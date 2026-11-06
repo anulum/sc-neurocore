@@ -45,11 +45,13 @@ _LEADING = {"rand": 0, "randn": 0, "poisson": 1, "poisson_grid": 1}
 def _calls(expression: str) -> list[tuple[str, ast.Call]]:
     """Return the ``rand``/``randn`` calls of an expression with their names, in source order.
 
-    Text that does not parse has no calls here; the equation validator reports it.
+    Text that does not parse, or that exhausts the parser (``RecursionError``, or
+    ``MemoryError`` on a parser stack overflow), has no calls here; the equation
+    validator reports it.
     """
     try:
         tree = ast.parse(expression, mode="eval")
-    except SyntaxError:
+    except (SyntaxError, RecursionError, MemoryError):
         return []
     calls = [
         (node.func.id, node)

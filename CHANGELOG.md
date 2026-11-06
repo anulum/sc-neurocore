@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refuse an equation that overflows Python's parser instead of failing with an
+  internal error. Some texts far below the 16,384-character limit make CPython's
+  parser raise `MemoryError` ("Parser stack overflowed"), for example 3,000
+  chained powers in 8,998 characters, on Python 3.11 to 3.14. The equation gate
+  caught only `RecursionError`, so the Studio candidate routes answered such a
+  text with HTTP 500. The gate now refuses it as "Equation expression is too
+  deep to parse", and numbering a neuron's random draw sites, which parses the
+  raw text before the gate, leaves both parser failures to the gate.
+
 - Write a guarantee summary next to the SystemVerilog emitted from an IR graph.
   The new `sc-neurocore compile-ir` command verifies the graph, emits the top
   level and writes `NAME.guarantees.json` and `.txt`: for each operation, the

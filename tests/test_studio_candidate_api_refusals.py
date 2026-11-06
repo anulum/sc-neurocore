@@ -22,6 +22,10 @@ from tests.studio_candidate_jobs_support import finish_candidate_job
 from tests.studio_candidate_support import adex_candidate
 
 _DEEP_EXPRESSION = " + ".join(["v"] * 1100)
+#: Longer than the gate's 16,384-character limit, so refused before it is parsed.
+_OVERLONG_EXPRESSION = " + ".join(["v"] * 10000)
+#: Within the length limit, but CPython's parser overflows its stack on it.
+_PARSER_OVERFLOW_EXPRESSION = "**".join(["v"] * 3000)
 #: Refusal raised when the interpreter's parser itself gives up on the expression.
 TOO_DEEP_TO_PARSE = "Equation expression is too deep to parse"
 
@@ -67,7 +71,13 @@ def candidate_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterato
         ),
         (
             ("model", "dynamics", "v"),
-            " + ".join(["v"] * 10000),
+            _OVERLONG_EXPRESSION,
+            "/model/dynamics/v",
+            f"Equation expression of {len(_OVERLONG_EXPRESSION)} characters exceeds limit 16384",
+        ),
+        (
+            ("model", "dynamics", "v"),
+            _PARSER_OVERFLOW_EXPRESSION,
             "/model/dynamics/v",
             TOO_DEEP_TO_PARSE,
         ),
@@ -133,7 +143,7 @@ def test_candidate_routes_refuse_real_parser_and_encoding_faults(
     location : str
         JSON pointer expected in the authored diagnostic.
     message : str
-        Exact refusal text, including the parser-depth alternative.
+        Exact refusal text located at ``location``.
     """
     document = adex_candidate()
     target = document
@@ -153,18 +163,7 @@ def test_candidate_routes_refuse_real_parser_and_encoding_faults(
         assert body["detail"]["reason"] == "invalid_candidate"
         validation = body["detail"]["validation"]
     assert validation["valid"] is False
-    if message == TOO_DEEP_TO_PARSE:
-        # Which gate refuses a ten-thousand-term sum depends on the interpreter:
-        # the parser's own recursion limit, or the validator's depth limit where
-        # the parser accepts it. Both are authored refusals at this location.
-        located = [
-            row["message"] for row in validation["diagnostics"] if row["location"] == location
-        ]
-        assert any(
-            text == TOO_DEEP_TO_PARSE or text.startswith("Equation AST depth ") for text in located
-        )
-    else:
-        assert {"location": location, "message": message} in validation["diagnostics"]
+    assert {"location": location, "message": message} in validation["diagnostics"]
     assert "TokenInfo" not in response.text
     assert "unexpected EOF" not in response.text
     assert "invalid literal" not in response.text

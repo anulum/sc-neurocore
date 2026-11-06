@@ -277,7 +277,10 @@ class ExpressionSafetyValidator:
             tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:
             raise EquationRefusal(f"Invalid equation syntax: {expr!r}") from e
-        except RecursionError as exc:
+        except (RecursionError, MemoryError) as exc:
+            # CPython's parser raises MemoryError ("Parser stack overflowed")
+            # for some texts far below the length limit, such as 3,000 chained
+            # powers in 8,998 characters.
             raise EquationRefusal("Equation expression is too deep to parse") from exc
 
         # Reject excessively deep ASTs (stack exhaustion / obfuscation)
