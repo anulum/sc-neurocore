@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Record the engine-loader re-exports that 4.0.0 removed without a line in
+  its notes. `bridges.quantum_annealing` no longer offers `get_ising_energy`,
+  `get_batch_ising_energy`, `get_simulated_annealing` and
+  `has_full_quantum_annealing_backend`; import them from
+  `sc_neurocore_engine.quantum`. `optics.photonic_emitter` no longer offers
+  `get_crosstalk_analyzer`, `get_crosstalk_bank_analyzer`,
+  `get_crosstalk_pair_analyzer` and `has_full_photonic_crosstalk_backend`;
+  import them from `sc_neurocore_engine.photonics`. `studio.models` no longer
+  offers `get_batch_simulate`; import it from `sc_neurocore_engine.studio`. A
+  repository test keeps this list true on both sides.
+
 - Push the container image that the vulnerability scan passed, instead of
   building it a second time for the push. Each release tag must name the
   scanned image in the runner's Docker daemon before it is pushed from there.

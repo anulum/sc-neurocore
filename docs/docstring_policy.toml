@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1785
+expected_file_count = 1786
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7224,3 +7224,6 @@ rationale = "Prove local product identities and every original word-function con
 [[file]]
 path = "tools/function_synthesis_yosys.py"
 rationale = "Map standalone RTL and require explicit equivalence of every input/output bit."
+[[file]]
+path = "tests/test_removed_engine_loader_shims.py"
+rationale = "Bind the changelog's removed engine-loader re-exports to their old modules and to the engine modules that still provide them."

@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5606
+    "test_files": 5607
   },
   "documentation": {
     "public_pages": [
@@ -7404,6 +7404,7 @@
       "tests/test_registry.py",
       "tests/test_release_surface_consistency.py",
       "tests/test_reload_identity_guard.py",
+      "tests/test_removed_engine_loader_shims.py",
       "tests/test_reservoir_metrics.py",
       "tests/test_reservoir_readout.py",
       "tests/test_reservoir_reservoir_construction.py",
