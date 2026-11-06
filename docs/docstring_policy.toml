@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1781
+expected_file_count = 1785
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -235,6 +235,22 @@ rationale = "Fits of a seeded benchmark recover known parameters within their st
 [[file]]
 path = "tests/test_studio_model_capabilities.py"
 rationale = "The per-model capability matrix enables only operations that run, names why the others are disabled, and is served by the real HTTP route."
+
+[[file]]
+path = "benchmarks/bench_model_nlif.py"
+rationale = "Time the nonlinear LIF RK4 model on each local backend and record a non-isolated regression without the machine host name."
+
+[[file]]
+path = "benchmarks/bench_model_sfa.py"
+rationale = "Time the SFA RK4 model on each local backend and record a non-isolated regression without the machine host name."
+
+[[file]]
+path = "benchmarks/bench_model_spike_response.py"
+rationale = "Time the spike response kernel model on each local backend and record a non-isolated regression without the machine host name."
+
+[[file]]
+path = "benchmarks/bench_model_spinnaker_lif.py"
+rationale = "Time the SpiNNaker LIF exact-flow model on each local backend and record a non-isolated regression without the machine host name."
 
 [[file]]
 path = "tests/test_tools/test_pixi_audit_cli.py"

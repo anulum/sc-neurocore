@@ -7,6 +7,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SFA RK4 multi-backend local regression benchmark
 
+"""Time the spike-frequency-adaptation RK4 model of ``SFANeuron`` on each local backend.
+
+The Python, Rust, Go, Julia and Mojo implementations each run the same constant current for a fixed
+number of steps and repetitions. The median, minimum and maximum nanoseconds per
+step, the spike counts and the source hashes are written to
+``benchmarks/results/local_python_2026-06-18_sfa_rk4.json``. The record is a local, non-isolated regression
+measurement and makes no production-speed or hardware claim.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -371,7 +380,6 @@ def _run_mojo_backend() -> dict[str, object]:
 
 def main() -> int:
     """Run the local multi-backend SFA RK4 benchmark."""
-
     backend_summary = {
         "python": _run_python_backend(),
         "rust": _run_rust_backend(),
@@ -386,7 +394,6 @@ def main() -> int:
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "host": platform.node(),
         "platform": platform.platform(),
         "python": platform.python_version(),
         "steps": STEPS,

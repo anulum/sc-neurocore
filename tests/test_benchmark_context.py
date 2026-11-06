@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 from benchmarks._benchmark_context import measurement_context
 
 
@@ -35,3 +38,25 @@ def test_measurement_context_records_reproducibility_contract() -> None:
     assert context["operating_system"]
     assert context["python_version"]
     assert context["numpy_version"]
+
+
+def test_no_benchmark_producer_records_the_machine_host_name() -> None:
+    """Benchmark records keep platform and hardware context, never the host name.
+
+    Results are committed and published, so a host name would identify the
+    machine. Every module under ``benchmarks/`` is parsed, and no call reads
+    ``platform.node()``.
+    """
+    root = Path(__file__).resolve().parents[1] / "benchmarks"
+    offenders = []
+    for path in sorted(root.rglob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "node"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "platform"
+            ):
+                offenders.append(f"{path.relative_to(root.parent)}:{node.lineno}")
+    assert offenders == []

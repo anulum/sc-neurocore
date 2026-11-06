@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Omit the machine hostname from the seven remaining benchmark producers that
+  recorded it: the shared non-resetting LIF harness and the MAT, nonlinear
+  LIF, SC resetting MAT, SFA, spike response and SpiNNaker LIF benchmarks.
+  Committed results keep their recorded values. A repository test now refuses
+  any benchmark module that reads the hostname.
+
 - Query crates.io through one tool that identifies the project, in both the
   publishing crate job and the dry-run crate job, so a dispatch without
   publishing proves the registry query a tag run depends on. The tool reads the

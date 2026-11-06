@@ -202,7 +202,6 @@ def main(argv: list[str] | None = None) -> int:
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "host": platform.node(),
         "platform": platform.platform(),
         "python": platform.python_version(),
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else [],

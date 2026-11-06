@@ -7,6 +7,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SpiNNaker LIF exact-flow multi-backend local regression benchmark
 
+"""Time the exact constant-current SpiNNaker LIF flow of ``SpiNNakerLIFNeuron`` on each local backend.
+
+The Python, Rust, Go and Julia implementations each run the same constant current for a fixed
+number of steps and repetitions. The median, minimum and maximum nanoseconds per
+step, the spike counts and the source hashes are written to
+``benchmarks/results/local_python_2026-06-18_spinnaker_lif_exact_flow.json``. The record is a local, non-isolated regression
+measurement and makes no production-speed or hardware claim.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -294,7 +303,6 @@ println("final_refracs=", join([r[4] for r in results], ","))
 
 def main() -> int:
     """Run the local multi-backend SpiNNaker LIF benchmark."""
-
     backend_summary = {
         "python": _run_python_backend(),
         "rust": _run_rust_backend(),
@@ -308,7 +316,6 @@ def main() -> int:
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "host": platform.node(),
         "platform": platform.platform(),
         "python": platform.python_version(),
         "steps": STEPS,

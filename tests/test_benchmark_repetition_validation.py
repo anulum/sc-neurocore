@@ -111,6 +111,8 @@ def test_model_cli_retains_every_runtime_repetition(
         return
     assert status == 0
     payload = json.loads(output.read_text())
+    assert "host" not in payload
+    assert payload["platform"] and payload["python"]
     assert payload["steps"] == 64
     assert payload["repeats"] == 3
     assert payload["production_speed_claim"] is False
