@@ -81,24 +81,30 @@ def _names(query: CatalogueQuery) -> frozenset[str]:
 
 
 class TestFilters:
+    """Filtering and facet rules held on the listing built in this module."""
+
     def test_readiness_floors_read_the_verified_tier_not_the_declared_one(self) -> None:
         """Lif declares S5 and is proven only at S2; it is not "at least S3"."""
         assert _names(CatalogueQuery(min_verified_science=3)) == {"Adex", "Hh", "ScLif"}
 
     def test_a_model_not_enrolled_on_silicon_meets_no_silicon_floor(self) -> None:
+        """Only Adex has a verified silicon tier at or above 1; unenrolled models never pass."""
         assert _names(CatalogueQuery(min_verified_silicon=1)) == {"Adex"}
 
     def test_verified_perfect_only_keeps_what_the_receipts_prove(self) -> None:
+        """The perfect-only switch keeps exactly the models whose receipts are verified perfect."""
         assert _names(CatalogueQuery(verified_perfect_only=True)) == {"Adex"}
 
     @pytest.mark.parametrize(
         ("text", "expected"),
         [("adaptiveexp", {"Adex"}), ("SC LEAKY", {"ScLif"}), ("conductance", {"Hh"})],
     )
-    def test_text_matches_name_label_alias_and_family(self, text, expected) -> None:
+    def test_text_matches_name_label_alias_and_family(self, text: str, expected: set[str]) -> None:
+        """Text matches case-insensitively against the alias, public label and family."""
         assert _names(CatalogueQuery(text=text)) == expected
 
     def test_facet_filters_intersect(self) -> None:
+        """Facet filters combine as an intersection, and an unknown value matches nothing."""
         assert _names(CatalogueQuery(family="Integrate-and-Fire", behavior="bursting")) == {"Adex"}
         assert _names(CatalogueQuery(identity_kind="sc-compatibility")) == {"ScLif"}
         assert _names(CatalogueQuery(metadata_state="invalid")) == {"Broken"}
@@ -120,13 +126,17 @@ class TestFilters:
         assert behaviors == {}
 
     def test_the_index_is_rebuilt_only_for_a_new_listing(self) -> None:
+        """The same listing object reuses its index; an equal but new list builds another."""
         first = catalogue_query._catalogue_index(_LISTING)
         assert catalogue_query._catalogue_index(_LISTING) is first
         assert catalogue_query._catalogue_index(list(_LISTING)) is not first
 
 
 class TestParameters:
+    """HTTP query parameters become a catalogue query or a named refusal."""
+
     def test_query_parameters_become_a_query(self) -> None:
+        """Every supported parameter is parsed, and no parameters give the empty query."""
         query = CatalogueQuery.from_params(
             {
                 "text": "lif",
@@ -161,13 +171,17 @@ class TestParameters:
             ({"verified_perfect_only": "yes"}, "verified_perfect_only must be true or false"),
         ],
     )
-    def test_what_cannot_be_a_query_is_refused(self, params, reason) -> None:
+    def test_what_cannot_be_a_query_is_refused(self, params: dict[str, str], reason: str) -> None:
+        """Unknown names and out-of-range or malformed values are refused with their reason."""
         with pytest.raises(CatalogueQueryRejected, match=reason):
             CatalogueQuery.from_params(params)
 
 
 class TestRegisteredCatalogue:
+    """The query applied to the registered model catalogue."""
+
     def test_an_empty_query_returns_the_whole_corpus_at_its_revision(self) -> None:
+        """No filter returns every registered model, sorted, with the corpus revision."""
         result = query_catalogue(CatalogueQuery())
         models = list_models()
 
@@ -178,6 +192,7 @@ class TestRegisteredCatalogue:
         assert sum(result["facets"]["identity_kind"].values()) == len(models)
 
     def test_every_matched_model_is_proven_at_the_floor(self) -> None:
+        """A science floor admits only verified tiers, never a tier that is only declared."""
         by_name = {model["name"]: model for model in list_models()}
         result = query_catalogue(CatalogueQuery(min_verified_science=3))
 
@@ -191,6 +206,7 @@ class TestRegisteredCatalogue:
         assert not declared_only & set(result["models"])
 
     def test_the_list_carries_the_detail_views_verified_judgement(self) -> None:
+        """For the first twelve models, the listing's perfect flag equals their detail readiness."""
         for model in list_models()[:12]:
             detail = get_model_detail(model["name"])
             assert detail is not None
@@ -199,18 +215,24 @@ class TestRegisteredCatalogue:
             assert model["is_perfect_verified"] is expected, model["name"]
 
 
+@pytest.fixture(scope="class")
+def client() -> TestClient:
+    """Serve the real Studio application once to the route cases of a class."""
+    return TestClient(create_app(), base_url="http://127.0.0.1")
+
+
 class TestRoute:
-    @pytest.fixture(scope="class")
-    def client(self) -> TestClient:
-        return TestClient(create_app(), base_url="http://127.0.0.1")
+    """The catalogue query through the Studio HTTP route."""
 
     def test_the_route_answers_a_query(self, client: TestClient) -> None:
+        """The route returns the same match count as the query function."""
         response = client.get("/api/models/query", params={"min_verified_science": "3"})
         assert response.status_code == 200, response.text
         body = response.json()
         assert body["matched"] == query_catalogue(CatalogueQuery(min_verified_science=3))["matched"]
 
     def test_the_route_names_why_a_query_is_refused(self, client: TestClient) -> None:
+        """A refused query is HTTP 422 with the reason in the response detail."""
         response = client.get("/api/models/query", params={"min_verified_science": "9"})
         assert response.status_code == 422
         assert "from 0 to 5" in response.json()["detail"]["reason"]
