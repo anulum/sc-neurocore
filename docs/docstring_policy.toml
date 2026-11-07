@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1814
+expected_file_count = 1815
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7254,6 +7254,9 @@ rationale = "Bind the guarantee table to the IR operations, the emitter, the com
 [[file]]
 path = "tests/test_cli_dispatch.py"
 rationale = "Exercise version, grouped help and per-command help through the public CLI."
+[[file]]
+path = "tests/test_cli_equation.py"
+rationale = "Compile equations through the public CLI, including Yosys synthesis of the emitted module and its failure and skip reports."
 [[file]]
 path = "tests/test_cli_architecture.py"
 rationale = "Protect the command package boundary, its single registrations and the removed CLI mirrors."

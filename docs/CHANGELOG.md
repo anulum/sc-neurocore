@@ -35,6 +35,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   logic than its device has, and Studio synthesis deletes the `$scopeinfo` debug
   cells Yosys 0.70 emits, which nextpnr 0.6 cannot place. CI installs nextpnr-ice40
   0.6-3build5 and runs the real flow.
+- Fix `sc-neurocore compile --synthesize` for `ice40` and `ecp5`. It handed
+  Yosys the layout that `deploy` writes (`hdl/*.v` and a top `.sv`), which
+  `compile` never writes, so it stopped with `FileNotFoundError`. It now
+  synthesises the `MODULE.v` it wrote. A Yosys failure is reported as a failure
+  with exit status 1; before, any unsuccessful run was reported as a missing
+  Yosys.
 
 - Take one catalogue model from its schema to synthesis with one command.
   `sc-neurocore hardware-path MODEL -o DIR` (Python:

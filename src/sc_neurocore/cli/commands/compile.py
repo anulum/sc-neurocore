@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from typing import Any
 
 from .deploy import TARGET_CONFIGS, run_auto_synthesis
@@ -369,7 +370,8 @@ def run_compile(args: argparse.Namespace) -> int:
     Returns
     -------
     int
-        Zero after artefact emission; invalid equations propagate their typed error.
+        Zero after artefact emission; one when requested Yosys synthesis fails.
+        Invalid equations propagate their typed error.
 
     Notes
     -----
@@ -548,11 +550,19 @@ def run_compile(args: argparse.Namespace) -> int:
     if args.synthesize:
         cfg = TARGET_CONFIGS.get(args.target)
         if cfg and cfg["tool"] == "yosys":
-            synth_ok = run_auto_synthesis(out_dir, args.target, args.module_name, cfg)
-            if synth_ok:
+            if shutil.which("yosys") is None:
+                print("[4/4] Synthesis skipped (Yosys not found)")
+            elif run_auto_synthesis(
+                out_dir,
+                args.target,
+                args.module_name,
+                cfg,
+                sources=[f"{args.module_name}.v"],
+            ):
                 print("[4/4] Synthesis complete")
             else:
-                print("[4/4] Synthesis skipped (Yosys not found)")
+                print("[4/4] Synthesis failed (Yosys errors above)")
+                return 1
         else:
             print(f"[4/4] Synthesis skipped (target '{args.target}' requires Vivado)")
     else:

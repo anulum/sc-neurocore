@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import shutil
 
 import pytest
 
@@ -121,50 +123,89 @@ def test_compile_emits_adaptive_precision_wrapper(tmp_path: Path) -> None:
     assert "module adaptive_fixture" in verilog
 
 
+needs_yosys = pytest.mark.skipif(shutil.which("yosys") is None, reason="Yosys is required")
+
+
+@needs_yosys
+def test_compile_synthesises_the_verilog_it_writes(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``--synthesize`` runs Yosys on the module ``compile`` itself wrote.
+
+    Before, it read the ``deploy`` layout (``hdl/*.v`` and a top ``.sv``), which
+    ``compile`` never writes, and failed with ``FileNotFoundError``.
+    """
+    output = tmp_path / "ice40"
+    rc = run_cli(
+        "compile",
+        "dv/dt = -v / 10.0 + I",
+        "--threshold",
+        "v > 1.0",
+        "--reset",
+        "v = 0.0",
+        "--module-name",
+        "synth_fixture",
+        "--target",
+        "ice40",
+        "--synthesize",
+        "--output",
+        str(output),
+    )
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "Synthesis complete" in out
+    netlist = json.loads((output / "synth_fixture.json").read_text(encoding="utf-8"))
+    assert "synth_fixture" in netlist["modules"]
+
+
+@needs_yosys
+def test_compile_reports_a_failed_synthesis_with_status_one(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A Yosys run that fails is reported as a failure, not as a missing tool.
+
+    A directory where Yosys must write the netlist makes its ``write_json`` fail.
+    """
+    output = tmp_path / "blocked"
+    (output / "synth_fixture.json").mkdir(parents=True)
+    rc = run_cli(
+        "compile",
+        "dv/dt = I",
+        "--module-name",
+        "synth_fixture",
+        "--target",
+        "ice40",
+        "--synthesize",
+        "--output",
+        str(output),
+    )
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "Synthesis failed (Yosys errors above)" in out
+    assert "Yosys not found" not in out
+
+
 @pytest.mark.parametrize(
-    ("target", "synthesis_result", "message", "expected_calls"),
-    [
-        ("ice40", True, "Synthesis complete", 1),
-        ("ice40", False, "Yosys not found", 1),
-        ("artix7", False, "requires Vivado", 0),
-    ],
+    ("target", "message"),
+    [("ice40", "Synthesis skipped (Yosys not found)"), ("artix7", "requires Vivado")],
 )
-def test_compile_reports_synthesis_outcome(
+def test_compile_reports_synthesis_it_cannot_run(
     target: str,
-    synthesis_result: bool,
     message: str,
-    expected_calls: int,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Synthesis status distinguishes success, missing Yosys, and Vivado targets."""
-    import sc_neurocore.cli.commands.compile as compile_command
-
-    calls: list[str] = []
-
-    def run_synthesis(
-        _output_dir: str,
-        observed_target: str,
-        _top_module: str,
-        _config: dict[str, str],
-    ) -> bool:
-        calls.append(observed_target)
-        return synthesis_result
-
-    monkeypatch.setattr(compile_command, "run_auto_synthesis", run_synthesis)
-
-    assert (
-        run_cli(
-            "compile",
-            "dv/dt = I",
-            "--target",
-            target,
-            "--synthesize",
-            "--output",
-            str(tmp_path / target),
-        )
-        == 0
+    """Without Yosys, or for a Vivado target, synthesis is skipped with the reason."""
+    monkeypatch.setenv("PATH", str(tmp_path / "no-tools"))
+    rc = run_cli(
+        "compile",
+        "dv/dt = I",
+        "--target",
+        target,
+        "--synthesize",
+        "--output",
+        str(tmp_path / target),
     )
-    assert len(calls) == expected_calls
+    assert rc == 0
     assert message in capsys.readouterr().out

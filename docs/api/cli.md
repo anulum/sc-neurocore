@@ -105,8 +105,11 @@ sc-neurocore compile \
   width/fraction or named precision options.
 
 Optional `--emit-hls` produces `MODULE.hls.cpp` beside the Verilog source.
-`--synthesize` runs Yosys only for open-source targets and reports that Vivado
-targets require their vendor flow.
+`--synthesize` runs Yosys on the `MODULE.v` it wrote, for the open-source
+targets (`ice40`, `ecp5`), and writes `MODULE.json`; when nextpnr is installed
+it also places and routes. A Yosys run that fails exits with status 1; a host
+without Yosys skips synthesis and says so. Vivado targets report that they
+require their vendor flow.
 
 Compile a NIR graph with an explicit fixed-point format:
 

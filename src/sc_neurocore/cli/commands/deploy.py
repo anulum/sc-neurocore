@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
 import re
 import subprocess
@@ -274,19 +275,25 @@ def run_auto_synthesis(
     target: str,
     top_module: str,
     cfg: dict[str, str],
+    *,
+    sources: Sequence[str] | None = None,
 ) -> bool:
     """Run the open-source synthesis flow when its tools are installed.
 
     Parameters
     ----------
     output_dir : str
-        Deployment directory containing the HDL tree.
+        Directory holding the Verilog sources; outputs are written there.
     target : str
         Target identifier used in status output.
     top_module : str
-        SystemVerilog top-module name.
+        Top-module name.
     cfg : dict[str, str]
         Device family, part, package, and tool configuration.
+    sources : Sequence[str] or None, optional
+        Verilog files to read, relative to ``output_dir``. ``None`` reads the
+        deployment layout that ``deploy`` writes: every ``hdl/*.v`` plus
+        ``<top_module>.sv``. ``compile`` passes the one ``<module>.v`` it writes.
 
     Returns
     -------
@@ -302,14 +309,13 @@ def run_auto_synthesis(
 
     print()
     print("[6/6] Running Yosys synthesis...")
-    verilog_files = " ".join(
-        [
+    if sources is None:
+        sources = [
             os.path.join("hdl", f)
             for f in os.listdir(os.path.join(output_dir, "hdl"))
             if f.endswith(".v")
-        ]
-        + [f"{top_module}.sv"]
-    )
+        ] + [f"{top_module}.sv"]
+    verilog_files = " ".join(sources)
     synth_cmd = f"synth_{cfg['family']}"
     yosys_script = (
         f"read_verilog -sv {verilog_files}; "

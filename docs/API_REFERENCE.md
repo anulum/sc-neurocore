@@ -7482,7 +7482,8 @@ args : argparse.Namespace
 Returns
 -------
 int
-    Zero after artefact emission; invalid equations propagate their typed error.
+    Zero after artefact emission; one when requested Yosys synthesis fails.
+    Invalid equations propagate their typed error.
 
 Notes
 -----
@@ -7608,19 +7609,23 @@ Returns
 int
     Zero on success, otherwise one for an invalid or failed deployment.
 
-### Function `run_auto_synthesis(output_dir, target, top_module, cfg)`
+### Function `run_auto_synthesis(output_dir, target, top_module, cfg, *, sources)`
 Run the open-source synthesis flow when its tools are installed.
 
 Parameters
 ----------
 output_dir : str
-    Deployment directory containing the HDL tree.
+    Directory holding the Verilog sources; outputs are written there.
 target : str
     Target identifier used in status output.
 top_module : str
-    SystemVerilog top-module name.
+    Top-module name.
 cfg : dict&#91;str, str&#93;
     Device family, part, package, and tool configuration.
+sources : Sequence&#91;str&#93; or None, optional
+    Verilog files to read, relative to ``output_dir``. ``None`` reads the
+    deployment layout that ``deploy`` writes: every ``hdl/*.v`` plus
+    ``<top_module>.sv``. ``compile`` passes the one ``<module>.v`` it writes.
 
 Returns
 -------
