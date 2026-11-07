@@ -16,7 +16,78 @@ is provided for missing or misspelled members.
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Callable, Protocol, cast
+from typing import Callable, NotRequired, Protocol, TypedDict, cast
+
+
+class DenseFoldPlan(TypedDict):
+    """Time-multiplexing plan of a dense layer over a target's DSP budget."""
+
+    n_inputs: int
+    n_outputs: int
+    mac_count: int
+    dsp_budget: int
+    output_parallelism: int
+    input_parallelism: int
+    dsp_per_cycle: int
+    input_fold_factor: int
+    output_fold_factor: int
+    compute_cycles: int
+    fold_required: bool
+    fits_dsp_budget: bool
+
+
+class HeuristicResourceReport(TypedDict):
+    """Uncalibrated heuristic estimate of SystemVerilog for a Zynq device.
+
+    ``calibration`` is ``"uncalibrated heuristic"``: no number here has been
+    measured against synthesis. Budgets equal to ``2**32 - 1`` mean the target
+    names no limit for that resource.
+    """
+
+    target_name: str
+    device_part: str
+    clock_mhz: int
+    calibration: str
+    lut_estimated: int
+    ff_estimated: int
+    dsp_estimated: int
+    bram_36k_estimated: int
+    uram_estimated: int
+    critical_path_estimate_ns: float
+    dsp_budget: int
+    bram_36k_budget: int
+    uram_budget: int
+    fits_dsp_budget: bool
+    fits_bram_budget: bool
+    fits_uram_budget: bool
+    dense_fold_plan: DenseFoldPlan | None
+
+
+class Ice40ResourceReport(TypedDict):
+    """Report of SystemVerilog emitted for the iCE40 UltraPlus UP5K.
+
+    When ``static_estimate`` is true the graph is one calibrated block inside
+    its measured domain, and ``logic_cells_estimated`` and
+    ``critical_path_estimate_ns`` are upper bounds measured with the toolchain
+    named in ``calibration``. When it is false the report carries the reason
+    and none of the estimate keys: synthesis with place and route decides.
+    """
+
+    target_name: str
+    device_part: str
+    clock_mhz: int
+    clock_period_ns: float
+    calibration: str
+    logic_cell_budget: int
+    ram_block_budget: int
+    dsp_budget: int
+    static_estimate: bool
+    static_estimate_reason: str | None
+    block: NotRequired[str]
+    logic_cells_estimated: NotRequired[int]
+    critical_path_estimate_ns: NotRequired[float]
+    fits_logic_cells: NotRequired[bool]
+    meets_timing_estimate: NotRequired[bool]
 
 
 class NativeGraph(Protocol):
@@ -244,6 +315,12 @@ class NativeIR(Protocol):
 
     def ir_emit_sv(self, graph: NativeGraph) -> str:
         """Emit synthesizable SystemVerilog or raise ValueError."""
+        ...
+
+    def ir_emit_sv_with_target(
+        self, graph: NativeGraph, target: str, clock_mhz: int
+    ) -> tuple[str, Ice40ResourceReport | HeuristicResourceReport]:
+        """Emit SystemVerilog for a device target with that target's report."""
         ...
 
     def ir_emit_mlir(self, graph: NativeGraph) -> str:

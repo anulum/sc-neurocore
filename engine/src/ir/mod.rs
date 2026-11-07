@@ -29,6 +29,8 @@ pub(crate) mod dense_contract;
 pub mod emit_mlir;
 pub mod emit_sv;
 pub mod graph;
+pub mod ice40_calibration;
+pub mod ice40_estimate;
 pub(crate) mod identifiers;
 pub(crate) mod kernel_contract;
 pub(crate) mod neuron_contract;

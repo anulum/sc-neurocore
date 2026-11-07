@@ -29,7 +29,11 @@
     co-simulated-only module is recorded with that boundary.
 ``synthesis/``
     The Yosys report of :func:`sc_neurocore.studio.synthesis.run_synthesis` for the
-    top level with its primitives, or the reason it is unavailable.
+    top level with its primitives, or the reason it is unavailable; for the iCE40
+    target, the place-and-route report of
+    :func:`sc_neurocore.studio.resource_feedback.run_resource_feedback`
+    (``pnr_report.json``) and the engine's static estimate set against the routed
+    result (``estimate_vs_real.json``).
 ``tools.json``, ``source.json``
     Tool, Python, package and engine versions; the package version and, from a Git
     checkout, its commit and whether the tree is dirty.
@@ -71,6 +75,7 @@ from sc_neurocore.compiler.guarantee_summary import render_guarantee_text, summa
 from sc_neurocore.hdl.resources import baseline_primitive_text
 from sc_neurocore.safety_cert.evidence import EvidenceBag, EvidenceItem
 from sc_neurocore.studio.bit_true_execution import native_tool_version
+from sc_neurocore.studio.resource_feedback import FeedbackGraph
 
 __all__ = [
     "CONTAINED_MODULES",
@@ -83,6 +88,7 @@ __all__ = [
     "checkout_root",
     "export_evidence_packet",
     "formal_targets",
+    "place_and_route",
     "run_formal_job",
     "source_identity",
     "synthesize",
@@ -129,6 +135,12 @@ _CATEGORIES = (
     ("parameters.json", "design", "Q formats, seeds and constants read from the IR"),
     ("cosim/", "test", "Co-simulation of the emitted top level against the Python reference"),
     ("formal/", "formal", "Formal job record or log"),
+    ("synthesis/pnr_report.json", "report", "Place-and-route resource and timing feedback"),
+    (
+        "synthesis/estimate_vs_real.json",
+        "report",
+        "Engine static estimate against the routed result",
+    ),
     ("synthesis/", "report", "Synthesis record or report"),
     ("tools.json", "report", "Tool, Python, package and engine versions"),
     ("source.json", "report", "Package version and source checkout identity"),
@@ -481,15 +493,7 @@ def synthesize(verilog: str, out_dir: Path, target: str = "ice40") -> dict[str, 
     """
     from sc_neurocore.studio.synthesis import run_synthesis
 
-    record: dict[str, Any] = {
-        "tool": "yosys",
-        "target": target,
-        "place_and_route": {
-            "status": "not run",
-            "reason": "run_synthesis performs Yosys synthesis only; no place and route "
-            "was run, so no routed resource or timing figures exist",
-        },
-    }
+    record: dict[str, Any] = {"tool": "yosys", "target": target}
     if shutil.which("yosys") is None:
         record.update(status="unavailable", reason="yosys is not installed")
         return record
@@ -505,6 +509,80 @@ def synthesize(verilog: str, out_dir: Path, target: str = "ice40") -> dict[str, 
     path = out_dir / "synthesis" / "yosys_report.json"
     _write_json(path, report)
     record.update(report="synthesis/yosys_report.json", report_sha256=_sha256(path.read_bytes()))
+    return record
+
+
+def place_and_route(
+    graph: FeedbackGraph,
+    out_dir: Path,
+    target: str = "ice40",
+    clock_mhz: int = 12,
+    *,
+    timeout_seconds: float,
+) -> dict[str, Any]:
+    """Place and route a graph out of context and set the routed result against its estimate.
+
+    For a target :func:`~sc_neurocore.studio.resource_feedback.run_resource_feedback`
+    supports, its full report is written to ``synthesis/pnr_report.json`` and the
+    estimate, the routed core and the estimate check to
+    ``synthesis/estimate_vs_real.json`` under ``out_dir``.
+
+    Parameters
+    ----------
+    graph : FeedbackGraph
+        The verified graph.
+    out_dir : Path
+        Packet directory that receives the reports.
+    target : str, default "ice40"
+        Studio target.
+    clock_mhz : int, default 12
+        Clock the timing is judged at; must be positive.
+    timeout_seconds : float
+        Limit for each Yosys and nextpnr run, set for the executing host.
+
+    Returns
+    -------
+    dict
+        The record: ``run`` with the overall ``verdict``, the verdict of every check
+        and the paths and SHA-256 of both reports, or ``unavailable`` with the reason.
+    """
+    from sc_neurocore.studio.resource_feedback import ENGINE_TARGETS, run_resource_feedback
+
+    record: dict[str, Any] = {"tool": "nextpnr-ice40", "target": target, "clock_mhz": clock_mhz}
+    if target not in ENGINE_TARGETS:
+        record.update(
+            status="unavailable",
+            reason=f"place and route is supported for {sorted(ENGINE_TARGETS)}, not {target!r}",
+        )
+        return record
+    report = run_resource_feedback(
+        graph, clock_mhz=clock_mhz, target=target, timeout_seconds=timeout_seconds
+    )
+    toolchain = next((c for c in report["checks"] if c["name"] == "toolchain"), None)
+    if toolchain is not None:
+        record.update(status="unavailable", reason=str(toolchain["detail"]))
+        return record
+    checks = {check["name"]: check["verdict"] for check in report["checks"]}
+    comparison = {
+        "estimate": report["estimate"],
+        "core_logic_cells": report.get("core_logic_cells"),
+        "fmax": (report.get("place_and_route") or {}).get("fmax"),
+        "estimate_comparison": report.get("estimate_comparison"),
+        "estimate_check": next((c for c in report["checks"] if c["name"] == "estimate"), None),
+    }
+    pnr_path = out_dir / "synthesis" / "pnr_report.json"
+    comparison_path = out_dir / "synthesis" / "estimate_vs_real.json"
+    _write_json(pnr_path, report)
+    _write_json(comparison_path, comparison)
+    record.update(
+        status="run",
+        verdict=report["verdict"],
+        checks=checks,
+        report="synthesis/pnr_report.json",
+        report_sha256=_sha256(pnr_path.read_bytes()),
+        estimate_vs_real="synthesis/estimate_vs_real.json",
+        estimate_vs_real_sha256=_sha256(comparison_path.read_bytes()),
+    )
     return record
 
 
@@ -607,7 +685,8 @@ def boundary_statement(
     boundaries : Sequence[Mapping[str, Any]]
         Co-simulated-only records of :func:`formal_targets`.
     synthesis : Mapping[str, Any]
-        Synthesis record of :func:`synthesize`.
+        Synthesis record of :func:`synthesize`, with the record of
+        :func:`place_and_route` under ``place_and_route`` when one was made.
 
     Returns
     -------
@@ -665,6 +744,20 @@ def boundary_statement(
         missing.append(
             f"No synthesis result: synthesis {synthesis['status']} ({synthesis['reason']})."
         )
+    routed = synthesis.get("place_and_route")
+    if routed is None:
+        missing.append("No place and route: none was run for this packet.")
+    elif routed["status"] != "run":
+        missing.append(f"No place and route: {routed['reason']}.")
+    else:
+        checks = ", ".join(f"{name} {verdict}" for name, verdict in routed["checks"].items())
+        establishes.append(
+            f"nextpnr-ice40 placed and routed the design out of context, in a five-pin "
+            f"shift-register harness, for the {routed['target']} target at "
+            f"{routed['clock_mhz']} MHz with resource-feedback verdict {routed['verdict']} "
+            f"({checks}); the routed figures and the engine's static estimate set against "
+            "them are in synthesis/pnr_report.json and synthesis/estimate_vs_real.json."
+        )
     excluded = [
         *missing,
         "No unbounded proof: each formal verdict holds only to its stated depth, for the "
@@ -674,7 +767,9 @@ def boundary_statement(
         "parameters other than those its harness proves.",
         "No statement about inputs, cycles or seeds other than the recorded stimulus, "
         "and no error bound on the stochastic bitstream estimates.",
-        "No measured power, timing or behaviour on hardware, and no place and route.",
+        "No measured power, timing or behaviour on hardware. Routed timing is the "
+        "place-and-route tool's static analysis of the core in its harness, and package "
+        "I/O is judged by the core's port count, not on a board.",
         "Synthesis figures are estimates of the named tool and version for the named "
         "target, not measurements.",
         "No authenticity: the manifest is a digest list, not a signature. Verification "
@@ -698,6 +793,9 @@ def _render_text(summary: Mapping[str, Any]) -> str:
         lines.append(f"Formal {record['module']}: {outcome}")
     synthesis = summary["synthesis"]
     lines.append(f"Synthesis ({synthesis['target']}): {synthesis['status']}")
+    routed = synthesis["place_and_route"]
+    outcome = routed.get("verdict") or f"unavailable ({routed.get('reason')})"
+    lines.append(f"Place and route ({routed['target']}, {routed['clock_mhz']} MHz): {outcome}")
     lines.append("")
     lines.append("This packet establishes:")
     lines += [f"- {sentence}" for sentence in summary["boundary"]["establishes"]]
@@ -730,8 +828,10 @@ def export_evidence_packet(
     *,
     cycles: int = 256,
     synthesis_target: str = "ice40",
+    clock_mhz: int = 12,
     formal_timeout_s: float = 1800.0,
     repository: Path | None = None,
+    pnr_timeout_s: float,
 ) -> PacketExport:
     """Write the evidence packet of one dense layer design into a new directory.
 
@@ -744,12 +844,17 @@ def export_evidence_packet(
     cycles : int, default 256
         Cycles of the co-simulation stimulus.
     synthesis_target : str, default "ice40"
-        Yosys synthesis target.
+        Yosys synthesis and place-and-route target.
+    clock_mhz : int, default 12
+        Clock the routed timing is judged at; must be positive.
     formal_timeout_s : float, default 1800.0
         Wall-clock limit of each formal job.
     repository : Path or None, optional
         Source checkout holding the formal jobs and the Git identity; the checkout this
         package runs from when omitted, if any.
+    pnr_timeout_s : float
+        Limit for each Yosys and nextpnr run of the place and route, set for the
+        executing host.
 
     Returns
     -------
@@ -773,6 +878,8 @@ def export_evidence_packet(
     problems = graph.verify()
     if problems:
         raise ValueError("the graph fails IR verification: " + "; ".join(problems))
+    if clock_mhz <= 0:
+        raise ValueError("clock_mhz must be positive")
     design = parse_dense_design(graph.to_text())
     if out_dir.exists() and (not out_dir.is_dir() or any(out_dir.iterdir())):
         raise ValueError(f"{out_dir} exists and is not an empty directory")
@@ -803,6 +910,9 @@ def export_evidence_packet(
 
     source = verilog + "".join(baseline_primitive_text(name) for name in PRIMITIVES)
     synthesis = synthesize(source, out_dir, synthesis_target)
+    synthesis["place_and_route"] = place_and_route(
+        graph, out_dir, synthesis_target, clock_mhz, timeout_seconds=pnr_timeout_s
+    )
     _write_json(out_dir / "synthesis" / "synthesis.json", synthesis)
 
     _write_json(out_dir / "tools.json", tool_versions())

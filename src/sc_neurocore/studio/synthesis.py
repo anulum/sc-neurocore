@@ -17,6 +17,7 @@ from math import ceil
 from typing import Any
 import json
 import os
+import re
 import shutil
 import subprocess  # nosec B404
 import tempfile
@@ -438,8 +439,10 @@ def _run_synthesis_in_directory(
         # the Xilinx target failed on every design; synth_gowin's "-json"
         # also withholds block RAM for nextpnr-gowin, which this target does
         # not run, and built a 256x16 memory from 64 LUT-RAMs. For iCE40 and
-        # ECP5 the two are the same command.
-        f"read_verilog {v_path.name}; {synth_cmd}; write_json {json_path.name}",
+        # ECP5 the two are the same command. Yosys 0.70 emits portless
+        # $scopeinfo debug cells on flattening, which nextpnr 0.6 cannot
+        # place ("no BELs remaining to implement cell type '$scopeinfo'").
+        f"read_verilog {v_path.name}; {synth_cmd}; delete t:$scopeinfo; write_json {json_path.name}",
         encoding="utf-8",
     )
 
@@ -897,16 +900,69 @@ def run_pnr(
             if "critical path" in line.lower():
                 critical_path = line.strip()
 
-        return {
+        outcome: dict[str, Any] = {
             "success": result.returncode == 0,
             "max_freq_mhz": max_freq,
             "critical_path": critical_path,
             "log_excerpt": log[-300:],
         }
+        if result.returncode != 0 and _io_placement_failed(log):
+            outcome["error"] = (
+                "the design needs more I/O pins than the package has; "
+                "wrap the core in an I/O harness or choose a larger package"
+            )
+        elif result.returncode != 0 and capacity_failure(log):
+            outcome["error"] = "the design needs more logic than the device has"
+        return outcome
     except FileNotFoundError:
         return {"success": False, "error": f"{pnr_tool} not found"}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": "PnR timed out (120s)"}
+
+
+#: nextpnr-ice40 log lines that mean the logic does not fit the device: the
+#: placer cannot grow a region for its logic cells, or no logic BEL is left.
+#: An unplaceable cell of another type, such as $scopeinfo, is not capacity.
+_CAPACITY_FAILURE = re.compile(
+    r"Failed to expand region|no BELs remaining to implement cell type '(?:ICESTORM_\w+|SB_\w+)'"
+)
+
+
+def capacity_failure(log: str) -> bool:
+    """Say whether nextpnr-ice40 stopped because the logic does not fit the device.
+
+    Parameters
+    ----------
+    log : str
+        nextpnr's standard output and error.
+
+    Returns
+    -------
+    bool
+        True for a failed region expansion or no logic BEL left for an iCE40
+        logic or primitive cell; False for any other failure.
+    """
+    return _CAPACITY_FAILURE.search(log) is not None
+
+
+def _io_placement_failed(log: str) -> bool:
+    """Say whether nextpnr stopped because an I/O buffer found no package pin.
+
+    Parameters
+    ----------
+    log : str
+        nextpnr's standard output and error.
+
+    Returns
+    -------
+    bool
+        True when an iCE40 ``$sb_io`` buffer could not be placed, the message
+        nextpnr-ice40 0.6 gives when the ports outnumber the package pins.
+    """
+    return any(
+        "Unable to find a placement location for cell" in line and "$sb_io" in line
+        for line in log.splitlines()
+    )
 
 
 def _pnr_output_path(json_path: Path, target: str) -> Path:

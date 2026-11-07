@@ -52,6 +52,7 @@ from sc_neurocore.safety_cert.evidence_packet import (  # noqa: E402
     checkout_root,
     export_evidence_packet,
     formal_targets,
+    place_and_route,
     run_formal_job,
     source_identity,
     synthesize,
@@ -63,6 +64,11 @@ from sc_neurocore.hdl.resources import baseline_primitive_text  # noqa: E402
 from sc_neurocore.studio.synthesis import SYNTHESIS_TIMEOUT_SECONDS  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+
+#: Per-tool wall-clock limit these tests give Yosys and nextpnr. A reference value for
+#: the hosts that run them (hosted CI runners, the workstation); the library has no
+#: default, and converting test limits to host-derived values is a tracked backlog item.
+TOOL_TIMEOUT_S = 900.0
 _DCLS = (
     'sc.graph @dcls {\n  %0 = sc.input "spike" : bitstream<7>\n'
     '  %1 = sc.input "weights" : vec<fixed<16,8>,1>\n'
@@ -130,6 +136,14 @@ def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def require_place_and_route() -> None:
+    """Skip without nextpnr-ice40, unless the resource-check CI job demands it."""
+    if shutil.which("nextpnr-ice40") is None:
+        if os.environ.get("SC_NEUROCORE_REQUIRE_FPGA_TOOLS") == "1":
+            raise RuntimeError("SC_NEUROCORE_REQUIRE_FPGA_TOOLS=1 but nextpnr-ice40 is missing")
+        pytest.skip("nextpnr-ice40 is not installed; the CI test job installs it")
+
+
 DESIGNS = {
     "2x2": (2, 2, 16, [0.5, 0.25, 0.75, 0.9], None),
     "3x2": (3, 2, 12, [0.0, 0.25, 1.0, 0.5, -0.1, 0.75], None),
@@ -157,7 +171,9 @@ def packet(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
     require_simulator()
     out = tmp_path_factory.mktemp("shared") / "packet"
-    export_evidence_packet(dense_text(*DESIGNS["3x2"]), out, cycles=64)
+    export_evidence_packet(
+        dense_text(*DESIGNS["3x2"]), out, cycles=64, pnr_timeout_s=TOOL_TIMEOUT_S
+    )
     return out
 
 
@@ -176,7 +192,7 @@ def test_a_real_dense_design_exports_a_verifying_packet(label: str, tmp_path: Pa
     text = dense_text(*DESIGNS[label])
     graph = parse_ir(text)
     out = tmp_path / "packet"
-    export = export_evidence_packet(text, out)
+    export = export_evidence_packet(text, out, pnr_timeout_s=TOOL_TIMEOUT_S)
     assert export.cosim_agrees and export.first_difference is None
     assert (out / "design.sc").read_text(encoding="utf-8") == text
     assert (out / "design.sv").read_text(encoding="utf-8") == graph.emit_sv()
@@ -194,6 +210,7 @@ def test_a_real_dense_design_exports_a_verifying_packet(label: str, tmp_path: Pa
     assert verdict["verdict"] == "AGREE" and verdict["cycles"] == 256
     _check_formal(out)
     _check_synthesis(out, may_time_out=label in SLOW_SYNTHESIS)
+    _check_place_and_route(out, slow=label in SLOW_SYNTHESIS)
     tools = read_json(out / "tools.json")
     assert set(tools["tools"]) == set(TOOLS) and tools["sc_neurocore"]
     assert tools["tools"]["iverilog"]["available"] is True
@@ -252,7 +269,6 @@ def _check_synthesis(out: Path, *, may_time_out: bool) -> None:
     outcome than completion or that timeout fails.
     """
     synthesis = read_json(out / "synthesis/synthesis.json")
-    assert synthesis["place_and_route"]["status"] == "not run"
     if shutil.which("yosys") is None:
         assert synthesis["status"] == "unavailable"
         return
@@ -267,6 +283,50 @@ def _check_synthesis(out: Path, *, may_time_out: bool) -> None:
     report = (out / synthesis["report"]).read_bytes()
     assert synthesis["report_sha256"] == hashlib.sha256(report).hexdigest()
     assert json.loads(report)["resources"]["luts"] > 0
+
+
+def _check_place_and_route(out: Path, *, slow: bool) -> None:
+    """Check the place-and-route record, both reports and the boundary sentence.
+
+    Without nextpnr-ice40 the record names the missing tool and no report is
+    written. Otherwise both reports are bound by their SHA-256, the record repeats
+    the report's verdicts, and a design inside the calibrated domain routes within
+    the device, meets 12 MHz and stays within its estimate. A design whose Yosys
+    run may exceed its limit may instead be undetermined at synthesis.
+    """
+    routed = read_json(out / "synthesis/synthesis.json")["place_and_route"]
+    assert (routed["target"], routed["clock_mhz"]) == ("ice40", 12)
+    boundary = read_json(out / "evidence.json")["boundary"]
+    if shutil.which("nextpnr-ice40") is None or shutil.which("yosys") is None:
+        assert routed["status"] == "unavailable" and "not installed" in routed["reason"]
+        assert not (out / "synthesis/pnr_report.json").exists()
+        assert f"No place and route: {routed['reason']}." in boundary["does_not_establish"]
+        return
+    assert routed["status"] == "run"
+    report_bytes = (out / routed["report"]).read_bytes()
+    comparison_bytes = (out / routed["estimate_vs_real"]).read_bytes()
+    assert routed["report_sha256"] == hashlib.sha256(report_bytes).hexdigest()
+    assert routed["estimate_vs_real_sha256"] == hashlib.sha256(comparison_bytes).hexdigest()
+    report, comparison = json.loads(report_bytes), json.loads(comparison_bytes)
+    assert routed["verdict"] == report["verdict"]
+    assert routed["checks"] == {c["name"]: c["verdict"] for c in report["checks"]}
+    assert comparison["estimate"] == report["estimate"]
+    assert comparison["core_logic_cells"] == report.get("core_logic_cells")
+    assert any(
+        s.startswith("nextpnr-ice40 placed and routed the design out of context")
+        and f"verdict {routed['verdict']}" in s
+        for s in boundary["establishes"]
+    )
+    if slow and routed["checks"].get("synthesis") == "undetermined":
+        return
+    assert routed["checks"]["logic_fits_device"] == "pass"
+    assert routed["checks"]["timing"] == "pass"
+    if report["estimate"]["static_estimate"]:
+        assert routed["checks"]["estimate"] == "pass"
+        assert comparison["estimate_check"]["verdict"] == "pass"
+    else:
+        assert "estimate" not in routed["checks"] and comparison["estimate_check"] is None
+        assert comparison["estimate_comparison"].startswith("not applicable: ")
 
 
 def _copy(packet: Path, tmp_path: Path) -> Path:
@@ -399,6 +459,109 @@ def test_every_tamper_class_is_refused(packet: Path, tmp_path: Path, tamper: str
     assert main(["evidence-packet", "verify", str(copy)]) == 1
 
 
+def _tamper_place_and_route_report(root: Path) -> None:
+    """Lower the routed logic-cell count in the place-and-route report."""
+    path = root / "synthesis" / "pnr_report.json"
+    report = read_json(path)
+    report["core_logic_cells"] -= 1
+    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _tamper_estimate_comparison(root: Path) -> None:
+    """Delete the estimate-against-routed record."""
+    (root / "synthesis" / "estimate_vs_real.json").unlink()
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (_tamper_place_and_route_report, "altered member: synthesis/pnr_report.json"),
+        (_tamper_estimate_comparison, "missing member: synthesis/estimate_vs_real.json"),
+    ],
+)
+def test_the_place_and_route_members_are_bound_by_the_manifest(
+    packet: Path, tmp_path: Path, change: Any, message: str
+) -> None:
+    """Both routed reports are listed, hashed and refused when changed or removed.
+
+    Parameters
+    ----------
+    packet : Path
+        The shared packet.
+    tmp_path : Path
+        Directory of the tampered copy.
+    change : callable
+        The change made to the copy.
+    message : str
+        Expected problem.
+    """
+    require_place_and_route()
+    listed = {member["path"]: member for member in read_json(packet / MANIFEST)["members"]}
+    for name in ("synthesis/pnr_report.json", "synthesis/estimate_vs_real.json"):
+        assert listed[name]["category"] == "report"
+        data = (packet / name).read_bytes()
+        assert listed[name]["sha256"] == hashlib.sha256(data).hexdigest()
+    copy = _copy(packet, tmp_path)
+    change(copy)
+    report = verify_evidence_packet(copy)
+    assert not report.ok and message in report.problems
+    assert main(["evidence-packet", "verify", str(copy)]) == 1
+
+
+def test_place_and_route_that_cannot_run_writes_no_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An unsupported target or missing tools leave an unavailable record and no file.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Packet directories.
+    monkeypatch : pytest.MonkeyPatch
+        Empties ``PATH`` for the second case.
+    """
+    graph = parse_ir(dense_text(*DESIGNS["2x2"]))
+    other = place_and_route(graph, tmp_path / "ecp5", "ecp5", timeout_seconds=TOOL_TIMEOUT_S)
+    assert other == {
+        "tool": "nextpnr-ice40",
+        "target": "ecp5",
+        "clock_mhz": 12,
+        "status": "unavailable",
+        "reason": "place and route is supported for ['ice40'], not 'ecp5'",
+    }
+    monkeypatch.setenv("PATH", str(tmp_path / "empty"))
+    missing = place_and_route(graph, tmp_path / "missing", timeout_seconds=TOOL_TIMEOUT_S)
+    assert missing["status"] == "unavailable"
+    assert missing["reason"] == "not installed: yosys, nextpnr-ice40"
+    assert not (tmp_path / "ecp5").exists() and not (tmp_path / "missing").exists()
+
+
+def test_routed_and_unrouted_place_and_route_are_stated_as_they_are() -> None:
+    """A routed design is established with its verdict; an unrouted one is a gap."""
+    cosim = {"verdict": "AGREE", "first_difference": None, "cycles": 9}
+    routed = {
+        "status": "run",
+        "target": "ice40",
+        "clock_mhz": 100,
+        "verdict": "violation",
+        "checks": {"io_fits_package": "pass", "timing": "violation"},
+    }
+    synthesis = {"status": "completed", "reason": None, "target": "ice40"}
+    statement = boundary_statement(cosim, [], [], {**synthesis, "place_and_route": routed})
+    assert any(
+        "at 100 MHz with resource-feedback verdict violation "
+        "(io_fits_package pass, timing violation)" in s
+        for s in statement["establishes"]
+    )
+    assert not any(s.startswith("No place and route") for s in statement["does_not_establish"])
+    unrouted = {"status": "unavailable", "reason": "not installed: nextpnr-ice40"}
+    statement = boundary_statement(cosim, [], [], {**synthesis, "place_and_route": unrouted})
+    assert "No place and route: not installed: nextpnr-ice40." in statement["does_not_establish"]
+    assert not any("nextpnr-ice40 placed" in s for s in statement["establishes"])
+    statement = boundary_statement(cosim, [], [], synthesis)
+    assert "No place and route: none was run for this packet." in statement["does_not_establish"]
+
+
 @pytest.mark.parametrize(
     ("content", "message"),
     [
@@ -458,18 +621,29 @@ def test_unsupported_and_invalid_graphs_write_nothing(tmp_path: Path) -> None:
     current, leak, gain, noise = (builder.input(n, "i16") for n in ("i", "leak", "gain", "n"))
     builder.output("spike", builder.lif_step(current, leak, gain, noise))
     with pytest.raises(UnsupportedDesignError, match=r"sc\.lif_step"):
-        export_evidence_packet(builder.build().to_text(), tmp_path / "lif")
+        export_evidence_packet(
+            builder.build().to_text(), tmp_path / "lif", pnr_timeout_s=TOOL_TIMEOUT_S
+        )
     assert not (tmp_path / "lif").exists()
     with pytest.raises(ValueError):
-        export_evidence_packet("not an IR graph", tmp_path / "invalid")
+        export_evidence_packet(
+            "not an IR graph", tmp_path / "invalid", pnr_timeout_s=TOOL_TIMEOUT_S
+        )
     failing = _DCLS.replace("bitstream<7>", "bool").replace("offsets=[6]", "offsets=[0;1]")
     with pytest.raises(ValueError, match="fails IR verification"):
-        export_evidence_packet(failing, tmp_path / "failing")
+        export_evidence_packet(failing, tmp_path / "failing", pnr_timeout_s=TOOL_TIMEOUT_S)
+    with pytest.raises(ValueError, match="clock_mhz must be positive"):
+        export_evidence_packet(
+            dense_text(*DESIGNS["2x2"]),
+            tmp_path / "clock",
+            clock_mhz=0,
+            pnr_timeout_s=TOOL_TIMEOUT_S,
+        )
     used = tmp_path / "used"
     used.mkdir()
     (used / "keep.txt").write_text("x", encoding="utf-8")
     with pytest.raises(ValueError, match="not an empty directory"):
-        export_evidence_packet(dense_text(*DESIGNS["2x2"]), used)
+        export_evidence_packet(dense_text(*DESIGNS["2x2"]), used, pnr_timeout_s=TOOL_TIMEOUT_S)
     assert sorted(p.name for p in tmp_path.iterdir()) == ["used"]
 
 
@@ -889,7 +1063,9 @@ def test_a_packet_written_inside_the_checkout_does_not_mark_it_dirty(tmp_path: P
     require_simulator()
     root = _checkout(tmp_path / "checkout")
     out = root / "packet"
-    export_evidence_packet(dense_text(*DESIGNS["3x2"]), out, cycles=8, repository=root)
+    export_evidence_packet(
+        dense_text(*DESIGNS["3x2"]), out, cycles=8, repository=root, pnr_timeout_s=TOOL_TIMEOUT_S
+    )
     identity = read_json(out / "source.json")
     assert identity["dirty"] is False and identity["commit"] == _git(root, "rev-parse", "HEAD")
     assert source_identity(root)["dirty"] is True
@@ -911,10 +1087,15 @@ def test_the_cli_exports_and_verifies_a_packet(
     graph = tmp_path / "dense.sc"
     graph.write_text(dense_text(*DESIGNS["2x2"]), encoding="utf-8")
     out = tmp_path / "packet"
-    assert main(["evidence-packet", "export", str(graph), "-o", str(out), "--cycles", "32"]) == 0
+    arguments = ["evidence-packet", "export", str(graph), "-o", str(out), "--cycles", "32"]
+    arguments += ["--pnr-timeout-seconds", str(TOOL_TIMEOUT_S)]
+    assert main([*arguments, "--clock-mhz", "20"]) == 0
     printed = capsys.readouterr().out
     assert "Co-simulation:    AGREE" in printed and str(out) in printed
     assert read_json(out / "cosim" / "verdict.json")["cycles"] == 32
+    routed = read_json(out / "synthesis" / "synthesis.json")["place_and_route"]
+    assert routed["clock_mhz"] == 20
+    assert "Place and route (ice40, 20 MHz): " in (out / "evidence.txt").read_text("utf-8")
     assert main(["evidence-packet", "verify", str(out)]) == 0
     manifest = read_json(out / MANIFEST)
     assert f"Manifest SHA-256: {manifest['manifest_sha256']}" in capsys.readouterr().out
@@ -935,20 +1116,61 @@ def test_the_cli_refuses_with_status_one(
         Sets ``PATH`` for the last case only.
     """
     missing = tmp_path / "missing.sc"
-    assert main(["evidence-packet", "export", str(missing), "-o", str(tmp_path / "a")]) == 1
+    assert (
+        main(
+            [
+                "evidence-packet",
+                "export",
+                str(missing),
+                "-o",
+                str(tmp_path / "a"),
+                "--pnr-timeout-seconds",
+                "900",
+            ]
+        )
+        == 1
+    )
     assert "cannot read IR graph" in capsys.readouterr().out
     lif = tmp_path / "lif.sc"
     builder = ScGraphBuilder("lif_graph")
     current, leak, gain, noise = (builder.input(n, "i16") for n in ("i", "leak", "gain", "n"))
     builder.output("spike", builder.lif_step(current, leak, gain, noise))
     lif.write_text(builder.build().to_text(), encoding="utf-8")
-    assert main(["evidence-packet", "export", str(lif), "-o", str(tmp_path / "b")]) == 1
+    assert (
+        main(
+            [
+                "evidence-packet",
+                "export",
+                str(lif),
+                "-o",
+                str(tmp_path / "b"),
+                "--pnr-timeout-seconds",
+                "900",
+            ]
+        )
+        == 1
+    )
     assert "sc.lif_step" in capsys.readouterr().out
     dense = tmp_path / "dense.sc"
     dense.write_text(dense_text(*DESIGNS["2x2"]), encoding="utf-8")
     monkeypatch.setenv("PATH", str(tmp_path / "empty"))
-    assert main(["evidence-packet", "export", str(dense), "-o", str(tmp_path / "c")]) == 1
+    assert (
+        main(
+            [
+                "evidence-packet",
+                "export",
+                str(dense),
+                "-o",
+                str(tmp_path / "c"),
+                "--pnr-timeout-seconds",
+                "900",
+            ]
+        )
+        == 1
+    )
     assert "Icarus Verilog" in capsys.readouterr().out
     assert not any((tmp_path / name).exists() for name in ("a", "b", "c"))
     with pytest.raises(SimulatorUnavailableError):
-        export_evidence_packet(dense.read_text(encoding="utf-8"), tmp_path / "d")
+        export_evidence_packet(
+            dense.read_text(encoding="utf-8"), tmp_path / "d", pnr_timeout_s=TOOL_TIMEOUT_S
+        )

@@ -7854,6 +7854,32 @@ int
 
 ---
 
+## Module `cli.commands.resource_check`
+
+### Function `add_resource_check_command(subparsers)`
+Register the ``resource-check`` command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_resource_check(args)`
+Run the resource and timing check of one IR graph.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``resource-check`` arguments.
+
+Returns
+-------
+int
+    0 when every check passes, 1 on a violation, 2 when a check is
+    undetermined or the graph cannot be read, parsed or verified.
+
+---
+
 ## Module `cli.commands.scnir`
 
 ### Function `add_scnir_command(subparsers)`
@@ -40005,6 +40031,33 @@ dict
     The record: ``completed``, ``failed`` or ``unavailable`` with the reason, and
     the report path and its SHA-256 when a report exists.
 
+### Function `place_and_route(graph, out_dir, target, clock_mhz, *, timeout_seconds)`
+Place and route a graph out of context and set the routed result against its estimate.
+
+For a target :func:`~sc_neurocore.studio.resource_feedback.run_resource_feedback`
+supports, its full report is written to ``synthesis/pnr_report.json`` and the
+estimate, the routed core and the estimate check to
+``synthesis/estimate_vs_real.json`` under ``out_dir``.
+
+Parameters
+----------
+graph : FeedbackGraph
+    The verified graph.
+out_dir : Path
+    Packet directory that receives the reports.
+target : str, default "ice40"
+    Studio target.
+clock_mhz : int, default 12
+    Clock the timing is judged at; must be positive.
+timeout_seconds : float
+    Limit for each Yosys and nextpnr run, set for the executing host.
+
+Returns
+-------
+dict
+    The record: ``run`` with the overall ``verdict``, the verdict of every check
+    and the paths and SHA-256 of both reports, or ``unavailable`` with the reason.
+
 ### Function `tool_versions()`
 Return the version of every external tool and of Python and both packages.
 
@@ -40045,14 +40098,15 @@ formal : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
 boundaries : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
     Co-simulated-only records of :func:`formal_targets`.
 synthesis : Mapping&#91;str, Any&#93;
-    Synthesis record of :func:`synthesize`.
+    Synthesis record of :func:`synthesize`, with the record of
+    :func:`place_and_route` under ``place_and_route`` when one was made.
 
 Returns
 -------
 dict
     ``establishes`` and ``does_not_establish``, each a list of sentences.
 
-### Function `export_evidence_packet(graph_text, out_dir, *, cycles, synthesis_target, formal_timeout_s, repository)`
+### Function `export_evidence_packet(graph_text, out_dir, *, cycles, synthesis_target, clock_mhz, formal_timeout_s, repository, pnr_timeout_s)`
 Write the evidence packet of one dense layer design into a new directory.
 
 Parameters
@@ -40064,12 +40118,17 @@ out_dir : Path
 cycles : int, default 256
     Cycles of the co-simulation stimulus.
 synthesis_target : str, default "ice40"
-    Yosys synthesis target.
+    Yosys synthesis and place-and-route target.
+clock_mhz : int, default 12
+    Clock the routed timing is judged at; must be positive.
 formal_timeout_s : float, default 1800.0
     Wall-clock limit of each formal job.
 repository : Path or None, optional
     Source checkout holding the formal jobs and the Git identity; the checkout this
     package runs from when omitted, if any.
+pnr_timeout_s : float
+    Limit for each Yosys and nextpnr run of the place and route, set for the
+    executing host.
 
 Returns
 -------
@@ -56079,6 +56138,113 @@ the pack was refused before it ran.
 
 ---
 
+## Module `studio.resource_feedback`
+
+### Class `FeedbackGraph`
+The graph surface the feedback needs from ``sc_neurocore_engine.ir.ScGraph``.
+
+- **name**()
+  - Module name of the emitted top level.
+- **emit_sv_with_report**(target, clock_mhz)
+  - Emit SystemVerilog for a device with the engine's static estimate.
+
+### Function `with_instanced_primitives(verilog)`
+Append every baseline primitive the design instances, transitively.
+
+Only instanced primitives are read: an unused primitive with an
+unpacked-array port would stop Yosys's Verilog reader.
+
+Parameters
+----------
+verilog : str
+    Emitted top level.
+
+Returns
+-------
+str
+    The top level followed by the primitives it needs.
+
+### Function `out_of_context_harness(top, ports)`
+Write a five-pin harness and a port stub for one core.
+
+Parameters
+----------
+top : str
+    Core module name.
+ports : Mapping
+    The core's ports from its Yosys JSON netlist (``direction`` and ``bits``).
+
+Returns
+-------
+tuple of (str, str, int, int)
+    Harness Verilog, core port stub, input bits and output bits it shifts.
+
+### Function `timing_met(clocks)`
+Return whether every clock reaches its constraint, or None without clocks.
+
+An achieved frequency equal to the constraint meets it.
+
+### Function `capacity_check(core, packed)`
+Judge a design whose core and harness did not fit the device.
+
+The core needs ``packed`` minus the harness flip-flops. A core above the
+device's logic cells is a violation. A core that fits while the core and
+its harness do not is undetermined: nothing was routed, so placement and
+timing of the core alone are unknown.
+
+### Function `io_check(port_bits)`
+Judge the core's port bits against the SG48 user pins; equal fits.
+
+### Function `overall_verdict(checks)`
+Combine checks: any violation wins, then any undetermined, else pass.
+
+Parameters
+----------
+checks : Sequence of Mapping
+    Checks with a ``verdict`` of pass, violation or undetermined.
+
+Returns
+-------
+str
+    The combined verdict; an empty list is undetermined.
+
+### Function `run_resource_feedback(graph, *, clock_mhz, target, timeout_seconds, process_limits)`
+Synthesise, place and route a graph out of context and judge it.
+
+Each check is a pass, a violation or undetermined. A missing tool, a
+timeout or a tool error is undetermined and never a pass.
+
+Parameters
+----------
+graph : FeedbackGraph
+    A verified IR graph.
+clock_mhz : int
+    Target clock in MHz; must be positive.
+target : str, default "ice40"
+    Studio target; one of :data:`ENGINE_TARGETS`.
+timeout_seconds : float
+    Wall-clock limit for each Yosys and nextpnr run, positive. The caller
+    sets it for the host that runs the tools; no host-independent default
+    exists.
+process_limits : EdaProcessLimits or None
+    Optional CPU and memory ceilings for the tool processes.
+
+Returns
+-------
+dict
+    ``schema_version``, ``target``, ``device``, ``clock_mhz``, the engine
+    ``estimate``, ``toolchain`` versions, ``synthesis`` cell counts of the
+    core, ``io`` (port bits against package pins), ``harness``,
+    ``place_and_route``, ``core_logic_cells``, ``checks`` and ``verdict``.
+
+Raises
+------
+ValueError
+    For an unsupported target, a non-positive clock or a non-positive
+    timeout.
+
+---
+
 ## Module `studio.runtime_state_packet`
 
 ### Class `ForeignRuntimeError`
@@ -56695,6 +56861,20 @@ Returns
 dict&#91;str, Any&#93;
     Path-free PnR result with success state, timing metadata, log excerpt,
     or a bounded error message.
+
+### Function `capacity_failure(log)`
+Say whether nextpnr-ice40 stopped because the logic does not fit the device.
+
+Parameters
+----------
+log : str
+    nextpnr's standard output and error.
+
+Returns
+-------
+bool
+    True for a failed region expansion or no logic BEL left for an iCE40
+    logic or primitive cell; False for any other failure.
 
 ---
 

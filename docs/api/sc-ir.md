@@ -180,6 +180,96 @@ and output digests, build profile and host scheduling context. The command
 above uses the debug profile. Select `--release` for optimized compiler
 measurements and reserve isolated CPUs before making throughput claims.
 
+## Device targets and resource reports
+
+`ScGraph.emit_sv_with_report(target, clock_mhz)` emits the same SystemVerilog
+as `emit_sv`, headed by one target comment, and returns it with that
+device's report. `clock_mhz` must be positive. Targets:
+
+| Target | Report |
+| --- | --- |
+| `ice40:UP5K` | `Ice40ResourceReport`: device `iCE40UP5K-SG48`, budgets (5280 logic cells, 30 RAM blocks, 8 DSPs) and, where calibrated, a static estimate. |
+| `zynq-ultrascale-plus:ZU3EG`, `zynq-ultrascale-plus:ZU9EG`, `zynq7:<device>` | `HeuristicResourceReport`, labelled `"uncalibrated heuristic"`, with the dense fold plan. |
+
+Any other target, including `generic` and a bare `ice40`, raises `ValueError`.
+
+**The iCE40 estimate.** An `Ice40ResourceReport` has `static_estimate: true`
+only when the graph holds exactly one calibrated block inside its measured
+domain:
+
+| Block | Domain |
+| --- | --- |
+| `dense_forward` | 2-12 inputs, 2-8 neurons, data width 12-24 |
+| `lif_step` | data width 12-32 |
+| two encoders, `bitwise_and`, `decode` | stream length a power of two, 64-4096 |
+
+The block must also be in the form the calibration measured, because
+synthesis follows constants and ports:
+
+| Block | Required form |
+| --- | --- |
+| dense | inputs an input port of `vec<rate,n>`; weights a constant rate vector; leak 16 and gain 256 as constants of `fixed<width,8>`; stream length 7, seeds 4660 and 4661, `y_min` 0 and `y_max` 300 |
+| LIF | all four operands input ports of `fixed<width,8>`; fraction 8, rest 0, reset 0, threshold 256, refractory period 7 |
+| synapse stream | both probabilities input ports of `rate`; seeds `0xACE1` and `0xBEEF` |
+
+A weight vector or leak/gain on a port builds a runtime multiplier, and other
+constants change the logic, so any other form has no estimate
+(`"operand source, type or parameter outside the calibration"`).
+
+With an estimate, the report carries `logic_cells_estimated`,
+`critical_path_estimate_ns`, `fits_logic_cells` and `meets_timing_estimate`.
+Otherwise it carries none of these numbers, only `static_estimate_reason`.
+Word-level operations, compositions of blocks and anything outside a domain
+or form have no static estimate. The comparison covers calibrated structural
+blocks only.
+
+**What the estimate bounds.** It bounds the routed core of the block, out of
+context, as Yosys 0.70 and nextpnr-ice40 0.6-3build5 build it. The bound comes
+from `benchmarks/results/ice40_up5k_calibration/designs.json`, and
+`tools/ice40_up5k_calibration.py --check` refits it and prints every figure
+cited here. In detail:
+
+- **Measurement:** each design is synthesised, wrapped in a five-pin
+  shift-register harness, and placed and routed with seeds 1, 2 and 3.
+  - Core logic cells are the routed logic cells minus the harness flip-flops.
+  - A design whose harness does not fit the device is sized by its packed logic
+    cells minus the harness flip-flops.
+  - The critical path is the worst of the three seeds.
+- **Dense weights:** constant rate weights quantise to Q8 by truncation, and
+  synthesis removes a synapse whose code is zero (including negative weights,
+  which clamp to zero). Every non-zero code costs the same. So the dense bound
+  is fitted with every weight non-zero, the worst case, and smaller or zero
+  weights only reduce logic. This is measured on the recorded geometries and
+  weight probes, not proven.
+- **Dense logic cells:**
+  - a fit on n_in, n_out, n_in·n_out and n_out·width, scaled by its largest
+    measured/fit ratio and an explicit 1.03 margin;
+  - with each fitted design left out in turn, the refitted bound misses it by at
+    most the leave-one-out figure that `--check` prints;
+  - a fresh held-out set of off-grid geometries validates it.
+- **Dense critical path:**
+  - a fit on 1, n_in and n_in²;
+  - the regressors were chosen on the fitted designs by leave-one-out coverage,
+    then the tightest mean bound, then the fewest regressors;
+  - this choice was made after the held-out margins of every candidate had been
+    seen, and every candidate passes that held-out set (`--check` prints the
+    table).
+- **LIF:** the fit set touches the bound by construction, and the held-out
+  widths validate it.
+- **Synapse streams:** they are measured at every calibrated length, so their
+  bound is checked on the whole domain. Their explicit 1.03 logic-cell margin
+  was set after the length-512 result was seen. Other lengths are outside the
+  domain: they measured up to 1.7x larger and 5x slower.
+- **Timing:** it is nextpnr's static timing analysis of the core in its harness,
+  not a measurement on hardware.
+- **Fit verdict:** `fits_logic_cells` compares the core bound with the device's
+  logic cells. It does not account for I/O or for placement at very high
+  utilisation.
+
+Judge a graph against real Yosys and nextpnr runs with
+`sc_neurocore.studio.resource_feedback.run_resource_feedback` or the
+[`resource-check` command](cli.md#hardware-mode).
+
 ## Constant representation
 
 Floating constants are scaled using their declared binary point and truncated

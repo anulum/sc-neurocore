@@ -46,6 +46,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
         "info",
         "maintenance",
         "mapping",
+        "resource_check",
         "scnir",
         "serve",
         "studio",

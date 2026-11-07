@@ -26,8 +26,21 @@ DOCSTRING_POLICY = REPO_ROOT / "docs" / "docstring_policy.toml"
 _DocumentedNode = ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
 
 
+def _is_overload_stub(node: _DocumentedNode) -> bool:
+    """Say whether a function is a ``typing.overload`` signature, documented by its implementation."""
+    return any(
+        (isinstance(d, ast.Name) and d.id == "overload")
+        or (isinstance(d, ast.Attribute) and d.attr == "overload")
+        for d in node.decorator_list
+    )
+
+
 def _public_definitions(tree: ast.Module) -> list[tuple[str, _DocumentedNode]]:
-    """Collect top-level public declarations and direct public class methods."""
+    """Collect top-level public declarations and direct public class methods.
+
+    ``typing.overload`` signatures are skipped: the implementation that follows
+    them carries the docstring.
+    """
     definitions: list[tuple[str, _DocumentedNode]] = []
 
     for node in tree.body:
@@ -35,13 +48,32 @@ def _public_definitions(tree: ast.Module) -> list[tuple[str, _DocumentedNode]]:
             definitions.append((node.name, node))
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    if not item.name.startswith("_"):
+                    if not item.name.startswith("_") and not _is_overload_stub(item):
                         definitions.append((f"{node.name}.{item.name}", item))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if not node.name.startswith("_"):
+            if not node.name.startswith("_") and not _is_overload_stub(node):
                 definitions.append((node.name, node))
 
     return definitions
+
+
+def test_overload_signatures_are_documented_by_their_implementation() -> None:
+    """Overload stubs are skipped; an undocumented implementation is still collected."""
+    tree = ast.parse(
+        "from typing import overload\n"
+        "import typing\n"
+        "class G:\n"
+        "    @overload\n"
+        "    def f(self, x: int) -> int: ...\n"
+        "    @typing.overload\n"
+        "    def f(self, x: str) -> str: ...\n"
+        "    def f(self, x):\n"
+        "        return x\n"
+    )
+    names = [name for name, _ in _public_definitions(tree)]
+    assert names == ["G", "G.f"]
+    (implementation,) = [node for name, node in _public_definitions(tree) if name == "G.f"]
+    assert ast.get_docstring(implementation) is None
 
 
 def test_scoped_public_python_files_have_maintained_docstrings() -> None:

@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from sc_neurocore_engine._ir_native import NativeGraph as _ScGraph, native as _native
+from typing import Literal, overload
+
+from sc_neurocore_engine._ir_native import (
+    DenseFoldPlan as DenseFoldPlan,
+    HeuristicResourceReport as HeuristicResourceReport,
+    Ice40ResourceReport as Ice40ResourceReport,
+    NativeGraph as _ScGraph,
+    native as _native,
+)
 
 
 class ScGraphBuilder:
@@ -589,6 +597,47 @@ class ScGraph:
     def emit_sv(self) -> str:
         """Emit SystemVerilog from this graph."""
         return _native.ir_emit_sv(self._inner)
+
+    @overload
+    def emit_sv_with_report(
+        self, target: Literal["ice40:UP5K"], clock_mhz: int
+    ) -> tuple[str, Ice40ResourceReport]: ...
+
+    @overload
+    def emit_sv_with_report(
+        self, target: str, clock_mhz: int
+    ) -> tuple[str, Ice40ResourceReport | HeuristicResourceReport]: ...
+
+    def emit_sv_with_report(
+        self, target: str, clock_mhz: int
+    ) -> tuple[str, Ice40ResourceReport | HeuristicResourceReport]:
+        """Emit SystemVerilog for a device with that device's report.
+
+        Parameters
+        ----------
+        target : str
+            ``ice40:UP5K`` for the calibrated iCE40 UltraPlus UP5K report;
+            ``zynq-ultrascale-plus:ZU3EG``, ``zynq-ultrascale-plus:ZU9EG`` or
+            ``zynq7:<device>`` for an uncalibrated heuristic estimate.
+        clock_mhz : int
+            Target clock in MHz; must be positive.
+
+        Returns
+        -------
+        tuple of (str, Ice40ResourceReport or HeuristicResourceReport)
+            The SystemVerilog and the report. An iCE40 report has a static
+            estimate only for one calibrated block inside its measured domain.
+            A literal ``"ice40:UP5K"`` target is typed as an iCE40 report.
+
+        Raises
+        ------
+        ValueError
+            For an unknown target, a zero clock or a graph that fails
+            verification.
+        OverflowError
+            For a negative clock or one above ``2**32 - 1``.
+        """
+        return _native.ir_emit_sv_with_target(self._inner, target, clock_mhz)
 
     def emit_mlir(self) -> str:
         """Emit CIRCT HW/Comb/Seq text through the native compiler entry point."""

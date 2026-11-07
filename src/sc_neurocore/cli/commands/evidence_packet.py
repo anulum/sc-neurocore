@@ -30,8 +30,9 @@ def add_evidence_packet_command(
         description=(
             "Write, for one dense layer IR graph, its IR and SystemVerilog, guarantee "
             "summary, parameters, co-simulation against the Python reference, formal job "
-            "results, synthesis report and tool versions into one hash-bound directory, "
-            "or check such a directory."
+            "results, synthesis report, place-and-route report with the estimate set "
+            "against it, and tool versions into one hash-bound directory, or check such "
+            "a directory."
         ),
     )
     actions = parser.add_subparsers(dest="evidence_action", metavar="ACTION", required=True)
@@ -48,7 +49,18 @@ def add_evidence_packet_command(
     export.add_argument(
         "--cycles", type=int, default=256, help="Co-simulation cycles (default 256)"
     )
-    export.add_argument("--target", default="ice40", help="Yosys synthesis target (default ice40)")
+    export.add_argument(
+        "--target", default="ice40", help="Synthesis and place-and-route target (default ice40)"
+    )
+    export.add_argument(
+        "--clock-mhz", type=int, default=12, help="Clock routed timing is judged at (default 12)"
+    )
+    export.add_argument(
+        "--pnr-timeout-seconds",
+        type=float,
+        required=True,
+        help="Limit in seconds for each place-and-route tool run, chosen for this host",
+    )
     export.set_defaults(handler=run_evidence_packet_export)
     verify = actions.add_parser(
         "verify",
@@ -88,7 +100,12 @@ def run_evidence_packet_export(args: argparse.Namespace) -> int:
         return 1
     try:
         export = export_evidence_packet(
-            text, Path(args.output), cycles=args.cycles, synthesis_target=args.target
+            text,
+            Path(args.output),
+            cycles=args.cycles,
+            synthesis_target=args.target,
+            clock_mhz=args.clock_mhz,
+            pnr_timeout_s=args.pnr_timeout_seconds,
         )
     except (ValueError, SimulatorUnavailableError, CosimError) as error:
         print(f"Error: no evidence packet for {source}: {error}")

@@ -9,8 +9,11 @@
 //! Python bindings for constructing, verifying, serialising, and emitting SC IR graphs.
 
 use crate::ir;
+use crate::ir::ice40_estimate::{self, Ice40Estimate, Ice40Report};
+use crate::ir::sv_target::{ResourceReport, SvTarget};
 use pyo3::exceptions::{PyOverflowError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 /// Register the compute-graph IR classes and functions on the Python extension module.
 pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -20,6 +23,7 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ir_print, m)?)?;
     m.add_function(wrap_pyfunction!(ir_parse, m)?)?;
     m.add_function(wrap_pyfunction!(ir_emit_sv, m)?)?;
+    m.add_function(wrap_pyfunction!(ir_emit_sv_with_target, m)?)?;
     m.add_function(wrap_pyfunction!(ir_emit_mlir, m)?)?;
     Ok(())
 }
@@ -590,6 +594,114 @@ fn ir_parse(text: &str) -> PyResult<PyScGraph> {
 #[pyfunction]
 fn ir_emit_sv(graph: PyRef<'_, PyScGraph>) -> PyResult<String> {
     ir::emit_sv::emit(&graph.inner).map_err(PyValueError::new_err)
+}
+
+/// Emit SystemVerilog for a device target with that target's report.
+///
+/// `ice40:UP5K` returns the calibrated iCE40 report; the Zynq targets
+/// (`zynq-ultrascale-plus:ZU3EG`, `zynq-ultrascale-plus:ZU9EG`,
+/// `zynq7:<device>`) return their uncalibrated heuristic estimate. An unknown
+/// name or a zero clock raises `ValueError`.
+#[pyfunction]
+fn ir_emit_sv_with_target<'py>(
+    py: Python<'py>,
+    graph: PyRef<'_, PyScGraph>,
+    target: &str,
+    clock_mhz: u32,
+) -> PyResult<(String, Bound<'py, PyDict>)> {
+    if target == ice40_estimate::TARGET_NAME {
+        let (systemverilog, report) =
+            ir::emit_sv::emit_systemverilog_for_ice40_up5k(&graph.inner, clock_mhz)
+                .map_err(PyValueError::new_err)?;
+        return Ok((systemverilog, ice40_report_dict(py, &report)?));
+    }
+    let target = SvTarget::from_spec(target, clock_mhz).map_err(PyValueError::new_err)?;
+    let (systemverilog, report) = ir::emit_sv::emit_systemverilog_with_target(&graph.inner, target)
+        .map_err(PyValueError::new_err)?;
+    Ok((systemverilog, heuristic_report_dict(py, &report)?))
+}
+
+/// Convert an iCE40 UP5K report into a Python dictionary.
+///
+/// Without a static estimate the dictionary carries the reason and no
+/// logic-cell or timing number at all.
+fn ice40_report_dict<'py>(py: Python<'py>, report: &Ice40Report) -> PyResult<Bound<'py, PyDict>> {
+    let dict = PyDict::new(py);
+    dict.set_item("target_name", ice40_estimate::TARGET_NAME)?;
+    dict.set_item("device_part", ice40_estimate::DEVICE_PART)?;
+    dict.set_item("clock_mhz", report.clock_mhz)?;
+    dict.set_item("clock_period_ns", report.clock_period_ns())?;
+    dict.set_item("calibration", ir::ice40_calibration::TOOLCHAIN)?;
+    dict.set_item("logic_cell_budget", ice40_estimate::LOGIC_CELL_BUDGET)?;
+    dict.set_item("ram_block_budget", ice40_estimate::RAM_BLOCK_BUDGET)?;
+    dict.set_item("dsp_budget", ice40_estimate::DSP_BUDGET)?;
+    match &report.estimate {
+        Ice40Estimate::Calibrated {
+            block,
+            logic_cells,
+            critical_path_ns,
+        } => {
+            dict.set_item("static_estimate", true)?;
+            dict.set_item("static_estimate_reason", py.None())?;
+            dict.set_item("block", *block)?;
+            dict.set_item("logic_cells_estimated", *logic_cells)?;
+            dict.set_item("critical_path_estimate_ns", *critical_path_ns)?;
+            dict.set_item("fits_logic_cells", report.fits_logic_cells())?;
+            dict.set_item("meets_timing_estimate", report.meets_timing())?;
+        }
+        Ice40Estimate::Unavailable { reason } => {
+            dict.set_item("static_estimate", false)?;
+            dict.set_item("static_estimate_reason", reason)?;
+        }
+    }
+    Ok(dict)
+}
+
+/// Convert a heuristic resource estimate into a Python dictionary.
+fn heuristic_report_dict<'py>(
+    py: Python<'py>,
+    report: &ResourceReport,
+) -> PyResult<Bound<'py, PyDict>> {
+    let dict = PyDict::new(py);
+    dict.set_item("target_name", &report.target_name)?;
+    dict.set_item("device_part", &report.device_part)?;
+    dict.set_item("clock_mhz", report.clock_mhz)?;
+    dict.set_item("calibration", "uncalibrated heuristic")?;
+    dict.set_item("lut_estimated", report.lut_estimated)?;
+    dict.set_item("ff_estimated", report.ff_estimated)?;
+    dict.set_item("dsp_estimated", report.dsp_estimated)?;
+    dict.set_item("bram_36k_estimated", report.bram_36k_estimated)?;
+    dict.set_item("uram_estimated", report.uram_estimated)?;
+    dict.set_item(
+        "critical_path_estimate_ns",
+        report.critical_path_estimate_ns,
+    )?;
+    dict.set_item("dsp_budget", report.dsp_budget)?;
+    dict.set_item("bram_36k_budget", report.bram_36k_budget)?;
+    dict.set_item("uram_budget", report.uram_budget)?;
+    dict.set_item("fits_dsp_budget", report.fits_dsp_budget)?;
+    dict.set_item("fits_bram_budget", report.fits_bram_budget)?;
+    dict.set_item("fits_uram_budget", report.fits_uram_budget)?;
+    match &report.dense_fold_plan {
+        Some(plan) => {
+            let fold = PyDict::new(py);
+            fold.set_item("n_inputs", plan.n_inputs)?;
+            fold.set_item("n_outputs", plan.n_outputs)?;
+            fold.set_item("mac_count", plan.mac_count)?;
+            fold.set_item("dsp_budget", plan.dsp_budget)?;
+            fold.set_item("output_parallelism", plan.output_parallelism)?;
+            fold.set_item("input_parallelism", plan.input_parallelism)?;
+            fold.set_item("dsp_per_cycle", plan.dsp_per_cycle)?;
+            fold.set_item("input_fold_factor", plan.input_fold_factor)?;
+            fold.set_item("output_fold_factor", plan.output_fold_factor)?;
+            fold.set_item("compute_cycles", plan.compute_cycles)?;
+            fold.set_item("fold_required", plan.fold_required)?;
+            fold.set_item("fits_dsp_budget", plan.fits_dsp_budget)?;
+            dict.set_item("dense_fold_plan", fold)?;
+        }
+        None => dict.set_item("dense_fold_plan", py.None())?,
+    }
+    Ok(dict)
 }
 
 /// Emit typed CIRCT MLIR from an IR graph.

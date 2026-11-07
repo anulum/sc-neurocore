@@ -405,6 +405,11 @@ jobs:
           - python-minor: "3.12"
             shard-index: 1
             primary: true
+    env:
+      # Every leg installs Yosys 0.70 and nextpnr-ice40 0.6, so the resource
+      # feedback tests run the real flow and refuse to skip
+      # (tests/test_studio_resource_feedback.py).
+      SC_NEUROCORE_REQUIRE_FPGA_TOOLS: "1"
     steps:
       - name: Record native Go gate enclosing-job clock
         if: matrix.coverage && matrix.shard-index == 8
@@ -536,7 +541,11 @@ jobs:
           sudo apt-get update -qq
           # libhdf5-dev: the SHD readers link HDF5 (Go via `pkg-config hdf5`
           # under -tags=hdf5, Mojo by loading libhdf5_serial.so).
-          sudo apt-get install -y -qq cvc5 git iverilog make verilator libhdf5-dev pkg-config libreadline8t64 libtcl8.6
+          # nextpnr-ice40: the iCE40 UP5K estimate is calibrated on this
+          # exact build, so the resource feedback tests pin it.
+          sudo apt-get install -y -qq cvc5 git iverilog make verilator libhdf5-dev pkg-config libreadline8t64 libtcl8.6 \
+            nextpnr-ice40=0.6-3build5 nextpnr-ice40-chipdb=0.6-3build5
+          nextpnr-ice40 --version
           python -m pip install --require-hashes -r requirements/sby.txt
 
       - name: Retrieve this run's shared HDL toolchain

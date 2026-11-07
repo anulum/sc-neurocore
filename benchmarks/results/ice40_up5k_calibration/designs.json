@@ -1,0 +1,5791 @@
+{
+ "clock_mhz": 12,
+ "core_logic_cell_rule": "routed ICESTORM_LC used (seed 1) minus the harness flip-flops counted in the harness-only netlist; each harness output multiplexer feeds its own flip-flop and packs into that logic cell, and logic cells are seed-independent here",
+ "critical_path_rule": "per seed 1000 / achieved Fmax of the slowest clock; the calibration uses the worst of seeds 1, 2 and 3",
+ "designs": [
+  {
+   "core_logic_cells": 4025,
+   "critical_path_ns_per_seed": [
+    109.171,
+    110.11,
+    109.131
+   ],
+   "family": "dense",
+   "name": "fit_dense_12x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1034,
+    "SB_DFFER": 64,
+    "SB_DFFR": 420,
+    "SB_DFFS": 218,
+    "SB_LUT4": 2621
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4083,
+   "critical_path_ns_per_seed": [
+    106.126,
+    109.25,
+    107.225
+   ],
+   "family": "dense",
+   "name": "fit_dense_12x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1057,
+    "SB_DFFER": 64,
+    "SB_DFFR": 428,
+    "SB_DFFS": 218,
+    "SB_LUT4": 2677
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4124,
+   "critical_path_ns_per_seed": [
+    111.566,
+    109.727,
+    112.335
+   ],
+   "family": "dense",
+   "name": "fit_dense_12x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1082,
+    "SB_DFFER": 64,
+    "SB_DFFR": 436,
+    "SB_DFFS": 218,
+    "SB_LUT4": 2712
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4199,
+   "critical_path_ns_per_seed": [
+    110.308,
+    108.681,
+    112.361
+   ],
+   "family": "dense",
+   "name": "fit_dense_12x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1106,
+    "SB_DFFER": 64,
+    "SB_DFFR": 444,
+    "SB_DFFS": 218,
+    "SB_LUT4": 2777
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x4_w12",
+   "packed_core_logic_cells": 5208,
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1552,
+    "SB_DFFER": 128,
+    "SB_DFFR": 695,
+    "SB_DFFS": 377,
+    "SB_LUT4": 3004
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x4_w16",
+   "packed_core_logic_cells": 5349,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1600,
+    "SB_DFFER": 128,
+    "SB_DFFR": 711,
+    "SB_DFFS": 377,
+    "SB_LUT4": 3131
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x4_w20",
+   "packed_core_logic_cells": 5460,
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1648,
+    "SB_DFFER": 128,
+    "SB_DFFR": 727,
+    "SB_DFFS": 377,
+    "SB_LUT4": 3226
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x4_w24",
+   "packed_core_logic_cells": 5579,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1696,
+    "SB_DFFER": 128,
+    "SB_DFFR": 743,
+    "SB_DFFS": 377,
+    "SB_LUT4": 3323
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x6_w12",
+   "packed_core_logic_cells": 6426,
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2070,
+    "SB_DFFER": 192,
+    "SB_DFFR": 970,
+    "SB_DFFS": 536,
+    "SB_LUT4": 3399
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x6_w16",
+   "packed_core_logic_cells": 6630,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2142,
+    "SB_DFFER": 192,
+    "SB_DFFR": 994,
+    "SB_DFFS": 536,
+    "SB_LUT4": 3587
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x6_w20",
+   "packed_core_logic_cells": 6822,
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2214,
+    "SB_DFFER": 192,
+    "SB_DFFR": 1018,
+    "SB_DFFS": 536,
+    "SB_LUT4": 3750
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x6_w24",
+   "packed_core_logic_cells": 6968,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2286,
+    "SB_DFFER": 192,
+    "SB_DFFR": 1042,
+    "SB_DFFS": 536,
+    "SB_LUT4": 3875
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x8_w12",
+   "packed_core_logic_cells": 7638,
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2588,
+    "SB_DFFER": 256,
+    "SB_DFFR": 1232,
+    "SB_DFFS": 708,
+    "SB_LUT4": 3794
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x8_w16",
+   "packed_core_logic_cells": 7918,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2684,
+    "SB_DFFER": 256,
+    "SB_DFFR": 1264,
+    "SB_DFFS": 708,
+    "SB_LUT4": 4049
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x8_w20",
+   "packed_core_logic_cells": 8141,
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2780,
+    "SB_DFFER": 256,
+    "SB_DFFR": 1296,
+    "SB_DFFS": 708,
+    "SB_LUT4": 4241
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_12x8_w24",
+   "packed_core_logic_cells": 8365,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2876,
+    "SB_DFFER": 256,
+    "SB_DFFR": 1328,
+    "SB_DFFS": 708,
+    "SB_LUT4": 4433
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 835,
+   "critical_path_ns_per_seed": [
+    34.943,
+    37.708,
+    37.244
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 252,
+    "SB_DFFER": 64,
+    "SB_DFFR": 93,
+    "SB_DFFS": 35,
+    "SB_LUT4": 597
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 901,
+   "critical_path_ns_per_seed": [
+    36.493,
+    35.803,
+    35.948
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 276,
+    "SB_DFFER": 64,
+    "SB_DFFR": 101,
+    "SB_DFFS": 35,
+    "SB_LUT4": 656
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 956,
+   "critical_path_ns_per_seed": [
+    36.174,
+    36.375,
+    36.797
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 300,
+    "SB_DFFER": 64,
+    "SB_DFFR": 109,
+    "SB_DFFS": 35,
+    "SB_LUT4": 704
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1004,
+   "critical_path_ns_per_seed": [
+    38.003,
+    39.297,
+    39.958
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 324,
+    "SB_DFFER": 64,
+    "SB_DFFR": 117,
+    "SB_DFFS": 35,
+    "SB_LUT4": 746
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1195,
+   "critical_path_ns_per_seed": [
+    36.334,
+    36.652,
+    38.755
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 418,
+    "SB_DFFER": 128,
+    "SB_DFFR": 165,
+    "SB_DFFS": 57,
+    "SB_LUT4": 819
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1329,
+   "critical_path_ns_per_seed": [
+    37.379,
+    37.59,
+    37.907
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 466,
+    "SB_DFFER": 128,
+    "SB_DFFR": 181,
+    "SB_DFFS": 57,
+    "SB_LUT4": 942
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1441,
+   "critical_path_ns_per_seed": [
+    39.324,
+    38.938,
+    39.748
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 514,
+    "SB_DFFER": 128,
+    "SB_DFFR": 197,
+    "SB_DFFS": 57,
+    "SB_LUT4": 1038
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1543,
+   "critical_path_ns_per_seed": [
+    41.891,
+    39.1,
+    39.601
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 562,
+    "SB_DFFER": 128,
+    "SB_DFFR": 213,
+    "SB_DFFS": 57,
+    "SB_LUT4": 1126
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1565,
+   "critical_path_ns_per_seed": [
+    37.049,
+    37.1,
+    39.68
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 584,
+    "SB_DFFER": 192,
+    "SB_DFFR": 233,
+    "SB_DFFS": 83,
+    "SB_LUT4": 1041
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1771,
+   "critical_path_ns_per_seed": [
+    36.425,
+    36.821,
+    37.603
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 656,
+    "SB_DFFER": 192,
+    "SB_DFFR": 257,
+    "SB_DFFS": 83,
+    "SB_LUT4": 1228
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1938,
+   "critical_path_ns_per_seed": [
+    37.642,
+    37.883,
+    38.873
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 728,
+    "SB_DFFER": 192,
+    "SB_DFFR": 281,
+    "SB_DFFS": 83,
+    "SB_LUT4": 1372
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2093,
+   "critical_path_ns_per_seed": [
+    40.079,
+    39.495,
+    40.186
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 800,
+    "SB_DFFER": 192,
+    "SB_DFFR": 305,
+    "SB_DFFS": 83,
+    "SB_LUT4": 1508
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1929,
+   "critical_path_ns_per_seed": [
+    36.612,
+    36.69,
+    38.199
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 750,
+    "SB_DFFER": 256,
+    "SB_DFFR": 298,
+    "SB_DFFS": 112,
+    "SB_LUT4": 1263
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2203,
+   "critical_path_ns_per_seed": [
+    37.881,
+    36.863,
+    35.882
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 846,
+    "SB_DFFER": 256,
+    "SB_DFFR": 330,
+    "SB_DFFS": 112,
+    "SB_LUT4": 1511
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2426,
+   "critical_path_ns_per_seed": [
+    38.211,
+    38.528,
+    38.198
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 942,
+    "SB_DFFER": 256,
+    "SB_DFFR": 362,
+    "SB_DFFS": 112,
+    "SB_LUT4": 1703
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2640,
+   "critical_path_ns_per_seed": [
+    38.662,
+    41.563,
+    39.31
+   ],
+   "family": "dense",
+   "name": "fit_dense_2x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1038,
+    "SB_DFFER": 256,
+    "SB_DFFR": 394,
+    "SB_DFFS": 112,
+    "SB_LUT4": 1887
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1476,
+   "critical_path_ns_per_seed": [
+    45.059,
+    42.228,
+    42.188
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 406,
+    "SB_DFFER": 64,
+    "SB_DFFR": 164,
+    "SB_DFFS": 66,
+    "SB_LUT4": 1014
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1529,
+   "critical_path_ns_per_seed": [
+    42.426,
+    44.367,
+    44.409
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 430,
+    "SB_DFFER": 64,
+    "SB_DFFR": 172,
+    "SB_DFFS": 66,
+    "SB_LUT4": 1061
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1589,
+   "critical_path_ns_per_seed": [
+    45.112,
+    45.603,
+    42.677
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 454,
+    "SB_DFFER": 64,
+    "SB_DFFR": 180,
+    "SB_DFFS": 66,
+    "SB_LUT4": 1110
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1644,
+   "critical_path_ns_per_seed": [
+    47.439,
+    44.225,
+    46.289
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 478,
+    "SB_DFFER": 64,
+    "SB_DFFR": 188,
+    "SB_DFFS": 66,
+    "SB_LUT4": 1158
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1980,
+   "critical_path_ns_per_seed": [
+    45.638,
+    47.678,
+    43.376
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 640,
+    "SB_DFFER": 128,
+    "SB_DFFR": 271,
+    "SB_DFFS": 121,
+    "SB_LUT4": 1252
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2122,
+   "critical_path_ns_per_seed": [
+    45.771,
+    46.713,
+    46.845
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 688,
+    "SB_DFFER": 128,
+    "SB_DFFR": 287,
+    "SB_DFFS": 121,
+    "SB_LUT4": 1383
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2231,
+   "critical_path_ns_per_seed": [
+    47.121,
+    46.922,
+    48.035
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 736,
+    "SB_DFFER": 128,
+    "SB_DFFR": 303,
+    "SB_DFFS": 121,
+    "SB_LUT4": 1476
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2340,
+   "critical_path_ns_per_seed": [
+    49.61,
+    48.787,
+    49.028
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 784,
+    "SB_DFFER": 128,
+    "SB_DFFR": 319,
+    "SB_DFFS": 121,
+    "SB_LUT4": 1571
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2510,
+   "critical_path_ns_per_seed": [
+    44.728,
+    44.567,
+    45.972
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 874,
+    "SB_DFFER": 192,
+    "SB_DFFR": 384,
+    "SB_DFFS": 170,
+    "SB_LUT4": 1509
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2722,
+   "critical_path_ns_per_seed": [
+    45.323,
+    44.121,
+    45.282
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 946,
+    "SB_DFFER": 192,
+    "SB_DFFR": 408,
+    "SB_DFFS": 170,
+    "SB_LUT4": 1704
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2886,
+   "critical_path_ns_per_seed": [
+    47.347,
+    47.347,
+    47.494
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1018,
+    "SB_DFFER": 192,
+    "SB_DFFR": 432,
+    "SB_DFFS": 170,
+    "SB_LUT4": 1844
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3049,
+   "critical_path_ns_per_seed": [
+    47.998,
+    48.461,
+    49.343
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1090,
+    "SB_DFFER": 192,
+    "SB_DFFR": 456,
+    "SB_DFFS": 170,
+    "SB_LUT4": 1988
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3040,
+   "critical_path_ns_per_seed": [
+    43.376,
+    43.403,
+    42.884
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1108,
+    "SB_DFFER": 256,
+    "SB_DFFR": 488,
+    "SB_DFFS": 228,
+    "SB_LUT4": 1768
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3322,
+   "critical_path_ns_per_seed": [
+    45.915,
+    46.655,
+    46.683
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1204,
+    "SB_DFFER": 256,
+    "SB_DFFR": 520,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2027
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3541,
+   "critical_path_ns_per_seed": [
+    46.263,
+    47.769,
+    45.548
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1300,
+    "SB_DFFER": 256,
+    "SB_DFFR": 552,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2215
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3763,
+   "critical_path_ns_per_seed": [
+    48.115,
+    47.693,
+    47.916
+   ],
+   "family": "dense",
+   "name": "fit_dense_4x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1396,
+    "SB_DFFER": 256,
+    "SB_DFFR": 584,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2407
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2089,
+   "critical_path_ns_per_seed": [
+    52.963,
+    51.629,
+    52.951
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 556,
+    "SB_DFFER": 64,
+    "SB_DFFR": 229,
+    "SB_DFFS": 103,
+    "SB_LUT4": 1399
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2146,
+   "critical_path_ns_per_seed": [
+    50.911,
+    48.915,
+    52.7
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 580,
+    "SB_DFFER": 64,
+    "SB_DFFR": 237,
+    "SB_DFFS": 103,
+    "SB_LUT4": 1446
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2206,
+   "critical_path_ns_per_seed": [
+    52.066,
+    51.389,
+    52.05
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 604,
+    "SB_DFFER": 64,
+    "SB_DFFR": 245,
+    "SB_DFFS": 103,
+    "SB_LUT4": 1499
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2257,
+   "critical_path_ns_per_seed": [
+    55.544,
+    54.011,
+    55.916
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 628,
+    "SB_DFFER": 64,
+    "SB_DFFR": 253,
+    "SB_DFFS": 103,
+    "SB_LUT4": 1542
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2788,
+   "critical_path_ns_per_seed": [
+    55.848,
+    56.71,
+    54.009
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 854,
+    "SB_DFFER": 128,
+    "SB_DFFR": 381,
+    "SB_DFFS": 181,
+    "SB_LUT4": 1697
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2897,
+   "critical_path_ns_per_seed": [
+    52.803,
+    54.155,
+    53.015
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 902,
+    "SB_DFFER": 128,
+    "SB_DFFR": 397,
+    "SB_DFFS": 181,
+    "SB_LUT4": 1791
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3009,
+   "critical_path_ns_per_seed": [
+    56.484,
+    56.205,
+    56.855
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 950,
+    "SB_DFFER": 128,
+    "SB_DFFR": 413,
+    "SB_DFFS": 181,
+    "SB_LUT4": 1887
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3121,
+   "critical_path_ns_per_seed": [
+    58.946,
+    56.218,
+    56.538
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 998,
+    "SB_DFFER": 128,
+    "SB_DFFR": 429,
+    "SB_DFFS": 181,
+    "SB_LUT4": 1983
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3493,
+   "critical_path_ns_per_seed": [
+    54.961,
+    54.18,
+    55.796
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1152,
+    "SB_DFFER": 192,
+    "SB_DFFR": 519,
+    "SB_DFFS": 273,
+    "SB_LUT4": 1995
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3646,
+   "critical_path_ns_per_seed": [
+    53.33,
+    53.107,
+    53.545
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1224,
+    "SB_DFFER": 192,
+    "SB_DFFR": 543,
+    "SB_DFFS": 273,
+    "SB_LUT4": 2135
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3822,
+   "critical_path_ns_per_seed": [
+    53.996,
+    55.119,
+    55.557
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1296,
+    "SB_DFFER": 192,
+    "SB_DFFR": 567,
+    "SB_DFFS": 273,
+    "SB_LUT4": 2281
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3981,
+   "critical_path_ns_per_seed": [
+    55.504,
+    55.809,
+    56.905
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1368,
+    "SB_DFFER": 192,
+    "SB_DFFR": 591,
+    "SB_DFFS": 273,
+    "SB_LUT4": 2419
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4198,
+   "critical_path_ns_per_seed": [
+    56.67,
+    54.009,
+    58.109
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1450,
+    "SB_DFFER": 256,
+    "SB_DFFR": 682,
+    "SB_DFFS": 340,
+    "SB_LUT4": 2294
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4407,
+   "critical_path_ns_per_seed": [
+    53.317,
+    54.42,
+    52.908
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1546,
+    "SB_DFFER": 256,
+    "SB_DFFR": 714,
+    "SB_DFFS": 340,
+    "SB_LUT4": 2478
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4631,
+   "critical_path_ns_per_seed": [
+    57.144,
+    55.347,
+    56.748
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1642,
+    "SB_DFFER": 256,
+    "SB_DFFR": 746,
+    "SB_DFFS": 340,
+    "SB_LUT4": 2670
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4865,
+   "critical_path_ns_per_seed": [
+    57.529,
+    58.718,
+    57.965
+   ],
+   "family": "dense",
+   "name": "fit_dense_6x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1738,
+    "SB_DFFER": 256,
+    "SB_DFFR": 778,
+    "SB_DFFS": 340,
+    "SB_LUT4": 2870
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2716,
+   "critical_path_ns_per_seed": [
+    58.723,
+    58.142,
+    60.654
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 716,
+    "SB_DFFER": 64,
+    "SB_DFFR": 289,
+    "SB_DFFS": 145,
+    "SB_LUT4": 1795
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2780,
+   "critical_path_ns_per_seed": [
+    57.426,
+    59.306,
+    61.104
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 739,
+    "SB_DFFER": 64,
+    "SB_DFFR": 297,
+    "SB_DFFS": 145,
+    "SB_LUT4": 1853
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2841,
+   "critical_path_ns_per_seed": [
+    60.537,
+    62.152,
+    60.988
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 764,
+    "SB_DFFER": 64,
+    "SB_DFFR": 305,
+    "SB_DFFS": 145,
+    "SB_LUT4": 1900
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2899,
+   "critical_path_ns_per_seed": [
+    61.663,
+    61.846,
+    61.397
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 788,
+    "SB_DFFER": 64,
+    "SB_DFFR": 313,
+    "SB_DFFS": 145,
+    "SB_LUT4": 1949
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3564,
+   "critical_path_ns_per_seed": [
+    60.625,
+    60.8,
+    62.254
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1088,
+    "SB_DFFER": 128,
+    "SB_DFFR": 480,
+    "SB_DFFS": 252,
+    "SB_LUT4": 2110
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3698,
+   "critical_path_ns_per_seed": [
+    63.14,
+    63.249,
+    61.687
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1136,
+    "SB_DFFER": 128,
+    "SB_DFFR": 496,
+    "SB_DFFS": 252,
+    "SB_LUT4": 2234
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3802,
+   "critical_path_ns_per_seed": [
+    64.731,
+    64.053,
+    62.321
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1184,
+    "SB_DFFER": 128,
+    "SB_DFFR": 512,
+    "SB_DFFS": 252,
+    "SB_LUT4": 2325
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3921,
+   "critical_path_ns_per_seed": [
+    64.958,
+    63.26,
+    62.363
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1232,
+    "SB_DFFER": 128,
+    "SB_DFFR": 528,
+    "SB_DFFS": 252,
+    "SB_LUT4": 2426
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4412,
+   "critical_path_ns_per_seed": [
+    61.516,
+    61.499,
+    60.52
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1460,
+    "SB_DFFER": 192,
+    "SB_DFFR": 677,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2421
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4621,
+   "critical_path_ns_per_seed": [
+    62.188,
+    61.314,
+    62.878
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1532,
+    "SB_DFFER": 192,
+    "SB_DFFR": 701,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2611
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4788,
+   "critical_path_ns_per_seed": [
+    64.506,
+    64.942,
+    65.469
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1604,
+    "SB_DFFER": 192,
+    "SB_DFFR": 725,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2755
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4956,
+   "critical_path_ns_per_seed": [
+    66.387,
+    64.637,
+    64.215
+   ],
+   "family": "dense",
+   "name": "fit_dense_8x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1676,
+    "SB_DFFER": 192,
+    "SB_DFFR": 749,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2900
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_8x8_w12",
+   "packed_core_logic_cells": 5271,
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1832,
+    "SB_DFFER": 256,
+    "SB_DFFR": 872,
+    "SB_DFFS": 456,
+    "SB_LUT4": 2744
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_8x8_w16",
+   "packed_core_logic_cells": 5540,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1928,
+    "SB_DFFER": 256,
+    "SB_DFFR": 904,
+    "SB_DFFS": 456,
+    "SB_LUT4": 2989
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_8x8_w20",
+   "packed_core_logic_cells": 5762,
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2024,
+    "SB_DFFER": 256,
+    "SB_DFFR": 936,
+    "SB_DFFS": 456,
+    "SB_LUT4": 3183
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "fit_dense_8x8_w24",
+   "packed_core_logic_cells": 5983,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "fit",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2120,
+    "SB_DFFER": 256,
+    "SB_DFFR": 968,
+    "SB_DFFS": 456,
+    "SB_LUT4": 3371
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2981,
+   "critical_path_ns_per_seed": [
+    52.051,
+    51.839,
+    51.191
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 712,
+    "SB_DFFER": 64,
+    "SB_DFFR": 262,
+    "SB_DFFS": 121,
+    "SB_LUT4": 2121
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3051,
+   "critical_path_ns_per_seed": [
+    50.156,
+    49.23,
+    47.51
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 736,
+    "SB_DFFER": 64,
+    "SB_DFFR": 270,
+    "SB_DFFS": 121,
+    "SB_LUT4": 2179
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3084,
+   "critical_path_ns_per_seed": [
+    50.793,
+    50.793,
+    50.886
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 760,
+    "SB_DFFER": 64,
+    "SB_DFFR": 278,
+    "SB_DFFS": 121,
+    "SB_LUT4": 2213
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3154,
+   "critical_path_ns_per_seed": [
+    51.695,
+    52.475,
+    52.991
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 784,
+    "SB_DFFER": 64,
+    "SB_DFFR": 286,
+    "SB_DFFS": 121,
+    "SB_LUT4": 2269
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4096,
+   "critical_path_ns_per_seed": [
+    51.863,
+    52.341,
+    52.962
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1080,
+    "SB_DFFER": 128,
+    "SB_DFFR": 426,
+    "SB_DFFS": 204,
+    "SB_LUT4": 2775
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4191,
+   "critical_path_ns_per_seed": [
+    52.672,
+    52.261,
+    53.199
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1128,
+    "SB_DFFER": 128,
+    "SB_DFFR": 442,
+    "SB_DFFS": 204,
+    "SB_LUT4": 2860
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4309,
+   "critical_path_ns_per_seed": [
+    55.293,
+    56.498,
+    54.696
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1176,
+    "SB_DFFER": 128,
+    "SB_DFFR": 458,
+    "SB_DFFS": 204,
+    "SB_LUT4": 2961
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4416,
+   "critical_path_ns_per_seed": [
+    56.96,
+    54.724,
+    55.211
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1224,
+    "SB_DFFER": 128,
+    "SB_DFFR": 474,
+    "SB_DFFS": 204,
+    "SB_LUT4": 3052
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4749,
+   "critical_path_ns_per_seed": [
+    51.469,
+    53.519,
+    54.194
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1362,
+    "SB_DFFER": 192,
+    "SB_DFFR": 561,
+    "SB_DFFS": 282,
+    "SB_LUT4": 3051
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4906,
+   "critical_path_ns_per_seed": [
+    53.304,
+    53.083,
+    53.742
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1434,
+    "SB_DFFER": 192,
+    "SB_DFFR": 585,
+    "SB_DFFS": 282,
+    "SB_LUT4": 3194
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 5068,
+   "critical_path_ns_per_seed": [
+    57.921,
+    54.46,
+    57.052
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_12x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1506,
+    "SB_DFFER": 192,
+    "SB_DFFR": 609,
+    "SB_DFFS": 282,
+    "SB_LUT4": 3333
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "family": "dense",
+   "name": "folded_fit_dense_12x6_w24",
+   "packed_core_logic_cells": 5247,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "over capacity",
+   "weight_pattern": "folded"
+  },
+  {
+   "family": "dense",
+   "name": "folded_fit_dense_12x8_w12",
+   "packed_core_logic_cells": 5405,
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "over capacity",
+   "weight_pattern": "folded"
+  },
+  {
+   "family": "dense",
+   "name": "folded_fit_dense_12x8_w16",
+   "packed_core_logic_cells": 5619,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "over capacity",
+   "weight_pattern": "folded"
+  },
+  {
+   "family": "dense",
+   "name": "folded_fit_dense_12x8_w20",
+   "packed_core_logic_cells": 5842,
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "over capacity",
+   "weight_pattern": "folded"
+  },
+  {
+   "family": "dense",
+   "name": "folded_fit_dense_12x8_w24",
+   "packed_core_logic_cells": 6068,
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 12,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "over capacity",
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 522,
+   "critical_path_ns_per_seed": [
+    35.801,
+    34.995,
+    35.934
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 179,
+    "SB_DFFER": 64,
+    "SB_DFFR": 60,
+    "SB_DFFS": 17,
+    "SB_LUT4": 397
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 580,
+   "critical_path_ns_per_seed": [
+    34.665,
+    36.427,
+    36.824
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 203,
+    "SB_DFFER": 64,
+    "SB_DFFR": 68,
+    "SB_DFFS": 17,
+    "SB_LUT4": 446
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 650,
+   "critical_path_ns_per_seed": [
+    37.841,
+    36.135,
+    34.6
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 227,
+    "SB_DFFER": 64,
+    "SB_DFFR": 76,
+    "SB_DFFS": 17,
+    "SB_LUT4": 508
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 702,
+   "critical_path_ns_per_seed": [
+    38.729,
+    37.26,
+    38.515
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 251,
+    "SB_DFFER": 64,
+    "SB_DFFR": 84,
+    "SB_DFFS": 17,
+    "SB_LUT4": 553
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1041,
+   "critical_path_ns_per_seed": [
+    36.135,
+    37.048,
+    36.052
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 358,
+    "SB_DFFER": 128,
+    "SB_DFFR": 121,
+    "SB_DFFS": 33,
+    "SB_LUT4": 791
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1152,
+   "critical_path_ns_per_seed": [
+    37.217,
+    35.777,
+    37.672
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 406,
+    "SB_DFFER": 128,
+    "SB_DFFR": 137,
+    "SB_DFFS": 33,
+    "SB_LUT4": 887
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1291,
+   "critical_path_ns_per_seed": [
+    39.402,
+    36.902,
+    38.198
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 454,
+    "SB_DFFER": 128,
+    "SB_DFFR": 153,
+    "SB_DFFS": 33,
+    "SB_LUT4": 1011
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1397,
+   "critical_path_ns_per_seed": [
+    41.573,
+    39.737,
+    41.243
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 502,
+    "SB_DFFER": 128,
+    "SB_DFFR": 169,
+    "SB_DFFS": 33,
+    "SB_LUT4": 1103
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1302,
+   "critical_path_ns_per_seed": [
+    37.049,
+    34.959,
+    36.612
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 478,
+    "SB_DFFER": 192,
+    "SB_DFFR": 158,
+    "SB_DFFS": 39,
+    "SB_LUT4": 998
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1463,
+   "critical_path_ns_per_seed": [
+    37.272,
+    36.507,
+    36.729
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 550,
+    "SB_DFFER": 192,
+    "SB_DFFR": 182,
+    "SB_DFFS": 39,
+    "SB_LUT4": 1142
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1672,
+   "critical_path_ns_per_seed": [
+    39.179,
+    39.892,
+    38.303
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 622,
+    "SB_DFFER": 192,
+    "SB_DFFR": 206,
+    "SB_DFFS": 39,
+    "SB_LUT4": 1328
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1840,
+   "critical_path_ns_per_seed": [
+    40.396,
+    40.063,
+    39.748
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 694,
+    "SB_DFFER": 192,
+    "SB_DFFR": 230,
+    "SB_DFFS": 39,
+    "SB_LUT4": 1470
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1638,
+   "critical_path_ns_per_seed": [
+    36.186,
+    36.453,
+    36.583
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 629,
+    "SB_DFFER": 256,
+    "SB_DFFR": 214,
+    "SB_DFFS": 60,
+    "SB_LUT4": 1216
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1858,
+   "critical_path_ns_per_seed": [
+    37.364,
+    36.93,
+    35.961
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 725,
+    "SB_DFFER": 256,
+    "SB_DFFR": 246,
+    "SB_DFFS": 60,
+    "SB_LUT4": 1415
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2128,
+   "critical_path_ns_per_seed": [
+    37.762,
+    38.741,
+    38.835
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 821,
+    "SB_DFFER": 256,
+    "SB_DFFR": 278,
+    "SB_DFFS": 60,
+    "SB_LUT4": 1656
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2347,
+   "critical_path_ns_per_seed": [
+    39.853,
+    39.205,
+    41.177
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_2x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 917,
+    "SB_DFFER": 256,
+    "SB_DFFR": 310,
+    "SB_DFFS": 60,
+    "SB_LUT4": 1840
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1306,
+   "critical_path_ns_per_seed": [
+    36.174,
+    37.034,
+    36.081
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 338,
+    "SB_DFFER": 64,
+    "SB_DFFR": 120,
+    "SB_DFFS": 42,
+    "SB_LUT4": 968
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1360,
+   "critical_path_ns_per_seed": [
+    38.606,
+    37.021,
+    37.577
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 362,
+    "SB_DFFER": 64,
+    "SB_DFFR": 128,
+    "SB_DFFS": 42,
+    "SB_LUT4": 1015
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1435,
+   "critical_path_ns_per_seed": [
+    39.706,
+    36.148,
+    37.881
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 386,
+    "SB_DFFER": 64,
+    "SB_DFFR": 136,
+    "SB_DFFS": 42,
+    "SB_LUT4": 1083
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1471,
+   "critical_path_ns_per_seed": [
+    38.466,
+    39.958,
+    38.385
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 410,
+    "SB_DFFER": 64,
+    "SB_DFFR": 144,
+    "SB_DFFS": 42,
+    "SB_LUT4": 1116
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1651,
+   "critical_path_ns_per_seed": [
+    38.993,
+    40.184,
+    39.617
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 505,
+    "SB_DFFER": 128,
+    "SB_DFFR": 187,
+    "SB_DFFS": 69,
+    "SB_LUT4": 1176
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1769,
+   "critical_path_ns_per_seed": [
+    40.333,
+    39.034,
+    40.86
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 553,
+    "SB_DFFER": 128,
+    "SB_DFFR": 203,
+    "SB_DFFS": 69,
+    "SB_LUT4": 1283
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1896,
+   "critical_path_ns_per_seed": [
+    42.038,
+    43.23,
+    42.116
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 601,
+    "SB_DFFER": 128,
+    "SB_DFFR": 219,
+    "SB_DFFS": 69,
+    "SB_LUT4": 1395
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1994,
+   "critical_path_ns_per_seed": [
+    41.233,
+    43.655,
+    46.153
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 649,
+    "SB_DFFER": 128,
+    "SB_DFFR": 235,
+    "SB_DFFS": 69,
+    "SB_LUT4": 1475
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1990,
+   "critical_path_ns_per_seed": [
+    40.889,
+    39.541,
+    39.593
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 656,
+    "SB_DFFER": 192,
+    "SB_DFFR": 247,
+    "SB_DFFS": 86,
+    "SB_LUT4": 1397
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2157,
+   "critical_path_ns_per_seed": [
+    38.636,
+    38.705,
+    38.982
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 728,
+    "SB_DFFER": 192,
+    "SB_DFFR": 271,
+    "SB_DFFS": 86,
+    "SB_LUT4": 1548
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2332,
+   "critical_path_ns_per_seed": [
+    40.941,
+    40.252,
+    40.359
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 800,
+    "SB_DFFER": 192,
+    "SB_DFFR": 295,
+    "SB_DFFS": 86,
+    "SB_LUT4": 1703
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2490,
+   "critical_path_ns_per_seed": [
+    41.708,
+    41.538,
+    41.165
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 872,
+    "SB_DFFER": 192,
+    "SB_DFFR": 319,
+    "SB_DFFS": 86,
+    "SB_LUT4": 1835
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2358,
+   "critical_path_ns_per_seed": [
+    38.016,
+    40.386,
+    39.246
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 822,
+    "SB_DFFER": 256,
+    "SB_DFFR": 314,
+    "SB_DFFS": 113,
+    "SB_LUT4": 1620
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2571,
+   "critical_path_ns_per_seed": [
+    40.584,
+    39.483,
+    39.749
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 918,
+    "SB_DFFER": 256,
+    "SB_DFFR": 346,
+    "SB_DFFS": 113,
+    "SB_LUT4": 1816
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2808,
+   "critical_path_ns_per_seed": [
+    41.059,
+    42.29,
+    42.354
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1014,
+    "SB_DFFER": 256,
+    "SB_DFFR": 378,
+    "SB_DFFS": 113,
+    "SB_LUT4": 2019
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3018,
+   "critical_path_ns_per_seed": [
+    40.517,
+    42.41,
+    42.238
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_4x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 4,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1110,
+    "SB_DFFER": 256,
+    "SB_DFFR": 410,
+    "SB_DFFS": 113,
+    "SB_LUT4": 2199
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1353,
+   "critical_path_ns_per_seed": [
+    37.354,
+    36.583,
+    38.188
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 353,
+    "SB_DFFER": 64,
+    "SB_DFFR": 131,
+    "SB_DFFS": 48,
+    "SB_LUT4": 985
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1412,
+   "critical_path_ns_per_seed": [
+    37.285,
+    37.722,
+    38.225
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 377,
+    "SB_DFFER": 64,
+    "SB_DFFR": 139,
+    "SB_DFFS": 48,
+    "SB_LUT4": 1035
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1445,
+   "critical_path_ns_per_seed": [
+    41.045,
+    37.921,
+    38.32
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 401,
+    "SB_DFFER": 64,
+    "SB_DFFR": 147,
+    "SB_DFFS": 48,
+    "SB_LUT4": 1067
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1512,
+   "critical_path_ns_per_seed": [
+    40.663,
+    41.218,
+    42.539
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 425,
+    "SB_DFFER": 64,
+    "SB_DFFR": 155,
+    "SB_DFFS": 48,
+    "SB_LUT4": 1127
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2249,
+   "critical_path_ns_per_seed": [
+    43.286,
+    42.533,
+    45.243
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 639,
+    "SB_DFFER": 128,
+    "SB_DFFR": 244,
+    "SB_DFFS": 97,
+    "SB_LUT4": 1582
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2380,
+   "critical_path_ns_per_seed": [
+    43.311,
+    43.206,
+    43.788
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 687,
+    "SB_DFFER": 128,
+    "SB_DFFR": 260,
+    "SB_DFFS": 97,
+    "SB_LUT4": 1698
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2465,
+   "critical_path_ns_per_seed": [
+    44.583,
+    40.995,
+    43.153
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 735,
+    "SB_DFFER": 128,
+    "SB_DFFR": 276,
+    "SB_DFFS": 97,
+    "SB_LUT4": 1767
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2588,
+   "critical_path_ns_per_seed": [
+    44.372,
+    46.263,
+    45.094
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 783,
+    "SB_DFFER": 128,
+    "SB_DFFR": 292,
+    "SB_DFFS": 97,
+    "SB_LUT4": 1872
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2652,
+   "critical_path_ns_per_seed": [
+    41.46,
+    43.547,
+    42.518
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 820,
+    "SB_DFFER": 192,
+    "SB_DFFR": 318,
+    "SB_DFFS": 134,
+    "SB_LUT4": 1811
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2827,
+   "critical_path_ns_per_seed": [
+    43.497,
+    42.317,
+    43.138
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 892,
+    "SB_DFFER": 192,
+    "SB_DFFR": 342,
+    "SB_DFFS": 134,
+    "SB_LUT4": 1965
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2980,
+   "critical_path_ns_per_seed": [
+    43.935,
+    42.874,
+    44.726
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 964,
+    "SB_DFFER": 192,
+    "SB_DFFR": 366,
+    "SB_DFFS": 134,
+    "SB_LUT4": 2093
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3143,
+   "critical_path_ns_per_seed": [
+    46.714,
+    45.601,
+    45.523
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1036,
+    "SB_DFFER": 192,
+    "SB_DFFR": 390,
+    "SB_DFFS": 134,
+    "SB_LUT4": 2233
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3092,
+   "critical_path_ns_per_seed": [
+    42.188,
+    41.46,
+    42.585
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1016,
+    "SB_DFFER": 256,
+    "SB_DFFR": 413,
+    "SB_DFFS": 167,
+    "SB_LUT4": 2040
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3318,
+   "critical_path_ns_per_seed": [
+    42.015,
+    42.505,
+    42.028
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1112,
+    "SB_DFFER": 256,
+    "SB_DFFR": 445,
+    "SB_DFFS": 167,
+    "SB_LUT4": 2244
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3522,
+   "critical_path_ns_per_seed": [
+    41.828,
+    42.597,
+    41.538
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1208,
+    "SB_DFFER": 256,
+    "SB_DFFR": 477,
+    "SB_DFFS": 167,
+    "SB_LUT4": 2418
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3751,
+   "critical_path_ns_per_seed": [
+    44.289,
+    42.767,
+    43.443
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_6x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 6,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1304,
+    "SB_DFFER": 256,
+    "SB_DFFR": 509,
+    "SB_DFFS": 167,
+    "SB_LUT4": 2612
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1704,
+   "critical_path_ns_per_seed": [
+    45.455,
+    44.794,
+    44.993
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 449,
+    "SB_DFFER": 64,
+    "SB_DFFR": 170,
+    "SB_DFFS": 77,
+    "SB_LUT4": 1194
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1755,
+   "critical_path_ns_per_seed": [
+    44.212,
+    43.19,
+    42.719
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 473,
+    "SB_DFFER": 64,
+    "SB_DFFR": 178,
+    "SB_DFFS": 77,
+    "SB_LUT4": 1237
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1811,
+   "critical_path_ns_per_seed": [
+    46.751,
+    43.301,
+    43.934
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x2_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 497,
+    "SB_DFFER": 64,
+    "SB_DFFR": 186,
+    "SB_DFFS": 77,
+    "SB_LUT4": 1285
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1871,
+   "critical_path_ns_per_seed": [
+    44.306,
+    46.473,
+    43.855
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x2_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 521,
+    "SB_DFFER": 64,
+    "SB_DFFR": 194,
+    "SB_DFFS": 77,
+    "SB_LUT4": 1337
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2402,
+   "critical_path_ns_per_seed": [
+    46.355,
+    46.167,
+    44.818
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x4_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 708,
+    "SB_DFFER": 128,
+    "SB_DFFR": 284,
+    "SB_DFFS": 125,
+    "SB_LUT4": 1609
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2524,
+   "critical_path_ns_per_seed": [
+    47.826,
+    44.873,
+    45.047
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x4_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 756,
+    "SB_DFFER": 128,
+    "SB_DFFR": 300,
+    "SB_DFFS": 125,
+    "SB_LUT4": 1724
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2636,
+   "critical_path_ns_per_seed": [
+    49.77,
+    48.273,
+    47.756
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 804,
+    "SB_DFFER": 128,
+    "SB_DFFR": 316,
+    "SB_DFFS": 125,
+    "SB_LUT4": 1818
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 2750,
+   "critical_path_ns_per_seed": [
+    50.007,
+    48.312,
+    49.134
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x4_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 852,
+    "SB_DFFER": 128,
+    "SB_DFFR": 332,
+    "SB_DFFS": 125,
+    "SB_LUT4": 1916
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3146,
+   "critical_path_ns_per_seed": [
+    44.555,
+    45.456,
+    46.502
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 967,
+    "SB_DFFER": 192,
+    "SB_DFFR": 396,
+    "SB_DFFS": 175,
+    "SB_LUT4": 2068
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3304,
+   "critical_path_ns_per_seed": [
+    43.562,
+    43.059,
+    43.269
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x6_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1039,
+    "SB_DFFER": 192,
+    "SB_DFFR": 420,
+    "SB_DFFS": 175,
+    "SB_LUT4": 2206
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3473,
+   "critical_path_ns_per_seed": [
+    44.635,
+    45.057,
+    46.103
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x6_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1111,
+    "SB_DFFER": 192,
+    "SB_DFFR": 444,
+    "SB_DFFS": 175,
+    "SB_LUT4": 2350
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3637,
+   "critical_path_ns_per_seed": [
+    46.884,
+    48.738,
+    47.161
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1183,
+    "SB_DFFER": 192,
+    "SB_DFFR": 468,
+    "SB_DFFS": 175,
+    "SB_LUT4": 2494
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3867,
+   "critical_path_ns_per_seed": [
+    45.746,
+    47.916,
+    46.62
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x8_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1226,
+    "SB_DFFER": 256,
+    "SB_DFFR": 505,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2504
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4092,
+   "critical_path_ns_per_seed": [
+    44.039,
+    43.709,
+    43.72
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x8_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1322,
+    "SB_DFFER": 256,
+    "SB_DFFR": 537,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2697
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4303,
+   "critical_path_ns_per_seed": [
+    47.399,
+    48.699,
+    45.77
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x8_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1418,
+    "SB_DFFER": 256,
+    "SB_DFFR": 569,
+    "SB_DFFS": 228,
+    "SB_LUT4": 2881
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4532,
+   "critical_path_ns_per_seed": [
+    46.526,
+    47.425,
+    49.041
+   ],
+   "family": "dense",
+   "name": "folded_fit_dense_8x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1514,
+    "SB_DFFER": 256,
+    "SB_DFFR": 601,
+    "SB_DFFS": 228,
+    "SB_LUT4": 3077
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3130,
+   "critical_path_ns_per_seed": [
+    50.979,
+    52.923,
+    52.185
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_12x2_w23",
+   "parameters": {
+    "data_width": 23,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 778,
+    "SB_DFFER": 64,
+    "SB_DFFR": 284,
+    "SB_DFFS": 121,
+    "SB_LUT4": 2250
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3758,
+   "critical_path_ns_per_seed": [
+    52.233,
+    51.174,
+    50.568
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_12x3_w13",
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 12,
+    "n_neurons": 3
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 940,
+    "SB_DFFER": 96,
+    "SB_DFFR": 347,
+    "SB_DFFS": 171,
+    "SB_LUT4": 2639
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 535,
+   "critical_path_ns_per_seed": [
+    35.909,
+    34.652,
+    37.747
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_2x2_w13",
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 185,
+    "SB_DFFER": 64,
+    "SB_DFFR": 62,
+    "SB_DFFS": 17,
+    "SB_LUT4": 410
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1796,
+   "critical_path_ns_per_seed": [
+    37.617,
+    37.63,
+    38.451
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_2x8_w15",
+   "parameters": {
+    "data_width": 15,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 701,
+    "SB_DFFER": 256,
+    "SB_DFFR": 238,
+    "SB_DFFS": 60,
+    "SB_LUT4": 1360
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1972,
+   "critical_path_ns_per_seed": [
+    50.911,
+    51.492,
+    51.004
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_3x7_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 3,
+    "n_neurons": 7
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 738,
+    "SB_DFFER": 224,
+    "SB_DFFR": 236,
+    "SB_DFFS": 76,
+    "SB_LUT4": 1367
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1720,
+   "critical_path_ns_per_seed": [
+    41.614,
+    41.878,
+    40.726
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_5x3_w21",
+   "parameters": {
+    "data_width": 21,
+    "n_inputs": 5,
+    "n_neurons": 3
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 525,
+    "SB_DFFER": 96,
+    "SB_DFFR": 192,
+    "SB_DFFS": 61,
+    "SB_LUT4": 1252
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3122,
+   "critical_path_ns_per_seed": [
+    56.749,
+    57.013,
+    56.921
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_7x5_w19",
+   "parameters": {
+    "data_width": 19,
+    "n_inputs": 7,
+    "n_neurons": 5
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1021,
+    "SB_DFFER": 160,
+    "SB_DFFR": 350,
+    "SB_DFFS": 141,
+    "SB_LUT4": 2112
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3369,
+   "critical_path_ns_per_seed": [
+    62.595,
+    60.756,
+    61.118
+   ],
+   "family": "dense",
+   "name": "folded_held2_dense_9x4_w17",
+   "parameters": {
+    "data_width": 17,
+    "n_inputs": 9,
+    "n_neurons": 4
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 993,
+    "SB_DFFER": 128,
+    "SB_DFFR": 344,
+    "SB_DFFS": 153,
+    "SB_LUT4": 2293
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3337,
+   "critical_path_ns_per_seed": [
+    50.62,
+    50.302,
+    50.542
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_10x3_w18",
+   "parameters": {
+    "data_width": 18,
+    "n_inputs": 10,
+    "n_neurons": 3
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 873,
+    "SB_DFFER": 96,
+    "SB_DFFR": 321,
+    "SB_DFFS": 144,
+    "SB_LUT4": 2351
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3199,
+   "critical_path_ns_per_seed": [
+    57.452,
+    58.696,
+    57.785
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_16x2_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 16,
+    "n_neurons": 2
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 809,
+    "SB_DFFER": 64,
+    "SB_DFFR": 307,
+    "SB_DFFS": 152,
+    "SB_LUT4": 2202
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 144,
+   "critical_path_ns_per_seed": [
+    34.402,
+    33.317,
+    31.65
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_1x1_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 1,
+    "n_neurons": 1
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 64,
+    "SB_DFFER": 32,
+    "SB_DFFR": 17,
+    "SB_LUT4": 132
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3594,
+   "critical_path_ns_per_seed": [
+    40.317,
+    41.521,
+    40.887
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_2x12_w28",
+   "parameters": {
+    "data_width": 28,
+    "n_inputs": 2,
+    "n_neurons": 12
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1461,
+    "SB_DFFER": 384,
+    "SB_DFFR": 492,
+    "SB_DFFS": 77,
+    "SB_LUT4": 2861
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 1679,
+   "critical_path_ns_per_seed": [
+    52.508,
+    50.3,
+    50.948
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_3x5_w14",
+   "parameters": {
+    "data_width": 14,
+    "n_inputs": 3,
+    "n_neurons": 5
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 607,
+    "SB_DFFER": 160,
+    "SB_DFFR": 188,
+    "SB_DFFS": 57,
+    "SB_LUT4": 1190
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3916,
+   "critical_path_ns_per_seed": [
+    90.08,
+    90.623,
+    89.062
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_5x10_w22",
+   "parameters": {
+    "data_width": 22,
+    "n_inputs": 5,
+    "n_neurons": 10
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1503,
+    "SB_DFFER": 320,
+    "SB_DFFR": 540,
+    "SB_DFFS": 166,
+    "SB_LUT4": 2673
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 3238,
+   "critical_path_ns_per_seed": [
+    47.775,
+    47.628,
+    47.773
+   ],
+   "family": "dense",
+   "name": "folded_held_dense_7x7_w10",
+   "parameters": {
+    "data_width": 10,
+    "n_inputs": 7,
+    "n_neurons": 7
+   },
+   "role": "folded",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1067,
+    "SB_DFFER": 224,
+    "SB_DFFR": 407,
+    "SB_DFFS": 180,
+    "SB_LUT4": 2062
+   },
+   "weight_pattern": "folded"
+  },
+  {
+   "core_logic_cells": 4087,
+   "critical_path_ns_per_seed": [
+    116.762,
+    115.457,
+    114.308
+   ],
+   "family": "dense",
+   "name": "held_dense_10x3_w18",
+   "parameters": {
+    "data_width": 18,
+    "n_inputs": 10,
+    "n_neurons": 3
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1180,
+    "SB_DFFER": 96,
+    "SB_DFFR": 487,
+    "SB_DFFS": 250,
+    "SB_LUT4": 2552
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "held_dense_16x2_w16",
+   "packed_core_logic_cells": 5297,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 16,
+    "n_neurons": 2
+   },
+   "role": "held",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1360,
+    "SB_DFFER": 64,
+    "SB_DFFR": 550,
+    "SB_DFFS": 300,
+    "SB_LUT4": 3445
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 409,
+   "critical_path_ns_per_seed": [
+    34.678,
+    36.147,
+    34.573
+   ],
+   "family": "dense",
+   "name": "held_dense_1x1_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 1,
+    "n_neurons": 1
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 123,
+    "SB_DFFER": 32,
+    "SB_DFFR": 40,
+    "SB_DFFS": 11,
+    "SB_LUT4": 317
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4074,
+   "critical_path_ns_per_seed": [
+    41.747,
+    41.959,
+    41.019
+   ],
+   "family": "dense",
+   "name": "held_dense_2x12_w28",
+   "parameters": {
+    "data_width": 28,
+    "n_inputs": 2,
+    "n_neurons": 12
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1658,
+    "SB_DFFER": 384,
+    "SB_DFFR": 629,
+    "SB_DFFS": 161,
+    "SB_LUT4": 2941
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 1944,
+   "critical_path_ns_per_seed": [
+    49.626,
+    49.397,
+    48.077
+   ],
+   "family": "dense",
+   "name": "held_dense_3x5_w14",
+   "parameters": {
+    "data_width": 14,
+    "n_inputs": 3,
+    "n_neurons": 5
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 689,
+    "SB_DFFER": 160,
+    "SB_DFFR": 272,
+    "SB_DFFS": 109,
+    "SB_LUT4": 1246
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4996,
+   "critical_path_ns_per_seed": [
+    53.413,
+    54.367,
+    53.82
+   ],
+   "family": "dense",
+   "name": "held_dense_5x10_w22",
+   "parameters": {
+    "data_width": 22,
+    "n_inputs": 5,
+    "n_neurons": 10
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1875,
+    "SB_DFFER": 320,
+    "SB_DFFR": 820,
+    "SB_DFFS": 345,
+    "SB_LUT4": 2930
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4367,
+   "critical_path_ns_per_seed": [
+    71.711,
+    68.905,
+    71.846
+   ],
+   "family": "dense",
+   "name": "held_dense_7x7_w10",
+   "parameters": {
+    "data_width": 10,
+    "n_inputs": 7,
+    "n_neurons": 7
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1505,
+    "SB_DFFER": 224,
+    "SB_DFFR": 676,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2328
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4178,
+   "critical_path_ns_per_seed": [
+    107.993,
+    107.491,
+    109.846
+   ],
+   "family": "dense",
+   "name": "held2_dense_12x2_w23",
+   "parameters": {
+    "data_width": 23,
+    "n_inputs": 12,
+    "n_neurons": 2
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1100,
+    "SB_DFFER": 64,
+    "SB_DFFR": 442,
+    "SB_DFFS": 218,
+    "SB_LUT4": 2760
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4630,
+   "critical_path_ns_per_seed": [
+    110.799,
+    109.207,
+    110.056
+   ],
+   "family": "dense",
+   "name": "held2_dense_12x3_w13",
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 12,
+    "n_neurons": 3
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1302,
+    "SB_DFFER": 96,
+    "SB_DFFR": 548,
+    "SB_DFFS": 310,
+    "SB_LUT4": 2827
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 849,
+   "critical_path_ns_per_seed": [
+    37.443,
+    36.822,
+    36.043
+   ],
+   "family": "dense",
+   "name": "held2_dense_2x2_w13",
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 258,
+    "SB_DFFER": 64,
+    "SB_DFFR": 95,
+    "SB_DFFS": 35,
+    "SB_LUT4": 609
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2090,
+   "critical_path_ns_per_seed": [
+    36.201,
+    36.053,
+    36.651
+   ],
+   "family": "dense",
+   "name": "held2_dense_2x8_w15",
+   "parameters": {
+    "data_width": 15,
+    "n_inputs": 2,
+    "n_neurons": 8
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 822,
+    "SB_DFFER": 256,
+    "SB_DFFR": 322,
+    "SB_DFFS": 112,
+    "SB_LUT4": 1407
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2361,
+   "critical_path_ns_per_seed": [
+    52.221,
+    51.199,
+    50.485
+   ],
+   "family": "dense",
+   "name": "held2_dense_3x7_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 3,
+    "n_neurons": 7
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 871,
+    "SB_DFFER": 224,
+    "SB_DFFR": 352,
+    "SB_DFFS": 147,
+    "SB_LUT4": 1447
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 2290,
+   "critical_path_ns_per_seed": [
+    54.114,
+    53.146,
+    54.47
+   ],
+   "family": "dense",
+   "name": "held2_dense_5x3_w21",
+   "parameters": {
+    "data_width": 21,
+    "n_inputs": 5,
+    "n_neurons": 3
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 704,
+    "SB_DFFER": 96,
+    "SB_DFFR": 288,
+    "SB_DFFS": 118,
+    "SB_LUT4": 1505
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 3950,
+   "critical_path_ns_per_seed": [
+    82.369,
+    80.939,
+    79.643
+   ],
+   "family": "dense",
+   "name": "held2_dense_7x5_w19",
+   "parameters": {
+    "data_width": 19,
+    "n_inputs": 7,
+    "n_neurons": 5
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1341,
+    "SB_DFFER": 160,
+    "SB_DFFR": 543,
+    "SB_DFFS": 271,
+    "SB_LUT4": 2307
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "core_logic_cells": 4194,
+   "critical_path_ns_per_seed": [
+    83.147,
+    81.098,
+    84.181
+   ],
+   "family": "dense",
+   "name": "held2_dense_9x4_w17",
+   "parameters": {
+    "data_width": 17,
+    "n_inputs": 9,
+    "n_neurons": 4
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1323,
+    "SB_DFFER": 128,
+    "SB_DFFR": 545,
+    "SB_DFFS": 292,
+    "SB_LUT4": 2455
+   },
+   "weight_pattern": "fit"
+  },
+  {
+   "family": "dense",
+   "name": "held3_dense_10x7_w13",
+   "packed_core_logic_cells": 6189,
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 10,
+    "n_neurons": 7
+   },
+   "role": "held3",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 2075,
+    "SB_DFFER": 224,
+    "SB_DFFR": 946,
+    "SB_DFFS": 512,
+    "SB_LUT4": 3280
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "family": "dense",
+   "name": "held3_dense_12x4_w16",
+   "packed_core_logic_cells": 5349,
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 12,
+    "n_neurons": 4
+   },
+   "role": "held3",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1600,
+    "SB_DFFER": 128,
+    "SB_DFFR": 711,
+    "SB_DFFS": 377,
+    "SB_LUT4": 3131
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 835,
+   "critical_path_ns_per_seed": [
+    36.427,
+    37.986,
+    36.717
+   ],
+   "family": "dense",
+   "name": "held3_dense_2x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 252,
+    "SB_DFFER": 64,
+    "SB_DFFR": 93,
+    "SB_DFFS": 35,
+    "SB_LUT4": 597
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 1944,
+   "critical_path_ns_per_seed": [
+    50.366,
+    47.97,
+    48.605
+   ],
+   "family": "dense",
+   "name": "held3_dense_3x5_w14",
+   "parameters": {
+    "data_width": 14,
+    "n_inputs": 3,
+    "n_neurons": 5
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 689,
+    "SB_DFFER": 160,
+    "SB_DFFR": 272,
+    "SB_DFFS": 109,
+    "SB_LUT4": 1246
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 1831,
+   "critical_path_ns_per_seed": [
+    45.241,
+    43.271,
+    45.162
+   ],
+   "family": "dense",
+   "name": "held3_dense_4x3_w16",
+   "parameters": {
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 559,
+    "SB_DFFER": 96,
+    "SB_DFFR": 231,
+    "SB_DFFS": 92,
+    "SB_LUT4": 1225
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 4234,
+   "critical_path_ns_per_seed": [
+    54.059,
+    54.046,
+    56.533
+   ],
+   "family": "dense",
+   "name": "held3_dense_5x8_w22",
+   "parameters": {
+    "data_width": 22,
+    "n_inputs": 5,
+    "n_neurons": 8
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1543,
+    "SB_DFFER": 256,
+    "SB_DFFR": 665,
+    "SB_DFFS": 284,
+    "SB_LUT4": 2533
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 3009,
+   "critical_path_ns_per_seed": [
+    56.881,
+    58.032,
+    55.769
+   ],
+   "family": "dense",
+   "name": "held3_dense_6x4_w20",
+   "parameters": {
+    "data_width": 20,
+    "n_inputs": 6,
+    "n_neurons": 4
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 950,
+    "SB_DFFER": 128,
+    "SB_DFFR": 413,
+    "SB_DFFS": 181,
+    "SB_LUT4": 1887
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 4956,
+   "critical_path_ns_per_seed": [
+    66.52,
+    66.848,
+    67.285
+   ],
+   "family": "dense",
+   "name": "held3_dense_8x6_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 8,
+    "n_neurons": 6
+   },
+   "role": "held3",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1675,
+    "SB_DFFER": 192,
+    "SB_DFFR": 749,
+    "SB_DFFS": 353,
+    "SB_LUT4": 2900
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 3806,
+   "critical_path_ns_per_seed": [
+    128.513,
+    126.183,
+    130.153
+   ],
+   "family": "dense",
+   "name": "held4_dense_11x2_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 11,
+    "n_neurons": 2
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1015,
+    "SB_DFFER": 64,
+    "SB_DFFR": 385,
+    "SB_DFFS": 202,
+    "SB_LUT4": 2473
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "family": "dense",
+   "name": "held4_dense_11x4_w21",
+   "packed_core_logic_cells": 5344,
+   "parameters": {
+    "data_width": 21,
+    "n_inputs": 11,
+    "n_neurons": 4
+   },
+   "role": "held4",
+   "status": "over capacity",
+   "synthesis_cells": {
+    "SB_CARRY": 1701,
+    "SB_DFFER": 128,
+    "SB_DFFR": 675,
+    "SB_DFFS": 348,
+    "SB_LUT4": 3156
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 1524,
+   "critical_path_ns_per_seed": [
+    48.911,
+    49.861,
+    51.215
+   ],
+   "family": "dense",
+   "name": "held4_dense_3x3_w18",
+   "parameters": {
+    "data_width": 18,
+    "n_inputs": 3,
+    "n_neurons": 3
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 501,
+    "SB_DFFER": 96,
+    "SB_DFFR": 193,
+    "SB_DFFS": 68,
+    "SB_LUT4": 1040
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 3259,
+   "critical_path_ns_per_seed": [
+    52.894,
+    54.651,
+    51.621
+   ],
+   "family": "dense",
+   "name": "held4_dense_3x8_w24",
+   "parameters": {
+    "data_width": 24,
+    "n_inputs": 3,
+    "n_neurons": 8
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1265,
+    "SB_DFFER": 256,
+    "SB_DFFR": 494,
+    "SB_DFFS": 165,
+    "SB_LUT4": 2143
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 2895,
+   "critical_path_ns_per_seed": [
+    53.81,
+    53.624,
+    53.317
+   ],
+   "family": "dense",
+   "name": "held4_dense_5x5_w17",
+   "parameters": {
+    "data_width": 17,
+    "n_inputs": 5,
+    "n_neurons": 5
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 970,
+    "SB_DFFER": 160,
+    "SB_DFFR": 418,
+    "SB_DFFS": 182,
+    "SB_LUT4": 1773
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 3091,
+   "critical_path_ns_per_seed": [
+    53.531,
+    55.952,
+    56.643
+   ],
+   "family": "dense",
+   "name": "held4_dense_5x6_w13",
+   "parameters": {
+    "data_width": 13,
+    "n_inputs": 5,
+    "n_neurons": 6
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1049,
+    "SB_DFFER": 192,
+    "SB_DFFR": 462,
+    "SB_DFFS": 217,
+    "SB_LUT4": 1805
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 2627,
+   "critical_path_ns_per_seed": [
+    66.982,
+    67.261,
+    65.649
+   ],
+   "family": "dense",
+   "name": "held4_dense_7x2_w23",
+   "parameters": {
+    "data_width": 23,
+    "n_inputs": 7,
+    "n_neurons": 2
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 749,
+    "SB_DFFER": 64,
+    "SB_DFFR": 281,
+    "SB_DFFS": 124,
+    "SB_LUT4": 1748
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 4188,
+   "critical_path_ns_per_seed": [
+    80.631,
+    80.925,
+    79.56
+   ],
+   "family": "dense",
+   "name": "held4_dense_7x6_w14",
+   "parameters": {
+    "data_width": 14,
+    "n_inputs": 7,
+    "n_neurons": 6
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1429,
+    "SB_DFFER": 192,
+    "SB_DFFR": 613,
+    "SB_DFFS": 310,
+    "SB_LUT4": 2334
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 3631,
+   "critical_path_ns_per_seed": [
+    80.155,
+    81.267,
+    80.527
+   ],
+   "family": "dense",
+   "name": "held4_dense_9x3_w15",
+   "parameters": {
+    "data_width": 15,
+    "n_inputs": 9,
+    "n_neurons": 3
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1065,
+    "SB_DFFER": 96,
+    "SB_DFFR": 437,
+    "SB_DFFS": 223,
+    "SB_LUT4": 2226
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 4957,
+   "critical_path_ns_per_seed": [
+    80.647,
+    80.937,
+    80.263
+   ],
+   "family": "dense",
+   "name": "held4_dense_9x6_w12",
+   "parameters": {
+    "data_width": 12,
+    "n_inputs": 9,
+    "n_neurons": 6
+   },
+   "role": "held4",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 1671,
+    "SB_DFFER": 192,
+    "SB_DFFR": 749,
+    "SB_DFFS": 400,
+    "SB_LUT4": 2621
+   },
+   "weight_pattern": "random"
+  },
+  {
+   "core_logic_cells": 875,
+   "critical_path_ns_per_seed": [
+    65.858,
+    65.065,
+    65.09
+   ],
+   "family": "lif",
+   "name": "fit_lif_w12",
+   "parameters": {
+    "data_width": 12
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 81,
+    "SB_DFFER": 32,
+    "SB_DFFR": 13,
+    "SB_LUT4": 860
+   }
+  },
+  {
+   "core_logic_cells": 1414,
+   "critical_path_ns_per_seed": [
+    66.785,
+    67.474,
+    68.36
+   ],
+   "family": "lif",
+   "name": "fit_lif_w16",
+   "parameters": {
+    "data_width": 16
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 105,
+    "SB_DFFER": 32,
+    "SB_DFFR": 17,
+    "SB_LUT4": 1398
+   }
+  },
+  {
+   "core_logic_cells": 2029,
+   "critical_path_ns_per_seed": [
+    75.217,
+    76.819,
+    77.054
+   ],
+   "family": "lif",
+   "name": "fit_lif_w20",
+   "parameters": {
+    "data_width": 20
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 126,
+    "SB_DFFER": 32,
+    "SB_DFFR": 21,
+    "SB_LUT4": 2004
+   }
+  },
+  {
+   "core_logic_cells": 2786,
+   "critical_path_ns_per_seed": [
+    83.145,
+    80.684,
+    82.221
+   ],
+   "family": "lif",
+   "name": "fit_lif_w24",
+   "parameters": {
+    "data_width": 24
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 144,
+    "SB_DFFER": 32,
+    "SB_DFFR": 25,
+    "SB_LUT4": 2763
+   }
+  },
+  {
+   "core_logic_cells": 4329,
+   "critical_path_ns_per_seed": [
+    85.092,
+    84.829,
+    84.777
+   ],
+   "family": "lif",
+   "name": "fit_lif_w32",
+   "parameters": {
+    "data_width": 32
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 184,
+    "SB_DFFER": 32,
+    "SB_DFFR": 33,
+    "SB_LUT4": 4298
+   }
+  },
+  {
+   "detail": "fixed<8,8> is refused by the graph verifier: the fraction must be smaller than the word width",
+   "family": "lif",
+   "name": "fit_lif_w8",
+   "parameters": {
+    "data_width": 8
+   },
+   "role": "fit",
+   "status": "invalid type"
+  },
+  {
+   "core_logic_cells": 706,
+   "critical_path_ns_per_seed": [
+    55.003,
+    57.026,
+    56.641
+   ],
+   "family": "lif",
+   "name": "held_lif_w10",
+   "parameters": {
+    "data_width": 10
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 75,
+    "SB_DFFER": 32,
+    "SB_DFFR": 11,
+    "SB_LUT4": 693
+   }
+  },
+  {
+   "core_logic_cells": 1701,
+   "critical_path_ns_per_seed": [
+    73.125,
+    71.579,
+    72.094
+   ],
+   "family": "lif",
+   "name": "held_lif_w18",
+   "parameters": {
+    "data_width": 18
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 112,
+    "SB_DFFER": 32,
+    "SB_DFFR": 19,
+    "SB_LUT4": 1681
+   }
+  },
+  {
+   "core_logic_cells": 3085,
+   "critical_path_ns_per_seed": [
+    78.461,
+    76.976,
+    76.82
+   ],
+   "family": "lif",
+   "name": "held_lif_w26",
+   "parameters": {
+    "data_width": 26
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 154,
+    "SB_DFFER": 32,
+    "SB_DFFR": 27,
+    "SB_LUT4": 3056
+   }
+  },
+  {
+   "core_logic_cells": 522,
+   "critical_path_ns_per_seed": [
+    34.546,
+    37.3,
+    36.189
+   ],
+   "family": "synapse",
+   "name": "fit_synapse_1024",
+   "parameters": {
+    "stream_length": 1024
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 104,
+    "SB_DFFER": 9,
+    "SB_DFFR": 34,
+    "SB_DFFS": 21,
+    "SB_LUT4": 410
+   }
+  },
+  {
+   "core_logic_cells": 514,
+   "critical_path_ns_per_seed": [
+    37.034,
+    37.034,
+    37.802
+   ],
+   "family": "synapse",
+   "name": "fit_synapse_256",
+   "parameters": {
+    "stream_length": 256
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 100,
+    "SB_DFFER": 9,
+    "SB_DFFR": 30,
+    "SB_DFFS": 21,
+    "SB_LUT4": 403
+   }
+  },
+  {
+   "core_logic_cells": 523,
+   "critical_path_ns_per_seed": [
+    36.176,
+    37.777,
+    37.195
+   ],
+   "family": "synapse",
+   "name": "fit_synapse_4096",
+   "parameters": {
+    "stream_length": 4096
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 108,
+    "SB_DFFER": 9,
+    "SB_DFFR": 38,
+    "SB_DFFS": 21,
+    "SB_LUT4": 412
+   }
+  },
+  {
+   "core_logic_cells": 505,
+   "critical_path_ns_per_seed": [
+    38.161,
+    36.281,
+    36.452
+   ],
+   "family": "synapse",
+   "name": "fit_synapse_64",
+   "parameters": {
+    "stream_length": 64
+   },
+   "role": "fit",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 96,
+    "SB_DFFER": 7,
+    "SB_DFFR": 26,
+    "SB_DFFS": 21,
+    "SB_LUT4": 397
+   }
+  },
+  {
+   "core_logic_cells": 513,
+   "critical_path_ns_per_seed": [
+    37.049,
+    37.165,
+    36.546
+   ],
+   "family": "synapse",
+   "name": "held_synapse_128",
+   "parameters": {
+    "stream_length": 128
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 98,
+    "SB_DFFER": 8,
+    "SB_DFFR": 28,
+    "SB_DFFS": 21,
+    "SB_LUT4": 401
+   }
+  },
+  {
+   "core_logic_cells": 522,
+   "critical_path_ns_per_seed": [
+    36.173,
+    36.637,
+    36.399
+   ],
+   "family": "synapse",
+   "name": "held_synapse_2048",
+   "parameters": {
+    "stream_length": 2048
+   },
+   "role": "held",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 106,
+    "SB_DFFER": 9,
+    "SB_DFFR": 36,
+    "SB_DFFS": 21,
+    "SB_LUT4": 411
+   }
+  },
+  {
+   "core_logic_cells": 889,
+   "critical_path_ns_per_seed": [
+    202.552,
+    206.375,
+    201.985
+   ],
+   "family": "synapse",
+   "name": "held2_synapse_100",
+   "parameters": {
+    "stream_length": 100
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 454,
+    "SB_DFFER": 7,
+    "SB_DFFR": 27,
+    "SB_DFFS": 21,
+    "SB_LUT4": 433
+   }
+  },
+  {
+   "core_logic_cells": 667,
+   "critical_path_ns_per_seed": [
+    96.638,
+    98.952,
+    96.743
+   ],
+   "family": "synapse",
+   "name": "held2_synapse_3000",
+   "parameters": {
+    "stream_length": 3000
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 216,
+    "SB_DFFER": 12,
+    "SB_DFFR": 37,
+    "SB_DFFS": 21,
+    "SB_LUT4": 483
+   }
+  },
+  {
+   "core_logic_cells": 520,
+   "critical_path_ns_per_seed": [
+    37.577,
+    36.358,
+    37.603
+   ],
+   "family": "synapse",
+   "name": "held2_synapse_512",
+   "parameters": {
+    "stream_length": 512
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 102,
+    "SB_DFFER": 9,
+    "SB_DFFR": 32,
+    "SB_DFFS": 21,
+    "SB_LUT4": 407
+   }
+  },
+  {
+   "core_logic_cells": 645,
+   "critical_path_ns_per_seed": [
+    93.434,
+    92.746,
+    94.48
+   ],
+   "family": "synapse",
+   "name": "held2_synapse_700",
+   "parameters": {
+    "stream_length": 700
+   },
+   "role": "held2",
+   "status": "routed",
+   "synthesis_cells": {
+    "SB_CARRY": 200,
+    "SB_DFFER": 10,
+    "SB_DFFR": 33,
+    "SB_DFFS": 21,
+    "SB_LUT4": 464
+   }
+  }
+ ],
+ "device": "iCE40UP5K-SG48",
+ "flow": [
+  "emit the graph with the engine for iCE40 UP5K",
+  "yosys: read_verilog -sv design.v (top plus instanced baseline primitives); synth_ice40 -top <graph>; delete t:$scopeinfo; write_json design.json",
+  "yosys: synthesise the five-pin shift-register harness against a port stub of the core and merge it with design.json (hierarchy -top sc_ooc_harness; flatten)",
+  "nextpnr-ice40 --up5k --package sg48 --freq 12 --timing-allow-fail --seed 1, 2 and 3",
+  "core logic cells = routed ICESTORM_LC used minus the harness flip-flops (each harness multiplexer packs with its own flip-flop)",
+  "critical path per seed = 1000 / achieved Fmax of the slowest clock"
+ ],
+ "measured": "2026-11-07",
+ "schema_version": "sc-neurocore.ice40-up5k-calibration-measurements.v1",
+ "toolchain": {
+  "nextpnr_ice40": "0.6-3build5",
+  "yosys": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231)",
+  "yosys_archive_sha256": "4db33120c25a3cdaac911881a373656d4d519dd05faaaca0516f0da8339223d7"
+ },
+ "weight_patterns": {
+  "fit": "0.05 + 0.9*((i*7) mod 11)/10 for weight i: every weight non-zero (0.05 to 0.95)",
+  "folded": "((i*7) mod 11 - 5)/10 for weight i: about half zero or negative, clamped to zero",
+  "random": "random non-zero Q8 codes (1 + randrange(256))/256 from random.Random(<design name>)"
+ },
+ "weight_probes": {
+  "measured": "2026-11-07",
+  "method": "run_resource_feedback (out-of-context harness, nextpnr seed 1) at 12 MHz; seed_base 0x1234, stream_length 7; rate weights quantise to Q8 by truncation (code = floor(256*w), 1.0 -> 256)",
+  "rows": [
+   {
+    "core_logic_cells": 217,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 0.0"
+   },
+   {
+    "core_logic_cells": 217,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 1e-6"
+   },
+   {
+    "core_logic_cells": 217,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 0.4/65536"
+   },
+   {
+    "core_logic_cells": 217,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 0.6/65536"
+   },
+   {
+    "core_logic_cells": 217,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 0.99/256 (largest value that quantises to zero is just below 1/256)"
+   },
+   {
+    "core_logic_cells": 835,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 1",
+    "weights": "all 1/256 (smallest non-zero code)"
+   },
+   {
+    "core_logic_cells": 835,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 255",
+    "weights": "all 0.999"
+   },
+   {
+    "core_logic_cells": 835,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 256",
+    "weights": "all 1.0"
+   },
+   {
+    "core_logic_cells": 835,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "fit pattern"
+   },
+   {
+    "core_logic_cells": 490,
+    "data_width": 12,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "one non-zero",
+    "weights": "first weight 0.7, rest 0.0"
+   },
+   {
+    "core_logic_cells": 324,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 0.0"
+   },
+   {
+    "core_logic_cells": 324,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 1e-6"
+   },
+   {
+    "core_logic_cells": 324,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 0.4/65536"
+   },
+   {
+    "core_logic_cells": 324,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 0.6/65536"
+   },
+   {
+    "core_logic_cells": 324,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 0.99/256 (largest value that quantises to zero is just below 1/256)"
+   },
+   {
+    "core_logic_cells": 1747,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 1",
+    "weights": "all 1/256 (smallest non-zero code)"
+   },
+   {
+    "core_logic_cells": 1747,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 255",
+    "weights": "all 0.999"
+   },
+   {
+    "core_logic_cells": 1747,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 256",
+    "weights": "all 1.0"
+   },
+   {
+    "core_logic_cells": 1747,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all non-zero",
+    "weights": "fit pattern"
+   },
+   {
+    "core_logic_cells": 596,
+    "data_width": 12,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "one non-zero",
+    "weights": "first weight 0.7, rest 0.0"
+   },
+   {
+    "core_logic_cells": 285,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all 0",
+    "weights": "all 0.0"
+   },
+   {
+    "core_logic_cells": 580,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "about half zero",
+    "weights": "folded pattern"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "[0.5, 0.25, 0.75, 0.9]"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "all 0.999"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "all 1/3"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "all 2/3"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 0"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 1"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 2"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 3"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 4"
+   },
+   {
+    "core_logic_cells": 901,
+    "data_width": 16,
+    "n_inputs": 2,
+    "n_neurons": 2,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 5"
+   },
+   {
+    "core_logic_cells": 425,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all 0.0"
+   },
+   {
+    "core_logic_cells": 425,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all 0",
+    "weights": "all -0.5 (clamped)"
+   },
+   {
+    "core_logic_cells": 1097,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "half non-zero",
+    "weights": "every other weight 0.7, rest 0.0"
+   },
+   {
+    "core_logic_cells": 1529,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "about half zero",
+    "weights": "folded pattern"
+   },
+   {
+    "core_logic_cells": 1832,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all non-zero",
+    "weights": "all 0.999"
+   },
+   {
+    "core_logic_cells": 1832,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 0"
+   },
+   {
+    "core_logic_cells": 1831,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 1"
+   },
+   {
+    "core_logic_cells": 1831,
+    "data_width": 16,
+    "n_inputs": 4,
+    "n_neurons": 3,
+    "q8_codes": "all non-zero",
+    "weights": "uniform draw 2"
+   }
+  ]
+ }
+}

@@ -27,6 +27,7 @@ mod state;
 mod word;
 
 use crate::ir::graph::*;
+use crate::ir::ice40_estimate::Ice40Report;
 use crate::ir::kernel_contract::{
     attention_shape as softmax_attention_shape, const_f64_vec, q_fixed,
 };
@@ -44,6 +45,30 @@ pub fn emit_systemverilog_with_target(
     graph: &ScGraph,
     target: SvTarget,
 ) -> Result<(String, ResourceReport), String> {
+    let header = target.header_comment();
+    let sv = emit_systemverilog_body(graph, &target, &header)?;
+    Ok((sv, target.estimate_graph(graph)))
+}
+
+/// Emit SystemVerilog for the iCE40 UltraPlus UP5K with its calibrated report.
+///
+/// The RTL is the generic emission with a device header. The report carries a
+/// static estimate only for a single calibrated structural block inside its
+/// measured domain; any other graph gets the reason why it has none.
+pub fn emit_systemverilog_for_ice40_up5k(
+    graph: &ScGraph,
+    clock_mhz: u32,
+) -> Result<(String, Ice40Report), String> {
+    let report = crate::ir::ice40_estimate::report(graph, clock_mhz)?;
+    let sv = emit_systemverilog_body(graph, &SvTarget::Generic, &report.header_comment())?;
+    Ok((sv, report))
+}
+
+fn emit_systemverilog_body(
+    graph: &ScGraph,
+    target: &SvTarget,
+    header: &str,
+) -> Result<String, String> {
     crate::ir::verify::verify(graph).map_err(|errors| {
         errors
             .iter()
@@ -60,7 +85,7 @@ pub fn emit_systemverilog_with_target(
          // Do not edit — regenerate from IR source.\n\n",
         graph.name
     ));
-    sv.push_str(&target.header_comment());
+    sv.push_str(header);
     sv.push_str("`timescale 1ns / 1ps\n\n");
 
     // Module declaration
@@ -116,7 +141,7 @@ pub fn emit_systemverilog_with_target(
                 ));
             }
             ScOp::Input { .. } | ScOp::Output { .. } => {}
-            ScOp::Constant { id, value, ty } => constants::emit(&mut sv, *id, value, ty, &target)?,
+            ScOp::Constant { id, value, ty } => constants::emit(&mut sv, *id, value, ty, target)?,
             ScOp::Encode { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
@@ -272,7 +297,7 @@ pub fn emit_systemverilog_with_target(
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
                 let noise_wire = value_to_wire(graph, *noise);
-                emit_target_dsp_attribute(&mut sv, &target);
+                emit_target_dsp_attribute(&mut sv, target);
                 sv.push_str(&format!(
                     "    sc_lif_neuron #(\n\
                      \x20       .DATA_WIDTH({}),\n\
@@ -322,7 +347,7 @@ pub fn emit_systemverilog_with_target(
                     *id,
                     [*inputs, *weights, *leak, *gain],
                     params,
-                    &target,
+                    target,
                 )?;
                 inst_idx += 1;
             }
@@ -347,7 +372,7 @@ pub fn emit_systemverilog_with_target(
                 let centre_wire = value_to_wire(graph, *centre);
                 let sigma_wire = value_to_wire(graph, *sigma);
                 let tap_offsets = emit_concat_u32(&params.tap_offsets, params.ptr_width)?;
-                emit_target_dsp_attribute(&mut sv, &target);
+                emit_target_dsp_attribute(&mut sv, target);
                 sv.push_str(&format!(
                     "    sc_dcls_layer_core #(\n\
                      \x20       .N_TAPS({}),\n\
@@ -462,8 +487,7 @@ pub fn emit_systemverilog_with_target(
     }
 
     sv.push_str("\nendmodule\n");
-    let report = target.estimate_graph(graph);
-    Ok((sv, report))
+    Ok(sv)
 }
 
 fn type_to_width(ty: &ScType) -> usize {

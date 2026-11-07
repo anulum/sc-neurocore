@@ -31,7 +31,7 @@ Top-level help groups the product into five modes:
 ```text
 Model     info, compile, compile-nir, compile-ir, evidence-packet, hardware-path, serve,
           map-nir
-Hardware  deploy, collect-synthesis, scnir, formal, hub-init
+Hardware  deploy, collect-synthesis, resource-check, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
 Data      dataset manifest, dataset verify, dataset split
 Maintain  benchmark, preflight
@@ -151,7 +151,8 @@ Python through `sc_neurocore.compiler.guarantee_summary.summarize_graph`.
 Write and check the evidence packet of one dense layer design:
 
 ```bash
-sc-neurocore evidence-packet export dense.sc --output build/dense_packet
+sc-neurocore evidence-packet export dense.sc --output build/dense_packet \
+  --pnr-timeout-seconds 900
 sc-neurocore evidence-packet verify build/dense_packet
 ```
 
@@ -163,7 +164,12 @@ SystemVerilog, the guarantee summary, `parameters.json`, a co-simulation of the
 emitted top level against the Python bit-true reference (`--cycles`, default
 256), the committed formal jobs of the modules involved run in a scratch copy, a
 Yosys report (`--target`, default `ice40`), tool and source versions, a
-boundary statement and `manifest.json`. A formal job or synthesis whose tools are
+boundary statement and `manifest.json`. For `ice40` it also places and routes
+the design out of context (as `resource-check` does, timing judged at
+`--clock-mhz`, default 12, each tool run limited by the required
+`--pnr-timeout-seconds`) and writes `synthesis/pnr_report.json` and
+`synthesis/estimate_vs_real.json`, the engine's static estimate set against the
+routed core. A formal job, synthesis or place and route whose tools are
 missing is recorded as unavailable with the reason. `evidence-packet verify`
 re-hashes every member and exits with status 1 on a missing, extra, altered or
 symbolically linked member, a directory that holds no member, an entry that is
@@ -215,9 +221,44 @@ sc-neurocore map-nir model.nir \
 | --- | --- | --- |
 | `deploy` | Build FPGA or browser deployment artefacts | NIR bridge, trusted checkpoint loader, ANN-to-SNN conversion, web deployer |
 | `collect-synthesis` | Convert vendor reports into optimiser evidence | optimiser report parsers and evidence writer |
+| `resource-check` | Synthesise, place and route one IR graph and judge capacity, I/O, timing and the static estimate | `sc_neurocore.studio.resource_feedback` |
 | `scnir` | Validate, upgrade, export, or audit SC-NIR evidence | `sc_neurocore.ir` schema/conversion/audit APIs |
 | `formal verify-network` | Emit RTL/SVA/SBY/report evidence and replay traces | network formal contracts and optional SymbiYosys |
 | `hub-init` | Generate a self-hosted hub Compose bundle | hub bundle generator |
+
+Judge one IR graph against the iCE40 UP5K with real Yosys and nextpnr runs:
+
+```bash
+sc-neurocore resource-check dense.sc --clock-mhz 12 --timeout-seconds 900 \
+  --output build/dense_resources.json
+```
+
+`resource-check` emits the graph for `ice40:UP5K`, synthesises it with Yosys,
+wraps the core in a five-pin shift-register harness and places and routes it
+on the SG48 package with nextpnr-ice40. It reports a pass, a violation or
+undetermined for each check:
+
+- `io_fits_package`: the core's port bits against the 39 user pins nextpnr
+  places on the SG48. Most emitted top levels have more port bits than that,
+  so they report an I/O violation and exit 1; the logic, timing and estimate
+  checks are still run and reported on the core in its harness;
+- `logic_fits_device`: the core's logic cells. When the core with its harness
+  does not fit, the core is sized from the packed logic cells: above the
+  device's 5280 it is a violation, otherwise undetermined, since nothing was
+  routed. Any other placement or routing failure is undetermined;
+- `timing`: every clock's achieved frequency against `--clock-mhz`;
+- `estimate`: the routed core logic cells and worst path against the engine's
+  static estimate. This check runs only when the
+  [estimate](sc-ir.md#device-targets-and-resource-reports) exists, and it is
+  undetermined unless the tools are the calibration's Yosys 0.70 and
+  nextpnr-ice40 0.6-3build5.
+
+A missing tool, a timeout or a tool error is undetermined, never a pass. The
+command exits with status 0 when every check passes, 1 on any violation and 2
+when a check is undetermined or the graph cannot be read, parsed or verified.
+`--timeout-seconds` (required) limits each tool run; choose it for the host
+that runs the tools, since there is no host-independent default. `--output`
+writes the JSON report.
 
 Deploy a NIR graph:
 

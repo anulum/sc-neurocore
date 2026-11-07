@@ -53,6 +53,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_causality_engine_binding_runtime.py",
     "tests/test_cazelles_map_engine_binding.py",
     "tests/test_chialvo_map_engine_binding.py",
+    "tests/test_cli_resource_check.py",
     "tests/test_coba_lif_engine_binding.py",
     "tests/test_compte_wm_engine_binding.py",
     "tests/test_cordiv_engine_bindings.py",
@@ -107,6 +108,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_ir_source.py",
     "tests/test_ir_state_runtime.py",
     "tests/test_ir_streaming_runtime.py",
+    "tests/test_ir_sv_target_report.py",
     "tests/test_ir_word_delay.py",
     "tests/test_izhikevich2007_engine_binding.py",
     "tests/test_izhikevich_engine_binding.py",
@@ -192,6 +194,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_studio_equation_ir.py",
     "tests/test_studio_equation_ir_http.py",
     "tests/test_studio_equation_ir_process.py",
+    "tests/test_studio_resource_feedback.py",
     "tests/test_terman_wang_engine_binding.py",
     "tests/test_wilson_cowan_engine_binding.py",
     "tests/test_wilson_hr_engine_binding.py",
@@ -513,7 +516,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 157
+    assert len(_GUARDED_BINDING_FILES) == 160
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (

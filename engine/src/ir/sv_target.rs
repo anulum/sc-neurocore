@@ -134,6 +134,34 @@ impl SvTarget {
         }
     }
 
+    /// Build a heuristic device target from its [`SvTarget::target_name`] and a clock.
+    ///
+    /// `generic` names no device and is refused; the iCE40 UP5K has its own
+    /// calibrated path in [`crate::ir::ice40_estimate`].
+    pub fn from_spec(spec: &str, clock_mhz: u32) -> Result<Self, String> {
+        if clock_mhz == 0 {
+            return Err("clock_mhz must be positive".to_string());
+        }
+        match spec {
+            "zynq-ultrascale-plus:ZU3EG" => {
+                Ok(Self::zynq_ultrascale_plus(SkuKind::Zu3eg, clock_mhz))
+            }
+            "zynq-ultrascale-plus:ZU9EG" => {
+                Ok(Self::zynq_ultrascale_plus(SkuKind::Zu9eg, clock_mhz))
+            }
+            _ => match spec.strip_prefix("zynq7:") {
+                Some(device) if !device.is_empty() => Ok(Self::Zynq7 {
+                    device: device.to_string(),
+                    clock_mhz,
+                }),
+                _ => Err(format!(
+                    "unknown SystemVerilog target {spec:?}; expected ice40:UP5K, \
+                     zynq-ultrascale-plus:ZU3EG, zynq-ultrascale-plus:ZU9EG or zynq7:<device>"
+                )),
+            },
+        }
+    }
+
     pub fn target_name(&self) -> String {
         match self {
             Self::Generic => "generic".to_string(),

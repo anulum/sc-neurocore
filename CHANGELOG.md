@@ -12,6 +12,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Emit SystemVerilog for a device with that device's resource report, and judge a
+  graph against real Yosys and nextpnr runs (2026-11-07).
+  `ScGraph.emit_sv_with_report(target, clock_mhz)` returns, for `ice40:UP5K`, an
+  iCE40 UltraPlus UP5K report with budgets and, for one calibrated block inside its
+  measured domain and in the measured operand form (dense layer, LIF neuron,
+  power-of-two synapse stream), a static bound on routed core logic cells and
+  critical path; any other graph, including one with port or other constant
+  operands, carries the reason instead of a number. Zynq targets keep the heuristic report, now labelled
+  uncalibrated. The bound is generated from
+  `benchmarks/results/ice40_up5k_calibration/designs.json` by
+  `tools/ice40_up5k_calibration.py`, which refits it, checks every recorded design
+  and weight probe against it and prints the figures its documentation cites.
+  `sc-neurocore resource-check GRAPH --clock-mhz N --timeout-seconds S` (Python:
+  `sc_neurocore.studio.resource_feedback.run_resource_feedback`) synthesises the
+  graph, places and routes it out of context in a five-pin harness on the SG48,
+  and reports package I/O, logic capacity, timing and the estimate as pass,
+  violation or undetermined, exiting 0, 1 or 2. `evidence-packet export` adds the
+  place-and-route report and the estimate set against the routed core to the
+  packet's manifest (`--clock-mhz`, `--pnr-timeout-seconds`). Studio place and
+  route names a design that needs more I/O pins than its package has, or more
+  logic than its device has, and Studio synthesis deletes the `$scopeinfo` debug
+  cells Yosys 0.70 emits, which nextpnr 0.6 cannot place. CI installs nextpnr-ice40
+  0.6-3build5 and runs the real flow.
+
 - Take one catalogue model from its schema to synthesis with one command.
   `sc-neurocore hardware-path MODEL -o DIR` (Python:
   `sc_neurocore.studio.hardware_path.run_hardware_path`) checks the model's

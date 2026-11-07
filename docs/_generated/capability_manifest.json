@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5614
+    "test_files": 5618
   },
   "documentation": {
     "public_pages": [
@@ -4586,6 +4586,7 @@
       "tests/test_cli_mapping.py",
       "tests/test_cli_nir.py",
       "tests/test_cli_nir_execution_metadata.py",
+      "tests/test_cli_resource_check.py",
       "tests/test_cli_scnir.py",
       "tests/test_cli_serve.py",
       "tests/test_cli_studio.py",
@@ -5790,6 +5791,7 @@
       "tests/test_ir_source.py",
       "tests/test_ir_state_runtime.py",
       "tests/test_ir_streaming_runtime.py",
+      "tests/test_ir_sv_target_report.py",
       "tests/test_ir_type_checker_check_ir_types.py",
       "tests/test_ir_type_checker_types_compatible.py",
       "tests/test_ir_word_delay.py",
@@ -8264,6 +8266,7 @@
       "tests/test_studio_replay_notebook.py",
       "tests/test_studio_replay_pack.py",
       "tests/test_studio_request_validation.py",
+      "tests/test_studio_resource_feedback.py",
       "tests/test_studio_router_contract.py",
       "tests/test_studio_runtime_job_receipt.py",
       "tests/test_studio_runtime_settings_parsing_cors_and_websocket.py",
@@ -8575,6 +8578,7 @@
       "tests/test_tools/test_go_security_baseline.py",
       "tests/test_tools/test_godoc_coverage_native.py",
       "tests/test_tools/test_icarus_verilog_dependency.py",
+      "tests/test_tools/test_ice40_up5k_calibration.py",
       "tests/test_tools/test_install_profile_audit.py",
       "tests/test_tools/test_lib_rs_provenance_gate.py",
       "tests/test_tools/test_license_matrix.py",

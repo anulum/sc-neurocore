@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1807
+expected_file_count = 1814
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7290,3 +7290,24 @@ rationale = "Check the hardware-path command's exit statuses, refusal messages, 
 [[file]]
 path = "tests/test_hardware_path_support_doc.py"
 rationale = "Keep the tracked supported-set table equal to the derivation from the capability matrix."
+[[file]]
+path = "src/sc_neurocore/studio/resource_feedback.py"
+rationale = "Synthesise, place and route one graph out of context on the iCE40 UP5K and judge I/O, capacity, timing and the static estimate as pass, violation or undetermined."
+[[file]]
+path = "src/sc_neurocore/cli/commands/resource_check.py"
+rationale = "Run the resource and timing check of one IR graph from the command line with exit status zero, one or two."
+[[file]]
+path = "tools/ice40_up5k_calibration.py"
+rationale = "Refit the iCE40 UP5K calibration from its record, check every design and weight probe, print the cited figures and generate the engine constants."
+[[file]]
+path = "tests/test_studio_resource_feedback.py"
+rationale = "Judge real graphs with Yosys and nextpnr and reach every verdict branch, boundary and planted estimate violation."
+[[file]]
+path = "tests/test_cli_resource_check.py"
+rationale = "Check the resource-check command's exit statuses, report file and refusals."
+[[file]]
+path = "tests/test_ir_sv_target_report.py"
+rationale = "Bind the device-target emission and its report to the committed calibration record through the native bridge."
+[[file]]
+path = "tests/test_tools/test_ice40_up5k_calibration.py"
+rationale = "Refit the committed record and refuse every planted violation of its bound, probe rules and held-out isolation."
