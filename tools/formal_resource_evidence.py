@@ -32,6 +32,12 @@ from tools.formal_resource_accounting import validate_resource_measurement
 from tools.formal_resource_policy import YICES_RETRY, next_attempt, select_contract
 
 
+def _log_line(log: str, offset: int) -> str:
+    """Return the log line holding ``offset``, stripped and bounded to 200 characters."""
+    start = log.rfind("\n", 0, offset) + 1
+    return log[start:].split("\n", 1)[0].strip()[:200]
+
+
 def validate_resource_attempt(
     repository: Path,
     job: Path,
@@ -104,15 +110,16 @@ def validate_resource_attempt(
         and all(marker in (("PASS", "0"), ("TIMEOUT", "8")) for marker in markers),
         "Resource log reports a proof failure or tool error.",
     )
+    failure = re.search(
+        r"(?:^|[ \t:])ERROR:|^Traceback |Illegal instruction|Segmentation fault|Broken pipe|"
+        r"Assert failed|Status:[ \t]*(?:failed|unknown)|solver returned unknown",
+        log,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
     require(
-        re.search(
-            r"(?:^|[ \t:])ERROR:|^Traceback |Illegal instruction|Segmentation fault|Broken pipe|"
-            r"Assert failed|Status:[ \t]*(?:failed|unknown)|solver returned unknown",
-            log,
-            flags=re.IGNORECASE | re.MULTILINE,
-        )
-        is None,
-        "Resource native log contains a tool failure or counterexample.",
+        failure is None,
+        "Resource native log contains a tool failure or counterexample: "
+        + (_log_line(log, failure.start()) if failure is not None else ""),
     )
     native_solver = "yices" if solver == "yices-smt2" else solver
     require(

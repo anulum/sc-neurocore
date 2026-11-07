@@ -67,13 +67,22 @@ def observe_until(tree: WorkerTree, pids: list[int]) -> None:
     raise AssertionError(f"tree did not observe {pids}")
 
 
-def gone(pid: int) -> bool:
-    """Return whether ``pid`` exited; a process reaped while read has exited too."""
+def gone(pid: int, start_token: str | None = None) -> bool:
+    """Return whether the process ``pid`` named has exited.
+
+    A zombie (``Z``), a task being reaped (``X``) and a missing ``/proc`` entry
+    have all exited. With ``start_token``, a live process whose start time
+    differs is a later process that reused the PID after the named one was
+    reaped, so the named process has exited too.
+    """
     try:
         with open(f"/proc/{pid}/stat", encoding="ascii") as handle:
-            return handle.read().rsplit(")", 1)[-1].split()[0] == "Z"
+            fields = handle.read().rsplit(")", 1)[-1].split()
     except (FileNotFoundError, ProcessLookupError):
         return True
+    if fields[0] in ("Z", "X"):
+        return True
+    return start_token is not None and fields[19] != start_token
 
 
 def finish(child: subprocess.Popen[str], tree: WorkerTree) -> None:

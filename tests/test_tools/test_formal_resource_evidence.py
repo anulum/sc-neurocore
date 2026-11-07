@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 from pathlib import Path
+import re
 import shutil
 
 import pytest
@@ -152,11 +153,15 @@ def test_changed_actual_resource_fact_refuses(
 def test_resource_log_tool_failure_cannot_be_relabelled(
     case: NativeEvidence, marker: str, reason: str
 ) -> None:
-    """A rehashed native log with an actual failure marker cannot qualify a row."""
+    """A rehashed native log with an actual failure marker cannot qualify a row.
+
+    A tool failure names the offending log line, so a hosted failure shows its cause.
+    """
     path = case.repository / "primary-public.log"
     path.write_text(path.read_text() + "\n" + marker + "\n")
     _change(case.repository / "receipt.json", "log.normalized_sha256", digest(path))
-    with pytest.raises(ValueError, match=reason):
+    expected = reason if reason.startswith("proof") else f"{reason}: {re.escape(marker)}$"
+    with pytest.raises(ValueError, match=expected):
         _check(case)
 
 

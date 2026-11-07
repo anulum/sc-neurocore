@@ -25,6 +25,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.studio.platform.jobs_process_protocol import _process_worker_environment
+from sc_neurocore.studio.platform.storage_worker_tree import process_start_token
 from tests.studio_storage_tree_support import *
 
 
@@ -49,10 +50,12 @@ def test_kill_stops_leader_children_and_grandchildren() -> None:
         descendants = [pid for _ in range(2) for pid in reported(child)]
         observe_until(tree, descendants)
         assert {member.pid for member in tree.live()} == {child.pid, *descendants}
+        # Read before the kill: once reaped, a PID can be reused by another process.
+        tokens = {pid: process_start_token(pid) for pid in descendants}
         assert tree.kill(rounds=5) is True
         assert tree.live() == ()
         child.wait(timeout=10.0)
-        assert all(gone(pid) for pid in descendants)
+        assert all(gone(pid, tokens[pid]) for pid in descendants)
     finally:
         finish(child, tree)
 
@@ -82,9 +85,10 @@ def test_setsid_double_fork_escape_stays_under_subreaper_leader() -> None:
         assert int(fields[1]) == child.pid, "escape was not reparented to the subreaper"
         assert int(fields[3]) != os.getsid(child.pid), "escape did not leave the session"
         observe_until(tree, [escaped])
+        token = process_start_token(escaped)
         assert tree.kill(rounds=5) is True
         child.wait(timeout=10.0)
-        assert gone(escaped)
+        assert gone(escaped, token)
     finally:
         finish(child, tree)
 
@@ -261,3 +265,17 @@ def test_adopted_orphans_are_attributed_killed_and_reaped() -> None:
     assert result["leader_state"] == "S"
     assert result["stopped"] is True
     assert result["owned_after_stop"] == "gone"
+
+
+def test_gone_counts_zombies_reaping_and_reused_pids_as_exited() -> None:
+    """A missing entry, a zombie and a PID reused by a later process all mean exited."""
+    assert gone(os.getpid()) is False
+    assert gone(os.getpid(), process_start_token(os.getpid())) is False
+    assert gone(os.getpid(), "0") is True
+    child = subprocess.Popen([sys.executable, "-c", "pass"])
+    deadline = time.monotonic() + 10.0
+    while not gone(child.pid) and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert gone(child.pid) is True
+    child.wait(timeout=10.0)
+    assert gone(child.pid) is True
