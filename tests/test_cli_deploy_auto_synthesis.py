@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import shutil
+
 from tests.cli_deploy_support import *  # noqa: F403
 
 
@@ -250,3 +252,83 @@ def test_find_hdl_source_returns_none_outside_source_tree(
 
     monkeypatch.setattr(deploy_command, "Path", lambda _value: tmp_path / "orphan" / "cli.py")
     assert deploy_command._find_hdl_source() is None
+
+
+@pytest.mark.skipif(
+    not all(shutil.which(tool) for tool in ("yosys", "nextpnr-ice40")),
+    reason="Yosys and nextpnr-ice40 are required",
+)
+def test_a_hierarchical_design_is_placed_and_routed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A flattened hierarchy reaches nextpnr without Yosys 0.70 $scopeinfo cells.
+
+    Left in, nextpnr 0.6 stops with "no BELs remaining to implement cell type
+    '$scopeinfo'" and the run prints "PnR failed".
+    """
+    import sc_neurocore.cli.commands.deploy as deploy_command
+
+    (tmp_path / "hdl").mkdir()
+    (tmp_path / "hdl" / "cell.v").write_text(
+        "module cell(input wire clk, input wire d, output reg q);\n"
+        "    always @(posedge clk) q <= ~d;\n"
+        "endmodule\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "fixture.sv").write_text(
+        "module fixture(input wire clk, input wire d, output wire q);\n"
+        "    wire mid;\n"
+        "    cell first(.clk(clk), .d(d), .q(mid));\n"
+        "    cell second(.clk(clk), .d(mid), .q(q));\n"
+        "endmodule\n",
+        encoding="utf-8",
+    )
+    assert deploy_command.run_auto_synthesis(
+        str(tmp_path), "ice40", "fixture", deploy_command.TARGET_CONFIGS["ice40"]
+    )
+    out = capsys.readouterr().out
+    assert "PnR succeeded: fixture.asc" in out, out
+    assert "PnR failed" not in out
+    netlist = json.loads((tmp_path / "fixture.json").read_text(encoding="utf-8"))
+    types = {c["type"] for m in netlist["modules"].values() for c in m.get("cells", {}).values()}
+    assert "$scopeinfo" not in types
+
+
+@pytest.mark.parametrize(
+    ("target", "tools", "outputs"),
+    [
+        ("ice40", ("yosys", "nextpnr-ice40", "icepack"), ("fixture.asc", "fixture.bin")),
+        ("ecp5", ("yosys", "nextpnr-ecp5", "ecppack"), ("fixture.config", "fixture.bit")),
+    ],
+)
+def test_the_generated_makefile_builds_a_bitstream(
+    target: str, tools: tuple[str, ...], outputs: tuple[str, ...], tmp_path: Path
+) -> None:
+    """``make bitstream`` in a deployment runs each family's own place-and-route and packer."""
+    import sc_neurocore.cli.commands.deploy as deploy_command
+
+    missing = [tool for tool in (*tools, "make") if shutil.which(tool) is None]
+    if missing:
+        pytest.skip(f"not installed: {', '.join(missing)}")
+    (tmp_path / "hdl").mkdir()
+    (tmp_path / "hdl" / "cell.v").write_text(
+        "module cell(input wire clk, input wire d, output reg q);\n"
+        "    always @(posedge clk) q <= ~d;\n"
+        "endmodule\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "fixture.sv").write_text(
+        "module fixture(input wire clk, input wire d, output wire q);\n"
+        "    wire mid;\n"
+        "    cell first(.clk(clk), .d(d), .q(mid));\n"
+        "    cell second(.clk(clk), .d(mid), .q(q));\n"
+        "endmodule\n",
+        encoding="utf-8",
+    )
+    deploy_command._generate_project(str(tmp_path), target, "fixture")
+    built = subprocess.run(
+        ["make", "bitstream"], cwd=tmp_path, capture_output=True, text=True, timeout=600
+    )
+    assert built.returncode == 0, built.stdout[-2000:] + built.stderr[-2000:]
+    for name in outputs:
+        assert (tmp_path / name).stat().st_size > 0, name

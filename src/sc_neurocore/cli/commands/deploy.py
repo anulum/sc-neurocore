@@ -320,6 +320,9 @@ def run_auto_synthesis(
     yosys_script = (
         f"read_verilog -sv {verilog_files}; "
         f"{synth_cmd} -top {top_module}; "
+        # Yosys 0.70 emits portless $scopeinfo debug cells when it flattens a
+        # hierarchy; nextpnr 0.6 cannot place them.
+        "delete t:$scopeinfo; "
         f"write_json {top_module}.json; stat"
     )
     result = subprocess.run(
@@ -408,6 +411,7 @@ def _generate_project(
     cfg = TARGET_CONFIGS[target]
 
     if cfg["tool"] == "yosys":
+        (placed_option, placed_suffix), packer, bitstream = _PLACED_OUTPUTS[cfg["family"]]
         makefile = f"""# SC-NeuroCore Deploy — {target} target
 TOP = {top_module}
 DEVICE = {cfg["device"]}
@@ -417,16 +421,16 @@ VERILOG_FILES = $(wildcard hdl/*.v) {top_module}.sv
 .PHONY: synth pnr bitstream clean
 
 synth:
-\tyosys -p "read_verilog -sv $(VERILOG_FILES); synth_{cfg["family"]} -top $(TOP); write_json $(TOP).json; stat"
+\tyosys -p "read_verilog -sv $(VERILOG_FILES); synth_{cfg["family"]} -top $(TOP); delete t:\\$$scopeinfo; write_json $(TOP).json; stat"
 
 pnr: synth
-\tnextpnr-{cfg["family"]} --{cfg["device"]} --json $(TOP).json --asc $(TOP).asc --package {cfg["package"]}
+\tnextpnr-{cfg["family"]} --{cfg["device"]} --json $(TOP).json {placed_option} $(TOP).{placed_suffix} --package {cfg["package"]}
 
 bitstream: pnr
-\t{"icepack" if cfg["family"] == "ice40" else "ecppack"} $(TOP).asc $(TOP).bin
+\t{packer} $(TOP).{placed_suffix} $(TOP).{bitstream}
 
 clean:
-\trm -f *.json *.asc *.bin
+\trm -f *.json *.{placed_suffix} *.{bitstream}
 """
         with open(os.path.join(output_dir, "Makefile"), "w") as f:
             f.write(makefile)

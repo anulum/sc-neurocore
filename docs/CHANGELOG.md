@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Place and route hierarchical designs from `deploy` (2026-11-07). Yosys 0.70
+  leaves `$scopeinfo` debug cells in a flattened hierarchy, which nextpnr 0.6
+  cannot place, so such a design printed "PnR failed"; deploy synthesis now
+  deletes them. The generated Makefile uses each family's own place and route
+  and packer (ECP5: `--textcfg` and `ecppack` to `.bit`), and its Yosys command
+  keeps the `$` of `$scopeinfo` from the shell.
+
 - Place and route ECP5 designs in `compile --synthesize` and `deploy`. Both
   passed nextpnr-ecp5 the iCE40 option `--asc`, which it does not accept, so
   every ECP5 run reported "PnR failed" after synthesis. ECP5 now writes the
