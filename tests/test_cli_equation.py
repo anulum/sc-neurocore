@@ -158,6 +158,42 @@ def test_compile_synthesises_the_verilog_it_writes(
     assert "synth_fixture" in netlist["modules"]
 
 
+@pytest.mark.skipif(
+    not all(shutil.which(tool) for tool in ("yosys", "nextpnr-ecp5", "ecppack")),
+    reason="Yosys, nextpnr-ecp5 and ecppack are required",
+)
+def test_compile_places_routes_and_packs_for_ecp5(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """ECP5 place and route writes a Trellis text configuration and ecppack packs it.
+
+    nextpnr-ecp5 has no ``--asc`` option; before, every ECP5 run printed
+    "PnR failed" after a successful synthesis.
+    """
+    output = tmp_path / "ecp5"
+    rc = run_cli(
+        "compile",
+        "dv/dt = -v / 10.0 + I",
+        "--threshold",
+        "v > 1.0",
+        "--reset",
+        "v = 0.0",
+        "--module-name",
+        "synth_fixture",
+        "--target",
+        "ecp5",
+        "--synthesize",
+        "--output",
+        str(output),
+    )
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "PnR succeeded: synth_fixture.config" in out
+    assert "PnR failed" not in out
+    assert (output / "synth_fixture.config").is_file()
+    assert (output / "synth_fixture.bit").stat().st_size > 0
+
+
 @needs_yosys
 def test_compile_reports_a_failed_synthesis_with_status_one(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]

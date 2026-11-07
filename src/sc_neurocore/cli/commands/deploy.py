@@ -339,14 +339,18 @@ def run_auto_synthesis(
         pnr_tool = shutil.which(f"nextpnr-{cfg['family']}")
         if pnr_tool:
             print("  Running nextpnr place-and-route...")
+            # nextpnr-ice40 writes an IceStorm .asc that icepack packs; nextpnr-ecp5
+            # takes no --asc and writes a Trellis text configuration for ecppack.
+            placed, pack_tool, bitstream = _PLACED_OUTPUTS[cfg["family"]]
+            placed_file = f"{top_module}.{placed[1]}"
             pnr_result = subprocess.run(
                 [
                     pnr_tool,
                     f"--{cfg['device']}",
                     "--json",
                     f"{top_module}.json",
-                    "--asc",
-                    f"{top_module}.asc",
+                    placed[0],
+                    placed_file,
                     "--package",
                     cfg["package"],
                 ],
@@ -356,18 +360,17 @@ def run_auto_synthesis(
                 timeout=300,
             )
             if pnr_result.returncode == 0:
-                print(f"  PnR succeeded: {top_module}.asc")
+                print(f"  PnR succeeded: {placed_file}")
                 # Try bitstream generation
-                pack_tool = "icepack" if cfg["family"] == "ice40" else "ecppack"
                 pack_bin = shutil.which(pack_tool)
                 if pack_bin:
                     subprocess.run(
-                        [pack_bin, f"{top_module}.asc", f"{top_module}.bin"],
+                        [pack_bin, placed_file, f"{top_module}.{bitstream}"],
                         cwd=output_dir,
                         capture_output=True,
                         timeout=60,
                     )
-                    bin_path = os.path.join(output_dir, f"{top_module}.bin")
+                    bin_path = os.path.join(output_dir, f"{top_module}.{bitstream}")
                     if os.path.exists(bin_path):
                         size_kb = os.path.getsize(bin_path) / 1024
                         print(f"  Bitstream: {bin_path} ({size_kb:.1f} KB)")
@@ -380,6 +383,13 @@ def run_auto_synthesis(
             print(f"    {line}")
         return False
 
+
+#: Per FPGA family: nextpnr's placed-design option and file suffix, the packer,
+#: and the bitstream suffix the packer writes.
+_PLACED_OUTPUTS: dict[str, tuple[tuple[str, str], str, str]] = {
+    "ice40": (("--asc", "asc"), "icepack", "bin"),
+    "ecp5": (("--textcfg", "config"), "ecppack", "bit"),
+}
 
 TARGET_CONFIGS: dict[str, dict[str, str]] = {
     "ice40": {"family": "ice40", "device": "hx8k", "package": "ct256", "tool": "yosys"},

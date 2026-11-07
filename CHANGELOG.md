@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Place and route ECP5 designs in `compile --synthesize` and `deploy`. Both
+  passed nextpnr-ecp5 the iCE40 option `--asc`, which it does not accept, so
+  every ECP5 run reported "PnR failed" after synthesis. ECP5 now writes the
+  Trellis text configuration (`--textcfg`, `MODULE.config`) and `ecppack`
+  packs it into `MODULE.bit`; iCE40 keeps `--asc` and `icepack`.
+
 - Emit SystemVerilog for a device with that device's resource report, and judge a
   graph against real Yosys and nextpnr runs (2026-11-07).
   `ScGraph.emit_sv_with_report(target, clock_mhz)` returns, for `ice40:UP5K`, an
