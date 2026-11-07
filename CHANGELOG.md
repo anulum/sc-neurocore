@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add a bit-exact integer SHD core and its reference (2026-11-07).
+  `tools/shd_int_reference.py` defines the integer-delay SHD network in integers:
+  - 4-bit counts in, int8 weights;
+  - delays 0..30;
+  - LIF with an arithmetic-shift leak and integer thresholds;
+  - every width bounded for inputs of up to 1024 steps.
+  `hdl/sc_shd_int_core.v` computes it bit for bit, in an event mode and a
+  full-scan mode with identical results. `tools/cosim_shd_int_core.py` and
+  `tests/test_shd_int_core_cosim.py` compare every accumulator with the reference.
+
 - Place and route hierarchical designs from `deploy` (2026-11-07). Yosys 0.70
   leaves `$scopeinfo` debug cells in a flattened hierarchy, which nextpnr 0.6
   cannot place, so such a design printed "PnR failed"; deploy synthesis now

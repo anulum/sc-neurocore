@@ -67,3 +67,37 @@ copies with Icarus and checks currents, encoder bits, membrane state and spikes
 cycle by cycle; `tests/test_ir_dense_rtl.py` repeats the installed Python-to-RTL
 boundary against the bit-true Python neurons. These are simulations, not board
 measurements or routed timing results.
+
+## SHD inference core
+
+`sc_shd_int_core.v` runs the SHD speech network with integer axonal delays
+(140 counts → 128 → 128 → 20). `tools/shd_int_reference.py` is the integer
+reference for that network, and the core matches it bit for bit on every
+accumulator.
+
+**Step and arithmetic:**
+- One 2 ms input step is a fixed phase sequence. Layer 1 multiplies 4-bit counts
+  by int8 weights; layers 2 and 3 add weight rows for spikes.
+- Delays are 0..30 steps through 32-slot histories.
+- The LIF update is `v − (v >>> 2) + acc·2^F`. A neuron fires at an integer
+  threshold and its membrane then resets to 0.
+
+**Sizing and refusal:**
+- Every width comes from a written bound for inputs of at most 1024 steps and
+  counts of at most 15, so nothing saturates.
+- A longer or empty input raises `error` and does not run.
+
+**Two modes, one result:**
+- `ZERO_SKIP = 1` reads a weight row only for a non-zero input; `ZERO_SKIP = 0`
+  reads every row.
+- Both give identical accumulators. `row_reads` reports which rows were read.
+
+**Weights and delays** are ROM contents loaded by `$readmemh` in a form
+synthesis keeps. Bit-exactness of a synthesised netlist is verified
+separately, by post-synthesis simulation.
+
+**Tests:** `pytest tests/test_shd_int_core_cosim.py` cosimulates random and edge
+networks against the reference with Icarus Verilog.
+
+**Legacy model:** `sc_shd_top.v` and its Vmin/Q8.8 cells implement the earlier
+binary-input model and are superseded by this core.
