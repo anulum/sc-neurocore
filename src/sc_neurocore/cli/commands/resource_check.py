@@ -15,7 +15,8 @@ import json
 from pathlib import Path
 
 #: Exit status for each overall verdict; an undetermined run is never success.
-EXIT_CODES = {"pass": 0, "violation": 1, "undetermined": 2}
+#: The keys are verdict names; bandit B105 reads the "pass" key as a password.
+EXIT_CODES = {"pass": 0, "violation": 1, "undetermined": 2}  # nosec B105
 
 
 def add_resource_check_command(
