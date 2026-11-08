@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import gc
 import importlib.util
 import json
 import os
@@ -19,7 +18,6 @@ import subprocess
 import sys
 import textwrap
 import time
-import warnings
 from pathlib import Path
 from types import FrameType
 from typing import Any
@@ -536,32 +534,47 @@ def test_an_interruption_while_waiting_kills_every_process_and_propagates(tmp_pa
     assert _wait_until_gone(child), f"child {child} outlived the interrupted command"
 
 
-def test_an_interruption_leaves_no_output_pipe_open(tmp_path: Path) -> None:
-    """The interrupted command's stdout and stderr pipes are closed, not left to the collector."""
+def test_an_interruption_leaves_no_output_pipe_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The interrupted command's stdout and stderr pipes are closed, not left to the collector.
+
+    The pipes are checked on the process object itself. Counting ResourceWarnings after a
+    collection also counted objects that earlier tests in the same process had leaked.
+    """
     tool = _load_tool()
+    started: list[subprocess.Popen[str]] = []
+
+    class RecordingPopen(subprocess.Popen[str]):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            super().__init__(*args, **kwargs)
+            started.append(self)
+
+    monkeypatch.setattr(tool.subprocess, "Popen", RecordingPopen)
 
     def interrupt(_signum: int, _frame: FrameType | None) -> None:
         raise _Interrupted
 
     previous = signal.signal(signal.SIGALRM, interrupt)
     signal.setitimer(signal.ITIMER_REAL, 0.5)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", ResourceWarning)
-        try:
-            with pytest.raises(_Interrupted):
-                tool.run_in_process_group(
-                    ["sleep", "60"],
-                    cwd=tmp_path,
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                    check=False,
-                )
-        finally:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-            signal.signal(signal.SIGALRM, previous)
-        gc.collect()
-    assert [str(item.message) for item in caught if item.category is ResourceWarning] == []
+    try:
+        with pytest.raises(_Interrupted):
+            tool.run_in_process_group(
+                ["sleep", "60"],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+    [process] = started
+    assert process.stdout is not None and process.stdout.closed
+    assert process.stderr is not None and process.stderr.closed
+    assert process.returncode is not None
 
 
 def test_ctrl_c_on_the_runner_kills_the_command_it_started(tmp_path: Path) -> None:
