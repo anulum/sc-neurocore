@@ -269,7 +269,29 @@ dependabot PRs merged.
 - API documentation updated with experimental scope and hardware-validation boundaries.
 - Cross-repo bridges verified: SCPN-QUANTUM-CONTROL, SCPN-PHASE-ORCHESTRATOR.
 
-## v4.0.0 — Current release ✓ (current)
+## v4.1.0 — Current release ✓ (current)
+
+The curated summary is
+[RELEASE_NOTES_v4.1.0.md](docs/development/RELEASE_NOTES_v4.1.0.md); the complete
+list of changes is the `[4.1.0]` section of [CHANGELOG.md](CHANGELOG.md).
+
+- Bit-exact integer SHD core in Verilog with its integer Python reference and
+  a trained integer network with integer axonal delays.
+- Device resource reports from `ScGraph.emit_sv_with_report`, with a bound
+  fitted on recorded iCE40 UltraPlus place-and-route runs for the calibrated
+  blocks, and `sc-neurocore resource-check` against real Yosys and nextpnr runs.
+- `sc-neurocore hardware-path` from a catalogue model to synthesis, guarantee
+  summaries from `compile-ir`, and hash-bound evidence packets for one
+  generated dense layer design.
+- Engine wheels published through trusted publishing and signed build
+  provenance on every release file.
+- SNN Studio remains a development preview.
+- Only the latest 4.1.x patch receives security fixes (see
+  [SECURITY.md](SECURITY.md)).
+
+## v4.0.0 — Previous release ✓
+
+- Released 2026-10-29.
 
 The curated summary is
 [RELEASE_NOTES_v4.0.0.md](docs/development/RELEASE_NOTES_v4.0.0.md); the complete
@@ -290,7 +312,7 @@ list of changes is the `[4.0.0]` section of [CHANGELOG.md](CHANGELOG.md).
 - Only the latest 4.0.x patch receives security fixes; support for 3.x ended
   with this release (see [SECURITY.md](SECURITY.md)).
 
-## v3.16 — Previous release baseline ✓
+## v3.16 — Earlier release ✓
 
 - Released 2026-07-05.
 - HDL static inventory at that release: 43 top-level non-testbench Verilog RTL modules
@@ -395,7 +417,7 @@ Built-in outer loop using Zenith’s mapping controlling internal thresholds ada
 
 Progress (2026-05-21): `ArcaneZenithCognitiveCore` now exposes a built-in outer-loop API (`run_meta_learning_episode`) with deterministic per-step adaptation traces, bounded-parameter contract checks, fail-closed empty-input validation, and compact symbolic trace export (`export_reasoning_trace`) for downstream introspection.
 
-## v4.1 — Community & Ecosystem (target: Q4 2026)
+## Later 4.x releases — Community & Ecosystem
 
 ### Community seeding
 
@@ -404,8 +426,8 @@ Progress (2026-05-21): `ArcaneZenithCognitiveCore` now exposes a built-in outer-
 - ~~Lab outreach~~ templates ready in `docs/internal/`
 - GitHub Discussions with seeded categories
 - Publish `sc_neurocore_engine` wheels through the trusted-publisher release
-  path. This remains gated on current wheel publication and install-smoke
-  evidence in the internal TODO.
+  path. The path and a smoke test of every wheel on its own platform are in
+  place from 4.1.0; the first upload through it is the 4.1.0 release.
 
 ### Silicon partnerships
 

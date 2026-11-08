@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-11-08
+
+- The curated summary of this release is `docs/development/RELEASE_NOTES_v4.1.0.md`, which is also the GitHub Release text.
+- Accept rounding differences between processors in `tools/ice40_up5k_calibration.py --check`.
+  NNLS and the BLAS kernels under it round the last digits of a fitted constant
+  differently on different CPUs, so a hosted runner found the generated Rust
+  constants stale. The check now compares the text outside the floating-point
+  literals exactly and each literal within 1e-9; the generated constants are
+  unchanged. `tools/export_shd_int_network.py` loads its checkpoint with
+  `weights_only=True` and reproduces the committed network byte for byte.
+
 - Align the dependency locks with current upstream releases (2026-11-08).
   Every hash-locked Python profile is regenerated with its own recorded
   command; pinned tools move to ruff 0.17.4, semgrep 1.184.0, cyclonedx-bom

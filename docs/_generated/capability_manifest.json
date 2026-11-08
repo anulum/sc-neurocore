@@ -977,7 +977,7 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 666,
+    "public_documentation_pages": 667,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
@@ -1383,6 +1383,7 @@
       "docs/compiler/standalone_function_units.md",
       "docs/development/RELEASE_NOTES_v2.0.0.md",
       "docs/development/RELEASE_NOTES_v4.0.0.md",
+      "docs/development/RELEASE_NOTES_v4.1.0.md",
       "docs/development/audit_cadence.md",
       "docs/development/dependency_audits.md",
       "docs/development/licensing.md",
@@ -3317,7 +3318,7 @@
     "name": "sc-neurocore",
     "readme": "README.md",
     "requires_python": ">=3.11",
-    "version": "4.0.0"
+    "version": "4.1.0"
   },
   "project_label": "SC-NeuroCore",
   "quality_gates": {

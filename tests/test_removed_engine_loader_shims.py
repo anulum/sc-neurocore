@@ -49,16 +49,21 @@ REMOVED_SHIMS = {
 }
 
 
-def _unreleased_notes() -> str:
-    """Return the ``[Unreleased]`` section of the root changelog.
+def _release_notes(heading: str) -> str:
+    """Return one section of the root changelog.
+
+    Parameters
+    ----------
+    heading : str
+        Section heading after ``## ``, for example ``[4.1.0]``.
 
     Returns
     -------
     str
-        Text between the ``[Unreleased]`` heading and the next release heading.
+        Text between that heading and the next section heading.
     """
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    start = text.index("## [Unreleased]")
+    start = text.index(f"## {heading}")
     return text[start : text.index("\n## [", start + 1)]
 
 
@@ -123,8 +128,8 @@ def test_engine_bridge_still_provides_each_removed_loader(old_module: str) -> No
 
 
 def test_changelog_names_every_removed_loader_and_its_replacement() -> None:
-    """The unreleased notes name each removed loader, its old module and its engine module."""
-    notes = " ".join(_unreleased_notes().split())
+    """The 4.1.0 notes name each removed loader, its old module and its engine module."""
+    notes = " ".join(_release_notes("[4.1.0]").split())
     for old_module, (engine_module, names) in REMOVED_SHIMS.items():
         assert f"`{old_module.removeprefix('sc_neurocore.')}`" in notes
         assert f"`{engine_module}`" in notes
