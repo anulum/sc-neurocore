@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1822
+expected_file_count = 1824
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7342,3 +7342,11 @@ rationale = "Pin the trained integer network artefact and run it bit-exactly on 
 [[file]]
 path = "data/masquelier_shd/train_dcls_max.py"
 rationale = "Train the DCLS-max SHD model whose annealed delays become the integer network."
+
+[[file]]
+path = "tests/studio_storage_tree_support.py"
+rationale = "Start real leader process trees and observe their PIDs for the worker-tree custody tests."
+
+[[file]]
+path = "tests/test_cli_deploy_auto_synthesis.py"
+rationale = "Drive the deploy command and its synthesis helper through Yosys, place and route, packing and hierarchical designs."

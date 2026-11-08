@@ -100,7 +100,7 @@ def main() -> None:
     config.neuron_module = CompatibleLIFNode
     ckpt_path = os.path.join(RUN, CKPT)
     model = SNN_axonal_feedforward_delays(config)
-    model.load_state_dict(torch.load(ckpt_path, map_location="cpu", weights_only=False)["net"])
+    model.load_state_dict(torch.load(ckpt_path, map_location="cpu", weights_only=True)["net"])
     model.eval()
 
     dcls = [m for m in model.layers if isinstance(m, dcls_module)]

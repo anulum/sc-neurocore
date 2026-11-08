@@ -46,7 +46,8 @@ than validated on held-out lengths.
 ``--check`` refits, checks that every fit, held-out and folded design inside
 the domain is within its bound, that every over-capacity design is judged not
 to fit, that the weight probes show zero weights only reducing logic, and that
-the generated Rust file is current. ``--write`` regenerates it.
+the generated Rust file is current to floating-point rounding
+(:func:`constants_match`). ``--write`` regenerates it.
 
 Usage::
 
@@ -59,6 +60,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from collections.abc import Callable
@@ -70,6 +72,15 @@ from scipy.optimize import nnls
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MEASUREMENTS = REPO_ROOT / "benchmarks" / "results" / "ice40_up5k_calibration" / "designs.json"
 GENERATED = REPO_ROOT / "engine" / "src" / "ir" / "ice40_calibration.rs"
+
+#: Tolerance, relative and absolute, of ``--check`` for each generated float.
+#: NNLS and the BLAS kernels under it round differently on different CPUs: an
+#: AVX-512 workstation and an AVX-only Xeon disagree in the last one or two
+#: digits of eight fitted values, and so do hosted CI runners.
+GENERATED_FLOAT_TOLERANCE = 1e-9
+
+#: A floating-point literal of the generated file, not part of a longer word.
+_FLOAT_LITERAL = re.compile(r"(?<![\w.])-?\d+(?:\.\d+(?:[eE][-+]?\d+)?|[eE][-+]?\d+)(?![\w.])")
 
 #: Explicit extra logic-cell margin for synapse streams. Synthesis of the
 #: power-of-two streams moves by a few cells without following the length
@@ -475,6 +486,44 @@ def render(model: dict[str, Any], measured: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def constants_match(committed: str, generated: str) -> bool:
+    """Return whether two renderings differ only in floating-point rounding.
+
+    Parameters
+    ----------
+    committed : str
+        Text of the committed Rust file.
+    generated : str
+        Text that :func:`render` produced on this machine.
+
+    Returns
+    -------
+    bool
+        True when the text outside the floating-point literals is the same,
+        apart from whitespace and the trailing comma before ``]`` (an array
+        moves between one line and several with the length of its literals),
+        and every literal is within :data:`GENERATED_FLOAT_TOLERANCE` of its
+        counterpart.
+    """
+
+    def skeleton(text: str) -> str:
+        return re.sub(r"\s+", "", _FLOAT_LITERAL.sub("#", text)).replace(",]", "]")
+
+    if skeleton(committed) != skeleton(generated):
+        return False
+    return all(
+        math.isclose(
+            float(a),
+            float(b),
+            rel_tol=GENERATED_FLOAT_TOLERANCE,
+            abs_tol=GENERATED_FLOAT_TOLERANCE,
+        )
+        for a, b in zip(
+            _FLOAT_LITERAL.findall(committed), _FLOAT_LITERAL.findall(generated), strict=True
+        )
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the check or regenerate the constants.
 
@@ -524,7 +573,7 @@ def main(argv: list[str] | None = None) -> int:
         GENERATED.write_text(text, encoding="utf-8")
         print(f"wrote {GENERATED.relative_to(REPO_ROOT)}")
         return 0
-    if not GENERATED.exists() or GENERATED.read_text(encoding="utf-8") != text:
+    if not GENERATED.exists() or not constants_match(GENERATED.read_text(encoding="utf-8"), text):
         print(f"{GENERATED.relative_to(REPO_ROOT)} is stale; run with --write")
         return 1
     print("calibration holds and the generated constants are current")

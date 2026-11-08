@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (auto_synthesis) from former test_cli_deploy.py
 
+"""Open-source synthesis, place and route, and packing reached from the deploy command."""
+
 from __future__ import annotations
 
 import shutil

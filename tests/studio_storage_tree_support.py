@@ -42,6 +42,7 @@ def leader(body: str) -> subprocess.Popen[str]:
 
 
 def tree_for(child: subprocess.Popen[str]) -> WorkerTree:
+    """Track the leader ``child`` through a pidfd and its recorded start time."""
     pidfd = os.pidfd_open(child.pid)
     return WorkerTree(
         TrackedProcess(pid=child.pid, pidfd=pidfd, start_token=process_start_token(child.pid))
@@ -49,6 +50,7 @@ def tree_for(child: subprocess.Popen[str]) -> WorkerTree:
 
 
 def reported(child: subprocess.Popen[str]) -> list[int]:
+    """Read the descendant PIDs that the leader ``child`` printed as one JSON list."""
     assert child.stdout is not None
     line = child.stdout.readline()
     assert line, "leader exited before reporting its descendants"
@@ -58,6 +60,7 @@ def reported(child: subprocess.Popen[str]) -> list[int]:
 
 
 def observe_until(tree: WorkerTree, pids: list[int]) -> None:
+    """Observe ``tree`` until it owns every PID in ``pids``, failing after ten seconds."""
     deadline = time.monotonic() + 10.0
     while time.monotonic() < deadline:
         tree.observe()
@@ -86,6 +89,7 @@ def gone(pid: int, start_token: str | None = None) -> bool:
 
 
 def finish(child: subprocess.Popen[str], tree: WorkerTree) -> None:
+    """Kill the whole tree, wait for the leader and release its pidfd and pipe."""
     try:
         tree.kill(rounds=20)
         child.wait(timeout=10.0)
@@ -96,6 +100,7 @@ def finish(child: subprocess.Popen[str], tree: WorkerTree) -> None:
 
 
 def ppid(pid: int) -> int:
+    """Return the parent PID of ``pid`` from ``/proc``, or -1 when it has gone."""
     try:
         with open(f"/proc/{pid}/stat", encoding="ascii") as handle:
             return int(handle.read().rsplit(")", 1)[-1].split()[1])
@@ -104,6 +109,7 @@ def ppid(pid: int) -> int:
 
 
 def one_child_leader() -> tuple[subprocess.Popen[str], WorkerTree, int]:
+    """Start a leader with one forked child and return the leader, its tree and the child PID."""
     child = leader(
         "pid = os.fork()\n"
         "if pid == 0:\n"

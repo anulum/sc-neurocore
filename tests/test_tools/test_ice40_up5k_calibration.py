@@ -164,6 +164,39 @@ def test_write_regenerates_a_stale_file_and_a_broken_record_fails(
     assert "calibration does not hold:" in out and "held4_dense_3x3_w18: 1000000" in out
 
 
+def test_check_accepts_another_cpu_rounding_and_refuses_a_real_change(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Last-digit rounding of another CPU is current; a moved value or changed text is stale."""
+    committed = calibration.GENERATED.read_text(encoding="utf-8")
+    # Values that an AVX-only Xeon rendered from the same record and libraries.
+    rounded = committed.replace("    233.3856488191447,", "    233.38564881914473,").replace(
+        "[53.96229729729731, 1.054783783783783];", "[53.9622972972973, 1.0547837837837837];"
+    )
+    assert rounded != committed
+    assert calibration.constants_match(committed, rounded)
+    moved = committed.replace("    233.3856488191447,", "    233.3857488191447,")
+    assert moved != committed
+    assert not calibration.constants_match(committed, moved)
+    renamed = committed.replace("pub const LIF_PATH:", "pub const LIF_PATHS:")
+    assert not calibration.constants_match(committed, renamed)
+    assert not calibration.constants_match(committed, committed.replace("(2, 12)", "(2, 13)"))
+    assert calibration.constants_match(
+        "pub const X: [f64; 2] = [1.5, 0.0];", "pub const X: [f64; 2] = [\n    1.5,\n    1e-17,\n];"
+    )
+    generated = tmp_path / "ice40_calibration.rs"
+    generated.write_text(rounded, encoding="utf-8")
+    monkeypatch.setattr(calibration, "GENERATED", generated)
+    monkeypatch.setattr(calibration, "REPO_ROOT", tmp_path)
+    assert calibration.main(["--check"]) == 0
+    generated.write_text(moved, encoding="utf-8")
+    capsys.readouterr()
+    assert calibration.main(["--check"]) == 1
+    assert "ice40_calibration.rs is stale; run with --write" in capsys.readouterr().out
+
+
 def test_the_script_entry_point_exits_with_the_check_status(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
