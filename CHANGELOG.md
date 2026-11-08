@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add the trained integer SHD network for the bit-exact core (2026-11-08).
+  `hdl/fixtures/shd_int_network.json` is the integer
+  form of a DCLS-max checkpoint trained with sharp delays. It runs bit for
+  bit on `hdl/sc_shd_int_core.v`; `shd_int_network.README.md` records the
+  checkpoint and export provenance. `tools/export_shd_int_network.py` reproduces
+  the file from the checkpoint. `tests/test_shd_int_network.py` pins its
+  digest and runs it on the core. The core testbench waits out the vendor
+  global set/reset when it drives a synthesised netlist, and the training
+  script cites the learnable-delays paper as arXiv 2306.17670.
+
 - Add a bit-exact integer SHD core and its reference (2026-11-07).
   `tools/shd_int_reference.py` defines the integer-delay SHD network in integers:
   - 4-bit counts in, int8 weights;

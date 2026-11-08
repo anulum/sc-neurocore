@@ -84,6 +84,7 @@ def _check(net: ref.IntNetwork, samples: list) -> None:
 
 @pytest.mark.parametrize("seed", [0, 5])
 def test_random_networks_are_bit_exact(seed: int) -> None:
+    """Random networks run bit-exactly on the core in both zero-skip modes."""
     _check(_random(seed), _stimuli(seed))
 
 
@@ -132,11 +133,12 @@ def test_random_networks_are_bit_exact(seed: int) -> None:
     ],
 )
 def test_edge_networks_are_bit_exact(name: str, overrides: dict) -> None:
+    """Extreme delays, weights and thresholds run bit-exactly on the core."""
     _check(_random(11, **overrides), _stimuli(11))
 
 
 def _leak_probe(layer: int) -> tuple[ref.IntNetwork, np.ndarray]:
-    """A network whose output depends only on how the leak rounds a negative membrane.
+    """Build a network whose output depends only on how the leak rounds a negative membrane.
 
     The probed layer sees -5 at step 0 and +10 at step 1 with threshold 7: rounding the leak
     toward minus infinity gives -5 - floor(-5 / 4) + 10 = 7 (fires), rounding toward zero
@@ -165,6 +167,7 @@ def _leak_probe(layer: int) -> tuple[ref.IntNetwork, np.ndarray]:
 
 @pytest.mark.parametrize("layer", [1, 2])
 def test_negative_membrane_leak_rounds_toward_minus_infinity(layer: int) -> None:
+    """The core's leak rounds a negative membrane toward minus infinity, as the reference does."""
     net, frames = _leak_probe(layer)
     assert ref.run(net, frames)[0] == 128  # the probe separates the two roundings
     for zero_skip in (1, 0):
@@ -177,6 +180,7 @@ def test_negative_membrane_leak_rounds_toward_minus_infinity(layer: int) -> None
 
 
 def test_longest_accepted_input_is_bit_exact() -> None:
+    """The longest accepted input at full counts runs bit-exactly on the core."""
     net = _random(
         13, frac_bits=8, d1=Z1, d2=Z2, q1=np.full((128, 140), 127), theta1=4000, theta2=300
     )
@@ -185,10 +189,12 @@ def test_longest_accepted_input_is_bit_exact() -> None:
 
 
 def test_stimulus_writer_rejects_counts_outside_four_bits(tmp_path: Path) -> None:
+    """The stimulus writer refuses counts that do not fit four bits."""
     with pytest.raises(ValueError):
         cosim.write_stimulus([np.full((2, 140), 16)], tmp_path / "s.hex")
 
 
 def test_simulate_requires_a_positive_deadline() -> None:
+    """Simulation refuses a deadline that is not positive."""
     with pytest.raises(ValueError):
         cosim.simulate(_random(0), [np.zeros((1, 140), dtype=np.int64)], timeout_seconds=0)

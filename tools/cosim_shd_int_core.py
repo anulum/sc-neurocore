@@ -49,6 +49,7 @@ class SampleResult:
 
     @property
     def matches(self) -> bool:
+        """Return whether the RTL accumulators equal the reference accumulators."""
         return self.rtl == self.reference
 
 
@@ -210,6 +211,18 @@ def _load_frames(path: Path) -> tuple[list[np.ndarray], np.ndarray]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Cosimulate every sample of an npz file on the core and print a JSON summary.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments; ``sys.argv[1:]`` when omitted.
+
+    Returns
+    -------
+    int
+        0 when every sample's RTL accumulators equal the reference, 1 otherwise.
+    """
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("network", type=Path, help="integer network JSON (IntNetwork.to_json)")
     parser.add_argument("frames", type=Path, help="npz with frames, lengths and labels")

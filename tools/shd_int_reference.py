@@ -50,6 +50,8 @@ class InputRefused(ValueError):
 
 @dataclass(frozen=True)
 class IntNetwork:
+    """Integer SHD network: per-channel delays, int8 weights, fraction bits and LIF thresholds."""
+
     frac_bits: int
     d1: np.ndarray  # (140,) int, 0..30
     d2: np.ndarray  # (128,) int, 0..30
@@ -60,6 +62,7 @@ class IntNetwork:
     theta2: int
 
     def __post_init__(self) -> None:
+        """Refuse shapes, dtypes and value ranges the core cannot hold."""
         for name, arr, shape in (
             ("d1", self.d1, (N_INPUT,)),
             ("d2", self.d2, (N_HIDDEN,)),
@@ -88,10 +91,12 @@ class IntNetwork:
         return -4 * x, theta + x - 1
 
     def membrane_width(self, layer: int) -> int:
+        """Return the signed bit width that holds every membrane value of ``layer``."""
         lo, hi = self.membrane_bound(layer)
         return max((-lo).bit_length(), hi.bit_length()) + 1
 
     def to_json(self) -> str:
+        """Serialise the network as JSON with sorted keys."""
         return json.dumps(
             {
                 "frac_bits": self.frac_bits,
@@ -108,6 +113,7 @@ class IntNetwork:
 
     @classmethod
     def from_json(cls, text: str) -> "IntNetwork":
+        """Build a network from the JSON written by :meth:`to_json`."""
         raw = json.loads(text)
         return cls(
             frac_bits=int(raw["frac_bits"]),
@@ -164,7 +170,7 @@ def _lif(acc: np.ndarray, frac_bits: int, theta: int, bounds: tuple[int, int]) -
 
 
 def run(net: IntNetwork, counts: np.ndarray) -> np.ndarray:
-    """The 20 output accumulators for one sample."""
+    """Return the 20 output accumulators for one sample."""
     c = prepare_counts(counts)
     t_in = c.shape[0]
     t1 = t_in + DELAY_HALF

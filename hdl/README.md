@@ -99,5 +99,9 @@ separately, by post-synthesis simulation.
 **Tests:** `pytest tests/test_shd_int_core_cosim.py` cosimulates random and edge
 networks against the reference with Icarus Verilog.
 
+**Trained network:** `fixtures/shd_int_network.json`, with its provenance in
+`fixtures/shd_int_network.README.md`. `tests/test_shd_int_network.py` runs it
+on the core.
+
 **Legacy model:** `sc_shd_top.v` and its Vmin/Q8.8 cells implement the earlier
 binary-input model and are superseded by this core.

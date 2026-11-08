@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1815
+expected_file_count = 1822
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7314,3 +7314,31 @@ rationale = "Bind the device-target emission and its report to the committed cal
 [[file]]
 path = "tests/test_tools/test_ice40_up5k_calibration.py"
 rationale = "Refit the committed record and refuse every planted violation of its bound, probe rules and held-out isolation."
+
+[[file]]
+path = "tools/shd_int_reference.py"
+rationale = "Define the integer SHD network arithmetic, its proven bounds and its input refusals for the bit-exact core."
+
+[[file]]
+path = "tools/cosim_shd_int_core.py"
+rationale = "Write the core's ROM and stimulus files and compare every RTL accumulator with the integer reference."
+
+[[file]]
+path = "tools/export_shd_int_network.py"
+rationale = "Export a DCLS-max SHD checkpoint to the integer network with single-tap delay and int8 quantisation checks."
+
+[[file]]
+path = "tests/test_shd_int_reference.py"
+rationale = "Pin the integer reference's input contract, delays, leak rounding, bounds and argmax ties."
+
+[[file]]
+path = "tests/test_shd_int_core_cosim.py"
+rationale = "Cosimulate random and edge networks on the core against the reference in both zero-skip modes."
+
+[[file]]
+path = "tests/test_shd_int_network.py"
+rationale = "Pin the trained integer network artefact and run it bit-exactly on the core."
+
+[[file]]
+path = "data/masquelier_shd/train_dcls_max.py"
+rationale = "Train the DCLS-max SHD model whose annealed delays become the integer network."

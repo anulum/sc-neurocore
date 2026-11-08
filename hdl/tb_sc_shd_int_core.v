@@ -51,6 +51,10 @@ module tb_sc_shd_int_core;
     initial begin
         $readmemh("stimulus.hex", stim);
         fd = $fopen("outputs.txt", "w");
+`ifdef GATE_LEVEL
+        // Vendor cell models hold every register in global set/reset for the first 100 ns.
+        #200;
+`endif
         repeat (3) @(posedge clk);
         rst_n = 1;
         @(posedge clk);

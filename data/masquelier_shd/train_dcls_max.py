@@ -6,10 +6,12 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Train SHD with DCLS max (Hammouamri 2024) for FPGA integer delays
-"""Train SHD model from scratch with DCLS 'max' version (triangular kernel
-with cosine-annealed sigma) — Tim Masquelier's recommendation 2026-04-09.
+"""Train an SHD model from scratch with the DCLS 'max' version for integer delays.
 
-Reference: Hammouamri et al. 2024, https://arxiv.org/abs/2306.00817
+The kernel is triangular with a cosine-annealed sigma, following Tim Masquelier's
+recommendation of 2026-04-09.
+
+Reference: Hammouamri et al. 2024, https://arxiv.org/abs/2306.17670
 
 The 'max' version uses ((SIG - |X|).relu()).prod() — triangular kernel
 with learnable bandwidth SIG. We schedule SIG from 15 → 0 over training:
@@ -413,7 +415,7 @@ def train_with_regulariser(
     lambda_delay=0.0,
     l1_weight=0.0,
 ):
-    """Custom training loop with integer delay regulariser and L1 weight penalty."""
+    """Train one epoch with the integer delay regulariser and the L1 weight penalty."""
     from src.SHD.trainer import (
         reset_states,
         calc_loss_SHD,
@@ -1037,7 +1039,7 @@ if __name__ == "__main__":
 
     config_data = {
         "dcls_version": "max",
-        "reference": "Hammouamri 2024 arxiv 2306.00817",
+        "reference": "Hammouamri 2024 arxiv 2306.17670",
         "neuron_module": neuron_module_name,
         "sigma_schedule": "cosine",
         "sigma_init": SIG_INIT,

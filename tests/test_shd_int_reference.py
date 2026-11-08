@@ -50,16 +50,19 @@ def _network(rng: np.random.Generator, **overrides) -> ref.IntNetwork:
     ],
 )
 def test_input_outside_the_contract_is_refused(frames: np.ndarray) -> None:
+    """Empty, over-long, wrongly shaped, negative and fractional inputs are refused."""
     with pytest.raises(ref.InputRefused):
         ref.run(_network(np.random.default_rng(0)), frames)
 
 
 def test_counts_above_fifteen_clamp_to_fifteen() -> None:
+    """Counts above fifteen give the same output as counts of fifteen."""
     net = _network(np.random.default_rng(1))
     assert np.array_equal(ref.run(net, np.full((6, 140), 40)), ref.run(net, np.full((6, 140), 15)))
 
 
 def test_delay_moves_each_channel_by_exactly_its_delay() -> None:
+    """Each channel is shifted by its own delay and truncated at the output length."""
     x = np.zeros((5, 3), dtype=np.int64)
     x[0] = [1, 2, 3]
     x[4] = [4, 5, 6]
@@ -70,6 +73,7 @@ def test_delay_moves_each_channel_by_exactly_its_delay() -> None:
 
 
 def test_membrane_leak_rounds_toward_minus_infinity_on_negative_values() -> None:
+    """The leak of a negative membrane rounds toward minus infinity."""
     # v = -5 after step 0. Step 1 adds 10: floor rounding gives -5 - floor(-5/4) + 10 = 7,
     # rounding toward zero would give -5 - (-1) + 10 = 6. Threshold 7 separates the two.
     acc = np.array([[-5], [10]], dtype=np.int64)
@@ -78,6 +82,7 @@ def test_membrane_leak_rounds_toward_minus_infinity_on_negative_values() -> None
 
 
 def test_lif_fires_at_threshold_and_resets_to_zero() -> None:
+    """A neuron fires when the membrane reaches the threshold and resets to zero."""
     acc = np.array([[5], [0], [4], [0]], dtype=np.int64)
     spikes = ref._lif(acc, 0, theta=5, bounds=(-100, 100))
     # step0 u=5 fires; step1 u=0; step2 u=4; step3 u=4-1=3
@@ -88,6 +93,7 @@ def test_lif_fires_at_threshold_and_resets_to_zero() -> None:
     "q1_value, q3_value, theta", [(-127, 127, 1), (127, -127, 1), (127, 127, 2**30)]
 )
 def test_proven_bounds_hold_at_the_extremes(q1_value: int, q3_value: int, theta: int) -> None:
+    """Extreme weights and thresholds on the longest full input stay within the output bound."""
     net = ref.IntNetwork(
         frac_bits=8,
         d1=Z1,
@@ -103,6 +109,7 @@ def test_proven_bounds_hold_at_the_extremes(q1_value: int, q3_value: int, theta:
 
 
 def test_membrane_width_covers_both_bounds() -> None:
+    """The derived membrane width holds both the lowest and the highest membrane value."""
     net = _network(np.random.default_rng(2), frac_bits=4, theta1=820, theta2=636)
     for layer in (1, 2):
         low, high = net.membrane_bound(layer)
@@ -111,6 +118,7 @@ def test_membrane_width_covers_both_bounds() -> None:
 
 
 def test_bounds_constants_match_the_written_arithmetic() -> None:
+    """The bound constants equal their written arithmetic and fit the stated widths."""
     assert ref.L1_ACC_BOUND == 140 * 15 * 127 == 266_700 < 2**19
     assert ref.HIDDEN_ACC_BOUND == 128 * 127 == 16_256 < 2**14
     assert ref.OUTPUT_BOUND == (1024 + 30) * 16_256 == 17_133_824 < 2**25
@@ -126,16 +134,19 @@ def test_bounds_constants_match_the_written_arithmetic() -> None:
     ],
 )
 def test_invalid_network_is_rejected(field: str, value) -> None:
+    """Out-of-range delays, weights, shapes and thresholds are rejected."""
     with pytest.raises(ValueError):
         _network(np.random.default_rng(3), **{field: value})
 
 
 def test_json_round_trip_is_exact() -> None:
+    """A network survives a JSON round trip unchanged."""
     net = _network(np.random.default_rng(4))
     assert ref.IntNetwork.from_json(net.to_json()).to_json() == net.to_json()
 
 
 def test_argmax_ties_go_to_the_lowest_index() -> None:
+    """A tie between class accumulators predicts the lowest class index."""
     rng = np.random.default_rng(5)
     net = _network(rng, q3=np.tile(rng.integers(-127, 128, (1, 128)), (20, 1)))
     out = ref.run(net, rng.integers(0, 16, (60, 140)))
