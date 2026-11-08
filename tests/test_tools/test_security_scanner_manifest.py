@@ -70,8 +70,8 @@ def test_manifest_scanner_versions_match_governed_locks() -> None:
     scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
-    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.183.0"
-    assert scanners["ruff"]["pinned_version"] == "ruff==0.17.3"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.184.0"
+    assert scanners["ruff"]["pinned_version"] == "ruff==0.17.4"
     assert scanners["mypy"]["pinned_version"] == "mypy==2.4.1"
     repo = Path(__file__).resolve().parents[2]
     for name, source in (("semgrep", "semgrep.in"), ("ruff", "lint.in"), ("mypy", "lint.in")):

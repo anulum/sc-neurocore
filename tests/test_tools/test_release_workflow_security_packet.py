@@ -98,9 +98,9 @@ def test_release_workflow_installs_real_release_sweep_tools() -> None:
     assert "python -m pip install --require-hashes -r requirements/fuzz.txt" in run_text
     assert "go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12" in run_text
     assert "go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0" in run_text
-    assert "go install github.com/anchore/syft/cmd/syft@v1.55.0" in run_text
+    assert "go install github.com/anchore/syft/cmd/syft@v1.57.0" in run_text
     assert "go install github.com/zricethezav/gitleaks/v8@v8.30.1" in run_text
-    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1" in run_text
+    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.2" in run_text
     assert "cargo install cargo-audit --version 0.22.2 --locked" in run_text
     assert "cargo install cargo-deny --version 0.20.2 --locked" in run_text
     assert "cargo install cargo-fuzz --version 0.13.2" in run_text

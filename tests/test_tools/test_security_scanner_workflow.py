@@ -167,7 +167,7 @@ def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "go install github.com/anchore/syft/cmd/syft@v1.55.0" in run_text
+    assert "go install github.com/anchore/syft/cmd/syft@v1.57.0" in run_text
     assert "tools/security_scan/run_syft_cyclonedx_scanners.py" in run_text
     assert "security/ci-security-packet/security/sbom.cdx.json" in run_text
     assert "security/ci-security-packet/security/syft_cyclonedx_summary.json" in run_text
@@ -184,7 +184,7 @@ def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
         "python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt" in run_text
     )
     assert "go install github.com/zricethezav/gitleaks/v8@v8.30.1" in run_text
-    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1" in run_text
+    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.2" in run_text
 
     assert "tools/security_scan/run_semgrep_scanners.py" in run_text
     assert "security/ci-security-packet/security/semgrep.json" in run_text

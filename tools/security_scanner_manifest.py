@@ -196,7 +196,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.183.0",
+        pinned_version="semgrep==1.184.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -217,7 +217,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="medium",
-        pinned_version="trivy==0.76.1",
+        pinned_version="trivy==0.76.2",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -235,7 +235,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="syft==1.55.0",
+        pinned_version="syft==1.57.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -336,7 +336,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore code quality owner",
         noise="low",
-        pinned_version="ruff==0.17.3",
+        pinned_version="ruff==0.17.4",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

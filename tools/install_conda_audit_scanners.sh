@@ -14,14 +14,14 @@ audit_download_dir=$(mktemp -d "${TMPDIR:?Set TMPDIR to an owned directory}/cond
 trap 'rm -rf -- "$audit_download_dir"' EXIT
 mkdir -p "$audit_scanner_bin"
 curl -fsSL --retry 3 \
-  https://github.com/anchore/syft/releases/download/v1.55.0/syft_1.55.0_linux_amd64.tar.gz \
+  https://github.com/anchore/syft/releases/download/v1.57.0/syft_1.57.0_linux_amd64.tar.gz \
   -o "$audit_download_dir/syft.tar.gz"
-printf '%s  %s\n' bb65249542db5fedeeb4d3f9b018b75e7264dbfbbb10486f044581a92f90490d \
+printf '%s  %s\n' 9c077a7d43029b3b13e98a8db720661e700c4d58db6352153a06395ae4a2a704 \
   "$audit_download_dir/syft.tar.gz" | sha256sum --check --status
 tar -xzf "$audit_download_dir/syft.tar.gz" -C "$audit_scanner_bin" syft
 curl -fsSL --retry 3 \
-  https://github.com/anchore/grype/releases/download/v0.121.0/grype_0.121.0_linux_amd64.tar.gz \
+  https://github.com/anchore/grype/releases/download/v0.121.2/grype_0.121.2_linux_amd64.tar.gz \
   -o "$audit_download_dir/grype.tar.gz"
-printf '%s  %s\n' 64e07133d3486115de647a66581461dccf5c732748a0a3119077395565f15519 \
+printf '%s  %s\n' 9c8965ced9df657e5e851c14021bae838802f711edd7a48f9bc3c923a8d28f12 \
   "$audit_download_dir/grype.tar.gz" | sha256sum --check --status
 tar -xzf "$audit_download_dir/grype.tar.gz" -C "$audit_scanner_bin" grype

@@ -103,9 +103,9 @@ jobs:
           retry_go_install go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           retry_go_install go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
-          retry_go_install go install github.com/anchore/syft/cmd/syft@v1.55.0
+          retry_go_install go install github.com/anchore/syft/cmd/syft@v1.57.0
           retry_go_install go install github.com/zricethezav/gitleaks/v8@v8.30.1
-          retry_go_install go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1
+          retry_go_install go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.2
           cargo install cargo-audit --version 0.22.2 --locked
           cargo install cargo-deny --version 0.20.2 --locked
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"

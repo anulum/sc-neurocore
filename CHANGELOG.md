@@ -12,6 +12,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Align the dependency locks with current upstream releases (2026-11-08).
+  Every hash-locked Python profile is regenerated with its own recorded
+  command; pinned tools move to ruff 0.17.4, semgrep 1.184.0, cyclonedx-bom
+  8.0.1, click 8.5.1, hypothesis 6.170.15, mkdocs-material 9.8.1, jupyterlab
+  4.6.6, notebook 7.6.5 and the current setuptools stubs. The Rust locks take
+  cc 1.11.1 and smallvec 1.16.5, and the fuzz workspace follows the engine to
+  z3 0.22. The Studio frontend takes the current Vite, Vitest, Playwright,
+  module-federation, React Flow, Zustand and eslint-plugin-jsdoc releases.
+  The release and container workflows pin action-gh-release 3.0.4 and
+  login-action 4.8.0, and the scanners move to Syft 1.57.0, Grype 0.121.2
+  and Trivy 0.76.2 (checksums and image digest pinned). Recorded holds are
+  unchanged: Rust 1.99.1, TypeScript
+  7, uv 0.13.6, brian2 2.11, MCP 2, Mojo 1.2, the Sinabs NIR range and
+  Semgrep's click range.
+
 - Add the trained integer SHD network for the bit-exact core (2026-11-08).
   `hdl/fixtures/shd_int_network.json` is the integer
   form of a DCLS-max checkpoint trained with sharp delays. It runs bit for

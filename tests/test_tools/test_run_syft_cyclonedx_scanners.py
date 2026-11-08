@@ -59,7 +59,7 @@ def test_manifest_syft_command_uses_packet_runner() -> None:
         "python tools/security_scan/run_syft_cyclonedx_scanners.py "
         "--output-dir security/ci-security-packet"
     )
-    assert scanners["syft-cyclonedx"]["pinned_version"] == "syft==1.55.0"
+    assert scanners["syft-cyclonedx"]["pinned_version"] == "syft==1.57.0"
 
 
 def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:

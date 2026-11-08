@@ -44,7 +44,7 @@ jobs:
       packages: write
     steps:
       - name: Log in to GHCR
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Log in to GHCR
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -94,7 +94,7 @@ jobs:
       # `latest` follows the newest final release tag; a dispatched image_tag never moves it.
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -127,7 +127,7 @@ jobs:
           test -n "${IMAGE_REF}"
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c image \
+            aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb image \
             --scanners vuln \
             --ignore-unfixed \
             --severity CRITICAL,HIGH \
@@ -143,7 +143,7 @@ jobs:
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "${PWD}:/work" \
-            aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c image \
+            aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb image \
             --scanners vuln \
             --ignore-unfixed \
             --severity CRITICAL,HIGH \

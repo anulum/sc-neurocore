@@ -92,9 +92,9 @@ jobs:
           python -m pip install --require-hashes -r requirements/fuzz.txt -r requirements/runtime.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
-          go install github.com/anchore/syft/cmd/syft@v1.55.0
+          go install github.com/anchore/syft/cmd/syft@v1.57.0
           go install github.com/zricethezav/gitleaks/v8@v8.30.1
-          go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.1
+          go install github.com/aquasecurity/trivy/cmd/trivy@v0.76.2
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           cargo install cargo-audit --version 0.22.2 --locked
           cargo install cargo-deny --version 0.20.2 --locked
@@ -232,7 +232,7 @@ jobs:
 
       - name: Create GitHub Release
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.publish }}
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           body_path: ${{ steps.changelog.outputs.notes_file }}

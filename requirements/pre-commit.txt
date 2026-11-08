@@ -12,9 +12,9 @@ distlib==0.4.4 \
     --hash=sha256:ca4175b4ac7f71223cc30ed7248c45d2b38c2439d8ee6e498ab67ed63cf3508d \
     --hash=sha256:cf09d55b1e85a89576b036aeb71550bfd68320f3f21761ca329eadadad918638
     # via virtualenv
-filelock==4.2.6 \
-    --hash=sha256:ee7af8ede36dcaf12e1016d9f7c3a63ecd5497d46f85dab21b8c779b8f944e97 \
-    --hash=sha256:fd7d4fca497bf3e3d0945a13261f8e684f2aef12ce7cf76aef26e13bf7388b88
+filelock==4.2.9 \
+    --hash=sha256:96530b7c538d4ea08493ab067247aab7948c54d8cd622cce711c97cccc5d9896 \
+    --hash=sha256:a379c50a729e5b68c8519a4d26489f755d9769960a236ecd838190e2a78db2e9
     # via
     #   python-discovery
     #   virtualenv
@@ -30,17 +30,17 @@ packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via virtualenv
-platformdirs==4.14.2 \
-    --hash=sha256:6d13b4c1d66b7548dcec9e3db13c1ba9d9adb65041b5d07869313afc07e6e41b \
-    --hash=sha256:dc1f93390f2a9265e44e5afc8667ec7faf737739604e39bc538fec889720c36b
+platformdirs==4.14.5 \
+    --hash=sha256:32e9921db7385aa8169bee4fe9501923e5715ba9fb7ea3b9c69b0d8e0639f7a1 \
+    --hash=sha256:8e778c6fa421516f4d3369449f8df3b0e1b72c0e0005fe88e3ec772d0a14e750
     # via virtualenv
 pre-commit==4.7.0 \
     --hash=sha256:1f3deee12b914c8fa184bd2b5953391c2e4f36763e403d4a23dc9983fa7c6e86 \
     --hash=sha256:2e229038ad3656081b70c27913157e4b636ef306f643f024a8a8e3f0f7b2f877
     # via -r requirements/pre-commit.in
-python-discovery==1.9.0 \
-    --hash=sha256:88beb57e51b919c30f303b053ec41359298ca349192035b0a802c76347ae96d7 \
-    --hash=sha256:fb65edfff3541b7ceb3a39be334a0f69f4cb5148287a053e1874748742fda93b
+python-discovery==1.9.5 \
+    --hash=sha256:86279f5d2728bc067de28b7ddc571be2eacc2ae0e7048f8629d2481a0f8848a2 \
+    --hash=sha256:a1fae8fca11e4bc61e38491c2aafff29e430b3c5e272d51ae52fb895bc4c0fac
     # via virtualenv
 pyyaml==6.0.3 \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
@@ -117,7 +117,7 @@ pyyaml==6.0.3 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
     # via pre-commit
-virtualenv==21.15.2 \
-    --hash=sha256:dbd886e6e5689eb4dde6a9bbc478ad14b4fc8ed0852690d8273ccfb8c467f635 \
-    --hash=sha256:fb8c62c7c328e0238061c721068f06b7bc6bd10f7a0f5987195cef1008837ee6
+virtualenv==21.15.6 \
+    --hash=sha256:4b99ab9b95ff11043939bb4cad2fa0449175fa5a478372864f62160cb6c1a7ed \
+    --hash=sha256:c8b65c7d206ca6ef18de9352c160b3f04f66fff9f6b0ec8fd31f14688eba52c4
     # via pre-commit

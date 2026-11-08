@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "@xyflow/react": "12.12.0",
+    "@xyflow/react": "12.12.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "zustand": "5.0.16"
+    "zustand": "5.1.0"
   },
   "overrides": {
     "adm-zip": "0.6.1",
@@ -34,22 +34,22 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@module-federation/runtime": "2.9.2",
-    "@module-federation/vite": "1.23.7",
-    "@playwright/test": "1.64.1",
+    "@module-federation/runtime": "2.9.3",
+    "@module-federation/vite": "1.23.11",
+    "@playwright/test": "1.65.0",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "6.1.2",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitejs/plugin-react": "6.2.1",
+    "@vitest/coverage-v8": "5.1.0",
     "adm-zip": "0.6.1",
     "eslint": "10.14.0",
-    "eslint-plugin-jsdoc": "65.4.2",
+    "eslint-plugin-jsdoc": "65.4.5",
     "happy-dom": "21.0.4",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
-    "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "vite": "8.3.6",
+    "vitest": "5.1.0"
   },
   "packageManager": "npm@12.2.1"
 }
