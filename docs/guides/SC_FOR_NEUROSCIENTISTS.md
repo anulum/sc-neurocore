@@ -91,17 +91,11 @@ and maps to ~10 logic gates in hardware.
 The standard benchmark: 10,000 excitatory + 2,500 inhibitory neurons,
 random connectivity, producing asynchronous irregular (AI) firing.
 
-| Property | Brian2 | SC-NeuroCore |
-|----------|--------|-------------|
-| Neuron model | LIF (float64) | LIF (bitstream, L=256) |
-| Mean rate | 24.6 Hz | 23.8 Hz |
-| CV(ISI) | 0.89 | 0.85 |
-| Simulation speed | 12.8 s (10K neurons, 1s) | 3.2 s (Rust engine) |
-| Correlation coefficient (vs Brian2) | — | 0.97 |
-
-The SC network reproduces the AI regime with high fidelity. The Rust
-engine is 4x faster than Brian2 for this benchmark; FPGA deployment
-would be orders of magnitude faster.
+The committed comparison with Brian2 is described in the README ("Brunel
+balanced-network scaling artefact"): the NumPy dense lane matches Brian2's
+firing rates within 5%, and its speed relative to Brian2 depends on network
+size. The Rust rows of that artefact are not a dynamics-parity result. No FPGA
+run of this network has been measured.
 
 ### Where SC diverges from traditional simulators
 

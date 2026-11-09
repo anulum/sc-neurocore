@@ -15,7 +15,7 @@ SC-NeuroCore supports multiple deployment targets:
 
 | Target | Format | Use case |
 |--------|--------|----------|
-| Rust engine | JSON config | 10-100x CPU speedup |
+| Rust engine | JSON config | Faster CPU simulation |
 | FPGA | Verilog + hex weights | Ultra-low-power edge |
 | NumPy checkpoint | `.npz` | Python-to-Python transfer |
 | SCPN compiler | IR graph | SCPN ecosystem integration |
@@ -228,7 +228,7 @@ FPGA deployment requires synthesis but achieves 1000x lower power.
 ## What you learned
 
 - NumPy checkpoints for Python-to-Python model transfer
-- JSON export for the Rust engine (10-100x speedup)
+- JSON export for the Rust engine
 - Q8.8 hex files for FPGA weight loading via `$readmemh`
 - Auto-generated Verilog network wrapper modules
 - SCPN compiler integration for ecosystem interop

@@ -163,7 +163,7 @@ net.run(duration=1.0, dt=0.001)
 
 ## 10. Using with Rust Backend
 
-All 10 configs work with the Rust NetworkRunner for 10-100x speedup:
+All 10 configs work with the Rust NetworkRunner:
 
 ```python
 net = brunel_balanced_network(n_exc=5000, n_inh=1250)
