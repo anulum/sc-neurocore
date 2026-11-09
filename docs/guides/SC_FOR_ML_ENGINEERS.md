@@ -154,16 +154,13 @@ See Tutorial 08 for STDP details.
 
 ### MNIST (50 PCA features, 128 hidden, 10 output)
 
-| Method | Test accuracy | Training time | Inference power |
-|--------|-------------|---------------|----------------|
-| PyTorch MLP (float32, GPU) | 97.5% | 5 s | ~100 W |
-| SC-NeuroCore (L=512, CPU) | ~88% | ~60 s | ~50 W |
-| SC-NeuroCore (L=512, Rust) | ~88% | ~6 s | ~15 W |
-| SC-NeuroCore (L=256, FPGA) | ~85% | — (fixed weights) | ~0.05 W |
-
-SC trades ~10% accuracy for 2000× lower inference power. For
-always-on edge applications (keyword spotting, gesture recognition,
-anomaly detection), this trade-off is often worthwhile.
+This guide quotes no accuracy, training-time or power comparison for this
+configuration: the repository has no committed measurement of it on the
+same task and hardware. Committed results and their artefacts are listed
+in `docs/benchmarks/BENCHMARKS.md`. For always-on edge applications
+(keyword spotting, gesture recognition, anomaly detection), the trade-off
+between accuracy, latency and power has to be measured for the design at
+hand.
 
 ### Where SC wins
 

@@ -19,8 +19,8 @@ computation scales with activity, not graph size:
 | Hardware | GPU (dense) | Neuromorphic / FPGA (sparse) |
 
 For sparse, event-driven graphs (sensor networks, social media streams,
-molecular dynamics), spiking GNNs can be orders of magnitude more
-energy-efficient.
+molecular dynamics), spiking GNNs can be more energy-efficient; how much
+depends on the hardware and the activity, and it is not measured here.
 
 ## SpikeGNNLayer
 
