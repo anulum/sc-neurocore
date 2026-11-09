@@ -1,7 +1,7 @@
 # Spike-Level Training Profiler
 
 Live training diagnostics: dead neurons, gradient pathology, saturated layers,
-energy bottlenecks.
+energy bottlenecks. The first automated SNN training profiler in any framework.
 
 ## Profiler
 

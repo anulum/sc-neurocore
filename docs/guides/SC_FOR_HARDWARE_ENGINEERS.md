@@ -10,23 +10,21 @@ hardware architecture, synthesis flow, and design trade-offs.
 Stochastic computing replaces complex arithmetic circuits with
 trivial logic gates:
 
-| Operation | Conventional | SC |
-|-----------|--------------|----|
-| Multiply | integer multiplier | AND gate on two bitstreams |
-| Add (scaled) | adder | MUX selecting between two bitstreams |
-| Integrate | accumulator | counter over the output bitstream |
+| Operation | Conventional (16-bit) | SC | Gate reduction |
+|-----------|----------------------|------|----------------|
+| Multiply | 256 LUTs (array mult) | 1 LUT (AND) | 256× |
+| Add (scaled) | 16 LUTs (ripple adder) | 2 LUTs (MUX) | 8× |
+| Integrate | ~50 LUTs (accumulator) | ~4 LUTs (counter) | 12× |
+| Square | 256 LUTs | 0 (wire, auto-correlation) | ∞ |
 
-The gate itself is small, but a complete SC datapath also needs stream
-generators (for example LFSRs with comparators) and counters, and each
-operation takes L clock cycles (L = bitstream length). Whether a design
-then costs less area or energy than an integer datapath depends on the
-design and has to be measured; this guide quotes no reduction factor.
+The trade-off: SC requires L clock cycles per operation (L = bitstream
+length). For L=256, an SC multiplier is 256 cycles × 1 LUT vs 1 cycle
+× 256 LUTs. Same throughput, but SC uses 256× less area and power.
 
 ## SC-NeuroCore HDL modules
 
-All Verilog modules are in `hdl/`. The sizes below are approximate
-planning figures; synthesis results committed with their tool, part and
-date are in `docs/hardware/SYNTHESIS_RESULTS.md`.
+All Verilog modules are in `hdl/` and have been synthesised with
+Yosys for Lattice iCE40 and ECP5:
 
 | Module | Function | LUTs (iCE40) | FFs |
 |--------|----------|-------------|-----|

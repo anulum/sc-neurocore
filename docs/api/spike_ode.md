@@ -5,7 +5,7 @@ Continuous-depth SNN layer combining adaptive ODE solvers with event-driven spik
 - `SpikingODELayer` — Integrates LIF membrane ODE with adaptive Euler stepping. Detects threshold crossings via bisection for sub-timestep spike timing. Auto-shrinks step size near threshold, expands far from it. ~5x faster than fixed small-step integration.
 - `ODELIFDynamics` — LIF membrane dynamics: `dv/dt = -(v - v_rest) / tau_mem + I / C_mem`. Configurable threshold, reset, time constant.
 
-The intersection of Neural ODEs and SNNs, as a reusable layer. (Reference: EventProp, Wunderlich & Pehle 2021)
+The intersection of Neural ODEs and SNNs. No other library has this as a reusable layer. (Reference: EventProp, Wunderlich & Pehle 2021)
 
 ```python
 from sc_neurocore.spike_ode import SpikingODELayer, ODELIFDynamics

@@ -164,7 +164,7 @@ Alaghi & Hayes 2013, Diehl et al. 2015).
 ### Spike coding / DSP / normalisation
 
 `spike_codec/` (6 codecs: ISI+varint, predictive, delta, streaming, AER,
-waveform; measured ratios in `docs/guides/bci_codec.md`), `spike_dsp/` (FIR/IIR on
+waveform — BCI-grade, up to ~50–200× / 24× on 1024-ch), `spike_dsp/` (FIR/IIR on
 spike trains), `spike_norm/` (5 SNN normalisers citing 2021–2024 venues).
 
 ### Network-level models

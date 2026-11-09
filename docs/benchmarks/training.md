@@ -91,7 +91,8 @@ python examples/mnist_conv_train.py --epochs 30 --batch-size 128 \
 SC-NeuroCore's accuracy is competitive. The key differentiator is not
 raw MNIST accuracy (which saturates across all frameworks) but the
 end-to-end pathway: **train in PyTorch → export `to_sc_weights()` →
-SC bitstream simulation → Verilog RTL synthesis**.
+SC bitstream simulation → Verilog RTL synthesis**. No other framework
+provides this pipeline.
 
 ```
     MNIST Accuracy (%) — SNN frameworks

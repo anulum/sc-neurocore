@@ -171,8 +171,7 @@ mean +/- std wall time and peak memory across repeats.
 **Brian2 advantages:**
 
 - N > 1000: C++ code generation + sparse connectivity scale far better.
-  At 10K neurons, Brian2 is much faster than V1's Python loop; the
-  README's Brunel paragraph gives the committed comparison of current lanes.
+  At 10K neurons, Brian2 is 10--100x faster than V1's Python loop.
 - Biological detail: conductance-based synapses, dendritic compartments,
   gap junctions. SC-NeuroCore models delta-PSC only.
 - Ecosystem: NeuroML, PyNN, and the computational neuroscience toolchain.

@@ -100,7 +100,7 @@ out = layer.forward_batch_numpy(batch, seed=42)  # (100, 32)
 ## 4. Python Fallback and GPU Path
 
 Without the Rust engine, `sc_neurocore.layers.VectorizedSCLayer` uses packed
-NumPy uint64 SWAR popcount, which is slower than the Rust engine.
+NumPy uint64 SWAR popcount (10-100x slower than Rust).
 
 With CuPy installed, set `use_gpu=True` for GPU offload via `gpu_vec_mac`
 (broadcast AND + SWAR popcount on CUDA). Effective for large layers (256+

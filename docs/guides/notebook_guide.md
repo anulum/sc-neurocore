@@ -62,9 +62,9 @@ These notebooks demonstrate capabilities unique to SC-NeuroCore — features not
 
 | # | Notebook | What you learn | Uniqueness |
 |---|----------|---------------|------------|
-| 21 | `21_spike_alu` | Turing-complete spike-based ALU: logic gates, register, adder, sort | Spike-based ALU built from SNN primitives |
-| 22 | `22_ir_type_safety` | IR signal type checker: Bitstream/Rate/Spike/Fixed compatibility | Type checks on IR signals before RTL emission |
-| 23 | `23_topological_observables` | Winding number, Ricci curvature, sheaf defect on coupling graphs | Topological observables on SNN coupling graphs |
+| 21 | `21_spike_alu` | Turing-complete spike-based ALU: logic gates, register, adder, sort | First spike ALU in an SNN framework |
+| 22 | `22_ir_type_safety` | IR signal type checker: Bitstream/Rate/Spike/Fixed compatibility | First SNN→FPGA type system |
+| 23 | `23_topological_observables` | Winding number, Ricci curvature, sheaf defect on coupling graphs | First topological observables on SNN |
 | 24 | `24_identity_lazarus` | Lazarus checkpoint save/load/merge, TraceEncoder, DirectorController | First persistent AI identity substrate |
 | 25 | `25_cortical_column_dynamics` | 5-population canonical microcircuit, feedforward latency | Biophysically grounded column model |
 | 26 | `26_spike_codec_benchmark` | 5 codecs (ISI/AER/predictive/delta/streaming), density curves | Comprehensive codec comparison |

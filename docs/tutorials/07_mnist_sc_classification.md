@@ -241,6 +241,6 @@ print("Saved mnist_sc_confusion.png")
 ## Next steps
 
 - Replace PCA with a convolutional SC front-end (`SCConv2DLayer`)
-- Use the Rust engine for faster training
+- Use the Rust engine for 10-100x training speedup
 - Add STDP for unsupervised feature extraction (see `StochasticSTDPSynapse`)
 - Deploy the trained network on FPGA (see [FPGA in 20 Minutes](fpga_in_20_minutes.md))

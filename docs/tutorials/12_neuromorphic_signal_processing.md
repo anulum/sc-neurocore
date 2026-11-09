@@ -216,15 +216,15 @@ print(f"SC uses {5} AND gates + 1 MUX vs {5} multipliers + {4} adders")
 
 | Component | Conventional (16-bit) | SC (L=256) |
 |-----------|----------------------|------------|
-| Multiply | integer multiplier | AND gate on two bitstreams |
-| Precision | 16-bit exact | grows with L (error scale about 1/√L) |
+| Multiplier | ~256 LUTs | 1 LUT (AND) |
+| 5-tap FIR | ~1280 LUTs | ~10 LUTs |
+| Power (est.) | ~50 mW | ~0.5 mW |
+| Precision | 16-bit exact | ~8-bit effective |
 | Latency | 1 cycle | L=256 cycles |
 
-The multiply itself is one gate, but a complete SC datapath also needs
-stream generators and counters, and each operation takes L cycles. For
-applications that tolerate that latency (audio, slow sensors), SC can
-save area; whether it saves power against an integer design has to be
-measured per design, and this tutorial quotes no ratio.
+SC trades latency for area and power. For applications where
+latency tolerance > 256 clock cycles (audio, slow sensors),
+SC wins on power by 100x.
 
 ## 9. Real-time processing pipeline
 

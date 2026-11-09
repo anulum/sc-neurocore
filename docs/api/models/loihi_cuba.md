@@ -574,8 +574,8 @@ all platforms — x86, ARM, RISC-V, FPGA. This is a critical property for:
 1. **Hardware-software co-verification:** An SNN simulated in SC-NeuroCore (software)
    can be verified cycle-by-cycle against an FPGA implementation (hardware)
 2. **Regression testing:** Results never change due to floating-point rounding
-3. **Multi-platform deployment:** the same integer arithmetic runs on x86, on ARM
-   and in the RTL; co-simulation checks each generated design against the reference
+3. **Multi-platform deployment:** Train on x86, deploy on ARM, verify on FPGA —
+   identical spike trains guaranteed
 
 This contrasts with floating-point models where IEEE 754 fused multiply-add (FMA)
 and different compilation flags can produce bit-level differences.

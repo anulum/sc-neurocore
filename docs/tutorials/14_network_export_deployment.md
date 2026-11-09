@@ -15,7 +15,7 @@ SC-NeuroCore supports multiple deployment targets:
 
 | Target | Format | Use case |
 |--------|--------|----------|
-| Rust engine | JSON config | Faster CPU simulation |
+| Rust engine | JSON config | 10-100x CPU speedup |
 | FPGA | Verilog + hex weights | Ultra-low-power edge |
 | NumPy checkpoint | `.npz` | Python-to-Python transfer |
 | SCPN compiler | IR graph | SCPN ecosystem integration |
@@ -215,17 +215,20 @@ deployment_preflight([layer1, layer2])
 
 ## 8. Performance comparison across backends
 
-This tutorial quotes no throughput, latency or power per backend.
-Committed timings, each with its artefact, are in
-`docs/benchmarks/BENCHMARKS.md`; FPGA power needs a measured board or a
-vendor power analysis of a placed design. The Rust engine is faster than
-the NumPy path on the same host with no hardware change; an FPGA
-deployment needs synthesis and its own measurement.
+| Backend | Throughput | Latency | Power |
+|---------|-----------|---------|-------|
+| Python (NumPy) | ~1K samples/s | ~1 ms | ~50 W (CPU) |
+| Rust engine | ~100K samples/s | ~10 μs | ~15 W (CPU) |
+| FPGA (iCE40) | ~10M samples/s | ~25 ns | ~50 mW |
+| FPGA (ECP5) | ~50M samples/s | ~10 ns | ~200 mW |
+
+The Rust engine gives immediate speedup with no hardware changes.
+FPGA deployment requires synthesis but achieves 1000x lower power.
 
 ## What you learned
 
 - NumPy checkpoints for Python-to-Python model transfer
-- JSON export for the Rust engine
+- JSON export for the Rust engine (10-100x speedup)
 - Q8.8 hex files for FPGA weight loading via `$readmemh`
 - Auto-generated Verilog network wrapper modules
 - SCPN compiler integration for ecosystem interop

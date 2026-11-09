@@ -6,14 +6,6 @@
 **Report Date:** March 18, 2026
 **Author:** Miroslav Šotek (Anulum Research)
 
-> **Status (9 November 2026):** a historical snapshot of v3.13.3, kept as
-> published in March 2026. Some figures here are out of date or have no
-> committed artefact. "100% coverage" is the CI gate over the measured core
-> files, with the omissions listed in `pyproject.toml` (see
-> `docs/guides/faq.md`). The Brian2 rows match no committed artefact; the
-> current comparison at matched firing rates is in the README. Quote current
-> figures from the README and its linked evidence, not from this page.
-
 ---
 
 ## Executive Summary

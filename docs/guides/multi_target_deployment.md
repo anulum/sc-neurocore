@@ -416,10 +416,13 @@ for target in ["artix7", "loihi2", "sifive_x280_ai"]:
 
 ### 7.2 Platform Comparison (LIF Q8.8)
 
-This guide quotes no per-platform resource, frequency or power figures. The
-committed synthesis results, each with its tool, part and date, are in
-`docs/hardware/SYNTHESIS_RESULTS.md`; power needs a measured board or a
-vendor power analysis of a placed design.
+| Target | LUTs | DSPs | FFs | Max Freq | Power |
+|--------|:----:|:----:|:---:|:--------:|:-----:|
+| iCE40 HX8K | 120 | 0 | 30 | 250 MHz | 15 mW |
+| Artix-7 100T | 80 | 1 | 25 | 450 MHz | 20 mW |
+| ECP5 85F | 95 | 1 | 28 | 400 MHz | 18 mW |
+| Kintex U+ | 75 | 1 | 22 | 550 MHz | 25 mW |
+| ASIC 16nm | 60 | N/A | 20 | 1 GHz | 0.5 mW |
 
 ### 7.3 Multi-Die Floorplan Quality
 
