@@ -9,14 +9,16 @@
 #!/usr/bin/env python3
 """Example 05: Full SCPN Layer Stack.
 
-Demonstrates the complete 16-layer SCPN consciousness model, from
-L1 (Quantum) through L16 (Director), with inter-layer coupling.
+Demonstrates the complete 16-layer SCPN (Stochastic Coupled Phase-oscillator
+Network) stack, from L1 (Quantum) through L16 (Director), with inter-layer
+coupling and global coherence metrics.
 """
 
 from sc_neurocore.scpn import create_full_stack, run_integrated_step, get_global_metrics
 
 
-def main():
+def main() -> None:
+    """Build the 16-layer stack, run 10 coupled steps and print its coherence metrics."""
     print("=== SC-NeuroCore: SCPN Layer Stack ===\n")
 
     # Create the full stack with default parameters

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1845
+expected_file_count = 1846
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7434,3 +7434,7 @@ rationale = "The executable example counts membrane-register toggles of a clock-
 [[file]]
 path = "tests/test_examples_power_comparison.py"
 rationale = "The toggle-count example reports only figures read from its own rows and labels them as toggles, not power."
+
+[[file]]
+path = "examples/05_scpn_stack.py"
+rationale = "The executable example builds the 16-layer SCPN (Stochastic Coupled Phase-oscillator Network) stack, runs coupled steps and prints its coherence metrics."

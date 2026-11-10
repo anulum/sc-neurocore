@@ -676,7 +676,7 @@ Runnable scripts in `examples/`:
 | `02_sc_neuron_layer.py` | SCDenseLayer construction, spike trains, and firing-rate summary |
 | `03_ir_compile_demo.py` | IR graph building, verification, SystemVerilog emission (v3 Rust engine) |
 | `04_vectorized_layer.py` | VectorizedSCLayer throughput benchmarking |
-| `05_scpn_stack.py` | Full 7-layer SCPN consciousness stack with inter-layer coupling |
+| `05_scpn_stack.py` | 16-layer SCPN (Stochastic Coupled Phase-oscillator Network) stack with inter-layer coupling and global coherence metrics |
 | `06_hdl_generation.py` | Verilog top-level generation from a network description |
 | `07_ensemble_consensus.py` | Multi-agent ensemble orchestration and voting |
 | `08_hdc_symbolic_query.py` | Hyper-Dimensional Computing symbolic memory (v3 Rust engine) |

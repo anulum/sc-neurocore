@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Describe the SCPN example by what it builds. The README gave examples/05_scpn_stack.py
+  seven layers and a non-technical reading of SCPN; the example builds 16 layers. The
+  README row and the example's docstring now call it a 16-layer SCPN (Stochastic Coupled
+  Phase-oscillator Network) stack with inter-layer coupling and global coherence metrics,
+  the reading the SCPN API page already uses.
+
 - Stop claiming that the event-driven neuron's power is proportional to spike rate. No
   power measurement of hdl/sc_event_neuron.v exists, and its leak counter and threshold
   compare run on every clock. The README, the architecture file and the documentation home
