@@ -97,7 +97,7 @@ sc-neurocore/
 │   ├── sc_lif_neuron.v     Q8.8 leaky integrate-and-fire (generic)
 │   ├── sc_dense_layer_core.v  Full SC dense pipeline
 │   ├── sc_aer_encoder.v    AER spike encoder (event-driven output)
-│   ├── sc_event_neuron.v   Event-triggered LIF (power proportional to spike rate)
+│   ├── sc_event_neuron.v   Event-triggered LIF (membrane updates on events and leak ticks)
 │   ├── sc_aer_router.v     AER event distribution to target neurons
 │   ├── sc_cordiv.v         CORDIV stochastic division
 │   ├── sc_stdp_synapse.v   On-chip STDP learning

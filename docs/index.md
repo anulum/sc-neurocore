@@ -65,7 +65,7 @@ Start here if you need to understand what the software is for:
 - **Learnable delays** — `DelayLinear` with trainable per-synapse delays via differentiable interpolation
 - **Deploy helper** — `sc-neurocore deploy model.nir --target artix7` scaffolds a project or FPGA flow invocation when the required toolchain is installed
 - **Mixed-precision SC** — per-layer adaptive bitstream length (Hoeffding/sensitivity-based)
-- **Event-driven FPGA** — AER encoder, event neuron, spike router (power proportional to spike rate)
+- **Event-driven FPGA** — AER encoder, event neuron, spike router (the neuron integrates on input events and decays on leak ticks instead of every cycle; no power measurement yet)
 - **Neural data compression** — waveform and spike-raster codecs, learnable predictors, Rust acceleration, and benchmark artefacts
 - **conda-forge recipe draft** — prepared for staged-recipes submission; not
   yet published on conda-forge

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1843
+expected_file_count = 1845
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7426,3 +7426,11 @@ rationale = "The pip requirements files offered in the README list exactly the p
 [[file]]
 path = "tests/test_public_hardware_run_claims.py"
 rationale = "Public pages and the safety-monitor sources claim no board or silicon run, matched without regard to case, line breaks or emphasis."
+
+[[file]]
+path = "examples/power_comparison.py"
+rationale = "The executable example counts membrane-register toggles of a clock-driven and an event-driven LIF model and derives its summary from those counts, never claiming a power measurement."
+
+[[file]]
+path = "tests/test_examples_power_comparison.py"
+rationale = "The toggle-count example reports only figures read from its own rows and labels them as toggles, not power."

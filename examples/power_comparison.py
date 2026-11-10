@@ -9,11 +9,20 @@
 
 # SC-NeuroCore — Switching activity comparison: clock-driven vs event-driven LIF
 #
-# Measures register toggle counts (proxy for dynamic power) for both neuron
-# implementations under identical sparse input. Validates the claim that
-# event-driven power is proportional to spike rate, not clock rate.
+# Counts membrane-register bit toggles of two Python models, one of each
+# neuron, under identical sparse input. Toggles are one input of dynamic
+# power; clock distribution, the leak counter and control logic are not
+# counted, so the printed figures are not a power measurement.
+
+"""Compare membrane-register toggles of a clock-driven and an event-driven LIF model."""
 
 from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+DEFAULT_ACTIVITIES = (10.0, 1.0, 0.1, 0.01)
+DEFAULT_CYCLES = 100_000
 
 
 def _q88_encode(val: float) -> int:
@@ -48,7 +57,26 @@ def _count_toggles(prev: int, curr: int, width: int = 16) -> int:
 def simulate_clock_driven(
     n_cycles: int, spike_times: set[int], leak_k: int, gain_k: int, threshold: int
 ) -> tuple[int, list[int]]:
-    """Simulate sc_lif_neuron.v: updates membrane every cycle."""
+    """Model sc_lif_neuron.v, which updates its membrane every cycle.
+
+    Parameters
+    ----------
+    n_cycles : int
+        Number of clock cycles to simulate.
+    spike_times : set of int
+        Cycles at which an input spike arrives.
+    leak_k : int
+        Leak constant in Q8.8.
+    gain_k : int
+        Input gain in Q8.8.
+    threshold : int
+        Firing threshold in Q8.8.
+
+    Returns
+    -------
+    tuple of (int, list of int)
+        Membrane-register bit toggles, and the cycles at which the neuron fired.
+    """
     v = 0
     prev_v = 0
     total_toggles = 0
@@ -80,7 +108,26 @@ def simulate_event_driven(
     threshold: int,
     leak_period: int,
 ) -> tuple[int, list[int]]:
-    """Simulate sc_event_neuron.v: updates only on events + leak ticks."""
+    """Model sc_event_neuron.v, which integrates on input events and decays on leak ticks.
+
+    Parameters
+    ----------
+    n_cycles : int
+        Number of clock cycles to simulate.
+    spike_times : set of int
+        Cycles at which an input event arrives.
+    leak_k : int
+        Leak constant in Q8.8.
+    threshold : int
+        Firing threshold in Q8.8.
+    leak_period : int
+        Cycles between leak ticks (the RTL's ``LEAK_PERIOD`` parameter).
+
+    Returns
+    -------
+    tuple of (int, list of int)
+        Membrane-register bit toggles, and the cycles at which the neuron fired.
+    """
     v = 0
     prev_v = 0
     total_toggles = 0
@@ -114,42 +161,122 @@ def simulate_event_driven(
     return total_toggles, spikes_out
 
 
-def main():
-    n_cycles = 100_000
+@dataclass(frozen=True)
+class ActivityRow:
+    """Toggle counts of both models at one input activity."""
+
+    activity_pct: float
+    interval: int
+    clock_toggles: int
+    event_toggles: int
+    clock_spikes: int
+    event_spikes: int
+
+    @property
+    def reduction(self) -> float:
+        """Return how many times fewer toggles the event-driven model makes."""
+        return self.clock_toggles / max(self.event_toggles, 1)
+
+    @property
+    def fewer_toggles_pct(self) -> float:
+        """Return the event-driven model's toggle count below the clock-driven one, in percent."""
+        return 100.0 * (1.0 - self.event_toggles / max(self.clock_toggles, 1))
+
+
+def compare(
+    activities: Sequence[float] = DEFAULT_ACTIVITIES, n_cycles: int = DEFAULT_CYCLES
+) -> list[ActivityRow]:
+    """Run both models at each input activity and return their toggle counts.
+
+    The event-driven model ticks its leak once per input interval, so both its
+    input events and its leak ticks follow the activity.
+
+    Parameters
+    ----------
+    activities : sequence of float
+        Input activities in percent of cycles.
+    n_cycles : int
+        Number of clock cycles per run.
+
+    Returns
+    -------
+    list of ActivityRow
+        One row per activity, in the given order.
+    """
     leak_k = _q88_encode(0.1)  # ~26 in Q8.8
     gain_k = _q88_encode(1.0)  # 256 in Q8.8
     threshold = _q88_encode(1.0)  # 256 in Q8.8
-
-    print("=" * 60)
-    print("  SC-NeuroCore: Clock-Driven vs Event-Driven Power Analysis")
-    print("=" * 60)
-
-    for activity_pct in [10.0, 1.0, 0.1, 0.01]:
+    rows = []
+    for activity_pct in activities:
         interval = max(1, int(100 / activity_pct))
         spike_times = set(range(0, n_cycles, interval))
-
         t_clock, s_clock = simulate_clock_driven(n_cycles, spike_times, leak_k, gain_k, threshold)
         t_event, s_event = simulate_event_driven(
             n_cycles, spike_times, leak_k, threshold, leak_period=interval
         )
+        rows.append(
+            ActivityRow(activity_pct, interval, t_clock, t_event, len(s_clock), len(s_event))
+        )
+    return rows
 
-        ratio = t_clock / max(t_event, 1)
-        savings = 100.0 * (1.0 - t_event / max(t_clock, 1))
 
-        print(f"\n  Activity: {activity_pct}% (1 spike every {interval} cycles)")
+def conclusion(rows: Sequence[ActivityRow], n_cycles: int = DEFAULT_CYCLES) -> list[str]:
+    """Summarise measured rows without stating anything the rows do not show.
+
+    Parameters
+    ----------
+    rows : sequence of ActivityRow
+        Rows from :func:`compare`, from the highest activity to the lowest.
+    n_cycles : int
+        Number of clock cycles per run.
+
+    Returns
+    -------
+    list of str
+        Lines of the summary.
+    """
+    first, last = rows[0], rows[-1]
+    reductions = [row.reduction for row in rows]
+    return [
+        f"Membrane-register toggles over {n_cycles:,} cycles, from "
+        f"{first.activity_pct}% to {last.activity_pct}% activity:",
+        f"clock-driven {first.clock_toggles:,} -> {last.clock_toggles:,}, "
+        f"event-driven {first.event_toggles:,} -> {last.event_toggles:,}.",
+        f"The event-driven model makes {min(reductions):.1f}x to "
+        f"{max(reductions):.1f}x fewer toggles at these activities.",
+        "Clock distribution, the leak counter and control logic are not",
+        "counted, so this is not a power measurement.",
+    ]
+
+
+def main() -> None:
+    """Print the toggle counts of both models and the derived summary."""
+    print("=" * 60)
+    print("  SC-NeuroCore: Clock-Driven vs Event-Driven Toggle Counts")
+    print("=" * 60)
+
+    rows = compare()
+    for row in rows:
+        print(
+            f"\n  Activity: {row.activity_pct}% (1 input every {row.interval} cycles;"
+            f" event leak tick every {row.interval} cycles)"
+        )
         print(f"  {'-' * 50}")
-        print(f"  Clock-driven:  {t_clock:>10,} toggles  ({t_clock / n_cycles:.2f}/cycle)")
-        print(f"  Event-driven:  {t_event:>10,} toggles  ({t_event / n_cycles:.2f}/cycle)")
-        print(f"  Toggle reduction: {ratio:.1f}x")
-        print(f"  Power savings:    {savings:.0f}%")
-        print(f"  Output spikes:    clock={len(s_clock)}, event={len(s_event)}")
+        print(
+            f"  Clock-driven:  {row.clock_toggles:>10,} toggles"
+            f"  ({row.clock_toggles / DEFAULT_CYCLES:.2f}/cycle)"
+        )
+        print(
+            f"  Event-driven:  {row.event_toggles:>10,} toggles"
+            f"  ({row.event_toggles / DEFAULT_CYCLES:.2f}/cycle)"
+        )
+        print(f"  Toggle reduction: {row.reduction:.1f}x")
+        print(f"  Fewer toggles:    {row.fewer_toggles_pct:.0f}%")
+        print(f"  Output spikes:    clock={row.clock_spikes}, event={row.event_spikes}")
 
     print(f"\n{'=' * 60}")
-    print("  Conclusion: event-driven toggle count scales with input")
-    print("  spike rate. Clock-driven toggles are constant regardless")
-    print("  of activity. At 0.1% activity (typical cortical rates),")
-    print("  event-driven uses ~100x fewer toggles.")
-    print("  Dynamic power ~ C * V^2 * f * toggle_rate")
+    for line in conclusion(rows):
+        print(f"  {line}")
     print(f"{'=' * 60}")
 
 

@@ -188,7 +188,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
-| Python test files | 5624 |
+| Python test files | 5625 |
 | Public documentation pages | 670 |
 | GitHub Actions workflows | 25 |
 
@@ -568,7 +568,7 @@ hdl/
   sc_dense_layer_top.v        -- Dense layer top wrapper
   sc_neurocore_top.v          -- AXI-Lite dense-layer measurement and rate readback
   sc_aer_encoder.v            -- AER spike encoder (event-driven output)
-  sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
+  sc_event_neuron.v           -- Event-triggered LIF (membrane updates on events and leak ticks)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v                   -- Self-checking simulation testbenches
   formal/ (91 proof jobs)     -- catalogue model checks + legacy SC cores

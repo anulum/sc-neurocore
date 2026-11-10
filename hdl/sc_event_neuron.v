@@ -6,16 +6,15 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-// SC-NeuroCore — Event-triggered LIF neuron: idle until spike event arrives
+// SC-NeuroCore — Event-triggered LIF neuron: integrates on events, decays on leak ticks
 //
-// Unlike the clock-driven sc_lif_neuron.v which updates every cycle,
-// this module only performs computation when:
-//   1. An input event arrives (event_valid && event_target == my_id), OR
-//   2. A leak timer fires (periodic membrane decay)
-//
-// Power consumption is proportional to input spike rate, not clock rate.
-// For sparse networks (1-10 Hz firing in 1 MHz clock), this saves >99%
-// of switching power vs clock-driven.
+// Unlike the clock-driven sc_lif_neuron.v, which integrates every cycle, this
+// module adds a weight to v_mem when an input event arrives (event_valid) and
+// decays v_mem when the leak timer fires (every LEAK_PERIOD cycles). The leak
+// counter and the threshold compare run on every clock, and a membrane at or
+// above threshold is reset to v_reset on a clock edge with or without an
+// event. No power measurement of this module exists; tb_power_comparison.v
+// and examples/power_comparison.py compare register toggles only.
 //
 // Q8.8 fixed-point, same arithmetic as sc_lif_neuron.v.
 

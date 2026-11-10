@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop claiming that the event-driven neuron's power is proportional to spike rate. No
+  power measurement of hdl/sc_event_neuron.v exists, and its leak counter and threshold
+  compare run on every clock. The README, the architecture file and the documentation home
+  page now say that it integrates on input events and decays on leak ticks instead of
+  every cycle. The RTL header drops an unmeasured saving of more than 99 % and an
+  event-address check the module does not have. The toggle-count example
+  examples/power_comparison.py derives its summary from its own rows. Its old summary said
+  that clock-driven toggles stay constant and that the event-driven model makes about 100
+  times fewer toggles at 0.1 % activity, while its rows showed both counts falling with
+  activity and a 38-fold reduction. It now labels its figures as toggles, not power
+  savings, and a test keeps the summary bound to the rows.
+
 - Replace the architecture overview page. The old page was a package listing with
   counts from mid-2026 that the system map already called stale. The new page is the
   entry point to the architecture: what the programme is for, the loop from model to
