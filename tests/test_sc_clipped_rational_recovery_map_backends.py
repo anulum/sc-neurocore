@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import numpy.typing as npt
 import pytest
@@ -16,6 +18,14 @@ from sc_neurocore.neurons.models import sc_clipped_rational_recovery_map
 from sc_neurocore.neurons.models.sc_clipped_rational_recovery_map import (
     SCClippedRationalRecoveryMapNeuron,
 )
+from tests.julia_requirement import require_julia
+
+_BACKEND_AVAILABLE: dict[str, Callable[[], bool]] = {
+    "rust": lambda: sc_clipped_rational_recovery_map._HAS_RUST,
+    "julia": sc_clipped_rational_recovery_map._ensure_julia_loaded,
+    "go": sc_clipped_rational_recovery_map._ensure_go_loaded,
+    "mojo": sc_clipped_rational_recovery_map._ensure_mojo_loaded,
+}
 
 
 def _run(
@@ -28,13 +38,9 @@ def _run(
 
 @pytest.mark.parametrize("backend", ["rust", "julia", "go", "mojo"])
 def test_binary64_runtime_parity(backend: str) -> None:
-    available = {
-        "rust": sc_clipped_rational_recovery_map._HAS_RUST,
-        "julia": sc_clipped_rational_recovery_map._ensure_julia_loaded(),
-        "go": sc_clipped_rational_recovery_map._ensure_go_loaded(),
-        "mojo": sc_clipped_rational_recovery_map._ensure_mojo_loaded(),
-    }[backend]
-    assert available
+    if backend == "julia":
+        require_julia()
+    assert _BACKEND_AVAILABLE[backend]()
     expected = _run("python")
     observed = _run(backend)
     np.testing.assert_array_equal(observed[0], expected[0])

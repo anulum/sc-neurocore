@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +18,16 @@ import pytest
 
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
+from tests.julia_requirement import require_julia
 
 
 _ROOT = Path(__file__).resolve().parents[1]
+_BACKEND_AVAILABLE: dict[str, Callable[[], bool]] = {
+    "rust": lambda: cazelles_map._HAS_RUST,
+    "julia": cazelles_map._ensure_julia_loaded,
+    "go": cazelles_map._ensure_go_loaded,
+    "mojo": cazelles_map._ensure_mojo_loaded,
+}
 
 
 def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], int, float]:
@@ -30,12 +38,9 @@ def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], 
 
 @pytest.mark.parametrize("backend", ["rust", "julia", "go", "mojo"])
 def test_exact_runtime_parity(backend: str) -> None:
-    assert {
-        "rust": cazelles_map._HAS_RUST,
-        "julia": cazelles_map._ensure_julia_loaded(),
-        "go": cazelles_map._ensure_go_loaded(),
-        "mojo": cazelles_map._ensure_mojo_loaded(),
-    }[backend]
+    if backend == "julia":
+        require_julia()
+    assert _BACKEND_AVAILABLE[backend]()
     expected = _run("python")
     observed = _run(backend)
     np.testing.assert_array_equal(observed[0], expected[0])
