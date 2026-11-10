@@ -7630,7 +7630,10 @@ sources : Sequence&#91;str&#93; or None, optional
 Returns
 -------
 bool
-    ``True`` when Yosys succeeds, otherwise ``False``.
+    ``True`` when Yosys and every later step that ran (nextpnr place and
+    route, bitstream packing) succeeded. A later step whose tool is not
+    installed is skipped with a message. ``False`` when Yosys is not
+    installed, or when any step that ran failed or exceeded its time limit.
 
 ---
 

@@ -217,7 +217,8 @@ def test_compile_reports_a_failed_synthesis_with_status_one(
     )
     out = capsys.readouterr().out
     assert rc == 1
-    assert "Synthesis failed (Yosys errors above)" in out
+    assert "Yosys synthesis failed" in out
+    assert "Synthesis flow failed (errors above)" in out
     assert "Yosys not found" not in out
 
 

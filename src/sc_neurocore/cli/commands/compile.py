@@ -561,7 +561,7 @@ def run_compile(args: argparse.Namespace) -> int:
             ):
                 print("[4/4] Synthesis complete")
             else:
-                print("[4/4] Synthesis failed (Yosys errors above)")
+                print("[4/4] Synthesis flow failed (errors above)")
                 return 1
         else:
             print(f"[4/4] Synthesis skipped (target '{args.target}' requires Vivado)")

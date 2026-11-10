@@ -251,8 +251,11 @@ def _deploy_model(
     print(f"  Power/thermal model -> {power_model_path}")
 
     # Step 6: Auto-synthesize if open-source toolchain available
+    import shutil
+
     cfg = TARGET_CONFIGS[target]
-    if cfg["tool"] == "yosys":
+    yosys_installed = cfg["tool"] == "yosys" and shutil.which("yosys") is not None
+    if yosys_installed:
         synth_ok = run_auto_synthesis(output_dir, target, "sc_deploy_lif", cfg)
     else:
         synth_ok = False
@@ -261,6 +264,9 @@ def _deploy_model(
     print(f"Deploy complete. Project in {output_dir}/")
     if synth_ok:
         print("Synthesis succeeded. Results in output directory.")
+    elif yosys_installed:
+        print("Synthesis flow failed (errors above). The generated project is kept.")
+        return 1
     elif cfg["tool"] == "yosys":
         print("Yosys not found. To synthesize manually:")
         print(f"  cd {output_dir} && make synth")
@@ -298,7 +304,10 @@ def run_auto_synthesis(
     Returns
     -------
     bool
-        ``True`` when Yosys succeeds, otherwise ``False``.
+        ``True`` when Yosys and every later step that ran (nextpnr place and
+        route, bitstream packing) succeeded. A later step whose tool is not
+        installed is skipped with a message. ``False`` when Yosys is not
+        installed, or when any step that ran failed or exceeded its time limit.
     """
     import os
     import shutil
@@ -325,66 +334,117 @@ def run_auto_synthesis(
         "delete t:$scopeinfo; "
         f"write_json {top_module}.json; stat"
     )
-    result = subprocess.run(
-        [yosys, "-p", yosys_script],
-        cwd=output_dir,
-        capture_output=True,
-        text=True,
-        timeout=300,
+    result = _run_flow_step(
+        [yosys, "-p", yosys_script], output_dir, SYNTHESIS_TIMEOUT_S, "Yosys synthesis"
     )
-    if result.returncode == 0:
-        for line in result.stdout.splitlines():
-            if any(k in line for k in ("Number of cells", "Number of wires", "LUT", "SB_")):
-                print(f"  {line.strip()}")
-        print(f"  Synthesis JSON: {os.path.join(output_dir, top_module + '.json')}")
-
-        # Try place-and-route if nextpnr available
-        pnr_tool = shutil.which(f"nextpnr-{cfg['family']}")
-        if pnr_tool:
-            print("  Running nextpnr place-and-route...")
-            # nextpnr-ice40 writes an IceStorm .asc that icepack packs; nextpnr-ecp5
-            # takes no --asc and writes a Trellis text configuration for ecppack.
-            placed, pack_tool, bitstream = _PLACED_OUTPUTS[cfg["family"]]
-            placed_file = f"{top_module}.{placed[1]}"
-            pnr_result = subprocess.run(
-                [
-                    pnr_tool,
-                    f"--{cfg['device']}",
-                    "--json",
-                    f"{top_module}.json",
-                    placed[0],
-                    placed_file,
-                    "--package",
-                    cfg["package"],
-                ],
-                cwd=output_dir,
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
-            if pnr_result.returncode == 0:
-                print(f"  PnR succeeded: {placed_file}")
-                # Try bitstream generation
-                pack_bin = shutil.which(pack_tool)
-                if pack_bin:
-                    subprocess.run(
-                        [pack_bin, placed_file, f"{top_module}.{bitstream}"],
-                        cwd=output_dir,
-                        capture_output=True,
-                        timeout=60,
-                    )
-                    bin_path = os.path.join(output_dir, f"{top_module}.{bitstream}")
-                    if os.path.exists(bin_path):
-                        size_kb = os.path.getsize(bin_path) / 1024
-                        print(f"  Bitstream: {bin_path} ({size_kb:.1f} KB)")
-            else:
-                print("  PnR failed (nextpnr error). Synthesis JSON still available.")
-        return True
-    else:
-        print("  Yosys synthesis failed:")
-        for line in result.stderr.splitlines()[-5:]:
-            print(f"    {line}")
+    if result is None:
         return False
+    if result.returncode != 0:
+        print("  Yosys synthesis failed:")
+        _print_stderr_tail(result.stderr)
+        return False
+    for line in result.stdout.splitlines():
+        if any(k in line for k in ("Number of cells", "Number of wires", "LUT", "SB_")):
+            print(f"  {line.strip()}")
+    print(f"  Synthesis JSON: {os.path.join(output_dir, top_module + '.json')}")
+
+    # Place and route only when nextpnr is installed; a missing tool skips the step.
+    pnr_name = f"nextpnr-{cfg['family']}"
+    pnr_tool = shutil.which(pnr_name)
+    if not pnr_tool:
+        print(f"  Place-and-route skipped ({pnr_name} not found).")
+        return True
+    print("  Running nextpnr place-and-route...")
+    # nextpnr-ice40 writes an IceStorm .asc that icepack packs; nextpnr-ecp5
+    # takes no --asc and writes a Trellis text configuration for ecppack.
+    placed, pack_tool, bitstream = _PLACED_OUTPUTS[cfg["family"]]
+    placed_file = f"{top_module}.{placed[1]}"
+    pnr_result = _run_flow_step(
+        [
+            pnr_tool,
+            f"--{cfg['device']}",
+            "--json",
+            f"{top_module}.json",
+            placed[0],
+            placed_file,
+            "--package",
+            cfg["package"],
+        ],
+        output_dir,
+        PLACE_AND_ROUTE_TIMEOUT_S,
+        "nextpnr place-and-route",
+    )
+    if pnr_result is None:
+        return False
+    if pnr_result.returncode != 0:
+        print("  PnR failed (nextpnr error). Synthesis JSON still available.")
+        _print_stderr_tail(pnr_result.stderr)
+        return False
+    print(f"  PnR succeeded: {placed_file}")
+
+    # Pack a bitstream only when the family's packer is installed.
+    pack_bin = shutil.which(pack_tool)
+    if not pack_bin:
+        print(f"  Bitstream skipped ({pack_tool} not found).")
+        return True
+    bitstream_file = f"{top_module}.{bitstream}"
+    pack_result = _run_flow_step(
+        [pack_bin, placed_file, bitstream_file],
+        output_dir,
+        PACK_TIMEOUT_S,
+        f"{pack_tool} bitstream packing",
+    )
+    if pack_result is None:
+        return False
+    bin_path = os.path.join(output_dir, bitstream_file)
+    if pack_result.returncode != 0 or not os.path.exists(bin_path):
+        print(f"  Bitstream packing failed ({pack_tool} wrote no {bitstream_file}).")
+        _print_stderr_tail(pack_result.stderr)
+        return False
+    size_kb = os.path.getsize(bin_path) / 1024
+    print(f"  Bitstream: {bin_path} ({size_kb:.1f} KB)")
+    return True
+
+
+#: Wall-clock limits, in seconds, for the open-source flow steps. They stay fixed
+#: here until host-derived limits replace them (TODO SCN-HOST-DERIVED-TEST-DEADLINES).
+SYNTHESIS_TIMEOUT_S = 300
+PLACE_AND_ROUTE_TIMEOUT_S = 300
+PACK_TIMEOUT_S = 60
+
+
+def _run_flow_step(
+    command: list[str], cwd: str, timeout_s: int, label: str
+) -> subprocess.CompletedProcess[str] | None:
+    """Run one synthesis-flow tool, reporting a timeout instead of raising it.
+
+    Parameters
+    ----------
+    command : list[str]
+        Tool executable and arguments.
+    cwd : str
+        Working directory of the tool.
+    timeout_s : int
+        Wall-clock limit in seconds.
+    label : str
+        Step name used in the timeout message.
+
+    Returns
+    -------
+    subprocess.CompletedProcess[str] or None
+        The finished process, or ``None`` after printing that the step timed out.
+    """
+    try:
+        return subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        print(f"  {label} timed out after {timeout_s} s.")
+        return None
+
+
+def _print_stderr_tail(stderr: str | None) -> None:
+    """Print the last five lines of a tool's standard error."""
+    for line in (stderr or "").splitlines()[-5:]:
+        print(f"    {line}")
 
 
 #: Per FPGA family: nextpnr's placed-design option and file suffix, the packer,

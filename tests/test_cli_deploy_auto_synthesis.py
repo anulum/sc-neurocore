@@ -27,6 +27,7 @@ def test_deploy_reports_successful_open_source_synthesis(
     model = tmp_path / "model.nir"
     model.write_bytes(b"fixture")
     fake_nir = fake_module("nir", read=mock.Mock(return_value=object()))
+    monkeypatch.setattr(shutil, "which", lambda program: f"/tools/{program}")
     monkeypatch.setattr(deploy_command, "run_auto_synthesis", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(
         bridge,
@@ -52,7 +53,12 @@ def test_deploy_reports_missing_open_source_synthesis_tool(
     model = tmp_path / "model.nir"
     model.write_bytes(b"fixture")
     fake_nir = fake_module("nir", read=mock.Mock(return_value=object()))
-    monkeypatch.setattr(deploy_command, "run_auto_synthesis", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(shutil, "which", lambda _program: None)
+    monkeypatch.setattr(
+        deploy_command,
+        "run_auto_synthesis",
+        mock.Mock(side_effect=AssertionError("the adapter must not run without Yosys")),
+    )
     monkeypatch.setattr(
         bridge,
         "from_nir",
@@ -65,6 +71,35 @@ def test_deploy_reports_missing_open_source_synthesis_tool(
     output = capsys.readouterr().out
     assert "Yosys not found" in output
     assert "make synth" in output
+
+
+def test_deploy_reports_a_failed_synthesis_flow_with_status_one(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """An installed toolchain whose flow fails is a failed deployment, not a missing tool."""
+    import sc_neurocore.cli.commands.deploy as deploy_command
+    import sc_neurocore.nir_bridge as bridge
+
+    model = tmp_path / "model.nir"
+    model.write_bytes(b"fixture")
+    fake_nir = fake_module("nir", read=mock.Mock(return_value=object()))
+    monkeypatch.setattr(shutil, "which", lambda program: f"/tools/{program}")
+    monkeypatch.setattr(deploy_command, "run_auto_synthesis", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        bridge,
+        "from_nir",
+        lambda _graph, *, dt: types.SimpleNamespace(topo_order=["input"]),
+    )
+
+    with mock.patch.dict("sys.modules", {"nir": fake_nir}):
+        assert run_cli("deploy", str(model), "--target", "ice40") == 1
+
+    output = capsys.readouterr().out
+    assert "Synthesis flow failed (errors above)" in output
+    assert "Yosys not found" not in output
+    assert "Synthesis succeeded" not in output
 
 
 def test_run_auto_synthesis_returns_false_without_yosys(
@@ -148,7 +183,9 @@ def test_run_auto_synthesis_succeeds_without_place_and_route(
         "fixture",
         deploy_command.TARGET_CONFIGS["ice40"],
     )
-    assert "Number of cells: 12" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "Number of cells: 12" in output
+    assert "Place-and-route skipped (nextpnr-ice40 not found)" in output
 
 
 def test_run_auto_synthesis_reports_place_and_route_failure(
@@ -156,7 +193,7 @@ def test_run_auto_synthesis_reports_place_and_route_failure(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A nextpnr failure preserves the successful synthesis artefact."""
+    """A nextpnr failure fails the flow; the synthesis artefact stays available."""
     import sc_neurocore.cli.commands.deploy as deploy_command
     import shutil
 
@@ -173,18 +210,22 @@ def test_run_auto_synthesis_reports_place_and_route_failure(
     )
     monkeypatch.setattr(subprocess, "run", lambda *_args, **_kwargs: next(results))
 
-    assert deploy_command.run_auto_synthesis(
+    assert not deploy_command.run_auto_synthesis(
         str(_synthesis_project(tmp_path)),
         "ice40",
         "fixture",
         deploy_command.TARGET_CONFIGS["ice40"],
     )
-    assert "PnR failed" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "PnR failed" in output
+    assert "    failed" in output
+    assert "PnR succeeded" not in output
 
 
 def test_run_auto_synthesis_succeeds_without_pack_tool(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Place-and-route success does not require a bitstream packer."""
     import sc_neurocore.cli.commands.deploy as deploy_command
@@ -212,6 +253,7 @@ def test_run_auto_synthesis_succeeds_without_pack_tool(
         "fixture",
         deploy_command.TARGET_CONFIGS["ice40"],
     )
+    assert "Bitstream skipped (icepack not found)" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("create_bitstream", [False, True])
@@ -221,7 +263,7 @@ def test_run_auto_synthesis_invokes_pack_tool(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The packer is invoked and any produced bitstream is measured."""
+    """The packer is invoked; a bitstream is measured, and a missing one fails the flow."""
     import sc_neurocore.cli.commands.deploy as deploy_command
     import shutil
 
@@ -235,14 +277,101 @@ def test_run_auto_synthesis_invokes_pack_tool(
 
     monkeypatch.setattr(subprocess, "run", run_tool)
 
-    assert deploy_command.run_auto_synthesis(
+    succeeded = deploy_command.run_auto_synthesis(
         str(output),
         "ice40",
         "fixture",
         deploy_command.TARGET_CONFIGS["ice40"],
     )
-    emitted = "Bitstream:" in capsys.readouterr().out
-    assert emitted is create_bitstream
+    printed = capsys.readouterr().out
+    assert succeeded is create_bitstream
+    assert ("Bitstream:" in printed) is create_bitstream
+    assert (
+        "Bitstream packing failed (icepack wrote no fixture.bin)" in printed
+    ) is not create_bitstream
+
+
+def test_run_auto_synthesis_fails_when_the_packer_exits_nonzero(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A packer error fails the flow even when it leaves a file behind."""
+    import sc_neurocore.cli.commands.deploy as deploy_command
+    import shutil
+
+    output = _synthesis_project(tmp_path)
+    monkeypatch.setattr(shutil, "which", lambda program: f"/tools/{program}")
+
+    def run_tool(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        if command[0].endswith("icepack"):
+            (Path(str(kwargs["cwd"])) / "fixture.bin").write_bytes(b"\x00")
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="bad asc")
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", run_tool)
+
+    assert not deploy_command.run_auto_synthesis(
+        str(output),
+        "ice40",
+        "fixture",
+        deploy_command.TARGET_CONFIGS["ice40"],
+    )
+    printed = capsys.readouterr().out
+    assert "Bitstream packing failed" in printed
+    assert "bad asc" in printed
+    assert "Bitstream:" not in printed
+
+
+@pytest.mark.parametrize(
+    ("timed_out", "label", "limit"),
+    [
+        ("yosys", "Yosys synthesis", "SYNTHESIS_TIMEOUT_S"),
+        ("nextpnr-ice40", "nextpnr place-and-route", "PLACE_AND_ROUTE_TIMEOUT_S"),
+        ("icepack", "icepack bitstream packing", "PACK_TIMEOUT_S"),
+    ],
+)
+def test_run_auto_synthesis_reports_a_step_timeout_as_a_failure(
+    timed_out: str,
+    label: str,
+    limit: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A step that exceeds its limit fails the flow with a message, not a traceback."""
+    import sc_neurocore.cli.commands.deploy as deploy_command
+    import shutil
+
+    seconds = getattr(deploy_command, limit)
+    monkeypatch.setattr(shutil, "which", lambda program: f"/tools/{program}")
+    calls: list[str] = []
+
+    def run_tool(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        tool = Path(command[0]).name
+        calls.append(tool)
+        assert (
+            kwargs["timeout"]
+            == {
+                "yosys": deploy_command.SYNTHESIS_TIMEOUT_S,
+                "nextpnr-ice40": deploy_command.PLACE_AND_ROUTE_TIMEOUT_S,
+                "icepack": deploy_command.PACK_TIMEOUT_S,
+            }[tool]
+        )
+        if tool == timed_out:
+            raise subprocess.TimeoutExpired(command, seconds)
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", run_tool)
+
+    assert not deploy_command.run_auto_synthesis(
+        str(_synthesis_project(tmp_path)),
+        "ice40",
+        "fixture",
+        deploy_command.TARGET_CONFIGS["ice40"],
+    )
+    assert f"{label} timed out after {seconds} s." in capsys.readouterr().out
+    assert calls[-1] == timed_out
 
 
 def test_find_hdl_source_returns_none_outside_source_tree(

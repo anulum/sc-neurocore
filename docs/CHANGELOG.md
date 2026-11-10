@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Report a failed open-source synthesis flow as a failure in `compile --synthesize`
+  and `deploy`. A nextpnr place-and-route error or a bitstream packer error used to
+  print "PnR failed" and still exit with status 0; it now exits with status 1, as a
+  Yosys failure already did. A step that exceeds its time limit (300 s for Yosys and
+  nextpnr, 60 s for packing) is reported instead of raising a traceback, a missing
+  nextpnr or packer is reported as a skipped step, and `deploy` no longer says
+  "Yosys not found" when an installed Yosys fails.
+
 - Retain all seven original timing samples for each of the five Lapicque
   backends with `benchmarks/capture_lapicque_samples.py`, and reject damaged,
   instrumented or source-mismatched evidence with
