@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop saying that Core 4.1.0 is blocked by the red `formal-all` gate, which the README
+  and the external formal evidence page still stated after 4.1.0 was released. Both now
+  say that full formal qualification remains incomplete and is not claimed until that
+  gate is green.
+
 - Install everything the package needs from `requirements.txt` and `requirements-dev.txt`.
   The runtime file now lists `defusedxml`, `tomli-w` and `typing-extensions` from the
   package dependencies, and the development file lists the six development dependencies it

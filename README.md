@@ -580,8 +580,8 @@ top-wrapper properties (19 non-catalogue jobs + **72 catalogue jobs** under
 `hdl/formal/catalogue/`). This counts unique job configurations and statements,
 including the inline `FORMAL` block in `hdl/sc_neurocore_top.v`; it is not a
 count of qualified passing results. Full qualification remains incomplete,
-so `formal-all` is expected to remain red and the next stable Core 4.1.0
-release remains blocked. See [external formal evidence](docs/formal/external_results.md).
+so `formal-all` is expected to remain red, and full formal qualification is
+not claimed until it is honestly green. See [external formal evidence](docs/formal/external_results.md).
 Re-emit catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
 ### GPU Acceleration

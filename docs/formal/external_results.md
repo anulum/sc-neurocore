@@ -13,7 +13,8 @@ it does not reproduce that external execution.
 
 Full formal qualification remains incomplete for 23 resource-intensive jobs.
 The `formal-all` gate is expected to fail until their results and required
-assertion-enable evidence qualify. Core 4.1.0 remains blocked until this gate is honestly green.
+assertion-enable evidence qualify. Full formal qualification is not claimed until this gate
+is honestly green.
 The indexed Amari primary PASS has a separate, independently reviewed
 assertion-enable audit over its retained prepared model. All six enables are
 reached at step 2 within the original prove depth 12. Timeouts, memory limits
