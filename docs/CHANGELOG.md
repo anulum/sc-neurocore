@@ -50,10 +50,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   previously left to the garbage collector, which on Python 3.13 and later reported
   them as unclosed-database warnings in unrelated code.
 
-- Stop saying that Core 4.1.0 is blocked by the red `formal-all` gate, which the README
-  and the external formal evidence page still stated after 4.1.0 was released. Both now
-  say that full formal qualification remains incomplete and is not claimed until that
-  gate is green.
+- Stop saying that Core 4.1.0 is blocked by the red `formal-all` gate, which the README,
+  the external formal evidence page and the formal workflow's job summary still stated
+  after 4.1.0 was released. All three now say that full formal qualification remains
+  incomplete, or is not claimed, until that gate is green.
 
 - Install everything the package needs from `requirements.txt` and `requirements-dev.txt`.
   The runtime file now lists `defusedxml`, `tomli-w` and `typing-extensions` from the

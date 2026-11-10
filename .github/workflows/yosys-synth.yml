@@ -285,7 +285,7 @@ jobs:
             unproven="$(awk -F'\t' 'NR > 1 && $2 == "UNPROVEN-RESOURCE" {n++} END {print n+0}' "$table")"
             echo "Native proofs: ${proofs}. **UNPROVEN-RESOURCE: ${unproven}.** These rows are resource-incomplete, independently reviewed, and are not proofs."
             echo
-            echo 'Core 4.1.0 remains blocked while any formal row lacks qualifying evidence. Each accepted resource-incomplete row requires its explicit reviewed index, non-vacuity audit and release-note scope.'
+            echo 'Full formal qualification is not claimed while any formal row lacks qualifying evidence. Each accepted resource-incomplete row requires its explicit reviewed index, non-vacuity audit and release-note scope.'
             echo
             echo '| Job | Status | Wall s | Max RSS KiB | Location | Native status | Cgroup peak B |'
             echo '|---|---|---:|---:|---|---|---:|'
