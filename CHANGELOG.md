@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Correct the hand-written test matrix of VALIDATION.md and one workflow row of the
+  README. The matrix counted 3,376 Python tests in 145 files and 67 formal checks in 7
+  files. The Python row now points to the README's generated test-file count. The formal
+  row gives the 91 SymbiYosys proof jobs under hdl/formal/, which the README's test-bound
+  count also states. The Rust engine row is CI-listed, as in the README. The engine tests
+  run on Ubuntu, Windows and macOS, not only Ubuntu and Windows. The generated
+  coverage-scope block, which three earlier changes had left out of date, is regenerated.
+  The README described benchmark.yml as performance regression tracking, but the workflow
+  starts only by hand with a run reason and change reference.
+
 - Correct statements on the documentation home page and two overview pages that the code
   contradicts or that no record supports. The MPI line and the getting-started guide no
   longer claim billion-neuron runs, for which no record exists. The analysis toolkit has

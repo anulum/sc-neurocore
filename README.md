@@ -720,7 +720,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **publish.yml** | Publish `sc-neurocore`, engine wheels, and `engine/` crate releases; retries skip already-published PyPI/crates.io versions |
 | **pypi-downloads.yml** | Daily PyPI download history on the serialized `metrics` branch |
 | **release.yml** | Build sdist/SBOM/security packet, support tagged-release backfills, and attach release assets to GitHub Release |
-| **benchmark.yml** | Performance regression tracking |
+| **benchmark.yml** | Performance benchmarks, started by hand with a run reason and change reference |
 | **brunel-parity.yml** | Weekly rerun of the dense NumPy Brunel lane against Brian2; fails when mean rates differ by more than the published 5% |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
 | **dependency-audit.yml** | Complete audit of every committed dependency lock, per ecosystem |
