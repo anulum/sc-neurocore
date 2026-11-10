@@ -6,8 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Neuro-Safe Hardware Monitor
 //
-// Enforces all 6 formally proven safety boundaries at the nanosecond scale.
-// Each property maps 1:1 to a theorem in safety_bounds.lean.
+// Checks the 6 safety bounds stated in safety_bounds.lean every clock cycle
+// (4 proved there, 2 axiomatised). Each check maps to one Lean statement;
+// P3 is a simplified range check (see below).
 //
 // Property Map:
 //   [P1] monitor_soundness   → halt ↔ coherence < limit

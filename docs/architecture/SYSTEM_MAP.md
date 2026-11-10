@@ -241,10 +241,12 @@ same source-selected library artifact. (Wiring completeness: see Audit.)
 
 ### 5.6 Hardware tier — `hdl/`
 
-25 Verilog modules (LIF Q8.8, axonal delay, CSR int8 sparse matvec, AER
-encoder/router, CORDIV, on-chip STDP, SHD 3-stage core + AXI wrapper), formal
-(`hdl/formal/` SymbiYosys), PYNQ-Z2 deployment (`hdl/pynq/`). Proven on silicon
-via the SHD pipeline.
+The top-level Verilog modules counted in section 1 (LIF Q8.8, axonal delay, CSR
+int8 sparse matvec, AER encoder/router, CORDIV, on-chip STDP, SHD 3-stage core +
+AXI wrapper), formal (`hdl/formal/` SymbiYosys), PYNQ-Z2 driver package
+(`hdl/pynq/`). The SHD pipeline is synthesised for a Zynq XC7Z020 and matches
+its Q8.8 reference in co-simulation; no board run has validated it yet
+(`ARCHITECTURE.md` §SHD).
 
 ### 5.7 Benchmarks
 

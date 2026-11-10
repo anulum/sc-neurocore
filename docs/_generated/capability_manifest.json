@@ -982,7 +982,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5623
+    "test_files": 5624
   },
   "documentation": {
     "public_pages": [
@@ -7229,6 +7229,7 @@
       "tests/test_public_api_packaged_resources.py",
       "tests/test_public_claims_metrics.py",
       "tests/test_public_docstring_policy.py",
+      "tests/test_public_hardware_run_claims.py",
       "tests/test_publish_workflow.py",
       "tests/test_pynq_driver_driver_source_hygiene.py",
       "tests/test_pynq_driver_free_tests.py",

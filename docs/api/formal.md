@@ -174,7 +174,7 @@ suite at every commit:
 | ``sc_add_preserves_range``     | ``engine/tests/test_sc_add.rs`` fuzzes pA, pB, D over 10⁴ triples |
 
 A violation of any cross-check is treated as a fatal regression — the
-hardware monitor ``neuro_safe_monitor.sv`` would halt the fabric in
+hardware monitor ``safety_monitor.sv`` would halt the fabric in
 production; the test failure prevents the corresponding binary from
 being published. So the axiomatisation is a **temporary expedient
 pending Mathlib**, not a hand-wave.
@@ -190,7 +190,8 @@ unit cannot afford full formal-methods machine-checked correctness
 of the network — that would require something like Coq-verified RTL
 (CompCert-level effort) and is well beyond the scope of the
 project. What **is** affordable is formal verification of the
-*monitor itself* — a dozen lines of RTL with six stated invariants.
+*monitor's invariants* — six stated bounds, checked by about 100 lines
+of RTL.
 
 **Why Lean 4 specifically.** Lean 4 is the pragmatic successor to
 Lean 3 + Mathlib (de Moura & Ullrich 2021). Its dependent-type
@@ -219,25 +220,33 @@ bounds 1:1, (b) tight tactic-level proof automation via ``omega``
 ``nlinarith`` / ``polyrith`` as the clean closure story for the
 axiomatised theorems.
 
-**Hardware-proof correspondence.** The monitor's six SystemVerilog
-properties in ``safety_monitor.sv`` mirror the six Lean theorems
-above 1:1:
+**Hardware-proof correspondence.** ``safety_monitor.sv`` (module
+``neuro_safe_monitor``) checks one runtime condition for each of the
+six Lean statements above. Each check latches a sticky bit of
+``violation_flags``, and any violation raises ``hardware_halt``:
 
 ```
-    Lean theorem                ←→  SystemVerilog property
-    ----------------------------    ----------------------
-    monitor_soundness          ←→  assert property (P1 @(posedge clk) ...);
-    safe_transition            ←→  assert property (P2 ...)
-    sc_precision_numerator_bound ←→ assert property (P3 ...)
-    sc_add_preserves_range     ←→  assert property (P4 ...)
-    lif_membrane_bounded       ←→  assert property (P5 ...)
-    scc_bounded                ←→  assert property (P6 ...)
+    Lean statement               ←→  monitor check (violation_flags bit)
+    ----------------------------     -----------------------------------
+    monitor_soundness            ←→  current or voltage above its limit,
+                                     or coherence below the limit (bit 0)
+    safe_transition              ←→  coherence lower than in the
+                                     previous cycle (bit 1)
+    sc_precision_numerator_bound ←→  popcount above N (bit 2)
+    sc_add_preserves_range       ←→  SC addition result above N (bit 3)
+    lif_membrane_bounded         ←→  membrane above v_max (bit 4)
+    scc_bounded                  ←→  |SCC numerator| above the
+                                     denominator (bit 5)
 ```
 
-The monitor is synthesisable (Yosys via :doc:`hdl_gen`
-``openroad_flow/``), so the same set of invariants that Lean proves
-in software are enforced in silicon at ≥100 MHz on the PYNQ-Z2
-reference platform.
+The precision check is a simplified range check (popcount ≤ N), not
+the full ``4·k·(N−k) ≤ N²`` inequality, and the two SC statements are
+axiomatised in Lean (see above). The monitor is written as
+synthesisable RTL and is the default target of the :doc:`hdl_gen`
+``openroad_flow/run_asic_flow.sh`` script (Yosys, then optionally
+OpenROAD, at a 100 MHz SKY130 target), so a hardware build can enforce
+these checks every clock cycle. No synthesis report, timing result or
+board run for the monitor is committed yet.
 
 ---
 
@@ -253,9 +262,9 @@ concentric rings. From inside out:
    stochastic_doctor (software-level invariant checker)
              │
              ▼  runs every inference
-   neuro_safe_monitor.sv (hardware runtime enforcer)
+   safety_monitor.sv (hardware runtime enforcer)
              │
-             ▼  runs every clock edge in silicon
+             ▼  runs every clock edge in hardware
    safety_bounds.lean (formal specification — compile-time)
              │
              ▼  runs once per release
@@ -282,7 +291,7 @@ the theorems (not on every unit test).
 | :class:`FormalProofEngine`             | Python façade; ``is_available()``, theorem/axiom inventory checks, and ``check_proofs() -> bool`` |
 | 21 proved theorem declarations (pure core Lean 4) | Controller polarity, safe transition, LIF branch/structure/bound, and SCC interval contracts |
 | 2 axiomatised theorems                 | With explicit Mathlib roadmap note in file header                         |
-| 1:1 Lean ↔ SystemVerilog property map  | Every Lean theorem corresponds to a ``neuro_safe_monitor.sv`` property   |
+| Lean ↔ monitor check map               | Six Lean statements each have a runtime check in ``safety_monitor.sv`` (§2); the precision check is simplified |
 | Hardware cross-check                   | Each axiomatised theorem has a matching Rust fuzz/sweep test              |
 | Graceful `lean` absence                | ``is_available()`` returns False if ``lean`` not on ``PATH``              |
 | Clear failure reporting                | ``check_proofs`` prints the first error line + returns False              |

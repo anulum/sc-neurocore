@@ -11,7 +11,7 @@
 
 Lean 4 formalisation of key safety properties for stochastic computing
 neural networks. These theorems establish bounds that are enforced at
-runtime by the hardware monitor (`neuro_safe_monitor.sv`) and the
+runtime by the hardware monitor (`safety_monitor.sv`) and the
 software doctor (`stochastic_doctor`).
 
 ## Theorem inventory
@@ -60,8 +60,9 @@ non-negativity constraint on a quadratic form (`(N−2k)²` and
 `(D−pA)(D−pB)`). They are provable with one line of `nlinarith` once
 Mathlib is added to the project (see §7 of `docs/api/formal.md`).
 Until then, each carries a runtime cross-check in the Rust/Python test
-suite: the hardware monitor `neuro_safe_monitor.sv` enforces the
-bound in silicon, and breaking it in simulation raises a
+suite: the hardware monitor (`safety_monitor.sv`) is designed to check
+each bound at run time (the precision bound in a simplified form; no
+board run yet), and breaking it in simulation raises a
 `SafetyViolation` that the CI treats as a fatal regression.
 -/
 

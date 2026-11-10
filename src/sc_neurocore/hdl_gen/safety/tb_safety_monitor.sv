@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Testbench for Neuro-Safe Hardware Monitor
 //
-// Verifies all 6 formally proven safety properties.
+// Exercises all 6 monitor checks.
 
 `timescale 1ns / 1ps
 

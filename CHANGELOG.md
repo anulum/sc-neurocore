@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Stop claiming hardware results that no record supports. The system map said the SHD
+  pipeline was proven on silicon, the research-labs guide said simulated spikes fire
+  identically on silicon, and the formal page said the safety monitor enforces its
+  invariants in silicon at 100 MHz or more on the PYNQ-Z2. No board run has been made and
+  no synthesis report for the monitor is committed, so each page now states the
+  co-simulation and synthesis evidence and says that no board run has validated it yet.
+  The formal page also lists the monitor's six runtime checks and violation-flag bits in
+  place of assertions the RTL does not contain, and notes that its precision check is a
+  simplified range check. A test now finds these claims without regard to case, line
+  breaks or emphasis.
+
 - Close every job-ledger database connection when the Studio application shuts down,
   including the connections opened by worker threads that have ended. They were
   previously left to the garbage collector, which on Python 3.13 and later reported

@@ -60,8 +60,9 @@ and performs arithmetic with logic gates — directly mapping to FPGA
 hardware.
 
 **What you gain:** bit-true correspondence between your Python
-simulation and synthesised Verilog. What fires in simulation fires
-identically on silicon.
+simulation and synthesised Verilog, for the neurons that have RTL. What
+fires in the Python simulation fires identically in the Verilog
+co-simulation; no board run has validated this on hardware yet.
 
 **What you keep:** familiar neuron models. SC-NeuroCore implements
 173 models from McCulloch-Pitts (1943) through Hodgkin-Huxley,
