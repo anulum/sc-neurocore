@@ -50312,8 +50312,6 @@ can be closed from another thread.
 
 - **__init__**(\*, owner)
   - Track connections for ``owner``; all are closed when ``owner`` is collected.
-- **generation**()
-  - Return how many times :meth:`close_all` has run.
 - **current**(entry, path, busy_timeout_ms)
   - Return the calling thread's ``(generation, connection)``, opening it if needed.
 - **open**(path, busy_timeout_ms, retired)
@@ -50322,8 +50320,6 @@ can be closed from another thread.
   - Close ``connection`` and stop tracking it.
 - **close_all**()
   - Close the caller's and every ended thread's connection; retire the rest.
-- **__len__**()
-  - Return how many connections are open and recorded.
 
 ---
 

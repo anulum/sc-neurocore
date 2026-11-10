@@ -21,6 +21,7 @@ from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.platform.jobs import StudioJobManager
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.platform.storage_isolated_jobs import IsolatedJobManager
 
 
 def _closed(connection: sqlite3.Connection) -> bool:
@@ -184,3 +185,20 @@ def test_application_shutdown_closes_the_job_ledger(tmp_path: Path) -> None:
     assert ledger.connection() is not mine
     assert _closed(mine)
     ledger.close_all()
+
+
+def test_application_shutdown_passes_by_a_manager_that_owns_no_ledger(tmp_path: Path) -> None:
+    """The isolated job manager owns no ledger and has no ``close``; shutdown leaves it alone.
+
+    In isolated mode every durable job operation goes to the storage authority,
+    so the application's shutdown step finds nothing to close and must not fail.
+    """
+    assert not hasattr(IsolatedJobManager, "close")
+    app = create_app(StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs")))
+    local = app.state.studio_job_manager
+    app.state.studio_job_manager = object.__new__(IsolatedJobManager)
+    try:
+        with TestClient(app, base_url="http://127.0.0.1", headers={"sec-fetch-site": "none"}):
+            pass
+    finally:
+        local.close()

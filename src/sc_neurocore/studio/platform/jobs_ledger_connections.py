@@ -43,15 +43,6 @@ class LedgerConnectionRegistry:
         # Once the owner is unreachable no thread can be using its connections.
         weakref.finalize(owner, self._close_every)
 
-    @property
-    def generation(self) -> int:
-        """Return how many times :meth:`close_all` has run.
-
-        A thread whose cached connection belongs to an earlier generation must
-        close it with :meth:`forget` and open a new one.
-        """
-        return self._generation
-
     def current(
         self, entry: tuple[int, sqlite3.Connection] | None, path: Path, busy_timeout_ms: int
     ) -> tuple[int, sqlite3.Connection]:
@@ -127,8 +118,3 @@ class LedgerConnectionRegistry:
             self._connections = []
         for connection in connections:
             connection.close()
-
-    def __len__(self) -> int:
-        """Return how many connections are open and recorded."""
-        with self._lock:
-            return len(self._connections)
