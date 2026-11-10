@@ -17,6 +17,10 @@ trivial logic gates:
 | Integrate | ~50 LUTs (accumulator) | ~4 LUTs (counter) | 12× |
 | Square | 256 LUTs | 0 (wire, auto-correlation) | ∞ |
 
+Note on the Square row: with the same stream on both inputs of an AND gate,
+P(A AND A) = P(A), not P(A)². Squaring in SC needs a decorrelated copy of the
+stream (for example a delayed copy), which costs at least one flip-flop.
+
 The trade-off: SC requires L clock cycles per operation (L = bitstream
 length). For L=256, an SC multiplier is 256 cycles × 1 LUT vs 1 cycle
 × 256 LUTs. Same throughput, but SC uses 256× less area and power.
@@ -44,6 +48,25 @@ Yosys for Lattice iCE40 and ECP5:
 | `sc_dma_controller.v` | DMA for weight upload and output readback | ~300 | ~96 |
 | `sc_cdc_primitives.v` | Clock domain crossing (2-FF sync, Gray counter, async FIFO) | ~60 | ~32 |
 | `sc_neurocore_top.v` | System top (DMA + AXI + layers) | varies | varies |
+
+No source was found for the iCE40 figures in this table; they are kept as
+written. Measured on 2026-11-10 with Yosys 0.33 (`synth_ice40`, iCE40 HX
+without DSP, default module parameters, source at commit a42345c26), as
+SB_LUT4 / flip-flops:
+
+| Module | Measured |
+|--------|----------|
+| `sc_lif_neuron.v` | 1,403 / 49 (with `-dsp`: 234 / 49 plus 2 SB_MAC16) |
+| `sc_bitstream_synapse.v` | 1 / 0 |
+| `sc_mux_add.v` | 1 / 0 |
+| `sc_cordiv.v` | 1 / 1 |
+| `sc_axil_cfg_param.v` | 400 / 548 |
+| `sc_axis_interface.v` | 5 / 132 |
+| `sc_dma_controller.v` | 143 / 88 |
+
+Not measured: `sc_bitstream_encoder.v` (its flip-flops with asynchronous set
+and reset are not legalised for iCE40), `sc_axil_cfg.v` (not parsed by Yosys
+0.33) and `sc_cdc_primitives.v` (no top module of that name).
 
 `sc_axis_interface.v` propagates the accepted slave-side `s_axis_tlast` marker
 to `m_axis_tlast` on the corresponding layer output word. This keeps frame
@@ -79,11 +102,21 @@ module sc_dense_layer_top #(
 );
 ```
 
+The port map above does not match `hdl/sc_dense_layer_top.v`: that module has
+the parameters `N_INPUTS = 3`, `N_NEURONS = 5`, `STREAM_LEN = 4096` and
+`DATA_WIDTH = 16`, and the ports `clk`, `rst_n`, `start`, `done`, `x_inputs`,
+`weight_values`, `y_min`, `y_max`, `spike_out` and `spike_valid`.
+
 ### Timing
 
 - **Latency**: 2 clock cycles (1 for multiply+MUX, 1 for LIF update)
 - **Throughput**: 1 result per L clocks (L = bitstream length)
 - **Clock rate**: 100-200 MHz on iCE40, up to 400 MHz on ECP5
+  - No source was found for these figures. Measured on 2026-11-10 for
+    `sc_lif_neuron.v` alone, every port on I/O, seed 1: 32.05 MHz on iCE40
+    HX8K (Yosys 0.33, nextpnr-ice40, package ct256) and 45.83 MHz on ECP5-85
+    (Yosys 0.33 `synth_ecp5`: 189 LUT4, 2 MULT18X18D, 49 flip-flops;
+    nextpnr-ecp5, package CABGA381).
 
 ## Synthesis flow
 
@@ -170,6 +203,10 @@ wire signed [15:0] leak_term = (product > 32'sh7FFF_FF) ? 16'sh7FFF :
 
 SC requires random bitstreams. The `sc_lfsr_16bit.v` module generates
 pseudo-random sequences using a 16-bit linear feedback shift register:
+
+(There is no separate `sc_lfsr_16bit.v` in `hdl/`; this LFSR is implemented
+inside `hdl/sc_bitstream_encoder.v`, which uses the polynomial and taps below.
+The period of 65,535 was checked by stepping those taps from the seed 0xACE1.)
 
 ```
 Polynomial: x¹⁶ + x¹⁴ + x¹³ + x¹¹ + 1

@@ -2,7 +2,7 @@
 
 The Studio is a web-based research workbench for designing, simulating, and
 analysing spiking neurons interactively. It combines <!-- count:studio_catalogue_models -->185<!-- /count --> catalogue models,
-custom ODE editing, 15 analysis views, and Verilog RTL generation in a single
+custom ODE editing, 16 analysis views, and Verilog RTL generation in a single
 interface.
 
 The main toolbar opens a searchable **Hardware catalogue** without requiring
@@ -151,7 +151,7 @@ Five built-in templates: LIF, Izhikevich, AdEx, Hodgkin-Huxley, FitzHugh-Nagumo.
 
 ## Analysis Views
 
-The Studio provides 15 view tabs, each showing a different analysis of the
+The Studio provides 16 view tabs, each showing a different analysis of the
 current simulation:
 
 | View | Tab | What it shows |

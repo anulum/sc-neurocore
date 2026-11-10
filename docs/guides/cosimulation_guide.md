@@ -66,11 +66,15 @@ The co-simulation suite is organized into four test classes:
 
 ### TestCoSimulation — Q8.8 Baseline
 
+Defined in `tests/test_cosim_emitters_co_simulation.py`; the five models (`lif`,
+`lapicque`, `quadratic_if`, `izhikevich`, `perfect_integrator`) are listed in
+`tests/cosim_emitters_support.py`.
+
 | Test | Description | Assertion |
 |------|-------------|-----------|
-| `test_both_produce_spikes` | Both Python and Verilog spike (6 models) | `spikes > 0` |
-| `test_spike_count_accuracy` | Spike counts match within 1% (6 models) | `gap < 1%` |
-| `test_no_current_no_spikes` | Zero current → zero spikes (5 models) | `spikes == 0` |
+| `test_both_produce_spikes` | Both Python and Verilog spike (5 models) | `spikes > 0` |
+| `test_spike_count_accuracy` | Spike counts are equal for 4 models; `izhikevich` is pinned at Python 25 vs Verilog 24 (4%) | `gap == 0`; `izhikevich`: `(25, 24)` |
+| `test_no_current_no_spikes` | Zero current → zero spikes (4 models; `izhikevich` excluded) | `spikes == 0` |
 | `test_python_sim_is_deterministic` | Python gives same result twice | `a == b` |
 | `test_verilog_sim_is_deterministic` | Verilog gives same result twice | `a == b` |
 

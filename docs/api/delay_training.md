@@ -165,13 +165,13 @@ Relevant environment variables:
 
 ## References
 
-- Hammouamri, Xiloyannis, Bhatt, Bhattacharyya & Bhatt,
+- Hammouamri, Khalfaoui-Hassani & Masquelier,
   "Learning Delays in Spiking Neural Networks using Dilated Convolutions
-  with Learnable Spacings", ICLR 2023
-- Göltz, Kriener, Baumbach, Billaudelle, Breitwieser, Cramer, Dold,
-  Kungl, Senn, Schemmel, Meier & Petrovici, "DelGrad: Exact Gradients
-  in Spiking Networks for Learning Transmission Delays and Weights",
-  arXiv 2024
+  with Learnable Spacings", ICLR 2024 (arXiv:2306.17670)
+- Göltz, Weber, Kriener, Lake, Payvand & Petrovici, "DelGrad: Exact
+  Gradients in Spiking Networks for Learning Transmission Delays and
+  Weights", arXiv:2404.19165v1, 2024 (later versions retitle the paper and
+  add Billaudelle and Schemmel as authors)
 - Sun, Zeng, Fang & Li, "Learnable Axonal Delay in Spiking Neural
   Networks for Adaptive Temporal Representation", AAAI 2025
 
