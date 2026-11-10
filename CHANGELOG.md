@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Retain all seven original timing samples for each of the five Lapicque
+  backends with `benchmarks/capture_lapicque_samples.py`, and reject damaged,
+  instrumented or source-mismatched evidence with
+  `benchmarks/validate_lapicque_samples.py`. The capture and validation checks
+  run in CI with complete statement and branch coverage. Three guides document
+  the commands, provenance checks and external performance-isolation boundary.
+  This adds measurement tooling; it publishes no performance results or model
+  readiness changes.
+
 ## [4.1.0] - 2026-11-08
 
 - The curated summary of this release is `docs/development/RELEASE_NOTES_v4.1.0.md`, which is also the GitHub Release text.

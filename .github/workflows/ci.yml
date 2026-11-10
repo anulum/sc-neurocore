@@ -1405,6 +1405,47 @@ jobs:
             --include='src/sc_neurocore/hdc/base.py,src/sc_neurocore/hdc/classifier.py,src/sc_neurocore/hdc/__init__.py' \
             --fail-under=100 --show-missing
 
+      - name: Prepare the real unsupported interpreter for Lapicque refusal checks
+        if: matrix.coverage && matrix.shard-index == 5
+        id: lapicque_unsupported_python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11.18"
+
+      - name: Restore the qualified Lapicque capture interpreter
+        if: matrix.coverage && matrix.shard-index == 5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+
+      - name: Lapicque capture and consumer exact branch coverage
+        if: matrix.coverage && matrix.shard-index == 5
+        run: |
+          bash benchmarks/verify_lapicque_capture.sh \
+            --checkout "$GITHUB_WORKSPACE" \
+            --output-dir "$RUNNER_TEMP/lapicque-capture" \
+            --unsupported-python "${{ steps.lapicque_unsupported_python.outputs.python-path }}"
+
+      - name: Stage Lapicque diagnostics without following source symlinks
+        if: always() && matrix.coverage && matrix.shard-index == 5
+        run: |
+          lapicque_raw="$RUNNER_TEMP/lapicque-capture"
+          lapicque_evidence="$RUNNER_TEMP/lapicque-capture-evidence"
+          test -d "$lapicque_raw"
+          mkdir -- "$lapicque_evidence"
+          cd -- "$lapicque_raw"
+          find -P . -type f \( -name '*.json' -o -name '*.xml' -o -name '.coverage-*' \) \
+            -exec cp --parents --target-directory="$lapicque_evidence" -- '{}' +
+
+      - name: Preserve Lapicque capture and consumer diagnostics
+        if: always() && matrix.coverage && matrix.shard-index == 5
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: lapicque-capture-and-consumer
+          path: ${{ runner.temp }}/lapicque-capture-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

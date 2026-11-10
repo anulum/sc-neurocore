@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1825
+expected_file_count = 1839
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7354,3 +7354,59 @@ rationale = "Drive the deploy command and its synthesis helper through Yosys, pl
 [[file]]
 path = "tests/test_training/test_snn_modules_spiking_net.py"
 rationale = "SpikingNet shapes, gradient flow on a fixed draw whose hidden layers are checked to spike, and stochastic-computing weight export."
+
+[[file]]
+path = "benchmarks/capture_lapicque_samples.py"
+rationale = "Retain actual original Lapicque return samples, preserve monitor ownership and reject source or report corruption through the public capture command."
+
+[[file]]
+path = "benchmarks/tests/conftest.py"
+rationale = "Require explicit genuine producer evidence for the standalone Lapicque consumer tests."
+
+[[file]]
+path = "benchmarks/tests/lapicque_admission_driver.py"
+rationale = "Exercise actual interpreter loader and loaded-source admission failures before measurement without replacing the numerical runtime."
+
+[[file]]
+path = "benchmarks/tests/lapicque_cli_driver.py"
+rationale = "Execute the real capture command and preserve actual profiler ownership across filesystem and monitoring failures."
+
+[[file]]
+path = "benchmarks/tests/lapicque_integrity_driver.py"
+rationale = "Exercise real post-computation source, metadata and output faults after complete original five-language work."
+
+[[file]]
+path = "benchmarks/tests/lapicque_monitor_driver.py"
+rationale = "Exercise actual monitoring ownership and cleanup changes after complete original benchmark computation."
+
+[[file]]
+path = "benchmarks/tests/test_capture_lapicque_admission.py"
+rationale = "Require the public capture command to refuse genuine missing inputs, altered source, occupied outputs and unsupported interpreters."
+
+[[file]]
+path = "benchmarks/tests/test_capture_lapicque_diagnostics.py"
+rationale = "Run complete instrumented capture commands and verify actual output failures retain diagnostic samples without performance credit."
+
+[[file]]
+path = "benchmarks/tests/test_capture_lapicque_integrity.py"
+rationale = "Reject real post-computation integrity faults after the original full workload and retain all available original samples."
+
+[[file]]
+path = "benchmarks/tests/test_capture_lapicque_monitor_ownership.py"
+rationale = "Verify real foreign monitoring owners, changed event masks and audit-triggered owner loss cannot qualify a capture."
+
+[[file]]
+path = "benchmarks/tests/test_capture_lapicque_samples.py"
+rationale = "Exercise full five-language public captures and genuine report failures while preserving samples, parity and original exceptions."
+
+[[file]]
+path = "benchmarks/tests/test_lapicque_return_records.py"
+rationale = "Validate real original return observations through the public recording API and reject explicitly damaged copies."
+
+[[file]]
+path = "benchmarks/tests/test_validate_lapicque_samples.py"
+rationale = "Exercise the public validator on real producer output and refuse corrupted durations, provenance, workloads and parity."
+
+[[file]]
+path = "benchmarks/validate_lapicque_samples.py"
+rationale = "Validate actual five-language Lapicque durations, source hashes, parity and aggregates before admitting their integrity for external performance qualification."
