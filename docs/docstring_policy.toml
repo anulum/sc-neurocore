@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1839
+expected_file_count = 1840
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7410,3 +7410,7 @@ rationale = "Exercise the public validator on real producer output and refuse co
 [[file]]
 path = "benchmarks/validate_lapicque_samples.py"
 rationale = "Validate actual five-language Lapicque durations, source hashes, parity and aggregates before admitting their integrity for external performance qualification."
+
+[[file]]
+path = "tests/test_requirements_files_mirror_pyproject.py"
+rationale = "The pip requirements files offered in the README list exactly the pyproject dependencies, with every version clause kept."

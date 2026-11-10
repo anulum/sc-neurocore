@@ -1,4 +1,8 @@
-# Pinned runtime dependencies for SC-NeuroCore v3.14.0
+# Runtime dependencies for SC-NeuroCore
 # Canonical source of truth: pyproject.toml [project.dependencies]
+# tests/test_public_api_install_profiles.py checks that this file mirrors it.
 numpy>=1.24
 scipy>=1.10
+defusedxml>=0.7.1
+tomli-w>=1.0
+typing-extensions>=4.0,<5

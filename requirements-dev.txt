@@ -1,11 +1,18 @@
-# Pinned dev dependencies for SC-NeuroCore v3.14.0
+# Development dependencies for SC-NeuroCore
 # Canonical source of truth: pyproject.toml [project.optional-dependencies.dev]
+# tests/test_public_api_install_profiles.py checks that this file mirrors it.
 -r requirements.txt
 pytest>=9.1.1
 pytest-cov>=7.1.0
+pytest-xdist
+filelock
 hypothesis>=6.167.0
-mypy>=2.4.0
-ruff==0.17.3
+mypy==2.4.1
+ruff==0.17.4
 bandit>=1.7
 pyyaml>=6.0
+onnx
+pint>=0.23
+sympy>=1.12
 mojo==1.0.0; platform_system != "Windows"
+tomli-w>=1.0

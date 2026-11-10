@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Install everything the package needs from `requirements.txt` and `requirements-dev.txt`.
+  The runtime file now lists `defusedxml`, `tomli-w` and `typing-extensions` from the
+  package dependencies, and the development file lists the six development dependencies it
+  lacked and the exact `mypy` and `ruff` versions of the `dev` extra. A test keeps both
+  files in step with `pyproject.toml`.
+
 - Correct documentation errors that a record proves. The delay-training page names the
   published authors of its first two references and the venue of the first, the co-
   simulation guide lists the models and tolerances its tests enforce, the Studio guide
