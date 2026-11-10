@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Close every job-ledger database connection when the Studio application shuts down,
+  including the connections opened by worker threads that have ended. They were
+  previously left to the garbage collector, which on Python 3.13 and later reported
+  them as unclosed-database warnings in unrelated code.
+
 - Stop saying that Core 4.1.0 is blocked by the red `formal-all` gate, which the README
   and the external formal evidence page still stated after 4.1.0 was released. Both now
   say that full formal qualification remains incomplete and is not claimed until that

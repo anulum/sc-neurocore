@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.studio.platform.jobs_ledger_connections import LedgerConnectionRegistry
 from sc_neurocore.studio.platform.jobs_ledger_recovery import (
     StudioJobReconciliation,
     reconcile_ledger,
@@ -97,6 +98,7 @@ class StudioJobLedger:
         self._supervisor = supervisor or supervisor_identity()
         self._lease_seconds = lease_seconds
         self._local = threading.local()
+        self._connections = LedgerConnectionRegistry(owner=self)
         root.mkdir(parents=True, exist_ok=True)
         # executescript() commits whatever transaction is open, so the schema is
         # applied on its own. Every statement is idempotent, and the migration
@@ -129,27 +131,25 @@ class StudioJobLedger:
 
     def close(self) -> None:
         """Close this thread's connection, if it opened one."""
-        connection = getattr(self._local, "connection", None)
-        if connection is not None:
-            connection.close()
-            self._local.connection = None
+        entry = getattr(self._local, "entry", None)
+        if entry is not None:
+            self._connections.forget(entry[1])
+            self._local.entry = None
+
+    def close_all(self) -> None:
+        """Close every connection no live thread can be using; others close on their next use."""
+        self._connections.close_all()
+        self._local.entry = None  # the caller's own connection is among those just closed
 
     def connection(self) -> sqlite3.Connection:
         """Return this thread's connection, opening it on first use."""
         return self._connect()
 
     def _connect(self) -> sqlite3.Connection:
-        connection = getattr(self._local, "connection", None)
-        if connection is None:
-            connection = sqlite3.connect(
-                self._path, timeout=DEFAULT_BUSY_TIMEOUT_MS / 1000.0, isolation_level=None
-            )
-            connection.row_factory = sqlite3.Row
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("PRAGMA synchronous=FULL")
-            connection.execute(f"PRAGMA busy_timeout={DEFAULT_BUSY_TIMEOUT_MS}")
-            self._local.connection = connection
-        return connection
+        entry = getattr(self._local, "entry", None)
+        entry = self._connections.current(entry, self._path, DEFAULT_BUSY_TIMEOUT_MS)
+        self._local.entry = entry
+        return entry[1]
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:

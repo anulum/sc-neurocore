@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -114,6 +116,15 @@ __all__ = [
 ]
 
 
+@asynccontextmanager
+async def _close_job_manager_on_shutdown(application: FastAPI) -> AsyncIterator[None]:
+    """Close the job manager's ledger connections when the application shuts down."""
+    yield
+    close = getattr(application.state.studio_job_manager, "close", None)
+    if close is not None:
+        close()
+
+
 def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
     """Create and configure the Visual SNN Studio FastAPI application.
 
@@ -129,7 +140,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         Application with security middleware and responsibility routers mounted.
     """
     application = FastAPI(
-        title="SC-NeuroCore Studio", version="1.0.0", docs_url=None, redoc_url=None
+        title="SC-NeuroCore Studio",
+        version="1.0.0",
+        docs_url=None,
+        redoc_url=None,
+        lifespan=_close_job_manager_on_shutdown,
     )
     application.add_exception_handler(RequestValidationError, request_validation_error_handler)
     context = build_studio_api_context(application, runtime_settings)

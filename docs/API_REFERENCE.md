@@ -50261,6 +50261,8 @@ lease_seconds : float
   - Return the identity this ledger stamps on leases it takes.
 - **close**()
   - Close this thread's connection, if it opened one.
+- **close_all**()
+  - Close every connection no live thread can be using; others close on their next use.
 - **connection**()
   - Return this thread's connection, opening it on first use.
 - **transaction**()
@@ -50293,6 +50295,35 @@ lease_seconds : float
   - Return the stored rows of every job that has not finished.
 - **reconcile**()
   - Resolve every job left alive by a supervisor that is no longer here.
+
+---
+
+## Module `studio.platform.jobs_ledger_connections`
+
+### Class `LedgerConnectionRegistry`
+Thread-owned ledger connections, each closed only when nothing can still use it.
+
+Each connection is used only by the thread that opened it. A connection is
+closed by its own thread, or by another thread only once its owner has
+ended; a live thread may be inside a transaction, and closing its
+connection under it would crash the interpreter. Connections are created
+with ``check_same_thread=False`` only so that an ended thread's connection
+can be closed from another thread.
+
+- **__init__**(\*, owner)
+  - Track connections for ``owner``; all are closed when ``owner`` is collected.
+- **generation**()
+  - Return how many times :meth:`close_all` has run.
+- **current**(entry, path, busy_timeout_ms)
+  - Return the calling thread's ``(generation, connection)``, opening it if needed.
+- **open**(path, busy_timeout_ms, retired)
+  - Open a ledger connection for the calling thread and record it.
+- **forget**(connection)
+  - Close ``connection`` and stop tracking it.
+- **close_all**()
+  - Close the caller's and every ended thread's connection; retire the rest.
+- **__len__**()
+  - Return how many connections are open and recorded.
 
 ---
 
@@ -50605,6 +50636,8 @@ Reading what those jobs did is the custody surface this inherits from
   - Configure bounded execution over the durable job ledger.
 - **root**()
   - Return the directory holding the ledger and every job's sandbox.
+- **close**()
+  - Close the ledger connections of every thread; calling it again is harmless.
 - **max_seed_file_bytes**()
   - Return the existing per-file seed ceiling enforced by this manager and worker.
 - **submit**(\*, kind, owner, request_id, task, timeout_seconds, workspace, idempotency_key, experiment_sha256, admission)

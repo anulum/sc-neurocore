@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1840
+expected_file_count = 1842
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -2235,6 +2235,14 @@ rationale = "Process-group reaping with escalation and verification; a reap repo
 [[file]]
 path = "src/sc_neurocore/studio/platform/jobs_ledger.py"
 rationale = "Durable transactional job store: admission, transitions, leases and recovery of the records that outlive a Studio process."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_connections.py"
+rationale = "Thread-owned ledger connections: closes every connection a job ledger opened, including those of ended threads, when the ledger closes or is collected."
+
+[[file]]
+path = "tests/test_studio_jobs_ledger_connections.py"
+rationale = "Closing the ledger, the job manager and the application closes every thread's connection, including those of ended threads."
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/jobs_ledger_reads.py"

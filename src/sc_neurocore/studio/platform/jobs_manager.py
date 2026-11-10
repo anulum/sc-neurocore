@@ -123,6 +123,10 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         """Return the directory holding the ledger and every job's sandbox."""
         return self._root
 
+    def close(self) -> None:
+        """Close the ledger connections of every thread; calling it again is harmless."""
+        self._ledger.close_all()
+
     @property
     def max_seed_file_bytes(self) -> int:
         """Return the existing per-file seed ceiling enforced by this manager and worker."""
