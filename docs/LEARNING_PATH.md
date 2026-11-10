@@ -179,7 +179,7 @@ verify it with Verilator, and read the resource utilization report.
 
 | Resource | What you learn |
 |----------|---------------|
-| [Architecture Overview](architecture/architecture.md) | Full system architecture, module dependency graph |
+| [Architecture Overview](architecture/architecture.md) | What the package is for, its three tiers and the contracts between them |
 | [Component Inventory](architecture/COMPONENT_INVENTORY.md) | Every module, its role, its test coverage |
 | [Technical Manual](guides/TECHNICAL_MANUAL.md) | Internal design decisions, numerical choices |
 | [Foundational Whitepaper](research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md) | Theoretical basis for the SC-SNN approach |

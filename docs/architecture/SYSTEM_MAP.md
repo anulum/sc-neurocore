@@ -9,8 +9,9 @@
 # SC-NeuroCore — System Architecture Map
 
 > Canonical architecture map, last refreshed against the tree on 2026-07-14, when
-> the package version was `3.16.0`; later releases are not yet reflected. Supersedes the earlier `architecture.md` and
-> `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
+> the package version was `3.16.0`; later releases are not yet reflected. It superseded the package listing formerly in
+> `architecture.md`, which is now a short [entry page](architecture.md) without counts, and
+> `COMPONENT_INVENTORY.md` in this directory, which is stale (see *Provenance*).
 >
 > Purpose: a single, factual reference to SC-NeuroCore's capabilities, data flow,
 > inputs/outputs, processing models, backends and their wiring — for sibling
@@ -491,8 +492,9 @@ modules as production capabilities.
   evidence-based depth scans (neurons, SC core, network, compiler/EDA,
   acceleration) and direct source verification of the dispatch selector, neuron
   count, and benchmark/FIM claims.
-- The earlier `architecture.md` (counts: 174 neurons) and `COMPONENT_INVENTORY.md`
-  (lists classes absent from `src/`, e.g. `DigitalSoul`, `PhiEvaluator`) are
+- The earlier `architecture.md` (counts: 174 neurons) was **stale** and has since been
+  replaced by a short entry page that states no counts. `COMPONENT_INVENTORY.md`
+  (lists classes absent from `src/`, e.g. `DigitalSoul`, `PhiEvaluator`) is
   **stale**; this document is the corrected reference. The per-component SOTA
   assessment, maturity ledger, documentation-drift findings, and the per-lane
   remediation plan are maintained separately in the internal audit

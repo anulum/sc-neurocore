@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Replace the architecture overview page. The old page was a package listing with
+  counts from mid-2026 that the system map already called stale. The new page is the
+  entry point to the architecture: what the programme is for, the loop from model to
+  evidence, the three tiers that exist today, the contracts between them, which
+  established tools are integrated and what is built here, what ships and what is
+  research, and what is planned. It states no counts and links to the generated
+  capability snapshot instead. The navigation lists it first. The system map and two
+  pages that described the old content are reworded, and two stale counts are removed
+  from the repository's `ARCHITECTURE.md`.
+
 - Stop claiming hardware results that no record supports. The system map said the SHD
   pipeline was proven on silicon, the research-labs guide said simulated spikes fire
   identically on silicon, and the formal page said the safety monitor enforces its
