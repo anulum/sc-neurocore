@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Bind the README's MNIST figure for the surrogate-gradient example to its record. The row
+  gave ~95% for FastSigmoid, SuperSpike and ATan alike. The example uses the default ATan
+  surrogate, and the committed 10-epoch benchmark of the same network with ATan reached
+  95.9%. No record gives that figure for the other two. The row now names ATan and the
+  run.
+
 - Add a page on what each kind of evidence establishes and what it does not: records
   of a run, agreement between implementations, co-simulation, formal results, reports
   of design tools, benchmark artefacts and measurements on a device. The architecture
