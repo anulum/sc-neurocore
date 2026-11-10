@@ -12,6 +12,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Rewrite the integration and performance-tuning guides from the code and records. The
+  integration guide described APIs that do not exist, a deployed PYNQ-Z2 overlay and a
+  hardware interrupt. It now covers the SHD accelerator: what is co-simulated and
+  synthesised, that a bitstream from the block-design script carries no trained model, how
+  to build it, the driver and its register map, and the steps before a first board run.
+  The performance guide gave a 250 MHz board clock, resource and power figures and
+  latencies with no record behind them. It now covers bitstream length and precision, with
+  lengths computed by `adaptive_length`, the packed, CuPy, sparse, Rust and GPU paths, the
+  one committed timing result, and the absence of any power measurement. The PYNQ demo and
+  driver use the block-design instance name `sc_shd_0`. The demo no longer prints a
+  throughput from core cycles alone, and it gives the 75.2 % accuracy as the
+  floating-point model's. The hardware-claims test now reads both guides.
+
 - Describe the SCPN example by what it builds. The README gave examples/05_scpn_stack.py
   seven layers and a non-technical reading of SCPN; the example builds 16 layers. The
   README row and the example's docstring now call it a 16-layer SCPN (Stochastic Coupled

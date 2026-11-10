@@ -19,21 +19,26 @@ Model:
     - Architecture: Input(140) -> DCLS -> Dense(140x128) -> Vmin_LIF
                     -> DCLS -> Dense(128x128) -> Vmin_LIF
                     -> Dense(128x20) -> Sum_v -> argmax
-    - Accuracy: 75.2% on SHD test set (Q8.8 quantised, 0% rounding drop)
+    - Accuracy: 75.2% on the SHD test set for the trained floating-point
+      model; the hardware path has no measured accuracy, and a bitstream
+      from create_block_design.tcl carries no trained weights or delays
+      (ARCHITECTURE.md, section "SHD FPGA Pipeline")
     - Training: DCLS max (Hammouamri 2024) with learnable delay sharpening
 
 Usage:
     python demo_shd_fpga.py
 """
 
+import importlib
+
 import numpy as np
 
 # --- PYNQ setup ---
 try:
-    from pynq import Overlay
+    Overlay = importlib.import_module("pynq").Overlay
 
     overlay = Overlay("/home/xilinx/sc_shd.bit")
-    mmio = overlay.sc_shd_axi_wrapper_0.mmio
+    mmio = overlay.sc_shd_0.mmio  # instance name from create_block_design.tcl
     print("FPGA overlay loaded successfully")
 except ImportError:
     print("PYNQ not available — running in simulation mode")
@@ -73,7 +78,7 @@ def generate_synthetic_spike_raster(
     return (rng.random((t_steps, n_channels)) < rate).astype(np.uint8)
 
 
-def main():
+def main() -> None:
     """Run SHD inference demo."""
     if mmio is None:
         print("No FPGA available. Generating synthetic test data...")
@@ -101,13 +106,15 @@ def main():
     print(f"Output voltages: {voltages}")
     print(f"Argmax: {np.argmax(voltages)} (class {np.argmax(voltages)})")
 
-    # Timing estimate
+    # Core clock cycles only: each input step also costs six MMIO writes from
+    # Python, which this count leaves out. No latency has been measured.
     t_total = spike_raster.shape[0] + 30 + 3  # data + padding + pipeline
     freq_mhz = 100
-    latency_us = t_total / freq_mhz
-    print(f"Inference latency: {t_total} cycles @ {freq_mhz} MHz = {latency_us:.1f} us")
-    throughput = 1e6 / latency_us
-    print(f"Throughput: {throughput:.0f} inferences/s")
+    core_us = t_total / freq_mhz
+    print(
+        f"Core clock cycles: {t_total} ({core_us:.1f} us at {freq_mhz} MHz),"
+        " excluding the Python MMIO writes; not a measured latency"
+    )
 
 
 if __name__ == "__main__":

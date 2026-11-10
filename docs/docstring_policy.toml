@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1846
+expected_file_count = 1848
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7438,3 +7438,11 @@ rationale = "The toggle-count example reports only figures read from its own row
 [[file]]
 path = "examples/05_scpn_stack.py"
 rationale = "The executable example builds the 16-layer SCPN (Stochastic Coupled Phase-oscillator Network) stack, runs coupled steps and prints its coherence metrics."
+
+[[file]]
+path = "hdl/pynq/sc_shd_driver.py"
+rationale = "The PYNQ-Z2 driver for the SHD core writes the AXI-Lite registers of sc_shd_axi_wrapper and names the block-design instance that create_block_design.tcl creates."
+
+[[file]]
+path = "hdl/pynq/demo_shd_fpga.py"
+rationale = "The PYNQ-Z2 demo drives the SHD core and states that its cycle count is not a measured latency and that the bitstream carries no trained model."

@@ -15,7 +15,7 @@ Usage:
     from sc_shd_driver import SHDAccelerator
 
     overlay = Overlay("sc_shd.bit")
-    accel = SHDAccelerator(overlay.sc_shd_axi_wrapper_0)
+    accel = SHDAccelerator(overlay.sc_shd_0)  # instance name from create_block_design.tcl
 
     # Load scales (from trained model checkpoint)
     accel.set_scales(scale_l1, scale_l2, scale_l3)
@@ -24,7 +24,21 @@ Usage:
     predicted_class = accel.classify(spike_raster)
 """
 
+from typing import Protocol, cast
+
 import numpy as np
+
+
+class RegisterBus(Protocol):
+    """Read and write 32-bit AXI-Lite registers, as ``pynq.MMIO`` does."""
+
+    def read(self, offset: int) -> int:
+        """Return the register at byte offset ``offset``."""
+        ...
+
+    def write(self, offset: int, value: int) -> None:
+        """Write ``value`` to the register at byte offset ``offset``."""
+        ...
 
 
 # Register offsets (byte addresses)
@@ -49,20 +63,21 @@ class SHDAccelerator:
     a high-level API for FPGA inference.
     """
 
-    def __init__(self, mmio):
+    def __init__(self, mmio: object) -> None:
         """Initialise with a PYNQ MMIO object (from overlay IP).
 
         Parameters
         ----------
         mmio : pynq.MMIO or pynq.DefaultIP
             Memory-mapped IO for the sc_shd_axi_wrapper IP block.
-            From overlay: ``overlay.sc_shd_axi_wrapper_0.mmio``
-            or directly: ``overlay.sc_shd_axi_wrapper_0``
+            From overlay: ``overlay.sc_shd_0.mmio``
+            or directly: ``overlay.sc_shd_0`` (the instance name that
+            create_block_design.tcl gives the wrapper).
         """
-        if hasattr(mmio, "mmio"):
-            self._mmio = mmio.mmio
-        else:
-            self._mmio = mmio
+        bus = getattr(mmio, "mmio", mmio)
+        if not (callable(getattr(bus, "read", None)) and callable(getattr(bus, "write", None))):
+            raise TypeError("mmio must provide read(offset) and write(offset, value)")
+        self._mmio = cast(RegisterBus, bus)
 
     def set_scales(self, scale_l1: int, scale_l2: int, scale_l3: int) -> None:
         """Set Q16.16 per-layer scales (from training checkpoint).

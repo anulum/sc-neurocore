@@ -145,7 +145,7 @@ vectorization for production-grade throughput.
 | Resource | What you learn |
 |----------|---------------|
 | [Rust Engine & Performance](tutorials/05_rust_engine_performance.md) | SIMD-accelerated Rust engine, Python↔Rust bridge |
-| [Performance Tuning](guides/PERFORMANCE_TUNING.md) | Packed uint64 ops, CuPy GPU path, sparse layers |
+| [Performance Tuning](guides/PERFORMANCE_TUNING.md) | Bitstream length and precision, packed uint64 ops, CuPy GPU path, sparse layers, what is measured |
 | [Rust Engine API](api/rust-engine.md) | Rust crate API reference |
 | [Benchmark Report](benchmarks/BENCHMARK_REPORT.md) | Throughput numbers vs Brian2, Norse, snnTorch |
 
@@ -185,7 +185,7 @@ verify it with Verilator, and read the resource utilization report.
 | [Foundational Whitepaper](research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md) | Theoretical basis for the SC-SNN approach |
 | [Quantum-SC Hybrid Networks](tutorials/15_quantum_sc_hybrid.md) | Quantum circuits as SC front-ends |
 | [Neuromorphic Signal Processing](tutorials/12_neuromorphic_signal_processing.md) | SC filterbanks, edge detection |
-| [Integration Guide](guides/INTEGRATION_GUIDE.md) | Embedding SC-NeuroCore in larger systems |
+| [Integration Guide](guides/INTEGRATION_GUIDE.md) | Building and driving the SHD accelerator on a PYNQ-Z2, and its open steps |
 
 **Checkpoint**: You can add a custom neuron model, wire it into the
 compiler, and generate HDL for it.

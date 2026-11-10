@@ -33,6 +33,8 @@ _CHECKED_FILES = (
     "docs/benchmarks/BENCHMARKS.md",
     "docs/COMPETITIVE_LANDSCAPE.md",
     "docs/guides/FOR_RESEARCH_LABS.md",
+    "docs/guides/INTEGRATION_GUIDE.md",
+    "docs/guides/PERFORMANCE_TUNING.md",
     "docs/api/formal.md",
     "tools/architecture_map.toml",
     "docs/_generated/capability_manifest.json",
@@ -52,6 +54,8 @@ _RUN_CLAIMS = (
     "enforces the bound in silicon",
     "every clock edge in silicon",
     "all 6 formally proven",
+    "deployed as an overlay on the pynq",
+    "typically clocked at 250 mhz",
 )
 
 
@@ -99,6 +103,14 @@ def test_file_claims_no_board_or_silicon_run(relative: str) -> None:
         ),
         ("// Verifies all 6 formally\n// proven safety properties.", "all 6 formally proven"),
         ("**Proven** on silicon via the SHD pipeline.", "proven on silicon"),
+        (
+            "The sc-neurocore is deployed as an overlay on the PYNQ-Z2.",
+            "deployed as an overlay on the pynq",
+        ),
+        (
+            "but is typically clocked at 250 MHz on the PYNQ-Z2 for stability.",
+            "typically clocked at 250 mhz",
+        ),
     ],
 )
 def test_each_published_wording_is_caught(published: str, claim: str) -> None:
