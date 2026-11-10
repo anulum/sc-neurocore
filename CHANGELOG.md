@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Correct README statements that the code or its records contradict. The Zenith quickstart
+  passed a weight array to the Rust plasticity layer, which accepts one scalar weight, so
+  the snippet raised a TypeError; it now runs, and it says that no call yet copies trained
+  Torch weights into the Rust layer, instead of promising an export to hardware. The
+  example table describes the Zenith demo by what it does. The core tier is called the
+  supported core surface of the beta package, matching the package classifier. The Rust
+  engine section gives the largest committed scaling run, 100K neurons, instead of 100K+.
+  It says which SIMD paths are chosen at run time and that the SVE and RISC-V V paths are
+  compiled only on request. Two crate test counts now match `cargo test -- --list`: 22 for
+  autonomous_learning and 34 for stochastic_doctor_core.
+
 - Rewrite the integration and performance-tuning guides from the code and records. The
   integration guide described APIs that do not exist, a deployed PYNQ-Z2 overlay and a
   hardware interrupt. It now covers the SHD accelerator: what is co-simulated and

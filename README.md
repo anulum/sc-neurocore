@@ -205,28 +205,28 @@ pages** counts Markdown under `docs/` after excluding `docs/internal/` and
 
 ### Zenith Quickstart
 
-Train biologically plausible rules using PyTorch surrogate autograd, then export the exact layer to hardware:
+Train plasticity rules with PyTorch surrogate autograd, and run the same rules in the Rust
+backend, whose layer state saves to and loads from a file. The Rust layer starts from one
+scalar weight; no call yet copies trained Torch weights into it.
+
+```python
+from sc_neurocore.plasticity import create_plasticity_layer
+from sc_neurocore._native.learning_bridge import RULE_STDP
+
+# 1. Train the rule layer with PyTorch autograd (needs the training extra)
+torch_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="torch", autograd=True)
+# ... standard cross-entropy loss.backward() loop
+
+# 2. Run the same rule in the Rust backend and save its state to a file
+rust_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="rust", weight=0.5)
+rust_layer.step(pre_spikes=[True] * 128, post_spikes=[False] * 128, rewards=[0.0] * 128, dt=0.001)
+rust_layer.save("rule_layer.scal")
+```
+See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`](examples/zenith_hybrid_resnet.py).
 
 ### Bio-hybrid Closed-Loop with ArcaneZenith (Experimental)
 
 The experimental `bioware` module validates finite MEA frames and maps them through spike detection, 16-bit AER epochs, deterministic stochastic bitstreams, and optogenetic pulse proposals. It includes PCA/K-Means spike sorting, heuristic culture monitoring, an onset-gain pharmacology prototype, and an optional `ArcaneZenithCognitiveCore` callback. It is research software, not a clinical or tissue-safety controller; see [the maintained contract](docs/api/bioware.md).
-
-```python
-import torch
-from sc_neurocore.plasticity import create_plasticity_layer
-from sc_neurocore._native.learning_bridge import RULE_STDP
-
-# 1. Train entirely in standard DL execution architectures
-bcm_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="torch", autograd=True)
-# ... standard cross-entropy loss.backward() loop
-
-# 2. Deploy natively to SC-NeuroCore hardware limits
-exascale_layer = create_plasticity_layer(
-    count=128, rule_type=RULE_STDP, backend="rust", weight=bcm_layer.weights.detach().numpy()
-)
-exascale_layer.save("hw_layer.scal")
-```
-See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`](examples/zenith_hybrid_resnet.py).
 
 ```bash
 # Add only the extras needed for the current workflow.
@@ -445,7 +445,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 100% of the measured files. [What the gate measures and omits](VALIDATION.md) is generated from the coverage configuration. |
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Supported core surface of the beta package; current CI coverage gate is 100% of the measured files. [What the gate measures and omits](VALIDATION.md) is generated from the coverage configuration. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
 | **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
@@ -684,7 +684,7 @@ Runnable scripts in `examples/`:
 | `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
 | `12_load_pretrained_model.py` | Load pretrained ConvSpikingNet and classify MNIST digits |
-| `zenith_hybrid_resnet.py` | Train hybrid network with PyTorch autograd → save via Zenith exascale persistence |
+| `zenith_hybrid_resnet.py` | Train a hybrid network with a Torch BCM plasticity layer through autograd, then save and reload a Rust-backend layer state file |
 | `jax_training_demo.py` | JAX JIT surrogate-gradient SNN training on synthetic data |
 | `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
 | `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** in the committed 2026-03-26 run (learnable beta/threshold, cosine LR; evidence in `benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
@@ -825,9 +825,11 @@ pip install -r requirements-dev.txt   # runtime + dev tools
 
 The `sc_neurocore_engine` crate provides 212 Rust PyO3 model wrappers callable
 from Python (including ArcaneNeuron), a 180-model NetworkRunner with
-Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
-primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
-RISC-V V). Rust test totals are maintained by the Rust workspace; public
+Rayon-parallel population simulation (run at up to 100K neurons in the
+committed scaling benchmark), and SIMD-accelerated primitives: AVX-512 or
+AVX2 chosen at run time on x86-64 and NEON on AArch64, plus SVE and RISC-V V
+code paths that are compiled only when a build enables those target
+features, which no workflow or published wheel does. Rust test totals are maintained by the Rust workspace; public
 release claims should cite the current `cargo test -- --list` output or CI
 evidence before publication.
 
@@ -836,13 +838,13 @@ evidence before publication.
 | `sc_neurocore_engine` | CI-listed | PyO3 SIMD engine, Rust model wrappers, NetworkRunner |
 | `tinysc_riscv` | 83 | RISC-V SC instruction set simulator |
 | `core_engine` | 22 | SC arithmetic core (standalone) |
-| `autonomous_learning` | 12 | Self-modifying plasticity rules |
+| `autonomous_learning` | 22 | Self-modifying plasticity rules |
 | `neuro_symbolic` | 28 | Hyperdimensional computing + predictive coding |
-| `stochastic_doctor_core` | 23 | Bitstream diagnostics engine |
+| `stochastic_doctor_core` | 34 | Bitstream diagnostics engine |
 
 | Category | Scope |
 |----------|-------|
-| Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
+| Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (AVX-512, AVX2, NEON; SVE and RISC-V V compiled on request) |
 | Neurons | 212 PyO3 model wrappers; 180 canonical models wired into NetworkRunner |
 | NetworkRunner | 180-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
