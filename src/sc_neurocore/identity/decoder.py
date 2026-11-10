@@ -14,23 +14,24 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.analysis import (
-    cv_isi,
-    firing_rate,
-    functional_connectivity,
-    spike_train_pca,
-)
+from sc_neurocore._source_checkout import require_source_checkout_package
 
 from .substrate import IdentitySubstrate
+
+# The decoder's spike statistics come from sc_neurocore.analysis, which only a
+# source checkout ships. It is imported where it is used, so that
+# sc_neurocore.identity stays importable from an installed wheel.
+_ANALYSIS = "sc_neurocore.analysis"
 
 
 class StateDecoder:
     """Extract cognitive state from spiking network for session priming."""
 
-    def __init__(self, substrate: IdentitySubstrate):
+    def __init__(self, substrate: IdentitySubstrate) -> None:
+        """Read state from ``substrate``."""
         self.substrate = substrate
 
-    def _recent_trains(self, n_neurons=50, window=1000) -> list[np.ndarray[Any, Any]]:  # type: ignore[no-untyped-def]
+    def _recent_trains(self, n_neurons: int = 50, window: int = 1000) -> list[np.ndarray[Any, Any]]:
         """Get recent binary spike trains for the first n_neurons."""
         history = self.substrate.spike_history
         if len(history) < 2:
@@ -39,16 +40,19 @@ class StateDecoder:
         n = min(n_neurons, self.substrate.n_cortical)
         return [np.array([h[i] for h in recent], dtype=np.int8) for i in range(n)]
 
-    def extract_dominant_patterns(self, n_components=10) -> np.ndarray[Any, Any]:  # type: ignore[no-untyped-def]
+    def extract_dominant_patterns(self, n_components: int = 10) -> np.ndarray[Any, Any]:
         """PCA on recent spike trains -> dominant activity patterns."""
         trains = self._recent_trains()
         if not trains:
             return np.zeros((0, 0))
+        require_source_checkout_package(_ANALYSIS, "StateDecoder.extract_dominant_patterns")
+        from sc_neurocore.analysis import spike_train_pca
+
         n_comp = min(n_components, len(trains))
         projected, _ = spike_train_pca(trains, n_components=n_comp)
         return projected
 
-    def extract_attractor_states(self, threshold=0.8) -> list[np.ndarray[Any, Any]]:  # type: ignore[no-untyped-def]
+    def extract_attractor_states(self, threshold: float = 0.8) -> list[np.ndarray[Any, Any]]:
         """Find stable attractor states via correlation clustering.
 
         Groups of neurons that fire together with correlation above
@@ -57,11 +61,13 @@ class StateDecoder:
         trains = self._recent_trains(n_neurons=30)
         if len(trains) < 3:
             return []
+        require_source_checkout_package(_ANALYSIS, "StateDecoder.extract_attractor_states")
+        from sc_neurocore.analysis import functional_connectivity
 
         fc = functional_connectivity(trains)
         n = fc.shape[0]
-        visited = set()
-        attractors = []
+        visited: set[int] = set()
+        attractors: list[np.ndarray[Any, Any]] = []
 
         for i in range(n):
             if i in visited:
@@ -82,6 +88,9 @@ class StateDecoder:
         trains = self._recent_trains(n_neurons=30)
         if not trains:
             return np.zeros((0, 0))
+        require_source_checkout_package(_ANALYSIS, "StateDecoder.extract_connectivity_signature")
+        from sc_neurocore.analysis import functional_connectivity
+
         return functional_connectivity(trains)
 
     def generate_priming_context(self) -> str:
@@ -91,6 +100,8 @@ class StateDecoder:
 
         if n_steps < 10:
             return f"Substrate dormant. {n_steps} steps recorded. No patterns yet."
+        require_source_checkout_package(_ANALYSIS, "StateDecoder.generate_priming_context")
+        from sc_neurocore.analysis import cv_isi, firing_rate
 
         patterns = self.extract_dominant_patterns(n_components=5)
         n_patterns = patterns.shape[0] if patterns.ndim == 2 else 0

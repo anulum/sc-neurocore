@@ -26,15 +26,8 @@ from sc_neurocore.network import (
     Network,
     SpikeMonitor,
 )
+from sc_neurocore._source_checkout import require_source_checkout_package
 from sc_neurocore.network.topology import small_world
-from sc_neurocore.analysis import (
-    firing_rate,
-    cv_isi,
-    fano_factor,
-    power_spectrum,
-    spike_train_pca,
-    functional_connectivity,
-)
 
 _HOMEOSTATIC_TARGET_RATE = 10.0  # Hz, Turrigiano 2008
 
@@ -225,6 +218,11 @@ class IdentitySubstrate:
                 "total_steps": self._total_steps,
             }
 
+        # sc_neurocore.analysis ships only in a source checkout; importing it here keeps
+        # sc_neurocore.identity importable from an installed wheel.
+        require_source_checkout_package("sc_neurocore.analysis", "IdentitySubstrate.extract_state")
+        from sc_neurocore.analysis import firing_rate, functional_connectivity, spike_train_pca
+
         trains = [
             np.array([h[i] for h in self._spike_history[-1000:]], dtype=np.int8)
             for i in range(min(self.n_cortical, 50))
@@ -256,6 +254,9 @@ class IdentitySubstrate:
                 "n_steps": self._total_steps,
             }
 
+        require_source_checkout_package("sc_neurocore.analysis", "IdentitySubstrate.health_check")
+        from sc_neurocore.analysis import cv_isi, fano_factor, firing_rate, power_spectrum
+
         recent = np.array(self._spike_history[-1000:], dtype=np.int8)
         pop_train = recent.sum(axis=1).astype(np.int8)
         pop_train_binary = (pop_train > 0).astype(np.int8)
@@ -286,8 +287,10 @@ class IdentitySubstrate:
 
     @property
     def spike_history(self) -> list[np.ndarray[Any, Any]]:
+        """Return the recorded cortical spike vectors, oldest first."""
         return self._spike_history
 
     @property
     def ee_weights(self) -> np.ndarray[Any, Any]:
+        """Return a copy of the excitatory-to-excitatory weights."""
         return self.proj_ee.data.copy()

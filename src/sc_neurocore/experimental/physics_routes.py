@@ -20,7 +20,7 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.physics.heat import FeynmanKacHeatSolver
+from sc_neurocore._source_checkout import require_source_checkout_package
 from sc_neurocore.solvers import RK4Solver, StormerVerlet
 
 from .alternative_path import AlternativePathRoute
@@ -37,6 +37,13 @@ def _heat_cosine_mode_baseline(
     dt: float = 1e-4,
     seed: int = 7,
 ) -> float:
+    # sc_neurocore.physics ships only in a source checkout; importing it here keeps
+    # sc_neurocore.experimental importable from an installed wheel.
+    require_source_checkout_package(
+        "sc_neurocore.physics.heat", "The physics.heat.cosine-mode route"
+    )
+    from sc_neurocore.physics.heat import FeynmanKacHeatSolver
+
     solver = FeynmanKacHeatSolver(
         length=length,
         diffusivity=diffusivity,

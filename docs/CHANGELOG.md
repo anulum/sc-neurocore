@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Import every subpackage that the wheel ships from an installed wheel.
+  sc_neurocore.identity and sc_neurocore.experimental imported sc_neurocore.analysis and
+  sc_neurocore.physics at module level, and the wheel leaves both out, so importing them
+  from an installed wheel failed. They now import those packages where they are used. A
+  feature that needs one of them, such as the identity substrate's health check or the
+  heat-diffusion comparison route, names the missing package and says that it ships only
+  in a source checkout. A missing third-party dependency is still raised unchanged. A new
+  test blocks every package the wheel leaves out and imports every shipped subpackage.
+
 - Correct README statements that the code or its records contradict. The Zenith quickstart
   passed a weight array to the Rust plasticity layer, which accepts one scalar weight, so
   the snippet raised a TypeError; it now runs, and it says that no call yet copies trained

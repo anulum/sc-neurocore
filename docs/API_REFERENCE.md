@@ -275,6 +275,27 @@ Own one explicit WGPU rule layer with safe host-buffer boundaries.
 
 ---
 
+## Module `_source_checkout`
+
+### Function `require_source_checkout_package(package, feature)`
+Import ``package``, or refuse because only a source checkout ships it.
+
+Parameters
+----------
+package : str
+    Fully qualified name of a package that the wheel does not ship.
+feature : str
+    The feature that needs ``package``; the refusal names it.
+
+Raises
+------
+ModuleNotFoundError
+    ``package`` itself, or a parent package of it, cannot be found, as in an
+    installed wheel. A missing third-party dependency inside ``package`` is
+    raised unchanged, because a source checkout would not fix it.
+
+---
+
 ## Module `accel.adaptive_threshold_if`
 
 ### Function `backend_available(backend)`
@@ -24898,6 +24919,7 @@ Save and restore complete IdentitySubstrate state.
 Extract cognitive state from spiking network for session priming.
 
 - **__init__**(substrate)
+  - Read state from ``substrate``.
 - **extract_dominant_patterns**(n_components)
   - PCA on recent spike trains -> dominant activity patterns.
 - **extract_attractor_states**(threshold)
@@ -24966,7 +24988,9 @@ Connectivity: small-world E->E with STDP, random E->I, I->E, E->M, M->E.
 - **health_check**()
   - L16 Director: check network dynamics are healthy.
 - **spike_history**()
+  - Return the recorded cortical spike vectors, oldest first.
 - **ee_weights**()
+  - Return a copy of the excitatory-to-excitatory weights.
 
 ---
 

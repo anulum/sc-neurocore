@@ -18,12 +18,7 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.analysis import (
-    cv_isi,
-    fano_factor,
-    firing_rate,
-    permutation_entropy,
-)
+from sc_neurocore._source_checkout import require_source_checkout_package
 
 from .substrate import IdentitySubstrate
 
@@ -55,6 +50,11 @@ class DirectorController:
                 "perm_entropy": float("nan"),
                 "n_steps": len(history),
             }
+
+        # sc_neurocore.analysis ships only in a source checkout; importing it here keeps
+        # sc_neurocore.identity importable from an installed wheel.
+        require_source_checkout_package("sc_neurocore.analysis", "DirectorController.monitor")
+        from sc_neurocore.analysis import cv_isi, fano_factor, firing_rate, permutation_entropy
 
         recent = np.array(history[-500:], dtype=np.int8)
         pop_binary = (recent.sum(axis=1) > 0).astype(np.int8)

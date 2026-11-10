@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1848
+expected_file_count = 1851
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7446,3 +7446,15 @@ rationale = "The PYNQ-Z2 driver for the SHD core writes the AXI-Lite registers o
 [[file]]
 path = "hdl/pynq/demo_shd_fpga.py"
 rationale = "The PYNQ-Z2 demo drives the SHD core and states that its cycle count is not a measured latency and that the bitstream carries no trained model."
+
+[[file]]
+path = "src/sc_neurocore/_source_checkout.py"
+rationale = "Shipped modules import a source-checkout-only package where it is used and refuse with the reason, so the shipped package stays importable from a wheel."
+
+[[file]]
+path = "src/sc_neurocore/identity/substrate.py"
+rationale = "The identity substrate imports the source-checkout analysis package only inside extract_state and health_check, and its public properties are documented."
+
+[[file]]
+path = "tests/test_wheel_shipped_subpackages_import.py"
+rationale = "Every subpackage the wheel ships imports with the source-only packages blocked, and features that need them refuse with the reason."
