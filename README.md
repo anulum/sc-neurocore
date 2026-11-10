@@ -267,7 +267,7 @@ The committed Brunel balanced-network scaling artefact
 ratios against Brian2 for its 10K-100K Rust rows — but those rows measure an
 unconnected fixed-point LIF layer under constant external drive, not the
 recurrent Brunel network, so they are not a dynamics-parity result (their
-firing rates sit 1.4-17x above Brian2's at matched sizes). The
+firing rates sit 3.2-17x above Brian2's at matched sizes). The
 dynamics-parity comparison in the same artefact is the NumPy dense lane
 (rates within 5% of Brian2): 2.4x faster at 1,000 neurons, 1.3x at 5,000,
 and 0.75x (slower than Brian2) at 10,000. The artefact is one recording

@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Correct documentation errors that a record proves. The delay-training page names the
+  published authors of its first two references and the venue of the first, the co-
+  simulation guide lists the models and tolerances its tests enforce, the Studio guide
+  counts its 16 analysis views, and the README gives the firing-rate range of the non-
+  parity Rust rows at 10,000-100,000 neurons as the artefact records it (3.2-17x above
+  Brian2). The hardware engineers' guide adds current Yosys and nextpnr measurements
+  beside the figures for which no source was found; no figure is removed.
+
 - Report a failed open-source synthesis flow as a failure in `compile --synthesize`
   and `deploy`. A nextpnr place-and-route error or a bitstream packer error used to
   print "PnR failed" and still exit with status 0; it now exits with status 1, as a
