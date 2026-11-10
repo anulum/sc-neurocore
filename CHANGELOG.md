@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Correct statements on the documentation home page and two overview pages that the code
+  contradicts or that no record supports. The MPI line and the getting-started guide no
+  longer claim billion-neuron runs, for which no record exists. The analysis toolkit has
+  25 modules and the visualization package has 12 plot functions, and both are marked as
+  source-checkout only. The equation compiler is described as handling supported ODE
+  models, with a link to the supported modes. The NIR paragraph names the other ecosystem
+  members as such and no longer calls the FPGA backend the missing one. The product
+  overview calls the package's entry points supported, matching its beta status, and the
+  market page states SC-NeuroCore's own focus without an unsourced comparison with other
+  frameworks.
+
 - Import every subpackage that the wheel ships from an installed wheel.
   sc_neurocore.identity and sc_neurocore.experimental imported sc_neurocore.analysis and
   sc_neurocore.physics at module level, and the wheel leaves both out, so importing them

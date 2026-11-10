@@ -292,7 +292,7 @@ DVS gesture (256-256-11).
 
 ## MPI Distributed Simulation
 
-For billion-neuron scale runs across multiple nodes:
+For runs distributed across multiple nodes:
 
 ```bash
 pip install sc-neurocore[mpi]

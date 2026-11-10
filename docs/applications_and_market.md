@@ -38,7 +38,7 @@ A buyer or partner does not only get another simulator. They get a route for ask
 
 ## Differentiation
 
-SC-NeuroCore is differentiated by the combination of stochastic bitstream arithmetic, spiking neural models, optional accelerated execution, generated hardware artefacts, and evidence-indexed documentation. Many SNN frameworks support training or biological simulation. Few make stochastic-computing arithmetic and hardware evidence central to the workflow.
+SC-NeuroCore is differentiated by the combination of stochastic bitstream arithmetic, spiking neural models, optional accelerated execution, generated hardware artefacts, and evidence-indexed documentation. SC-NeuroCore makes stochastic-computing arithmetic and hardware evidence central to its workflow.
 
 The distinct public claim is therefore not that every experimental module is deployment-ready. The distinct claim is that the repository provides a broad, auditable path from stochastic neural modelling to hardware-oriented evidence, while marking missing evidence explicitly.
 

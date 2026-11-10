@@ -49,7 +49,7 @@ SC-NeuroCore treats stochasticity as a measurable engineering parameter rather t
 
 | Layer | Purpose |
 | --- | --- |
-| Public Python package | Stable entry points for simulation, encoding, layers, selected hardware helpers, and documented APIs. |
+| Public Python package | Supported entry points of the beta package for simulation, encoding, layers, selected hardware helpers, and documented APIs. |
 | Optional Rust engine | Acceleration for selected hot paths when the local environment provides the engine. |
 | Training and interop extras | PyTorch, NIR, JAX, CuPy, quantum, and Studio paths installed only when requested. |
 | HDL and hardware evidence | Verilog/SystemVerilog generation, primitive RTL, synthesis reports, and deployment guides. |

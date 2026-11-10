@@ -38,10 +38,10 @@ Start here if you need to understand what the software is for:
 - **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
-- **MPI distributed** — billion-neuron scale via mpi4py
+- **MPI distributed** — simulation distributed across ranks with mpi4py
 - **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
-- **127-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
-- **14 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
+- **127-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (25 modules; source checkout only)
+- **12 visualization plot functions** — raster, voltage, ISI, PSD, cross-correlogram, and more (source checkout only)
 - **13 advanced plasticity rules** — pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
 - **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput
@@ -49,7 +49,7 @@ Start here if you need to understand what the software is for:
 - **GPU acceleration** — PyTorch CUDA + CuPy backend + JAX JIT training
 - **SNN training** — 6 surrogate gradients, 12 differentiable neuron cells/nets (`nn.Module`), SpikingNet + ConvSpikingNet, `to_sc_weights()` bridge to bitstreams
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
-- **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
+- **Equation → Verilog compiler** — supported ODE models to synthesizable Q8.8 fixed-point RTL in one function call ([supported modes](api/equation-native-ir.md))
 - **Verilog RTL** — synthesis-oriented modules, formal-verification collateral, and targeted co-simulation/parity paths
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **[NIR bridge](guides/nir_integration.md)** — FPGA backend for [NIR](https://neuroir.org/) (18/18 primitives, recurrent edges, multi-port subgraphs)
@@ -161,9 +161,9 @@ demonstrates importing NIR graphs and simulating spiking networks. Or try the
 ## Community & Ecosystem
 
 SC-NeuroCore integrates with the [NIR](https://neuroir.org/) (Neuromorphic Intermediate Representation)
-ecosystem, connecting to Norse, snnTorch, Lava-DL, and hardware targets including
-BrainScaleS-2, Loihi, and SpiNNaker2. SC-NeuroCore adds the missing FPGA deployment
-backend via bit-true Verilog co-simulation.
+ecosystem, whose other members include Norse, snnTorch, Lava-DL and the hardware platforms
+BrainScaleS-2, Loihi and SpiNNaker2. SC-NeuroCore adds an FPGA backend for NIR graphs,
+checked by bit-true Verilog co-simulation.
 
 **Contact:** [protoscience@anulum.li](mailto:protoscience@anulum.li) |
 [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) |
