@@ -102,6 +102,19 @@ states none, so that it cannot go stale.
    fails closed when its runtime is missing instead of returning made-up
    data.
 
+### How each contract is checked today
+
+| Contract | Check | Reach |
+| --- | --- | --- |
+| 1 | `tests/test_sc_forward_bit_identical.py` | Exact equality of the accelerated and the reference path for one seed, over three layer shapes and three stream lengths. Hosted runs require the compiled engine. |
+| 2 | Stated per pipeline in the repository's `ARCHITECTURE.md` | One pipeline. No automated check holds the stated gap. |
+| 3 | A hosted step runs `hdl/test_shd_axi.sh` and three co-simulation tools, one per stage of the spoken-digits pipeline; `tests/test_shd_int_core_cosim.py` compares the integer core with its reference | The stages and the integer core, on every change. The whole-pipeline comparison is run by hand with `tools/cosim_shd_top_verilog.py` and needs extracted weights. |
+| 4 | `tests/test_studio_evidence_chain.py`, `tests/test_tools_studio_evidence_verify.py`, `tests/test_studio_evidence_seal.py` and the browser-side seal test | Packs exported from the Studio, on both runtimes. |
+| 5 | The refusal tests of each surface | Per surface. Elsewhere it is an aim. |
+
+What each kind of evidence shows, and what it does not, is set out in
+[Evidence: what each kind establishes](evidence.md).
+
 ## What we integrate and what we build
 
 SC-NeuroCore does not replace the established tools of its field. It
@@ -178,6 +191,7 @@ the map.
 ## Where to read next
 
 - [System map](SYSTEM_MAP.md): the package in detail, with source references.
+- [Evidence](evidence.md): what each kind of evidence shows and does not show.
 - [Group and project map](../ecosystem.md): every project and its status.
 - [Product overview](../product_overview.md): today's workflow.
 - [Evidence boundary](../benchmarks/cross_framework.md): how to read results.

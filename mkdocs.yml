@@ -279,6 +279,7 @@ nav:
       - Cross-Framework Comparison: benchmarks/cross_framework.md
   - Architecture:
       - Overview: architecture/architecture.md
+      - Evidence: architecture/evidence.md
       - System Map: architecture/SYSTEM_MAP.md
       - Package Boundary Decision: architecture/package_boundary_decision.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md

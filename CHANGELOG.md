@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Add a page on what each kind of evidence establishes and what it does not: records
+  of a run, agreement between implementations, co-simulation, formal results, reports
+  of design tools, benchmark artefacts and measurements on a device. The architecture
+  overview now names, for each of its five contracts, the test or hosted step that
+  checks it and how far that check reaches.
+
 - Correct the hand-written test matrix of VALIDATION.md and one workflow row of the
   README. The matrix counted 3,376 Python tests in 145 files and 67 formal checks in 7
   files. The Python row now points to the README's generated test-file count. The formal
