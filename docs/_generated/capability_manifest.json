@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5628
+    "test_files": 5630
   },
   "documentation": {
     "public_pages": [
@@ -8539,6 +8539,7 @@
       "tests/test_tools/test_dcls_verilator_lint.py",
       "tests/test_tools/test_docstring_policy_guard_ci_native.py",
       "tests/test_tools/test_docstring_policy_guard_native.py",
+      "tests/test_tools/test_docstring_policy_guard_since_native.py",
       "tests/test_tools/test_documentation_debt_native.py",
       "tests/test_tools/test_eda_toolchain_versions.py",
       "tests/test_tools/test_engine_abi_contracts.py",
@@ -8626,6 +8627,7 @@
       "tests/test_tools/test_perf_gate_contract.py",
       "tests/test_tools/test_pixi_audit_cli.py",
       "tests/test_tools/test_preflight_native_requirements.py",
+      "tests/test_tools/test_preflight_range_gates.py",
       "tests/test_tools/test_pypi_downloads.py",
       "tests/test_tools/test_pytest_plugin_policy.py",
       "tests/test_tools/test_pytest_shards.py",

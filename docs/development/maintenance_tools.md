@@ -172,13 +172,18 @@ file while lowering its declared count, reducing the minimum length or adding
 missing-symbol allowances fails the guard. Policy sources must exist inside the
 repository. Scope acceptance is separate from native documentation acceptance.
 
-Locally the baseline is committed `HEAD`. GitHub Actions uses the push event's
+Locally the baseline is committed `HEAD`, or the commit named by `--since REV`.
+The preflight passes the merge base of `HEAD` with the branch it pushes to, so a
+push is checked over the same commits as the hosted push event; CI refuses
+`--since`. GitHub Actions uses the push event's
 original `before` commit or the pull request's `base.sha`; manual runs use the
 current commit's first parent. The checkout must match the triggering commit.
 Missing history, unavailable native Git or malformed event inputs fail the
 guard. New-ref pushes without an established original baseline need an explicit
-baseline migration before qualification. The local hook runs on every commit;
-the CI lint job and the public policy tests run the same guard.
+baseline migration before qualification. With the pre-commit hooks installed
+(`pre-commit install`), the guard runs on every commit; the preflight runs it over
+the whole push range; the CI lint job and the public policy tests run the same
+guard.
 
 The docstring policy uses Ruff `D` rules with the NumPy-convention pydocstyle
 setting, an isolated configuration and disabled inline suppressions. The

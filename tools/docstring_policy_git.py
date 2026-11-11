@@ -129,6 +129,47 @@ def baseline_commit(root: Path, environment: Mapping[str, str]) -> str:
     return baseline
 
 
+def explicit_baseline_commit(root: Path, revision: str, environment: Mapping[str, str]) -> str:
+    """Resolve an explicit local range baseline, such as the base of a push.
+
+    Parameters
+    ----------
+    root : Path
+        Exact repository root; subdirectories cannot replace the source scope.
+    revision : str
+        Revision whose policy and tree the candidate is compared with.
+    environment : mapping of str to str
+        Process environment; hosted CI must use its own event baseline.
+
+    Returns
+    -------
+    str
+        Full commit identifier of ``revision``, an ancestor of the checkout.
+
+    Raises
+    ------
+    PolicyError
+        If the guard runs in CI, the root is not exact, or ``revision`` does not
+        name a commit that the checkout descends from.
+    """
+    if environment.get("GITHUB_ACTIONS") == "true":
+        raise PolicyError(
+            "An explicit baseline is a local range check; CI uses its event baseline."
+        )
+    top = git_bytes(root, "rev-parse", "--show-toplevel").decode("utf-8").strip()
+    if Path(top).resolve() != root.resolve():
+        raise PolicyError("The policy guard requires the exact repository root.")
+    if not revision or revision.startswith("-"):
+        raise PolicyError("The explicit baseline must name a commit.")
+    baseline = _commit(
+        git_bytes(root, "rev-parse", "--verify", "--end-of-options", revision + "^{commit}")
+        .decode("ascii")
+        .strip()
+    )
+    git_bytes(root, "merge-base", "--is-ancestor", baseline, "HEAD")
+    return baseline
+
+
 def changed_python_paths(root: Path, baseline: str) -> set[str]:
     """Discover the Python files that the commit candidate adds or changes.
 

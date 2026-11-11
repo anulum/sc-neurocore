@@ -30,7 +30,8 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 
 ## Preflight Gate
 
-Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
+Every push is guarded by `tools/preflight.py`, which runs the same checks as CI. The push base is the
+merge base of `HEAD` with the branch it pushes to (`origin/main` when no upstream is set). Among its gates:
 
 | Gate | What it checks |
 |------|----------------|
@@ -39,6 +40,8 @@ Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
 | **bandit** | Security static analysis |
 | **spdx-guard** | SPDX license headers on all source files |
 | **pytest** | 3 376+ tests with 100% coverage gate |
+| **docstring-scope-range** | Every Python file changed since the push base is enrolled in the docstring policy, as the hosted push check requires |
+| **pre-commit-range** | The pre-commit hooks over the files changed since the push base, or over all files when a hook configuration changed. Both range gates refuse a checkout with uncommitted or untracked changes, because the hooks read the working tree and a push sends only commits |
 
 ```bash
 make preflight          # full gate (lint + tests)

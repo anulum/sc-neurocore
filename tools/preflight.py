@@ -151,6 +151,75 @@ SPDX_SKIP_PARTS = {
 }
 
 
+#: Files whose change alters what a pre-commit hook checks in every file, so the
+#: range check must then cover all files, as the hosted Pre-commit run does.
+#: typos reads ``_typos.toml`` and ``pyproject.toml`` by discovery beside the
+#: ``.typos.toml`` its hook names.
+HOOK_CONFIGURATION_PATHS = frozenset(
+    {".pre-commit-config.yaml", ".typos.toml", "_typos.toml", "pyproject.toml"}
+)
+#: Branch a push is checked against when the checkout has no upstream configured.
+DEFAULT_PUSH_TARGET = "origin/main"
+
+
+def _git(*arguments: str) -> str | None:
+    """Return the stripped output of a successful Git read, or None on any failure."""
+    try:
+        result = subprocess.run(
+            ["git", *arguments], capture_output=True, text=True, check=False, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def push_base() -> str | None:
+    """Return the commit a push of HEAD starts from, as the hosted push event records it.
+
+    Returns
+    -------
+    str or None
+        The merge base of HEAD with its upstream branch, or with
+        :data:`DEFAULT_PUSH_TARGET` when no upstream is configured; None when
+        Git cannot determine it.
+    """
+    target = _git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    return _git("merge-base", "HEAD", target or DEFAULT_PUSH_TARGET) or None
+
+
+def range_gates(base: str, changed: list[str]) -> list[tuple[str, list[str]]]:
+    """Build the gates that check the whole push range, as the hosted Pre-commit run does.
+
+    Parameters
+    ----------
+    base : str
+        Commit the push starts from, from :func:`push_base`.
+    changed : list of str
+        Paths changed between ``base`` and HEAD.
+
+    Returns
+    -------
+    list of tuple
+        The documentation scope guard with ``base`` as its baseline, and the
+        pre-commit hooks over the files changed in the range. When a hook
+        configuration file changed, the hooks run over all files instead.
+    """
+    if HOOK_CONFIGURATION_PATHS.intersection(changed):
+        scope = ["--all-files"]
+    else:
+        scope = ["--from-ref", base, "--to-ref", "HEAD"]
+    return [
+        (
+            "docstring-scope-range",
+            ["python", "-m", "tools.docstring_policy_guard", "--since", base],
+        ),
+        (
+            "pre-commit-range",
+            ["python", "-m", "pre_commit", "run", "--show-diff-on-failure", *scope],
+        ),
+    ]
+
+
 def check_spdx() -> bool:
     """Check maintained files beneath the working directory for direct SPDX headers.
 
@@ -234,12 +303,52 @@ def run_gate(name: str, cmd: list[str] | None) -> bool:
     return ok
 
 
+def selected_gates(no_tests: bool) -> list[tuple[str, list[str] | None]]:
+    """Return the gates one preflight run executes, with the push-range gates last.
+
+    Parameters
+    ----------
+    no_tests : bool
+        Leave out the pytest gate, as ``--no-tests`` requests.
+
+    Returns
+    -------
+    list of tuple
+        The configured gates, then the range gates of :func:`range_gates` for
+        the commits a push of HEAD would add. The range hooks read the working
+        tree, while a push sends only HEAD, so the checkout must be clean. When
+        the push base cannot be determined, or the checkout is not clean or its
+        state cannot be read, a ``push-range`` gate without a command, which
+        fails, takes their place.
+    """
+    gates: list[tuple[str, list[str] | None]] = [
+        (name, command) for name, command in GATES if not (no_tests and name == "pytest")
+    ]
+    base = push_base()
+    status = _git("status", "--porcelain")
+    if base is None:
+        print("The push base could not be determined; the range gates refuse.")
+        gates.append(("push-range", None))
+    elif status is None:
+        print("The checkout state could not be read; the range gates refuse.")
+        gates.append(("push-range", None))
+    elif status:
+        print("The checkout has changes a push would not send; the range gates refuse:")
+        print(status)
+        gates.append(("push-range", None))
+    else:
+        changed = (_git("diff", "--name-only", base, "HEAD") or "").splitlines()
+        gates.extend(range_gates(base, changed))
+    return gates
+
+
 def main() -> int:
     """Run the requested preflight gates and return one if any gate fails.
 
     The command runs all configured gates by default. ``--no-tests`` explicitly
     excludes the pytest gate; ``--coverage`` preserves the default coverage run.
-    This entry point can execute the complete local suite.
+    The range gates from :func:`range_gates` always run last, over the commits a
+    push of HEAD would add. This entry point can execute the complete local suite.
     """
     parser = argparse.ArgumentParser(description="SC-NeuroCore preflight checks")
     parser.add_argument("--no-tests", action="store_true", help="Skip pytest (fast lint-only mode)")
@@ -248,10 +357,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    gates = GATES
-    if args.no_tests:
-        gates = [(n, c) for n, c in gates if n != "pytest"]
-
+    gates = selected_gates(args.no_tests)
     passed, failed = [], []
     for name, cmd in gates:
         if run_gate(name, cmd):

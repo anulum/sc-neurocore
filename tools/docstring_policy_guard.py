@@ -17,7 +17,13 @@ import os
 from pathlib import Path
 import sys
 
-from tools.docstring_policy_git import POLICY_PATH, baseline_commit, changed_python_paths, git_bytes
+from tools.docstring_policy_git import (
+    POLICY_PATH,
+    baseline_commit,
+    changed_python_paths,
+    explicit_baseline_commit,
+    git_bytes,
+)
 from tools.docstring_policy_scope import PolicyError, compare_policies, parse_policy
 
 
@@ -33,7 +39,9 @@ class ScopeCheck:
     violations: tuple[str, ...]
 
 
-def check_scope(root: Path, environment: Mapping[str, str] | None = None) -> ScopeCheck:
+def check_scope(
+    root: Path, environment: Mapping[str, str] | None = None, since: str | None = None
+) -> ScopeCheck:
     """Compare working-tree rules to trusted Git history and changed source paths.
 
     Parameters
@@ -42,6 +50,9 @@ def check_scope(root: Path, environment: Mapping[str, str] | None = None) -> Sco
         Exact repository root containing the candidate policy.
     environment : mapping of str to str, optional
         CI event environment; the actual process environment is used by default.
+    since : str, optional
+        Explicit local baseline revision, such as the base of a push, so that
+        every Python file changed since it must be enrolled. Refused in CI.
 
     Returns
     -------
@@ -54,7 +65,12 @@ def check_scope(root: Path, environment: Mapping[str, str] | None = None) -> Sco
         If a required policy, Git query or CI provenance input is unavailable.
     """
     root = root.resolve()
-    commit = baseline_commit(root, os.environ if environment is None else environment)
+    actual = os.environ if environment is None else environment
+    commit = (
+        baseline_commit(root, actual)
+        if since is None
+        else explicit_baseline_commit(root, since, actual)
+    )
     baseline = parse_policy(git_bytes(root, "show", f"{commit}:{POLICY_PATH}"))
     try:
         candidate = parse_policy((root / POLICY_PATH).read_bytes())
@@ -91,9 +107,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--since",
+        help="local baseline revision, such as the base of a push; refused in CI",
+    )
     args = parser.parse_args(argv)
     try:
-        result = check_scope(args.repo)
+        result = check_scope(args.repo, since=args.since)
     except PolicyError as exc:
         print(str(exc), file=sys.stderr)
         return 2

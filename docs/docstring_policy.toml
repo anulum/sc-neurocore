@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1874
+expected_file_count = 1876
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7550,3 +7550,11 @@ rationale = "Validate exact original wheel archives and shared payload ownership
 [[file]]
 path = "tools/studio_desktop_wheel_destination.py"
 rationale = "Install relative console launchers and preserve ordinary PyPA RECORD ownership."
+
+[[file]]
+path = "tests/test_tools/test_docstring_policy_guard_since_native.py"
+rationale = "Exercise the guard's explicit local range baseline on real Git history, including refusal in CI and of non-ancestors."
+
+[[file]]
+path = "tests/test_tools/test_preflight_range_gates.py"
+rationale = "Exercise the preflight's push base and range gates on real Git repositories, including the refusal when no base exists."
