@@ -8,26 +8,41 @@
 
 //! Balanced Resonate-and-Fire oscillator dynamics.
 
+#![deny(missing_docs)]
+
 /// Balanced Resonate-and-Fire — divergence-bound RF with smooth refractory
 /// reset. Higuchi, Kairat, Bohte, and Otte 2024, Algorithm 1.
 #[derive(Clone, Debug)]
 pub struct BalancedResonateAndFireNeuron {
+    /// Real part of the resonator state; a spike is `x` at or above the dynamic threshold.
     pub x: f64,
+    /// Imaginary part of the resonator state.
     pub y: f64,
+    /// Refractory variable: decays by `gamma` and gains 1 per spike, raising the threshold
+    /// and the damping.
     pub q: f64,
+    /// Angular frequency of the resonator (1/ms).
     pub omega: f64,
+    /// Offset from the divergence-boundary damping controlling closeness to sustained oscillation (1/ms).
     pub b_offset: f64,
+    /// Base firing threshold on the real part of the state (dimensionless).
     pub threshold: f64,
+    /// Decay factor of the refractory variable (dimensionless).
     pub gamma: f64,
+    /// Forward-Euler step (ms); `dt * omega` must be at most 1.
     pub dt: f64,
 }
 
+/// Damping at which the forward-Euler discretised resonator neither grows nor decays:
+/// `(-1 + sqrt(1 - (dt * omega)^2)) / dt`, with the square root taken of zero when
+/// `dt * omega` exceeds 1.
 pub fn brf_sustain_oscillation_boundary(omega: f64, dt: f64) -> f64 {
     let scaled = dt * omega;
     (-1.0 + (1.0 - scaled * scaled).max(0.0).sqrt()) / dt
 }
 
 impl BalancedResonateAndFireNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -41,18 +56,27 @@ impl BalancedResonateAndFireNeuron {
         }
     }
 
+    /// The sustain-oscillation boundary for this neuron's `omega` and `dt`.
     pub fn p_omega(&self) -> f64 {
         brf_sustain_oscillation_boundary(self.omega, self.dt)
     }
 
+    /// Current damping, `p_omega() - b_offset - q`.
     pub fn damping(&self) -> f64 {
         self.p_omega() - self.b_offset - self.q
     }
 
+    /// Current firing threshold, `threshold + q`.
     pub fn dynamic_threshold(&self) -> f64 {
         self.threshold + self.q
     }
 
+    /// Advance the neuron by one forward-Euler step of `dt` with the input `current` on `x`.
+    ///
+    /// The damping and the dynamic threshold are taken before the step. Returns 1 when `x`
+    /// ends at or above that threshold, else 0; then `q` becomes `gamma * q` plus the spike.
+    /// A non-finite or non-positive `dt` or `omega`, or `dt * omega` above 1, returns 0 and
+    /// leaves the state unchanged; the other parameters are not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         if !(self.dt.is_finite()
             && self.omega.is_finite()
@@ -73,6 +97,7 @@ impl BalancedResonateAndFireNeuron {
         spike
     }
 
+    /// Clear `x`, `y` and `q`; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;

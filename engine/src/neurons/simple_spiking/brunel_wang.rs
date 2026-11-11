@@ -8,6 +8,8 @@
 
 //! Brunel-Wang (2001) pyramidal-cell LIF dynamics.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Brunel-Wang LIF with NMDA/AMPA/GABA
 // ═══════════════════════════════════════════════════════════════════
@@ -26,23 +28,43 @@
 /// Brunel, N. & Wang, X.J., J Comput Neurosci 11:63, 2001.
 #[derive(Clone, Debug)]
 pub struct BrunelWangNeuron {
+    /// Membrane voltage (mV).
     pub v: f64,
+    /// Leak reversal potential (mV).
     pub v_rest: f64,
+    /// Post-event reset voltage (mV).
     pub v_reset: f64,
+    /// Event threshold (mV).
     pub v_threshold: f64,
+    /// Pyramidal membrane time constant from C_m/g_m (ms).
     pub tau_m: f64,
+    /// Absolute refractory period (ms).
     pub tau_ref: f64,
+    /// External AMPA conductance per aggregate gate (nS).
     pub g_ampa_ext: f64,
+    /// Recurrent AMPA conductance per aggregate gate (nS).
     pub g_ampa_rec: f64,
+    /// Recurrent NMDA conductance per aggregate gate (nS).
     pub g_nmda: f64,
+    /// GABA conductance per aggregate gate (nS).
     pub g_gaba: f64,
+    /// AMPA reversal potential (mV).
     pub v_ampa: f64,
+    /// NMDA reversal potential (mV).
     pub v_nmda: f64,
+    /// GABA reversal potential (mV).
     pub v_gaba: f64,
+    /// Membrane capacitance (nF) dividing the summed synaptic current:
+    /// `dv/dt = -(v - v_rest) / tau_m + I_syn / c_m`.
     pub c_m: f64,
+    /// Extracellular magnesium concentration in the NMDA block (mM).
     pub mg_conc: f64,
+    /// Midpoint Runge-Kutta step (ms); one per step call.
     pub dt: f64,
+    /// Absolute refractory time remaining (ms).
     pub ref_remaining: f64,
+    /// Scale applied to the input of [`BrunelWangNeuron::step`] before it becomes the
+    /// external AMPA gate.
     pub gain: f64,
 }
 
@@ -176,10 +198,16 @@ impl BrunelWangNeuron {
     }
 
     /// Single-current interface: routes input to external AMPA drive.
+    ///
+    /// `gain * current` is used as the external AMPA gate of
+    /// [`BrunelWangNeuron::try_step_full`] with the recurrent gates at zero, so it must be
+    /// finite and non-negative; any refused step returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.step_full(self.gain * current, 0.0, 0.0, 0.0)
     }
 
+    /// Return the membrane potential to `v_rest` and end any refractory period; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.ref_remaining = 0.0;

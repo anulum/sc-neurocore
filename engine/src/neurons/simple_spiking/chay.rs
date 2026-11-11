@@ -8,27 +8,47 @@
 
 //! Chay pancreatic beta-cell dynamics.
 
+#![deny(missing_docs)]
+
 /// Chay 1985 — pancreatic beta cell with Ca-dependent K.
 #[derive(Clone, Debug)]
 pub struct ChayNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Potassium activation gate; the potassium current is linear in it.
     pub n: f64,
+    /// Intracellular calcium variable; activates the calcium-activated potassium current as
+    /// `ca / (ca + 1)`.
     pub ca: f64,
+    /// Nondimensionalised maximal calcium conductance (reduced conductance, Chay scaling) (dimensionless).
     pub g_ca: f64,
+    /// Nondimensionalised maximal voltage-gated potassium conductance (dimensionless).
     pub g_k: f64,
+    /// Nondimensionalised maximal calcium-activated potassium conductance (dimensionless).
     pub g_kca: f64,
+    /// Nondimensionalised leak conductance (dimensionless).
     pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Calcium timescale ratio; small values make the calcium dynamics slow (dimensionless).
     pub rho: f64,
+    /// Nondimensionalised calcium influx coefficient from the calcium current (dimensionless).
     pub alpha_ca: f64,
+    /// Nondimensionalised calcium efflux rate coefficient (dimensionless).
     pub k_ca: f64,
+    /// Time advanced by each [`ChayNeuron::step`] call (ms), split into forward-Euler
+    /// sub-steps of at most 0.001 ms.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl ChayNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -48,6 +68,14 @@ impl ChayNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron by `dt` with the injected current `current`.
+    ///
+    /// Runs `ceil(dt / 0.001)` forward-Euler sub-steps with unit capacitance. Returns 1 when
+    /// the membrane potential starts below `v_threshold` and crosses it upwards in some
+    /// sub-step, else 0. A non-finite current, a non-finite or non-positive `dt`, or a
+    /// sub-step result that is not finite or leaves its range (membrane potential from -200
+    /// to 200 mV, `n` from 0 to 1, `ca` from 0 to 100) returns 0 and leaves the neuron
+    /// unchanged. The other parameters are not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.dt.is_finite() || self.dt <= 0.0 {
             return 0;
@@ -103,6 +131,8 @@ impl ChayNeuron {
             0
         }
     }
+    /// Return the membrane potential, `n` and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.n = 0.1;

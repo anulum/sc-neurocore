@@ -8,23 +8,38 @@
 
 //! Sherman-Rinzel-Keizer pancreatic beta-cell dynamics.
 
+#![deny(missing_docs)]
+
 /// Sherman-Rinzel-Keizer 1988 — pancreatic beta cell (reduced).
 #[derive(Clone, Debug)]
 pub struct ShermanRinzelKeizerNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Fast potassium activation; relaxes with a fixed 9.09 ms time constant, and the
+    /// potassium current is linear in it.
     pub n: f64,
+    /// Slow potassium activation; relaxes with `tau_s`.
     pub s: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal conductance of the slow current (mS/cm^2).
     pub g_s: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Time constant of the slow gating variable (ms).
     pub tau_s: f64,
+    /// Forward-Euler step (ms); one per [`ShermanRinzelKeizerNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl ShermanRinzelKeizerNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -40,6 +55,12 @@ impl ShermanRinzelKeizerNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron by one forward-Euler step of `dt` with the injected current `current`.
+    ///
+    /// The voltage equation has unit capacitance and no leak, and calcium activation is
+    /// taken at its steady state. Returns 1 when the membrane potential starts below
+    /// `v_threshold` and ends at or above it, else 0. The input and the state are not
+    /// validated, so a non-finite current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let m_inf = 1.0 / (1.0 + (-(self.v + 20.0) / 12.0).exp());
@@ -58,6 +79,8 @@ impl ShermanRinzelKeizerNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.n = 0.1;

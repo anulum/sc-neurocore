@@ -6,23 +6,36 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — project stochastic rate-adaptation recurrence
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// Count-neutral SC logistic rate-adaptation model with hazard sampling.
 #[derive(Clone, Debug)]
 pub struct SCStochasticRateAdaptationNeuron {
+    /// Adaptation current, in the input's current units; `da/dt = -a / tau_a + delta_a * rate`
+    /// and never negative.
     pub a: f64,
+    /// Maximum logistic firing rate (Hz).
     pub f_max: f64,
+    /// Logistic input slope (1/current).
     pub beta: f64,
+    /// Half-activation effective current (current).
     pub i_half: f64,
+    /// Adaptation time constant (ms).
     pub tau_a: f64,
+    /// Rate-to-adaptation coupling (current/Hz).
     pub delta_a: f64,
+    /// Runge-Kutta step (ms); the spike probability over it is
+    /// `1 - exp(-rate * dt / 1000)` with the rate in Hz.
     pub dt: f64,
     rng: Xoshiro256PlusPlus,
 }
 
 impl SCStochasticRateAdaptationNeuron {
+    /// Create a neuron with the default parameters and initial state of its model
+    /// descriptor, and a generator seeded with `seed` for [`Self::step`].
     #[must_use]
     pub fn new(seed: u64) -> Self {
         Self {
@@ -53,6 +66,11 @@ impl SCStochasticRateAdaptationNeuron {
     }
 
     /// Advance with an explicit uniform variate; returns `-1` on invalid input.
+    ///
+    /// One classical Runge-Kutta step of `dt` advances `a`; the mean of the four stage rates
+    /// gives the spike probability, and the result is 1 when `uniform` is below it. A
+    /// `uniform` outside `[0, 1)`, an invalid state or parameter, or an invalid result
+    /// returns -1 and leaves `a` unchanged.
     pub fn step_with_uniform(&mut self, current: f64, uniform: f64) -> i32 {
         if !self.valid()
             || !current.is_finite()
@@ -79,15 +97,21 @@ impl SCStochasticRateAdaptationNeuron {
         i32::from(uniform < probability)
     }
 
+    /// Advance with a uniform variate drawn from the internal generator; see
+    /// [`Self::step_with_uniform`].
     pub fn step(&mut self, current: f64) -> i32 {
         let uniform = self.rng.random::<f64>();
         self.step_with_uniform(current, uniform)
     }
 
+    /// Clear the adaptation current; the parameters are kept and the generator is not
+    /// reseeded.
     pub fn reset(&mut self) {
         self.a = 0.0;
     }
 
+    /// Whether the state and parameters satisfy the model's contract: all finite, `a` and
+    /// `delta_a` non-negative, and `f_max`, `beta`, `tau_a` and `dt` positive.
     #[must_use]
     pub fn valid(&self) -> bool {
         self.a.is_finite()

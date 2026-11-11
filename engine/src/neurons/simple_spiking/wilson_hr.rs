@@ -8,18 +8,27 @@
 
 //! Wilson HR continuous polynomial cortical-neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Wilson HR — polynomial cortical neuron. Wilson 1999.
 #[derive(Clone, Debug)]
 pub struct WilsonHRNeuron {
+    /// Scaled membrane potential in Wilson's source units; never reset.
     pub v: f64,
+    /// Recovery variable; relaxes towards `1.35 * v + 1.03` with `tau_r`.
     pub r: f64,
+    /// Source membrane capacitance C multiplying dV/dt (uF/cm^2).
     pub capacitance: f64,
+    /// Recovery-variable time constant (ms).
     pub tau_r: f64,
+    /// Observational sampled upward-crossing level; not a source reset parameter (dimensionless).
     pub v_peak: f64,
+    /// Runge-Kutta step (ms); one per [`WilsonHRNeuron::step`] call.
     pub dt: f64,
 }
 
 impl WilsonHRNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -0.7,
@@ -88,6 +97,12 @@ impl WilsonHRNeuron {
             0
         })
     }
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the input `current`.
+    ///
+    /// Returns 1 when `v` starts below `v_peak` and ends at or above it, else 0; neither
+    /// variable is reset. A non-finite current or result, or a parameter that is not finite
+    /// or a non-positive `capacitance`, `tau_r` or `dt`, returns 0 and leaves the state
+    /// unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
@@ -110,6 +125,7 @@ impl WilsonHRNeuron {
         *self = candidate;
         Some((trace, spikes))
     }
+    /// Return `v` and `r` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -0.7;
         self.r = 0.085;

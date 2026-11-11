@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Document the engine's 22 simple spiking models in full and lower the Rust
+  documentation ceiling from 3004 to 2712 undocumented items, each file read
+  against its code. The documentation states each model's integrator and step
+  size, its spike rule, which inputs are refused and what a refusal returns
+  (some models return -1, others 0), and whether reset keeps the parameters.
+  The McKean descriptor described `mu` as a left-branch gain; it is the height
+  of the Heaviside excitation step added where `v` reaches `a`, and the
+  descriptor now says so.
+
 - Keep the biophysical neuron facade within its frozen line ceiling. Documenting
   the shared `safe_rate` helper had grown `engine/src/neurons/biophysical.rs`
   from 54 to 59 lines, which the engine monolith guard refuses. The helper now

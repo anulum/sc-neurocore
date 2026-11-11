@@ -8,15 +8,25 @@
 
 //! SCTriangularMcKean piecewise-linear neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Retained SC triangular piecewise-linear FHN-like recurrence.
 #[derive(Clone, Debug)]
 pub struct SCTriangularMcKeanNeuron {
+    /// Fast variable (dimensionless), driven by the triangular piecewise-linear function of
+    /// `v` with breakpoints at `a / 2` and `(1 + a) / 2`.
     pub v: f64,
+    /// Slow recovery variable (dimensionless); `dw/dt = epsilon * (v - gamma * w)`.
     pub w: f64,
+    /// Triangular breakpoint (dimensionless).
     pub a: f64,
+    /// Slow-fast timescale ratio (dimensionless).
     pub epsilon: f64,
+    /// Slow-variable feedback gain (dimensionless).
     pub gamma: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per step.
     pub dt: f64,
+    /// Sampled event threshold (dimensionless).
     pub v_peak: f64,
 }
 
@@ -87,6 +97,10 @@ impl SCTriangularMcKeanNeuron {
         }
     }
     /// Advance one RK4 sample and report an upward `v_peak` crossing.
+    ///
+    /// An invalid parameter (`a` outside 0 to 1, or a non-positive `epsilon`, `gamma` or
+    /// `dt`), a non-finite current or a non-finite result returns 0 and leaves the state
+    /// unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;

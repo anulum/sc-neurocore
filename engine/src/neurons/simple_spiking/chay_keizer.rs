@@ -8,6 +8,8 @@
 
 //! Faithful five-state Chay-Keizer pancreatic beta-cell dynamics.
 
+#![deny(missing_docs)]
+
 const MAX_SUBSTEP: f64 = 0.01;
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 200.0;
@@ -16,32 +18,57 @@ const CA_MAX: f64 = 1000.0;
 /// Chay & Keizer 1983 five-state pancreatic beta-cell model.
 #[derive(Clone, Debug)]
 pub struct ChayKeizerNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Calcium-current activation gate (dimensionless).
     pub m: f64,
+    /// Calcium-current inactivation gate (dimensionless).
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless).
     pub n: f64,
+    /// Free cytosolic calcium concentration (uM).
     pub ca: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal voltage-gated potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Voltage shift of the calcium-gate Hodgkin-Huxley rate functions (mV).
     pub v_prime: f64,
+    /// Voltage shift of the potassium-gate Hodgkin-Huxley rate functions (mV).
     pub v_star: f64,
+    /// Calcium dissociation constant of the calcium-activated potassium channel (uM).
     pub k_dis: f64,
+    /// Cell radius (sets the surface-to-volume calcium influx scaling) (cm).
     pub radius_cm: f64,
+    /// Faraday constant (C/mol).
     pub faraday: f64,
+    /// Fraction of free (unbuffered) cytosolic calcium (dimensionless).
     pub f_ca: f64,
+    /// Calcium removal (pump) rate constant (1/ms).
     pub k_ca: f64,
+    /// Temperature (sets the Q10 gate-kinetics factor) (degC).
     pub temp_celsius: f64,
+    /// Time advanced by each [`ChayKeizerNeuron::step`] call (ms), split into forward-Euler
+    /// sub-steps of at most 0.01 ms.
     pub dt: f64,
+    /// Membrane potential at which an upward spike crossing is registered (mV).
     pub v_threshold: f64,
 }
 
 impl ChayKeizerNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -54.774,
@@ -180,6 +207,16 @@ impl ChayKeizerNeuron {
         ))
     }
 
+    /// Advance the neuron by `dt` with the injected current `current`.
+    ///
+    /// Runs `ceil(dt / 0.01)` forward-Euler sub-steps; the gate kinetics are scaled by
+    /// `3^((temp_celsius - 6.3) / 10)` and the gates are clamped to 0 to 1. Returns 1 when
+    /// the membrane potential starts below `v_threshold` and crosses it upwards in some
+    /// sub-step, else 0. An invalid input returns 0 and leaves the neuron unchanged: a
+    /// non-finite current or parameter, a membrane potential outside -200 to 200 mV, a gate
+    /// outside 0 to 1, calcium outside 0 to 1000, a negative conductance, `f_ca` or `k_ca`,
+    /// a non-positive `c_m`, `k_dis`, `radius_cm`, `faraday` or `dt`, more than 100 000
+    /// sub-steps, or a sub-step that takes the potential or calcium out of range.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_state(current) {
             return 0;
@@ -207,6 +244,8 @@ impl ChayKeizerNeuron {
         i32::from(crossed && v_initial < self.v_threshold)
     }
 
+    /// Return the membrane potential, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         (self.v, self.m, self.h, self.n, self.ca) = (-54.774, 0.029725, 0.747865, 0.061079, 0.8);
     }

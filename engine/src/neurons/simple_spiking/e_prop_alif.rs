@@ -8,19 +8,31 @@
 
 //! Adaptive LIF dynamics for eligibility propagation.
 
+#![deny(missing_docs)]
+
 /// e-prop ALIF — adaptive LIF for eligibility-propagation learning. Bellec et al. 2020.
 #[derive(Clone, Debug)]
 pub struct EPropALIFNeuron {
+    /// Membrane potential (dimensionless); reset to 0 by a spike.
     pub v: f64,
+    /// Threshold-adaptation variable: decays by `alpha_a` each step and gains 1 per spike.
     pub a: f64,
+    /// Eligibility trace: decays by `alpha_a` and adds the pseudo-derivative
+    /// `max(0.3 * (1 - |v - threshold|), 0)` each step.
     pub e_trace: f64,
+    /// Per-step membrane decay factor, `exp(-dt / tau_m)`.
     pub alpha_m: f64,
+    /// Per-step adaptation decay factor, `exp(-dt / tau_a)`.
     pub alpha_a: f64,
+    /// Baseline firing threshold (normalised) (dimensionless).
     pub v_threshold_base: f64,
+    /// Strength of the spike-triggered threshold adaptation (dimensionless).
     pub beta: f64,
 }
 
 impl EPropALIFNeuron {
+    /// Create a neuron at rest with decay factors `exp(-dt / tau_m)` and `exp(-dt / tau_a)`;
+    /// the threshold parameters take their descriptor defaults.
     pub fn new(tau_m: f64, tau_a: f64, dt: f64) -> Self {
         Self {
             v: 0.0,
@@ -32,6 +44,11 @@ impl EPropALIFNeuron {
             beta: 0.07,
         }
     }
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `v` becomes `alpha_m * v + current`, the threshold is `v_threshold_base + beta * a`,
+    /// and the eligibility trace is updated. Reaching the threshold resets `v` to 0 and
+    /// adds 1 to the decayed `a`. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v = self.alpha_m * self.v + current;
         let threshold = self.v_threshold_base + self.beta * self.a;
@@ -46,6 +63,8 @@ impl EPropALIFNeuron {
             0
         }
     }
+    /// Clear the membrane potential, the adaptation and the eligibility trace; the decay
+    /// factors and threshold parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.a = 0.0;

@@ -8,23 +8,40 @@
 
 //! Conductance-based leaky integrate-and-fire dynamics.
 
+#![deny(missing_docs)]
+
 /// Conductance-based LIF (COBA). Brette et al. 2007.
 #[derive(Clone, Debug)]
 pub struct COBALIFNeuron {
+    /// Membrane voltage after the most recent complete macro step (mV).
     pub v: f64,
+    /// Excitatory synaptic conductance (nS).
     pub g_e: f64,
+    /// Inhibitory synaptic conductance (nS).
     pub g_i: f64,
+    /// Remaining absolute refractory voltage-hold interval (ms).
     pub refractory_time: f64,
+    /// Membrane capacitance (pF).
     pub c_m: f64,
+    /// Leak conductance (nS).
     pub g_l: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Excitatory synaptic reversal potential (mV).
     pub e_e: f64,
+    /// Inhibitory synaptic reversal potential (mV).
     pub e_i: f64,
+    /// Excitatory conductance decay time constant (ms).
     pub tau_e: f64,
+    /// Inhibitory conductance decay time constant (ms).
     pub tau_i: f64,
+    /// Post-RK4 raw-candidate spike threshold (mV).
     pub v_threshold: f64,
+    /// Post-spike and refractory-hold voltage (mV).
     pub v_reset: f64,
+    /// Absolute refractory voltage-hold duration (ms).
     pub refractory_period: f64,
+    /// Runge-Kutta step (ms); one per step call.
     pub dt: f64,
 }
 
@@ -33,6 +50,7 @@ impl COBALIFNeuron {
     const V_MAX: f64 = 100.0;
     const G_MAX: f64 = 1.0e9;
 
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -86,6 +104,10 @@ impl COBALIFNeuron {
             && self.refractory_period >= self.dt
     }
 
+    /// Check the state and parameters against the model's contract: finite values, the
+    /// membrane and reset potentials within -200 to 100 mV, conductances from 0 to 1e9 nS,
+    /// positive `c_m`, time constants, `refractory_period` and `dt`, a non-negative `g_l`,
+    /// and `refractory_time` at most `refractory_period`, which is at least `dt`.
     pub fn validate(&self) -> Result<(), &'static str> {
         if self.valid() {
             Ok(())
@@ -141,6 +163,16 @@ impl COBALIFNeuron {
         (decay(g_e, self.tau_e), decay(g_i, self.tau_i))
     }
 
+    /// Add the conductance increments, advance one step of `dt` with the injected current
+    /// `current` (pA), and return 1 on a spike, else 0.
+    ///
+    /// While refractory, the membrane potential is held at `v_reset`, only the conductances
+    /// decay, and `refractory_time` counts down by `dt`. Otherwise the membrane potential and
+    /// the conductances advance one classical Runge-Kutta step; ending at or above
+    /// `v_threshold` is a spike, which resets the potential to `v_reset` and starts the
+    /// refractory period. An invalid state or parameter, a non-finite current, a negative or
+    /// non-finite increment, a conductance above 1e9 nS or a membrane potential outside
+    /// -200 to 100 mV returns an error and leaves the neuron unchanged.
     pub fn try_step(
         &mut self,
         current: f64,
@@ -212,10 +244,13 @@ impl COBALIFNeuron {
         Ok(i32::from(spiked))
     }
 
+    /// Advance like [`COBALIFNeuron::try_step`], returning -1 where it returns an error.
     pub fn step(&mut self, current: f64, delta_ge: f64, delta_gi: f64) -> i32 {
         self.try_step(current, delta_ge, delta_gi).unwrap_or(-1)
     }
 
+    /// Return the membrane potential to `e_l` and clear the conductances and the refractory
+    /// time; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.e_l;
         self.g_e = 0.0;

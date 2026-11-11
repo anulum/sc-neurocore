@@ -8,22 +8,36 @@
 
 //! Gutkin-Ermentrout cortical neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Gutkin-Ermentrout — reduced cortical neuron with Type-I excitability.
 #[derive(Clone, Debug)]
 pub struct GutkinErmentroutNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Potassium activation gate, within 0 to 1; relaxes towards its steady state at a rate
+    /// of 1 per ms, and the potassium current is linear in it.
     pub n: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Runge-Kutta step (ms); one per [`GutkinErmentroutNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl GutkinErmentroutNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -88,6 +102,14 @@ impl GutkinErmentroutNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance and sodium activation is taken at its
+    /// steady state. Returns 1 when the membrane potential starts below `v_threshold` and
+    /// ends at or above it, else 0. A non-finite current, an invalid parameter or state, or
+    /// a stage or result with a non-finite value or `n` outside 0 to 1 returns 0 and leaves
+    /// the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
@@ -128,6 +150,8 @@ impl GutkinErmentroutNeuron {
             0
         }
     }
+    /// Return the membrane potential and `n` to their initial values; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.n = 0.1;

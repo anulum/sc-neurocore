@@ -8,23 +8,37 @@
 
 //! FitzHugh-Rinzel bursting neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// FitzHugh-Rinzel — 3D extension with slow bursting variable.
 #[derive(Clone, Debug)]
 pub struct FitzHughRinzelNeuron {
+    /// Dimensionless fast membrane-potential analogue (dimensionless).
     pub v: f64,
+    /// Dimensionless intermediate recovery state (dimensionless).
     pub w: f64,
+    /// Dimensionless ultra-slow current-modulation state (dimensionless).
     pub y: f64,
+    /// Offset in the fast recovery (w) nullcline (dimensionless).
     pub a: f64,
+    /// Recovery-variable self-decay coefficient (dimensionless).
     pub b: f64,
+    /// Offset in the super-slow (y) nullcline (dimensionless).
     pub c: f64,
+    /// Super-slow-variable self-decay coefficient (dimensionless).
     pub d: f64,
+    /// Timescale of the fast recovery variable (dimensionless).
     pub delta: f64,
+    /// Timescale of the super-slow variable; small values give slow bursting (dimensionless).
     pub mu: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per step.
     pub dt: f64,
+    /// Level on v at which a spike is registered (dimensionless).
     pub v_threshold: f64,
 }
 
 impl FitzHughRinzelNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -1.0,
@@ -117,10 +131,16 @@ impl FitzHughRinzelNeuron {
         })
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the input `current`.
+    ///
+    /// Returns 1 when `v` starts below `v_threshold` and ends at or above it, else 0. A
+    /// non-finite current or result, or a parameter that is not finite or a non-positive
+    /// `b`, `d`, `delta`, `mu` or `dt`, returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Return `v`, `w` and `y` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -1.0;
         self.w = -0.5;
@@ -131,7 +151,8 @@ impl FitzHughRinzelNeuron {
     /// and the upward-crossing spike count. Uses the same RK4 candidate path as
     /// `step`, so the trace is bit-identical to the per-step path and — because the right-hand side is
     /// exact arithmetic (`v.powi(3)` = `v*v*v`) — to the Python reference. The
-    /// final state is left in `self.v` / `self.w` / `self.y`.
+    /// final state is left in `self.v` / `self.w` / `self.y`. If any step is invalid, an
+    /// empty trace and no spikes are returned and the state is unchanged.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         self.try_simulate(n_steps, current).unwrap_or_default()
     }

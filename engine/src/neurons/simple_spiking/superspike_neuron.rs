@@ -8,19 +8,31 @@
 
 //! SuperSpike surrogate-gradient neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// SuperSpike — LIF with surrogate gradient trace. Zenke & Ganguli 2018.
 #[derive(Clone, Debug)]
 pub struct SuperSpikeNeuron {
+    /// Membrane potential (dimensionless); reset to `v_reset` by a spike.
     pub v: f64,
+    /// Surrogate-gradient eligibility trace: decays by `alpha_e` and adds
+    /// `1 / (beta_sg * |v - v_threshold| + 1)^2` each step.
     pub trace: f64,
+    /// Per-step membrane decay factor, `exp(-dt / tau_m)`.
     pub alpha_m: f64,
+    /// Per-step trace decay factor, `exp(-dt / tau_e)`.
     pub alpha_e: f64,
+    /// Normalised firing threshold (dimensionless).
     pub v_threshold: f64,
+    /// Normalised reset potential (dimensionless).
     pub v_reset: f64,
+    /// Steepness of the surrogate-gradient nonlinearity (dimensionless).
     pub beta_sg: f64,
 }
 
 impl SuperSpikeNeuron {
+    /// Create a neuron at rest with decay factors `exp(-dt / tau_m)` and `exp(-dt / tau_e)`;
+    /// the threshold, reset and surrogate parameters take their descriptor defaults.
     pub fn new(tau_m: f64, tau_e: f64, dt: f64) -> Self {
         Self {
             v: 0.0,
@@ -32,6 +44,10 @@ impl SuperSpikeNeuron {
             beta_sg: 10.0,
         }
     }
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `v` becomes `alpha_m * v + current`, the trace is updated from the new `v`, and
+    /// reaching `v_threshold` resets `v` to `v_reset`. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v = self.alpha_m * self.v + current;
         let sg = 1.0 / (self.beta_sg * (self.v - self.v_threshold).abs() + 1.0).powi(2);
@@ -43,6 +59,7 @@ impl SuperSpikeNeuron {
             0
         }
     }
+    /// Clear the membrane potential and the trace; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.trace = 0.0;

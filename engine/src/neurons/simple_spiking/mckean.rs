@@ -7,17 +7,26 @@
 
 //! Source-bound space-clamped McKean Heaviside system.
 
+#![deny(missing_docs)]
+
 const STATE_BOUND: f64 = 1.0e6;
 
 /// Complete state and configuration for the McKean/Tonnelier source equations.
 #[derive(Clone, Debug)]
 pub struct McKeanNeuron {
+    /// Fast variable (dimensionless); `dv/dt = -lambda*v + mu*H(v - a) - w + I`.
     pub v: f64,
+    /// Slow recovery variable (dimensionless); `dw/dt = b*v`.
     pub w: f64,
+    /// Piecewise-linear breakpoint (dimensionless).
     pub a: f64,
+    /// Linear decay rate of `v` (dimensionless).
     pub lambda: f64,
+    /// Height of the Heaviside excitation step, added where v reaches a (dimensionless).
     pub mu: f64,
+    /// Slow-variable coupling (dimensionless).
     pub b: f64,
+    /// Runge-Kutta step in the model's dimensionless time, at most 1; one per step.
     pub dt: f64,
 }
 
@@ -71,7 +80,10 @@ impl McKeanNeuron {
             && self.dt > 0.0
             && self.dt <= 1.0
     }
-    /// Advance atomically and report invalid transitions as an error.
+    /// Advance one classical Runge-Kutta step of `dt` and return 1 when `v` crosses `a`
+    /// upwards, else 0. An invalid state, configuration or current, or a result outside the
+    /// safety envelope (finite, magnitude at most 1e6), returns an error and leaves the
+    /// neuron unchanged.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.valid() || !current.is_finite() {
             return Err("invalid McKean state, configuration, or current");
@@ -86,6 +98,7 @@ impl McKeanNeuron {
         self.w = w;
         Ok(event)
     }
+    /// Advance like [`McKeanNeuron::try_step`], returning -1 where it returns an error.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(-1)
     }

@@ -8,20 +8,32 @@
 
 //! Terman-Wang oscillatory segmentation dynamics.
 
+#![deny(missing_docs)]
+
 /// Terman-Wang oscillator — segmentation by oscillatory correlation.
 #[derive(Clone, Debug)]
 pub struct TermanWangOscillator {
+    /// Dimensionless fast excitatory state (dimensionless).
     pub v: f64,
+    /// Dimensionless slow recovery state (dimensionless).
     pub w: f64,
+    /// Amplitude of the sigmoidal recovery nullcline (dimensionless).
     pub alpha: f64,
+    /// Voltage scale (steepness) of the tanh recovery activation (dimensionless).
     pub beta: f64,
+    /// Timescale separation; small values give slow recovery (dimensionless).
     pub epsilon: f64,
+    /// Constant baseline drive added to the fast variable (dimensionless).
     pub rho: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per step.
     pub dt: f64,
+    /// Level on v at which a spike is registered (dimensionless).
     pub v_peak: f64,
 }
 
 impl TermanWangOscillator {
+    /// Create an oscillator with the default parameters and initial state of its model
+    /// descriptor.
     pub fn new() -> Self {
         Self {
             v: -1.5,
@@ -92,6 +104,12 @@ impl TermanWangOscillator {
             0
         })
     }
+    /// Advance the oscillator by one classical Runge-Kutta step of `dt` with the input
+    /// `current`.
+    ///
+    /// Returns 1 when `v` starts below `v_peak` and ends at or above it, else 0. A non-finite
+    /// current or result, or a parameter that is not finite or a non-positive `beta`,
+    /// `epsilon` or `dt`, returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
@@ -118,6 +136,7 @@ impl TermanWangOscillator {
         *self = candidate;
         Some((trace, spikes))
     }
+    /// Return `v` and `w` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -1.5;
         self.w = -0.5;

@@ -8,22 +8,35 @@
 
 //! Pernarowski beta-cell bursting dynamics.
 
+#![deny(missing_docs)]
+
 /// Pernarowski 1994 three-state pancreatic beta-cell burster.
 #[derive(Clone, Debug)]
 pub struct PernarowskiNeuron {
+    /// Dimensionless fast voltage-like state (dimensionless).
     pub v: f64,
+    /// Dimensionless fast recovery state (dimensionless).
     pub w: f64,
+    /// Dimensionless ultra-slow bursting-control state (dimensionless).
     pub z: f64,
+    /// Offset in the fast recovery (w) nullcline (dimensionless).
     pub alpha: f64,
+    /// Coupling gain of the fast variable to the slow bursting variable (dimensionless).
     pub beta: f64,
+    /// Timescale of the fast recovery variable (dimensionless).
     pub eps1: f64,
+    /// Timescale of the slow bursting variable; small values give slow bursting (dimensionless).
     pub eps2: f64,
+    /// Recovery coupling coefficient (dimensionless).
     pub gamma: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per step.
     pub dt: f64,
+    /// Level on v at which a spike is registered (dimensionless).
     pub v_threshold: f64,
 }
 
 impl PernarowskiNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -1.0,
@@ -112,6 +125,11 @@ impl PernarowskiNeuron {
             0
         })
     }
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the input `current`.
+    ///
+    /// Returns 1 when `v` starts below `v_threshold` and ends at or above it, else 0. A
+    /// non-finite current or result, or a parameter that is not finite or a non-positive
+    /// `eps1`, `eps2`, `gamma` or `dt`, returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
@@ -121,7 +139,8 @@ impl PernarowskiNeuron {
     /// trace is bit-identical to the per-step path and to the Python reference
     /// (the cubic uses `v.powi(3)` = `v*v*v`, matching the Python `v*v*v`; no
     /// transcendental functions). The final state is left in `self.v` / `self.w`
-    /// / `self.z`.
+    /// / `self.z`. If any step is invalid, an empty trace and no spikes are returned and
+    /// the state is unchanged.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         self.try_simulate(n_steps, current).unwrap_or_default()
     }
@@ -138,6 +157,7 @@ impl PernarowskiNeuron {
         *self = candidate;
         Some((trace, spikes))
     }
+    /// Return `v`, `w` and `z` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -1.0;
         self.w = 0.0;

@@ -8,19 +8,30 @@
 
 //! FitzHugh-Nagumo qualitative spiking dynamics.
 
+#![deny(missing_docs)]
+
 /// FitzHugh-Nagumo 1961 — 2D qualitative spike model.
 #[derive(Clone, Debug)]
 pub struct FitzHughNagumoNeuron {
+    /// Fast voltage-like variable (dimensionless).
     pub v: f64,
+    /// Slow recovery variable (dimensionless).
     pub w: f64,
+    /// Recovery-variable offset (w-nullcline intercept) (dimensionless).
     pub a: f64,
+    /// Recovery coupling coefficient (dimensionless).
     pub b: f64,
+    /// Timescale separation; small values slow the recovery variable (dimensionless).
     pub epsilon: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per
+    /// [`FitzHughNagumoNeuron::step`] call.
     pub dt: f64,
+    /// Level on v at which a spike is registered (dimensionless).
     pub v_threshold: f64,
 }
 
 impl FitzHughNagumoNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -1.0,
@@ -33,6 +44,11 @@ impl FitzHughNagumoNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the input `current`.
+    ///
+    /// Returns 1 when `v` starts below `v_threshold` and ends at or above it, and 0 otherwise.
+    /// Returns -1 and leaves the state unchanged when the current or a result is not
+    /// finite, or when a parameter is not finite or `b`, `epsilon` or `dt` is not positive.
     pub fn step(&mut self, current: f64) -> i32 {
         if !(current.is_finite() && self.is_valid()) {
             return -1;
@@ -53,6 +69,7 @@ impl FitzHughNagumoNeuron {
         }
     }
 
+    /// Return `v` and `w` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -1.0;
         self.w = -0.5;

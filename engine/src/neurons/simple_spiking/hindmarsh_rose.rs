@@ -8,21 +8,33 @@
 
 //! Hindmarsh-Rose bursting neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Hindmarsh-Rose 1984 — 3D chaotic bursting model.
 #[derive(Clone, Debug)]
 pub struct HindmarshRoseNeuron {
+    /// Dimensionless fast membrane-potential analogue (dimensionless).
     pub x: f64,
+    /// Dimensionless fast recovery state (dimensionless).
     pub y: f64,
+    /// Dimensionless slow adaptation state (dimensionless).
     pub z: f64,
+    /// Fast-subsystem nonlinearity controlling spiking vs bursting (dimensionless).
     pub b: f64,
+    /// Slow adaptation timescale; small values give slow bursting (dimensionless).
     pub r: f64,
+    /// Adaptation coupling strength (dimensionless).
     pub s: f64,
+    /// Resting value of x setting the adaptation drive (dimensionless).
     pub x_rest: f64,
+    /// Runge-Kutta step in the model's dimensionless time; one per step.
     pub dt: f64,
+    /// Level on x at which a spike is registered (dimensionless).
     pub x_threshold: f64,
 }
 
 impl HindmarshRoseNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             x: -1.6,
@@ -101,9 +113,15 @@ impl HindmarshRoseNeuron {
             0
         })
     }
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the input `current`.
+    ///
+    /// Returns 1 when `x` starts below `x_threshold` and ends at or above it, else 0. A
+    /// non-finite current or result, or a parameter that is not finite or a non-positive
+    /// `r`, `s` or `dt`, returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
+    /// Return `x`, `y` and `z` to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = -1.6;
         self.y = -10.0;
@@ -115,7 +133,8 @@ impl HindmarshRoseNeuron {
     /// bit-identical to the per-step path and — because the right-hand side is
     /// exact arithmetic (`x.powi(3)` = `x*x*x`, `x.powi(2)` = `x*x`) — to the
     /// Python reference, even though the bursting dynamics are chaotic. The
-    /// final state is left in `self.x` / `self.y` / `self.z`.
+    /// final state is left in `self.x` / `self.y` / `self.z`. If any step is invalid, an
+    /// empty trace and no spikes are returned and the state is unchanged.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         self.try_simulate(n_steps, current).unwrap_or_default()
     }

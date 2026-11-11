@@ -8,28 +8,47 @@
 
 //! Butera pre-Botzinger respiratory neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Butera pre-Bötzinger respiratory neuron. Butera et al. 1999.
 #[derive(Clone, Debug)]
 pub struct ButeraRespiratoryNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Potassium activation gate; fast sodium inactivation is taken as `1 - n`.
     pub n: f64,
+    /// Persistent sodium inactivation gate.
     pub h_nap: f64,
+    /// Maximal fast sodium conductance (nS).
     pub g_na: f64,
+    /// Maximal persistent sodium conductance (nS).
     pub g_nap: f64,
+    /// Maximal delayed-rectifier potassium conductance (nS).
     pub g_k: f64,
+    /// Leak conductance (nS).
     pub g_l: f64,
+    /// Whole-cell capacitance dividing the complete membrane-current balance (pF).
     pub capacitance: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Tonic excitatory synaptic conductance; inactive in the scalar source profile (nS).
     pub g_tonic: f64,
+    /// Reversal potential of the tonic synaptic drive (mV).
     pub e_syn: f64,
+    /// Maximal inactivation time constant of the persistent sodium current (ms).
     pub tau_h: f64,
+    /// Runge-Kutta step (ms); one per [`ButeraRespiratoryNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl ButeraRespiratoryNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -158,6 +177,14 @@ impl ButeraRespiratoryNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current` (pA).
+    ///
+    /// The result is clamped to the membrane potential range -200 to 100 mV and gates
+    /// within 0 to 1. Returns 1 when the membrane potential starts below `v_threshold` and
+    /// ends at or above it, else 0. A non-finite current or parameter, a state outside the
+    /// admissible ranges (gates from -0.05 to 1.05) or a non-finite result returns 0 and
+    /// leaves the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let Some((v, n, h_nap)) = self.butera_rk4_candidate(current) else {
@@ -172,6 +199,8 @@ impl ButeraRespiratoryNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.n = 0.01;

@@ -8,28 +8,47 @@
 
 //! Morris-Lecar conductance-based neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Morris-Lecar 1981 — barnacle muscle fiber.
 #[derive(Clone, Debug)]
 pub struct MorrisLecarNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Potassium activation, within 0 to 1; calcium activation is taken at its steady state.
     pub w: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Midpoint voltage of the calcium activation function (mV).
     pub v1: f64,
+    /// Slope voltage of the calcium activation function (mV).
     pub v2: f64,
+    /// Midpoint voltage of the potassium activation function (mV).
     pub v3: f64,
+    /// Slope voltage of the potassium activation function (mV).
     pub v4: f64,
+    /// Potassium activation rate scaling (1/ms).
     pub phi: f64,
+    /// Runge-Kutta step (ms); one per [`MorrisLecarNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl MorrisLecarNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -112,6 +131,13 @@ impl MorrisLecarNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or
+    /// above it, else 0. A non-finite current, a parameter that is not finite or a
+    /// non-positive `c_m`, conductance, `v2`, `v4`, `phi` or `dt`, or a stage or result with
+    /// a non-finite value or `w` outside 0 to 1 returns 0 and leaves the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
@@ -152,6 +178,8 @@ impl MorrisLecarNeuron {
             0
         }
     }
+    /// Return the membrane potential and `w` to their initial values; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = -60.0;
         self.w = 0.0;
