@@ -979,11 +979,11 @@
     ]
   },
   "counts": {
-    "github_workflows": 25,
+    "github_workflows": 26,
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 672,
+    "public_documentation_pages": 673,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
@@ -1400,6 +1400,7 @@
       "docs/development/release_rollback.md",
       "docs/development/security_hardening.md",
       "docs/development/security_scanner_ci.md",
+      "docs/development/studio_desktop_assembly.md",
       "docs/development/v3_migration.md",
       "docs/ecosystem.md",
       "docs/formal/external_results.md",
@@ -3356,6 +3357,7 @@
       ".github/workflows/security-scanners.yml",
       ".github/workflows/stale.yml",
       ".github/workflows/studio-desktop-installation.yml",
+      ".github/workflows/studio-desktop-runtime.yml",
       ".github/workflows/v3-engine.yml",
       ".github/workflows/v3-wheels.yml",
       ".github/workflows/yosys-synth.yml"

@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Exact upstream generated-bytecode installation disposition
+
+# PyPA installer 1.1.0 does not install these upstream-generated caches.
+# Preserve the complete original archive and verify every original RECORD row.
+# Any archive pin change requires requalification; this is not a general cache allowance.
+schema_version = "studio.desktop.generated-bytecode.v1"
+filename = "pyside6_essentials-6.12.0-cp310-abi3-manylinux_2_34_x86_64.whl"
+sha256 = "16f4b5e41daf49235ae048458243da9efe5f3d8040f9cc5aa454ce69893d3bd9"
+size_bytes = 84346433
+source_url = "https://pypi.org/project/PySide6-Essentials/6.12.0/#files"
+
+[[generated_bytecode]]
+path = "PySide6/support/__pycache__/__init__.cpython-312.pyc"
+record_hash = "sha256=1u7uDwSk7ky3Bet7a08vF5ZFLxLSvhUj4Kh_SOBjzmg"
+size_bytes = 315
+source_path = "PySide6/support/__init__.py"
+source_record_hash = "sha256=VEzYGbtVB2wirZUgh9Dc70FNxk9vCaSsZa0e4CFrVpU"
+source_size_bytes = 223
+
+[[generated_bytecode]]
+path = "PySide6/support/__pycache__/deprecated.cpython-312.pyc"
+record_hash = "sha256=VzIaiL6_q-rpjCATJmwsIhlWeM_zgqPjTlAugaMBTj8"
+size_bytes = 271
+source_path = "PySide6/support/deprecated.py"
+source_record_hash = "sha256=lUMen8nVE4f1bysadfOL4ieUpK3c18QW8JtRWsDDVQY"
+source_size_bytes = 605

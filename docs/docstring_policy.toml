@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1860
+expected_file_count = 1874
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7494,3 +7494,59 @@ rationale = "Pin Cazelles map backend parity, published parameters, breakpoints 
 [[file]]
 path = "tests/test_sc_clipped_rational_recovery_map_backends.py"
 rationale = "Pin clipped rational-recovery map backend parity, Mojo single steps and failure-atomic validation."
+
+[[file]]
+path = "studio/desktop/assembly_tests/conftest.py"
+rationale = "Bind complete original runtime and wheel inputs to dedicated desktop assembly fixtures."
+
+[[file]]
+path = "studio/desktop/assembly_tests/studio_desktop_install_controls.py"
+rationale = "Exercise real audited file drift at public producer process boundaries and restore the original files."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_assembly_process.py"
+rationale = "Exercise actual command output, child exit failures and complete descendant cleanup."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_install_wheels.py"
+rationale = "Exercise complete original wheel replacement, relocation and real file-drift refusals."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_probe_runtime.py"
+rationale = "Exercise actual standalone inventory calls and malformed installed-record refusals."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_runtime_inventory.py"
+rationale = "Validate actual runtime reports and original installed payload bindings through the public decoder."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_wheel_catalog.py"
+rationale = "Exercise original archive identities, metadata refusals and shared file ownership."
+
+[[file]]
+path = "studio/desktop/assembly_tests/test_studio_desktop_wheel_destination.py"
+rationale = "Exercise real launcher relocation, wheel member writes and ordinary installed RECORDs."
+
+[[file]]
+path = "tools/studio_desktop_assembly_process.py"
+rationale = "Retain real child command output and verify complete process-group cleanup."
+
+[[file]]
+path = "tools/studio_desktop_install_wheels.py"
+rationale = "Replace the complete original wheel closure in standalone desktop staging."
+
+[[file]]
+path = "tools/studio_desktop_probe_runtime.py"
+rationale = "Report actual standalone runtime identities and installed records without external imports."
+
+[[file]]
+path = "tools/studio_desktop_runtime_inventory.py"
+rationale = "Validate actual isolated runtime reports, RECORD bindings and original payload bytes."
+
+[[file]]
+path = "tools/studio_desktop_wheel_catalog.py"
+rationale = "Validate exact original wheel archives and shared payload ownership before installation."
+
+[[file]]
+path = "tools/studio_desktop_wheel_destination.py"
+rationale = "Install relative console launchers and preserve ordinary PyPA RECORD ownership."

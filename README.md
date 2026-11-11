@@ -189,8 +189,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
 | Python test files | 5628 |
-| Public documentation pages | 672 |
-| GitHub Actions workflows | 25 |
+| Public documentation pages | 673 |
+| GitHub Actions workflows | 26 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
 <!-- capability-snapshot:end -->
@@ -706,7 +706,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-25 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+26 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -733,6 +733,7 @@ bridge install. For source-tree runs against local bridge code, use
 | **security-scanners.yml** | pip-audit, cargo-audit, Semgrep, and release security scans |
 | **pre-commit.yml** | Pre-commit hook validation |
 | **studio-desktop-installation.yml** | Studio Linux installation acceptance on two complete prepared bundles with the real runtime |
+| **studio-desktop-runtime.yml** | Shared pinned inputs and standalone runtime assembly checks, required by CI |
 | **yosys-synth.yml** | Yosys HDL synthesis verification; a manual run can also run and time every SymbiYosys job |
 | **stale.yml** | Auto-label and close stale issues |
 

@@ -2172,10 +2172,28 @@ jobs:
       - name: Check SPDX headers
         run: python tools/spdx_header_audit.py --check
 
+  studio-desktop-runtime:
+    uses: ./.github/workflows/studio-desktop-runtime.yml
+
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test, coverage-union, test-nir-interoperability, test-hdc-reference, spdx-guard, rust-documentation]
+    if: ${{ !cancelled() }}
+    needs: [lint, test, coverage-union, test-nir-interoperability, test-hdc-reference, spdx-guard, rust-documentation, studio-desktop-runtime]
     steps:
+      - name: Require every build prerequisite to pass
+        env:
+          PREREQUISITE_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python - <<'PYCODE'
+          import json
+          import os
+
+          results = json.loads(os.environ["PREREQUISITE_RESULTS"])
+          assert results
+          failed = {name: job["result"] for name, job in results.items() if job["result"] != "success"}
+          if failed:
+              raise SystemExit("Build prerequisites did not pass: " + json.dumps(failed, sort_keys=True))
+          PYCODE
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # 1.98.1

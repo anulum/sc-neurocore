@@ -550,6 +550,7 @@ nav:
       - Release Notes v4.1.0: development/RELEASE_NOTES_v4.1.0.md
       - Release Notes v4.0.0: development/RELEASE_NOTES_v4.0.0.md
       - Release Rollback: development/release_rollback.md
+      - Desktop Runtime Assembly: development/studio_desktop_assembly.md
       - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
   - Changelog: CHANGELOG.md
   - Pricing: pricing.md

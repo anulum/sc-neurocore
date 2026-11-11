@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Assemble the standalone Linux desktop runtime from the complete selected
+  original wheel set, validate installed records and wheel payloads, and generate
+  relocatable console launchers. Retain original commands, diagnostics and
+  process receipts. Add a hash-locked CI input producer and a consumer that
+  checks source binding, types, documentation, formatting and complete statement
+  and branch coverage of the six assembly tools.
+
 - Move Go to 1.27.4 in every module and workflow. Go 1.27.3's standard library is
   affected by GO-2026-6859 (CVE-2026-97054), an HTTP/1 server crash in net/http, fixed
   in 1.27.4. The locked-dependency audit reports it for all five Go modules.

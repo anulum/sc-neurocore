@@ -1,0 +1,510 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Shared original runtime inputs and complete desktop assembly qualification
+
+name: Studio desktop runtime qualification
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+  PIP_CONFIG_FILE: /dev/null
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+  LC_ALL: C
+  PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+
+jobs:
+  inputs:
+    name: Prepare original desktop runtime inputs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      artifact_id: ${{ steps.upload_inputs.outputs.artifact-id }}
+      manifest_sha256: ${{ steps.record_inputs.outputs.manifest_sha256 }}
+    steps:
+      - name: Record producer clock and allocation
+        id: clock
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/studio-runtime-producer"
+          date +%s > "$RUNNER_TEMP/studio-runtime-producer/started-at"
+          printf 'started_at=%s\n' "$(cat "$RUNNER_TEMP/studio-runtime-producer/started-at")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+          cache: pip
+          cache-dependency-path: requirements/studio-assembly-tools-linux-x86_64.txt
+      - name: Install the complete locked controller profile
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r requirements/studio-assembly-tools-linux-x86_64.txt
+      - name: Acquire original pinned archives and validate catalogs
+        env:
+          STARTED_AT: ${{ steps.clock.outputs.started_at }}
+        run: |
+          python - <<'PY'
+          import math
+          import os
+          import shutil
+          import sys
+          import sysconfig
+          import time
+          from pathlib import Path
+
+          from tools.studio_desktop_assembly_process import run_assembly_command
+
+          root = Path.cwd()
+          allocation = Path(os.environ["RUNNER_TEMP"]) / "studio-runtime-producer"
+          data = allocation / "inputs" / "data"
+          for name in ("wheels", "foreign", "scripts", "locks"):
+              (data / name).mkdir(parents=True)
+          assert sys.version_info[:3] == (3, 12, 16)
+          assert sysconfig.get_platform() == "linux-x86_64"
+          curl = shutil.which("curl")
+          assert curl is not None
+          download = [
+              sys.executable,
+              "-B",
+              "-m",
+              "pip",
+              "download",
+              "--require-hashes",
+              "--only-binary",
+              ":all:",
+          ]
+          commands = [
+              (
+                  "runtime-wheels",
+                  [
+                      *download,
+                      "--dest",
+                      str(data / "wheels"),
+                      "-r",
+                      "requirements/studio-assembly-runtime-linux-x86_64.txt",
+                  ],
+              ),
+              (
+                  "script-wheels",
+                  [
+                      *download,
+                      "--no-deps",
+                      "--dest",
+                      str(data / "scripts"),
+                      "-r",
+                      "requirements/studio-assembly-scripts-linux-x86_64.txt",
+                  ],
+              ),
+              (
+                  "foreign-wheel",
+                  [
+                      *download,
+                      "--no-deps",
+                      "--platform",
+                      "win_amd64",
+                      "--implementation",
+                      "cp",
+                      "--abi",
+                      "cp312",
+                      "--python-version",
+                      "3.12",
+                      "--dest",
+                      str(data / "foreign"),
+                      "-r",
+                      "requirements/studio-assembly-foreign-native.txt",
+                  ],
+              ),
+              (
+                  "portable-python",
+                  [
+                      curl,
+                      "--fail",
+                      "--silent",
+                      "--show-error",
+                      "--location",
+                      "--proto",
+                      "=https",
+                      "--proto-redir",
+                      "=https",
+                      "--max-filesize",
+                      "34505639",
+                      "--output",
+                      str(data / "portable-python.tar.gz"),
+                      "--",
+                      "https://releases.astral.sh/github/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+                  ],
+              ),
+          ]
+          for name in ("wheels", "foreign", "scripts"):
+              commands.append(
+                  (
+                      "catalog-" + name,
+                      [
+                          sys.executable,
+                          "-B",
+                          "-m",
+                          "tools.studio_desktop_wheel_catalog",
+                          "--directory",
+                          str(data / name),
+                          "--output",
+                          str(data / name / "catalog.json"),
+                          "--python-version",
+                          "3.12.16",
+                          "--platform",
+                          "linux-x86_64",
+                      ],
+                  )
+              )
+          deadline = float(os.environ["STARTED_AT"]) + 15 * 60 - 120
+          for name, command in commands:
+              run_assembly_command(
+                  command, math.floor(deadline - time.time()), allocation / "receipts" / name
+              )
+          for path in sorted((root / "requirements").glob("studio-assembly-*")):
+              shutil.copyfile(path, data / "locks" / path.name)
+          (data / "source-revision.txt").write_text(os.environ["GITHUB_SHA"] + "\n")
+          PY
+      - name: Bind the exact complete input set
+        id: record_inputs
+        run: |
+          set -euo pipefail
+          input_root="$RUNNER_TEMP/studio-runtime-producer/inputs"
+          printf '%s  %s\n' ce4f6d0a6cfdb3bed6e44c2f9affd85943c76a42e25ad3a259002f31d6fb8a20 "$input_root/data/portable-python.tar.gz" | sha256sum --check --strict
+          (
+            cd "$input_root/data"
+            find . -type f -print0 | sort -z | xargs -0 sha256sum
+          ) > "$input_root/inputs.sha256"
+          printf 'manifest_sha256=%s\n' "$(sha256sum "$input_root/inputs.sha256" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+          du -sb "$input_root" > "$RUNNER_TEMP/studio-runtime-producer/input-bytes.txt"
+      - name: Share this run's inputs once
+        id: upload_inputs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-desktop-runtime-inputs-${{ github.sha }}
+          path: ${{ runner.temp }}/studio-runtime-producer/inputs
+          if-no-files-found: error
+          retention-days: 1
+      - name: Preserve producer diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-desktop-input-diagnostics-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/studio-runtime-producer/started-at
+            ${{ runner.temp }}/studio-runtime-producer/input-bytes.txt
+            ${{ runner.temp }}/studio-runtime-producer/receipts
+          if-no-files-found: error
+          retention-days: 7
+
+  assembly:
+    name: Studio desktop runtime
+    runs-on: ubuntu-24.04
+    needs: [inputs]
+    if: ${{ !cancelled() }}
+    timeout-minutes: 60
+    env:
+      MYPYPATH: src:bridge:.
+      SC_NEUROCORE_STUDIO_ASSEMBLY_REFUSAL_SUPPORT: ${{ github.workspace }}/tests/studio_seccomp_support.py
+    steps:
+      - name: Record consumer clock and require the actual producer
+        id: clock
+        env:
+          PRODUCER_RESULT: ${{ needs.inputs.result }}
+        run: |
+          set -euo pipefail
+          namespace="$RUNNER_TEMP/studio-runtime-acceptance"
+          mkdir -p "$namespace"/{tmp,diagnostics,staging}
+          {
+            printf '%s=%s\n' TMPDIR "$namespace/tmp"
+            printf '%s=%s\n' COVERAGE_FILE "$namespace/diagnostics/.coverage"
+            printf '%s=%s\n' SC_NEUROCORE_STUDIO_ASSEMBLY_RUNTIME "$namespace/staging/python"
+            printf '%s=%s\n' SC_NEUROCORE_STUDIO_ASSEMBLY_CATALOG "$namespace/inputs/data/wheels/catalog.json"
+            printf '%s=%s\n' SC_NEUROCORE_STUDIO_ASSEMBLY_INPUTS "$namespace/inputs/data/wheels"
+            printf '%s=%s\n' SC_NEUROCORE_STUDIO_ASSEMBLY_INCOMPATIBLE_CATALOG "$namespace/inputs/data/foreign/catalog.json"
+            printf '%s=%s\n' SC_NEUROCORE_STUDIO_ASSEMBLY_SCRIPT_CATALOG "$namespace/inputs/data/scripts/catalog.json"
+          } >> "$GITHUB_ENV"
+          date +%s > "$namespace/diagnostics/started-at"
+          printf 'started_at=%s\n' "$(cat "$namespace/diagnostics/started-at")" >> "$GITHUB_OUTPUT"
+          test "$PRODUCER_RESULT" = success
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+          cache: pip
+          cache-dependency-path: requirements/studio-assembly-tools-linux-x86_64.txt
+      - name: Install locked controller and actual Linux runtime prerequisites
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential libegl1 libgl1 libnss3 libasound2t64 \
+            libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 \
+            libxcomposite1 libxdamage1 libxrandr2 libxtst6 libdbus-1-3
+          python -m pip install --require-hashes --only-binary :all: -r requirements/studio-assembly-tools-linux-x86_64.txt
+      - name: Check assembler source and dedicated test quality
+        run: |
+          set -euo pipefail
+          production=(tools/studio_desktop_*.py)
+          tests=(studio/desktop/assembly_tests/*.py)
+          test "${#production[@]}" -eq 6
+          test "${#tests[@]}" -eq 8
+          files=("${production[@]}" "${tests[@]}")
+          python -m mypy --strict --explicit-package-bases --namespace-packages "${files[@]}"
+          python -m ruff check "${files[@]}"
+          python -m ruff check --isolated --config 'lint.pydocstyle.convention = "numpy"' \
+            --select D,E902 --ignore-noqa --no-cache "${files[@]}"
+          python -m ruff format --check "${files[@]}"
+          python -m bandit -q -c pyproject.toml "${production[@]}"
+      - name: Receive only the matching producer artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          artifact-ids: ${{ needs.inputs.outputs.artifact_id }}
+          digest-mismatch: error
+          path: ${{ runner.temp }}/studio-runtime-acceptance/inputs
+          merge-multiple: true
+      - name: Verify the source binding and every input before execution
+        env:
+          EXPECTED_MANIFEST: ${{ needs.inputs.outputs.manifest_sha256 }}
+        run: |
+          set -euo pipefail
+          namespace="$RUNNER_TEMP/studio-runtime-acceptance"
+          input_root="$namespace/inputs"
+          [[ "$EXPECTED_MANIFEST" =~ ^[0-9a-f]{64}$ ]]
+          printf '%s  %s\n' "$EXPECTED_MANIFEST" "$input_root/inputs.sha256" | sha256sum --check --strict
+          find "$input_root/data" ! -type d ! -type f -print > "$namespace/diagnostics/unexpected-input-kinds.txt"
+          test ! -s "$namespace/diagnostics/unexpected-input-kinds.txt"
+          (
+            cd "$input_root/data"
+            sha256sum --check --strict ../inputs.sha256
+          ) > "$namespace/diagnostics/verified-and-observed-inputs.txt"
+          (
+            cd "$input_root/data"
+            find . -type f -print0 | sort -z | xargs -0 sha256sum
+          ) > "$namespace/diagnostics/observed-inputs.sha256"
+          cmp "$input_root/inputs.sha256" "$namespace/diagnostics/observed-inputs.sha256"
+          test "$(cat "$input_root/data/source-revision.txt")" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Seed one actual standalone runtime offline
+        env:
+          STARTED_AT: ${{ steps.clock.outputs.started_at }}
+        run: |
+          python - <<'PY'
+          import math
+          import os
+          import shutil
+          import tarfile
+          import time
+          from pathlib import Path
+
+          from tools.studio_desktop_assembly_process import run_assembly_command
+          from tools.studio_desktop_wheel_catalog import read_catalog
+
+          namespace = Path(os.environ["RUNNER_TEMP"]) / "studio-runtime-acceptance"
+          data = namespace / "inputs/data"
+          catalog = read_catalog(data / "wheels/catalog.json")
+          with tarfile.open(data / "portable-python.tar.gz") as archive:
+              archive.extractall(namespace / "staging", filter="data")
+          runtime = Path(os.environ["SC_NEUROCORE_STUDIO_ASSEMBLY_RUNTIME"])
+          python = runtime / "bin/python3.12"
+          seed = namespace / "runtime-seed.txt"
+          with seed.open("x") as stream:
+              for wheel in catalog.wheels:
+                  stream.write(wheel.path.as_uri() + " --hash=sha256:" + wheel.sha256 + "\n")
+          uv = shutil.which("uv")
+          assert uv is not None
+          commands = [
+              (
+                  "python-identity",
+                  [
+                      str(python),
+                      "-I",
+                      "-B",
+                      "-c",
+                      "import sys; assert sys.version_info[:3] == (3,12,16); "
+                      "print(sys.version); print(sys.prefix)",
+                  ],
+              ),
+              ("uv-version", [uv, "--version"]),
+              (
+                  "seed-original-closure",
+                  [
+                      uv,
+                      "--no-config",
+                      "--offline",
+                      "pip",
+                      "install",
+                      "--python",
+                      str(python),
+                      "--system",
+                      "--no-index",
+                      "--no-deps",
+                      "--require-hashes",
+                      "--only-binary",
+                      ":all:",
+                      "--link-mode",
+                      "copy",
+                      "--reinstall-package",
+                      "pip",
+                      "-r",
+                      str(seed),
+                  ],
+              ),
+              (
+                  "seed-dependency-check",
+                  [uv, "--no-config", "--offline", "pip", "check", "--python", str(python)],
+              ),
+          ]
+          deadline = float(os.environ["STARTED_AT"]) + 60 * 60 - 120
+          for name, command in commands:
+              result = run_assembly_command(
+                  command, math.floor(deadline - time.time()), namespace / "diagnostics" / name
+              )
+              if name == "uv-version":
+                  assert result.stdout.decode().split()[1] == "0.13.7"
+          PY
+      - name: Qualify the complete six-module cohort and exact coverage
+        env:
+          STARTED_AT: ${{ steps.clock.outputs.started_at }}
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          import os
+          import sys
+          import time
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          from tools.studio_desktop_assembly_process import run_assembly_command
+
+          root = Path.cwd()
+          namespace = Path(os.environ["RUNNER_TEMP"]) / "studio-runtime-acceptance"
+          diagnostics = namespace / "diagnostics"
+          config = root / "studio/desktop/assembly-coverage.ini"
+          tests = sorted((root / "studio/desktop/assembly_tests").glob("test_studio_desktop_*.py"))
+          assert len(tests) == 6
+          paths = [str(path.relative_to(root)) for path in tests]
+          base = [
+              sys.executable,
+              "-B",
+              "-m",
+              "pytest",
+              "--confcutdir=" + str(root / "studio/desktop/assembly_tests"),
+              "-q",
+          ]
+          deadline = float(os.environ["STARTED_AT"]) + 60 * 60 - 120
+          remaining = math.floor(deadline - time.time())
+          collected = run_assembly_command(
+              [*base, "--collect-only", *paths], remaining, diagnostics / "collection"
+          )
+          nodeids = {
+              line
+              for line in collected.stdout.decode().splitlines()
+              if line.startswith("studio/desktop/assembly_tests/test_studio_desktop_") and "::" in line
+          }
+          assert nodeids
+          environment = {**os.environ, "SC_NEUROCORE_STUDIO_ASSEMBLY_COMMAND_SECONDS": str(remaining)}
+          command = [
+              sys.executable,
+              "-B",
+              "-m",
+              "coverage",
+              "run",
+              "--rcfile=" + str(config),
+              "-m",
+              *base[3:],
+              *paths,
+              "--junitxml=" + str(diagnostics / "cohort.xml"),
+              "--basetemp=" + str(namespace / "pytest"),
+          ]
+          run_assembly_command(
+              command, math.floor(deadline - time.time()), diagnostics / "cohort", environment=environment
+          )
+          for name, arguments in [
+              ("combine", ["combine", "--keep", str(diagnostics)]),
+              ("json", ["json", "-o", str(diagnostics / "coverage.json")]),
+              ("report", ["report", "--show-missing"]),
+          ]:
+              run_assembly_command(
+                  [
+                      sys.executable,
+                      "-B",
+                      "-m",
+                      "coverage",
+                      *arguments[:1],
+                      "--rcfile=" + str(config),
+                      *arguments[1:],
+                  ],
+                  math.floor(deadline - time.time()),
+                  diagnostics / ("coverage-" + name),
+              )
+          cases = ET.parse(diagnostics / "cohort.xml").findall(".//testcase")
+          assert cases and all(
+              case.find("skipped") is None and case.find("failure") is None and case.find("error") is None
+              for case in cases
+          )
+          observed = {
+              case.attrib["classname"].replace(".", "/") + ".py::" + case.attrib["name"] for case in cases
+          }
+          assert len(observed) == len(cases) == len(nodeids) and observed == nodeids
+          report = json.loads((diagnostics / "coverage.json").read_text())
+          expected_sources = {
+              "studio_desktop_" + name + ".py"
+              for name in (
+                  "assembly_process",
+                  "wheel_destination",
+                  "wheel_catalog",
+                  "probe_runtime",
+                  "runtime_inventory",
+                  "install_wheels",
+              )
+          }
+          assert len(report["files"]) == 6
+          assert {Path(name).name for name in report["files"]} == expected_sources
+          assert all(
+              Path(name).resolve(strict=True).is_relative_to(root / "tools") for name in report["files"]
+          )
+          assert report["totals"]["percent_covered"] == 100 and report["totals"]["excluded_lines"] == 0
+          (diagnostics / "membership.json").write_text(
+              json.dumps(
+                  {
+                      "collected": sorted(nodeids),
+                      "executed": sorted(observed),
+                      "source_modules": sorted(expected_sources),
+                      "bundle_sealed": False,
+                      "desktop_acceptance": False,
+                  },
+                  indent=2,
+              )
+              + "\n"
+          )
+          PY
+      - name: Require unchanged source and cache policy
+        run: git diff --exit-code -- tools/studio_desktop_*.py tools/studio_desktop_generated_bytecode.toml studio/desktop/assembly_tests studio/desktop/assembly-coverage.ini
+      - name: Preserve actual cohort diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-desktop-runtime-diagnostics-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/studio-runtime-acceptance/diagnostics
+            ${{ runner.temp }}/studio-runtime-acceptance/pytest/**/command.json
+            ${{ runner.temp }}/studio-runtime-acceptance/pytest/**/receipt.json
+            ${{ runner.temp }}/studio-runtime-acceptance/pytest/**/stdout
+            ${{ runner.temp }}/studio-runtime-acceptance/pytest/**/stderr
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
