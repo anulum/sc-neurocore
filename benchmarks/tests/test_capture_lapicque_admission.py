@@ -15,6 +15,16 @@ import sys
 
 import pytest
 
+# A parent measured with ``patch = subprocess`` exports these, and coverage's own
+# startup hook then starts a second tracer in every child interpreter that has
+# coverage installed. The unsupported interpreter is traced explicitly instead.
+_COVERAGE_STARTUP_VARIABLES = ("COVERAGE_PROCESS_START", "COVERAGE_PROCESS_CONFIG")
+
+
+def _explicitly_traced_environment() -> dict[str, str]:
+    """Return the environment without coverage's automatic child-process startup."""
+    return {k: v for k, v in os.environ.items() if k not in _COVERAGE_STARTUP_VARIABLES}
+
 
 def _command(source: Path, checkout: Path, output: Path, python: Path | None = None) -> list[str]:
     """Build the actual source command, tracing a separately installed negative runtime when requested."""
@@ -117,7 +127,7 @@ def test_actual_unsupported_interpreter_is_refused_before_measurement(tmp_path: 
             "-c",
             "import sys;print(sys.implementation.name,sys.version_info.major,sys.version_info.minor)",
         ],
-        env=os.environ,
+        env=_explicitly_traced_environment(),
         capture_output=True,
         text=True,
         check=True,
@@ -126,7 +136,7 @@ def test_actual_unsupported_interpreter_is_refused_before_measurement(tmp_path: 
     output = tmp_path / "unsupported"
     result = subprocess.run(
         _command(source, checkout, output, python),
-        env=os.environ,
+        env=_explicitly_traced_environment(),
         capture_output=True,
         text=True,
         check=False,
