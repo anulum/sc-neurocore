@@ -15,6 +15,11 @@ to import from an installed wheel; ``sc_neurocore.identity`` and
 as an installed wheel lacks them, and imports every shipped top-level
 subpackage. Only failures caused by a blocked package count here; a missing
 optional third-party dependency is a different, declared boundary.
+
+The identity monitors measure spike trains through the shipped
+``sc_neurocore.spike_train_statistics``, so they run in the same blocked
+process and must agree with the source-checkout ``sc_neurocore.analysis``
+functions on the same history.
 """
 
 from __future__ import annotations
@@ -25,8 +30,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 
+from sc_neurocore import analysis
 from sc_neurocore._source_checkout import require_source_checkout_package
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -96,13 +103,44 @@ try:
 except ModuleNotFoundError as exc:
     refusals["decoder"] = str(exc)
 
+import numpy as np
+from sc_neurocore.identity import DirectorController, IdentitySubstrate
+
+rng = np.random.default_rng(7)
+substrate = IdentitySubstrate(n_cortical=8, n_inhibitory=4, n_memory=4, seed=3)
+substrate._spike_history = [(rng.random(8) < 0.05).astype(np.int8) for _ in range(600)]
+substrate._total_steps = 600
+director = DirectorController(substrate)
+monitor = director.monitor()
+health = substrate.health_check()
+director_methods = {}
+for name in ("diagnose", "report", "correct"):
+    try:
+        getattr(director, name)()
+        director_methods[name] = None
+    except ModuleNotFoundError as exc:
+        director_methods[name] = str(exc)
+for name, call in (
+    ("extract_state", substrate.extract_state),
+    ("priming", StateDecoder(substrate).generate_priming_context),
+):
+    try:
+        call()
+        refusals[name] = None
+    except ModuleNotFoundError as exc:
+        refusals[name] = str(exc)
+
 print(json.dumps({
     "blocked": blocked,
     "shipped": shipped,
     "failures": failures,
     "blocker_works": blocker_works,
     "refusals": refusals,
-}))
+    "history": [row.tolist() for row in substrate._spike_history],
+    "monitor": monitor,
+    "health": health,
+    "director_methods": director_methods,
+}, default=lambda value: value.item()))
 """
 
 
@@ -136,7 +174,7 @@ def test_every_shipped_subpackage_imports_without_the_source_only_packages(
     shipped = probe["shipped"]
     assert isinstance(blocked, list) and isinstance(shipped, list)
     assert {"sc_neurocore.analysis", "sc_neurocore.physics"} <= set(blocked)
-    assert {"identity", "experimental"} <= set(shipped)
+    assert {"identity", "experimental", "spike_train_statistics"} <= set(shipped)
     assert probe["failures"] == {}
 
 
@@ -156,6 +194,63 @@ def test_features_that_need_a_source_only_package_refuse_with_the_reason(
     assert isinstance(decoder, str) and "StateDecoder.extract_connectivity_signature" in decoder
     for message in (heat, decoder):
         assert "only in a source checkout" in message
+
+
+def test_identity_features_that_need_pca_or_connectivity_still_refuse(
+    probe: dict[str, object],
+) -> None:
+    """State extraction and priming need PCA or connectivity, so a wheel refuses them."""
+    refusals = probe["refusals"]
+    assert isinstance(refusals, dict)
+    for key, feature in (
+        ("extract_state", "IdentitySubstrate.extract_state"),
+        ("priming", "StateDecoder.generate_priming_context"),
+    ):
+        message = refusals[key]
+        assert isinstance(message, str) and feature in message
+        assert "only in a source checkout" in message
+
+
+def _same(measured: object, expected: float) -> bool:
+    """Return whether a JSON-decoded float equals ``expected``, with nan equal to nan."""
+    assert isinstance(measured, float)
+    return bool(np.isclose(measured, expected, rtol=1e-12, atol=0.0, equal_nan=True))
+
+
+def test_identity_monitors_run_without_analysis_and_match_it(probe: dict[str, object]) -> None:
+    """The director and the health check run in the blocked process and agree with analysis."""
+    history = probe["history"]
+    monitor = probe["monitor"]
+    health = probe["health"]
+    assert isinstance(history, list) and isinstance(monitor, dict) and isinstance(health, dict)
+    recent = np.array(history, dtype=np.int8)
+    assert recent.shape == (600, 8)
+
+    director_train = (recent[-500:].sum(axis=1) > 0).astype(np.int8)
+    assert monitor["n_steps"] == 600
+    assert _same(monitor["mean_rate"], analysis.firing_rate(director_train))
+    assert _same(monitor["cv"], analysis.cv_isi(director_train))
+    assert _same(monitor["fano"], analysis.fano_factor(director_train, window_ms=50.0))
+    assert _same(monitor["perm_entropy"], analysis.permutation_entropy(director_train))
+    assert 0.0 < monitor["perm_entropy"] <= 1.0
+
+    health_train = (recent.sum(axis=1) > 0).astype(np.int8)
+    psd, _ = analysis.power_spectrum(health_train)
+    p_norm = psd / psd.sum()
+    p_norm = p_norm[p_norm > 0]
+    assert health["n_steps"] == 600
+    assert _same(health["mean_rate"], analysis.firing_rate(health_train))
+    assert _same(health["cv"], analysis.cv_isi(health_train))
+    assert _same(health["fano"], analysis.fano_factor(health_train, window_ms=50.0))
+    assert _same(health["spectral_entropy"], float(-np.sum(p_norm * np.log2(p_norm))))
+    assert isinstance(health["is_healthy"], bool)
+
+
+def test_director_diagnosis_report_and_correction_run_without_analysis(
+    probe: dict[str, object],
+) -> None:
+    """The director's other public methods need nothing that the wheel leaves out."""
+    assert probe["director_methods"] == {"diagnose": None, "report": None, "correct": None}
 
 
 def test_a_present_package_passes() -> None:

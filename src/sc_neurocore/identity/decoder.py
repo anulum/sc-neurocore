@@ -15,11 +15,12 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore._source_checkout import require_source_checkout_package
+from sc_neurocore.spike_train_statistics import cv_isi, firing_rate
 
 from .substrate import IdentitySubstrate
 
-# The decoder's spike statistics come from sc_neurocore.analysis, which only a
-# source checkout ships. It is imported where it is used, so that
+# The decoder's PCA and connectivity measures come from sc_neurocore.analysis,
+# which only a source checkout ships. It is imported where it is used, so that
 # sc_neurocore.identity stays importable from an installed wheel.
 _ANALYSIS = "sc_neurocore.analysis"
 
@@ -101,7 +102,6 @@ class StateDecoder:
         if n_steps < 10:
             return f"Substrate dormant. {n_steps} steps recorded. No patterns yet."
         require_source_checkout_package(_ANALYSIS, "StateDecoder.generate_priming_context")
-        from sc_neurocore.analysis import cv_isi, firing_rate
 
         patterns = self.extract_dominant_patterns(n_components=5)
         n_patterns = patterns.shape[0] if patterns.ndim == 2 else 0

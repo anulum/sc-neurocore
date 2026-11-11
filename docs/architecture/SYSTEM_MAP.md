@@ -426,11 +426,12 @@ root of an explicitly tested acyclic import graph; public symbol identity and
 pickle compatibility remain anchored to the historical facade.
 
 ### M. Analysis, explainability, profiling, energy — *Research (most)*
-`analysis` (spike-train toolkit, 132 functions) · `explain` · `explainability` ·
-`debug` · `profiler` · `profiling` · `viz` · `dashboard` · `energy` ·
-`energy_accounting`
+`analysis` (spike-train toolkit, 132 functions) · `spike_train_statistics` (the
+nine-function statistics core, shipped in the wheel and re-exported by `analysis`) ·
+`explain` · `explainability` · `debug` · `profiler` · `profiling` · `viz` ·
+`dashboard` · `energy` · `energy_accounting`
 → Spike statistics, explanation, energy/CO₂e accounting, HIL debug. **MAINTAINED**
-(analysis, profiler, energy_accounting) / DRAFT (others).
+(analysis, spike_train_statistics, profiler, energy_accounting) / DRAFT (others).
 
 ### N. Quantum & cognition — *Research (experimental)*
 `quantum` (Qiskit/PennyLane VQC bridge) · `bridges.quantum_annealing`

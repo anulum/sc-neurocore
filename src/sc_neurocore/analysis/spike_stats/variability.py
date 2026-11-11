@@ -15,6 +15,13 @@ from typing import Any
 
 import numpy as np
 
+# cv_isi and fano_factor are defined by the shipped core and re-exported here.
+from sc_neurocore.spike_train_statistics.variability import cv_isi as cv_isi
+from sc_neurocore.spike_train_statistics.variability import fano_factor as fano_factor
+from sc_neurocore.spike_train_statistics.variability import (
+    permutation_entropy as _core_permutation_entropy,
+)
+
 from .basic import isi, spike_times
 
 # ---------------------------------------------------------------------------
@@ -31,17 +38,6 @@ if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
         _HAS_RUST = True
     except ImportError:
         pass
-
-
-def cv_isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
-    """Coefficient of variation of ISI. CV=1 for Poisson, <1 for regular."""
-    intervals = isi(binary_train, dt)
-    if intervals.size < 2:
-        return float("nan")
-    mu = intervals.mean()
-    if mu == 0:
-        return float("nan")
-    return float(intervals.std() / mu)
 
 
 def cv2(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
@@ -103,22 +99,6 @@ def lvr(
     if count == 0:
         return float("nan")
     return float(3.0 * result / count)
-
-
-def fano_factor(
-    binary_train: np.ndarray[Any, Any], window_ms: float = 50.0, dt: float = 0.001
-) -> float:
-    """Fano factor: variance/mean of spike counts in sliding windows."""
-    window_steps = max(1, int(window_ms / (dt * 1000)))
-    n = binary_train.size
-    if n < window_steps:
-        return float("nan")
-    n_windows = n // window_steps
-    counts = binary_train[: n_windows * window_steps].reshape(n_windows, window_steps).sum(axis=1)
-    mu = counts.mean()
-    if mu == 0:
-        return float("nan")
-    return float(counts.var() / mu)
 
 
 def isi_entropy(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int = 20) -> float:
@@ -234,30 +214,17 @@ def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: flo
 def permutation_entropy(
     binary_train: np.ndarray[Any, Any], order: int = 3, delay: int = 1
 ) -> float:
-    """Bandt-Pompe permutation entropy. Bandt & Pompe 2002."""
-    x = binary_train.astype(np.float64)
-    n = x.size
-    if n < order * delay:
-        return float("nan")
-    if _HAS_RUST and _ssc is not None:
-        return float(_ssc.py_permutation_entropy(np.ascontiguousarray(x), order, delay))
-    # n_patterns = n - (order - 1) * delay; the n < order * delay guard above
-    # ensures n >= order * delay, so n_patterns >= delay >= 1 and at least one
-    # ordinal pattern always exists.
-    n_patterns = n - (order - 1) * delay
-    patterns = np.zeros(n_patterns, dtype=np.int64)
-    for i in range(n_patterns):
-        window = x[i : i + order * delay : delay]
-        rank = np.argsort(np.argsort(window))
-        key = 0
-        for j, r in enumerate(rank):
-            key += int(r) * (order**j)
-        patterns[i] = key
-    _, counts = np.unique(patterns, return_counts=True)
-    p = counts / counts.sum()
-    h = -np.sum(p * np.log2(p + 1e-30))
-    h_max = np.log2(float(np.prod(np.arange(1, order + 1))))
-    return float(h / h_max) if h_max > 0 else 0.0
+    """Bandt-Pompe permutation entropy. Bandt & Pompe 2002.
+
+    Uses the Rust helper when it is built, otherwise
+    :func:`sc_neurocore.spike_train_statistics.permutation_entropy`, which
+    defines the result and refuses ``order`` or ``delay`` below 1.
+    """
+    if _HAS_RUST and _ssc is not None and order >= 1 and delay >= 1:
+        x = binary_train.astype(np.float64)
+        if x.size >= order * delay:
+            return float(_ssc.py_permutation_entropy(np.ascontiguousarray(x), order, delay))
+    return _core_permutation_entropy(binary_train, order, delay)
 
 
 def hurst_exponent(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> float:

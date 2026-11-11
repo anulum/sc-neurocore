@@ -103,7 +103,7 @@ They stay available from a source checkout.
 
 | Metadata token | Decision | Rationale |
 | --- | --- | --- |
-| `sc_neurocore.analysis` | source-checkout research surface | Analysis tooling remains broad and optional; package promotion requires a bounded public API and dependency gate. |
+| `sc_neurocore.analysis` | source-checkout research surface | Analysis tooling remains broad and optional; package promotion requires a bounded public API and dependency gate. Its spike-train statistics core is promoted as `sc_neurocore.spike_train_statistics`, listed under Promoted Interfaces. |
 | `sc_neurocore.audio` | source-checkout research surface | Audio engines remain research-only until latency and dependency evidence justify packaging. |
 | `sc_neurocore.bio` | source-checkout research surface | Biological circuit experiments stay source-only until validation and safety boundaries are explicit. |
 | `sc_neurocore.chaos` | source-checkout research surface | Chaotic-RNG research utilities stay source-only until a packaged API boundary is selected. |
@@ -119,6 +119,16 @@ They stay available from a source checkout.
 | `sc_neurocore.swarm` | source-checkout research surface | Swarm tooling stays source-only until ownership and runtime boundaries are split. |
 | `sc_neurocore.viz` | source-checkout research surface | Visualisation remains a source-checkout feature until the plotting API and dependencies are bounded. |
 | `sc_neurocore.world_model` | source-checkout research surface | World-model experiments stay outside the base wheel until a separate package or public API is chosen. |
+
+## Promoted Interfaces
+
+These packages passed the Promotion Gate below and ship in the base wheel. The
+source-checkout package they came from re-exports them under its existing
+names; a promoted package imports nothing from that source-checkout package.
+
+| Package | Decision | Promoted from | Evidence |
+| --- | --- | --- | --- |
+| `sc_neurocore.spike_train_statistics` | core package | `sc_neurocore.analysis.spike_stats`: the `basic` and `spectral` modules, and `cv_isi`, `fano_factor` and `permutation_entropy` from `variability`. | A bounded API of nine functions; NumPy is its only dependency; `mypy --strict`; module tests in `tests/test_spike_train_statistics.py`, including agreement with the Rust `spike_stats_core` helper where it is built; `tests/test_wheel_shipped_subpackages_import.py` runs the identity monitors with `sc_neurocore.analysis` blocked, as in an installed wheel. |
 
 ## Cargo Workspace Excludes
 

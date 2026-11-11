@@ -3122,25 +3122,6 @@ float
 
 ---
 
-## Module `analysis.spike_stats.basic`
-
-### Function `spike_times(binary_train, dt)`
-Extract spike times (seconds) from a binary 0/1 array.
-
-### Function `isi(binary_train, dt)`
-Inter-spike intervals (seconds) from a binary train.
-
-### Function `firing_rate(binary_train, dt)`
-Mean firing rate (Hz).
-
-### Function `spike_count(binary_train)`
-Return the total number of spikes in a binary spike train.
-
-### Function `bin_spike_train(binary_train, bin_size)`
-Bin a binary spike train into spike counts per bin.
-
----
-
 ## Module `analysis.spike_stats.causality`
 
 ### Function `pairwise_granger_causality(source, target, bin_size, order)`
@@ -3959,15 +3940,6 @@ Detect repeated spatiotemporal spike patterns with significance testing.
 
 ---
 
-## Module `analysis.spike_stats.spectral`
-
-### Function `power_spectrum(binary_train, dt)`
-Power spectral density of a binary spike train.
-
-Returns (psd, freqs_hz).
-
----
-
 ## Module `analysis.spike_stats.statistics`
 
 ### Function `significance_bootstrap(statistic_func, train_a, train_b, n_surrogates, seed)`
@@ -4074,9 +4046,6 @@ Returns list of bin indices where significant rate changes occur.
 
 ## Module `analysis.spike_stats.variability`
 
-### Function `cv_isi(binary_train, dt)`
-Coefficient of variation of ISI. CV=1 for Poisson, <1 for regular.
-
 ### Function `cv2(binary_train, dt)`
 Local coefficient of variation CV2. Holt et al. 1996.
 
@@ -4093,9 +4062,6 @@ LV=1 for Poisson, <1 for regular, >1 for bursty.
 Revised local variation LvR. Shinomoto et al. 2009.
 
 Corrects LV for refractoriness: LvR = mean(3(1 - 4*ISI_i*ISI_{i+1}/(ISI_i+ISI_{i+1})^2)(1 + 4*R/(ISI_i+ISI_{i+1}))).
-
-### Function `fano_factor(binary_train, window_ms, dt)`
-Fano factor: variance/mean of spike counts in sliding windows.
 
 ### Function `isi_entropy(binary_train, dt, bins)`
 Shannon entropy of the ISI distribution (bits).
@@ -4114,6 +4080,10 @@ Sample entropy (SampEn). Richman & Moorman 2000.
 
 ### Function `permutation_entropy(binary_train, order, delay)`
 Bandt-Pompe permutation entropy. Bandt & Pompe 2002.
+
+Uses the Rust helper when it is built, otherwise
+:func:`sc_neurocore.spike_train_statistics.permutation_entropy`, which
+defines the result and refuses ``order`` or ``delay`` below 1.
 
 ### Function `hurst_exponent(binary_train, min_window)`
 Hurst exponent via detrended fluctuation analysis (DFA). Peng et al. 1994.
@@ -42919,6 +42889,180 @@ seed : int
   - Reset membrane voltages to the configured resting potential.
 - **voltage**()
   - Return a defensive copy of the current membrane voltages.
+
+---
+
+## Module `spike_train_statistics.basic`
+
+### Function `spike_times(binary_train, dt)`
+Return the spike times of a binary spike train, in seconds.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; a positive entry marks a spike.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+numpy.ndarray
+    Index of every spiking step multiplied by ``dt``, in increasing order.
+
+### Function `isi(binary_train, dt)`
+Return the inter-spike intervals of a binary spike train, in seconds.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; a positive entry marks a spike.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+numpy.ndarray
+    Differences between consecutive spike times; an empty ``float64``
+    array when the train holds fewer than two spikes.
+
+### Function `firing_rate(binary_train, dt)`
+Return the mean firing rate of a binary spike train, in hertz.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; each entry is counted as that many spikes.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+float
+    Sum of the train divided by its duration ``binary_train.size * dt``;
+    ``0.0`` when that duration is not positive.
+
+### Function `spike_count(binary_train)`
+Return the total number of spikes in a binary spike train.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; each entry is counted as that many spikes.
+
+Returns
+-------
+int
+    Sum of the train.
+
+### Function `bin_spike_train(binary_train, bin_size)`
+Return the spike count in each consecutive bin of ``bin_size`` steps.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; each entry is counted as that many spikes.
+bin_size : int
+    Number of time steps per bin; must be positive.
+
+Returns
+-------
+numpy.ndarray
+    One count per complete bin; steps after the last complete bin are
+    dropped. When the train is shorter than one bin, a single-element
+    array holding the count of the whole train.
+
+---
+
+## Module `spike_train_statistics.spectral`
+
+### Function `power_spectrum(binary_train, dt)`
+Return the periodogram of a binary spike train and its frequencies.
+
+The train's mean is subtracted before the real FFT, so the zero-frequency
+bin holds no constant offset.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+tuple of numpy.ndarray
+    ``(psd, freqs_hz)``: the squared FFT magnitude divided by the number of
+    samples, and the matching non-negative frequencies in hertz. Both are
+    empty when the train has fewer than two samples.
+
+---
+
+## Module `spike_train_statistics.variability`
+
+### Function `cv_isi(binary_train, dt)`
+Return the coefficient of variation of the inter-spike intervals.
+
+A Poisson train gives a value near 1 and a regular train a value below 1.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; a positive entry marks a spike.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+float
+    Standard deviation of the intervals divided by their mean; ``nan``
+    when the train has fewer than two intervals or their mean is zero.
+
+### Function `fano_factor(binary_train, window_ms, dt)`
+Return the Fano factor of the spike counts in consecutive windows.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step; each entry is counted as that many spikes.
+window_ms : float
+    Window length in milliseconds; at least one time step is used.
+dt : float
+    Time step in seconds.
+
+Returns
+-------
+float
+    Variance of the window counts divided by their mean; steps after the
+    last complete window are dropped. ``nan`` when the train is shorter
+    than one window or the mean count is zero.
+
+### Function `permutation_entropy(binary_train, order, delay)`
+Return the normalised Bandt-Pompe permutation entropy (Bandt & Pompe 2002).
+
+Each window of ``order`` samples spaced ``delay`` steps apart is reduced to
+the ranks of its samples. Tied samples are ranked by position, earlier
+first. The Shannon entropy of the rank patterns is divided by its maximum,
+``log2(order!)``.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    One entry per time step.
+order : int
+    Samples per window; must be at least 1.
+delay : int
+    Steps between the samples of a window; must be at least 1.
+
+Returns
+-------
+float
+    Entropy in ``&#91;0, 1&#93;``; ``nan`` when the train has fewer than
+    ``order * delay`` samples, and ``0.0`` when ``order`` is 1.
+
+Raises
+------
+ValueError
+    ``order`` or ``delay`` is less than 1.
 
 ---
 

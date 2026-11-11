@@ -4,28 +4,16 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Spectral analysis of spike trains
+# SC-NeuroCore — Spike-train power spectrum, re-exported from the shipped core
 
-"""Spectral analysis of spike trains."""
+"""Spike-train power spectrum, re-exported from :mod:`sc_neurocore.spike_train_statistics`.
+
+The implementation lives in the shipped package so that shipped modules can use
+it from a wheel; this source-checkout path keeps the same name.
+"""
 
 from __future__ import annotations
 
-from typing import Any
-import numpy as np
+from sc_neurocore.spike_train_statistics.spectral import power_spectrum
 
-
-def power_spectrum(
-    binary_train: np.ndarray[Any, Any], dt: float = 0.001
-) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-    """Power spectral density of a binary spike train.
-
-    Returns (psd, freqs_hz).
-    """
-    n = binary_train.size
-    if n < 2:
-        return np.array([]), np.array([])
-    x = binary_train.astype(np.float64) - binary_train.mean()
-    fft_vals = np.fft.rfft(x)
-    psd = np.abs(fft_vals) ** 2 / n
-    freqs = np.fft.rfftfreq(n, d=dt)
-    return psd, freqs
+__all__ = ["power_spectrum"]

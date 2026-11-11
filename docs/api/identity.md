@@ -16,6 +16,16 @@ Three-population network with STDP-driven small-world connectivity:
 
 Six projections: E->E (small-world STDP), E->I, I->E, E->M, M->E, I->I.
 
+## Installed wheel and source checkout
+
+`IdentitySubstrate.health_check` and the `DirectorController` methods measure
+spike trains with
+[`sc_neurocore.spike_train_statistics`](spike_train_statistics.md), which ships
+in the wheel, so they work from an installed copy. `IdentitySubstrate.extract_state`
+and the `StateDecoder` methods also use PCA and functional connectivity from
+`sc_neurocore.analysis`, which ships only in a source checkout; from an installed
+wheel they raise `ModuleNotFoundError` naming the method.
+
 ## Classes
 
 ### IdentitySubstrate

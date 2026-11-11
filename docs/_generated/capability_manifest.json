@@ -753,6 +753,12 @@
         "tier": "core"
       },
       {
+        "domain": "Analysis, explainability & profiling",
+        "name": "spike_train_statistics",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
         "domain": "Neuromorphic substrates & physical I/O",
         "name": "spintronic",
         "status": "library-only",
@@ -977,12 +983,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 671,
+    "public_documentation_pages": 672,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5626
+    "test_files": 5628
   },
   "documentation": {
     "public_pages": [
@@ -1344,6 +1350,7 @@
       "docs/api/spike_norm.md",
       "docs/api/spike_ode.md",
       "docs/api/spike_profiler.md",
+      "docs/api/spike_train_statistics.md",
       "docs/api/spikformer.md",
       "docs/api/spintronic.md",
       "docs/api/stochastic_doctor.md",
@@ -5652,6 +5659,7 @@
       "tests/test_ibm_verification_circuits_recombination.py",
       "tests/test_ibm_verification_circuits_thermal_average.py",
       "tests/test_ibm_verification_circuits_two_posner_transport.py",
+      "tests/test_identity_and_variability_remaining_branches.py",
       "tests/test_identity_checkpoint_contracts.py",
       "tests/test_identity_decoder_contracts.py",
       "tests/test_identity_director_correct.py",
@@ -7862,6 +7870,7 @@
       "tests/test_spike_stats_waveform_repolarization_slope.py",
       "tests/test_spike_stats_waveform_waveform_amplitude.py",
       "tests/test_spike_stats_waveform_waveform_width.py",
+      "tests/test_spike_train_statistics.py",
       "tests/test_spike_train_stats_bin_spike_train.py",
       "tests/test_spike_train_stats_burst_detection.py",
       "tests/test_spike_train_stats_cross_correlation.py",

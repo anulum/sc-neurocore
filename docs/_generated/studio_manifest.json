@@ -752,6 +752,12 @@
         "tier": "core"
       },
       {
+        "domain": "Analysis, explainability & profiling",
+        "name": "spike_train_statistics",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
         "domain": "Neuromorphic substrates & physical I/O",
         "name": "spintronic",
         "status": "library-only",

@@ -35,6 +35,11 @@ print(f"Fano factor: {fano_factor(train):.2f}")
 
 Spike extraction, ISI computation, rate, count, binning.
 
+The five functions below, `power_spectrum`, and `cv_isi`, `fano_factor` and
+`permutation_entropy` from the variability module are defined by
+[`sc_neurocore.spike_train_statistics`](spike_train_statistics.md), which ships
+in the wheel; this package re-exports them under the names shown here.
+
 | Function | Description |
 |----------|-------------|
 | `spike_times(train, dt)` | Extract spike times (seconds) from a binary 0/1 array |

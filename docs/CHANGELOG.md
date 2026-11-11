@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Ship the core spike-train statistics in the wheel as `sc_neurocore.spike_train_statistics`:
+  spike times, inter-spike intervals, rate, count, binning, power spectrum, ISI
+  coefficient of variation, Fano factor and permutation entropy. NumPy is its only
+  dependency and it imports nothing from `sc_neurocore.analysis`, which re-exports these
+  nine functions under its existing names. The identity health check and director
+  monitor now run from an installed wheel; state extraction and the decoder still need
+  a source checkout for PCA and functional connectivity, and say so. Permutation
+  entropy is computed with NumPy array operations instead of a per-window Python loop;
+  ties are ranked by position, as in the Rust helper. An order or delay
+  below 1 now raises `ValueError`.
+
 - Bind the README's MNIST figure for the surrogate-gradient example to its record. The row
   gave ~95% for FastSigmoid, SuperSpike and ATan alike. The example uses the default ATan
   surrogate, and the committed 10-epoch benchmark of the same network with ATan reached
