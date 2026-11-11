@@ -1412,6 +1412,16 @@ jobs:
         with:
           python-version: "3.11.18"
 
+      - name: Install the shard's locked test tools into the unsupported interpreter
+        if: matrix.coverage && matrix.shard-index == 5
+        # The admission test traces the refusal inside this interpreter with
+        # coverage, so it needs the same hash-locked coverage as the shard.
+        env:
+          LAPICQUE_UNSUPPORTED_PYTHON: ${{ steps.lapicque_unsupported_python.outputs.python-path }}
+        run: >-
+          "$LAPICQUE_UNSUPPORTED_PYTHON" -m pip install
+          --require-hashes --no-deps -r "$RUNNER_TEMP/test-tool-pins.txt"
+
       - name: Restore the qualified Lapicque capture interpreter
         if: matrix.coverage && matrix.shard-index == 5
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0

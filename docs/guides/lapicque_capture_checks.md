@@ -12,8 +12,10 @@ The capture profile exercises the original five-language benchmark through the
 [capture command](lapicque_timing_samples.md) and the
 [sample validator](lapicque_sample_validation.md). It requires Linux, CPython
 3.12, all five built backends and a separately installed unsupported interpreter
-for the actual runtime-refusal test. The CI profile selects CPython 3.12.16 and
-uses CPython 3.11.18 for that refusal.
+for the actual runtime-refusal test. The refusal is traced with coverage inside
+that interpreter, so it needs the same hash-locked coverage as the primary one.
+The CI profile selects CPython 3.12.16, uses CPython 3.11.18 for that refusal,
+and installs the shard's test tool pins from `requirements/ci-dev.txt` into it.
 
 From the checkout, supply a new output directory and the existing interpreter:
 
