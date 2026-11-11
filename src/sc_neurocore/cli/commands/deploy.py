@@ -406,8 +406,8 @@ def run_auto_synthesis(
     return True
 
 
-#: Wall-clock limits, in seconds, for the open-source flow steps. They stay fixed
-#: here until host-derived limits replace them (TODO SCN-HOST-DERIVED-TEST-DEADLINES).
+#: Wall-clock limits, in seconds, for the open-source flow steps. They are fixed
+#: values; limits derived from the speed of the host are planned to replace them.
 SYNTHESIS_TIMEOUT_S = 300
 PLACE_AND_ROUTE_TIMEOUT_S = 300
 PACK_TIMEOUT_S = 60
