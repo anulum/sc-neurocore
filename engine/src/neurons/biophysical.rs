@@ -28,6 +28,7 @@ mod mihalas_niebur;
 mod plant_r15;
 mod pospischil;
 mod prescott;
+mod rate_functions;
 mod reexports;
 mod sc_four_state_glif;
 mod sc_scaled_reset_adaptive_if;
@@ -35,25 +36,5 @@ mod sc_six_state_thalamocortical;
 mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
+pub use rate_functions::safe_rate;
 pub use reexports::*;
-// ── Helper: safe alpha/beta kinetics avoiding division-by-zero ──
-
-/// Hodgkin-Huxley-type rate `number_factor * d / (1 - exp(-d / denom_scale))` with
-/// `d = v + v_offset`.
-///
-/// The expression is 0/0 at `d = 0`; within `1e-7` of it `fallback` is returned instead.
-/// Every caller in the engine passes the limit `number_factor * denom_scale` there.
-pub fn safe_rate(
-    number_factor: f64,
-    v_offset: f64,
-    v: f64,
-    denom_scale: f64,
-    fallback: f64,
-) -> f64 {
-    let d = v + v_offset;
-    if d.abs() < 1e-7 {
-        fallback
-    } else {
-        number_factor * d / (1.0 - (-d / denom_scale).exp())
-    }
-}
