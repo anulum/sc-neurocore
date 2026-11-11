@@ -253,7 +253,13 @@ jobs:
           sudo apt-get install -y -qq build-essential libegl1 libgl1 libnss3 libasound2t64 \
             libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 \
             libxcomposite1 libxdamage1 libxrandr2 libxtst6 libdbus-1-3
-          python -m pip install --require-hashes --only-binary :all: -r requirements/studio-assembly-tools-linux-x86_64.txt
+          # The cohort runs from a separate control virtual environment: the probe must
+          # refuse a controller whose base prefix is external, so the controller must not
+          # be the base interpreter itself.
+          python -m venv "$RUNNER_TEMP/studio-assembly-control"
+          "$RUNNER_TEMP/studio-assembly-control/bin/python" -m pip install --require-hashes \
+            --only-binary :all: -r requirements/studio-assembly-tools-linux-x86_64.txt
+          echo "$RUNNER_TEMP/studio-assembly-control/bin" >> "$GITHUB_PATH"
       - name: Check assembler source and dedicated test quality
         run: |
           set -euo pipefail
