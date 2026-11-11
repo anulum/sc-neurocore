@@ -8,33 +8,57 @@
 
 //! Plant R15 Aplysia parabolic-burster dynamics.
 
+#![deny(missing_docs)]
+
 use super::safe_rate;
 
 /// Plant R15 — Aplysia parabolic burster. Plant & Kim 1976.
 #[derive(Clone, Debug)]
 pub struct PlantR15Neuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m: f64,
+    /// Sodium inactivation gate.
     pub h: f64,
+    /// Potassium activation gate.
     pub n: f64,
+    /// Intracellular calcium variable; activates the calcium-activated potassium current
+    /// as `ca / (0.5 + ca)` and never falls below zero.
     pub ca: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Calcium influx coefficient converting calcium current into the calcium variable (cm^2/(uA*ms)).
     pub k_ca: f64,
+    /// Calcium removal time constant (ms).
     pub tau_ca: f64,
+    /// Forward-Euler integration step (ms); each [`PlantR15Neuron::step`] call runs five
+    /// of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl PlantR15Neuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -58,6 +82,11 @@ impl PlantR15Neuron {
             v_threshold: -10.0,
         }
     }
+    /// Advance the neuron by five forward-Euler steps of `dt` with the injected current `current`.
+    ///
+    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or
+    /// above it, else 0. The input and the state are not validated, so a non-finite
+    /// current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         for _ in 0..5 {
@@ -86,6 +115,8 @@ impl PlantR15Neuron {
             0
         }
     }
+    /// Return the membrane potential, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.m = 0.05;

@@ -8,29 +8,50 @@
 
 //! Count-neutral custody for the historical four-state RK4 recurrence.
 
+#![deny(missing_docs)]
+
 /// Historical SC-NeuroCore four-state adaptive-threshold recurrence.
 #[derive(Clone, Debug)]
 pub struct SCFourStateGLIFNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Adaptive threshold (mV); relaxes towards `theta_inf` plus `a_theta` times the
+    /// depolarisation above `v_rest`.
     pub theta: f64,
+    /// Steady adaptive-threshold target (mV).
     pub theta_inf: f64,
+    /// First after-spike current (mV); decays with `tau_asc1`.
     pub i_asc1: f64,
+    /// Second after-spike current (mV); decays with `tau_asc2`.
     pub i_asc2: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Hard-reset membrane potential (mV).
     pub v_reset: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Threshold adaptation time constant (ms).
     pub tau_theta: f64,
+    /// First after-spike-current time constant (ms).
     pub tau_asc1: f64,
+    /// Second after-spike-current time constant (ms).
     pub tau_asc2: f64,
+    /// Project voltage-threshold coupling (dimensionless).
     pub a_theta: f64,
+    /// Project threshold reset increment (mV).
     pub delta_theta: f64,
+    /// First project after-spike-current increment (mV).
     pub r_asc1: f64,
+    /// Second project after-spike-current increment (mV).
     pub r_asc2: f64,
+    /// Normalized current-to-voltage gain (dimensionless).
     pub resistance: f64,
+    /// Runge-Kutta step (ms); one per step call.
     pub dt: f64,
 }
 
 impl SCFourStateGLIFNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -140,16 +161,26 @@ impl SCFourStateGLIFNeuron {
         next.valid().then_some((next, event))
     }
 
+    /// Advance one classical Runge-Kutta step of `dt` and return 1 on an event, else 0.
+    ///
+    /// An event is `v >= theta` after the step: the potential is reset to `v_reset`, `theta`
+    /// rises by `delta_theta`, and `r_asc1` and `r_asc2` are added to the after-spike
+    /// currents. An invalid parameter, state or current, or a non-finite or invalid result,
+    /// returns `None` and leaves the neuron unchanged.
     pub fn try_step(&mut self, current: f64) -> Option<i32> {
         let (candidate, event) = self.candidate(current)?;
         *self = candidate;
         Some(event)
     }
 
+    /// Advance like [`SCFourStateGLIFNeuron::try_step`], returning 0 where it returns `None`.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Run `n_steps` steps at the constant current `current` and return the membrane
+    /// potential after each step and the event count. If any step is invalid, `None` is
+    /// returned and the neuron is left unchanged.
     pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
         let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
@@ -162,6 +193,8 @@ impl SCFourStateGLIFNeuron {
         Some((trace, events))
     }
 
+    /// Return the membrane potential to `v_rest`, the threshold to `theta_inf` and the
+    /// after-spike currents to zero; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.theta = self.theta_inf;

@@ -8,42 +8,78 @@
 
 //! Source cortical-excitatory waking recurrence with optional Ih and IT.
 
+#![deny(missing_docs)]
+
 #[derive(Clone, Debug)]
 /// Hill-Tononi cortical-waking state and complete scalar-cell configuration.
 pub struct HillTononiNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Dynamic spike threshold (mV).
     pub theta: f64,
+    /// Depolarisation measure controlling I_DK (dimensionless).
     pub d_k: f64,
+    /// I_h activation gate (dimensionless).
     pub m_h: f64,
+    /// I_T activation gate (dimensionless).
     pub m_t: f64,
+    /// I_T inactivation gate (dimensionless).
     pub h_t: f64,
+    /// Remaining source potassium-pulse interval (ms).
     pub spike_timer: f64,
+    /// Normalised sodium leak conductance (dimensionless).
     pub g_na_l: f64,
+    /// Normalised potassium leak conductance (dimensionless).
     pub g_k_l: f64,
+    /// Normalised persistent-sodium conductance (dimensionless).
     pub g_na_p: f64,
+    /// Normalised depolarisation-dependent potassium conductance (dimensionless).
     pub g_dk: f64,
+    /// Normalised hyperpolarisation-activated conductance; disabled for the default cortical waking cell (dimensionless).
     pub g_h: f64,
+    /// Normalised low-threshold calcium conductance; disabled for the default cortical waking cell (dimensionless).
     pub g_t: f64,
+    /// Sodium reversal and spike-clamp potential (mV).
     pub e_na: f64,
+    /// Potassium leak reversal potential (mV).
     pub e_k: f64,
+    /// Persistent-sodium reversal potential (mV).
     pub e_na_p: f64,
+    /// Depolarisation-dependent potassium reversal potential (mV).
     pub e_dk: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_h: f64,
+    /// Low-threshold calcium reversal potential (mV).
     pub e_t: f64,
+    /// Persistent-sodium activation exponent (dimensionless).
     pub n_na_p: f64,
+    /// Low-threshold calcium activation exponent (dimensionless).
     pub n_t: f64,
+    /// Membrane integration time constant (ms).
     pub tau_m: f64,
+    /// Equilibrium dynamic threshold (mV).
     pub theta_eq: f64,
+    /// Dynamic-threshold relaxation time constant (ms).
     pub tau_theta: f64,
+    /// Normalised post-spike potassium-pulse conductance (dimensionless).
     pub g_spike: f64,
+    /// Duration of the post-spike potassium pulse (ms).
     pub t_spike: f64,
+    /// Post-spike repolarisation time constant (ms).
     pub tau_spike: f64,
+    /// Depolarisation-measure relaxation time constant (ms).
     pub tau_d: f64,
+    /// Peak voltage-dependent influx into the depolarisation measure (ms^-1).
     pub d_influx_peak: f64,
+    /// Half-activation voltage of depolarisation influx (mV).
     pub d_threshold: f64,
+    /// Slope of depolarisation influx activation (mV).
     pub d_slope: f64,
+    /// Resting depolarisation measure (dimensionless).
     pub d_eq: f64,
+    /// Half-activation value of the depolarisation-dependent potassium current (dimensionless).
     pub d_half: f64,
+    /// Runge-Kutta step (ms); one per step call.
     pub dt: f64,
 }
 

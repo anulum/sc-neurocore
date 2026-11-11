@@ -8,25 +8,42 @@
 
 //! Golomb Kv3-enabled fast-spiking interneuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Golomb fast-spiking interneuron with Kv3. Golomb et al. 2007.
 #[derive(Clone, Debug)]
 pub struct GolombFSNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n: f64,
+    /// Kv3 potassium activation gate.
     pub p: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal Kv3-type potassium conductance (mS/cm^2).
     pub g_kv3: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Runge-Kutta integration step (ms); each [`GolombFSNeuron::step`] call runs ten of
+    /// them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl GolombFSNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -100,6 +117,12 @@ impl GolombFSNeuron {
         out
     }
 
+    /// Advance the neuron by ten classical Runge-Kutta steps of `dt` with the injected
+    /// current `current`, held constant across them.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. The input and the state
+    /// are not validated, so a non-finite current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let mut s = [self.v, self.h, self.n, self.p];
@@ -116,6 +139,8 @@ impl GolombFSNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.9;

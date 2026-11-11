@@ -8,29 +8,50 @@
 
 //! Connor-Stevens A-type potassium-current neuron dynamics.
 
+#![deny(missing_docs)]
+
 /// Connor-Stevens — A-type K current for delay tuning. Connor et al. 1977.
 #[derive(Clone, Debug)]
 pub struct ConnorStevensNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m: f64,
+    /// Sodium inactivation gate.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n: f64,
+    /// A-type potassium activation gate.
     pub a: f64,
+    /// A-type potassium inactivation gate.
     pub b: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal transient A-type potassium conductance (mS/cm^2).
     pub g_a: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// A-type current reversal potential (mV).
     pub e_a: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Runge-Kutta integration step (ms); see [`ConnorStevensNeuron::step`] for how many
+    /// run per call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl ConnorStevensNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -68.0,
@@ -198,6 +219,15 @@ impl ConnorStevensNeuron {
         Some(state)
     }
 
+    /// Advance the neuron with the injected current `current`.
+    ///
+    /// Runs `floor(1 / max(dt, 0.001))` classical Runge-Kutta steps of length `dt`, which
+    /// is 1 ms of model time when `dt` is at least 0.001 ms and divides 1 ms. Returns 1
+    /// when the membrane potential starts below `v_threshold` and ends at or above it,
+    /// else 0. A non-finite current or parameter, a state outside the admissible ranges
+    /// (membrane potential from -250 to 250 mV, `m`, `h`, `n` and `b` from -0.05 to 1.05,
+    /// `a` from -0.05 to 1.5), or a rate that overflows returns 0 and leaves the neuron
+    /// unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let Some((v, m, h, n, a, b)) = self.cs_rk4_candidate(current) else {
@@ -215,6 +245,8 @@ impl ConnorStevensNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -68.0;
         self.m = 0.01;

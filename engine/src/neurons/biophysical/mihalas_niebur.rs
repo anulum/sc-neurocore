@@ -8,6 +8,8 @@
 
 //! Mihalaş-Niebur equations 2.1–2.2 with capacitance-normalised currents.
 
+#![deny(missing_docs)]
+
 /// Four-state generalised integrate-and-fire neuron from Mihalaş and Niebur (2009).
 ///
 /// Rates are per millisecond, voltages are volts, and currents are volts per
@@ -16,23 +18,43 @@
 /// reset are otherwise unchanged.
 #[derive(Clone, Debug)]
 pub struct MihalasNieburNeuron {
+    /// Membrane potential (V).
     pub v: f64,
+    /// Adaptive threshold (V); a step that ends with `v >= theta` is an event.
     pub theta: f64,
+    /// First spike-induced current, capacitance-normalised (V/ms); decays at
+    /// `current_decay_rate_1`.
     pub i1: f64,
+    /// Second spike-induced current, capacitance-normalised (V/ms); decays at
+    /// `current_decay_rate_2`.
     pub i2: f64,
+    /// Leak reversal potential E_L (V).
     pub v_rest: f64,
+    /// Published event-reset voltage V_r (V).
     pub v_reset: f64,
+    /// Published lower threshold reset Theta_r (V).
     pub theta_reset: f64,
+    /// Stationary threshold Theta_inf (V).
     pub theta_inf: f64,
+    /// Capacitance-normalised leak rate G/C (1/ms).
     pub leak_rate: f64,
+    /// Voltage-to-threshold coupling a (1/ms).
     pub threshold_voltage_coupling: f64,
+    /// Threshold relaxation rate b (1/ms).
     pub threshold_decay_rate: f64,
+    /// First spike-induced current decay rate k_1 (1/ms).
     pub current_decay_rate_1: f64,
+    /// Second spike-induced current decay rate k_2 (1/ms).
     pub current_decay_rate_2: f64,
+    /// First event-map retention R_1 (dimensionless).
     pub current_retention_1: f64,
+    /// Second event-map retention R_2 (dimensionless).
     pub current_retention_2: f64,
+    /// Capacitance-normalised first event-map jump A_1/C (V/ms).
     pub current_jump_1: f64,
+    /// Capacitance-normalised second event-map jump A_2/C (V/ms).
     pub current_jump_2: f64,
+    /// Runge-Kutta step (ms); one per [`MihalasNieburNeuron::step`] call.
     pub dt: f64,
 }
 

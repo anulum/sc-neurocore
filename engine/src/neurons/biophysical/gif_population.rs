@@ -8,28 +8,45 @@
 
 //! Seeded escape-rate generalized integrate-and-fire population dynamics.
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// GIF population — escape-rate generalized IF. Mensi et al. 2012.
 #[derive(Clone, Debug)]
 pub struct GIFPopulationNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Threshold of the exponential escape-rate hazard (mV); spikes do not move it.
     pub theta: f64,
+    /// Spike-triggered adaptation current (mV), which lowers the membrane potential and
+    /// decays with `tau_eta`.
     pub eta: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Time constant of the spike-triggered adaptation kernel (ms).
     pub tau_eta: f64,
+    /// Sharpness of the exponential escape-rate hazard (mV).
     pub delta_v: f64,
+    /// Escape (firing) rate at threshold (1/ms).
     pub lambda_0: f64,
+    /// Spike-triggered adaptation increment added to eta at each spike (mV).
     pub eta_increment: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Reset potential (mV).
     pub v_reset: f64,
+    /// Integration time step (ms).
     pub dt: f64,
+    /// Random seed for the stochastic spike-generation process (dimensionless).
     pub seed: u64,
     rng: Xoshiro256PlusPlus,
 }
 
 impl GIFPopulationNeuron {
+    /// Create a neuron with the default parameters and initial state of its model
+    /// descriptor, and a spike generator seeded with `seed`.
     pub fn new(seed: u64) -> Self {
         Self {
             v: -65.0,
@@ -100,6 +117,15 @@ impl GIFPopulationNeuron {
         (1.0 - (-hazard * self.dt).exp()).clamp(0.0, 1.0)
     }
 
+    /// Advance the neuron by `dt` with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `current` is in mV: the subthreshold membrane potential relaxes towards
+    /// `v_rest + current`. The membrane potential and `eta` are advanced exactly over `dt`;
+    /// a spike is then drawn with probability
+    /// `1 - exp(-lambda_0 * exp((v - theta) / delta_v) * dt)`, the inner exponent clamped
+    /// between -745 and 20. A spike resets the potential to `v_reset` and adds
+    /// `eta_increment` to `eta`. A non-finite current, an invalid parameter or a
+    /// non-finite result returns 0 and leaves the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_runtime() {
             return 0;
@@ -118,6 +144,8 @@ impl GIFPopulationNeuron {
         }
     }
 
+    /// Return the membrane potential to `v_rest`, clear `eta` and reseed the generator from
+    /// `seed`, so the spike sequence repeats; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.eta = 0.0;

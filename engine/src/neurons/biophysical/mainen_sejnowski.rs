@@ -8,24 +8,43 @@
 
 //! Mainen-Sejnowski two-compartment soma and axon dynamics.
 
+#![deny(missing_docs)]
+
 /// Mainen-Sejnowski — two-compartment (soma + axon). Mainen & Sejnowski 1996.
 #[derive(Clone, Debug)]
 pub struct MainenSejnowskiNeuron {
+    /// Somatic membrane potential (mV); the soma has only a leak current.
     pub vs: f64,
+    /// Axonal membrane potential (mV); the axon carries the sodium and potassium currents.
     pub va: f64,
+    /// Sodium activation gate, driven by the axonal potential.
     pub m: f64,
+    /// Sodium inactivation gate, driven by the axonal potential.
     pub h: f64,
+    /// Potassium activation gate, driven by the axonal potential; the potassium current is
+    /// linear in it.
     pub n: f64,
+    /// Coupling conductance between the somatic and axonal compartments (mS/cm^2).
     pub kappa: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Somatic membrane capacitance (uF/cm^2).
     pub c_s: f64,
+    /// Axonal membrane capacitance (uF/cm^2).
     pub c_a: f64,
+    /// Forward-Euler integration step (ms), at most 0.1; each step call runs 20 of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
     /// Legacy engine configuration: update the soma voltage first and let
     /// the axon derivative consume the already-updated soma value
@@ -35,6 +54,8 @@ pub struct MainenSejnowskiNeuron {
 }
 
 impl MainenSejnowskiNeuron {
+    /// Create a neuron with the default parameters and initial state of its model
+    /// descriptor, in the canonical ordering of the two compartments.
     pub fn new() -> Self {
         Self {
             vs: -65.0,

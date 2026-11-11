@@ -49,7 +49,7 @@ init = 0.3
 [parameters.kappa]
 default = 10.0
 unit = "mS/cm^2"
-meaning = "coupling conductance between the somatic and dendritic compartments"
+meaning = "coupling conductance between the somatic and axonal compartments"
 range = [
     0.0,
     100.0,
@@ -121,7 +121,7 @@ range = [
 [parameters.c_a]
 default = 0.1
 unit = "uF/cm^2"
-meaning = "dendritic membrane capacitance"
+meaning = "axonal membrane capacitance"
 range = [
     0.05,
     1.0,

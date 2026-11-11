@@ -8,27 +8,44 @@
 
 //! Wang-Buzsaki fast-spiking interneuron dynamics.
 
+#![deny(missing_docs)]
+
 use super::safe_rate;
 
 /// Wang-Buzsaki — fast-spiking GABAergic interneuron. Wang & Buzsáki 1996.
 #[derive(Clone, Debug)]
 pub struct WangBuzsakiNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h: f64,
+    /// Potassium activation gate.
     pub n: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Forward-Euler integration step (ms); see [`WangBuzsakiNeuron::step`] for how many
+    /// run per call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl WangBuzsakiNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -46,6 +63,13 @@ impl WangBuzsakiNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron with the injected current `current`.
+    ///
+    /// Runs `floor(0.5 / max(dt, 0.001))` forward-Euler steps of length `dt`, which is
+    /// 0.5 ms of model time when `dt` is at least 0.001 ms and divides 0.5 ms. Returns 1
+    /// when the membrane potential starts below `v_threshold` and ends at or above it,
+    /// else 0. The input and the state are not validated, so a non-finite current
+    /// propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let n_sub = (0.5 / self.dt.max(0.001)) as usize;
@@ -70,6 +94,8 @@ impl WangBuzsakiNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.8;

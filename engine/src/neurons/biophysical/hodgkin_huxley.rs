@@ -8,27 +8,44 @@
 
 //! Hodgkin-Huxley 1952 conductance-based neuron dynamics.
 
+#![deny(missing_docs)]
+
 use super::safe_rate;
 
 /// Hodgkin-Huxley 1952 — 4-ODE ion channel model.
 #[derive(Clone, Debug)]
 pub struct HodgkinHuxleyNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m: f64,
+    /// Sodium inactivation gate.
     pub h: f64,
+    /// Potassium activation gate.
     pub n: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Forward-Euler integration step (ms); each [`HodgkinHuxleyNeuron::step`] call runs
+    /// `floor(1 / dt)` of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl HodgkinHuxleyNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -46,6 +63,12 @@ impl HodgkinHuxleyNeuron {
             v_threshold: 0.0,
         }
     }
+    /// Advance the neuron by 1 ms of model time with the injected current `current`.
+    ///
+    /// Runs `floor(1 / dt)` forward-Euler steps of length `dt` (1 ms when `dt` divides
+    /// 1 ms). Returns 1 when the membrane potential starts below `v_threshold` and ends at
+    /// or above it, else 0. The input and the state are not validated, so a non-finite
+    /// current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let steps = (1.0 / self.dt) as usize;
@@ -70,6 +93,8 @@ impl HodgkinHuxleyNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.m = 0.05;

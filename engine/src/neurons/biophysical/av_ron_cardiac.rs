@@ -8,26 +8,43 @@
 
 //! Av-Ron cardiac-ganglion Type III burster dynamics.
 
+#![deny(missing_docs)]
+
 /// Av-Ron cardiac ganglion — Type III burster. Av-Ron et al. 1991.
 #[derive(Clone, Debug)]
 pub struct AvRonCardiacNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n: f64,
+    /// Activation gate of the slow inward current.
     pub s: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Slow inward current conductance (mS/cm^2).
     pub g_s: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Slow inward current reversal potential (mV).
     pub e_s: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Runge-Kutta step (ms); one per [`AvRonCardiacNeuron::step`] call.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
 }
 
 impl AvRonCardiacNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -160,6 +177,13 @@ impl AvRonCardiacNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. A non-finite current,
+    /// an invalid parameter or state, or a stage or result with a non-finite value or a
+    /// gate outside 0 to 1 returns 0 and leaves the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_runtime() {
             return 0;
@@ -179,6 +203,8 @@ impl AvRonCardiacNeuron {
         }
     }
 
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -60.0;
         self.h = 0.6;

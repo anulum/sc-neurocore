@@ -8,32 +8,60 @@
 
 //! Five-state GLIF5 dynamics from Teeter et al. (2018), equations 1–8.
 
+#![deny(missing_docs)]
+
 /// Teeter GLIF5 membrane, threshold, after-spike-current, and reset state.
 #[derive(Clone, Debug)]
 pub struct GLIFNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Spike-induced threshold component (mV); decays at `b_spike` and rises by
+    /// `delta_theta_spike` at each spike.
     pub theta_spike: f64,
+    /// First after-spike current (pA); decays at `k_asc1`.
     pub i_asc1: f64,
+    /// Second after-spike current (pA); decays at `k_asc2`.
     pub i_asc2: f64,
+    /// Voltage-dependent threshold component (mV); driven through `a_voltage` and decays at
+    /// `b_voltage`.
     pub theta_voltage: f64,
+    /// Time left in the refractory cut (ms); while positive a step only counts it down.
     pub refractory_remaining: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance C (pF).
     pub capacitance: f64,
+    /// Membrane resistance R (GOhm).
     pub resistance: f64,
+    /// Instantaneous threshold at rest (mV).
     pub theta_inf: f64,
+    /// Spike-threshold decay rate (1/ms).
     pub b_spike: f64,
+    /// Voltage-threshold decay rate (1/ms).
     pub b_voltage: f64,
+    /// Voltage-threshold coupling coefficient (1/ms).
     pub a_voltage: f64,
+    /// First after-spike-current decay rate (1/ms).
     pub k_asc1: f64,
+    /// Second after-spike-current decay rate (1/ms).
     pub k_asc2: f64,
+    /// Affine voltage reset slope (dimensionless).
     pub f_v: f64,
+    /// Affine voltage reset offset (mV).
     pub delta_v: f64,
+    /// Spike-threshold reset increment (mV).
     pub delta_theta_spike: f64,
+    /// First after-spike-current reset fraction (dimensionless).
     pub f_asc1: f64,
+    /// Second after-spike-current reset fraction (dimensionless).
     pub f_asc2: f64,
+    /// First after-spike-current reset increment (pA).
     pub delta_i_asc1: f64,
+    /// Second after-spike-current reset increment (pA).
     pub delta_i_asc2: f64,
+    /// Absolute refractory cut duration (ms).
     pub refractory_period: f64,
+    /// Exact-flow interval (ms) advanced by each step.
     pub dt: f64,
 }
 

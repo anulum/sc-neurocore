@@ -8,35 +8,59 @@
 
 //! De Schutter-Bower Purkinje-cell conductance dynamics.
 
+#![deny(missing_docs)]
+
 /// De Schutter-Bower Purkinje cell — Ca-dependent K. De Schutter & Bower 1994.
 ///
 /// The compact seven-state point model uses candidate-first RK4 with five
 /// internal substeps over `(v, h_na, n_k, m_cap, h_cap, q_kca, ca)`.
 #[derive(Clone, Debug)]
 pub struct DeSchutterPurkinjeNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h_na: f64,
+    /// Potassium activation gate.
     pub n_k: f64,
+    /// P-type calcium activation gate; relaxes with a 0.3 ms time constant.
     pub m_cap: f64,
+    /// P-type calcium inactivation gate; relaxes with a 45 ms time constant.
     pub h_cap: f64,
+    /// Calcium-activated potassium activation; relaxes at 1/ms towards `ca / (ca + 0.0002)`.
     pub q_kca: f64,
+    /// Intracellular calcium concentration; never negative.
     pub ca: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal P-type calcium conductance (mS/cm^2).
     pub g_cap: f64,
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Calcium efflux (removal) rate (1/ms).
     pub ca_decay: f64,
+    /// Calcium influx coefficient converting calcium current into concentration change (cm^2/(uA*ms)).
     pub f_ca: f64,
+    /// Runge-Kutta integration step (ms); each [`DeSchutterPurkinjeNeuron::step`] call
+    /// runs five of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl DeSchutterPurkinjeNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -68.0,
@@ -148,6 +172,13 @@ impl DeSchutterPurkinjeNeuron {
         next[6] = next[6].max(0.0);
         next
     }
+    /// Advance the neuron by five classical Runge-Kutta steps of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. A non-finite current,
+    /// an invalid parameter or state, or a non-finite sub-step result returns 0 and leaves
+    /// the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid() {
             return 0;
@@ -175,6 +206,8 @@ impl DeSchutterPurkinjeNeuron {
             0
         }
     }
+    /// Return the membrane potential, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -68.0;
         self.h_na = 0.8;

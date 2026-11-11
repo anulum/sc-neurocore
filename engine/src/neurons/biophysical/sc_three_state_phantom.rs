@@ -11,33 +11,59 @@
 /// SC three-state phantom burster — dual slow K for phantom bursting. retained project recurrence.
 #[derive(Clone, Debug)]
 pub struct SCThreeStatePhantomBurster {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// First slow potassium gate; relaxes with `tau_s1`.
     pub s1: f64,
+    /// Second slow potassium gate; relaxes with `tau_s2`.
     pub s2: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal instantaneous potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal first slow potassium conductance (mS/cm^2).
     pub g_s1: f64,
+    /// Maximal second slow potassium conductance (mS/cm^2).
     pub g_s2: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Calcium activation midpoint (mV).
     pub v_m: f64,
+    /// Calcium activation slope (mV).
     pub s_m: f64,
+    /// Instantaneous potassium activation midpoint (mV).
     pub v_n: f64,
+    /// Instantaneous potassium activation slope (mV).
     pub s_n: f64,
+    /// First slow-gate activation midpoint (mV).
     pub v_s1: f64,
+    /// First slow-gate activation slope (mV).
     pub s_s1: f64,
+    /// Second slow-gate activation midpoint (mV).
     pub v_s2: f64,
+    /// Second slow-gate activation slope (mV).
     pub s_s2: f64,
+    /// First slow-gate time constant (ms).
     pub tau_s1: f64,
+    /// Second slow-gate time constant (ms).
     pub tau_s2: f64,
+    /// Forward-Euler integration step (ms); one step per
+    /// [`SCThreeStatePhantomBurster::step`] call.
     pub dt: f64,
+    /// Sampled upward-crossing threshold (mV).
     pub v_threshold: f64,
 }
 
 impl SCThreeStatePhantomBurster {
+    /// Create a burster with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -66,6 +92,12 @@ impl SCThreeStatePhantomBurster {
             v_threshold: -20.0,
         }
     }
+    /// Advance the burster by one forward-Euler step of `dt` with the injected current `current`.
+    ///
+    /// The calcium and the fast potassium activations are taken at their steady states.
+    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or
+    /// above it, else 0. The input and the state are not validated, so a non-finite
+    /// current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let m_inf = 1.0 / (1.0 + (-(self.v - self.v_m) / self.s_m).exp());
@@ -86,6 +118,8 @@ impl SCThreeStatePhantomBurster {
             0
         }
     }
+    /// Return the membrane potential and the slow gates to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.s1 = 0.1;

@@ -8,29 +8,49 @@
 
 //! Count-neutral custody for the historical scaled-reset adaptive IF recurrence.
 
+#![deny(missing_docs)]
+
 /// Historical SC-NeuroCore four-state adaptive-threshold recurrence.
 #[derive(Clone, Debug)]
 pub struct SCScaledResetAdaptiveIFNeuron {
+    /// Normalised membrane potential (dimensionless).
     pub v: f64,
+    /// Adaptive threshold (dimensionless); a step that ends with `v >= theta` is an event.
     pub theta: f64,
+    /// First spike-induced current (dimensionless); decays with `tau_1`.
     pub i1: f64,
+    /// Second spike-induced current (dimensionless); decays with `tau_2`.
     pub i2: f64,
+    /// Normalised resting potential (dimensionless).
     pub v_rest: f64,
+    /// Normalised reset offset (dimensionless).
     pub v_reset: f64,
+    /// Adaptive-threshold floor (dimensionless).
     pub theta_reset: f64,
+    /// Steady adaptive-threshold target (dimensionless).
     pub theta_inf: f64,
+    /// Membrane time constant (ms).
     pub tau_v: f64,
+    /// Threshold time constant (ms).
     pub tau_theta: f64,
+    /// First current time constant (ms).
     pub tau_1: f64,
+    /// Second current time constant (ms).
     pub tau_2: f64,
+    /// Project voltage-threshold coupling (dimensionless).
     pub a: f64,
+    /// Candidate-proportional voltage-reset coefficient (dimensionless).
     pub b: f64,
+    /// First additive current kick (dimensionless).
     pub r1: f64,
+    /// Second additive current kick (dimensionless).
     pub r2: f64,
+    /// Runge-Kutta step (ms); one per step call.
     pub dt: f64,
 }
 
 impl SCScaledResetAdaptiveIFNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: 0.0,
@@ -182,6 +202,8 @@ impl SCScaledResetAdaptiveIFNeuron {
         Some((trace, events))
     }
 
+    /// Return the membrane potential to `v_rest`, the threshold to `theta_reset` and the
+    /// spike-induced currents to zero; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.theta = self.theta_reset;

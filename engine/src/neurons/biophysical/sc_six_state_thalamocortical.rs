@@ -8,33 +8,61 @@
 
 //! Preserved SC six-state conductance recurrence; no literature attribution.
 
+#![deny(missing_docs)]
+
 /// Preserved SC six-state thalamocortical oscillator with Na-dependent K.
 #[derive(Clone, Debug)]
 pub struct SCSixStateThalamocorticalNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h_na: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n_k: f64,
+    /// Activation gate of the hyperpolarisation-activated current.
     pub m_h: f64,
+    /// T-type calcium inactivation gate; T-type activation is taken at its steady state.
     pub h_t: f64,
+    /// Intracellular sodium concentration (mM); drives the sodium-dependent potassium current
+    /// and never falls below zero.
     pub na_i: f64,
+    /// Maximal fast sodium conductance (project conductance).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (project conductance).
     pub g_k: f64,
+    /// Maximal hyperpolarisation-activated conductance (project conductance).
     pub g_h: f64,
+    /// Maximal low-threshold calcium conductance (project conductance).
     pub g_t: f64,
+    /// Maximal sodium-dependent potassium conductance (project conductance).
     pub g_kna: f64,
+    /// Leak conductance (project conductance).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_h: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Maximum saturating sodium-pump removal rate. The pump removes
+    /// `na_pump_max * na_i / (na_i + na_eq)` per unit of `dt`; the descriptor labels it
+    /// mM/s, but the model states no time unit for `dt`.
     pub na_pump_max: f64,
+    /// Sodium-pump half-saturation concentration (mM).
     pub na_eq: f64,
+    /// Runge-Kutta step, in the model's time unit; one per
+    /// [`SCSixStateThalamocorticalNeuron::step`] call.
     pub dt: f64,
+    /// Sampled upward-crossing event threshold (mV).
     pub v_threshold: f64,
 }
 
 impl SCSixStateThalamocorticalNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -147,6 +175,13 @@ impl SCSixStateThalamocorticalNeuron {
         out
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance; sodium is clamped at zero after the
+    /// step. Returns 1 when the membrane potential starts below `v_threshold` and ends at
+    /// or above it, else 0. The input and the state are not validated, so a non-finite
+    /// current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let s = self.rk4_substep(
@@ -165,6 +200,8 @@ impl SCSixStateThalamocorticalNeuron {
             0
         }
     }
+    /// Return the membrane potential, the gates and sodium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h_na = 0.6;

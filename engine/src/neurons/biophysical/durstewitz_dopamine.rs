@@ -8,30 +8,51 @@
 
 //! Durstewitz prefrontal-cortex neuron dynamics with D1 modulation.
 
+#![deny(missing_docs)]
+
 /// Durstewitz PFC neuron with D1 dopamine modulation. Durstewitz et al. 2000.
 #[derive(Clone, Debug)]
 pub struct DurstewitzDopamineNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate; sodium activation is taken at its steady state.
     pub h_na: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n_k: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal NMDA-receptor conductance (mS/cm^2).
     pub g_nmda: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// NMDA reversal potential (mV).
     pub e_nmda: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Extracellular magnesium concentration setting the NMDA block (mM).
     pub mg: f64,
+    /// Dopamine D1-receptor activation level (dimensionless).
     pub d1_level: f64,
+    /// D1-dependent scaling of the NMDA conductance (dimensionless).
     pub g_nmda_scale: f64,
+    /// D1-dependent scaling of the potassium conductance (dimensionless).
     pub g_k_scale: f64,
+    /// D1-dependent shift of the sodium-current activation (mV).
     pub v_shift_na: f64,
+    /// Runge-Kutta step (ms); one per [`DurstewitzDopamineNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl DurstewitzDopamineNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -109,6 +130,12 @@ impl DurstewitzDopamineNeuron {
         out
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. The input and the state
+    /// are not validated, so a non-finite current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let s = self.rk4_substep([self.v, self.h_na, self.n_k], current);
@@ -121,6 +148,8 @@ impl DurstewitzDopamineNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h_na = 0.7;

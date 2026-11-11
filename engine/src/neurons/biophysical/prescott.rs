@@ -8,26 +8,43 @@
 
 //! Prescott conductance model for Type I, II, and III excitability.
 
+#![deny(missing_docs)]
+
 /// Prescott 2008 — Type I/II/III excitability tuning via M-current.
 #[derive(Clone, Debug)]
 pub struct PrescottNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Slow recovery gate of the slow current, within 0 to 1.
     pub w: f64,
+    /// Maximal fast (spike-generating) conductance (mS/cm^2).
     pub g_fast: f64,
+    /// Maximal slow (recovery) conductance (mS/cm^2).
     pub g_slow: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Reversal potential of the fast current (mV).
     pub e_fast: f64,
+    /// Reversal potential of the slow current (mV).
     pub e_slow: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Half-activation voltage of the slow (w) gating variable (mV).
     pub beta_w: f64,
+    /// Slope of the slow (w) gating activation (mV).
     pub gamma_w: f64,
+    /// Time constant of the slow gating variable (ms).
     pub tau_w: f64,
+    /// Temperature scaling factor of the slow gating kinetics (dimensionless).
     pub phi: f64,
+    /// Runge-Kutta step (ms); one per [`PrescottNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl PrescottNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -119,6 +136,14 @@ impl PrescottNeuron {
         }
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The voltage equation has unit capacitance and the fast activation is taken at its
+    /// steady state. Returns 1 when the membrane potential starts below `v_threshold` and
+    /// ends at or above it, else 0. A non-finite current, an invalid parameter, or a stage
+    /// or result with a non-finite value or `w` outside 0 to 1 returns 0 and leaves the
+    /// neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_runtime() {
             return 0;
@@ -136,6 +161,8 @@ impl PrescottNeuron {
         }
     }
 
+    /// Return the membrane potential and `w` to their initial values; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.w = 0.0;

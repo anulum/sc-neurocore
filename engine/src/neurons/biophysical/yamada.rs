@@ -8,26 +8,43 @@
 
 //! Yamada subcritical Hopf-burster dynamics.
 
+#![deny(missing_docs)]
+
 /// Yamada 1989 — subcritical Hopf burster.
 #[derive(Clone, Debug)]
 pub struct YamadaNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Potassium activation gate; sodium inactivation is taken as `1 - n`.
     pub n: f64,
+    /// Slow potassium gate that drives bursting; relaxes with `tau_q`.
     pub q: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Fast potassium (recovery) conductance (mS/cm^2).
     pub g_k: f64,
+    /// Slow potassium (bursting) conductance (mS/cm^2).
     pub g_q: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Slow potassium reversal potential (mV).
     pub e_q: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Slow bursting variable time constant (ms).
     pub tau_q: f64,
+    /// Forward-Euler integration step (ms); one step per [`YamadaNeuron::step`] call.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
 }
 
 impl YamadaNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -46,6 +63,11 @@ impl YamadaNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron by one forward-Euler step of `dt` with the injected current `current`.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. The input and the state
+    /// are not validated, so a non-finite current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let m_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 9.5).exp());
@@ -65,6 +87,8 @@ impl YamadaNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -60.0;
         self.n = 0.1;

@@ -8,28 +8,48 @@
 
 //! Pospischil minimal conductance model for cortical cell types.
 
+#![deny(missing_docs)]
+
 /// Pospischil — minimal HH for 5 cortical cell types. Pospischil et al. 2008.
 #[derive(Clone, Debug)]
 pub struct PospischilNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m: f64,
+    /// Sodium inactivation gate.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n: f64,
+    /// Slow M-type potassium activation gate.
     pub p: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal slow non-inactivating (M-type) potassium conductance (mS/cm^2).
     pub g_m: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Spike-threshold reference voltage shifting the gating midpoints (mV).
     pub vt: f64,
+    /// Runge-Kutta integration step (ms); each [`PospischilNeuron::step`] call runs four
+    /// of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl PospischilNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -127,6 +147,12 @@ impl PospischilNeuron {
         out
     }
 
+    /// Advance the neuron by four classical Runge-Kutta steps of `dt` with the injected
+    /// current `current`, held constant across them.
+    ///
+    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or
+    /// above it, else 0. The input and the state are not validated, so a non-finite
+    /// current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let mut s = [self.v, self.m, self.h, self.n, self.p];
@@ -144,6 +170,8 @@ impl PospischilNeuron {
             0
         }
     }
+    /// Return the membrane potential and the gates to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = -70.0;
         self.m = 0.05;

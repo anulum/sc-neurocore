@@ -38,6 +38,11 @@ mod yamada;
 pub use reexports::*;
 // ── Helper: safe alpha/beta kinetics avoiding division-by-zero ──
 
+/// Hodgkin-Huxley-type rate `number_factor * d / (1 - exp(-d / denom_scale))` with
+/// `d = v + v_offset`.
+///
+/// The expression is 0/0 at `d = 0`; within `1e-7` of it `fallback` is returned instead.
+/// Every caller in the engine passes the limit `number_factor * denom_scale` there.
 pub fn safe_rate(
     number_factor: f64,
     v_offset: f64,

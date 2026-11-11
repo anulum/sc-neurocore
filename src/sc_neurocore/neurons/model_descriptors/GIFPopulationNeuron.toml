@@ -81,7 +81,7 @@ range = [
 [parameters.eta_increment]
 default = 5.0
 unit = "mV"
-meaning = "threshold/adaptation increment added at each spike"
+meaning = "spike-triggered adaptation increment added to eta at each spike"
 range = [
     0.0,
     20.0,

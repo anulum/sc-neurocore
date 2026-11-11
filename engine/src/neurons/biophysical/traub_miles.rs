@@ -8,39 +8,47 @@
 
 //! Traub-Miles hippocampal CA3 pyramidal neuron dynamics.
 
-/// Traub-Miles — hippocampal CA3 pyramidal neuron with M-current.
+#![deny(missing_docs)]
+
+/// Traub-Miles hippocampal pyramidal neuron with sodium, delayed-rectifier potassium and
+/// leak currents.
 ///
-/// Full Traub et al. 1991 model with Na, K_dr, leak, plus
-/// M-current (Kv7/KCNQ) for spike frequency adaptation.
-/// The M-current is the slow K⁺ conductance responsible for:
-/// - Spike frequency adaptation (SFA)
-/// - Theta-frequency resonance (~4-8 Hz)
-/// - Subthreshold membrane potential oscillations
-///
-/// IM = g_M * w * (V - E_K)
-/// dw/dt = (w_inf - w) / tau_w
-/// w_inf = 1 / (1 + exp(-(V + 35) / 10))
-/// tau_w = 100 / (3.3 * exp((V+35)/20) + exp(-(V+35)/20))
+/// Hodgkin-Huxley-type gates `m`, `h` and `n` with Traub-type rate functions, integrated
+/// with ten classical Runge-Kutta steps per call. The model has no M-current, calcium,
+/// synaptic or dendritic terms, as its model page states.
 ///
 /// Traub et al., J Neurophysiol 66:635, 1991.
-/// Yamada et al., Meth Neuronal Model (Koch & Segev), 1989 (M-current kinetics).
 #[derive(Clone, Debug)]
 pub struct TraubMilesNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m: f64,
+    /// Sodium inactivation gate.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub n: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Runge-Kutta integration step (ms); each [`TraubMilesNeuron::step`] call runs ten of
+    /// them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl TraubMilesNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -67.0,
@@ -182,6 +190,13 @@ impl TraubMilesNeuron {
             None
         }
     }
+    /// Advance the neuron by ten classical Runge-Kutta steps of `dt` with the injected
+    /// current `current`, held constant across them.
+    ///
+    /// The voltage equation has unit capacitance. Returns 1 when the membrane potential
+    /// starts below `v_threshold` and ends at or above it, else 0. A non-finite current,
+    /// an invalid parameter or state, or a stage or sub-step result with a non-finite value
+    /// or a gate outside 0 to 1 returns 0 and leaves the neuron unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_runtime() {
             return 0;
@@ -211,6 +226,8 @@ impl TraubMilesNeuron {
             0
         }
     }
+    /// Return to [`TraubMilesNeuron::new`]: the initial state and the default parameters, so
+    /// a changed parameter is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

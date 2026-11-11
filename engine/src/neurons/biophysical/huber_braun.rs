@@ -8,26 +8,44 @@
 
 //! Huber-Braun temperature-sensitive cold-receptor dynamics.
 
+#![deny(missing_docs)]
+
 /// Huber-Braun — temperature-sensitive cold receptor. Braun et al. 1998.
 #[derive(Clone, Debug)]
 pub struct HuberBraunNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Activation of the slow depolarising current; relaxes with `tau_sd`.
     pub a_sd: f64,
+    /// Activation of the slow repolarising current; relaxes with `tau_sr`.
     pub a_sr: f64,
+    /// Maximal slow depolarising conductance (mS/cm^2).
     pub g_sd: f64,
+    /// Maximal slow repolarising conductance (mS/cm^2).
     pub g_sr: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Reversal potential of the slow depolarising current (mV).
     pub e_sd: f64,
+    /// Reversal potential of the slow repolarising current (mV).
     pub e_sr: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Time constant of the slow depolarising current (ms).
     pub tau_sd: f64,
+    /// Time constant of the slow repolarising current (ms).
     pub tau_sr: f64,
+    /// Noise amplitude of the Python model's membrane equation. This engine step adds no
+    /// noise and does not read it, so the Rust model is deterministic.
     pub eta: f64,
+    /// Forward-Euler integration step (ms); one step per [`HuberBraunNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl HuberBraunNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -46,6 +64,12 @@ impl HuberBraunNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron by one forward-Euler step of `dt` with the injected current `current`.
+    ///
+    /// The slow activations update first, then the membrane potential, with unit
+    /// capacitance and without noise. Returns 1 when the membrane potential starts below
+    /// `v_threshold` and ends at or above it, else 0. The input and the state are not
+    /// validated, so a non-finite current propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         // Braun, Huber et al. 1998: SD V1/2 = -40 mV, slope = 6
@@ -63,6 +87,8 @@ impl HuberBraunNeuron {
             0
         }
     }
+    /// Return the membrane potential and the activations to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -50.0;
         self.a_sd = 0.0;

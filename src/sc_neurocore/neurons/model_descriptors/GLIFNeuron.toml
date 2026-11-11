@@ -78,7 +78,7 @@ range = [
 
 [parameters.resistance]
 default = 1.0
-unit = "MOhm"
+unit = "GOhm"
 meaning = "membrane resistance R"
 range = [
     1e-12,

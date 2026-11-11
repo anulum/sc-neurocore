@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Document the engine's 24 biophysical conductance models and the shared
+  `safe_rate` helper in full, and lower the Rust documentation ceiling from
+  3490 to 3004 undocumented items. Each file was read against its code; the
+  documentation states each model's integration scheme, spike rule, validation
+  and reset, and each file denies missing documentation. Corrections made on
+  the way: the Traub-Miles documentation claimed an M-current that the model
+  does not have; the GLIF resistance is in GOhm, not MOhm, given its pF, pA,
+  mV and ms; the GIF adaptation increment moves `eta`, not the threshold; and
+  the Mainen-Sejnowski coupling and capacitance belong to the axonal
+  compartment, not a dendritic one. The Huber-Braun Rust model adds no
+  membrane noise, unlike the Python model; its documentation now says so.
+
 - Document the engine's cerebellar models in full and lower the Rust
   documentation ceiling from 3646 to 3490 undocumented items. Every field,
   constructor, step and reset of the Golgi, deep cerebellar nuclei, granule,
