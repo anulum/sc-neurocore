@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Move Go to 1.27.4 in every module and workflow. Go 1.27.3's standard library is
+  affected by GO-2026-6859 (CVE-2026-97054), an HTTP/1 server crash in net/http, fixed
+  in 1.27.4. The locked-dependency audit reports it for all five Go modules.
+
 - Refresh the dependency pins that no pending change holds: patch updates of itoa, syn
   and const-oid in the nine separate Rust crate locks; Vite 8.3.7, the React plugin for
   Vite 6.3.0 and typescript-eslint 8.72.2 in the Studio frontend; and the typos hook

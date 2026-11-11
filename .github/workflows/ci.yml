@@ -64,7 +64,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27.3"
+          go-version: "1.27.4"
           cache: false
 
       - name: Install tools
@@ -498,12 +498,12 @@ jobs:
           } >> "$GITHUB_ENV"
 
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
-      # `go 1.27.3` (and release.yml / security-scanners.yml). A mismatched
+      # `go 1.27.4` (and release.yml / security-scanners.yml). A mismatched
       # version makes `go build` reject the module under GOTOOLCHAIN=local.
       # The builder also sets GOTOOLCHAIN=auto. TIER 0: real builds.
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27.3"
+          go-version: "1.27.4"
           cache-dependency-path: |
             src/sc_neurocore/accel/go/go.mod
             src/sc_neurocore/accel/go/services/hil_debugger/go.sum
@@ -1623,7 +1623,7 @@ jobs:
       - name: Install the maintained Go compiler for real platform-refusal inputs
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27.3"
+          go-version: "1.27.4"
           cache-dependency-path: src/sc_neurocore/accel/go/go.mod
 
       - name: Exercise actual native Go gate Windows refusal
