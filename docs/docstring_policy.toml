@@ -7553,7 +7553,7 @@ rationale = "Install relative console launchers and preserve ordinary PyPA RECOR
 
 [[file]]
 path = "tests/test_tools/test_docstring_policy_guard_since_native.py"
-rationale = "Exercise the guard's explicit local range baseline on real Git history, including refusal in CI and of non-ancestors."
+rationale = "Exercise the explicit local range baseline, by --since and by the baseline variable, on real Git history, including refusal in CI and of non-ancestors."
 
 [[file]]
 path = "tests/test_tools/test_preflight_range_gates.py"

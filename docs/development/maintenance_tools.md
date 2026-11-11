@@ -172,10 +172,13 @@ file while lowering its declared count, reducing the minimum length or adding
 missing-symbol allowances fails the guard. Policy sources must exist inside the
 repository. Scope acceptance is separate from native documentation acceptance.
 
-Locally the baseline is committed `HEAD`, or the commit named by `--since REV`.
-The preflight passes the merge base of `HEAD` with the branch it pushes to, so a
-push is checked over the same commits as the hosted push event; CI refuses
-`--since`. GitHub Actions uses the push event's
+Locally the baseline is committed `HEAD`, or the commit named by `--since REV`
+or by the `SC_NEUROCORE_POLICY_BASELINE` variable. The variable reaches every
+check that reads this baseline, including the Go and Rust documentation
+ratchets below. The preflight passes the merge base of `HEAD` with the branch
+it pushes to, as `--since` to the guard and as the variable to the hooks it
+runs, so a push is checked over the same commits as the hosted push event; CI
+refuses both. GitHub Actions uses the push event's
 original `before` commit or the pull request's `base.sha`; manual runs use the
 current commit's first parent. The checkout must match the triggering commit.
 Missing history, unavailable native Git or malformed event inputs fail the
@@ -224,7 +227,8 @@ records include this source manifest and its SHA-256 alongside the exact argv.
 The legacy outer `source_sha256` field remains a Git revision; the nested
 `measurement.source_sha256` binds observed file bytes. External compiler and
 standard-library bytes are outside this capsule. The ratchet independently
-parses the original Git sources selected by local HEAD or the actual CI event
+parses the original Git sources selected by local HEAD (or
+`SC_NEUROCORE_POLICY_BASELINE`) or the actual CI event
 and refuses cohort removal, scalar inflation and new individual debt. Historical
 source images use the compiler release recorded in their immutable ceiling,
 including a version recheck, while current source uses the CI toolchain. Updating
@@ -273,7 +277,9 @@ the current source it is refused until the macro documents it. In the original
 baseline it counts as debt under an identity built from the macro name, the
 invocation text and the definition text; its retention cannot be checked.
 
-The ratchet independently compiles immutable original Git sources and checks
+The ratchet independently compiles immutable original Git sources, selected
+like the Go ratchet's by local HEAD (or `SC_NEUROCORE_POLICY_BASELINE`) or the
+actual CI event, and checks
 original ceiling/version reproduction. `--update` records individual v2
 allowances and may only lower them. The legacy outer `source_sha256` remains a
 Git revision; nested source pins are byte hashes. The selected default library

@@ -21,6 +21,9 @@ from typing import cast
 from tools.docstring_policy_scope import PolicyError
 
 POLICY_PATH = "docs/docstring_policy.toml"
+#: Environment variable naming an explicit local baseline, such as the base of a
+#: push, for every check that reads :func:`baseline_commit`. CI refuses it.
+BASELINE_VARIABLE = "SC_NEUROCORE_POLICY_BASELINE"
 
 
 def git_bytes(root: Path, *arguments: str) -> bytes:
@@ -85,6 +88,8 @@ def baseline_commit(root: Path, environment: Mapping[str, str]) -> str:
         Exact repository root; subdirectories cannot replace the source scope.
     environment : mapping of str to str
         Process environment, including GitHub's event identity when in CI.
+        Locally, :data:`BASELINE_VARIABLE` names an explicit baseline instead
+        of HEAD, as :func:`explicit_baseline_commit` resolves it.
 
     Returns
     -------
@@ -94,8 +99,12 @@ def baseline_commit(root: Path, environment: Mapping[str, str]) -> str:
     Raises
     ------
     PolicyError
-        If event provenance, repository identity or Git history is unavailable.
+        If event provenance, repository identity or Git history is unavailable,
+        or if :data:`BASELINE_VARIABLE` is set in CI or names no ancestor.
     """
+    explicit = environment.get(BASELINE_VARIABLE)
+    if explicit is not None:
+        return explicit_baseline_commit(root, explicit, environment)
     top = git_bytes(root, "rev-parse", "--show-toplevel").decode("utf-8").strip()
     if Path(top).resolve() != root.resolve():
         raise PolicyError("The policy guard requires the exact repository root.")

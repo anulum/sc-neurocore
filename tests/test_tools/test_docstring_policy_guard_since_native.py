@@ -28,16 +28,22 @@ from tests.docstring_policy_guard_support import (
     repository_fixture,
     write_policy,
 )
+from tools.docstring_policy_git import BASELINE_VARIABLE, baseline_commit
 from tools.docstring_policy_guard import check_scope
 from tools.docstring_policy_scope import PolicyError
 
 
 def _guard_since(
-    root: Path, since: str, environment: dict[str, str] | None = None
+    root: Path, since: str | None, environment: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
-    """Run the production CLI with an explicit baseline and no inherited CI inputs."""
-    env = {key: value for key, value in os.environ.items() if not key.startswith("GITHUB_")}
+    """Run the production CLI, with an explicit baseline when given, and no inherited CI inputs."""
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith("GITHUB_") and key != BASELINE_VARIABLE
+    }
     env.update(environment or {})
+    option = [] if since is None else ["--since", since]
     return subprocess.run(
         [
             sys.executable,
@@ -46,8 +52,7 @@ def _guard_since(
             "tools.docstring_policy_guard",
             "--repo",
             str(root),
-            "--since",
-            since,
+            *option,
         ],
         cwd=REPO_ROOT,
         env=env,
@@ -138,3 +143,31 @@ def test_the_explicit_baseline_requires_the_exact_repository_root(tmp_path: Path
     head = fixture_git(root, "rev-parse", "HEAD")
     with pytest.raises(PolicyError, match="exact repository root"):
         check_scope(root / "docs", {}, since=head)
+
+
+def test_the_baseline_variable_gives_every_baseline_reader_the_push_base(tmp_path: Path) -> None:
+    """Hooks such as the scope guard and the Go and Rust ratchets read the variable's base."""
+    root = repository_fixture(tmp_path)
+    base = fixture_git(root, "rev-parse", "HEAD")
+    _commit_source(root, "first.py")
+    assert baseline_commit(root, {BASELINE_VARIABLE: base}) == base
+    assert check_scope(root, {BASELINE_VARIABLE: base}) == check_scope(root, {}, since=base)
+    refused = _guard_since(root, None, {BASELINE_VARIABLE: base})
+    assert refused.returncode == 1
+    assert "Missing required policy file: first.py" in refused.stderr
+
+
+@pytest.mark.parametrize("revision", ["not-a-revision", ""])
+def test_a_baseline_variable_naming_no_commit_is_refused(tmp_path: Path, revision: str) -> None:
+    """A set but unusable variable is refused rather than replaced by HEAD."""
+    root = repository_fixture(tmp_path)
+    with pytest.raises(PolicyError):
+        baseline_commit(root, {BASELINE_VARIABLE: revision})
+
+
+def test_hosted_ci_refuses_the_baseline_variable(tmp_path: Path) -> None:
+    """CI keeps its event baseline even when the variable is present."""
+    root = repository_fixture(tmp_path)
+    head = fixture_git(root, "rev-parse", "HEAD")
+    with pytest.raises(PolicyError, match="CI uses its event baseline"):
+        baseline_commit(root, {"GITHUB_ACTIONS": "true", BASELINE_VARIABLE: head})

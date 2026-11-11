@@ -21,10 +21,12 @@ import sys
 
 import pytest
 
+from tools.docstring_policy_git import BASELINE_VARIABLE
 import tools.preflight
 from tools.preflight import (
     DEFAULT_PUSH_TARGET,
     HOOK_CONFIGURATION_PATHS,
+    POLICY_BASELINE_VARIABLE,
     push_base,
     range_gates,
     run_gate,
@@ -132,6 +134,8 @@ def test_range_gates_check_the_changed_files_and_the_policy_since_the_base() -> 
         "abc123",
     ]
     assert gates["pre-commit-range"] == [
+        "env",
+        "SC_NEUROCORE_POLICY_BASELINE=abc123",
         "python",
         "-m",
         "pre_commit",
@@ -144,12 +148,18 @@ def test_range_gates_check_the_changed_files_and_the_policy_since_the_base() -> 
     ]
 
 
+def test_the_hooks_receive_the_push_base_through_the_policy_variable() -> None:
+    """The variable the preflight sets is the one every baseline reader resolves."""
+    assert POLICY_BASELINE_VARIABLE == BASELINE_VARIABLE
+
+
 @pytest.mark.parametrize("configuration", sorted(HOOK_CONFIGURATION_PATHS))
 def test_a_hook_configuration_change_checks_all_files(configuration: str) -> None:
     """A changed hook version or rule can affect every file, so all files are checked."""
     gates = dict(range_gates("abc123", ["src/a.py", configuration]))
     assert gates["pre-commit-range"][-1] == "--all-files"
     assert "--from-ref" not in gates["pre-commit-range"]
+    assert gates["pre-commit-range"][:2] == ["env", "SC_NEUROCORE_POLICY_BASELINE=abc123"]
 
 
 def test_selected_gates_end_with_the_range_of_this_checkout(

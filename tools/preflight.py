@@ -160,6 +160,10 @@ HOOK_CONFIGURATION_PATHS = frozenset(
 )
 #: Branch a push is checked against when the checkout has no upstream configured.
 DEFAULT_PUSH_TARGET = "origin/main"
+#: Variable through which hooks that compare with a baseline commit, such as the
+#: documentation scope guard and the Go and Rust documentation ratchets, receive
+#: the push base; ``tools.docstring_policy_git.BASELINE_VARIABLE`` reads it.
+POLICY_BASELINE_VARIABLE = "SC_NEUROCORE_POLICY_BASELINE"
 
 
 def _git(*arguments: str) -> str | None:
@@ -202,7 +206,9 @@ def range_gates(base: str, changed: list[str]) -> list[tuple[str, list[str]]]:
     list of tuple
         The documentation scope guard with ``base`` as its baseline, and the
         pre-commit hooks over the files changed in the range. When a hook
-        configuration file changed, the hooks run over all files instead.
+        configuration file changed, the hooks run over all files instead. The
+        hooks receive ``base`` through :data:`POLICY_BASELINE_VARIABLE`, so the
+        hooks that compare with a baseline use the push base, as CI does.
     """
     if HOOK_CONFIGURATION_PATHS.intersection(changed):
         scope = ["--all-files"]
@@ -215,7 +221,16 @@ def range_gates(base: str, changed: list[str]) -> list[tuple[str, list[str]]]:
         ),
         (
             "pre-commit-range",
-            ["python", "-m", "pre_commit", "run", "--show-diff-on-failure", *scope],
+            [
+                "env",
+                f"{POLICY_BASELINE_VARIABLE}={base}",
+                "python",
+                "-m",
+                "pre_commit",
+                "run",
+                "--show-diff-on-failure",
+                *scope,
+            ],
         ),
     ]
 

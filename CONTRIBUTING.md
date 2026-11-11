@@ -41,7 +41,7 @@ merge base of `HEAD` with the branch it pushes to (`origin/main` when no upstrea
 | **spdx-guard** | SPDX license headers on all source files |
 | **pytest** | 3 376+ tests with 100% coverage gate |
 | **docstring-scope-range** | Every Python file changed since the push base is enrolled in the docstring policy, as the hosted push check requires |
-| **pre-commit-range** | The pre-commit hooks over the files changed since the push base, or over all files when a hook configuration changed. Both range gates refuse a checkout with uncommitted or untracked changes, because the hooks read the working tree and a push sends only commits |
+| **pre-commit-range** | The pre-commit hooks over the files changed since the push base, or over all files when a hook configuration changed; the hooks that compare with a baseline, such as the Go and Rust documentation ratchets, compare with the push base. Both range gates refuse a checkout with uncommitted or untracked changes, because the hooks read the working tree and a push sends only commits |
 
 ```bash
 make preflight          # full gate (lint + tests)

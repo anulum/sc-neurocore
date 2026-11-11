@@ -16,7 +16,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   finds the commit a push starts from and runs the documentation scope guard
   from it (`--since`), and runs the pre-commit hooks over the files changed in the
   range, or over all files when a hook configuration changed, as the hosted
-  Pre-commit run does. The hooks read the working tree while a push sends only
+  Pre-commit run does. The hooks receive the same commit through
+  `SC_NEUROCORE_POLICY_BASELINE`, so the Go and Rust documentation ratchets also
+  compare with the push base, as CI does with the push event. The hooks read the working tree while a push sends only
   commits, so the range gates refuse a checkout with uncommitted or untracked
   changes. Two hosted failures on 2026-11-11 had passed every local
   check: unenrolled tests changed earlier in a pushed range, and a typos release
