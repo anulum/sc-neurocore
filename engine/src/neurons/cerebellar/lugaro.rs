@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Lugaro Cell
 // ═══════════════════════════════════════════════════════════════════
@@ -23,16 +25,27 @@
 /// Dieudonné & Bhatt, J Physiol 548:97, 2003; Lainé & Bhatt, Front Syst Neurosci 1:4, 2007.
 #[derive(Clone, Debug)]
 pub struct LugaroCell {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub adapt: f64, // Adaptation current
+    /// Adaptation current, in mV subtracted from the membrane's steady state; never negative.
+    pub adapt: f64,
+    /// Resting potential (depolarised for spontaneous firing) (mV).
     pub v_rest: f64,
+    /// Post-spike reset potential (mV).
     pub v_reset: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Spike-frequency adaptation time constant (ms).
     pub tau_adapt: f64,
+    /// Subthreshold adaptation coupling (dimensionless).
     pub a_adapt: f64, // Adaptation coupling strength
+    /// Gain applied to the injected drive (dimensionless).
     pub gain: f64,
+    /// Serotonin (5-HT) modulation level (dimensionless).
     pub serotonin: f64, // 5-HT modulation factor [0, 1]
+    /// Integration time step (ms).
     pub dt: f64,
 }
 
@@ -43,6 +56,7 @@ impl Default for LugaroCell {
 }
 
 impl LugaroCell {
+    /// Create a cell with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -55.0,
@@ -94,6 +108,15 @@ impl LugaroCell {
             && self.v_threshold > self.v_rest
     }
 
+    /// Advance the cell by `dt` with the injected current `current` and return 1 on a spike, else 0.
+    ///
+    /// The input is `current · gain · (1 + 0.5 · serotonin)`. The membrane
+    /// potential and the adaptation current relax exactly towards their steady states over
+    /// `dt`; the adaptation steady state is `a_adapt` times the depolarisation above
+    /// `v_rest`. Reaching `v_threshold` is a spike: the potential is reset to `v_reset` and
+    /// the adaptation current rises by 1. Otherwise the potential is clamped to -100 to
+    /// 60 mV. A non-finite current, an invalid state or parameter, or a non-finite result
+    /// returns 0 and leaves the cell unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.is_valid() || !current.is_finite() {
             return 0;
@@ -129,6 +152,8 @@ impl LugaroCell {
         0
     }
 
+    /// Return to [`LugaroCell::new`]: the initial state and the default parameters, so a
+    /// changed parameter, including `serotonin`, is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

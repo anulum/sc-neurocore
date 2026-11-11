@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 use super::super::biophysical::safe_rate;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -26,23 +28,39 @@ use super::super::biophysical::safe_rate;
 /// Sultan & Bower, J Comp Neurol 409:63, 1999; Häusser & Clark, Neuron 19:665, 1997.
 #[derive(Clone, Debug)]
 pub struct StellateCell {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64, // Na+ inactivation
-    pub n: f64, // Kdr activation
-    pub p: f64, // Kv3.1 activation
+    /// Na+ inactivation.
+    pub h: f64,
+    /// Kdr activation.
+    pub n: f64,
+    /// Kv3.1 activation.
+    pub p: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal Kv3-type potassium conductance (mS/cm^2).
     pub g_kv3: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Integration time step (ms), split into 50 exponential sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -53,6 +71,7 @@ impl Default for StellateCell {
 }
 
 impl StellateCell {
+    /// Create a cell with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -168,6 +187,14 @@ impl StellateCell {
             && self.gain >= 0.0
     }
 
+    /// Advance the cell by `dt` with the injected current `current`, scaled by `gain`.
+    ///
+    /// Returns 1 if the cell spiked during the step, else 0. Each of the 50 sub-steps relaxes
+    /// the gates exponentially (sodium activation at its steady state), then solves the
+    /// conductance-based voltage equation exactly with the gates frozen and clamps the
+    /// potential to -100 to 60 mV. A sub-step that reaches `v_threshold` is a spike and
+    /// resets the potential to -65 mV. A non-finite current, an invalid state or parameter,
+    /// or a non-finite sub-step result returns 0 and leaves the cell unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.is_valid() || !current.is_finite() {
             return 0;
@@ -240,6 +267,8 @@ impl StellateCell {
         fired
     }
 
+    /// Return to [`StellateCell::new`]: the initial state and the default parameters, so a
+    /// changed parameter is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 use super::super::biophysical::safe_rate;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -36,43 +38,79 @@ use super::super::biophysical::safe_rate;
 /// Solinas et al., Front Cell Neurosci 1:2, 2007.
 #[derive(Clone, Debug)]
 pub struct GolgiCell {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub m: f64,    // Na_t activation
-    pub h: f64,    // Na_t inactivation
-    pub p_na: f64, // Na_p persistent activation
-    pub n: f64,    // K_dr activation
-    pub a: f64,    // K_A activation
-    pub b: f64,    // K_A inactivation
-    pub w: f64,    // K_M (muscarinic) activation
-    pub m_t: f64,  // Ca_T activation
-    pub s: f64,    // Ca_T inactivation
-    pub c_n: f64,  // Ca_N activation
-    pub r: f64,    // Ih activation
-    pub ca: f64,   // Intracellular Ca²⁺ (µM)
+    /// Na_t activation.
+    pub m: f64,
+    /// Na_t inactivation.
+    pub h: f64,
+    /// Na_p persistent activation.
+    pub p_na: f64,
+    /// K_dr activation.
+    pub n: f64,
+    /// K_A activation.
+    pub a: f64,
+    /// K_A inactivation.
+    pub b: f64,
+    /// K_M (muscarinic) activation.
+    pub w: f64,
+    /// Ca_T activation.
+    pub m_t: f64,
+    /// Ca_T inactivation.
+    pub s: f64,
+    /// Ca_N activation.
+    pub c_n: f64,
+    /// Ih activation.
+    pub r: f64,
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
     // Conductances (mS/cm²)
+    /// Maximal transient sodium conductance (mS/cm^2).
     pub g_na_t: f64,
+    /// Maximal persistent sodium conductance (mS/cm^2).
     pub g_na_p: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_kdr: f64,
+    /// Maximal A-type potassium conductance (mS/cm^2).
     pub g_ka: f64,
+    /// Maximal slow (M-type) potassium conductance (mS/cm^2).
     pub g_km: f64,
+    /// Maximal low-threshold (T-type) calcium conductance (mS/cm^2).
     pub g_cat: f64,
+    /// Maximal high-threshold (N-type) calcium conductance (mS/cm^2).
     pub g_can: f64,
+    /// Maximal BK calcium-activated potassium conductance (mS/cm^2).
     pub g_bk: f64,
+    /// Maximal SK calcium-activated potassium conductance (mS/cm^2).
     pub g_sk: f64,
+    /// Maximal hyperpolarisation-activated (Ih) conductance (mS/cm^2).
     pub g_h: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversals
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_h: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Calcium removal time constant (ms).
     pub tau_ca: f64,
+    /// Calcium concentration at half-activation of the BK current (uM).
     pub kd_bk: f64,
+    /// Calcium concentration at half-activation of the SK current (uM).
     pub kd_sk: f64,
+    /// Integration time step (ms), split into `sub_steps` exponential-Euler sub-steps.
     pub dt: f64,
+    /// Number of numerical integration sub-steps per timestep (dimensionless).
     pub sub_steps: usize,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -83,6 +121,7 @@ impl Default for GolgiCell {
 }
 
 impl GolgiCell {
+    /// Create a cell with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -235,6 +274,13 @@ impl GolgiCell {
             && self.gain >= 0.0
     }
 
+    /// Advance the cell by `dt` with the injected current `current`, scaled by `gain`.
+    ///
+    /// Returns 1 when the membrane potential starts the step below 0 mV and ends it at or
+    /// above 0 mV, else 0. The step runs `sub_steps` exponential-Euler sub-steps. A non-finite current, an
+    /// invalid state or parameter, or a sub-step that leaves the valid range (membrane
+    /// potential from -100 to 60 mV, gates from 0 to 1, non-negative Ca²⁺) returns 0 and
+    /// leaves the cell unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_state() {
             return 0;
@@ -388,6 +434,8 @@ impl GolgiCell {
         }
     }
 
+    /// Return to [`GolgiCell::new`]: the initial state and the default parameters, so a
+    /// changed parameter is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

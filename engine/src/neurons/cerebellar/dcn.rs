@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 use super::super::biophysical::safe_rate;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -28,33 +30,59 @@ use super::super::biophysical::safe_rate;
 /// Llinás & Mühlethaler, J Physiol 404:241, 1988; Jahnsen, J Physiol 372:129, 1986.
 #[derive(Clone, Debug)]
 pub struct DCNNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64,  // Na_t inactivation
-    pub n: f64,  // K_dr activation
-    pub p: f64,  // Na_p persistent activation
-    pub s: f64,  // T-type Ca²⁺ inactivation (slow)
-    pub r: f64,  // Ih activation
-    pub ca: f64, // Intracellular Ca²⁺ (µM)
+    /// Na_t inactivation.
+    pub h: f64,
+    /// K_dr activation.
+    pub n: f64,
+    /// Na_p persistent activation.
+    pub p: f64,
+    /// T-type Ca²⁺ inactivation (slow).
+    pub s: f64,
+    /// Ih activation.
+    pub r: f64,
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
     // Conductances (mS/cm²)
+    /// Maximal transient sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal persistent sodium conductance (mS/cm^2).
     pub g_nap: f64, // Persistent Na
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
-    pub g_t: f64,   // T-type Ca²⁺
+    /// Maximal low-threshold (T-type) calcium conductance (mS/cm^2).
+    pub g_t: f64, // T-type Ca²⁺
+    /// Maximal calcium-activated afterhyperpolarisation potassium conductance (mS/cm^2).
     pub g_ahp: f64, // Ca²⁺-dependent AHP
-    pub g_h: f64,   // Ih
+    /// Maximal hyperpolarisation-activated (Ih) conductance (mS/cm^2).
+    pub g_h: f64, // Ih
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_h: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Calcium removal time constant (ms).
     pub tau_ca: f64,
+    /// Calcium concentration at half-activation of the afterhyperpolarisation current (uM).
     pub kd_ahp: f64,
+    /// Integration time step (ms), split into 20 exponential sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -65,6 +93,7 @@ impl Default for DCNNeuron {
 }
 
 impl DCNNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -96,6 +125,16 @@ impl DCNNeuron {
         }
     }
 
+    /// Advance the neuron by `dt` with the injected current `current`, scaled by `gain`.
+    ///
+    /// Returns 1 if the neuron spiked during the step, else 0. Each of the 20 sub-steps
+    /// relaxes the gates and Ca²⁺ exponentially, then solves the conductance-based voltage
+    /// equation exactly with the gates frozen. A sub-step that reaches `v_threshold` is a
+    /// spike: the membrane potential is reset to -60 mV, the T-type inactivation `s` is
+    /// halved and 0.5 µM Ca²⁺ is added. A non-finite current, an invalid state or
+    /// parameter, or a non-finite result returns 0 and leaves the neuron unchanged; an
+    /// accepted result is clamped to the valid range (membrane potential from -100 to
+    /// 60 mV, gates from 0 to 1, non-negative Ca²⁺).
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.is_valid() || !current.is_finite() {
             return 0;
@@ -196,6 +235,8 @@ impl DCNNeuron {
         fired
     }
 
+    /// Return to [`DCNNeuron::new`]: the initial state and the default parameters, so a
+    /// changed parameter is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

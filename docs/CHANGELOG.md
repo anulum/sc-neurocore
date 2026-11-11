@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Document the engine's cerebellar models in full and lower the Rust
+  documentation ceiling from 3646 to 3490 undocumented items. Every field,
+  constructor, step and reset of the Golgi, deep cerebellar nuclei, granule,
+  Lugaro, stellate and unipolar brush cell models now has rustdoc read against
+  its code, and each file denies missing documentation. A new tool,
+  `tools/rust_model_field_docs.py`, writes a field's meaning and unit from the
+  neuron model descriptors where the Rust field has no documentation yet, and
+  never replaces existing documentation. The Lugaro descriptor described
+  `a_adapt` as a per-spike increment; in both the Python and the Rust model it
+  is the subthreshold adaptation coupling, and the descriptor now says so.
+
 - Check the whole push range before a push leaves the machine. The preflight now
   finds the commit a push starts from and runs the documentation scope guard
   from it (`--since`), and runs the pre-commit hooks over the files changed in the

@@ -297,6 +297,25 @@ the Rust pre-commit hook uses the same ratchet.
 python -m pytest tests/test_tools/test_rustdoc_symbols_native.py tests/test_tools/test_rust_doc_measurement_native.py tests/test_tools/test_rust_doc_history_native.py tests/test_tools/test_rust_doc_ratchet_native.py tests/test_tools_rust_doc_ratchet.py -q
 ```
 
+### Rust model field documentation
+
+`python -m tools.rust_model_field_docs` documents the public fields of the
+engine structs that share their name with a neuron model descriptor's
+`class_name`. When the descriptor gives a field a `meaning` and the Rust field
+has no documentation yet, the tool writes that meaning with its unit as the
+doc comment, for example `/// Leak reversal potential (mV).`; unit `1` is
+written as dimensionless, and Markdown link and emphasis characters are
+escaped. A parameter takes precedence over a state variable of the same name.
+Existing documentation is never replaced, so a hand-written comment stays.
+Two descriptors of one class, a described struct defined twice, an unclosed
+struct, an unreadable descriptor or an empty meaning stop the tool with
+status 2 before anything is written. `--check` writes nothing and fails while
+any described field lacks documentation.
+After writing, measure under the ceiling's Rust release and lower the engine's
+aggregate v1 ceiling in `engine/missing_docs_ceiling.json` to the measured figure,
+with the measured revision as `source_sha256`. `--update` would migrate the engine
+ceiling to the individual v2 record, which is a separate decision.
+
 ### SHD Vertex corrected-selection summary
 
 `tools/summarise_shd_vertex_runs.py` aggregates downloaded SHD Vertex run

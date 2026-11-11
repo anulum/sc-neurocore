@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Unipolar Brush Cell
 // ═══════════════════════════════════════════════════════════════════
@@ -24,15 +26,26 @@
 /// Bhatt et al., J Comp Neurol 349:560, 1994; Diana et al., J Neurosci 27:4374, 2007.
 #[derive(Clone, Debug)]
 pub struct UnipolarBrushCell {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub persistent: f64, // Slow NMDA-like persistent current
+    /// Slow NMDA-like persistent current, in mV added to the membrane's steady state; never
+    /// negative.
+    pub persistent: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Post-spike reset potential (mV).
     pub v_reset: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
-    pub tau_persistent: f64,  // Slow decay of persistent current (ms)
+    /// Persistent (NMDA-like) current time constant (ms).
+    pub tau_persistent: f64, // Slow decay of persistent current (ms)
+    /// Persistent inward current gain (dimensionless).
     pub persistent_gain: f64, // How much input drives persistent current
+    /// Gain applied to the injected drive (dimensionless).
     pub gain: f64,
+    /// Integration time step (ms).
     pub dt: f64,
 }
 
@@ -43,6 +56,7 @@ impl Default for UnipolarBrushCell {
 }
 
 impl UnipolarBrushCell {
+    /// Create a cell with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -90,6 +104,15 @@ impl UnipolarBrushCell {
         previous + (steady_state - previous) * (-(-dt / tau).exp_m1())
     }
 
+    /// Advance the cell by `dt` with the injected current `current` and return 1 on a spike, else 0.
+    ///
+    /// Only excitatory input drives the cell: the input is `gain · max(current, 0)`. The
+    /// persistent current relaxes exactly towards `persistent_gain` times the input with
+    /// `tau_persistent`, then the membrane potential relaxes towards `v_rest` plus the input
+    /// and the persistent current with `tau_m`. Reaching `v_threshold` is a spike and resets
+    /// the potential to `v_reset`; otherwise it is clamped to -100 to 60 mV. An invalid
+    /// configuration or state, a non-finite current or a non-finite result returns 0 and
+    /// leaves the cell unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_configuration() || !self.valid_state() || !current.is_finite() {
             return 0;
@@ -123,6 +146,8 @@ impl UnipolarBrushCell {
         0
     }
 
+    /// Return the membrane potential to `v_rest` and clear the persistent current; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.persistent = 0.0;

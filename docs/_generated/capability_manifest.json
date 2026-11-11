@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5630
+    "test_files": 5631
   },
   "documentation": {
     "public_pages": [
@@ -8658,6 +8658,7 @@
       "tests/test_tools/test_rust_doc_history_native.py",
       "tests/test_tools/test_rust_doc_measurement_native.py",
       "tests/test_tools/test_rust_doc_ratchet_native.py",
+      "tests/test_tools/test_rust_model_field_docs.py",
       "tests/test_tools/test_rust_supply_chain_scanner_plan.py",
       "tests/test_tools/test_rustdoc_symbols_native.py",
       "tests/test_tools/test_scan_wheel_isa.py",

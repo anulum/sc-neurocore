@@ -90,7 +90,7 @@ range = [
 [parameters.a_adapt]
 default = 0.05
 unit = "1"
-meaning = "adaptation increment per spike"
+meaning = "subthreshold adaptation coupling"
 range = [
     0.0,
     2.0,

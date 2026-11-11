@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar Circuit Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Granule Cell
 // ═══════════════════════════════════════════════════════════════════
@@ -32,35 +34,65 @@
 /// D'Angelo & De Zeeuw, Trends Neurosci 32:30, 2009 (review).
 #[derive(Clone, Debug)]
 pub struct GranuleCell {
-    pub v: f64,       // Membrane potential (mV)
-    pub m: f64,       // Na activation
-    pub h: f64,       // Na inactivation
-    pub n: f64,       // K_dr activation
-    pub a: f64,       // K_A activation
-    pub b: f64,       // K_A inactivation
-    pub m_t: f64,     // T-type Ca²⁺ activation
-    pub s: f64,       // T-type Ca²⁺ inactivation
-    pub ca: f64,      // Intracellular Ca²⁺ (µM)
-    pub r: f64,       // Ih activation
-    pub c_m: f64,     // Capacitance (µF/cm²)
-    pub g_na: f64,    // Na conductance
-    pub g_kdr: f64,   // K_dr conductance
-    pub g_ka: f64,    // K_A conductance
-    pub g_t: f64,     // T-type Ca²⁺ conductance
-    pub g_kca: f64,   // Ca²⁺-dependent K conductance
-    pub g_h: f64,     // Ih conductance
-    pub g_l: f64,     // Leak conductance
+    /// Membrane potential (mV).
+    pub v: f64,
+    /// Na activation.
+    pub m: f64,
+    /// Na inactivation.
+    pub h: f64,
+    /// K_dr activation.
+    pub n: f64,
+    /// K_A activation.
+    pub a: f64,
+    /// K_A inactivation.
+    pub b: f64,
+    /// T-type Ca²⁺ activation.
+    pub m_t: f64,
+    /// T-type Ca²⁺ inactivation.
+    pub s: f64,
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
+    /// Ih activation.
+    pub r: f64,
+    /// Membrane capacitance (uF/cm^2).
+    pub c_m: f64, // Capacitance (µF/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
+    pub g_na: f64, // Na conductance
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
+    pub g_kdr: f64, // K_dr conductance
+    /// Maximal A-type potassium conductance (mS/cm^2).
+    pub g_ka: f64, // K_A conductance
+    /// Maximal low-threshold (T-type) calcium conductance (mS/cm^2).
+    pub g_t: f64, // T-type Ca²⁺ conductance
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
+    pub g_kca: f64, // Ca²⁺-dependent K conductance
+    /// Maximal hyperpolarisation-activated (Ih) conductance (mS/cm^2).
+    pub g_h: f64, // Ih conductance
+    /// Maximal leak conductance (mS/cm^2).
+    pub g_l: f64, // Leak conductance
+    /// Maximal tonic GABA-A conductance (mS/cm^2).
     pub g_tonic: f64, // Tonic GABA conductance
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_h: f64, // Ih reversal (~-40 mV, mixed cation)
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// GABA-A reversal potential (mV).
     pub e_gaba: f64,
+    /// Calcium removal time constant (ms).
     pub tau_ca: f64, // Ca²⁺ decay (ms)
+    /// Calcium concentration at half-activation of the calcium-activated potassium current (uM).
     pub kd_kca: f64, // K_Ca half-saturation (µM)
+    /// Integration time step (ms), split into `sub_steps` exponential sub-steps.
     pub dt: f64,
+    /// Number of numerical integration sub-steps per timestep (dimensionless).
     pub sub_steps: usize,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -71,6 +103,7 @@ impl Default for GranuleCell {
 }
 
 impl GranuleCell {
+    /// Create a cell with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -180,6 +213,14 @@ impl GranuleCell {
             && self.gain >= 0.0
     }
 
+    /// Advance the cell by `dt` with the injected current `current`, scaled by `gain`.
+    ///
+    /// Returns 1 when the membrane potential starts the step below 0 mV and ends it at or
+    /// above 0 mV, else 0. Each of the `sub_steps` sub-steps relaxes the gates and Ca²⁺
+    /// exponentially, then solves the conductance-based voltage equation exactly with the
+    /// gates frozen and clamps the potential to -100 to 60 mV. A non-finite current, an
+    /// invalid state or parameter, or a non-finite sub-step result returns 0 and leaves the
+    /// cell unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.is_valid() || !current.is_finite() {
             return 0;
@@ -300,6 +341,8 @@ impl GranuleCell {
         }
     }
 
+    /// Return to [`GranuleCell::new`]: the initial state and the default parameters, so a
+    /// changed parameter is restored too.
     pub fn reset(&mut self) {
         *self = Self::new();
     }
