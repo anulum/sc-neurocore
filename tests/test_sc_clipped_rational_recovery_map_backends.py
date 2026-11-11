@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Retained rational-recovery runtime parity
 
+"""Runtime parity and contracts of the clipped rational-recovery map neuron.
+
+Every compiled backend must reproduce the Python reference in binary64; the
+other tests pin Mojo single steps, failure-atomic validation, and agreement
+between simulate and repeated step.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -31,6 +38,7 @@ _BACKEND_AVAILABLE: dict[str, Callable[[], bool]] = {
 def _run(
     backend: str, *, steps: int = 512, current: float = 0.0
 ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+    """Return the trace, the event count and the final state of one simulation."""
     neuron = SCClippedRationalRecoveryMapNeuron()
     trace, events = neuron.simulate(steps, current, backend)
     return trace, events, neuron.x, neuron.y
@@ -38,6 +46,7 @@ def _run(
 
 @pytest.mark.parametrize("backend", ["rust", "julia", "go", "mojo"])
 def test_binary64_runtime_parity(backend: str) -> None:
+    """Each compiled backend reproduces the Python trace, events and final state exactly."""
     if backend == "julia":
         require_julia()
     assert _BACKEND_AVAILABLE[backend]()
@@ -48,6 +57,7 @@ def test_binary64_runtime_parity(backend: str) -> None:
 
 
 def test_mojo_one_step_and_event_contract() -> None:
+    """Mojo matches 2000 random single steps of the reference, events included."""
     assert sc_clipped_rational_recovery_map._ensure_mojo_loaded()
     rng = np.random.default_rng(20260828)
     worst = 0.0
@@ -69,6 +79,7 @@ def test_mojo_one_step_and_event_contract() -> None:
 
 
 def test_validation_is_failure_atomic() -> None:
+    """Invalid arguments are refused and a refused step leaves the state unchanged."""
     with pytest.raises(ValueError, match="integer"):
         SCClippedRationalRecoveryMapNeuron().simulate(True)
     with pytest.raises(ValueError, match="between"):
@@ -84,6 +95,7 @@ def test_validation_is_failure_atomic() -> None:
 
 
 def test_simulate_matches_repeated_step() -> None:
+    """The simulation gives the same trace and event count as calling step repeatedly."""
     trace, events = SCClippedRationalRecoveryMapNeuron().simulate(128, backend="python")
     stepper = SCClippedRationalRecoveryMapNeuron()
     manual = []

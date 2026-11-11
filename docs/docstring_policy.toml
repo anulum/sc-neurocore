@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1858
+expected_file_count = 1860
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7486,3 +7486,11 @@ rationale = "Pin the shipped core's values, edge cases, re-exported identities, 
 [[file]]
 path = "tests/test_identity_and_variability_remaining_branches.py"
 rationale = "Reach the director, decoder and analysis variability branches that no other suite reaches, so the files changed by the core promotion are wholly covered."
+
+[[file]]
+path = "tests/test_cazelles_map_backends.py"
+rationale = "Pin Cazelles map backend parity, published parameters, breakpoints and failure-atomic validation."
+
+[[file]]
+path = "tests/test_sc_clipped_rational_recovery_map_backends.py"
+rationale = "Pin clipped rational-recovery map backend parity, Mojo single steps and failure-atomic validation."

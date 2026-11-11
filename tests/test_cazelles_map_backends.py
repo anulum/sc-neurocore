@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Cazelles source-map runtime parity
 
+"""Runtime parity and contracts of the Cazelles piecewise-linear map neuron.
+
+Every compiled backend must reproduce the Python reference bit for bit; the
+remaining tests pin the published parameters, the breakpoints, the input
+extensions and the failure-atomic validation.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -31,6 +38,7 @@ _BACKEND_AVAILABLE: dict[str, Callable[[], bool]] = {
 
 
 def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], int, float]:
+    """Return the trace, the event count and the final state of one simulation."""
     neuron = CazellesMapNeuron()
     trace, events = neuron.simulate(n_steps, 0.0, backend=backend)
     return trace, events, neuron.x
@@ -38,6 +46,7 @@ def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], 
 
 @pytest.mark.parametrize("backend", ["rust", "julia", "go", "mojo"])
 def test_exact_runtime_parity(backend: str) -> None:
+    """Each compiled backend reproduces the Python trace, events and final state exactly."""
     if backend == "julia":
         require_julia()
     assert _BACKEND_AVAILABLE[backend]()
@@ -57,6 +66,7 @@ def test_ci_builds_the_required_go_and_mojo_libraries() -> None:
 
 
 def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:
+    """Mojo matches the reference orbit and 2000 random single steps away from breakpoints."""
     assert cazelles_map._ensure_mojo_loaded()
     reference, expected_events, _xf = _run("python")
     observed, events, _mojo_xf = _run("mojo")
@@ -76,6 +86,7 @@ def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:
 
 
 def test_figure_one_parameters_and_all_four_branches() -> None:
+    """One probe per branch of the map gives the expected next state and event."""
     probes = (
         (0.2, 0.21),
         (0.5, 0.875),
@@ -93,12 +104,14 @@ def test_figure_one_parameters_and_all_four_branches() -> None:
     ((0.0, 0.0), (0.4, 1.0), (0.6, 0.0), (0.7, 0.7), (1.0, 0.3999999999999999)),
 )
 def test_disclosed_right_continuous_breakpoints(x: float, expected: float) -> None:
+    """At each breakpoint the map takes the value of the branch to its right."""
     neuron = CazellesMapNeuron(x=x)
     neuron.step(0.0)
     assert neuron.x == expected
 
 
 def test_alpha_exponent_and_additive_input_extensions() -> None:
+    """The alpha term, its exponent and the additive input change the next state as stated."""
     linear = CazellesMapNeuron(x=0.2, alpha=0.1, exponent=1)
     quadratic = CazellesMapNeuron(x=0.2, alpha=0.1, exponent=2)
     linear.step(0.01)
@@ -119,11 +132,13 @@ def test_alpha_exponent_and_additive_input_extensions() -> None:
     ),
 )
 def test_invalid_construction_is_rejected(kwargs: dict[str, Any]) -> None:
+    """Non-finite, out-of-range or inconsistent parameters raise ValueError."""
     with pytest.raises(ValueError):
         CazellesMapNeuron(**kwargs)
 
 
 def test_nonfinite_and_out_of_domain_updates_are_atomic() -> None:
+    """A refused update leaves the state unchanged."""
     neuron = CazellesMapNeuron()
     before = neuron.x
     with pytest.raises(ValueError, match="current must be finite"):
@@ -135,6 +150,7 @@ def test_nonfinite_and_out_of_domain_updates_are_atomic() -> None:
 
 
 def test_simulation_validation_and_state_commit() -> None:
+    """The simulation refuses invalid arguments and commits the final state of the trace."""
     with pytest.raises(ValueError, match="integer"):
         CazellesMapNeuron().simulate(True)
     with pytest.raises(ValueError, match="between"):
