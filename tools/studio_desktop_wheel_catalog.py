@@ -113,7 +113,7 @@ class SharedWheelPayload:
     executable : bool
         Original executable declaration, equal for every owner.
     archives : tuple of str
-        Exact selected archive basenames whose RECORDs own this file.
+        Exact selected archive basenames whose RECORD files own this file.
     """
 
     record_hash: str
@@ -402,7 +402,7 @@ def read_catalog(path: Path) -> WheelCatalog:
     Returns
     -------
     WheelCatalog
-        Exact complete input declarations, with original archive RECORDs checked.
+        Exact complete input declarations, with the original archives' RECORD files checked.
 
     Raises
     ------
