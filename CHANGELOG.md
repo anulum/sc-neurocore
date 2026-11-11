@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Refresh the dependency pins that no pending change holds: patch updates of itoa, syn
+  and const-oid in the nine separate Rust crate locks; Vite 8.3.7, the React plugin for
+  Vite 6.3.0 and typescript-eslint 8.72.2 in the Studio frontend; and the typos hook
+  1.52.0, the newest release published to PyPI. The engine's lock and the Python, Go and
+  Mojo pins wait for a pending change that fixes them. Rust stays on 1.98.1 while its
+  recorded migration constraint remains, and TypeScript 7 waits for typescript-eslint,
+  which supports TypeScript below 6.1.
+
 - Ship the core spike-train statistics in the wheel as `sc_neurocore.spike_train_statistics`:
   spike times, inter-spike intervals, rate, count, binning, power spectrum, ISI
   coefficient of variation, Fano factor and permutation entropy. NumPy is its only
