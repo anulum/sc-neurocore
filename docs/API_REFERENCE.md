@@ -22527,6 +22527,25 @@ Mirrors ``core_engine::Lfsr16`` polynomial: x^16 + x^14 + x^13 + x^11 + 1.
 Given the same seed, reproduces the exact same bitstream for formal
 verification and replay-based auditing.
 
+Parameters
+----------
+seed : int
+    Non-zero seed. The register keeps its low 16 bits, so a seed that is a
+    non-zero multiple of 65536 starts a register of 0, which never leaves
+    0.
+
+Attributes
+----------
+initial_seed : int
+    The seed as given, not reduced to 16 bits.
+reg : int
+    The current 16-bit register value.
+
+Raises
+------
+ValueError
+    If ``seed`` is 0.
+
 - **__init__**(seed)
 - **step**()
   - Advance one step, return new register value.
@@ -22536,26 +22555,89 @@ verification and replay-based auditing.
   - Reset to initial seed for replay.
 
 ### Class `SpikeDecision`
+Outcome of a threshold decision.
+
+:meth:`SpikeDecisionTree.add_decision` sets ``SPIKE`` or ``NO_SPIKE``;
+``UNDETERMINED`` is the default of a node built by hand.
+
 
 ### Class `DecisionMargin`
 How close a decision was to flipping.
+
+Attributes
+----------
+popcount : int
+    Ones in the bitstream.
+threshold : int
+    Threshold count of the decision.
+margin : int
+    popcount - threshold; negative for no spike.
+confidence : float
+    |margin| / bitstream length; 0.0 for an empty bitstream.
 
 
 ### Class `DecisionNode`
 One node in a spike decision tree.
 
+Attributes
+----------
+neuron_id : str
+    Name of the deciding neuron.
+popcount : int
+    Ones in the observed bitstream.
+threshold : int
+    Threshold count; a popcount at or above it is a spike.
+bitstream_length : int
+    Bits observed.
+probability : float
+    popcount / bitstream_length.
+scc_context : float
+    Stochastic cross-correlation given with the decision.
+scc_influence : float
+    |scc_context| × probability.
+decision : SpikeDecision
+    The outcome.
+children : list of DecisionNode
+    Nodes recorded with this node as their parent.
+bitstream_hash : str
+    First 16 hexadecimal characters of the SHA-256 of the bitstream's
+    bytes.
+timestep : int
+    Timestep of the decision.
+threshold_q16 : int
+    Q16 threshold the bitstream was encoded with, 0 when not given.
+layer_id : str
+    Layer of the neuron.
+contributing_neurons : list of str
+    Names of the inputs given with the decision.
+
 - **is_leaf**()
+  - Whether the node has no children.
 - **margin**()
+  - The decision's margin: popcount - threshold, and that over the bitstream length.
 
 ### Class `SpikeDecisionTree`
 Captures "why this spike fired" as a verifiable decision tree.
+
+The first node recorded without a parent becomes the root; later nodes
+without a parent are kept in the tree's list (and counted) but linked to
+nothing, so the depth, the spike path and the dictionary form cover only
+the root and its descendants.
+
+Attributes
+----------
+root : DecisionNode or None
+    The first node recorded without a parent.
 
 - **__init__**()
 - **add_decision**(neuron_id, bitstream, threshold, scc, parent, timestep, layer_id, contributing_neurons, threshold_q16)
   - Record a spike decision from bitstream observation.
 - **depth**()
+  - Number of levels below and including the root; 0 without a root.
 - **num_spikes**()
+  - Number of recorded nodes that spiked, unlinked ones included.
 - **num_nodes**()
+  - Number of recorded nodes, unlinked ones included.
 - **nodes_at_layer**(layer_id)
   - Return all nodes at a given layer.
 - **nodes_at_timestep**(timestep)
@@ -22565,9 +22647,25 @@ Captures "why this spike fired" as a verifiable decision tree.
 - **spike_path**()
   - Return the chain of spiking nodes from root down.
 - **to_dict**()
+  - Return the root's subtree as nested dictionaries.
 
 ### Class `ProvenanceStep`
 One step in a full provenance chain.
+
+Attributes
+----------
+stage : str
+    Name of the stage, for example ``"input"`` or ``"decision"``.
+description : str
+    Text of the step.
+data_hash : str
+    First 16 hexadecimal characters of the SHA-256 of the step's data, or
+    of its description when it has no data.
+timestamp_ns : int
+    ``time.perf_counter_ns()`` when the step was recorded: a monotonic
+    counter, not a wall-clock time.
+metadata : dict of str to Any
+    Extra values of the step.
 
 
 ### Class `ProvenanceTrace`
@@ -22577,37 +22675,121 @@ Full chain from input → encoding → computation → spike decision.
 - **add_step**(stage, description, data, metadata)
   - Record one provenance step.
 - **finalize**()
+  - Mark the trace complete; it does not stop further steps.
 - **is_complete**()
+  - Whether :meth:`finalize` has been called.
 - **num_steps**()
+  - Number of recorded steps.
 - **chain_hash**()
   - Hash of the entire provenance chain for tamper detection.
 - **to_list**()
+  - Return the steps as dictionaries of their five fields, in order.
 
 ### Class `RegulatoryMetadata`
 IEC 62304 / FDA SaMD traceability fields.
+
+Free-text fields named after those traceability items; the module stores
+them in a report and checks none of them.
+
+Attributes
+----------
+device_class, risk_level, intended_use, software_version : str
+    Device classification, risk level, intended use and software version.
+udi : str
+    Unique device identifier.
+sudi_hash : str
+    Hash of the software and its configuration, as supplied.
+operator_id : str
+    Operator of the run.
+review_status : str
+    Review state, ``"pending"`` by default.
 
 
 ### Class `FormalPropertyLink`
 Cross-reference to SymbiYosys formal verification.
 
+A record of a property's name, file and status as supplied; the module
+neither runs nor reads the proof.
+
+Attributes
+----------
+property_name : str
+    Name of the property.
+property_file : str
+    File of the property.
+status : str
+    ``"proven"``, ``"cex"`` or ``"unverified"`` (the default), as supplied.
+bounded_depth : int
+    Proof depth, as supplied.
+engine : str
+    Proof engine, ``"sby"`` by default.
+
 
 ### Class `VerifiabilityReport`
 Formal audit report with hash verification.
+
+Built by :meth:`ExplainabilityEngine.verify`.
+
+Attributes
+----------
+chain_hash : str
+    The provenance trace's chain hash.
+num_steps : int
+    Steps of the provenance trace.
+all_hashes_valid : bool
+    The replay comparison's result, the same value as ``replay_matches``;
+    no hash is checked.
+decision_tree_depth : int
+    Depth of the decision tree.
+total_spikes : int
+    Recorded nodes that spiked.
+replay_seed : int
+    The engine's seed.
+replay_matches : bool
+    Whether every replayed bitstream matched its stored one.
+regulatory : RegulatoryMetadata or None
+    Traceability fields, as supplied.
+formal_properties : list of FormalPropertyLink
+    Property records, as supplied.
 
 
 ### Class `SensitivityResult`
 Result of a 'what-if' threshold perturbation.
 
+Attributes
+----------
+neuron_id : str
+    Name of the neuron.
+original_threshold, perturbed_threshold : int
+    Threshold count before and after the change.
+original_decision, perturbed_decision : SpikeDecision
+    Decision before and after the change.
+flipped : bool
+    Whether the two decisions differ.
+
 
 ### Class `SensitivityAnalyzer`
-Counterfactual analysis: 'would the decision flip if threshold ±N?'
+Counterfactual analysis: would the decision flip if the threshold moved by ±N.
+
+Each perturbed decision compares the node's popcount with the shifted
+threshold count; the bitstream is not encoded again.
 
 - **analyze**(node, perturbations)
+  - Decide a node again with shifted threshold counts.
 - **critical_delta**(node)
   - Smallest threshold change that flips the decision.
 
 ### Class `CausalAttribution`
 Attribution of a spike to upstream neurons.
+
+Attributes
+----------
+target_neuron : str
+    Name of the explained neuron.
+attributions : dict of str to float
+    Weighted popcount of each input.
+total_contribution : float
+    Sum of the attributions.
 
 - **top_contributors**()
   - Sorted (descending) list of contributing neurons.
@@ -22615,35 +22797,53 @@ Attribution of a spike to upstream neurons.
 ### Class `CausalAttributor`
 Computes causal attribution from input neurons to output spike.
 
+The attribution of an input is its popcount times its weight; the target
+contributes only its name. No intervention or counterfactual is run.
+
 - **attribute**(target, input_bitstreams, weights)
   - Compute per-input-neuron contribution to the target popcount.
 
 ### Class `DiffEntry`
 One field that differs between two explanations.
 
+Attributes
+----------
+field : str
+    Name of the field.
+value_a, value_b : Any
+    The field's value in the first and the second node.
+
 
 ### Class `ExplanationDiff`
 Compares two decision nodes to find divergence points.
 
 - **diff**(a, b)
+  - List the fields in which two nodes differ.
 
 ### Class `TemporalWindow`
 Records decisions across timesteps for temporal attribution.
 
 - **__init__**()
 - **add**(node)
+  - Record a node under its timestep.
 - **spike_rate_at**(timestep)
+  - Return the fraction of a timestep's nodes that spiked; 0.0 for an unseen timestep.
 - **active_timesteps**()
+  - Return the recorded timesteps in ascending order.
 - **peak_timestep**()
   - Timestep with the highest spike rate.
 - **num_timesteps**()
+  - Number of distinct recorded timesteps.
 
 ### Class `NaturalLanguageExplainer`
 Generates human-readable explanation strings.
 
 - **explain_node**(node)
+  - Describe one decision in English.
 - **explain_attribution**(attr)
+  - Describe an attribution by its three largest contributors and the total.
 - **explain_sensitivity**(results)
+  - Describe the smallest tested threshold change that flips the decision.
 - **enhance_with_local_llm**(text, \*, bridge, question)
   - Enhance a deterministic explanation through the local LLM bridge.
 - **explain_node_with_local_llm**(node, \*, bridge, question)
@@ -22654,26 +22854,75 @@ Traces decisions across network layers.
 
 - **__init__**()
 - **add**(node)
+  - Record a node under its layer.
 - **layer_ids**()
+  - The recorded layers in the order first seen.
 - **spikes_at_layer**(layer_id)
+  - Return how many of a layer's nodes spiked; 0 for an unseen layer.
 - **spike_rate_at_layer**(layer_id)
+  - Return the fraction of a layer's nodes that spiked; 0.0 for an unseen layer.
 - **propagation_path**()
   - Per-layer spike rate for visualising propagation.
 
 ### Class `SymbolicPathStep`
 One step in a symbolic decision path.
 
+Attributes
+----------
+neuron_id : str
+    Name of the neuron.
+decision : SpikeDecision
+    Its decision.
+reason : str
+    Text of the reason.
+
 
 ### Class `SymbolicPath`
 Human-readable symbolic path: input → encoding → decision.
 
+Attributes
+----------
+steps : list of SymbolicPathStep
+    The steps in the order added.
+
 - **__init__**()
 - **add**(neuron_id, decision, reason)
+  - Append one step.
 - **length**()
+  - Number of steps in the path.
 - **to_list**()
+  - Return the steps as dictionaries of neuron, decision value and reason.
 
 ### Class `ExplainabilityEngine`
 End-to-end explainability: replay + decision tree + provenance.
+
+Parameters
+----------
+seed : int
+    Non-zero LFSR seed every replay starts from.
+
+Attributes
+----------
+seed : int
+    The LFSR seed.
+replay : LFSRReplay
+    A replay engine built from the seed; the engine's methods build their
+    own and do not use it.
+tree : SpikeDecisionTree
+    Every explained decision, recorded without a parent.
+provenance : ProvenanceTrace
+    Three steps per explained decision: input, encoding and decision.
+temporal : TemporalWindow
+    The decisions by timestep.
+multi_layer : MultiLayerTrace
+    The decisions by layer.
+symbolic : SymbolicPath
+    One step per decision with its popcount comparison.
+
+Raises
+------
+ValueError
+    If ``seed`` is 0.
 
 - **__init__**(seed)
 - **explain_spike**(neuron_id, threshold_q16, bitstream_length, spike_threshold_count, scc, timestep, layer_id, contributing_neurons)

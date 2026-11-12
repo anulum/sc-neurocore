@@ -6,12 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Traceable Stochastic Explainability Layer
 
-"""Bitstream-level explainability with deterministic replay and provenance.
+"""Bitstream-level explanations of threshold spike decisions, with LFSR replay and provenance.
 
-Leverages bit-true deterministic SC streams and LFSR replay to generate
-full provenance traces: "why this spike fired" as a verifiable bitstream
-decision tree.  Integrates with the ``predictive_coding.ReasoningTrace``
-for neuro-symbolic explanations and produces hash-verified audit trails.
+A spike decision here is a popcount compared with a threshold count. The
+module regenerates the bitstream of a decision from a 16-bit LFSR seed,
+records the decision, a provenance trace of hashed steps and several views
+of the recorded decisions (by layer, by timestep, as a symbolic path), and
+derives margins, threshold sensitivity, a weighted-popcount attribution and
+text explanations from them. The provenance trace's chain hash covers each
+step's stage and data hash; the module itself never compares it with a
+stored value.
+
+Two behaviours shape what an explanation shows: every replay starts from the
+engine's seed, so decisions with the same threshold and length get the same
+bitstream whatever the neuron; and :class:`ExplainabilityEngine` records its
+decisions without parent links, so its decision tree is a root with
+unlinked nodes beside it.
 """
 
 from __future__ import annotations
@@ -60,6 +70,25 @@ class LFSRReplay:
     Mirrors ``core_engine::Lfsr16`` polynomial: x^16 + x^14 + x^13 + x^11 + 1.
     Given the same seed, reproduces the exact same bitstream for formal
     verification and replay-based auditing.
+
+    Parameters
+    ----------
+    seed : int
+        Non-zero seed. The register keeps its low 16 bits, so a seed that is a
+        non-zero multiple of 65536 starts a register of 0, which never leaves
+        0.
+
+    Attributes
+    ----------
+    initial_seed : int
+        The seed as given, not reduced to 16 bits.
+    reg : int
+        The current 16-bit register value.
+
+    Raises
+    ------
+    ValueError
+        If ``seed`` is 0.
     """
 
     def __init__(self, seed: int) -> None:
@@ -75,7 +104,25 @@ class LFSRReplay:
         return self.reg
 
     def encode(self, threshold: int, length: int) -> np.ndarray[Any, Any]:
-        """Generate a bitstream by comparing LFSR output against threshold."""
+        """Generate a bitstream by comparing LFSR output against threshold.
+
+        Each bit is 1 when the current register value is below the threshold,
+        compared before the register steps, so the first bit compares the
+        seed's register value.
+
+        Parameters
+        ----------
+        threshold : int
+            Comparison threshold in Q16 (0 to 65535 gives probabilities from 0
+            to just below 1).
+        length : int
+            Number of bits.
+
+        Returns
+        -------
+        numpy.ndarray
+            The bits as uint8; the register has advanced ``length`` steps.
+        """
         bits = np.zeros(length, dtype=np.uint8)
         for i in range(length):
             bits[i] = 1 if self.reg < threshold else 0
@@ -83,7 +130,12 @@ class LFSRReplay:
         return bits
 
     def reset(self) -> None:
-        """Reset to initial seed for replay."""
+        """Reset to initial seed for replay.
+
+        The register is set to ``initial_seed`` without the 16-bit reduction
+        the constructor applies, so for a seed above 65535 the register after
+        a reset differs from the one after construction.
+        """
         self.reg = self.initial_seed
 
 
@@ -91,6 +143,12 @@ class LFSRReplay:
 
 
 class SpikeDecision(Enum):
+    """Outcome of a threshold decision.
+
+    :meth:`SpikeDecisionTree.add_decision` sets ``SPIKE`` or ``NO_SPIKE``;
+    ``UNDETERMINED`` is the default of a node built by hand.
+    """
+
     SPIKE = "spike"
     NO_SPIKE = "no_spike"
     UNDETERMINED = "undetermined"
@@ -98,7 +156,19 @@ class SpikeDecision(Enum):
 
 @dataclass
 class DecisionMargin:
-    """How close a decision was to flipping."""
+    """How close a decision was to flipping.
+
+    Attributes
+    ----------
+    popcount : int
+        Ones in the bitstream.
+    threshold : int
+        Threshold count of the decision.
+    margin : int
+        popcount - threshold; negative for no spike.
+    confidence : float
+        |margin| / bitstream length; 0.0 for an empty bitstream.
+    """
 
     popcount: int
     threshold: int
@@ -108,7 +178,40 @@ class DecisionMargin:
 
 @dataclass
 class DecisionNode:
-    """One node in a spike decision tree."""
+    """One node in a spike decision tree.
+
+    Attributes
+    ----------
+    neuron_id : str
+        Name of the deciding neuron.
+    popcount : int
+        Ones in the observed bitstream.
+    threshold : int
+        Threshold count; a popcount at or above it is a spike.
+    bitstream_length : int
+        Bits observed.
+    probability : float
+        popcount / bitstream_length.
+    scc_context : float
+        Stochastic cross-correlation given with the decision.
+    scc_influence : float
+        |scc_context| × probability.
+    decision : SpikeDecision
+        The outcome.
+    children : list of DecisionNode
+        Nodes recorded with this node as their parent.
+    bitstream_hash : str
+        First 16 hexadecimal characters of the SHA-256 of the bitstream's
+        bytes.
+    timestep : int
+        Timestep of the decision.
+    threshold_q16 : int
+        Q16 threshold the bitstream was encoded with, 0 when not given.
+    layer_id : str
+        Layer of the neuron.
+    contributing_neurons : list of str
+        Names of the inputs given with the decision.
+    """
 
     neuron_id: str
     popcount: int
@@ -127,17 +230,30 @@ class DecisionNode:
 
     @property
     def is_leaf(self) -> bool:
+        """Whether the node has no children."""
         return len(self.children) == 0
 
     @property
     def margin(self) -> DecisionMargin:
+        """The decision's margin: popcount - threshold, and that over the bitstream length."""
         m = self.popcount - self.threshold
         conf = abs(m) / self.bitstream_length if self.bitstream_length > 0 else 0.0
         return DecisionMargin(self.popcount, self.threshold, m, conf)
 
 
 class SpikeDecisionTree:
-    """Captures "why this spike fired" as a verifiable decision tree."""
+    """Captures "why this spike fired" as a verifiable decision tree.
+
+    The first node recorded without a parent becomes the root; later nodes
+    without a parent are kept in the tree's list (and counted) but linked to
+    nothing, so the depth, the spike path and the dictionary form cover only
+    the root and its descendants.
+
+    Attributes
+    ----------
+    root : DecisionNode or None
+        The first node recorded without a parent.
+    """
 
     def __init__(self) -> None:
         self.root: Optional[DecisionNode] = None
@@ -155,7 +271,36 @@ class SpikeDecisionTree:
         contributing_neurons: Optional[List[str]] = None,
         threshold_q16: int = 0,
     ) -> DecisionNode:
-        """Record a spike decision from bitstream observation."""
+        """Record a spike decision from bitstream observation.
+
+        Parameters
+        ----------
+        neuron_id : str
+            Name of the deciding neuron.
+        bitstream : numpy.ndarray
+            The observed bits.
+        threshold : int
+            Threshold count; a popcount at or above it is a spike.
+        scc : float
+            Stochastic cross-correlation of the inputs.
+        parent : DecisionNode or None
+            Node to attach this one to as a child.
+        timestep : int
+            Timestep of the decision.
+        layer_id : str
+            Layer of the neuron.
+        contributing_neurons : list of str or None
+            Names of the inputs.
+        threshold_q16 : int
+            Q16 threshold the bitstream was encoded with.
+
+        Returns
+        -------
+        DecisionNode
+            The recorded node: probability popcount / length (0.0 for an empty
+            bitstream), SCC influence |scc| × probability, and the hash of the
+            bitstream's bytes.
+        """
         popcount = int(np.sum(bitstream))
         length = len(bitstream)
         prob = popcount / length if length > 0 else 0.0
@@ -190,6 +335,7 @@ class SpikeDecisionTree:
 
     @property
     def depth(self) -> int:
+        """Number of levels below and including the root; 0 without a root."""
         if self.root is None:
             return 0
         return self._compute_depth(self.root)
@@ -201,10 +347,12 @@ class SpikeDecisionTree:
 
     @property
     def num_spikes(self) -> int:
+        """Number of recorded nodes that spiked, unlinked ones included."""
         return sum(1 for n in self._nodes if n.decision == SpikeDecision.SPIKE)
 
     @property
     def num_nodes(self) -> int:
+        """Number of recorded nodes, unlinked ones included."""
         return len(self._nodes)
 
     def nodes_at_layer(self, layer_id: str) -> List[DecisionNode]:
@@ -216,14 +364,21 @@ class SpikeDecisionTree:
         return [n for n in self._nodes if n.timestep == timestep]
 
     def get_node(self, neuron_id: str) -> Optional[DecisionNode]:
-        """Look up a node by neuron ID."""
+        """Look up a node by neuron ID.
+
+        Returns the first node recorded with that name, or ``None``.
+        """
         for n in self._nodes:
             if n.neuron_id == neuron_id:
                 return n
         return None
 
     def spike_path(self) -> List[DecisionNode]:
-        """Return the chain of spiking nodes from root down."""
+        """Return the chain of spiking nodes from root down.
+
+        The spiking nodes of the root's subtree in depth-first order; a
+        non-spiking node does not stop the walk below it.
+        """
         if self.root is None:
             return []
         path: List[DecisionNode] = []
@@ -237,6 +392,15 @@ class SpikeDecisionTree:
             self._collect_spike_path(c, path)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the root's subtree as nested dictionaries.
+
+        Returns
+        -------
+        dict of str to Any
+            Each node's name, popcount, threshold, probability, decision,
+            hash, SCC influence, margin, confidence, timestep, layer, inputs
+            and children; empty without a root.
+        """
         if self.root is None:
             return {}
         return self._node_to_dict(self.root)
@@ -264,7 +428,23 @@ class SpikeDecisionTree:
 
 @dataclass
 class ProvenanceStep:
-    """One step in a full provenance chain."""
+    """One step in a full provenance chain.
+
+    Attributes
+    ----------
+    stage : str
+        Name of the stage, for example ``"input"`` or ``"decision"``.
+    description : str
+        Text of the step.
+    data_hash : str
+        First 16 hexadecimal characters of the SHA-256 of the step's data, or
+        of its description when it has no data.
+    timestamp_ns : int
+        ``time.perf_counter_ns()`` when the step was recorded: a monotonic
+        counter, not a wall-clock time.
+    metadata : dict of str to Any
+        Extra values of the step.
+    """
 
     stage: str
     description: str
@@ -287,7 +467,24 @@ class ProvenanceTrace:
         data: Optional[np.ndarray[Any, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> ProvenanceStep:
-        """Record one provenance step."""
+        """Record one provenance step.
+
+        Parameters
+        ----------
+        stage : str
+            Name of the stage.
+        description : str
+            Text of the step.
+        data : numpy.ndarray or None
+            Data whose bytes are hashed; without it the description is hashed.
+        metadata : dict of str to Any or None
+            Extra values of the step.
+
+        Returns
+        -------
+        ProvenanceStep
+            The recorded step. Steps can be added after :meth:`finalize`.
+        """
         if data is not None:
             data_hash = hashlib.sha256(data.tobytes()).hexdigest()[:16]
         else:
@@ -304,19 +501,27 @@ class ProvenanceTrace:
         return step
 
     def finalize(self) -> None:
+        """Mark the trace complete; it does not stop further steps."""
         self._complete = True
 
     @property
     def is_complete(self) -> bool:
+        """Whether :meth:`finalize` has been called."""
         return self._complete
 
     @property
     def num_steps(self) -> int:
+        """Number of recorded steps."""
         return len(self._steps)
 
     @property
     def chain_hash(self) -> str:
-        """Hash of the entire provenance chain for tamper detection."""
+        """Hash of the entire provenance chain for tamper detection.
+
+        The SHA-256, as 64 hexadecimal characters, of every step's data hash
+        and stage in order. Descriptions enter only through the data hash of
+        a step without data; metadata and timestamps do not enter.
+        """
         h = hashlib.sha256()
         for step in self._steps:
             h.update(step.data_hash.encode())
@@ -324,6 +529,7 @@ class ProvenanceTrace:
         return h.hexdigest()
 
     def to_list(self) -> List[Dict[str, Any]]:
+        """Return the steps as dictionaries of their five fields, in order."""
         return [
             {
                 "stage": s.stage,
@@ -341,7 +547,24 @@ class ProvenanceTrace:
 
 @dataclass
 class RegulatoryMetadata:
-    """IEC 62304 / FDA SaMD traceability fields."""
+    """IEC 62304 / FDA SaMD traceability fields.
+
+    Free-text fields named after those traceability items; the module stores
+    them in a report and checks none of them.
+
+    Attributes
+    ----------
+    device_class, risk_level, intended_use, software_version : str
+        Device classification, risk level, intended use and software version.
+    udi : str
+        Unique device identifier.
+    sudi_hash : str
+        Hash of the software and its configuration, as supplied.
+    operator_id : str
+        Operator of the run.
+    review_status : str
+        Review state, ``"pending"`` by default.
+    """
 
     device_class: str = "Class II"
     risk_level: str = "moderate"
@@ -355,7 +578,24 @@ class RegulatoryMetadata:
 
 @dataclass
 class FormalPropertyLink:
-    """Cross-reference to SymbiYosys formal verification."""
+    """Cross-reference to SymbiYosys formal verification.
+
+    A record of a property's name, file and status as supplied; the module
+    neither runs nor reads the proof.
+
+    Attributes
+    ----------
+    property_name : str
+        Name of the property.
+    property_file : str
+        File of the property.
+    status : str
+        ``"proven"``, ``"cex"`` or ``"unverified"`` (the default), as supplied.
+    bounded_depth : int
+        Proof depth, as supplied.
+    engine : str
+        Proof engine, ``"sby"`` by default.
+    """
 
     property_name: str
     property_file: str = ""
@@ -366,7 +606,32 @@ class FormalPropertyLink:
 
 @dataclass
 class VerifiabilityReport:
-    """Formal audit report with hash verification."""
+    """Formal audit report with hash verification.
+
+    Built by :meth:`ExplainabilityEngine.verify`.
+
+    Attributes
+    ----------
+    chain_hash : str
+        The provenance trace's chain hash.
+    num_steps : int
+        Steps of the provenance trace.
+    all_hashes_valid : bool
+        The replay comparison's result, the same value as ``replay_matches``;
+        no hash is checked.
+    decision_tree_depth : int
+        Depth of the decision tree.
+    total_spikes : int
+        Recorded nodes that spiked.
+    replay_seed : int
+        The engine's seed.
+    replay_matches : bool
+        Whether every replayed bitstream matched its stored one.
+    regulatory : RegulatoryMetadata or None
+        Traceability fields, as supplied.
+    formal_properties : list of FormalPropertyLink
+        Property records, as supplied.
+    """
 
     chain_hash: str
     num_steps: int
@@ -384,7 +649,19 @@ class VerifiabilityReport:
 
 @dataclass
 class SensitivityResult:
-    """Result of a 'what-if' threshold perturbation."""
+    """Result of a 'what-if' threshold perturbation.
+
+    Attributes
+    ----------
+    neuron_id : str
+        Name of the neuron.
+    original_threshold, perturbed_threshold : int
+        Threshold count before and after the change.
+    original_decision, perturbed_decision : SpikeDecision
+        Decision before and after the change.
+    flipped : bool
+        Whether the two decisions differ.
+    """
 
     neuron_id: str
     original_threshold: int
@@ -395,13 +672,32 @@ class SensitivityResult:
 
 
 class SensitivityAnalyzer:
-    """Counterfactual analysis: 'would the decision flip if threshold ±N?'"""
+    """Counterfactual analysis: would the decision flip if the threshold moved by ±N.
+
+    Each perturbed decision compares the node's popcount with the shifted
+    threshold count; the bitstream is not encoded again.
+    """
 
     @staticmethod
     def analyze(
         node: DecisionNode,
         perturbations: Optional[List[int]] = None,
     ) -> List[SensitivityResult]:
+        """Decide a node again with shifted threshold counts.
+
+        Parameters
+        ----------
+        node : DecisionNode
+            The decision to perturb.
+        perturbations : list of int or None
+            Threshold changes; ``None`` uses -10, -5, -1, 1, 5 and 10.
+
+        Returns
+        -------
+        list of SensitivityResult
+            One result per change, in order; a perturbed threshold below 0 is
+            clamped to 0.
+        """
         if perturbations is None:
             perturbations = [-10, -5, -1, 1, 5, 10]
         results = []
@@ -422,7 +718,11 @@ class SensitivityAnalyzer:
 
     @staticmethod
     def critical_delta(node: DecisionNode) -> int:
-        """Smallest threshold change that flips the decision."""
+        """Smallest threshold change that flips the decision.
+
+        margin + 1 for a spike (raise the threshold above the popcount) and
+        the negative margin itself for no spike (lower it to the popcount).
+        """
         m = node.margin
         if m.margin >= 0:
             return m.margin + 1
@@ -434,7 +734,17 @@ class SensitivityAnalyzer:
 
 @dataclass
 class CausalAttribution:
-    """Attribution of a spike to upstream neurons."""
+    """Attribution of a spike to upstream neurons.
+
+    Attributes
+    ----------
+    target_neuron : str
+        Name of the explained neuron.
+    attributions : dict of str to float
+        Weighted popcount of each input.
+    total_contribution : float
+        Sum of the attributions.
+    """
 
     target_neuron: str
     attributions: Dict[str, float]  # source_neuron -> contribution weight
@@ -447,7 +757,11 @@ class CausalAttribution:
 
 
 class CausalAttributor:
-    """Computes causal attribution from input neurons to output spike."""
+    """Computes causal attribution from input neurons to output spike.
+
+    The attribution of an input is its popcount times its weight; the target
+    contributes only its name. No intervention or counterfactual is run.
+    """
 
     @staticmethod
     def attribute(
@@ -455,7 +769,22 @@ class CausalAttributor:
         input_bitstreams: Dict[str, np.ndarray[Any, Any]],
         weights: Optional[Dict[str, float]] = None,
     ) -> CausalAttribution:
-        """Compute per-input-neuron contribution to the target popcount."""
+        """Compute per-input-neuron contribution to the target popcount.
+
+        Parameters
+        ----------
+        target : DecisionNode
+            The explained decision; only its name is used.
+        input_bitstreams : dict of str to numpy.ndarray
+            Bitstream of each input neuron.
+        weights : dict of str to float or None
+            Weight of each input; a missing one, or no mapping, counts 1.0.
+
+        Returns
+        -------
+        CausalAttribution
+            Each input's sum of bits times its weight, and their total.
+        """
         attribs: Dict[str, float] = {}
         for nid, bs in input_bitstreams.items():
             w = weights.get(nid, 1.0) if weights else 1.0
@@ -474,7 +803,15 @@ class CausalAttributor:
 
 @dataclass
 class DiffEntry:
-    """One field that differs between two explanations."""
+    """One field that differs between two explanations.
+
+    Attributes
+    ----------
+    field : str
+        Name of the field.
+    value_a, value_b : Any
+        The field's value in the first and the second node.
+    """
 
     field: str
     value_a: Any
@@ -486,6 +823,22 @@ class ExplanationDiff:
 
     @staticmethod
     def diff(a: DecisionNode, b: DecisionNode) -> List[DiffEntry]:
+        """List the fields in which two nodes differ.
+
+        Compared: neuron name, popcount, threshold, bitstream length,
+        probability, SCC context, decision and bitstream hash. Timestep, layer,
+        inputs, children and the Q16 threshold are not compared.
+
+        Parameters
+        ----------
+        a, b : DecisionNode
+            The two nodes.
+
+        Returns
+        -------
+        list of DiffEntry
+            One entry per differing field, in the order above.
+        """
         diffs = []
         for attr in [
             "neuron_id",
@@ -514,19 +867,25 @@ class TemporalWindow:
         self._windows: Dict[int, List[DecisionNode]] = {}
 
     def add(self, node: DecisionNode) -> None:
+        """Record a node under its timestep."""
         self._windows.setdefault(node.timestep, []).append(node)
 
     def spike_rate_at(self, timestep: int) -> float:
+        """Return the fraction of a timestep's nodes that spiked; 0.0 for an unseen timestep."""
         nodes = self._windows.get(timestep, [])
         if not nodes:
             return 0.0
         return sum(1 for n in nodes if n.decision == SpikeDecision.SPIKE) / len(nodes)
 
     def active_timesteps(self) -> List[int]:
+        """Return the recorded timesteps in ascending order."""
         return sorted(self._windows.keys())
 
     def peak_timestep(self) -> int:
-        """Timestep with the highest spike rate."""
+        """Timestep with the highest spike rate.
+
+        On a tie the timestep recorded first wins; 0 when nothing is recorded.
+        """
         best_t = 0
         best_rate = -1.0
         for t in self._windows:
@@ -538,6 +897,7 @@ class TemporalWindow:
 
     @property
     def num_timesteps(self) -> int:
+        """Number of distinct recorded timesteps."""
         return len(self._windows)
 
 
@@ -549,6 +909,23 @@ class NaturalLanguageExplainer:
 
     @staticmethod
     def explain_node(node: DecisionNode) -> str:
+        """Describe one decision in English.
+
+        A spike reads "exceeded threshold … by N bits", also when the popcount
+        equals the threshold (N is 0); no spike reads "fell short … by N bits".
+        A positive SCC context and up to five input names are added; a
+        negative SCC context is not mentioned.
+
+        Parameters
+        ----------
+        node : DecisionNode
+            The decision.
+
+        Returns
+        -------
+        str
+            The description.
+        """
         m = node.margin
         if node.decision == SpikeDecision.SPIKE:
             desc = (
@@ -572,6 +949,18 @@ class NaturalLanguageExplainer:
 
     @staticmethod
     def explain_attribution(attr: CausalAttribution) -> str:
+        """Describe an attribution by its three largest contributors and the total.
+
+        Parameters
+        ----------
+        attr : CausalAttribution
+            The attribution.
+
+        Returns
+        -------
+        str
+            The description.
+        """
         top = attr.top_contributors[:3]
         parts = [f"{nid} ({w:.1f})" for nid, w in top]
         return (
@@ -581,6 +970,19 @@ class NaturalLanguageExplainer:
 
     @staticmethod
     def explain_sensitivity(results: List[SensitivityResult]) -> str:
+        """Describe the smallest tested threshold change that flips the decision.
+
+        Parameters
+        ----------
+        results : list of SensitivityResult
+            Results of :meth:`SensitivityAnalyzer.analyze`.
+
+        Returns
+        -------
+        str
+            The flipping change of smallest size, or a sentence that no tested
+            change flips the decision.
+        """
         flips = [r for r in results if r.flipped]
         if not flips:
             return "Decision is robust to all tested perturbations."
@@ -605,6 +1007,22 @@ class NaturalLanguageExplainer:
 
         The caller must supply a configured ``LocalLLMBridge`` instance so this
         module keeps no hard runtime dependency on any local model server.
+        The module does not check the returned text against the numbers of
+        the base explanation.
+
+        Parameters
+        ----------
+        text : str
+            The base explanation.
+        bridge : Any
+            An object whose ``chat(prompt)`` returns a response with ``text``.
+        question : str
+            Instruction placed before the base explanation.
+
+        Returns
+        -------
+        str
+            The response's text.
         """
         response = bridge.chat(f"{question}\n\nBase explanation:\n{text}")
         enhanced: str = response.text
@@ -620,7 +1038,22 @@ class NaturalLanguageExplainer:
             "Do not change or invent numeric values."
         ),
     ) -> str:
-        """Generate a local-LLM-enhanced explanation for one decision node."""
+        """Generate a local-LLM-enhanced explanation for one decision node.
+
+        Parameters
+        ----------
+        node : DecisionNode
+            The decision; :meth:`explain_node` gives the base explanation.
+        bridge : Any
+            As for :meth:`enhance_with_local_llm`.
+        question : str
+            Instruction placed before the base explanation.
+
+        Returns
+        -------
+        str
+            The response's text.
+        """
         base = NaturalLanguageExplainer.explain_node(node)
         return NaturalLanguageExplainer.enhance_with_local_llm(
             base,
@@ -639,23 +1072,31 @@ class MultiLayerTrace:
         self._layers: Dict[str, List[DecisionNode]] = {}
 
     def add(self, node: DecisionNode) -> None:
+        """Record a node under its layer."""
         self._layers.setdefault(node.layer_id, []).append(node)
 
     @property
     def layer_ids(self) -> List[str]:
+        """The recorded layers in the order first seen."""
         return list(self._layers.keys())
 
     def spikes_at_layer(self, layer_id: str) -> int:
+        """Return how many of a layer's nodes spiked; 0 for an unseen layer."""
         return sum(1 for n in self._layers.get(layer_id, []) if n.decision == SpikeDecision.SPIKE)
 
     def spike_rate_at_layer(self, layer_id: str) -> float:
+        """Return the fraction of a layer's nodes that spiked; 0.0 for an unseen layer."""
         nodes = self._layers.get(layer_id, [])
         if not nodes:
             return 0.0
         return sum(1 for n in nodes if n.decision == SpikeDecision.SPIKE) / len(nodes)
 
     def propagation_path(self) -> List[Dict[str, Any]]:
-        """Per-layer spike rate for visualising propagation."""
+        """Per-layer spike rate for visualising propagation.
+
+        One dictionary per layer in the order first seen, with the layer, its
+        spike rate and its node count.
+        """
         return [
             {"layer": lid, "spike_rate": self.spike_rate_at_layer(lid), "count": len(nodes)}
             for lid, nodes in self._layers.items()
@@ -667,7 +1108,17 @@ class MultiLayerTrace:
 
 @dataclass
 class SymbolicPathStep:
-    """One step in a symbolic decision path."""
+    """One step in a symbolic decision path.
+
+    Attributes
+    ----------
+    neuron_id : str
+        Name of the neuron.
+    decision : SpikeDecision
+        Its decision.
+    reason : str
+        Text of the reason.
+    """
 
     neuron_id: str
     decision: SpikeDecision
@@ -675,19 +1126,38 @@ class SymbolicPathStep:
 
 
 class SymbolicPath:
-    """Human-readable symbolic path: input → encoding → decision."""
+    """Human-readable symbolic path: input → encoding → decision.
+
+    Attributes
+    ----------
+    steps : list of SymbolicPathStep
+        The steps in the order added.
+    """
 
     def __init__(self) -> None:
         self.steps: List[SymbolicPathStep] = []
 
     def add(self, neuron_id: str, decision: SpikeDecision, reason: str) -> None:
+        """Append one step.
+
+        Parameters
+        ----------
+        neuron_id : str
+            Name of the neuron.
+        decision : SpikeDecision
+            Its decision.
+        reason : str
+            Text of the reason.
+        """
         self.steps.append(SymbolicPathStep(neuron_id, decision, reason))
 
     @property
     def length(self) -> int:
+        """Number of steps in the path."""
         return len(self.steps)
 
     def to_list(self) -> List[Dict[str, str]]:
+        """Return the steps as dictionaries of neuron, decision value and reason."""
         return [
             {"neuron": s.neuron_id, "decision": s.decision.value, "reason": s.reason}
             for s in self.steps
@@ -698,7 +1168,36 @@ class SymbolicPath:
 
 
 class ExplainabilityEngine:
-    """End-to-end explainability: replay + decision tree + provenance."""
+    """End-to-end explainability: replay + decision tree + provenance.
+
+    Parameters
+    ----------
+    seed : int
+        Non-zero LFSR seed every replay starts from.
+
+    Attributes
+    ----------
+    seed : int
+        The LFSR seed.
+    replay : LFSRReplay
+        A replay engine built from the seed; the engine's methods build their
+        own and do not use it.
+    tree : SpikeDecisionTree
+        Every explained decision, recorded without a parent.
+    provenance : ProvenanceTrace
+        Three steps per explained decision: input, encoding and decision.
+    temporal : TemporalWindow
+        The decisions by timestep.
+    multi_layer : MultiLayerTrace
+        The decisions by layer.
+    symbolic : SymbolicPath
+        One step per decision with its popcount comparison.
+
+    Raises
+    ------
+    ValueError
+        If ``seed`` is 0.
+    """
 
     def __init__(self, seed: int = 0xACE1) -> None:
         self.seed = seed
@@ -723,8 +1222,40 @@ class ExplainabilityEngine:
     ) -> DecisionNode:
         """Explain one spike decision via deterministic replay.
 
-        Replays the LFSR from the current seed state, generates the
-        exact bitstream, and records the decision in the tree and trace.
+        Replays the LFSR from the engine's seed, generates the bitstream, and
+        records the decision in the tree and trace. Every call starts from
+        the seed, so two neurons with the same Q16 threshold and length get
+        the same bitstream. The bitstream is stored under the neuron's name,
+        replacing one stored before.
+
+        Parameters
+        ----------
+        neuron_id : str
+            Name of the neuron.
+        threshold_q16 : int
+            Encoding threshold in Q16, from 0 to 65535.
+        bitstream_length : int
+            Number of bits; must be positive.
+        spike_threshold_count : int
+            Threshold count of the decision, from 0 to ``bitstream_length``.
+        scc : float
+            Stochastic cross-correlation of the inputs.
+        timestep : int
+            Timestep of the decision.
+        layer_id : str
+            Layer of the neuron.
+        contributing_neurons : list of str or None
+            Names of the inputs.
+
+        Returns
+        -------
+        DecisionNode
+            The recorded decision.
+
+        Raises
+        ------
+        ValueError
+            If a parameter is outside its range; nothing is recorded then.
         """
         _validate_replay_parameters(
             threshold_q16=threshold_q16,
@@ -786,7 +1317,29 @@ class ExplainabilityEngine:
         regulatory: Optional[RegulatoryMetadata] = None,
         formal_properties: Optional[List[FormalPropertyLink]] = None,
     ) -> VerifiabilityReport:
-        """Generate a verifiability report with full replay check."""
+        """Generate a verifiability report with full replay check.
+
+        Marks the provenance trace complete, then replays every stored
+        bitstream from the seed with the Q16 threshold and length of the
+        first node recorded under that neuron's name and compares the common
+        prefix. A neuron explained twice with other parameters is reported as
+        a mismatch only when the two bitstreams differ in their common
+        prefix; a changed length alone, or a nearby threshold, still matches.
+
+        Parameters
+        ----------
+        regulatory : RegulatoryMetadata or None
+            Traceability fields to carry in the report.
+        formal_properties : list of FormalPropertyLink or None
+            Property records to carry in the report.
+
+        Returns
+        -------
+        VerifiabilityReport
+            The chain hash, step count, tree depth, spike count, seed and the
+            replay result, given as both ``replay_matches`` and
+            ``all_hashes_valid``.
+        """
         self.provenance.finalize()
 
         all_match = True
@@ -821,7 +1374,25 @@ class ExplainabilityEngine:
         threshold_q16: int,
         length: int,
     ) -> np.ndarray[Any, Any]:
-        """Replay a bitstream from the engine's seed (for external comparison)."""
+        """Replay a bitstream from the engine's seed (for external comparison).
+
+        Parameters
+        ----------
+        threshold_q16 : int
+            Encoding threshold in Q16, from 0 to 65535.
+        length : int
+            Number of bits; must be positive.
+
+        Returns
+        -------
+        numpy.ndarray
+            The bits as uint8; nothing is recorded.
+
+        Raises
+        ------
+        ValueError
+            If a parameter is outside its range.
+        """
         _validate_replay_parameters(
             threshold_q16=threshold_q16,
             bitstream_length=length,
@@ -835,7 +1406,20 @@ class ExplainabilityEngine:
         node: DecisionNode,
         perturbations: Optional[List[int]] = None,
     ) -> List[SensitivityResult]:
-        """Run sensitivity analysis on a decision node."""
+        """Run sensitivity analysis on a decision node.
+
+        Parameters
+        ----------
+        node : DecisionNode
+            The decision to perturb.
+        perturbations : list of int or None
+            Threshold changes, as for :meth:`SensitivityAnalyzer.analyze`.
+
+        Returns
+        -------
+        list of SensitivityResult
+            One result per change.
+        """
         return SensitivityAnalyzer.analyze(node, perturbations)
 
     def attribute(
@@ -844,7 +1428,22 @@ class ExplainabilityEngine:
         input_bitstreams: Dict[str, np.ndarray[Any, Any]],
         weights: Optional[Dict[str, float]] = None,
     ) -> CausalAttribution:
-        """Compute causal attribution for a decision."""
+        """Compute causal attribution for a decision.
+
+        Parameters
+        ----------
+        target : DecisionNode
+            The explained decision.
+        input_bitstreams : dict of str to numpy.ndarray
+            Bitstream of each input neuron.
+        weights : dict of str to float or None
+            Weight of each input.
+
+        Returns
+        -------
+        CausalAttribution
+            As :meth:`CausalAttributor.attribute` computes it.
+        """
         return CausalAttributor.attribute(target, input_bitstreams, weights)
 
     def explain_spike_with_local_llm(
@@ -864,7 +1463,36 @@ class ExplainabilityEngine:
             "Do not change or invent numeric values."
         ),
     ) -> tuple[DecisionNode, str]:
-        """Run the deterministic explainability path, then enhance it locally."""
+        """Run the deterministic explainability path, then enhance it locally.
+
+        Parameters
+        ----------
+        neuron_id : str
+            Name of the neuron.
+        threshold_q16 : int
+            Encoding threshold in Q16, from 0 to 65535.
+        bitstream_length : int
+            Number of bits; must be positive.
+        spike_threshold_count : int
+            Threshold count of the decision, from 0 to ``bitstream_length``.
+        bridge : Any
+            As for :meth:`NaturalLanguageExplainer.enhance_with_local_llm`.
+        scc : float
+            Stochastic cross-correlation of the inputs.
+        timestep : int
+            Timestep of the decision.
+        layer_id : str
+            Layer of the neuron.
+        contributing_neurons : list of str or None
+            Names of the inputs.
+        question : str
+            Instruction placed before the base explanation.
+
+        Returns
+        -------
+        tuple of DecisionNode and str
+            The recorded decision and the bridge's text.
+        """
         node = self.explain_spike(
             neuron_id=neuron_id,
             threshold_q16=threshold_q16,

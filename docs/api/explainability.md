@@ -1,7 +1,8 @@
 # Explainability
 
 Bitstream-level explainability and causal attribution for SC decisions.
-Anchored to formal verification properties.
+A verifiability report can name formal-verification properties and their
+status as supplied; the module neither runs nor reads the proofs.
 
 ## Replay Guardrails
 
