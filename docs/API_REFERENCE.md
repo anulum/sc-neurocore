@@ -54543,7 +54543,9 @@ Notes
 -----
 ``ready`` is printed once the endpoint accepts connections. A refused or
 malformed connection is closed and the service continues; it never
-stops running workers on shutdown.
+stops running workers on shutdown. SIGTERM and SIGINT are unblocked at
+start, so a mask blocking them, handed down by the starting process,
+cannot keep the service from stopping.
 
 ---
 

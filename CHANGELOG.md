@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio worker launcher service unblocks SIGTERM and SIGINT when it
+  starts, so a blocked-signal mask handed down by the process that starts it
+  can no longer keep it from stopping in order. The launcher test support
+  places its sockets under a folder short enough for the Unix socket path
+  limit under any temporary folder, kills and reports a launcher that does
+  not stop on SIGTERM, and on Linux ends a launcher together with the test
+  that started it.
+
 - The Rust documentation measurement runs the toolchain the measured crate
   pins (`engine/rust-toolchain.toml` for the engine) in every compiler call,
   also for the original revision it compiles in a temporary directory, whatever

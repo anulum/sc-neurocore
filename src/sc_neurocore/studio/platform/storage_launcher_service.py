@@ -39,7 +39,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     -----
     ``ready`` is printed once the endpoint accepts connections. A refused or
     malformed connection is closed and the service continues; it never
-    stops running workers on shutdown.
+    stops running workers on shutdown. SIGTERM and SIGINT are unblocked at
+    start, so a mask blocking them, handed down by the starting process,
+    cannot keep the service from stopping.
     """
     parser = argparse.ArgumentParser(prog="studio-worker-launcher")
     parser.add_argument("--configuration", required=True)
@@ -53,6 +55,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     signal.signal(signal.SIGTERM, request_stop)
     signal.signal(signal.SIGINT, request_stop)
+    # A process inherits its starter's blocked-signal mask; blocked, the two
+    # handlers above would never run and the service could not stop in order.
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGTERM, signal.SIGINT})
     with WorkerLauncher(configuration) as launcher:
         print("ready", flush=True)
         while not stopping:

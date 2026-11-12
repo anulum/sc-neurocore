@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1921
+expected_file_count = 1924
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7738,3 +7738,15 @@ rationale = "Bitstream explanations of threshold spike decisions: LFSR replay, d
 [[file]]
 path = "src/sc_neurocore/meta_plasticity/meta_plasticity.py"
 rationale = "Plasticity parameters changed by a threshold controller, an evolver and helpers, each documented as the code computes, its metric-only inputs, unbounded learning-rate scaling and unchecked limits included."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_launcher_service.py"
+rationale = "Entry of the worker launcher service: its stop on SIGTERM or SIGINT holds whatever signal mask the starting process handed down."
+
+[[file]]
+path = "tests/studio_storage_launcher_support.py"
+rationale = "Real launcher processes for tests: a socket base that fits the Unix limit under any temporary folder, a stop that kills and reports a service ignoring SIGTERM, and a service that ends with its test."
+
+[[file]]
+path = "tests/test_studio_storage_launcher_lifecycle.py"
+rationale = "Binds the launcher service stopping on SIGTERM under an inherited blocked mask, the kill of one that ignores it, its end with the starting process, and the socket base under long temporary folders."
