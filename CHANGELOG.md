@@ -12,6 +12,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Move the Studio frontend's Vite pin from 8.3.7 to 8.3.8, the newest patch
+  release, in `package.json` and the lock.
+
 - Use British spelling in the descriptive text of eight neuron model
   descriptors (`normalised`, `energised`, `specialisation`, `synthesises`,
   `repolarisation`, `behaviour`). Unit strings and the Lapicque descriptor are
