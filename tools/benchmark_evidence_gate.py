@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -117,17 +118,21 @@ def tracked_files(repo_root: Path, directory: str) -> tuple[str, ...] | None:
         (a packaged or temporary tree, or a subdirectory of a repository): Git
         cannot say there which files are evidence, and the caller walks the
         directory instead. ``None`` also when no ``git`` program can be started.
+        A name that is not UTF-8 is given as the file system decoding gives it,
+        which is the form a directory walk yields for the same file.
     """
     try:
         top = _git_bytes(repo_root, "rev-parse", "--show-toplevel")
-        if top is None or Path(top.decode("utf-8").strip()).resolve() != repo_root.resolve():
+        if top is None:
+            return None
+        if Path(os.fsdecode(top.removesuffix(b"\n"))).resolve() != repo_root.resolve():
             return None
         listed = _git_bytes(repo_root, "ls-files", "-z", "--", directory)
     except OSError:
         return None
     if listed is None:
         return None
-    return tuple(name for name in listed.decode("utf-8").split("\0") if name)
+    return tuple(name for name in os.fsdecode(listed).split("\0") if name)
 
 
 def _safe_repo_path(path: str) -> bool:

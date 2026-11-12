@@ -35,7 +35,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   files, staged ones included, are read now; outside a repository (a packaged
   or temporary tree, or where no `git` program can be started) the directories
   are read as they are. The evidence gate gains `tracked_files` for this. The
-  committed census is unchanged.
+  committed census is unchanged. A tracked file whose name is not UTF-8 is
+  listed in the form a directory walk gives it; the first form of
+  `tracked_files` raised on such a name.
 
 - `bipolar_decode` and `bipolar_multiply` now check their bit arguments in
   the representation the caller gave, before converting them to one byte per

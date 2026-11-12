@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -289,6 +290,60 @@ def test_tracked_files_is_none_without_a_git_program(
     empty.mkdir()
     monkeypatch.setenv("PATH", str(empty))
     assert tool.tracked_files(repo, "benchmarks/results") is None
+
+
+_BYTE_NAMES = pytest.mark.skipif(
+    sys.platform != "linux", reason="a file name is an arbitrary byte string only on Linux"
+)
+
+
+@_BYTE_NAMES
+def test_tracked_files_lists_a_name_that_is_not_utf8(tmp_path: Path) -> None:
+    """Such a name is listed in the form a directory walk gives it, so the two can be compared."""
+    tool = _load_tool()
+    repo = tmp_path / "repo"
+    _tracked_and_untracked_tree(repo)
+    results = repo / "benchmarks" / "results"
+    odd = os.fsencode(results) + b"/record_\xe9.json"
+    with open(odd, "wb") as handle:
+        handle.write(b"{}")
+    subprocess.run([b"git", b"-C", os.fsencode(repo), b"add", odd], check=True, capture_output=True)
+    listed = tool.tracked_files(repo, "benchmarks/results")
+    assert listed == (
+        os.fsdecode(b"benchmarks/results/record_\xe9.json"),
+        "benchmarks/results/tracked.json",
+    )
+    walked = {path.relative_to(repo).as_posix() for path in results.glob("*.json")}
+    assert set(listed) < walked
+
+
+@_BYTE_NAMES
+def test_tracked_files_reads_a_work_tree_whose_own_path_is_not_utf8(tmp_path: Path) -> None:
+    """The top of the work tree is compared in the same form, so such a tree is still a repository."""
+    tool = _load_tool()
+    repo = Path(os.fsdecode(os.fsencode(tmp_path) + b"/rep\xe9"))
+    _tracked_and_untracked_tree(repo)
+    assert tool.tracked_files(repo, "benchmarks/results") == ("benchmarks/results/tracked.json",)
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows removes a trailing space from a directory name"
+)
+def test_tracked_files_reads_a_work_tree_whose_name_ends_with_a_space(tmp_path: Path) -> None:
+    """Only the line end Git prints is removed from the top it reports, not a space of the name."""
+    tool = _load_tool()
+    repo = tmp_path / "repo "
+    _tracked_and_untracked_tree(repo)
+    assert tool.tracked_files(repo, "benchmarks/results") == ("benchmarks/results/tracked.json",)
+
+
+@_BYTE_NAMES
+def test_tracked_files_reads_a_work_tree_whose_name_ends_with_a_line_end(tmp_path: Path) -> None:
+    """Git prints one line end after the top; a line end that belongs to the name stays."""
+    tool = _load_tool()
+    repo = tmp_path / "repo\n"
+    _tracked_and_untracked_tree(repo)
+    assert tool.tracked_files(repo, "benchmarks/results") == ("benchmarks/results/tracked.json",)
 
 
 def test_record_without_a_path_keyed_digest_binds_no_source(tmp_path: Path) -> None:

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import runpy
@@ -601,6 +602,27 @@ class TestOnlyTrackedFilesAreRead:
             capture_output=True,
         )
         assert build_census(tmp_path)["all_records"] == 2
+
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="a file name is an arbitrary byte string only on Linux"
+    )
+    def test_a_tracked_record_whose_name_is_not_utf8_is_read(self, tmp_path: Path) -> None:
+        """Git's listing and the directory walk give such a name in the same form."""
+        _tree_with_one_record(tmp_path)
+        odd = os.fsencode(tmp_path / "benchmarks" / "results") + b"/record_\xe9.json"
+        with open(odd, "wb") as handle:
+            handle.write(json.dumps({"model": "LapicqueNeuron"}).encode("utf-8"))
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", "src", "benchmarks"],
+            check=True,
+            capture_output=True,
+        )
+        census = build_census(tmp_path)
+        assert census["all_records"] == 2
+        totals = census["totals"]
+        assert isinstance(totals, dict)
+        assert totals["measured"] == 2
 
 
 def _script_bound_record(
