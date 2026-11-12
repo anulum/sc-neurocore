@@ -14,18 +14,26 @@ import math
 
 import pytest
 
+from sc_neurocore.neurons.models import DendriticNMDANeuron as PublicDendriticNMDANeuron
+from sc_neurocore.neurons.models.dendritic_nmda import DendriticNMDANeuron
+
+
+def _public_neuron(**parameters: float) -> DendriticNMDANeuron:
+    """Build the neuron through the package's public name and return it typed."""
+    neuron = PublicDendriticNMDANeuron(**parameters)
+    assert isinstance(neuron, DendriticNMDANeuron)
+    return neuron
+
 
 class TestDendriticNMDANeuron:
     """Public behaviour of the dendritic NMDA neuron through its exported class."""
 
     @pytest.fixture()
-    def neuron(self):
+    def neuron(self) -> DendriticNMDANeuron:
         """Return a neuron with the default parameters."""
-        from sc_neurocore.neurons.models import DendriticNMDANeuron
+        return _public_neuron()
 
-        return DendriticNMDANeuron()
-
-    def test_defaults(self, neuron):
+    def test_defaults(self, neuron: DendriticNMDANeuron) -> None:
         """Both compartments start at rest and the magnesium concentration is 1 mM."""
         assert neuron.v_soma == -65.0
         assert neuron.v_dend == -65.0
@@ -46,78 +54,70 @@ class TestDendriticNMDANeuron:
             {"v_dend": float("inf")},
         ],
     )
-    def test_rejects_non_physical_nmda_parameters(self, kwargs):
+    def test_rejects_non_physical_nmda_parameters(self, kwargs: dict[str, float]) -> None:
         """NMDA compartment parameters must be finite and biophysically bounded."""
-        from sc_neurocore.neurons.models import DendriticNMDANeuron
-
         with pytest.raises(ValueError):
-            DendriticNMDANeuron(**kwargs)
+            _public_neuron(**kwargs)
 
     @pytest.mark.parametrize("voltage", [float("nan"), float("inf")])
-    def test_rejects_non_finite_mg_block_voltage(self, voltage):
+    def test_rejects_non_finite_mg_block_voltage(self, voltage: float) -> None:
         """Voltage-dependent magnesium block must reject non-finite voltage."""
-        from sc_neurocore.neurons.models import DendriticNMDANeuron
-
         with pytest.raises(ValueError, match="voltage"):
-            DendriticNMDANeuron().mg_block(voltage)
+            _public_neuron().mg_block(voltage)
 
     @pytest.mark.parametrize(
         ("i_soma", "glutamate"),
         [(float("nan"), 0.0), (0.0, float("inf")), (0.0, -0.01)],
     )
-    def test_rejects_non_physical_nmda_drive(self, i_soma, glutamate):
+    def test_rejects_non_physical_nmda_drive(self, i_soma: float, glutamate: float) -> None:
         """Somatic current must be finite and glutamate must be finite non-negative."""
-        from sc_neurocore.neurons.models import DendriticNMDANeuron
-
         with pytest.raises(ValueError):
-            DendriticNMDANeuron().step(i_soma, glutamate)
+            _public_neuron().step(i_soma, glutamate)
 
-    def test_step_returns_binary(self, neuron):
+    def test_step_returns_binary(self, neuron: DendriticNMDANeuron) -> None:
         """A step returns 0 or 1 and nothing else."""
         s = neuron.step(10.0, 0.5)
         assert s in (0, 1)
 
-    def test_mg_block_at_rest(self, neuron):
+    def test_mg_block_at_rest(self, neuron: DendriticNMDANeuron) -> None:
         """At -65 mV, Mg block should be strong (~0.06)."""
         b = neuron.mg_block(-65.0)
         assert 0.0 < b < 0.15, f"Mg block at -65mV = {b}, expected ~0.06"
 
-    def test_mg_block_at_depolarised(self, neuron):
+    def test_mg_block_at_depolarised(self, neuron: DendriticNMDANeuron) -> None:
         """At 0 mV, Mg block should be relieved (~0.78)."""
         b = neuron.mg_block(0.0)
         assert b > 0.5, f"Mg block at 0mV = {b}, expected >0.5"
 
-    def test_mg_block_formula(self, neuron):
+    def test_mg_block_formula(self, neuron: DendriticNMDANeuron) -> None:
         """B(V) = 1/(1 + [Mg]/3.57 * exp(-0.062*V)) — exact from Jahr & Stevens."""
         for v in [-80.0, -65.0, -40.0, -20.0, 0.0, 20.0]:
             expected = 1.0 / (1.0 + (1.0 / 3.57) * math.exp(-0.062 * v))
             actual = neuron.mg_block(v)
             assert abs(actual - expected) < 1e-12, f"Mg block at {v}mV: {actual} != {expected}"
 
-    def test_spikes_with_strong_input(self, neuron):
+    def test_spikes_with_strong_input(self, neuron: DendriticNMDANeuron) -> None:
         """Strong somatic current must produce spikes."""
         spikes = sum(neuron.step(50.0, 0.0) for _ in range(2000))
         assert spikes > 0
 
-    def test_coincidence_detection(self):
+    def test_coincidence_detection(self) -> None:
         """NMDA requires BOTH glutamate AND depolarisation for full effect."""
-        from sc_neurocore.neurons.models import DendriticNMDANeuron
-
         # Only soma current, no glutamate.
-        n1 = DendriticNMDANeuron()
+        n1 = _public_neuron()
         for _ in range(500):
             n1.step(30.0, 0.0)
         v_no_glut = n1.v_dend
 
         # Soma current + glutamate.
-        n2 = DendriticNMDANeuron()
+        n2 = _public_neuron()
         for _ in range(500):
             n2.step(30.0, 1.0)
         v_with_glut = n2.v_dend
         # The inward NMDA current raises the dendrite by a stated least amount.
         assert v_with_glut > v_no_glut + 3.0
 
-    def test_reset(self, neuron):
+    def test_reset(self, neuron: DendriticNMDANeuron) -> None:
         """Reset returns both compartments to -65 mV after a run."""
         for _ in range(100):
             neuron.step(30.0, 0.5)
