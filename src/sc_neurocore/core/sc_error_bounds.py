@@ -230,14 +230,38 @@ def mux_add_variance(value_a: float, value_b: float, length: int) -> float:
     return q * (1.0 - q) / length
 
 
-def dot_product_variance(values_a: list[float], values_b: list[float], length: int) -> float:
-    r"""Variance of a MUX-tree unipolar dot product of two independent vectors.
+def _product_values(values_a: list[float], values_b: list[float]) -> list[float]:
+    """Return the validated term products ``a_k * b_k`` of two equal-length vectors."""
+    if len(values_a) != len(values_b):
+        raise ValueError("values_a and values_b must have equal length")
+    if not values_a:
+        raise ValueError("dot product requires at least one term")
+    products = []
+    for index, (a, b) in enumerate(zip(values_a, values_b)):
+        pa = _validate_probability(a, f"values_a[{index}]")
+        pb = _validate_probability(b, f"values_b[{index}]")
+        products.append(pa * pb)
+    return products
 
-    The scaled dot product :math:`\frac{1}{K}\sum_k \text{AND}(a_k, b_k)` of
-    length :math:`K` has variance
+
+def dot_product_variance(values_a: list[float], values_b: list[float], length: int) -> float:
+    r"""Variance of an averaged unipolar dot product of two independent vectors.
+
+    Every product stream :math:`\text{AND}(a_k, b_k)` is observed over all
+    :math:`N` bits (one counter per term, or an adder tree) and the :math:`K`
+    estimates are averaged. The scaled dot product
+    :math:`\frac{1}{K}\sum_k a_k b_k` then has variance
     :math:`\frac{1}{K^2 N}\sum_k a_k b_k (1 - a_k b_k)`, whose standard error
     grows as :math:`O(1/\sqrt{K N})` — the SC analogue of the
     :math:`\sqrt{K}\,u` inner-product growth of Connolly & Higham (2025).
+
+    This is **not** the variance of a multiplexer's single output stream,
+    which sees only :math:`N` of the :math:`K N` product bits; use
+    :func:`mux_dot_product_variance` or
+    :func:`interleaved_dot_product_variance` for those circuits.
+
+    Assumptions: all operand streams are independent, and each is a sequence
+    of independent bits.
 
     Parameters
     ----------
@@ -249,21 +273,93 @@ def dot_product_variance(values_a: list[float], values_b: list[float], length: i
     Returns
     -------
     float
-        Variance of the scaled dot-product estimate.
+        Variance of the averaged scaled dot-product estimate.
     """
     _validate_length(length)
-    if len(values_a) != len(values_b):
-        raise ValueError("values_a and values_b must have equal length")
-    if not values_a:
-        raise ValueError("dot product requires at least one term")
-    k = len(values_a)
-    total = 0.0
-    for index, (a, b) in enumerate(zip(values_a, values_b)):
-        pa = _validate_probability(a, f"values_a[{index}]")
-        pb = _validate_probability(b, f"values_b[{index}]")
-        product = pa * pb
-        total += product * (1.0 - product)
-    return total / (k * k * length)
+    products = _product_values(values_a, values_b)
+    k = len(products)
+    return sum(q * (1.0 - q) for q in products) / (k * k * length)
+
+
+def mux_dot_product_variance(values_a: list[float], values_b: list[float], length: int) -> float:
+    r"""Variance of a dot product through a uniformly random multiplexer.
+
+    One output stream of :math:`N` bits is formed; each bit is the bit of one
+    product stream :math:`\text{AND}(a_k, b_k)`, chosen uniformly at random
+    among the :math:`K` terms. The output bits are then independent with
+    probability :math:`\bar q = \frac{1}{K}\sum_k a_k b_k`, and the estimate of
+    :math:`\bar q` has variance :math:`\bar q (1 - \bar q) / N`.
+
+    The selection itself adds variance: two constant terms 0 and 1 give
+    :math:`1/(4N)`, where the averaged form gives zero.
+
+    Assumptions: all operand streams are independent sequences of independent
+    bits; the select input is uniform over the terms, independent from bit to
+    bit and independent of the data.
+
+    Parameters
+    ----------
+    values_a, values_b : list of float
+        Equal-length vectors of probabilities in :math:`[0, 1]`.
+    length : int
+        Length :math:`N` of the multiplexer's output stream (positive).
+
+    Returns
+    -------
+    float
+        :math:`\bar q (1 - \bar q) / N`.
+    """
+    _validate_length(length)
+    products = _product_values(values_a, values_b)
+    mean = sum(products) / len(products)
+    return mean * (1.0 - mean) / length
+
+
+def interleaved_dot_product_variance(
+    values_a: list[float], values_b: list[float], length: int
+) -> float:
+    r"""Variance of a dot product through a round-robin multiplexer.
+
+    One output stream of :math:`N` bits is formed; bit :math:`t` is the bit of
+    term :math:`t \bmod K`. When :math:`N` is a multiple of :math:`K` every
+    term contributes :math:`N/K` bits, the estimate of
+    :math:`\frac{1}{K}\sum_k a_k b_k` is unbiased, and its variance is
+    :math:`\frac{1}{K N}\sum_k a_k b_k (1 - a_k b_k)`.
+
+    When :math:`N` is not a multiple of :math:`K` the terms are not weighted
+    equally and the estimate is biased; no variance is returned for that case.
+
+    Assumptions: all operand streams are independent sequences of independent
+    bits; the select input is the fixed sequence :math:`0, 1, \dots, K-1`
+    repeated.
+
+    Parameters
+    ----------
+    values_a, values_b : list of float
+        Equal-length vectors of probabilities in :math:`[0, 1]`.
+    length : int
+        Length :math:`N` of the multiplexer's output stream; a positive
+        multiple of the number of terms.
+
+    Returns
+    -------
+    float
+        Variance of the round-robin scaled dot-product estimate.
+
+    Raises
+    ------
+    GuaranteeNotDetermined
+        If ``length`` is not a multiple of the number of terms.
+    """
+    _validate_length(length)
+    products = _product_values(values_a, values_b)
+    k = len(products)
+    if length % k:
+        raise GuaranteeNotDetermined(
+            "a round-robin multiplexer weights the terms equally only when the "
+            "length is a multiple of the number of terms"
+        )
+    return sum(q * (1.0 - q) for q in products) / (k * length)
 
 
 def threshold_encoding_error_bound(points: Sequence[float]) -> float:

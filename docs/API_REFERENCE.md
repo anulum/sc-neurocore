@@ -18790,13 +18790,23 @@ float
     :math:`q (1 - q) / N` with :math:`q = (p_a + p_b)/2`.
 
 ### Function `dot_product_variance(values_a, values_b, length)`
-Variance of a MUX-tree unipolar dot product of two independent vectors.
+Variance of an averaged unipolar dot product of two independent vectors.
 
-The scaled dot product :math:`\frac{1}{K}\sum_k \text{AND}(a_k, b_k)` of
-length :math:`K` has variance
+Every product stream :math:`\text{AND}(a_k, b_k)` is observed over all
+:math:`N` bits (one counter per term, or an adder tree) and the :math:`K`
+estimates are averaged. The scaled dot product
+:math:`\frac{1}{K}\sum_k a_k b_k` then has variance
 :math:`\frac{1}{K^2 N}\sum_k a_k b_k (1 - a_k b_k)`, whose standard error
 grows as :math:`O(1/\sqrt{K N})` — the SC analogue of the
 :math:`\sqrt{K}\,u` inner-product growth of Connolly & Higham (2025).
+
+This is **not** the variance of a multiplexer's single output stream,
+which sees only :math:`N` of the :math:`K N` product bits; use
+:func:`mux_dot_product_variance` or
+:func:`interleaved_dot_product_variance` for those circuits.
+
+Assumptions: all operand streams are independent, and each is a sequence
+of independent bits.
 
 Parameters
 ----------
@@ -18808,7 +18818,69 @@ length : int
 Returns
 -------
 float
-    Variance of the scaled dot-product estimate.
+    Variance of the averaged scaled dot-product estimate.
+
+### Function `mux_dot_product_variance(values_a, values_b, length)`
+Variance of a dot product through a uniformly random multiplexer.
+
+One output stream of :math:`N` bits is formed; each bit is the bit of one
+product stream :math:`\text{AND}(a_k, b_k)`, chosen uniformly at random
+among the :math:`K` terms. The output bits are then independent with
+probability :math:`\bar q = \frac{1}{K}\sum_k a_k b_k`, and the estimate of
+:math:`\bar q` has variance :math:`\bar q (1 - \bar q) / N`.
+
+The selection itself adds variance: two constant terms 0 and 1 give
+:math:`1/(4N)`, where the averaged form gives zero.
+
+Assumptions: all operand streams are independent sequences of independent
+bits; the select input is uniform over the terms, independent from bit to
+bit and independent of the data.
+
+Parameters
+----------
+values_a, values_b : list of float
+    Equal-length vectors of probabilities in :math:`&#91;0, 1&#93;`.
+length : int
+    Length :math:`N` of the multiplexer's output stream (positive).
+
+Returns
+-------
+float
+    :math:`\bar q (1 - \bar q) / N`.
+
+### Function `interleaved_dot_product_variance(values_a, values_b, length)`
+Variance of a dot product through a round-robin multiplexer.
+
+One output stream of :math:`N` bits is formed; bit :math:`t` is the bit of
+term :math:`t \bmod K`. When :math:`N` is a multiple of :math:`K` every
+term contributes :math:`N/K` bits, the estimate of
+:math:`\frac{1}{K}\sum_k a_k b_k` is unbiased, and its variance is
+:math:`\frac{1}{K N}\sum_k a_k b_k (1 - a_k b_k)`.
+
+When :math:`N` is not a multiple of :math:`K` the terms are not weighted
+equally and the estimate is biased; no variance is returned for that case.
+
+Assumptions: all operand streams are independent sequences of independent
+bits; the select input is the fixed sequence :math:`0, 1, \dots, K-1`
+repeated.
+
+Parameters
+----------
+values_a, values_b : list of float
+    Equal-length vectors of probabilities in :math:`&#91;0, 1&#93;`.
+length : int
+    Length :math:`N` of the multiplexer's output stream; a positive
+    multiple of the number of terms.
+
+Returns
+-------
+float
+    Variance of the round-robin scaled dot-product estimate.
+
+Raises
+------
+GuaranteeNotDetermined
+    If ``length`` is not a multiple of the number of terms.
 
 ### Function `threshold_encoding_error_bound(points)`
 Exact worst-case error of threshold encoding with a given set of points.

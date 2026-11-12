@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5632
+    "test_files": 5633
   },
   "documentation": {
     "public_pages": [
@@ -7556,6 +7556,7 @@
       "tests/test_sc_division.py",
       "tests/test_sc_error_bounds_closed_form.py",
       "tests/test_sc_error_bounds_correlation.py",
+      "tests/test_sc_error_bounds_dot_product.py",
       "tests/test_sc_error_bounds_inverse.py",
       "tests/test_sc_error_bounds_low_discrepancy.py",
       "tests/test_sc_error_bounds_monte_carlo.py",

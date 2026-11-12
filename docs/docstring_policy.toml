@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1885
+expected_file_count = 1886
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -1811,6 +1811,10 @@ rationale = "Bind the cross-correlation diagnostics' input contract: values are 
 [[file]]
 path = "tests/test_sc_error_bounds_low_discrepancy.py"
 rationale = "Bind the deterministic bounds of threshold encoding to an enumeration of the worst case for the points actually used."
+
+[[file]]
+path = "tests/test_sc_error_bounds_dot_product.py"
+rationale = "Bind each dot-product variance formula to a simulation of the circuit it describes: averaging, random multiplexer and round-robin multiplexer."
 
 [[file]]
 path = "src/sc_neurocore/layers/__init__.py"

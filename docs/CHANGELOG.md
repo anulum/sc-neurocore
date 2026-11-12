@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Separate the variance contracts of the stochastic dot product by circuit.
+  `dot_product_variance` was described as the variance of a multiplexer tree
+  but computes the variance of averaging every product stream in full
+  (`sum q_k (1 - q_k) / (K^2 N)`); it now says so. Two functions are new:
+  `mux_dot_product_variance` for one output stream behind a uniformly random
+  multiplexer (`q_mean (1 - q_mean) / N`), and
+  `interleaved_dot_product_variance` for a round-robin multiplexer
+  (`sum q_k (1 - q_k) / (K N)`; a length that is not a multiple of the number
+  of terms is refused with `GuaranteeNotDetermined`). Each states its
+  assumptions on the select input and on the independence of the streams.
+  For two constant terms 0 and 1 and `N = 100` the random multiplexer has
+  variance 0.0025, where the averaged form gives 0. The returned values of
+  `dot_product_variance` are unchanged.
+
 - Fix the sign of the NMDA current in the dendritic NMDA neuron. The current
   `g_NMDA * glutamate * B(V_d) * (V_d - E_NMDA)` was added to the dendrite's
   equation. Below `E_NMDA` it is negative, so glutamate lowered the dendritic
