@@ -43,7 +43,7 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = "normalized voltage"
+unit = "normalised voltage"
 meaning = "resting voltage"
 range = [
     -1000.0,
@@ -52,7 +52,7 @@ range = [
 
 [parameters.v_reset]
 default = 0.0
-unit = "normalized voltage"
+unit = "normalised voltage"
 meaning = "post-event reset voltage"
 range = [
     -1000.0,
@@ -61,7 +61,7 @@ range = [
 
 [parameters.v_threshold]
 default = 1.0
-unit = "normalized voltage"
+unit = "normalised voltage"
 meaning = "event threshold"
 range = [
     -1000.0,
@@ -79,7 +79,7 @@ range = [
 
 [parameters.resistance]
 default = 1.0
-unit = "normalized resistance"
+unit = "normalised resistance"
 meaning = "current-to-voltage gain"
 range = [
     1e-12,

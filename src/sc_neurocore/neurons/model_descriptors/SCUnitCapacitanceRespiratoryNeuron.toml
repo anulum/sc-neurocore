@@ -85,7 +85,7 @@ range = [
 
 [parameters.capacitance]
 default = 1.0
-unit = "normalized"
+unit = "normalised"
 meaning = "fixed unit capacitance preserving the historical project recurrence"
 range = [
     1.0,

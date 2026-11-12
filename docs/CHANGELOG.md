@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The unit strings of the `SCLapicqueLIFNeuron` and
+  `SCUnitCapacitanceRespiratoryNeuron` descriptors and of the `sc_lapicque_lif`
+  schema profile use British spelling (`normalised voltage`, `normalised
+  resistance`, `normalised`). No unit, value or behaviour changes.
+
 - A model descriptor's `[backends.<lane>]` table takes its lane name from a
   closed list (`python`, `rust`, `rust_safety`, `julia`, `go`, `mojo`; the
   earlier name `rust_engine` is still read) and may state `evidence`, the tests

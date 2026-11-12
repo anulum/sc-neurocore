@@ -39,12 +39,12 @@
       "resistance": "source"
     },
     "units": {
-      "v": "normalized voltage",
-      "v_rest": "normalized voltage",
-      "v_reset": "normalized voltage",
-      "v_threshold": "normalized voltage",
+      "v": "normalised voltage",
+      "v_rest": "normalised voltage",
+      "v_reset": "normalised voltage",
+      "v_threshold": "normalised voltage",
       "tau": "ms",
-      "resistance": "normalized resistance"
+      "resistance": "normalised resistance"
     }
   }
 }
