@@ -12,6 +12,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The benchmark coverage census counts a model as measured when a committed
+  record measures it, also where the record does not hold the model's class
+  name. A record that binds by path the benchmark scripts that produced it is
+  now attributed to the model those scripts name, when they name exactly one;
+  a record whose scripts name two models is credited to neither. Each cited
+  record states how it is attributed (`class_name` or `bound_script`, with the
+  script). A model is named by a script only when its class name appears there
+  as a whole identifier, so `NMDANeuron` is no longer named by a script that
+  names `DendriticNMDANeuron`. Measured models go from 28 to 84 of 185, models
+  with a script and no record from 73 to 17; 84 have neither, as before. The
+  records are the same files as before and nothing was measured again: 61
+  records that were listed as naming no model are now attributed, and their
+  currency is unchanged (most of them describe earlier sources). Census schema
+  version 3.
+
 - The benchmark coverage census reads the files Git tracks. It walked the
   results and script directories on disk, so a local run left beside the
   committed records, or a folder Git ignores, changed its counts: in a

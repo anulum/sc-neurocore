@@ -14,16 +14,20 @@ hand-written row. Nothing computes it. Two live measurements disagree with that
 figure and with each other, and the difference between them is the finding:
 
 * 101 of 185 models are *named by* a benchmark script;
-* 26 of 185 have a *committed benchmark record* naming them.
+* 84 of 185 are measured by a *committed benchmark record*: 28 by a record that
+  holds their class name, 56 more by a record that binds their benchmark script.
 
-A script that exists is apparatus, not a measurement. The 75 models between the
+A script that exists is apparatus, not a measurement. The 17 models between the
 two figures have the machinery to be benchmarked and no evidence that anyone
 ran it, which is precisely the gap a coverage number is supposed to expose.
 
 This census separates the three states so the distinction cannot be lost again:
 
 ``measured``
-    a committed record under ``benchmarks/results`` names the model.
+    a committed record under ``benchmarks/results`` measures the model: it
+    holds the model's class name, or it binds by path benchmark scripts that
+    between them name this model and no other. The record is the evidence in
+    both cases; a script without a record stays apparatus.
 ``apparatus_only``
     a benchmark script names the model; no committed record does.
 ``absent``
@@ -73,6 +77,7 @@ import argparse
 from collections.abc import Iterable, Mapping, Sequence
 import json
 from pathlib import Path
+import re
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -86,7 +91,7 @@ from tools.benchmark_evidence_gate import (  # noqa: E402
 )
 
 #: Schema of the emitted census.
-CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v2"
+CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v3"
 
 #: Where the census is committed.
 DEFAULT_OUTPUT = "docs/_generated/benchmark_coverage_census.json"
@@ -104,6 +109,9 @@ SCRIPTS_DIR = "benchmarks"
 #: The three states a catalogue model can be in.
 STATES = ("measured", "apparatus_only", "absent")
 
+#: How a cited record is tied to the model it measures.
+ATTRIBUTIONS = ("class_name", "bound_script")
+
 #: The three things that can be said about a record's bound sources.
 CURRENCIES = ("current", "outdated", "unbound")
 
@@ -120,6 +128,15 @@ _UNBOUND_REASONS = frozenset(
 def model_names() -> tuple[str, ...]:
     """Return every registered catalogue model class name, sorted."""
     return tuple(sorted(_CLASS_TO_MODULE))
+
+
+def _models_named_in(source: str) -> list[str]:
+    """Return the catalogue models whose class name appears in *source* as a whole identifier.
+
+    ``NMDANeuron`` is not named by a text that holds ``DendriticNMDANeuron``.
+    """
+    pattern = r"\b(?:" + "|".join(re.escape(name) for name in model_names()) + r")\b"
+    return sorted(set(re.findall(pattern, source)))
 
 
 def _names_in_payload(payload: object, wanted: frozenset[str]) -> set[str]:
@@ -170,8 +187,70 @@ def _parsed_records(repo_root: Path) -> dict[str, object]:
     return parsed
 
 
+def _bound_scripts(payload: object) -> list[str]:
+    """Return the Python sources a record binds below the scripts directory, sorted.
+
+    Each is given by its path below that directory. Only a script directly
+    inside it is a benchmark script, and only those are looked up by the
+    caller, so a bound source in a subfolder or elsewhere attributes nothing:
+    it is a source, not the benchmark that wrote the record.
+    """
+    hashes = payload.get("source_hashes") if isinstance(payload, dict) else None
+    if not isinstance(hashes, dict):
+        return []
+    prefix = f"{SCRIPTS_DIR}/"
+    return sorted(
+        key[len(prefix) :]
+        for key in hashes
+        if isinstance(key, str) and key.startswith(prefix) and key.endswith(".py")
+    )
+
+
+def record_attributions(repo_root: Path = REPO_ROOT) -> dict[str, dict[str, object]]:
+    """Return, for each record that measures a model, the models and how that is known.
+
+    A record that holds a model's class name measures that model
+    (``class_name``). A record that holds none, and binds by path benchmark
+    scripts that between them name exactly one model, measures that model
+    (``bound_script``; the first such script by name is recorded). A record
+    whose scripts name two models is credited to neither: which of them it
+    measured is not stated anywhere a tool can read.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Repository root; the results and script directories are resolved beneath it.
+
+    Returns
+    -------
+    dict
+        Record path below the results directory to ``models`` (sorted names),
+        ``attribution`` (one of :data:`ATTRIBUTIONS`) and, for a script
+        attribution, ``script``.
+    """
+    wanted = frozenset(model_names())
+    named_by_script = {
+        path.name: _models_named_in(source) for path, source in _script_sources(repo_root)
+    }
+    attributed: dict[str, dict[str, object]] = {}
+    for record, payload in _parsed_records(repo_root).items():
+        by_class = sorted(_names_in_payload(payload, wanted))
+        if by_class:
+            attributed[record] = {"models": by_class, "attribution": "class_name"}
+            continue
+        naming = [script for script in _bound_scripts(payload) if named_by_script.get(script)]
+        models = {name for script in naming for name in named_by_script[script]}
+        if len(models) == 1:
+            attributed[record] = {
+                "models": sorted(models),
+                "attribution": "bound_script",
+                "script": naming[0],
+            }
+    return attributed
+
+
 def measured_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
-    """Return each model that a committed benchmark record names, with the records.
+    """Return each model that a committed benchmark record measures, with the records.
 
     Parameters
     ----------
@@ -181,14 +260,16 @@ def measured_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     Returns
     -------
     dict
-        Model name to the sorted records naming it, each given by its path
-        below the results directory. A model absent from the mapping has no
-        committed benchmark evidence at all.
+        Model name to the sorted records attributed to it (see
+        :func:`record_attributions`), each given by its path below the results
+        directory. A model absent from the mapping has no committed benchmark
+        evidence at all.
     """
-    wanted = frozenset(model_names())
     found: dict[str, set[str]] = {}
-    for record, payload in _parsed_records(repo_root).items():
-        for name in _names_in_payload(payload, wanted):
+    for record, entry in record_attributions(repo_root).items():
+        models = entry["models"]
+        assert isinstance(models, list)
+        for name in models:
             found.setdefault(name, set()).add(record)
     return {name: sorted(records) for name, records in sorted(found.items())}
 
@@ -270,6 +351,17 @@ def record_currency(
     return {"name": record, "currency": "outdated", "changed": changed}
 
 
+def _script_sources(repo_root: Path) -> list[tuple[Path, str]]:
+    """Return every readable benchmark script with its text."""
+    sources: list[tuple[Path, str]] = []
+    for path in _evidence_files(repo_root, SCRIPTS_DIR, "*.py"):
+        try:
+            sources.append((path, path.read_text(encoding="utf-8")))
+        except OSError:
+            continue
+    return sources
+
+
 def apparatus_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     """Return each model a benchmark script names, with the scripts naming it.
 
@@ -283,16 +375,10 @@ def apparatus_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     dict
         Model name to the sorted script filenames naming it.
     """
-    wanted = model_names()
     found: dict[str, set[str]] = {}
-    for path in _evidence_files(repo_root, SCRIPTS_DIR, "*.py"):
-        try:
-            source = path.read_text(encoding="utf-8")
-        except OSError:
-            continue
-        for name in wanted:
-            if name in source:
-                found.setdefault(name, set()).add(path.name)
+    for path, source in _script_sources(repo_root):
+        for name in _models_named_in(source):
+            found.setdefault(name, set()).add(path.name)
     return {name: sorted(scripts) for name, scripts in sorted(found.items())}
 
 
@@ -318,15 +404,27 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
         same totals over every record that parses, and the records that bind
         sources although no model's name appears in them.
     """
-    measured = measured_models(repo_root)
+    attributions = record_attributions(repo_root)
+    measured: dict[str, list[str]] = {}
+    for record, entry in sorted(attributions.items()):
+        models = entry["models"]
+        assert isinstance(models, list)
+        for name in models:
+            measured.setdefault(name, []).append(record)
     apparatus = apparatus_models(repo_root)
     named_paths = manifest_source_paths(repo_root)
     every = {
         record: record_currency(record, repo_root, named_paths.get(record))
         for record in _parsed_records(repo_root)
     }
-    cited = {record for records in measured.values() for record in records}
-    currency = {record: every[record] for record in sorted(cited)}
+    cited = set(attributions)
+    currency = {
+        record: {
+            **every[record],
+            **{key: value for key, value in attributions[record].items() if key != "models"},
+        }
+        for record in sorted(cited)
+    }
     uncited_bound = [
         entry
         for record, entry in sorted(every.items())
@@ -355,6 +453,10 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
         "catalogue_models": len(rows),
         "totals": totals,
         "cited_records": len(currency),
+        "attribution_totals": {
+            word: sum(1 for entry in currency.values() if entry["attribution"] == word)
+            for word in ATTRIBUTIONS
+        },
         "record_currency_totals": record_totals,
         "all_records": len(every),
         "all_record_currency_totals": _currency_totals(every.values()),
@@ -382,7 +484,12 @@ def render_summary(census: dict[str, object]) -> str:
     lines.append("a benchmark script that names a model is apparatus, not a measurement")
     record_totals = census["record_currency_totals"]
     assert isinstance(record_totals, dict)
-    lines.append(f"cited records: {census['cited_records']}")
+    by = census["attribution_totals"]
+    assert isinstance(by, dict)
+    lines.append(
+        f"cited records: {census['cited_records']} "
+        f"(by class name {by['class_name']}, through the bound script {by['bound_script']})"
+    )
     for word in CURRENCIES:
         lines.append(f"  {word:15s} {int(record_totals[word]):4d}")
     all_totals = census["all_record_currency_totals"]

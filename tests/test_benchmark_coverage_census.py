@@ -11,8 +11,10 @@
 The 7-point audit carries "Benchmarks FAIL — 63/173 covered (36%)" as a
 hand-written row that nothing computes. Measured against live sources the figure
 matches neither of the two things it could mean: 101 of 185 models are *named by*
-a benchmark script, and 28 have a *committed record* naming them. The 73 models
-between those figures own the apparatus and show no evidence anyone ran it.
+a benchmark script, and 84 are measured by a *committed record* (28 by a record
+that holds their class name, 56 more by a record that binds their benchmark
+script). The 17 models between those figures own the apparatus and show no
+evidence anyone ran it.
 
 These cases hold the census to that distinction. A script is not a measurement,
 the three states stay exhaustive and disjoint, and the totals are pinned so the
@@ -25,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import re
 import runpy
 import subprocess
 import sys
@@ -50,7 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 #: The measured census at the time this was pinned. It shrinks only by a
 #: deliberate change here, and `apparatus_only` shrinking while `measured` does
 #: not would mean scripts were deleted rather than benchmarks run.
-PINNED_TOTALS = {"measured": 28, "apparatus_only": 73, "absent": 84}
+PINNED_TOTALS = {"measured": 84, "apparatus_only": 17, "absent": 84}
 
 
 @pytest.fixture(scope="module")
@@ -124,18 +127,31 @@ class TestApparatusIsNotEvidence:
     def test_a_measured_model_is_named_by_the_record_it_cites(
         self, census: dict[str, object]
     ) -> None:
-        """A citation that does not name the model is not evidence for it."""
+        """A citation that does not name the model is not evidence for it.
+
+        Checked here by reading the files: a record attributed by class name holds
+        the name; one attributed through its script binds that script by path, and
+        the script names this model and no other.
+        """
+        every_name = [str(other["model"]) for other in _rows(census)]
         for row in _rows(census):
             if row["state"] != "measured":
                 continue
-            records = row["records"]
-            assert isinstance(records, list) and records
+            records = _records(row)
+            assert records
             for record in records:
-                assert isinstance(record, dict)
-                text = (REPO_ROOT / "benchmarks" / "results" / str(record["name"])).read_text(
-                    encoding="utf-8"
-                )
-                assert str(row["model"]) in text
+                path = REPO_ROOT / "benchmarks" / "results" / str(record["name"])
+                text = path.read_text(encoding="utf-8")
+                if record["attribution"] == "class_name":
+                    assert f'"{row["model"]}"' in text
+                    assert "script" not in record
+                    continue
+                assert record["attribution"] == "bound_script"
+                script = str(record["script"])
+                assert f"benchmarks/{script}" in json.loads(text)["source_hashes"]
+                source = (REPO_ROOT / "benchmarks" / script).read_text(encoding="utf-8")
+                named = [name for name in every_name if re.search(rf"\b{name}\b", source)]
+                assert named == [str(row["model"])]
 
     def test_an_absent_model_has_neither(self, census: dict[str, object]) -> None:
         """Otherwise 'absent' would understate what exists."""
@@ -212,7 +228,9 @@ class TestARecordSaysWhetherItsSourcesAreStillTheSame:
         _tree_with_one_record(tmp_path)
         row = _adex_row(build_census(tmp_path))
         assert row["state"] == "measured"
-        assert row["records"] == [{"name": "bench_adex.json", "currency": "current"}]
+        assert row["records"] == [
+            {"name": "bench_adex.json", "currency": "current", "attribution": "class_name"}
+        ]
 
     def test_one_changed_source_makes_it_outdated_and_is_named(self, tmp_path: Path) -> None:
         """Only the source that changed is listed; the untouched one is not."""
@@ -221,7 +239,12 @@ class TestARecordSaysWhetherItsSourcesAreStillTheSame:
         row = _adex_row(build_census(tmp_path))
         assert row["state"] == "measured"
         assert row["records"] == [
-            {"name": "bench_adex.json", "currency": "outdated", "changed": ["src/kernel.py"]}
+            {
+                "name": "bench_adex.json",
+                "currency": "outdated",
+                "changed": ["src/kernel.py"],
+                "attribution": "class_name",
+            }
         ]
 
     def test_a_removed_source_makes_it_outdated_and_is_named(self, tmp_path: Path) -> None:
@@ -251,13 +274,17 @@ class TestARecordSaysWhetherItsSourcesAreStillTheSame:
         record.write_text(json.dumps(payload), encoding="utf-8")
         row = _adex_row(build_census(tmp_path))
         assert row["state"] == "measured"
-        assert row["records"] == [{"name": "bench_adex.json", "currency": "unbound"}]
+        assert row["records"] == [
+            {"name": "bench_adex.json", "currency": "unbound", "attribution": "class_name"}
+        ]
 
     def test_a_record_in_a_subfolder_is_named_by_its_path(self, tmp_path: Path) -> None:
         """Two records with the same file name in different folders stay apart."""
         _tree_with_one_record(tmp_path, folder="nested")
         row = _adex_row(build_census(tmp_path))
-        assert row["records"] == [{"name": "nested/bench_adex.json", "currency": "current"}]
+        assert row["records"] == [
+            {"name": "nested/bench_adex.json", "currency": "current", "attribution": "class_name"}
+        ]
 
     def test_the_record_totals_count_each_record_once(self, tmp_path: Path) -> None:
         """A record that names two models is one record."""
@@ -574,6 +601,173 @@ class TestOnlyTrackedFilesAreRead:
             capture_output=True,
         )
         assert build_census(tmp_path)["all_records"] == 2
+
+
+def _script_bound_record(
+    root: Path, script_text: str, *, script: str = "benchmarks/bench_demo.py"
+) -> tuple[Path, Path]:
+    """Write a benchmark script and a record that binds it by path and names no model."""
+    script_path = root / script
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+    script_path.write_text(script_text, encoding="utf-8")
+    record = root / "benchmarks" / "results" / "local_demo.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(
+        json.dumps({"benchmark": "demo", "source_hashes": {script: _digest(script_path)}}),
+        encoding="utf-8",
+    )
+    return script_path, record
+
+
+def _row(census: dict[str, object], model: str) -> dict[str, object]:
+    return next(row for row in _rows(census) if row["model"] == model)
+
+
+class TestARecordIsAttributedThroughTheScriptItBinds:
+    """A record that binds one benchmark script measures the one model that script names."""
+
+    def test_the_model_of_the_bound_script_is_measured(self, tmp_path: Path) -> None:
+        """The record says which script produced it; the script says which model."""
+        _script_bound_record(tmp_path, "from models import AdExNeuron\n")
+        census = build_census(tmp_path)
+        row = _row(census, "AdExNeuron")
+        assert row["state"] == "measured"
+        assert row["records"] == [
+            {
+                "name": "local_demo.json",
+                "currency": "current",
+                "attribution": "bound_script",
+                "script": "bench_demo.py",
+            }
+        ]
+        assert census["cited_records"] == 1
+        assert census["uncited_bound_records"] == []
+
+    def test_a_script_that_names_two_models_attributes_nothing(self, tmp_path: Path) -> None:
+        """Which of the two the record measured is not stated, so neither is credited."""
+        _script_bound_record(tmp_path, "AdExNeuron\nLapicqueNeuron\n")
+        census = build_census(tmp_path)
+        assert _row(census, "AdExNeuron")["state"] == "apparatus_only"
+        assert _row(census, "LapicqueNeuron")["state"] == "apparatus_only"
+        assert census["cited_records"] == 0
+        assert census["uncited_bound_records"] == [
+            {"name": "local_demo.json", "currency": "current"}
+        ]
+
+    def test_a_name_inside_a_longer_name_is_not_a_mention(self, tmp_path: Path) -> None:
+        """`NMDANeuron` is not named by a script that names `DendriticNMDANeuron`."""
+        _script_bound_record(tmp_path, "neuron = DendriticNMDANeuron()\n")
+        census = build_census(tmp_path)
+        assert _row(census, "DendriticNMDANeuron")["state"] == "measured"
+        shorter = _row(census, "NMDANeuron")
+        assert shorter["state"] == "absent"
+        assert shorter["scripts"] == []
+
+    def test_a_name_inside_another_identifier_is_not_a_mention(self, tmp_path: Path) -> None:
+        """`AdExNeuron` is not named by `NotAdExNeuronAtAll` or by `AdExNeuronTable`."""
+        _script_bound_record(tmp_path, "class NotAdExNeuronAtAll:\n    AdExNeuronTable = 1\n")
+        census = build_census(tmp_path)
+        row = _row(census, "AdExNeuron")
+        assert row["state"] == "absent"
+        assert row["scripts"] == []
+        assert census["cited_records"] == 0
+
+    def test_a_class_name_in_the_record_comes_first(self, tmp_path: Path) -> None:
+        """A record that names its model is not also credited to its script's model."""
+        _script_path, record = _script_bound_record(tmp_path, "AdExNeuron\n")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["model"] = "LapicqueNeuron"
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        census = build_census(tmp_path)
+        assert _row(census, "LapicqueNeuron")["records"] == [
+            {"name": "local_demo.json", "currency": "current", "attribution": "class_name"}
+        ]
+        assert _row(census, "AdExNeuron")["state"] == "apparatus_only"
+        assert census["cited_records"] == 1
+
+    @pytest.mark.parametrize("script", ["benchmarks/helpers/bench_demo.py", "tools/bench_demo.py"])
+    def test_only_a_script_of_the_benchmark_directory_counts(
+        self, tmp_path: Path, script: str
+    ) -> None:
+        """A bound source elsewhere is a source, not the benchmark that wrote the record."""
+        _script_bound_record(tmp_path, "AdExNeuron\n", script=script)
+        census = build_census(tmp_path)
+        assert _row(census, "AdExNeuron")["state"] == "absent"
+        assert census["cited_records"] == 0
+
+    def test_a_changed_script_keeps_the_attribution_and_ages_the_record(
+        self, tmp_path: Path
+    ) -> None:
+        """Whom a record measures and whether it is current are two separate facts."""
+        script_path, _record = _script_bound_record(tmp_path, "AdExNeuron\n")
+        script_path.write_text("AdExNeuron  # edited\n", encoding="utf-8")
+        assert _row(build_census(tmp_path), "AdExNeuron")["records"] == [
+            {
+                "name": "local_demo.json",
+                "currency": "outdated",
+                "changed": ["benchmarks/bench_demo.py"],
+                "attribution": "bound_script",
+                "script": "bench_demo.py",
+            }
+        ]
+
+    def test_two_bound_scripts_of_one_model_are_one_attribution(self, tmp_path: Path) -> None:
+        """Both scripts name the same single model; the first by name is recorded."""
+        _first, record = _script_bound_record(tmp_path, "AdExNeuron\n")
+        second = tmp_path / "benchmarks" / "bench_again.py"
+        second.write_text("AdExNeuron\n", encoding="utf-8")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["source_hashes"]["benchmarks/bench_again.py"] = _digest(second)
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        records = _row(build_census(tmp_path), "AdExNeuron")["records"]
+        assert isinstance(records, list)
+        assert len(records) == 1
+        assert records[0]["script"] == "bench_again.py"
+
+    def test_a_bound_helper_that_names_no_model_is_not_the_script(self, tmp_path: Path) -> None:
+        """A shared helper beside the benchmark is bound too; it attributes nothing."""
+        _demo, record = _script_bound_record(tmp_path, "AdExNeuron\n")
+        helper = tmp_path / "benchmarks" / "a_shared_context.py"
+        helper.write_text("def load_average() -> str:\n    return ''\n", encoding="utf-8")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["source_hashes"]["benchmarks/a_shared_context.py"] = _digest(helper)
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        records = _row(build_census(tmp_path), "AdExNeuron")["records"]
+        assert isinstance(records, list)
+        assert [entry["script"] for entry in records] == ["bench_demo.py"]
+
+    def test_two_bound_scripts_of_different_models_attribute_nothing(self, tmp_path: Path) -> None:
+        """A record bound to the benchmarks of two models is credited to neither."""
+        _first, record = _script_bound_record(tmp_path, "AdExNeuron\n")
+        second = tmp_path / "benchmarks" / "bench_other.py"
+        second.write_text("LapicqueNeuron\n", encoding="utf-8")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["source_hashes"]["benchmarks/bench_other.py"] = _digest(second)
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        census = build_census(tmp_path)
+        assert census["cited_records"] == 0
+        assert _row(census, "AdExNeuron")["state"] == "apparatus_only"
+
+    def test_the_dendritic_nmda_record_measures_its_model(self, census: dict[str, object]) -> None:
+        """The record that started this: it names its benchmark, not its class."""
+        row = _row(census, "DendriticNMDANeuron")
+        assert row["state"] == "measured"
+        names = {str(record["name"]): record for record in _records(row)}
+        record = names["local_python_2026-06-26_dendritic_nmda_rk4.json"]
+        assert record["attribution"] == "bound_script"
+        assert record["script"] == "bench_model_dendritic_nmda.py"
+
+    def test_the_summary_says_how_the_measured_models_are_known(
+        self, census: dict[str, object]
+    ) -> None:
+        """Two counts that add up to the cited records."""
+        by = census["attribution_totals"]
+        assert isinstance(by, dict)
+        assert set(by) == {"class_name", "bound_script"}
+        assert int(by["class_name"]) + int(by["bound_script"]) == census["cited_records"]
+        summary = render_summary(census)
+        assert f"by class name {by['class_name']}" in summary
+        assert f"through the bound script {by['bound_script']}" in summary
 
 
 class TestUnreadableFilesAreSkippedNotCounted:

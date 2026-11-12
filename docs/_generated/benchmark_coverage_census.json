@@ -5,11 +5,15 @@
     "unbound": 191
   },
   "all_records": 318,
+  "attribution_totals": {
+    "bound_script": 61,
+    "class_name": 26
+  },
   "catalogue_models": 185,
-  "cited_records": 26,
+  "cited_records": 87,
   "record_currency_totals": {
-    "current": 6,
-    "outdated": 19,
+    "current": 14,
+    "outdated": 72,
     "unbound": 1
   },
   "rows": [
@@ -21,20 +25,50 @@
     },
     {
       "model": "AdExNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_adex.json",
+          "script": "bench_adex.py"
+        }
+      ],
       "scripts": [
         "bench_adex.py",
         "bench_neuron_integrators.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "AdaptiveThresholdIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            ".github/workflows/ci.yml",
+            "Cargo.lock",
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/Cargo.toml",
+            "engine/src/bindings/adaptive_threshold_if.rs",
+            "engine/src/neurons/trivial/adaptive_threshold_if.rs",
+            "pyproject.toml",
+            "src/sc_neurocore/accel/go/adaptive_threshold_if/__init__.py",
+            "src/sc_neurocore/accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
+            "src/sc_neurocore/accel/go/go.mod",
+            "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.jl",
+            "src/sc_neurocore/accel/mojo/pixi.lock",
+            "src/sc_neurocore/accel/mojo/pixi.toml",
+            "tools/build_accel_backends.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_adaptive_threshold_if.json",
+          "script": "bench_model_adaptive_threshold_if.py"
+        }
+      ],
       "scripts": [
         "bench_model_adaptive_threshold_if.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "AdaptiveThresholdMoENeuron",
@@ -62,16 +96,36 @@
     },
     {
       "model": "AlphaNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            ".github/workflows/ci.yml",
+            "Cargo.lock",
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/Cargo.toml",
+            "pyproject.toml",
+            "src/sc_neurocore/accel/go/go.mod",
+            "src/sc_neurocore/accel/go/services/alpha.go",
+            "src/sc_neurocore/accel/mojo/pixi.lock",
+            "src/sc_neurocore/accel/mojo/pixi.toml",
+            "tools/build_accel_backends.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_alpha.json",
+          "script": "bench_model_alpha.py"
+        }
+      ],
       "scripts": [
         "bench_model_alpha.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "AmariNeuralField",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_amari_field.json"
         }
@@ -167,6 +221,7 @@
       "model": "BrunelWangNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/simple_spiking/brunel_wang.rs",
@@ -183,27 +238,60 @@
     },
     {
       "model": "ButeraRespiratoryNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/simple_spiking/butera_respiratory.rs"
+          ],
+          "currency": "outdated",
+          "name": "bench_butera_respiratory.json",
+          "script": "bench_model_butera_respiratory.py"
+        }
+      ],
       "scripts": [
         "bench_model_butera_respiratory.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "COBALIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_schemas/coba_lif.json",
+            "src/sc_neurocore/neurons/model_schemas/coba_lif.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_coba_lif_rk4.json",
+          "script": "bench_model_coba_lif.py"
+        }
+      ],
       "scripts": [
         "bench_model_coba_lif.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "CazellesMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "src/sc_neurocore/neurons/models/cazelles_map.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_cazelles_map.json",
+          "script": "bench_cazelles_map.py"
+        }
+      ],
       "scripts": [
         "bench_cazelles_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "CerebellarBasketNeuron",
@@ -237,11 +325,21 @@
     },
     {
       "model": "ChialvoMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_chialvo_map.json",
+          "script": "bench_chialvo_map.py"
+        }
+      ],
       "scripts": [
         "bench_chialvo_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ClosedFormContinuousNeuron",
@@ -271,6 +369,7 @@
       "model": "CompteWMNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "src/sc_neurocore/accel/rust/safety/compte_wm.rs"
           ],
@@ -285,11 +384,22 @@
     },
     {
       "model": "ConnorStevensNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/biophysical/connor_stevens.rs"
+          ],
+          "currency": "outdated",
+          "name": "bench_connor_stevens_mojo.json",
+          "script": "bench_connor_stevens_mojo.py"
+        }
+      ],
       "scripts": [
         "bench_connor_stevens_mojo.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ContinuousAttractorNeuron",
@@ -299,11 +409,18 @@
     },
     {
       "model": "CourageNekorkinMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_courage_nekorkin_map_simulate.json",
+          "script": "bench_courage_nekorkin_map_simulate.py"
+        }
+      ],
       "scripts": [
         "bench_courage_nekorkin_map_simulate.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "DCNNeuron",
@@ -313,19 +430,42 @@
     },
     {
       "model": "DPINeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "hdl/formal/catalogue/sc_dpineuron.v",
+            "tools/emit_catalogue_formal.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-13_dpi_neuron_circuit.json",
+          "script": "bench_model_dpi_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_dpi_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "DeSchutterPurkinjeNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/biophysical.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-26_de_schutter_purkinje_rk4.json",
+          "script": "bench_model_de_schutter_purkinje.py"
+        }
+      ],
       "scripts": [
         "bench_model_de_schutter_purkinje.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "DendrifyNeuron",
@@ -335,11 +475,18 @@
     },
     {
       "model": "DendriticNMDANeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "local_python_2026-06-26_dendritic_nmda_rk4.json",
+          "script": "bench_model_dendritic_nmda.py"
+        }
+      ],
       "scripts": [
         "bench_model_dendritic_nmda.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "DestexheThalamicNeuron",
@@ -361,11 +508,22 @@
     },
     {
       "model": "DurstewitzDopamineNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/biophysical.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_durstewitz_dopamine_rk4.json",
+          "script": "bench_model_durstewitz_dopamine.py"
+        }
+      ],
       "scripts": [
         "bench_model_durstewitz_dopamine.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "EPropALIFNeuron",
@@ -377,6 +535,7 @@
       "model": "EnergyLIFNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
@@ -385,50 +544,131 @@
           ],
           "currency": "outdated",
           "name": "bench_energy_lif.json"
+        },
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_energy_lif.py",
+            "src/sc_neurocore/accel/go/services/energy_lif.go",
+            "src/sc_neurocore/accel/go/services/energy_lif_test.go",
+            "src/sc_neurocore/accel/julia/neurons/energy_lif.jl",
+            "src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo",
+            "src/sc_neurocore/accel/rust/safety/energy_lif.rs",
+            "src/sc_neurocore/neurons/models/energy_lif.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_energy_lif_exact_flow.json",
+          "script": "bench_model_energy_lif.py"
         }
       ],
       "scripts": [
-        "bench_model_energy_lif.py",
-        "bench_model_sc_normalized_energy_lif.py"
+        "bench_model_energy_lif.py"
       ],
       "state": "measured"
     },
     {
       "model": "ErmentroutKopellMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_ermentrout_kopell_map.json",
+          "script": "bench_ermentrout_kopell_map.py"
+        }
+      ],
       "scripts": [
         "bench_ermentrout_kopell_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ErmentroutKopellPopulation",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "Cargo.lock",
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/Cargo.toml",
+            "pyproject.toml",
+            "src/sc_neurocore/accel/go/go.mod",
+            "src/sc_neurocore/accel/mojo/pixi.lock",
+            "src/sc_neurocore/accel/mojo/pixi.toml",
+            "tools/build_accel_backends.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_ermentrout_kopell_pop.json",
+          "script": "bench_ermentrout_kopell_pop.py"
+        }
+      ],
       "scripts": [
         "bench_ermentrout_kopell_pop.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "EscapeRateNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_schemas/escape_rate.json",
+            "src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
+            "src/sc_neurocore/neurons/models/escape_rate.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_escape_rate_lfsr16.json",
+          "script": "bench_model_escape_rate.py"
+        }
+      ],
       "scripts": [
         "bench_model_escape_rate.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ExpIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_schemas/exp_if.json",
+            "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
+            "tests/test_model_expif_source_contract.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_expif.json",
+          "script": "bench_model_expif.py"
+        },
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_expif.py",
+            "engine/src/neuron/exp_if.rs",
+            "src/sc_neurocore/accel/go/neurons/expif/expif.go",
+            "src/sc_neurocore/accel/go/services/expif.go",
+            "src/sc_neurocore/accel/julia/neurons/expif.jl",
+            "src/sc_neurocore/accel/mojo/kernels/expif.mojo",
+            "src/sc_neurocore/accel/rust/safety/expif.rs",
+            "src/sc_neurocore/neurons/models/expif.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-16_expif_rk4.json",
+          "script": "bench_model_expif.py"
+        }
+      ],
       "scripts": [
         "bench_model_expif.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "FitzHughNagumoNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/fitzhugh_nagumo.rs"
           ],
@@ -445,6 +685,7 @@
       "model": "FitzHughRinzelNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs"
           ],
@@ -475,8 +716,7 @@
       "model": "GLIFNeuron",
       "records": [],
       "scripts": [
-        "bench_glif_simulate.py",
-        "bench_sc_four_state_glif.py"
+        "bench_glif_simulate.py"
       ],
       "state": "apparatus_only"
     },
@@ -518,11 +758,22 @@
     },
     {
       "model": "GolombFSNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/biophysical.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-23_golomb_fs_rk4.json",
+          "script": "bench_model_golomb_fs.py"
+        }
+      ],
       "scripts": [
         "bench_model_golomb_fs.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "GranuleCell",
@@ -532,32 +783,66 @@
     },
     {
       "model": "GutkinErmentroutNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_gutkin_ermentrout_rk4.json",
+          "script": "bench_model_gutkin_ermentrout.py"
+        }
+      ],
       "scripts": [
         "bench_model_gutkin_ermentrout.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "HayL5PyramidalNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/multi_compartment/hay_l5.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-26_hay_l5_rk4.json",
+          "script": "bench_model_hay_l5.py"
+        }
+      ],
       "scripts": [
         "bench_model_hay_l5.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "HillTononiNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/biophysical.rs",
+            "engine/src/neurons/biophysical/hill_tononi.rs"
+          ],
+          "currency": "outdated",
+          "name": "bench_hill_tononi.json",
+          "script": "bench_model_hill_tononi.py"
+        }
+      ],
       "scripts": [
         "bench_model_hill_tononi.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "HindmarshRoseNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/hindmarsh_rose.rs"
           ],
@@ -572,12 +857,25 @@
     },
     {
       "model": "HodgkinHuxleyNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/biophysical/hodgkin_huxley.rs",
+            "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json",
+            "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml"
+          ],
+          "currency": "outdated",
+          "name": "bench_hodgkin_huxley_mojo.json",
+          "script": "bench_hodgkin_huxley_mojo.py"
+        }
+      ],
       "scripts": [
         "bench_hodgkin_huxley_mojo.py",
         "bench_neuron_integrators.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "HuberBraunNeuron",
@@ -599,11 +897,21 @@
     },
     {
       "model": "IbarzTanakaMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_ibarz_tanaka_map.json",
+          "script": "bench_ibarz_tanaka_map.py"
+        }
+      ],
       "scripts": [
         "bench_ibarz_tanaka_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "IhNeuron",
@@ -625,27 +933,54 @@
     },
     {
       "model": "IntegerQIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_iqif.json",
+          "script": "bench_model_iqif.py"
+        }
+      ],
       "scripts": [
         "bench_model_iqif.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "Izhikevich2007Neuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_izhikevich2007_simulate.json",
+          "script": "bench_izhikevich2007_simulate.py"
+        }
+      ],
       "scripts": [
         "bench_izhikevich2007_simulate.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "JansenRitUnit",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_jansen_rit.json",
+          "script": "bench_jansen_rit.py"
+        }
+      ],
       "scripts": [
         "bench_jansen_rit.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "KLIFNeuron",
@@ -655,16 +990,45 @@
     },
     {
       "model": "LapicqueNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "src/sc_neurocore/accel/lapicque.py",
+            "src/sc_neurocore/neurons/models/lapicque.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_lapicque.json",
+          "script": "bench_model_lapicque.py"
+        },
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_lapicque.py",
+            "engine/src/neuron/lapicque.rs",
+            "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
+            "src/sc_neurocore/accel/go/services/lapicque.go",
+            "src/sc_neurocore/accel/julia/neurons/lapicque.jl",
+            "src/sc_neurocore/accel/lapicque.py",
+            "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
+            "src/sc_neurocore/accel/rust/safety/lapicque.rs",
+            "src/sc_neurocore/neurons/models/lapicque.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-17_lapicque_exact_flow.json",
+          "script": "bench_model_lapicque.py"
+        }
+      ],
       "scripts": [
         "bench_model_lapicque.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "LarterBreakspearNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_larter_breakspear.json"
         }
@@ -716,6 +1080,7 @@
       "model": "MATNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/bench_model_mat.py",
             "bridge/sc_neurocore_engine/__init__.py",
@@ -730,11 +1095,25 @@
           ],
           "currency": "outdated",
           "name": "bench_mat.json"
+        },
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_mat.py",
+            "src/sc_neurocore/accel/go/services/mat.go",
+            "src/sc_neurocore/accel/go/services/mat_test.go",
+            "src/sc_neurocore/accel/julia/neurons/mat.jl",
+            "src/sc_neurocore/accel/mojo/kernels/mat.mojo",
+            "src/sc_neurocore/accel/rust/safety/mat.rs",
+            "src/sc_neurocore/neurons/models/mat.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_mat_rk4.json",
+          "script": "bench_model_mat.py"
         }
       ],
       "scripts": [
-        "bench_model_mat.py",
-        "bench_model_sc_resetting_mat.py"
+        "bench_model_mat.py"
       ],
       "state": "measured"
     },
@@ -752,24 +1131,46 @@
     },
     {
       "model": "MartinottiNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_martinotti_neuron_rk4.json",
+          "script": "bench_model_martinotti_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_martinotti_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "McCullochPittsNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_mcculloch_pitts.json",
+          "script": "bench_model_mcculloch_pitts.py"
+        }
+      ],
       "scripts": [
         "bench_model_mcculloch_pitts.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "McKeanNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/neurons/simple_spiking/mckean.rs",
@@ -780,18 +1181,27 @@
         }
       ],
       "scripts": [
-        "bench_model_mckean.py",
-        "bench_model_sc_triangular_mckean.py"
+        "bench_model_mckean.py"
       ],
       "state": "measured"
     },
     {
       "model": "MedvedevMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_medvedev_map.json",
+          "script": "bench_medvedev_map.py"
+        }
+      ],
       "scripts": [
         "bench_medvedev_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "MetaPlasticNeuron",
@@ -810,11 +1220,21 @@
     },
     {
       "model": "MorrisLecarNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-17_morris_lecar_rk4.json",
+          "script": "bench_model_morris_lecar.py"
+        }
+      ],
       "scripts": [
         "bench_model_morris_lecar.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "MotorUnit",
@@ -830,22 +1250,33 @@
     },
     {
       "model": "MulticompartmentMCNNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/multi_compartment/multicompartment_mcn.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-26_multicompartment_mcn_rk4.json",
+          "script": "bench_model_multicompartment_mcn.py"
+        }
+      ],
       "scripts": [
         "bench_model_multicompartment_mcn.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "NMDANeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_nmda.json"
         }
       ],
       "scripts": [
-        "bench_model_dendritic_nmda.py",
         "bench_model_nmda.py"
       ],
       "state": "measured"
@@ -858,16 +1289,27 @@
     },
     {
       "model": "NeuroGridNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-26_neurogrid_rk4.json",
+          "script": "bench_model_neurogrid.py"
+        }
+      ],
       "scripts": [
         "bench_model_neurogrid.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "NonResettingLIFNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "bridge/sc_neurocore_engine/__init__.py",
@@ -885,19 +1327,39 @@
     },
     {
       "model": "NonlinearLIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_nlif.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_nlif_rk4.json",
+          "script": "bench_model_nlif.py"
+        }
+      ],
       "scripts": [
         "bench_model_nlif.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "PVFastSpikingNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_pv_fast_spiking_rk4.json",
+          "script": "bench_model_pv_fast_spiking_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_pv_fast_spiking_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ParallelSpikingNeuron",
@@ -915,16 +1377,45 @@
     },
     {
       "model": "PerfectIntegratorNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
+            "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml"
+          ],
+          "currency": "outdated",
+          "name": "bench_perfect_integrator.json",
+          "script": "bench_model_perfect_integrator.py"
+        },
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_perfect_integrator.py",
+            "engine/src/neurons/trivial/perfect_integrator.rs",
+            "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
+            "src/sc_neurocore/accel/go/services/perfect_integrator.go",
+            "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
+            "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo",
+            "src/sc_neurocore/accel/perfect_integrator.py",
+            "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs",
+            "src/sc_neurocore/neurons/models/perfect_integrator.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-13_perfect_integrator_euler.json",
+          "script": "bench_model_perfect_integrator.py"
+        }
+      ],
       "scripts": [
         "bench_model_perfect_integrator.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "PernarowskiNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/pernarowski.rs"
           ],
@@ -957,19 +1448,43 @@
     },
     {
       "model": "PoissonNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_schemas/poisson.json",
+            "src/sc_neurocore/neurons/model_schemas/poisson.toml",
+            "src/sc_neurocore/neurons/models/poisson.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_poisson_lfsr16.json",
+          "script": "bench_model_poisson.py"
+        }
+      ],
       "scripts": [
         "bench_model_poisson.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "PospischilNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/biophysical.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-23_pospischil_rk4.json",
+          "script": "bench_model_pospischil.py"
+        }
+      ],
       "scripts": [
         "bench_model_pospischil.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "PredictiveCodingNeuron",
@@ -987,11 +1502,22 @@
     },
     {
       "model": "QuadraticIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
+            "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-16_quadratic_if_exact_flow.json",
+          "script": "bench_model_quadratic_if.py"
+        }
+      ],
       "scripts": [
         "bench_model_quadratic_if.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "QuantumInspiredLIFNeuron",
@@ -1001,11 +1527,22 @@
     },
     {
       "model": "RallCableNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/multi_compartment/rall_cable.rs"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_rall_cable_implicit.json",
+          "script": "bench_model_rall_cable.py"
+        }
+      ],
       "scripts": [
         "bench_model_rall_cable.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "RenshawCell",
@@ -1015,24 +1552,41 @@
     },
     {
       "model": "ResonateAndFireNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            ".github/workflows/ci.yml",
+            "Cargo.lock",
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/Cargo.toml",
+            "pyproject.toml",
+            "src/sc_neurocore/accel/go/go.mod",
+            "src/sc_neurocore/accel/mojo/pixi.lock",
+            "src/sc_neurocore/accel/mojo/pixi.toml",
+            "tools/build_accel_backends.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_resonate_and_fire.json",
+          "script": "bench_model_resonate_and_fire.py"
+        }
+      ],
       "scripts": [
-        "bench_balanced_resonate_and_fire.py",
         "bench_model_resonate_and_fire.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "RulkovMapNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_rulkov_map.json"
         }
       ],
       "scripts": [
-        "bench_rulkov_map.py",
-        "bench_sc_upward_crossing_rulkov_map.py"
+        "bench_rulkov_map.py"
       ],
       "state": "measured"
     },
@@ -1050,24 +1604,39 @@
     },
     {
       "model": "SCClippedLogisticBurstingMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_sc_clipped_logistic_bursting_map.json",
+          "script": "bench_sc_clipped_logistic_bursting_map.py"
+        }
+      ],
       "scripts": [
         "bench_sc_clipped_logistic_bursting_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SCClippedRationalRecoveryMapNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "bench_sc_clipped_rational_recovery_map.json",
+          "script": "bench_sc_clipped_rational_recovery_map.py"
+        }
+      ],
       "scripts": [
         "bench_sc_clipped_rational_recovery_map.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SCDecoupledAdaptationIonMassNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_larter_breakspear.json"
         }
@@ -1113,6 +1682,7 @@
       "model": "SCNonResettingAdaptiveLIFNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "bridge/sc_neurocore_engine/__init__.py",
@@ -1132,6 +1702,7 @@
       "model": "SCNormalizedEnergyLIFNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
@@ -1151,6 +1722,7 @@
       "model": "SCResettingMATNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/bench_model_sc_resetting_mat.py",
             "bridge/sc_neurocore_engine/__init__.py",
@@ -1182,6 +1754,7 @@
       "model": "SCResettingWilsonHRNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_sc_resetting_wilson_hr_simulate.json"
         }
@@ -1203,6 +1776,7 @@
       "model": "SCSigmaDeltaAccumulatorNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
@@ -1247,6 +1821,7 @@
       "model": "SCTriangularMcKeanNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/neurons/simple_spiking/sc_triangular_mckean.rs"
@@ -1262,16 +1837,29 @@
     },
     {
       "model": "SCUnitCapacitanceRespiratoryNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml",
+            "engine/src/neurons/simple_spiking/butera_respiratory.rs",
+            "engine/src/neurons/simple_spiking/sc_unit_capacitance_respiratory.rs"
+          ],
+          "currency": "outdated",
+          "name": "bench_sc_unit_capacitance_respiratory.json",
+          "script": "bench_model_sc_unit_capacitance_respiratory.py"
+        }
+      ],
       "scripts": [
         "bench_model_sc_unit_capacitance_respiratory.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SCUpwardCrossingRulkovMapNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_sc_upward_crossing_rulkov_map.json"
         }
@@ -1285,6 +1873,7 @@
       "model": "SCWBNMDAMagnesiumBlockNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "current",
           "name": "bench_nmda.json"
         }
@@ -1296,11 +1885,21 @@
     },
     {
       "model": "SFANeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_sfa.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_sfa_rk4.json",
+          "script": "bench_model_sfa.py"
+        }
+      ],
       "scripts": [
         "bench_model_sfa.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SKNeuron",
@@ -1310,19 +1909,36 @@
     },
     {
       "model": "SRM0Neuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "currency": "current",
+          "name": "local_python_2026-06-18_srm0_exact_flow.json",
+          "script": "bench_model_srm0.py"
+        }
+      ],
       "scripts": [
         "bench_model_srm0.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SSTNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_sst_neuron_rk4.json",
+          "script": "bench_model_sst_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_sst_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SelfReferentialNeuron",
@@ -1334,6 +1950,7 @@
       "model": "ShermanRinzelKeizerNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "currency": "unbound",
           "name": "bench_sherman_rinzel_keizer.json"
         }
@@ -1353,6 +1970,7 @@
       "model": "SigmaDeltaNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
@@ -1369,11 +1987,21 @@
     },
     {
       "model": "SigmoidRateNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_sigmoid_rate.json",
+          "script": "bench_model_sigmoid_rate.py"
+        }
+      ],
       "scripts": [
         "bench_model_sigmoid_rate.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SpiNNaker2Neuron",
@@ -1383,19 +2011,39 @@
     },
     {
       "model": "SpiNNakerLIFNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_spinnaker_lif.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_spinnaker_lif_exact_flow.json",
+          "script": "bench_model_spinnaker_lif.py"
+        }
+      ],
       "scripts": [
         "bench_model_spinnaker_lif.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "SpikeResponseNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "benchmarks/bench_model_spike_response.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-18_spike_response_kernel.json",
+          "script": "bench_model_spike_response.py"
+        }
+      ],
       "scripts": [
         "bench_model_spike_response.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "StellateCell",
@@ -1437,6 +2085,7 @@
       "model": "TermanWangOscillator",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/terman_wang.rs"
           ],
@@ -1451,19 +2100,42 @@
     },
     {
       "model": "ThetaNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/descriptor_generator.py",
+            "tools/emit_catalogue_formal.py",
+            "tools/readiness_evidence_index.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-16_theta_exact_flow.json",
+          "script": "bench_model_theta.py"
+        }
+      ],
       "scripts": [
         "bench_model_theta.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "ThresholdLinearRateNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-07-14_threshold_linear_rate.json",
+          "script": "bench_model_threshold_linear_rate.py"
+        }
+      ],
       "scripts": [
         "bench_model_threshold_linear_rate.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "TraubMilesNeuron",
@@ -1499,24 +2171,45 @@
     },
     {
       "model": "UpperMotorNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_upper_motor_neuron_exp_euler.json",
+          "script": "bench_model_upper_motor_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_upper_motor_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "VIPNeuron",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
+          "name": "local_python_2026-06-24_vip_neuron_rk4.json",
+          "script": "bench_model_vip_neuron.py"
+        }
+      ],
       "scripts": [
         "bench_model_vip_neuron.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "WangBuzsakiNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/Cargo.toml",
             "engine/src/neurons/biophysical/wang_buzsaki.rs"
@@ -1538,16 +2231,27 @@
     },
     {
       "model": "WilsonCowanUnit",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_wilson_cowan.json",
+          "script": "bench_wilson_cowan.py"
+        }
+      ],
       "scripts": [
         "bench_wilson_cowan.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "WilsonHRNeuron",
       "records": [
         {
+          "attribution": "class_name",
           "changed": [
             "engine/src/neurons/simple_spiking/wilson_hr.rs"
           ],
@@ -1556,18 +2260,27 @@
         }
       ],
       "scripts": [
-        "bench_sc_resetting_wilson_hr_simulate.py",
         "bench_wilson_hr_simulate.py"
       ],
       "state": "measured"
     },
     {
       "model": "WongWangUnit",
-      "records": [],
+      "records": [
+        {
+          "attribution": "bound_script",
+          "changed": [
+            "bridge/sc_neurocore_engine/__init__.py"
+          ],
+          "currency": "outdated",
+          "name": "bench_wong_wang.json",
+          "script": "bench_wong_wang.py"
+        }
+      ],
       "scripts": [
         "bench_wong_wang.py"
       ],
-      "state": "apparatus_only"
+      "state": "measured"
     },
     {
       "model": "YamadaNeuron",
@@ -1578,56 +2291,16 @@
       "state": "apparatus_only"
     }
   ],
-  "schema_version": "sc-neurocore.benchmark-coverage-census.v2",
+  "schema_version": "sc-neurocore.benchmark-coverage-census.v3",
   "totals": {
     "absent": 84,
-    "apparatus_only": 73,
-    "measured": 28
+    "apparatus_only": 17,
+    "measured": 84
   },
   "uncited_bound_records": [
     {
-      "changed": [
-        ".github/workflows/ci.yml",
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/Cargo.toml",
-        "engine/src/bindings/adaptive_threshold_if.rs",
-        "engine/src/neurons/trivial/adaptive_threshold_if.rs",
-        "pyproject.toml",
-        "src/sc_neurocore/accel/go/adaptive_threshold_if/__init__.py",
-        "src/sc_neurocore/accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
-        "src/sc_neurocore/accel/go/go.mod",
-        "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.jl",
-        "src/sc_neurocore/accel/mojo/pixi.lock",
-        "src/sc_neurocore/accel/mojo/pixi.toml",
-        "tools/build_accel_backends.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_adaptive_threshold_if.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_adex.json"
-    },
-    {
       "currency": "current",
       "name": "bench_aihara_map.json"
-    },
-    {
-      "changed": [
-        ".github/workflows/ci.yml",
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/Cargo.toml",
-        "pyproject.toml",
-        "src/sc_neurocore/accel/go/go.mod",
-        "src/sc_neurocore/accel/go/services/alpha.go",
-        "src/sc_neurocore/accel/mojo/pixi.lock",
-        "src/sc_neurocore/accel/mojo/pixi.toml",
-        "tools/build_accel_backends.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_alpha.json"
     },
     {
       "currency": "current",
@@ -1642,107 +2315,8 @@
       "name": "bench_bioware.json"
     },
     {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/simple_spiking/butera_respiratory.rs"
-      ],
-      "currency": "outdated",
-      "name": "bench_butera_respiratory.json"
-    },
-    {
-      "changed": [
-        "src/sc_neurocore/neurons/models/cazelles_map.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_cazelles_map.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_chialvo_map.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/src/neurons/biophysical/connor_stevens.rs"
-      ],
-      "currency": "outdated",
-      "name": "bench_connor_stevens_mojo.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_courage_nekorkin_map_simulate.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_ermentrout_kopell_map.json"
-    },
-    {
-      "changed": [
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/Cargo.toml",
-        "pyproject.toml",
-        "src/sc_neurocore/accel/go/go.mod",
-        "src/sc_neurocore/accel/mojo/pixi.lock",
-        "src/sc_neurocore/accel/mojo/pixi.toml",
-        "tools/build_accel_backends.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_ermentrout_kopell_pop.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/model_schemas/exp_if.json",
-        "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
-        "tests/test_model_expif_source_contract.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_expif.json"
-    },
-    {
       "currency": "current",
       "name": "bench_function_call_domains.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/biophysical.rs",
-        "engine/src/neurons/biophysical/hill_tononi.rs"
-      ],
-      "currency": "outdated",
-      "name": "bench_hill_tononi.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/src/neurons/biophysical/hodgkin_huxley.rs",
-        "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json",
-        "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml"
-      ],
-      "currency": "outdated",
-      "name": "bench_hodgkin_huxley_mojo.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_ibarz_tanaka_map.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_izhikevich2007_simulate.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_jansen_rit.json"
     },
     {
       "changed": [
@@ -1752,23 +2326,8 @@
       "name": "bench_kl_refine.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/accel/lapicque.py",
-        "src/sc_neurocore/neurons/models/lapicque.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_lapicque.json"
-    },
-    {
       "currency": "current",
       "name": "bench_learning_bridge.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_medvedev_map.json"
     },
     {
       "currency": "current",
@@ -1795,41 +2354,10 @@
     },
     {
       "changed": [
-        "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
-        "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml"
-      ],
-      "currency": "outdated",
-      "name": "bench_perfect_integrator.json"
-    },
-    {
-      "changed": [
-        ".github/workflows/ci.yml",
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/__init__.py",
-        "engine/Cargo.toml",
-        "pyproject.toml",
-        "src/sc_neurocore/accel/go/go.mod",
-        "src/sc_neurocore/accel/mojo/pixi.lock",
-        "src/sc_neurocore/accel/mojo/pixi.toml",
-        "tools/build_accel_backends.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_resonate_and_fire.json"
-    },
-    {
-      "changed": [
         "src/sc_neurocore/accel/sc_chaotic_map.py"
       ],
       "currency": "outdated",
       "name": "bench_sc_chaotic_map.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_sc_clipped_logistic_bursting_map.json"
-    },
-    {
-      "currency": "current",
-      "name": "bench_sc_clipped_rational_recovery_map.json"
     },
     {
       "changed": [
@@ -1837,29 +2365,6 @@
       ],
       "currency": "outdated",
       "name": "bench_sc_stochastic_rate_adaptation.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/simple_spiking/butera_respiratory.rs",
-        "engine/src/neurons/simple_spiking/sc_unit_capacitance_respiratory.rs"
-      ],
-      "currency": "outdated",
-      "name": "bench_sc_unit_capacitance_respiratory.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_wilson_cowan.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "bench_wong_wang.json"
     },
     {
       "currency": "current",
@@ -1963,314 +2468,11 @@
     },
     {
       "changed": [
-        "benchmarks/bench_model_expif.py",
-        "engine/src/neuron/exp_if.rs",
-        "src/sc_neurocore/accel/go/neurons/expif/expif.go",
-        "src/sc_neurocore/accel/go/services/expif.go",
-        "src/sc_neurocore/accel/julia/neurons/expif.jl",
-        "src/sc_neurocore/accel/mojo/kernels/expif.mojo",
-        "src/sc_neurocore/accel/rust/safety/expif.rs",
-        "src/sc_neurocore/neurons/models/expif.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-16_expif_rk4.json"
-    },
-    {
-      "changed": [
-        "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
-        "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-16_quadratic_if_exact_flow.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/descriptor_generator.py",
-        "tools/emit_catalogue_formal.py",
-        "tools/readiness_evidence_index.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-16_theta_exact_flow.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_lapicque.py",
-        "engine/src/neuron/lapicque.rs",
-        "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
-        "src/sc_neurocore/accel/go/services/lapicque.go",
-        "src/sc_neurocore/accel/julia/neurons/lapicque.jl",
-        "src/sc_neurocore/accel/lapicque.py",
-        "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
-        "src/sc_neurocore/accel/rust/safety/lapicque.rs",
-        "src/sc_neurocore/neurons/models/lapicque.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-17_lapicque_exact_flow.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-17_morris_lecar_rk4.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/model_schemas/coba_lif.json",
-        "src/sc_neurocore/neurons/model_schemas/coba_lif.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_coba_lif_rk4.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_energy_lif.py",
-        "src/sc_neurocore/accel/go/services/energy_lif.go",
-        "src/sc_neurocore/accel/go/services/energy_lif_test.go",
-        "src/sc_neurocore/accel/julia/neurons/energy_lif.jl",
-        "src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo",
-        "src/sc_neurocore/accel/rust/safety/energy_lif.rs",
-        "src/sc_neurocore/neurons/models/energy_lif.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_energy_lif_exact_flow.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_gutkin_ermentrout_rk4.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_mat.py",
-        "src/sc_neurocore/accel/go/services/mat.go",
-        "src/sc_neurocore/accel/go/services/mat_test.go",
-        "src/sc_neurocore/accel/julia/neurons/mat.jl",
-        "src/sc_neurocore/accel/mojo/kernels/mat.mojo",
-        "src/sc_neurocore/accel/rust/safety/mat.rs",
-        "src/sc_neurocore/neurons/models/mat.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_mat_rk4.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_nlif.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_nlif_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/multi_compartment/rall_cable.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_rall_cable_implicit.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_sfa.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_sfa_rk4.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_spike_response.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_spike_response_kernel.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_spinnaker_lif.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-18_spinnaker_lif_exact_flow.json"
-    },
-    {
-      "currency": "current",
-      "name": "local_python_2026-06-18_srm0_exact_flow.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/biophysical.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-23_golomb_fs_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/biophysical.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-23_pospischil_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/biophysical.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_durstewitz_dopamine_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_martinotti_neuron_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_pv_fast_spiking_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_sst_neuron_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_upper_motor_neuron_exp_euler.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-24_vip_neuron_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/biophysical.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-26_de_schutter_purkinje_rk4.json"
-    },
-    {
-      "currency": "current",
-      "name": "local_python_2026-06-26_dendritic_nmda_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/multi_compartment/hay_l5.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-26_hay_l5_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml",
-        "engine/src/neurons/multi_compartment/multicompartment_mcn.rs"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-26_multicompartment_mcn_rk4.json"
-    },
-    {
-      "changed": [
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-06-26_neurogrid_rk4.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "hdl/formal/catalogue/sc_dpineuron.v",
-        "tools/emit_catalogue_formal.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-13_dpi_neuron_circuit.json"
-    },
-    {
-      "changed": [
-        "benchmarks/bench_model_perfect_integrator.py",
-        "engine/src/neurons/trivial/perfect_integrator.rs",
-        "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
-        "src/sc_neurocore/accel/go/services/perfect_integrator.go",
-        "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
-        "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo",
-        "src/sc_neurocore/accel/perfect_integrator.py",
-        "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs",
-        "src/sc_neurocore/neurons/models/perfect_integrator.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-13_perfect_integrator_euler.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/model_schemas/escape_rate.json",
-        "src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
-        "src/sc_neurocore/neurons/models/escape_rate.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_escape_rate_lfsr16.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_iqif.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_mcculloch_pitts.json"
-    },
-    {
-      "changed": [
         "engine/src/photonic.rs",
         "src/sc_neurocore/optics/_photonic_crosstalk.py"
       ],
       "currency": "outdated",
       "name": "local_python_2026-07-14_photonic_crosstalk.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py",
-        "src/sc_neurocore/neurons/model_schemas/poisson.json",
-        "src/sc_neurocore/neurons/model_schemas/poisson.toml",
-        "src/sc_neurocore/neurons/models/poisson.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_poisson_lfsr16.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_sigmoid_rate.json"
-    },
-    {
-      "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
-      ],
-      "currency": "outdated",
-      "name": "local_python_2026-07-14_threshold_linear_rate.json"
     },
     {
       "changed": [
