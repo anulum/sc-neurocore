@@ -44,7 +44,7 @@ pub struct SCFourStateGLIFNeuron {
     pub r_asc1: f64,
     /// Second project after-spike-current increment (mV).
     pub r_asc2: f64,
-    /// Normalized current-to-voltage gain (dimensionless).
+    /// Normalised current-to-voltage gain (dimensionless).
     pub resistance: f64,
     /// Runge-Kutta step (ms); one per step call.
     pub dt: f64,
