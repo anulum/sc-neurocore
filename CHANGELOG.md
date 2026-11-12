@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Rust documentation measurement runs the toolchain the measured crate
+  pins (`engine/rust-toolchain.toml` for the engine) in every compiler call,
+  also for the original revision it compiles in a temporary directory, whatever
+  toolchain, compiler or compiler wrapper the caller's environment or a Cargo
+  configuration file names. A pinned toolchain that does not run, or a
+  compiler that does not report exactly the pinned release, is refused by
+  name, and rustup is not allowed to fetch one.
+
 - The unit strings of the `SCLapicqueLIFNeuron` and
   `SCUnitCapacitanceRespiratoryNeuron` descriptors and of the `sc_lapicque_lif`
   schema profile use British spelling (`normalised voltage`, `normalised

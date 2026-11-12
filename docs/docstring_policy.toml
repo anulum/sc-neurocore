@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1915
+expected_file_count = 1917
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -3113,6 +3113,14 @@ rationale = "Immutable original Git Rust source, independently compiled debt and
 [[file]]
 path = "tests/test_tools/test_rust_doc_history_native.py"
 rationale = "Actual original Git Rust debt, protected declaration ownership and public ratchet CLI contracts."
+
+[[file]]
+path = "tools/rust_toolchain_pin.py"
+rationale = "Read the Rust toolchain a measured crate pins, nearest its manifest within the repository, and the environment that makes every compiler call run it."
+
+[[file]]
+path = "tests/test_tools/test_rust_doc_toolchain_native.py"
+rationale = "Actual rustup and Cargo run the pinned toolchain in every call of a measurement and of the original revision; absent, ignored and malformed pins are refused by their whole message."
 
 [[file]]
 path = "tests/test_hdc_python_bit_stream_tensor_inputs.py"

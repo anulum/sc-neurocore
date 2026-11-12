@@ -10,9 +10,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import subprocess
 from typing import cast
@@ -26,6 +28,14 @@ from tools.rust_doc_symbols import (
     RustSymbolError,
     build_parser,
     source_pins,
+)
+from tools.rust_toolchain_pin import (
+    RustToolchainPinError,
+    ToolchainPin,
+    compiler_environment,
+    pinned_toolchain,
+    reported_version_matches,
+    toolchain_environment,
 )
 
 
@@ -62,6 +72,9 @@ class RustMeasurement:
     cargo_version: str
     argv: tuple[str, ...]
     producer_sha256: str
+    #: The toolchain the measured crate pins, which every compiler call ran;
+    #: ``None`` when the crate pins none and the caller's toolchain ran.
+    toolchain_pin: ToolchainPin | None = None
 
     @property
     def undocumented(self) -> int:
@@ -80,9 +93,10 @@ class RustMeasurement:
             or capture_inputs(root, self.paths, self.manifest) != self.pins
         ):
             raise RustMeasurementError("Rust documentation inputs changed during measurement.")
+        rustc, environment = _measurement_environment(root, self.toolchain_pin)
         if (
-            _run(root, ["rustc", "--version"]).strip() != self.rustc_version
-            or _run(root, ["cargo", "--version"]).strip() != self.cargo_version
+            rustc != self.rustc_version
+            or _run(root, ["cargo", "--version"], environment).strip() != self.cargo_version
         ):
             raise RustMeasurementError(
                 "The Rust documentation toolchain changed during measurement."
@@ -102,6 +116,9 @@ class RustMeasurement:
             "source_pins": dict(self.pins),
             "rustc": self.rustc_version,
             "cargo": self.cargo_version,
+            "toolchain_pin": (
+                self.toolchain_pin.to_public_dict() if self.toolchain_pin is not None else None
+            ),
             "argv": list(self.argv),
             "undocumented": self.undocumented,
             "files": self.files,
@@ -112,11 +129,21 @@ class RustMeasurement:
         }
 
 
-def _run(root: Path, argv: list[str]) -> str:
-    """Require terminal native compiler execution before reading structured output."""
+def _run(root: Path, argv: list[str], environment: Mapping[str, str]) -> str:
+    """Require terminal native compiler execution before reading structured output.
+
+    Every call names its environment, so that no compiler call of a measurement
+    can run another toolchain than the one the measured crate pins.
+    """
     try:
         result = subprocess.run(
-            argv, cwd=root, capture_output=True, text=True, check=False, timeout=1800
+            argv,
+            cwd=root,
+            env=dict(environment),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=1800,
         )
     except (OSError, subprocess.SubprocessError, UnicodeError) as exc:
         raise RustMeasurementError(
@@ -125,6 +152,60 @@ def _run(root: Path, argv: list[str]) -> str:
     if result.returncode != 0:
         raise RustMeasurementError("The native cargo rustc measurement failed.")
     return result.stdout
+
+
+def _pin(root: Path, manifest: str) -> ToolchainPin | None:
+    """Return the toolchain the measured crate pins, as a measurement error when unreadable."""
+    try:
+        return pinned_toolchain(root, manifest)
+    except RustToolchainPinError as exc:
+        raise RustMeasurementError(str(exc)) from exc
+
+
+def _measurement_environment(root: Path, pin: ToolchainPin | None) -> tuple[str, dict[str, str]]:
+    """Return the compiler version and the environment every compiler call of a measurement uses.
+
+    Parameters
+    ----------
+    root : Path
+        Directory the compiler starts in.
+    pin : ToolchainPin or None
+        The crate's pin; ``None`` keeps the caller's environment and compiler.
+
+    Returns
+    -------
+    tuple of str and dict
+        ``rustc --version`` of the compiler Cargo will run, and the environment.
+        With a pin it names the pinned toolchain's own ``bin/rustc`` in ``RUSTC``
+        and keeps no other compiler or wrapper the caller or a Cargo configuration
+        names.
+
+    Raises
+    ------
+    RustMeasurementError
+        If the pinned toolchain or its compiler executable does not run, or the
+        compiler that runs is not the release a numbered pin names.
+    """
+    environment = toolchain_environment(pin, os.environ)
+    if pin is None:
+        return _run(root, ["rustc", "--version"], environment).strip(), environment
+    try:
+        sysroot = _run(root, ["rustc", "--print", "sysroot"], environment).strip()
+        compiler = Path(sysroot) / "bin" / ("rustc.exe" if os.name == "nt" else "rustc")
+        environment = compiler_environment(environment, compiler)
+        # The version is read from the executable Cargo will run, not from the proxy.
+        reported = _run(root, [str(compiler), "--version"], environment).strip()
+    except RustMeasurementError as exc:
+        raise RustMeasurementError(
+            f"The Rust toolchain {pin.channel} pinned by {pin.source} does not run here; "
+            f"install it with: rustup toolchain install {pin.channel}"
+        ) from exc
+    if not reported_version_matches(pin, reported):
+        raise RustMeasurementError(
+            f"{pin.source} pins Rust {pin.channel}, but the compiler that ran reports "
+            f"{reported!r}; the measurement runs only with the pinned compiler."
+        )
+    return reported, environment
 
 
 def _object(value: object) -> dict[str, object]:
@@ -196,7 +277,7 @@ def _is_library(target: dict[str, object]) -> bool:
     )
 
 
-def _library(root: Path, manifest: str) -> tuple[str, str, Path]:
+def _library(root: Path, manifest: str, environment: Mapping[str, str]) -> tuple[str, str, Path]:
     """Resolve the selected manifest to its Cargo library name, source and workspace root."""
     data = _object(
         json.loads(
@@ -211,6 +292,7 @@ def _library(root: Path, manifest: str) -> tuple[str, str, Path]:
                     "--manifest-path",
                     manifest,
                 ],
+                environment,
             )
         )
     )
@@ -389,11 +471,12 @@ def measure_rust_findings(
         root = root.resolve()
         paths = tuple(rust_scope(root))
         pins = capture_inputs(root, paths, manifest)
+        pin = _pin(root, manifest)
         native = parser or build_parser()
         symbols = native.read(root, paths)
-        rustc = _run(root, ["rustc", "--version"]).strip()
-        cargo = _run(root, ["cargo", "--version"]).strip()
-        target_name, target_source, workspace_root = _library(root, manifest)
+        rustc, environment = _measurement_environment(root, pin)
+        cargo = _run(root, ["cargo", "--version"], environment).strip()
+        target_name, target_source, workspace_root = _library(root, manifest, environment)
         input_digest = hashlib.sha256(
             json.dumps(pins, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
@@ -413,7 +496,7 @@ def measure_rust_findings(
             "--cfg",
             f'sc_neurocore_doc_execution="{uuid4().hex}"',
         )
-        raw = _run(root, list(argv))
+        raw = _run(root, list(argv), environment)
         cases: set[RustDebtCase] = set()
         finished = artifact = False
         for line in raw.splitlines():
@@ -475,6 +558,7 @@ def measure_rust_findings(
             cargo,
             argv,
             native.executable_sha256,
+            pin,
         )
         native.verify()
         result.verify(root)

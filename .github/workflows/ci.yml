@@ -168,12 +168,13 @@ jobs:
       - name: Rust documentation adapter types and documentation
         run: |
           files=(
-            tools/rust_doc_ratchet.py tools/rust_doc_measurement.py
+            tools/rust_doc_ratchet.py tools/rust_doc_measurement.py tools/rust_toolchain_pin.py
             tools/rust_doc_symbols.py tools/rust_doc_history.py tools/documentation_debt.py
             tests/test_tools/test_rustdoc_symbols_native.py
             tests/test_tools/test_rust_doc_measurement_native.py
             tests/test_tools/test_rust_doc_history_native.py
             tests/test_tools/test_rust_doc_ratchet_native.py
+            tests/test_tools/test_rust_doc_toolchain_native.py
           )
           python -m mypy --strict --explicit-package-bases "${files[@]}"
           ruff check "${files[@]}"
@@ -191,7 +192,8 @@ jobs:
             tests/test_tools/test_rustdoc_symbols_native.py \
             tests/test_tools/test_rust_doc_measurement_native.py \
             tests/test_tools/test_rust_doc_history_native.py \
-            tests/test_tools/test_rust_doc_ratchet_native.py
+            tests/test_tools/test_rust_doc_ratchet_native.py \
+            tests/test_tools/test_rust_doc_toolchain_native.py
       - name: Original engine Rust documentation debt
         run: python -m tools.rust_doc_ratchet
 

@@ -288,13 +288,36 @@ compiler/dependency inputs need their own qualification. The engine ceiling
 is kept in the aggregate v1 form; a v2 record of the whole engine is about
 10 MB and its adoption is a separate decision.
 
+Every compiler call of a measurement, the two version queries, `cargo metadata`
+and the compilation, runs the toolchain the measured crate pins: the nearest
+`rust-toolchain.toml` or legacy `rust-toolchain` from the manifest's directory
+up to the repository root, never beyond it (for the engine,
+`engine/rust-toolchain.toml`). The measurement sets it as `RUSTUP_TOOLCHAIN`
+with `RUSTUP_AUTO_INSTALL=0`, over whatever the caller's environment names, and
+names the pinned toolchain's own `bin/rustc` in `RUSTC`. It removes
+`CARGO_BUILD_RUSTC`, `CARGO_BUILD_RUSTC_WRAPPER` and
+`CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER` and sets `RUSTC_WRAPPER` and
+`RUSTC_WORKSPACE_WRAPPER` empty, so neither the caller nor `build.rustc` or a
+wrapper in a Cargo configuration file can make Cargo run another compiler. Cargo
+starts from the repository root, where rustup alone would not find a member
+crate's file, and the original revision compiles in a temporary directory that
+no rustup directory override reaches; that revision reads its own pin from its
+image. A pinned toolchain that does not run is refused by name and is not
+fetched. A numbered pin must be exactly the release that this compiler
+executable reports, so a pre-release of it, or a compiler on the path that
+ignores rustup, cannot stand in for it. Two
+toolchain files in one directory, a path toolchain, a missing or malformed
+channel and a file that is not UTF-8 text are refused. The pin file is a
+measured input. A crate without a pin is measured with the caller's
+toolchain, and the measurement record states the pin or its absence.
+
 The `rust-documentation` CI job pins Rust 1.98.1, runs the native parser's
 format/build/Clippy checks, strict adapter checks and real native contracts,
 then runs the original engine ratchet. The build job depends on this check;
 the Rust pre-commit hook uses the same ratchet.
 
 ```bash
-python -m pytest tests/test_tools/test_rustdoc_symbols_native.py tests/test_tools/test_rust_doc_measurement_native.py tests/test_tools/test_rust_doc_history_native.py tests/test_tools/test_rust_doc_ratchet_native.py tests/test_tools_rust_doc_ratchet.py -q
+python -m pytest tests/test_tools/test_rustdoc_symbols_native.py tests/test_tools/test_rust_doc_measurement_native.py tests/test_tools/test_rust_doc_history_native.py tests/test_tools/test_rust_doc_ratchet_native.py tests/test_tools/test_rust_doc_toolchain_native.py tests/test_tools_rust_doc_ratchet.py -q
 ```
 
 ### Rust model field documentation

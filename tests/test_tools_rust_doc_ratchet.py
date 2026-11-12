@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -37,6 +38,7 @@ from tools.rust_doc_ratchet import (
     read_ceiling,
     write_ceiling,
 )
+from tools.rust_toolchain_pin import pinned_toolchain
 
 PROVENANCE = {
     "argv": "cargo rustc --lib --manifest-path engine/Cargo.toml -- -W missing_docs",
@@ -273,15 +275,25 @@ class TestRunningTheLint:
     def test_it_returns_the_count_the_reader_found_and_the_toolchain_version(
         self, tmp_path: Path
     ) -> None:
-        """Resolve actual missing function and struct docs across two compiled Rust files."""
+        """Resolve actual missing function and struct docs across two compiled Rust files.
+
+        The fixture pins the toolchain the repository's engine pins, so the version
+        returned is that release on any host, whatever its default compiler.
+        """
+        engine = pinned_toolchain(REPO_ROOT, "engine/Cargo.toml")
+        assert engine is not None
         root = rust_project(
             tmp_path / "repo",
             "//! Native crate.\n/// Native module.\npub mod other;\npub fn entry() {}\n",
             extra={"other.rs": "pub struct Item;\n"},
         )
+        (root / "rust-toolchain.toml").write_text(f'[toolchain]\nchannel = "{engine.channel}"\n')
+        subprocess.run(
+            ["git", "add", "--", "rust-toolchain.toml"], cwd=root, check=True, timeout=30
+        )
         undocumented, files, version = measure(root, "Cargo.toml")
         assert (undocumented, files) == (2, 2)
-        assert version.startswith("rustc 1.98.1")
+        assert version.startswith(f"rustc {engine.channel} ")
 
     def test_it_refuses_when_cargo_is_absent(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
