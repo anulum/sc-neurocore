@@ -5,9 +5,11 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Atomic Mojo batch mirror for composite reduced adaptive-threshold IF
+#
+# Build: mojo build --Werror --target-cpu x86-64-v3 --emit shared-lib -o libadaptive_threshold_if.so adaptive_threshold_if.mojo
 
 from std.math import exp, isfinite
-from std.memory import UnsafePointer
+from std.memory import Pointer
 
 
 @always_inline
@@ -157,41 +159,41 @@ def _run_adaptive_threshold_if(
     ):
         return 2
 
-    var v_final = UnsafePointer[Float64, MutAnyOrigin](
+    var v_final = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=v_final_addr
     )
-    var theta_final = UnsafePointer[Float64, MutAnyOrigin](
+    var theta_final = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=theta_final_addr
     )
-    var spike_count = UnsafePointer[Float64, MutAnyOrigin](
+    var spike_count = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=spike_count_addr
     )
     if steps == 0:
         if write_output:
-            v_final[0], theta_final[0], spike_count[0] = v_init, theta_init, 0.0
+            v_final[unsafe_offset=0], theta_final[unsafe_offset=0], spike_count[unsafe_offset=0] = v_init, theta_init, 0.0
         return 0
 
-    var current = UnsafePointer[Float64, MutAnyOrigin](
+    var current = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=current_addr
     )
-    var v_out = UnsafePointer[Float64, MutAnyOrigin](
+    var v_out = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=v_out_addr
     )
-    var theta_out = UnsafePointer[Float64, MutAnyOrigin](
+    var theta_out = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=theta_out_addr
     )
-    var spikes_out = UnsafePointer[Float64, MutAnyOrigin](
+    var spikes_out = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=spikes_out_addr
     )
     for index in range(steps):
-        if not isfinite(current[index]):
+        if not isfinite(current[unsafe_offset=index]):
             return 3
 
     var v = v_init
     var theta = theta_init
     var count = 0
     for index in range(steps):
-        var next_v = _exact_relaxation(v, v_rest + current[index], tau_m, dt)
+        var next_v = _exact_relaxation(v, v_rest + current[unsafe_offset=index], tau_m, dt)
         var next_theta = _exact_relaxation(theta, theta_rest, tau_theta, dt)
         if not isfinite(next_v) or not isfinite(next_theta):
             return 4
@@ -206,12 +208,20 @@ def _run_adaptive_threshold_if(
         else:
             v, theta = next_v, next_theta
         if write_output:
-            v_out[index], theta_out[index], spikes_out[index] = v, theta, spike
+            v_out[unsafe_offset=index], theta_out[unsafe_offset=index], spikes_out[unsafe_offset=index] = v, theta, spike
     if write_output:
-        v_final[0], theta_final[0], spike_count[0] = v, theta, Float64(count)
+        v_final[unsafe_offset=0], theta_final[unsafe_offset=0], spike_count[unsafe_offset=0] = v, theta, Float64(count)
     return 0
 
 
+# The caller owns stable Float64 current[n] and three disjoint writable
+# Float64 traces[n] (voltage, threshold, binary events), plus three disjoint
+# Float64 scalars (final voltage, final threshold, event count).
+# All buffers remain valid for this synchronous call; ownership is not retained.
+# Zero steps allow null trace addresses but require the three final-state scalars.
+# Status 0 writes the complete result; 1 rejects lengths, addresses or overlap,
+# 2 invalid configuration, 3 nonfinite current, 4 nonfinite dynamics.
+# Every refusal leaves all output buffers unchanged.
 @export
 def adaptive_threshold_if_simulate_c(
     n: Int32,
@@ -231,7 +241,7 @@ def adaptive_threshold_if_simulate_c(
     v_final_addr: Int,
     theta_final_addr: Int,
     spike_count_addr: Int,
-) -> Int32:
+) abi("C") -> Int32:
     var status = _run_adaptive_threshold_if(
         n,
         v_init,

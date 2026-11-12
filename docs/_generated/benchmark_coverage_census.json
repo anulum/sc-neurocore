@@ -56,6 +56,7 @@
             "src/sc_neurocore/accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.jl",
+            "src/sc_neurocore/accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
             "tools/build_accel_backends.py"
@@ -225,6 +226,7 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/simple_spiking/brunel_wang.rs",
+            "src/sc_neurocore/accel/mojo/brunel_wang/brunel_wang.mojo",
             "src/sc_neurocore/neurons/models/brunel_wang.py"
           ],
           "currency": "outdated",
@@ -436,6 +438,7 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "hdl/formal/catalogue/sc_dpineuron.v",
+            "tests/test_model_descriptor_reproducibility.py",
             "tools/emit_catalogue_formal.py"
           ],
           "currency": "outdated",
@@ -995,6 +998,7 @@
           "attribution": "bound_script",
           "changed": [
             "src/sc_neurocore/accel/lapicque.py",
+            "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
             "src/sc_neurocore/neurons/models/lapicque.py"
           ],
           "currency": "outdated",
@@ -1154,6 +1158,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/accel/mojo/kernels/mcculloch_pitts.mojo",
             "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
           ],
           "currency": "outdated",
@@ -1564,6 +1569,7 @@
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
+            "src/sc_neurocore/accel/mojo/resonate_and_fire/resonate_and_fire.mojo",
             "tools/build_accel_backends.py"
           ],
           "currency": "outdated",
@@ -2317,7 +2323,9 @@
     {
       "changed": [
         "src/sc_neurocore/neurons/descriptor_generator.py",
-        "src/sc_neurocore/neurons/model_descriptor.py"
+        "src/sc_neurocore/neurons/expression_derivative.py",
+        "src/sc_neurocore/neurons/model_descriptor.py",
+        "src/sc_neurocore/neurons/readiness.py"
       ],
       "currency": "outdated",
       "name": "bench_function_call_domains.json"
@@ -2559,7 +2567,8 @@
         "engine/src/ir/bindings.rs",
         "engine/src/ir/emit_sv.rs",
         "engine/src/ir/mod.rs",
-        "engine/src/ir/sv_target.rs"
+        "engine/src/ir/sv_target.rs",
+        "src/sc_neurocore/neurons/expression_derivative.py"
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
@@ -2573,7 +2582,8 @@
         "engine/src/ir/bindings.rs",
         "engine/src/ir/emit_sv.rs",
         "engine/src/ir/mod.rs",
-        "engine/src/ir/sv_target.rs"
+        "engine/src/ir/sv_target.rs",
+        "src/sc_neurocore/neurons/expression_derivative.py"
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"

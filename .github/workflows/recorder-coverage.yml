@@ -1,0 +1,224 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Native recorder branch coverage
+
+name: Native recorder branch coverage
+
+"on":
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  recorder-coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # Four Windows-only statements and six branches remain eligible until
+      # source-bound Windows execution is reviewed; then this floor becomes 100.
+      RECORDER_COVERAGE_FLOOR: "98.417721518987"
+    steps:
+      - name: Configure isolated branch data
+        shell: bash
+        run: |
+          echo "COVERAGE_FILE=$RUNNER_TEMP/recorder-coverage/.coverage" >> "$GITHUB_ENV"
+          echo "COVERAGE_RCFILE=$RUNNER_TEMP/recorder-coverage.toml" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+
+      - name: Install the same hash-locked coverage tool as both producers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/coverage-requirements.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
+          start = next(i for i, line in enumerate(lines) if re.match(r"coverage==\S+ \\$", line))
+          block = [lines[start]]
+          for line in lines[start + 1 :]:
+              if not line.strip().startswith("--hash="):
+                  break
+              block.append(line)
+          Path(sys.argv[1]).write_text("\n".join(block).rstrip(" \\") + "\n", encoding="utf-8")
+          PY
+          python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-requirements.txt"
+
+      - name: Retrieve the actual primary Linux recorder branch data
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: facet-recorder-linux-coverage
+          path: ${{ runner.temp }}/recorder-coverage/linux
+
+      - name: Retrieve the actual Windows recorder branch data
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: facet-recorder-windows-coverage
+          path: ${{ runner.temp }}/recorder-coverage/windows
+
+      - name: Require both branch databases and map their source paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/recorder-coverage/linux/.coverage.linux"
+          test -s "$RUNNER_TEMP/recorder-coverage/windows/.coverage.windows"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          from coverage import CoverageData
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          for platform in ("linux", "windows"):
+              data = CoverageData(str(root / "recorder-coverage" / platform / f".coverage.{platform}"))
+              data.read()
+              assert data.has_arcs(), f"{platform} recorder data must contain branches"
+          original = Path("pyproject.toml").read_text(encoding="utf-8")
+          original = original.replace("[tool.coverage.report]", "[tool.coverage.report]\nprecision = 12", 1)
+          aliases = """
+          [tool.coverage.paths]
+          recorder_tools = ["tools", "*/tools"]
+          recorder_tests = ["tests", "*/tests"]
+          recorder_package = ["src/sc_neurocore", "*/src/sc_neurocore"]
+          """
+          Path(os.environ["COVERAGE_RCFILE"]).write_text(original + "\n" + aliases, encoding="utf-8")
+          PY
+          python -m coverage combine --keep \
+            "$RUNNER_TEMP/recorder-coverage/linux/.coverage.linux" \
+            "$RUNNER_TEMP/recorder-coverage/windows/.coverage.windows"
+
+      - name: Prove canonical paths and actual Windows contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in linux windows; do
+            mkdir -p "$RUNNER_TEMP/recorder-coverage/mapped-$platform"
+            COVERAGE_FILE="$RUNNER_TEMP/recorder-coverage/mapped-$platform/.coverage" \
+              python -m coverage combine --keep \
+                "$RUNNER_TEMP/recorder-coverage/$platform/.coverage.$platform"
+          done
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from coverage import CoverageData
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "recorder-coverage"
+          tools = {
+              "tools/facet_receipt.py",
+              "tools/facet_receipt_evidence.py",
+              "tools/facet_receipt_runtime.py",
+          }
+          expected = tools | {"tests/test_facet_receipt_process.py"}
+          expected |= {path.as_posix() for path in Path("src/sc_neurocore").rglob("*.py")}
+          databases: dict[str, CoverageData] = {}
+          measured: dict[str, set[str]] = {}
+          for platform in ("linux", "windows", "combined"):
+              location = (
+                  root / f"mapped-{platform}" / ".coverage" if platform != "combined" else root / ".coverage"
+              )
+              data = CoverageData(str(location))
+              data.read()
+              assert data.has_arcs(), f"Mapped {platform} data must contain branches"
+              files = set(data.measured_files())
+              assert files, f"Mapped {platform} data is empty"
+              assert all("\\" not in name and ":" not in name for name in files), (
+                  "Unmapped native source path"
+              )
+              assert files <= expected, (
+                  f"Unrecognized {platform} measurement paths: {sorted(files - expected)}"
+              )
+              databases[platform] = data
+              measured[platform] = files
+          assert measured["combined"] == measured["linux"] | measured["windows"], (
+              "Combining lost native source paths"
+          )
+          assert tools | {"tests/test_facet_receipt_process.py"} <= measured["combined"], (
+              "Required recorder sources missing"
+          )
+          subject = "tools/facet_receipt_evidence.py"
+          windows_lines = set(databases["windows"].lines(subject) or [])
+          windows_arcs = set(databases["windows"].arcs(subject) or [])
+          assert windows_lines and windows_arcs, "Windows data did not map onto the recorder tool"
+          native_lines = windows_lines & {75, 76, 170, 171}
+          assert native_lines, "Windows data contains no executed Windows-only recorder statement"
+          assert windows_lines <= set(databases["combined"].lines(subject) or []), (
+              "Combined data lost Windows lines"
+          )
+          assert windows_arcs <= set(databases["combined"].arcs(subject) or []), (
+              "Combined data lost Windows branches"
+          )
+          proof = {
+              "native_database_file_counts": {name: len(paths) for name, paths in measured.items()},
+              "all_measured_paths_canonical": True,
+              "combined_matches_exact_native_union": True,
+              "windows_only_recorder_lines_observed": sorted(native_lines),
+              "mapped_windows_recorder_line_count": len(windows_lines),
+              "mapped_windows_recorder_arc_count": len(windows_arcs),
+              "mapped_databases_are_derived_inputs_not_new_executions": True,
+          }
+          (root / "mapping-proof.json").write_text(json.dumps(proof, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Enforce the production recorder branch floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="tools/facet_receipt.py,tools/facet_receipt_evidence.py,tools/facet_receipt_runtime.py"
+          python -m coverage report --include="$tools" --precision=12 \
+            --fail-under="$RECORDER_COVERAGE_FLOOR" --show-missing
+          python -m coverage json --include="$tools" \
+            --fail-under="$RECORDER_COVERAGE_FLOOR" \
+            -o "$RUNNER_TEMP/recorder-coverage/production.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from coverage import Coverage
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "recorder-coverage"
+          report = json.loads((root / "production.json").read_text(encoding="utf-8"))
+          allowed: dict[str, tuple[set[int], set[tuple[int, int]]]] = {
+              "tools/facet_receipt.py": (set(), set()),
+              "tools/facet_receipt_evidence.py": (
+                  {75, 76, 170, 171},
+                  {(74, 75), (88, 105), (156, 158), (165, 170), (170, 171), (170, 172)},
+              ),
+              "tools/facet_receipt_runtime.py": (set(), set()),
+          }
+          assert report["meta"]["branch_coverage"], "Recorder report must contain branches"
+          assert set(report["files"]) == set(allowed), "All three production tools are required"
+          for name, row in report["files"].items():
+              lines, arcs = allowed[name]
+              assert set(row["missing_lines"]) <= lines, f"Uncovered portable statements in {name}"
+              assert {tuple(arc) for arc in row["missing_branches"]} <= arcs, (
+                  f"Uncovered portable branches in {name}"
+              )
+          coverage = Coverage()
+          coverage.load()
+          coverage.json_report(
+              include=["tests/test_facet_receipt_process.py"],
+              outfile=str(root / "process-observer.json"),
+          )
+          PY
+
+      - name: Preserve the combined branch report and both original inputs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: facet-recorder-combined-coverage
+          path: ${{ runner.temp }}/recorder-coverage
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7

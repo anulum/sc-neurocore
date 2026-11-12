@@ -40,8 +40,9 @@ does not claim and no declaration can credit a tier without a receipt.
 
 from __future__ import annotations
 
+import tomllib
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -73,11 +74,6 @@ from sc_neurocore.neurons.model_descriptor import (
 )
 from sc_neurocore.neurons.model_identity import identity_registry
 from sc_neurocore.neurons.receipt_execution import evidence_selection_problems
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
-    import tomli as tomllib  # type: ignore[no-redef] # Python 3.10 has no tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FacetStatus = Literal[
@@ -312,6 +308,7 @@ def derive_subjects(
     tuple[Subject, ...]
         Subjects with digests of the current content, de-duplicated by
         ``(kind, path)`` and sorted.
+        Prose and inline configurations do not produce subjects.
     """
     spec = next(item for item in FACETS if item.name == facet)
     identity = identity_registry()[class_name]
@@ -363,7 +360,7 @@ def derive_subjects(
                 continue
             if reference.kind in {"test-node", "test-file"}:
                 add_file("validator", reference.path)
-            elif reference.kind == "artifact-file":
+            else:
                 kind: SubjectKind = (
                     "report" if "report" in spec.required_subjects else "source-reference"
                 )
@@ -373,6 +370,8 @@ def derive_subjects(
             add(subject)
     for relative in (
         "tools/facet_receipt.py",
+        "tools/facet_receipt_runtime.py",
+        "tools/facet_receipt_evidence.py",
         "src/sc_neurocore/neurons/receipt_execution.py",
         "src/sc_neurocore/neurons/facet_receipts.py",
         "src/sc_neurocore/neurons/readiness.py",
@@ -483,15 +482,32 @@ def _verified_science(kernel: int, bound: Mapping[str, bool]) -> int:
     return 5
 
 
-def _verified_silicon(bound: Mapping[str, bool]) -> int | None:
-    if not (bound["rtl_compile"] or bound["cosim"]):
-        return None
-    tier = 0
-    for facet in ("cosim", "synthesis", "timing", "formal_equivalence", "ppa"):
-        if not bound[facet]:
-            break
-        tier += 1
-    return tier
+def _verified_silicon(descriptor: ModelDescriptor, bound: Mapping[str, bool]) -> int | None:
+    """Score verified flags through the canonical silicon ladder.
+
+    Parameters
+    ----------
+    descriptor : ModelDescriptor
+        Original proof anchors; the descriptor remains unchanged.
+    bound : Mapping[str, bool]
+        Verified statuses. A true status already requires a declared facet
+        and a valid, source-bound receipt.
+
+    Returns
+    -------
+    int or None
+        Highest contiguous tier supported by the verified facets.
+    """
+    silicon = replace(
+        descriptor.silicon,
+        compiles=bound["rtl_compile"] or bound["cosim"],
+        cosim_validated=bound["cosim"],
+        synthesised=bound["synthesis"],
+        timing_closed=bound["timing"],
+        formally_equivalent=bound["formal_equivalence"],
+        ppa_signed=bound["ppa"],
+    )
+    return silicon_tier(replace(descriptor, silicon=silicon))
 
 
 def verify_model(
@@ -560,7 +576,7 @@ def verify_model(
         declared_science=science_tier(descriptor),
         declared_silicon=silicon_tier(descriptor),
         verified_science=_verified_science(descriptor_completeness_tier(descriptor), bound),
-        verified_silicon=_verified_silicon(bound),
+        verified_silicon=_verified_silicon(descriptor, bound),
         facets=tuple(verifications),
     )
 

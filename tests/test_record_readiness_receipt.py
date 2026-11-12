@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -32,6 +33,29 @@ VALIDATOR = (
     "tests/test_reference_mcculloch_pitts.py::"
     "test_truth_rows_match_an_independent_absolute_veto_rule"
 )
+
+
+def test_publication_checkout_keeps_current_cosimulation_receipts(recording_checkout: Path) -> None:
+    """Refresh the real checkout without invalidating its copied scientific evidence."""
+    result = run_publisher(recording_checkout, "refresh")
+    assert result.returncode == 0, result.stdout + result.stderr
+    ledger = recording_checkout / ARTIFACTS[0]
+    observation = recording_checkout.parent / "publication-baseline-profiles.json"
+    shutil.copyfile(ledger, observation)
+    payload = json.loads(observation.read_text(encoding="utf-8"))
+    recorded = {
+        (row["class_name"], row["stem"]): next(
+            facet for facet in row["registry"] if facet["facet"] == "cosim"
+        )
+        for row in payload["profiles"]
+    }
+    for identity in (
+        ("AdaptiveThresholdIFNeuron", "adaptive_threshold_if"),
+        ("BrunelWangNeuron", "brunel_wang"),
+        ("LapicqueNeuron", "lapicque"),
+        ("ResonateAndFireNeuron", "resonate_fire"),
+    ):
+        assert recorded[identity]["status"] == "bound", (identity, recorded[identity])
 
 
 @pytest.fixture
@@ -57,8 +81,19 @@ def recording_checkout(tmp_path: Path) -> Iterator[Path]:
         timeout=30,
     )
     try:
-        for name in ("record_readiness_receipt.py", "readiness_artifact_refresh.py"):
-            shutil.copyfile(REPO_ROOT / "tools" / name, checkout / "tools" / name)
+        sources = (
+            Path("tools/record_readiness_receipt.py"),
+            Path("tools/readiness_artifact_refresh.py"),
+            Path("tools/facet_receipt.py"),
+            Path("tools/facet_receipt_evidence.py"),
+            Path("tools/facet_receipt_runtime.py"),
+            Path("src/sc_neurocore/neurons/readiness.py"),
+            Path("src/sc_neurocore/neurons/expression_derivative.py"),
+        )
+        for relative in (*sources, *ARTIFACTS):
+            shutil.copyfile(REPO_ROOT / relative, checkout / relative)
+        shutil.rmtree(checkout / RECEIPTS)
+        shutil.copytree(REPO_ROOT / RECEIPTS, checkout / RECEIPTS)
         yield checkout
     finally:
         subprocess.run(

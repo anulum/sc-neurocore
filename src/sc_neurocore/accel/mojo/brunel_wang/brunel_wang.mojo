@@ -7,7 +7,7 @@
 # SC-NeuroCore — Mojo C ABI for Brunel-Wang midpoint-RK2 batches
 
 from std.math import exp, isfinite
-from std.memory import UnsafePointer
+from std.memory import Pointer
 
 
 @always_inline
@@ -25,6 +25,14 @@ def derivative(
     return -(voltage - v_rest) / tau_m + (i_ampa + i_nmda + i_gaba) / c_m
 
 
+# The caller owns stable Float64 aggregate gates[steps] (external AMPA, recurrent
+# AMPA, NMDA, GABA), disjoint Float64 voltage and refractory traces[steps], an
+# Int64 event trace[steps], and writable Float64 final voltage/refractory scalars.
+# Addresses, extents and non-overlap are caller preconditions; the scalar outputs
+# must also be writable for zero steps. No pointer ownership survives the call.
+# Status 0 completes the batch; 1 rejects negative steps, 2 configuration,
+# 3 nonfinite/negative gates, 4 nonfinite dynamics. A dynamics refusal can leave
+# partial traces: callers must discard every output when status is nonzero.
 @export
 def brunel_wang_simulate_c(
     steps: Int, v_init: Float64, ref_init: Float64, v_rest: Float64,
@@ -34,7 +42,7 @@ def brunel_wang_simulate_c(
     mg_conc: Float64, dt: Float64, ext_addr: Int, ampa_addr: Int, nmda_addr: Int,
     gaba_addr: Int, voltages_addr: Int, refractory_addr: Int, events_addr: Int,
     v_final_addr: Int, ref_final_addr: Int,
-) -> Int:
+) abi("C") -> Int:
     """Run one complete configured batch; nonzero status invalidates outputs."""
     if steps < 0:
         return 1
@@ -50,17 +58,17 @@ def brunel_wang_simulate_c(
         and isfinite(dt) and dt > 0.0
     ):
         return 2
-    var ext = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=ext_addr)
-    var ampa = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=ampa_addr)
-    var nmda = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=nmda_addr)
-    var gaba = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=gaba_addr)
-    var voltages = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=voltages_addr)
-    var refractory = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=refractory_addr)
-    var events = UnsafePointer[Int64, MutAnyOrigin](unsafe_from_address=events_addr)
-    var v_final = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=v_final_addr)
-    var ref_final = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=ref_final_addr)
+    var ext = Pointer[Float64, MutAnyOrigin](unsafe_from_address=ext_addr)
+    var ampa = Pointer[Float64, MutAnyOrigin](unsafe_from_address=ampa_addr)
+    var nmda = Pointer[Float64, MutAnyOrigin](unsafe_from_address=nmda_addr)
+    var gaba = Pointer[Float64, MutAnyOrigin](unsafe_from_address=gaba_addr)
+    var voltages = Pointer[Float64, MutAnyOrigin](unsafe_from_address=voltages_addr)
+    var refractory = Pointer[Float64, MutAnyOrigin](unsafe_from_address=refractory_addr)
+    var events = Pointer[Int64, MutAnyOrigin](unsafe_from_address=events_addr)
+    var v_final = Pointer[Float64, MutAnyOrigin](unsafe_from_address=v_final_addr)
+    var ref_final = Pointer[Float64, MutAnyOrigin](unsafe_from_address=ref_final_addr)
     for index in range(steps):
-        if not (isfinite(ext[index]) and ext[index] >= 0.0 and isfinite(ampa[index]) and ampa[index] >= 0.0 and isfinite(nmda[index]) and nmda[index] >= 0.0 and isfinite(gaba[index]) and gaba[index] >= 0.0):
+        if not (isfinite(ext[unsafe_offset=index]) and ext[unsafe_offset=index] >= 0.0 and isfinite(ampa[unsafe_offset=index]) and ampa[unsafe_offset=index] >= 0.0 and isfinite(nmda[unsafe_offset=index]) and nmda[unsafe_offset=index] >= 0.0 and isfinite(gaba[unsafe_offset=index]) and gaba[unsafe_offset=index] >= 0.0):
             return 3
     var v = v_init
     var ref_remaining = ref_init
@@ -70,9 +78,9 @@ def brunel_wang_simulate_c(
             v = v_reset
             ref_remaining = max(0.0, ref_remaining - dt)
         else:
-            var k1 = derivative(v, ext[index], ampa[index], nmda[index], gaba[index], v_rest, tau_m, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc)
+            var k1 = derivative(v, ext[unsafe_offset=index], ampa[unsafe_offset=index], nmda[unsafe_offset=index], gaba[unsafe_offset=index], v_rest, tau_m, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc)
             var midpoint = v + 0.5 * dt * k1
-            var k2 = derivative(midpoint, ext[index], ampa[index], nmda[index], gaba[index], v_rest, tau_m, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc)
+            var k2 = derivative(midpoint, ext[unsafe_offset=index], ampa[unsafe_offset=index], nmda[unsafe_offset=index], gaba[unsafe_offset=index], v_rest, tau_m, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc)
             var candidate = v + dt * k2
             if not (isfinite(k1) and isfinite(midpoint) and isfinite(k2) and isfinite(candidate)):
                 return 4
@@ -81,11 +89,11 @@ def brunel_wang_simulate_c(
                 v = v_reset
                 ref_remaining = tau_ref
                 event = 1
-        voltages[index] = v
-        refractory[index] = ref_remaining
-        events[index] = event
-    v_final[0] = v
-    ref_final[0] = ref_remaining
+        voltages[unsafe_offset=index] = v
+        refractory[unsafe_offset=index] = ref_remaining
+        events[unsafe_offset=index] = event
+    v_final[unsafe_offset=0] = v
+    ref_final[unsafe_offset=0] = ref_remaining
     return 0
 
-# Build: mojo build --emit shared-lib -o libbrunel_wang.so brunel_wang.mojo
+# Build: mojo build --Werror --target-cpu x86-64-v3 --emit shared-lib -o libbrunel_wang.so brunel_wang.mojo

@@ -188,9 +188,9 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
-| Python test files | 5637 |
+| Python test files | 5644 |
 | Public documentation pages | 673 |
-| GitHub Actions workflows | 26 |
+| GitHub Actions workflows | 27 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
 <!-- capability-snapshot:end -->
@@ -706,12 +706,13 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-26 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
+27 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
 | **audit-cadence.yml** | Scheduled repository, release-evidence, and policy audits |
 | **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.11-3.14, coverage gate enforced in CI) + Build |
+| **recorder-coverage.yml** | Native Linux/Windows recorder branch coverage, required artifacts, and portable gap enforcement |
 | **compiler-e2e.yml** | Compiler end-to-end lowering, simulation, and evidence gates |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.11–3.14) |

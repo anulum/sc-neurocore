@@ -7,14 +7,14 @@
 # SC-NeuroCore — Mojo Lapicque exact-flow simulator
 #
 # Build:
-#   mojo build --emit shared-lib -o liblapicque.so lapicque.mojo
+#   mojo build --Werror --target-cpu x86-64-v3 --emit shared-lib -o liblapicque.so lapicque.mojo
 #
 # The caller supplies n_steps+1 Float64 slots: the post-step voltage trace and
 # final voltage. Rejected contracts leave the buffer untouched because a
 # validation pass completes before emission.
 
 from std.math import exp, isfinite
-from std.memory import UnsafePointer
+from std.memory import Pointer
 
 
 struct Lapicque(Copyable, Movable):
@@ -109,7 +109,7 @@ def _run_lapicque(
     var v = v0
     if not model.valid(v):
         return -1
-    var output = UnsafePointer[Float64, MutAnyOrigin](
+    var output = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=output_addr
     )
     var spikes: Int64 = 0
@@ -123,12 +123,16 @@ def _run_lapicque(
         else:
             v = next_v
         if write_output:
-            output[index] = v
+            output[unsafe_offset=index] = v
     if write_output:
-        output[n_steps] = v
+        output[unsafe_offset=n_steps] = v
     return spikes
 
 
+# The caller owns a writable Float64 buffer of n_steps + 1 elements for this
+# synchronous call. It receives post-step voltages followed by the final voltage.
+# Return the event count; -1 rejects invalid configuration, drive or trajectory
+# before any output write. A null output address is refused even for zero steps.
 @export
 def lapicque_simulate_c(
     v0: Float64,
@@ -141,7 +145,7 @@ def lapicque_simulate_c(
     n_steps: Int,
     current: Float64,
     output_addr: Int,
-) -> Int64:
+) abi("C") -> Int64:
     if n_steps < 0 or output_addr == 0 or not isfinite(current):
         return -1
     var model = Lapicque(v_rest, v_reset, v_threshold, tau, resistance, dt)
@@ -208,10 +212,10 @@ def _run_lapicque_complete(
     if not common_valid or not profile_valid or not isfinite(drive):
         return -1
 
-    var voltage = UnsafePointer[Float64, MutAnyOrigin](
+    var voltage = Pointer[Float64, MutAnyOrigin](
         unsafe_from_address=voltage_addr
     )
-    var events = UnsafePointer[UInt8, MutAnyOrigin](unsafe_from_address=event_addr)
+    var events = Pointer[UInt8, MutAnyOrigin](unsafe_from_address=event_addr)
     var event_count: Int64 = 0
     for index in range(n_steps):
         var v_inf: Float64
@@ -246,13 +250,18 @@ def _run_lapicque_complete(
         else:
             v = next_v
         if write_output:
-            voltage[index] = v
-            events[index] = event
+            voltage[unsafe_offset=index] = v
+            events[unsafe_offset=index] = event
     if write_output:
-        voltage[n_steps] = v
+        voltage[unsafe_offset=n_steps] = v
     return event_count
 
 
+# Caller-owned, disjoint buffers hold n_steps + 1 Float64 voltages and n_steps
+# UInt8 events; both addresses must be nonzero, including for an empty batch.
+# The source_profile and excited flags accept only 0 or 1. The complete source
+# circuit retains its excited state; the LIF profile resets after an event.
+# Return the event count, or -1 without output mutation for a rejected batch.
 @export
 def lapicque_simulate_complete_c(
     v0: Float64,
@@ -271,7 +280,7 @@ def lapicque_simulate_complete_c(
     drive: Float64,
     voltage_addr: Int,
     event_addr: Int,
-) -> Int64:
+) abi("C") -> Int64:
     if (
         n_steps < 0
         or voltage_addr == 0

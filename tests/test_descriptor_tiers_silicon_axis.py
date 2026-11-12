@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (silicon_axis) from former test_descriptor_tiers.py
 
+"""Test the silicon ladder against declared flags and evidence anchors."""
+
 from __future__ import annotations
 
 from tests.descriptor_tiers_support import *  # noqa: F403

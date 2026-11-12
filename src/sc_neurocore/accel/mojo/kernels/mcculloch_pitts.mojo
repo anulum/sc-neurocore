@@ -6,9 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Source-faithful McCulloch-Pitts Mojo kernel
 #
-# Build: mojo build --emit shared-lib -o libmcculloch_pitts.so mcculloch_pitts.mojo
+# Build: mojo build --Werror --target-cpu x86-64-v3 --emit shared-lib -o libmcculloch_pitts.so mcculloch_pitts.mojo
 
-from std.memory import UnsafePointer
+from std.memory import Pointer
 
 
 @always_inline
@@ -41,13 +41,13 @@ def _run_mcculloch_pitts(
 ) -> Int64:
     if theta <= 0 or theta > 2147483647 or n_rows < 0:
         return -1
-    var counts = UnsafePointer[Int64, MutAnyOrigin](unsafe_from_address=counts_addr)
-    var flags = UnsafePointer[UInt8, MutAnyOrigin](unsafe_from_address=flags_addr)
-    var output = UnsafePointer[UInt8, MutAnyOrigin](unsafe_from_address=output_addr)
+    var counts = Pointer[Int64, MutAnyOrigin](unsafe_from_address=counts_addr)
+    var flags = Pointer[UInt8, MutAnyOrigin](unsafe_from_address=flags_addr)
+    var output = Pointer[UInt8, MutAnyOrigin](unsafe_from_address=output_addr)
     var event_count: Int64 = 0
     for index in range(n_rows):
-        var count = Int(counts[index])
-        var flag = Int(flags[index])
+        var count = Int(counts[unsafe_offset=index])
+        var flag = Int(flags[unsafe_offset=index])
         if not _valid_count(count) or (flag != 0 and flag != 1):
             return -1
         var event = mcculloch_pitts_step(count, flag == 1, theta)
@@ -55,10 +55,15 @@ def _run_mcculloch_pitts(
             return -1
         event_count += Int64(event)
         if write_output:
-            output[index] = UInt8(event)
+            output[unsafe_offset=index] = UInt8(event)
     return event_count
 
 
+# The caller retains ownership of stable Int64 counts and UInt8 inhibitory flags
+# and a disjoint writable UInt8 event buffer, each with n_rows elements.
+# Counts lie in [0, 2147483647], flags in {0, 1}, theta in [1, 2147483647].
+# Return the active-event count; -1 rejects the complete batch before output
+# mutation. Zero rows return 0 without dereferencing or requiring any buffer.
 @export
 def mcculloch_pitts_evaluate_c(
     theta: Int,
@@ -66,7 +71,7 @@ def mcculloch_pitts_evaluate_c(
     flags_addr: Int,
     n_rows: Int,
     output_addr: Int,
-) -> Int64:
+) abi("C") -> Int64:
     if theta <= 0 or theta > 2147483647 or n_rows < 0:
         return -1
     if n_rows == 0:

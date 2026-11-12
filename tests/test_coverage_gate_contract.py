@@ -13,10 +13,9 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
-    import tomli as tomllib  # type: ignore[no-redef]  # Python 3.10 fallback
+import tomllib
+
+import pytest
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -191,8 +190,12 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert readiness["env"] == {
         "TEST_RESULT": "${{ needs.test.result }}",
         "WINDOWS_RESULT": "${{ needs.shd-non-linux-refusal.result }}",
+        "RECORDER_RESULT": "${{ needs.recorder-coverage.result }}",
     }
-    assert readiness["run"] == 'test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success'
+    assert readiness["run"] == (
+        'test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success '
+        '&& test "$RECORDER_RESULT" = success'
+    )
     compatibility = workflow["jobs"]["compatibility-union"]
     assert compatibility["name"] == "test (${{ matrix.python-minor }})"
     assert compatibility["needs"] == ["test"]
@@ -472,3 +475,61 @@ def test_exactly_one_primary_matrix_leg_carries_native_desktop_admission() -> No
         f"found {len(primary_legs)} of {len(include)}"
     )
     assert primary_legs[0] == {"python-minor": "3.12", "shard-index": 1, "primary": True}
+
+
+def test_recorder_branch_floor_is_a_required_primary_dependency() -> None:
+    """Keep native recorder inputs and the unchanged production floor mandatory."""
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    recorder = workflow["jobs"]["recorder-coverage"]
+    assert recorder["needs"] == ["test", "shd-non-linux-refusal"]
+    assert recorder["if"] == "${{ !cancelled() }}"
+    assert recorder["uses"] == "./.github/workflows/recorder-coverage.yml"
+    assert "recorder-coverage" in workflow["jobs"]["coverage-union"]["needs"]
+    reusable = yaml.safe_load((_ROOT / recorder["uses"]).read_text())
+    job = reusable["jobs"]["recorder-coverage"]
+    assert job["env"]["RECORDER_COVERAGE_FLOOR"] == "98.417721518987"
+    downloads = [
+        step["with"]["name"]
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/download-artifact@")
+    ]
+    assert downloads == ["facet-recorder-linux-coverage", "facet-recorder-windows-coverage"]
+    floor = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Enforce the production recorder branch floor"
+    )
+    assert floor["run"].count('--fail-under="$RECORDER_COVERAGE_FLOOR"') == 2
+    assert "continue-on-error" not in recorder
+    assert "continue-on-error" not in floor
+
+
+@pytest.mark.parametrize("result", ["success", "failure", "cancelled", "skipped"])
+def test_recorder_result_controls_the_actual_primary_union_shell(result: str) -> None:
+    """Execute the real union guard for each recorder terminal result.
+
+    Parameters
+    ----------
+    result : str
+        Recorder job result; only success may admit the primary union.
+    """
+    import os
+    import subprocess
+
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    guard = workflow["jobs"]["coverage-union"]["steps"][0]
+    environment = dict(os.environ)
+    environment.update(TEST_RESULT="success", WINDOWS_RESULT="success", RECORDER_RESULT=result)
+    completed = subprocess.run(
+        ["bash", "-euo", "pipefail", "-c", guard["run"]],
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert (completed.returncode == 0) == (result == "success")

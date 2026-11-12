@@ -281,12 +281,14 @@ def test_fabricated_and_tampered_receipts_are_invalid_not_stale(
 def test_receipt_refuses_unregistered_identity_profile_and_missing_descriptor(
     copied_receipt: tuple[Path, FacetReceipt],
 ) -> None:
-    """Check the refusals for an unknown class, unknown profile and absent descriptor."""
+    """Reject unknown identities and profiles; retain source subjects without a descriptor."""
     repo, receipt = copied_receipt
     ghost = replace(receipt, class_name="GhostNeuron").sealed()
     assert verify_receipt(ghost, class_name="GhostNeuron", repo_root=repo)[2] == (
         "unregistered receipt identity",
     )
+    with pytest.raises(ValueError, match="unknown profile"):
+        verify_model(receipt.class_name, repo_root=repo, profile="ghost-profile")
     wrong_profile = replace(receipt, profile="ghost-profile").sealed()
     assert verify_receipt(wrong_profile, class_name=receipt.class_name, repo_root=repo)[2] == (
         "unknown model profile: ghost-profile",
@@ -294,6 +296,11 @@ def test_receipt_refuses_unregistered_identity_profile_and_missing_descriptor(
     descriptor = repo / "src/sc_neurocore/neurons/model_descriptors" / f"{receipt.class_name}.toml"
     original = descriptor.read_text(encoding="utf-8")
     descriptor.unlink()
+    remaining = derive_subjects(
+        receipt.class_name, receipt.facet, repo_root=repo, evidence_refs=receipt.evidence_refs
+    )
+    assert not any(subject.kind == "descriptor-contract" for subject in remaining)
+    assert {subject.kind for subject in remaining} >= {"model-module", "compiler"}
     assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[2] == (
         "current model descriptor is missing",
     )
@@ -345,15 +352,19 @@ def test_deleted_receipt_input_becomes_stale(
     assert problems == ()
 
 
-def test_unavailable_evidence_and_partial_science_credit(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("class_name", "profile"),
+    [("LapicqueNeuron", "lapicque"), ("McCullochPittsNeuron", "mcculloch_pitts")],
+)
+def test_unavailable_evidence_and_partial_science_credit(
+    tmp_path: Path, class_name: str, profile: str
+) -> None:
     """Missing named files cannot be located; one science receipt stops at S4."""
     from sc_neurocore.neurons.facet_receipts import latest_receipts
 
-    absent = verify_model("LapicqueNeuron", profile="lapicque", repo_root=tmp_path, receipts={})
+    absent = verify_model(class_name, profile=profile, repo_root=tmp_path, receipts={})
     assert absent.facet("class_validated").status == "unavailable"
     assert absent.facet("class_validated").problems
-    key = ("LapicqueNeuron", "dynamics_faithful", "lapicque")
-    partial = verify_model(
-        "LapicqueNeuron", profile="lapicque", receipts={key: latest_receipts()[key]}
-    )
+    key = (class_name, "dynamics_faithful", profile)
+    partial = verify_model(class_name, profile=profile, receipts={key: latest_receipts()[key]})
     assert partial.verified_science == 4

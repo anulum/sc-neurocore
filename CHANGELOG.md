@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Record readiness evidence from the validator's actual interpreter and retain
+  exact raw execution artifacts privately. Public receipts keep repository-relative
+  commands and projected output without host identity.
+- Preserve validator interruptions and bounded process cleanup when a group leader
+  exits or a detached output writer retains its stream.
+- Derive verified silicon readiness through the descriptor's canonical tier rules
+  and type symbolic differentiation through the existing SymPy interfaces.
+
 - A new tool, `tools/model_behaviour_report.py`, runs the behaviour cases that
   model descriptors state and writes
   `docs/_generated/model_behaviour_report.json`. Every case runs through the

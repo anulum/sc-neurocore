@@ -466,13 +466,11 @@ def _reference_trace_without_avx512(model: str) -> npt.NDArray[np.float64]:
 
 def test_at_least_one_model_reaches_tier3() -> None:
     """The polyglot models are engineering-verified, so Tier-3 is non-empty."""
-
     assert _tier3_models(), "no Tier-3 descriptors — backend/reproducibility regression"
 
 
 def test_non_generic_tier3_models_have_dedicated_reproducibility_routes() -> None:
     """Every Tier-3 model outside the generic batch shape is explicitly routed."""
-
     dedicated = set(_all_tier3_models()) - set(_tier3_models())
     assert dedicated == _DEDICATED_REPRODUCIBILITY_MODELS
 
@@ -480,7 +478,6 @@ def test_non_generic_tier3_models_have_dedicated_reproducibility_routes() -> Non
 @_parametrize("model", _tier3_models())
 def test_golden_trace_is_reproducible(model: str) -> None:
     """Re-running the reference config reproduces a measured equivalent digest."""
-
     trace = _reference_trace(model, "python")
     assert np.all(np.isfinite(trace)), f"{model} reference trace is not finite"
     digest = _reference_digest(model, trace)
@@ -492,10 +489,15 @@ def test_golden_trace_is_reproducible(model: str) -> None:
 
 @_parametrize(
     "model",
-    [model for model in _tier3_models() if len(_declared_golden_digests(model)) > 1],
+    [
+        model
+        for model in _tier3_models()
+        if len(_declared_golden_digests(model)) > 1
+        or _reference_config(model).get("kind") != "truth_table"
+    ],
 )
 def test_declared_simd_golden_variants_remain_ulp_bounded(model: str) -> None:
-    """Every allowed SIMD digest must preserve the existing numeric parity bound."""
+    """Native and portable traces must match declared digests and the parity bound."""
     native = _reference_trace(model, "python")
     portable = _reference_trace_without_avx512(model)
     declared = _declared_golden_digests(model)
@@ -511,7 +513,6 @@ def test_declared_simd_golden_variants_remain_ulp_bounded(model: str) -> None:
 @_parametrize("model", _tier3_models())
 def test_declared_backend_parity_holds(model: str) -> None:
     """Each available declared backend matches Python within its declared parity."""
-
     descriptor = _descriptor(model)
     implemented = [b for b in descriptor.backends if b.status == "implemented"]
     assert len(implemented) >= 2, f"{model} declares fewer than two backends"

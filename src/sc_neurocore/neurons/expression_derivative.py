@@ -40,7 +40,7 @@ from __future__ import annotations
 import ast
 import math
 from collections.abc import Callable
-from typing import cast
+from typing import Protocol, cast
 
 import sympy
 
@@ -81,6 +81,13 @@ _TWO_OVER_SQRT_PI = 2.0 / math.sqrt(math.pi)
 _Derivative = Callable[[Callable[..., sympy.Expr], sympy.Expr], sympy.Expr]
 
 
+class _ExpressionAssumptions(Protocol):
+    """Describe SymPy's tri-valued assumptions omitted by its partial stubs."""
+
+    is_positive: bool | None
+    is_nonzero: bool | None
+
+
 def _dsl_function(
     name: str, derivative: _Derivative, *, positive: bool = False
 ) -> Callable[..., sympy.Expr]:
@@ -101,6 +108,7 @@ def _dsl_function(
         The SymPy function class.
 
     """
+    function: Callable[..., sympy.Expr]
 
     def fdiff(self: sympy.Function, argindex: int = 1) -> sympy.Expr:
         return derivative(function, _as_expr(self.args[0]))
@@ -121,8 +129,8 @@ _DSL_FUNCTIONS: dict[str, Callable[..., sympy.Expr]] = {
     "softplus": _dsl_function("softplus", lambda f, x: _sigmoid_expr(x)),
     "rsqrt": _dsl_function("rsqrt", lambda f, x: _as_expr(-(f(x) ** 3) / 2), positive=True),
     "arctan": _dsl_function("arctan", lambda f, x: _as_expr(1 / (1 + x**2))),
-    "arcsin": _dsl_function("arcsin", lambda f, x: _as_expr(1 / sympy.sqrt(1 - x**2))),
-    "arccos": _dsl_function("arccos", lambda f, x: _as_expr(-1 / sympy.sqrt(1 - x**2))),
+    "arcsin": _dsl_function("arcsin", lambda f, x: _as_expr(1 / _sqrt(1 - x**2))),
+    "arccos": _dsl_function("arccos", lambda f, x: _as_expr(-1 / _sqrt(1 - x**2))),
     "erf": _dsl_function(
         "erf", lambda f, x: _as_expr(_float(_TWO_OVER_SQRT_PI) * sympy.exp(-(x**2)))
     ),
@@ -185,6 +193,12 @@ def differentiate(expr: str, wrt: str) -> str:
 def _as_expr(value: object) -> sympy.Expr:
     """Return a SymPy expression value behind SymPy's partially typed API."""
     return cast(sympy.Expr, value)
+
+
+def _sqrt(value: sympy.Expr) -> sympy.Expr:
+    """Return a SymPy square root through its partially typed function boundary."""
+    root = cast(Callable[[sympy.Expr], object], sympy.sqrt)
+    return _as_expr(root(value))
 
 
 def _diff(expr: sympy.Expr, symbol: sympy.Expr) -> sympy.Expr:
@@ -310,7 +324,10 @@ class _Converter:
         if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
             return self._opaque(node)
         y, x = (self.convert(value) for value in node.args)
-        if x.is_positive is not True and y.is_nonzero is not True:
+        if (
+            cast(_ExpressionAssumptions, x).is_positive is not True
+            and cast(_ExpressionAssumptions, y).is_nonzero is not True
+        ):
             raise ExpressionDifferentiationError(
                 "atan2 derivative needs a provably positive x or nonzero y; "
                 "the origin and negative x-axis are not differentiable"
@@ -325,7 +342,10 @@ class _Converter:
         if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
             return self._opaque(node)
         first, second = (self.convert(value) for value in node.args)
-        if first.is_nonzero is not True and second.is_nonzero is not True:
+        if (
+            cast(_ExpressionAssumptions, first).is_nonzero is not True
+            and cast(_ExpressionAssumptions, second).is_nonzero is not True
+        ):
             raise ExpressionDifferentiationError(
                 "hypot derivative needs a provably nonzero coordinate; "
                 "the origin is not differentiable"
@@ -339,7 +359,8 @@ class _Converter:
         if not any(isinstance(sub, ast.Name) and sub.id == self._wrt for sub in ast.walk(node)):
             return self._opaque(node)
         argument = self.convert(node.args[0])
-        assumptions = sympy.And(*(sympy.Q.real(symbol) for symbol in argument.free_symbols))
+        conjunction = cast(Callable[..., object], sympy.And)
+        assumptions = conjunction(*(sympy.Q.real(symbol) for symbol in argument.free_symbols))
         ask = cast(Callable[[object, object], object], sympy.ask)
         if ask(sympy.Q.positive(argument), assumptions) is not True:
             raise ExpressionDifferentiationError(

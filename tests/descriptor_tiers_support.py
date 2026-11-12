@@ -6,14 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_descriptor_tiers.py
 
-from __future__ import annotations
-
 """Tests for the science (S0-S5) and silicon (H0-H5) tier scoring.
 
 The scoring must be a faithful, evidence-gated derivation: S0-S3 track the
 curation kernel, S4/S5 open only on recorded validation evidence, and every
 silicon rung is credited only alongside its proof anchor so a tier can never be
-inflated ahead of the committed evidence (master plan invariant I7)."""
+inflated ahead of the committed evidence.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -59,7 +60,7 @@ def _s0_payload() -> dict[str, Any]:
 
 
 def _s3_payload() -> dict[str, Any]:
-    """A descriptor curated and engineering-verified to exactly science tier 3.
+    """Return a descriptor curated and engineering-verified to science tier 3.
 
     Carries dynamics as well, so adding validation evidence can lift it to S4/S5.
     """
@@ -89,7 +90,7 @@ def _s3_payload() -> dict[str, Any]:
 
 
 def _validated_payload() -> dict[str, Any]:
-    """An S3 payload with full faithful-dynamics + class-validation evidence (S5)."""
+    """Return an S3 payload with faithful dynamics and class-validation evidence."""
     payload = _s3_payload()
     payload["validation"] = {
         "dynamics_faithful": True,

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (completeness_and_perfect) from former test_descriptor_tiers.py
 
+"""Test combined readiness tiers and declared terminal acceptance."""
+
 from __future__ import annotations
 
 from tests.descriptor_tiers_support import *  # noqa: F403

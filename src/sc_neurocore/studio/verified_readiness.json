@@ -483,7 +483,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261106T214900Z__adaptive_threshold_if.json",
+     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261109T083858Z__adaptive_threshold_if.json",
      "status": "bound"
     },
     {
@@ -3461,7 +3461,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "BrunelWangNeuron__cosim__20261106T214903Z__brunel_wang.json",
+     "receipt": "BrunelWangNeuron__cosim__20261109T083858Z__brunel_wang.json",
      "status": "bound"
     },
     {
@@ -13441,7 +13441,7 @@
      ],
      "facet": "dynamics_faithful",
      "problems": [],
-     "receipt": "LapicqueNeuron__dynamics_faithful__20261019T202935Z__lapicque.json",
+     "receipt": "LapicqueNeuron__dynamics_faithful__20261109T083858Z__lapicque.json",
      "status": "bound"
     },
     {
@@ -13486,7 +13486,7 @@
      ],
      "facet": "class_validated",
      "problems": [],
-     "receipt": "LapicqueNeuron__class_validated__20261019T202910Z__lapicque.json",
+     "receipt": "LapicqueNeuron__class_validated__20261109T083858Z__lapicque.json",
      "status": "bound"
     },
     {
@@ -13565,7 +13565,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "LapicqueNeuron__cosim__20261106T214906Z__lapicque.json",
+     "receipt": "LapicqueNeuron__cosim__20261109T083858Z__lapicque.json",
      "status": "bound"
     },
     {
@@ -15327,7 +15327,7 @@
      ],
      "facet": "dynamics_faithful",
      "problems": [],
-     "receipt": "McCullochPittsNeuron__dynamics_faithful__20260924T130859Z__mcculloch_pitts.json",
+     "receipt": "McCullochPittsNeuron__dynamics_faithful__20261109T083858Z__mcculloch_pitts.json",
      "status": "bound"
     },
     {
@@ -15344,7 +15344,7 @@
      ],
      "facet": "class_validated",
      "problems": [],
-     "receipt": "McCullochPittsNeuron__class_validated__20260924T130852Z__mcculloch_pitts.json",
+     "receipt": "McCullochPittsNeuron__class_validated__20261109T083858Z__mcculloch_pitts.json",
      "status": "bound"
     },
     {
@@ -20395,7 +20395,7 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "ResonateAndFireNeuron__cosim__20261106T214908Z__resonate_fire.json",
+     "receipt": "ResonateAndFireNeuron__cosim__20261109T083858Z__resonate_fire.json",
      "status": "bound"
     },
     {

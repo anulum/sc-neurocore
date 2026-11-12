@@ -35,15 +35,16 @@ import json
 import math
 import os
 import platform
-import signal
 import shutil
 import subprocess
 import sys
 import tempfile
+from importlib.machinery import ModuleSpec, SourceFileLoader
 from pathlib import Path
 from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from sc_neurocore import __version__ as PACKAGE_VERSION  # noqa: E402
@@ -60,6 +61,7 @@ from sc_neurocore.neurons.facet_receipts import (  # noqa: E402
     FacetReceiptError,
     Subject,
     credit_problems,
+    parse_receipt,
     receipt_filename,
 )
 from sc_neurocore.neurons.model_identity import identity_registry  # noqa: E402
@@ -81,14 +83,23 @@ _RTL_DIR = "hdl/formal/catalogue"
 
 
 def _formal_inventory_tool() -> ModuleType:
-    """Load ``tools/emit_catalogue_formal.py`` for its class-to-RTL mapping."""
+    """Load the checked-out class-to-RTL mapping.
+
+    Raises
+    ------
+    RecordError
+        If the checked-out mapping module is unreadable.
+    """
     path = REPO_ROOT / "tools" / "emit_catalogue_formal.py"
-    spec = importlib.util.spec_from_file_location("emit_catalogue_formal_mapping", path)
-    if spec is None or spec.loader is None:
-        raise RecordError(f"cannot load {path}")
+    loader = SourceFileLoader("emit_catalogue_formal_mapping", str(path))
+    spec = ModuleSpec(loader.name, loader, origin=str(path))
+    spec.has_location = True
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module  # slotted dataclasses resolve their module here
-    spec.loader.exec_module(module)
+    try:
+        loader.exec_module(module)
+    except OSError as error:
+        raise RecordError("formal RTL mapping tool is unavailable") from error
     return module
 
 
@@ -119,7 +130,7 @@ class RecordError(RuntimeError):
 
 
 def _tool_version(name: str) -> str:
-    """Return the first line a tool prints for ``-V``/``--version``, or empty."""
+    """Return a nonempty successful ``-V``/``--version`` result's first line, or empty."""
     executable = shutil.which(name)
     if executable is None:
         return ""
@@ -130,6 +141,8 @@ def _tool_version(name: str) -> str:
             )
         except (OSError, subprocess.TimeoutExpired):
             continue
+        if completed.returncode != 0:
+            continue
         text = (completed.stdout or completed.stderr).strip().splitlines()
         if text:
             return text[0][:200]
@@ -137,19 +150,20 @@ def _tool_version(name: str) -> str:
 
 
 def _git(args: list[str]) -> str:
+    """Read Git output while preserving porcelain status-column whitespace."""
     try:
         completed = subprocess.run(
             ["git", *args], cwd=REPO_ROOT, capture_output=True, text=True, timeout=30, check=False
         )
     except (OSError, subprocess.TimeoutExpired):
         return ""
-    return completed.stdout.strip() if completed.returncode == 0 else ""
+    return completed.stdout.rstrip("\r\n") if completed.returncode == 0 else ""
 
 
 def _runtime(subjects: tuple[Subject, ...]) -> dict[str, str]:
+    """Collect source and host facts; interpreter facts come from the validator."""
     dirty = _git(["status", "--porcelain", "--", *(subject.path for subject in subjects)])
     return {
-        "python": platform.python_version(),
         "platform": platform.platform(),
         "sc_neurocore": PACKAGE_VERSION,
         "git_head": _git(["rev-parse", "HEAD"]),
@@ -172,53 +186,105 @@ def _outcome(exit_code: int, counts: dict[str, int]) -> str:
 
 
 def run_command(
-    command: list[str], *, timeout: float | None
+    command: list[str], *, timeout: float | None, raw_evidence_dir: Path | None = None
 ) -> tuple[int, dict[str, int], str, dict[str, str]]:
     """Run the evidence command and return exit code, counts, outcome and tool.
 
     Direct pytest invocations receive ``-p no:cacheprovider --junitxml`` and
     counts come from testcase elements. Other successful commands carry zero
     passed checks. None means a bounded 600-second budget, not unlimited work.
+
+    Parameters
+    ----------
+    command : list[str]
+        Actual direct invocation; pytest receives the runtime provenance plugin.
+    timeout : float or None
+        Positive finite process budget, or the existing bounded default.
+    raw_evidence_dir : pathlib.Path or None
+        Private custody parent for original argv, JUnit and captured bytes.
+        The default is the ignored internal receipt archive.
+
+    Returns
+    -------
+    tuple[int, dict[str, int], str, dict[str, str]]
+        Exit status, actual test counts, outcome and public execution facts.
+
+    Raises
+    ------
+    RecordError
+        If the budget is invalid, the archive resolves to a public path, or the
+        validator process cannot be started or reaped within its cleanup budget.
     """
     duration = 600.0 if timeout is None else timeout
     if not math.isfinite(duration) or duration <= 0:
         raise RecordError("timeout must be positive and finite")
-    is_pytest = pytest_command(command)
-    tool = {"name": "pytest" if is_pytest else Path(command[0]).name}
-    if is_pytest:
-        import pytest
+    from tools.facet_receipt_evidence import (
+        ExecutionStartError,
+        capture_execution,
+        private_archive_directory,
+        retain_execution,
+    )
 
-        tool["version"] = pytest.__version__
-    else:
+    is_pytest = pytest_command(command)
+    try:
+        archive_directory = private_archive_directory(REPO_ROOT, raw_evidence_dir)
+    except ValueError as error:
+        raise RecordError(str(error)) from error
+    tool = {"name": "pytest" if is_pytest else Path(command[0]).name}
+    if not is_pytest:
         tool["version"] = _tool_version(command[0])
     with tempfile.TemporaryDirectory(prefix="facet-receipt-") as scratch:
         argv = list(command)
         report = Path(scratch) / "junit.xml"
+        environment = dict(os.environ)
         if is_pytest:
-            argv += ["-p", "no:cacheprovider", f"--junitxml={report}"]
-        try:
-            process = subprocess.Popen(
-                argv,
-                cwd=REPO_ROOT,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                start_new_session=os.name == "posix",
+            argv += [
+                "-p",
+                "no:cacheprovider",
+                "-p",
+                "tools.facet_receipt_runtime",
+                f"--junitxml={report}",
+            ]
+            environment["PYTHONPATH"] = os.pathsep.join(
+                [str(REPO_ROOT / "src"), str(REPO_ROOT), environment.get("PYTHONPATH", "")]
             )
-            stdout, stderr = process.communicate(timeout=duration)
-        except subprocess.TimeoutExpired:
-            if os.name == "posix":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-            process.communicate()
+        try:
+            execution = capture_execution(
+                argv, repo_root=REPO_ROOT, environment=environment, timeout=duration
+            )
+        except ExecutionStartError as error:
+            raise RecordError(str(error)) from error
+        stdout, stderr = execution.stdout, execution.stderr
+        timed_out = execution.timed_out
+        interruption = execution.interruption
+        exit_code = -1 if timed_out else execution.exit_code
+        if is_pytest:
+            tool.update(
+                retain_execution(
+                    command=command,
+                    executed_command=argv,
+                    repo_root=REPO_ROOT,
+                    temporary=Path(scratch),
+                    stdout=stdout,
+                    stderr=stderr,
+                    junit=report.read_bytes() if report.is_file() else b"",
+                    exit_code=exit_code,
+                    private_directory=archive_directory,
+                )
+            )
+        else:
+            tool["stdout"] = stdout.decode("utf-8", errors="replace")
+            tool["stderr"] = stderr.decode("utf-8", errors="replace")
+        if interruption is not None:
+            raise interruption
+        if execution.cleanup_error is not None:
+            raise RecordError(
+                "validator cleanup exceeded its process budget"
+            ) from execution.cleanup_error
+        if timed_out:
             counts = {"collected": 0, "passed": 0, "failed": 0, "errors": 0, "skipped": 0}
             return -1, counts, "timeout", tool
-        exit_code = process.returncode
-        tool["stdout"] = stdout
-        tool["stderr"] = stderr
         if is_pytest and report.is_file():
-            tool["junit_xml"] = report.read_text(encoding="utf-8")
             try:
                 counts = _junit_counts(report)
             except ValueError:
@@ -261,15 +327,53 @@ def record_receipt(
     timeout: float | None = None,
     receipt_dir: Path = RECEIPT_DIR,
     recorded_at: str | None = None,
+    raw_evidence_dir: Path | None = None,
 ) -> tuple[Path, FacetReceipt]:
     """Run ``command`` for ``model``/``facet`` and write a sealed receipt.
+
+    Parameters
+    ----------
+    model : str
+        Registered canonical model class.
+    facet : str
+        Declared readiness facet validated by this execution.
+    command : list[str]
+        Actual direct pytest argv, retained exactly in private custody.
+    profile : str, optional
+        Numerical profile, mandatory when the model has several profiles.
+    claim_scope : str or None
+        Explicit claim scope, or the facet's reviewed default.
+    evidence : list[str] or None
+        Selected subset of the descriptor's declared validators.
+    extra_subjects : list[Subject] or None
+        Additional facet inputs, such as committed RTL or native binaries.
+    notes : str, optional
+        Public explanatory text included in the sealed receipt.
+    timeout : float or None
+        Positive finite execution budget, or the existing bounded default.
+    receipt_dir : pathlib.Path
+        Append-only destination for the public sealed receipt.
+    recorded_at : str or None
+        Explicit archive timestamp, or the actual current UTC time.
+    raw_evidence_dir : pathlib.Path or None
+        Private raw artifact archive; defaults to the ignored internal tree.
+
+    Returns
+    -------
+    tuple[pathlib.Path, FacetReceipt]
+        Newly created path and its complete sealed execution record.
 
     Raises
     ------
     RecordError
         If the model or facet is unknown, no evidence reference can be found,
         the derived subjects miss a required kind, or the target file exists.
+    FacetReceiptError
+        If the completed record violates the public receipt schema, including
+        a subject path that is not repository-relative.
     """
+    from tools.facet_receipt_evidence import logical_command
+
     spec = FACET_BY_NAME.get(facet)
     if spec is None:
         raise RecordError(f"unknown facet {facet!r}; known: {', '.join(FACET_BY_NAME)}")
@@ -332,12 +436,19 @@ def record_receipt(
         raise RecordError(
             "credit requires a direct pytest validator; native result adapters are not yet supported"
         )
-    exit_code, counts, outcome, tool = run_command(command, timeout=timeout)
+    try:
+        public_command = logical_command(command, REPO_ROOT)
+    except ValueError as error:
+        raise RecordError(str(error)) from error
+    exit_code, counts, outcome, tool = run_command(
+        command, timeout=timeout, raw_evidence_dir=raw_evidence_dir
+    )
     validator = {
         "name": "tools/facet_receipt.py",
         "schema": FACET_RECEIPT_SCHEMA,
         "execution_contract": EXECUTION_CONTRACT,
         "junit_xml": tool.pop("junit_xml", ""),
+        "public_projection": tool.get("projection", ""),
     }
     execution_errors = execution_problems(command, refs, validator, counts)
     changed = [
@@ -363,6 +474,11 @@ def record_receipt(
         else {}
     )
     stamp = recorded_at or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    runtime = _runtime(subjects)
+    for key in ("implementation", "python", "executable_sha256"):
+        value = tool.pop("runtime_" + key, "")
+        if value:
+            runtime[key] = value
     receipt = FacetReceipt(
         class_name=model,
         facet=facet,
@@ -370,10 +486,10 @@ def record_receipt(
         claim_scope=spec.claim_scope if claim_scope is None else claim_scope,
         subjects=subjects,
         evidence_refs=tuple(refs),
-        command=tuple(command),
+        command=public_command,
         tool=tool,
         extra_tools=extra_tools,
-        runtime=_runtime(subjects),
+        runtime=runtime,
         validator=validator,
         outcome=outcome,
         exit_code=exit_code,
@@ -381,6 +497,7 @@ def record_receipt(
         recorded_at=stamp,
         notes=notes,
     ).sealed()
+    parse_receipt(receipt.to_payload())
     receipt_dir.mkdir(parents=True, exist_ok=True)
     target = receipt_dir / receipt_filename(model, facet, stamp, profile=profile)
     with tempfile.NamedTemporaryFile(
@@ -401,7 +518,25 @@ def record_receipt(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry point."""
+    """Record a validator execution through the command-line interface.
+
+    Parameters
+    ----------
+    argv : list[str] or None
+        Recorder arguments and the validator command after ``--``. None reads
+        the process arguments.
+
+    Returns
+    -------
+    int
+        Zero for a creditable receipt, one for an uncreditable recorded run,
+        or two for a recording refusal.
+
+    Raises
+    ------
+    SystemExit
+        If argument parsing rejects the invocation or prints its help text.
+    """
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     commands = parser.add_subparsers(dest="action", required=True)
     record = commands.add_parser("record", help="run the evidence command and write a receipt")
@@ -414,6 +549,11 @@ def main(argv: list[str] | None = None) -> int:
     record.add_argument("--notes", default="", help="free-text note stored in the receipt")
     record.add_argument("--timeout", type=float, default=None, help="command timeout in seconds")
     record.add_argument("--receipt-dir", type=Path, default=RECEIPT_DIR)
+    record.add_argument(
+        "--raw-evidence-dir",
+        type=Path,
+        help="private directory retaining exact invocation and original validator artifacts",
+    )
     record.add_argument("command", nargs=argparse.REMAINDER, help="evidence command after --")
     args = parser.parse_args(argv)
     command = [arg for arg in args.command if arg != "--"]
@@ -432,6 +572,7 @@ def main(argv: list[str] | None = None) -> int:
             notes=args.notes,
             timeout=args.timeout,
             receipt_dir=args.receipt_dir,
+            raw_evidence_dir=args.raw_evidence_dir,
         )
     except (RecordError, FacetReceiptError) as error:
         print(f"error: {error}", file=sys.stderr)

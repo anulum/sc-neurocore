@@ -284,6 +284,17 @@ jobs:
           export COVERAGE_FILE="$RUNNER_TEMP/shd-platform-coverage/.coverage.windows"
           python -m coverage run -m pytest --no-cov -q tests/test_accel_shd_platform.py
           python -m coverage combine --keep "$RUNNER_TEMP/shd-platform-coverage"
+      - name: Exercise native recorder cleanup with branch coverage
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/facet-recorder-platform-coverage"
+          export COVERAGE_FILE="$RUNNER_TEMP/facet-recorder-platform-coverage/.coverage.windows"
+          python -m coverage run --branch \
+            --source=sc_neurocore,tools.facet_receipt,tools.facet_receipt_evidence,tools.facet_receipt_runtime,tests.test_facet_receipt_process \
+            -m pytest --no-cov -q -p no:cacheprovider tests/test_facet_receipt_process.py \
+            --basetemp="$RUNNER_TEMP/facet-recorder-platform-coverage/pytest" \
+            --junitxml="$RUNNER_TEMP/facet-recorder-platform-coverage/junit.xml"
+          python -m coverage combine --keep "$RUNNER_TEMP/facet-recorder-platform-coverage"
       - name: Preserve native platform coverage
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -291,6 +302,17 @@ jobs:
           path: ${{ runner.temp }}/shd-platform-coverage
           include-hidden-files: true
           if-no-files-found: error
+      - name: Preserve native recorder branch coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: facet-recorder-windows-coverage
+          path: |
+            ${{ runner.temp }}/facet-recorder-platform-coverage/.coverage*
+            ${{ runner.temp }}/facet-recorder-platform-coverage/junit.xml
+            ${{ runner.temp }}/facet-recorder-platform-coverage/pytest/**/native-process-control.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
   test-timing-baseline:
     runs-on: ubuntu-24.04
@@ -1456,6 +1478,44 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
+      - name: Recorder execution and publication branch coverage
+        if: matrix.primary
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/facet-recorder-linux-coverage"
+          export COVERAGE_FILE="$RUNNER_TEMP/facet-recorder-linux-coverage/.coverage.linux"
+          python -m coverage run --branch \
+            --source=sc_neurocore,tools.facet_receipt,tools.facet_receipt_evidence,tools.facet_receipt_runtime,tests.test_facet_receipt_process \
+              -m pytest --no-cov -q \
+                tests/test_facet_receipt_provenance.py \
+                tests/test_facet_receipt_projection.py \
+                tests/test_facet_receipt_cli.py \
+                tests/test_facet_receipt_process.py \
+                tests/test_facet_receipt_posix.py \
+                tests/test_facet_receipt_posix_tools.py \
+                tests/test_facet_receipt_checkout.py \
+                tests/test_facet_receipts.py \
+                tests/test_receipt_execution.py \
+                tests/test_readiness_verification.py \
+                tests/test_readiness_evidence_ledger.py \
+                tests/test_studio_model_readiness_verified.py \
+                --basetemp="$RUNNER_TEMP/facet-recorder-linux-coverage/pytest" \
+                --junitxml="$RUNNER_TEMP/facet-recorder-linux-coverage/junit.xml"
+          python -m coverage combine --keep "$RUNNER_TEMP/facet-recorder-linux-coverage"
+
+      - name: Preserve native recorder Linux branch coverage
+        if: always() && matrix.primary
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: facet-recorder-linux-coverage
+          path: |
+            ${{ runner.temp }}/facet-recorder-linux-coverage/.coverage*
+            ${{ runner.temp }}/facet-recorder-linux-coverage/junit.xml
+            ${{ runner.temp }}/facet-recorder-linux-coverage/pytest/**/native-process-control.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -1601,6 +1661,11 @@ jobs:
           path: ${{ runner.temp }}/pytest-timings/pytest-durations.json
           key: ${{ github.repository }}-pytest-timings-v1-${{ github.run_id }}-${{ github.run_attempt }}
 
+  recorder-coverage:
+    needs: [test, shd-non-linux-refusal]
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/recorder-coverage.yml
+
   native-go-windows-refusal:
     name: Native Go gate Windows refusal (20-minute governance ceiling)
     runs-on: windows-latest
@@ -1713,7 +1778,7 @@ jobs:
     # Windows refusal leg.
     name: test (3.12)
     runs-on: ubuntu-latest
-    needs: [test, shd-non-linux-refusal, native-go-windows-refusal]
+    needs: [test, shd-non-linux-refusal, native-go-windows-refusal, recorder-coverage]
     # A skipped job would report success to branch protection, so this job
     # runs after failed legs too and requires every test shard to pass.
     if: ${{ !cancelled() }}
@@ -1723,8 +1788,11 @@ jobs:
         env:
           TEST_RESULT: ${{ needs.test.result }}
           WINDOWS_RESULT: ${{ needs.shd-non-linux-refusal.result }}
+          RECORDER_RESULT: ${{ needs.recorder-coverage.result }}
         shell: bash
-        run: test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success
+        run: >-
+          test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success
+          && test "$RECORDER_RESULT" = success
 
       - name: Require successful native Go Windows refusal
         env:

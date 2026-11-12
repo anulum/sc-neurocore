@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1895
+expected_file_count = 1909
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7634,3 +7634,59 @@ rationale = "Bind the dendritic NMDA model's integrators, lane anchor and defini
 [[file]]
 path = "tests/test_model_dendritic_nmda_contracts.py"
 rationale = "Bind the public behaviour of the dendritic NMDA class: defaults, refusals, the magnesium block and coincidence detection."
+
+[[file]]
+path = "tests/test_facet_receipt_checkout.py"
+rationale = "Reject missing mapping code and required model inputs through the real CLI on byte-verified isolated checkouts."
+
+[[file]]
+path = "tests/test_facet_receipt_cli.py"
+rationale = "Refuse invalid recording arguments and preserve actual execution versus collection credit through the public CLI."
+
+[[file]]
+path = "tests/test_facet_receipt_posix.py"
+rationale = "Verify actual remaining process-group termination after its leader exits and reap every controlled descendant."
+
+[[file]]
+path = "tests/test_facet_receipt_posix_tools.py"
+rationale = "Check successful native version provenance and real missing or malformed executable refusals through the public process runner."
+
+[[file]]
+path = "tests/test_facet_receipt_process.py"
+rationale = "Interrupt and time out actual recorder children and verify their exit on the native operating system."
+
+[[file]]
+path = "tests/test_facet_receipt_projection.py"
+rationale = "Reject damaged real validator artifacts without losing raw evidence or inventing scientific credit."
+
+[[file]]
+path = "tests/test_facet_receipt_provenance.py"
+rationale = "Exercise scientific recording through real module and console entry points, custody, identity, and credit refusals."
+
+[[file]]
+path = "tools/facet_receipt_evidence.py"
+rationale = "Retain exact private execution artifacts and project public provenance without changing result identities or accounting."
+
+[[file]]
+path = "tools/facet_receipt_runtime.py"
+rationale = "Capture the actual validator interpreter and pytest facts inside the child process."
+
+[[file]]
+path = "tests/descriptor_tiers_support.py"
+rationale = "Construct descriptor inputs for public science and silicon scoring without changing the registered model catalogue or issuing hardware receipts."
+
+[[file]]
+path = "tests/test_descriptor_tiers_silicon_axis.py"
+rationale = "Require each declared silicon flag and evidence anchor through the public tier scorer."
+
+[[file]]
+path = "tests/test_descriptor_tiers_science_axis.py"
+rationale = "Require curation and validation anchors through the public science tier scorer."
+
+[[file]]
+path = "tests/test_descriptor_tiers_completeness_and_perfect.py"
+rationale = "Verify combined public readiness labels and acceptance against the declared terminal silicon tier."
+
+[[file]]
+path = "tests/test_model_descriptor_reproducibility.py"
+rationale = "Re-run each Tier-3 descriptor's reference configuration against its golden trace and every declared backend that is available against its declared parity."

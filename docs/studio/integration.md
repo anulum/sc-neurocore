@@ -1,8 +1,16 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Studio integration and project management -->
+
 # Integration & Project Management
 
-Block 6 ties all Studio components together: project save/load for
-persistent workspaces, and a full pipeline that chains network design
-through compilation to FPGA synthesis in a single action.
+Studio saves and restores persistent project workspaces. Its full pipeline
+chains network design through compilation to FPGA synthesis in a single
+action.
 
 ## Project Save/Load
 

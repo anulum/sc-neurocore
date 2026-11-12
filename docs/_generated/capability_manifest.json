@@ -979,7 +979,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 26,
+    "github_workflows": 27,
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5637
+    "test_files": 5644
   },
   "documentation": {
     "public_pages": [
@@ -3352,6 +3352,7 @@
       ".github/workflows/pre-commit.yml",
       ".github/workflows/publish.yml",
       ".github/workflows/pypi-downloads.yml",
+      ".github/workflows/recorder-coverage.yml",
       ".github/workflows/release.yml",
       ".github/workflows/scorecard.yml",
       ".github/workflows/security-scanners.yml",
@@ -5307,6 +5308,13 @@
       "tests/test_extended_neurons_stochastic_if.py",
       "tests/test_extended_neurons_true_north.py",
       "tests/test_extended_neurons_wong_wang.py",
+      "tests/test_facet_receipt_checkout.py",
+      "tests/test_facet_receipt_cli.py",
+      "tests/test_facet_receipt_posix.py",
+      "tests/test_facet_receipt_posix_tools.py",
+      "tests/test_facet_receipt_process.py",
+      "tests/test_facet_receipt_projection.py",
+      "tests/test_facet_receipt_provenance.py",
       "tests/test_facet_receipts.py",
       "tests/test_facet_receipts_ingress.py",
       "tests/test_fault_engine_bindings.py",

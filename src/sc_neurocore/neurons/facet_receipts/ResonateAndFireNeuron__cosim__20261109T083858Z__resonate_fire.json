@@ -1,0 +1,187 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "ResonateAndFireNeuron",
+  "facet": "cosim",
+  "profile": "resonate_fire",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "b5e9618a533db3e1c12bcf40f6fc949040afdb368ca0da58c4fd730da80062da",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "2627e82d2be63efd7bbb33eba5248a37aed969c9eb67de2468d3e66f987d0386",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "d2a0b09f0710dd6c2a0f46960b1d792b99dae300d182440d931a86654e51b1e2",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "971ccd3e5a78cd11982cb07e41c763a633ee05e71a66be9f48b589878e30056c",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "21df7b0ea62e0674ff457188d970b20f65d0adc1802beebe2030e55aa3886893",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "72a0ae374db13a4bfbab9982b4487c95b23ccdf2b6ff674ca091d259e14b9527",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/ResonateAndFireNeuron.toml",
+      "sha256": "cbe4936296a89e1713c96a81e6a359def9696974daaf44cff6f9288d0d39cb56",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/resonate_and_fire.py",
+      "sha256": "e730253cbee5655ec843d02fcbcbdcfdb49ab140e6e0757c47cbbd87e8b22dba",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/resonate_fire.json",
+      "sha256": "c8fba8240f79fe2155df196cd752a1fa3b774c484852da15b61fec5dfc844d08",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/resonate_fire.toml",
+      "sha256": "18e14fbe711727dfc67683f6e94d41764e45bb95c21c3af720f97476c6ea2aa9",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "d3cb4587d6bcaa69f53b7b5f29cd4f14eedced0139a7496743a73eb3bee86dca",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "757c044dfc80cf275874175106585096c3b80bd2226bb52978429e6ff5716049",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_resonate_and_fire.py",
+      "sha256": "806627a0b88409c119c54c4b901eb3531390a4e88058d58183f7978d0fe6610a",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "ebbdcdc8bed56f0caff699e1a51b257652057e808e005060adc8cc1f0c64c0fa",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt_evidence.py",
+      "sha256": "b1fff5ea70d395da254aa5d461126f1b5d564ac07cd2d0bb3f4340640107fb1e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt_runtime.py",
+      "sha256": "9b0ba08435eea690aa7694975346712bb4a173af698add06639041e6b0ddc58d",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_resonate_and_fire.py::test_q3232_rtl_tracks_exact_map_and_complete_event_vector"
+  ],
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_resonate_and_fire.py::test_q3232_rtl_tracks_exact_map_and_complete_event_vector",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "projection": "repository-relative-execution.v1",
+    "raw_manifest_sha256": "a9977289e0a6cd1336332b83ec7810260cd236463977d98448fedc0c1709ef8b",
+    "raw_junit_sha256": "24fee5fe5f1bf373e283a3802ec4daa40c272756817cc8a50e5529bb55691a84",
+    "raw_stdout_sha256": "66b7f0c4e1ddab62be75a7037789a89237564e816184437d6bb19992789fafeb",
+    "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "version": "9.2.0",
+    "stdout": ".                                                                        [100%]\nJuliaCall stays uninitialised: importing it would resolve the Julia project <python-environment>/julia_env again. Set SC_NEUROCORE_REQUIRE_JULIA=1 to let this run resolve it, after pointing PYTHON_JULIAPKG_PROJECT at a private copy when the project is shared.\n1 passed in 1.96s\n",
+    "stderr": ""
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/c++ 13.3.0)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "SBY v0.70"
+  },
+  "runtime": {
+    "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "4.1.0",
+    "git_head": "c81e965d793772f18485022f1ba2ab2f0b4e73ef",
+    "dirty_subjects": "src/sc_neurocore/neurons/expression_derivative.py, src/sc_neurocore/neurons/readiness.py, tools/facet_receipt.py, tools/facet_receipt_evidence.py, tools/facet_receipt_runtime.py",
+    "implementation": "CPython",
+    "python": "3.12.16",
+    "executable_sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"1\" time=\"1.836\" timestamp=\"2026-11-09T09:43:05.382033+01:00\"><properties><property name=\"facet_runtime.implementation\" value=\"CPython\" /><property name=\"facet_runtime.python\" value=\"3.12.16\" /><property name=\"facet_runtime.executable_sha256\" value=\"23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5\" /><property name=\"facet_runtime.pytest\" value=\"9.2.0\" /></properties><testcase classname=\"tests.test_cosim_resonate_and_fire\" name=\"test_q3232_rtl_tracks_exact_map_and_complete_event_vector\" time=\"0.079\" /></testsuite></testsuites>",
+    "public_projection": "repository-relative-execution.v1"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-11-09T08:38:58Z",
+  "notes": "Source-bound validator execution for the current recorder and runtime provenance contract.",
+  "receipt_sha256": "e7265c47c92d0e08a86dc649bd8948a69bac7add52604de07f79a4b9bc358c49"
+}

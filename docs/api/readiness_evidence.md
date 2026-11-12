@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Readiness evidence contracts -->
+
 # Readiness evidence: declared versus verified
 
 A model descriptor *declares* readiness: `validation.dynamics_faithful`,
@@ -68,13 +76,78 @@ verifier implementations. Scientific metric/tolerance edits invalidate evidence.
 The recorder checks inputs again after execution and refuses credit if they
 changed. Receipt publication is atomic and exclusive; an existing file is never
 overwritten. Default execution timeout is 600 seconds; a positive finite override
-is allowed. On POSIX, timeout terminates the command's process group.
+is allowed. POSIX execution waits for the owned process group, including members
+remaining after its leader exits; Windows execution owns the direct child.
+Timeout stops that owned scope. Cleanup has a separate finite budget equal to
+the execution timeout.
+If the validator cannot be started, the CLI reports a fixed refusal and writes
+neither a receipt nor a raw execution archive.
+Missing formal mapping code or required local model inputs also refuses the
+run before starting a validator. For `cosim`, committed RTL is an optional
+freshness subject; the descriptor, model, schema, compiler and validator
+subjects remain mandatory.
 
 Historical v1 receipts remain readable and immutable but cannot provide v2
 credit. They need a fresh run, not a changed seal. SHA-256 seals detect content
 changes; they are not signatures, independent scientific review or proof of
 the recorder's identity. A receipt covers its declared inputs and validated
 domain, not arbitrary imported dependencies or all possible operating points.
+
+### Runtime identity and public execution projection
+
+New executions use the `repository-relative-execution.v1` public projection.
+The command records a logical `python -m pytest` or `pytest` invocation with
+repository-relative selectors. A plugin running inside the actual validator
+process records its Python implementation, version and executable SHA-256,
+and the pytest version used by that process. The recorder's own interpreter
+is not substituted for these facts. Missing runtime evidence refuses credit.
+
+Public JUnit XML omits hostname attributes and private runtime-location
+properties. Known repository, home, interpreter and temporary locations in
+diagnostic text become descriptive tokens. Every testcase identity, outcome,
+count and timing remains present; a private identity in a testcase identifier
+refuses credit rather than changing which validator ran. Unclassified
+private locations also refuse credit.
+
+Exact original stdout, stderr and JUnit bytes, together with actual argv,
+working directory and exit code, remain in a fresh private execution directory.
+Output is captured in private temporary files and snapshotted when the owned
+scope finishes or its cleanup returns. Output handles inherited by detached
+processes cannot make capture wait indefinitely. Those detached processes are
+outside the recorder's ownership; their later writes are outside the snapshot.
+POSIX snapshots use positional reads bounded by the initially observed file size.
+Concurrent truncation can shorten that snapshot without moving the inherited
+writer's offset or mapping pages that another process can invalidate.
+The receipt retains their SHA-256 values and the exact private manifest hash.
+The default archive is `docs/internal/receipt_runs/`; `--raw-evidence-dir`
+selects another private archive. Keep this archive outside public documentation,
+packages and release artifacts. These additive fields use the existing v2
+string maps; historical seals are never edited to claim a new execution.
+
+| Public field | Meaning |
+|---|---|
+| `command` | Logical direct pytest command and repository-relative arguments |
+| `runtime.implementation`, `runtime.python` | Implementation and version observed inside the validator process |
+| `runtime.executable_sha256` | SHA-256 of that process's resolved interpreter binary |
+| `tool.version` | The validator process's pytest version |
+| `validator.public_projection` | The location-normalisation contract applied to its public evidence |
+| `tool.raw_manifest_sha256` | Hash of the exact private `manifest.json` bytes |
+| `tool.raw_junit_sha256`, `tool.raw_stdout_sha256`, `tool.raw_stderr_sha256` | Hashes of the exact original artifacts before decoding or projection |
+
+Each private execution directory contains `manifest.json`, `junit.xml`,
+`stdout.bin` and `stderr.bin`. The manifest records original and executed argv,
+working directory, exit code, artifact hashes and projection contract. A failed
+projection preserves these originals and refuses scientific credit. The
+low-level command runner still reports the measured process outcome; that
+outcome alone does not establish receipt credit.
+
+A parent interruption retains the exact captured artifacts before propagating
+the interruption, and creates no public receipt. On POSIX the recorder terminates
+the validator process group and reaps its direct child before saving the run.
+The group is terminated even when its leader has already exited while a
+remaining member still owns the captured output handles. Failure to reap the
+direct child within the cleanup budget refuses publication after retaining the
+captured artifacts.
 
 A receipt records one execution of the evidence command. Use the publication
 command to record it and refresh every catalogue view together:
@@ -95,6 +168,10 @@ recorder refuses to overwrite, and the verifier reads the newest receipt per
 class it is read for, carries every required subject kind, ended with
 `outcome = "passed"`, exit code 0, at least one passed check and no failed,
 errored or skipped check, and states the claim scope the facet requires.
+
+Native tool metadata uses the first nonempty line of a successful `-V` or
+`--version` invocation. Unavailable tools and probes that supply no successful
+version leave the version empty.
 
 The publication command also creates the receipt's adjacent `.json.license`
 ownership sidecar and refreshes the model profile ledger, readiness evidence
@@ -120,6 +197,22 @@ The fast readiness regression checks that the established AdaptiveThresholdIF,
 BrunelWang, Lapicque and ResonateAndFire co-simulation profiles retain their
 source-bound receipts. A shared compiler change therefore exposes withdrawn
 labels before the longer distribution checks run.
+
+## Recorder validation
+
+The reusable `recorder-coverage.yml` workflow combines the actual Linux and
+Windows recorder branch databases. Both artifacts and branch measurements are
+required; a missing platform database fails the check. The combined database
+must preserve both native inputs under canonical source paths. The Windows
+input must contribute recorder lines and branches, including at least one
+executed Windows-only statement. The production scope is
+`tools/facet_receipt.py`, `tools/facet_receipt_evidence.py` and
+`tools/facet_receipt_runtime.py`. Its named coverage floor is paired with an
+exact set of eligible Windows-only gaps, so an uncovered portable statement or
+branch fails even when the aggregate percentage clears the floor. The process
+observer has a separate diagnostic report. These artifacts remain separate from
+the package's existing 100% coverage union, whose required check also requires
+the recorder coverage job to succeed.
 
 ## Statuses
 

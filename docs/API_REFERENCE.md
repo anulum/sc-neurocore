@@ -35105,6 +35105,7 @@ Returns
 tuple&#91;Subject, ...&#93;
     Subjects with digests of the current content, de-duplicated by
     ``(kind, path)`` and sorted.
+    Prose and inline configurations do not produce subjects.
 
 ### Function `verify_receipt(receipt, *, class_name, repo_root)`
 Judge one receipt against the current repository.

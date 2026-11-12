@@ -66,6 +66,9 @@ def test_catalogue_reads_each_receipt_once_and_detail_reads_fresh_inputs(tmp_pat
         import json
         import sys
         from pathlib import Path
+        sys.path.insert(0, sys.argv[2])
+        import sc_neurocore
+        assert Path(sc_neurocore.__file__).resolve().is_relative_to(Path(sys.argv[2]).resolve())
         from sc_neurocore.neurons.facet_receipts import RECEIPT_DIR
         from sc_neurocore.neurons.models import __all__ as published_models
         from sc_neurocore.studio.model_catalogue import get_model_detail, list_models
@@ -103,7 +106,15 @@ def test_catalogue_reads_each_receipt_once_and_detail_reads_fresh_inputs(tmp_pat
         """
     )
     result = subprocess.run(
-        [sys.executable, "-I", "-B", "-c", program, str(tmp_path / "receipt-inputs.json")],
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            program,
+            str(tmp_path / "receipt-inputs.json"),
+            str(Path(__file__).resolve().parents[1] / "src"),
+        ],
         capture_output=True,
         text=True,
         timeout=120,
