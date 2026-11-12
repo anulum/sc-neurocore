@@ -30678,12 +30678,13 @@ and physiologically admissible, preventing corrupted glial state from
 leaking into downstream membrane dynamics.
 
 - **__post_init__**()
+  - Validate the configuration and the initial state.
 - **step_with_pre**(i_ext, pre_spike)
-  - Step with external current and presynaptic spike indicator.
+  - Advance one Euler step with external current and a presynaptic spike flag.
 - **step**(current)
-  - Step without presynaptic spike info (no glial calcium increment).
+  - Advance one step without a presynaptic spike (no calcium increment).
 - **reset**()
-  - Reset state to initial conditions.
+  - Return ``v`` to ``e_l`` and clear the calcium; the parameters are kept.
 
 ---
 

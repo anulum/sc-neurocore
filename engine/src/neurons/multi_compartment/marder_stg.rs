@@ -8,41 +8,78 @@
 
 //! Marder stomatogastric-ganglion neuron model.
 
+#![deny(missing_docs)]
+
 /// Marder STG — stomatogastric ganglion LP neuron with 7 currents.
 #[derive(Clone, Debug)]
 pub struct MarderSTGNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate.
     pub m_na: f64,
+    /// Sodium inactivation gate.
     pub h_na: f64,
+    /// T-type calcium activation gate.
     pub m_cat: f64,
+    /// T-type calcium inactivation gate.
     pub h_cat: f64,
+    /// Slow calcium activation gate.
     pub m_cas: f64,
+    /// Slow calcium inactivation gate.
     pub h_cas: f64,
+    /// A-type potassium activation gate.
     pub m_a: f64,
+    /// A-type potassium inactivation gate.
     pub h_a: f64,
+    /// Calcium-activated potassium activation gate; its steady state is
+    /// `ca / (ca + 3)` times a voltage sigmoid.
     pub m_kca: f64,
+    /// Delayed-rectifier potassium activation gate.
     pub m_kd: f64,
+    /// H-current activation gate.
     pub m_h: f64,
+    /// Intracellular calcium (uM); sets the Nernst calcium reversal and never falls below
+    /// zero.
     pub ca: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub cm: f64,
+    /// Maximal fast sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal transient (T-type) calcium conductance (mS/cm^2).
     pub g_cat: f64,
+    /// Maximal slow calcium conductance (mS/cm^2).
     pub g_cas: f64,
+    /// Maximal transient A-type potassium conductance (mS/cm^2).
     pub g_a: f64,
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_kd: f64,
+    /// Maximal hyperpolarisation-activated (H) conductance (mS/cm^2).
     pub g_h: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// H-current reversal potential (mV).
     pub e_h: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Extracellular calcium concentration for the Nernst reversal (uM).
     pub ca_out: f64,
+    /// Resting intracellular calcium concentration (uM).
     pub ca_rest: f64,
+    /// Calcium relaxation time constant (ms).
     pub tau_ca: f64,
+    /// Calcium influx coefficient converting calcium current into concentration change (uM*cm^2/uA).
     pub f_ca: f64,
+    /// Temperature for the Nernst calcium reversal (degC).
     pub celsius: f64,
+    /// Runge-Kutta step (ms); one per [`MarderSTGNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
@@ -57,6 +94,7 @@ fn stg_exp(x: f64) -> f64 {
 }
 
 impl MarderSTGNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -152,6 +190,14 @@ impl MarderSTGNeuron {
         ]
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt` with the injected
+    /// current `current`.
+    ///
+    /// The calcium reversal follows the Nernst equation from `ca_out`, `ca` and `celsius`.
+    /// The gates are clamped to 0 to 1 and calcium at zero after the step. Returns 1 when the
+    /// membrane potential starts below `v_threshold` and ends at or above it, else 0. A
+    /// non-finite result, which a non-finite current or too large a `dt` can cause, returns
+    /// 0 and leaves the neuron unchanged; the input itself is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let y = [
@@ -203,6 +249,8 @@ impl MarderSTGNeuron {
             0
         }
     }
+    /// Return the membrane potential, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -60.0;
         self.m_na = 0.0;

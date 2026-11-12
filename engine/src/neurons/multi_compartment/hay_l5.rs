@@ -8,45 +8,82 @@
 
 //! Hay layer-5 pyramidal neuron model.
 
+#![deny(missing_docs)]
+
 /// Hay et al. 2011 — Layer 5 thick-tufted pyramidal (3-compartment reduced).
 #[derive(Clone, Debug)]
 pub struct HayL5PyramidalNeuron {
+    /// Somatic membrane potential (mV).
     pub v_s: f64,
+    /// Trunk membrane potential (mV).
     pub v_t: f64,
+    /// Apical (tuft) membrane potential (mV).
     pub v_a: f64,
+    /// Somatic sodium inactivation gate; sodium activation is taken at its steady state.
     pub h_na: f64,
+    /// Somatic potassium activation gate.
     pub n_k: f64,
+    /// Trunk T-type calcium activation; relaxes at a rate of 1 per ms.
     pub m_ca: f64,
+    /// Trunk T-type calcium inactivation; relaxes with a 20 ms time constant.
     pub h_ca: f64,
+    /// Trunk Ih activation; relaxes with a 50 ms time constant.
     pub m_ih: f64,
+    /// Apical calcium; activates the calcium-activated potassium current as
+    /// `ca_a / (ca_a + 0.001)` and never falls below zero.
     pub ca_a: f64,
+    /// Maximal somatic sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal somatic potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Somatic leak conductance (mS/cm^2).
     pub g_l_s: f64,
+    /// Maximal trunk low-threshold (T-type) calcium conductance (mS/cm^2).
     pub g_ca_t: f64,
+    /// Maximal trunk hyperpolarisation-activated (Ih) conductance (mS/cm^2).
     pub g_ih: f64,
+    /// Trunk leak conductance (mS/cm^2).
     pub g_l_t: f64,
+    /// Maximal apical (high-threshold) calcium conductance (mS/cm^2).
     pub g_ca_a: f64,
+    /// Maximal apical calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Apical leak conductance (mS/cm^2).
     pub g_l_a: f64,
+    /// Soma-trunk coupling conductance (mS/cm^2).
     pub g_st: f64,
+    /// Trunk-apical coupling conductance (mS/cm^2).
     pub g_ta: f64,
+    /// Somatic compartment area fraction (dimensionless).
     pub p_s: f64,
+    /// Trunk compartment area fraction (dimensionless).
     pub p_t: f64,
+    /// Apical compartment area fraction (dimensionless).
     pub p_a: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Hyperpolarisation-activated current reversal potential (mV).
     pub e_ih: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Calcium decay time constant (ms).
     pub ca_decay: f64,
+    /// Calcium influx coefficient converting calcium current into concentration change (cm^2/(uA*ms)).
     pub f_ca: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Runge-Kutta step (ms); each [`HayL5PyramidalNeuron::step`] call runs four of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl HayL5PyramidalNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v_s: -75.0,
@@ -215,6 +252,12 @@ impl HayL5PyramidalNeuron {
         next
     }
 
+    /// Advance the neuron by four classical Runge-Kutta steps of `dt`, injecting
+    /// `current_soma / p_s` into the soma and `current_tuft / p_a` into the apical compartment.
+    ///
+    /// Returns 1 when the somatic potential starts below `v_threshold` and ends at or above
+    /// it, else 0. A non-finite current, an invalid parameter or state, or a non-finite
+    /// sub-step result returns 0 and leaves the neuron unchanged.
     pub fn step(&mut self, current_soma: f64, current_tuft: f64) -> i32 {
         if !current_soma.is_finite() || !current_tuft.is_finite() || !self.valid() {
             return 0;
@@ -245,6 +288,8 @@ impl HayL5PyramidalNeuron {
             0
         }
     }
+    /// Return the potentials, the gates and calcium to their initial values; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v_s = -75.0;
         self.v_t = -75.0;

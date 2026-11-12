@@ -8,6 +8,8 @@
 
 //! Dendritic NMDA neuron model.
 
+#![deny(missing_docs)]
+
 /// Dendritic NMDA spike model.
 ///
 /// Captures the non-linear voltage-dependent Mg²⁺ block of NMDA receptors
@@ -22,19 +24,30 @@
 /// Reference: Jahr & Stevens (1990), Schiller et al. (2000).
 #[derive(Clone, Debug)]
 pub struct DendriticNMDANeuron {
+    /// Somatic membrane potential (mV); reset to -65 mV by a spike.
     pub v_soma: f64,
+    /// Dendritic membrane potential (mV).
     pub v_dend: f64,
+    /// NMDA synaptic conductance (relative) (dimensionless).
     pub g_nmda: f64,
+    /// NMDA reversal potential (mV).
     pub e_nmda: f64,
+    /// Extracellular Mg2+ concentration (mM).
     pub mg_conc: f64,
+    /// Soma-dendrite coupling conductance (relative) (dimensionless).
     pub g_coupling: f64,
+    /// Somatic membrane time constant (ms).
     pub tau_soma: f64,
+    /// Dendritic membrane time constant (ms).
     pub tau_dend: f64,
+    /// Somatic firing threshold (mV).
     pub theta: f64,
+    /// Runge-Kutta step (ms); one per [`DendriticNMDANeuron::step`] call.
     pub dt: f64,
 }
 
 impl DendriticNMDANeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v_soma: -65.0,
@@ -107,6 +120,14 @@ impl DendriticNMDANeuron {
     }
 
     /// Step with somatic input and dendritic glutamate.
+    ///
+    /// One classical Runge-Kutta step of `dt` of
+    /// `tau_soma * dv_soma/dt = -(v_soma + 65) + i_soma + g_coupling * (v_dend - v_soma)` and
+    /// `tau_dend * dv_dend/dt = -(v_dend + 65) + i_nmda + g_coupling * (v_soma - v_dend)`, with
+    /// `i_nmda = g_nmda * glutamate * B(v_dend) * (v_dend - e_nmda)` added as written. The soma
+    /// reaching `theta` resets it to -65 mV and returns 1, else 0. A non-finite input, a
+    /// negative `glutamate`, an invalid parameter or a non-finite result returns 0 and
+    /// leaves the state unchanged.
     pub fn step(&mut self, i_soma: f64, glutamate: f64) -> i32 {
         if !i_soma.is_finite() || !glutamate.is_finite() || glutamate < 0.0 || !self.valid() {
             return 0;
@@ -126,6 +147,7 @@ impl DendriticNMDANeuron {
         }
     }
 
+    /// Return both potentials to -65 mV; the parameters are kept.
     pub fn reset(&mut self) {
         self.v_soma = -65.0;
         self.v_dend = -65.0;

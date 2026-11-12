@@ -16,7 +16,7 @@ Equations:
 
     dCa/dt = -Ca/tau_ca + delta * S_pre(t)        (calcium rise on presynaptic spike)
     I_glio = g_glio * H(Ca - Ca_thresh)            (gliotransmitter release)
-    dV/dt  = -(V - E_L)/tau_m + I_ext + I_glio    (LIF with glial feedback)
+    dV/dt  = (-(V - E_L) + I_ext + I_glio)/tau_m  (LIF with glial feedback)
 
 H is the Heaviside step function. Gliotransmitter release occurs when
 calcium exceeds threshold, providing slow excitatory feedback.
@@ -71,6 +71,14 @@ class AstrocyteLIFNeuron:
     ca: float = 0.0
 
     def __post_init__(self) -> None:
+        """Validate the configuration and the initial state.
+
+        Raises
+        ------
+        ValueError
+            If a parameter or state value is non-finite or outside its range, or
+            if ``theta`` is not above ``v_reset``.
+        """
         self._validate()
 
     def _validate(self) -> None:
@@ -84,7 +92,34 @@ class AstrocyteLIFNeuron:
             _non_negative(name, getattr(self, name))
 
     def step_with_pre(self, i_ext: float, pre_spike: bool) -> int:
-        """Step with external current and presynaptic spike indicator."""
+        """Advance one Euler step with external current and a presynaptic spike flag.
+
+        Calcium decays with ``tau_ca`` and gains ``ca_delta`` on a presynaptic
+        spike. The gliotransmitter current ``g_glio`` flows while the new calcium
+        exceeds ``ca_thresh``. The membrane follows
+        ``tau_m dV/dt = -(V - E_L) + I_ext + I_glio`` and resets to ``v_reset``
+        when it reaches ``theta``. The state changes only after every candidate
+        value has passed its check.
+
+        Parameters
+        ----------
+        i_ext : float
+            External current, in the voltage units of the membrane equation.
+        pre_spike : bool
+            Whether a presynaptic spike arrives in this step.
+
+        Returns
+        -------
+        int
+            1 on a spike, else 0.
+
+        Raises
+        ------
+        ValueError
+            If the state, a parameter, ``i_ext`` or a candidate value is invalid.
+        TypeError
+            If ``pre_spike`` is not a ``bool``.
+        """
         self._validate()
         _finite("i_ext", i_ext)
         if type(pre_spike) is not bool:
@@ -108,10 +143,26 @@ class AstrocyteLIFNeuron:
         return 1 if spike else 0
 
     def step(self, current: float) -> int:
-        """Step without presynaptic spike info (no glial calcium increment)."""
+        """Advance one step without a presynaptic spike (no calcium increment).
+
+        Parameters
+        ----------
+        current : float
+            External current, in the voltage units of the membrane equation.
+
+        Returns
+        -------
+        int
+            1 on a spike, else 0.
+
+        Raises
+        ------
+        ValueError
+            If the state, a parameter or ``current`` is invalid.
+        """
         return self.step_with_pre(current, pre_spike=False)
 
     def reset(self) -> None:
-        """Reset state to initial conditions."""
+        """Return ``v`` to ``e_l`` and clear the calcium; the parameters are kept."""
         self.v = self.e_l
         self.ca = 0.0

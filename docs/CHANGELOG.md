@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Document the engine's 10 multi-compartment models in full, each file read
+  against its code: how each step integrates (Euler sub-steps, RK4 or the
+  implicit cable solve), which compartment receives the input, where the spike
+  is detected, and what a refused step returns. Two corrections: the astrocyte
+  LIF docstrings (Rust and Python) wrote the membrane equation with only the
+  leak divided by `tau_m`, while both codes divide the whole sum, and the Marder
+  STG descriptor gave `f_ca` the unit `cm^2/(uA*ms)`, where the model's calcium
+  equation needs `uM*cm^2/uA`. The astrocyte LIF Python module now documents
+  its public methods in NumPy form and is enrolled in the docstring policy.
+
 - Document the engine's 22 simple spiking models in full and lower the Rust
   documentation ceiling from 3004 to 2712 undocumented items, each file read
   against its code. The documentation states each model's integrator and step

@@ -8,6 +8,8 @@
 
 //! Multi-compartment MCN neuron model.
 
+#![deny(missing_docs)]
+
 /// Multi-compartment neuron (MCN) matching the Spiking-WM architecture.
 ///
 /// Dual-dendrite model with basal and apical compartments. The apical dendrite
@@ -53,6 +55,7 @@ pub struct MulticompartmentMCNNeuron {
 }
 
 impl MulticompartmentMCNNeuron {
+    /// Create a neuron at rest with the Table II defaults listed above.
     pub fn new() -> Self {
         Self {
             u: 0.0,
@@ -174,6 +177,7 @@ impl MulticompartmentMCNNeuron {
         self.step_compartments(current, 0.0, 0.0)
     }
 
+    /// Return the soma and both dendrites to zero; the parameters are kept.
     pub fn reset(&mut self) {
         self.u = 0.0;
         self.v_basal = 0.0;

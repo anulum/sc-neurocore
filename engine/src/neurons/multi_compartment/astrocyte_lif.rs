@@ -8,6 +8,8 @@
 
 //! Astrocyte-coupled leaky integrate-and-fire neuron model.
 
+#![deny(missing_docs)]
+
 /// Astrocyte-LIF hybrid unit with calcium wave feedback.
 ///
 /// Models the tripartite synapse: a glial astrocyte monitors extracellular
@@ -16,25 +18,38 @@
 ///
 ///   dCa/dt = -Ca/τ_ca + δ · S_pre(t)        (calcium rise on presynaptic spike)
 ///   I_glio = g_glio · H(Ca - Ca_thresh)      (gliotransmitter release)
-///   dV/dt = -(V - E_L)/τ_m + I_ext + I_glio  (LIF with glial feedback)
+///   dV/dt = (-(V - E_L) + I_ext + I_glio)/τ_m  (LIF with glial feedback)
 ///
 /// Reference: Perea, Navarrete & Araque, "Tripartite synapses" (2009).
 #[derive(Clone, Debug)]
 pub struct AstrocyteLIFNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Astrocytic calcium (uM); decays with `tau_ca`, rises by `ca_delta` per presynaptic
+    /// spike and never falls below zero.
     pub ca: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Astrocytic calcium decay time constant (ms).
     pub tau_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Firing threshold (mV).
     pub theta: f64,
+    /// Post-spike reset potential (mV).
     pub v_reset: f64,
+    /// Calcium increment per presynaptic spike (uM).
     pub ca_delta: f64,
+    /// Calcium threshold for gliotransmitter release (uM).
     pub ca_thresh: f64,
+    /// Gliotransmission feedback conductance (relative) (dimensionless).
     pub g_glio: f64,
+    /// Forward-Euler step (ms); one per step call.
     pub dt: f64,
 }
 
 impl AstrocyteLIFNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -52,6 +67,11 @@ impl AstrocyteLIFNeuron {
     }
 
     /// Step with external current and presynaptic spike indicator.
+    ///
+    /// One forward-Euler step of `dt`: calcium first, then the gliotransmitter current
+    /// `g_glio` when calcium exceeds `ca_thresh`, then the membrane potential. Reaching
+    /// `theta` resets it to `v_reset` and returns 1, else 0. The input and the state are not
+    /// validated.
     pub fn step_with_pre(&mut self, i_ext: f64, pre_spike: bool) -> i32 {
         // Astrocyte calcium dynamics.
         let dca = -self.ca / self.tau_ca
@@ -87,6 +107,7 @@ impl AstrocyteLIFNeuron {
         self.step_with_pre(current, false)
     }
 
+    /// Return the membrane potential to `e_l` and clear calcium; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.e_l;
         self.ca = 0.0;

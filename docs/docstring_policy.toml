@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1878
+expected_file_count = 1879
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7566,3 +7566,7 @@ rationale = "Write and check engine field rustdoc from the neuron model descript
 [[file]]
 path = "tests/test_tools/test_rust_model_field_docs.py"
 rationale = "Real-file contracts for descriptor field rustdoc: rendering, placement above attributes, preserved documentation, refusals and the engine check."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/astrocyte_lif.py"
+rationale = "Astrocyte-LIF model whose membrane formula was corrected in the Rust documentation burndown; public surface documented in NumPy form from the code."

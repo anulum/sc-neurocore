@@ -8,20 +8,32 @@
 
 //! Rall cable neuron model.
 
+#![deny(missing_docs)]
+
 /// Rall cable — N-compartment passive dendrite model. Rall 1964.
 #[derive(Clone, Debug)]
 pub struct RallCableNeuron {
+    /// Membrane potential of each cable compartment, index 0 being the soma; one entry per n_comp, every compartment starting at v_rest rather than at a fixed number (mV).
     pub v: Vec<f64>,
+    /// Number of cable compartments (dimensionless).
     pub n_comp: usize,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Ratio of inter-compartment coupling to membrane conductance (dimensionless).
     pub g_ratio: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Reset potential (mV).
     pub v_reset: f64,
+    /// Backward-Euler step (ms); one per [`RallCableNeuron::step`] call.
     pub dt: f64,
 }
 
 impl RallCableNeuron {
+    /// Create a cable of `n_comp` compartments (at least one) at -65 mV with the default
+    /// parameters of its model descriptor.
     pub fn new(n_comp: usize) -> Self {
         let count = n_comp.max(1);
         Self {
@@ -35,6 +47,13 @@ impl RallCableNeuron {
             dt: 0.1,
         }
     }
+    /// Advance the cable by one backward-Euler step of `dt`, injecting `current` into the
+    /// last (distal) compartment.
+    ///
+    /// The step solves the tridiagonal system of leak and nearest-neighbour coupling. Returns
+    /// 1 when the soma (compartment 0) starts below `v_threshold` and ends at or above it,
+    /// resetting it to `v_reset`, else 0. A non-finite current, an invalid parameter or
+    /// state, or a singular or non-finite solve returns -1 and leaves the cable unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         let Some(mut candidate) = self.candidate(current) else {
             return -1;
@@ -49,6 +68,7 @@ impl RallCableNeuron {
             0
         }
     }
+    /// Set every compartment to `v_rest`; the parameters are kept.
     pub fn reset(&mut self) {
         self.v.fill(self.v_rest);
     }

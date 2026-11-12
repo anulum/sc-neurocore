@@ -8,6 +8,8 @@
 
 //! TC-LIF (Zhang et al. 2024) and the preserved SC exponential variant.
 
+#![deny(missing_docs)]
+
 /// TC-LIF — Zhang et al. (2024) two-compartment spiking neuron.
 ///
 /// Discrete map (paper Eqs. 10–12, exact ordering U_D → U_S → S):
@@ -27,12 +29,19 @@
 /// Zhang, Yang, Ma, Wu, Li & Tan, AAAI 38(15):16838, 2024.
 #[derive(Clone, Debug)]
 pub struct TwoCompartmentLIFNeuron {
+    /// Dendritic potential `U_D` (dimensionless).
     pub u_d: f64,
+    /// Somatic potential `U_S` (dimensionless).
     pub u_s: f64,
+    /// Spike of the previous step, 0 or 1, which drives both soft resets.
     pub s_prev: f64,
+    /// Somato-dendritic coupling, -sigmoid(c1) in the paper; strictly inside (-1, 0) (dimensionless).
     pub beta1: f64,
+    /// Dendro-somatic coupling, sigmoid(c2) in the paper; strictly inside (0, 1) (dimensionless).
     pub beta2: f64,
+    /// Dendritic soft-reset magnitude applied through the delayed spike (dimensionless).
     pub gamma: f64,
+    /// Somatic firing threshold and somatic soft-reset magnitude (dimensionless).
     pub v_th: f64,
 }
 
@@ -137,14 +146,26 @@ impl Default for TwoCompartmentLIFNeuron {
 /// makes no publication-exact claim.
 #[derive(Clone, Debug)]
 pub struct SCExponentialTwoCompartmentLIF {
+    /// Somatic potential; set to `v_reset` by a spike.
     pub v_s: f64,
+    /// Dendritic potential; never reset by a spike.
     pub v_d: f64,
+    /// Value both potentials take on [`SCExponentialTwoCompartmentLIF::reset`]; the step
+    /// decays towards zero, not towards it.
     pub v_rest: f64,
+    /// Somatic potential after a spike.
     pub v_reset: f64,
+    /// Somatic firing threshold.
     pub theta: f64,
+    /// Somatic decay time constant; each step multiplies the soma by `exp(-dt / tau_s)`.
     pub tau_s: f64,
+    /// Dendritic decay time constant; each step multiplies the dendrite by
+    /// `exp(-dt / tau_d)`.
     pub tau_d: f64,
+    /// Dendro-somatic coupling: the soma adds `kappa` times the updated dendritic
+    /// potential.
     pub kappa: f64,
+    /// Step length, in the unit of the time constants.
     pub dt: f64,
 }
 

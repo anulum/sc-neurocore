@@ -217,7 +217,7 @@ range = [
 
 [parameters.f_ca]
 default = 0.94
-unit = "cm^2/(uA*ms)"
+unit = "uM*cm^2/uA"
 meaning = "calcium influx coefficient converting calcium current into concentration change"
 range = [
     0.0,

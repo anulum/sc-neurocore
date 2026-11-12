@@ -8,31 +8,55 @@
 
 //! Booth-Rinzel multi-compartment neuron model.
 
+#![deny(missing_docs)]
+
 /// Booth-Rinzel — 2-compartment motoneuron with bistability. Booth et al. 1997.
 #[derive(Clone, Debug)]
 pub struct BoothRinzelNeuron {
+    /// Somatic membrane potential (mV).
     pub vs: f64,
+    /// Dendritic membrane potential (mV).
     pub vd: f64,
+    /// Somatic sodium inactivation gate.
     pub h: f64,
+    /// Somatic potassium activation gate.
     pub n: f64,
+    /// Dendritic gate relaxing towards its voltage steady state with a 400 ms time constant;
+    /// it enters no current in this implementation, as in the Python model.
     pub q: f64,
+    /// Dendritic calcium; activates the calcium-activated potassium current as
+    /// `min(ca / 250, 1)` and never falls below zero.
     pub ca: f64,
+    /// Somatic compartment area fraction (dimensionless).
     pub p: f64,
+    /// Soma-dendrite coupling conductance (mS/cm^2).
     pub gc: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Forward-Euler step (ms); each [`BoothRinzelNeuron::step`] call runs four of them.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl BoothRinzelNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             vs: -65.0,
@@ -56,6 +80,12 @@ impl BoothRinzelNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Advance the neuron by four forward-Euler steps of `dt` with the injected current
+    /// `current`, delivered to the soma as `current / p`.
+    ///
+    /// The gates are clamped to 0 to 1, both potentials to -200 to 100 mV, and calcium at
+    /// zero. Returns 1 when the somatic potential starts below `v_threshold` and ends at or
+    /// above it, else 0. The input and the state are not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.vs;
         for _ in 0..4 {
@@ -93,6 +123,8 @@ impl BoothRinzelNeuron {
             0
         }
     }
+    /// Return both potentials, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.vs = -65.0;
         self.vd = -65.0;

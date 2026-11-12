@@ -8,37 +8,65 @@
 
 //! Pinsky-Rinzel multi-compartment neuron model.
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// Pinsky-Rinzel 1994 — 2-compartment pyramidal cell.
 #[derive(Clone, Debug)]
 pub struct PinskyRinzelNeuron {
+    /// Somatic membrane potential (mV).
     pub v_s: f64,
+    /// Dendritic membrane potential (mV).
     pub v_d: f64,
+    /// Somatic sodium inactivation gate; sodium activation is taken at its steady state.
     pub h: f64,
+    /// Somatic delayed-rectifier potassium activation; the current is linear in it.
     pub n: f64,
+    /// Dendritic calcium activation; the calcium current uses `s^2`.
     pub s: f64,
+    /// Activation of the voltage- and calcium-dependent potassium current, which also
+    /// scales with `min(ca / 250, 1)`.
     pub c: f64,
+    /// Activation of the afterhyperpolarisation potassium current; its opening rate is
+    /// `min(0.00002 * ca, 0.01)`.
     pub q: f64,
+    /// Dendritic calcium; `dca/dt = -0.13 * i_ca - 0.075 * ca`, never below zero.
     pub ca: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub cm: f64,
+    /// Soma-dendrite coupling conductance (mS/cm^2).
     pub gc: f64,
+    /// Somatic compartment area fraction (dimensionless).
     pub p: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_kdr: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal calcium-dependent afterhyperpolarisation potassium conductance (mS/cm^2).
     pub g_kahp: f64,
+    /// Maximal voltage- and calcium-dependent potassium conductance (mS/cm^2).
     pub g_kc: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Runge-Kutta step (ms); one per [`PinskyRinzelNeuron::step`] call.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl PinskyRinzelNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             v_s: -60.0,
@@ -115,6 +143,12 @@ impl PinskyRinzelNeuron {
         ]
     }
 
+    /// Advance the neuron by one classical Runge-Kutta step of `dt`, injecting
+    /// `current_soma / p` into the soma and `current_dend / (1 - p)` into the dendrite.
+    ///
+    /// The gates are clamped to 0 to 1 and calcium at zero after the step. Returns 1 when
+    /// the somatic potential starts below `v_threshold` and ends at or above it, else 0.
+    /// The inputs and the state are not validated.
     pub fn step(&mut self, current_soma: f64, current_dend: f64) -> i32 {
         let v_prev = self.v_s;
         let y = [
@@ -155,6 +189,8 @@ impl PinskyRinzelNeuron {
             0
         }
     }
+    /// Return both potentials, the gates and calcium to their initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v_s = -60.0;
         self.v_d = -60.0;
