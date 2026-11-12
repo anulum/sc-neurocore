@@ -28640,10 +28640,11 @@ defaults and initial values, the timestep) always follow the regenerated
 payload, which is read from the model code — so the corpus can never drift
 from the implementation. Curation fields (parameter units/ranges/meaning,
 state semantics, taxonomy, the backend matrix, reproducibility, notes,
-validation evidence, silicon evidence anchors, the curated display name and
-documentation slug, and any richer provenance, dynamics, or display fields)
-are preserved from the curated payload. The curated ``metadata.name`` and
-``documentation.slug`` are authoritative overlays: a hand-written descriptive
+validation evidence, silicon evidence anchors, the behaviour cases, the
+curated display name and documentation slug, and any richer provenance,
+dynamics, or display fields) are preserved from the curated payload. The
+curated ``metadata.name`` and ``documentation.slug`` are authoritative
+overlays: a hand-written descriptive
 name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
 generic generator default. A curated state entry whose name the regeneration
 classified as a parameter is dropped rather than preserved, so a variable
@@ -29795,6 +29796,49 @@ terminal_reason:
     multicompartment model that need not reach signed PPA).
 
 
+### Class `BehaviourCase`
+One statement of what a model does at a named drive, in a form that can fail.
+
+A case is the author's statement, not an independent reference: it shows
+that the model does what its author says. It takes one of two forms.
+
+``interval``
+    After ``steps`` steps at the constant ``inputs``, the observable lies
+    within ``bounds``, both ends included. Equal ends state an exact value.
+``contrast``
+    The observable at ``inputs`` exceeds the observable at
+    ``reference_inputs`` by at least ``margin``, which is positive.
+
+A spike count of a run lies between zero and the number of steps. Bounds on
+it are whole numbers within that range and leave at least one count out, so
+they can fail; a margin between two spike counts is a whole number from one
+to the number of steps, so it can hold. A drive is a table of finite
+numbers: a model whose step takes a vector or a truth value cannot state a
+case in this form. A whole-number input is kept as a float.
+
+Parameters
+----------
+name:
+    What the case states, unique within the descriptor.
+kind:
+    ``"interval"`` or ``"contrast"`` (:data:`BEHAVIOUR_KINDS`).
+steps:
+    Number of steps the model is advanced, positive.
+observable:
+    ``"spikes"`` for the number of steps that returned a spike, or
+    ``"state:<name>"`` for the final value of a declared state variable.
+inputs:
+    The constant value of each named input of the model's step, as
+    ``(name, value)`` pairs sorted by name.
+bounds:
+    ``(low, high)`` for an interval; ``None`` for a contrast.
+reference_inputs:
+    The second drive of a contrast, naming the same inputs; empty for an
+    interval.
+margin:
+    The least difference of a contrast; ``None`` for an interval.
+
+
 ### Class `ModelDescriptor`
 The full declarative descriptor for one neuron model.
 
@@ -29830,7 +29874,7 @@ payload:
     A loaded descriptor mapping (from TOML/JSON), using the v2 section
     layout: ``metadata``, ``provenance``, ``state``, ``parameters``,
     ``integration``, ``dynamics``, ``backends``, ``reproducibility``,
-    ``documentation``.
+    ``documentation``, and the optional list of ``behaviour`` cases.
 
 Returns
 -------
@@ -29840,8 +29884,10 @@ ModelDescriptor
 Raises
 ------
 ModelDescriptorError
-    If any required identifier is missing or a controlled-vocabulary field
-    carries an unknown value.
+    If any required identifier is missing, a controlled-vocabulary field
+    carries an unknown value, or a behaviour case is malformed or could not
+    fail (a bound with one end, an order without a margin, an observable the
+    descriptor does not declare).
 
 ---
 

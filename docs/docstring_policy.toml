@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1892
+expected_file_count = 1893
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -503,6 +503,10 @@ rationale = "Public descriptor-corpus generator used by the corpus refresh tool 
 [[file]]
 path = "src/sc_neurocore/neurons/model_descriptor.py"
 rationale = "Public descriptor schema contract used by generated model metadata, catalogue validation, and Studio model browsing."
+
+[[file]]
+path = "tests/test_model_descriptor_behaviour_cases.py"
+rationale = "Bind the behaviour cases of a model descriptor: the two forms that can fail, every refusal, and that the generator's merge and serialisation keep them."
 
 [[file]]
 path = "src/sc_neurocore/neurons/__init__.py"

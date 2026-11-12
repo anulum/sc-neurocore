@@ -602,10 +602,11 @@ def merge_descriptor_payloads(
     payload, which is read from the model code — so the corpus can never drift
     from the implementation. Curation fields (parameter units/ranges/meaning,
     state semantics, taxonomy, the backend matrix, reproducibility, notes,
-    validation evidence, silicon evidence anchors, the curated display name and
-    documentation slug, and any richer provenance, dynamics, or display fields)
-    are preserved from the curated payload. The curated ``metadata.name`` and
-    ``documentation.slug`` are authoritative overlays: a hand-written descriptive
+    validation evidence, silicon evidence anchors, the behaviour cases, the
+    curated display name and documentation slug, and any richer provenance,
+    dynamics, or display fields) are preserved from the curated payload. The
+    curated ``metadata.name`` and ``documentation.slug`` are authoritative
+    overlays: a hand-written descriptive
     name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
     generic generator default. A curated state entry whose name the regeneration
     classified as a parameter is dropped rather than preserved, so a variable
@@ -677,6 +678,11 @@ def merge_descriptor_payloads(
             # inspection. Preserve them wholesale so dual-axis readiness (S4/S5
             # and H0-H5) cannot be wiped by a structural corpus refresh.
             merged[section] = _copy(cur_section)
+    cur_behaviour = curated.get("behaviour")
+    if isinstance(cur_behaviour, list) and cur_behaviour:
+        # Behaviour cases are the author's statement and are never read from the
+        # model code, so a structural refresh must carry them over as written.
+        merged["behaviour"] = _copy(cur_behaviour)
     cur_doc = _mapping(curated.get("documentation"))
     notes = cur_doc.get("notes")
     if isinstance(notes, str) and notes:

@@ -32,9 +32,10 @@ ahead of the evidence in the descriptor (master plan invariant I7).
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 MODEL_DESCRIPTOR_SCHEMA_VERSION = 2
 
@@ -53,6 +54,19 @@ VALIDATION_METRICS = frozenset({"none", "parity", "statistical", "trajectory", "
 # means the class has not been declared yet (so the model cannot be certified
 # perfect). H0-H5 mirror the silicon axis in :mod:`descriptor_tiers`.
 SILICON_TARGET_TIERS = frozenset({"", "H0", "H1", "H2", "H3", "H4", "H5"})
+
+# The two forms a behaviour case may take. Both can fail: an interval has two
+# ends, a contrast has a least margin. A bound with one end is not a form.
+BEHAVIOUR_KINDS = frozenset({"interval", "contrast"})
+# The observable every model has; a state variable is named ``state:<name>``.
+BEHAVIOUR_SPIKE_OBSERVABLE = "spikes"
+_BEHAVIOUR_STATE_PREFIX = "state:"
+_BEHAVIOUR_KEYS = {
+    "interval": frozenset({"name", "kind", "steps", "observable", "inputs", "bounds"}),
+    "contrast": frozenset(
+        {"name", "kind", "steps", "observable", "inputs", "reference_inputs", "margin"}
+    ),
+}
 
 _SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 _DOI = re.compile(r"^10\.\d{4,9}/\S+$")
@@ -277,6 +291,60 @@ class Silicon:
 
 
 @dataclass(frozen=True, slots=True)
+class BehaviourCase:
+    """One statement of what a model does at a named drive, in a form that can fail.
+
+    A case is the author's statement, not an independent reference: it shows
+    that the model does what its author says. It takes one of two forms.
+
+    ``interval``
+        After ``steps`` steps at the constant ``inputs``, the observable lies
+        within ``bounds``, both ends included. Equal ends state an exact value.
+    ``contrast``
+        The observable at ``inputs`` exceeds the observable at
+        ``reference_inputs`` by at least ``margin``, which is positive.
+
+    A spike count of a run lies between zero and the number of steps. Bounds on
+    it are whole numbers within that range and leave at least one count out, so
+    they can fail; a margin between two spike counts is a whole number from one
+    to the number of steps, so it can hold. A drive is a table of finite
+    numbers: a model whose step takes a vector or a truth value cannot state a
+    case in this form. A whole-number input is kept as a float.
+
+    Parameters
+    ----------
+    name:
+        What the case states, unique within the descriptor.
+    kind:
+        ``"interval"`` or ``"contrast"`` (:data:`BEHAVIOUR_KINDS`).
+    steps:
+        Number of steps the model is advanced, positive.
+    observable:
+        ``"spikes"`` for the number of steps that returned a spike, or
+        ``"state:<name>"`` for the final value of a declared state variable.
+    inputs:
+        The constant value of each named input of the model's step, as
+        ``(name, value)`` pairs sorted by name.
+    bounds:
+        ``(low, high)`` for an interval; ``None`` for a contrast.
+    reference_inputs:
+        The second drive of a contrast, naming the same inputs; empty for an
+        interval.
+    margin:
+        The least difference of a contrast; ``None`` for an interval.
+    """
+
+    name: str
+    kind: str
+    steps: int
+    observable: str
+    inputs: tuple[tuple[str, float], ...]
+    bounds: tuple[float, float] | None = None
+    reference_inputs: tuple[tuple[str, float], ...] = ()
+    margin: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ModelDescriptor:
     """The full declarative descriptor for one neuron model."""
 
@@ -313,6 +381,10 @@ class ModelDescriptor:
     #: with incomplete custody naming what moved.
     stateless: bool = False
     schema_version: int = MODEL_DESCRIPTOR_SCHEMA_VERSION
+    #: What the model's author states it does, as cases that can fail. Optional:
+    #: a descriptor without the ``behaviour`` table states none. The cases take
+    #: no part in the contract digest of a receipt and in no tier.
+    behaviour: tuple[BehaviourCase, ...] = ()
 
 
 def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
@@ -363,7 +435,7 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         A loaded descriptor mapping (from TOML/JSON), using the v2 section
         layout: ``metadata``, ``provenance``, ``state``, ``parameters``,
         ``integration``, ``dynamics``, ``backends``, ``reproducibility``,
-        ``documentation``.
+        ``documentation``, and the optional list of ``behaviour`` cases.
 
     Returns
     -------
@@ -373,8 +445,10 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
     Raises
     ------
     ModelDescriptorError
-        If any required identifier is missing or a controlled-vocabulary field
-        carries an unknown value.
+        If any required identifier is missing, a controlled-vocabulary field
+        carries an unknown value, or a behaviour case is malformed or could not
+        fail (a bound with one end, an order without a margin, an observable the
+        descriptor does not declare).
     """
     metadata = _section(payload, "metadata")
     version = metadata.get("schema_version", 1)
@@ -425,7 +499,11 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
             "descriptor asserts stateless and declares "
             f"{len(descriptor.state)} state variables; it cannot be both"
         )
-    return descriptor
+    table = payload.get("behaviour")
+    if table is None:
+        return descriptor
+    cases = _parse_behaviour(table, {spec.name for spec in descriptor.state})
+    return replace(descriptor, behaviour=cases)
 
 
 def _section(
@@ -606,6 +684,132 @@ def _parse_reproducibility(section: Mapping[str, object]) -> Reproducibility:
     )
 
 
+def _parse_behaviour(table: object, state_names: set[str]) -> tuple[BehaviourCase, ...]:
+    if (
+        not isinstance(table, Sequence)
+        or isinstance(table, str)
+        or not all(isinstance(entry, Mapping) for entry in table)
+    ):
+        raise ModelDescriptorError("descriptor [[behaviour]] must be a list of tables")
+    cases: list[BehaviourCase] = []
+    seen: set[str] = set()
+    for entry in table:
+        case = _parse_behaviour_case(entry, state_names)
+        if case.name in seen:
+            raise ModelDescriptorError(f"behaviour case {case.name!r} is stated more than once")
+        seen.add(case.name)
+        cases.append(case)
+    return tuple(cases)
+
+
+def _parse_behaviour_case(entry: Mapping[str, object], state_names: set[str]) -> BehaviourCase:
+    name = entry.get("name")
+    if not isinstance(name, str) or not name:
+        raise ModelDescriptorError("a behaviour case requires a non-empty 'name'")
+    where = f"behaviour case {name!r}"
+    kind = entry.get("kind")
+    if not isinstance(kind, str) or kind not in BEHAVIOUR_KINDS:
+        raise ModelDescriptorError(f"{where}: kind must be one of {sorted(BEHAVIOUR_KINDS)}")
+    foreign = sorted(set(entry) - _BEHAVIOUR_KEYS[kind])
+    if foreign:
+        raise ModelDescriptorError(f"{where}: {kind} case does not take {foreign}")
+    steps = entry.get("steps")
+    if isinstance(steps, bool) or not isinstance(steps, int) or steps <= 0:
+        raise ModelDescriptorError(f"{where}: steps must be a positive whole number")
+    observable = entry.get("observable")
+    declared = {BEHAVIOUR_SPIKE_OBSERVABLE} | {
+        _BEHAVIOUR_STATE_PREFIX + state for state in state_names
+    }
+    if not isinstance(observable, str) or observable not in declared:
+        raise ModelDescriptorError(
+            f"{where}: observable must be {BEHAVIOUR_SPIKE_OBSERVABLE!r} or "
+            f"'{_BEHAVIOUR_STATE_PREFIX}<name>' of a declared state variable"
+        )
+    inputs = _behaviour_drive(entry.get("inputs"), where, "inputs")
+    if kind == "interval":
+        return BehaviourCase(
+            name=name,
+            kind=kind,
+            steps=steps,
+            observable=observable,
+            inputs=inputs,
+            bounds=_behaviour_bounds(entry.get("bounds"), where, observable, steps),
+        )
+    reference = _behaviour_drive(entry.get("reference_inputs"), where, "reference_inputs")
+    if [key for key, _ in reference] != [key for key, _ in inputs]:
+        raise ModelDescriptorError(f"{where}: both drives of a contrast name the same inputs")
+    if reference == inputs:
+        raise ModelDescriptorError(f"{where}: the two drives of a contrast must differ")
+    margin = _finite_number(entry.get("margin"))
+    if margin is None or margin <= 0:
+        raise ModelDescriptorError(f"{where}: margin must be a positive finite number")
+    if observable == BEHAVIOUR_SPIKE_OBSERVABLE and (not margin.is_integer() or margin > steps):
+        raise ModelDescriptorError(
+            f"{where}: a spike margin is a whole number from 1 to the number of steps ({steps})"
+        )
+    return BehaviourCase(
+        name=name,
+        kind=kind,
+        steps=steps,
+        observable=observable,
+        inputs=inputs,
+        reference_inputs=reference,
+        margin=margin,
+    )
+
+
+def _finite_number(value: object) -> float | None:
+    """Return a number as a finite float, or ``None`` when the value is not one.
+
+    A whole number of any size can be written in a descriptor; one that no
+    float can hold is not a finite number here.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _behaviour_drive(value: object, where: str, key: str) -> tuple[tuple[str, float], ...]:
+    if not isinstance(value, Mapping) or not value:
+        raise ModelDescriptorError(f"{where}: {key} must be a non-empty table of named inputs")
+    drive: list[tuple[str, float]] = []
+    for name, written in sorted(value.items()):
+        number = _finite_number(written)
+        if number is None:
+            raise ModelDescriptorError(f"{where}: {key}.{name} must be a finite number")
+        drive.append((str(name), number))
+    return tuple(drive)
+
+
+def _behaviour_bounds(
+    value: object, where: str, observable: str, steps: int
+) -> tuple[float, float]:
+    if not isinstance(value, Sequence) or isinstance(value, str) or len(value) != 2:
+        raise ModelDescriptorError(f"{where}: bounds must be a [low, high] pair with both ends")
+    low, high = _finite_number(value[0]), _finite_number(value[1])
+    if low is None or high is None:
+        raise ModelDescriptorError(f"{where}: bounds must be two finite numbers")
+    if low > high:
+        raise ModelDescriptorError(f"{where}: bounds must be in the order [low, high]")
+    if observable != BEHAVIOUR_SPIKE_OBSERVABLE:
+        return (low, high)
+    if low < 0 or not (low.is_integer() and high.is_integer()):
+        raise ModelDescriptorError(f"{where}: a spike count is a whole number that is not negative")
+    if high > steps:
+        raise ModelDescriptorError(
+            f"{where}: a spike count cannot exceed the number of steps ({steps})"
+        )
+    if low == 0 and high == steps:
+        raise ModelDescriptorError(
+            f"{where}: spike bounds from 0 to the number of steps hold for every model"
+        )
+    return (low, high)
+
+
 def _parse_validation(section: Mapping[str, object]) -> Validation:
     metric = _vocab(section.get("metric", "none"), VALIDATION_METRICS, "validation metric")
     return Validation(
@@ -649,12 +853,15 @@ __all__ = [
     "BACKEND_NAMES",
     "BACKEND_PARITIES",
     "BACKEND_STATUSES",
+    "BEHAVIOUR_KINDS",
+    "BEHAVIOUR_SPIKE_OBSERVABLE",
     "BIOPHYSICAL_DETAILS",
     "MATURITIES",
     "MODEL_DESCRIPTOR_SCHEMA_VERSION",
     "SILICON_TARGET_TIERS",
     "VALIDATION_METRICS",
     "BackendSupport",
+    "BehaviourCase",
     "ModelDescriptor",
     "ModelDescriptorError",
     "ParameterSpec",

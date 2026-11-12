@@ -12,6 +12,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A model descriptor may state behaviour cases: what the model does at a named
+  drive, in a form that can fail. The optional `[[behaviour]]` list holds two
+  kinds. An `interval` bounds one observable (the spike count, or the final
+  value of a declared state variable as `state:<name>`) after a number of
+  steps at constant named inputs, with both ends; equal ends state an exact
+  value. A `contrast` states that the observable at one drive exceeds the
+  observable at a second drive by at least a positive margin. A bound with
+  one end, an order without a margin, an observable the descriptor does not
+  declare, an empty drive, and any key the kind does not take are refused when
+  the descriptor is parsed. A spike count of a run lies between zero and the
+  number of steps, so spike bounds that span that whole range or reach above
+  it, and a spike margin that is fractional or above the number of steps, are
+  refused as well. A drive is a table of finite numbers; a model whose step
+  takes a vector or a truth value cannot state a case in this form yet. The
+  cases are the author's statement and take no part in a readiness tier or in
+  the contract digest of a receipt. The descriptor generator keeps them when
+  it refreshes a descriptor from the model code. No shipped descriptor states
+  a case yet, and nothing runs them yet.
+
 - The benchmark coverage census counts a model as measured when a committed
   record measures it, also where the record does not hold the model's class
   name. A record that binds by path the benchmark scripts that produced it is
