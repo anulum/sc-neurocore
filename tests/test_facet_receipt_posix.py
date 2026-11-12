@@ -25,6 +25,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.facet_receipt_budget_support import command_budget, poll_interval
 from tools.facet_receipt import run_command
 
 
@@ -58,9 +59,8 @@ def test_linux_interruption_kills_the_remaining_group_after_its_leader_exits(
     status, counts, outcome, _ = run_command([sys.executable, "-c", "pass"], timeout=None)
     baseline = time.monotonic() - started
     assert status == 0 and counts["passed"] == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
-    interval = baseline / (1 + cpus)
+    budget = command_budget(baseline)
+    interval = poll_interval(baseline)
     identity = tmp_path / "leader-and-child.json"
     completed = tmp_path / "grandchild-completed"
     child = (
@@ -159,8 +159,7 @@ def test_linux_detached_output_writer_cannot_extend_the_owned_command_deadline(
     status, counts, outcome, _ = run_command([sys.executable, "-c", "pass"], timeout=None)
     baseline = time.monotonic() - started
     assert status == 0 and counts["passed"] == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60 / 8, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
+    budget = command_budget(baseline, ceiling=4 * 60 * 60 / 8)
     identity = tmp_path / "leader-detached-child.json"
     completed = tmp_path / "detached-child-completed"
     child = (
@@ -251,8 +250,7 @@ def test_linux_concurrent_output_truncation_cannot_crash_the_public_recorder(
     )
     baseline = time.monotonic() - started
     assert status == 0 and counts["passed"] == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60 / 8, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
+    budget = command_budget(baseline, ceiling=4 * 60 * 60 / 8)
     script = tmp_path / "concurrent_writer.py"
     repo_root = Path(__file__).resolve().parents[1]
     script.write_text(

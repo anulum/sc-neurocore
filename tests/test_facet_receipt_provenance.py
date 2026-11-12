@@ -28,6 +28,7 @@ import pytest
 from sc_neurocore.neurons.facet_receipts import credit_problems, load_receipt
 from sc_neurocore.neurons.readiness import verify_receipt
 from sc_neurocore.neurons.receipt_execution import junit_checks
+from tests.facet_receipt_budget_support import command_budget, poll_interval
 from tools.facet_receipt import REPO_ROOT, record_receipt
 
 _VALIDATOR = (
@@ -197,10 +198,8 @@ def test_posix_cli_interrupt_reaps_its_validator_and_retains_original_bytes(
         raw_evidence_dir=tmp_path / "baseline-raw",
     )
     measured_baseline = time.monotonic() - started
-    cpus = len(os.sched_getaffinity(0))
-    pressure = max(1.0, os.getloadavg()[0] / cpus)
-    budget = min(4 * 60 * 60, measured_baseline * (1 + cpus) * pressure)
-    interval = measured_baseline / (1 + cpus)
+    budget = command_budget(measured_baseline)
+    interval = poll_interval(measured_baseline)
     archive = tmp_path / "interrupted-raw"
     receipts = tmp_path / "interrupted-receipts"
     command = [

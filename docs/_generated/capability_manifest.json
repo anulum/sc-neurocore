@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5644
+    "test_files": 5646
   },
   "documentation": {
     "public_pages": [
@@ -3532,6 +3532,7 @@
       "tests/explain_support.py",
       "tests/expr_lut_tables_support.py",
       "tests/extended_neurons_support.py",
+      "tests/facet_receipt_budget_support.py",
       "tests/fault_injection_module_support.py",
       "tests/fault_injection_support.py",
       "tests/fault_tolerance_support.py",
@@ -5308,6 +5309,7 @@
       "tests/test_extended_neurons_stochastic_if.py",
       "tests/test_extended_neurons_true_north.py",
       "tests/test_extended_neurons_wong_wang.py",
+      "tests/test_facet_receipt_budget_support.py",
       "tests/test_facet_receipt_checkout.py",
       "tests/test_facet_receipt_cli.py",
       "tests/test_facet_receipt_posix.py",

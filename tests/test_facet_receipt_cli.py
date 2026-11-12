@@ -21,6 +21,7 @@ import pytest
 
 from sc_neurocore.neurons.facet_receipts import credit_problems, load_receipt
 from sc_neurocore.neurons.readiness import verify_receipt
+from tests.facet_receipt_budget_support import command_budget
 from tools.facet_receipt import REPO_ROOT, main, run_command
 
 _VALIDATOR = (
@@ -257,9 +258,7 @@ def test_cli_preserves_scientific_source_binding_without_git(tmp_path: Path) -> 
     )
     baseline = time.monotonic() - started
     assert status == 0 and counts["passed"] == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count() or 1
-    pressure = max(1.0, os.getloadavg()[0] / cpus) if hasattr(os, "getloadavg") else 1.0
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * pressure)
+    budget = command_budget(baseline)
     empty_path = tmp_path / "empty-path"
     empty_path.mkdir()
     environment = dict(os.environ)

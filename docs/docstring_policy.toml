@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1909
+expected_file_count = 1911
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7690,3 +7690,11 @@ rationale = "Verify combined public readiness labels and acceptance against the 
 [[file]]
 path = "tests/test_model_descriptor_reproducibility.py"
 rationale = "Re-run each Tier-3 descriptor's reference configuration against its golden trace and every declared backend that is available against its declared parity."
+
+[[file]]
+path = "tests/facet_receipt_budget_support.py"
+rationale = "Hold the one rule by which the recorder's real-process tests bound a command: the measured baseline times a fixed factor, widened by the host's load and never by its processor count."
+
+[[file]]
+path = "tests/test_facet_receipt_budget_support.py"
+rationale = "Bind the budget rule of the recorder's real-process tests: the same margin on every processor count, pressure from the one-minute load, the ceiling, the platform fallbacks, each refusal by its whole message, and that the six test files take their budget from the rule."

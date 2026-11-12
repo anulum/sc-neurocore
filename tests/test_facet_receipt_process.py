@@ -21,6 +21,12 @@ from pathlib import Path
 
 import pytest
 
+from tests.facet_receipt_budget_support import (
+    BUDGET_FACTOR,
+    command_budget,
+    poll_interval,
+    usable_processors,
+)
 from tools.facet_receipt import run_command
 
 
@@ -58,11 +64,8 @@ def test_native_recorder_reaps_the_started_child(tmp_path: Path, termination: st
     assert baseline_status == 0
     assert baseline_counts["passed"] == 0
     assert baseline_outcome == "skipped"
-    cpus = os.cpu_count() or 1
-    load = os.getloadavg()[0] if hasattr(os, "getloadavg") else None
-    pressure = max(1.0, load / cpus) if load is not None else 1.0
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * pressure)
-    interval = baseline / (1 + cpus)
+    budget = command_budget(baseline)
+    interval = poll_interval(baseline)
     pid_file = tmp_path / "child.pid"
     completed = tmp_path / "child.completed"
     program = (
@@ -113,8 +116,8 @@ def test_native_recorder_reaps_the_started_child(tmp_path: Path, termination: st
                 "child_pid": pid,
                 "command": command,
                 "measured_baseline_seconds": baseline,
-                "cpu_count": cpus,
-                "load_1m": load,
+                "usable_processors": usable_processors(),
+                "budget_factor": BUDGET_FACTOR,
                 "budget_seconds": budget,
                 "poll_interval_seconds": interval,
                 "native_process_exit_verified": True,

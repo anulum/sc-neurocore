@@ -24,6 +24,7 @@ import pytest
 
 from sc_neurocore.neurons.facet_receipts import credit_problems, load_receipt
 from sc_neurocore.neurons.readiness import current_digest, derive_subjects, verify_receipt
+from tests.facet_receipt_budget_support import command_budget, poll_interval
 from tools.facet_receipt import REPO_ROOT, run_command
 
 
@@ -114,8 +115,7 @@ def test_cli_refuses_incomplete_checkout_inputs_without_running_a_validator(
     )
     baseline = time.monotonic() - started
     assert status == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
+    budget = command_budget(baseline)
     checkout = tmp_path / "checkout"
     if omission != "model-subjects":
         omitted = (
@@ -211,8 +211,7 @@ def test_cli_binds_generated_cosimulation_without_optional_committed_rtl(tmp_pat
     )
     baseline = time.monotonic() - started
     assert status == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
+    budget = command_budget(baseline)
     checkout = tmp_path / "checkout"
     for directory in ("src", "tools"):
         _copy_public_checkout_tree(directory, checkout, budget=budget)
@@ -293,9 +292,8 @@ def test_cli_refuses_subject_membership_changes_during_a_real_validator(
     )
     baseline = time.monotonic() - started
     assert status == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    budget = min(4 * 60 * 60, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
-    interval = baseline / (1 + cpus)
+    budget = command_budget(baseline)
+    interval = poll_interval(baseline)
     checkout = tmp_path / "checkout"
     for directory in ("src", "tools"):
         _copy_public_checkout_tree(directory, checkout, budget=budget)

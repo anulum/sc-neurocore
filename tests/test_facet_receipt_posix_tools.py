@@ -23,6 +23,7 @@ from types import FrameType
 
 import pytest
 
+from tests.facet_receipt_budget_support import command_budget as host_command_budget
 from tools.facet_receipt import RecordError, run_command
 
 
@@ -36,8 +37,7 @@ def command_budget() -> float:
     )
     baseline = time.monotonic() - started
     assert status == 0 and counts["passed"] == 0 and outcome == "skipped"
-    cpus = len(os.sched_getaffinity(0))
-    return min(4 * 60 * 60, baseline * (1 + cpus) * max(1.0, os.getloadavg()[0] / cpus))
+    return host_command_budget(baseline)
 
 
 @pytest.mark.parametrize(("program", "arguments"), [("sleep", ["0"]), ("true", [])])
