@@ -27,6 +27,7 @@ from .sc_correlation import (
     observed_and_bias,
 )
 from .sc_error_bounds import (
+    GuaranteeNotDetermined,
     SCErrorBound,
     bernoulli_std_error,
     bernoulli_variance,
@@ -41,6 +42,7 @@ from .sc_error_bounds import (
     multiply_variance,
     mux_add_variance,
     sc_error_bound,
+    threshold_encoding_error_bound,
 )
 from .tensor_stream import TensorStream
 
@@ -68,6 +70,8 @@ __all__ = [
     "mux_add_variance",
     "dot_product_variance",
     "low_discrepancy_error_bound",
+    "threshold_encoding_error_bound",
+    "GuaranteeNotDetermined",
     "hoeffding_confidence",
     "hoeffding_min_length",
     "min_length_for_std_error",

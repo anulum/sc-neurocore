@@ -18657,6 +18657,14 @@ ValueError
 
 ## Module `core.sc_error_bounds`
 
+### Class `GuaranteeNotDetermined`
+No proven bound exists for the requested configuration.
+
+Raised instead of returning a number when the assumption behind a closed
+form does not hold. It is a :class:`ValueError`, so existing handlers of
+invalid arguments also catch it.
+
+
 ### Class `SCErrorBound`
 Summary of the accuracy of one encoded SC value.
 
@@ -18802,23 +18810,75 @@ Returns
 float
     Variance of the scaled dot-product estimate.
 
-### Function `low_discrepancy_error_bound(length)`
-Deterministic error bound :math:`1/N` for a low-discrepancy SC source.
+### Function `threshold_encoding_error_bound(points)`
+Exact worst-case error of threshold encoding with a given set of points.
 
-Sobol/Halton bitstreams are deterministic: a value representable at
-resolution :math:`1/N` is encoded exactly, and any value is within
-:math:`1/N`. This replaces the pseudo-random :math:`O(1/\sqrt N)` standard
-error with a hard :math:`O(1/N)` bound (Najafi, Lilja & Riedel 2018).
+A deterministic source encodes :math:`p \in &#91;0, 1&#93;` with comparator points
+:math:`x_1, \dots, x_N \in &#91;0, 1)` as the bits :math:`&#91;x_i < p&#93;` and decodes
+:math:`\hat p = \#\{i : x_i < p\} / N`. Between two neighbouring points the
+count is constant, so the error is extreme at the points. With the points
+sorted, :math:`x_{(1)} \le \dots \le x_{(N)}`,
+
+.. math::
+    \sup_{p \in &#91;0, 1&#93;} |\hat p - p|
+    = \max_{1 \le i \le N} \max\!\left(\frac{i}{N} - x_{(i)},\;
+      x_{(i)} - \frac{i - 1}{N}\right),
+
+which is the star discrepancy of the point set (Doerr, Gnewuch & Wahlström
+2014). The supremum is approached just above a point and need not be
+attained. The value is at least :math:`1/(2N)`.
+
+The bound belongs to these points: a different prefix of the same sequence
+has its own. It covers the encoding of one value. It says nothing about a
+gate that combines two streams, whose error depends on how the two point
+sets relate to each other.
+
+Parameters
+----------
+points : sequence of float
+    The comparator points actually used, in any order, each in
+    :math:`&#91;0, 1)`.
+
+Returns
+-------
+float
+    The supremum of the decoding error over all :math:`p \in &#91;0, 1&#93;`.
+
+Raises
+------
+ValueError
+    If ``points`` is empty or holds a value that is not finite or lies
+    outside :math:`&#91;0, 1)`.
+
+### Function `low_discrepancy_error_bound(length)`
+Deterministic error bound :math:`1/N` of a power-of-two radical-inverse prefix.
+
+The first :math:`N = 2^k` points of the base-2 radical-inverse sequence
+(the unscrambled one-dimensional Sobol sequence, and the Halton sequence in
+base 2, both from index 0) are exactly :math:`\{0, 1/N, \dots, (N-1)/N\}`.
+Threshold encoding with them decodes :math:`\lceil pN \rceil / N`, so the
+error lies in :math:`&#91;0, 1/N)` (Najafi, Lilja & Riedel 2018).
+
+For any other length the prefix is not that grid and the error can exceed
+:math:`1/N`: the first five points encode :math:`p = 0.3` as :math:`0.6`.
+No number is returned then. Use :func:`threshold_encoding_error_bound`
+with the points actually used; it is exact for every length, base and
+scrambling.
 
 Parameters
 ----------
 length : int
-    Bitstream length :math:`N` (positive).
+    Bitstream length :math:`N`; a positive power of two.
 
 Returns
 -------
 float
     :math:`1 / N`.
+
+Raises
+------
+GuaranteeNotDetermined
+    If ``length`` is not a power of two.
 
 ### Function `hoeffding_confidence(length, epsilon)`
 Distribution-free confidence that :math:`|\hat p - p| < \epsilon`.

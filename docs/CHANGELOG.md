@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- State the deterministic error bound of threshold encoding for the points
+  actually used. The new `threshold_encoding_error_bound(points)` returns the
+  exact worst-case decoding error of a point set (its one-dimensional star
+  discrepancy). `low_discrepancy_error_bound(length)` keeps `1/N` only for a
+  power of two, where the first `N` radical-inverse points form the grid
+  `j/N`, and refuses any other length with the new `GuaranteeNotDetermined`
+  (a `ValueError`). Before, it returned `1/N` for every length, although five
+  Halton points encode 0.3 as 0.6.
+
 - Check the input of the stochastic cross-correlation diagnostics
   (`estimate_scc`, `observed_and_bias`, `correlation_diagnostic`) in its
   original representation before converting it to bits. Fractional values,

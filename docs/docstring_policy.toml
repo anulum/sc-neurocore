@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1880
+expected_file_count = 1881
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -1807,6 +1807,10 @@ rationale = "Public stochastic cross-correlation (SCC) diagnostic that estimates
 [[file]]
 path = "tests/test_sc_correlation_validation.py"
 rationale = "Bind the cross-correlation diagnostics' input contract: values are checked in their original representation, and every exact 0/1 container gives the same result."
+
+[[file]]
+path = "tests/test_sc_error_bounds_low_discrepancy.py"
+rationale = "Bind the deterministic bounds of threshold encoding to an enumeration of the worst case for the points actually used."
 
 [[file]]
 path = "src/sc_neurocore/layers/__init__.py"
