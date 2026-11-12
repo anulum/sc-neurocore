@@ -33,10 +33,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 - Keep the biophysical neuron facade within its frozen line ceiling. Documenting
   the shared `safe_rate` helper had grown `engine/src/neurons/biophysical.rs`
-  from 54 to 59 lines, which the engine monolith guard refuses. The helper now
-  lives in its own module, `biophysical/rate_functions.rs`, and the facade
-  re-exports it under the same path; the facade is 40 lines and its ceiling is
-  lowered to 40.
+  from 54 to 59 lines, which the engine monolith guard refuses. The helper's
+  body now lives in its own module, `biophysical/rate_functions.rs`. The facade
+  keeps a `safe_rate` function that calls it, because the Rust documentation
+  ratchet requires a declaration that was undocumented at the last published
+  revision to remain in its file. The facade is 50 lines and its ceiling is
+  lowered from 54 to 50.
 
 - Document the engine's 24 biophysical conductance models and the shared
   `safe_rate` helper in full, and lower the Rust documentation ceiling from

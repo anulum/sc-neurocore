@@ -36,5 +36,15 @@ mod sc_six_state_thalamocortical;
 mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
-pub use rate_functions::safe_rate;
 pub use reexports::*;
+/// Hodgkin-Huxley-type rate with a fallback at its 0/0 point; the body and its full description
+/// are in the private module `rate_functions`. The historical path of this function stays here.
+pub fn safe_rate(
+    number_factor: f64,
+    v_offset: f64,
+    v: f64,
+    denom_scale: f64,
+    fallback: f64,
+) -> f64 {
+    rate_functions::safe_rate(number_factor, v_offset, v, denom_scale, fallback)
+}

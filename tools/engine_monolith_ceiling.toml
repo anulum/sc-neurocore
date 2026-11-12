@@ -91,7 +91,7 @@ max_lines = 35
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/biophysical.rs"]
-max_lines = 40
+max_lines = 50
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/cerebellar.rs"]
