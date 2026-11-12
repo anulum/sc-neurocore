@@ -64,6 +64,12 @@ def _rows(census: dict[str, object]) -> list[dict[str, object]]:
     return rows
 
 
+def _records(row: dict[str, object]) -> list[dict[str, object]]:
+    records = row["records"]
+    assert isinstance(records, list)
+    return records
+
+
 class TestTheCommittedCensusIsCurrent:
     """The committed census equals what the tool computes now."""
 
@@ -393,11 +399,7 @@ class TestARecordNoModelNamesIsStillWatched:
         assert isinstance(all_totals, dict)
         assert isinstance(cited_totals, dict)
         assert sum(int(all_totals[word]) for word in CURRENCIES) == parsed
-        cited = {
-            str(record["name"])
-            for row in _rows(census)
-            for record in row["records"]  # type: ignore[attr-defined]
-        }
+        cited = {str(record["name"]) for row in _rows(census) for record in _records(row)}
         others = census["uncited_bound_records"]
         assert isinstance(others, list)
         names = [str(entry["name"]) for entry in others]
