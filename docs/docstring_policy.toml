@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1914
+expected_file_count = 1915
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7710,3 +7710,7 @@ rationale = "Bind the budget rule of the recorder's real-process tests: the same
 [[file]]
 path = "tests/test_waveform_codec_polyglot_contracts.py"
 rationale = "Retained waveform source-marker checks describe validation symbols without claiming compilation, packet compatibility or codec backend parity."
+
+[[file]]
+path = "tests/test_model_descriptor_backend_lanes.py"
+rationale = "Bind the lanes a descriptor may declare: the closed list of names with the one legacy name, evidence kept as written, sources as repository-relative paths in their written order, each refusal with its whole message, and that a refresh by the generator keeps both fields."

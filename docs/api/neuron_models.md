@@ -195,6 +195,20 @@ missing metadata, non-table sections, scalar tag fields, non-numeric values,
 malformed ranges, invalid provenance years, and invalid digest formats before a
 descriptor reaches the catalogue or Studio browser surface.
 
+A `[backends.<lane>]` table names one of six lanes: `python`, `rust` (the
+production engine binding), `rust_safety` (the safety crate), `julia`, `go` and
+`mojo`. The earlier name `rust_engine` is still read for the descriptors that
+carry it and is not written for a new table; a table under any other name is
+refused. Beside `status` and `parity` a lane may state `evidence`, the tests
+that are its evidence in the grammar of the descriptor's other evidence fields,
+and `sources`, the list of tracked files that implement the model in that
+lane. A source is a path inside the repository: an absolute path, a path
+through a parent folder, an empty entry and a repeated entry are refused. A
+lane table states its `status`, and a key other than `status`, `parity`,
+`evidence` and `sources` is refused, so that a misspelt key cannot drop what it
+states. The parser keeps both fields as written and does not check that a test
+or a file exists. No readiness facet reads them yet.
+
 Tier-3 golden traces remain exact-hash contracts. When a scalar transcendental
 has two measured NumPy SIMD results on heterogeneous x86 hosts, the descriptor's
 `[reproducibility]` table may add `golden_trace_sha256_variants`; the typed parser

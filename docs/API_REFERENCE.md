@@ -29707,7 +29707,26 @@ Citation and licensing provenance for a model.
   - True when authors, a year, and a valid DOI are all present.
 
 ### Class `BackendSupport`
-Implementation status and numeric parity for one compute backend.
+What a descriptor declares about one backend lane.
+
+Attributes
+----------
+name : str
+    The lane: one of ``BACKEND_LANES`` or of ``LEGACY_BACKEND_LANES``.
+status : str
+    One of ``BACKEND_STATUSES``.
+parity : str
+    One of ``BACKEND_PARITIES``: how the lane's results relate to the
+    reference lane.
+evidence : str
+    The tests that are the lane's evidence, in the grammar of the
+    descriptor's other evidence fields (test files or test nodes, separated
+    by semicolons); empty when none is named. The text is kept as written
+    and is not resolved here.
+sources : tuple of str
+    The tracked files that implement the model in this lane, as
+    repository-relative paths in their written order; empty when none is
+    listed. Whether a file exists is not checked here.
 
 
 ### Class `Reproducibility`

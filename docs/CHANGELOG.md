@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A model descriptor's `[backends.<lane>]` table takes its lane name from a
+  closed list (`python`, `rust`, `rust_safety`, `julia`, `go`, `mojo`; the
+  earlier name `rust_engine` is still read) and may state `evidence`, the tests
+  that are the lane's evidence, and `sources`, the tracked files that implement
+  the model in that lane. A table under another name, a table without a status
+  or with a key outside those four, a lane that is neither a table nor a status
+  word, evidence that is not text, and a source that is absolute, passes
+  through a parent folder, is empty or is listed twice are refused. No shipped
+  descriptor changes and every model keeps its tier. No readiness facet reads
+  the two fields yet.
+
 - The internal Rust safety crate no longer exports seven placeholder codec
   modules that returned constant values (`aer_codec`, `codec`, `delta_codec`,
   `entropy`, `predictive_codec`, `streaming_codec`, `waveform_codec`). Their

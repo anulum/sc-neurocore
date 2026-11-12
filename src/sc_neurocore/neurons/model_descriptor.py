@@ -42,6 +42,16 @@ MODEL_DESCRIPTOR_SCHEMA_VERSION = 2
 BIOPHYSICAL_DETAILS = frozenset({"point", "reduced", "multicompartment", "conductance"})
 MATURITIES = frozenset({"reference", "experimental", "validated"})
 BACKEND_NAMES = ("python", "rust", "julia", "go", "mojo")
+# The lanes a descriptor may declare under ``[backends.<lane>]``. ``rust`` is the
+# production engine binding and ``rust_safety`` the safety crate: two roles, declared
+# apart. ``BACKEND_NAMES`` above stays the five lanes of the kernel parity suites.
+BACKEND_LANES = ("python", "rust", "rust_safety", "julia", "go", "mojo")
+# An earlier name of the ``rust`` lane that shipped descriptors still carry. It is
+# accepted so that those descriptors parse; no new table is written under it.
+LEGACY_BACKEND_LANES = ("rust_engine",)
+# The keys a lane table takes. Any other key is refused, so that a misspelt key cannot
+# drop what it states without a word.
+_BACKEND_TABLE_KEYS = ("status", "parity", "evidence", "sources")
 BACKEND_STATUSES = frozenset({"implemented", "planned", "unsupported"})
 BACKEND_PARITIES = frozenset({"exact", "ulp-bounded", "approximate", "n/a"})
 
@@ -152,11 +162,33 @@ class Provenance:
 
 @dataclass(frozen=True, slots=True)
 class BackendSupport:
-    """Implementation status and numeric parity for one compute backend."""
+    """What a descriptor declares about one backend lane.
+
+    Attributes
+    ----------
+    name : str
+        The lane: one of ``BACKEND_LANES`` or of ``LEGACY_BACKEND_LANES``.
+    status : str
+        One of ``BACKEND_STATUSES``.
+    parity : str
+        One of ``BACKEND_PARITIES``: how the lane's results relate to the
+        reference lane.
+    evidence : str
+        The tests that are the lane's evidence, in the grammar of the
+        descriptor's other evidence fields (test files or test nodes, separated
+        by semicolons); empty when none is named. The text is kept as written
+        and is not resolved here.
+    sources : tuple of str
+        The tracked files that implement the model in this lane, as
+        repository-relative paths in their written order; empty when none is
+        listed. Whether a file exists is not checked here.
+    """
 
     name: str
     status: str
     parity: str = "n/a"
+    evidence: str = ""
+    sources: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -647,15 +679,71 @@ def _parse_dynamics(section: Mapping[str, object]) -> dict[str, str]:
 def _parse_backends(section: Mapping[str, object]) -> tuple[BackendSupport, ...]:
     backends: list[BackendSupport] = []
     for name, value in section.items():
-        status = "implemented"
+        if name not in BACKEND_LANES and name not in LEGACY_BACKEND_LANES:
+            raise ModelDescriptorError(
+                f"descriptor backend lane {name!r} is not a lane; the lanes are "
+                f"{', '.join(BACKEND_LANES)}, and the legacy name {LEGACY_BACKEND_LANES[0]}"
+            )
         parity = "n/a"
+        evidence = ""
+        sources: tuple[str, ...] = ()
         if isinstance(value, Mapping):
-            status = _vocab(value.get("status", "implemented"), BACKEND_STATUSES, "backend status")
+            for key in value:
+                if key not in _BACKEND_TABLE_KEYS:
+                    raise ModelDescriptorError(
+                        f"descriptor backend {name!r} has the key {key!r}; a lane table takes "
+                        f"{', '.join(_BACKEND_TABLE_KEYS[:-1])} and {_BACKEND_TABLE_KEYS[-1]}"
+                    )
+            if "status" not in value:
+                raise ModelDescriptorError(
+                    f"descriptor backend {name!r} table must state its status"
+                )
+            status = _vocab(value["status"], BACKEND_STATUSES, "backend status")
             parity = _vocab(value.get("parity", "n/a"), BACKEND_PARITIES, "backend parity")
+            evidence = _backend_evidence(value.get("evidence", ""), name)
+            sources = _backend_sources(value.get("sources", []), name)
         elif isinstance(value, str):
             status = _vocab(value, BACKEND_STATUSES, "backend status")
-        backends.append(BackendSupport(name=name, status=status, parity=parity))
+        else:
+            raise ModelDescriptorError(
+                f"descriptor backend {name!r} must be a table or a status word, got {value!r}"
+            )
+        backends.append(
+            BackendSupport(
+                name=name, status=status, parity=parity, evidence=evidence, sources=sources
+            )
+        )
     return tuple(backends)
+
+
+def _backend_evidence(value: object, lane: str) -> str:
+    if not isinstance(value, str):
+        raise ModelDescriptorError(
+            f"descriptor backend {lane!r} evidence must be a string, got {value!r}"
+        )
+    return value
+
+
+def _backend_sources(value: object, lane: str) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise ModelDescriptorError(
+            f"descriptor backend {lane!r} sources must be a list of repository paths, got {value!r}"
+        )
+    sources: list[str] = []
+    for path in value:
+        # The same rule a receipt applies to a subject's path, so that every listed
+        # source can become a subject: inside the repository, never through a parent.
+        if not isinstance(path, str) or not path or path.startswith("/") or ".." in path.split("/"):
+            raise ModelDescriptorError(
+                f"descriptor backend {lane!r} source must be a repository-relative path, "
+                f"got {path!r}"
+            )
+        if path in sources:
+            raise ModelDescriptorError(
+                f"descriptor backend {lane!r} lists the source {path!r} twice"
+            )
+        sources.append(path)
+    return tuple(sources)
 
 
 def _parse_reproducibility(section: Mapping[str, object]) -> Reproducibility:
@@ -850,12 +938,14 @@ def _parse_silicon(section: Mapping[str, object]) -> Silicon:
 
 
 __all__ = [
+    "BACKEND_LANES",
     "BACKEND_NAMES",
     "BACKEND_PARITIES",
     "BACKEND_STATUSES",
     "BEHAVIOUR_KINDS",
     "BEHAVIOUR_SPIKE_OBSERVABLE",
     "BIOPHYSICAL_DETAILS",
+    "LEGACY_BACKEND_LANES",
     "MATURITIES",
     "MODEL_DESCRIPTOR_SCHEMA_VERSION",
     "SILICON_TARGET_TIERS",

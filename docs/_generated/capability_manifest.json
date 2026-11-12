@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5647
+    "test_files": 5648
   },
   "documentation": {
     "public_pages": [
@@ -6138,6 +6138,7 @@
       "tests/test_model_dendrify_dendrify_pipeline.py",
       "tests/test_model_dendritic_nmda.py",
       "tests/test_model_dendritic_nmda_contracts.py",
+      "tests/test_model_descriptor_backend_lanes.py",
       "tests/test_model_descriptor_behaviour_cases.py",
       "tests/test_model_descriptor_completeness_and_validation.py",
       "tests/test_model_descriptor_every_model.py",
