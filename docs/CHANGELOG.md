@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The internal Rust safety crate no longer exports seven placeholder codec
+  modules that returned constant values (`aer_codec`, `codec`, `delta_codec`,
+  `entropy`, `predictive_codec`, `streaming_codec`, `waveform_codec`). Their
+  source files stay in the repository as unsupported source and are not
+  compiled; the crate is marked `publish = false`. The production Rust codec
+  components are those of the engine crate. The Go, Julia and Mojo codec
+  mirrors stay unsupported sources; the mirror-authority guide says what each
+  is. The engine workflow now runs the safety crate's tests, among them seven
+  doctests that must fail to compile if an export returns.
+
 - A new tool, `tools/model_behaviour_variants.py`, asks a model's behaviour
   cases whether they depend on the signs of its equations. For a catalogue
   model that states cases and has a bound schema it builds every variant of

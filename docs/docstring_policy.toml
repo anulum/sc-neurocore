@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1913
+expected_file_count = 1914
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7706,3 +7706,7 @@ rationale = "Hold the one rule by which the recorder's real-process tests bound 
 [[file]]
 path = "tests/test_facet_receipt_budget_support.py"
 rationale = "Bind the budget rule of the recorder's real-process tests: the same margin on every processor count, pressure from the one-minute load, the ceiling, the platform fallbacks, each refusal by its whole message, and that the six test files take their budget from the rule."
+
+[[file]]
+path = "tests/test_waveform_codec_polyglot_contracts.py"
+rationale = "Retained waveform source-marker checks describe validation symbols without claiming compilation, packet compatibility or codec backend parity."

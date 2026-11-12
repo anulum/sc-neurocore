@@ -4,9 +4,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — WaveformCodec polyglot validation contract tests
+# SC-NeuroCore — WaveformCodec source-mirror validation markers
 
-"""Contract checks for WaveformCodec validation ranges across language mirrors."""
+"""Check validation markers in retained WaveformCodec source mirrors.
+
+These static checks do not compile the mirrors or establish codec support,
+packet compatibility or runtime parity.
+"""
 
 from __future__ import annotations
 
@@ -36,7 +40,7 @@ MIRROR_PATHS = (
 
 
 def test_waveform_codec_validation_markers_exist_in_all_language_surfaces() -> None:
-    """Every language surface carries the shared wire-header validation contract."""
+    """Each retained source file keeps the shared validation constant names."""
     missing: list[str] = []
     for relative_path in MIRROR_PATHS:
         body = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
@@ -47,8 +51,8 @@ def test_waveform_codec_validation_markers_exist_in_all_language_surfaces() -> N
     assert missing == []
 
 
-def test_authoritative_waveform_codec_mirrors_have_runtime_validators() -> None:
-    """Compiled mirrors expose fail-closed validators instead of only comments."""
+def test_retained_waveform_mirror_sources_contain_validator_definitions() -> None:
+    """Retained Rust and Go sources include validator definitions."""
     rust_body = (REPO_ROOT / "src/sc_neurocore/accel/rust/safety/waveform_codec.rs").read_text(
         encoding="utf-8"
     )

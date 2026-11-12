@@ -29,6 +29,36 @@ Everything else is one of:
 - transcript mirror
 - historical scaffold
 
+## Codec implementations and retained sources
+
+The Python packet APIs live in `sc_neurocore.spike_codec`. The production Rust
+engine provides waveform channel coders, stateful waveform-stream and spike-event
+coding, and EMA/LFSR predictive kernels. These components do not establish that
+every Python packet container has a complete Rust implementation. Use the
+[codec catalogue](../api/spike_codec.md) for component availability and the
+[wire-format reference](../reference/spike_codec_wire_formats.md) for packet
+boundaries.
+
+The internal `sc-neurocore-safety` crate disables registry publication with
+`publish = false`. Its neuron APIs remain available, but it does not export
+the placeholder modules `aer_codec`, `codec`, `delta_codec`, `entropy`,
+`predictive_codec`, `streaming_codec` or `waveform_codec`. Their `.rs` files remain
+in `src/sc_neurocore/accel/rust/safety/` as unsupported source and are not compiled
+into the crate. Use the production engine for real Rust codec components.
+
+The following source mirrors also remain unsupported as codec backends:
+
+| Language | Retained source area | Qualification boundary |
+|---|---|---|
+| Go | `accel/go/services/{registry,streaming_codec,waveform_codec}/` | Empty factory/codec functions; waveform configuration validation alone does not encode or decode packets. |
+| Julia | `accel/julia/spike_codec/*.jl` | Algorithm transcripts, including entropy and registry helpers; no maintained codec loader or executed packet parity. |
+| Mojo | `accel/mojo/kernels/*codec.mojo` and `entropy.mojo` | Algorithm transcripts returning scalar placeholders; no maintained codec loader or executed packet parity. |
+
+Paths in the table resolve under `src/sc_neurocore/`. Constants, validator
+definitions and static source-marker tests do not qualify a working codec.
+Only a real maintained implementation, exercised through its public loader with
+packet parity and measured benchmarks, can establish codec support.
+
 ## Current authoritative Julia entrypoints
 
 The maintained Julia surface is currently limited to files explicitly loaded by

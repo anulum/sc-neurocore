@@ -6,6 +6,49 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety library
 
+//! Internal source-parity safety models.
+//!
+//! Codec transcripts are retained as source files but are not codec backends
+//! and are deliberately absent from this crate's public API. Production codec
+//! components live in the separate `sc-neurocore-engine` crate.
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::aer_codec as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::codec as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::delta_codec as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::entropy as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::predictive_codec as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::streaming_codec as _;
+//! ```
+//!
+//! ```compile_fail
+//! use sc_neurocore_safety::waveform_codec as _;
+//! ```
+//!
+//! Neuron models remain available through their existing modules:
+//!
+//! ```
+//! use sc_neurocore_safety::theta::ThetaNeuron;
+//!
+//! let mut neuron = ThetaNeuron::new();
+//! assert_eq!(neuron.step(0.0), Ok(0));
+//! ```
+
 // Source-parity safety mirrors retain their canonical `new()` constructors;
 // blanket `Default` impls would create 359 public contracts absent upstream.
 #![allow(clippy::new_without_default)]
@@ -20,7 +63,6 @@ pub mod adaptive_threshold_if;
 pub mod adaptive_threshold_moe;
 pub mod adex;
 pub mod advanced;
-pub mod aer_codec;
 pub mod aer_router;
 pub mod aer_udp;
 pub mod agent;
@@ -82,7 +124,6 @@ pub mod clif;
 pub mod clopath_stdp;
 pub mod coba_lif;
 pub mod cochlear_hair_cell;
-pub mod codec;
 pub mod codegen;
 pub mod collective_fields;
 pub mod compiler;
@@ -104,7 +145,6 @@ pub mod de_schutter_purkinje;
 pub mod decoder;
 pub mod decorrelators;
 pub mod delay_linear;
-pub mod delta_codec;
 pub mod demo_sleep_optimization;
 pub mod dendrify;
 pub mod dendritic;
@@ -130,7 +170,6 @@ pub mod encoding;
 pub mod energy;
 pub mod energy_lif;
 pub mod engine;
-pub mod entropy;
 pub mod eprop;
 pub mod equiv;
 pub mod ermentrout_kopell_map_neuron;
@@ -320,7 +359,6 @@ pub mod poisson;
 pub mod population;
 pub mod pospischil;
 pub mod power_estimator;
-pub mod predictive_codec;
 pub mod predictive_coding;
 pub mod predictive_model;
 pub mod prescott;
@@ -426,7 +464,6 @@ pub mod stimulus;
 pub mod stochastic_if;
 pub mod stochastic_lif;
 pub mod stochastic_stdp;
-pub mod streaming_codec;
 pub mod substrate;
 pub mod superspike_neuron;
 pub mod surrogate;
@@ -476,7 +513,6 @@ pub mod verilog_generator;
 pub mod vip_neuron;
 pub mod wang_buzsaki;
 pub mod watermark;
-pub mod waveform_codec;
 pub mod web_viz;
 pub mod weights;
 pub mod wendling;
