@@ -30,9 +30,10 @@ starting value, a contrast when it held. A model is then in one state:
 ``invalid``
     a case could not be run: it names an input the model's step does not take
     or leaves a required one out, its state variable is not held by the model
-    or is not one finite number, the step refused the drive, a spike count
-    was asked of a step that returned something other than 0 or 1, or it asks
-    for more than :data:`MAX_CASE_STEPS` steps.
+    or is not one finite number, the step raised an error at the drive, a
+    spike count was asked of a step that returned something other than 0 or 1
+    (a truth value counts as one of them), or it asks for more than
+    :data:`MAX_CASE_STEPS` steps.
 ``no_case``
     the descriptor states no case.
 
@@ -78,6 +79,8 @@ import numbers
 from pathlib import Path
 import sys
 from typing import Any
+
+import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -164,10 +167,10 @@ def _observe(
     for _ in range(steps):
         try:
             returned = instance.step(**inputs)
-        except (ValueError, ArithmeticError, TypeError) as error:
-            raise _CannotRun(f"the step refused the drive ({type(error).__name__})") from error
+        except Exception as error:  # the model's own code: whatever it raises is reported
+            raise _CannotRun(f"the step raised {type(error).__name__}") from error
         if state is None:
-            if not isinstance(returned, numbers.Real) or returned not in (0, 1):
+            if not isinstance(returned, (numbers.Real, np.bool_)) or returned not in (0, 1):
                 raise _CannotRun("the step returned a value that is not 0 or 1")
             spikes += 1 if returned == 1 else 0
     if state is None:
@@ -178,11 +181,37 @@ def _observe(
     return float(final), bool(final != start)
 
 
-def _written(value: float, observable: str) -> int | float:
-    """Return an observed value as the report writes it: an exact count, or six significant digits."""
+def as_written(value: float, observable: str) -> int | float:
+    """Return an observed value as a report writes it: an exact count, or six significant digits."""
     if observable == BEHAVIOUR_SPIKE_OBSERVABLE:
         return int(value)
     return float(f"{value:.6g}")
+
+
+def case_holds(case: BehaviourCase, observed: float, reference: float | None = None) -> bool:
+    """Say whether an observation satisfies a case.
+
+    Parameters
+    ----------
+    case : BehaviourCase
+        The case as its descriptor states it.
+    observed : float
+        The observable after the case's steps at its drive.
+    reference : float, optional
+        The observable at the reference drive; required for a contrast.
+
+    Returns
+    -------
+    bool
+        For an interval, whether the observation lies within the bounds, both
+        ends included. For a contrast, whether the observation exceeds the
+        reference by at least the margin.
+    """
+    if case.bounds is not None:
+        low, high = case.bounds
+        return low <= observed <= high
+    assert case.margin is not None and reference is not None
+    return observed - reference >= case.margin
 
 
 def _stated(value: float, observable: str) -> int | float:
@@ -207,17 +236,14 @@ def _evaluate_case(model: type[Any], case: BehaviourCase) -> dict[str, object]:
         entry["margin"] = _stated(case.margin, case.observable)
     try:
         observed, moved = _observe(model, dict(case.inputs), case.steps, case.observable)
-        entry["observed"] = _written(observed, case.observable)
+        entry["observed"] = as_written(observed, case.observable)
         if case.kind == "interval":
-            assert case.bounds is not None
-            low, high = case.bounds
-            entry["held"] = low <= observed <= high
+            entry["held"] = case_holds(case, observed)
             entry["exercised"] = moved
         else:
-            assert case.margin is not None
             reference, _ = _observe(model, dict(case.reference_inputs), case.steps, case.observable)
-            entry["reference_observed"] = _written(reference, case.observable)
-            entry["held"] = observed - reference >= case.margin
+            entry["reference_observed"] = as_written(reference, case.observable)
+            entry["held"] = case_holds(case, observed, reference)
             entry["exercised"] = entry["held"]
     except _CannotRun as refusal:
         entry.pop("observed", None)

@@ -37,6 +37,7 @@ from tools.model_behaviour_report import (
     REPORT_SCHEMA,
     REPORT_NOTES,
     build_report,
+    case_holds,
     cases_digest,
     check_problems,
     encode,
@@ -50,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 184
+MODELS_WITHOUT_A_CASE = 183
 
 
 class _Integrator:
@@ -124,6 +125,29 @@ class _ArrayScalarState:
         """Add the current to the level."""
         self.level = self.level + np.float64(current)
         return 0
+
+
+class _FailsInItsOwnWay:
+    """A model whose step raises an error of its own kind."""
+
+    def step(self, current: float) -> int:
+        """Raise what a model's internal check might raise."""
+        raise RuntimeError("the solver did not converge")
+
+
+class _TruthValueSpikes:
+    """A model whose step returns a numpy truth value, as a vectorised threshold test does."""
+
+    def __init__(self) -> None:
+        self.level = 0.0
+
+    def step(self, current: float) -> np.bool_:
+        """Fire on every second step at unit current."""
+        self.level += 0.5 * current
+        fired = np.float64(self.level) >= 1.0
+        if fired:
+            self.level = 0.0
+        return fired
 
 
 class _TakesAnything:
@@ -290,7 +314,7 @@ def test_a_contrast_whose_reference_drive_cannot_be_run_reports_no_observation()
     result = evaluate_model(_Refuses, (case,))
     assert result["state"] == "invalid"
     assert "observed" not in result["cases"][0]
-    assert "ValueError" in result["cases"][0]["reason"]
+    assert result["cases"][0]["reason"] == "the step raised ValueError"
 
 
 def test_a_final_state_value_is_written_with_six_significant_digits() -> None:
@@ -321,47 +345,56 @@ _INVALID = {
     "an input the step does not take": (
         _TwoInputs,
         _interval("x", {"drive": 1.0, "gate": 1.0, "glutamate": 1.0}, (1, 100)),
-        "glutamate",
+        "the step takes no input named ['glutamate']",
     ),
-    "a required input left out": (_TwoInputs, _interval("x", {"drive": 1.0}, (1, 100)), "gate"),
+    "a required input left out": (
+        _TwoInputs,
+        _interval("x", {"drive": 1.0}, (1, 100)),
+        "the step requires the input ['gate']",
+    ),
     "a state variable the model does not hold": (
         _Integrator,
         _interval("x", {"current": 1.0}, (0.0, 1.0), observable="state:calcium"),
-        "calcium",
+        "the model holds no state variable named 'calcium'",
     ),
     "a step that refuses the drive": (
         _Refuses,
         _interval("x", {"current": -1.0}, (0, 0)),
-        "ValueError",
+        "the step raised ValueError",
     ),
     "a spike count of a step that returns a rate": (
         _Rate,
         _interval("x", {"current": 1.0}, (1, 100)),
-        "0 or 1",
+        "the step returned a value that is not 0 or 1",
+    ),
+    "a step that fails in its own way": (
+        _FailsInItsOwnWay,
+        _interval("x", {"current": 1.0}, (1, 100)),
+        "the step raised RuntimeError",
     ),
     "a step that needs a whole number": (
         _IndexedByItsInput,
         _interval("x", {"channel": 1.0}, (1, 100)),
-        "TypeError",
+        "the step raised TypeError",
     ),
     "a model that cannot be built without arguments": (
         _NeedsAnArgument,
         _interval("x", {"current": 1.0}, (0, 0)),
-        "built",
+        "the model cannot be built without arguments",
     ),
 }
 
 
 @pytest.mark.parametrize("reason", sorted(_INVALID))
 def test_a_case_that_cannot_be_run_is_invalid_and_says_why(reason: str) -> None:
-    """Nothing is observed and nothing is held; the reason names the fault."""
-    model, case, fragment = _INVALID[reason]
+    """Nothing is observed and nothing is held; the reason is the whole sentence of the fault."""
+    model, case, message = _INVALID[reason]
     result = evaluate_model(model, (case,))
     assert result["state"] == "invalid"
     (reported,) = result["cases"]
     assert reported["held"] is False
     assert "observed" not in reported
-    assert fragment in reported["reason"]
+    assert reported["reason"] == message
 
 
 def test_a_state_variable_of_a_model_that_returns_a_rate_can_be_bounded() -> None:
@@ -373,6 +406,24 @@ def test_a_state_variable_of_a_model_that_returns_a_rate_can_be_bounded() -> Non
     assert result["state"] == "held"
     assert result["cases"][0]["observed"] == 1.5
     assert result["cases"][0]["bounds"] == [1.5, 1.5]
+
+
+def test_a_truth_value_returned_by_a_step_counts_as_a_spike() -> None:
+    """A numpy truth value is 0 or 1: fifty spikes in a hundred steps are counted."""
+    result = evaluate_model(_TruthValueSpikes, (_interval("x", {"current": 1.0}, (50, 50)),))
+    assert result["state"] == "held"
+    assert result["cases"][0]["observed"] == 50
+    assert type(result["cases"][0]["observed"]) is int
+
+
+def test_a_case_holds_at_both_ends_of_its_interval_and_at_its_margin() -> None:
+    """One rule for both tools: ends are included, and a difference equal to the margin holds."""
+    interval = _interval("x", {"current": 1.0}, (12, 14))
+    assert [case_holds(interval, value) for value in (11, 12, 14, 15)] == [False, True, True, False]
+    contrast = _contrast("x", {"drive": 2.0}, {"drive": 1.0}, margin=10)
+    assert case_holds(contrast, 30, 20) is True
+    assert case_holds(contrast, 29, 20) is False
+    assert case_holds(contrast, 20, 30) is False
 
 
 def test_a_bound_is_written_exactly_as_stated() -> None:
@@ -551,11 +602,29 @@ def test_the_report_binds_the_cases_the_descriptor_states(report: dict[str, obje
     )
 
 
+def test_the_fitzhugh_nagumo_model_holds_the_cases_of_its_band(report: dict[str, object]) -> None:
+    """Silent without a current, 26 and 28 spikes inside the band, one spike above it."""
+    row = _models(report)["FitzHughNagumoNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 26, 28, 28, 1]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": 0.5},
+        {"current": 0.8},
+        {"current": 1.0},
+        {"current": 2.0},
+    ]
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True, True, True]
+
+
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models state cases and how many hold them."""
     summary = render_summary(report)
     assert "catalogue models: 185" in summary
-    assert re.search(r"^  held\s+1$", summary, flags=re.M)
+    assert re.search(r"^  held\s+2$", summary, flags=re.M)
     assert re.search(rf"^  no_case\s+{MODELS_WITHOUT_A_CASE}$", summary, flags=re.M)
     for note in REPORT_NOTES:
         assert note in summary
@@ -586,7 +655,7 @@ def test_the_script_runs_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(SystemExit) as finished:
         runpy.run_path(str(script), run_name="__main__")
     assert finished.value.code == 0
-    assert json.loads((ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))["totals"]["held"] == 1
+    assert json.loads((ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))["totals"]["held"] == 2
 
 
 class _Diverges:

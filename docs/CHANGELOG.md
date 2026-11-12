@@ -12,6 +12,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A new tool, `tools/model_behaviour_variants.py`, asks a model's behaviour
+  cases whether they depend on the signs of its equations. For a catalogue
+  model that states cases and has a bound schema it builds every variant of
+  the schema: the same schema with the sign of one term of one equation
+  changed, on the syntax tree of the equation, sums inside a factor or a
+  function call included. The unchanged schema is run first and must hold
+  every case; each variant is then run on the cases in order, up to the first
+  case it breaks. A variant that holds every case names a term whose sign no
+  case decides; `--check` fails on it, on a schema that does not hold its
+  model's cases, and on a stale
+  `docs/_generated/model_behaviour_variants.json`. A schema is run through
+  the Universal DSL as the Studio runs a candidate, with the current of a
+  case as the one input; a model without a bound schema, with a schema the
+  engine refuses, or with cases of another shape is reported as such and has
+  no variants. The FitzHugh-Nagumo descriptor states five cases from the
+  model's own band test: silent without a current, 26, 28 and 28 spikes at
+  currents 0.5, 0.8 and 1.0, and one spike at 2.0, in 10000 steps. Its class
+  holds them, its schema holds them, and each of the eight variants of its
+  two equations breaks one. The dendritic NMDA model has no bound schema and
+  so no variants. A variant that breaks a case shows that the case depends on
+  that sign, not that the sign is right. In the behaviour report a step that
+  returns a truth value is counted as a spike or none, and any error a step
+  raises makes the case invalid with the error's name. 183 catalogue models
+  state no case yet.
+
 - Record readiness evidence from the validator's actual interpreter and retain
   exact raw execution artifacts privately. Public receipts keep repository-relative
   commands and projected output without host identity.

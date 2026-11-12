@@ -1,0 +1,138 @@
+{
+  "catalogue_models": 185,
+  "models": [
+    {
+      "model": "DendriticNMDANeuron",
+      "state": "no_schema",
+      "unchanged": [],
+      "variants": []
+    },
+    {
+      "model": "FitzHughNagumoNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "without a current the model fires at most once",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "observed": 26
+        },
+        {
+          "held": true,
+          "name": "a current of 0.8 inside the oscillatory band fires 28 times",
+          "observed": 28
+        },
+        {
+          "held": true,
+          "name": "a current of 1.0 inside the oscillatory band fires 28 times",
+          "observed": 28
+        },
+        {
+          "held": true,
+          "name": "a current of 2.0 above the band fires once and stays quiet",
+          "observed": 1
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "equation": "v",
+          "expression": "-v - v * v * v / 3.0 - w + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v * v * v / 3.0 - w + I"
+        },
+        {
+          "case": "without a current the model fires at most once",
+          "equation": "v",
+          "expression": "v + v * v * v / 3.0 - w + I",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "- v * v * v / 3.0",
+          "within": "v - v * v * v / 3.0 - w + I"
+        },
+        {
+          "case": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 + w + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- w",
+          "within": "v - v * v * v / 3.0 - w + I"
+        },
+        {
+          "case": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 - w - I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "v - v * v * v / 3.0 - w + I"
+        },
+        {
+          "case": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "equation": "w",
+          "expression": "epsilon * (-v + a - b * w)",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + a - b * w"
+        },
+        {
+          "case": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "equation": "w",
+          "expression": "epsilon * (v - a - b * w)",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ a",
+          "within": "v + a - b * w"
+        },
+        {
+          "case": "without a current the model fires at most once",
+          "equation": "w",
+          "expression": "epsilon * (v + a + b * w)",
+          "observed": 20,
+          "outcome": "violated",
+          "term": "- b * w",
+          "within": "v + a - b * w"
+        },
+        {
+          "case": "without a current the model fires at most once",
+          "equation": "w",
+          "expression": "-(epsilon * (v + a - b * w))",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "the whole right-hand side",
+          "within": "epsilon * (v + a - b * w)"
+        }
+      ]
+    }
+  ],
+  "models_with_cases": 2,
+  "models_without_cases": 183,
+  "notes": [
+    "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
+    "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
+    "a model without a bound schema, or whose cases are not driven by the one input 'current', has no variants here"
+  ],
+  "schema_version": "sc-neurocore.model-behaviour-variants.v1",
+  "totals": {
+    "cases_not_drivable": 0,
+    "discriminated": 1,
+    "no_schema": 1,
+    "no_variant": 0,
+    "not_discriminated": 0,
+    "schema_differs": 0,
+    "schema_not_executable": 0
+  },
+  "variants": {
+    "not_discriminated": 0,
+    "total": 8,
+    "violated": 8
+  }
+}

@@ -465,10 +465,91 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            1
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the model fires at most once",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 10000
+        },
+        {
+          "bounds": [
+            26,
+            26
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 inside the oscillatory band fires 26 times",
+          "observable": "spikes",
+          "observed": 26,
+          "steps": 10000
+        },
+        {
+          "bounds": [
+            28,
+            28
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.8
+          },
+          "kind": "interval",
+          "name": "a current of 0.8 inside the oscillatory band fires 28 times",
+          "observable": "spikes",
+          "observed": 28,
+          "steps": 10000
+        },
+        {
+          "bounds": [
+            28,
+            28
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.0
+          },
+          "kind": "interval",
+          "name": "a current of 1.0 inside the oscillatory band fires 28 times",
+          "observable": "spikes",
+          "observed": 28,
+          "steps": 10000
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 above the band fires once and stays quiet",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 10000
+        }
+      ],
+      "cases_sha256": "46f9c915572e22bc3e7ed2b6114f745e60ae6a3026a73db00a16e4a24efead12",
       "model": "FitzHughNagumoNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -1259,9 +1340,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 1,
+    "held": 2,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 184
+    "no_case": 183
   }
 }
