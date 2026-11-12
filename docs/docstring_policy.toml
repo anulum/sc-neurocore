@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1879
+expected_file_count = 1880
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -1803,6 +1803,10 @@ rationale = "Public analytic stochastic-computing error-bound calculators (varia
 [[file]]
 path = "src/sc_neurocore/core/sc_correlation.py"
 rationale = "Public stochastic cross-correlation (SCC) diagnostic that estimates bitstream correlation and predicts the AND-composition bias."
+
+[[file]]
+path = "tests/test_sc_correlation_validation.py"
+rationale = "Bind the cross-correlation diagnostics' input contract: values are checked in their original representation, and every exact 0/1 container gives the same result."
 
 [[file]]
 path = "src/sc_neurocore/layers/__init__.py"

@@ -18603,7 +18603,9 @@ float
 Raises
 ------
 ValueError
-    If the streams are empty, non-binary, or of unequal length.
+    If a stream is not a boolean, integer or real array, is not
+    one-dimensional, is empty, holds a value other than 0 or 1 in its
+    original representation, or if the streams differ in length.
 
 ### Function `observed_and_bias(bits_a, bits_b)`
 Return the measured ``AND`` bias :math:`a/N - p_a p_b` of two streams.
@@ -18618,6 +18620,11 @@ Returns
 float
     The signed deviation of the observed one-probability of ``AND`` from the
     independent product :math:`p_a p_b`.
+
+Raises
+------
+ValueError
+    Under the same conditions as :func:`estimate_scc`.
 
 ### Function `correlation_diagnostic(bits_a, bits_b, *, bias_threshold)`
 Diagnose ``AND``-composition correlation bias between two SC bitstreams.
@@ -18639,6 +18646,12 @@ Returns
 -------
 CorrelationDiagnostic
     Decoded values, SCC, predicted and observed AND bias, and the flag.
+
+Raises
+------
+ValueError
+    Under the same conditions as :func:`estimate_scc`, or if
+    ``bias_threshold`` is negative or not finite.
 
 ---
 

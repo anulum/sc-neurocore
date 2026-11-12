@@ -37,6 +37,15 @@ bias that formula predicts from the measured SCC. This module is the diagnostic
 half of the correlation-bias question flagged in the SC gap register — it lets a
 design surface fail loud when re-convergent fan-ins share a source.
 
+Input contract
+--------------
+A bitstream is a one-dimensional, non-empty boolean, integer or real array in
+which every element equals 0 or 1 *as given*. The check reads the original
+values; conversion to one byte per bit happens only afterwards, so a value
+such as ``0.9``, ``256``, ``-1``, ``NaN`` or infinity is refused and is never
+turned into a bit by the conversion. Text, bytes, objects and complex numbers
+are refused by their element type.
+
 References
 ----------
 Alaghi, A. & Hayes, J. P. (2013). Exposing correlation in stochastic computing.
@@ -57,16 +66,31 @@ from .sc_error_bounds import multiply_correlation_bias
 
 UInt8Array = NDArray[np.uint8]
 
+#: NumPy element kinds that may hold bits: boolean, signed and unsigned integer, real.
+_BIT_CONTAINER_KINDS = frozenset("biuf")
+
 
 def _as_bit_array(bits: Any, name: str) -> UInt8Array:
-    array = np.asarray(bits, dtype=np.uint8)
-    if array.ndim != 1:
+    """Return ``bits`` as one byte per bit after checking the original values.
+
+    The element type, the dimension, the size and every value are checked on
+    the array as NumPy reads it from ``bits``, before any conversion, so no
+    value becomes 0 or 1 through a cast.
+    """
+    try:
+        original = np.asarray(bits)
+    except ValueError as error:
+        # NumPy refuses nested sequences of unequal length; such input is not a stream.
+        raise ValueError(f"{name} must be one-dimensional") from error
+    if original.dtype.kind not in _BIT_CONTAINER_KINDS:
+        raise ValueError(f"{name} must be a boolean, integer or real array of 0/1 bits")
+    if original.ndim != 1:
         raise ValueError(f"{name} must be one-dimensional")
-    if array.size == 0:
+    if original.size == 0:
         raise ValueError(f"{name} must be non-empty")
-    if not np.all((array == 0) | (array == 1)):
+    if not np.all((original == 0) | (original == 1)):
         raise ValueError(f"{name} must contain only 0/1 bits")
-    return array
+    return original.astype(np.uint8)
 
 
 def _overlap_counts(bits_a: UInt8Array, bits_b: UInt8Array) -> tuple[int, int, int, int]:
@@ -94,7 +118,9 @@ def estimate_scc(bits_a: Any, bits_b: Any) -> float:
     Raises
     ------
     ValueError
-        If the streams are empty, non-binary, or of unequal length.
+        If a stream is not a boolean, integer or real array, is not
+        one-dimensional, is empty, holds a value other than 0 or 1 in its
+        original representation, or if the streams differ in length.
     """
     array_a = _as_bit_array(bits_a, "bits_a")
     array_b = _as_bit_array(bits_b, "bits_b")
@@ -128,6 +154,11 @@ def observed_and_bias(bits_a: Any, bits_b: Any) -> float:
     float
         The signed deviation of the observed one-probability of ``AND`` from the
         independent product :math:`p_a p_b`.
+
+    Raises
+    ------
+    ValueError
+        Under the same conditions as :func:`estimate_scc`.
     """
     array_a = _as_bit_array(bits_a, "bits_a")
     array_b = _as_bit_array(bits_b, "bits_b")
@@ -188,6 +219,12 @@ def correlation_diagnostic(
     -------
     CorrelationDiagnostic
         Decoded values, SCC, predicted and observed AND bias, and the flag.
+
+    Raises
+    ------
+    ValueError
+        Under the same conditions as :func:`estimate_scc`, or if
+        ``bias_threshold`` is negative or not finite.
     """
     array_a = _as_bit_array(bits_a, "bits_a")
     array_b = _as_bit_array(bits_b, "bits_b")

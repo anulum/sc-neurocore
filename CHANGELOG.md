@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Check the input of the stochastic cross-correlation diagnostics
+  (`estimate_scc`, `observed_and_bias`, `correlation_diagnostic`) in its
+  original representation before converting it to bits. Fractional values,
+  integers other than 0 and 1, `NaN`, infinity, text, bytes, objects and
+  complex numbers are refused with a `ValueError`; before, the conversion to
+  one byte turned some of them into bits. Exact 0/1 input in boolean, integer
+  or real form gives the same result as before.
+
 - Move the Studio frontend's Vite pin from 8.3.7 to 8.3.8, the newest patch
   release, in `package.json` and the lock.
 
