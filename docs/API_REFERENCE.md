@@ -19775,74 +19775,193 @@ list of CausalEvent
 ### Class `SpikeEvent`
 Single telemetry sample from an FPGA or simulator.
 
+Attributes
+----------
+timestamp : int
+    Sample time, in the source's unit.
+layer_id : str
+    Layer of the neuron.
+neuron_id : int
+    Neuron index.
+correlation : float
+    Stochastic-computing correlation reported with the sample.
+popcount : int
+    Ones counted in the sample's bitstream.
+precision : float
+    Precision reported with the sample.
+sequence : int
+    Sequence number of the sample.
+
 
 ### Class `SpikeRingBuffer`
 Fixed-capacity circular buffer for SpikeEvent telemetry.
 
 Lock-protected overwrite-on-full. Mirrors Go RingBuffer.
 
+Parameters
+----------
+capacity : int
+    Number of events kept; values below 1 become 1.
+
 - **__init__**(capacity)
 - **push**(evt)
+  - Store one event, overwriting the oldest when the buffer is full.
 - **snapshot**(n)
+  - Return the most recent events, oldest first.
 - **head**()
+  - Number of events pushed so far, never reduced by overwriting.
 - **capacity**()
+  - Number of events the buffer keeps.
 
 ### Class `LayerAggregator`
 Per-layer running statistics collector.
 
+Each layer's statistics are a dictionary with the event count, the sums of
+correlation, precision and popcount, the smallest precision and the largest
+correlation seen.
+
 - **__init__**()
 - **record**(evt)
+  - Add one event to its layer's statistics, starting them on the layer's first event.
 - **get**(layer_id)
+  - Return a copy of one layer's statistics, or ``None`` for a layer not seen.
 - **all**()
+  - Return a copy of every layer's statistics, keyed by layer.
 - **mean_correlation**(ls)
+  - Return a layer's mean correlation; 0.0 for statistics without events.
 - **mean_precision**(ls)
+  - Return a layer's mean precision; 0.0 for statistics without events.
 
 ### Class `ErrorBudget`
 Threshold-based alerting for precision/correlation bounds.
 
+Attributes
+----------
+min_precision : float
+    Precision below which an event violates the budget.
+max_correlation : float
+    Correlation above which an event violates the budget.
+violations : int
+    Violating events counted so far.
+
 - **check**(evt)
+  - Return whether an event violates the budget, counting it if so.
 
 ### Class `CorrelationWindow`
 Sliding window for correlation values.
 
+Parameters
+----------
+size : int
+    Number of values kept; values below 1 become 1.
+
 - **__init__**(size)
 - **add**(v)
+  - Store one value, overwriting the oldest when the window is full.
 - **count**()
+  - Number of values held, at most the window size.
 - **mean**()
+  - Return the mean of the held values; 0.0 when empty.
 - **max**()
+  - Return the largest held value; 0.0 when empty.
 
 ### Class `PrecisionTracker`
 Exponential moving average of precision.
 
+Attributes
+----------
+alpha : float
+    Weight of the newest value.
+ema : float
+    The average; the first value itself after the first update.
+count : int
+    Updates so far.
+
 - **update**(precision)
+  - Fold one precision value into the average.
 
 ### Class `EventFilter`
 Selects events matching criteria.
 
+Attributes
+----------
+layer_id : str
+    Layer an event must belong to; empty matches every layer.
+min_neuron, max_neuron : int
+    Inclusive neuron range, used only when ``has_neuron`` is set.
+has_neuron : bool
+    Whether the neuron range applies.
+
 - **match**(evt)
+  - Return whether an event passes the layer and, if set, the neuron range.
 
 ### Class `TriggerCondition`
 Conditional breakpoint for debugger.
 
+Attributes
+----------
+min_correlation : float
+    A correlation at or above it fires the trigger; 0 disables this test.
+max_precision : float
+    A precision at or below it fires the trigger; 0 disables this test.
+layer_id : str
+    Layer the trigger watches; empty watches every layer.
+armed : bool
+    Whether the trigger fires at all.
+
+Notes
+-----
+With both thresholds at their default 0 the trigger never fires.
+
 - **evaluate**(evt)
+  - Return whether an event fires the trigger.
 
 ### Class `TriggerLog`
 Records fired trigger events for post-mortem analysis.
 
+Attributes
+----------
+entries : list of SpikeEvent
+    The fired events, in order, never trimmed.
+
 - **__init__**()
 - **fire**(evt)
+  - Append one fired event.
 - **count**()
+  - Number of fired events recorded.
 
 ### Class `RateLimiter`
 Token-bucket rate limiter for high-speed streams.
 
+The bucket starts full and is refilled only by :meth:`refill`; nothing refills
+it over time.
+
+Parameters
+----------
+capacity : int
+    Largest number of tokens, and the number at the start.
+
 - **__init__**(capacity)
 - **allow**()
+  - Take one token if there is one, and return whether one was taken.
 - **refill**(n)
+  - Add ``n`` tokens, up to the capacity.
 - **available**()
+  - Number of tokens left.
 
 ### Class `HealthStatus`
 Debugger health snapshot.
+
+Attributes
+----------
+status : str
+    ``"healthy"`` or ``"buffer_pressure"``.
+events_per_sec : float
+    Events received per second of uptime.
+buffer_usage : float
+    Fraction of the ring buffer filled, from 0 to 1.
+clients_active : int
+    Connected clients, as given.
 
 
 ### Function `filter_events(events, f)`
@@ -19851,11 +19970,41 @@ Apply a filter to a list of events.
 ### Function `check_health(events_received, uptime_seconds, buffer_head, buffer_capacity, clients_active)`
 Compute health status from telemetry metrics.
 
+As the Go daemon computes it: the buffer usage is min(head, capacity) /
+capacity, so once the ring buffer has filled once it stays at 1.0 and the
+status stays ``"buffer_pressure"`` (usage above 0.95) while the buffer is in
+use.
+
+Parameters
+----------
+events_received : int
+    Events received since the start.
+uptime_seconds : int
+    Seconds since the start; 0 gives 0 events per second.
+buffer_head : int
+    The ring buffer's head counter.
+buffer_capacity : int
+    The ring buffer's capacity; 0 gives a usage of 0.
+clients_active : int
+    Connected clients.
+
+Returns
+-------
+HealthStatus
+    The snapshot.
+
 ### Function `export_csv(events)`
 Export events to CSV string.
 
+One header row (``timestamp``, ``layer_id``, ``neuron_id``, ``correlation``,
+``popcount``, ``precision``, ``sequence``), then one row per event with
+correlation and precision at six decimals.
+
 ### Function `export_json(events)`
 Export events to JSON array string.
+
+The keys follow the Go daemon's JSON (``ts`` and ``seq`` where the CSV says
+``timestamp`` and ``sequence``); indented by two spaces.
 
 ---
 

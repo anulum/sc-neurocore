@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1925
+expected_file_count = 1926
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7754,3 +7754,7 @@ rationale = "Binds the launcher service stopping on SIGTERM under an inherited b
 [[file]]
 path = "src/sc_neurocore/debug/sc_scope.py"
 rationale = "Bitstream scope: transports, samples, windows, correlation, error budgets, triggers and the text renderer, each documented as the code computes, its simulated-only source and never-firing trigger types included."
+
+[[file]]
+path = "src/sc_neurocore/debug/hil_client.py"
+rationale = "Python reference of the HIL debugger telemetry: ring buffer, aggregation, budgets, windows, triggers, rate limiter, health and export, each documented as the Go daemon it mirrors computes, its sticky buffer pressure included."

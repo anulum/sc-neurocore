@@ -582,7 +582,7 @@ Figures above are `time.perf_counter` deltas from
   - `src/sc_neurocore/debug/sc_scope.py` (899 lines)
   - `src/sc_neurocore/debug/hil_server.py` (127 lines)
   - `src/sc_neurocore/debug/hil_debugger.py` (34 lines)
-  - `src/sc_neurocore/debug/hil_client.py` (353 lines)
+  - `src/sc_neurocore/debug/hil_client.py` (531 lines)
 - Go daemon: `src/sc_neurocore/accel/go/services/hil_debugger/`
   (`main.go` + `main_test.go`).
 - Tests: `tests/test_debug/*.py` (2 271 lines across 43 files).
