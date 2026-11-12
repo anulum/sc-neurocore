@@ -27106,17 +27106,49 @@ Generates crossbar-aware SystemVerilog with compensation LUTs.
 ### Class `STDPParams`
 Mutable STDP parameters.
 
+Attributes
+----------
+tau_plus, tau_minus : float
+    Potentiation and depression time constants in milliseconds.
+a_plus, a_minus : float
+    Potentiation and depression amplitudes.
+lr : float
+    Learning rate.
+
 - **to_vector**()
+  - Return the five parameters as ``&#91;tau_plus, tau_minus, a_plus, a_minus, lr&#93;``.
 - **from_vector**(v)
+  - Build parameters from the first five numbers of a vector.
 
 ### Class `STPParams`
 Mutable short-term plasticity parameters.
 
+Attributes
+----------
+u_base : float
+    Baseline release probability.
+tau_d : float
+    Depression time constant in milliseconds.
+tau_f : float
+    Facilitation time constant in milliseconds.
+
 - **to_vector**()
+  - Return the three parameters as ``&#91;u_base, tau_d, tau_f&#93;``.
 - **from_vector**(v)
+  - Build parameters from the first three numbers of a vector.
 
 ### Class `HomeostaticParams`
 Homeostatic plasticity: target rate + gain modulation.
+
+Attributes
+----------
+target_rate_hz : float
+    Firing rate the gain pushes towards.
+gain_adaptation_rate : float
+    Gain change per hertz of rate error.
+current_gain : float
+    The present gain, kept in &#91;0.1, 10&#93; by :meth:`adapt`; the
+    constructor accepts any value.
 
 - **adapt**(measured_rate_hz)
   - Adjust gain to push firing rate toward target.
@@ -27124,32 +27156,92 @@ Homeostatic plasticity: target rate + gain modulation.
 ### Class `BitstreamParams`
 Mutable SC bitstream parameters.
 
+Attributes
+----------
+length : int
+    Bitstream length; the only one of the three in the vector form.
+lfsr_seed : int
+    LFSR seed.
+precision_bits : int
+    Fractional bits of the fixed-point format.
+
 
 ### Class `PlasticityRuleSet`
 Complete set of mutable plasticity rules.
 
 This is the "genome" that the meta-controller evolves.
 
+Attributes
+----------
+stdp : STDPParams
+    STDP parameters.
+stp : STPParams
+    Short-term plasticity parameters.
+homeostatic : HomeostaticParams
+    Homeostatic parameters.
+bitstream : BitstreamParams
+    Bitstream parameters.
+generation : int
+    Generation of the evolver that made the set.
+fitness : float
+    The last fitness assigned to the set.
+
 - **to_vector**()
   - Serialise all mutable params to a flat vector.
 - **from_vector**(v, gen)
+  - Build a rule set from its eleven-number vector.
 - **vector_dim**()
+  - Length of the vector form, 11.
 - **copy**()
+  - Return a deep copy, fitness and generation included.
 
 ### Class `MetaSignalType`
-Types of meta-control signals from L16.
+Types of meta-control signals.
+
+:meth:`MetaController.decide` emits ``INCREASE_LR``, ``DECREASE_LR``,
+``WIDEN_WINDOW``, ``NARROW_WINDOW`` and ``NO_OP``;
+``INCREASE_HOMEOSTATIC`` and ``RESET_STP`` are applied by
+:meth:`MetaController.apply_signals` but only reach it from a caller.
 
 
 ### Class `MetaControlSignal`
 One meta-control directive.
 
+Attributes
+----------
+signal_type : MetaSignalType
+    What to change.
+magnitude : float
+    Size of the change; its meaning depends on the type.
+target_param : str
+    Name of the changed parameter, informational only.
+
 
 ### Class `MetaController`
 SC-domain meta-controller that rewrites plasticity rules.
 
-Observes network performance metrics (surprise, novelty, GCI,
-firing rates) and emits rule modifications. The controller itself
-uses SC bitstream logic for decision-making.
+Observes network performance metrics (surprise, novelty, GCI) and emits
+rule modifications. Its decisions compare means and a standard deviation
+of the recent metrics with fixed thresholds on floating-point numbers;
+no bitstream is involved.
+
+Parameters
+----------
+sensitivity : float
+    Scale of the novelty and GCI-spread thresholds.
+rng_seed : int
+    Seed of ``rng``.
+
+Attributes
+----------
+sensitivity : float
+    Scale of the thresholds.
+rng : numpy.random.Generator
+    A generator the controller does not use.
+observation_window : collections.deque
+    The last 100 observed metric dictionaries.
+signal_history : list of MetaControlSignal
+    Every signal :meth:`decide` returned, in order.
 
 - **__init__**(sensitivity, rng_seed)
 - **observe**(metrics)
@@ -27165,7 +27257,26 @@ Evolutionary engine for plasticity rule sets.
 Maintains a population of candidate rules, evaluates fitness,
 and evolves via selection + crossover + mutation.
 
+Attributes
+----------
+population_size : int
+    Size of each generation; parent selection needs at least four.
+mutation_rate : float
+    Probability that a vector entry mutates.
+mutation_scale : float
+    Standard deviation of a mutation relative to the entry's size.
+elite_count : int
+    Best sets copied unchanged into the next generation.
+rng : numpy.random.Generator
+    Source of selection, crossover and mutation draws.
+population : list of PlasticityRuleSet
+    The current generation; empty means ``population_size`` default
+    sets.
+generation : int
+    Generations evolved so far.
+
 - **__post_init__**()
+  - Fill an empty population with default rule sets.
 - **evaluate_fitness**(rules, metrics)
   - Compute fitness from network performance metrics.
 - **select_parents**()
@@ -27177,12 +27288,26 @@ and evolves via selection + crossover + mutation.
 - **evolve**()
   - Run one generation of evolution.
 - **best**()
+  - The population's member with the highest stored fitness.
 - **mean_fitness**()
+  - Mean stored fitness of the population; new children count 0.0.
 
 ### Class `NeuromodulatorType`
+The four modelled neuromodulators.
+
+Each is a level in &#91;0, 1&#93; of :class:`NeuromodulatorState`, not a
+concentration.
+
 
 ### Class `NeuromodulatorState`
 Simulated neuromodulatory tone that modulates meta-plasticity.
+
+Attributes
+----------
+levels : dict of NeuromodulatorType to float
+    Each modulator's level in &#91;0, 1&#93;, 0.5 at the start.
+decay_rate : float
+    Amount subtracted from every level at each update.
 
 - **update**(novelty, surprise, gci)
   - Update neuromodulator levels from network state.
@@ -27192,35 +27317,109 @@ Simulated neuromodulatory tone that modulates meta-plasticity.
 ### Class `EngineConfig`
 Configuration for the meta-plasticity engine.
 
+Attributes
+----------
+num_neurons : int
+    Stored and not used.
+meta_interval : int
+    Steps between controller decisions.
+evolve_interval : int
+    Steps between evolution rounds.
+enable_neuromodulation : bool
+    Whether each step scales the learning rate by the neuromodulators.
+enable_evolution : bool
+    Whether evolution rounds run.
+
 
 ### Class `MetaPlasticityEngine`
 Top-level orchestrator for self-evolving meta-plasticity.
 
-Connects ArcaneNeuron populations, the meta-controller, and the
-rule evolver into a single lifelong learning system.
+Steps the meta-controller, the neuromodulatory scaling of the learning
+rate and the rule evolver on one rule set; it holds no neurons.
+
+Attributes
+----------
+config : EngineConfig
+    Schedules and switches.
+rules : PlasticityRuleSet
+    The active rule set.
+controller : MetaController
+    The rule-based controller.
+evolver : RuleEvolver
+    The evolver.
+neuromod : NeuromodulatorState
+    The neuromodulator levels.
+step_count : int
+    Steps taken.
+rule_changes : int
+    Signals other than ``NO_OP`` applied.
+evolution_events : int
+    Times the evolver's best replaced the active rule set.
+performance_log : list of dict
+    One entry per step, never trimmed.
 
 - **step**(metrics)
   - Process one timestep of meta-plasticity.
 - **status**()
+  - Return the engine's counters, the evolver's state and the current rates.
 
 ### Class `RuleCheckpoint`
 Serialisable snapshot of a PlasticityRuleSet at a point in time.
 
+Attributes
+----------
+step : int
+    Step at which it was taken.
+vector : numpy.ndarray
+    The rule set's eleven-number vector.
+fitness : float
+    The set's fitness.
+generation : int
+    The set's generation.
+tag : str
+    A label.
+
 - **restore**()
+  - Rebuild the rule set from the vector, with the stored fitness and generation.
 
 ### Class `CheckpointStore`
-Persistent store for rule checkpoints.
+In-memory store for rule checkpoints.
+
+Nothing is written to disk; when full, the oldest checkpoint is dropped.
+
+Attributes
+----------
+checkpoints : list of RuleCheckpoint
+    The checkpoints, oldest first.
+max_checkpoints : int
+    Largest number kept.
 
 - **save**(rules, step, tag)
+  - Store a checkpoint of a rule set.
 - **restore_best**()
+  - Restore the checkpoint of highest fitness; ``None`` when empty.
 - **restore_by_tag**(tag)
+  - Restore the newest checkpoint with a tag; ``None`` when there is none.
 - **count**()
+  - Number of stored checkpoints.
 
 ### Class `EWCProtection`
 Elastic Weight Consolidation for plasticity parameters.
 
 Penalises large deviations from previously learned rule vectors
-to protect against catastrophic forgetting.
+to protect against catastrophic forgetting. The importance weights are
+all 1, not a Fisher information estimate, so the penalty is a plain
+squared distance over the raw vector, in which the bitstream length and
+the time constants dominate the small rates.
+
+Attributes
+----------
+importance : float
+    Scale of the penalty.
+anchor : numpy.ndarray or None
+    The consolidated vector.
+fisher : numpy.ndarray or None
+    Per-entry weights; ones after :meth:`consolidate`.
 
 - **consolidate**(rules)
   - Set the current rules as the anchor point.
@@ -27234,6 +27433,14 @@ Intrinsic curiosity based on prediction error of network state.
 
 Tracks expected next-state and computes curiosity as the prediction
 error magnitude. High curiosity → explore (increase meta-plasticity).
+The prediction is an exponential moving average of past states.
+
+Attributes
+----------
+alpha : float
+    Weight of the newest state in the moving average.
+curiosity : float
+    The last score.
 
 - **update**(state_vector)
   - Update prediction model and return curiosity score.
@@ -27241,8 +27448,18 @@ error magnitude. High curiosity → explore (increase meta-plasticity).
 ### Class `MetaLearningRate`
 Learning rate of the learning rate.
 
-Adapts the meta-controller sensitivity based on whether recent
-rule changes improved fitness.
+Grows when the reported fitness change is positive and shrinks
+otherwise. Nothing in the module applies it to the meta-controller; it
+is a value for the caller.
+
+Attributes
+----------
+meta_lr : float
+    The current rate.
+min_meta_lr, max_meta_lr : float
+    Its limits.
+improvement_history : list of float
+    Every reported fitness change.
 
 - **update**(fitness_delta)
   - Adjust meta_lr from fitness delta. Positive = good → speed up.
@@ -27253,15 +27470,39 @@ Offline memory consolidation via experience replay.
 Stores recent metric snapshots and replays them during sleep to
 stabilise rule sets without new input.
 
+Attributes
+----------
+replay_buffer : collections.deque
+    The last 200 recorded metric dictionaries.
+consolidation_rounds : int
+    Largest number of replays per sleep.
+is_sleeping : bool
+    Set when :meth:`sleep` starts and cleared when it returns; a step
+    that raises leaves it set.
+
 - **record**(metrics)
+  - Add one metric snapshot to the replay buffer.
 - **sleep**(engine_step_fn)
   - Run consolidation by replaying buffered experiences.
 - **buffer_size**()
+  - Number of snapshots in the replay buffer.
 
 ### Class `SynapticTag`
 Synaptic tag for early→late LTP conversion.
 
+Attributes
+----------
+synapse_id : int
+    The tagged synapse.
+tag_strength : float
+    Strength from 0 to 1.
+tag_time_ms : float
+    Time of tagging in milliseconds.
+captured : bool
+    Whether a consolidation captured the tag.
+
 - **is_expired**()
+  - Whether the strength has fallen below 0.01.
 
 ### Class `TaggingModel`
 Synaptic tagging and capture model.
@@ -27269,12 +27510,25 @@ Synaptic tagging and capture model.
 Early-phase LTP creates a tag. If a consolidation signal arrives
 before the tag decays, it is "captured" into late-phase LTP.
 
+Attributes
+----------
+tag_decay_rate : float
+    Exponential decay rate per millisecond.
+capture_threshold : float
+    Least strength a tag needs to be captured.
+tags : list of SynapticTag
+    All tags.
+
 - **create_tag**(synapse_id, strength, time_ms)
+  - Create and keep a tag.
 - **decay_tags**(dt_ms)
+  - Multiply every uncaptured tag's strength by exp(-rate × dt_ms).
 - **consolidate**(consolidation_strength)
   - Attempt capture on all active tags. Returns count of captured.
 - **prune_expired**()
+  - Remove expired uncaptured tags and return how many were removed.
 - **active_tags**()
+  - Number of tags neither captured nor expired.
 
 ### Class `ContextRuleBank`
 Maintains separate rule sets per context/task.
@@ -27282,23 +27536,58 @@ Maintains separate rule sets per context/task.
 Allows rapid switching between learned plasticity configurations
 without catastrophic interference.
 
+Attributes
+----------
+bank : dict of str to PlasticityRuleSet
+    A copy of the rule set stored for each context.
+active_context : str
+    The context last switched to.
+
 - **store**(context, rules)
+  - Store a copy of a rule set under a context, replacing an earlier one.
 - **switch**(context)
+  - Make a context active and return a copy of its rule set.
 - **contexts**()
+  - Return the stored contexts in the order first stored.
 - **num_contexts**()
+  - Number of stored contexts.
 
 ### Class `FitnessTrajectory`
 Tracks fitness over time and detects trends.
 
+Attributes
+----------
+history : list of float
+    Every recorded fitness.
+window : int
+    Number of recent values the trend and stagnation look at.
+
 - **record**(fitness)
+  - Append one fitness value to the history.
 - **trend**()
   - Return slope of fitness over recent window. >0 = improving.
 - **is_improving**()
+  - Whether the trend is positive.
 - **is_stagnant**()
+  - Whether a full window's standard deviation is below 1e-4.
 - **best_ever**()
+  - The highest recorded fitness; 0.0 for an empty history.
 
 ### Class `RuleConstraints`
 Hard constraints on plasticity parameters to prevent pathological values.
+
+Attributes
+----------
+stdp_lr_range : tuple of float
+    Limits of the STDP learning rate.
+stdp_tau_range : tuple of float
+    Limits of both STDP time constants.
+stp_u_range : tuple of float
+    Limits of the baseline release probability.
+homeostatic_target_range : tuple of float
+    Limits of the target rate.
+bitstream_length_range : tuple of int
+    Limits of the bitstream length.
 
 - **enforce**(rules)
   - Clamp all parameters to valid ranges.
@@ -27308,8 +27597,35 @@ Hard constraints on plasticity parameters to prevent pathological values.
 ### Function `population_diversity(evolver)`
 Compute diversity as mean pairwise L2 distance of rule vectors.
 
+The distance is over the raw eleven-number vectors, so the bitstream
+length and the time constants dominate it.
+
+Parameters
+----------
+evolver : RuleEvolver
+    The evolver whose population is measured.
+
+Returns
+-------
+float
+    The mean distance; 0.0 for fewer than two members.
+
 ### Function `inject_diversity(evolver, n_random)`
 Replace worst individuals with fresh random rule sets.
+
+Each new set is the default vector plus 0.1 × a Gaussian vector whose
+first five entries are |N(0, 1)| × 10 + 1, so its STDP time constants,
+amplitudes and learning rate grow by 0.1 or more: every new learning rate
+is at least 0.11, above the 0.1 that :class:`RuleConstraints` allows. The
+population is left in the order of the fitness before the replacement, the
+new sets (fitness 0.0) in the places of the least fit.
+
+Parameters
+----------
+evolver : RuleEvolver
+    The evolver to change; its generator draws the vectors.
+n_random : int
+    How many of the least fit to replace.
 
 ---
 

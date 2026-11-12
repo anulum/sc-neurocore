@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1920
+expected_file_count = 1921
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7734,3 +7734,7 @@ rationale = "Spintronic device and array estimates, MuMax3 script and table help
 [[file]]
 path = "src/sc_neurocore/explainability/explainability.py"
 rationale = "Bitstream explanations of threshold spike decisions: LFSR replay, decision records, provenance, sensitivity, attribution and text, each documented as the code computes, its seed-only replay, unlinked tree nodes and unchecked report fields included."
+
+[[file]]
+path = "src/sc_neurocore/meta_plasticity/meta_plasticity.py"
+rationale = "Plasticity parameters changed by a threshold controller, an evolver and helpers, each documented as the code computes, its metric-only inputs, unbounded learning-rate scaling and unchecked limits included."
