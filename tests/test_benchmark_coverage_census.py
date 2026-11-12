@@ -26,6 +26,7 @@ import hashlib
 import json
 from pathlib import Path
 import runpy
+import subprocess
 import sys
 
 import pytest
@@ -510,6 +511,69 @@ class TestTheGateManifestNamesThePathsOfLaneKeyedRecords:
         assert build_census(tmp_path)["uncited_bound_records"] == [
             {"name": record.name, "currency": "current"}
         ]
+
+
+def _add_untracked_and_ignored(root: Path) -> None:
+    """Put a record and a script on disk that a repository would not track."""
+    local = root / "benchmarks" / "results" / "experimental_runs"
+    local.mkdir(parents=True)
+    (local / "trial.json").write_text(json.dumps({"model": "LapicqueNeuron"}), encoding="utf-8")
+    (root / "benchmarks" / "results" / "scratch.json").write_text("{}", encoding="utf-8")
+    (root / "benchmarks" / "bench_scratch.py").write_text("LapicqueNeuron\n", encoding="utf-8")
+
+
+class TestOnlyTrackedFilesAreRead:
+    """In a repository the census reads what git tracks, not what lies in the directory."""
+
+    def test_untracked_and_ignored_files_change_nothing(self, tmp_path: Path) -> None:
+        """A local run left beside the committed records is not evidence."""
+        _tree_with_one_record(tmp_path)
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+        (tmp_path / ".gitignore").write_text(
+            "benchmarks/results/experimental_runs/\n", encoding="utf-8"
+        )
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", ".gitignore", "src", "benchmarks"],
+            check=True,
+            capture_output=True,
+        )
+        before = encode(build_census(tmp_path))
+        _add_untracked_and_ignored(tmp_path)
+        after = build_census(tmp_path)
+        assert encode(after) == before
+        assert after["all_records"] == 1
+        totals = after["totals"]
+        assert isinstance(totals, dict)
+        assert totals["measured"] == 1
+        assert totals["apparatus_only"] == 0
+
+    def test_without_a_repository_the_directory_is_walked(self, tmp_path: Path) -> None:
+        """The same files in a plain tree are all read: the test above can tell the difference."""
+        _tree_with_one_record(tmp_path)
+        _add_untracked_and_ignored(tmp_path)
+        census = build_census(tmp_path)
+        assert census["all_records"] == 3
+        totals = census["totals"]
+        assert isinstance(totals, dict)
+        assert totals["measured"] == 2
+
+    def test_a_newly_staged_record_is_read(self, tmp_path: Path) -> None:
+        """A record added to the index counts before it is committed."""
+        _tree_with_one_record(tmp_path)
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", "src", "benchmarks"],
+            check=True,
+            capture_output=True,
+        )
+        _uncited_record(tmp_path)
+        assert build_census(tmp_path)["all_records"] == 1
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", "src", "benchmarks"],
+            check=True,
+            capture_output=True,
+        )
+        assert build_census(tmp_path)["all_records"] == 2
 
 
 class TestUnreadableFilesAreSkippedNotCounted:

@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The benchmark coverage census reads the files Git tracks. It walked the
+  results and script directories on disk, so a local run left beside the
+  committed records, or a folder Git ignores, changed its counts: in a
+  checkout with such files the census check failed although nothing committed
+  had changed, while a clean checkout passed. In a repository only tracked
+  files, staged ones included, are read now; outside a repository (a packaged
+  or temporary tree, or where no `git` program can be started) the directories
+  are read as they are. The evidence gate gains `tracked_files` for this. The
+  committed census is unchanged.
+
 - `bipolar_decode` and `bipolar_multiply` now check their bit arguments in
   the representation the caller gave, before converting them to one byte per
   bit. Before, the conversion came first, so `[0.9, 1.9]` was decoded as the

@@ -99,6 +99,37 @@ def _git_bytes(repo_root: Path, *args: str) -> bytes | None:
     return result.stdout if result.returncode == 0 else None
 
 
+def tracked_files(repo_root: Path, directory: str) -> tuple[str, ...] | None:
+    """List the files Git tracks below a directory of a work tree.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Directory that is expected to be the top of a Git work tree.
+    directory : str
+        Repository-relative directory whose tracked files are wanted.
+
+    Returns
+    -------
+    tuple of str or None
+        Repository-relative paths in Git's order, including files staged and not
+        yet committed. ``None`` when ``repo_root`` is not the top of a work tree
+        (a packaged or temporary tree, or a subdirectory of a repository): Git
+        cannot say there which files are evidence, and the caller walks the
+        directory instead. ``None`` also when no ``git`` program can be started.
+    """
+    try:
+        top = _git_bytes(repo_root, "rev-parse", "--show-toplevel")
+        if top is None or Path(top.decode("utf-8").strip()).resolve() != repo_root.resolve():
+            return None
+        listed = _git_bytes(repo_root, "ls-files", "-z", "--", directory)
+    except OSError:
+        return None
+    if listed is None:
+        return None
+    return tuple(name for name in listed.decode("utf-8").split("\0") if name)
+
+
 def _safe_repo_path(path: str) -> bool:
     """Restrict provenance lookups to ordinary repository-relative paths."""
     return (

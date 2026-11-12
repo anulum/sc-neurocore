@@ -50,8 +50,12 @@ such record that binds a source by path is listed with its currency too
 given beside the totals of the cited ones. An edit of any bound source
 therefore changes this file.
 
-It reads only committed sources, records no timestamps, host names or commit
-hashes, and answers nothing about whether a lane is built here today —
+In a repository it reads the files Git tracks and nothing else that lies in the
+directories: a local run left beside the committed records, or a file Git
+ignores, is not evidence and changes nothing. Outside a repository (a packaged
+or temporary tree) it reads the directories as they are. It records no
+timestamps, host names or commit hashes, and answers nothing about whether a
+lane is built here today —
 `tools/benchmark_evidence_gate.py` judges the *quality* of the artefacts that
 exist, and this counts *how many models have any*. The two are different
 questions and neither substitutes for the other.
@@ -76,7 +80,10 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT))
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
-from tools.benchmark_evidence_gate import current_source_hash_failures  # noqa: E402
+from tools.benchmark_evidence_gate import (  # noqa: E402
+    current_source_hash_failures,
+    tracked_files,
+)
 
 #: Schema of the emitted census.
 CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v2"
@@ -136,11 +143,24 @@ def _names_in_payload(payload: object, wanted: frozenset[str]) -> set[str]:
     return found
 
 
+def _evidence_files(repo_root: Path, directory: str, pattern: str) -> list[Path]:
+    """Return the files below a directory that count: tracked ones in a repository, all otherwise.
+
+    ``pattern`` is a glob relative to the directory (``**/*.json`` descends, ``*.py`` does not).
+    """
+    base = repo_root / directory
+    tracked = tracked_files(repo_root, directory)
+    if tracked is None:
+        return sorted(base.glob(pattern))
+    wanted = {repo_root / name for name in tracked}
+    return sorted(path for path in base.glob(pattern) if path in wanted)
+
+
 def _parsed_records(repo_root: Path) -> dict[str, object]:
     """Return every record under the results directory that parses, by its path below it."""
     results = repo_root / RESULTS_DIR
     parsed: dict[str, object] = {}
-    for path in sorted(results.rglob("*.json")):
+    for path in _evidence_files(repo_root, RESULTS_DIR, "**/*.json"):
         try:
             parsed[path.relative_to(results).as_posix()] = json.loads(
                 path.read_text(encoding="utf-8")
@@ -265,7 +285,7 @@ def apparatus_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     """
     wanted = model_names()
     found: dict[str, set[str]] = {}
-    for path in sorted((repo_root / SCRIPTS_DIR).glob("*.py")):
+    for path in _evidence_files(repo_root, SCRIPTS_DIR, "*.py"):
         try:
             source = path.read_text(encoding="utf-8")
         except OSError:

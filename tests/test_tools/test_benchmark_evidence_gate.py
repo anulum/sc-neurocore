@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 
 def _load_tool() -> Any:
     repo_root = Path(__file__).resolve().parents[2]
@@ -227,6 +229,66 @@ def test_changed_source_is_named_while_the_committed_proof_still_holds(tmp_path:
     failures = tool.current_source_hash_failures(artefact, repo_root=repo)
     assert [failure.reason for failure in failures] == ["missing_source_for_hash_check"]
     assert failures[0].path == "benchmarks/bench_demo.py"
+
+
+def _tracked_and_untracked_tree(repo: Path) -> None:
+    """Make a repository with one tracked record, one untracked and one ignored."""
+    results = repo / "benchmarks" / "results"
+    (results / "local").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(repo)], check=True, capture_output=True)
+    (repo / ".gitignore").write_text("benchmarks/results/local/\n", encoding="utf-8")
+    _write_json(results / "tracked.json", {"kept": True})
+    subprocess.run(
+        ["git", "-C", str(repo), "add", ".gitignore", "benchmarks/results/tracked.json"],
+        check=True,
+        capture_output=True,
+    )
+    _write_json(results / "untracked.json", {"kept": False})
+    _write_json(results / "local" / "ignored.json", {"kept": False})
+
+
+def test_tracked_files_lists_only_what_git_tracks(tmp_path: Path) -> None:
+    """An untracked file and an ignored file are present on disk and are not listed."""
+    tool = _load_tool()
+    repo = tmp_path / "repo"
+    _tracked_and_untracked_tree(repo)
+    assert (repo / "benchmarks" / "results" / "untracked.json").is_file()
+    assert (repo / "benchmarks" / "results" / "local" / "ignored.json").is_file()
+    assert tool.tracked_files(repo, "benchmarks/results") == ("benchmarks/results/tracked.json",)
+    assert tool.tracked_files(repo, "benchmarks/absent") == ()
+
+
+def test_tracked_files_is_none_where_git_cannot_say(tmp_path: Path) -> None:
+    """Outside a work tree, and below the top of one, the caller has to walk the directory."""
+    tool = _load_tool()
+    plain = tmp_path / "plain"
+    (plain / "benchmarks" / "results").mkdir(parents=True)
+    assert tool.tracked_files(plain, "benchmarks/results") is None
+    repo = tmp_path / "repo"
+    _tracked_and_untracked_tree(repo)
+    assert tool.tracked_files(repo / "benchmarks", "results") is None
+
+
+def test_tracked_files_is_none_when_the_index_cannot_be_read(tmp_path: Path) -> None:
+    """A work tree whose index is damaged gives no listing instead of an empty one."""
+    tool = _load_tool()
+    repo = tmp_path / "repo"
+    _tracked_and_untracked_tree(repo)
+    (repo / ".git" / "index").write_bytes(b"not an index")
+    assert tool.tracked_files(repo, "benchmarks/results") is None
+
+
+def test_tracked_files_is_none_without_a_git_program(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Where no git program can be started the caller walks the directory, and nothing is raised."""
+    tool = _load_tool()
+    repo = tmp_path / "repo"
+    _tracked_and_untracked_tree(repo)
+    empty = tmp_path / "no-programs"
+    empty.mkdir()
+    monkeypatch.setenv("PATH", str(empty))
+    assert tool.tracked_files(repo, "benchmarks/results") is None
 
 
 def test_record_without_a_path_keyed_digest_binds_no_source(tmp_path: Path) -> None:
