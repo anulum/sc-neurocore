@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1918
+expected_file_count = 1919
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7726,3 +7726,7 @@ rationale = "Bind the lanes a descriptor may declare: the closed list of names w
 [[file]]
 path = "src/sc_neurocore/digital_twin/twinsync.py"
 rationale = "Time-warp synchronisation of a digital twin: logical clocks, checkpoints and rollback, the twin session and its ten supporting parts, each documented as the code behaves, its placeholders and unit-mixing sums included."
+
+[[file]]
+path = "src/sc_neurocore/spintronic/spintronic_mapper.py"
+rationale = "Spintronic device and array estimates, MuMax3 script and table helpers and the Verilog wrapper, each documented as the code computes, its fixed tables, simplified formulas and placeholder read-back included."

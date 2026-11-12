@@ -43589,9 +43589,29 @@ ValueError
 ## Module `spintronic.spintronic_mapper`
 
 ### Class `SpintronicTech`
+The device technology of a spintronic cell or array.
+
+Each member selects a preset of :meth:`SpintronicDeviceConfig.from_tech`
+and an entry of :attr:`SpintronicDeviceConfig.endurance_cycles`.
+
 
 ### Class `MaterialParams`
 Micromagnetic material parameters.
+
+Attributes
+----------
+saturation_magnetisation_a_m : float
+    Saturation magnetisation Ms in A/m.
+exchange_stiffness_j_m : float
+    Exchange stiffness Aex in J/m.
+dmi_strength_j_m2 : float
+    Interfacial Dzyaloshinskii-Moriya strength D in J/m².
+perpendicular_anisotropy_j_m3 : float
+    Uniaxial perpendicular anisotropy Ku in J/m³.
+damping_alpha : float
+    Gilbert damping, dimensionless.
+temperature_k : float
+    Temperature in kelvin; 300 by default.
 
 - **cofeb_mgo**()
   - CoFeB/MgO — standard STT-MTJ / SOT-MRAM stack.
@@ -43603,22 +43623,70 @@ Micromagnetic material parameters.
 ### Class `SpintronicDeviceConfig`
 Configuration for a single spintronic device.
 
+The defaults describe a CoFeB/MgO cell; :meth:`from_tech` gives the
+presets of the four technologies.
+
+Attributes
+----------
+tech : SpintronicTech
+    Device technology.
+material : MaterialParams
+    Material stack of the free layer.
+width_nm, length_nm, thickness_nm : float
+    Free-layer dimensions in nanometres; each must be positive.
+switching_current_ua : float
+    Write current in microamperes; must be positive.
+switching_time_ns : float
+    Write pulse duration in nanoseconds; must be positive.
+write_resistance_ohm : float
+    Resistance of the write path in ohms; must be positive.
+parallel_resistance_ohm : float
+    Resistance in the parallel state in ohms; must be positive.
+retention_years : float
+    Stated retention; stored and not used by any estimate.
+tmr_ratio : float
+    Tunnelling magnetoresistance ratio, (R_AP - R_P) / R_P; must not be
+    negative.
+error_rate : float
+    Write error probability per device, used by
+    :meth:`SpintronicMapper.map_network`.
+
+Raises
+------
+ValueError
+    If a dimension, the switching current or time, or a resistance is not
+    positive, or the TMR ratio is negative.
+
 - **__post_init__**()
+  - Refuse non-positive dimensions, currents, times and resistances.
 - **from_tech**(tech)
+  - Return the preset device of one technology.
 - **area_nm2**()
+  - Footprint of the free layer, width × length, in nm².
 - **switching_energy_fj**()
-  - Write-path switching energy, E = I² × R_write × t.
+  - Write-path switching energy, E = I² × R_write × t, in femtojoules.
 - **thermal_stability**()
   - Thermal stability factor Δ = Ku × V / (kB × T).
 - **read_disturb_probability**()
   - Probability of read disturb (accidental flip during read).
 - **endurance_cycles**()
-  - Estimated write endurance cycles.
+  - Write endurance of the technology from a fixed table.
 
 ### Class `VariabilityModel`
 Process variability for spintronic devices.
 
-Models dimension, anisotropy, and DMI variations from fab data.
+Each parameter is scaled by ``1 + N(0, sigma / 100)``: width and length,
+and the material's anisotropy, DMI strength, damping and saturation
+magnetisation. Thickness, resistances and switching current and time are
+not varied.
+
+Attributes
+----------
+width_sigma_pct, length_sigma_pct : float
+    Standard deviation of the width and the length, in per cent.
+ku_sigma_pct, dmi_sigma_pct, damping_sigma_pct, ms_sigma_pct : float
+    Standard deviation of the anisotropy, the DMI strength, the damping
+    and the saturation magnetisation, in per cent.
 
 - **apply**(device, rng)
   - Return a variability-injected copy of the device.
@@ -43626,33 +43694,111 @@ Models dimension, anisotropy, and DMI variations from fab data.
 ### Class `SpintronicCell`
 One cell in a spintronic array.
 
+Attributes
+----------
+row, col : int
+    Position of the cell in its array.
+device : SpintronicDeviceConfig
+    The cell's own, possibly varied, device.
+state : int
+    Magnetic state: 0 for parallel (P), 1 for anti-parallel (AP).
+weight_q88 : int
+    The stored weight in Q8.8 fixed point (256 is 1.0). It is kept as a
+    number beside the binary state and read back unchanged.
+
 - **resistance_ohm**()
+  - Cell resistance in ohms: R_P in state 0, R_P × (1 + TMR) in state 1.
 
 ### Class `SpintronicArray`
 Crossbar array of spintronic devices for SC computation.
 
+Every cell gets its own copy of the technology's preset device, varied by
+the variability model with draws from one generator seeded by
+``rng_seed``, row by row.
+
+Parameters
+----------
+rows, cols : int
+    Array dimensions.
+tech : SpintronicTech
+    Technology of every cell.
+variability : VariabilityModel or None
+    Process variability; ``None`` uses the default model.
+rng_seed : int
+    Seed of the array's random-number generator.
+
+Attributes
+----------
+rows, cols : int
+    Array dimensions.
+tech : SpintronicTech
+    Technology of every cell.
+rng : numpy.random.Generator
+    The generator the cells' variability was drawn from.
+cells : list of list of SpintronicCell
+    The cells, indexed ``cells&#91;row&#93;&#91;col&#93;``.
+
 - **__init__**(rows, cols, tech, variability, rng_seed)
 - **total_cells**()
+  - Number of cells, rows × cols.
 - **total_area_um2**()
+  - Sum of the cells' free-layer footprints in µm², varied sizes included.
 - **program_weights**(weights_q88)
   - Program Q8.8 weights into the array.
 - **read_weights**()
   - Read weights back from the array.
 - **power_breakdown**(bitstream_length)
-  - Per-array power breakdown in femtojoules.
+  - Per-array energy breakdown in femtojoules.
 
 ### Class `MappingResult`
 Result of mapping SC bitstreams to a spintronic array.
+
+Attributes
+----------
+array_rows, array_cols : int
+    Dimensions of the array, those of the weight matrix.
+tech : SpintronicTech
+    Technology of the array.
+total_area_um2 : float
+    Sum of the varied cells' footprints in µm².
+total_energy_fj : float
+    The nominal device's switching energy × cells × bitstream length.
+total_switching_time_ns : float
+    The nominal device's switching time × bitstream length.
+bit_error_rate : float
+    The nominal device's error rate × cells: an expected number of
+    failing devices, which can exceed 1.
+mc_yield : float
+    Yield of a Monte-Carlo analysis; :meth:`SpintronicMapper.map_network`
+    leaves it at 1.0.
 
 
 ### Class `SpintronicMapper`
 Maps SC bitstreams + weights to a spintronic crossbar.
 
 Performs:
-1. Weight quantisation to device states (P/AP)
-2. Array sizing from network dimensions
-3. Energy/timing estimation
-4. Monte-Carlo variability yield analysis
+1. Weight storage, with the P/AP state set by a threshold at 0.5
+2. Array sizing from the weight matrix's shape
+3. Energy/timing estimation from the nominal device
+4. A Monte-Carlo yield over arrays of varied devices
+
+Parameters
+----------
+tech : SpintronicTech
+    Technology of the arrays.
+variability : VariabilityModel or None
+    Process variability; ``None`` uses the default model.
+rng_seed : int
+    Seed of the generator that seeds each array.
+
+Attributes
+----------
+tech : SpintronicTech
+    Technology of the arrays.
+variability : VariabilityModel
+    The variability applied to every array.
+rng : numpy.random.Generator
+    The generator that draws each array's seed.
 
 - **__init__**(tech, variability, rng_seed)
 - **map_network**(weights_q88, bitstream_length)
@@ -43664,12 +43810,15 @@ Performs:
 Generates MuMax3 (.mx3) scripts for micromagnetic co-simulation.
 
 - **generate_switching**(device, current_density_a_m2, duration_ns)
+  - Return a MuMax3 script that drives a current through the device's free layer.
 - **generate_skyrmion**(device)
+  - Return a MuMax3 script that relaxes one Néel skyrmion in the device.
 
 ### Class `SpintronicVerilogGenerator`
 Generates Verilog wrappers for spintronic crossbar arrays.
 
 - **generate**(array_name, rows, cols, tech)
+  - Return a wrapper module with a weight-programming port and bitstream ports.
 
 ### Class `RacetrackShiftRegister`
 Domain-wall racetrack memory with current-driven bit shifting.
@@ -43677,80 +43826,180 @@ Domain-wall racetrack memory with current-driven bit shifting.
 Models a nanotrack with N bit positions; SOT current pulses shift
 all domain walls one position per clock edge.
 
+Attributes
+----------
+n_positions : int
+    Number of bit positions of the track.
+bits : numpy.ndarray or None
+    The stored bits as int8; ``None`` becomes ``n_positions`` zeros.
+shift_current_ua : float
+    Shift current in microamperes.
+shift_time_ns : float
+    Duration of one shift pulse in nanoseconds.
+shift_error_rate : float
+    Probability, per shift, that one random position flips.
+
 - **__post_init__**()
+  - Start an empty track with ``n_positions`` zero bits.
 - **load**(data)
+  - Replace the stored bits by the first ``n_positions`` of ``data``.
 - **shift_right**(n, rng)
+  - Shift every bit towards the end of the track, ``n`` times.
 - **shift_left**(n, rng)
+  - Shift every bit towards the start of the track, ``n`` times.
 - **shift_energy_fj**()
+  - Energy of one shift pulse, I² × 500 Ω × t, in femtojoules.
 
 ### Class `SkyrmionHallCorrector`
 Corrects skyrmion trajectory for the skyrmion Hall effect.
 
-Skyrmions drift at an angle θ_H to the applied current direction.
-θ_H = arctan(4π Q / (α D)) where Q is topological charge.
+Skyrmions drift at an angle θ_H to the applied current direction. The
+code computes θ_H = arctan(4π |Q| α) with Q the topological charge and α
+the damping. This is not the Thiele form arctan(4πQ / (α 𝒟)), in which the
+damping divides; ``dmi_strength`` is stored and not used.
+
+Attributes
+----------
+topological_charge : int
+    Topological charge Q; its sign is ignored.
+damping_alpha : float
+    Gilbert damping α.
+dmi_strength : float
+    DMI strength in J/m²; not used.
 
 - **hall_angle_deg**()
+  - The drift angle in degrees, arctan(4π |Q| α).
 - **corrected_position**(x_drive, track_width_nm)
-  - Return (x, y) position accounting for Hall drift.
+  - Return the position a skyrmion reaches after a drive along the track.
 - **needs_confinement**()
+  - Whether the drift angle exceeds 5 degrees.
 
 ### Class `MLCConfig`
 Multi-level cell configuration for spintronic devices.
 
+Attributes
+----------
+bits_per_cell : int
+    Bits stored per cell.
+levels : int
+    Number of levels; always set to 2**bits_per_cell after construction,
+    whatever value is given.
+
 - **__post_init__**()
+  - Set ``levels`` to 2**bits_per_cell.
 - **resistance_margins**()
   - Resistance levels evenly spaced between R_P and R_AP.
 - **quantize_weight**(weight_float)
-  - Quantize a &#91;0, 1&#93; weight to an MLC level.
+  - Quantise a &#91;0, 1&#93; weight to an MLC level.
 - **dequantize**(level)
+  - Return the weight of a level, level / (levels - 1).
 - **density_improvement**()
+  - Storage density relative to a one-bit cell, equal to ``bits_per_cell``.
 
 ### Class `WriteVerifyResult`
 Result of a write-verify cycle.
 
+Attributes
+----------
+target_weight : int
+    The Q8.8 weight that was to be written.
+actual_weight : int
+    The weight the cell holds after the last attempt.
+attempts : int
+    Number of write attempts made.
+success : bool
+    Whether the last attempt landed within 4 of the target.
+
 - **error**()
+  - Absolute difference between the target and the written weight.
 
 ### Class `AgingModel`
 Endurance degradation model for spintronic devices.
 
 TMR and thermal stability degrade with write cycles.
 
+Attributes
+----------
+cycles_written : int
+    Write cycles so far.
+
 - **tmr_degradation**(initial_tmr, endurance_limit)
   - TMR degrades linearly as cycling approaches endurance limit.
 - **stability_degradation**(initial_delta, endurance_limit)
   - Thermal stability degrades with oxide breakdown.
 - **is_worn_out**()
+  - Whether the TMR of a 1.5-TMR device rated for 10**12 cycles fell below 0.5.
 - **write**(n)
+  - Count ``n`` more write cycles.
 
 ### Class `RadiationModel`
 SEU and TID models for spintronic devices in radiation environments.
+
+Attributes
+----------
+seu_cross_section_cm2 : float
+    Single-event-upset cross-section per device, in cm².
+tid_threshold_krad : float
+    Total ionising dose, in krad, at which performance has halved.
 
 - **seu_rate**(flux_particles_cm2_s, n_devices)
   - SEU events per second.
 - **tid_degradation**(dose_krad)
   - Fraction of performance remaining after TID.
 - **is_rad_hard**()
-  - Spintronic devices are inherently radiation-hard (non-charge-based).
+  - Whether the TID threshold is at least 100 krad.
 
 ### Class `DefectEntry`
 One defective cell in the array.
+
+Attributes
+----------
+row, col : int
+    Position of the cell.
+defect_type : str
+    Kind of defect, free text; the module uses no list of kinds.
 
 
 ### Class `DefectMap`
 Tracks and remaps defective cells in a spintronic array.
 
+Attributes
+----------
+defects : list of DefectEntry
+    The recorded defects, in the order added.
+remap : dict
+    Spare address for each remapped ``(row, col)``.
+
 - **__init__**()
 - **add_defect**(row, col, defect_type)
+  - Record one defective cell.
 - **defect_count**()
+  - Number of recorded defects, repeated cells counted again.
 - **defect_rate**(total_cells)
+  - Return the recorded defects per cell.
 - **add_remap**(bad, spare)
+  - Send accesses of one address to a spare address.
 - **is_defective**(row, col)
+  - Return whether a defect is recorded at one position.
 - **effective_address**(row, col)
+  - Return the address an access to one position uses.
 
 ### Class `MuMax3Result`
 Parsed result from a MuMax3 simulation.
 
+Attributes
+----------
+final_mx, final_my, final_mz : float
+    Average reduced magnetisation components of the last table row.
+switched : bool
+    Whether the last row's z component is negative.
+energy_j : float
+    Energy in joules; not read by the parser.
+sim_time_ns : float
+    Simulated time of the last row in nanoseconds.
+
 - **magnetisation_magnitude**()
+  - Length of the average magnetisation vector (mx, my, mz).
 
 ### Class `MuMax3OutputParser`
 Parses MuMax3 table output for co-simulation integration.
@@ -43758,20 +44007,93 @@ Parses MuMax3 table output for co-simulation integration.
 - **parse_table**(text)
   - Parse a MuMax3 .table output (TSV with header).
 - **is_switching_successful**(result)
+  - Return whether a result switched and stayed nearly saturated.
 
 ### Function `switching_current_vs_temperature(i_c0_ua, delta_0, temperature_k, temp_ref_k)`
-Ic(T) = Ic0 × (1 - T/T_ref × kBT/(Δ0 × kBT_ref)).
+Ic(T) = Ic0 × max(0.01, 1 - (T / T_ref) / Δ0).
 
-Simplified Néel-Arrhenius model for thermally activated switching.
+A linear thermal reduction of the switching current, floored at 1 % of
+Ic0.
+
+Parameters
+----------
+i_c0_ua : float
+    Switching current at the reference temperature, in microamperes.
+delta_0 : float
+    Thermal stability factor at the reference temperature.
+temperature_k : float
+    Temperature in kelvin.
+temp_ref_k : float
+    Reference temperature in kelvin.
+
+Returns
+-------
+float
+    The switching current in microamperes; ``i_c0_ua`` unchanged when the
+    reference temperature or Δ0 is not positive.
 
 ### Function `switching_time_vs_temperature(t_sw0_ns, temperature_k, temp_ref_k)`
 Switching time increases with temperature due to thermal fluctuations.
 
+Computed as t_sw0 × (1 + 0.1 × (T / T_ref - 1)), a linear model; below the
+reference temperature the time decreases.
+
+Parameters
+----------
+t_sw0_ns : float
+    Switching time at the reference temperature, in nanoseconds.
+temperature_k : float
+    Temperature in kelvin.
+temp_ref_k : float
+    Reference temperature in kelvin; must not be 0.
+
+Returns
+-------
+float
+    The switching time in nanoseconds.
+
 ### Function `retention_failure_probability(thermal_stability, time_seconds, attempt_freq_hz)`
 P_fail = 1 - exp(-t × f0 × exp(-Δ)).
 
+Parameters
+----------
+thermal_stability : float
+    Thermal stability factor Δ.
+time_seconds : float
+    Storage time t in seconds.
+attempt_freq_hz : float
+    Attempt frequency f0 in hertz.
+
+Returns
+-------
+float
+    The probability, clamped to &#91;0, 1&#93;; 0.0 when Δ is above 100.
+
 ### Function `write_verify(cell, target_q88, max_attempts, rng)`
 Program a cell with write-verify loop.
+
+Each attempt writes the target afresh and sets the cell's state by the
+0.5 threshold; with a generator it then adds Gaussian noise of standard
+deviation 2, truncated to an integer, and clamps the weight to &#91;0, 511&#93;.
+The loop stops at the first attempt within 4 of the target. Without a
+generator the first attempt always succeeds.
+
+Parameters
+----------
+cell : SpintronicCell
+    The cell to program; changed in place.
+target_q88 : int
+    The Q8.8 weight to write.
+max_attempts : int
+    Largest number of attempts.
+rng : numpy.random.Generator or None
+    Source of write noise; ``None`` writes exactly.
+
+Returns
+-------
+WriteVerifyResult
+    The target, the written weight, the attempts used and whether the
+    last attempt succeeded.
 
 ---
 
