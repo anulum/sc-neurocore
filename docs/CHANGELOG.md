@@ -12,6 +12,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The benchmark coverage census now says whether each record still describes
+  the sources in the tree. A record that binds sources by path carries one of
+  three words: `current` (every bound source has the recorded digest),
+  `outdated` (a bound source changed or is gone; the changed paths are listed)
+  or `unbound` (no source is named by a path, so nothing can be said). An
+  outdated record describes earlier bytes; it does not say that the measured
+  value changed. The census lists this for the records a catalogue model
+  cites and, separately, for every other record under `benchmarks/results`
+  that binds sources, since most records do not carry a model's class name;
+  records that key digests by lane are bound through the evidence gate's
+  manifest where it names their paths. Counts over all records are given
+  beside those of the cited ones. Because the census is a checked generated
+  file, an edit of any bound source now has to regenerate it in the same
+  commit. The evidence gate gains `current_source_hash_failures`, the same
+  comparison as its commit-time check but against the tree as it is now.
+  Census schema version 2; the three model states and their totals are
+  unchanged.
+
 - Separate the variance contracts of the stochastic dot product by circuit.
   `dot_product_variance` was described as the variance of a multiplexer tree
   but computes the variance of averaging every product stream in full

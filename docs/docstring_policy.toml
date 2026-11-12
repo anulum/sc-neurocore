@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1886
+expected_file_count = 1889
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -2443,6 +2443,18 @@ rationale = "Public Brunel-Wang benchmark entry point: what it measures across f
 [[file]]
 path = "tools/benchmark_coverage_census.py"
 rationale = "Public benchmark coverage census: what each of the three states means, why a benchmark script that names a model is apparatus rather than a measurement, and how this differs from the evidence gate that judges artefact quality."
+
+[[file]]
+path = "tools/benchmark_evidence_gate.py"
+rationale = "Evidence gate for committed benchmark records; its public comparison of a record's source digests with the tree as it is now is what the coverage census reports as currency."
+
+[[file]]
+path = "tests/test_benchmark_coverage_census.py"
+rationale = "Bind the coverage census: the three model states, and the currency of every record that binds sources, cited by a model or not."
+
+[[file]]
+path = "tests/test_tools/test_benchmark_evidence_gate.py"
+rationale = "Bind the evidence gate's manifest contract and its two source-digest comparisons: at the record's commit and against the tree now."
 
 [[file]]
 path = "src/sc_neurocore/studio/project.py"

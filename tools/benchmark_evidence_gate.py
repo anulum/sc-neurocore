@@ -32,10 +32,12 @@ class GateFailure:
     path: str
 
     def to_json(self) -> dict[str, str]:
+        """Return the failure as the three string fields the report stores."""
         return {"gate_id": self.gate_id, "reason": self.reason, "path": self.path}
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Return the command-line parser with the manifest and report paths."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--manifest",
@@ -218,17 +220,37 @@ def _check_source_hashes(
             _fail(failures, gate_id, "source_hash_mismatch", f"{source_path}->{json_path}")
 
 
-def committed_source_hash_failures(
+#: File suffixes that mark a ``source_hashes`` key as a repository path.
+_SOURCE_PATH_SUFFIXES = (
+    ".py",
+    ".rs",
+    ".go",
+    ".jl",
+    ".mojo",
+    ".toml",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".lock",
+    ".sby",
+    ".v",
+    ".h",
+    ".md",
+    ".txt",
+    ".sh",
+    ".mod",
+    ".sum",
+)
+
+
+def _record_source_hash_failures(
     artefact: Path,
     *,
     repo_root: Path,
-    source_hash_paths: Mapping[str, str] | None = None,
+    source_hash_paths: Mapping[str, str] | None,
+    source_hash_policy: str,
 ) -> list[GateFailure]:
-    """Validate a measured record against its committed source snapshot.
-
-    ``source_hash_paths`` maps repository source paths to their JSON paths for
-    records that key source digests by lane or use a different field name.
-    """
+    """Compare a record's source digests under one policy and return the failures."""
     failures: list[GateFailure] = []
     try:
         relative = artefact.resolve().relative_to(repo_root.resolve()).as_posix()
@@ -241,30 +263,10 @@ def committed_source_hash_failures(
         if not isinstance(hashes, dict):
             _fail(failures, "record", "missing_source_hashes", relative)
             return failures
-        suffixes = (
-            ".py",
-            ".rs",
-            ".go",
-            ".jl",
-            ".mojo",
-            ".toml",
-            ".json",
-            ".yml",
-            ".yaml",
-            ".lock",
-            ".sby",
-            ".v",
-            ".h",
-            ".md",
-            ".txt",
-            ".sh",
-            ".mod",
-            ".sum",
-        )
         paths = {
             path: f"source_hashes.{path}"
             for path in hashes
-            if isinstance(path, str) and path.endswith(suffixes)
+            if isinstance(path, str) and path.endswith(_SOURCE_PATH_SUFFIXES)
         }
     else:
         paths = dict(source_hash_paths)
@@ -277,10 +279,70 @@ def committed_source_hash_failures(
         payload=payload,
         source_hashes=paths,
         artefact_path=relative,
-        source_hash_policy="artefact_commit",
+        source_hash_policy=source_hash_policy,
         failures=failures,
     )
     return failures
+
+
+def committed_source_hash_failures(
+    artefact: Path,
+    *,
+    repo_root: Path,
+    source_hash_paths: Mapping[str, str] | None = None,
+) -> list[GateFailure]:
+    """Validate a measured record against its committed source snapshot.
+
+    ``source_hash_paths`` maps repository source paths to their JSON paths for
+    records that key source digests by lane or use a different field name.
+    """
+    return _record_source_hash_failures(
+        artefact,
+        repo_root=repo_root,
+        source_hash_paths=source_hash_paths,
+        source_hash_policy="artefact_commit",
+    )
+
+
+def current_source_hash_failures(
+    artefact: Path,
+    *,
+    repo_root: Path,
+    source_hash_paths: Mapping[str, str] | None = None,
+) -> list[GateFailure]:
+    """Compare a measured record with the sources as they are in the tree now.
+
+    :func:`committed_source_hash_failures` answers whether the record was
+    measured on the sources it names, at the commit that recorded it. This
+    function answers the other question: whether those sources are still the
+    same files. A failure with the reason ``source_hash_mismatch`` or
+    ``missing_source_for_hash_check`` names a source that changed or is gone;
+    it says that the record describes earlier bytes, not that the measured
+    value changed.
+
+    Parameters
+    ----------
+    artefact : Path
+        The benchmark record, inside ``repo_root``.
+    repo_root : Path
+        Repository root whose working tree is read; no Git history is used.
+    source_hash_paths : mapping of str to str, optional
+        Repository source paths mapped to their JSON paths, for records that
+        key source digests by lane or use a different field name.
+
+    Returns
+    -------
+    list of GateFailure
+        Empty when every path-keyed digest equals the file in the tree. The
+        reasons ``missing_source_hashes`` and ``missing_path_keyed_source_hashes``
+        mean that the record binds no source by path.
+    """
+    return _record_source_hash_failures(
+        artefact,
+        repo_root=repo_root,
+        source_hash_paths=source_hash_paths,
+        source_hash_policy="working_tree",
+    )
 
 
 def _check_regression_limits(
@@ -417,6 +479,23 @@ def evaluate_benchmark_evidence_gate(
     output_path: Path,
     repo_root: Path | None = None,
 ) -> dict[str, Any]:
+    """Evaluate every gate of the manifest, write the report and return it.
+
+    Parameters
+    ----------
+    manifest_path : Path
+        JSON manifest that lists the required benchmark artefact gates.
+    output_path : Path
+        Where the machine-readable report is written.
+    repo_root : Path, optional
+        Repository root; the current directory when omitted.
+
+    Returns
+    -------
+    dict
+        The report: whether every gate passed, the policy used for source
+        digests, and one entry per failure.
+    """
     root = repo_root or Path.cwd()
     failures: list[GateFailure] = []
     try:
@@ -525,6 +604,7 @@ def evaluate_benchmark_evidence_gate(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the gate from the command line and return 0 only when it passes."""
     args = build_parser().parse_args(argv)
     report = evaluate_benchmark_evidence_gate(
         manifest_path=args.manifest,

@@ -29,6 +29,27 @@ This census separates the three states so the distinction cannot be lost again:
 ``absent``
     neither.
 
+Every record a model cites also carries a currency word:
+
+``current``
+    every source the record binds by path still has the recorded digest.
+``outdated``
+    at least one bound source changed or is gone; the changed paths are listed.
+    The record describes earlier bytes. It does not say the measured value
+    changed.
+``unbound``
+    the record binds no source by path, so nothing can be said.
+
+A record that keys its digests by lane names no path itself. Where the evidence
+gate's manifest names the paths for it, those are used.
+
+A record under ``benchmarks/results`` in which no catalogue model's class name
+appears measures no model in the sense above, yet it may bind sources. Every
+such record that binds a source by path is listed with its currency too
+(``uncited_bound_records``), and the totals over all records that parse are
+given beside the totals of the cited ones. An edit of any bound source
+therefore changes this file.
+
 It reads only committed sources, records no timestamps, host names or commit
 hashes, and answers nothing about whether a lane is built here today —
 `tools/benchmark_evidence_gate.py` judges the *quality* of the artefacts that
@@ -45,18 +66,20 @@ Usage::
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 import json
 from pathlib import Path
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT))
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
+from tools.benchmark_evidence_gate import current_source_hash_failures  # noqa: E402
 
 #: Schema of the emitted census.
-CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v1"
+CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v2"
 
 #: Where the census is committed.
 DEFAULT_OUTPUT = "docs/_generated/benchmark_coverage_census.json"
@@ -64,11 +87,27 @@ DEFAULT_OUTPUT = "docs/_generated/benchmark_coverage_census.json"
 #: Directory holding committed benchmark evidence.
 RESULTS_DIR = "benchmarks/results"
 
+#: Manifest of the evidence gate. It names the source paths of records that key
+#: their digests by lane instead of by path.
+GATE_MANIFEST = "benchmarks/benchmark_regression_gates.json"
+
 #: Directory holding the benchmark scripts.
 SCRIPTS_DIR = "benchmarks"
 
 #: The three states a catalogue model can be in.
 STATES = ("measured", "apparatus_only", "absent")
+
+#: The three things that can be said about a record's bound sources.
+CURRENCIES = ("current", "outdated", "unbound")
+
+#: Reasons of the evidence gate that mean a record binds no source by path.
+_UNBOUND_REASONS = frozenset(
+    {
+        "artefact_is_missing_or_invalid",
+        "missing_source_hashes",
+        "missing_path_keyed_source_hashes",
+    }
+)
 
 
 def model_names() -> tuple[str, ...]:
@@ -97,6 +136,20 @@ def _names_in_payload(payload: object, wanted: frozenset[str]) -> set[str]:
     return found
 
 
+def _parsed_records(repo_root: Path) -> dict[str, object]:
+    """Return every record under the results directory that parses, by its path below it."""
+    results = repo_root / RESULTS_DIR
+    parsed: dict[str, object] = {}
+    for path in sorted(results.rglob("*.json")):
+        try:
+            parsed[path.relative_to(results).as_posix()] = json.loads(
+                path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            continue
+    return parsed
+
+
 def measured_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     """Return each model that a committed benchmark record names, with the records.
 
@@ -108,19 +161,93 @@ def measured_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     Returns
     -------
     dict
-        Model name to the sorted record filenames naming it. A model absent
-        from the mapping has no committed benchmark evidence at all.
+        Model name to the sorted records naming it, each given by its path
+        below the results directory. A model absent from the mapping has no
+        committed benchmark evidence at all.
     """
     wanted = frozenset(model_names())
     found: dict[str, set[str]] = {}
-    for path in sorted((repo_root / RESULTS_DIR).rglob("*.json")):
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
+    for record, payload in _parsed_records(repo_root).items():
         for name in _names_in_payload(payload, wanted):
-            found.setdefault(name, set()).add(path.name)
+            found.setdefault(name, set()).add(record)
     return {name: sorted(records) for name, records in sorted(found.items())}
+
+
+def manifest_source_paths(repo_root: Path = REPO_ROOT) -> dict[str, dict[str, str]]:
+    """Return the source paths the evidence gate's manifest names, per record.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Repository root; the manifest is read at :data:`GATE_MANIFEST` beneath it.
+
+    Returns
+    -------
+    dict
+        Record path below the results directory to its mapping of source path
+        to the place of the digest inside the record. Empty when the manifest
+        is absent or malformed.
+    """
+    try:
+        manifest = json.loads((repo_root / GATE_MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    gates = manifest.get("gates") if isinstance(manifest, dict) else None
+    prefix = f"{RESULTS_DIR}/"
+    named: dict[str, dict[str, str]] = {}
+    for gate in gates if isinstance(gates, list) else []:
+        if not isinstance(gate, dict):
+            continue
+        artefact, mapping = gate.get("artefact"), gate.get("source_hashes")
+        if isinstance(artefact, str) and artefact.startswith(prefix) and isinstance(mapping, dict):
+            named[artefact.removeprefix(prefix)] = {str(k): str(v) for k, v in mapping.items()}
+    return named
+
+
+def record_currency(
+    record: str,
+    repo_root: Path = REPO_ROOT,
+    source_paths: Mapping[str, str] | None = None,
+) -> dict[str, object]:
+    """Say whether the sources a record binds by path are still the same files.
+
+    Parameters
+    ----------
+    record : str
+        Path of the record below the results directory.
+    repo_root : Path
+        Repository root whose committed sources are compared.
+    source_paths : mapping of str to str, optional
+        Source path to the place of its digest inside the record, as the
+        evidence gate's manifest names them. Used only when the record itself
+        keys no digest by a path; a named digest the record lacks counts as a
+        changed source.
+
+    Returns
+    -------
+    dict
+        ``name`` and ``currency`` (one of :data:`CURRENCIES`); an outdated
+        record also lists the ``changed`` source paths, sorted.
+    """
+    artefact = repo_root / RESULTS_DIR / record
+    failures = current_source_hash_failures(artefact, repo_root=repo_root)
+    named: dict[str, str] = {}
+    if source_paths and failures and all(f.reason in _UNBOUND_REASONS for f in failures):
+        failures = current_source_hash_failures(
+            artefact, repo_root=repo_root, source_hash_paths=source_paths
+        )
+        named = {place: source for source, place in source_paths.items()}
+    if not failures:
+        return {"name": record, "currency": "current"}
+    if all(failure.reason in _UNBOUND_REASONS for failure in failures):
+        return {"name": record, "currency": "unbound"}
+    changed = sorted(
+        {
+            named.get(failure.path, failure.path.split("->")[0].removeprefix("source_hashes."))
+            for failure in failures
+        }
+    )
+    return {"name": record, "currency": "outdated", "changed": changed}
 
 
 def apparatus_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
@@ -149,6 +276,12 @@ def apparatus_models(repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
     return {name: sorted(scripts) for name, scripts in sorted(found.items())}
 
 
+def _currency_totals(entries: Iterable[dict[str, object]]) -> dict[str, int]:
+    """Count the entries per currency word, every word present."""
+    words = [entry["currency"] for entry in entries]
+    return {word: words.count(word) for word in CURRENCIES}
+
+
 def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
     """Return the coverage census over the whole catalogue.
 
@@ -161,10 +294,24 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
     -------
     dict
         The census payload: one row per model with its state and bindings,
-        plus totals per state.
+        totals per state, totals of the cited records per currency word, the
+        same totals over every record that parses, and the records that bind
+        sources although no model's name appears in them.
     """
     measured = measured_models(repo_root)
     apparatus = apparatus_models(repo_root)
+    named_paths = manifest_source_paths(repo_root)
+    every = {
+        record: record_currency(record, repo_root, named_paths.get(record))
+        for record in _parsed_records(repo_root)
+    }
+    cited = {record for records in measured.values() for record in records}
+    currency = {record: every[record] for record in sorted(cited)}
+    uncited_bound = [
+        entry
+        for record, entry in sorted(every.items())
+        if record not in cited and entry["currency"] != "unbound"
+    ]
     rows: list[dict[str, object]] = []
     for name in model_names():
         if name in measured:
@@ -177,15 +324,21 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
             {
                 "model": name,
                 "state": state,
-                "records": measured.get(name, []),
+                "records": [currency[record] for record in measured.get(name, [])],
                 "scripts": apparatus.get(name, []),
             }
         )
     totals = {state: sum(1 for row in rows if row["state"] == state) for state in STATES}
+    record_totals = _currency_totals(currency.values())
     return {
         "schema_version": CENSUS_SCHEMA,
         "catalogue_models": len(rows),
         "totals": totals,
+        "cited_records": len(currency),
+        "record_currency_totals": record_totals,
+        "all_records": len(every),
+        "all_record_currency_totals": _currency_totals(every.values()),
+        "uncited_bound_records": uncited_bound,
         "rows": rows,
     }
 
@@ -207,6 +360,20 @@ def render_summary(census: dict[str, object]) -> str:
         share = (100 * count) // total if total else 0
         lines.append(f"  {state:15s} {count:4d}  ({share}%)")
     lines.append("a benchmark script that names a model is apparatus, not a measurement")
+    record_totals = census["record_currency_totals"]
+    assert isinstance(record_totals, dict)
+    lines.append(f"cited records: {census['cited_records']}")
+    for word in CURRENCIES:
+        lines.append(f"  {word:15s} {int(record_totals[word]):4d}")
+    all_totals = census["all_record_currency_totals"]
+    assert isinstance(all_totals, dict)
+    lines.append(f"all records: {census['all_records']}")
+    for word in CURRENCIES:
+        lines.append(f"  {word:15s} {int(all_totals[word]):4d}")
+    others = census["uncited_bound_records"]
+    assert isinstance(others, list)
+    lines.append(f"bound to sources and named by no model: {len(others)}")
+    lines.append("an outdated record describes earlier sources; it does not say the speed changed")
     return "\n".join(lines)
 
 

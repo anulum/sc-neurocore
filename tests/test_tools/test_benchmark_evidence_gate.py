@@ -5,6 +5,8 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
+"""Hold the benchmark evidence gate to real records, sources and Git history."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -198,7 +200,68 @@ def test_historical_result_accepts_lane_keyed_source_digest(tmp_path: Path) -> N
     assert [failure.reason for failure in failures] == ["source_hash_mismatch"]
 
 
+def test_record_is_current_while_its_source_is_unchanged(tmp_path: Path) -> None:
+    """A record whose source still has the recorded digest is current."""
+    tool = _load_tool()
+    repo = tmp_path / "repository"
+    artefact, _manifest = _historical_repo(repo)
+
+    assert tool.current_source_hash_failures(artefact, repo_root=repo) == []
+
+
+def test_changed_source_is_named_while_the_committed_proof_still_holds(tmp_path: Path) -> None:
+    """After a source change the record stays proven and stops being current."""
+    tool = _load_tool()
+    repo = tmp_path / "repository"
+    artefact, _manifest = _historical_repo(repo)
+    source = repo / "benchmarks" / "bench_demo.py"
+    source.write_text("print('changed')\n", encoding="utf-8")
+    _commit(repo, "change source after measurement")
+
+    assert tool.committed_source_hash_failures(artefact, repo_root=repo) == []
+    failures = tool.current_source_hash_failures(artefact, repo_root=repo)
+    assert [failure.reason for failure in failures] == ["source_hash_mismatch"]
+    assert failures[0].path.split("->")[0] == "benchmarks/bench_demo.py"
+
+    source.unlink()
+    failures = tool.current_source_hash_failures(artefact, repo_root=repo)
+    assert [failure.reason for failure in failures] == ["missing_source_for_hash_check"]
+    assert failures[0].path == "benchmarks/bench_demo.py"
+
+
+def test_record_without_a_path_keyed_digest_binds_no_source(tmp_path: Path) -> None:
+    """Digests keyed by a lane name, or no digests, bind no file by path."""
+    tool = _load_tool()
+    repo = tmp_path / "repository"
+    artefact, _manifest = _historical_repo(repo)
+
+    _write_json(artefact, {"latency_ns": 10.0, "source_hashes": {"python": "0" * 64}})
+    failures = tool.current_source_hash_failures(artefact, repo_root=repo)
+    assert [failure.reason for failure in failures] == ["missing_path_keyed_source_hashes"]
+
+    _write_json(artefact, {"latency_ns": 10.0})
+    failures = tool.current_source_hash_failures(artefact, repo_root=repo)
+    assert [failure.reason for failure in failures] == ["missing_source_hashes"]
+
+    paths = {"benchmarks/bench_demo.py": "source_hashes.python"}
+    _write_json(
+        artefact,
+        {
+            "latency_ns": 10.0,
+            "source_hashes": {"python": tool._sha256(repo / "benchmarks" / "bench_demo.py")},
+        },
+    )
+    assert (
+        tool.current_source_hash_failures(artefact, repo_root=repo, source_hash_paths=paths) == []
+    )
+
+    artefact.unlink()
+    failures = tool.current_source_hash_failures(artefact, repo_root=repo)
+    assert [failure.reason for failure in failures] == ["artefact_is_missing_or_invalid"]
+
+
 def test_benchmark_evidence_gate_accepts_reviewed_manifest(tmp_path: Path) -> None:
+    """A manifest whose artefact, numbers and source digest agree passes."""
     tool = _load_tool()
     source = tmp_path / "benchmarks" / "bench_demo.py"
     source.parent.mkdir(parents=True)
@@ -246,6 +309,7 @@ def test_benchmark_evidence_gate_accepts_reviewed_manifest(tmp_path: Path) -> No
 
 
 def test_benchmark_evidence_gate_fails_closed_on_missing_metric(tmp_path: Path) -> None:
+    """A required number that is absent from the artefact fails the gate."""
     tool = _load_tool()
     _write_json(tmp_path / "benchmarks" / "results" / "demo.json", {"latency_ns": 10.0})
     manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
@@ -281,6 +345,7 @@ def test_benchmark_evidence_gate_fails_closed_on_missing_metric(tmp_path: Path) 
 
 
 def test_benchmark_evidence_gate_rejects_stale_source_hash(tmp_path: Path) -> None:
+    """A digest that no longer equals its source fails the gate."""
     tool = _load_tool()
     source = tmp_path / "benchmarks" / "bench_demo.py"
     source.parent.mkdir(parents=True)
@@ -356,6 +421,7 @@ def test_benchmark_evidence_gate_accepts_dotted_source_filename(tmp_path: Path) 
 
 
 def test_benchmark_evidence_gate_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
+    """The command line exits with a failure status when a gate fails."""
     tool = _load_tool()
     manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
     _write_json(
@@ -371,6 +437,7 @@ def test_benchmark_evidence_gate_cli_returns_nonzero_on_failure(tmp_path: Path) 
 
 
 def test_benchmark_evidence_gate_rejects_manifest_without_schema(tmp_path: Path) -> None:
+    """A manifest without its schema version is refused."""
     tool = _load_tool()
     manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
     _write_json(manifest, {"gates": []})
@@ -389,6 +456,7 @@ def test_benchmark_evidence_gate_rejects_manifest_without_schema(tmp_path: Path)
 
 
 def test_benchmark_evidence_gate_rejects_duplicate_gate_ids(tmp_path: Path) -> None:
+    """Two gates with the same identifier are refused."""
     tool = _load_tool()
     _write_json(tmp_path / "benchmarks" / "results" / "one.json", {"latency_ns": 1.0})
     _write_json(tmp_path / "benchmarks" / "results" / "two.json", {"latency_ns": 2.0})
@@ -424,6 +492,7 @@ def test_benchmark_evidence_gate_rejects_duplicate_gate_ids(tmp_path: Path) -> N
 
 
 def test_benchmark_evidence_gate_rejects_contractless_gate(tmp_path: Path) -> None:
+    """A gate that requires nothing of its artefact is refused."""
     tool = _load_tool()
     _write_json(tmp_path / "benchmarks" / "results" / "demo.json", {"latency_ns": 1.0})
     manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
@@ -450,6 +519,7 @@ def test_benchmark_evidence_gate_rejects_contractless_gate(tmp_path: Path) -> No
 
 
 def test_benchmark_evidence_gate_accepts_numeric_parity_group(tmp_path: Path) -> None:
+    """Numbers declared equal across lanes pass when they are equal."""
     tool = _load_tool()
     _write_json(
         tmp_path / "benchmarks" / "results" / "demo.json",
@@ -501,6 +571,7 @@ def test_benchmark_evidence_gate_accepts_numeric_parity_group(tmp_path: Path) ->
 
 
 def test_benchmark_evidence_gate_rejects_numeric_parity_mismatch(tmp_path: Path) -> None:
+    """Numbers declared equal across lanes fail when they differ."""
     tool = _load_tool()
     _write_json(
         tmp_path / "benchmarks" / "results" / "demo.json",
