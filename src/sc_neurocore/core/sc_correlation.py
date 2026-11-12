@@ -62,35 +62,10 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from .bit_input import as_bit_array
 from .sc_error_bounds import multiply_correlation_bias
 
 UInt8Array = NDArray[np.uint8]
-
-#: NumPy element kinds that may hold bits: boolean, signed and unsigned integer, real.
-_BIT_CONTAINER_KINDS = frozenset("biuf")
-
-
-def _as_bit_array(bits: Any, name: str) -> UInt8Array:
-    """Return ``bits`` as one byte per bit after checking the original values.
-
-    The element type, the dimension, the size and every value are checked on
-    the array as NumPy reads it from ``bits``, before any conversion, so no
-    value becomes 0 or 1 through a cast.
-    """
-    try:
-        original = np.asarray(bits)
-    except ValueError as error:
-        # NumPy refuses nested sequences of unequal length; such input is not a stream.
-        raise ValueError(f"{name} must be one-dimensional") from error
-    if original.dtype.kind not in _BIT_CONTAINER_KINDS:
-        raise ValueError(f"{name} must be a boolean, integer or real array of 0/1 bits")
-    if original.ndim != 1:
-        raise ValueError(f"{name} must be one-dimensional")
-    if original.size == 0:
-        raise ValueError(f"{name} must be non-empty")
-    if not np.all((original == 0) | (original == 1)):
-        raise ValueError(f"{name} must contain only 0/1 bits")
-    return original.astype(np.uint8)
 
 
 def _overlap_counts(bits_a: UInt8Array, bits_b: UInt8Array) -> tuple[int, int, int, int]:
@@ -122,8 +97,8 @@ def estimate_scc(bits_a: Any, bits_b: Any) -> float:
         one-dimensional, is empty, holds a value other than 0 or 1 in its
         original representation, or if the streams differ in length.
     """
-    array_a = _as_bit_array(bits_a, "bits_a")
-    array_b = _as_bit_array(bits_b, "bits_b")
+    array_a = as_bit_array(bits_a, "bits_a", one_dimensional=True)
+    array_b = as_bit_array(bits_b, "bits_b", one_dimensional=True)
     if array_a.size != array_b.size:
         raise ValueError("bits_a and bits_b must have equal length")
 
@@ -160,8 +135,8 @@ def observed_and_bias(bits_a: Any, bits_b: Any) -> float:
     ValueError
         Under the same conditions as :func:`estimate_scc`.
     """
-    array_a = _as_bit_array(bits_a, "bits_a")
-    array_b = _as_bit_array(bits_b, "bits_b")
+    array_a = as_bit_array(bits_a, "bits_a", one_dimensional=True)
+    array_b = as_bit_array(bits_b, "bits_b", one_dimensional=True)
     if array_a.size != array_b.size:
         raise ValueError("bits_a and bits_b must have equal length")
     n = array_a.size
@@ -226,8 +201,8 @@ def correlation_diagnostic(
         Under the same conditions as :func:`estimate_scc`, or if
         ``bias_threshold`` is negative or not finite.
     """
-    array_a = _as_bit_array(bits_a, "bits_a")
-    array_b = _as_bit_array(bits_b, "bits_b")
+    array_a = as_bit_array(bits_a, "bits_a", one_dimensional=True)
+    array_b = as_bit_array(bits_b, "bits_b", one_dimensional=True)
     if array_a.size != array_b.size:
         raise ValueError("bits_a and bits_b must have equal length")
     threshold = float(bias_threshold)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1889
+expected_file_count = 1892
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -1807,6 +1807,18 @@ rationale = "Public stochastic cross-correlation (SCC) diagnostic that estimates
 [[file]]
 path = "tests/test_sc_correlation_validation.py"
 rationale = "Bind the cross-correlation diagnostics' input contract: values are checked in their original representation, and every exact 0/1 container gives the same result."
+
+[[file]]
+path = "src/sc_neurocore/core/bit_input.py"
+rationale = "The single validated conversion of caller input to one byte per bit; its text is the input contract the correlation diagnostics and the bipolar primitives share."
+
+[[file]]
+path = "tests/test_core_bit_input.py"
+rationale = "Bind the shared bit conversion: one function for both core modules, the caller's shape rule, and a result that never aliases the input."
+
+[[file]]
+path = "tests/test_bipolar_sc_bit_input_contract.py"
+rationale = "Bind the bit-input contract of bipolar decode and multiply through the public functions: values checked before conversion, any shape, every exact 0/1 container."
 
 [[file]]
 path = "tests/test_sc_error_bounds_low_discrepancy.py"

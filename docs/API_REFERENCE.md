@@ -18487,13 +18487,16 @@ p = (value + 1) / 2.  Bitstream has P(bit=1) = p.
 ### Function `bipolar_decode(bits)`
 Decode a bitstream back to bipolar value in &#91;-1, 1&#93;.
 
-value = 2 * mean(bits) - 1.
+value = 2 * mean(bits) - 1. The bits are validated in their original
+representation (see the module's input contract); any shape is admitted.
 
 ### Function `bipolar_multiply(a, b)`
 XNOR gate: bipolar multiplication.
 
 XNOR(a, b) = NOT(XOR(a, b)) = 1 when a == b, 0 when a != b.
-E&#91;XNOR&#93; decodes to v_a * v_b in bipolar domain.
+E&#91;XNOR&#93; decodes to v_a * v_b in bipolar domain. Both operands are
+validated in their original representation (see the module's input
+contract) and must have the same shape.
 
 ### Function `bipolar_mac(inputs, weights, L, seed)`
 Bipolar multiply-accumulate: weighted sum via XNOR + popcount.
@@ -18528,6 +18531,39 @@ Returns
 Normalise float weights to &#91;-1, 1&#93; for bipolar SC.
 
 Preserves sign information (unlike unipolar to_sc_weights).
+
+---
+
+## Module `core.bit_input`
+
+### Function `as_bit_array(bits, name, *, one_dimensional)`
+Return ``bits`` as one byte per bit after checking the original values.
+
+The element type, the dimension, the size and every value are checked on
+the array as NumPy reads it from ``bits``, before any conversion, so no
+value becomes 0 or 1 through a cast.
+
+Parameters
+----------
+bits : array-like
+    Candidate bits in any boolean, integer or real container.
+name : str
+    Name of the caller's argument, used in every refusal.
+one_dimensional : bool, default False
+    Require exactly one dimension. When false, any shape is admitted.
+
+Returns
+-------
+numpy.ndarray of uint8
+    A new array of the same shape holding 0 and 1. The input is never
+    written to and never returned itself.
+
+Raises
+------
+ValueError
+    If the input is a nested sequence of unequal lengths, has an element
+    type other than boolean, integer or real, breaks the shape rule, is
+    empty, or holds a value other than 0 and 1.
 
 ---
 

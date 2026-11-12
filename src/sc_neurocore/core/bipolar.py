@@ -14,6 +14,12 @@ Unipolar SC (AND gate) only handles [0, 1]. Bipolar SC uses XNOR:
 
 This enables signed weight multiplication for trained SNNs.
 
+Input contract of the bit arguments (``bipolar_decode``, ``bipolar_multiply``):
+a non-empty boolean, integer or real array of any shape in which every element
+equals 0 or 1 as given. The values are checked before conversion to one byte
+per bit (:func:`sc_neurocore.core.bit_input.as_bit_array`), so a value such as
+``0.9``, ``256`` or ``NaN`` is refused and never becomes a bit through a cast.
+
 Gaines, B.R. (1969). Stochastic computing systems. Advances in
 Information Systems Science, 2:37-172.
 
@@ -26,7 +32,9 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
+
+from .bit_input import as_bit_array
 
 FloatArray = NDArray[np.float64]
 UInt8Array = NDArray[np.uint8]
@@ -43,15 +51,6 @@ def _as_float_array(values: Any, name: str) -> FloatArray:
         raise ValueError(f"{name} contains NaN or Inf")
     if np.any(array < -1.0) or np.any(array > 1.0):
         raise ValueError(f"{name} values must be in [-1, 1]")
-    return array
-
-
-def _as_bit_array(bits: Any, name: str) -> UInt8Array:
-    array = np.asarray(bits, dtype=np.uint8)
-    if array.size == 0:
-        raise ValueError(f"{name} must be non-empty")
-    if not np.all((array == 0) | (array == 1)):
-        raise ValueError(f"{name} must contain only 0/1 bits")
     return array
 
 
@@ -72,23 +71,26 @@ def bipolar_encode(value: float, L: int, rng: Any = None) -> UInt8Array:
     return result
 
 
-def bipolar_decode(bits: np.ndarray[Any, Any]) -> float:
+def bipolar_decode(bits: ArrayLike) -> float:
     """Decode a bitstream back to bipolar value in [-1, 1].
 
-    value = 2 * mean(bits) - 1.
+    value = 2 * mean(bits) - 1. The bits are validated in their original
+    representation (see the module's input contract); any shape is admitted.
     """
-    bit_array = _as_bit_array(bits, "bits")
+    bit_array = as_bit_array(bits, "bits")
     return float(2.0 * bit_array.mean() - 1.0)
 
 
-def bipolar_multiply(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> UInt8Array:
+def bipolar_multiply(a: ArrayLike, b: ArrayLike) -> UInt8Array:
     """XNOR gate: bipolar multiplication.
 
     XNOR(a, b) = NOT(XOR(a, b)) = 1 when a == b, 0 when a != b.
-    E[XNOR] decodes to v_a * v_b in bipolar domain.
+    E[XNOR] decodes to v_a * v_b in bipolar domain. Both operands are
+    validated in their original representation (see the module's input
+    contract) and must have the same shape.
     """
-    a_bits = _as_bit_array(a, "a")
-    b_bits = _as_bit_array(b, "b")
+    a_bits = as_bit_array(a, "a")
+    b_bits = as_bit_array(b, "b")
     if a_bits.shape != b_bits.shape:
         raise ValueError("a and b must have the same shape")
     result: UInt8Array = (a_bits == b_bits).astype(np.uint8)

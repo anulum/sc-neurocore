@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5633
+    "test_files": 5635
   },
   "documentation": {
     "public_pages": [
@@ -4300,6 +4300,7 @@
       "tests/test_bipolar_sc_bipolar_sc_layer.py",
       "tests/test_bipolar_sc_bipolar_sc_layer_bias_and_activation.py",
       "tests/test_bipolar_sc_bipolar_validation_paths.py",
+      "tests/test_bipolar_sc_bit_input_contract.py",
       "tests/test_bipolar_sc_float_to_bipolar_weights.py",
       "tests/test_bit_true_cosim_bit_true_cosim.py",
       "tests/test_bit_true_cosim_rust_matches_c.py",
@@ -4706,6 +4707,7 @@
       "tests/test_cordiv_division_adaptive_length.py",
       "tests/test_cordiv_division_sc_divide.py",
       "tests/test_cordiv_engine_bindings.py",
+      "tests/test_core_bit_input.py",
       "tests/test_core_bitstream_utility_contracts.py",
       "tests/test_core_mdl_parser_contracts.py",
       "tests/test_core_orchestrator_contracts.py",

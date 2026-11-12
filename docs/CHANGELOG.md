@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `bipolar_decode` and `bipolar_multiply` now check their bit arguments in
+  the representation the caller gave, before converting them to one byte per
+  bit. Before, the conversion came first, so `[0.9, 1.9]` was decoded as the
+  bits 0 and 1, `256` became 0 and `NaN` became 0 with a warning. Such input,
+  and text, bytes, objects and complex numbers, is now refused with a
+  `ValueError` that names the argument; exact 0/1 values in boolean, integer
+  or real containers of any shape give the same result as before. The check
+  is the one the cross-correlation diagnostics received earlier and is now a
+  single function, `sc_neurocore.core.bit_input.as_bit_array`, used by both
+  modules; the diagnostics' behaviour is unchanged. The two bipolar functions
+  are annotated as taking any array-like input.
+
 - The benchmark coverage census now says whether each record still describes
   the sources in the tree. A record that binds sources by path carries one of
   three words: `current` (every bound source has the recorded digest),
