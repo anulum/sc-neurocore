@@ -108,7 +108,7 @@ notes = "PerfectIntegratorNeuron.naud_gerstner_2012() is the source profile. Per
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "normalized source profile; exact equality sequence at I=5 for 1000 steps plus I=0/0.333/0.7/2/3/20 native cohort"
+operating_point = "normalised source profile; exact equality sequence at I=5 for 1000 steps plus I=0/0.333/0.7/2/3/20 native cohort"
 tolerance = "five native complete packets bit-exact; reference voltage/event digests exact; source Q8.8 event-exact at the strict equality boundary"
 evidence = "tests/test_reference_perfect_integrator_source_receipt.py; tests/test_perfect_integrator_backend_parity.py; tests/test_cosim_perfect_integrator.py"
 
@@ -120,4 +120,4 @@ synthesised = true
 synth_report = "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json"
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
-terminal_reason = "The source Q8.8 core preserves the strict equality boundary, synthesizes to 3,034 Yosys coarse cells, and passes depth-20 reset/event safety. Timing, PPA, target-device, board, physical-silicon, and universal fixed-point equivalence remain open."
+terminal_reason = "The source Q8.8 core preserves the strict equality boundary, synthesises to 3,034 Yosys coarse cells, and passes depth-20 reset/event safety. Timing, PPA, target-device, board, physical-silicon, and universal fixed-point equivalence remain open."

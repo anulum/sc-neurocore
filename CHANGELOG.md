@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Use British spelling in the descriptive text of eight neuron model
+  descriptors (`normalised`, `energised`, `specialisation`, `synthesises`,
+  `repolarisation`, `behaviour`). Unit strings and the Lapicque descriptor are
+  unchanged.
+
 - Document the engine's 10 multi-compartment models in full, each file read
   against its code: how each step integrates (Euler sub-steps, RK4 or the
   implicit cable solve), which compartment receives the input, where the spike

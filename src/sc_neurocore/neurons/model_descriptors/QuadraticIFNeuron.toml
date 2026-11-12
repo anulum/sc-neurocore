@@ -12,7 +12,7 @@ name = "Quadratic IF"
 class_name = "QuadraticIFNeuron"
 module = "quadratic_if"
 display_name = "Latham 2000 quadratic integrate-and-fire"
-summary = "Source-aligned isolated scalar QIF with Latham's normalized numerical apex, repolarization, and timestep; the historical symmetric SC recurrence is preserved separately."
+summary = "Source-aligned isolated scalar QIF with Latham's normalised numerical apex, repolarisation, and timestep; the historical symmetric SC recurrence is preserved separately."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
@@ -99,7 +99,7 @@ notes = "QuadraticIFNeuron.latham_2000() is source-counted. QuadraticIFNeuron() 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "normalized source profile at eta=4 for 240 exact held-current steps; five complete native packets and independent digest receipt"
+operating_point = "normalised source profile at eta=4 for 240 exact held-current steps; five complete native packets and independent digest receipt"
 tolerance = "exact-runtime events and receipt digests exact; native voltage <=2e-12; source Euler Q16.16 is cycle-exact at eta=0/2/4/8 with voltage <0.003, while eta=1 preserves four aggregate events with four one-cycle displacements"
 evidence = "tests/test_quadratic_if_backends_rejects_and_flow.py::test_source_complete_packet_matches_python; tests/test_reference_quadratic_if.py"
 

@@ -11,8 +11,8 @@ schema_version = 2
 name = "SCNormalizedEnergyLIFNeuron"
 class_name = "SCNormalizedEnergyLIFNeuron"
 module = "sc_normalized_energy_lif"
-display_name = "SC normalized energy-gated LIF"
-summary = "Retained project exact-flow normalized energy recurrence."
+display_name = "SC normalised energy-gated LIF"
+summary = "Retained project exact-flow normalised energy recurrence."
 family = "SC project models"
 category = "integrate-and-fire"
 biophysical_detail = "point"
@@ -100,7 +100,7 @@ range = [
 [parameters.epsilon_0]
 default = 1.0
 unit = "1"
-meaning = "normalized energy capacity"
+meaning = "normalised energy capacity"
 range = [
     0.0,
     1000000.0,

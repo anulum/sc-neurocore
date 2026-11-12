@@ -151,7 +151,7 @@ range = [
 [parameters.resistance]
 default = 1.0
 unit = "1"
-meaning = "normalized current-to-voltage gain"
+meaning = "normalised current-to-voltage gain"
 range = [
     -1000000.0,
     1000000.0,
@@ -193,7 +193,7 @@ reference_config = "src/sc_neurocore/neurons/reference_receipts/sc_four_state_gl
 
 [documentation]
 slug = "models/sc_four_state_glif"
-notes = "Count-neutral identity preserving the former GLIFNeuron four-state RK4 behavior."
+notes = "Count-neutral identity preserving the former GLIFNeuron four-state RK4 behaviour."
 
 [validation]
 dynamics_faithful = true

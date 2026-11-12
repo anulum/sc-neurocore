@@ -19,7 +19,7 @@ biophysical_detail = "point"
 maturity = "validated"
 intended_use = [
     "project compatibility",
-    "symmetric normalized QIF experiments",
+    "symmetric normalised QIF experiments",
 ]
 hardware_fit = [
     "fixed-point quadratic accumulator and reset core",
@@ -36,7 +36,7 @@ authors = [
 ]
 year = 2026
 doi = ""
-derivation_note = "Historical symmetric SC normalization retained without attributing its finite boundaries to Latham et al. 2000."
+derivation_note = "Historical symmetric SC normalisation retained without attributing its finite boundaries to Latham et al. 2000."
 
 [state.v]
 init = -1.0

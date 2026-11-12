@@ -104,7 +104,7 @@ notes = "Count-neutral SC compatibility identity; PerfectIntegratorNeuron.naud_g
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "normalized SC profile; exact equality sequence at I=5 for 1000 steps"
+operating_point = "normalised SC profile; exact equality sequence at I=5 for 1000 steps"
 tolerance = "five native complete packets bit-exact; reference voltage and event sequences exact"
 evidence = "tests/test_reference_perfect_integrator_source_receipt.py; tests/test_perfect_integrator_backend_parity.py; tests/test_cosim_perfect_integrator.py"
 
