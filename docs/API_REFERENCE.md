@@ -20118,36 +20118,103 @@ seed : int
 ### Class `LamportClock`
 Lamport logical clock for causal ordering.
 
+Attributes
+----------
+time : int
+    The current logical time; starts at 0.
+
 - **__init__**()
 - **tick**()
-  - Local event: increment.
+  - Advance the clock for a local event.
 - **send**()
-  - Prepare timestamp for sending.
+  - Advance the clock and return the timestamp a sent message carries.
 - **receive**(remote_time)
-  - Update on message receipt.
+  - Merge a received timestamp: one past the larger of both clocks.
 
 ### Class `VectorClock`
 Vector clock for full causal dependency tracking.
 
+Parameters
+----------
+node_id : int
+    Index of the owning node in the vector.
+num_nodes : int
+    Number of nodes, the length of the vector.
+
+Attributes
+----------
+clock : numpy.ndarray
+    One int64 counter per node, all 0 at the start.
+
 - **__init__**(node_id, num_nodes)
 - **tick**()
+  - Advance the owning node's counter for a local event.
 - **send**()
+  - Advance the owning node's counter and return the vector a message carries.
 - **receive**(remote_clock)
+  - Merge a received vector element by element, then advance the own counter.
 - **happened_before**(other)
-  - Check if self happened-before other (self < other).
+  - Tell whether this clock happened before another vector.
 - **concurrent_with**(other)
-  - Check if self is concurrent with other.
+  - Tell whether this clock and another vector are causally unordered.
 
 ### Class `EventType`
+Kinds of event the time-warp engine queues.
+
 
 ### Class `TwinEvent`
 One event in the time-warp simulation.
+
+Events order by virtual time, then by priority; the other fields do not
+take part in the ordering.
+
+Attributes
+----------
+virtual_time_ns : int
+    Virtual time of the event in nanoseconds.
+priority : int
+    Tie-breaker between events of the same virtual time.
+event_type : EventType
+    What the event is.
+source_node, target_node : int
+    Sending and receiving node; -1 as source marks the physical world or a
+    global barrier.
+payload : dict
+    Event data, for example the neuron id of a sensor event.
+lamport_ts : int
+    Lamport timestamp the event carries.
+vector_ts : numpy.ndarray or None
+    Vector timestamp the event carries, if any.
+cancelled : bool
+    A cancelled event is dequeued without being processed.
 
 
 ### Class `Checkpoint`
 Deterministic state snapshot for rollback.
 
+Attributes
+----------
+checkpoint_id : int
+    Sequence number given by the checkpoint manager.
+virtual_time_ns : int
+    Virtual time of the snapshot in nanoseconds.
+node_id : int
+    Node whose state was saved.
+neuron_state, synapse_state : numpy.ndarray or None
+    Copies of the saved state arrays.
+lfsr_state : int
+    Saved random-number-generator state.
+identity_deep : float
+    The node's deep identity value at the time of the snapshot.
+lamport_time : int
+    The node's Lamport time.
+vector_clock : numpy.ndarray or None
+    A copy of the node's vector clock.
+checksum : str
+    Set by :meth:`compute_checksum`.
+
 - **compute_checksum**()
+  - Hash the snapshot's identifying fields and neuron state, and store the result.
 
 ### Class `CheckpointManager`
 Manages state snapshots for time-warp rollback.
@@ -20155,16 +20222,40 @@ Manages state snapshots for time-warp rollback.
 Preserves the identity substrate (ArcaneNeuron.v_deep) across
 rollback: deep compartment is NEVER rolled back.
 
+Parameters
+----------
+max_checkpoints : int
+    Checkpoints kept per node; older ones are dropped on save.
+
 - **__init__**(max_checkpoints)
 - **save**(node_id, virtual_time_ns, neuron_state, synapse_state, lfsr_state, identity_deep, lamport_time, vector_clock)
+  - Save a snapshot of one node, keeping at most ``max_checkpoints`` per node.
 - **find_rollback_target**(node_id, target_time_ns)
-  - Find the latest checkpoint at or before target_time.
+  - Return the last checkpoint saved for a node at or before a virtual time.
 - **discard_after**(node_id, time_ns)
-  - Discard checkpoints after a given time (post-rollback cleanup).
+  - Drop a node's checkpoints later than a virtual time, after a rollback.
 - **total_checkpoints**()
+  - Number of checkpoints held for all nodes together.
 
 ### Class `NodeState`
 Per-node state in the time-warp simulation.
+
+Attributes
+----------
+node_id : int
+    Index of the node.
+local_virtual_time_ns : int
+    The node's local virtual time.
+lamport : LamportClock
+    The node's Lamport clock.
+vector_clock : VectorClock or None
+    The node's vector clock.
+processed_events : int
+    Events the node has processed.
+rollback_count : int
+    Rollbacks the node has made.
+identity_deep : float
+    Deep identity value; a rollback never changes it.
 
 
 ### Class `TimeWarpEngine`
@@ -20179,32 +20270,57 @@ SC neuromorphic simulation:
 4. Fossil collection prunes checkpoints below GVT
 5. Identity (v_deep) is NEVER rolled back — it is the self
 
+Parameters
+----------
+num_nodes : int
+    Number of nodes, each with a Lamport and a vector clock.
+checkpoint_interval_ns : int
+    Despite its name, a count of events: a node saves a checkpoint each time
+    its number of processed events is a multiple of this value (values below
+    1 count as 1).
+
 - **__init__**(num_nodes, checkpoint_interval_ns)
 - **inject_event**(event)
-  - Inject an event into the simulation.
+  - Queue an event in virtual-time order.
 - **process_next**()
-  - Process the next event from the queue.
+  - Take the earliest event from the queue and apply it to its target node.
 - **compute_gvt**()
-  - Compute Global Virtual Time (minimum of all LVTs + in-transit).
+  - Compute the global virtual time and store it.
 - **fossil_collect**()
-  - Remove checkpoints below GVT.
+  - Drop every checkpoint older than the global virtual time.
 - **status**()
+  - Return the engine's counters and each node's local virtual time.
 - **inject_sync_barrier**(virtual_time_ns)
-  - Inject a sync barrier event to all nodes at given time.
+  - Queue one synchronisation barrier event for every node at a virtual time.
 - **verify_causal_order**()
-  - Verify causal ordering of processed events.
+  - Find neighbouring processed events of one node that ran backwards in time.
 - **detect_starvation**(threshold_ns)
-  - Detect nodes lagging behind GVT by more than threshold.
+  - List the nodes whose local time lies more than a threshold below the global time.
 - **node_throughput**()
-  - Events processed per node.
+  - Return the number of events each node has processed.
 
 ### Class `SyncMode`
+Synchronisation strategies a twin session can be labelled with.
+
 
 ### Class `DivergenceMetric`
 Measures divergence between physical and digital twin.
 
+Attributes
+----------
+spike_rate_divergence : float
+    Relative difference of the physical and digital spike rates.
+timing_offset_ns : int
+    Session time minus the engine's global virtual time, in nanoseconds.
+identity_drift : float
+    Absolute difference of the physical and digital identity values.
+causal_violations : int
+    The engine's rollback count.
+
 - **total_divergence**()
+  - Heuristic sum of the four parts, mixing their units.
 - **within_tolerance**()
+  - Whether the total divergence is below 1.0.
 
 ### Class `TwinSession`
 Orchestrates physical ↔ digital twin synchronization.
@@ -20213,16 +20329,29 @@ Manages bidirectional data flow:
 - Physical → Digital: sensor events (MEA spikes, EEG)
 - Digital → Physical: stimulation commands (opto, TMS)
 
+Parameters
+----------
+num_nodes : int
+    Number of nodes of the session's time-warp engine.
+mode : SyncMode
+    The strategy the session reports; the engine runs optimistically in every
+    mode.
+max_divergence : float
+    Stored for the caller; the session does not act on it.
+
 - **__init__**(num_nodes, mode, max_divergence)
 - **start**()
+  - Mark the session as running; nothing else changes.
 - **stop**()
+  - Mark the session as stopped; nothing else changes.
 - **inject_physical_event**(spike_time_ns, neuron_id, target_node)
-  - Inject a physical sensor event into the digital twin.
+  - Queue a sensor event from the physical subject for the digital twin.
 - **advance**(steps)
-  - Advance the simulation by N steps.
+  - Process up to a number of queued events.
 - **update_divergence**(physical_rate_hz, digital_rate_hz, physical_identity)
-  - Update divergence metrics.
+  - Recompute the divergence between the physical subject and the twin.
 - **status**()
+  - Return the session's state, its divergence and the engine's status.
 
 ### Class `LookaheadConfig`
 Null-message lookahead for conservative synchronization.
@@ -20231,23 +20360,66 @@ Each node declares a minimum time advance (lookahead) it guarantees
 before generating output events. Peers can safely advance by at
 least this amount without rollback risk.
 
+Attributes
+----------
+node_id : int
+    The declaring node.
+lookahead_ns : int
+    The guaranteed advance in nanoseconds.
+last_null_message_ns : int
+    Virtual time of the node's last null message.
+
 - **can_advance_to**(target_ns)
+  - Tell whether a virtual time lies within the declared lookahead.
 - **send_null_message**(current_ns)
+  - Record a null message at a virtual time.
 
 ### Class `NullMessageOptimizer`
 Reduces rollbacks in mixed conservative/optimistic mode.
 
+Parameters
+----------
+num_nodes : int
+    Number of nodes, each given a lookahead configuration.
+default_lookahead_ns : int
+    The lookahead every node starts with.
+
 - **__init__**(num_nodes, default_lookahead_ns)
 - **safe_advance_time**(node_id)
-  - Maximum time this node can safely advance to.
+  - Return the latest virtual time a node can reach without risking a rollback.
 - **broadcast_null**(node_id, current_ns)
+  - Record a null message of one node at its current virtual time.
 
 ### Class `DeltaCheckpoint`
 Stores only the diff from a base checkpoint.
 
+Attributes
+----------
+base_checkpoint_id, checkpoint_id : int
+    The checkpoint the diff starts from and the one it describes.
+virtual_time_ns : int
+    Virtual time of the described state.
+node_id : int
+    Node of the state.
+changed_indices : numpy.ndarray
+    Indices along the first axis of the changed elements: flat indices for
+    a one-dimensional state; for more dimensions a row index repeats once
+    per changed element of that row.
+changed_values : numpy.ndarray
+    The later state's entries at those indices (whole rows for a state of
+    more than one dimension).
+lfsr_delta : int
+    Change of the random-number-generator state; not set by
+    :meth:`compute_delta`.
+size_bytes : int
+    Bytes of the two arrays.
+
 - **compute_delta**(base_state, new_state, base_id, new_id, virtual_time_ns, node_id)
+  - Build the diff of two state arrays of the same shape.
 - **compression_ratio**()
+  - Placeholder ratio: 1.0 whenever the diff holds bytes, else 0.0.
 - **num_changes**()
+  - Number of changed elements in the diff.
 
 ### Class `ReplayVerifier`
 Verifies bitstream-exact replay across runs.
@@ -20256,62 +20428,148 @@ Compares checkpoint hashes from two runs to prove determinism.
 
 - **__init__**()
 - **record_run_a**(checkpoint)
+  - Append a checkpoint's stored checksum to the first run.
 - **record_run_b**(checkpoint)
+  - Append a checkpoint's stored checksum to the second run.
 - **is_deterministic**()
+  - Whether both runs recorded checksums and agree over their common length.
 - **first_divergence_index**()
+  - Index of the first differing checksum over the common length, or None.
 - **compared_count**()
+  - Number of checksum pairs compared: the shorter run's length.
 
 ### Class `DriftCorrection`
 One drift correction action.
+
+Attributes
+----------
+correction_ns : int
+    The time shift proposed for the digital twin.
+applied_at_ns : int
+    The digital time at which the drift was seen.
+node_id : int
+    The node concerned.
+reason : str
+    The measured drift, for the record.
 
 
 ### Class `DriftAutoCorrector`
 Closed-loop drift correction between physical and digital twin.
 
+Parameters
+----------
+max_drift_ns : int
+    Drift tolerated without a correction.
+correction_gain : float
+    Fraction of the drift the correction proposes.
+
 - **__init__**(max_drift_ns, correction_gain)
 - **check_and_correct**(physical_time_ns, digital_time_ns, node_id)
+  - Propose a correction when the twin's time drifts past the tolerance.
 - **total_corrections**()
+  - Number of corrections proposed so far.
 
 ### Class `MPIRankMapping`
 Maps MPI ranks to physical node topology.
 
+Attributes
+----------
+rank : int
+    The MPI rank.
+hostname : str
+    Host the rank runs on.
+gpu_id : int
+    GPU of the rank, -1 for none.
+numa_node : int
+    NUMA node of the rank.
+neuron_range : tuple of int
+    Half-open range ``&#91;first, end)`` of neuron ids the rank holds.
+
 - **neuron_count**()
+  - Number of neurons in the rank's half-open range.
 
 ### Class `MPITopology`
 Physical→logical node layout for distributed twin.
 
 - **__init__**()
 - **add_rank**(mapping)
+  - Add or replace the mapping of one rank.
 - **total_neurons**()
+  - Sum of the neuron counts of all ranks.
 - **num_ranks**()
+  - Number of mapped ranks.
 - **rank_for_neuron**(neuron_id)
+  - Return the first mapped rank whose range holds a neuron.
 - **co_located_ranks**(rank)
-  - Ranks on the same host (cheap communication).
+  - Return the other ranks on the same host as a rank, where communication is cheap.
 
 ### Class `BackpressureController`
 Prevents event overload by throttling injection rate.
 
+Parameters
+----------
+max_queue_depth : int
+    Queue depth at which offered events are refused.
+cooldown_ns : int
+    Stored for the caller; the controller does not use it.
+
 - **__init__**(max_queue_depth, cooldown_ns)
 - **should_accept**(current_queue_depth)
+  - Count an offered event and tell whether the queue has room for it.
 - **rejection_rate**()
+  - Share of offered events refused; 0.0 before any offer.
 - **is_backpressured**()
+  - Whether more than a tenth of the offered events were refused.
 
 ### Class `CheckpointAuditChain`
 Tamper-evident chain of checkpoint hashes.
 
 - **__init__**()
 - **append**(checkpoint)
+  - Chain a checkpoint's stored checksum onto the previous link.
 - **verify**()
+  - Recompute every link from the start and compare it with the stored one.
 - **length**()
+  - Number of links in the chain.
 
 ### Class `SessionSnapshot`
-Serializable session state for persistence.
+Serialisable session state for persistence.
+
+Attributes
+----------
+session_time_ns : int
+    The session's time.
+num_nodes : int
+    Nodes of the engine.
+mode : str
+    The session's sync mode value.
+physical_events_in, digital_events_out : int
+    The session's event counters.
+gvt_ns : int
+    The engine's last computed global virtual time.
+total_rollbacks : int
+    The engine's rollbacks.
+node_lvts : dict of int to int
+    Local virtual time per node.
+checkpoint_count : int
+    Checkpoints the engine holds.
 
 - **from_session**(session)
+  - Capture a session's counters and its engine's times.
 - **to_dict**()
+  - Return the snapshot as a dictionary of its fields.
 
 ### Class `TwinEndpoint`
 One twin in a federation.
+
+Attributes
+----------
+twin_id : str
+    The twin's name in the federation.
+session : TwinSession
+    The twin's session.
+priority : int
+    Stored for the caller; the federation does not order by it.
 
 
 ### Class `TwinFederation`
@@ -20319,18 +20577,31 @@ Federates multiple digital twins for multi-subject studies.
 
 - **__init__**()
 - **register**(twin_id, session, priority)
+  - Add or replace a twin under a name.
 - **twin_count**()
+  - Number of registered twins.
 - **global_gvt**()
+  - Return the smallest last computed global virtual time of all twins.
 - **advance_all**(steps)
+  - Advance every twin's session by up to a number of events.
 - **total_divergence**()
+  - Return the sum of the twins' total divergences.
 
 ### Class `AdaptiveCheckpointInterval`
 Dynamically adjusts checkpoint frequency based on rollback rate.
 
+Parameters
+----------
+base_interval : int
+    The starting interval.
+min_interval, max_interval : int
+    Bounds the interval is kept within when it changes.
+
 - **__init__**(base_interval, min_interval, max_interval)
 - **update**(total_rollbacks, total_events)
-  - Adjust interval: more rollbacks → more frequent checkpoints.
+  - Halve or double the interval from the rollbacks since the last update.
 - **is_aggressive**()
+  - Whether the interval is at most twice the minimum.
 
 ---
 

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1917
+expected_file_count = 1918
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7722,3 +7722,7 @@ rationale = "Retained waveform source-marker checks describe validation symbols 
 [[file]]
 path = "tests/test_model_descriptor_backend_lanes.py"
 rationale = "Bind the lanes a descriptor may declare: the closed list of names with the one legacy name, evidence kept as written, sources as repository-relative paths in their written order, each refusal with its whole message, and that a refresh by the generator keeps both fields."
+
+[[file]]
+path = "src/sc_neurocore/digital_twin/twinsync.py"
+rationale = "Time-warp synchronisation of a digital twin: logical clocks, checkpoints and rollback, the twin session and its ten supporting parts, each documented as the code behaves, its placeholders and unit-mixing sums included."
