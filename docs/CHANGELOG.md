@@ -12,6 +12,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A new tool, `tools/model_behaviour_report.py`, runs the behaviour cases that
+  model descriptors state and writes
+  `docs/_generated/model_behaviour_report.json`. Every case runs through the
+  model's public class, from a newly built model, with the case's constant
+  inputs passed by name. Each case is written as stated, with what was
+  observed, whether it held and whether it was exercised: a spike was
+  observed, a state variable left its starting value, or a contrast held. A
+  model whose cases all hold while none is exercised is reported as
+  `held_vacuously`; `--check` fails on it, on a failed case, on a case that
+  cannot be run (a case may ask for at most 100000 steps) and on a stale
+  report. Each model that states cases carries
+  `cases_sha256`, the digest of its cases as parsed, which ties the result to
+  the text that was run. The dendritic NMDA descriptor is the first to state
+  cases, eight of them, and holds them: neither input alone fires the soma,
+  both together give 59 spikes in 20000 steps, glutamate adds 17 spikes at a
+  soma current of 40, glutamate alone moves the dendrite to its balance point
+  near -59.52, and the lane anchor is 266 spikes. The other 184 catalogue
+  models state no case yet. The cases are the author's statement of what the
+  model does, not an independent reference. Limits of the form: a drive is
+  constant finite numbers passed as floats, so a model whose step takes a
+  vector, or requires a truth value or a whole number, cannot state a case;
+  a spike count needs a step that returns 0 or 1, so a model whose step
+  returns a rate or several values can state cases on its state variables
+  only.
+
 - A model descriptor may state behaviour cases: what the model does at a named
   drive, in a form that can fail. The optional `[[behaviour]]` list holds two
   kinds. An `interval` bounds one observable (the spike count, or the final

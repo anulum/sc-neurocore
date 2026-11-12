@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1893
+expected_file_count = 1895
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -2467,6 +2467,14 @@ rationale = "Evidence gate for committed benchmark records; its public compariso
 [[file]]
 path = "tests/test_benchmark_coverage_census.py"
 rationale = "Bind the coverage census: the three model states, and the currency of every record that binds sources, cited by a model or not."
+
+[[file]]
+path = "tools/model_behaviour_report.py"
+rationale = "Public behaviour report: what each of the five model states means, why cases that hold with nothing exercised count as a failure, what a case in this form cannot state, and that the cases are the author's statement rather than an independent reference."
+
+[[file]]
+path = "tests/test_tools/test_model_behaviour_report.py"
+rationale = "Bind the behaviour report with small real integrators: held, failed, held vacuously and invalid, the digest of the stated cases, the check mode, and the seven cases of the dendritic NMDA model."
 
 [[file]]
 path = "tests/test_tools/test_benchmark_evidence_gate.py"

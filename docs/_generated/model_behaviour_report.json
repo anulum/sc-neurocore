@@ -1,0 +1,1267 @@
+{
+  "catalogue_models": 185,
+  "models": [
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ATypeKNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AdExNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AdaptiveThresholdIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AdaptiveThresholdMoENeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AiharaMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AkidaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AlphaMotorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AlphaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AmariNeuralField",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ArcaneNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AstrocyteLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AstrocyteModel",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AstrocyteNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AttentionGatedNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "AvRonCardiacNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BKNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BalancedResonateAndFireNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BendaHerzNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BertramPhantomBurster",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BoothRinzelNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BrainScaleSAdExNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "BrunelWangNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ButeraRespiratoryNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "COBALIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CazellesMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CerebellarBasketNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ChandelierNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ChayKeizerMinimalNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ChayKeizerNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ChayNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ChialvoMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ClosedFormContinuousNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CochlearHairCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ComplementaryLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CompositionalBindingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CompteWMNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ConnorStevensNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ContinuousAttractorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "CourageNekorkinMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DCNNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DPINeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DeSchutterPurkinjeNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DendrifyNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "glutamate": 0.0,
+            "i_soma": 20.0
+          },
+          "kind": "interval",
+          "name": "a soma current of 20 alone stays below threshold",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "glutamate": 1.0,
+            "i_soma": 0.0
+          },
+          "kind": "interval",
+          "name": "glutamate alone stays below threshold",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            -60.0,
+            -59.0
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 1.0,
+            "i_soma": 0.0
+          },
+          "kind": "interval",
+          "name": "glutamate alone raises the dendrite to its balance point",
+          "observable": "state:v_dend",
+          "observed": -59.5204,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            50,
+            70
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 1.0,
+            "i_soma": 20.0
+          },
+          "kind": "interval",
+          "name": "a soma current of 20 with glutamate fires",
+          "observable": "spikes",
+          "observed": 59,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            180,
+            200
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 0.0,
+            "i_soma": 40.0
+          },
+          "kind": "interval",
+          "name": "a soma current of 40 alone fires",
+          "observable": "spikes",
+          "observed": 190,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            200,
+            220
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 1.0,
+            "i_soma": 40.0
+          },
+          "kind": "interval",
+          "name": "a soma current of 40 with glutamate fires",
+          "observable": "spikes",
+          "observed": 207,
+          "steps": 20000
+        },
+        {
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 1.0,
+            "i_soma": 40.0
+          },
+          "kind": "contrast",
+          "margin": 10,
+          "name": "glutamate adds spikes at a soma current of 40",
+          "observable": "spikes",
+          "observed": 207,
+          "reference_inputs": {
+            "glutamate": 0.0,
+            "i_soma": 40.0
+          },
+          "reference_observed": 190,
+          "steps": 20000
+        },
+        {
+          "bounds": [
+            266,
+            266
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "glutamate": 0.5,
+            "i_soma": 50.0
+          },
+          "kind": "interval",
+          "name": "the lane anchor",
+          "observable": "spikes",
+          "observed": 266,
+          "steps": 20000
+        }
+      ],
+      "cases_sha256": "29245eae688201f00605fbf57f6c2509cad00b762159120c8eb9ea263e7ba046",
+      "model": "DendriticNMDANeuron",
+      "state": "held"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DestexheThalamicNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DifferentiableSurrogateNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DirectionSelectiveRGC",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "DurstewitzDopamineNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "EPropALIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "EnergyLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ErmentroutKopellMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ErmentroutKopellPopulation",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "EscapeRateNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ExpIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "FitzHughNagumoNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "FitzHughRinzelNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "FractionalLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GIFPopulationNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GLMNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GalvesLocherbachNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GammaMotorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GammaRenewalNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GatedLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GolgiCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GolombFSNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GranuleCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "GutkinErmentroutNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HayL5PyramidalNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HillTononiNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HindmarshRoseNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HodgkinHuxleyNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HuberBraunNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HybridFisherPosnerLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "HybridLinearAttentionNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "IbarzTanakaMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "IhNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "InhibitoryLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "InhomogeneousPoissonNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "IntegerQIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "Izhikevich2007Neuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "JansenRitUnit",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "KLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LapicqueNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LarterBreakspearNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LeakyCompeteFireNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LearnableNeuronModel",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LiquidTimeConstantNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "Loihi2Neuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LoihiCUBANeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "LugaroCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MATNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MainenSejnowskiNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MarderSTGNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MartinottiNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "McCullochPittsNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "McKeanNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MedvedevMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MetaPlasticNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MihalasNieburNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MorrisLecarNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MotorUnit",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MultiTimescaleNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "MulticompartmentMCNNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "NMDANeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "NagumoSatoMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "NeuroGridNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "NonResettingLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "NonlinearLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PVFastSpikingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ParallelSpikingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ParametricLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PerfectIntegratorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PernarowskiNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PersistentNaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PinskyRinzelNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PlantR15Neuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PoissonNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PospischilNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PredictiveCodingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "PrescottNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "QuadraticIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "QuantumInspiredLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "RallCableNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "RenshawCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ResonateAndFireNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "RulkovMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCAdaptiveThresholdMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCChaoticMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCClippedLogisticBurstingMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCClippedRationalRecoveryMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCDecoupledAdaptationIonMassNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCExponentialTwoCompartmentLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCFourStateGLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCInclusivePerfectIntegratorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCLapicqueLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCLeakyTwoCompartmentLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCNonResettingAdaptiveLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCNormalizedEnergyLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCResettingMATNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCResettingParallelSpikingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCResettingWilsonHRNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCScaledResetAdaptiveIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCSigmaDeltaAccumulatorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCSixStateThalamocorticalNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCStochasticRateAdaptationNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCSymmetricQuadraticIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCThreeStatePhantomBurster",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCTriangularMcKeanNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCUnitCapacitanceRespiratoryNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCUpwardCrossingRulkovMapNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SCWBNMDAMagnesiumBlockNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SFANeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SKNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SRM0Neuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SSTNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SelfReferentialNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ShermanRinzelKeizerNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SiegertTransferFunction",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SigmaDeltaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SigmoidRateNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SpiNNaker2Neuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SpiNNakerLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SpikeResponseNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "StellateCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "StochasticIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "StochasticLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "SuperSpikeNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TTypeCaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TermanWangOscillator",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ThetaNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "ThresholdLinearRateNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TraubMilesNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TrueNorthNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TsodyksMarkramNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "TwoCompartmentLIFNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "UnipolarBrushCell",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "UpperMotorNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "VIPNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "WangBuzsakiNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "WendlingNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "WilsonCowanUnit",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "WilsonHRNeuron",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "WongWangUnit",
+      "state": "no_case"
+    },
+    {
+      "cases": [],
+      "cases_sha256": null,
+      "model": "YamadaNeuron",
+      "state": "no_case"
+    }
+  ],
+  "notes": [
+    "a case is the author's statement of what the model does, not an independent reference",
+    "a drive is constant finite numbers passed by name as floats; a model whose step takes a vector, or requires a truth value or a whole number, cannot state a case in this form",
+    "a spike count needs a step that returns 0 or 1; a model whose step returns a rate or several values can state cases on its state variables only"
+  ],
+  "schema_version": "sc-neurocore.model-behaviour-report.v1",
+  "totals": {
+    "failed": 0,
+    "held": 1,
+    "held_vacuously": 0,
+    "invalid": 0,
+    "no_case": 184
+  }
+}

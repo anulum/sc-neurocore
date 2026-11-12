@@ -107,3 +107,116 @@ status = "implemented"
 [documentation]
 slug = "models/dendritic_nmda"
 notes = ""
+
+[[behaviour]]
+name = "a soma current of 20 alone stays below threshold"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+i_soma = 20.0
+glutamate = 0.0
+
+[[behaviour]]
+name = "glutamate alone stays below threshold"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+i_soma = 0.0
+glutamate = 1.0
+
+[[behaviour]]
+name = "glutamate alone raises the dendrite to its balance point"
+kind = "interval"
+steps = 20000
+observable = "state:v_dend"
+bounds = [
+    -60.0,
+    -59.0,
+]
+
+[behaviour.inputs]
+i_soma = 0.0
+glutamate = 1.0
+
+[[behaviour]]
+name = "a soma current of 20 with glutamate fires"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    50,
+    70,
+]
+
+[behaviour.inputs]
+i_soma = 20.0
+glutamate = 1.0
+
+[[behaviour]]
+name = "a soma current of 40 alone fires"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    180,
+    200,
+]
+
+[behaviour.inputs]
+i_soma = 40.0
+glutamate = 0.0
+
+[[behaviour]]
+name = "a soma current of 40 with glutamate fires"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    200,
+    220,
+]
+
+[behaviour.inputs]
+i_soma = 40.0
+glutamate = 1.0
+
+[[behaviour]]
+name = "glutamate adds spikes at a soma current of 40"
+kind = "contrast"
+steps = 20000
+observable = "spikes"
+margin = 10
+
+[behaviour.inputs]
+i_soma = 40.0
+glutamate = 1.0
+
+[behaviour.reference_inputs]
+i_soma = 40.0
+glutamate = 0.0
+
+[[behaviour]]
+name = "the lane anchor"
+kind = "interval"
+steps = 20000
+observable = "spikes"
+bounds = [
+    266,
+    266,
+]
+
+[behaviour.inputs]
+i_soma = 50.0
+glutamate = 0.5
