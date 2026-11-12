@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 32,
-    "outdated": 95,
+    "current": 33,
+    "outdated": 94,
     "unbound": 191
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 14,
-    "outdated": 72,
+    "current": 15,
+    "outdated": 71,
     "unbound": 1
   },
   "rows": [
@@ -1228,10 +1228,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            "engine/Cargo.toml"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "local_python_2026-06-17_morris_lecar_rk4.json",
           "script": "bench_model_morris_lecar.py"
         }

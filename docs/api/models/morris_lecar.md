@@ -446,15 +446,16 @@ labelled `local_regression_non_isolated` and
 is runnable across maintained backends, not a production throughput claim.
 
 Measured local regression values from
-`benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`:
+`benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`
+(run of 2026-11-12T19:18:19+00:00; the file keeps its first name):
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Evidence |
 |---------|---------------:|------------:|------------:|-------:|----------|
-| Python | 35631.74989 | 30500.767725 | 51336.38503 | 476 | RK4 reference |
-| Rust engine | 350.713925 | 328.178685 | 358.75923 | 476 | RK4 engine example |
-| Go service mirror | 248.1 | 246.8 | 251.4 | 476 | deterministic RK4 mirror |
-| Julia mirror | 179.829115 | 176.156045 | 181.100615 | 476 | RK4 mirror |
-| Mojo mirror | 233.19244501180947 | 230.25805014185607 | 247.85831512417644 | 476 | RK4 mirror |
+| Python | 43213.93002 | 38361.714935 | 46302.0493 | 476 | RK4 reference |
+| Rust engine | 402.58588 | 341.544245 | 469.397365 | 476 | RK4 engine example |
+| Go service mirror | 373.6 | 347.6 | 489.0 | 476 | deterministic RK4 mirror |
+| Julia mirror | 301.15215 | 227.98312 | 380.17809 | 476 | RK4 mirror |
+| Mojo mirror | 276.16384002612904 | 270.23033500881866 | 282.51665498828515 | 476 | RK4 mirror |
 
 ### 7.2 Historical Rust Criterion evidence
 

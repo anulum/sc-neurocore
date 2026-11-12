@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Morris-Lecar Mojo kernel compiles under the pinned Mojo 1.0.0 again: its
+  functions are declared with `def`, which replaced `fn`. Its own check reproduces
+  the Python reference's spike counts (0, 3 and 5 over 2000 steps at currents 0,
+  50 and 100), and the five-runtime Morris-Lecar benchmark was run again: every
+  backend, Mojo included, counts 476 spikes, and the model page shows the new
+  timings.
+
 - The Studio worker launcher service unblocks SIGTERM and SIGINT when it
   starts, so a blocked-signal mask handed down by the process that starts it
   can no longer keep it from stopping in order. The launcher test support

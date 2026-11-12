@@ -9,13 +9,13 @@
 from std.math import cosh, tanh
 
 
-fn _finite(x: Float64) -> Bool:
+def _finite(x: Float64) -> Bool:
     return (
         x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
     )
 
 
-fn morris_lecar_valid(
+def morris_lecar_valid(
     v: Float64,
     w: Float64,
     c_m: Float64,
@@ -63,19 +63,19 @@ fn morris_lecar_valid(
     )
 
 
-fn _m_inf(v: Float64, v1: Float64, v2: Float64) -> Float64:
+def _m_inf(v: Float64, v1: Float64, v2: Float64) -> Float64:
     return 0.5 * (1.0 + tanh((v - v1) / v2))
 
 
-fn _w_inf(v: Float64, v3: Float64, v4: Float64) -> Float64:
+def _w_inf(v: Float64, v3: Float64, v4: Float64) -> Float64:
     return 0.5 * (1.0 + tanh((v - v3) / v4))
 
 
-fn _lambda(v: Float64, v3: Float64, v4: Float64, phi: Float64) -> Float64:
+def _lambda(v: Float64, v3: Float64, v4: Float64, phi: Float64) -> Float64:
     return phi * cosh((v - v3) / (2.0 * v4))
 
 
-fn _rhs_v(
+def _rhs_v(
     v: Float64,
     w: Float64,
     current: Float64,
@@ -96,7 +96,7 @@ fn _rhs_v(
     return (-i_ca - i_k - i_l + current) / c_m
 
 
-fn _rhs_w(
+def _rhs_w(
     v: Float64,
     w: Float64,
     v3: Float64,
@@ -106,7 +106,7 @@ fn _rhs_w(
     return _lambda(v, v3, v4, phi) * (_w_inf(v, v3, v4) - w)
 
 
-fn morris_lecar_next_v(
+def morris_lecar_next_v(
     v: Float64,
     w: Float64,
     current: Float64,
@@ -142,7 +142,7 @@ fn morris_lecar_next_v(
     return next_v
 
 
-fn morris_lecar_next_w(
+def morris_lecar_next_w(
     v: Float64,
     w: Float64,
     current: Float64,
@@ -178,7 +178,7 @@ fn morris_lecar_next_w(
     return next_w
 
 
-fn morris_lecar_step_spike(
+def morris_lecar_step_spike(
     v: Float64,
     next_v: Float64,
     v_threshold: Float64,
@@ -194,7 +194,7 @@ fn morris_lecar_step_spike(
 # RK4 steps at constant current and return the rising-edge spike count. This composes the
 # per-step primitives above into the simulate() recurrence so the kernel carries a runnable
 # parity check.
-fn simulate(n_steps: Int, current: Float64) -> Int:
+def simulate(n_steps: Int, current: Float64) -> Int:
     var v = -60.0
     var w = 0.0
     var c_m = 20.0
