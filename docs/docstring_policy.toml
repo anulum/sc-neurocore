@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1924
+expected_file_count = 1925
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7750,3 +7750,7 @@ rationale = "Real launcher processes for tests: a socket base that fits the Unix
 [[file]]
 path = "tests/test_studio_storage_launcher_lifecycle.py"
 rationale = "Binds the launcher service stopping on SIGTERM under an inherited blocked mask, the kill of one that ignores it, its end with the starting process, and the socket base under long temporary folders."
+
+[[file]]
+path = "src/sc_neurocore/debug/sc_scope.py"
+rationale = "Bitstream scope: transports, samples, windows, correlation, error budgets, triggers and the text renderer, each documented as the code computes, its simulated-only source and never-firing trigger types included."

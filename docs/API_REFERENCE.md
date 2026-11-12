@@ -19914,9 +19914,33 @@ Correlation-driven feedback loop:
 ## Module `debug.sc_scope`
 
 ### Class `TransportType`
+The source a transport backend reads from.
+
+Only ``SIMULATED`` produces data in this module.
+
 
 ### Class `TransportConfig`
 Configuration for a transport backend.
+
+Attributes
+----------
+transport_type : TransportType
+    The source.
+port : str
+    Port name for a serial or JTAG link.
+baud_rate : int
+    Serial speed.
+dma_base_addr : int
+    Base address of a DMA region.
+dma_length : int
+    Length of the DMA region in bytes.
+timeout_ms : int
+    Read timeout in milliseconds.
+
+Notes
+-----
+The backend of this module reads none of these fields; they are for a
+deployment-specific backend.
 
 
 ### Class `TransportBackend`
@@ -19924,38 +19948,97 @@ Pluggable transport adapter for bitstream acquisition.
 
 Production backends (JTAG, UART, PYNQ DMA) require hardware;
 the ``SIMULATED`` backend generates synthetic data for testing
-and development.
+and development. This class implements only the simulated one: for
+the other types it reports a connection and reads ``None``.
+
+Attributes
+----------
+config : TransportConfig
+    The backend's configuration.
+is_connected : bool
+    Whether :meth:`connect` has been called since the last disconnect.
+bytes_received : int
+    Bytes produced by simulated reads.
 
 - **connect**()
   - Establish connection to the target.
 - **disconnect**()
+  - Mark the backend disconnected and reset the simulation's state.
 - **read_bitstream**(num_words, layer_id)
   - Read packed bitstream words from the target.
 
 ### Class `BitstreamSample`
 One timestamped bitstream capture.
 
+Attributes
+----------
+timestamp_ns : int
+    Capture time in nanoseconds since the session started.
+layer_id : int
+    Layer of the sample.
+neuron_id : int
+    Neuron of the sample.
+words : numpy.ndarray
+    The bitstream packed in 32-bit words.
+sample_index : int
+    Position of the sample in its session.
+
 - **bit_length**()
+  - Number of bits, 32 per word.
 - **popcount**()
+  - Number of one bits over all words.
 - **density**()
+  - Fraction of one bits; 0.0 for an empty sample.
 - **effective_bits**()
   - Shannon entropy-based effective precision.
 
 ### Class `AnalysisWindow`
 Windowed statistics from recent samples.
 
+Attributes
+----------
+window_size : int
+    Number of most recent samples kept.
+densities, popcounts, effective_bits, timestamps : collections.deque
+    The kept samples' values, oldest first; rebuilt with
+    ``window_size`` as their length at construction.
+
 - **__post_init__**()
+  - Replace the four buffers by empty ones of length ``window_size``.
 - **push**(sample)
+  - Add one sample's density, popcount, entropy measure and time.
 - **count**()
+  - Number of samples in the window.
 - **mean_density**()
+  - Mean density of the window; 0.0 when empty.
 - **std_density**()
+  - Population standard deviation of the densities; 0.0 below two samples.
 - **mean_effective_bits**()
+  - Mean of the entropy measure; 0.0 when empty.
 - **total_popcount**()
+  - Sum of the window's popcounts.
 - **sample_rate_hz**()
   - Estimated sample rate from timestamps.
 
 ### Class `LiveAnalyzer`
 Real-time SC bitstream analyzer with per-layer windows.
+
+Parameters
+----------
+num_layers : int
+    Layers whose windows exist from the start.
+window_size : int
+    Window size of those layers.
+
+Attributes
+----------
+num_layers : int
+    The number given at construction.
+windows : dict of int to AnalysisWindow
+    One window per layer seen; a layer first seen in a sample gets a
+    window of 64 samples, not ``window_size``.
+total_samples : int
+    Samples ingested.
 
 - **__init__**(num_layers, window_size)
 - **ingest**(sample)
@@ -19963,50 +20046,129 @@ Real-time SC bitstream analyzer with per-layer windows.
 - **layer_stats**(layer_id)
   - Get summary stats for one layer.
 - **all_stats**()
+  - Return :meth:`layer_stats` of every layer with a window.
 
 ### Class `LayerErrorBudget`
 Per-layer precision tracking against golden model expectations.
 
+Attributes
+----------
+layer_id : int
+    The layer.
+expected_density : float
+    The golden model's density.
+tolerance : float
+    Largest accepted absolute difference.
+history : list of float
+    Every checked density, never trimmed.
+
 - **check**(measured_density)
   - Check if measured density is within tolerance.
 - **current_error**()
+  - Absolute error of the last checked density; 0.0 before any check.
 - **mean_error**()
+  - Mean absolute error over the history; 0.0 before any check.
 - **max_error**()
+  - Largest absolute error over the history; 0.0 before any check.
 - **violations**()
+  - Number of checked densities outside the tolerance.
 - **pass_rate**()
+  - Fraction of checks within the tolerance; 1.0 before any check.
 
 ### Class `TriggerType`
+The condition a trigger tests.
+
+:meth:`TriggerEngine.evaluate` tests ``DENSITY_ABOVE``, ``DENSITY_BELOW``
+and ``SPIKE_DETECTED`` (any one bit); ``SCC_ABOVE`` and
+``ERROR_BUDGET_VIOLATION`` are accepted and never fire.
+
 
 ### Class `TriggerCondition`
 Conditional capture trigger.
+
+Attributes
+----------
+trigger_type : TriggerType
+    What is tested.
+threshold : float
+    The density limit of the density triggers.
+layer_id : int
+    Only samples of this layer are tested.
+enabled : bool
+    Whether the trigger is tested.
 
 
 ### Class `TriggerEvent`
 A triggered capture event.
 
+Attributes
+----------
+trigger_type : TriggerType
+    The trigger that fired.
+timestamp_ns : int
+    The sample's time.
+layer_id : int
+    The sample's layer.
+measured_value : float
+    The sample's density.
+threshold : float
+    The trigger's threshold.
+sample : BitstreamSample
+    The sample itself.
+
 
 ### Class `TriggerEngine`
 Evaluates capture triggers against incoming samples.
 
+Attributes
+----------
+conditions : list of TriggerCondition
+    The triggers, tested in order.
+events : list of TriggerEvent
+    Fired events, the first ``max_events`` of them.
+max_events : int
+    Largest number of events kept; later ones are returned but not kept.
+
 - **__init__**()
 - **add_trigger**(condition)
+  - Append a trigger condition.
 - **evaluate**(sample)
   - Check all triggers against a sample. Returns fired events.
 - **event_count**()
+  - Number of kept events.
 - **clear**()
+  - Drop every kept event; the triggers stay.
 
 ### Class `ScopeSession`
 Manages a live debugging session.
 
+Attributes
+----------
+transport : TransportBackend
+    Where samples come from.
+analyzer : LiveAnalyzer
+    Where samples are analysed.
+triggers : TriggerEngine
+    The capture triggers.
+error_budgets : dict of int to LayerErrorBudget
+    One budget per tracked layer.
+is_running : bool
+    Whether the session has started and not stopped.
+sample_count : int
+    Samples captured.
+
 - **start**()
   - Start the scope session.
 - **stop**()
+  - Stop the session and disconnect the transport; the start time stays.
 - **add_error_budget**(layer_id, expected_density, tol)
+  - Track one layer's density against an expected value.
 - **capture_one**(layer_id, neuron_id, num_words)
   - Capture one bitstream sample from the target.
 - **capture_sweep**(num_layers, num_words)
   - Capture one sample from each layer.
 - **status**()
+  - Return the session's state for display.
 
 ### Class `ScopeRenderer`
 Text-mode rendering of live scope data for CLI output.
@@ -20014,6 +20176,7 @@ Text-mode rendering of live scope data for CLI output.
 - **render_density_bar**(density, width)
   - Render a density as a text bar.
 - **render_layer_summary**(layer_id, stats)
+  - Render one layer's statistics as one line.
 - **render_session**(session)
   - Render full session status as text.
 
@@ -20025,6 +20188,20 @@ compiled extension is importable (the default when the repo is built with
 ``maturin develop --release``). Falls back to :func:`_compute_scc_python`
 when the extension is missing — the fallback is numerically identical
 (both implement the case-split Alaghi & Hayes 2013 form).
+
+Parameters
+----------
+a, b : numpy.ndarray
+    The two bitstreams as 32-bit words; the native path needs them
+    C-contiguous and reads two words as one 64-bit word, which assumes a
+    little-endian host.
+
+Returns
+-------
+float
+    The correlation in &#91;-1, 1&#93;; 0.0 for streams of different or zero
+    length, or when the joint density equals the product of the
+    densities.
 
 ---
 

@@ -4,7 +4,8 @@ Three complementary debug surfaces for stochastic-computing and spiking
 neural networks: an **offline spike tracer + analyser** for post-mortem
 divergence and causality analysis, a **live bitstream oscilloscope**
 (``sc_scope``) that computes per-layer density / effective-bits / SCC
-on a live FPGA stream, an **adaptive SC doctor** (``sc_doctor``) that
+on a stream of packed bitstream words (a simulated source is built in;
+a hardware link needs a deployment-specific transport), an **adaptive SC doctor** (``sc_doctor``) that
 auto-tunes bitstream length on-the-fly and adds Hamming(7,4) ECC when
 needed, and a **Hardware-in-the-Loop telemetry daemon** that multiplexes
 protobuf ``HILFrame`` messages onto a WebSocket for GUI/CI consumers.
@@ -92,17 +93,26 @@ $p_{B} = \frac{\mathrm{popcount}(B)}{L}$,
 $p_{AB} = \frac{\mathrm{popcount}(A \wedge B)}{L}$,
 
 $$
-\mathrm{SCC}(A, B)
-= \frac{p_{AB} - p_{A}\, p_{B}}
-       {\bigl|\min(p_{A}, p_{B}) - p_{A}\, p_{B}\bigr| + \epsilon}.
+\mathrm{SCC}(A, B) =
+\begin{cases}
+\dfrac{p_{AB} - p_{A}\, p_{B}}{\min(p_{A}, p_{B}) - p_{A}\, p_{B}},
+  & p_{AB} > p_{A}\, p_{B} \\[1ex]
+\dfrac{p_{AB} - p_{A}\, p_{B}}{p_{A}\, p_{B} - \max(0,\, p_{A} + p_{B} - 1)},
+  & p_{AB} < p_{A}\, p_{B}
+\end{cases}
 $$
+
+and $0$ when $|p_{AB} - p_{A} p_{B}| < 10^{-12}$; the result is clamped to
+$[-1, +1]$.
 
 This is Alaghi & Hayes' original SC-correlation measure
 (Alaghi & Hayes, 2013) bounded in $[-1,+1]$: $+1$ = perfectly
-correlated, $0$ = independent, $-1$ = anti-correlated. The
-:func:`compute_scc` reference implementation walks the stream word-by-word
-in pure Python; the same formula is fused inside the Mojo SIMD kernel
-``scc_numerator_256w`` (see `mojo_accel.md` §4.2) for the hot path.
+correlated, $0$ = independent, $-1$ = anti-correlated.
+:func:`compute_scc` calls the Rust kernel of ``stochastic_doctor_core``
+when the compiled extension is importable and otherwise walks the stream
+word by word in Python; the Mojo SIMD kernel ``scc_numerator_256w`` (see
+`mojo_accel.md` §4.2) computes the same numerator for bulk offline
+analyses and is not called by the scope (see the limitations below).
 
 ### 1.5 Adaptive bitstream-length feedback
 
@@ -148,8 +158,9 @@ e_{t} = |d_{t} - d^{\star}|, \quad
 $$
 
 The observed density $d_{t}$ is compared with the golden-model
-expected density $d^{\star}$; the default tolerance $\tau = 0.05$ is
-2$\sigma$ on a 1024-bit stream under the Gaussian rate approximation.
+expected density $d^{\star}$; under the Gaussian rate approximation at
+$d = 0.5$ the default tolerance $\tau = 0.05$ is 2$\sigma$ on a 400-bit
+stream and 3.2$\sigma$ on a 1024-bit one.
 
 ---
 
@@ -168,8 +179,10 @@ float32 — manageable for single-run post-mortems.
 
 ### 2.2 Live vs. offline: two price points
 
-``sc_scope`` runs on a *streaming* budget: constant-time per sample,
-constant memory (ring buffer), O(1) trigger evaluation. The offline
+``sc_scope`` runs on a *streaming* budget: the work per sample grows
+with its words (popcount) and with the number of triggers, the analysis
+windows are fixed-length buffers, and only the error-budget history
+grows with every checked sample. The offline
 tools (``find_divergence``, ``spike_diff``, ``causal_chain``) run on a
 *snapshot* budget: O(TN) or O(DN) over the full trace. Both exist because
 most bugs are easier to catch in one mode but not the other — a slow
@@ -197,11 +210,14 @@ need.
 
 ### 2.5 Pluggable transports, simulated loopback
 
-:class:`TransportBackend` abstracts over JTAG / UART / PYNQ DMA /
-simulated. The simulated path (sinusoidally modulated density per layer)
-lets the scope stack run entirely offline for CI, while the hardware
-paths reuse exactly the same :class:`LiveAnalyzer` and :class:`TriggerEngine`
-classes — no "sim-only" code branches in the analysis layer.
+:class:`TransportBackend` names JTAG / UART / PYNQ DMA / simulated
+sources; only the simulated one reads data in this module, and a hardware
+source needs a deployment-specific backend. The simulated source draws
+uniform 32-bit words and sets only each word's top bit by a density that
+varies by layer and time, so its bit density stays near 0.5; it lets the
+scope stack run entirely offline for CI. A hardware backend feeds the same
+:class:`LiveAnalyzer` and :class:`TriggerEngine` classes — there are no
+"sim-only" code branches in the analysis layer.
 
 ### 2.6 Server daemon as a Go child process
 
@@ -246,7 +262,8 @@ the Go streaming daemon keeps each side idiomatic.
 - **Upstream inputs.** `SpikeTracer` wraps a
   :class:`sc_neurocore.edge.sc_network.SCNetwork` (see `edge.md`) and
   intercepts its `step_all`. `sc_scope` reads packed-u32 bitstreams
-  straight from an FPGA transport.
+  from a transport backend (simulated here; an FPGA link needs a
+  deployment-specific backend).
 - **Downstream consumers.** `LiveAnalyzer` emits per-layer stats
   consumed by `ScopeRenderer` (text CLI) or the Go WebSocket fan-out.
   `ScDoctor` outputs a new bitstream length that the SC pipeline's
@@ -264,13 +281,15 @@ the Go streaming daemon keeps each side idiomatic.
   (:func:`causal_chain` returning :class:`CausalEvent` records).
 - Full spike-diff summary (total mismatches, per-neuron mismatches,
   first-divergence record).
-- Four transports: ``SIMULATED`` (deterministic for CI), ``UART``,
-  ``JTAG``, ``PYNQ_DMA``.
+- Four transport types: ``SIMULATED`` (deterministic for CI) reads data;
+  ``UART``, ``JTAG`` and ``PYNQ_DMA`` stand for deployment-specific
+  backends.
 - Timestamped samples with density, popcount, Shannon effective bits.
-- Ring-buffer analysis windows (64–∞ samples) with mean + std density,
-  mean effective bits, sample rate.
-- Five trigger types: ``DENSITY_ABOVE``, ``DENSITY_BELOW``,
-  ``SPIKE_DETECTED``, ``SCC_ABOVE``, ``ERROR_BUDGET_VIOLATION``.
+- Fixed-length analysis windows (64 samples by default) with mean + std
+  density, mean effective bits, sample rate.
+- Five trigger types: ``DENSITY_ABOVE``, ``DENSITY_BELOW`` and
+  ``SPIKE_DETECTED`` are evaluated; ``SCC_ABOVE`` and
+  ``ERROR_BUDGET_VIOLATION`` are accepted and never fire.
 - Per-layer error budget with pass-rate metric.
 - Adaptive bitstream length with hysteresis + Hamming(7,4) ECC.
 - Go WebSocket daemon with `/health` readiness probe.
@@ -316,20 +335,25 @@ per_neuron worst: neuron 7
 
 ```python
 from sc_neurocore.debug.sc_scope import (
-    TransportConfig, TransportType, ScopeSession,
-    TriggerCondition, TriggerType,
+    LiveAnalyzer,
+    ScopeSession,
+    TransportBackend,
+    TransportConfig,
+    TransportType,
+    TriggerCondition,
+    TriggerType,
 )
 
-cfg = TransportConfig(transport_type=TransportType.SIMULATED)
-scope = ScopeSession(transport_config=cfg, num_layers=4, window_size=512)
-scope.trigger_engine.add_trigger(
-    TriggerCondition(TriggerType.DENSITY_ABOVE, threshold=0.8, layer_id=2)
+transport = TransportBackend(TransportConfig(transport_type=TransportType.SIMULATED))
+scope = ScopeSession(transport=transport, analyzer=LiveAnalyzer(num_layers=4, window_size=512))
+scope.triggers.add_trigger(
+    TriggerCondition(TriggerType.DENSITY_ABOVE, threshold=0.52, layer_id=2)
 )
 scope.start()
-for _ in range(1000):
-    scope.step(num_words=32)
+for _ in range(250):
+    scope.capture_sweep(num_layers=4, num_words=32)
 print(scope.analyzer.all_stats())
-print(f"{len(scope.trigger_engine.events)} triggered events")
+print(f"{scope.triggers.event_count} triggered events")
 scope.stop()
 ```
 
@@ -552,16 +576,16 @@ Figures above are `time.perf_counter` deltas from
 ## Reference
 
 - Sources:
-  - `src/sc_neurocore/debug/tracer.py` (155 LOC)
-  - `src/sc_neurocore/debug/analyzer.py` (176 LOC)
-  - `src/sc_neurocore/debug/sc_doctor.py` (101 LOC)
-  - `src/sc_neurocore/debug/sc_scope.py` (538 LOC)
-  - `src/sc_neurocore/debug/hil_server.py` (124 LOC)
-  - `src/sc_neurocore/debug/hil_debugger.py` (34 LOC)
-  - `src/sc_neurocore/debug/hil_client.py` (353 LOC)
+  - `src/sc_neurocore/debug/tracer.py` (157 lines)
+  - `src/sc_neurocore/debug/analyzer.py` (177 lines)
+  - `src/sc_neurocore/debug/sc_doctor.py` (138 lines)
+  - `src/sc_neurocore/debug/sc_scope.py` (899 lines)
+  - `src/sc_neurocore/debug/hil_server.py` (127 lines)
+  - `src/sc_neurocore/debug/hil_debugger.py` (34 lines)
+  - `src/sc_neurocore/debug/hil_client.py` (353 lines)
 - Go daemon: `src/sc_neurocore/accel/go/services/hil_debugger/`
   (`main.go` + `main_test.go`).
-- Tests: `tests/test_debug/*.py` (1 781 LOC across 5 files).
+- Tests: `tests/test_debug/*.py` (2 271 lines across 43 files).
 - Benchmark: `benchmarks/bench_debug.py`.
 - Wire protocol: [Protobuf Schemas](proto.md).
 

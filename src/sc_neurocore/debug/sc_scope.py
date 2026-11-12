@@ -8,26 +8,26 @@
 
 """Live bitstream oscilloscope for SC hardware debugging.
 
-Streams real-time bitstream activity from FPGA/ASIC targets (via JTAG,
-UART, or PYNQ DMA) and computes live correlation metrics, effective
-precision, and per-layer error budgets while the hardware runs.
+Analyses u32-packed bitstream samples as they arrive: density, popcount,
+an entropy measure, stochastic-computing correlation, per-layer windows,
+error budgets against expected densities and capture triggers.
 
-Unlike post-mortem waveform viewers, this provides in-flight diagnostics:
+Samples come from a transport backend. Only the simulated backend
+produces data; the JTAG, UART and PYNQ DMA types are configuration
+values whose backends report a connection and read nothing, so reading
+from hardware needs a deployment-specific backend.
 
 - **TransportBackend**: Pluggable adapters for JTAG, UART, PYNQ DMA, or
   simulated (loopback) bitstream sources.
 - **BitstreamSample**: Timestamped bitstream capture with metadata.
-- **LiveAnalyzer**: Windowed real-time computation of popcount, SCC,
-  effective bits, density, and error budget.
+- **LiveAnalyzer**: Windowed computation of density, popcount and the
+  entropy measure per layer.
 - **LayerErrorBudget**: Per-layer precision tracking against golden model.
-- **TriggerEngine**: Conditional capture triggers (spike, density, SCC).
+- **TriggerEngine**: Conditional capture triggers on density.
 - **ScopeSession**: Manages streaming, analysis, and trigger evaluation.
 - **ScopeRenderer**: Text-mode (CLI) rendering of live scope data.
 
-Compatible with:
-- ``debug/tracer.py`` — shares the ExecutionTrace schema
-- ``analysis/`` — reuses spike_stats metrics where applicable
-- ``profiling/`` — energy/spike profiling hooks
+The module imports none of the tracer, analysis or profiling modules.
 """
 
 from __future__ import annotations
@@ -58,6 +58,11 @@ except ImportError:
 
 
 class TransportType(Enum):
+    """The source a transport backend reads from.
+
+    Only ``SIMULATED`` produces data in this module.
+    """
+
     JTAG = "jtag"
     UART = "uart"
     PYNQ_DMA = "pynq_dma"
@@ -66,7 +71,28 @@ class TransportType(Enum):
 
 @dataclass
 class TransportConfig:
-    """Configuration for a transport backend."""
+    """Configuration for a transport backend.
+
+    Attributes
+    ----------
+    transport_type : TransportType
+        The source.
+    port : str
+        Port name for a serial or JTAG link.
+    baud_rate : int
+        Serial speed.
+    dma_base_addr : int
+        Base address of a DMA region.
+    dma_length : int
+        Length of the DMA region in bytes.
+    timeout_ms : int
+        Read timeout in milliseconds.
+
+    Notes
+    -----
+    The backend of this module reads none of these fields; they are for a
+    deployment-specific backend.
+    """
 
     transport_type: TransportType
     port: str = ""
@@ -82,7 +108,17 @@ class TransportBackend:
 
     Production backends (JTAG, UART, PYNQ DMA) require hardware;
     the ``SIMULATED`` backend generates synthetic data for testing
-    and development.
+    and development. This class implements only the simulated one: for
+    the other types it reports a connection and reads ``None``.
+
+    Attributes
+    ----------
+    config : TransportConfig
+        The backend's configuration.
+    is_connected : bool
+        Whether :meth:`connect` has been called since the last disconnect.
+    bytes_received : int
+        Bytes produced by simulated reads.
     """
 
     config: TransportConfig
@@ -92,7 +128,11 @@ class TransportBackend:
     _sim_step: int = 0
 
     def connect(self) -> bool:
-        """Establish connection to the target."""
+        """Establish connection to the target.
+
+        The simulated backend seeds its generator with 42; the other types
+        open nothing. Always returns ``True``.
+        """
         if self.config.transport_type == TransportType.SIMULATED:
             self._sim_rng = np.random.default_rng(42)
             self.is_connected = True
@@ -102,6 +142,7 @@ class TransportBackend:
         return True
 
     def disconnect(self) -> None:
+        """Mark the backend disconnected and reset the simulation's state."""
         self.is_connected = False
         self._sim_rng = None
         self._sim_step = 0
@@ -110,6 +151,13 @@ class TransportBackend:
         """Read packed bitstream words from the target.
 
         Returns u32-packed words, or None on timeout/error.
+
+        Without a connection, and for every type but ``SIMULATED``, the
+        result is ``None``. A simulated read draws uniform 32-bit words and
+        sets or clears only their top bit by a density of 0.3 + 0.1 ×
+        ``layer_id`` with a slow sinusoidal change, clipped to [0.05, 0.95];
+        the other 31 bits stay uniform, so the stream's bit density is close
+        to 0.5 for every layer.
         """
         if not self.is_connected:
             return None
@@ -142,7 +190,21 @@ class TransportBackend:
 
 @dataclass
 class BitstreamSample:
-    """One timestamped bitstream capture."""
+    """One timestamped bitstream capture.
+
+    Attributes
+    ----------
+    timestamp_ns : int
+        Capture time in nanoseconds since the session started.
+    layer_id : int
+        Layer of the sample.
+    neuron_id : int
+        Neuron of the sample.
+    words : numpy.ndarray
+        The bitstream packed in 32-bit words.
+    sample_index : int
+        Position of the sample in its session.
+    """
 
     timestamp_ns: int
     layer_id: int
@@ -152,10 +214,12 @@ class BitstreamSample:
 
     @property
     def bit_length(self) -> int:
+        """Number of bits, 32 per word."""
         return len(self.words) * 32
 
     @property
     def popcount(self) -> int:
+        """Number of one bits over all words."""
         total = 0
         for w in self.words:
             total += bin(int(w)).count("1")
@@ -163,12 +227,18 @@ class BitstreamSample:
 
     @property
     def density(self) -> float:
+        """Fraction of one bits; 0.0 for an empty sample."""
         bl = self.bit_length
         return self.popcount / bl if bl > 0 else 0.0
 
     @property
     def effective_bits(self) -> float:
-        """Shannon entropy-based effective precision."""
+        """Shannon entropy-based effective precision.
+
+        The binary entropy of the density times the bit length, H(d) × L:
+        the information of L independent bits of that density, not the
+        resolution of the encoded value. 0.0 at a density of 0 or 1.
+        """
         p = self.density
         if p <= 0.0 or p >= 1.0:
             return 0.0
@@ -180,7 +250,16 @@ class BitstreamSample:
 
 @dataclass
 class AnalysisWindow:
-    """Windowed statistics from recent samples."""
+    """Windowed statistics from recent samples.
+
+    Attributes
+    ----------
+    window_size : int
+        Number of most recent samples kept.
+    densities, popcounts, effective_bits, timestamps : collections.deque
+        The kept samples' values, oldest first; rebuilt with
+        ``window_size`` as their length at construction.
+    """
 
     window_size: int = 64
     densities: Deque[float] = field(default_factory=lambda: deque(maxlen=64))
@@ -189,12 +268,14 @@ class AnalysisWindow:
     timestamps: Deque[int] = field(default_factory=lambda: deque(maxlen=64))
 
     def __post_init__(self) -> None:
+        """Replace the four buffers by empty ones of length ``window_size``."""
         self.densities = deque(maxlen=self.window_size)
         self.popcounts = deque(maxlen=self.window_size)
         self.effective_bits = deque(maxlen=self.window_size)
         self.timestamps = deque(maxlen=self.window_size)
 
     def push(self, sample: BitstreamSample) -> None:
+        """Add one sample's density, popcount, entropy measure and time."""
         self.densities.append(sample.density)
         self.popcounts.append(sample.popcount)
         self.effective_bits.append(sample.effective_bits)
@@ -202,27 +283,36 @@ class AnalysisWindow:
 
     @property
     def count(self) -> int:
+        """Number of samples in the window."""
         return len(self.densities)
 
     @property
     def mean_density(self) -> float:
+        """Mean density of the window; 0.0 when empty."""
         return float(np.mean(self.densities)) if self.densities else 0.0
 
     @property
     def std_density(self) -> float:
+        """Population standard deviation of the densities; 0.0 below two samples."""
         return float(np.std(self.densities)) if len(self.densities) > 1 else 0.0
 
     @property
     def mean_effective_bits(self) -> float:
+        """Mean of the entropy measure; 0.0 when empty."""
         return float(np.mean(self.effective_bits)) if self.effective_bits else 0.0
 
     @property
     def total_popcount(self) -> int:
+        """Sum of the window's popcounts."""
         return sum(self.popcounts)
 
     @property
     def sample_rate_hz(self) -> float:
-        """Estimated sample rate from timestamps."""
+        """Estimated sample rate from timestamps.
+
+        Samples per second between the first and the last kept timestamp; 0.0
+        below two samples or without elapsed time.
+        """
         if len(self.timestamps) < 2:
             return 0.0
         dt_ns = self.timestamps[-1] - self.timestamps[0]
@@ -263,6 +353,20 @@ def compute_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     ``maturin develop --release``). Falls back to :func:`_compute_scc_python`
     when the extension is missing — the fallback is numerically identical
     (both implement the case-split Alaghi & Hayes 2013 form).
+
+    Parameters
+    ----------
+    a, b : numpy.ndarray
+        The two bitstreams as 32-bit words; the native path needs them
+        C-contiguous and reads two words as one 64-bit word, which assumes a
+        little-endian host.
+
+    Returns
+    -------
+    float
+        The correlation in [-1, 1]; 0.0 for streams of different or zero
+        length, or when the joint density equals the product of the
+        densities.
     """
     if len(a) != len(b) or len(a) == 0:
         return 0.0
@@ -286,7 +390,25 @@ def compute_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
 
 
 class LiveAnalyzer:
-    """Real-time SC bitstream analyzer with per-layer windows."""
+    """Real-time SC bitstream analyzer with per-layer windows.
+
+    Parameters
+    ----------
+    num_layers : int
+        Layers whose windows exist from the start.
+    window_size : int
+        Window size of those layers.
+
+    Attributes
+    ----------
+    num_layers : int
+        The number given at construction.
+    windows : dict of int to AnalysisWindow
+        One window per layer seen; a layer first seen in a sample gets a
+        window of 64 samples, not ``window_size``.
+    total_samples : int
+        Samples ingested.
+    """
 
     def __init__(self, num_layers: int = 1, window_size: int = 64):
         self.num_layers = num_layers
@@ -304,7 +426,20 @@ class LiveAnalyzer:
         self.total_samples += 1
 
     def layer_stats(self, layer_id: int) -> Dict[str, float]:
-        """Get summary stats for one layer."""
+        """Get summary stats for one layer.
+
+        Parameters
+        ----------
+        layer_id : int
+            The layer.
+
+        Returns
+        -------
+        dict of str to float
+            Mean and standard deviation of density, mean entropy measure,
+            total popcount, sample count and sample rate; empty for a layer
+            without samples.
+        """
         w = self.windows.get(layer_id)
         if w is None or w.count == 0:
             return {}
@@ -318,6 +453,7 @@ class LiveAnalyzer:
         }
 
     def all_stats(self) -> Dict[int, Dict[str, float]]:
+        """Return :meth:`layer_stats` of every layer with a window."""
         return {lid: self.layer_stats(lid) for lid in self.windows}
 
 
@@ -326,7 +462,19 @@ class LiveAnalyzer:
 
 @dataclass
 class LayerErrorBudget:
-    """Per-layer precision tracking against golden model expectations."""
+    """Per-layer precision tracking against golden model expectations.
+
+    Attributes
+    ----------
+    layer_id : int
+        The layer.
+    expected_density : float
+        The golden model's density.
+    tolerance : float
+        Largest accepted absolute difference.
+    history : list of float
+        Every checked density, never trimmed.
+    """
 
     layer_id: int
     expected_density: float
@@ -334,18 +482,23 @@ class LayerErrorBudget:
     history: List[float] = field(default_factory=list)
 
     def check(self, measured_density: float) -> bool:
-        """Check if measured density is within tolerance."""
+        """Check if measured density is within tolerance.
+
+        The density is also appended to the history.
+        """
         self.history.append(measured_density)
         return abs(measured_density - self.expected_density) <= self.tolerance
 
     @property
     def current_error(self) -> float:
+        """Absolute error of the last checked density; 0.0 before any check."""
         if not self.history:
             return 0.0
         return abs(self.history[-1] - self.expected_density)
 
     @property
     def mean_error(self) -> float:
+        """Mean absolute error over the history; 0.0 before any check."""
         if not self.history:
             return 0.0
         errors = [abs(h - self.expected_density) for h in self.history]
@@ -353,16 +506,19 @@ class LayerErrorBudget:
 
     @property
     def max_error(self) -> float:
+        """Largest absolute error over the history; 0.0 before any check."""
         if not self.history:
             return 0.0
         return max(abs(h - self.expected_density) for h in self.history)
 
     @property
     def violations(self) -> int:
+        """Number of checked densities outside the tolerance."""
         return sum(1 for h in self.history if abs(h - self.expected_density) > self.tolerance)
 
     @property
     def pass_rate(self) -> float:
+        """Fraction of checks within the tolerance; 1.0 before any check."""
         if not self.history:
             return 1.0
         return 1.0 - self.violations / len(self.history)
@@ -372,6 +528,13 @@ class LayerErrorBudget:
 
 
 class TriggerType(Enum):
+    """The condition a trigger tests.
+
+    :meth:`TriggerEngine.evaluate` tests ``DENSITY_ABOVE``, ``DENSITY_BELOW``
+    and ``SPIKE_DETECTED`` (any one bit); ``SCC_ABOVE`` and
+    ``ERROR_BUDGET_VIOLATION`` are accepted and never fire.
+    """
+
     DENSITY_ABOVE = "density_above"
     DENSITY_BELOW = "density_below"
     SPIKE_DETECTED = "spike_detected"
@@ -381,7 +544,19 @@ class TriggerType(Enum):
 
 @dataclass
 class TriggerCondition:
-    """Conditional capture trigger."""
+    """Conditional capture trigger.
+
+    Attributes
+    ----------
+    trigger_type : TriggerType
+        What is tested.
+    threshold : float
+        The density limit of the density triggers.
+    layer_id : int
+        Only samples of this layer are tested.
+    enabled : bool
+        Whether the trigger is tested.
+    """
 
     trigger_type: TriggerType
     threshold: float = 0.5
@@ -391,7 +566,23 @@ class TriggerCondition:
 
 @dataclass
 class TriggerEvent:
-    """A triggered capture event."""
+    """A triggered capture event.
+
+    Attributes
+    ----------
+    trigger_type : TriggerType
+        The trigger that fired.
+    timestamp_ns : int
+        The sample's time.
+    layer_id : int
+        The sample's layer.
+    measured_value : float
+        The sample's density.
+    threshold : float
+        The trigger's threshold.
+    sample : BitstreamSample
+        The sample itself.
+    """
 
     trigger_type: TriggerType
     timestamp_ns: int
@@ -402,7 +593,17 @@ class TriggerEvent:
 
 
 class TriggerEngine:
-    """Evaluates capture triggers against incoming samples."""
+    """Evaluates capture triggers against incoming samples.
+
+    Attributes
+    ----------
+    conditions : list of TriggerCondition
+        The triggers, tested in order.
+    events : list of TriggerEvent
+        Fired events, the first ``max_events`` of them.
+    max_events : int
+        Largest number of events kept; later ones are returned but not kept.
+    """
 
     def __init__(self) -> None:
         self.conditions: List[TriggerCondition] = []
@@ -410,10 +611,26 @@ class TriggerEngine:
         self.max_events: int = 1000
 
     def add_trigger(self, condition: TriggerCondition) -> None:
+        """Append a trigger condition."""
         self.conditions.append(condition)
 
     def evaluate(self, sample: BitstreamSample) -> List[TriggerEvent]:
-        """Check all triggers against a sample. Returns fired events."""
+        """Check all triggers against a sample. Returns fired events.
+
+        Each enabled trigger of the sample's layer is tested once: density
+        above or below the threshold, or any one bit for a spike. The work
+        grows with the number of triggers and of the sample's words.
+
+        Parameters
+        ----------
+        sample : BitstreamSample
+            The sample.
+
+        Returns
+        -------
+        list of TriggerEvent
+            The events of this sample, in trigger order.
+        """
         fired = []
         for cond in self.conditions:
             if not cond.enabled:
@@ -449,9 +666,11 @@ class TriggerEngine:
 
     @property
     def event_count(self) -> int:
+        """Number of kept events."""
         return len(self.events)
 
     def clear(self) -> None:
+        """Drop every kept event; the triggers stay."""
         self.events.clear()
 
 
@@ -460,7 +679,23 @@ class TriggerEngine:
 
 @dataclass
 class ScopeSession:
-    """Manages a live debugging session."""
+    """Manages a live debugging session.
+
+    Attributes
+    ----------
+    transport : TransportBackend
+        Where samples come from.
+    analyzer : LiveAnalyzer
+        Where samples are analysed.
+    triggers : TriggerEngine
+        The capture triggers.
+    error_budgets : dict of int to LayerErrorBudget
+        One budget per tracked layer.
+    is_running : bool
+        Whether the session has started and not stopped.
+    sample_count : int
+        Samples captured.
+    """
 
     transport: TransportBackend
     analyzer: LiveAnalyzer
@@ -471,7 +706,15 @@ class ScopeSession:
     _start_time_ns: int = 0
 
     def start(self) -> bool:
-        """Start the scope session."""
+        """Start the scope session.
+
+        Connects the transport and records the start time.
+
+        Returns
+        -------
+        bool
+            ``False`` when the transport does not connect.
+        """
         if not self.transport.connect():
             return False
         self.is_running = True
@@ -479,16 +722,47 @@ class ScopeSession:
         return True
 
     def stop(self) -> None:
+        """Stop the session and disconnect the transport; the start time stays."""
         self.is_running = False
         self.transport.disconnect()
 
     def add_error_budget(self, layer_id: int, expected_density: float, tol: float = 0.05) -> None:
+        """Track one layer's density against an expected value.
+
+        Parameters
+        ----------
+        layer_id : int
+            The layer.
+        expected_density : float
+            The golden model's density.
+        tol : float
+            Largest accepted absolute difference.
+        """
         self.error_budgets[layer_id] = LayerErrorBudget(layer_id, expected_density, tol)
 
     def capture_one(
         self, layer_id: int = 0, neuron_id: int = 0, num_words: int = 8
     ) -> Optional[BitstreamSample]:
-        """Capture one bitstream sample from the target."""
+        """Capture one bitstream sample from the target.
+
+        The sample is analysed, checked against the layer's error budget if
+        one exists, and tested by the triggers.
+
+        Parameters
+        ----------
+        layer_id : int
+            Layer to read.
+        neuron_id : int
+            Neuron recorded with the sample.
+        num_words : int
+            32-bit words to read.
+
+        Returns
+        -------
+        BitstreamSample or None
+            The sample; ``None`` when the session is not running or the
+            transport read nothing.
+        """
         if not self.is_running:
             return None
         words = self.transport.read_bitstream(num_words, layer_id)
@@ -514,7 +788,20 @@ class ScopeSession:
         return sample
 
     def capture_sweep(self, num_layers: int, num_words: int = 8) -> List[BitstreamSample]:
-        """Capture one sample from each layer."""
+        """Capture one sample from each layer.
+
+        Parameters
+        ----------
+        num_layers : int
+            Layers 0 to ``num_layers - 1`` are read, each as neuron 0.
+        num_words : int
+            32-bit words per sample.
+
+        Returns
+        -------
+        list of BitstreamSample
+            The samples that were read.
+        """
         samples = []
         for lid in range(num_layers):
             s = self.capture_one(layer_id=lid, num_words=num_words)
@@ -523,6 +810,15 @@ class ScopeSession:
         return samples
 
     def status(self) -> Dict[str, Any]:
+        """Return the session's state for display.
+
+        Returns
+        -------
+        dict of str to Any
+            Running flag, samples, seconds since the start (still counting
+            after a stop), bytes received, kept trigger events and tracked
+            layers.
+        """
         elapsed = (time.time_ns() - self._start_time_ns) / 1e9 if self._start_time_ns else 0
         return {
             "running": self.is_running,
@@ -544,12 +840,32 @@ class ScopeRenderer:
 
     @classmethod
     def render_density_bar(cls, density: float, width: int = 40) -> str:
-        """Render a density as a text bar."""
+        """Render a density as a text bar.
+
+        A density outside [0, 1] is not clamped, so the bar is then longer
+        than ``width``: above 1 with more filled cells, below 0 with more
+        empty ones.
+        """
         filled = int(density * width)
         return f"[{'█' * filled}{'░' * (width - filled)}] {density:.3f}"
 
     @classmethod
     def render_layer_summary(cls, layer_id: int, stats: Dict[str, float]) -> str:
+        """Render one layer's statistics as one line.
+
+        Parameters
+        ----------
+        layer_id : int
+            The layer.
+        stats : dict of str to float
+            Its :meth:`LiveAnalyzer.layer_stats`.
+
+        Returns
+        -------
+        str
+            A density bar, the mean entropy measure and the sample count, or
+            "(no data)" for empty statistics.
+        """
         if not stats:
             return f"  L{layer_id}: (no data)"
         density = stats.get("mean_density", 0.0)
@@ -560,7 +876,10 @@ class ScopeRenderer:
 
     @classmethod
     def render_session(cls, session: ScopeSession) -> str:
-        """Render full session status as text."""
+        """Render full session status as text.
+
+        Error budgets show a check mark at a pass rate of 95 % or more.
+        """
         lines = ["═══ SC Bitstream Scope ═══"]
         st = session.status()
         lines.append(f"  Status: {'● LIVE' if st['running'] else '○ STOPPED'}")
