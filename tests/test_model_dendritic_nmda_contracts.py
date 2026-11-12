@@ -16,13 +16,17 @@ import pytest
 
 
 class TestDendriticNMDANeuron:
+    """Public behaviour of the dendritic NMDA neuron through its exported class."""
+
     @pytest.fixture()
     def neuron(self):
+        """Return a neuron with the default parameters."""
         from sc_neurocore.neurons.models import DendriticNMDANeuron
 
         return DendriticNMDANeuron()
 
     def test_defaults(self, neuron):
+        """Both compartments start at rest and the magnesium concentration is 1 mM."""
         assert neuron.v_soma == -65.0
         assert neuron.v_dend == -65.0
         assert neuron.mg_conc == 1.0
@@ -69,6 +73,7 @@ class TestDendriticNMDANeuron:
             DendriticNMDANeuron().step(i_soma, glutamate)
 
     def test_step_returns_binary(self, neuron):
+        """A step returns 0 or 1 and nothing else."""
         s = neuron.step(10.0, 0.5)
         assert s in (0, 1)
 
@@ -109,10 +114,11 @@ class TestDendriticNMDANeuron:
         for _ in range(500):
             n2.step(30.0, 1.0)
         v_with_glut = n2.v_dend
-        # With glutamate, dendrite should differ due to NMDA current.
-        assert v_no_glut != v_with_glut
+        # The inward NMDA current raises the dendrite by a stated least amount.
+        assert v_with_glut > v_no_glut + 3.0
 
     def test_reset(self, neuron):
+        """Reset returns both compartments to -65 mV after a run."""
         for _ in range(100):
             neuron.step(30.0, 0.5)
         neuron.reset()

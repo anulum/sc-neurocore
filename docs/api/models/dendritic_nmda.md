@@ -40,9 +40,13 @@ where:
 - $B(V_d)$ is the Mg²⁺ block factor at dendritic potential
 - $E_{\text{NMDA}} = 0$ mV is the NMDA reversal potential
 
+$I_{\text{NMDA}}$ is a membrane current in the usual sign convention. Below
+$E_{\text{NMDA}}$ it is negative, that is inward, and it enters the dendrite
+equation with a minus sign, so it depolarises the dendrite.
+
 **Dendritic dynamics:**
 
-$$\tau_d \frac{dV_d}{dt} = -(V_d - E_L) + I_{\text{NMDA}} + g_c \cdot (V_s - V_d)$$
+$$\tau_d \frac{dV_d}{dt} = -(V_d - E_L) - I_{\text{NMDA}} + g_c \cdot (V_s - V_d)$$
 
 where $E_L = -65$ mV is the leak reversal and $g_c = 0.5$ is the coupling conductance.
 
@@ -82,9 +86,17 @@ The NMDA channel operates as an AND gate:
 | Glutamate | V_dend | B(V) | I_NMDA | Biological meaning |
 |-----------|--------|------|--------|-------------------|
 | 0 | -65 mV | 0.06 | 0 | No presynaptic input |
-| 1 | -65 mV | 0.06 | small | Pre but no post (blocked) |
-| 0 | 0 mV | 0.78 | 0 | Post but no pre |
-| 1 | 0 mV | 0.78 | large | **Both pre and post (AND)** |
+| 1 | -65 mV | 0.06 | -5.8 (inward, small) | Pre but no post (blocked) |
+| 0 | -30 mV | 0.36 | 0 | Post but no pre |
+| 1 | -30 mV | 0.36 | -16.1 (inward, larger) | **Both pre and post (AND)** |
+
+The current values use the default $g_{\text{NMDA}} = 1.5$. At
+$V_d = E_{\text{NMDA}} = 0$ mV the block is largely relieved ($B = 0.78$) but the
+driving force, and with it the current, is zero.
+
+With the default parameters this shows in the spike count: a somatic current of
+20 alone stays below threshold, glutamate alone stays below threshold, and both
+together fire the soma (`tests/test_model_dendritic_nmda.py`).
 
 This coincidence detection is the biophysical basis of Hebbian learning
 and is fundamental to long-term potentiation (LTP) in the hippocampus.
@@ -243,7 +255,7 @@ Binary spike (0 or 1)
 | **Hard spike reset** | Soma resets to E_L on spike |
 | **Candidate-first RK4** | Production path integrates `(v_soma, v_dend)` with RK4 before committing state |
 | **Baseline comparison** | `integrator="baseline_euler"` preserves the historical dendrite-first Euler path |
-| **Polyglot parity** | Python, Rust engine, Rust safety, Go, Julia, and Mojo share the 253-spike anchor |
+| **Polyglot parity** | Python, Rust engine, Rust safety, Go, Julia, and Mojo share the 266-spike anchor |
 
 ---
 
@@ -372,7 +384,7 @@ Reset v_soma and v_dend to -65.0 mV.
 |-----------|--------|------|
 | Mg block | `1/(1 + (mg/3.57)*exp(-0.062*v))` | `1.0/(1.0 + (mg/3.57)*(-0.062*v).exp())` |
 | I_NMDA | `g*glut*B*(V_d - E)` | `g*glut*b*(v_dend - e_nmda)` |
-| dV_d/dt | `(-V_d - 65 + I_nmda + g_c*(V_s-V_d))/tau_d` | identical |
+| dV_d/dt | `(-V_d - 65 - I_nmda + g_c*(V_s-V_d))/tau_d` | identical |
 | dV_s/dt | `(-V_s - 65 + I_ext + g_c*(V_d-V_s))/tau_s` | identical |
 | Integrator | Candidate-first RK4 over `(v_soma, v_dend)` | identical |
 | Spike | `next_v_soma >= theta → v_soma = -65` | identical |
@@ -394,17 +406,20 @@ Reset v_soma and v_dend to -65.0 mV.
 Measured local regression results from
 `benchmarks/results/local_python_2026-06-26_dendritic_nmda_rk4.json`.
 The run used 20,000 steps, five repeats, `i_soma=50.0`, `glutamate=0.5`,
-and the expected 253-spike anchor. The evidence class is
+and the expected 266-spike anchor. The evidence class is
 `local_regression_non_isolated`; it verifies parity and regression timing on the
-local workstation, not isolated CPU-core benchmark performance.
+local workstation, not isolated CPU-core benchmark performance. The record
+was measured on 2026-11-12 with other work running on the workstation (load
+average about 9 to 10 on 12 cores), so the spread between minimum and
+maximum, largest for Julia, reflects that load.
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Command |
 |---------|----------------|-------------|-------------|--------|---------|
-| Python | 3602.653 | 3565.111 | 3756.433 | 253 | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_dendritic_nmda.py` |
-| Rust engine | 101.743 | 100.656 | 106.196 | 253 | `cargo run --release --manifest-path engine/Cargo.toml --example bench_dendritic_nmda_rk4` |
-| Go service | 188.400 | 180.800 | 196.500 | 253 | `go test ... -bench BenchmarkDendriticNMDARK4` |
-| Julia mirror | 127.686 | 122.129 | 128.417 | 253 | `julia --project=. -e <dendritic_nmda rk4 benchmark>` |
-| Mojo kernel | Smoke only | Smoke only | Smoke only | 253 | `mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` |
+| Python | 3930.133 | 3709.722 | 4364.354 | 266 | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_dendritic_nmda.py` |
+| Rust engine | 119.407 | 117.984 | 126.049 | 266 | `cargo run --release --manifest-path engine/Cargo.toml --example bench_dendritic_nmda_rk4` |
+| Go service | 220.500 | 211.100 | 237.800 | 266 | `go test ... -bench BenchmarkDendriticNMDARK4` |
+| Julia mirror | 138.354 | 133.170 | 164.554 | 266 | `julia --project=. -e <dendritic_nmda rk4 benchmark>` |
+| Mojo kernel | Smoke only | Smoke only | Smoke only | 266 | `mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` |
 
 ### Benchmark artefacts
 
@@ -461,12 +476,12 @@ local workstation, not isolated CPU-core benchmark performance.
 
 | Test | What it verifies | Status |
 |------|-----------------|--------|
-| `tests/test_model_dendritic_nmda.py` | Default RK4 path, Euler comparison, public import wiring, invalid-input preservation | PASS |
-| `tests/test_gap_models.py::TestDendriticNMDANeuron` | Legacy public behavior checks for Mg²⁺ block, spiking, coincidence detection, reset | PASS |
+| `tests/test_model_dendritic_nmda.py` | Default RK4 path, Euler comparison, public import wiring, invalid-input preservation; glutamate depolarises the dendrite to its balance point, turns a subthreshold current into firing and adds spikes at a firing current | PASS |
+| `tests/test_model_dendritic_nmda_contracts.py` | Public behaviour checks for Mg²⁺ block, spiking, coincidence detection, reset | PASS |
 | `cargo test --manifest-path engine/Cargo.toml --lib nmda_` | Rust engine NMDA unit anchor and related NMDA library checks | PASS |
 | `go test src/sc_neurocore/accel/go/services/dendritic_nmda.go src/sc_neurocore/accel/go/services/dendritic_nmda_test.go` | Go mirror anchor and invalid-state preservation | PASS |
 | `rustc --test src/sc_neurocore/accel/rust/safety/dendritic_nmda.rs` | Standalone Rust safety mirror anchor and invalid-state preservation | PASS |
-| `julia --project=. -e <dendritic_nmda anchor>` | Julia mirror 253-spike anchor | PASS |
+| `julia --project=. -e <dendritic_nmda anchor>` | Julia mirror 266-spike anchor | PASS |
 | `mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` | Mojo smoke anchor | PASS |
 
 ### Equation-to-code traceability
@@ -475,7 +490,7 @@ local workstation, not isolated CPU-core benchmark performance.
 |----------|----------------|---------------|
 | $B(V) = 1/(1 + [Mg]/3.57 \cdot e^{-0.062V})$ | `_mg_block_value` | `mg_block` |
 | $I_{NMDA} = g \cdot \text{glut} \cdot B \cdot (V_d - E)$ | `_derivatives` | `derivatives` |
-| $\tau_d \, dV_d/dt$ | `_derivatives` | `derivatives` |
+| $\tau_d \, dV_d/dt$, with $-I_{NMDA}$ | `_derivatives` | `derivatives` |
 | $\tau_s \, dV_s/dt$ | `_derivatives` | `derivatives` |
 | RK4 candidate | `_rk4_substep` | `rk4_substep` |
 

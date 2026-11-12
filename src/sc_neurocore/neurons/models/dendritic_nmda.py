@@ -17,12 +17,15 @@ The NMDA current is:
 
     I_NMDA = g_NMDA * glutamate * B(V_dend) * (V_dend - E_NMDA)
 
-This enables coincidence detection: the dendrite only passes current
-when both presynaptic glutamate AND postsynaptic depolarisation are present.
+It is a membrane current in the usual sign convention: below ``E_NMDA`` it is
+negative (inward) and enters the dendrite equation with a minus sign, so it
+depolarises. This enables coincidence detection: the dendrite only passes
+current when both presynaptic glutamate AND postsynaptic depolarisation are
+present.
 
 Dendrite dynamics:
 
-    tau_d * dV_d/dt = -(V_d - E_L) + I_NMDA + g_c * (V_s - V_d)
+    tau_d * dV_d/dt = -(V_d - E_L) - I_NMDA + g_c * (V_s - V_d)
 
 Soma dynamics:
 
@@ -86,6 +89,7 @@ class DendriticNMDANeuron:
     integrator: Literal["rk4", "baseline_euler"] = "rk4"
 
     def __post_init__(self) -> None:
+        """Refuse an unknown integrator and an invalid configuration at construction."""
         if self.integrator not in ("rk4", "baseline_euler"):
             raise ValueError("integrator must be 'rk4' or 'baseline_euler'")
         self._validate_configuration()
@@ -132,7 +136,7 @@ class DendriticNMDANeuron:
         b = self._mg_block_value(v_dend)
         i_nmda = self.g_nmda * glutamate * b * (v_dend - self.e_nmda)
         dv_soma = (-v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)) / self.tau_soma
-        dv_dend = (-v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend
+        dv_dend = (-v_dend - 65.0 - i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend
         return dv_soma, dv_dend
 
     def _rk4_substep(self, state: _State, i_soma: float, glutamate: float) -> _State:
@@ -162,7 +166,7 @@ class DendriticNMDANeuron:
         b = self._mg_block_value(self.v_dend)
         i_nmda = self.g_nmda * glutamate * b * (self.v_dend - self.e_nmda)
         dv_dend = (
-            -self.v_dend - 65.0 + i_nmda + self.g_coupling * (self.v_soma - self.v_dend)
+            -self.v_dend - 65.0 - i_nmda + self.g_coupling * (self.v_soma - self.v_dend)
         ) / self.tau_dend
         next_v_dend = self.v_dend + dv_dend * self.dt
         i_dend_to_soma = self.g_coupling * (next_v_dend - self.v_soma)

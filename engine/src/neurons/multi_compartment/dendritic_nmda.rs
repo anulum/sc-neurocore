@@ -15,10 +15,12 @@
 /// Captures the non-linear voltage-dependent Mg²⁺ block of NMDA receptors
 /// in dendritic branches. NMDA current has a sigmoidal voltage dependence:
 ///
-///   I_NMDA = g_NMDA · B(V) · (V - E_NMDA)
+///   I_NMDA = g_NMDA · glutamate · B(V) · (V - E_NMDA)
 ///   B(V) = 1 / (1 + [Mg²⁺]/3.57 · exp(-0.062 · V))
 ///
-/// This enables coincidence detection: the dendrite only passes current
+/// I_NMDA is a membrane current in the usual sign convention: below E_NMDA it is
+/// negative (inward) and enters the dendrite equation with a minus sign, so it
+/// depolarises. This enables coincidence detection: the dendrite only passes current
 /// when both presynaptic glutamate AND postsynaptic depolarisation are present.
 ///
 /// Reference: Jahr & Stevens (1990), Schiller et al. (2000).
@@ -93,7 +95,7 @@ impl DendriticNMDANeuron {
         let dv_soma =
             (-v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)) / self.tau_soma;
         let dv_dend =
-            (-v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend;
+            (-v_dend - 65.0 - i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend;
         (dv_soma, dv_dend)
     }
 
@@ -123,8 +125,8 @@ impl DendriticNMDANeuron {
     ///
     /// One classical Runge-Kutta step of `dt` of
     /// `tau_soma * dv_soma/dt = -(v_soma + 65) + i_soma + g_coupling * (v_dend - v_soma)` and
-    /// `tau_dend * dv_dend/dt = -(v_dend + 65) + i_nmda + g_coupling * (v_soma - v_dend)`, with
-    /// `i_nmda = g_nmda * glutamate * B(v_dend) * (v_dend - e_nmda)` added as written. The soma
+    /// `tau_dend * dv_dend/dt = -(v_dend + 65) - i_nmda + g_coupling * (v_soma - v_dend)`, with
+    /// `i_nmda = g_nmda * glutamate * B(v_dend) * (v_dend - e_nmda)` subtracted. The soma
     /// reaching `theta` resets it to -65 mV and returns 1, else 0. A non-finite input, a
     /// negative `glutamate`, an invalid parameter or a non-finite result returns 0 and
     /// leaves the state unchanged.
@@ -166,22 +168,48 @@ mod tests {
 
     #[test]
     fn nmda_coincidence_detection() {
-        let mut n = DendriticNMDANeuron::new();
-        // Only soma input — dendrite contributes little.
-        let mut spikes_soma_only = 0;
-        for _ in 0..2000 {
-            spikes_soma_only += n.step(8.0, 0.0);
-        }
-        n.reset();
-        // Soma + glutamate — NMDA amplifies.
-        let mut spikes_both = 0;
-        for _ in 0..2000 {
-            spikes_both += n.step(8.0, 1.0);
-        }
-        // Coincidence: both inputs together should fire more.
+        let run = |i_soma: f64, glutamate: f64| -> i32 {
+            let mut n = DendriticNMDANeuron::new();
+            (0..20_000).map(|_| n.step(i_soma, glutamate)).sum()
+        };
+        // Neither input alone fires the soma; both together do.
+        assert_eq!(
+            run(20.0, 0.0),
+            0,
+            "soma current 20 alone must stay below threshold"
+        );
+        assert_eq!(
+            run(0.0, 1.0),
+            0,
+            "glutamate alone must stay below threshold"
+        );
+        let both = run(20.0, 1.0);
         assert!(
-            spikes_both >= spikes_soma_only,
-            "NMDA coincidence: both={spikes_both} must >= soma_only={spikes_soma_only}"
+            (50..=70).contains(&both),
+            "soma current 20 with glutamate must fire: {both}"
+        );
+        // At a current that fires alone, glutamate adds spikes by a stated margin.
+        let soma_only = run(40.0, 0.0);
+        let with_glutamate = run(40.0, 1.0);
+        assert!(
+            (180..=200).contains(&soma_only),
+            "soma current 40 alone: {soma_only}"
+        );
+        assert!(
+            (soma_only + 10..=soma_only + 30).contains(&with_glutamate),
+            "glutamate must add spikes: with={with_glutamate}, soma_only={soma_only}"
+        );
+    }
+
+    #[test]
+    fn nmda_glutamate_alone_depolarises_the_dendrite() {
+        let mut n = DendriticNMDANeuron::new();
+        let spikes: i32 = (0..20_000).map(|_| n.step(0.0, 1.0)).sum();
+        assert_eq!(spikes, 0);
+        assert!(
+            (-60.0..-59.0).contains(&n.v_dend),
+            "an inward NMDA current must raise the dendrite to its balance point: v_dend={}",
+            n.v_dend
         );
     }
 
@@ -207,7 +235,7 @@ mod tests {
     fn nmda_rk4_cross_backend_anchor() {
         let mut n = DendriticNMDANeuron::new();
         let spikes: i32 = (0..20_000).map(|_| n.step(50.0, 0.5)).sum();
-        assert_eq!(spikes, 253);
+        assert_eq!(spikes, 266);
         assert!(n.v_soma.is_finite());
         assert!(n.v_dend.is_finite());
     }

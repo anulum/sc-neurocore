@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1881
+expected_file_count = 1885
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7578,3 +7578,19 @@ rationale = "Real-file contracts for descriptor field rustdoc: rendering, placem
 [[file]]
 path = "src/sc_neurocore/neurons/models/astrocyte_lif.py"
 rationale = "Astrocyte-LIF model whose membrane formula was corrected in the Rust documentation burndown; public surface documented in NumPy form from the code."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/dendritic_nmda.py"
+rationale = "Public two-compartment neuron with the voltage-dependent NMDA magnesium block; its documentation states the sign convention of the NMDA current."
+
+[[file]]
+path = "benchmarks/bench_model_dendritic_nmda.py"
+rationale = "Local regression driver that runs the dendritic NMDA anchor in every lane and records spikes, timing and the hashes of its sources."
+
+[[file]]
+path = "tests/test_model_dendritic_nmda.py"
+rationale = "Bind the dendritic NMDA model's integrators, lane anchor and defining behaviour: glutamate depolarises the dendrite and turns a subthreshold current into firing."
+
+[[file]]
+path = "tests/test_model_dendritic_nmda_contracts.py"
+rationale = "Bind the public behaviour of the dendritic NMDA class: defaults, refusals, the magnesium block and coincidence detection."

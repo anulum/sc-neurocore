@@ -7,6 +7,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Dendritic NMDA RK4 multi-backend local regression benchmark
 
+"""Run the dendritic NMDA anchor in every lane and record spikes and timing.
+
+The record is local regression evidence, not an isolated benchmark: it shows
+that the Python, Rust, Go, Julia and Mojo lanes give the same spike count for
+one drive and how long a step took on the workstation at that moment.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -254,6 +261,7 @@ def _run_mojo_backend() -> dict[str, object]:
 
 
 def main() -> None:
+    """Run every lane and write the record with the hashes of its sources."""
     report: dict[str, object] = {
         "benchmark": "dendritic_nmda_rk4",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -263,7 +271,7 @@ def main() -> None:
         "repeats": REPEATS,
         "i_soma": I_SOMA,
         "glutamate": GLUTAMATE,
-        "expected_spikes": 253,
+        "expected_spikes": 266,
         "source_hashes": _source_hashes(),
         "backends": [
             _run_python_backend(),
@@ -275,7 +283,7 @@ def main() -> None:
         "evidence_class": "local_regression_non_isolated",
         "notes": [
             "Functional parity and local regression timing only; this is not isolated CPU benchmark evidence.",
-            "All available backends are expected to produce 253 spikes for the 20,000-step anchor.",
+            "All available backends are expected to produce 266 spikes for the 20,000-step anchor.",
         ],
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

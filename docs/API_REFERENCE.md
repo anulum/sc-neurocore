@@ -31410,6 +31410,7 @@ integrator : {"rk4", "baseline_euler"}
     update as an explicit comparison path.
 
 - **__post_init__**()
+  - Refuse an unknown integrator and an invalid configuration at construction.
 - **mg_block**(v)
   - Mg2+ block factor: B(V) = 1/(1 + &#91;Mg&#93;/3.57 * exp(-0.062*V)).
 - **step**(i_soma, glutamate)

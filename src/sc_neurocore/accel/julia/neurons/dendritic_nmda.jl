@@ -45,7 +45,7 @@ end
     block = mg_block(s, v_dend)
     i_nmda = s.g_nmda * glutamate * block * (v_dend - s.e_nmda)
     dv_soma = (-v_soma - 65.0 + i_soma + s.g_coupling * (v_dend - v_soma)) / s.tau_soma
-    dv_dend = (-v_dend - 65.0 + i_nmda + s.g_coupling * (v_soma - v_dend)) / s.tau_dend
+    dv_dend = (-v_dend - 65.0 - i_nmda + s.g_coupling * (v_soma - v_dend)) / s.tau_dend
     return dv_soma, dv_dend
 end
 

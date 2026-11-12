@@ -19,11 +19,46 @@ func TestDendriticNMDACrossBackendAnchor(t *testing.T) {
 	for i := 0; i < 20_000; i++ {
 		spikes += state.Step(50.0, 0.5)
 	}
-	if spikes != 253 {
-		t.Fatalf("spikes = %d, want 253", spikes)
+	if spikes != 266 {
+		t.Fatalf("spikes = %d, want 266", spikes)
 	}
 	if !finite(state.VSoma, state.VDend) {
 		t.Fatalf("non-finite final state: soma=%g dend=%g", state.VSoma, state.VDend)
+	}
+}
+
+// TestDendriticNMDACoincidenceDetection holds the model's defining behaviour: neither a
+// subthreshold soma current nor glutamate alone fires, both together do, and glutamate
+// adds spikes at a current that fires alone.
+func TestDendriticNMDACoincidenceDetection(t *testing.T) {
+	run := func(iSoma, glutamate float64) (int, float64) {
+		state := NewDendriticNMDANeuron()
+		spikes := 0
+		for i := 0; i < 20_000; i++ {
+			spikes += state.Step(iSoma, glutamate)
+		}
+		return spikes, state.VDend
+	}
+	if spikes, _ := run(20.0, 0.0); spikes != 0 {
+		t.Fatalf("soma current 20 alone fired %d times, want 0", spikes)
+	}
+	spikes, vDend := run(0.0, 1.0)
+	if spikes != 0 {
+		t.Fatalf("glutamate alone fired %d times, want 0", spikes)
+	}
+	if vDend <= -60.0 || vDend >= -59.0 {
+		t.Fatalf("balance point of the dendrite must lie in (-60, -59): vDend=%g", vDend)
+	}
+	if both, _ := run(20.0, 1.0); both < 50 || both > 70 {
+		t.Fatalf("soma current 20 with glutamate fired %d times, want 50 to 70", both)
+	}
+	somaOnly, _ := run(40.0, 0.0)
+	withGlutamate, _ := run(40.0, 1.0)
+	if somaOnly < 180 || somaOnly > 200 {
+		t.Fatalf("soma current 40 alone fired %d times, want 180 to 200", somaOnly)
+	}
+	if withGlutamate < somaOnly+10 || withGlutamate > somaOnly+30 {
+		t.Fatalf("glutamate must add 10 to 30 spikes: with=%d somaOnly=%d", withGlutamate, somaOnly)
 	}
 }
 

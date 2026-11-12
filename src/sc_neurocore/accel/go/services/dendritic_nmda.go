@@ -65,7 +65,7 @@ func (s *DendriticNMDANeuronState) derivatives(vSoma float64, vDend float64, iSo
 	block := s.mgBlock(vDend)
 	iNmda := s.GNmda * glutamate * block * (vDend - s.ENmda)
 	dvSoma := (-vSoma - 65.0 + iSoma + s.GCoupling*(vDend-vSoma)) / s.TauSoma
-	dvDend := (-vDend - 65.0 + iNmda + s.GCoupling*(vSoma-vDend)) / s.TauDend
+	dvDend := (-vDend - 65.0 - iNmda + s.GCoupling*(vSoma-vDend)) / s.TauDend
 	return dvSoma, dvDend
 }
 

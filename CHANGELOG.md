@@ -12,6 +12,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Fix the sign of the NMDA current in the dendritic NMDA neuron. The current
+  `g_NMDA * glutamate * B(V_d) * (V_d - E_NMDA)` was added to the dendrite's
+  equation. Below `E_NMDA` it is negative, so glutamate lowered the dendritic
+  potential and removed spikes, the opposite of the model's stated behaviour.
+  It now depolarises below `E_NMDA`, as in the library's other NMDA models, in
+  every lane: Python, the Rust engine, the Rust safety mirror, Go, Julia and
+  Mojo. With the default parameters a somatic current of 20 alone and
+  glutamate alone stay below threshold, and both together fire. The
+  20,000-step anchor at current 50
+  and glutamate 0.5 moves from 253 to 266 spikes. Results computed with this
+  model before the fix have the glutamate effect inverted. The tests now hold
+  the behaviour in a form that can fail: two-sided bounds on the spike counts
+  and the dendrite's balance point solved from the documented equations. The
+  Mojo kernel is rewritten for Mojo 1.0.0, under which the previous file did not
+  compile. The model's page states the sign convention, corrects the
+  coincidence table and names the test files that exist. The benchmark record
+  is measured again.
+
 - State the deterministic error bound of threshold encoding for the points
   actually used. The new `threshold_encoding_error_bound(points)` returns the
   exact worst-case decoding error of a point set (its one-dimensional star

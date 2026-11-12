@@ -6,66 +6,58 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo candidate-first RK4 kernel for dendritic NMDA
 
-from math import exp
-
-alias State = SIMD[DType.float64, 4]
+from std.math import exp
 
 
-struct DendriticNMDA(Copyable, Movable):
-    var g_nmda: Float64
-    var e_nmda: Float64
-    var mg_conc: Float64
-    var g_coupling: Float64
-    var tau_soma: Float64
-    var tau_dend: Float64
-    var theta: Float64
-    var dt: Float64
-
-    fn __init__(out self):
-        self.g_nmda = 1.5
-        self.e_nmda = 0.0
-        self.mg_conc = 1.0
-        self.g_coupling = 0.5
-        self.tau_soma = 20.0
-        self.tau_dend = 50.0
-        self.theta = -50.0
-        self.dt = 0.1
-
-    fn mg_block(self, v_dend: Float64) -> Float64:
-        return 1.0 / (1.0 + (self.mg_conc / 3.57) * exp(-0.062 * v_dend))
-
-    fn derivatives(self, y: State, i_soma: Float64, glutamate: Float64) -> State:
-        var v_soma = y[0]
-        var v_dend = y[1]
-        var block = self.mg_block(v_dend)
-        var i_nmda = self.g_nmda * glutamate * block * (v_dend - self.e_nmda)
-        var d = State(0.0)
-        d[0] = (-v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)) / self.tau_soma
-        d[1] = (-v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend
-        return d
-
-    fn rk4_substep(self, y: State, i_soma: Float64, glutamate: Float64) -> State:
-        var dt = self.dt
-        var k1 = self.derivatives(y, i_soma, glutamate)
-        var k2 = self.derivatives(y + 0.5 * dt * k1, i_soma, glutamate)
-        var k3 = self.derivatives(y + 0.5 * dt * k2, i_soma, glutamate)
-        var k4 = self.derivatives(y + dt * k3, i_soma, glutamate)
-        return y + dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
-
-    fn simulate(self, n_steps: Int, i_soma: Float64, glutamate: Float64) -> Int:
-        var y = State(0.0)
-        y[0] = -65.0
-        y[1] = -65.0
-        var spikes = 0
-        for _ in range(n_steps):
-            y = self.rk4_substep(y, i_soma, glutamate)
-            if y[0] >= self.theta:
-                y[0] = -65.0
-                spikes += 1
-        return spikes
+def dendritic_nmda_mg_block(v_dend: Float64, mg_conc: Float64) -> Float64:
+    return 1.0 / (1.0 + (mg_conc / 3.57) * exp(-0.062 * v_dend))
 
 
-fn main():
-    var neuron = DendriticNMDA()
-    var spikes = neuron.simulate(20000, 50.0, 0.5)
+def dendritic_nmda_rhs(v_soma: Float64, v_dend: Float64, i_soma: Float64,
+                       glutamate: Float64) -> Tuple[Float64, Float64]:
+    var g_nmda = 1.5
+    var e_nmda = 0.0
+    var mg_conc = 1.0
+    var g_coupling = 0.5
+    var tau_soma = 20.0
+    var tau_dend = 50.0
+    var block = dendritic_nmda_mg_block(v_dend, mg_conc)
+    var i_nmda = g_nmda * glutamate * block * (v_dend - e_nmda)
+    return ((-v_soma - 65.0 + i_soma + g_coupling * (v_dend - v_soma)) / tau_soma,
+            (-v_dend - 65.0 - i_nmda + g_coupling * (v_soma - v_dend)) / tau_dend)
+
+
+def dendritic_nmda_step(v_soma: Float64, v_dend: Float64, i_soma: Float64,
+                        glutamate: Float64) -> Tuple[Float64, Float64, Int]:
+    var dt = 0.1
+    var theta = -50.0
+    var k1s, k1d = dendritic_nmda_rhs(v_soma, v_dend, i_soma, glutamate)
+    var k2s, k2d = dendritic_nmda_rhs(v_soma + 0.5 * dt * k1s, v_dend + 0.5 * dt * k1d,
+                                      i_soma, glutamate)
+    var k3s, k3d = dendritic_nmda_rhs(v_soma + 0.5 * dt * k2s, v_dend + 0.5 * dt * k2d,
+                                      i_soma, glutamate)
+    var k4s, k4d = dendritic_nmda_rhs(v_soma + dt * k3s, v_dend + dt * k3d,
+                                      i_soma, glutamate)
+    var next_soma = v_soma + dt * (k1s + 2.0 * k2s + 2.0 * k3s + k4s) / 6.0
+    var next_dend = v_dend + dt * (k1d + 2.0 * k2d + 2.0 * k3d + k4d) / 6.0
+    if next_soma >= theta:
+        return (-65.0, next_dend, 1)
+    return (next_soma, next_dend, 0)
+
+
+def dendritic_nmda_simulate(n_steps: Int, i_soma: Float64,
+                            glutamate: Float64) -> Tuple[Int, Float64, Float64]:
+    var v_soma = -65.0
+    var v_dend = -65.0
+    var spikes = 0
+    for _ in range(n_steps):
+        var spike: Int
+        v_soma, v_dend, spike = dendritic_nmda_step(v_soma, v_dend, i_soma, glutamate)
+        spikes += spike
+    return (spikes, v_soma, v_dend)
+
+
+def main():
+    var spikes, v_soma, v_dend = dendritic_nmda_simulate(20000, 50.0, 0.5)
+    print("dendritic_nmda final state:", v_soma, v_dend)
     print("dendritic_nmda spikes:", spikes)

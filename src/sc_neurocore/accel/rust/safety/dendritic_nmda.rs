@@ -67,7 +67,7 @@ impl DendriticNMDANeuron {
         let dv_soma =
             (-v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)) / self.tau_soma;
         let dv_dend =
-            (-v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend;
+            (-v_dend - 65.0 - i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend;
         (dv_soma, dv_dend)
     }
 
@@ -146,9 +146,32 @@ mod tests {
         for _ in 0..20_000 {
             spikes += state.step(50.0, 0.5);
         }
-        assert_eq!(spikes, 253);
+        assert_eq!(spikes, 266);
         assert!(state.v_soma.is_finite());
         assert!(state.v_dend.is_finite());
+    }
+
+    #[test]
+    fn test_dendritic_nmda_coincidence_detection() {
+        let run = |i_soma: f64, glutamate: f64| -> (i32, f64) {
+            let mut state = DendriticNMDANeuron::new();
+            let mut spikes = 0_i32;
+            for _ in 0..20_000 {
+                spikes += state.step(i_soma, glutamate);
+            }
+            (spikes, state.v_dend)
+        };
+        assert_eq!(run(20.0, 0.0).0, 0);
+        let (glutamate_only, v_dend) = run(0.0, 1.0);
+        assert_eq!(glutamate_only, 0);
+        assert!(
+            (-60.0..-59.0).contains(&v_dend),
+            "balance point of the dendrite: {v_dend}"
+        );
+        assert!((50..=70).contains(&run(20.0, 1.0).0));
+        let soma_only = run(40.0, 0.0).0;
+        assert!((180..=200).contains(&soma_only));
+        assert!((soma_only + 10..=soma_only + 30).contains(&run(40.0, 1.0).0));
     }
 
     #[test]
