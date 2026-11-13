@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 33,
-    "outdated": 94,
+    "current": 34,
+    "outdated": 93,
     "unbound": 191
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 15,
-    "outdated": 71,
+    "current": 16,
+    "outdated": 70,
     "unbound": 1
   },
   "rows": [
@@ -826,12 +826,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            "engine/Cargo.toml",
-            "engine/src/neurons/biophysical.rs",
-            "engine/src/neurons/biophysical/hill_tononi.rs"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "bench_hill_tononi.json",
           "script": "bench_model_hill_tononi.py"
         }
