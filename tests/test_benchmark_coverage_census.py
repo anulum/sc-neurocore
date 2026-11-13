@@ -354,6 +354,41 @@ def _uncited_record(root: Path, name: str = "local_two_compartment_rk4.json") ->
     return source, record
 
 
+def _tracked_records_that_parse(root: Path) -> int:
+    """Count the JSON files Git tracks under ``benchmarks/results`` that parse.
+
+    This count is separate from the census's own walk: it asks Git for the list.
+    A file Git ignores is not a record, as for the census, so an old local
+    output on one host cannot make the two disagree.
+
+    Parameters
+    ----------
+    root : Path
+        A Git checkout.
+
+    Returns
+    -------
+    int
+        How many tracked files below the results directory parse as JSON.
+    """
+    listed = subprocess.run(
+        ["git", "ls-files", "-z", "--", "benchmarks/results"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    ).stdout.split(b"\0")
+    parsed = 0
+    for name in listed:
+        if not name.endswith(b".json"):
+            continue
+        try:
+            json.loads((root / os.fsdecode(name)).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        parsed += 1
+    return parsed
+
+
 class TestARecordNoModelNamesIsStillWatched:
     """A record that binds sources is watched even when no model's name is in it."""
 
@@ -410,18 +445,29 @@ class TestARecordNoModelNamesIsStillWatched:
         census = build_census(tmp_path)
         assert census["all_records"] == 1
 
+    def test_an_ignored_file_in_a_checkout_is_not_a_record(self, tmp_path: Path) -> None:
+        """A JSON file Git ignores, such as an old local experiment's output, is not counted.
+
+        The census counts the records Git tracks, and the separate count below
+        must agree with it on a host that holds such files.
+        """
+        _uncited_record(tmp_path)
+        subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+        (tmp_path / ".gitignore").write_text(
+            "benchmarks/results/experimental_runs/\n", encoding="utf-8"
+        )
+        ignored = tmp_path / "benchmarks" / "results" / "experimental_runs" / "local.json"
+        ignored.parent.mkdir(parents=True)
+        ignored.write_text("{}", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        assert build_census(tmp_path)["all_records"] == 1
+        assert _tracked_records_that_parse(tmp_path) == 1
+
     def test_the_committed_census_watches_every_record_that_parses(
         self, census: dict[str, object]
     ) -> None:
-        """Counted here by a separate walk of the results directory."""
-        results = REPO_ROOT / "benchmarks" / "results"
-        parsed = 0
-        for path in results.rglob("*.json"):
-            try:
-                json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            parsed += 1
+        """Counted here by a separate walk of the records Git tracks."""
+        parsed = _tracked_records_that_parse(REPO_ROOT)
         assert census["all_records"] == parsed
         all_totals = census["all_record_currency_totals"]
         cited_totals = census["record_currency_totals"]
