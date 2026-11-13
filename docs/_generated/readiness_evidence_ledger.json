@@ -995,7 +995,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261112T215957Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261113T165208Z__adaptive_threshold_if.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -4265,7 +4265,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "BrunelWangNeuron__cosim__20261112T220002Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20261113T165212Z__brunel_wang.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -17195,7 +17195,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "McCullochPittsNeuron__dynamics_faithful__20261112T220042Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__dynamics_faithful__20261113T165218Z__mcculloch_pitts.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -17204,7 +17204,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "McCullochPittsNeuron__class_validated__20261112T220037Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__class_validated__20261113T165215Z__mcculloch_pitts.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -22625,7 +22625,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "ResonateAndFireNeuron__cosim__20261112T220047Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20261113T165222Z__resonate_fire.json",
           "changed_subjects": [],
           "problems": []
         },

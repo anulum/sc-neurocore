@@ -19,11 +19,13 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, Self
+from types import FrameType
+from typing import Any, Protocol, Self
 
 from defusedxml import ElementTree as ET
 from defusedxml.common import DefusedXmlException
@@ -64,6 +66,44 @@ class CapturedExecution:
     timed_out: bool
     interruption: BaseException | None
     cleanup_error: subprocess.TimeoutExpired | None = None
+
+
+class _HeldInterrupt:
+    """Hold SIGINT while the validator starts, so that an interrupt cannot orphan it.
+
+    An interrupt raised inside ``subprocess.Popen``, after the child has started
+    but before ``Popen`` returns, leaves the caller without the process it must
+    stop and reap. On the main thread, while a Python handler owns SIGINT,
+    `hold` records the signal instead. The caller calls `release` first thing
+    inside the block that owns the process: it restores the handler and gives it
+    any held interrupt there. A child starts with default handlers, so the
+    validator itself stays interruptible.
+    """
+
+    def __init__(self) -> None:
+        self.signals: list[int] = []
+        self._previous: Any = None
+        self._installed = False
+
+    def _record(self, signum: int, _frame: FrameType | None) -> None:
+        self.signals.append(signum)
+
+    def hold(self) -> None:
+        """Record SIGINT from now on, when the main thread's handler is a Python one."""
+        if threading.current_thread() is threading.main_thread():
+            previous = signal.getsignal(signal.SIGINT)
+            if callable(previous):
+                self._previous = previous
+                signal.signal(signal.SIGINT, self._record)
+                self._installed = True
+
+    def release(self) -> None:
+        """Restore the previous handler and give it an interrupt held meanwhile."""
+        if self._installed:
+            signal.signal(signal.SIGINT, self._previous)
+            self._installed = False
+            if self.signals:
+                self._previous(signal.SIGINT, None)
 
 
 def _captured_bytes(descriptor: int) -> bytes:
@@ -133,6 +173,8 @@ def capture_execution(
         If private temporary output or an owned process cannot be accessed.
     """
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        held = _HeldInterrupt()
+        held.hold()
         try:
             process = subprocess.Popen(
                 command,
@@ -142,8 +184,11 @@ def capture_execution(
                 env=environment,
                 start_new_session=os.name == "posix",
             )
-        except OSError as error:
-            raise ExecutionStartError("validator process could not be started") from error
+        except BaseException as error:
+            held.release()
+            if isinstance(error, OSError):
+                raise ExecutionStartError("validator process could not be started") from error
+            raise
         deadline = time.monotonic() + timeout
         exit_code = -1
         timed_out = False
@@ -152,6 +197,9 @@ def capture_execution(
         captured_stdout = b""
         captured_stderr = b""
         try:
+            # The handler is restored here, where the process is owned; an
+            # interrupt held during the start is raised now and cleaned up below.
+            held.release()
             exit_code = process.wait(timeout=timeout)
             if sys.platform != "win32" and os.name == "posix":
                 _wait_for_owned_group(process, deadline, timeout)

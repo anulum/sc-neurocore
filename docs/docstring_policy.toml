@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1944
+expected_file_count = 1945
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7674,6 +7674,10 @@ rationale = "Interrupt and time out actual recorder children and verify their ex
 [[file]]
 path = "tests/test_facet_receipt_projection.py"
 rationale = "Reject damaged real validator artifacts without losing raw evidence or inventing scientific credit."
+
+[[file]]
+path = "tests/test_facet_receipt_interrupt_hold.py"
+rationale = "Hold an interrupt that lands while the validator starts until the process is owned, so cleanup stops and reaps it instead of leaving an orphan."
 
 [[file]]
 path = "tests/test_facet_receipt_provenance.py"
