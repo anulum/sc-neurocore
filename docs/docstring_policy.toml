@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1936
+expected_file_count = 1937
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7798,3 +7798,7 @@ rationale = "Bind which preflight gates a change selects, observed through recor
 [[file]]
 path = "tests/test_cli_maintenance.py"
 rationale = "Bind the maintenance commands' delegation: the benchmark suite in one child process, and the preflight with every gate and the whole test suite, as that command always ran."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/ai_optimized.py"
+rationale = "Eight AI-optimised neuron models, each documented as its step computes: parameters the classes never learn, the unused window and coupling fields, the free-running phase, the uniform attractor input and the self-referential rate that differs from the Rust lane within the first 50 steps."

@@ -39,12 +39,12 @@ in the 81-model NetworkRunner).
 | Model | Equation Summary | Use Case |
 |-------|-----------------|----------|
 | `MultiTimescaleNeuron` | Three-compartment (fast/medium/slow), slow compartment modulates threshold | Temporal context accumulation |
-| `AttentionGatedNeuron` | Sigmoid gate with learned key/query weights | Selective input filtering |
+| `AttentionGatedNeuron` | Sigmoid gate on the input with key/query weights (parameters; the class does not learn them) | Selective input filtering |
 | `PredictiveCodingNeuron` | Fires only on prediction errors | Novelty detection |
-| `SelfReferentialNeuron` | Introspects spike history, auto-regulates dynamics | Stable autonomous firing |
-| `CompositionalBindingNeuron` | Phase-coding with amplitude, in-phase = bound | Variable binding |
-| `DifferentiableSurrogateNeuron` | Trainable alpha/beta/theta for surrogate gradients | SNN training |
-| `ContinuousAttractorNeuron` | Ring attractor, Mexican-hat connectivity | Continuous working memory |
+| `SelfReferentialNeuron` | Time constant grows with its own recent firing rate; fixed threshold | Stable autonomous firing |
+| `CompositionalBindingNeuron` | Free-running phase with an amplitude; fires while A·cos(φ) > θ (no input phase or coupling yet) | Variable binding |
+| `DifferentiableSurrogateNeuron` | alpha/beta/theta and a surrogate gradient for a trainer to use | SNN training |
+| `ContinuousAttractorNeuron` | Ring attractor, Mexican-hat connectivity; holds a bump given in its initial state | Continuous working memory |
 | `MetaPlasticNeuron` | Error-trace-driven meta-learning rate | Adaptive learning speed |
 
 All models share the standard `step(current) -> int` / `reset()` interface.
@@ -56,8 +56,8 @@ from sc_neurocore.neurons.models.ai_optimized import (
     PredictiveCodingNeuron,
 )
 
+# A current of 0.8 settles below the threshold of 1.0 and never fires; 2.0 does.
 mtn = MultiTimescaleNeuron()
-for t in range(200):
-    spike = mtn.step(current=0.8)
-print(f"Slow compartment: {mtn.v_slow:.4f}")
+spikes = sum(mtn.step(current=2.0) for _ in range(2000))
+print(f"Spikes: {spikes}, slow compartment: {mtn.v_slow:.4f}")  # Spikes: 500, slow compartment: 0.0206
 ```

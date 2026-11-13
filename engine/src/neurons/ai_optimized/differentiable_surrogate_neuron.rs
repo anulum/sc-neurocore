@@ -7,7 +7,8 @@
 // SC-NeuroCore — Differentiable-surrogate neuron model
 
 /// Spiking neuron with learnable surrogate gradient parameters.
-/// alpha (decay), beta (steepness), theta (threshold) all trainable.
+/// alpha (decay), beta (steepness), theta (threshold) are the parameters a trainer
+/// would adjust; this type computes the forward step and does not adjust them.
 #[derive(Clone, Debug)]
 pub struct DifferentiableSurrogateNeuron {
     pub v: f64,

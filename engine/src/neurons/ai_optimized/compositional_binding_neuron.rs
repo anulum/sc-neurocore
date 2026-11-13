@@ -7,7 +7,8 @@
 // SC-NeuroCore — Compositional-binding neuron model
 
 /// Phase-coding neuron for compositional variable binding.
-/// Spike when amplitude * cos(phase) > threshold.
+/// Spike when amplitude * cos(phase) > threshold, on every step while it holds.
+/// The phase advances freely: there is no input phase and `coupling` is not used.
 #[derive(Clone, Debug)]
 pub struct CompositionalBindingNeuron {
     pub phi: f64,

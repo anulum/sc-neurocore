@@ -6,7 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Attention-gated neuron model
 
-/// Spiking neuron with learned sigmoid attention gate.
+/// Spiking neuron whose input passes a sigmoid attention gate.
+/// The key and query weights are parameters; this type does not change them.
 /// gate = sigmoid(w_key * I + w_query * v), modulates input before integration.
 #[derive(Clone, Debug)]
 pub struct AttentionGatedNeuron {

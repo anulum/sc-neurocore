@@ -7,7 +7,8 @@
 // SC-NeuroCore — Continuous-attractor neuron model
 
 /// Ring attractor for continuous working memory.
-/// Mexican hat connectivity; holds a continuous value in persistent activity.
+/// Mexican hat connectivity; a bump set in `u` persists at its position.
+/// The scalar current drives every unit alike, so it cannot place or move a bump.
 #[derive(Clone, Debug)]
 pub struct ContinuousAttractorNeuron {
     pub u: Vec<f64>,
