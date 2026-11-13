@@ -110,6 +110,15 @@ describe("EquationEditor", () => {
     expect(props.options).toMatchObject({ minimap: { enabled: false }, lineNumbers: "off", wordWrap: "on" });
   });
 
+  it("lets Tab and Shift+Tab leave the editor, and names it after its visible heading", async () => {
+    // WCAG 2.1.2, measured in Chromium: Monaco kept Tab, Shift+Tab and
+    // Escape then Tab, and only its own Ctrl+M toggle let Tab leave; its
+    // default name, "Editor content", did not say so. Equations need no
+    // tab characters, so Tab moves focus as it does everywhere else.
+    const props = await mount();
+    expect(props.options).toMatchObject({ tabFocusMode: true, ariaLabel: "Equations" });
+  });
+
   it("registers the language before the editor mounts", async () => {
     const props = await mount();
     const monaco = { languages: {} };

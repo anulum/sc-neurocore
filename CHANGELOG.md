@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Tab and Shift+Tab now leave the ODE equation editor, as they do
+  everywhere else in the Studio. The editor kept them, together with Escape
+  then Tab, and only its own Ctrl+M toggle let a keyboard reader out, which
+  its name did not say (WCAG 2.1.2). Equations need no tab characters, so
+  the editor now moves focus on Tab, and it is named "Equations" after its
+  visible heading, in place of the generic "Editor content". A bundle built
+  from the change was checked in Chromium by keyboard, with and without
+  forced colours.
+
 - The keyboard focus is now visible and lands somewhere named. When the
   first-run tour closes, by Escape, Skip tour or its last step, focus moves
   to the Studio's title; before, it fell to the page body, so a keyboard

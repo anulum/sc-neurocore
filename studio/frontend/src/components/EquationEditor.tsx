@@ -153,6 +153,13 @@ export default function EquationEditor() {
           overviewRulerLanes: 0,
           hideCursorInOverviewRuler: true,
           scrollbar: { vertical: "hidden", horizontal: "hidden" },
+          // Tab and Shift+Tab move focus, as everywhere else in the Studio:
+          // Monaco otherwise keeps them, and only its own Ctrl+M toggle let a
+          // keyboard reader out (WCAG 2.1.2). Equations need no tab characters.
+          tabFocusMode: true,
+          // Named after the visible "Equations" heading, in place of Monaco's
+          // generic "Editor content".
+          ariaLabel: "Equations",
         }}
         theme="sc-ode-dark"
       />
