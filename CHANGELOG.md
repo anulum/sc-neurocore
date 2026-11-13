@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Typing an equation in the Studio's ODE editor no longer scrambles it.
+  The editor showed the Studio's own rendering of the equations, threshold
+  and reset, and the Studio keeps only what the text means. As soon as a
+  typed line read as an equation, such as `dv/dt` after selecting all, that
+  rendering replaced the text under the caret and moved the caret to the
+  end, so the rest of the line landed in the reset expression: the run was
+  refused and compiling it failed. Typing `/` in the editor only became
+  possible with the recent keyboard fix, which is what exposed this. The
+  editor now keeps the typed text for as long as the Studio holds exactly
+  what it reads, and still shows a change made elsewhere, such as a chosen
+  template. A bundle built from the change was checked in Chromium by
+  keyboard: the equation typed after selecting all is kept, runs and
+  compiles.
+
 - The Studio now announces what an action did to screen readers. The bar
   along the bottom is always drawn, and its run report is a status: a model
   run starting and finishing, and a finished network canvas run with its

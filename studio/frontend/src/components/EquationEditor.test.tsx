@@ -149,3 +149,83 @@ describe("EquationEditor", () => {
     expect(store.setReset).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Hand the editor's text to its change handler, as a key press does, and
+ * re-render with the store the handler wrote to.
+ *
+ * @param text - The whole text the editor holds after the key.
+ * @returns What the wrapper was handed next.
+ */
+async function type(text: string): Promise<EditorProps> {
+  const before = editor.props;
+  if (before === null) throw new Error("the editor wrapper was not rendered");
+  await act(async () => {
+    before.onChange(text);
+    root?.render(<EquationEditor />);
+    await Promise.resolve();
+  });
+  if (editor.props === null) throw new Error("the editor wrapper was not rendered");
+  return editor.props;
+}
+
+describe("EquationEditor while a person types", () => {
+  beforeEach(() => {
+    // The stand-in store takes what the editor writes, as the Studio's does.
+    store.setEquations.mockImplementation((equations: string[]) => { store.equations = equations; });
+    store.setThreshold.mockImplementation((threshold: string) => { store.threshold = threshold; });
+    store.setReset.mockImplementation((reset: string) => { store.reset = reset; });
+  });
+
+  afterEach(() => {
+    store.setEquations.mockReset();
+    store.setThreshold.mockReset();
+    store.setReset.mockReset();
+  });
+
+  it("hands the typed text back unchanged, also once it reads as an equation", async () => {
+    await mount();
+    // Select all, then type: each prefix is the editor's whole text after one more key.
+    const typed = "dv/dt = (-v + 1) / 10";
+    for (let end = 1; end <= typed.length; end += 1) {
+      expect((await type(typed.slice(0, end))).value).toBe(typed.slice(0, end));
+    }
+    expect(store.equations).toEqual([typed]);
+    expect(store.threshold).toBe("v > 1");
+    expect(store.reset).toBe("v = 0");
+  });
+
+  it("keeps a typed line's own spacing and a threshold typed below it", async () => {
+    await mount();
+    const typed = "  dv/dt = -v / 2  \n# threshold: v > 2";
+    expect((await type(typed)).value).toBe(typed);
+    expect(store.equations).toEqual(["dv/dt = -v / 2"]);
+    expect(store.threshold).toBe("v > 2");
+  });
+
+  it("still shows a change made elsewhere, such as a chosen template, over what was typed", async () => {
+    await mount();
+    await type("dv/dt = (-v + 1) / 10");
+    store.equations = ["dx/dt = 1"];
+    store.threshold = "x > 2";
+    await act(async () => { root?.render(<EquationEditor />); await Promise.resolve(); });
+    expect(editor.props?.value).toBe("dx/dt = 1\n\n# threshold: x > 2\n# reset: v = 0");
+  });
+
+  it("shows the rendering, not old typed text, when the store comes back to what was typed", async () => {
+    await mount();
+    // Type an equation with no threshold line: the store keeps its threshold and reset.
+    await type("dv/dt = -v / 2");
+    // A template is chosen elsewhere, and shown.
+    store.equations = ["dx/dt = 1"];
+    store.threshold = "x > 2";
+    await act(async () => { root?.render(<EquationEditor />); await Promise.resolve(); });
+    expect(editor.props?.value).toBe("dx/dt = 1\n\n# threshold: x > 2\n# reset: v = 0");
+    // A saved project brings back exactly the state the typed text led to.
+    store.equations = ["dv/dt = -v / 2"];
+    store.threshold = "v > 1";
+    store.reset = "v = 0";
+    await act(async () => { root?.render(<EquationEditor />); await Promise.resolve(); });
+    expect(editor.props?.value).toBe("dv/dt = -v / 2\n\n# threshold: v > 1\n# reset: v = 0");
+  });
+});
