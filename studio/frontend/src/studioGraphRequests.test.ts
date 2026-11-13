@@ -187,6 +187,37 @@ describe("Studio graph request builders", () => {
       .toEqual({ graphProjections: [retainedProjection] });
   });
 
+  it("removes an emptied seed rather than keeping it as undefined", () => {
+    const seeded: ProjectionEdge = { ...projection, seed: 7 };
+    const [updated] = studioProjectionUpdatedState([seeded], seeded.id, { seed: undefined }).graphProjections;
+    expect(updated).toEqual(projection);
+    expect(updated !== undefined && Object.prototype.hasOwnProperty.call(updated, "seed")).toBe(false);
+  });
+
+  it("removes the probability the all_to_all rule drops, and takes the rule", () => {
+    const [updated] = studioProjectionUpdatedState(
+      [projection], projection.id, { probability: undefined, rule: "all_to_all" },
+    ).graphProjections;
+    expect(updated).toEqual({ ...projection, probability: undefined, rule: "all_to_all" });
+    expect(updated !== undefined && Object.prototype.hasOwnProperty.call(updated, "probability")).toBe(false);
+  });
+
+  it.each([
+    ["a zero seed", { seed: 0 }],
+    ["a zero delay", { delay: 0 }],
+    ["a zero weight", { weight: 0 }],
+    ["autapses turned off", { autapses: false }],
+  ])("keeps %s, a value the editor gives, rather than removing it as cleared", (_value, updates) => {
+    // Only undefined clears a field: a falsy value the editor produces is a value.
+    const seeded: ProjectionEdge = { ...projection, autapses: true, seed: 7 };
+    const [updated] = studioProjectionUpdatedState([seeded], seeded.id, updates).graphProjections;
+    expect(updated).toEqual({ ...seeded, ...updates });
+    for (const [field, value] of Object.entries(updates)) {
+      expect(updated !== undefined && Object.prototype.hasOwnProperty.call(updated, field)).toBe(true);
+      expect(updated?.[field as keyof ProjectionEdge]).toBe(value);
+    }
+  });
+
   it("builds graph import and failure patches", () => {
     const imported = {
       populations: [population],

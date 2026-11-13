@@ -26,6 +26,19 @@ it("changes compile export ownership for a native graph before RTL exists", () =
     .not.toBe(studioBundleContextKey("compile", built));
 });
 
+it.each([
+  ["an emptied seed", { seed: undefined }],
+  ["the all_to_all rule, which drops the probability", { probability: undefined, rule: "all_to_all" as const }],
+])("keeps the project export's key computable after %s", (_change, updates) => {
+  useStudioStore.setState({
+    graphProjections: [{ delay: 0, id: "e1", probability: 0.2, rule: "random", seed: 7, source: "p1", target: "p2",
+      weight: 8 }],
+  });
+  useStudioStore.getState().updateProjection("e1", updates);
+  // The key seals the project's save state; a field left as undefined made it throw and refused the export.
+  expect(() => studioBundleContextKey("project", useStudioStore.getState())).not.toThrow();
+});
+
 it("binds repeat compilation exports to their actual job receipt", () => {
   const result = nativeIRBuildResult();
   useStudioStore.setState({ irText: result.ir_text, irRequestKey: "authored request", irResult: result });

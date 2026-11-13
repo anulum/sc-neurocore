@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Exporting a saved project's evidence bundle works again after a network
+  canvas projection's seed is emptied or its rule is set to all_to_all.
+  Both edits left the field in the projection with the value `undefined`
+  (the emptied seed, or the probability that all_to_all drops). Running the
+  network was not affected, but the project export seals the project's
+  state, the seal refuses `undefined`, and the browser refused the export
+  with "undefined is not a sealable JSON value." before sending it. A
+  cleared field now leaves the projection, as a saved project is read
+  back. A bundle built from the change was checked in Chromium: after
+  either edit the export is sent, as it is without them.
+
 - Typing an equation in the Studio's ODE editor no longer scrambles it.
   The editor showed the Studio's own rendering of the equations, threshold
   and reset, and the Studio keeps only what the text means. As soon as a

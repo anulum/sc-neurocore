@@ -371,8 +371,29 @@ export function studioProjectionUpdatedState(
 ): StudioProjectionUpdatedStatePatch {
   return {
     graphProjections: graphProjections.map((projection) =>
-      projection.id === projectionId ? { ...projection, ...updates } : projection),
+      projection.id === projectionId ? projectionWithUpdates(projection, updates) : projection),
   };
+}
+
+/**
+ * Apply an editor's update to one projection, removing what it clears.
+ *
+ * The editor clears a field by giving it `undefined`: an emptied seed, or the
+ * probability the all_to_all rule drops. A field left in the projection with
+ * that value is not absent, and the project's evidence seal refuses it, which
+ * refused the project export. A cleared field leaves the projection, as a
+ * saved project is read back.
+ *
+ * @param projection - The projection as it stands.
+ * @param updates - The editor's update.
+ * @returns The projection with the update applied and cleared fields gone.
+ */
+function projectionWithUpdates(projection: ProjectionEdge, updates: Partial<ProjectionEdge>): ProjectionEdge {
+  const updated: ProjectionEdge = { ...projection, ...updates };
+  for (const field of Object.keys(updates) as (keyof ProjectionEdge)[]) {
+    if (updates[field] === undefined) Reflect.deleteProperty(updated, field);
+  }
+  return updated;
 }
 
 /**
