@@ -22,6 +22,7 @@ import sys
 import pytest
 
 from tools.security_scan.locked_dependency_audit import run_locked_audit
+from tools.security_scan.locked_dependency_reports import OSV_ATTEMPTS
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -93,6 +94,11 @@ def test_input_changed_during_a_real_request_blocks_the_audit(tmp_path: Path) ->
     closes. No HTTP or advisory response is substituted. The accepted
     connection proves that the audit is inside its request, so the lock is
     rewritten before the audit can compare its inputs again.
+
+    The audit retries a dropped connection `OSV_ATTEMPTS` times in all, so
+    the peer serves every attempt the same way. A peer that stopped after the
+    first would leave the later attempts waiting in its backlog for their
+    full timeout.
     """
     source = ROOT / "src/sc_neurocore/accel/julia/sc_compte_wm_network/Manifest.toml"
     original = source.read_bytes()
@@ -132,21 +138,26 @@ def test_input_changed_during_a_real_request_blocks_the_audit(tmp_path: Path) ->
             text=True,
         )
         try:
-            peer, _ = listener.accept()
-            with peer:
-                peer.settimeout(30)
-                received = b""
-                while b"\r\n\r\n" not in received:
-                    chunk = peer.recv(4096)
-                    assert chunk, "the audit closed its request before sending it"
-                    received += chunk
-                lock.write_bytes(original + b"\n")
+            tunnels: list[bytes] = []
+            for attempt in range(OSV_ATTEMPTS):
+                peer, _ = listener.accept()
+                with peer:
+                    peer.settimeout(30)
+                    received = b""
+                    while b"\r\n\r\n" not in received:
+                        chunk = peer.recv(4096)
+                        assert chunk, "the audit closed its request before sending it"
+                        received += chunk
+                    tunnels.append(received)
+                    if attempt == 0:
+                        lock.write_bytes(original + b"\n")
             process.communicate(timeout=45)
         finally:
             if process.poll() is None:
                 process.kill()
                 process.communicate()
-    assert received.startswith(b"CONNECT api.osv.dev:443 ")
+    assert len(tunnels) == OSV_ATTEMPTS
+    assert all(tunnel.startswith(b"CONNECT api.osv.dev:443 ") for tunnel in tunnels)
     assert process.returncode == 1
     report = json.loads((target / "summary.json").read_text())
     assert report["passed"] is False and report["errors"] == ["ValueError"]
@@ -160,6 +171,8 @@ def test_input_changed_during_a_real_request_blocks_the_audit(tmp_path: Path) ->
     assert receipt["http_status"] is None
     assert receipt["error_type"] == "URLError"
     assert receipt["reason_type"] == "RemoteDisconnected"
+    dropped = {"http_status": None, "error_type": "URLError", "reason_type": "RemoteDisconnected"}
+    assert receipt["retried_attempts"] == [dropped] * (OSV_ATTEMPTS - 1)
     assert not (target / "lock-1/response-1.json").exists()
 
 
