@@ -19,7 +19,7 @@
  * into a ledger whose whole purpose is verifiability.
  *
  * Every decision is returned with a stable reason, so the panel can say why a
- * successful run did not reach the cart. Nothing here mutates the cart or
+ * successful run did not reach the cart; `queueSkipMessage` says it in words. Nothing here mutates the cart or
  * touches the store; `App.tsx` stays composition only.
  */
 
@@ -63,10 +63,66 @@ export interface AnalysisQueueInput {
   resultIdentityAfter: string | null;
 }
 
+/** Every reason a finished run is not queued, as a stable code a test can name. */
+export const QUEUE_SKIP_REASONS = [
+  "simulation_run_failed",
+  "simulation_result_unchanged",
+  "simulation_result_identity_invalid",
+  "analysis_run_failed",
+  "analysis_result_unchanged",
+  "analysis_result_identity_invalid",
+  "entry_refused",
+] as const;
+
+/** Why a finished run was not queued. */
+export type QueueSkipReason = (typeof QUEUE_SKIP_REASONS)[number];
+
+/** A skipped run: its reason, and for an entry the cart refused, the cart's own words. */
+export interface QueueSkip {
+  reason: QueueSkipReason;
+  detail?: string;
+}
+
 /** The cart with the artefact queued, or the reason it was not. */
 export type QueueDecision =
   | { action: "enqueue"; cart: EvidenceCart; kind: EvidenceCartItemKind }
-  | { action: "skip"; reason: string; cart: EvidenceCart };
+  | ({ action: "skip"; cart: EvidenceCart } & QueueSkip);
+
+/** What follows "The run finished," or "The analysis finished," when a result cannot be identified. */
+const UNIDENTIFIABLE_RESULT =
+  "but its result carries no readable digest, so it was not added to the evidence cart: "
+  + "an entry the cart cannot identify could not be verified.";
+
+/**
+ * Say in words why a finished run was not queued, or nothing.
+ *
+ * What this returns is shown beside the cart and announced to a screen
+ * reader, so no reason reaches it as a code. A failed run says nothing here,
+ * because the run reports its own failure; an unchanged result says nothing,
+ * because a repeat is not news.
+ *
+ * @param skip - The reason, with the cart's own words for a refused entry.
+ * @returns The sentence, or `null` when there is nothing to say.
+ */
+export function queueSkipMessage(skip: QueueSkip): string | null {
+  switch (skip.reason) {
+    case "simulation_run_failed":
+    case "simulation_result_unchanged":
+    case "analysis_run_failed":
+    case "analysis_result_unchanged":
+      return null;
+    case "simulation_result_identity_invalid":
+      return `The run finished, ${UNIDENTIFIABLE_RESULT}`;
+    case "analysis_result_identity_invalid":
+      return `The analysis finished, ${UNIDENTIFIABLE_RESULT}`;
+    case "entry_refused": {
+      const detail = skip.detail?.trim() ?? "";
+      const said = "The result was not added to the evidence cart.";
+      if (detail.length === 0) return said;
+      return `${said} ${detail}${detail.endsWith(".") ? "" : "."}`;
+    }
+  }
+}
 
 /**
  * Identify a simulation result by what it contains.
@@ -111,7 +167,10 @@ export function decideSimulationEnqueue(
     return { action: "skip", reason: "simulation_run_failed", cart };
   }
   const afterId = simulationResultIdentity(input.result);
-  if (afterId === null || afterId === input.resultIdentityBefore) {
+  if (afterId === null) {
+    return { action: "skip", reason: "simulation_result_identity_invalid", cart };
+  }
+  if (afterId === input.resultIdentityBefore) {
     return { action: "skip", reason: "simulation_result_unchanged", cart };
   }
   const sourceName =
@@ -127,7 +186,7 @@ export function decideSimulationEnqueue(
     }),
   );
   if (!queued.ok) {
-    return { action: "skip", reason: queued.error, cart };
+    return { action: "skip", reason: "entry_refused", detail: queued.error, cart };
   }
   return { action: "enqueue", cart: queued.cart, kind: "simulation" };
 }
@@ -172,7 +231,7 @@ export function decideAnalysisEnqueue(
     }),
   );
   if (!queued.ok) {
-    return { action: "skip", reason: queued.error, cart };
+    return { action: "skip", reason: "entry_refused", detail: queued.error, cart };
   }
   return { action: "enqueue", cart: queued.cart, kind: "analysis" };
 }

@@ -20,6 +20,7 @@ import {
   evidenceCartReceiptId,
   sha256HexOfCanonicalJson,
   simulationCartDraft,
+  verifyEvidenceCartExportRoundTrip,
   EVIDENCE_CART_SCHEMA_VERSION,
 } from "./evidenceCart";
 
@@ -204,6 +205,33 @@ describe("evidence cart export digests", () => {
     const result = await buildEvidenceCartExport(emptyEvidenceCart());
     expect(result).toEqual({
       error: "Evidence cart is empty; queue at least one artefact",
+    });
+  });
+
+  it("says in words which digest failed its read-back, since the reason is shown and announced", async () => {
+    const queued = enqueueEvidenceCartArtefact(
+      emptyEvidenceCart(),
+      simulationCartDraft("AdExNeuron", { spikes: [10, 20] }),
+      { id: "ec_sim", nowUtc: "2026-07-19T12:00:00.000Z" },
+    );
+    if (!queued.ok) throw new Error(queued.error);
+    const bundle = await buildEvidenceCartExport(queued.cart, { exportedAtUtc: "2026-07-19T12:05:00.000Z" });
+    if ("error" in bundle) throw new Error(bundle.error);
+    const [entry] = bundle.entries;
+    if (entry === undefined) throw new Error("The bundle has no entry.");
+
+    const changedEntry = await verifyEvidenceCartExportRoundTrip({
+      ...bundle, entries: [{ ...entry, payload: { spikes: [10, 21] } }],
+    });
+    expect(changedEntry).toEqual({
+      ok: false,
+      error: "Entry ec_sim does not match its SHA-256 digest when read back, so the cart was not exported.",
+    });
+
+    const changedBundle = await verifyEvidenceCartExportRoundTrip({ ...bundle, bundle_sha256: "0".repeat(64) });
+    expect(changedBundle).toEqual({
+      ok: false,
+      error: "The bundle does not match its own SHA-256 digest when read back, so the cart was not exported.",
     });
   });
 });

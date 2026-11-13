@@ -18,27 +18,42 @@ import { useStudioStore } from "../stores/studio";
  * set apart by the bar's gap on screen and by a comma read aloud, and the bar
  * wraps onto further lines in a narrow window.
  *
+ * The two network tabs report their own network and nothing else: before
+ * their first run they report nothing, never the last single-model run. On
+ * the canvas, problems found in the network come first, because the last
+ * run's counts would otherwise be announced after a refused run as if it had
+ * finished; a run the server refused says so, with its reasons.
+ *
  * @returns The bar.
  */
 export default function StatusBar() {
   const {
     result, activeTab, isSimulating, busyWith, sourceMode, selectedModelName, networkResult, graphSimResult,
+    graphErrors,
   } = useStudioStore();
 
   const parts: string[] = [];
 
   if (isSimulating) {
     parts.push(`${busyWith.length > 0 ? busyWith : "Run"} running…`);
-  } else if (activeTab === "canvas" && graphSimResult?.success) {
-    // A count the result does not carry is shown as unknown, never as zero.
-    parts.push(`Network: ${graphSimResult.n_total ?? "?"} neurons`);
-    parts.push(`${graphSimResult.n_spikes ?? "?"} spikes`);
-    parts.push(`${graphSimResult.n_steps ?? "?"} steps × ${graphSimResult.dt ?? "?"} ms`);
-  } else if (activeTab === "network" && networkResult) {
-    parts.push(`E-I Network: ${networkResult.n_exc}E/${networkResult.n_inh}I`);
-    parts.push(`${networkResult.n_spikes} spikes`);
-    parts.push(`E: ${networkResult.mean_exc_rate}Hz`);
-    parts.push(`I: ${networkResult.mean_inh_rate}Hz`);
+  } else if (activeTab === "canvas") {
+    if (graphErrors.length > 0) {
+      parts.push(`Network: ${graphErrors.length} problem${graphErrors.length === 1 ? "" : "s"} found`);
+    } else if (graphSimResult?.success) {
+      // A count the result does not carry is shown as unknown, never as zero.
+      parts.push(`Network: ${graphSimResult.n_total ?? "?"} neurons`);
+      parts.push(`${graphSimResult.n_spikes ?? "?"} spikes`);
+      parts.push(`${graphSimResult.n_steps ?? "?"} steps × ${graphSimResult.dt ?? "?"} ms`);
+    } else if (graphSimResult) {
+      parts.push("Network run refused", ...(graphSimResult.errors ?? []));
+    }
+  } else if (activeTab === "network") {
+    if (networkResult) {
+      parts.push(`E-I Network: ${networkResult.n_exc}E/${networkResult.n_inh}I`);
+      parts.push(`${networkResult.n_spikes} spikes`);
+      parts.push(`E: ${networkResult.mean_exc_rate}Hz`);
+      parts.push(`I: ${networkResult.mean_inh_rate}Hz`);
+    }
   } else if (result) {
     if (sourceMode === "model") parts.push(selectedModelName);
     parts.push(`${result.spike_count} spikes`);

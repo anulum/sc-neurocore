@@ -84,6 +84,38 @@ function fiCurve(resultSha256: string, rates: number[] = [0, 5]): FICurveRespons
 }
 
 /**
+ * Build a single-model run result carrying the given digest.
+ *
+ * @param resultSha256 - The result digest its metadata declares.
+ * @returns The result.
+ */
+function simulation(resultSha256: string): SimulateResponse {
+  return {
+    time: [0, 0.1],
+    states: { v: [-65, -60] },
+    current_trace: [10, 10],
+    spikes: [],
+    spike_count: 0,
+    stats: { rate_hz: 0, isi_mean_ms: null, isi_cv: null, isi_histogram: null },
+    dt: 0.1,
+    n_steps: 2,
+    run_metadata: {
+      dt: 0.1,
+      evidence_classification: "simulation",
+      input_sha256: DIGEST_A,
+      n_steps: 2,
+      result_sha256: resultSha256,
+      sample_count: 2,
+      schema_version: "studio.simulation-run.v2",
+      source: "model",
+      spike_count: 0,
+      status: "completed",
+      state_variables: ["v"],
+    },
+  };
+}
+
+/**
  * Stand the mocked store up again between cases.
  *
  * @param partial - The fields to set; the rest return to their defaults.
@@ -375,5 +407,60 @@ describe("useEvidenceCartSession runAnalysisIntoCart await parity (W12-G)", () =
 
     expect(latest?.error).toBeNull();
     expect(latest?.cart.items).toHaveLength(1);
+  });
+
+  it("says in words why a finished analysis whose digest cannot be read was not queued", async () => {
+    resetStore({
+      fiResult: fiCurve(DIGEST_A),
+      runFICurve: async () => {
+        mockStore.state = { ...mockStore.state, fiResult: fiCurve("not-a-digest", [0, 4]) };
+      },
+    });
+    mountHook();
+    await act(async () => {
+      await latest?.runAnalysisIntoCart();
+    });
+
+    expect(latest?.cart.items).toHaveLength(0);
+    expect(latest?.error).toBe(
+      "The analysis finished, but its result carries no readable digest, so it was not added to the "
+      + "evidence cart: an entry the cart cannot identify could not be verified.",
+    );
+  });
+
+  it("says in words why a finished run whose digest cannot be read was not queued", async () => {
+    resetStore({
+      result: simulation(DIGEST_A),
+      runSimulation: async () => {
+        mockStore.state = { ...mockStore.state, result: simulation("not-a-digest") };
+      },
+    });
+    mountHook();
+    await act(async () => {
+      await latest?.runSimulationIntoCart();
+    });
+
+    expect(latest?.cart.items).toHaveLength(0);
+    expect(latest?.error).toBe(
+      "The run finished, but its result carries no readable digest, so it was not added to the "
+      + "evidence cart: an entry the cart cannot identify could not be verified.",
+    );
+  });
+
+  it("stays quiet when a run leaves the same result behind, as when it failed", async () => {
+    const prior = simulation(DIGEST_A);
+    resetStore({
+      result: prior,
+      runSimulation: async () => {
+        mockStore.state = { ...mockStore.state, result: prior };
+      },
+    });
+    mountHook();
+    await act(async () => {
+      await latest?.runSimulationIntoCart();
+    });
+
+    expect(latest?.cart.items).toHaveLength(0);
+    expect(latest?.error).toBeNull();
   });
 });

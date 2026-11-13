@@ -153,10 +153,62 @@ describe("StatusBar", () => {
     });
   });
 
-  it("does not report a network canvas run that failed", async () => {
+  it("reports a refused network canvas run, with its reasons, not the last single-model run", async () => {
     useStudioStore.setState({
-      isSimulating: false, activeTab: "canvas", result: null, networkResult: null,
-      graphSimResult: { ...finishedGraph, success: false },
+      isSimulating: false, activeTab: "canvas", sourceMode: "model", selectedModelName: "AdExNeuron",
+      result: finishedRun, networkResult: null,
+      graphSimResult: { success: false, errors: ["Population 'Exc 0' has no neurons."] },
+    });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("Network run refused, Population 'Exc 0' has no neurons.");
+    });
+    useStudioStore.setState({ graphSimResult: { ...finishedGraph, success: false } });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("Network run refused");
+    });
+  });
+
+  it("reports the problems found in the network on the canvas, not an earlier run's counts", async () => {
+    useStudioStore.setState({
+      isSimulating: false, activeTab: "canvas", result: finishedRun, networkResult: null,
+      graphSimResult: finishedGraph, graphErrors: ["Projection 'p0' has no source.", "Population 'Inh 1' is empty."],
+    });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("Network: 2 problems found");
+    });
+    useStudioStore.setState({ graphErrors: ["Projection 'p0' has no source."] });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("Network: 1 problem found");
+    });
+  });
+
+  it("reports nothing on the canvas before its first network run, not the last single-model run", async () => {
+    useStudioStore.setState({
+      isSimulating: false, activeTab: "canvas", sourceMode: "model", selectedModelName: "AdExNeuron",
+      result: finishedRun, networkResult: null, graphSimResult: null, graphErrors: [],
+    });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("");
+    });
+  });
+
+  it("reports a finished E-I network run on its own tab", async () => {
+    useStudioStore.setState({
+      isSimulating: false, activeTab: "network", result: finishedRun, graphSimResult: null,
+      networkResult: {
+        spike_times: [], spike_neurons: [], n_exc: 80, n_inh: 20, n_total: 100, n_spikes: 412,
+        rate_time: [], exc_rates: [], inh_rates: [], duration: 200, dt: 0.1, mean_exc_rate: 5.2, mean_inh_rate: 11.4,
+      },
+    });
+    await withStatusBar((host) => {
+      expect(statusRegion(host).textContent).toBe("E-I Network: 80E/20I, 412 spikes, E: 5.2Hz, I: 11.4Hz");
+    });
+  });
+
+  it("reports nothing on the E-I network tab before its first run, not the last single-model run", async () => {
+    useStudioStore.setState({
+      isSimulating: false, activeTab: "network", sourceMode: "model", selectedModelName: "AdExNeuron",
+      result: finishedRun, networkResult: null, graphSimResult: finishedGraph,
     });
     await withStatusBar((host) => {
       expect(statusRegion(host).textContent).toBe("");

@@ -300,7 +300,9 @@ export async function buildEvidenceCartExport(
  * digest body is built the same way in both places rather than remembered.
  *
  * @param bundle - The bundle to check.
- * @returns Whether it holds together, and which entry failed when it does not.
+ * @returns Whether it holds together, and which entry failed when it does not,
+ *   said in words: the reason is shown beside the cart and announced to a
+ *   screen reader.
  */
 export async function verifyEvidenceCartExportRoundTrip(
   bundle: EvidenceCartExportBundle,
@@ -310,7 +312,7 @@ export async function verifyEvidenceCartExportRoundTrip(
     if (actual !== entry.payload_sha256) {
       return {
         ok: false,
-        error: `payload_sha256 mismatch for entry ${entry.id}`,
+        error: `Entry ${entry.id} does not match its SHA-256 digest when read back, so the cart was not exported.`,
       };
     }
   }
@@ -332,7 +334,10 @@ export async function verifyEvidenceCartExportRoundTrip(
   };
   const recomputed = await sha256HexOfCanonicalJson(digestBody);
   if (recomputed !== bundle.bundle_sha256) {
-    return { ok: false, error: "bundle_sha256 mismatch after round-trip" };
+    return {
+      ok: false,
+      error: "The bundle does not match its own SHA-256 digest when read back, so the cart was not exported.",
+    };
   }
   return { ok: true };
 }

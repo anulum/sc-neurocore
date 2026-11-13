@@ -25,6 +25,7 @@ import {
   decideSimulationEnqueue,
   evidenceCartExportSatisfiesGuided,
   exportEvidenceCartWithVerification,
+  queueSkipMessage,
   simulationResultIdentity,
   type QueueDecision,
 } from "./evidenceCartController";
@@ -64,14 +65,9 @@ export function useEvidenceCartSession(): EvidenceCartSession {
 
   const applyDecision = useCallback((decision: QueueDecision) => {
     if (decision.action === "skip") {
-      if (
-        decision.reason !== "simulation_result_unchanged"
-        && decision.reason !== "analysis_result_unchanged"
-        && decision.reason !== "simulation_run_failed"
-        && decision.reason !== "analysis_run_failed"
-      ) {
-        setError(decision.reason);
-      }
+      // Shown beside the cart and announced, so in words; a failed or unchanged run says nothing.
+      const message = queueSkipMessage(decision);
+      if (message !== null) setError(message);
       return;
     }
     cartRef.current = decision.cart;
@@ -100,11 +96,12 @@ export function useEvidenceCartSession(): EvidenceCartSession {
     const beforeId = simulationResultIdentity(beforeState.result);
     await beforeState.runSimulation();
     const afterState = useStudioStore.getState();
+    // A run succeeded when it left a new result; whether that result can be
+    // identified, and whether it differs, is the decision's to say.
     applyDecision(decideSimulationEnqueue(cartRef.current, {
         result: afterState.result,
         resultIdentityBefore: beforeId,
-        runSucceeded: afterState.result !== null
-          && simulationResultIdentity(afterState.result) !== beforeId,
+        runSucceeded: afterState.result !== null && afterState.result !== beforeState.result,
         selectedModelName,
         sourceMode,
     }));
@@ -122,7 +119,7 @@ export function useEvidenceCartSession(): EvidenceCartSession {
     const afterState = useStudioStore.getState();
     const after = afterState.fiResult;
     const afterId = analysisResultIdentity(after);
-    const runSucceeded = afterId !== null && afterId !== beforeId;
+    const runSucceeded = after !== null && after !== beforeState.fiResult;
     applyDecision(decideAnalysisEnqueue(cartRef.current, {
         analysisKind: "fi_curve",
         analysisResult: after,

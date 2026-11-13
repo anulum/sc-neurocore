@@ -20,7 +20,10 @@ import {
   decideSimulationEnqueue,
   evidenceCartExportSatisfiesGuided,
   exportEvidenceCartWithVerification,
+  queueSkipMessage,
+  QUEUE_SKIP_REASONS,
   simulationResultIdentity,
+  type QueueSkipReason,
 } from "./evidenceCartController";
 
 /**
@@ -430,5 +433,82 @@ describe("export freshness and payload round-trip", () => {
     });
     const verified = await verifyEvidenceCartExportRoundTrip(result.bundle);
     expect(verified).toEqual({ ok: true });
+  });
+});
+
+/** A snake_case token such as a reason code or a field name, which a reader should never be given. */
+const CODE_TOKEN = /\b[a-z0-9]+_[a-z0-9_]+\b/;
+
+describe("why a finished run did not reach the cart", () => {
+  it("names a simulation result whose digest cannot be read, rather than calling it unchanged", () => {
+    const unreadable = simulateResult();
+    const decision = decideSimulationEnqueue(emptyEvidenceCart(), {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "LIFNeuron",
+      result: { ...unreadable, run_metadata: { ...unreadable.run_metadata, result_sha256: "not-a-digest" } },
+      resultIdentityBefore: "a".repeat(64),
+    });
+    expect(decision.action === "skip" && decision.reason).toBe("simulation_result_identity_invalid");
+  });
+
+  it("carries the cart's own refusal of an entry as its detail under one reason", () => {
+    const decision = decideSimulationEnqueue(emptyEvidenceCart(), {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "LIFNeuron",
+      result: simulateResult({ stats: { rate_hz: Number.NaN, isi_mean_ms: null, isi_cv: null, isi_histogram: null } }),
+      resultIdentityBefore: null,
+    });
+    expect(decision).toMatchObject({
+      action: "skip", reason: "entry_refused", detail: "Evidence cart payload must be JSON-serialisable",
+    });
+  });
+
+  it("gives every reason a sentence, or silence for a failed or unchanged run, and never a code", () => {
+    const silent = new Set<QueueSkipReason>([
+      "simulation_run_failed", "simulation_result_unchanged", "analysis_run_failed", "analysis_result_unchanged",
+    ]);
+    expect(QUEUE_SKIP_REASONS).toHaveLength(7);
+    for (const reason of QUEUE_SKIP_REASONS) {
+      const message = queueSkipMessage({ reason, detail: "Evidence cart label must not be empty" });
+      if (silent.has(reason)) {
+        expect(message, reason).toBeNull();
+        continue;
+      }
+      expect(message, reason).toMatch(/^[A-Z].*\.$/);
+      expect(message, reason).not.toMatch(CODE_TOKEN);
+    }
+    expect(queueSkipMessage({ reason: "analysis_result_identity_invalid" })).toBe(
+      "The analysis finished, but its result carries no readable digest, so it was not added to the "
+      + "evidence cart: an entry the cart cannot identify could not be verified.",
+    );
+    expect(queueSkipMessage({ reason: "simulation_result_identity_invalid" })).toBe(
+      "The run finished, but its result carries no readable digest, so it was not added to the "
+      + "evidence cart: an entry the cart cannot identify could not be verified.",
+    );
+    expect(queueSkipMessage({ reason: "entry_refused", detail: "Evidence cart label must not be empty" })).toBe(
+      "The result was not added to the evidence cart. Evidence cart label must not be empty.",
+    );
+    // A refusal that already ends its sentence keeps one full stop; one without words still says what happened.
+    expect(queueSkipMessage({ reason: "entry_refused", detail: "Its payload holds a value JSON cannot." })).toBe(
+      "The result was not added to the evidence cart. Its payload holds a value JSON cannot.",
+    );
+    expect(queueSkipMessage({ reason: "entry_refused" })).toBe("The result was not added to the evidence cart.");
+  });
+
+  it("carries the cart's refusal of an analysis entry the same way", () => {
+    const decision = decideAnalysisEnqueue(emptyEvidenceCart(), {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "AdExNeuron",
+      analysisKind: "fi_curve",
+      analysisResult: { currents: [0, 1], rates: [Number.NaN, 2] },
+      resultIdentityBefore: null,
+      resultIdentityAfter: "c".repeat(64),
+    });
+    expect(decision).toMatchObject({
+      action: "skip", reason: "entry_refused", detail: "Evidence cart payload must be JSON-serialisable",
+    });
   });
 });

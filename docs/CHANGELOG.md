@@ -12,6 +12,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- On the network canvas and the E-I network tab, the status bar now
+  reports only that tab's network. Before, a canvas whose network run the
+  server refused, or that had not run yet, reported the last single-model
+  run there, and a screen reader announced it. When a run is refused before
+  it starts because the network has problems, the canvas says how many
+  problems were found, rather than the previous run's counts, which were
+  announced as if the run had just finished. A run the server refuses says
+  so, with its reasons.
+
+- The evidence cart now says in words why a finished run was not queued.
+  It passed the reason on as given, so a reason that is a code, such as
+  analysis_result_identity_invalid, would have been shown and announced as
+  that code. A run or analysis whose result carries no readable digest was
+  skipped without a word, or called unchanged; it is now named as such. A
+  failed or unchanged run still says nothing. The export's read-back check
+  names a failure in words, in place of "payload_sha256 mismatch": which
+  entry, or the bundle, no longer matches its SHA-256 digest, and that the
+  cart was not exported.
+
 - The Rust documentation ratchet refuses an original-image folder named
   through a link instead of following it, and reads the folder's owner and
   mode from the folder it has opened. The folder it checks is therefore the

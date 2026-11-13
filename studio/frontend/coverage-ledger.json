@@ -386,8 +386,8 @@
       "branches": 87.5
     },
     "src/components/StatusBar.tsx": {
-      "statements": 78.26,
-      "branches": 82.14
+      "statements": 96.55,
+      "branches": 91.66
     },
     "src/components/StudioReadinessPanel.tsx": {
       "statements": 100,
@@ -462,12 +462,12 @@
       "branches": 98.63
     },
     "src/evidenceCart.ts": {
-      "statements": 95.65,
-      "branches": 89.09
+      "statements": 98.55,
+      "branches": 92.72
     },
     "src/evidenceCartController.ts": {
-      "statements": 90.9,
-      "branches": 91.54
+      "statements": 96.49,
+      "branches": 95.23
     },
     "src/evidenceCartIdentity.ts": {
       "statements": 100,
@@ -910,8 +910,8 @@
       "branches": 0
     },
     "src/useEvidenceCartSession.ts": {
-      "statements": 97.91,
-      "branches": 90
+      "statements": 100,
+      "branches": 93.75
     },
     "src/useGraphJobs.ts": {
       "statements": 23.92,
