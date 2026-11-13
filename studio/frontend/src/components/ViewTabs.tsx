@@ -6,10 +6,11 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — the workbench view switcher: grouped tabs with the ARIA tabs pattern
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { KeyboardEvent } from "react";
 
 import type { ViewTab } from "../stores/studio";
+import { markRender } from "../renderTiming";
 import { nextViewTabIndex, viewTabId, VIEW_PANEL_ID } from "../viewTabs";
 import type { ViewTabGroup } from "../viewTabs";
 
@@ -48,6 +49,13 @@ export default function ViewTabs({
   const ordered = groups.flatMap((group) => group.views.map((entry) => entry.view));
   const enabled = ordered.map((view) => availability(view).available);
   const activeIsListed = ordered.includes(active);
+  // The render timing spec reads this mark: the view chosen here was drawn.
+  const shownView = useRef(active);
+  useEffect(() => {
+    if (shownView.current === active) return;
+    shownView.current = active;
+    markRender("view-drawn");
+  }, [active]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, view: ViewTab) => {
     const target = nextViewTabIndex(event.key, ordered.indexOf(view), enabled);

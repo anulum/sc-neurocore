@@ -39,6 +39,7 @@ import {
 } from "../studioGraphRequests";
 import type { GraphSimResult } from "../api/client";
 import { saturatedPopulations, saturationWarning } from "../networkSaturation";
+import { markRender } from "../renderTiming";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphConnect from "./NetworkGraphConnect";
 import NetworkGraphTable from "./NetworkGraphTable";
@@ -264,6 +265,13 @@ export default function NetworkCanvas() {
     })),
     [graphProjections],
   );
+
+  // The render timing spec reads this mark: the network view, as canvas or as
+  // table, drew the graph's current populations and projections.
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    markRender("network-drawn");
+  }, [nodes, edges, tableView]);
 
   const onNodesChange: OnNodesChange = useCallback((changes) => {
     const plan = studioNodeChangePlan(changes, applyNodeChanges(changes, nodes), graphPopulations);

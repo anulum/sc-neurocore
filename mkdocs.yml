@@ -166,6 +166,7 @@ nav:
       - Model Readiness Labels: studio/model-readiness.md
       - Synthesis Dashboard: studio/synthesis-dashboard.md
       - Training Monitor: studio/training-monitor.md
+      - Performance Measurement: studio/performance-measurement.md
       - Event Dataset Training: studio/event-training.md
       - Network Canvas: studio/network-canvas.md
       - Integration & Projects: studio/integration.md

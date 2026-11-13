@@ -20,6 +20,7 @@
  */
 
 import type { TrainingEpochMetrics } from "./api/client";
+import { markRender } from "./renderTiming";
 import { createFetchStudioTrainingSource } from "./studioTrainingFetchSource";
 
 /** Terminal outcomes that are distinct from a failed training computation. */
@@ -82,6 +83,8 @@ export function connectStudioTrainingEventSource(
       return;
     }
     if (update.kind === "epoch") {
+      // The render timing spec measures from this mark to the chart's.
+      markRender("training-event-received");
       handlers.onEpoch(update.metrics);
       return;
     }

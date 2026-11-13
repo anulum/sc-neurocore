@@ -28,6 +28,7 @@ export default defineConfig({
     "network-canvas-live.spec.ts",
     "network-notebook-live.spec.ts",
     "notebook-export-live.spec.ts",
+    "render-timing-live.spec.ts",
     "review-live.spec.ts",
     "training-conversion-live.spec.ts",
     "training-preregistration-live.spec.ts",

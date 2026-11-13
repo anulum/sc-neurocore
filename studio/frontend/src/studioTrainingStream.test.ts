@@ -160,6 +160,31 @@ describe("Studio training stream parser", () => {
     expect(source.closed).toBe(false);
   });
 
+  it("marks an epoch's arrival on the timeline before handing it on, and no other frame", () => {
+    const source = new FakeTrainingEventSource();
+    const received = () => performance.getEntriesByName("studio:training-event-received", "mark").length;
+    const markedBeforeHandler: number[] = [];
+    performance.clearMarks();
+    try {
+      connectStudioTrainingEventSource("job-2", {
+        onDisconnected: () => undefined,
+        onEpoch: () => { markedBeforeHandler.push(received()); },
+        onError: () => undefined,
+        onTerminal: () => undefined,
+      }, () => source);
+
+      source.emit({ event: "heartbeat" });
+      expect(received()).toBe(0);
+      source.emit({ event: "epoch", data: { epoch: 1, train_loss: 0.3, train_accuracy: 0.9, val_loss: 0.35, val_accuracy: 0.88 } });
+      source.emit({ event: "epoch", data: { epoch: 2, train_loss: 0.2, train_accuracy: 0.9, val_loss: 0.3, val_accuracy: 0.9 } });
+      expect(markedBeforeHandler).toEqual([1, 2]);
+      source.emit({ event: "completed" });
+      expect(received()).toBe(2);
+    } finally {
+      performance.clearMarks();
+    }
+  });
+
   it("dispatches terminal updates and closes the stream", () => {
     const source = new FakeTrainingEventSource();
     const terminals: StudioTrainingTerminalStatus[] = [];

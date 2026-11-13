@@ -54,6 +54,10 @@
     "scripts/normalize-federation-types.ts",
     "scripts/normalize-federation-types.node-test.ts",
     "scripts/coverage-ledger.ts",
-    "scripts/coverage-ledger.node-test.ts"
+    "scripts/coverage-ledger.node-test.ts",
+    "e2e/renderTimingReport.ts",
+    "e2e/renderTimingReport.node-test.ts",
+    "e2e/render-timing-live.spec.ts",
+    "playwright.timing.config.ts"
   ]
 }

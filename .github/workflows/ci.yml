@@ -282,6 +282,31 @@ jobs:
         working-directory: studio/frontend
         run: npx playwright test --config playwright.graph.config.ts
 
+      # The render timing measurement (docs/studio/performance-measurement.md)
+      # runs only when the workflow is started by hand: it is long, and its
+      # numbers are evidence for the budget proposal, not a gate. Its training
+      # workload needs PyTorch, which the live backend's locks above do not hold.
+      - name: Install PyTorch for the training workload
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
+
+      - name: Studio render timing measurement
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: studio/frontend
+        env:
+          SC_NEUROCORE_RENDER_TIMING_OUT: ${{ runner.temp }}/render-timing/render-timing.json
+        run: npx playwright test --config playwright.timing.config.ts
+
+      - name: Preserve the render timing artefact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: studio-render-timing
+          path: ${{ runner.temp }}/render-timing/render-timing.json
+          if-no-files-found: error
+          retention-days: 90
+
   shd-non-linux-refusal:
     name: SHD native Windows refusal
     runs-on: windows-latest

@@ -49,6 +49,7 @@ import { emptyViewDescription, emptyViewGuidance } from "../viewEmptyState";
 import type { EmptyViewAction } from "../viewEmptyState";
 import { plotDescription } from "../plotAccessibility";
 import { describeView } from "../viewDescriptions";
+import { markRender } from "../renderTiming";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 /** Whichever analysis result the active tab is showing, if any. */
@@ -93,6 +94,9 @@ export default function SimulationPlot() {
   const [traceShown, setTraceShown] = useState(false);
   const [dataTableShown, setDataTableShown] = useState(false);
   const crosshairRef = useRef<number | null>(null);
+  // The result whose trace was last marked as drawn, so redrawing the same
+  // trace (a crosshair, a zoom, a resize) adds no mark.
+  const markedResultRef = useRef<object | null>(null);
   const store = useStudioStore();
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
@@ -362,6 +366,11 @@ export default function SimulationPlot() {
     return true;
     })();
     setTraceShown((shown) => (shown === drewTrace ? shown : drewTrace));
+    // The render timing spec reads this mark: a new result's trace was drawn.
+    if (drewTrace && markedResultRef.current !== result) {
+      markedResultRef.current = result;
+      markRender("trace-drawn");
+    }
   }, [result, activeTab, emptyGuidance, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
 
   useEffect(() => {

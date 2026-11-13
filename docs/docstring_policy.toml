@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1939
+expected_file_count = 1940
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7810,3 +7810,7 @@ rationale = "Bind the frontend coverage ledger into the hosted frontend job: the
 [[file]]
 path = "tests/test_tools/test_hdl_toolchain_published_sdk_contract.py"
 rationale = "Bind the shared HDL toolchain to the one published SDK archive: hash before unpacking, solver pins equal to every committed receipt and non-vacuity audit, a source build only on request and the exact bytes handed on."
+
+[[file]]
+path = "tests/test_tools/test_ci_frontend_render_timing_contract.py"
+rationale = "Bind the Studio render timing measurement: the hand-started hosted step after the build and the backend, its kept artefact, the package script that builds first, and the configuration that serves the built bundle and only the timing spec."

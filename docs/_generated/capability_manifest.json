@@ -983,12 +983,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 673,
+    "public_documentation_pages": 674,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5658
+    "test_files": 5659
   },
   "documentation": {
     "public_pages": [
@@ -1532,6 +1532,7 @@
       "docs/studio/ode-editor.md",
       "docs/studio/onboarding.md",
       "docs/studio/parameter-fitting.md",
+      "docs/studio/performance-measurement.md",
       "docs/studio/replay-and-export.md",
       "docs/studio/svg-export.md",
       "docs/studio/synthesis-dashboard.md",
@@ -8545,6 +8546,7 @@
       "tests/test_tools/test_check_mojo_isa_baseline.py",
       "tests/test_tools/test_check_yices_isa.py",
       "tests/test_tools/test_ci_frontend_coverage_ledger_contract.py",
+      "tests/test_tools/test_ci_frontend_render_timing_contract.py",
       "tests/test_tools/test_ci_go_cache_contract.py",
       "tests/test_tools/test_ci_install_common.py",
       "tests/test_tools/test_ci_julia_runtime_contract.py",

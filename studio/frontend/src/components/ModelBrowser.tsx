@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { shortModelLabels } from "../modelShortName";
 import { useStudioStore } from "../stores/studio";
 import {
@@ -19,6 +19,7 @@ import {
     type ModelScanMetadata,
 } from "../api/client";
 import { useModelScanJob } from "../useModelScanJob";
+import { markRender } from "../renderTiming";
 import EvidenceSummaryStrip, {
     type EvidenceSummaryItem,
 } from "./EvidenceSummaryStrip";
@@ -319,6 +320,14 @@ export default function ModelBrowser() {
     useEffect(() => {
         void loadModels();
     }, [loadModels]);
+    // The render timing spec reads this mark: the catalogue's rows were drawn
+    // for the first time.
+    const catalogueMarked = useRef(false);
+    useEffect(() => {
+        if (catalogueMarked.current || models.length === 0) return;
+        catalogueMarked.current = true;
+        markRender("catalogue-drawn");
+    }, [models]);
     useEffect(() => {
         fetchModelFacets()
             .then(setFacets)

@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio marks on the browser's performance timeline when it draws a
+  catalogue, a trace, a chosen view, a network and a training epoch, and when
+  an epoch arrives from its stream; the marks change nothing on screen. A
+  browser measurement over the built bundle and a real backend, `npm run
+  test:e2e:timing`, takes ten samples of each measure across declared
+  workloads (a catalogue load, simulations of about 1 000, 10 000 and 100 000
+  steps, model and view switches, networks of 2, 10 and 50 populations, a
+  50-epoch training stream) and writes a `studio.render-timing.v1` artefact
+  with every sample, p50, p95, host, load, browser and commit, labelled
+  `functional-non-isolated` unless it ran on reserved cores.
+  `docs/studio/performance-measurement.md` explains it. No budget is checked.
+
 - The shared HDL toolchain workflow restores one published SDK archive
   instead of building the tools on each runner: the `scn-hdl.tar.gz` asset of
   release `hdl-sdk-yosys070-yices270-524357fd`, SHA-256

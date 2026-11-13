@@ -20,6 +20,7 @@ import type {
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
+import { markRender } from "../renderTiming";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 /** Text size in the metric charts: the Studio's floor, which their 7–8 px labels were under. */
@@ -496,6 +497,10 @@ export default function TrainingMonitor() {
   useEffect(() => { void loadSurrogates(); }, [loadSurrogates]);
   useEffect(() => { void loadTargetProfiles(); }, [loadTargetProfiles]);
   useEffect(() => { void loadTrainingJobs(); }, [loadTrainingJobs, authSession]);
+  // The render timing spec reads this mark: the charts drew a new epoch's row.
+  useEffect(() => {
+    if (trainingEpochs.length > 0) markRender("training-chart-drawn");
+  }, [trainingEpochs.length]);
 
   const [trainingInputReady, setTrainingInputReady] = useState(true);
   const latestEpoch = trainingEpochs[trainingEpochs.length - 1] ?? null;
