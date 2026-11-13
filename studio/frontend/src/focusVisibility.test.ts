@@ -28,6 +28,58 @@ function sourceFiles(dir: string): string[] {
   return found;
 }
 
+/** The kinds of control whose own outline the stylesheet removes and replaces with a ring. */
+const RINGED = [
+  "input:focus-visible",
+  "textarea:focus-visible",
+  "select:focus-visible",
+  "summary:focus-visible",
+  "a:focus-visible",
+  "button:focus-visible",
+];
+
+/**
+ * Return the stylesheet's forced-colours block and where it starts.
+ *
+ * @returns The block's body and its offset in the stylesheet, or null when there is none.
+ */
+function forcedColoursBlock(): { body: string; start: number } | null {
+  const start = CSS.indexOf("@media (forced-colors: active)");
+  if (start < 0) return null;
+  const open = CSS.indexOf("{", start);
+  let depth = 0;
+  for (let index = open; index < CSS.length; index += 1) {
+    if (CSS[index] === "{") depth += 1;
+    if (CSS[index] === "}") {
+      depth -= 1;
+      if (depth === 0) return { body: CSS.slice(open + 1, index), start };
+    }
+  }
+  return null;
+}
+
+describe("focus visibility under forced colours", () => {
+  it("draws an outline in the system highlight colour, since forced colours drop every box-shadow", () => {
+    // WCAG 2.4.7, measured with Chromium's forced-colors emulation: a focused
+    // control kept `outline-style: none` and lost its box-shadow ring, so the
+    // keyboard's place had no visible indicator at all.
+    const block = forcedColoursBlock();
+    if (block === null) throw new Error("The stylesheet has no forced-colours block");
+    for (const selector of RINGED) {
+      expect(block.body).toContain(selector);
+    }
+    expect(block.body).toMatch(/outline:\s*2px solid Highlight;/);
+  });
+
+  it("comes after every rule that removes an outline, so the cascade cannot take it back", () => {
+    // `select` and the range slider remove their outline outright, with the same
+    // specificity as the focus rules; only a later rule wins over them.
+    const block = forcedColoursBlock();
+    if (block === null) throw new Error("The stylesheet has no forced-colours block");
+    expect(block.start).toBeGreaterThan(CSS.lastIndexOf("outline: none"));
+  });
+});
+
 describe("focus visibility", () => {
   it("puts a ring on the kinds whose outline was removed", () => {
     // WCAG 2.4.7, measured in a browser before this was written: with no rule,
@@ -47,6 +99,15 @@ describe("focus visibility", () => {
       expect(CSS).toContain(selector);
     }
     expect(CSS).toMatch(/:focus-visible[\s\S]{0,400}box-shadow:\s*0 0 0 2px/);
+  });
+
+  it("draws the ring in the focus-ring colour, framed by a gap, so it shows on every surface", () => {
+    // The gap of --bg-primary keeps the ring apart from a control filled with
+    // the accent; src/paletteContrast.test.ts holds both colours to 3:1.
+    expect(CSS).toMatch(/--focus-ring:\s*var\(--accent\);/);
+    expect(CSS).toMatch(
+      /button:focus-visible \{[^}]*box-shadow:\s*0 0 0 2px var\(--bg-primary\), 0 0 0 4px var\(--focus-ring\);/,
+    );
   });
 
   it("uses :focus-visible, so a pointer click does not ring what it clicked", () => {

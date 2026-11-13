@@ -346,8 +346,8 @@
       "branches": 100
     },
     "src/components/OnboardingOverlay.tsx": {
-      "statements": 97.36,
-      "branches": 94.44
+      "statements": 97.82,
+      "branches": 95
     },
     "src/components/OperatorWorkbenchPanel.tsx": {
       "statements": 66.66,
@@ -590,7 +590,7 @@
       "branches": 90.12
     },
     "src/paletteContrast.ts": {
-      "statements": 98.23,
+      "statements": 98.26,
       "branches": 92.3
     },
     "src/pipelineEvidence.ts": {
@@ -766,8 +766,8 @@
       "branches": 100
     },
     "src/studioGraphRequests.ts": {
-      "statements": 98.21,
-      "branches": 96.87
+      "statements": 98.36,
+      "branches": 96.96
     },
     "src/studioGraphTable.ts": {
       "statements": 100,

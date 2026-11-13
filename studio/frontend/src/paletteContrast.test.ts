@@ -36,6 +36,7 @@ import {
   canvasTextColours,
   controlBorderRequirements,
   controlsUsingDividerBorder,
+  focusRingRequirements,
   parseCssColour,
   plotTextRequirements,
   readCssTokens,
@@ -309,6 +310,12 @@ describe("the Studio's declared colours", () => {
 
   it("holds every control outline to the 3:1 that identifies it as a control", () => {
     expect(auditPalette(controlBorderRequirements(), TOKENS)).toEqual([]);
+  });
+
+  it("holds the focus ring to 3:1 against every control surface and the gap that frames it", () => {
+    // Measured in Chromium before this was written: the ring was --accent-dim,
+    // 1.44:1 against --bg-secondary and 1.58:1 against --bg-primary.
+    expect(auditPalette(focusRingRequirements(), TOKENS)).toEqual([]);
   });
 
   it("keeps structural dividers on the token that is not held to 3:1", () => {

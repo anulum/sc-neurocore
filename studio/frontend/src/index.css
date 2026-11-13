@@ -24,6 +24,10 @@
   --text-muted: #9ca4ae;
   --accent: #4fc3f7;
   --accent-dim: #1a3a4a;
+  /* The keyboard focus ring. It was --accent-dim, measured at 1.44:1 against
+     --bg-secondary in Chromium, under the 3:1 that WCAG 1.4.11 asks of the
+     indicator of a state. Guarded by src/paletteContrast.test.ts. */
+  --focus-ring: var(--accent);
   --spike-red: #ff5252;
   --success: #81c784;
   --warning: #ffb74d;
@@ -1141,7 +1145,10 @@ select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-d
  *
  * `:focus-visible` rather than `:focus` so a pointer click does not ring a
  * control the reader is already looking at, while every keyboard arrival does.
- * The ring repeats `select:focus`'s shape so one indicator means one thing.
+ *
+ * The ring is a 2px gap of `--bg-primary` and then a 2px band of
+ * `--focus-ring`. The band clears 3:1 on every surface a control sits on, and
+ * the gap keeps it apart from a control filled with the accent.
  */
 input:focus-visible,
 textarea:focus-visible,
@@ -1150,7 +1157,7 @@ summary:focus-visible,
 a:focus-visible,
 button:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-dim);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--focus-ring);
   outline: none;
 }
 
@@ -1425,4 +1432,26 @@ input[type="range"]::-moz-range-thumb {
 }
 .react-flow .react-flow__attribution a {
   color: var(--text-secondary);
+}
+
+/*
+ * Focus under forced colours (Windows contrast themes).
+ *
+ * Forced colours drop every box-shadow, and with it the focus ring above:
+ * measured with Chromium's forced-colors emulation, a focused control kept
+ * `outline-style: none` and showed no indicator at all (WCAG 2.4.7). There the
+ * same controls draw an outline in the system's highlight colour instead. This
+ * block stays last in the file: `select` and the range slider remove their
+ * outline outright with the same specificity, and only a later rule wins.
+ */
+@media (forced-colors: active) {
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  summary:focus-visible,
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
 }

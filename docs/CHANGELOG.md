@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The keyboard focus is now visible and lands somewhere named. When the
+  first-run tour closes, by Escape, Skip tour or its last step, focus moves
+  to the Studio's title; before, it fell to the page body, so a keyboard
+  reader had no place to go on from. The focus ring was a dark band that
+  measured 1.44:1 against the panel behind it, under the 3:1 that WCAG asks
+  of the indicator of a state; it is now a 2px band of the accent colour,
+  framed by a 2px gap so it also shows around a control filled with the
+  accent, and the palette check holds it to 3:1 on every control surface.
+  Under forced colours (Windows contrast themes), which drop every shadow
+  and with it the ring, focused controls now draw an outline in the
+  system's highlight colour; before, they showed no indicator at all. A
+  bundle built from the change was checked in Chromium by keyboard, with
+  and without forced colours.
+
 - Exporting a saved project's evidence bundle works again after a network
   canvas projection's seed is emptied or its rule is set to all_to_all.
   Both edits left the field in the projection with the value `undefined`

@@ -68,6 +68,8 @@ test("the first-run tour keeps keys inside until Escape, then a keyboard export 
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(640);
   await page.keyboard.press("Escape");
   await expect(tour).not.toBeVisible();
+  // The tour opened by itself, so the keyboard goes on from the Studio's title, not from the body.
+  await expect(page.getByRole("heading", { level: 1, name: "SC-NeuroCore Studio" })).toBeFocused();
   const exportButton = page.getByRole("button", { name: "JSON", exact: true });
   await tabToControl(page, exportButton);
   const downloaded = page.waitForEvent("download");

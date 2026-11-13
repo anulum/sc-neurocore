@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useState, useEffect, useCallback, type KeyboardEvent } from "react";
+import { useState, useEffect, useCallback, useRef, type KeyboardEvent } from "react";
 
 const STORAGE_KEY = "sc-studio-onboarding-dismissed";
 
@@ -47,10 +47,20 @@ const steps = [
 ];
 
 /**
+ * The id of the Studio's title, which takes the keyboard when the tour ends.
+ *
+ * The tour opens by itself, so there is no control to hand focus back to, and
+ * a closing native modal returns it to the body. The title is a named place at
+ * the top of the Studio from which a keyboard reader goes on.
+ */
+export const STUDIO_TITLE_ID = "studio-title";
+
+/**
  * The first-run tour, until it is dismissed.
  *
  * A native modal keeps keyboard focus in the tour; Escape dismisses it and
  * records the same preference as Skip tour or completing the last step.
+ * However it ends, the keyboard then goes to the Studio's title.
  *
  * A step that names the catalogue takes the number of models loaded from it,
  * so the tour never states a count the catalogue has outgrown.
@@ -65,16 +75,29 @@ export default function OnboardingOverlay({ modelCount }: { modelCount: number }
     if (dialog !== null) dialog.showModal();
   }, []);
 
+  // Set when this tour ends, so that only an ended tour moves the keyboard, not
+  // one that was dismissed on an earlier visit and never opens.
+  const ended = useRef(false);
+
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (!dismissed) setVisible(true);
   }, []);
+
+  useEffect(() => {
+    // After the commit that removed the dialog: a native modal moves focus
+    // itself as it closes or leaves the document, so this has to come later.
+    if (visible || !ended.current) return;
+    ended.current = false;
+    document.getElementById(STUDIO_TITLE_ID)?.focus();
+  }, [visible]);
 
   if (!visible) return null;
 
   /** End the tour and remember that it was ended. */
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, "true");
+    ended.current = true;
     setVisible(false);
   }
 

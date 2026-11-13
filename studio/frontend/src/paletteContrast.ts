@@ -264,6 +264,37 @@ export function controlBorderRequirements(): PaletteRequirement[] {
 }
 
 /**
+ * Requirements for the keyboard focus ring.
+ *
+ * A focused control is ringed outside its edge by a gap of `--bg-primary` and
+ * then a band of `--focus-ring`. The ring is the indicator of the focused
+ * state, so SC 1.4.11 holds it to 3:1 against what it adjoins: the band
+ * against every surface a control is drawn on (`--bg-primary`, the gap, among
+ * them), and the gap against a control filled with the accent, which it keeps
+ * apart from a band of the same colour.
+ *
+ * @returns One requirement per surface, and one for the gap.
+ */
+export function focusRingRequirements(): PaletteRequirement[] {
+  return [
+    ...CONTROL_GROUNDS.map((ground) => ({
+      foreground: "var(--focus-ring)",
+      ground,
+      label: `--focus-ring on ${ground.join(" over ")}`,
+      threshold: CONTRAST_AA_LARGE,
+      why: "SC 1.4.11: the ring is what shows which control has the keyboard.",
+    })),
+    {
+      foreground: "var(--bg-primary)",
+      ground: ["var(--accent)"],
+      label: "the ring's --bg-primary gap on a control filled with --accent",
+      threshold: CONTRAST_AA_LARGE,
+      why: "SC 1.4.11: the gap keeps the ring apart from an accent-filled control.",
+    },
+  ];
+}
+
+/**
  * Requirements for one badge colour map, in both roles it is used in.
  *
  * A badge colour is the chip's text while the filter is off and the chip's

@@ -12,11 +12,14 @@
  * written into the tour, and says nothing numeric before the catalogue arrives.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import OnboardingOverlay from "./OnboardingOverlay";
+import OnboardingOverlay, { STUDIO_TITLE_ID } from "./OnboardingOverlay";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -156,6 +159,55 @@ describe("OnboardingOverlay", () => {
     expect(container.querySelector("p")?.textContent).toMatch(
       /^Browse the catalogue's 212 neuron models by category\. /,
     );
+  });
+
+  it.each([
+    ["Escape (the native close)", (dialog: HTMLDialogElement) => { dialog.close(); }],
+    ["Skip tour", (dialog: HTMLDialogElement) => {
+      [...dialog.querySelectorAll("button")].find((button) => button.textContent === "Skip tour")?.click();
+    }],
+    ["Get Started on the last step", (dialog: HTMLDialogElement) => {
+      dialog.querySelector<HTMLButtonElement>('[aria-label="Go to step 8 of 8"]')?.click();
+    }],
+  ])("hands the keyboard to the Studio's title when the tour ends by %s", async (_way, end) => {
+    await act(async () => {
+      root.render(<><h1 id={STUDIO_TITLE_ID} tabIndex={-1}>SC-NeuroCore Studio</h1>
+        <OnboardingOverlay modelCount={185} /></>);
+    });
+    const dialog = container.querySelector("dialog");
+    if (dialog === null) throw new Error("The first-run tour did not open");
+    await act(async () => { end(dialog); });
+    if (container.querySelector("dialog") !== null) {
+      // The last step's own action ends the tour.
+      await act(async () => {
+        [...container.querySelectorAll("button")].find((button) => button.textContent === "Get Started")?.click();
+      });
+    }
+    expect(container.querySelector("dialog")).toBeNull();
+    // Not the body: a keyboard reader goes on from a named place at the top of the Studio.
+    expect(document.activeElement?.id).toBe(STUDIO_TITLE_ID);
+  });
+
+  it("leaves the focus alone when the tour was dismissed before and never opens", async () => {
+    localStorage.setItem("sc-studio-onboarding-dismissed", "true");
+    const elsewhere = document.createElement("button");
+    document.body.append(elsewhere);
+    elsewhere.focus();
+    await act(async () => {
+      root.render(<><h1 id={STUDIO_TITLE_ID} tabIndex={-1}>SC-NeuroCore Studio</h1>
+        <OnboardingOverlay modelCount={185} /></>);
+    });
+    expect(document.activeElement).toBe(elsewhere);
+    elsewhere.remove();
+  });
+
+  it("is wired to the Studio's title, which can take the keyboard", () => {
+    // The tour hands focus to an element by id; the Studio's title has to carry
+    // that id and be focusable by script, or the hand-over lands on the body.
+    // Under happy-dom the module URL is not a file URL, so the source is read from the
+    // frontend root, where the test runner starts.
+    const app = readFileSync(join(process.cwd(), "src", "App.tsx"), "utf8");
+    expect(app).toMatch(/<h1 id=\{STUDIO_TITLE_ID\} tabIndex=\{-1\}>SC-NeuroCore Studio<\/h1>/);
   });
 
   it("keeps a step without a count as written", async () => {

@@ -43,7 +43,7 @@ import CompilerInspector from "./components/CompilerInspector";
 import SynthesisDashboard from "./components/SynthesisDashboard";
 import TrainingMonitor from "./components/TrainingMonitor";
 import NetworkCanvas from "./components/NetworkCanvas";
-import OnboardingOverlay from "./components/OnboardingOverlay";
+import OnboardingOverlay, { STUDIO_TITLE_ID } from "./components/OnboardingOverlay";
 import CapabilityStrip from "./components/CapabilityStrip";
 import AdminPanel from "./components/AdminPanel";
 import AuthControl from "./components/AuthControl";
@@ -409,7 +409,8 @@ export default function App() {
         <div className="header-row">
           <div className="header-logo">
             <div className="dot" aria-hidden="true" />
-            <h1>SC-NeuroCore Studio</h1>
+            {/* The first-run tour hands the keyboard here when it ends. */}
+            <h1 id={STUDIO_TITLE_ID} tabIndex={-1}>SC-NeuroCore Studio</h1>
           </div>
           <CapabilityStrip />
           <div className="segmented" role="group" aria-label="Experiment source">
