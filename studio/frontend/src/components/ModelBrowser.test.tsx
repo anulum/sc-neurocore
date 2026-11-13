@@ -242,6 +242,14 @@ describe("ModelBrowser", () => {
     expect(html).not.toMatch(/<button[^>]*model-row-select(?:(?!<\/button>).)*<a /s);
   });
 
+  it("exposes how many models the search leaves as a status, so a narrowed list is announced", async () => {
+    const { default: ModelBrowser } = await import("./ModelBrowser");
+    const html = renderToStaticMarkup(<ModelBrowser />);
+    // The count is the status's whole text; the behaviour tally beside it is not
+    // announced on every keystroke.
+    expect(html).toMatch(/<span role="status">\d+\/\d+ models<\/span>/);
+  });
+
   it("groups every model by family before the catalogue query has answered", () => {
     const grouped = filterAndGroupModels(CATALOGUE, { matched: null, patternFilter: "", behaviors: NONE });
     expect(Object.keys(grouped).sort()).toEqual([

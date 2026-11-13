@@ -526,7 +526,9 @@ export default function TrainingMonitor() {
         display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
       }}>
         <h2 className="panel-header" style={{ margin: 0 }}>Training monitor</h2>
-        <span style={{
+        {/* The run's state is a status: each change (starting, running,
+            stopping, its end) is announced once, read as "Training running". */}
+        <span role="status" style={{
           fontSize: "var(--fs-meta)", padding: "1px 6px", borderRadius: 3,
           background: isUncertain ? "rgba(255, 193, 7, 0.2)" :
                      isActive ? "rgba(129, 199, 132, 0.2)" :
@@ -537,7 +539,7 @@ export default function TrainingMonitor() {
                  trainingStatus === "completed" ? "#4fc3f7" :
                  trainingStatus === "failed" ? "#ff5252" : "var(--text-muted)",
         }}>
-          {trainingStatus}
+          <span className="visually-hidden">Training </span>{trainingStatus}
         </span>
         <TrainingJobPicker
           jobs={trainingJobs}

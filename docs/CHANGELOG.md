@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio now announces what an action did to screen readers. The bar
+  along the bottom is always drawn, and its run report is a status: a model
+  run starting and finishing, and a finished network canvas run with its
+  neuron, spike and step counts, are announced, with the shortcut hint kept
+  out of the message. The bar also wraps in a narrow window, so it no longer
+  overflows the page at 320 CSS px. The model list's count, the network
+  canvas's population and projection count, the training run's state (read as
+  "Training running", "Training stopped") and the evidence cart's count are
+  statuses too. The cart's last export now says that it passed its own
+  round-trip verification, and an export failure is announced in the same
+  place. Before, these were drawn but not announced, or announced only when
+  they first appeared. A bundle built from the change was checked in
+  Chromium by keyboard on the five accessibility journeys.
+
 - The Rust documentation ratchet builds its original revision's dependencies
   once, not on every run. The original Git revision is now extracted into a
   persistent folder outside the checkout: `sc-neurocore-rust-doc-original` in

@@ -456,7 +456,10 @@ export default function NetworkCanvas() {
           type="file"
         />
         <span style={{ fontSize: "var(--fs-meta)", color: "var(--text-muted)" }}>
-          {graphPopulations.length} pop · {graphProjections.length} proj · drag to connect
+          {/* The counts are a status, so adding or removing a population or a
+              projection is announced; the unchanging hint stays outside it. */}
+          <span role="status">{graphPopulations.length} pop · {graphProjections.length} proj</span>
+          {" · drag to connect"}
         </span>
       </div>
 

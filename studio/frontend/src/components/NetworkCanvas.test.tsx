@@ -144,6 +144,33 @@ describe("NetworkCanvas table view", () => {
     container.remove();
   });
 
+  it("keeps the graph's size in a status, so adding a population is announced", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    /**
+     * Return the texts of the canvas's status regions that count the graph.
+     *
+     * @returns Each such region's text.
+     */
+    const sizeRegions = (): string[] => [...container.querySelectorAll('[role="status"]')]
+      .map((region) => region.textContent)
+      .filter((text) => / pop · \d+ proj/.test(text));
+    try {
+      await act(async () => { root.render(<NetworkCanvas />); });
+      expect(sizeRegions()).toEqual(["2 pop · 1 proj"]);
+      await act(async () => {
+        useStudioStore.setState({ graphPopulations: [...POPULATIONS, { ...at(POPULATIONS, 0), id: "p3" }] });
+      });
+      // The unchanging hint stays beside the status, not in it.
+      expect(sizeRegions()).toEqual(["3 pop · 1 proj"]);
+      expect(container.textContent).toContain("drag to connect");
+    } finally {
+      await act(async () => { root.unmount(); });
+      container.remove();
+    }
+  });
+
   it("deletes through the table the same way the canvas does", async () => {
     const container = document.createElement("div");
     document.body.append(container);

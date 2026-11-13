@@ -58,6 +58,41 @@ describe("TrainingMonitor", () => {
     }
   });
 
+  it("words the run's state as one status, so a start and a stop are each announced once", async () => {
+    const original = useStudioStore.getState();
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("[]", {
+      headers: { "content-type": "application/json" },
+    })));
+    /**
+     * Return the texts of the monitor's status regions that name the run's state.
+     *
+     * @returns Each such region's text.
+     */
+    const stateRegions = (): string[] => [...host.querySelectorAll('[role="status"]')]
+      .map((region) => region.textContent)
+      .filter((text) => text.startsWith("Training "));
+    try {
+      await act(async () => { root.render(<TrainingMonitor />); });
+      await act(async () => {
+        useStudioStore.setState({ trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingJobs: [] });
+      });
+      expect(stateRegions()).toEqual(["Training idle"]);
+      await act(async () => { useStudioStore.setState({ trainingJobId: "sj_run", trainingStatus: "running" }); });
+      expect(stateRegions()).toEqual(["Training running"]);
+      await act(async () => { useStudioStore.setState({ trainingStatus: "cancelled" }); });
+      expect(stateRegions()).toEqual(["Training cancelled"]);
+      // The word "Training" is spoken only; the badge still shows the bare state.
+      const hidden = host.querySelector('[role="status"] .visually-hidden');
+      expect(hidden?.textContent).toBe("Training ");
+    } finally {
+      await act(async () => { root.unmount(); });
+      useStudioStore.setState(original, true);
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows retained runs and labels a legacy row without recorded config", () => {
     const html = renderToStaticMarkup(
       <TrainingJobPicker

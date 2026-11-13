@@ -418,7 +418,7 @@ test("guided operator run executes one ODE workflow through evidence export", as
   await expect(page.getByText("Evidence ready")).toBeVisible();
   await runNext.click();
 
-  await expect(page.getByText(/Last export:/)).toBeVisible();
+  await expect(page.getByText(/Last export verified by its round trip:/)).toBeVisible();
   await expect(page.getByText("Workflow complete", { exact: true }).first()).toBeVisible();
 
   expect(api.requests("/api/simulate")).toBe(1);

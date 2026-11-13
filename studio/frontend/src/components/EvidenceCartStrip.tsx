@@ -22,6 +22,11 @@ export interface EvidenceCartStripProps {
  * that serialises the whole cart — simulation, analysis and other artefacts
  * together.
  *
+ * The count and the export's outcome are two statuses, drawn even while empty,
+ * so a screen reader announces an artefact being queued, an export and a
+ * failure. An export is only offered after its own round-trip verification,
+ * and the outcome says so in words.
+ *
  * @param props - The cart's state and the export action.
  * @returns The strip.
  */
@@ -44,18 +49,21 @@ export default function EvidenceCartStrip({
     <div data-testid="evidence-cart-strip" style={{ fontSize: "var(--fs-body)", color: "var(--text-secondary)" }}>
       <div className="panel-header">Evidence cart</div>
       <div style={{ padding: "4px 6px", lineHeight: 1.45 }}>
-        <div>
+        <div role="status">
           <strong>{cart.items.length}</strong> artefact{cart.items.length === 1 ? "" : "s"}
           {kindText ? ` (${kindText})` : ""}
         </div>
-        {lastExport !== null && (
-          <div title={lastExport.bundle_sha256}>
-            Last export: {lastExport.bundle_sha256.slice(0, 12)}… ({lastExport.entry_count} entries)
-          </div>
-        )}
-        {error !== null && (
-          <div style={{ color: "var(--danger, #f85149)" }}>{error}</div>
-        )}
+        <div role="status">
+          {lastExport !== null && (
+            <div title={lastExport.bundle_sha256}>
+              Last export verified by its round trip: {lastExport.bundle_sha256.slice(0, 12)}…
+              {` (${lastExport.entry_count} entr${lastExport.entry_count === 1 ? "y" : "ies"})`}
+            </div>
+          )}
+          {error !== null && (
+            <div style={{ color: "var(--danger, #f85149)" }}>{error}</div>
+          )}
+        </div>
         <button
           type="button"
           className="btn-simulate"

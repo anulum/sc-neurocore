@@ -863,7 +863,9 @@ export default function ModelBrowser() {
                     marginTop: 3,
                 }}
             >
-                {totalFiltered}/{models.length} models
+                {/* The count alone is the status: it answers each search, while the
+                    behaviour tally only changes when a scan completes. */}
+                <span role="status">{totalFiltered}/{models.length} models</span>
                 {Object.keys(behaviors).length > 0 &&
                     ` · ${Object.values(behaviors).filter((b) => b.pattern === "tonic").length} tonic · ${Object.values(behaviors).filter((b) => b.pattern === "bursting").length} bursting · ${Object.values(behaviors).filter((b) => b.pattern === "silent").length} silent`}
             </div>
