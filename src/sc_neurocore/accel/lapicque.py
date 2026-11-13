@@ -14,6 +14,8 @@ import ctypes
 import importlib
 import importlib.util as importlib_util
 import os
+import sys
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
@@ -39,8 +41,10 @@ except (ImportError, AttributeError):
 _julia_module: Any | None = None
 _HAS_JULIA = False
 _go_lib: Any | None = None
+_go_library_path: str | None = None
 _HAS_GO = False
 _mojo_lib: Any | None = None
+_mojo_library_path: str | None = None
 _HAS_MOJO = False
 
 _ACCEL_ROOT = os.path.dirname(__file__)
@@ -69,7 +73,7 @@ def ensure_julia_loaded() -> bool:
 
 def ensure_go_loaded() -> bool:
     """Load the compiled Lapicque Go C-ABI bridge when available."""
-    global _go_lib, _HAS_GO
+    global _go_lib, _go_library_path, _HAS_GO
     if _go_lib is not None:
         return True
     library_path = os.path.join(_ACCEL_ROOT, "go", "neurons", "lapicque", "liblapicque.so")
@@ -99,13 +103,14 @@ def ensure_go_loaded() -> bool:
     ]
     complete.restype = ctypes.c_int64
     _go_lib = library
+    _go_library_path = library_path
     _HAS_GO = True
     return True
 
 
 def ensure_mojo_loaded() -> bool:
     """Load the compiled Lapicque Mojo C ABI when available."""
-    global _mojo_lib, _HAS_MOJO
+    global _mojo_lib, _mojo_library_path, _HAS_MOJO
     if _mojo_lib is not None:
         return True
     library_path = os.path.join(_ACCEL_ROOT, "mojo", "kernels", "liblapicque.so")
@@ -135,8 +140,56 @@ def ensure_mojo_loaded() -> bool:
     ]
     complete.restype = ctypes.c_int64
     _mojo_lib = library
+    _mojo_library_path = library_path
     _HAS_MOJO = True
     return True
+
+
+def backend_available(backend: str) -> bool:
+    """Return whether one named Lapicque lane can run here.
+
+    It asks the same loaders the model's dispatch asks, so the test gate that
+    consults it (``tests.native_lane_requirement``) cannot disagree with the
+    dispatch.
+    """
+    if backend == "python":
+        return True
+    if backend == "rust":
+        return _HAS_RUST
+    if backend == "julia":
+        return ensure_julia_loaded()
+    if backend == "go":
+        return ensure_go_loaded()
+    if backend == "mojo":
+        return ensure_mojo_loaded()
+    return False
+
+
+def lane_libraries(lane: str) -> tuple[Path, ...]:
+    """Return the native library files a loaded lane runs, for the lane record of a run.
+
+    Parameters
+    ----------
+    lane : str
+        A Lapicque lane.
+
+    Returns
+    -------
+    tuple of Path
+        For ``rust``, the native module that provides the engine's entry point;
+        for ``go`` and ``mojo``, the shared library the loader opened. Empty for
+        ``python`` and ``julia``, which load no native library of their own, and
+        for a lane that is not loaded.
+    """
+    if lane == "rust":
+        module = sys.modules.get(getattr(_EngineLapicqueCompleteFn, "__module__", None) or "")
+        origin = getattr(module, "__file__", None)
+        return (Path(origin),) if isinstance(origin, str) else ()
+    if lane == "go":
+        return (Path(_go_library_path),) if _go_library_path is not None else ()
+    if lane == "mojo":
+        return (Path(_mojo_library_path),) if _mojo_library_path is not None else ()
+    return ()
 
 
 def simulate_rust(n_steps: int, current: float) -> tuple[npt.NDArray[np.float64], int, float]:

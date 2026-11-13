@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5650
+    "test_files": 5655
   },
   "documentation": {
     "public_pages": [
@@ -3592,6 +3592,7 @@
       "tests/jax_backend_support.py",
       "tests/julia_requirement.py",
       "tests/julia_runtimes.py",
+      "tests/lane_evidence_support.py",
       "tests/lapicque_backends_support.py",
       "tests/layers/fusion_support.py",
       "tests/layers/sc_conv_layer_support.py",
@@ -4126,6 +4127,9 @@
       "tests/test_autofit_fit_single_model.py",
       "tests/test_autofit_fitted_model_dataclass.py",
       "tests/test_autofit_simulate.py",
+      "tests/test_backend_lane_facets.py",
+      "tests/test_backend_lane_receipts.py",
+      "tests/test_backend_lane_sources.py",
       "tests/test_backend_selection_dispatch.py",
       "tests/test_backend_selection_host.py",
       "tests/test_backend_selection_order.py",
@@ -5857,6 +5861,7 @@
       "tests/test_kuramoto_python.py",
       "tests/test_kuramoto_ssgf_python.py",
       "tests/test_kuramoto_step_rtl_cosim.py",
+      "tests/test_lane_evidence.py",
       "tests/test_lapicque_backend_auto_dispatch.py",
       "tests/test_lapicque_backend_c_abi.py",
       "tests/test_lapicque_backend_loading.py",

@@ -30,8 +30,8 @@ invalidates it):
 |---|---|---|---|---|
 | `dynamics_faithful` | science | S4 | descriptor contract, model module, validator | `validation.evidence` |
 | `class_validated` | science | S5 | descriptor contract, model module, validator | `validation.evidence` |
-| `backend:python` | software | none | descriptor contract, model module, validator | none |
-| `backend:rust` … `backend:mojo` | software | none | descriptor contract, model module, validator, native source and binary | none |
+| `backend:python` | software | none | descriptor contract, model module, validator | `backends.python.evidence` |
+| `backend:rust`, `backend:rust_safety`, `backend:julia`, `backend:go`, `backend:mojo` | software | none | descriptor contract, model module, validator, native source | `backends.<lane>.evidence` |
 | `rtl_compile` | silicon | H0 | schema profile, compiler, validator | `silicon.cosim_evidence` |
 | `cosim` | silicon | H1 | descriptor contract, model module, schema profile, compiler, validator | `silicon.cosim_evidence` |
 | `synthesis` | silicon | H2 | committed RTL, report, validator | `silicon.synth_report` |
@@ -51,6 +51,38 @@ changed shared compiler invalidates every generated-RTL receipt at once. The
 recorded under `formal_safety` and can never credit `formal_equivalence`: the
 two facets require different claim scopes.
 
+Every lane a descriptor may declare has one facet, sixteen facets in all. A
+lane's evidence is the `evidence` text of its `[backends.<lane>]` table. The
+*native source* subjects of a lane are what a repository can recompute on any
+host: the files that implement the model in that lane and the manifests, lock
+files, build configurations and tool pins that fix the lane's build
+(`LANE_BUILD_INPUTS` in
+`sc_neurocore.neurons.readiness` names them per lane). A source becomes a
+subject only when it is a tracked file spelled as Git spells it: in a Git
+checkout it must be in the index, compared as written, and elsewhere it must
+be written in normal form; either way the file must exist. A declared lane
+that lists any other source is `unavailable`, and the problem names the path,
+before a receipt is judged; where a checkout's index cannot be read, every
+source is reported unchecked, with the reason. The Rust lane also binds every
+tracked file of the engine's Python package and of the vendored crate that
+the bridge's and the root Cargo configuration build in place of a registry
+copy (`LANE_BUILD_TREES`), each with its own digest. The library a run
+loaded is a fact of that run and never a subject, because a built file is
+absent on a clean checkout and differs between hosts. It is kept as an
+*artefact* of the receipt: a receipt of `backend:rust`,
+`backend:rust_safety`, `backend:go` or `backend:mojo` credits only when it
+carries the `native-binary` artefact, and a receipt of any other facet credits
+only when it carries no artefact.
+
+A backend lane's receipt states as its claim scope the word the model's
+descriptor gives the lane (`backend_claim_scope`): the parity word of a
+compiled lane (`exact`, `ulp-bounded` or `approximate`), and `reference` for
+the Python lane, which is compared with itself. The recorder refuses a lane
+whose parity is `n/a`, and a claim scope given by hand that is another word.
+The parity word lies outside the descriptor's contract digest, so a change of
+it moves no subject; the verifier compares the receipt's claim scope with the
+descriptor of today and reads the receipt `invalid` when they differ.
+
 ## Facet receipts
 
 Receipt schema v2 binds the result to `(class, facet, profile)`. Select the
@@ -68,8 +100,9 @@ from a descriptor listing several validators; the receipt states that subset,
 not execution of all the other tests. A successful unrelated command, a passing
 different test or invented suite totals cannot credit the selected facet.
 Native-tool result adapters remain unsupported rather than crediting exit zero
-as a scientific result. Compiled backend facets require both source and binary
-subjects; their descriptor-bound validator enrolment remains necessary.
+as a scientific result. No shipped descriptor names a lane's evidence or
+sources yet, so no lane has a receipt and every declared lane reads
+`declared`.
 
 Current subject membership and digests are checked, including the recorder and
 verifier implementations. Scientific metric/tolerance edits invalidate evidence.
@@ -92,6 +125,39 @@ credit. They need a fresh run, not a changed seal. SHA-256 seals detect content
 changes; they are not signatures, independent scientific review or proof of
 the recorder's identity. A receipt covers its declared inputs and validated
 domain, not arbitrary imported dependencies or all possible operating points.
+
+### Lane evidence written by the run
+
+A backend lane's receipt must name the lane that ran, not the one a test asked
+for. A model that offers compiled lanes records, together with the state update
+of a complete run, the lane that executed and the native library files it
+loaded (`sc_neurocore.neurons.lane_runs`; `LapicqueNeuron` is the first such
+model). The record is kept outside the model's attributes, because the Rust
+dispatch of a population, the quiescence signature and the Studio's mutation
+audit read every attribute a model carries. The test fixture `lane_evidence`
+(`tests/lane_evidence_support.py`) writes the record into the running test's
+JUnit report: one `sc_neurocore.lane` property and one
+`sc_neurocore.native_binary` property per library, as `<file name>=<sha256>`,
+under pytest's default report family. `junit_lane_evidence` in
+`sc_neurocore.neurons.receipt_execution` returns each executed case's lane and
+library digests and every inconsistency: a case with no lane or with two, a
+malformed library property, one library name of one lane with two digests in a
+report (two lanes may load libraries of the same name). A test module that
+writes lane evidence registers the fixture's module with `pytest_plugins`.
+
+The recorder reads the properties from the report it retains in the receipt
+(`lane_run_evidence` in `sc_neurocore.neurons.facet_receipts`): every executed
+case must report the facet's lane, a case of a lane that builds a library must
+name one, and each library name must be a plain file name. The distinct
+libraries become the receipt's `native-binary` artefacts, by file name and
+digest. A problem makes the outcome `error`, each problem a line of the notes.
+The verifier derives the same from the retained report and refuses a receipt
+whose artefacts are not exactly those libraries. For a backend facet the
+receipt's `extra_tools` holds the version line of each tool of the lane's
+toolchain that answers (`rustc` and `cargo`, `go`, `mojo`, `julia`), asked in
+the folder the lane's build starts in. The line names the toolchain the
+recording environment resolves there; the library that ran is identified by
+its digest.
 
 ### Runtime identity and public execution projection
 

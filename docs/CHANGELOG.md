@@ -12,6 +12,62 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The `LapicqueNeuron` descriptor and the `lapicque` schema profile (TOML and
+  JSON) use British spelling in their descriptive values: the units
+  (`normalised polarisation`, `normalised capacitance`, `normalised
+  resistance`), the meanings, display name, summary, scope, notes and
+  validation text. So do the model module's docstrings and its two error
+  messages (`polarisation`). Keys, the schema's `family` identifier and
+  test identifiers keep their spelling. No unit, value or behaviour
+  changes.
+
+- A backend lane's receipt carries what its run showed: the recorder reads
+  the lane and the library digests each test case wrote into the retained
+  JUnit report, records the libraries as `native-binary` artefacts, and marks
+  the run `error` when a case ran another lane, named no lane, or named no
+  library on a lane that builds one. Its claim scope is the parity word the
+  descriptor gives the lane (`reference` for the Python lane); the recorder
+  refuses a lane without one, and the verifier reads a receipt `invalid` when
+  the descriptor's word has changed since. The receipt also holds the version
+  lines of the lane's toolchain. No shipped descriptor names a lane's
+  evidence yet, so no status changes.
+
+- A complete run of `LapicqueNeuron` records the backend lane that executed
+  and the native library files it loaded, outside the model's attributes
+  (`sc_neurocore.neurons.lane_runs`); the Lapicque accelerator names a loaded
+  lane's libraries and answers which lanes can run (`backend_available`), so
+  the repository's lane gate skips an unbuilt Go or Mojo lane locally and
+  fails it where the lane is required. A test fixture writes the lane and the
+  library digests into a test's JUnit report, and `junit_lane_evidence`
+  returns them per executed test case with every inconsistency. The recorder
+  does not read them yet.
+
+- The readiness facet of a native backend lane binds the lane's sources and
+  build inputs as its `native-backend` subjects, and the Rust lane also every
+  tracked file of the engine's Python package and of the vendored rayon-core
+  crate its build compiles. A source counts only when it is a tracked file
+  spelled as Git spells it (in the index of a Git checkout, compared as
+  written; elsewhere in normal form; the file must exist). A declared lane
+  that lists any other source reads `unavailable` and the problem names the
+  path; where a checkout's index cannot be read, the problem says why.
+  `lane_source_problems` reports them. A descriptor's `python` lane takes no
+  sources: its code is the model module. No shipped descriptor lists a
+  source yet, so no status changes.
+
+- Every backend lane a descriptor may declare has a readiness facet: sixteen
+  facets, with `backend:rust_safety` new. A lane's facet reads its evidence
+  from the `evidence` text of the lane's `[backends.<lane>]` table and requires
+  the lane's sources as subjects. The library a run loaded is an artefact of
+  the receipt and never a subject: a receipt of `backend:rust`,
+  `backend:rust_safety`, `backend:go` or `backend:mojo` credits only when it
+  carries it, and a receipt of any other facet credits only without an
+  artefact. `LANE_BUILD_INPUTS` names the tracked manifests, lock files, build
+  configurations and tool pins that fix each lane's build. The readiness
+  ledger's facet block lists the required artefacts. A declared lane without a
+  bound receipt is listed on its profile's row and does not decide the
+  profile's admission. The recorder does not yet derive a lane's subjects, so
+  no lane has a receipt.
+
 - The Morris-Lecar Mojo kernel compiles under the pinned Mojo 1.0.0 again: its
   functions are declared with `def`, which replaced `fn`. Its own check reproduces
   the Python reference's spike counts (0, 3 and 5 over 2000 steps at currents 0,

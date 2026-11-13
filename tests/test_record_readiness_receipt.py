@@ -81,19 +81,24 @@ def recording_checkout(tmp_path: Path) -> Iterator[Path]:
         timeout=30,
     )
     try:
-        sources = (
-            Path("tools/record_readiness_receipt.py"),
-            Path("tools/readiness_artifact_refresh.py"),
-            Path("tools/facet_receipt.py"),
-            Path("tools/facet_receipt_evidence.py"),
-            Path("tools/facet_receipt_runtime.py"),
-            Path("src/sc_neurocore/neurons/readiness.py"),
-            Path("src/sc_neurocore/neurons/expression_derivative.py"),
-        )
-        for relative in (*sources, *ARTIFACTS):
-            shutil.copyfile(REPO_ROOT / relative, checkout / relative)
-        shutil.rmtree(checkout / RECEIPTS)
-        shutil.copytree(REPO_ROOT / RECEIPTS, checkout / RECEIPTS)
+        # The checkout holds the committed head. Every file the tree under test changes
+        # or adds is copied over it and every file it removes is removed, so the
+        # publication tools run on the candidate and not on a hand-kept list of some
+        # of its files. Without rename detection each entry is one path.
+        candidate = subprocess.run(
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            timeout=30,
+        ).stdout.decode("utf-8")
+        for entry in filter(None, candidate.split("\0")):
+            relative = Path(entry[3:])
+            if (REPO_ROOT / relative).is_file():
+                (checkout / relative).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(REPO_ROOT / relative, checkout / relative)
+            else:
+                (checkout / relative).unlink(missing_ok=True)
         yield checkout
     finally:
         subprocess.run(

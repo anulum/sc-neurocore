@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from defusedxml import ElementTree as ET
 from defusedxml.common import DefusedXmlException
 
 EXECUTION_CONTRACT = "pytest-junit.v1"
+#: Test case property naming the backend lane a run executed.
+LANE_PROPERTY = "sc_neurocore.lane"
+#: Test case property naming one native library a run loaded, as ``<file name>=<sha256>``.
+NATIVE_BINARY_PROPERTY = "sc_neurocore.native_binary"
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def evidence_selection_problems(selected: Sequence[str], declared: str) -> tuple[str, ...]:
@@ -94,19 +102,10 @@ def junit_checks(xml: str) -> tuple[dict[str, int], tuple[str, ...]]:
         If the report is malformed, empty, declares a DTD or entities, or lacks
         testcase identities. External references are never resolved.
     """
-    try:
-        root = ET.fromstring(xml, forbid_dtd=True, forbid_entities=True, forbid_external=True)
-    except (ET.ParseError, DefusedXmlException) as error:
-        raise ValueError("invalid JUnit report") from error
-    if root.tag not in {"testsuites", "testsuite"}:
-        raise ValueError("not a JUnit report")
     counts = dict.fromkeys(("collected", "passed", "failed", "errors", "skipped"), 0)
     nodes: list[str] = []
-    for case in root.iter("testcase"):
-        name, owner = case.get("name", ""), case.get("classname", "")
-        if not name or not owner:
-            raise ValueError("JUnit testcase lacks its validator identity")
-        nodes.append(f"{owner}.{name}")
+    for case in _report_root(xml).iter("testcase"):
+        nodes.append(_case_identity(case))
         counts["collected"] += 1
         status = "passed"
         for tag, key in (("error", "errors"), ("failure", "failed"), ("skipped", "skipped")):
@@ -117,6 +116,108 @@ def junit_checks(xml: str) -> tuple[dict[str, int], tuple[str, ...]]:
     if not nodes:
         raise ValueError("JUnit report has no executed checks")
     return counts, tuple(nodes)
+
+
+def _report_root(xml: str) -> Any:
+    """Parse a JUnit report without resolving a DTD, entities or external references."""
+    try:
+        root = ET.fromstring(xml, forbid_dtd=True, forbid_entities=True, forbid_external=True)
+    except (ET.ParseError, DefusedXmlException) as error:
+        raise ValueError("invalid JUnit report") from error
+    if root.tag not in {"testsuites", "testsuite"}:
+        raise ValueError("not a JUnit report")
+    return root
+
+
+def _case_identity(case: Any) -> str:
+    """Return the dotted validator identity of one test case element."""
+    name, owner = case.get("name", ""), case.get("classname", "")
+    if not name or not owner:
+        raise ValueError("JUnit testcase lacks its validator identity")
+    return f"{owner}.{name}"
+
+
+@dataclass(frozen=True)
+class CaseLane:
+    """The lane one executed test case ran and the native libraries it loaded.
+
+    Attributes
+    ----------
+    case : str
+        Dotted validator identity of the test case.
+    lane : str
+        The backend lane the case reports.
+    libraries : tuple of tuple of str
+        ``(file name, sha256)`` of each library, in report order, each once.
+    """
+
+    case: str
+    lane: str
+    libraries: tuple[tuple[str, str], ...]
+
+
+def junit_lane_evidence(xml: str) -> tuple[tuple[CaseLane, ...], tuple[str, ...]]:
+    """Return the lane evidence of every executed test case and every inconsistency.
+
+    Parameters
+    ----------
+    xml : str
+        Complete pytest JUnit XML retained in a receipt.
+
+    Returns
+    -------
+    tuple
+        The executed cases that report exactly one lane, in report order, and the
+        problems: a case that reports no lane or more than one, a library property
+        that is not ``<file name>=<sha256>``, and one library name of one lane with
+        two digests in the report. Two lanes may load libraries of the same name
+        (the Go and the Mojo lane of a model each load their own
+        ``lib<model>.so``), so a name is compared within its lane only, and the
+        libraries of a case that reports no single lane are not compared. A
+        skipped case is not evidence and is not checked.
+
+    Raises
+    ------
+    ValueError
+        As :func:`junit_checks`: a malformed report, a declared DTD or entities, a
+        foreign root, or a test case without its identity.
+    """
+    cases: list[CaseLane] = []
+    problems: list[str] = []
+    digests: dict[tuple[str, str], str] = {}
+    for case in _report_root(xml).iter("testcase"):
+        identity = _case_identity(case)
+        if case.find("skipped") is not None:
+            continue
+        lanes: list[str] = []
+        libraries: list[tuple[str, str]] = []
+        block = case.find("properties")
+        for item in block.iter("property") if block is not None else ():
+            name, value = item.get("name", ""), item.get("value", "")
+            if name == LANE_PROPERTY:
+                lanes.append(value)
+            elif name == NATIVE_BINARY_PROPERTY:
+                file, separator, digest = value.rpartition("=")
+                if not separator or not file or not _SHA256.fullmatch(digest):
+                    problems.append(f"test case {identity} reports a malformed library {value!r}")
+                    continue
+                libraries.append((file, digest))
+        distinct = list(dict.fromkeys(lanes))
+        if not distinct:
+            problems.append(f"test case {identity} reports no lane")
+        elif len(distinct) > 1:
+            problems.append(
+                f"test case {identity} reports more than one lane: {', '.join(sorted(distinct))}"
+            )
+        else:
+            lane = distinct[0]
+            for file, digest in libraries:
+                known = digests.setdefault((lane, file), digest)
+                conflict = f"library {file} of lane {lane} has two digests in one report: {known}, {digest}"
+                if known != digest and conflict not in problems:
+                    problems.append(conflict)
+            cases.append(CaseLane(identity, lane, tuple(dict.fromkeys(libraries))))
+    return tuple(cases), tuple(problems)
 
 
 def execution_problems(

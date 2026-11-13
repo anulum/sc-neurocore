@@ -11,8 +11,8 @@ schema_version = 2
 name = "LapicqueNeuron"
 class_name = "LapicqueNeuron"
 module = "lapicque"
-display_name = "Lapicque polarization threshold"
-summary = "Source-aligned 1907 leaky-capacitor polarization experiment, with the later SC hard-reset LIF recurrence preserved under an explicit count-neutral identity."
+display_name = "Lapicque polarisation threshold"
+summary = "Source-aligned 1907 leaky-capacitor polarisation experiment, with the later SC hard-reset LIF recurrence preserved under an explicit count-neutral identity."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
@@ -22,7 +22,7 @@ intended_use = [
     "strength-duration experiments",
 ]
 hardware_fit = [
-    "fixed-point polarization-threshold core",
+    "fixed-point polarisation-threshold core",
 ]
 behavior_tags = [
     "excitable",
@@ -38,11 +38,11 @@ year = 1907
 doi = "10.1007/s00422-007-0189-6"
 doi_is_translation = true
 paper_title = "Recherches quantitatives sur l'excitation electrique des nerfs traitee comme une polarisation"
-source_scope = "Leaky-capacitor polarization and first threshold attainment; the source does not specify repetitive spikes or an automatic reset."
+source_scope = "Leaky-capacitor polarisation and first threshold attainment; the source does not specify repetitive spikes or an automatic reset."
 
 [state.v]
 init = 0.0
-unit = "normalized polarization"
+unit = "normalised polarisation"
 
 [state.excited]
 init = 0.0
@@ -50,8 +50,8 @@ meaning = "latched first threshold attainment"
 
 [parameters.v_threshold]
 default = 1.0
-unit = "normalized polarization"
-meaning = "excitation polarization threshold"
+unit = "normalised polarisation"
+meaning = "excitation polarisation threshold"
 range = [
     1e-12,
     1000000.0,
@@ -59,7 +59,7 @@ range = [
 
 [parameters.capacitance]
 default = 1.1
-unit = "normalized capacitance"
+unit = "normalised capacitance"
 meaning = "Lapicque circuit capacitance K"
 range = [
     1e-12,
@@ -68,7 +68,7 @@ range = [
 
 [parameters.series_resistance]
 default = 10.0
-unit = "normalized resistance"
+unit = "normalised resistance"
 meaning = "Lapicque source-series resistance R"
 range = [
     1e-12,
@@ -77,8 +77,8 @@ range = [
 
 [parameters.polarization_resistance]
 default = 1.0
-unit = "normalized resistance"
-meaning = "Lapicque polarization leakage resistance rho"
+unit = "normalised resistance"
+meaning = "Lapicque polarisation leakage resistance rho"
 range = [
     1e-12,
     1000000.0,
@@ -125,7 +125,7 @@ notes = "LapicqueNeuron.lapicque_1907() is the source profile. LapicqueNeuron() 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "normalized R/rho=10, beta=1 ms; multi-duration analytical thresholds and constant-voltage complete traces"
+operating_point = "normalised R/rho=10, beta=1 ms; multi-duration analytical thresholds and constant-voltage complete traces"
 tolerance = "receipt digests and event index exact; five native packets event-exact and <=5e-15; paired source schemas <=8e-15; source Q32.32 event-exact with <7e-8 state error"
 evidence = "tests/test_model_lapicque_source_contract.py; tests/test_reference_lapicque_source_receipt.py; tests/test_lapicque_backend_parity.py; tests/test_lapicque_engine_binding.py; tests/test_cosim_lapicque.py"
 
@@ -137,4 +137,4 @@ synthesised = true
 synth_report = "hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json"
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
-terminal_reason = "The normalized source Q32.32 core preserves four complete enrolled event vectors with <7e-8 state error, synthesizes to 11,511 Yosys coarse cells, and passes depth-20 reset/latch/no-repeat safety. Timing, PPA, target-device, board, physical-silicon, and universal fixed-point equivalence evidence remain open."
+terminal_reason = "The normalised source Q32.32 core preserves four complete enrolled event vectors with <7e-8 state error, synthesises to 11,511 Yosys coarse cells, and passes depth-20 reset/latch/no-repeat safety. Timing, PPA, target-device, board, physical-silicon, and universal fixed-point equivalence evidence remain open."

@@ -60,12 +60,15 @@ from sc_neurocore.neurons.facet_receipts import (  # noqa: E402
     FacetReceipt,
     FacetReceiptError,
     Subject,
+    backend_lane,
     credit_problems,
+    lane_run_evidence,
     parse_receipt,
     receipt_filename,
 )
 from sc_neurocore.neurons.model_identity import identity_registry  # noqa: E402
 from sc_neurocore.neurons.readiness import (  # noqa: E402
+    backend_claim_scope,
     current_digest,
     derive_subjects,
     facet_evidence_field,
@@ -79,6 +82,18 @@ from sc_neurocore.neurons.receipt_execution import (  # noqa: E402
 )
 
 _SILICON_TOOLS = ("iverilog", "yosys", "verilator", "sby")
+# Each backend lane's toolchain: the folder its build starts in and each tool with the
+# argument that makes it print its version. A tool is asked in that folder, so a pin its
+# own launcher honours there (a rustup toolchain file, a Go toolchain line) answers. A pixi
+# pin is not honoured by a plain call: the Mojo line names the mojo on the path, which is
+# also the one the lane's tests build with. The Python lane's interpreter is the run's own.
+_LANE_TOOLCHAINS: dict[str, tuple[str, tuple[tuple[str, str], ...]]] = {
+    "rust": ("bridge", (("rustc", "-V"), ("cargo", "-V"))),
+    "rust_safety": ("src/sc_neurocore/accel/rust", (("rustc", "-V"), ("cargo", "-V"))),
+    "julia": ("", (("julia", "--version"),)),
+    "go": ("src/sc_neurocore/accel/go", (("go", "version"),)),
+    "mojo": ("src/sc_neurocore/accel/mojo", (("mojo", "--version"),)),
+}
 _RTL_DIR = "hdl/formal/catalogue"
 
 
@@ -129,15 +144,38 @@ class RecordError(RuntimeError):
     """Raised when a receipt cannot be recorded as requested."""
 
 
-def _tool_version(name: str) -> str:
-    """Return a nonempty successful ``-V``/``--version`` result's first line, or empty."""
+def _tool_version(
+    name: str, flags: tuple[str, ...] = ("-V", "--version"), cwd: Path | None = None
+) -> str:
+    """Return the first line of the first nonempty successful version answer, or empty.
+
+    Parameters
+    ----------
+    name : str
+        The tool, looked up on the path.
+    flags : tuple of str
+        The arguments tried in turn, each alone.
+    cwd : pathlib.Path or None
+        The folder the tool runs in; None keeps the recorder's own.
+
+    Returns
+    -------
+    str
+        At most 200 characters; empty when the tool is absent or no argument
+        gives a successful nonempty answer.
+    """
     executable = shutil.which(name)
     if executable is None:
         return ""
-    for flag in ("-V", "--version"):
+    for flag in flags:
         try:
             completed = subprocess.run(
-                [executable, flag], capture_output=True, text=True, timeout=30, check=False
+                [executable, flag],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                cwd=cwd,
             )
         except (OSError, subprocess.TimeoutExpired):
             continue
@@ -147,6 +185,29 @@ def _tool_version(name: str) -> str:
         if text:
             return text[0][:200]
     return ""
+
+
+def _lane_toolchain(lane: str) -> dict[str, str]:
+    """Return the version line of each tool of a lane's toolchain that answers.
+
+    The line names the toolchain the recording environment resolves in the lane's
+    build folder; the library a run loaded is identified by its artefact digest,
+    not by this line.
+
+    Parameters
+    ----------
+    lane : str
+        A backend lane, or empty for a facet of another axis.
+
+    Returns
+    -------
+    dict[str, str]
+        Tool name to version line; a tool that is absent or does not answer is
+        left out. Empty for the Python lane and for other facets.
+    """
+    folder, tools = _LANE_TOOLCHAINS.get(lane, ("", ()))
+    versions = {name: _tool_version(name, (flag,), REPO_ROOT / folder) for name, flag in tools}
+    return {name: line for name, line in versions.items() if line}
 
 
 def _git(args: list[str]) -> str:
@@ -342,7 +403,9 @@ def record_receipt(
     profile : str, optional
         Numerical profile, mandatory when the model has several profiles.
     claim_scope : str or None
-        Explicit claim scope, or the facet's reviewed default.
+        Explicit claim scope, or the facet's reviewed default. A backend lane's
+        claim scope is the word its descriptor gives the lane (its parity word,
+        ``reference`` for the Python lane); an explicit one must equal it.
     evidence : list[str] or None
         Selected subset of the descriptor's declared validators.
     extra_subjects : list[Subject] or None
@@ -367,7 +430,9 @@ def record_receipt(
     ------
     RecordError
         If the model or facet is unknown, no evidence reference can be found,
-        the derived subjects miss a required kind, or the target file exists.
+        the derived subjects miss a required kind, a backend lane has no word
+        for its claim scope or an explicit claim scope is another, or the target
+        file exists.
     FacetReceiptError
         If the completed record violates the public receipt schema, including
         a subject path that is not repository-relative.
@@ -406,6 +471,22 @@ def record_receipt(
     selection_errors = evidence_selection_problems(refs, field_text)
     if selection_errors:
         raise RecordError("; ".join(selection_errors))
+    scope = spec.claim_scope if claim_scope is None else claim_scope
+    lane = backend_lane(facet)
+    # A backend facet reaches this line only with a descriptor: its evidence field is
+    # the descriptor's, and an empty one was refused just above.
+    if lane and descriptor is not None:
+        word = backend_claim_scope(descriptor, lane)
+        if not word:
+            raise RecordError(
+                f"{model} declares no parity word for lane {lane}; "
+                f"declare backends.{lane}.parity before recording"
+            )
+        if claim_scope is not None and claim_scope != word:
+            raise RecordError(
+                f"claim scope {claim_scope!r} is not {word!r}, the word {model} gives lane {lane}"
+            )
+        scope = word
     command_files = [
         arg.split("::", 1)[0]
         for arg in command
@@ -463,15 +544,21 @@ def record_receipt(
     )
     if {(s.kind, s.path, s.scope) for s in after} != {(s.kind, s.path, s.scope) for s in subjects}:
         changed.append("subject manifest membership")
-    if execution_errors or changed:
+    artifacts, lane_problems = lane_run_evidence(facet, validator["junit_xml"])
+    if execution_errors or changed or lane_problems:
         outcome = "error"
         notes = "\n".join(
-            [notes, *execution_errors, *(f"subject changed during run: {p}" for p in changed)]
+            [
+                notes,
+                *execution_errors,
+                *lane_problems,
+                *(f"subject changed during run: {p}" for p in changed),
+            ]
         )
     extra_tools = (
         {name: _tool_version(name) for name in _SILICON_TOOLS if shutil.which(name)}
         if spec.axis == "silicon"
-        else {}
+        else _lane_toolchain(lane)
     )
     stamp = recorded_at or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     runtime = _runtime(subjects)
@@ -483,7 +570,7 @@ def record_receipt(
         class_name=model,
         facet=facet,
         profile=profile,
-        claim_scope=spec.claim_scope if claim_scope is None else claim_scope,
+        claim_scope=scope,
         subjects=subjects,
         evidence_refs=tuple(refs),
         command=public_command,
@@ -496,6 +583,7 @@ def record_receipt(
         counts=counts,
         recorded_at=stamp,
         notes=notes,
+        artifacts=artifacts,
     ).sealed()
     parse_receipt(receipt.to_payload())
     receipt_dir.mkdir(parents=True, exist_ok=True)
@@ -543,7 +631,11 @@ def main(argv: list[str] | None = None) -> int:
     record.add_argument("--model", required=True, help="registered class name")
     record.add_argument("--facet", required=True, help="facet name, e.g. cosim or backend:rust")
     record.add_argument("--profile", default="", help="schema profile stem or 'hand'")
-    record.add_argument("--claim-scope", default=None, help="override the facet's claim scope")
+    record.add_argument(
+        "--claim-scope",
+        default=None,
+        help="override the facet's claim scope; a backend lane's must be its descriptor's word",
+    )
     record.add_argument("--evidence", action="append", default=[], help="evidence reference")
     record.add_argument("--subject", action="append", default=[], help="extra subject KIND=PATH")
     record.add_argument("--notes", default="", help="free-text note stored in the receipt")

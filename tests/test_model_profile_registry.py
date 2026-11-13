@@ -88,6 +88,8 @@ def test_admission_requires_an_executable_validator_per_declared_facet(
             spec = FACET_BY_NAME[entry.facet]
             if not entry.declared or not spec.evidence_field or entry.status == "bound":
                 continue
+            if spec.axis == "software":
+                continue
             if not entry.admitting_validators:
                 expected_reasons.append(entry.facet)
         if expected_reasons:
@@ -106,6 +108,29 @@ def test_admission_requires_an_executable_validator_per_declared_facet(
     assert summary["admission"]["not-executable"] == 13
     assert summary["admission"].get("admitted", 0) >= 1
     assert "LapicqueNeuron" in summary["multi_profile_classes"]
+
+
+def test_a_backend_lane_is_reported_and_never_decides_admission(
+    rows: tuple[ProfileRow, ...],
+) -> None:
+    """A declared lane without a bound receipt is listed on the row; it blocks no profile."""
+    named = [
+        reason.split()[2]
+        for row in rows
+        for reason in row.admission_reasons
+        if reason.startswith("declared facet ")
+    ]
+    assert named, "the inventory has blocked profiles to compare with"
+    assert not any(facet.startswith("backend:") for facet in named)
+    admitted_with_open_lanes = [
+        row for row in rows if row.admission == "admitted" and row.unvalidated_backends
+    ]
+    assert admitted_with_open_lanes, "an admitted profile with an unevidenced lane exists"
+    assert all(
+        FACET_BY_NAME[f"backend:{lane}"].evidence_field == f"backends.{lane}.evidence"
+        for row in admitted_with_open_lanes
+        for lane in row.unvalidated_backends
+    )
 
 
 def test_synthesis_reports_without_a_test_block_admission(rows: tuple[ProfileRow, ...]) -> None:

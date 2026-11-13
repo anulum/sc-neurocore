@@ -4,12 +4,12 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Lapicque 1907 polarization model + preserved SC LIF profile
+# SC-NeuroCore — Lapicque 1907 polarisation model + preserved SC LIF profile
 
-"""Source-explicit Lapicque polarization dynamics and SC compatibility.
+"""Source-explicit Lapicque polarisation dynamics and SC compatibility.
 
 Lapicque's 1907 paper models nerve excitation as the first attainment of a
-polarization threshold in a leaky-capacitor circuit. It does not define a
+polarisation threshold in a leaky-capacitor circuit. It does not define a
 repetitive spiking neuron or an automatic post-event reset. The source profile
 therefore latches its first excitation and never resets implicitly.
 
@@ -29,17 +29,18 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.accel import lapicque as _backends
+from sc_neurocore.neurons.lane_runs import record_lane_run
 
 LapicqueProfile = Literal["sc_lif", "lapicque_1907"]
 
 
 @dataclass
 class LapicqueNeuron:
-    """Lapicque 1907 polarization threshold with an explicit SC LIF profile.
+    """Lapicque 1907 polarisation threshold with an explicit SC LIF profile.
 
     For the source profile, with source voltage ``V``, series resistance
-    ``R``, membrane/polarization resistance ``rho``, capacitance ``K``, and
-    polarization ``v``, Lapicque derives
+    ``R``, membrane/polarisation resistance ``rho``, capacitance ``K``, and
+    polarisation ``v``, Lapicque derives
 
     ``K dv/dt = (V - v) / R - v / rho``.
 
@@ -54,7 +55,7 @@ class LapicqueNeuron:
     ``LapicqueNeuron()`` preserves the historical SC exact-flow LIF recurrence
     ``tau*dv/dt = -(v-v_rest) + resistance*current`` with hard reset.
     ``LapicqueNeuron.lapicque_1907()`` constructs the count-bearing source
-    profile. Its normalized defaults preserve the paper's ``R > rho`` regime
+    profile. Its normalised defaults preserve the paper's ``R > rho`` regime
     and ``beta=1 ms``; they are maintained reproducibility choices rather than
     claimed experimental constants.
 
@@ -100,9 +101,9 @@ class LapicqueNeuron:
         dt: float = 0.01,
         excited: bool = False,
     ) -> LapicqueNeuron:
-        """Construct the source-equation polarization-threshold profile.
+        """Construct the source-equation polarisation-threshold profile.
 
-        The defaults are a normalized reproducibility point with
+        The defaults are a normalised reproducibility point with
         ``series_resistance / polarization_resistance = 10`` and
         ``beta = 1 ms``. They are not presented as a parameter set measured by
         Lapicque. Input samples to :meth:`step` are source voltages, not injected
@@ -207,7 +208,7 @@ class LapicqueNeuron:
 
     def _validate_runtime_state(self) -> None:
         if not math.isfinite(self.v):
-            raise ValueError("runtime polarization/voltage state must be finite")
+            raise ValueError("runtime polarisation/voltage state must be finite")
         if self.profile == "sc_lif" and self.v >= self.v_threshold:
             raise ValueError("v must be below v_threshold for the SC LIF profile")
         if self.profile == "lapicque_1907" and not self.excited and self.v >= self.v_threshold:
@@ -219,7 +220,7 @@ class LapicqueNeuron:
         decay = math.exp(-self.dt / self.source_beta)
         candidate = v_inf + (self.v - v_inf) * decay
         if not math.isfinite(v_inf) or not math.isfinite(decay) or not math.isfinite(candidate):
-            raise ValueError("Lapicque polarization candidate must remain finite")
+            raise ValueError("Lapicque polarisation candidate must remain finite")
         return candidate
 
     def _sc_lif_candidate(self, current: float) -> float:
@@ -349,6 +350,8 @@ class LapicqueNeuron:
         voltage, events, final_v, final_excited = self._validated_complete_packet(packet, n_steps)
         self.v = final_v
         self.excited = final_excited
+        # The lane that ran is recorded with the state update, outside the model's attributes.
+        record_lane_run(self, selected, _backends.lane_libraries(selected))
         return voltage, events
 
     def _simulate_python_complete(

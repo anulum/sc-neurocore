@@ -22,7 +22,11 @@ facet only from a receipt that
 * ended with ``outcome = "passed"``, exit code 0, at least one passed check and
   no failed, errored or skipped check, and
 * carries the claim scope the facet requires (a bounded safety proof is
-  recorded under ``formal_safety`` and can never credit ``formal_equivalence``).
+  recorded under ``formal_safety`` and can never credit ``formal_equivalence``),
+  and
+* for a backend lane, shows in its retained report that every executed test
+  case ran that lane, and carries as artefacts exactly the native libraries
+  that report names (:func:`lane_run_evidence`).
 
 Receipts are append-only: a later run writes a new file; the verifier reads the
 newest receipt per (class, facet, profile) and never edits an older one.
@@ -37,18 +41,15 @@ from __future__ import annotations
 
 import json
 import re
+import tomllib
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, cast
 
 from sc_neurocore.neurons.evidence_references import sha256_canonical_json
-from sc_neurocore.neurons.receipt_execution import execution_problems
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
-    import tomli as tomllib  # type: ignore[no-redef]
+from sc_neurocore.neurons.model_descriptor import BACKEND_LANES
+from sc_neurocore.neurons.receipt_execution import execution_problems, junit_lane_evidence
 
 FACET_RECEIPT_SCHEMA = "sc-neurocore.facet-receipt.v2"
 RECEIPT_DIR = Path(__file__).resolve().parent / "facet_receipts"
@@ -115,6 +116,10 @@ class FacetSpec:
         descriptor has no field for the facet.
     claim_scope:
         Claim scope a receipt must state, ``""`` when unconstrained.
+    required_artifacts:
+        Kinds a creditable receipt must carry among its artefacts: facts of the
+        run that no repository can recompute, such as the library a lane
+        loaded. An artefact is never checked for freshness.
     """
 
     name: str
@@ -124,6 +129,7 @@ class FacetSpec:
     optional_subjects: tuple[SubjectKind, ...] = ()
     evidence_field: str = ""
     claim_scope: str = ""
+    required_artifacts: tuple[SubjectKind, ...] = ()
 
     @property
     def subjects(self) -> tuple[SubjectKind, ...]:
@@ -134,6 +140,9 @@ class FacetSpec:
 _SCIENCE_SUBJECTS: tuple[SubjectKind, ...] = ("descriptor-contract", "model-module", "validator")
 _SCIENCE_OPTIONAL: tuple[SubjectKind, ...] = ("schema-profile", "source-reference")
 _HARDWARE_REPORT: tuple[SubjectKind, ...] = ("committed-rtl", "report", "validator")
+# The lanes whose run loads a library built from their sources. Julia runs its sources
+# through its own runtime and Python is the model module itself.
+_LANES_THAT_BUILD_A_LIBRARY = frozenset({"rust", "rust_safety", "go", "mojo"})
 
 FACETS: tuple[FacetSpec, ...] = (
     FacetSpec(
@@ -154,14 +163,17 @@ FACETS: tuple[FacetSpec, ...] = (
     ),
     *(
         FacetSpec(
-            f"backend:{backend}",
+            f"backend:{lane}",
             "software",
             None,
             ("descriptor-contract", "model-module", "validator")
-            + (("native-backend", "native-binary") if backend != "python" else ()),
+            + (("native-backend",) if lane != "python" else ()),
             ("schema-profile", "source-reference"),
+            f"backends.{lane}.evidence",
+            "",
+            ("native-binary",) if lane in _LANES_THAT_BUILD_A_LIBRARY else (),
         )
-        for backend in ("python", "rust", "julia", "go", "mojo")
+        for lane in BACKEND_LANES
     ),
     FacetSpec(
         "rtl_compile",
@@ -219,6 +231,22 @@ INVALIDATION_MATRIX: dict[str, tuple[SubjectKind, ...]] = {
 def facets_invalidated_by(kind: SubjectKind) -> tuple[str, ...]:
     """Return the facets whose receipts a change of ``kind`` invalidates."""
     return tuple(name for name, kinds in INVALIDATION_MATRIX.items() if kind in kinds)
+
+
+def backend_lane(facet: str) -> str:
+    """Return the lane a backend facet names.
+
+    Parameters
+    ----------
+    facet : str
+        A facet name, such as ``backend:rust`` or ``cosim``.
+
+    Returns
+    -------
+    str
+        The lane after ``backend:``; empty for a facet of another axis.
+    """
+    return facet.removeprefix("backend:") if facet.startswith("backend:") else ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -469,11 +497,72 @@ def load_receipt(path: Path) -> FacetReceipt:
     return parse_receipt(payload)
 
 
+def _plain_file_name(name: str) -> bool:
+    """Whether ``name`` names one file: no folder separator, no dot name, no control character."""
+    return "/" not in name and "\\" not in name and name not in {".", ".."} and name.isprintable()
+
+
+def lane_run_evidence(facet: str, junit_xml: str) -> tuple[tuple[Subject, ...], tuple[str, ...]]:
+    """Return what a backend facet's run shows of its lane: the artefacts and the problems.
+
+    The recorder writes the artefacts into the receipt from this function after the
+    run; :func:`credit_problems` calls it again on the retained report and compares.
+    The lane is the one each test case reports having run, never the one a command
+    asked for.
+
+    Parameters
+    ----------
+    facet : str
+        The receipt's facet.
+    junit_xml : str
+        The JUnit report retained in the receipt.
+
+    Returns
+    -------
+    tuple
+        The ``native-binary`` artefacts, one per distinct library file name and
+        digest that a case of the facet's lane reports, sorted; and the problems:
+        a report the lane reader refuses, the inconsistencies it reports, no
+        executed case, a case that ran another lane, a case of a lane that builds
+        a library naming none, and a library name that is not a plain file name.
+        Both are empty for a facet of another axis.
+    """
+    lane = backend_lane(facet)
+    if not lane:
+        return (), ()
+    try:
+        cases, reported = junit_lane_evidence(junit_xml)
+    except ValueError as error:
+        return (), (f"lane evidence cannot be read: {error}",)
+    problems = list(reported)
+    if not cases and not reported:
+        problems.append("no executed test case reports a lane")
+    libraries: set[tuple[str, str]] = set()
+    for case in cases:
+        if case.lane != lane:
+            problems.append(f"test case {case.case} ran lane {case.lane}, not {lane}")
+            continue
+        if lane in _LANES_THAT_BUILD_A_LIBRARY and not case.libraries:
+            problems.append(f"test case {case.case} of lane {lane} names no library")
+        for name, digest in case.libraries:
+            if _plain_file_name(name):
+                libraries.add((name, digest))
+            else:
+                problems.append(
+                    f"test case {case.case} names a library that is not a file name: {name!r}"
+                )
+    artefacts = tuple(Subject("native-binary", name, digest) for name, digest in sorted(libraries))
+    return artefacts, tuple(problems)
+
+
 def credit_problems(receipt: FacetReceipt, *, class_name: str | None = None) -> tuple[str, ...]:
     """Return why a receipt cannot credit its facet; empty when it can.
 
     Freshness of the subjects is not judged here (it needs the repository);
-    see :func:`sc_neurocore.neurons.readiness.verify_receipt`.
+    see :func:`sc_neurocore.neurons.readiness.verify_receipt`, which also
+    compares a backend lane's claim scope with the descriptor of today. For a
+    backend facet the lane evidence is derived again from the retained report
+    (:func:`lane_run_evidence`) and its artefacts must be exactly those.
 
     Parameters
     ----------
@@ -524,6 +613,20 @@ def credit_problems(receipt: FacetReceipt, *, class_name: str | None = None) -> 
     for subject in receipt.subjects:
         if subject.kind not in spec.subjects:
             problems.append(f"subject kind {subject.kind!r} is not an input of {spec.name}")
+    carried = frozenset(artifact.kind for artifact in receipt.artifacts)
+    for kind in spec.required_artifacts:
+        if kind not in carried:
+            problems.append(f"required artefact kind {kind!r} is missing")
+    for artifact in receipt.artifacts:
+        if artifact.kind not in spec.required_artifacts:
+            problems.append(f"artefact kind {artifact.kind!r} is not an output of {spec.name}")
+    if backend_lane(spec.name):
+        reported, lane_problems = lane_run_evidence(
+            spec.name, receipt.validator.get("junit_xml", "")
+        )
+        problems.extend(lane_problems)
+        if set(reported) != set(receipt.artifacts):
+            problems.append("receipt artefacts are not the libraries its report names")
     return tuple(problems)
 
 
@@ -618,11 +721,13 @@ __all__ = [
     "FacetReceiptError",
     "FacetSpec",
     "Subject",
+    "backend_lane",
     "credit_problems",
     "descriptor_contract_digest",
     "descriptor_contract_digest_of",
     "facets_invalidated_by",
     "iter_receipts",
+    "lane_run_evidence",
     "latest_receipts",
     "load_receipt",
     "parse_receipt",

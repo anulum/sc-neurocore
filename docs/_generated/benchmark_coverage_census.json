@@ -999,6 +999,9 @@
           "changed": [
             "src/sc_neurocore/accel/lapicque.py",
             "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
+            "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml",
+            "src/sc_neurocore/neurons/model_schemas/lapicque.json",
+            "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
             "src/sc_neurocore/neurons/models/lapicque.py"
           ],
           "currency": "outdated",
@@ -2321,8 +2324,11 @@
       "changed": [
         "src/sc_neurocore/neurons/descriptor_generator.py",
         "src/sc_neurocore/neurons/expression_derivative.py",
+        "src/sc_neurocore/neurons/facet_receipts.py",
         "src/sc_neurocore/neurons/model_descriptor.py",
-        "src/sc_neurocore/neurons/readiness.py"
+        "src/sc_neurocore/neurons/profile_registry.py",
+        "src/sc_neurocore/neurons/readiness.py",
+        "src/sc_neurocore/neurons/receipt_execution.py"
       ],
       "currency": "outdated",
       "name": "bench_function_call_domains.json"

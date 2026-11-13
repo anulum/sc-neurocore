@@ -76,6 +76,7 @@ def build_ledger(repo_root: Path = REPO_ROOT) -> dict[str, object]:
                 "optional_subjects": list(spec.optional_subjects),
                 "evidence_field": spec.evidence_field,
                 "claim_scope": spec.claim_scope,
+                "required_artifacts": list(spec.required_artifacts),
             }
             for spec in FACETS
         ],

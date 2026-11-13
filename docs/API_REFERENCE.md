@@ -1338,6 +1338,29 @@ Load the compiled Lapicque Go C-ABI bridge when available.
 ### Function `ensure_mojo_loaded()`
 Load the compiled Lapicque Mojo C ABI when available.
 
+### Function `backend_available(backend)`
+Return whether one named Lapicque lane can run here.
+
+It asks the same loaders the model's dispatch asks, so the test gate that
+consults it (``tests.native_lane_requirement``) cannot disagree with the
+dispatch.
+
+### Function `lane_libraries(lane)`
+Return the native library files a loaded lane runs, for the lane record of a run.
+
+Parameters
+----------
+lane : str
+    A Lapicque lane.
+
+Returns
+-------
+tuple of Path
+    For ``rust``, the native module that provides the engine's entry point;
+    for ``go`` and ``mojo``, the shared library the loader opened. Empty for
+    ``python`` and ``julia``, which load no native library of their own, and
+    for a lane that is not loaded.
+
 ### Function `simulate_rust(n_steps, current)`
 Run the factory-default Rust engine recurrence.
 
@@ -30536,6 +30559,10 @@ evidence_field:
     descriptor has no field for the facet.
 claim_scope:
     Claim scope a receipt must state, ``""`` when unconstrained.
+required_artifacts:
+    Kinds a creditable receipt must carry among its artefacts: facts of the
+    run that no repository can recompute, such as the library a lane
+    loaded. An artefact is never checked for freshness.
 
 - **subjects**()
   - Every subject kind whose change invalidates the facet.
@@ -30574,6 +30601,19 @@ Every field is a recorded fact of the run; none is derived by the verifier.
 ### Function `facets_invalidated_by(kind)`
 Return the facets whose receipts a change of ``kind`` invalidates.
 
+### Function `backend_lane(facet)`
+Return the lane a backend facet names.
+
+Parameters
+----------
+facet : str
+    A facet name, such as ``backend:rust`` or ``cosim``.
+
+Returns
+-------
+str
+    The lane after ``backend:``; empty for a facet of another axis.
+
 ### Function `seal_digest(unsealed_payload)`
 Return the seal digest of a receipt payload without ``receipt_sha256``.
 
@@ -30591,11 +30631,39 @@ FacetReceiptError
 ### Function `load_receipt(path)`
 Load and structurally validate one receipt file.
 
+### Function `lane_run_evidence(facet, junit_xml)`
+Return what a backend facet's run shows of its lane: the artefacts and the problems.
+
+The recorder writes the artefacts into the receipt from this function after the
+run; :func:`credit_problems` calls it again on the retained report and compares.
+The lane is the one each test case reports having run, never the one a command
+asked for.
+
+Parameters
+----------
+facet : str
+    The receipt's facet.
+junit_xml : str
+    The JUnit report retained in the receipt.
+
+Returns
+-------
+tuple
+    The ``native-binary`` artefacts, one per distinct library file name and
+    digest that a case of the facet's lane reports, sorted; and the problems:
+    a report the lane reader refuses, the inconsistencies it reports, no
+    executed case, a case that ran another lane, a case of a lane that builds
+    a library naming none, and a library name that is not a plain file name.
+    Both are empty for a facet of another axis.
+
 ### Function `credit_problems(receipt, *, class_name)`
 Return why a receipt cannot credit its facet; empty when it can.
 
 Freshness of the subjects is not judged here (it needs the repository);
-see :func:`sc_neurocore.neurons.readiness.verify_receipt`.
+see :func:`sc_neurocore.neurons.readiness.verify_receipt`, which also
+compares a backend lane's claim scope with the descriptor of today. For a
+backend facet the lane evidence is derived again from the retained report
+(:func:`lane_run_evidence`) and its artefacts must be exactly those.
 
 Parameters
 ----------
@@ -30730,6 +30798,53 @@ True
 - **__post_init__**()
 - **step**(input_current)
 - **get_state**()
+
+---
+
+## Module `neurons.lane_runs`
+
+### Class `LaneRun`
+The lane a complete run executed and the native files it loaded.
+
+Attributes
+----------
+lane : str
+    The backend lane that ran, for example ``python`` or ``rust``.
+libraries : tuple of Path
+    The native library files the lane loaded; empty for a lane that loads
+    none of its own.
+
+
+### Function `record_lane_run(model, lane, libraries)`
+Record the lane a model's complete run executed, replacing an earlier record.
+
+Parameters
+----------
+model : object
+    The model that ran. It must support weak references, so that the record
+    cannot outlive it.
+lane : str
+    The lane that ran.
+libraries : tuple of Path
+    The native library files that lane loaded.
+
+Raises
+------
+TypeError
+    If the model does not support weak references.
+
+### Function `lane_run(model)`
+Return the lane record of a model's last complete run.
+
+Parameters
+----------
+model : object
+    A model.
+
+Returns
+-------
+LaneRun or None
+    The record, or ``None`` when the model has not completed a recorded run.
 
 ---
 
@@ -33770,11 +33885,11 @@ Reference: Jiang, C. & Zhang, Y. (2024). Neural Comput. 36(8):1546–1564.
 ## Module `neurons.models.lapicque`
 
 ### Class `LapicqueNeuron`
-Lapicque 1907 polarization threshold with an explicit SC LIF profile.
+Lapicque 1907 polarisation threshold with an explicit SC LIF profile.
 
 For the source profile, with source voltage ``V``, series resistance
-``R``, membrane/polarization resistance ``rho``, capacitance ``K``, and
-polarization ``v``, Lapicque derives
+``R``, membrane/polarisation resistance ``rho``, capacitance ``K``, and
+polarisation ``v``, Lapicque derives
 
 ``K dv/dt = (V - v) / R - v / rho``.
 
@@ -33789,7 +33904,7 @@ source-defined automatic reset.
 ``LapicqueNeuron()`` preserves the historical SC exact-flow LIF recurrence
 ``tau*dv/dt = -(v-v_rest) + resistance*current`` with hard reset.
 ``LapicqueNeuron.lapicque_1907()`` constructs the count-bearing source
-profile. Its normalized defaults preserve the paper's ``R > rho`` regime
+profile. Its normalised defaults preserve the paper's ``R > rho`` regime
 and ``beta=1 ms``; they are maintained reproducibility choices rather than
 claimed experimental constants.
 
@@ -33801,7 +33916,7 @@ Lapicque, L. (1907). *Journal de Physiologie et de Pathologie Generale*,
 - **__post_init__**()
   - Validate the configuration and the starting state.
 - **lapicque_1907**(\*, v, v_threshold, capacitance, series_resistance, polarization_resistance, dt, excited)
-  - Construct the source-equation polarization-threshold profile.
+  - Construct the source-equation polarisation-threshold profile.
 - **sc_lif_compatibility**(\*, v, v_rest, v_reset, v_threshold, tau, resistance, dt)
   - Construct the preserved hard-reset SC exact-flow LIF profile.
 - **source_beta**()
@@ -36177,9 +36292,8 @@ admission:
 admission_reasons:
     Why the profile is not admitted, empty when admitted.
 unvalidated_backends:
-    Backends the descriptor declares implemented without any validator
-    field to bind them; reported, not decided, until the native admission
-    contract defines the field.
+    Backend lanes the descriptor declares implemented whose facet is not
+    bound; reported on the row, never a reason against admission.
 
 - **entry**(facet)
   - Return the registry entry of one facet by name.
@@ -36247,6 +36361,25 @@ Declared and verified readiness of one registered class.
 - **evidence_by_field**()
   - Return the parsed references of every non-empty descriptor evidence field.
 
+### Function `lane_source_problems(sources, repo_root)`
+Name every source of a lane that is not a tracked file spelled as Git spells it.
+
+Parameters
+----------
+sources : iterable of str
+    The sources a descriptor lists for one lane, as written.
+repo_root : Path
+    Repository root. In a Git checkout a source must be in its index,
+    compared as written; elsewhere it must be written in normal form. In both
+    cases the file must exist.
+
+Returns
+-------
+tuple of str
+    One problem per refused source, in the written order; empty when every
+    source is accepted. Where a checkout's index cannot be read, every
+    source is reported as unchecked, with the reason.
+
 ### Function `declared_facets(descriptor)`
 Return which facets a descriptor declares, under tier semantics v1.
 
@@ -36288,8 +36421,30 @@ tuple&#91;Subject, ...&#93;
     ``(kind, path)`` and sorted.
     Prose and inline configurations do not produce subjects.
 
+### Function `backend_claim_scope(descriptor, lane)`
+Return the claim scope a receipt of ``lane`` states, as the descriptor gives it today.
+
+Parameters
+----------
+descriptor : ModelDescriptor
+    The model's descriptor.
+lane : str
+    A backend lane.
+
+Returns
+-------
+str
+    ``reference`` for the Python lane; for another lane its parity word when
+    that is ``exact``, ``ulp-bounded`` or ``approximate``; empty when the lane
+    has no table or its parity is ``n/a``, so that no receipt of it can be
+    recorded or credited.
+
 ### Function `verify_receipt(receipt, *, class_name, repo_root)`
 Judge one receipt against the current repository.
+
+A backend lane's receipt is invalid when the descriptor of today gives the
+lane no claim scope or another one than the receipt states
+(:func:`backend_claim_scope`).
 
 Returns
 -------
@@ -36323,6 +36478,19 @@ Return count summaries of declared versus verified readiness.
 ---
 
 ## Module `neurons.receipt_execution`
+
+### Class `CaseLane`
+The lane one executed test case ran and the native libraries it loaded.
+
+Attributes
+----------
+case : str
+    Dotted validator identity of the test case.
+lane : str
+    The backend lane the case reports.
+libraries : tuple of tuple of str
+    ``(file name, sha256)`` of each library, in report order, each once.
+
 
 ### Function `evidence_selection_problems(selected, declared)`
 Reject validator selections outside a descriptor's reviewed evidence.
@@ -36371,6 +36539,32 @@ Raises
 ValueError
     If the report is malformed, empty, declares a DTD or entities, or lacks
     testcase identities. External references are never resolved.
+
+### Function `junit_lane_evidence(xml)`
+Return the lane evidence of every executed test case and every inconsistency.
+
+Parameters
+----------
+xml : str
+    Complete pytest JUnit XML retained in a receipt.
+
+Returns
+-------
+tuple
+    The executed cases that report exactly one lane, in report order, and the
+    problems: a case that reports no lane or more than one, a library property
+    that is not ``<file name>=<sha256>``, and one library name of one lane with
+    two digests in the report. Two lanes may load libraries of the same name
+    (the Go and the Mojo lane of a model each load their own
+    ``lib<model>.so``), so a name is compared within its lane only, and the
+    libraries of a case that reports no single lane are not compared. A
+    skipped case is not evidence and is not checked.
+
+Raises
+------
+ValueError
+    As :func:`junit_checks`: a malformed report, a declared DTD or entities, a
+    foreign root, or a test case without its identity.
 
 ### Function `execution_problems(command, evidence_refs, validator, counts)`
 Check that a receipt's declared validators actually appear in its run.

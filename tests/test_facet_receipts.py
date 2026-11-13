@@ -178,7 +178,7 @@ def test_invalidation_matrix_names_descendants_only() -> None:
         "physical",
     }
     assert set(facets_invalidated_by("native-backend")) == {
-        f"backend:{name}" for name in ("rust", "julia", "go", "mojo")
+        f"backend:{name}" for name in ("rust", "rust_safety", "julia", "go", "mojo")
     }
     assert "model-module" in INVALIDATION_MATRIX["cosim"]
     assert "model-module" not in INVALIDATION_MATRIX["synthesis"]

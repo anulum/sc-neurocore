@@ -1497,6 +1497,7 @@ jobs:
                 tests/test_facet_receipt_posix_tools.py \
                 tests/test_facet_receipt_checkout.py \
                 tests/test_facet_receipts.py \
+                tests/test_backend_lane_receipts.py \
                 tests/test_receipt_execution.py \
                 tests/test_readiness_verification.py \
                 tests/test_readiness_evidence_ledger.py \

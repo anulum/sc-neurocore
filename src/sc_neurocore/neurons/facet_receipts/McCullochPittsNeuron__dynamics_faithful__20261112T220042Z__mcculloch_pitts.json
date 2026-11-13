@@ -1,0 +1,128 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "McCullochPittsNeuron",
+  "facet": "dynamics_faithful",
+  "profile": "mcculloch_pitts",
+  "claim_scope": "",
+  "subjects": [
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml",
+      "sha256": "9ff0153d778b95005db40457178b0cc0fe7cdfe4ab8fa4a48842b820ecfc4dd8",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/mcculloch_pitts.py",
+      "sha256": "2029d7b3877a0abee09a90ba576ee9d4f8b2c9d59648d09b6f49d6cb90f34c9e",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts.json",
+      "sha256": "334c96c92b43627471a880f51bab43a031077e776945f147c455cd5ffa38f8e5",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts.toml",
+      "sha256": "ed1381065f9f8e12031af05269cadaf5cf16719eec16b198ee15e1f2a7b1469b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "bf48981c63d5bf9ed56768a0b2df1a30d8137d13b5bf7440868ca43b80a92098",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "9e0de77ac9143b45d6a1b76c9a607b816b26ed90bcb38bd5784ef51f842ad1da",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "214d129d90ac752d796d3ad0e666da745656e5c52a3818216996ca4308f2e4ba",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_reference_mcculloch_pitts.py",
+      "sha256": "94620ea5695a04ab476752d3f798d9b9c55d991e12ee18ea47044ed535b476a4",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "2a253366865185ec0be7e6efa4901c839cb64868f9bf438795e6ed526a34e564",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt_evidence.py",
+      "sha256": "b1fff5ea70d395da254aa5d461126f1b5d564ac07cd2d0bb3f4340640107fb1e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt_runtime.py",
+      "sha256": "9b0ba08435eea690aa7694975346712bb4a173af698add06639041e6b0ddc58d",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule"
+  ],
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "projection": "repository-relative-execution.v1",
+    "raw_manifest_sha256": "0924342e13b96f3ec4dc3211bd5d9b2831c9b9547a706dbd13fa328673ca5894",
+    "raw_junit_sha256": "9da2b022a160c3347d8f48e86cb35b3d53c8bba41d022e5c40465c76d2b93241",
+    "raw_stdout_sha256": "4b6d07f3dd9162cdd77e3e17e4080e549552f0916da64fe26a751d430973d321",
+    "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "version": "9.2.0",
+    "stdout": ".                                                                        [100%]\n1 passed in 1.42s\n",
+    "stderr": ""
+  },
+  "extra_tools": {},
+  "runtime": {
+    "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "4.1.0",
+    "git_head": "a26149b16cacf187feb3a9826caeaa70a6931074",
+    "dirty_subjects": "src/sc_neurocore/neurons/facet_receipts.py, src/sc_neurocore/neurons/readiness.py, src/sc_neurocore/neurons/receipt_execution.py, tools/facet_receipt.py",
+    "implementation": "CPython",
+    "python": "3.12.16",
+    "executable_sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"1\" time=\"1.307\" timestamp=\"2026-11-12T23:00:40.419031+01:00\"><properties><property name=\"facet_runtime.implementation\" value=\"CPython\" /><property name=\"facet_runtime.python\" value=\"3.12.16\" /><property name=\"facet_runtime.executable_sha256\" value=\"23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5\" /><property name=\"facet_runtime.pytest\" value=\"9.2.0\" /></properties><testcase classname=\"tests.test_reference_mcculloch_pitts\" name=\"test_truth_rows_match_an_independent_absolute_veto_rule\" time=\"0.032\" /></testsuite></testsuites>",
+    "public_projection": "repository-relative-execution.v1"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-11-12T22:00:42Z",
+  "notes": "Recorded again by the recorder batch's recording pass (latest); original receipt McCullochPittsNeuron__dynamics_faithful__20261109T083858Z__mcculloch_pitts.json.",
+  "receipt_sha256": "a43ca653b0b1f8de88e9bc73c49d757aecc9a8afe2a0fb7a053cf47fb2d86ef0"
+}

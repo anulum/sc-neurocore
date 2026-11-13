@@ -165,9 +165,10 @@ Descriptor evidence fields are class-scoped: they validate the class's
 canonical profile (the one `model_identity.schema_for_class` returns). A
 non-canonical profile is validated only by its own schema
 `[validation].evidence` or by a receipt recorded for it, never by the canonical
-profile's tests, so no test admits a profile it did not exercise. Backend
-facets have no descriptor evidence field yet; declared-but-unvalidated backends
-are listed on the row instead of deciding admission. `--check` fails when the
+profile's tests, so no test admits a profile it did not exercise. A backend
+lane's facet reads its evidence from the lane's descriptor table; a lane that
+is declared and not bound is listed on the row and does not decide admission.
+`--check` fails when the
 tracked ledger is stale; `--summary` prints the partition.
 
 ## Migration decisions and limits

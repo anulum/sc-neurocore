@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Lapicque 1907 polarization-threshold source schema
+# SC-NeuroCore — Lapicque 1907 polarisation-threshold source schema
 
 [metadata]
 schema_version = 2
@@ -12,7 +12,7 @@ name = "LapicqueNeuron"
 author = "Lapicque, L."
 year = 1907
 doi = "10.1007/s00422-007-0189-6"
-description = "Leaky-capacitor polarization threshold; no source-defined post-event reset"
+description = "Leaky-capacitor polarisation threshold; no source-defined post-event reset"
 
 [state]
 v = 0.0
@@ -46,14 +46,14 @@ family = "polarization-threshold"
 source_equation = "K*dv/dt=(V-v)/R-v/rho; beta=K*R*rho/(R+rho)"
 input_contract = "I is Lapicque's source voltage V, not injected membrane current"
 event_contract = "first threshold attainment is latched; no automatic source reset"
-default_scope = "normalized maintained R/rho=10 and beta=1 ms reproducibility point"
+default_scope = "normalised maintained R/rho=10 and beta=1 ms reproducibility point"
 identity_note = "sc_lapicque_lif preserves the historical SC hard-reset periodic LIF recurrence"
 
 [profile]
 contract = "sc-neurocore.model-profile.v1"
 time_unit = "ms"
 exactness = "exact-flow"
-notes = "The map is the closed-form RC polarization flow sampled every dt under a held source voltage; excited latches the first threshold attainment and is an event register, not a biological quantity."
+notes = "The map is the closed-form RC polarisation flow sampled every dt under a held source voltage; excited latches the first threshold attainment and is an event register, not a biological quantity."
 
 [profile.state]
 v = "biological"
@@ -67,9 +67,9 @@ polarization_resistance = "source"
 dt = "timebase"
 
 [profile.units]
-v = "normalized polarization"
-v_threshold = "normalized polarization"
-capacitance = "normalized capacitance"
-series_resistance = "normalized resistance"
-polarization_resistance = "normalized resistance"
+v = "normalised polarisation"
+v_threshold = "normalised polarisation"
+capacitance = "normalised capacitance"
+series_resistance = "normalised resistance"
+polarization_resistance = "normalised resistance"
 dt = "ms"

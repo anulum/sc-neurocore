@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1926
+expected_file_count = 1934
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7758,3 +7758,35 @@ rationale = "Bitstream scope: transports, samples, windows, correlation, error b
 [[file]]
 path = "src/sc_neurocore/debug/hil_client.py"
 rationale = "Python reference of the HIL debugger telemetry: ring buffer, aggregation, budgets, windows, triggers, rate limiter, health and export, each documented as the Go daemon it mirrors computes, its sticky buffer pressure included."
+
+[[file]]
+path = "tests/test_backend_lane_facets.py"
+rationale = "Bind what the readiness facet of a backend lane requires: one facet per lane in the order of the lanes, the evidence field in the lane's descriptor table, the lane's sources as subjects and never its built library, the library as a required artefact of the lanes that build one, and the tracked build inputs of each lane."
+
+[[file]]
+path = "tests/test_facet_receipts.py"
+rationale = "Bind the facet receipt contract: the seal and its tampering, malformed payloads and subjects, the credit rules of every facet, the invalidation matrix, the descriptor contract digest, append-only successors per profile, and the recorder's refusals, budgets and counts."
+
+[[file]]
+path = "tests/test_backend_lane_sources.py"
+rationale = "Bind how a lane's sources and build inputs become the subjects of its facet: the digests of the files, the six misspellings refused with and without Git, an untracked or deleted file refused, the reference lane and the other axes untouched, and a refused source reported as unavailable by the verifier."
+
+[[file]]
+path = "src/sc_neurocore/neurons/lane_runs.py"
+rationale = "Record which backend lane a model's last complete run executed and the libraries it loaded, keyed by the model and dropped with it, outside the model's own attributes."
+
+[[file]]
+path = "src/sc_neurocore/accel/lapicque.py"
+rationale = "Load and run the Lapicque lanes, name the native libraries a loaded lane runs and answer which lanes can run here; enrolled because part A4 changes it."
+
+[[file]]
+path = "tests/test_lane_evidence.py"
+rationale = "Bind the lane evidence a run writes: the model's record of each lane, a run that raises recording nothing, the parser's cases and refusals, and real test runs whose reports name the lane that ran."
+
+[[file]]
+path = "tests/lane_evidence_support.py"
+rationale = "Write a model's last lane run into the running test's JUnit report as lane and library-digest properties, under pytest's default report family."
+
+[[file]]
+path = "tests/test_backend_lane_receipts.py"
+rationale = "Bind what the receipt of a backend lane must show of its run: each case on the facet's lane, the artefacts exactly the reported libraries, the claim scope the descriptor's word of today, freshness carried by the sources, and real recordings of the reference and Rust lanes with the toolchain read in the lane's build folder."

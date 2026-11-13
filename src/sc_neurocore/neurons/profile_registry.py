@@ -28,10 +28,11 @@ Descriptor evidence fields are class-scoped, so they validate the class's
 canonical profile; a non-canonical profile is validated only by its own schema
 ``[validation].evidence`` or by a receipt recorded for it, never by the
 canonical profile's tests. A declared facet backed by prose alone blocks
-admission; a descriptor flag never admits a scientific row on its own. Backend
-facets have no descriptor evidence field yet (owned by the native admission
-work), so declared-but-unvalidated backends are reported on the row instead of
-deciding admission.
+admission; a descriptor flag never admits a scientific row on its own. A backend
+lane's facet reads its evidence from the lane's descriptor table. A lane that is
+declared and not bound is reported on the row and does not decide admission:
+a lane's kernel is not the profile's realisation, and whether an unevidenced
+lane should block a profile is not settled.
 """
 
 from __future__ import annotations
@@ -192,9 +193,8 @@ class ProfileRow:
     admission_reasons:
         Why the profile is not admitted, empty when admitted.
     unvalidated_backends:
-        Backends the descriptor declares implemented without any validator
-        field to bind them; reported, not decided, until the native admission
-        contract defines the field.
+        Backend lanes the descriptor declares implemented whose facet is not
+        bound; reported on the row, never a reason against admission.
     """
 
     class_name: str
@@ -325,6 +325,9 @@ def _admission(
     for entry in registry:
         spec = FACET_BY_NAME[entry.facet]
         if not entry.declared or not spec.evidence_field:
+            continue
+        if spec.axis == "software":
+            # A backend lane is reported under ``unvalidated_backends``.
             continue
         if entry.status == "bound":
             continue

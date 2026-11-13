@@ -729,6 +729,11 @@ def _backend_sources(value: object, lane: str) -> tuple[str, ...]:
         raise ModelDescriptorError(
             f"descriptor backend {lane!r} sources must be a list of repository paths, got {value!r}"
         )
+    if value and lane == "python":
+        raise ModelDescriptorError(
+            "descriptor backend 'python' takes no sources: the reference lane's code is the "
+            "model module, which its facet binds"
+        )
     sources: list[str] = []
     for path in value:
         # The same rule a receipt applies to a subject's path, so that every listed

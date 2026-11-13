@@ -360,6 +360,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -616,6 +623,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -659,7 +673,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261109T083858Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261112T215957Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -894,6 +908,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -1144,6 +1165,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -1439,6 +1467,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -1704,6 +1739,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -1910,6 +1952,13 @@
         },
         {
           "facet": "backend:rust",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
           "declared": false,
           "status": "not-declared",
           "receipt": "",
@@ -2214,6 +2263,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -2257,7 +2313,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "BrunelWangNeuron__cosim__20261109T083858Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20261112T220002Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2407,6 +2463,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -2437,6 +2494,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -2694,6 +2758,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -2993,6 +3064,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -3267,6 +3345,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -3644,6 +3729,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -3844,6 +3936,7 @@
       "admission_reasons": [],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -3920,6 +4013,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -4200,6 +4300,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -4497,6 +4604,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -4784,6 +4898,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -5044,6 +5165,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -5299,6 +5427,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -5542,6 +5677,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -5885,6 +6027,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -6081,6 +6230,7 @@
       "admission_reasons": [],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -6157,6 +6307,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -6417,6 +6574,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -6762,6 +6926,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -7035,6 +7206,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -7257,6 +7435,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -7464,6 +7649,7 @@
       "admission_reasons": [],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -7540,6 +7726,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -7819,6 +8012,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -8073,6 +8273,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -8318,6 +8525,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -8580,6 +8794,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -8853,6 +9074,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -9049,7 +9277,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20261109T083858Z__lapicque.json",
+          "receipt": "LapicqueNeuron__dynamics_faithful__20261112T220033Z__lapicque.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -9112,7 +9340,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__class_validated__20261109T083858Z__lapicque.json",
+          "receipt": "LapicqueNeuron__class_validated__20261112T220014Z__lapicque.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -9186,6 +9414,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -9229,7 +9464,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__cosim__20261109T083858Z__lapicque.json",
+          "receipt": "LapicqueNeuron__cosim__20261112T220020Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -9533,6 +9768,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -9758,6 +10000,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -9834,6 +10077,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -10110,6 +10360,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -10290,7 +10547,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__dynamics_faithful__20261109T083858Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__dynamics_faithful__20261112T220042Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -10309,7 +10566,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__class_validated__20261109T083858Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__class_validated__20261112T220037Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -10335,6 +10592,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -10606,6 +10870,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -10859,6 +11130,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -11187,6 +11465,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -11392,6 +11677,7 @@
       "admission_reasons": [],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -11468,6 +11754,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -11688,6 +11981,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -11786,6 +12080,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -12083,6 +12384,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -12375,6 +12683,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -12660,6 +12975,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -12919,6 +13241,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -13161,6 +13490,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -13428,6 +13764,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -13681,6 +14024,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -13724,7 +14074,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "ResonateAndFireNeuron__cosim__20261109T083858Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20261112T220047Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",
@@ -13962,6 +14312,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -14237,6 +14594,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -14522,6 +14886,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -14812,6 +15183,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -15089,6 +15467,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -15296,6 +15681,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -15372,6 +15758,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -15673,6 +16066,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -15958,6 +16358,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -16216,6 +16623,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -16510,6 +16924,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -16775,6 +17196,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -17069,6 +17497,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -17376,6 +17811,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -17715,6 +18157,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -17986,6 +18435,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -18228,6 +18684,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -18439,6 +18902,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -18669,6 +19139,13 @@
         },
         {
           "facet": "backend:rust",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
           "declared": false,
           "status": "not-declared",
           "receipt": "",
@@ -18918,6 +19395,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -19123,6 +19607,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -19177,6 +19662,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -19465,6 +19957,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -19673,6 +20172,7 @@
       ],
       "unvalidated_backends": [
         "python",
+        "rust_safety",
         "julia",
         "go",
         "mojo"
@@ -19771,6 +20271,13 @@
           "facet": "backend:rust",
           "declared": false,
           "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": true,
+          "status": "declared",
           "receipt": "",
           "validators": []
         },
@@ -20073,6 +20580,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -20308,6 +20822,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -20552,6 +21073,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -20828,6 +21356,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -21071,6 +21606,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -21372,6 +21914,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -21626,6 +22175,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },
@@ -21916,6 +22472,13 @@
           "validators": []
         },
         {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
           "facet": "backend:julia",
           "declared": true,
           "status": "declared",
@@ -22194,6 +22757,13 @@
           "facet": "backend:rust",
           "declared": true,
           "status": "declared",
+          "receipt": "",
+          "validators": []
+        },
+        {
+          "facet": "backend:rust_safety",
+          "declared": false,
+          "status": "not-declared",
           "receipt": "",
           "validators": []
         },

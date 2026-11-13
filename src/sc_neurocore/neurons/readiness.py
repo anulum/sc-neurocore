@@ -40,6 +40,8 @@ does not claim and no declaration can credit a tier without a receipt.
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 import tomllib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
@@ -61,6 +63,7 @@ from sc_neurocore.neurons.facet_receipts import (
     FacetSpec,
     Subject,
     SubjectKind,
+    backend_lane,
     credit_problems,
     descriptor_contract_digest,
     descriptor_contract_digest_of,
@@ -68,6 +71,7 @@ from sc_neurocore.neurons.facet_receipts import (
 )
 from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
 from sc_neurocore.neurons.model_descriptor import (
+    BACKEND_LANES,
     ModelDescriptor,
     descriptor_completeness_tier,
     parse_model_descriptor,
@@ -100,6 +104,188 @@ _COMPILER_FILES = (
     "src/sc_neurocore/neurons/schema_validator.py",
     "src/sc_neurocore/neurons/schema_contracts.py",
 )
+# The tracked manifests, lock files, build configurations and tool pins that fix each lane's
+# build. A change of one of them can change what a lane computes while its sources stay the
+# same. A build reads the Cargo configurations from the directory it starts in upwards: the
+# engine wheel, which the Rust lane loads, is built from ``bridge/`` (its ``pyproject.toml``
+# names the manifest and the module) and reads the bridge's and the root configuration; the
+# engine's own builds (benchmarks, fuzzing) start in ``engine/`` and read the engine's. The
+# Rust list follows the engine wheel's exact-source cache key in the main workflow; of it,
+# ``bridge/rayon_source_patch.toml`` records the vendored crate's origin for the source
+# distribution and is read by no build. The safety crate is built in its own folder and,
+# by the native-engine workflow, from the root with ``--manifest-path``; both builds read
+# the root configuration.
+LANE_BUILD_INPUTS: dict[str, tuple[str, ...]] = {
+    "python": (),
+    "rust": (
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "bridge/.cargo/config.toml",
+        "bridge/pyproject.toml",
+        "bridge/rayon_source_patch.toml",
+        "engine/.cargo/config.toml",
+        "engine/Cargo.toml",
+        "engine/rust-toolchain.toml",
+        "requirements/maturin.txt",
+    ),
+    "rust_safety": (
+        ".cargo/config.toml",
+        "src/sc_neurocore/accel/rust/Cargo.lock",
+        "src/sc_neurocore/accel/rust/Cargo.toml",
+    ),
+    "julia": ("src/sc_neurocore/juliapkg.json",),
+    "go": ("src/sc_neurocore/accel/go/go.mod",),
+    "mojo": ("src/sc_neurocore/accel/mojo/pixi.lock", "src/sc_neurocore/accel/mojo/pixi.toml"),
+}
+# Folders whose every tracked file goes into a lane's library: the engine's Python package,
+# through which the Rust lane is imported, and the vendored rayon-core that the bridge's and
+# the root Cargo configuration build in place of the registry copy. The engine wheel's
+# exact-source cache key in the main workflow names both. Every file is a subject with its own
+# digest (a tree-scoped subject digests Python files only).
+LANE_BUILD_TREES: dict[str, tuple[str, ...]] = {
+    "rust": ("bridge/sc_neurocore_engine", "bridge/vendor/rayon-core"),
+}
+
+
+class _IndexUnread(Exception):
+    """The Git index of a checkout could not be read; the message says why."""
+
+
+def _tracked_paths(repo_root: Path) -> frozenset[str] | None:
+    """Return the paths in the Git index of ``repo_root``, ``None`` when it is no checkout.
+
+    A root that holds a ``.git`` entry is a checkout.
+
+    Raises
+    ------
+    _IndexUnread
+        When Git is not on the path there, cannot start or does not finish, or
+        cannot read the checkout.
+    """
+    if not (repo_root / ".git").exists():
+        return None
+    git = shutil.which("git")
+    if git is None:
+        raise _IndexUnread("Git is not on the path")
+    try:
+        completed = subprocess.run(
+            [git, "-C", str(repo_root), "ls-files", "-z"],
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise _IndexUnread("Git did not answer") from error
+    if completed.returncode != 0:
+        raise _IndexUnread("Git could not read the checkout")
+    return frozenset(
+        item.decode("utf-8", errors="surrogateescape")
+        for item in completed.stdout.split(b"\0")
+        if item
+    )
+
+
+def _tracked_or_none_tracked(repo_root: Path) -> frozenset[str] | None:
+    """Return the index of a checkout, ``None`` outside one, and nothing when it cannot be read."""
+    try:
+        return _tracked_paths(repo_root)
+    except _IndexUnread:
+        return frozenset()
+
+
+def _normal_path(path: str) -> bool:
+    """Whether ``path`` is written as a repository listing writes it."""
+    return (
+        bool(path)
+        and path == path.strip()
+        and "\\" not in path
+        and not any(ord(character) < 32 for character in path)
+        and all(part not in {"", ".", ".."} for part in path.split("/"))
+    )
+
+
+def _split_sources(
+    sources: Iterable[str], repo_root: Path, tracked: frozenset[str] | None
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Return the accepted and the refused sources of one lane, each in the written order.
+
+    In a Git checkout (``tracked`` is its index) a source is accepted when it is in
+    the index, compared as written; elsewhere (``tracked`` is ``None``) when it is
+    written in normal form. Either way the file must exist to be digested.
+    """
+    accepted: list[str] = []
+    refused: list[str] = []
+    for source in sources:
+        known = source in tracked if tracked is not None else _normal_path(source)
+        (accepted if known and (repo_root / source).is_file() else refused).append(source)
+    return tuple(accepted), tuple(refused)
+
+
+def lane_source_problems(sources: Iterable[str], repo_root: Path = REPO_ROOT) -> tuple[str, ...]:
+    """Name every source of a lane that is not a tracked file spelled as Git spells it.
+
+    Parameters
+    ----------
+    sources : iterable of str
+        The sources a descriptor lists for one lane, as written.
+    repo_root : Path
+        Repository root. In a Git checkout a source must be in its index,
+        compared as written; elsewhere it must be written in normal form. In both
+        cases the file must exist.
+
+    Returns
+    -------
+    tuple of str
+        One problem per refused source, in the written order; empty when every
+        source is accepted. Where a checkout's index cannot be read, every
+        source is reported as unchecked, with the reason.
+    """
+    listed = tuple(sources)
+    if not listed:
+        return ()
+    try:
+        tracked = _tracked_paths(repo_root)
+    except _IndexUnread as error:
+        return tuple(
+            f"source cannot be checked against the index ({error}): {source!r}" for source in listed
+        )
+    _accepted, refused = _split_sources(listed, repo_root, tracked)
+    return tuple(f"source is not a tracked file: {source!r}" for source in refused)
+
+
+def _vendored_files(tree: str, repo_root: Path, tracked: frozenset[str] | None) -> tuple[str, ...]:
+    """Return the files of a vendored folder: in the index of a checkout, else on disk.
+
+    Parameters
+    ----------
+    tree : str
+        Repository-relative folder.
+    repo_root : Path
+        Repository root.
+    tracked : frozenset of str or None
+        The checkout's index (empty when it could not be read), or ``None``
+        outside a checkout.
+
+    Returns
+    -------
+    tuple of str
+        Repository-relative file paths in sorted order; in a checkout whose index
+        could not be read, none.
+    """
+    if tracked is not None:
+        return tuple(sorted(path for path in tracked if path.startswith(tree + "/")))
+    folder = repo_root / tree
+    return tuple(
+        sorted(
+            path.relative_to(repo_root).as_posix() for path in folder.rglob("*") if path.is_file()
+        )
+    )
+
+
+def _lane_sources(descriptor: ModelDescriptor, lane: str) -> tuple[str, ...]:
+    """Return the sources a descriptor lists for ``lane``, empty when it has no such table."""
+    return next((backend.sources for backend in descriptor.backends if backend.name == lane), ())
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,8 +416,8 @@ def declared_facets(descriptor: ModelDescriptor) -> dict[str, bool]:
     implemented = {
         backend.name for backend in descriptor.backends if backend.status == "implemented"
     }
-    for backend in ("python", "rust", "julia", "go", "mojo"):
-        declared[f"backend:{backend}"] = backend in implemented
+    for lane in BACKEND_LANES:
+        declared[f"backend:{lane}"] = lane in implemented
     return declared
 
 
@@ -241,6 +427,11 @@ def facet_evidence_field(descriptor: ModelDescriptor, spec: FacetSpec) -> str:
         return descriptor.validation.evidence
     if spec.evidence_field.startswith("silicon."):
         return str(getattr(descriptor.silicon, spec.evidence_field.split(".", 1)[1]))
+    if spec.evidence_field.startswith("backends."):
+        lane = spec.evidence_field.split(".")[1]
+        return next(
+            (backend.evidence for backend in descriptor.backends if backend.name == lane), ""
+        )
     return ""
 
 
@@ -368,6 +559,23 @@ def derive_subjects(
     if "compiler" in spec.subjects:
         for subject in compiler_subjects(repo_root):
             add(subject)
+    if spec.name.startswith("backend:") and "native-backend" in spec.subjects:
+        lane = spec.name.split(":", 1)[1]
+        for relative in LANE_BUILD_INPUTS[lane]:
+            add_file("native-backend", relative)
+        trees = LANE_BUILD_TREES.get(lane, ())
+        sources = (
+            _lane_sources(parse_model_descriptor(payload), lane) if payload is not None else ()
+        )
+        if trees or sources:
+            # One listing of the index serves the lane's folders and its sources.
+            tracked = _tracked_or_none_tracked(repo_root)
+            for tree in trees:
+                for relative in _vendored_files(tree, repo_root, tracked):
+                    add_file("native-backend", relative)
+            accepted, _refused = _split_sources(sources, repo_root, tracked)
+            for relative in accepted:
+                add_file("native-backend", relative)
     for relative in (
         "tools/facet_receipt.py",
         "tools/facet_receipt_runtime.py",
@@ -384,6 +592,42 @@ def derive_subjects(
     )
 
 
+#: The parity words a compiled lane's receipt can state as its claim scope.
+PARITY_CLAIM_SCOPES = frozenset({"exact", "ulp-bounded", "approximate"})
+#: The claim scope of the reference lane: it is compared with itself, so it has no parity.
+REFERENCE_CLAIM_SCOPE = "reference"
+
+
+def backend_claim_scope(descriptor: ModelDescriptor, lane: str) -> str:
+    """Return the claim scope a receipt of ``lane`` states, as the descriptor gives it today.
+
+    Parameters
+    ----------
+    descriptor : ModelDescriptor
+        The model's descriptor.
+    lane : str
+        A backend lane.
+
+    Returns
+    -------
+    str
+        ``reference`` for the Python lane; for another lane its parity word when
+        that is ``exact``, ``ulp-bounded`` or ``approximate``; empty when the lane
+        has no table or its parity is ``n/a``, so that no receipt of it can be
+        recorded or credited.
+    """
+    if lane == "python":
+        return REFERENCE_CLAIM_SCOPE
+    return next(
+        (
+            backend.parity
+            for backend in descriptor.backends
+            if backend.name == lane and backend.parity in PARITY_CLAIM_SCOPES
+        ),
+        "",
+    )
+
+
 def verify_receipt(
     receipt: FacetReceipt,
     *,
@@ -391,6 +635,10 @@ def verify_receipt(
     repo_root: Path = REPO_ROOT,
 ) -> tuple[FacetStatus, tuple[str, ...], tuple[str, ...]]:
     """Judge one receipt against the current repository.
+
+    A backend lane's receipt is invalid when the descriptor of today gives the
+    lane no claim scope or another one than the receipt states
+    (:func:`backend_claim_scope`).
 
     Returns
     -------
@@ -419,6 +667,22 @@ def verify_receipt(
     )
     if selection_errors:
         return "invalid", (), selection_errors
+    lane = backend_lane(receipt.facet)
+    if lane:
+        # The parity word lies outside the descriptor's contract digest, so a change of it
+        # moves no subject; the claim scope carries it instead.
+        word = backend_claim_scope(descriptor, lane)
+        if not word:
+            return "invalid", (), (f"the descriptor gives lane {lane} no parity word",)
+        if receipt.claim_scope != word:
+            return (
+                "invalid",
+                (),
+                (
+                    f"claim scope {receipt.claim_scope!r} is not {word!r}, "
+                    f"the word the descriptor gives lane {lane} today",
+                ),
+            )
     expected = derive_subjects(
         class_name, receipt.facet, repo_root=repo_root, evidence_refs=receipt.evidence_refs
     )
@@ -450,10 +714,17 @@ def _facet_verification(
     receipt_entry: tuple[Path, FacetReceipt] | None,
     class_name: str,
     repo_root: Path,
+    source_problems: tuple[str, ...] = (),
 ) -> FacetVerification:
     receipt_name = receipt_entry[0].name if receipt_entry is not None else ""
     if not declared:
         return FacetVerification(spec.name, False, "not-declared", evidence, receipt_name, (), ())
+    if source_problems:
+        # A lane that names a file no checkout can digest is the descriptor's error;
+        # it is reported before any receipt is judged.
+        return FacetVerification(
+            spec.name, True, "unavailable", evidence, receipt_name, (), source_problems
+        )
     if receipt_entry is not None:
         status, changed, problems = verify_receipt(
             receipt_entry[1], class_name=class_name, repo_root=repo_root
@@ -565,6 +836,11 @@ def verify_model(
                 else None,
                 class_name=class_name,
                 repo_root=repo_root,
+                source_problems=lane_source_problems(
+                    _lane_sources(descriptor, spec.name.split(":", 1)[1]), repo_root
+                )
+                if spec.name.startswith("backend:") and declared[spec.name]
+                else (),
             )
         )
     bound = {item.facet: item.status == "bound" for item in verifications}
@@ -633,15 +909,21 @@ def summarise(records: Iterable[ReadinessRecord]) -> dict[str, Any]:
 
 __all__ = [
     "FACET_STATUSES",
+    "LANE_BUILD_INPUTS",
+    "LANE_BUILD_TREES",
     "REPO_ROOT",
     "FacetStatus",
     "FacetVerification",
+    "PARITY_CLAIM_SCOPES",
+    "REFERENCE_CLAIM_SCOPE",
     "ReadinessRecord",
+    "backend_claim_scope",
     "compiler_subjects",
     "current_digest",
     "declared_facets",
     "derive_subjects",
     "facet_evidence_field",
+    "lane_source_problems",
     "readiness_report",
     "summarise",
     "verify_model",

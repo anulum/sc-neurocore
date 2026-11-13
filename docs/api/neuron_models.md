@@ -203,11 +203,15 @@ refused. Beside `status` and `parity` a lane may state `evidence`, the tests
 that are its evidence in the grammar of the descriptor's other evidence fields,
 and `sources`, the list of tracked files that implement the model in that
 lane. A source is a path inside the repository: an absolute path, a path
-through a parent folder, an empty entry and a repeated entry are refused. A
-lane table states its `status`, and a key other than `status`, `parity`,
-`evidence` and `sources` is refused, so that a misspelt key cannot drop what it
-states. The parser keeps both fields as written and does not check that a test
-or a file exists. No readiness facet reads them yet.
+through a parent folder, an empty entry and a repeated entry are refused. The
+`python` lane takes no sources: the reference lane's code is the model module,
+which its facet binds. A lane table states its `status`, and a key other than
+`status`, `parity`, `evidence` and `sources` is refused, so that a misspelt key
+cannot drop what it states. The parser keeps both fields as written and does
+not check that a test or a file exists. The lane's readiness facet reads
+`evidence`, and binds each source that is a tracked file spelled as Git spells
+it; a lane that lists any other source is reported `unavailable`
+([readiness evidence](readiness_evidence.md)).
 
 Tier-3 golden traces remain exact-hash contracts. When a scalar transcendental
 has two measured NumPy SIMD results on heterogeneous x86 hosts, the descriptor's

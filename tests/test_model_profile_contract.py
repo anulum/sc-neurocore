@@ -153,7 +153,7 @@ def test_lapicque_exact_flow_separates_event_latch_and_timebase(
     ]
     assert numerical.admissible_methods == ("map",)
     assert numerical.evaluation_order == ("iterate", "level threshold", "reset")
-    assert profile.scientific.biological_state[0].unit == "normalized polarization"
+    assert profile.scientific.biological_state[0].unit == "normalised polarisation"
 
 
 def test_sc_lapicque_lif_exponential_euler_is_verified_exact_and_stays_an_sc_identity(

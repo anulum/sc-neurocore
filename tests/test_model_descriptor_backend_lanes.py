@@ -260,6 +260,17 @@ def test_a_source_listed_twice_is_refused() -> None:
     assert str(caught.value) == "descriptor backend 'mojo' lists the source 'a.mojo' twice"
 
 
+def test_the_reference_lane_takes_no_sources() -> None:
+    """The Python lane's code is the model module, which its facet binds; a listed source could never be."""
+    with pytest.raises(ModelDescriptorError) as caught:
+        _lanes({"python": {"status": "implemented", "sources": ["src/x.py"]}})
+    assert str(caught.value) == (
+        "descriptor backend 'python' takes no sources: the reference lane's code is the "
+        "model module, which its facet binds"
+    )
+    assert _lanes({"python": {"status": "implemented", "sources": []}})[0].sources == ()
+
+
 def test_a_name_with_dots_inside_a_folder_name_is_a_path() -> None:
     """Only a whole component of two dots leaves the repository; dots inside a name do not."""
     lanes = _lanes({"julia": {"status": "implemented", "sources": ["accel/julia/..hidden/x.jl"]}})
