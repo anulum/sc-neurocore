@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Thirteen Studio components that had no test of their own now have one:
+  the admin panel and its audit-archive section, the capability strip, the
+  cohort panel, the model comparison, the custom-equation editor, the model
+  capability list, the network controls, the synthesis evidence controls,
+  the template list, the text prompt, and a training run's event input and
+  preregistered criterion. Three of them were run by no test at all before
+  (0 % in the coverage ledger). Each test mounts its component and drives
+  it as a user does, and a deliberate fault in each component's source made
+  its test fail. Ten of the components are at 100 % of their statements and
+  branches. The admin panel, the text prompt and the model comparison stop
+  short only at defensive guards that no user action reaches. The frontend
+  coverage ledger records the gains. It also records six files that tests
+  already on main had raised, and the render-timing module, new at 100 %.
+
 - `.githooks/pre-push` is stored executable, and it runs the preflight's
   default: the gates that guard what the push touches, and no test suite.
   Git skips a hook that is not executable, so the hook that
