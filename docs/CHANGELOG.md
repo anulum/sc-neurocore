@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The equation editor keeps every `/` and `?` typed into it. In
+  Chromium-based browsers (Chrome, Edge) the keyboard help took both keys
+  whenever focus was not in an input or a text area, and the editor
+  focuses neither there: it receives text through EditContext. So `dv/dt`
+  could not be typed, only pasted. The help's `?` and `/` now act only
+  when focus is outside a text control (fields, selects, editable regions
+  and anything with a text-entry role). On buttons and links they still
+  open it, and Escape closes it wherever focus is. A test types both keys
+  into each kind of text control, an EditContext-like textbox among them,
+  and a bundle built from the change was checked in Chromium.
+
 - One toolchain manifest, `tools/toolchain_manifest.toml`, gives the answer
   for every tool version the CI declares, and `python -m
   tools.toolchain_manifest --check`, also a pre-commit hook, refuses four

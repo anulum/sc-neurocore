@@ -8,7 +8,7 @@
 // @vitest-environment happy-dom
 
 import { expect, it } from "vitest";
-import { isWorkbenchShortcutTarget } from "./workbenchKeyboard";
+import { isTextEntryTarget, isWorkbenchShortcutTarget } from "./workbenchKeyboard";
 
 it.each([
   "<button data-focus>Open catalogue</button>",
@@ -39,4 +39,31 @@ it("retains body shortcuts and distinguishes explicitly non-editable content", (
   expect(isWorkbenchShortcutTarget(document.body)).toBe(true);
   expect(isWorkbenchShortcutTarget(window)).toBe(true);
   expect(isWorkbenchShortcutTarget(null)).toBe(true);
+});
+
+it.each([
+  ["<input data-focus>", true],
+  ["<textarea data-focus></textarea>", true],
+  ["<select data-focus><option>synthetic</option></select>", true],
+  ['<div class="native-edit-context" role="textbox" tabindex="0" data-focus></div>', true],
+  ['<div role="textbox"><span data-focus>dv</span></div>', true],
+  ['<div role="searchbox" data-focus></div>', true],
+  ['<div role="combobox" data-focus></div>', true],
+  ['<div role="spinbutton" data-focus></div>', true],
+  ['<div contenteditable="plaintext-only" data-focus></div>', true],
+  ["<button data-focus>Run</button>", false],
+  ['<a data-focus href="/docs">Manual</a>', false],
+  ['<div role="slider" data-focus></div>', false],
+  ['<div contenteditable="false" data-focus>Read-only</div>', false],
+  ["<p data-focus>Text</p>", false],
+])("says whether %s takes typed characters (%s)", (markup, expected) => {
+  const host = document.createElement("div");
+  host.innerHTML = markup;
+  expect(isTextEntryTarget(host.querySelector("[data-focus]"))).toBe(expected);
+});
+
+it("treats a target that is not an element as taking no characters", () => {
+  expect(isTextEntryTarget(null)).toBe(false);
+  expect(isTextEntryTarget(window)).toBe(false);
+  expect(isTextEntryTarget(document)).toBe(false);
 });

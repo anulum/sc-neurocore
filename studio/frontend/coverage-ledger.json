@@ -302,8 +302,8 @@
       "branches": 100
     },
     "src/components/KeyboardHelp.tsx": {
-      "statements": 42.85,
-      "branches": 8.33
+      "statements": 100,
+      "branches": 100
     },
     "src/components/ModelBrowser.tsx": {
       "statements": 75.75,

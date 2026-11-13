@@ -8,6 +8,8 @@
 
 import { useState, useEffect } from "react";
 
+import { isTextEntryTarget } from "../workbenchKeyboard";
+
 const SHORTCUTS = [
   ["Space", "Run simulation"],
   ["1", "Trace view"],
@@ -33,12 +35,14 @@ export default function KeyboardHelp() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "Escape") { setShow(false); return; }
+      // Characters typed into a text control are the control's, not a shortcut: in Chromium the
+      // equation editor focuses an EditContext div, so the old input/textarea test swallowed "/".
+      if (isTextEntryTarget(e.target)) return;
       if (e.key === "?" || e.key === "/") {
         e.preventDefault();
         setShow((s) => !s);
       }
-      if (e.key === "Escape") setShow(false);
     };
     window.addEventListener("keydown", handler);
     return () => { window.removeEventListener("keydown", handler); };

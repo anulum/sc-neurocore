@@ -23,6 +23,39 @@ const INTERACTIVE = [
 export function isWorkbenchShortcutTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return true;
   if (target.closest(INTERACTIVE) !== null) return false;
+  return !isEditableRegion(target);
+}
+
+/** Controls that take typed characters, by element or by role. */
+const TEXT_ENTRY = [
+  "input", "textarea", "select",
+  '[role="textbox"]', '[role="searchbox"]', '[role="combobox"]', '[role="spinbutton"]',
+].join(",");
+
+/**
+ * Whether the target is inside content marked editable, and not marked otherwise.
+ *
+ * @param target - The keyboard event target.
+ * @returns Whether typed characters belong to an editable region around the target.
+ */
+function isEditableRegion(target: Element): boolean {
   const editable = target.closest("[contenteditable]");
-  return editable === null || String(editable.getAttribute("contenteditable")).toLowerCase() === "false";
+  return editable !== null && String(editable.getAttribute("contenteditable")).toLowerCase() !== "false";
+}
+
+/**
+ * Whether typed characters belong to the focused control rather than to a character shortcut.
+ *
+ * A single-character shortcut such as `?` must not fire while a person is typing. Buttons and links
+ * type nothing, so a character shortcut stays available on them; text fields, selects, editable
+ * regions and anything with a text-entry role keep their characters. That includes a code editor
+ * that receives text through EditContext: Monaco in Chromium focuses a `div` with role `textbox`,
+ * which is neither an input nor a text area.
+ *
+ * @param target - The real keyboard event target, including nested control content.
+ * @returns Whether the target takes typed characters.
+ */
+export function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return target.closest(TEXT_ENTRY) !== null || isEditableRegion(target);
 }
