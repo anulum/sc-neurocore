@@ -25,6 +25,7 @@ ungated runs must agree exactly, on the catalogue, not on a chosen few.
 from __future__ import annotations
 
 import importlib
+import inspect
 import threading
 from typing import Any
 
@@ -54,16 +55,46 @@ POPULATION = 4
 SPIKING_DRIVE = 500.0
 
 # The catalogue sweep: enough steps for a relaxation to show, on a fixed seed so
-# a model drawing from the process-wide generator cannot differ for that reason.
+# a model drawing from the process-wide generator, or from a generator of its
+# own, cannot differ for that reason.
 CATALOGUE_STEPS = 20
 CATALOGUE_SEED = 23
 
 
+def _model_class(class_name: str) -> Any:
+    """Return a catalogue model's class."""
+    module = importlib.import_module(f"sc_neurocore.neurons.models.{_CLASS_TO_MODULE[class_name]}")
+    return getattr(module, class_name)
+
+
 def _instance(class_name: str) -> Any:
     """Return a default-constructed catalogue model."""
-    module = importlib.import_module(f"sc_neurocore.neurons.models.{_CLASS_TO_MODULE[class_name]}")
-    model: Any = getattr(module, class_name)()
+    model: Any = _model_class(class_name)()
     return model
+
+
+def _seed_params(class_name: str) -> dict[str, Any]:
+    """Return the population parameters that fix a model's own generator, if it has one.
+
+    A model whose constructor takes ``seed`` and defaults it to fresh entropy
+    draws a new stream in each run, so a gated and an ungated run of it differ
+    whenever a spike falls in one stream and not the other. Reseeding the
+    process-wide generator does not reach it. The population derives each
+    neuron's seed from this one, inside the domain the model declares.
+
+    Parameters
+    ----------
+    class_name : str
+        A catalogue model's class name.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``{"seed": CATALOGUE_SEED}`` for a model whose constructor takes a seed,
+        else an empty mapping.
+    """
+    parameters = inspect.signature(_model_class(class_name)).parameters
+    return {"seed": CATALOGUE_SEED} if "seed" in parameters else {}
 
 
 class CountingQuiescent:
@@ -486,8 +517,9 @@ class TestTheWholeCatalogue:
 
         Each model is parked just inside the band the old gate skipped and run
         with no input, which is exactly where gating used to freeze it. The
-        process-wide generator is reseeded per run so a model that draws from
-        it cannot make two runs differ for a reason that is not gating.
+        process-wide generator is reseeded per run, and a model with a generator
+        of its own is given a fixed seed, so a model that draws random numbers
+        cannot make two runs differ for a reason that is not gating.
         """
         diverged: list[str] = []
         undrivable = 0
@@ -496,7 +528,7 @@ class TestTheWholeCatalogue:
             try:
                 for gated in (False, True):
                     np.random.seed(CATALOGUE_SEED)
-                    population = Population(class_name, 2)
+                    population = Population(class_name, 2, _seed_params(class_name))
                     _park_near_rest(population)
                     np.random.seed(CATALOGUE_SEED)
                     for _ in range(CATALOGUE_STEPS):
