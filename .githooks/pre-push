@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Preflight gate before a push: every gate, no test suite (the hosted CI runs the suite).
+# Preflight gate before a push: the gates that guard what the push touches, and no test suite.
+# The hosted CI runs every gate and the whole suite on every push.
 # Install: git config core.hooksPath .githooks
 set -euo pipefail
-echo "Running preflight (every gate, no test suite)..."
-python tools/preflight.py --all-gates
+echo "Running preflight (the gates of this change, no test suite)..."
+python tools/preflight.py

@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `.githooks/pre-push` is stored executable, and it runs the preflight's
+  default: the gates that guard what the push touches, and no test suite.
+  Git skips a hook that is not executable, so the hook that
+  `make install-hooks` installs never ran, and pushes went out without the
+  preflight. It passed `--all-gates`, which runs every gate whatever was
+  touched, including the lints of the whole Rust workspace; the default runs
+  only the gates of what the push touches. The hosted CI runs every gate and
+  the whole suite on every push.
+  A test now pushes through the stored hook and checks that the preflight
+  runs and that a failing preflight stops the push.
+
 - The dependency-lock audit retries a transient OSV failure instead of
   failing on one slow answer. A transport failure (such as a timeout or a
   reset connection) or HTTP 429, 500, 502, 503 or 504 is retried after 2 and
@@ -68,11 +79,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   determined or the tool itself changed. A new `frontend` gate runs, for a
   change under `studio/frontend/`, the frontend's lint, its type check and the
   Vitest tests related to the touched files, and fails when `npm` or `npx` is
-  missing. `--all-gates` runs every gate whatever was touched, and the push
-  hook passes it, so a push is checked as before; `--full-suite` adds the
-  whole pytest suite (`make preflight-full`); `--no-tests` stays accepted as
-  the default. `sc-neurocore preflight` keeps running every gate and the whole
-  suite.
+  missing. `--all-gates` runs every gate whatever was touched; `--full-suite`
+  adds the whole pytest suite (`make preflight-full`); `--no-tests` stays
+  accepted as the default. `sc-neurocore preflight` keeps running every gate
+  and the whole suite.
 
 - The `LapicqueNeuron` descriptor and the `lapicque` schema profile (TOML and
   JSON) use British spelling in their descriptive values: the units

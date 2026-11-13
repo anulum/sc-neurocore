@@ -30,9 +30,9 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 
 ## Preflight Gate
 
-Every push is guarded by `tools/preflight.py`. The push hook runs every gate (`--all-gates`) and no test
-suite; the hosted CI runs the whole suite on every push. Run by hand, the command runs the gates that guard
-the files your change touched: each gate declares its kinds of file, and a gate the change does not touch
+Every push is guarded by `tools/preflight.py`. The push hook runs its default, the gates that guard what
+the push touches, and no test suite; the hosted CI runs every gate and the whole suite on every push. Run by
+hand, the command does the same: each gate declares its kinds of file, and a gate the change does not touch
 prints `not applicable to this change: <gate>` and does not run. The capability manifest, SPDX header and
 benchmark evidence gates always run, and every gate runs when the touched files cannot be determined or
 `tools/preflight.py` itself changed. The whole test suite runs only with `--full-suite`. The touched files
@@ -56,8 +56,10 @@ make preflight-full     # every gate and the whole test suite
 make preflight-fast     # the same as make preflight (kept for existing habits)
 ```
 
-The `.githooks/pre-push` hook runs `python tools/preflight.py --all-gates` before every `git push`: every
-gate, no test suite. Install it with `make install-hooks`.
+The `.githooks/pre-push` hook runs `python tools/preflight.py` before every `git push`: the gates of the
+change, no test suite. Install it with `make install-hooks`. `--all-gates` runs every gate whatever was
+touched, including the lints of the whole Rust workspace, so it is a deliberate local check, not part of the
+hook.
 
 ## Development Guidelines
 

@@ -585,7 +585,7 @@ def main() -> int:
 
     By default the command runs the gates that guard the touched files and no
     test suite, and prints :data:`NO_SUITE_RULE`. ``--all-gates`` runs every
-    gate whatever was touched (the push hook passes it); ``--full-suite`` adds
+    gate whatever was touched (a full local check); ``--full-suite`` adds
     the whole pytest suite with coverage. ``--no-tests`` is accepted as the
     default, and ``--coverage`` is accepted and changes nothing. The range
     gates from :func:`range_gates` always run last, over the commits a push of
@@ -604,7 +604,7 @@ def main() -> int:
     parser.add_argument(
         "--all-gates",
         action="store_true",
-        help="Run every gate whatever the change touched (the push hook passes it)",
+        help="Run every gate whatever the change touched (a full local check)",
     )
     parser.add_argument(
         "--coverage",

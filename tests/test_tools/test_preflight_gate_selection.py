@@ -526,11 +526,106 @@ def test_full_suite_and_no_tests_together_are_refused(tmp_path: Path, preflight:
 # --- The callers keep their behaviour (design point c, amendment point f) ---
 
 
-def test_the_push_hook_runs_every_gate_and_no_suite() -> None:
-    """The stored hook passes ``--all-gates`` and no ``--full-suite``."""
+def test_the_push_hook_runs_the_gates_of_the_change_and_no_suite() -> None:
+    """The stored hook runs the default: the gates that guard what the push touches, no suite.
+
+    Neither ``--all-gates`` nor ``--full-suite``: the hosted CI runs every gate
+    and the whole suite on every push.
+    """
     hook = (REPO_ROOT / ".githooks/pre-push").read_text(encoding="utf-8")
     command = [line for line in hook.splitlines() if "tools/preflight.py" in line]
-    assert command == ["python tools/preflight.py --all-gates"]
+    assert command == ["python tools/preflight.py"]
+
+
+def test_the_push_hook_is_stored_executable() -> None:
+    """Git stores the hook with its executable bit; without it, Git skips the hook on every push."""
+    entry = subprocess.run(
+        ["git", "ls-files", "--stage", "--", ".githooks/pre-push"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    ).stdout.split()
+    assert entry[:1] == ["100755"]
+
+
+def _push_through_the_stored_hook(tmp_path: Path, fail: str) -> tuple[int, str, list[str], bool]:
+    """Push one commit from a clone whose hooks are the stored ``.githooks``, as ``make install-hooks`` sets them.
+
+    The hook is checked out of this repository's index, so it carries the mode
+    Git stores for it. ``python`` is a recording stand-in; Git, ``env`` and
+    ``bash`` are the real programs.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        The test's own folder.
+    fail : str
+        The stand-ins that exit with 1, separated by spaces, or nothing.
+
+    Returns
+    -------
+    tuple[int, str, list[str], bool]
+        The push's exit status, what Git printed, the command lines the
+        stand-ins recorded, and whether the origin's ``main`` moved.
+    """
+    clone = _clone_with_origin(tmp_path)
+    origin = tmp_path / "origin.git"
+    before = _git(origin, "rev-parse", "main")
+    hooks = tmp_path / "stored"
+    subprocess.run(
+        ["git", "checkout-index", f"--prefix={hooks}/", "--", ".githooks/pre-push"],
+        cwd=REPO_ROOT,
+        check=True,
+        timeout=30,
+    )
+    _change(clone, "README.md")
+    search_path = _search_path(tmp_path, ("python",))
+    bash = shutil.which("bash")
+    assert bash is not None, "the real bash is needed to run the hook"
+    (tmp_path / "real-tools" / "bash").symlink_to(bash)
+    record = tmp_path / "push.log"
+    pushed = subprocess.run(
+        [
+            "git",
+            "-c",
+            f"core.hooksPath={hooks / '.githooks'}",
+            "push",
+            "--quiet",
+            "origin",
+            "HEAD:main",
+        ],
+        cwd=clone,
+        env={
+            "PATH": search_path,
+            "HOME": str(tmp_path),
+            "PREFLIGHT_RECORD": str(record),
+            "PREFLIGHT_FAIL": fail,
+        },
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    commands = record.read_text(encoding="utf-8").splitlines() if record.exists() else []
+    return pushed.returncode, pushed.stderr, commands, _git(origin, "rev-parse", "main") != before
+
+
+def test_git_runs_the_stored_push_hook_before_a_push(tmp_path: Path) -> None:
+    """A push through the installed hooks runs the preflight of the change, then pushes."""
+    status, output, commands, moved = _push_through_the_stored_hook(tmp_path, fail="")
+    assert status == 0, output
+    assert commands == ["python tools/preflight.py"]
+    assert moved
+
+
+def test_a_failing_preflight_stops_the_push(tmp_path: Path) -> None:
+    """When the preflight fails, Git refuses the push and the origin stays where it was."""
+    status, _output, commands, moved = _push_through_the_stored_hook(tmp_path, fail="python")
+    assert status != 0
+    assert commands == ["python tools/preflight.py"]
+    assert not moved
 
 
 def test_the_make_targets_run_the_default_and_the_full_gate() -> None:
