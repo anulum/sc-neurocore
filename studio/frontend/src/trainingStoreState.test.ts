@@ -12,6 +12,9 @@ import type {
   TrainingEpochMetrics,
   TrainingWeightRestorePlan,
 } from "./api/client";
+import { studioTrainingKey } from "./studioExperimentKey";
+import { readEventTrainingData } from "./studioEventTrainingData";
+import eventData from "./studioEventTrainingData.fixture.json";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import {
   trainingConfigUpdatedState,
@@ -249,6 +252,31 @@ describe("training store state helpers", () => {
     expect(trainingConfigUpdatedState(trainingConfig, "hidden", [256, 128])).toEqual({
       trainingConfig: { ...trainingConfig, hidden: [256, 128] },
     });
+  });
+
+  it.each([
+    "model_kind", "target_profile", "seed", "max_grad_norm", "event_data", "preregistration",
+  ] as const)("removes the optional %s when it is cleared, so the configuration can still be sealed", (key) => {
+    // Every optional setting set, as after a conversion run with a criterion and an event declaration.
+    const applied = readEventTrainingData(eventData, "nmnist", 4);
+    if (applied === undefined) throw new Error("the event fixture no longer reads");
+    const full: StudioProjectTrainingConfig = {
+      ...trainingConfig,
+      dataset: "nmnist",
+      timesteps: 4,
+      model_kind: "qcfs_conversion",
+      target_profile: "ice40_up5k",
+      seed: 7,
+      max_grad_norm: 1,
+      event_data: applied,
+      preregistration: { metric: "val_accuracy", threshold: 0.5, rationale: "" },
+    };
+    const { trainingConfig: cleared } = trainingConfigUpdatedState(full, key, undefined);
+    // An undefined value has no JSON form and the training key seals the configuration, so a kept key blanked the
+    // Studio once a run had completed.
+    expect(Object.hasOwn(cleared, key)).toBe(false);
+    expect(() => studioTrainingKey(cleared)).not.toThrow();
+    expect(cleared).toEqual(Object.fromEntries(Object.entries(full).filter(([name]) => name !== key)));
   });
 
   it("builds failure and export-success patches", () => {

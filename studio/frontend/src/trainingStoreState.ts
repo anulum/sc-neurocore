@@ -357,9 +357,15 @@ export function trainingCheckpointImportedState(
 /**
  * Change one training setting, keeping the rest.
  *
+ * Clearing an optional setting (a value of `undefined`) removes its key rather
+ * than storing it. The training key is a canonical seal of this object, and a
+ * seal has no form for `undefined`: a kept key made it throw while the guided
+ * flow rendered, which blanked the Studio once a run had completed. A saved
+ * project is read back the same way, with absent optional settings left out.
+ *
  * @param currentConfig - The configuration as it stands.
  * @param key - The setting to change.
- * @param value - Its new value.
+ * @param value - Its new value, or `undefined` to clear an optional setting.
  * @returns The patch.
  */
 export function trainingConfigUpdatedState<K extends keyof StudioProjectTrainingConfig>(
@@ -367,6 +373,11 @@ export function trainingConfigUpdatedState<K extends keyof StudioProjectTraining
   key: K,
   value: StudioProjectTrainingConfig[K],
 ): TrainingConfigUpdatedStatePatch {
+  if (value === undefined) {
+    const trainingConfig = { ...currentConfig };
+    Reflect.deleteProperty(trainingConfig, key);
+    return { trainingConfig };
+  }
   return {
     trainingConfig: {
       ...currentConfig,

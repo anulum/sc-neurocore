@@ -16,6 +16,7 @@ import {
   studioTrainingKey,
 } from "./studioExperimentKey";
 import { studioGuidedFlowInputs } from "./studioGuidedFlowInputs";
+import { trainingConfigUpdatedState } from "./trainingStoreState";
 import type { StudioGuidedFlowSource } from "./studioGuidedFlowSource";
 import { studioSimulationConfigInput } from "./studioSimulationConfigInput";
 
@@ -225,6 +226,24 @@ describe("training completion", () => {
 
     expect(derive(state).trainingComplete).toBe(true);
   });
+
+  it.each(["completed", "failed"] as const)(
+    "reads a %s run as not current, without throwing, once an optional setting is cleared",
+    (trainingStatus) => {
+      // The path that blanked the Studio: train, then clear the seed or change the dataset (which clears the event
+      // declaration). The cleared setting must leave the configuration, not stay as undefined.
+      const withSeed = { ...TRAINING_CONFIG, seed: 7 };
+      const state = source({
+        trainingConfig: trainingConfigUpdatedState(withSeed, "seed", undefined).trainingConfig,
+        trainingExperimentKey: studioTrainingKey(withSeed),
+        trainingStatus,
+      });
+
+      expect(() => derive(state)).not.toThrow();
+      expect(derive(state).trainingComplete).toBe(false);
+      expect(derive(state).failures ?? {}).not.toHaveProperty("train");
+    },
+  );
 
   it("stops completing once the training configuration changes", () => {
     const state = source({

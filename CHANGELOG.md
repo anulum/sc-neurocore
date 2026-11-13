@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Clearing a training setting no longer blanks the Studio. After a run had
+  completed or failed, clearing an optional setting left it in the
+  configuration as `undefined`: choosing another dataset, clearing the seed
+  or the gradient norm limit, switching back to the spiking model,
+  withdrawing the preregistered criterion or clearing the event input. The
+  guided flow seals the training configuration while it renders, the seal
+  refuses `undefined`, and with no error boundary the whole page went blank.
+  A cleared setting now leaves the configuration, as a saved project is read
+  back. A test clears each optional setting, and a bundle built from the
+  change was checked in Chromium after a completed run.
+
 - The equation editor keeps every `/` and `?` typed into it. In
   Chromium-based browsers (Chrome, Edge) the keyboard help took both keys
   whenever focus was not in an input or a text area, and the editor
