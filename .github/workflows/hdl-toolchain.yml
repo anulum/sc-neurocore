@@ -10,9 +10,28 @@ name: Stable HDL toolchain
 
 on:
   workflow_call:
+    inputs:
+      rebuild_sdk:
+        description: >-
+          Build the SDK from its pinned sources instead of restoring the
+          published archive. Only a deliberate SDK update sets this; that
+          update publishes the new archive and records the formal receipts
+          again with its solver binaries.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+
+env:
+  # The one SDK archive whose solver binaries the committed formal receipts
+  # bind. A source build on another runner image produced a different Yices
+  # binary, so every run restores these exact bytes; release
+  # hdl-sdk-yosys070-yices270-524357fd also carries the corresponding sources.
+  SCN_HDL_SDK_URL: https://github.com/anulum/sc-neurocore/releases/download/hdl-sdk-yosys070-yices270-524357fd/scn-hdl.tar.gz
+  SCN_HDL_SDK_SHA256: 49a65847681b69ae5a42f2801562d464f7d9d52af6c87e7744c180a6a70668c3
+  SCN_HDL_SDK_YICES_SHA256: 524357fd625311f9a43affded6ea4250c19783f07b2119d82d57ebb25c75d50e
+  SCN_HDL_SDK_Z3_SHA256: c05be002097e2f2106efeeac03e58032e3f5cca10104f95d7a0ddc0bd3f907cb
 
 jobs:
   build:
@@ -31,7 +50,36 @@ jobs:
           sudo apt-get install -y -qq autoconf bison binutils cmake flex g++-13 gcc-13 git \
             libc6-dev libedit-dev libffi-dev libfl-dev libgmock-dev libgtest-dev \
             libreadline-dev libreadline8t64 libtcl8.6 make pkg-config tcl-dev zlib1g-dev
+      - name: Restore the published SDK archive
+        if: ${{ !inputs.rebuild_sdk }}
+        id: published
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/scn-hdl-published
+          key: scn-hdl-sdk-${{ env.SCN_HDL_SDK_SHA256 }}
+      - name: Download the published SDK archive
+        if: ${{ !inputs.rebuild_sdk && steps.published.outputs.cache-hit != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/scn-hdl-published"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
+            "$SCN_HDL_SDK_URL" -o "$RUNNER_TEMP/scn-hdl-published/scn-hdl.tar.gz"
+      - name: Unpack the published SDK archive after checking its pinned hash
+        if: ${{ !inputs.rebuild_sdk }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/scn-hdl-published/scn-hdl.tar.gz"
+          echo "$SCN_HDL_SDK_SHA256  $archive" | sha256sum --check
+          # Only plain files and folders, all under scn-hdl/, and no '..' part.
+          tar -tzf "$archive" | awk '$0 !~ /^scn-hdl(\/|$)/ || $0 ~ /(^|\/)\.\.(\/|$)/ { print; bad = 1 } END { exit bad }'
+          tar -tvzf "$archive" | awk 'substr($1, 1, 1) !~ /^[-d]$/ { print; bad = 1 } END { exit bad }'
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          echo "$SCN_HDL_SDK_YICES_SHA256  $RUNNER_TEMP/scn-hdl/bin/yices-smt2" | sha256sum --check
+          echo "$SCN_HDL_SDK_Z3_SHA256  $RUNNER_TEMP/scn-hdl/bin/z3" | sha256sum --check
       - name: Identify the actual compiler and build dependencies
+        if: ${{ inputs.rebuild_sdk }}
         id: build-environment
         shell: bash
         run: |
@@ -46,13 +94,14 @@ jobs:
             "$(sha256sum "$RUNNER_TEMP/scn-hdl-build-environment.txt" | cut -d ' ' -f 1)" \
             >> "$GITHUB_OUTPUT"
       - name: Restore the source-pinned HDL tools
+        if: ${{ inputs.rebuild_sdk }}
         id: tools
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/scn-hdl
           key: ubuntu24-x64-hdl-yosys070-sby070-z34812-3b15884d-yices270-generic-v1-sv2v0013-${{ steps.build-environment.outputs.digest }}-${{ hashFiles('.github/workflows/hdl-toolchain.yml', 'tools/build_yices.sh', 'tools/check_yices_isa.sh', 'requirements/sby.txt') }}
       - name: Build the verified stable sources once
-        if: steps.tools.outputs.cache-hit != 'true'
+        if: ${{ inputs.rebuild_sdk && steps.tools.outputs.cache-hit != 'true' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -108,7 +157,7 @@ jobs:
           cp "$source_root/sv2v/sv2v-Linux/LICENSE" "$source_root/sv2v/sv2v-Linux/NOTICE" \
             "$tool_prefix/share/licenses/sv2v/"
       - name: Retain upstream and bundled dependency notices
-        if: steps.tools.outputs.cache-hit != 'true'
+        if: ${{ inputs.rebuild_sdk && steps.tools.outputs.cache-hit != 'true' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -121,7 +170,7 @@ jobs:
                 | tar --null --files-from=- -cf -
             ) | tar -C "$notices" -xf -
           done
-      - name: Verify and package the toolchain for this run
+      - name: Verify the toolchain for this run
         shell: bash
         run: |
           set -euo pipefail
@@ -160,6 +209,13 @@ jobs:
           test "$("$tool_prefix/bin/z3" --version)" = "Z3 version 4.8.12 - 64 bit"
           test "$("$tool_prefix/bin/yices-smt2" --version | head -1)" = "Yices 2.7.0"
           test "$("$tool_prefix/bin/sv2v" --numeric-version)" = "0.0.13"
+      - name: Record the provenance of a source build and package it
+        if: ${{ inputs.rebuild_sdk }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_prefix="$RUNNER_TEMP/scn-hdl"
+          version="$("$tool_prefix/bin/yosys" -V)"
           {
             printf '%s\n' "$version"
             "$tool_prefix/bin/sby" --version
@@ -184,6 +240,15 @@ jobs:
           tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/scn-hdl.tar.gz" scn-hdl
           cd "$RUNNER_TEMP"
           sha256sum scn-hdl.tar.gz > scn-hdl.tar.gz.sha256
+      - name: Hand on the published SDK archive unchanged
+        if: ${{ !inputs.rebuild_sdk }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/scn-hdl-published/scn-hdl.tar.gz" "$RUNNER_TEMP/scn-hdl.tar.gz"
+          cd "$RUNNER_TEMP"
+          sha256sum scn-hdl.tar.gz > scn-hdl.tar.gz.sha256
+          test "$(cut -d ' ' -f 1 scn-hdl.tar.gz.sha256)" = "$SCN_HDL_SDK_SHA256"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: stable-hdl-sdk

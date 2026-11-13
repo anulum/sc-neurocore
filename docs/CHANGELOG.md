@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The shared HDL toolchain workflow restores one published SDK archive
+  instead of building the tools on each runner: the `scn-hdl.tar.gz` asset of
+  release `hdl-sdk-yosys070-yices270-524357fd`, SHA-256
+  `49a65847681b69ae5a42f2801562d464f7d9d52af6c87e7744c180a6a70668c3`. A cache
+  miss on a newer runner image had rebuilt Yices from the same pinned sources
+  into a different binary, and the formal validation refused it, because the
+  committed receipts bind the solver binary they ran. The workflow checks the
+  archive's hash, refuses members outside `scn-hdl/` and anything but plain
+  files and folders, checks the Yices and Z3 binaries against the receipts'
+  digests, runs the same version, licence and smoke checks, and hands the
+  archive on unchanged. A build from source runs only when a caller passes
+  `rebuild_sdk: true`. The release also carries the Yices and GMP sources the
+  binary was built from.
+
 - The README states at its top that this repository is a public mirror of
   ANULUM's canonical source, with the development history before publication
   held privately.

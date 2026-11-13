@@ -132,17 +132,25 @@ reviewed incomplete rows. Their scientific proof obligations remain open.
 Explicit `smtbmc z3` jobs use the SDK's pinned Z3 executable. Unqualified
 `smtbmc` entries use SBY's default Yices engine and the SDK's pinned Yices 2.7.0.
 The workflow prints solver versions before running the shard. No apt Z3 or
-Yices executable substitutes for these SDK binaries. The SDK workflow builds
-Yices 2.7.0 from commit `85cf17e44eac76b5d14b297c09fc9bfecf47ef65` with
+Yices executable substitutes for these SDK binaries. Every run restores one
+published SDK archive, the `scn-hdl.tar.gz` asset of this repository's release
+`hdl-sdk-yosys070-yices270-524357fd`, after checking its SHA-256, and checks
+its Yices and Z3 binaries against the digests the receipts record. That
+archive's Yices 2.7.0 was built from commit
+`85cf17e44eac76b5d14b297c09fc9bfecf47ef65` with
 `-O2 -march=x86-64 -mtune=generic`. Its source archive is hash-pinned; GMP and
 gperf packages are pinned against Ubuntu's signed archive index. The build
-scans Yices' own objects for unsupported instruction families and checks an
+scanned Yices' own objects for unsupported instruction families and checked an
 actual SAT/UNSAT result. GMP's CPUID-dispatched routines are excluded from the
-object scan. Restoring the SDK verifies its binary, recipe and scanner hashes
-and repeats the solver smoke. Cross-host byte identity comes from distributing
-one artifact; independent-build reproducibility has not been established.
-sv2v retains its pinned GitHub release-asset hash without a signed archive-index
-chain.
+object scan. Each run verifies the binary, recipe and scanner hashes and
+repeats the solver smoke. The release also carries the Yices and GMP sources
+the binary was built from. Cross-host byte identity comes from distributing
+this one archive: a build from the same pinned sources on a later runner image
+produced a different Yices binary, so independent-build reproducibility has
+not been established. A source build runs only when a caller sets
+`rebuild_sdk`, for a deliberate SDK update that publishes a new archive and
+records the receipts again. sv2v retains its pinned GitHub release-asset hash
+without a signed archive-index chain.
 
 The following hosted jobs explicitly select `cvc5`. They use the runner's
 installed cvc5, whose version is recorded in the workflow log. These are native
