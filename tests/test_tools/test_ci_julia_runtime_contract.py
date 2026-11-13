@@ -48,7 +48,7 @@ def test_ci_pins_compatible_julia_before_package_installation() -> None:
     ]
     assert len(setup_matches) == 2
     for (setup_index, setup_step), (runtime_id, version) in zip(
-        setup_matches, (("julia-release", "1.13"), ("julia-1-11", JULIA_VERSION)), strict=True
+        setup_matches, (("julia-release", "1.13.3"), ("julia-1-11", JULIA_VERSION)), strict=True
     ):
         assert setup_step["id"] == runtime_id
         assert setup_step["with"] == {"version": version, "show-versioninfo": "never"}

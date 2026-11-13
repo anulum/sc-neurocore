@@ -25,13 +25,13 @@ permissions:
 jobs:
   fuzz:
     name: Fuzz IR parser
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # pinned action
         with:
-          toolchain: nightly
+          toolchain: nightly-2026-11-13
 
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
@@ -60,7 +60,7 @@ jobs:
           [[ "${MAX_TOTAL_TIME}" =~ ^[0-9]+$ ]]
           for target in parse_ir roundtrip_ir bitstream csr_matrix; do
             echo "::group::fuzz $target"
-            cargo +nightly fuzz run "$target" -- \
+            cargo +nightly-2026-11-13 fuzz run "$target" -- \
               -max_total_time="${MAX_TOTAL_TIME}" \
               -max_len=8192
             echo "::endgroup::"

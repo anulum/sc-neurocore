@@ -39,7 +39,7 @@ env:
 jobs:
   alias-image:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.alias_from != '' && inputs.alias_to != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     steps:
@@ -73,7 +73,7 @@ jobs:
 
   build-push:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.alias_from == '' || inputs.alias_to == '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write

@@ -163,6 +163,21 @@ consumer directory. It round-trips every public native class/function global
 through every supported pickle protocol and verifies object identity. Binding
 tests separately exercise instance persistence or refusal, inputs and mutation.
 
+### Tool versions
+
+Every tool version the workflows, the composite actions and the pin files declare
+is the one answer `tools/toolchain_manifest.toml` gives. That covers the runner
+images (`ubuntu-24.04`, as on the development host), Python, Rust stable and its
+dated nightly, Go, Node, npm, pixi, Julia, Mojo and the Ubuntu packages whose
+version shapes a result.
+
+- `python -m tools.toolchain_manifest --check` names any declaration that
+  differs, and the `toolchain-manifest` pre-commit hook runs it.
+- `--check-host` asks the tools on your `PATH` (the project `.venv/bin` first)
+  for their versions.
+- Raise a version in the manifest first, then change every declaration the check
+  names.
+
 ### Frontend toolchain
 
 Use the Node version pinned in the workflows and npm 12.2.1, as declared by

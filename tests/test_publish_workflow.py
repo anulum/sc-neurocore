@@ -256,8 +256,8 @@ def test_every_uploaded_engine_wheel_is_smoke_tested_on_its_own_platform() -> No
 
     smoke = jobs["smoke-engine-wheels"]
     matrix = smoke["strategy"]["matrix"]
-    runners = {"ubuntu-latest": "ubuntu-latest", "windows-latest": "windows-latest"}
-    runners |= {"macos-latest": "macos-latest", "linux-arm64": "ubuntu-24.04-arm"}
+    runners = {"ubuntu-24.04": "ubuntu-24.04", "windows-2025-vs2026": "windows-2025-vs2026"}
+    runners |= {"macos-26": "macos-26", "linux-arm64": "ubuntu-24.04-arm"}
     assert {target["artifact"]: target["runner"] for target in matrix["target"]} == runners
     smoked = {
         (target["artifact"], version)
@@ -294,7 +294,7 @@ def test_publish_workflow_engine_wheel_release_matrix_matches_ci() -> None:
     build_matrix = jobs["build-engine-wheels"]["strategy"]["matrix"]
     arm_matrix = jobs["build-engine-linux-arm"]["strategy"]["matrix"]
 
-    assert build_matrix["os"] == ["ubuntu-latest", "windows-latest", "macos-latest"]
+    assert build_matrix["os"] == ["ubuntu-24.04", "windows-2025-vs2026", "macos-26"]
     assert build_matrix["python-version"] == ["3.11", "3.12", "3.13", "3.14"]
     assert arm_matrix["python-version"] == build_matrix["python-version"]
 

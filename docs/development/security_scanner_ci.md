@@ -125,7 +125,9 @@ sequence.
   plus per-target reports such as `security/cargo_fuzz_ir_parser.json`; it runs
   outside push and pull-request CI with a bounded total time budget and installs
   the maintained `cargo-fuzz` release pinned in the workflow using stable Cargo
-  before executing the fuzz lane on the configured nightly toolchain. The Python
+  before executing the fuzz lane on the dated nightly toolchain that
+  `tools/toolchain_manifest.toml` pins (`rust.nightly`), which the runner reads
+  from the manifest and the workflow installs. The Python
   runner first builds each target with `cargo fuzz build` under an explicit
   build timeout, then runs `cargo fuzz run` with libFuzzer's per-target time
   budget. The default build timeout is one hour: the first instrumented build

@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cvc5 time libreadline8t64 libtcl8.6
+          sudo apt-get install -y -qq cvc5=1.1.2-1build1 time libreadline8t64 libtcl8.6
           python -m pip install --require-hashes -r requirements/sby.txt
           cd "$RUNNER_TEMP/hdl-download"
           sha256sum --check --status scn-hdl.tar.gz.sha256

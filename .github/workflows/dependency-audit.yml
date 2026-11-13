@@ -20,7 +20,7 @@ on:
 jobs:
   audit:
     name: Audit locked dependencies (${{ matrix.ecosystem }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -86,7 +86,7 @@ jobs:
 
   dependency-lock-audit:
     name: dependency-lock-audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [audit]
     if: always()
     steps:

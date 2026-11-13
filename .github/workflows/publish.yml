@@ -28,7 +28,7 @@ concurrency:
 jobs:
   build-python-dist:
     needs: [build-engine-wheels]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -54,7 +54,7 @@ jobs:
       - name: Download the matching native wheel for Studio acceptance
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: engine-wheel-ubuntu-latest-py3.12
+          name: engine-wheel-ubuntu-24.04-py3.12
           path: dist-engine/
       - name: Accept the installed Studio the wheel provides
         run: |
@@ -92,7 +92,7 @@ jobs:
   publish-python-pypi:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [build-python-dist]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: pypi
     permissions:
       id-token: write
@@ -113,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-2025-vs2026, macos-26]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -140,7 +140,7 @@ jobs:
           path: dist-engine/*.whl
 
   build-engine-linux-arm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     strategy:
@@ -182,9 +182,9 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
         target:
-          - { runner: ubuntu-latest, artifact: ubuntu-latest }
-          - { runner: windows-latest, artifact: windows-latest }
-          - { runner: macos-latest, artifact: macos-latest }
+          - { runner: ubuntu-24.04, artifact: ubuntu-24.04 }
+          - { runner: windows-2025-vs2026, artifact: windows-2025-vs2026 }
+          - { runner: macos-26, artifact: macos-26 }
           - { runner: ubuntu-24.04-arm, artifact: linux-arm64 }
     steps:
       # Only the project metadata is needed: the installed engine must carry its version.
@@ -230,7 +230,7 @@ jobs:
   publish-engine-pypi:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [smoke-engine-wheels]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: pypi
     permissions:
       id-token: write
@@ -253,7 +253,7 @@ jobs:
   # uploading. The publish job itself is skipped then.
   dry-run-crate:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     steps:
@@ -269,7 +269,7 @@ jobs:
   publish-crate:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [publish-python-pypi]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: crates-io
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

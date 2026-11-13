@@ -12,6 +12,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- One toolchain manifest, `tools/toolchain_manifest.toml`, gives the answer
+  for every tool version the CI declares, and `python -m
+  tools.toolchain_manifest --check`, also a pre-commit hook, refuses four
+  things:
+  - a declaration that differs from it;
+  - a floating runner, an undated nightly, or an unpinned `apt`, `apt-get` or
+    `choco` install of a listed tool;
+  - a setup version it cannot read as a literal, such as an `env`, `vars` or
+    `inputs` reference;
+  - a setup action it does not know, in a workflow or a composite action.
+
+  The hosted jobs now name their images. Every job that asked for
+  `ubuntu-latest`, which had moved to Ubuntu 26.04, runs on `ubuntu-24.04`, as
+  the development host and the other jobs already did. The Windows and macOS
+  legs name `windows-2025-vs2026` and `macos-26`, the images `*-latest` gave on
+  2026-11-13. Other pins:
+  - the nightly Rust of the docs, fuzz, release and scanner jobs is
+    `nightly-2026-11-13`, which the cargo-fuzz runner reads from the manifest;
+  - Julia 1.13 is 1.13.3;
+  - Icarus Verilog, Verilator, cvc5 and ShellCheck installs name their Ubuntu
+    24.04 versions.
+
+  The engine wheel artefacts follow the image names
+  (`engine-wheel-ubuntu-24.04-py…`). `--check-host` asks the tools on `PATH`
+  for their versions.
+
 - The hosted CI lints the Studio frontend. The frontend job runs
   `npm run lint` after installing and before the tests; until now only the
   local preflight ran it, so a lint regression pushed without the hook

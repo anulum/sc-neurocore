@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — One answer per tool, for the hosted runs and for this host
+
+# `python tools/toolchain_manifest.py --check` refuses any declaration in the
+# workflows, the composite actions, engine/rust-toolchain.toml, the go.mod
+# files, the Mojo pixi.toml and requirements-dev.txt that differs from this
+# file, any floating spelling (`*-latest`, an undated `nightly`, an apt or
+# choco tool install without its version) and any setup action this file does
+# not know. `--check-host` asks each tool on PATH (the project's .venv/bin
+# first) for its version. A raise of a version is one change to this file and
+# to every declaration the check then names.
+
+schema = "sc-neurocore.toolchain-manifest.v1"
+
+[runners]
+# Every `runs-on` label and every runner value of a matrix. The Linux image is
+# the one this host runs (owner's decision of 2026-11-13); Windows and macOS
+# are the images `windows-latest` and `macos-latest` gave on 2026-11-13.
+labels = ["ubuntu-24.04", "ubuntu-24.04-arm", "windows-2025-vs2026", "macos-26"]
+
+[python]
+# Exact releases: the main leg, the matrix legs, and the newest 3.12 release
+# with a Windows build (3.12 receives source-only security releases).
+versions = ["3.11.18", "3.12.16", "3.13.18", "3.14.10", "3.12.10"]
+# The version this host and the main leg run.
+main = "3.12.16"
+# Wheel build and test legs across Windows, macOS and Linux name the minor
+# only: the security-only branches publish no Windows or macOS binaries for
+# their newer patches, so each leg takes the newest patch setup-python offers
+# for its system.
+wheel_minors = ["3.11", "3.12", "3.13", "3.14"]
+# The jobs, as <workflow file>:<job>, in which a minor alone is accepted.
+wheel_jobs = [
+    "publish.yml:build-engine-wheels",
+    "publish.yml:build-engine-linux-arm",
+    "publish.yml:smoke-engine-wheels",
+    "v3-wheels.yml:build-wheels",
+    "v3-wheels.yml:build-linux-arm",
+    "v3-wheels.yml:test-wheels",
+]
+
+[rust]
+stable = "1.98.1"
+# The nightly the docs and cargo-fuzz runs installed on 2026-11-13
+# (rustc 1.102.0-nightly 8eb778d04 2026-11-12).
+nightly = "nightly-2026-11-13"
+
+[go]
+version = "1.27.4"
+
+[node]
+version = "26.13.0"
+
+[npm]
+# Installed by .github/actions/setup-npm from the registry archive, by digest.
+version = "12.2.1"
+sha256 = "228bd64aaef23270dbdbd2cf3d5ef5c467602ef38c4066246cef1984adab9a67"
+
+[pixi]
+version = "v0.83.0"
+
+[julia]
+# 1.11.9 is the runtime juliacall accepts; 1.13.3 is the release the
+# native-parity tests also run (installed on 2026-11-13 for "1.13").
+versions = ["1.11.9", "1.13.3"]
+
+[mojo]
+version = "1.0.0"
+
+[apt]
+# Ubuntu 24.04 (noble) packages whose version shapes a result. Every
+# `apt-get install` of one of them names this version; libraries and helpers
+# follow the image's security updates and are not listed.
+iverilog = "12.0-2build2"
+verilator = "5.020-1"
+cvc5 = "1.1.2-1build1"
+shellcheck = "0.9.0-1"
+# The iCE40 UP5K resource estimate is calibrated on this place-and-route.
+nextpnr-ice40 = "0.6-3build5"
+nextpnr-ice40-chipdb = "0.6-3build5"
+
+[choco]
+# The Windows leg's Icarus Verilog: Chocolatey publishes 11.0 only (read
+# 2026-11-13), so Windows keeps its own answer.
+iverilog = "11.0"
+
+[hdl_sdk]
+# The published HDL SDK archive that .github/workflows/hdl-toolchain.yml
+# restores; its solver binaries are the ones the formal receipts bind.
+archive_sha256 = "49a65847681b69ae5a42f2801562d464f7d9d52af6c87e7744c180a6a70668c3"
+
+# `--check-host` derives the expected line of python, rustc, go, node, npm,
+# julia and mojo from the versions above; these tools state theirs here. A
+# tool passes when one line of its output starts with `line`.
+
+[[host_tool]]
+name = "yosys"
+command = ["yosys", "-V"]
+line = "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231,"
+
+[[host_tool]]
+name = "sby"
+command = ["sby", "--version"]
+line = "SBY v0.70"
+
+[[host_tool]]
+name = "z3"
+command = ["z3", "--version"]
+line = "Z3 version 4.8.12 - 64 bit"
+
+[[host_tool]]
+name = "yices-smt2"
+command = ["yices-smt2", "--version"]
+line = "Yices 2.7.0"
+
+[[host_tool]]
+name = "sv2v"
+command = ["sv2v", "--numeric-version"]
+line = "0.0.13"
+
+[[host_tool]]
+name = "iverilog"
+command = ["iverilog", "-V"]
+line = "Icarus Verilog version 12.0 (stable)"
+
+[[host_tool]]
+name = "verilator"
+command = ["verilator", "--version"]
+line = "Verilator 5.020 "
+
+[[host_tool]]
+name = "cvc5"
+command = ["cvc5", "--version"]
+line = "This is cvc5 version 1.1.2"
+
+[[host_tool]]
+name = "shellcheck"
+command = ["shellcheck", "--version"]
+line = "version: 0.9.0"
+
+[[host_tool]]
+name = "nextpnr-ice40"
+command = ["nextpnr-ice40", "--version"]
+line = "\"nextpnr-ice40\" -- Next Generation Place and Route (Version 0.6-3build5)"

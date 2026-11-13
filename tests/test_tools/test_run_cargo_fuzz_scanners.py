@@ -18,6 +18,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import tomllib
 from pathlib import Path
 from types import FrameType
 from typing import Any
@@ -103,11 +104,19 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
         run_command=fake_run,
     )
 
+    # Every cargo-fuzz call names the dated nightly the toolchain manifest pins.
+    pinned = (
+        "+"
+        + tomllib.loads((repo_root / "tools/toolchain_manifest.toml").read_text())["rust"][
+            "nightly"
+        ]
+    )
+    assert pinned.startswith("+nightly-")
     assert [call[:5] for call in calls] == [
-        ["cargo", "+nightly", "fuzz", "build", "bitstream_ops"],
-        ["cargo", "+nightly", "fuzz", "run", "bitstream_ops"],
-        ["cargo", "+nightly", "fuzz", "build", "ir_parser"],
-        ["cargo", "+nightly", "fuzz", "run", "ir_parser"],
+        ["cargo", pinned, "fuzz", "build", "bitstream_ops"],
+        ["cargo", pinned, "fuzz", "run", "bitstream_ops"],
+        ["cargo", pinned, "fuzz", "build", "ir_parser"],
+        ["cargo", pinned, "fuzz", "run", "ir_parser"],
     ]
     assert all("--fuzz-dir" in call for call in calls)
     run_calls = [call for call in calls if call[3] == "run"]
@@ -123,6 +132,30 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
         )["passed"]
         is True
     )
+
+
+def test_runner_refuses_a_manifest_without_a_dated_nightly(tmp_path: Path) -> None:
+    """cargo-fuzz runs only on the dated nightly the toolchain manifest pins; an undated one is refused."""
+    tool = _load_tool()
+    manifest = tmp_path / "tools" / "toolchain_manifest.toml"
+    manifest.parent.mkdir()
+    manifest.write_text('[rust]\nnightly = "nightly"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="names no dated rust nightly"):
+        tool.pinned_nightly(tmp_path)
+    manifest.write_text('[rust]\nnightly = "nightly-2026-11-13"\n', encoding="utf-8")
+    assert tool.pinned_nightly(tmp_path) == "nightly-2026-11-13"
+
+
+def test_runner_refuses_a_missing_or_shapeless_manifest_with_a_value_error(tmp_path: Path) -> None:
+    """A missing manifest and a ``rust`` value that is not a table both stop the runner with ValueError."""
+    tool = _load_tool()
+    with pytest.raises(ValueError, match="cannot be read"):
+        tool.pinned_nightly(tmp_path)
+    manifest = tmp_path / "tools" / "toolchain_manifest.toml"
+    manifest.parent.mkdir()
+    manifest.write_text('rust = "nightly-2026-11-13"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="names no dated rust nightly"):
+        tool.pinned_nightly(tmp_path)
 
 
 def test_runner_rejects_unknown_target(tmp_path: Path) -> None:

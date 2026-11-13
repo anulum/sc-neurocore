@@ -15,6 +15,7 @@ import argparse
 import contextlib
 import json
 import os
+import re
 import signal
 import subprocess
 from collections.abc import Callable, Sequence
@@ -29,6 +30,8 @@ CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
 # coverage instrumentation: 22 to 25 minutes on a hosted runner, and more than
 # 30 minutes on a slow one. Later targets reuse that build.
 CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 3600
+# cargo-fuzz needs a nightly compiler; the toolchain manifest names the dated one.
+TOOLCHAIN_MANIFEST = Path("tools") / "toolchain_manifest.toml"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -49,7 +52,7 @@ def run_in_process_group(
 ) -> subprocess.CompletedProcess[str]:
     """Run ``command`` like ``subprocess.run``, but kill its whole process group on timeout.
 
-    ``cargo +nightly fuzz`` runs a toolchain proxy, cargo, cargo-fuzz, a nested
+    ``cargo +<nightly> fuzz`` runs a toolchain proxy, cargo, cargo-fuzz, a nested
     cargo and rustc. ``subprocess.run`` kills only the first of them on timeout;
     the orphaned compiler keeps the build directory locked, and the next target
     waits on that lock. The command runs in its own session, so a terminal
@@ -198,10 +201,39 @@ def _run(
         )
 
 
-def _target_command(target: str, seconds: int) -> list[str]:
+def pinned_nightly(repo_root: Path) -> str:
+    """Return the dated nightly toolchain that the repository's toolchain manifest pins.
+
+    Parameters
+    ----------
+    repo_root : Path
+        Repository root holding ``tools/toolchain_manifest.toml``.
+
+    Returns
+    -------
+    str
+        A toolchain name of the form ``nightly-YYYY-MM-DD``.
+
+    Raises
+    ------
+    ValueError
+        The manifest cannot be read, is not TOML, or names no dated nightly.
+    """
+    try:
+        data = tomllib.loads((repo_root / TOOLCHAIN_MANIFEST).read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ValueError(f"{TOOLCHAIN_MANIFEST} cannot be read: {exc}") from exc
+    rust = data.get("rust")
+    nightly = rust.get("nightly") if isinstance(rust, dict) else None
+    if not isinstance(nightly, str) or not re.fullmatch(r"nightly-\d{4}-\d{2}-\d{2}", nightly):
+        raise ValueError(f"{TOOLCHAIN_MANIFEST} names no dated rust nightly")
+    return nightly
+
+
+def _target_command(target: str, seconds: int, toolchain: str) -> list[str]:
     return [
         "cargo",
-        "+nightly",
+        f"+{toolchain}",
         "fuzz",
         "run",
         target,
@@ -212,10 +244,10 @@ def _target_command(target: str, seconds: int) -> list[str]:
     ]
 
 
-def _target_build_command(target: str) -> list[str]:
+def _target_build_command(target: str, toolchain: str) -> list[str]:
     return [
         "cargo",
-        "+nightly",
+        f"+{toolchain}",
         "fuzz",
         "build",
         target,
@@ -241,6 +273,7 @@ def run_cargo_fuzz_scanners(
         raise ValueError("max_total_time must be at least the selected target count")
     if build_timeout < 1:
         raise ValueError("build_timeout must be positive")
+    toolchain = pinned_nightly(repo_root)
 
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
@@ -248,14 +281,14 @@ def run_cargo_fuzz_scanners(
     seconds_per_target = max(1, max_total_time // len(targets))
     target_results: list[dict[str, Any]] = []
     for target in targets:
-        build_command = _target_build_command(target)
+        build_command = _target_build_command(target, toolchain)
         build_result = _run(
             build_command,
             repo_root=repo_root,
             run_command=run_command,
             timeout=build_timeout,
         )
-        command = _target_command(target, seconds_per_target)
+        command = _target_command(target, seconds_per_target, toolchain)
         if build_result.returncode != 0:
             target_report = {
                 "target": target,

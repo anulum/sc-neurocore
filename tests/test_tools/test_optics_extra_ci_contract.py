@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Optional-extra CI contract tests
 
+"""Keep every optional-extra CI lane explicit in the workflow and in the public dependency docs."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -51,20 +53,17 @@ OPTIONAL_CI_LANES = (
 
 def _repo_root() -> Path:
     """Return the repository root containing CI and docs."""
-
     return Path(__file__).resolve().parents[2]
 
 
 def _load_ci_workflow() -> dict[str, Any]:
     """Load the main CI workflow through the YAML parser used by tests."""
-
     workflow_path = _repo_root() / ".github" / "workflows" / "ci.yml"
     return cast(dict[str, Any], yaml.safe_load(workflow_path.read_text(encoding="utf-8")))
 
 
 def _job_run_text(job: dict[str, Any]) -> str:
     """Return all shell snippets from a GitHub Actions job."""
-
     return "\n".join(
         step["run"] for step in job["steps"] if isinstance(step, dict) and "run" in step
     )
@@ -72,7 +71,6 @@ def _job_run_text(job: dict[str, Any]) -> str:
 
 def _optional_matrix_rows() -> dict[str, dict[str, str]]:
     """Return the optional-extra CI matrix rows keyed by lane name."""
-
     workflow = _load_ci_workflow()
     job = cast(dict[str, Any], workflow["jobs"]["test-optional-extras"])
     include = cast(list[dict[str, str]], job["strategy"]["matrix"]["include"])
@@ -81,12 +79,11 @@ def _optional_matrix_rows() -> dict[str, dict[str, str]]:
 
 def test_optics_extra_ci_job_installs_profile_and_runs_selector() -> None:
     """Ensure the gdsfactory-gated optics path has explicit CI coverage."""
-
     workflow = _load_ci_workflow()
     job = cast(dict[str, Any], workflow["jobs"]["test-optics-extra"])
     run_text = _job_run_text(job)
 
-    assert job["runs-on"] == "ubuntu-latest"
+    assert job["runs-on"] == "ubuntu-24.04"
     assert job["env"]["PYTHONPATH"] == "src:."
     assert "python tools/ci_install_editable_only.py" in run_text
     assert "python -m pip install --require-hashes -r requirements/ci-optics.txt" in run_text
@@ -95,13 +92,12 @@ def test_optics_extra_ci_job_installs_profile_and_runs_selector() -> None:
 
 def test_optional_extra_ci_matrix_runs_import_skipped_selectors() -> None:
     """Ensure import-skipped optional surfaces have explicit CI lanes."""
-
     workflow = _load_ci_workflow()
     job = cast(dict[str, Any], workflow["jobs"]["test-optional-extras"])
     run_text = _job_run_text(job)
     rows = _optional_matrix_rows()
 
-    assert job["runs-on"] == "ubuntu-latest"
+    assert job["runs-on"] == "ubuntu-24.04"
     assert job["env"]["PYTHONPATH"] == "src:."
     assert job["strategy"]["fail-fast"] is False
     assert "python tools/ci_install_editable_only.py" in run_text
@@ -117,7 +113,6 @@ def test_optional_extra_ci_matrix_runs_import_skipped_selectors() -> None:
 
 def test_optics_extra_ci_boundary_is_documented() -> None:
     """Keep the optional-dependency matrix synchronized with the CI lane."""
-
     matrix_text = (_repo_root() / "docs" / "guides" / "optional_dependency_matrix.md").read_text(
         encoding="utf-8"
     )
@@ -133,7 +128,6 @@ def test_optics_extra_ci_boundary_is_documented() -> None:
 
 def test_optional_extra_ci_matrix_is_documented() -> None:
     """Keep optional-extra CI lanes synchronized with public dependency docs."""
-
     matrix_text = (_repo_root() / "docs" / "guides" / "optional_dependency_matrix.md").read_text(
         encoding="utf-8"
     )

@@ -58,6 +58,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.pre-commit-config\.yaml|README\.md|pyproject\.toml|src/|tests/|docs/|\.github/workflows/|tools/(capability_manifest\.py|capability_manifest\.toml|architecture_map\.toml))'
+      - id: toolchain-manifest
+        name: one answer per tool (toolchain manifest)
+        entry: python -m tools.toolchain_manifest --check
+        language: system
+        pass_filenames: false
+        files: '^(\.github/(workflows|actions)/|tools/(toolchain_manifest\.(py|toml)|rust_toolchain_pin\.py|security_scan/run_cargo_fuzz_scanners\.py)$|engine/rust-toolchain\.toml$|src/.*/(go\.mod|pixi\.toml)$|requirements-dev\.txt$)'
       - id: engine-monolith-no-growth
         name: engine monolith no-growth guard
         entry: python tools/engine_monolith_guard.py --check

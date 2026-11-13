@@ -80,9 +80,9 @@ def test_hosted_wheel_profile_supplies_compatible_runtime_and_build_dependencies
     assert profiles
     environment = {key: str(value) for key, value in default_environment().items()}
     platform = {
-        "ubuntu-latest": ("Linux", "linux", "posix"),
-        "windows-latest": ("Windows", "win32", "nt"),
-        "macos-latest": ("Darwin", "darwin", "posix"),
+        "ubuntu-24.04": ("Linux", "linux", "posix"),
+        "windows-2025-vs2026": ("Windows", "win32", "nt"),
+        "macos-26": ("Darwin", "darwin", "posix"),
     }[os_name]
     environment.update(
         python_version=python_version,

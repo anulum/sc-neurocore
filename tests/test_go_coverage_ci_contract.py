@@ -150,7 +150,7 @@ def test_actual_windows_refusal_uses_its_own_job_and_remaining_timeout() -> None
     """An independent Windows leg preserves genuine refusal evidence with a bounded child."""
     jobs = read_jobs()
     windows = mapping(jobs["native-go-windows-refusal"])
-    assert windows["runs-on"] == "windows-latest"
+    assert windows["runs-on"] == "windows-2025-vs2026"
     assert "strategy" not in windows and "needs" not in windows
     steps = job_steps(windows)
     assert steps[0]["id"] == "native_go_job_clock"

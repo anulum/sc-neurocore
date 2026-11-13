@@ -61,7 +61,7 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
 
     workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
     native = workflow["jobs"]["shd-non-linux-refusal"]
-    assert native["runs-on"] == "windows-latest"
+    assert native["runs-on"] == "windows-2025-vs2026"
     assert any(
         "tests/test_accel_shd_platform.py" in step.get("run", "") for step in native["steps"]
     )

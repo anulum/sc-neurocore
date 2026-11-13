@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   reference:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SC_NEUROCORE_REQUIRE_TORCHHD: "1"
       SC_NEUROCORE_PERF: "1"

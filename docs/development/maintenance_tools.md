@@ -386,6 +386,49 @@ Do not publish OpenROAD area, power, timing, or GDSII claims unless the exact
 OpenROAD binary or container digest and PDK revision are attached to the
 generated inventory.
 
+### Toolchain manifest
+
+`tools/toolchain_manifest.toml` gives one answer per tool for the hosted runs
+and for this host: the runner images, the Python, Rust (stable and a dated
+nightly), Go, Node, npm, pixi, Julia and Mojo versions, the Ubuntu packages
+whose version shapes a result, the Windows Icarus Verilog build, and the
+published HDL SDK archive. `python -m tools.toolchain_manifest` holds the
+repository to it:
+
+```bash
+python -m tools.toolchain_manifest --check       # workflows, actions and pins agree
+python -m tools.toolchain_manifest --check-host  # each tool on PATH answers its version
+python -m tools.toolchain_manifest --list        # every declaration and where it stands
+```
+
+- **`--check`** reads the workflows, the composite actions,
+  `engine/rust-toolchain.toml`, the `go.mod` files, the Mojo `pixi.toml` and
+  `requirements-dev.txt`. It refuses:
+  - a value that differs from the manifest;
+  - a floating spelling: a `*-latest` runner anywhere, an undated `nightly`, or
+    an install of a listed tool without its version, in any spelling of
+    `apt-get install`, `apt install` (options before or after the verb) or
+    `choco install` (`--version=V` or `--version V`);
+  - a setup version it cannot read as a literal: an `env`, `vars` or `inputs`
+    reference, or a `matrix` key the job's matrix does not give. A
+    `${{ matrix.<key> }}` value is read under the key it names;
+  - a setup action the manifest does not know, in a workflow or a composite
+    action.
+- **Python minors.** A Python minor alone (`3.12`) is accepted only in the
+  wheel jobs the manifest names. Python's security-only branches publish no
+  Windows or macOS binaries for their newer patches.
+- **The pre-commit hook.** `toolchain-manifest` runs the check whenever one of
+  those files changes, and the Pre-commit workflow runs it on every push to
+  main.
+- **`--check-host`** runs each tool with the project's `.venv/bin` first on
+  `PATH`. It is the host-side counterpart of the check.
+  `tools/eda_toolchain_versions.py` above records the toolchain context of one
+  measurement and does not compare it with the manifest.
+- **The cargo-fuzz runner** (`tools/security_scan/run_cargo_fuzz_scanners.py`)
+  reads its dated nightly from the manifest.
+- **A version raise** is one edit of the manifest followed by every declaration
+  the check then names.
+
 ## Validation
 
 Focused tests for these tools live under `tests/test_tools/`.

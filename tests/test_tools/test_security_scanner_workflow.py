@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import re
+import tomllib
 from pathlib import Path
 from typing import Any, cast
 
@@ -235,7 +236,8 @@ def test_security_scanner_workflow_runs_cargo_fuzz_on_schedule_or_full_dispatch(
         and str(step.get("uses", "")).startswith("dtolnay/rust-toolchain@")
     ]
 
-    assert "nightly" in toolchains
+    manifest = Path(__file__).resolve().parents[2] / "tools" / "toolchain_manifest.toml"
+    assert tomllib.loads(manifest.read_text(encoding="utf-8"))["rust"]["nightly"] in toolchains
     assert "cargo install cargo-fuzz --version 0.13.2" in run_text
     assert "cargo-fuzz --version 0.13.1 --locked" not in run_text
     assert "tools/security_scan/run_cargo_fuzz_scanners.py" in run_text

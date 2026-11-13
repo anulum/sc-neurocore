@@ -39,7 +39,7 @@ env:
 jobs:
   benchmark:
     name: Run Benchmarks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     concurrency:
       group: metrics-branch-writer
@@ -112,7 +112,7 @@ jobs:
 
   python-benchmark:
     name: Python Benchmark Suite
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -157,7 +157,7 @@ jobs:
 
   perf-gated-pytest:
     name: Perf-Gated Pytest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: read

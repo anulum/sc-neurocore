@@ -51,7 +51,7 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -134,7 +134,7 @@ jobs:
         run: mypy --strict src/sc_neurocore/
 
   rust-documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
     env:
       CARGO_BUILD_JOBS: "2"
@@ -198,7 +198,7 @@ jobs:
         run: python -m tools.rust_doc_ratchet
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -316,7 +316,7 @@ jobs:
 
   shd-non-linux-refusal:
     name: SHD native Windows refusal
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     timeout-minutes: 20
     env:
       PYTHONPATH: src;bridge
@@ -541,7 +541,7 @@ jobs:
       - id: julia-release
         uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
-          version: "1.13"
+          version: "1.13.3"
           show-versioninfo: "never"
 
       # juliacall 0.9.x currently constrains Julia to 1.10.3-1.11. GitHub's
@@ -615,7 +615,7 @@ jobs:
           # under -tags=hdf5, Mojo by loading libhdf5_serial.so).
           # nextpnr-ice40: the iCE40 UP5K estimate is calibrated on this
           # exact build, so the resource feedback tests pin it.
-          sudo apt-get install -y -qq cvc5 git iverilog make verilator libhdf5-dev pkg-config libreadline8t64 libtcl8.6 \
+          sudo apt-get install -y -qq cvc5=1.1.2-1build1 git iverilog=12.0-2build2 make verilator=5.020-1 libhdf5-dev pkg-config libreadline8t64 libtcl8.6 \
             nextpnr-ice40=0.6-3build5 nextpnr-ice40-chipdb=0.6-3build5
           nextpnr-ice40 --version
           python -m pip install --require-hashes -r requirements/sby.txt
@@ -1719,7 +1719,7 @@ jobs:
 
   native-go-windows-refusal:
     name: Native Go gate Windows refusal (20-minute governance ceiling)
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     # Explicit CI governance policy, not a measured runtime or host-capacity estimate.
     timeout-minutes: 20
     steps:
@@ -1828,7 +1828,7 @@ jobs:
     # the 100 % gate applies once, to the union of every shard and the native
     # Windows refusal leg.
     name: test (3.12)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test, shd-non-linux-refusal, native-go-windows-refusal, recorder-coverage]
     # A skipped job would report success to branch protection, so this job
     # runs after failed legs too and requires every test shard to pass.
@@ -2025,7 +2025,7 @@ jobs:
   compatibility-union:
     # Preserve branch-protection names after sharding each interpreter.
     name: test (${{ matrix.python-minor }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test]
     if: ${{ !cancelled() }}
     timeout-minutes: 5
@@ -2041,7 +2041,7 @@ jobs:
         run: test "$TEST_RESULT" = success
 
   test-training:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -2101,7 +2101,7 @@ jobs:
         run: pytest tests/test_torch_training_*.py -v
 
   test-optics-extra:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PYTHONPATH: "src:."
     steps:
@@ -2145,7 +2145,7 @@ jobs:
 
   test-optional-extras:
     name: Test optional extra (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -2189,7 +2189,7 @@ jobs:
 
   test-nir-interoperability:
     name: NIR interoperability (${{ matrix.profile }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -2284,7 +2284,7 @@ jobs:
     uses: ./.github/workflows/hdc-reference.yml
 
   spdx-guard:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -2295,7 +2295,7 @@ jobs:
     uses: ./.github/workflows/studio-desktop-runtime.yml
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ !cancelled() }}
     needs: [lint, test, coverage-union, test-nir-interoperability, test-hdc-reference, spdx-guard, rust-documentation, studio-desktop-runtime]
     steps:

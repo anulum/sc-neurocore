@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1941
+expected_file_count = 1944
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7818,3 +7818,15 @@ rationale = "Bind the shared HDL toolchain to the one published SDK archive: has
 [[file]]
 path = "tests/test_tools/test_ci_frontend_render_timing_contract.py"
 rationale = "Bind the Studio render timing measurement: the hand-started hosted step after the build and the backend, its kept artefact, the package script that builds first, and the configuration that serves the built bundle and only the timing spec."
+
+[[file]]
+path = "tools/toolchain_manifest.py"
+rationale = "Hold every tool declaration of the workflows, composite actions and pin files to one manifest, and ask each host tool for its version."
+
+[[file]]
+path = "tests/test_tools/test_toolchain_manifest.py"
+rationale = "Bind the checkout to its toolchain manifest, refuse each kind of drift in a copy, and run real executables for the host check."
+
+[[file]]
+path = "tests/test_tools/test_optics_extra_ci_contract.py"
+rationale = "Keep every optional-extra CI lane, the gdsfactory-gated optics lane among them, explicit in the workflow and synchronized with the public dependency documentation."
