@@ -20,6 +20,7 @@ import pytest
 import yaml
 
 from tools import check_icarus_verilog
+from tools.toolchain_manifest import MANIFEST, load_manifest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -186,7 +187,7 @@ def test_main_reports_failures(
 
 
 def test_ci_workflow_checks_icarus_verilog_after_install() -> None:
-    """The live CI workflow installs and verifies Icarus before package tests."""
+    """CI installs the manifest's pinned simulators and checks Icarus before the package tests."""
     workflow = _load_ci_workflow()
     steps = workflow["jobs"]["test"]["steps"]
     step_names = [step.get("name", "") for step in steps]
@@ -197,7 +198,17 @@ def test_ci_workflow_checks_icarus_verilog_after_install() -> None:
 
     install_run = steps[install_index]["run"]
     verify_run = steps[verify_index]["run"]
-    assert "apt-get install -y -qq cvc5 git iverilog make verilator" in install_run
+    apt = load_manifest(REPO_ROOT / MANIFEST).apt
+    pinned = " ".join(
+        [
+            f"cvc5={apt['cvc5']}",
+            "git",
+            f"iverilog={apt['iverilog']}",
+            "make",
+            f"verilator={apt['verilator']}",
+        ]
+    )
+    assert f"apt-get install -y -qq {pinned}" in install_run
     assert "hdl-toolchain" in workflow["jobs"]["test"]["needs"]
     assert "python tools/check_icarus_verilog.py --minimum-major 12" in verify_run
     assert install_index < verify_index < package_index
