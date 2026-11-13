@@ -1,0 +1,945 @@
+{
+  "schema": "sc-neurocore.studio-frontend-coverage-ledger.v1",
+  "files": {
+    "src/App.tsx": {
+      "statements": 32.65,
+      "branches": 29.69
+    },
+    "src/HostedExecutionPanel.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/HostedJobResult.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/HostedStudioPanel.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/SnnStudioPanel.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/StandaloneStudioPanel.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/adminFormParsers.ts": {
+      "statements": 100,
+      "branches": 77.77
+    },
+    "src/adminShell.ts": {
+      "statements": 88.17,
+      "branches": 60.69
+    },
+    "src/adminStoreState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/analysisJob.ts": {
+      "statements": 86.88,
+      "branches": 84.61
+    },
+    "src/analysisJobRecordValidation.ts": {
+      "statements": 80.73,
+      "branches": 81.73
+    },
+    "src/analysisJobRequest.ts": {
+      "statements": 91.8,
+      "branches": 90.69
+    },
+    "src/analysisJobSession.ts": {
+      "statements": 80.51,
+      "branches": 64.06
+    },
+    "src/analysisJobValidation.ts": {
+      "statements": 75,
+      "branches": 74.13
+    },
+    "src/analysisRequestMessages.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/api/adminApi.ts": {
+      "statements": 64.7,
+      "branches": 14.28
+    },
+    "src/api/analysisApi.ts": {
+      "statements": 81.25,
+      "branches": 100
+    },
+    "src/api/benchmarksApi.ts": {
+      "statements": 50,
+      "branches": 100
+    },
+    "src/api/candidatesApi.ts": {
+      "statements": 39.13,
+      "branches": 100
+    },
+    "src/api/client.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/api/compilerApi.ts": {
+      "statements": 88.88,
+      "branches": 100
+    },
+    "src/api/dclsApi.ts": {
+      "statements": 50,
+      "branches": 100
+    },
+    "src/api/equationIrTypes.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/api/fitsApi.ts": {
+      "statements": 50,
+      "branches": 100
+    },
+    "src/api/graphApi.ts": {
+      "statements": 77.77,
+      "branches": 100
+    },
+    "src/api/graphJobsApi.ts": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/api/hardwareApi.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/api/http.ts": {
+      "statements": 97.87,
+      "branches": 92.3
+    },
+    "src/api/modelsApi.ts": {
+      "statements": 79.31,
+      "branches": 100
+    },
+    "src/api/progressApi.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/api/projectApi.ts": {
+      "statements": 56.52,
+      "branches": 0
+    },
+    "src/api/simulationApi.ts": {
+      "statements": 75,
+      "branches": 100
+    },
+    "src/api/synthApi.ts": {
+      "statements": 75,
+      "branches": 100
+    },
+    "src/api/trainingApi.ts": {
+      "statements": 70.83,
+      "branches": 0
+    },
+    "src/api/types.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/appChrome.tsx": {
+      "statements": 75,
+      "branches": 70
+    },
+    "src/arrayAt.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/auditShell.ts": {
+      "statements": 100,
+      "branches": 85
+    },
+    "src/browserArtefactDownload.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/browserCanvasExport.ts": {
+      "statements": 91.66,
+      "branches": 100
+    },
+    "src/candidateCatalogue.ts": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/candidateJobs.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/candidateWorkbench.ts": {
+      "statements": 100,
+      "branches": 96.77
+    },
+    "src/capabilityShell.ts": {
+      "statements": 80.48,
+      "branches": 76.92
+    },
+    "src/characterizeStoreState.ts": {
+      "statements": 97.43,
+      "branches": 98.36
+    },
+    "src/citation.ts": {
+      "statements": 100,
+      "branches": 80
+    },
+    "src/compilerStoreState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/AdminAuditArchiveSection.tsx": {
+      "statements": 10.71,
+      "branches": 27.27
+    },
+    "src/components/AdminPanel.tsx": {
+      "statements": 0,
+      "branches": 100
+    },
+    "src/components/AdminPanelView.tsx": {
+      "statements": 19.23,
+      "branches": 54.76
+    },
+    "src/components/AnalysisJobControl.tsx": {
+      "statements": 94.44,
+      "branches": 100
+    },
+    "src/components/AnalysisJobWorkbench.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/AuthControl.tsx": {
+      "statements": 45.45,
+      "branches": 75
+    },
+    "src/components/BackendMatrix.tsx": {
+      "statements": 50,
+      "branches": 0
+    },
+    "src/components/BenchmarkContribution.tsx": {
+      "statements": 7.14,
+      "branches": 0
+    },
+    "src/components/CandidateCatalogueStart.tsx": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/components/CandidateJobHistory.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/CandidatePanel.tsx": {
+      "statements": 4.47,
+      "branches": 0
+    },
+    "src/components/CapabilityStrip.tsx": {
+      "statements": 46.66,
+      "branches": 33.33
+    },
+    "src/components/CohortPanel.tsx": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/components/ComparePanel.tsx": {
+      "statements": 41.66,
+      "branches": 37.5
+    },
+    "src/components/CompilerInspector.tsx": {
+      "statements": 57.14,
+      "branches": 79.22
+    },
+    "src/components/DclsPanel.tsx": {
+      "statements": 26.08,
+      "branches": 27.27
+    },
+    "src/components/DevelopmentPreviewBanner.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/EquationEditor.tsx": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/components/EquationIrOptions.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/EvidenceBundleArtifactList.tsx": {
+      "statements": 80,
+      "branches": 75
+    },
+    "src/components/EvidenceCartStrip.tsx": {
+      "statements": 100,
+      "branches": 91.66
+    },
+    "src/components/EvidenceSummaryStrip.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/EvidenceTierBadge.tsx": {
+      "statements": 93.33,
+      "branches": 88.09
+    },
+    "src/components/FitPanel.tsx": {
+      "statements": 1.78,
+      "branches": 0
+    },
+    "src/components/GraphJobsPanel.tsx": {
+      "statements": 44.44,
+      "branches": 38.23
+    },
+    "src/components/GuidedFlowPanel.tsx": {
+      "statements": 52.63,
+      "branches": 77.27
+    },
+    "src/components/HardwareCatalogue.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/HardwareCatalogueDialog.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/KeyboardHelp.tsx": {
+      "statements": 42.85,
+      "branches": 8.33
+    },
+    "src/components/ModelBrowser.tsx": {
+      "statements": 74.19,
+      "branches": 66.66
+    },
+    "src/components/ModelCapabilities.tsx": {
+      "statements": 26.66,
+      "branches": 8.33
+    },
+    "src/components/ModelComparison.tsx": {
+      "statements": 96.29,
+      "branches": 85
+    },
+    "src/components/ModelDocViewer.tsx": {
+      "statements": 50,
+      "branches": 26.08
+    },
+    "src/components/ModelInfo.tsx": {
+      "statements": 52.38,
+      "branches": 51.85
+    },
+    "src/components/MultiModelPicker.tsx": {
+      "statements": 69.56,
+      "branches": 55
+    },
+    "src/components/NetworkCanvas.tsx": {
+      "statements": 53.09,
+      "branches": 44.21
+    },
+    "src/components/NetworkControls.tsx": {
+      "statements": 30,
+      "branches": 8.33
+    },
+    "src/components/NetworkGraphConnect.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/NetworkGraphTable.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/OnboardingOverlay.tsx": {
+      "statements": 97.36,
+      "branches": 94.44
+    },
+    "src/components/OperatorWorkbenchPanel.tsx": {
+      "statements": 66.66,
+      "branches": 57.14
+    },
+    "src/components/ParameterSliders.tsx": {
+      "statements": 80.39,
+      "branches": 86.11
+    },
+    "src/components/PopulationEditor.tsx": {
+      "statements": 97.67,
+      "branches": 95.83
+    },
+    "src/components/ProjectEvidenceStrip.tsx": {
+      "statements": 100,
+      "branches": 75
+    },
+    "src/components/ProjectionEditor.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/ReviewPanel.tsx": {
+      "statements": 5,
+      "branches": 0
+    },
+    "src/components/SessionStorageStatus.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/SimulationPlot.tsx": {
+      "statements": 27.56,
+      "branches": 32.8
+    },
+    "src/components/SpikeStats.tsx": {
+      "statements": 83.33,
+      "branches": 87.5
+    },
+    "src/components/StatusBar.tsx": {
+      "statements": 47.61,
+      "branches": 50
+    },
+    "src/components/StudioReadinessPanel.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/SynthesisDashboard.tsx": {
+      "statements": 50.72,
+      "branches": 31.25
+    },
+    "src/components/SynthesisEvidenceControls.tsx": {
+      "statements": 100,
+      "branches": 78.57
+    },
+    "src/components/TemplateLibrary.tsx": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/components/TextPromptDialog.tsx": {
+      "statements": 35,
+      "branches": 43.75
+    },
+    "src/components/TrainingConfiguration.tsx": {
+      "statements": 90.47,
+      "branches": 95.08
+    },
+    "src/components/TrainingConversionResult.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/TrainingEventInput.tsx": {
+      "statements": 66.66,
+      "branches": 62.96
+    },
+    "src/components/TrainingMonitor.tsx": {
+      "statements": 33.33,
+      "branches": 61.18
+    },
+    "src/components/TrainingPreregistrationInput.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/TrainingPreregistrationVerdict.tsx": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/components/VerilogPreview.tsx": {
+      "statements": 85.71,
+      "branches": 72.41
+    },
+    "src/components/ViewTabs.tsx": {
+      "statements": 62.06,
+      "branches": 58.33
+    },
+    "src/contrastAudit.ts": {
+      "statements": 100,
+      "branches": 97.5
+    },
+    "src/cosimVerdict.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/developmentPreview.ts": {
+      "statements": 100,
+      "branches": 90
+    },
+    "src/equationIrConfig.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/evidenceBundles.ts": {
+      "statements": 100,
+      "branches": 98.63
+    },
+    "src/evidenceCart.ts": {
+      "statements": 95.65,
+      "branches": 89.09
+    },
+    "src/evidenceCartController.ts": {
+      "statements": 90.9,
+      "branches": 91.54
+    },
+    "src/evidenceCartIdentity.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/evidenceSeal.ts": {
+      "statements": 97.89,
+      "branches": 89.83
+    },
+    "src/fitWorkbench.ts": {
+      "statements": 100,
+      "branches": 94.59
+    },
+    "src/graphJobRecovery.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/graphJobRequest.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/graphJobResult.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/graphJobResultTransport.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/graphJobSavedInput.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/graphJobs.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/guidedFlowState.ts": {
+      "statements": 100,
+      "branches": 95.74
+    },
+    "src/guidedRunController.ts": {
+      "statements": 98.3,
+      "branches": 92
+    },
+    "src/hardwareCatalogueTypes.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/hostApi.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/hostApiTypes.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/hostBridge.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/hostedExamples.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/main.tsx": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/modelCapabilities.ts": {
+      "statements": 100,
+      "branches": 88.88
+    },
+    "src/modelComparison.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/modelCompileConfig.ts": {
+      "statements": 96.15,
+      "branches": 89.28
+    },
+    "src/modelInputs.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/modelReadinessBadge.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/modelScanJob.ts": {
+      "statements": 79.85,
+      "branches": 67.85
+    },
+    "src/modelScanJobValidation.ts": {
+      "statements": 73.79,
+      "branches": 68.07
+    },
+    "src/modelSelectionStoreState.ts": {
+      "statements": 97.5,
+      "branches": 98
+    },
+    "src/modelShortName.ts": {
+      "statements": 100,
+      "branches": 87.5
+    },
+    "src/networkNirExport.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/networkSaturation.ts": {
+      "statements": 100,
+      "branches": 83.33
+    },
+    "src/ode-language.ts": {
+      "statements": 36.36,
+      "branches": 0
+    },
+    "src/operatorWorkbenchState.ts": {
+      "statements": 94.73,
+      "branches": 90.12
+    },
+    "src/paletteContrast.ts": {
+      "statements": 98.23,
+      "branches": 92.3
+    },
+    "src/pipelineEvidence.ts": {
+      "statements": 100,
+      "branches": 95.45
+    },
+    "src/plotAccessibility.ts": {
+      "statements": 100,
+      "branches": 80.85
+    },
+    "src/plotEvidence.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/plots/analysisViews.ts": {
+      "statements": 98.94,
+      "branches": 77.77
+    },
+    "src/plots/comparisonViews.ts": {
+      "statements": 96.18,
+      "branches": 70.58
+    },
+    "src/plots/plotFrame.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/plots/stateViews.ts": {
+      "statements": 94.15,
+      "branches": 70
+    },
+    "src/plots/traceView.ts": {
+      "statements": 98.86,
+      "branches": 85.05
+    },
+    "src/projectEvidence.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/shareLinkApplication.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/simulationExports.ts": {
+      "statements": 96.93,
+      "branches": 73.07
+    },
+    "src/simulationPlotCanvas.ts": {
+      "statements": 100,
+      "branches": 94.44
+    },
+    "src/simulationRaw.ts": {
+      "statements": 96.07,
+      "branches": 91.3
+    },
+    "src/simulationSeed.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studio.ts": {
+      "statements": 77.77,
+      "branches": 50
+    },
+    "src/stores/studioArtifactDownload.ts": {
+      "statements": 86.66,
+      "branches": 83.33
+    },
+    "src/stores/studioBundle.ts": {
+      "statements": 95.23,
+      "branches": 100
+    },
+    "src/stores/studioCharacterize.ts": {
+      "statements": 95.77,
+      "branches": 83.33
+    },
+    "src/stores/studioCompile.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioDirectAnalysis.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioEquationIrActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioHeavyAnalysis.ts": {
+      "statements": 86.66,
+      "branches": 85.29
+    },
+    "src/stores/studioInitialState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioSimulation.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioStageFailure.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioStoreActions.ts": {
+      "statements": 44.03,
+      "branches": 51.26
+    },
+    "src/stores/studioSynthesis.ts": {
+      "statements": 95.45,
+      "branches": 100
+    },
+    "src/stores/studioTraceActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioTypes.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioAnalysisJobRunner.ts": {
+      "statements": 91.11,
+      "branches": 86.36
+    },
+    "src/studioAnalysisJobSelection.ts": {
+      "statements": 93.75,
+      "branches": 95.65
+    },
+    "src/studioAnalysisResultSink.ts": {
+      "statements": 85.41,
+      "branches": 92.42
+    },
+    "src/studioAnalysisState.ts": {
+      "statements": 97.5,
+      "branches": 94.44
+    },
+    "src/studioAuthSession.ts": {
+      "statements": 100,
+      "branches": 91.66
+    },
+    "src/studioAutoSimulation.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioBundleContext.ts": {
+      "statements": 91.66,
+      "branches": 100
+    },
+    "src/studioDocs.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioEventTrainingData.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioExperimentKey.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGraphAccountStore.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGraphDuplicate.ts": {
+      "statements": 100,
+      "branches": 93.75
+    },
+    "src/studioGraphHistory.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGraphRequests.ts": {
+      "statements": 98.21,
+      "branches": 96.87
+    },
+    "src/studioGraphTable.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGraphValidation.ts": {
+      "statements": 100,
+      "branches": 96.87
+    },
+    "src/studioGraphWorkspace.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGuidedFlowInputs.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioGuidedFlowSource.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioHeatmapSelection.ts": {
+      "statements": 100,
+      "branches": 95.83
+    },
+    "src/studioInputState.ts": {
+      "statements": 90.9,
+      "branches": 100
+    },
+    "src/studioJson.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioNullclineRanges.ts": {
+      "statements": 95,
+      "branches": 92.85
+    },
+    "src/studioPanelAnalysisPatch.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioPopulationEditor.ts": {
+      "statements": 97.29,
+      "branches": 95.06
+    },
+    "src/studioProjectState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioProjectionEditor.ts": {
+      "statements": 97.72,
+      "branches": 95.12
+    },
+    "src/studioReadiness.ts": {
+      "statements": 91.07,
+      "branches": 81.53
+    },
+    "src/studioSavedSessions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioShareRuntime.ts": {
+      "statements": 53.12,
+      "branches": 50
+    },
+    "src/studioSimulationConfig.ts": {
+      "statements": 100,
+      "branches": 92
+    },
+    "src/studioSimulationConfigInput.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioStartupRuntime.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioTraceImport.ts": {
+      "statements": 93.33,
+      "branches": 75
+    },
+    "src/studioTrainingFetchSource.ts": {
+      "statements": 89.09,
+      "branches": 80
+    },
+    "src/studioTrainingRecovery.ts": {
+      "statements": 95.34,
+      "branches": 96.34
+    },
+    "src/studioTrainingStream.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/studioUrlState.ts": {
+      "statements": 96.55,
+      "branches": 97.22
+    },
+    "src/synthesisStoreState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingCheckpoint.ts": {
+      "statements": 87.91,
+      "branches": 73.33
+    },
+    "src/trainingConversion.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingEvidence.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingExports.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingPreregistration.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingRequest.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/trainingRestore.ts": {
+      "statements": 79.16,
+      "branches": 66.66
+    },
+    "src/trainingStoreState.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/useAnalysisJob.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/useCandidateJobs.ts": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/useEvidenceCartSession.ts": {
+      "statements": 97.91,
+      "branches": 90
+    },
+    "src/useGraphJobs.ts": {
+      "statements": 23.92,
+      "branches": 8.62
+    },
+    "src/useLaboratoryJob.ts": {
+      "statements": 0,
+      "branches": 0
+    },
+    "src/useModelScanJob.ts": {
+      "statements": 93.33,
+      "branches": 100
+    },
+    "src/useStudioAnalysisJobIntegration.ts": {
+      "statements": 84.37,
+      "branches": 77.27
+    },
+    "src/viewDescriptions.ts": {
+      "statements": 92.48,
+      "branches": 62.16
+    },
+    "src/viewEmptyState.ts": {
+      "statements": 100,
+      "branches": 98.21
+    },
+    "src/viewTabs.ts": {
+      "statements": 95.45,
+      "branches": 100
+    },
+    "src/workbenchKeyboard.ts": {
+      "statements": 100,
+      "branches": 100
+    }
+  }
+}

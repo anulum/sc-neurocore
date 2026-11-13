@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio frontend has a coverage ledger:
+  `studio/frontend/coverage-ledger.json` records the statement and branch
+  coverage of every source file under `src`, and `npm run
+  test:coverage-ledger` runs the suite with v8 coverage and refuses a file
+  that falls below its recorded value or a new file below 100 %.
+  `scripts/coverage-ledger.ts accept` writes the ledger again only when
+  nothing fell. The CI frontend job runs the check after Vitest and keeps the
+  measured summary as an artefact.
+
 - `tools/preflight.py` checks what a change touched and runs no whole test
   suite by default. Each gate declares the kinds of file it guards; a gate the
   change does not touch prints `not applicable to this change: <gate>` and

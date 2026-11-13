@@ -219,6 +219,22 @@ jobs:
         working-directory: studio/frontend
         run: npm test
 
+      # No source file's statement or branch coverage may fall below its value in
+      # coverage-ledger.json; a new file must be at 100 %. The checker's own tests
+      # run first, at 100 % of its lines, branches and functions.
+      - name: Frontend coverage ledger
+        working-directory: studio/frontend
+        run: npm run test:coverage-ledger
+
+      - name: Preserve the frontend coverage summary
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: frontend-coverage-summary
+          path: studio/frontend/coverage/ledger/coverage-summary.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Hardware catalogue interface exact coverage
         working-directory: studio/frontend
         run: >-

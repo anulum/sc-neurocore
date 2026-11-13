@@ -16,6 +16,7 @@
     "build": "tsc -b && vite build && node scripts/normalize-federation-types.ts dist/@mf-types.zip && npm run verify:federation",
     "verify:federation": "node scripts/verify-federation-build.mjs",
     "preview": "vite preview",
+    "test:coverage-ledger": "node --test --experimental-test-coverage --test-coverage-include=**/scripts/coverage-ledger.ts --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 scripts/coverage-ledger.node-test.ts && vitest run --coverage && node scripts/coverage-ledger.ts check coverage/ledger/coverage-summary.json coverage-ledger.json",
     "test:build": "node --test --experimental-test-coverage --test-coverage-include=**/scripts/normalize-federation-types.ts --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 scripts/normalize-federation-types.node-test.ts"
   },
   "dependencies": {

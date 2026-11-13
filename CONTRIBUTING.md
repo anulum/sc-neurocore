@@ -169,6 +169,27 @@ Use the Node version pinned in the workflows and npm 12.2.1, as declared by
 package scripts without changing the shared machine's global npm installation.
 The producer and federation test host use matching React singleton versions.
 
+### Frontend coverage ledger
+
+`studio/frontend/coverage-ledger.json` records, for every source file under
+`studio/frontend/src`, the statement and branch coverage the Vitest suite
+reaches (test files and the three test-support modules excluded). It is a
+ratchet, not a claim: a file may not fall below its recorded value, and a file
+the ledger does not know must be at 100%. From `studio/frontend`:
+
+```bash
+npm run test:coverage-ledger      # the checker's own tests, the suite with v8 coverage, then the check
+node scripts/coverage-ledger.ts accept coverage/ledger/coverage-summary.json coverage-ledger.json
+```
+
+The check fails and names the file and the measure that fell, a new file below
+100%, or a ledger entry the run no longer measured. After a file improves, or
+after a file is removed or renamed, `accept` writes the ledger again from the
+run: it refuses, writing nothing, when any file fell or a new file is below
+100%, so the ledger only rises. The CI frontend job runs the script after
+Vitest and keeps the measured summary as the `frontend-coverage-summary`
+artefact.
+
 ### Hardware catalogue coverage
 
 The hardware catalogue uses three separate metadata modules: current synthesis

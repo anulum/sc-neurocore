@@ -108,6 +108,7 @@ studio/frontend/dist/
 studio/frontend/playwright-report/
 studio/frontend/test-results/
 studio/frontend/tsconfig.tsbuildinfo
+studio/frontend/coverage/
 
 # MkDocs build output
 site/

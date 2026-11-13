@@ -20,5 +20,21 @@ export default defineConfig({
       "src/components/CandidatePanel.test.tsx",
       "src/components/GraphJobsPanel.test.tsx",
     ],
+    // The frontend coverage ledger (scripts/coverage-ledger.ts) reads this
+    // json-summary. Coverage is off by default; `npm run test:coverage-ledger`
+    // turns it on. Test files and the three test-support modules are not source.
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.d.ts",
+        "src/candidateTestServer.ts",
+        "src/equationIrTestSupport.ts",
+        "src/plots/mockPlotContext.ts",
+      ],
+      reporter: ["text", "json-summary"],
+      reportsDirectory: "coverage/ledger",
+    },
   },
 });

@@ -52,6 +52,8 @@
     "e2e/training-conversion-live.spec.ts",
     "e2e/hardware-catalogue-live.spec.ts",
     "scripts/normalize-federation-types.ts",
-    "scripts/normalize-federation-types.node-test.ts"
+    "scripts/normalize-federation-types.node-test.ts",
+    "scripts/coverage-ledger.ts",
+    "scripts/coverage-ledger.node-test.ts"
   ]
 }

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1937
+expected_file_count = 1938
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7802,3 +7802,7 @@ rationale = "Bind the maintenance commands' delegation: the benchmark suite in o
 [[file]]
 path = "src/sc_neurocore/neurons/models/ai_optimized.py"
 rationale = "Eight AI-optimised neuron models, each documented as its step computes: parameters the classes never learn, the unused window and coupling fields, the free-running phase, the uniform attractor input and the self-referential rate that differs from the Rust lane within the first 50 steps."
+
+[[file]]
+path = "tests/test_tools/test_ci_frontend_coverage_ledger_contract.py"
+rationale = "Bind the frontend coverage ledger into the hosted frontend job: the checker after Vitest, the kept summary, the package script's order, the Vitest summary path and the committed, sorted, licensed ledger."
