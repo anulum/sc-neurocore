@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import shutil
+import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
 from typing import cast
@@ -34,6 +39,124 @@ from tools.rust_doc_symbols import NativeParser, build_parser
 
 LEGACY_SCHEMA = "sc-neurocore.rust-doc-ceiling.v1"
 INDIVIDUAL_SCHEMA = "sc-neurocore.rust-doc-ceiling.v2"
+#: Name of the persistent folder of the original source image in the temporary directory.
+ORIGINAL_IMAGE_DIR = "sc-neurocore-rust-doc-original"
+#: Environment variable that places the original source image elsewhere.
+ORIGINAL_IMAGE_ENV = "SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR"
+#: File that marks a folder as the ratchet's own; only a marked folder is ever emptied.
+IMAGE_MARKER = ".sc-neurocore-rust-doc-original"
+#: Entries of the image that survive between runs: Cargo's build outputs, never source.
+_BUILD_OUTPUTS = frozenset({"target", "native-target"})
+#: Whether runs take an exclusive lock and check the folder's owner (POSIX).
+_LOCKED = os.name == "posix"
+
+
+def original_image_directory(root: Path) -> Path:
+    """Return the persistent folder that holds the original source image.
+
+    The image is extracted afresh on every run, but its folder and Cargo's
+    build outputs in it persist. Cargo therefore reuses the dependencies it
+    built before, Z3 from C++ source among them, instead of building them
+    cold in a new temporary directory on every run. A cold build could take
+    longer than the measurement's own timeout on a loaded host. The folder
+    stays outside the checkout, so no rustup directory override or toolchain
+    file of the checkout reaches the original revision.
+
+    Parameters
+    ----------
+    root : Path
+        The repository being measured; the folder may not lie inside it.
+
+    Returns
+    -------
+    Path
+        The folder named by ``SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR``, else
+        ``sc-neurocore-rust-doc-original`` in the temporary directory.
+
+    Raises
+    ------
+    RustMeasurementError
+        If the override names a folder inside the repository.
+    """
+    named = os.environ.get(ORIGINAL_IMAGE_ENV)
+    if not named:
+        return Path(tempfile.gettempdir()) / ORIGINAL_IMAGE_DIR
+    folder = Path(named).resolve()
+    if folder.is_relative_to(root.resolve()):
+        raise RustMeasurementError(
+            f"{ORIGINAL_IMAGE_ENV} names {folder}, inside the measured checkout; "
+            "the original revision is measured in a folder outside it."
+        )
+    return folder
+
+
+def _private_folder(image: Path) -> None:
+    """Create the image folder for this account alone, and refuse one another account could alter."""
+    image.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        image.mkdir(mode=0o700)
+    except FileExistsError:
+        pass
+    status = os.lstat(image)
+    if stat.S_ISLNK(status.st_mode) or not stat.S_ISDIR(status.st_mode):
+        raise RustMeasurementError(f"The original source image folder {image} is not a directory.")
+    if _LOCKED and (status.st_uid != os.getuid() or status.st_mode & (stat.S_IWGRP | stat.S_IWOTH)):
+        raise RustMeasurementError(
+            f"The original source image folder {image} must belong to this account and be "
+            "writable by it alone; it is not used."
+        )
+
+
+@contextmanager
+def _exclusive(image: Path) -> Iterator[None]:
+    """Hold the image for one measurement; a concurrent run says so and waits for its turn."""
+    _private_folder(image)
+    if not _LOCKED:
+        yield
+        return
+    import fcntl
+
+    descriptor = os.open(image, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print(
+                f"Waiting for another Rust documentation run, which holds {image}.",
+                file=sys.stderr,
+                flush=True,
+            )
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def _reset_image(image: Path) -> None:
+    """Empty the ratchet's own folder except its build outputs, and mark it.
+
+    Everything but real ``target`` and ``native-target`` folders and the
+    marker is deleted. A folder that holds anything and lacks the marker is
+    not the ratchet's and is refused, so an override cannot empty a folder
+    of someone else's.
+    """
+    marker = image / IMAGE_MARKER
+    entries = list(image.iterdir())
+    if entries and (marker.is_symlink() or not marker.is_file()):
+        raise RustMeasurementError(
+            f"{image} holds files but no {IMAGE_MARKER} marker, so it is not the ratchet's "
+            "folder; it is not emptied. Name an empty folder of its own."
+        )
+    for entry in entries:
+        if entry.name == IMAGE_MARKER:
+            continue
+        if entry.name in _BUILD_OUTPUTS and entry.is_dir() and not entry.is_symlink():
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
+    marker.write_text("The Rust documentation ratchet's original source image.\n")
 
 
 @dataclass(frozen=True)
@@ -123,7 +246,7 @@ def _source_image(root: Path, revision: str, names: list[str], image: Path) -> N
             path.write_bytes(source.read())
     # Cargo writes build outputs, including generated Rust, below the image unless
     # the caller redirects them; neither default nor test location is source.
-    (image / ".gitignore").write_text("native-target/\ntarget/\n")
+    (image / ".gitignore").write_text(f"native-target/\ntarget/\n{IMAGE_MARKER}\n")
     commands = [
         ["git", "init", "-q", "--initial-branch=main"],
         ["git", "add", "--", "."],
@@ -221,8 +344,9 @@ def protect_rust_debt(
             else None
         )
         original_document = _document(original_raw) if original_raw is not None else None
-        with tempfile.TemporaryDirectory(prefix="rust-doc-original-") as folder:
-            image = Path(folder)
+        image = original_image_directory(root)
+        with _exclusive(image):
+            _reset_image(image)
             _source_image(root, revision, names, image)
             original = measure_rust_findings(
                 image, current.manifest, parser=parser or build_parser(), admit_expansions=True

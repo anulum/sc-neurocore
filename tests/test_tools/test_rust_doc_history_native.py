@@ -18,8 +18,24 @@ from pathlib import Path
 import runpy
 import subprocess
 import sys
+import tempfile
 
 import pytest
+from tools.rust_doc_history import ORIGINAL_IMAGE_ENV
+
+
+@pytest.fixture(autouse=True)
+def private_original_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test its own folder for the original revision's source image.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        The test's directory; the image folder goes below it.
+    monkeypatch : pytest.MonkeyPatch
+        Names the folder through the environment, also for child processes.
+    """
+    monkeypatch.setenv(ORIGINAL_IMAGE_ENV, str(tmp_path / "rust-doc-original-image"))
 
 
 @pytest.fixture(autouse=True)
@@ -34,6 +50,7 @@ def local_git_fixture_context(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 from tests.test_tools.test_rust_doc_measurement_native import rust_project
+from tools import rust_doc_history
 from tools.rust_doc_history import INDIVIDUAL_SCHEMA, LEGACY_SCHEMA, protect_rust_debt
 from tools.rust_doc_measurement import RustMeasurementError, measure_rust_findings
 from tools.rust_doc_symbols import NativeParser, build_parser
@@ -594,3 +611,304 @@ def test_legacy_ceiling_survives_committed_documentation_repayment(
     assert result.returncode == 2
     assert "New undocumented Rust declarations" in result.stdout
     assert ceiling.read_bytes() == original_record
+
+
+def test_the_original_image_folder_is_named_by_the_environment_or_the_temporary_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The folder persists at one place: the override when set, else the temporary directory.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Sets and removes the override.
+    tmp_path : Path
+        The temporary directory for the default.
+    """
+    root = tmp_path / "checkout"
+    monkeypatch.setenv(rust_doc_history.ORIGINAL_IMAGE_ENV, str(tmp_path / "chosen"))
+    assert rust_doc_history.original_image_directory(root) == tmp_path / "chosen"
+    monkeypatch.delenv(rust_doc_history.ORIGINAL_IMAGE_ENV)
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    assert (
+        rust_doc_history.original_image_directory(root)
+        == tmp_path / "sc-neurocore-rust-doc-original"
+    )
+
+
+def test_an_override_inside_the_checkout_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The original revision is never measured inside the checkout it is compared with.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Names a folder inside the checkout.
+    tmp_path : Path
+        Holds the checkout.
+    """
+    root = tmp_path / "checkout"
+    root.mkdir()
+    monkeypatch.setenv(rust_doc_history.ORIGINAL_IMAGE_ENV, str(root / "target" / "image"))
+    with pytest.raises(RustMeasurementError, match="inside the measured checkout"):
+        rust_doc_history.original_image_directory(root)
+
+
+def _marked(image: Path) -> Path:
+    """Return a folder marked as the ratchet's own, as a previous run leaves it.
+
+    Parameters
+    ----------
+    image : Path
+        The folder to create.
+
+    Returns
+    -------
+    Path
+        The folder.
+    """
+    image.mkdir(parents=True, mode=0o700)
+    (image / rust_doc_history.IMAGE_MARKER).write_text("marked\n")
+    return image
+
+
+def test_a_reset_keeps_only_the_build_outputs_and_the_marker(tmp_path: Path) -> None:
+    """Sources, the image's own Git index and stray entries go; Cargo's build outputs stay.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = _marked(tmp_path / "image")
+    for kept in ("target", "native-target"):
+        (image / kept / "debug").mkdir(parents=True)
+        (image / kept / "debug" / "built").write_text("cached")
+    (image / ".git").mkdir()
+    (image / "src").mkdir()
+    (image / "src" / "lib.rs").write_text("pub fn stale() {}\n")
+    (image / "Cargo.toml").write_text("[package]\n")
+    (tmp_path / "elsewhere").mkdir()
+    (image / "linked").symlink_to(tmp_path / "elsewhere")
+    rust_doc_history._reset_image(image)
+    assert sorted(entry.name for entry in image.iterdir()) == [
+        rust_doc_history.IMAGE_MARKER,
+        "native-target",
+        "target",
+    ]
+    assert (image / "target" / "debug" / "built").read_text() == "cached"
+    assert (tmp_path / "elsewhere").is_dir()
+
+
+def test_a_reset_removes_a_build_output_name_that_is_not_a_folder(tmp_path: Path) -> None:
+    """A file or a link named like a build output is not a cache and is removed.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = _marked(tmp_path / "image")
+    (image / "target").write_text("not a folder")
+    (tmp_path / "real").mkdir()
+    (image / "native-target").symlink_to(tmp_path / "real")
+    rust_doc_history._reset_image(image)
+    assert [entry.name for entry in image.iterdir()] == [rust_doc_history.IMAGE_MARKER]
+    assert (tmp_path / "real").is_dir()
+
+
+def test_an_empty_folder_is_marked_on_its_first_reset(tmp_path: Path) -> None:
+    """A new, empty folder becomes the ratchet's own.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    image.mkdir()
+    rust_doc_history._reset_image(image)
+    assert [entry.name for entry in image.iterdir()] == [rust_doc_history.IMAGE_MARKER]
+
+
+@pytest.mark.parametrize("marker", ["absent", "folder", "link"])
+def test_a_folder_that_is_not_the_ratchets_is_never_emptied(tmp_path: Path, marker: str) -> None:
+    """A non-empty folder without a real marker file, such as a Cargo target, is refused and left whole.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the folder.
+    marker : str
+        How the marker is missing: absent, a folder of that name, or a link to a file.
+    """
+    image = tmp_path / "shared-target"
+    (image / "debug" / "deps").mkdir(parents=True)
+    (image / "debug" / "deps" / "libdep.rlib").write_text("someone else's build")
+    (image / "CACHEDIR.TAG").write_text("Signature: 8a477f597d28d172789f06886806bc55\n")
+    if marker == "folder":
+        (image / rust_doc_history.IMAGE_MARKER).mkdir()
+    elif marker == "link":
+        (tmp_path / "a-file").write_text("x")
+        (image / rust_doc_history.IMAGE_MARKER).symlink_to(tmp_path / "a-file")
+    with pytest.raises(RustMeasurementError, match="not the ratchet's folder"):
+        rust_doc_history._reset_image(image)
+    assert (image / "debug" / "deps" / "libdep.rlib").read_text() == "someone else's build"
+    assert (image / "CACHEDIR.TAG").is_file()
+
+
+def test_the_folder_is_created_for_this_account_alone(tmp_path: Path) -> None:
+    """A new folder is made with mode 0700, and its parents as needed.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "parent" / "image"
+    with rust_doc_history._exclusive(image):
+        assert (image.stat().st_mode & 0o777) == 0o700
+
+
+def test_a_folder_others_can_write_is_refused(tmp_path: Path) -> None:
+    """A folder writable by group or others could hold planted build outputs; it is not used.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    image.mkdir()
+    image.chmod(0o777)
+    with (
+        pytest.raises(RustMeasurementError, match="writable by it alone"),
+        rust_doc_history._exclusive(image),
+    ):
+        pass
+
+
+def test_a_linked_or_non_directory_folder_is_refused(tmp_path: Path) -> None:
+    """A link in place of the folder, or a file, is refused by name.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    (tmp_path / "real").mkdir(mode=0o700)
+    linked = tmp_path / "linked"
+    linked.symlink_to(tmp_path / "real")
+    plain = tmp_path / "plain"
+    plain.write_text("not a folder")
+    for image in (linked, plain):
+        with (
+            pytest.raises(RustMeasurementError, match="is not a directory"),
+            rust_doc_history._exclusive(image),
+        ):
+            pass
+
+
+def test_a_folder_of_another_account_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A folder owned by another account is not used.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Makes this process look like another account.
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    image.mkdir(mode=0o700)
+    monkeypatch.setattr(os, "getuid", lambda: image.stat().st_uid + 1)
+    with (
+        pytest.raises(RustMeasurementError, match="must belong to this account"),
+        rust_doc_history._exclusive(image),
+    ):
+        pass
+
+
+def test_a_concurrent_run_waits_for_the_lock_on_the_folder(tmp_path: Path) -> None:
+    """While one run holds the folder, another process cannot lock the folder itself.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    probe = (
+        "import fcntl, os, sys\n"
+        "descriptor = os.open(sys.argv[1], os.O_RDONLY | os.O_DIRECTORY)\n"
+        "try:\n"
+        "    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)\n"
+        "except BlockingIOError:\n"
+        "    sys.exit(3)\n"
+    )
+    with rust_doc_history._exclusive(image):
+        held = subprocess.run([sys.executable, "-c", probe, str(image)], check=False, timeout=30)
+    free = subprocess.run([sys.executable, "-c", probe, str(image)], check=False, timeout=30)
+    assert held.returncode == 3
+    assert free.returncode == 0
+    assert not (tmp_path / "image.lock").exists()
+
+
+def test_a_waiting_run_says_what_it_waits_for(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A second run names the folder on stderr before it blocks, then proceeds when the lock is free.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    capsys : pytest.CaptureFixture
+        Reads the waiting run's message.
+    """
+    import fcntl
+    import threading
+    import time
+
+    image = tmp_path / "image"
+    image.mkdir(mode=0o700)
+    holder = os.open(image, os.O_RDONLY | os.O_DIRECTORY)
+    fcntl.flock(holder, fcntl.LOCK_EX)
+    entered = threading.Event()
+
+    def second_run() -> None:
+        with rust_doc_history._exclusive(image):
+            entered.set()
+
+    worker = threading.Thread(target=second_run)
+    worker.start()
+    deadline = time.monotonic() + 30
+    while "Waiting for another Rust documentation run" not in capsys.readouterr().err:
+        assert time.monotonic() < deadline, "the waiting run printed nothing"
+        assert not entered.is_set()
+        time.sleep(0.05)
+    os.close(holder)
+    worker.join(timeout=30)
+    assert entered.is_set()
+
+
+def test_without_posix_locks_the_image_is_used_unlocked(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Where ``flock`` is unavailable the run proceeds without a lock, and the folder is still made.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Turns the POSIX lock off.
+    tmp_path : Path
+        Holds the image.
+    """
+    monkeypatch.setattr(rust_doc_history, "_LOCKED", False)
+    image = tmp_path / "a" / "image"
+    with rust_doc_history._exclusive(image):
+        assert (tmp_path / "a").is_dir() and image.is_dir()
+    assert not list((tmp_path / "a").glob("*.lock"))

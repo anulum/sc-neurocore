@@ -300,9 +300,23 @@ names the pinned toolchain's own `bin/rustc` in `RUSTC`. It removes
 `RUSTC_WORKSPACE_WRAPPER` empty, so neither the caller nor `build.rustc` or a
 wrapper in a Cargo configuration file can make Cargo run another compiler. Cargo
 starts from the repository root, where rustup alone would not find a member
-crate's file, and the original revision compiles in a temporary directory that
-no rustup directory override reaches; that revision reads its own pin from its
-image. A pinned toolchain that does not run is refused by name and is not
+crate's file. The original revision compiles in its own folder outside the
+checkout, which no rustup directory override reaches; that revision reads its
+own pin from its image. The folder is `sc-neurocore-rust-doc-original` in the
+temporary directory, or the one `SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR` names
+outside the checkout. On every run, everything in it except Cargo's build
+outputs (`target`, `native-target`) and the ratchet's marker file is deleted.
+The sources are then extracted afresh, so the override must name a folder of
+its own. A non-empty folder without the marker is refused and left whole. The
+folder is created for the current account alone (mode 0700). A link, a folder
+of another account and one that group or others can write are refused. The
+build outputs persist, so the original's dependencies, Z3 from C++ source
+among them, are built once and not on every run; a cold build could outlast
+the measurement's own timeout. The folder can hold several gigabytes. It may
+be deleted when no run holds it, and the next run is then cold again. A run
+holds an exclusive lock on the folder; a second run says on stderr that it
+waits for that lock, then takes its turn.
+A pinned toolchain that does not run is refused by name and is not
 fetched. A numbered pin must be exactly the release that this compiler
 executable reports, so a pre-release of it, or a compiler on the path that
 ignores rustup, cannot stand in for it. Two

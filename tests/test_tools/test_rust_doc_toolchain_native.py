@@ -9,11 +9,11 @@
 """Bind the Rust documentation measurement to the toolchain the measured crate pins.
 
 The measurement starts Cargo from the repository root, where rustup finds no
-toolchain file for a member crate, and it compiles the original Git revision in a
-temporary directory, which no rustup directory override reaches. Both used to
-run whatever compiler the host defaulted to. A crate that pins its toolchain is
-now measured with that toolchain in every compiler call, whatever the caller's
-environment says, and a pin that cannot run is refused by name.
+toolchain file for a member crate, and it compiles the original Git revision in
+its own folder outside the checkout, which no rustup directory override reaches.
+Both used to run whatever compiler the host defaulted to. A crate that pins its
+toolchain is now measured with that toolchain in every compiler call, whatever
+the caller's environment says, and a pin that cannot run is refused by name.
 """
 
 from __future__ import annotations
@@ -38,10 +38,25 @@ from tools.rust_toolchain_pin import (
     reported_version_matches,
     toolchain_environment,
 )
+from tools.rust_doc_history import ORIGINAL_IMAGE_ENV
 
 REPO = Path(__file__).resolve().parents[2]
 #: A toolchain name that rustup will not find installed on any host.
 ABSENT = "0.0.1"
+
+
+@pytest.fixture(autouse=True)
+def private_original_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test its own folder for the original revision's source image.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        The test's directory; the image folder goes below it.
+    monkeypatch : pytest.MonkeyPatch
+        Names the folder through the environment, also for child processes.
+    """
+    monkeypatch.setenv(ORIGINAL_IMAGE_ENV, str(tmp_path / "rust-doc-original-image"))
 
 
 @pytest.fixture(autouse=True)
@@ -584,10 +599,10 @@ class TestTheMeasurement:
 def test_the_original_revision_is_measured_with_its_own_pin(
     parser: NativeParser, engine_channel: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The original Git image in a temporary directory compiles with the revision's pinned toolchain.
+    """The original Git image outside the checkout compiles with the revision's pinned toolchain.
 
     This is the case that refused pushes: no rustup directory override reaches the
-    temporary image, so the original was compiled with the host's default compiler
+    image, so the original was compiled with the host's default compiler
     and its version did not reproduce the ceiling's producer.
 
     Parameters

@@ -18,6 +18,21 @@ import subprocess
 import sys
 
 import pytest
+from tools.rust_doc_history import ORIGINAL_IMAGE_ENV
+
+
+@pytest.fixture(autouse=True)
+def private_original_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test its own folder for the original revision's source image.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        The test's directory; the image folder goes below it.
+    monkeypatch : pytest.MonkeyPatch
+        Names the folder through the environment, also for child processes.
+    """
+    monkeypatch.setenv(ORIGINAL_IMAGE_ENV, str(tmp_path / "rust-doc-original-image"))
 
 
 @pytest.fixture(autouse=True)

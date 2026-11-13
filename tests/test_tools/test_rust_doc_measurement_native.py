@@ -23,8 +23,23 @@ from tools.rust_doc_measurement import RustMeasurementError, measure_rust_findin
 from tools.rust_doc_symbols import NativeParser, build_parser
 from tools.doc_debt_ceiling import RatchetError
 from tools.rust_doc_ratchet import measure
+from tools.rust_doc_history import ORIGINAL_IMAGE_ENV
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def private_original_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give each test its own folder for the original revision's source image.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        The test's directory; the image folder goes below it.
+    monkeypatch : pytest.MonkeyPatch
+        Names the folder through the environment, also for child processes.
+    """
+    monkeypatch.setenv(ORIGINAL_IMAGE_ENV, str(tmp_path / "rust-doc-original-image"))
 
 
 @pytest.fixture(scope="module")

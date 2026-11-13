@@ -12,6 +12,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Rust documentation ratchet builds its original revision's dependencies
+  once, not on every run. The original Git revision is now extracted into a
+  persistent folder outside the checkout: `sc-neurocore-rust-doc-original` in
+  the temporary directory, or the one `SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR`
+  names. Before, it went to a new temporary directory each time. Its sources
+  are extracted afresh on every run, while Cargo's build outputs in the folder
+  persist, so Z3 is no longer compiled from C++ source each time. That cold
+  build had outlasted the measurement's own 1800 s timeout on a loaded host,
+  and the pre-push hook then refused a push. A killed run no longer leaves a
+  new multi-gigabyte folder behind each time: the one folder is reused. The
+  folder is created for the current account alone (mode 0700). A link, a
+  folder another account could write, and a non-empty folder without the
+  ratchet's marker are refused, so an override cannot empty a folder of
+  someone else's. An exclusive lock lets concurrent runs take turns, and a
+  waiting run says so.
+
 - Clearing a training setting no longer blanks the Studio. After a run had
   completed or failed, clearing an optional setting left it in the
   configuration as `undefined`: choosing another dataset, clearing the seed
