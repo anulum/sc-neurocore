@@ -129,21 +129,29 @@ def test_the_archive_is_checked_before_it_is_unpacked() -> None:
     assert run.count("tar -xzf") == 1
 
 
-def test_the_solver_pins_are_the_binaries_every_committed_receipt_ran() -> None:
-    """A receipt recorded with another solver binary fails here, not on the hosted run."""
+def test_the_solver_pins_are_the_binaries_every_committed_record_ran() -> None:
+    """A receipt or non-vacuity audit recorded with another solver binary fails here.
+
+    The hosted validation compares each receipt's solver with the SDK binary
+    and requires each audit's toolchain to equal its receipt's. This check
+    reads both kinds of record without the SDK, so a stray solver digest fails
+    before any hosted run.
+    """
     env = _toolchain()["env"]
     pins = {
         "yices-smt2": env["SCN_HDL_SDK_YICES_SHA256"],
         "z3": env["SCN_HDL_SDK_Z3_SHA256"],
     }
+    formal = ROOT / "benchmarks" / "results" / "formal"
     seen: set[str] = set()
-    receipts = sorted((ROOT / "benchmarks" / "results" / "formal").glob("*/receipt.json"))
-    assert receipts, "the repository holds formal receipts"
-    for receipt in receipts:
-        solver = json.loads(receipt.read_text(encoding="utf-8"))["toolchain"]["solver"]
-        assert solver["sha256"] == pins[solver["name"]], receipt.parent.name
-        seen.add(solver["name"])
-    assert seen == set(pins)
+    for kind in ("receipt.json", "nonvacuity.json"):
+        records = sorted(formal.glob(f"*/{kind}"))
+        assert records, f"the repository holds committed {kind} records"
+        for record in records:
+            solver = json.loads(record.read_text(encoding="utf-8"))["toolchain"]["solver"]
+            assert solver["sha256"] == pins[solver["name"]], f"{record.parent.name}/{kind}"
+            seen.add(solver["name"])
+    assert seen == set(pins), "every pinned solver is one some committed record ran"
 
 
 def test_a_source_build_runs_only_on_request() -> None:
