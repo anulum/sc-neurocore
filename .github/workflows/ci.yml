@@ -1541,6 +1541,7 @@ jobs:
                 tests/test_facet_receipt_projection.py \
                 tests/test_facet_receipt_cli.py \
                 tests/test_facet_receipt_process.py \
+                tests/test_facet_receipt_interrupt_hold.py \
                 tests/test_facet_receipt_posix.py \
                 tests/test_facet_receipt_posix_tools.py \
                 tests/test_facet_receipt_checkout.py \

@@ -21,6 +21,8 @@ jobs:
     env:
       # Four Windows-only statements and six branches remain eligible until
       # source-bound Windows execution is reviewed; then this floor becomes 100.
+      # Their line numbers below are pinned; tests/test_coverage_gate_contract.py
+      # derives them from tools/facet_receipt_evidence.py and must agree.
       RECORDER_COVERAGE_FLOOR: "98.417721518987"
     steps:
       - name: Configure isolated branch data
@@ -150,7 +152,7 @@ jobs:
           windows_lines = set(databases["windows"].lines(subject) or [])
           windows_arcs = set(databases["windows"].arcs(subject) or [])
           assert windows_lines and windows_arcs, "Windows data did not map onto the recorder tool"
-          native_lines = windows_lines & {75, 76, 170, 171}
+          native_lines = windows_lines & {115, 116, 218, 219}
           assert native_lines, "Windows data contains no executed Windows-only recorder statement"
           assert windows_lines <= set(databases["combined"].lines(subject) or []), (
               "Combined data lost Windows lines"
@@ -192,8 +194,8 @@ jobs:
           allowed: dict[str, tuple[set[int], set[tuple[int, int]]]] = {
               "tools/facet_receipt.py": (set(), set()),
               "tools/facet_receipt_evidence.py": (
-                  {75, 76, 170, 171},
-                  {(74, 75), (88, 105), (156, 158), (165, 170), (170, 171), (170, 172)},
+                  {115, 116, 218, 219},
+                  {(114, 115), (128, 145), (204, 206), (213, 218), (218, 219), (218, 220)},
               ),
               "tools/facet_receipt_runtime.py": (set(), set()),
           }

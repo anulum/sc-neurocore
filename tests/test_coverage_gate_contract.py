@@ -10,8 +10,10 @@
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
+from typing import Any
 
 import tomllib
 
@@ -504,6 +506,390 @@ def test_recorder_branch_floor_is_a_required_primary_dependency() -> None:
     assert floor["run"].count('--fail-under="$RECORDER_COVERAGE_FLOOR"') == 2
     assert "continue-on-error" not in recorder
     assert "continue-on-error" not in floor
+
+
+_RECORDER_SOURCES = (
+    "tools/facet_receipt.py",
+    "tools/facet_receipt_evidence.py",
+    "tools/facet_receipt_runtime.py",
+)
+_RECORDER_MODULES = frozenset(
+    path.removesuffix(".py").replace("/", ".") for path in _RECORDER_SOURCES
+)
+
+
+def _windows_side(test: ast.expr) -> str | None:
+    """Name the side of an ``if`` that only Windows takes, from its platform test.
+
+    Parameters
+    ----------
+    test : ast.expr
+        The ``if`` statement's condition.
+
+    Returns
+    -------
+    str | None
+        ``"body"`` for ``sys.platform == "win32"``; ``"orelse"`` for
+        ``sys.platform != "win32"``, alone or as an ``and`` operand; ``None``
+        when the condition does not read ``sys.platform``.
+    """
+    operands = (
+        test.values if isinstance(test, ast.BoolOp) and isinstance(test.op, ast.And) else [test]
+    )
+    for operand in operands:
+        if (
+            isinstance(operand, ast.Compare)
+            and ast.unparse(operand.left) == "sys.platform"
+            and len(operand.ops) == 1
+            and ast.unparse(operand.comparators[0]) == "'win32'"
+        ):
+            if isinstance(operand.ops[0], ast.NotEq):
+                return "orelse"
+            if isinstance(operand.ops[0], ast.Eq) and operand is test:
+                return "body"
+    assert "sys.platform" not in ast.unparse(test), (
+        f"unsupported platform test at line {test.lineno}: {ast.unparse(test)}"
+    )
+    return None
+
+
+def _windows_only_code(source: str) -> tuple[set[int], set[tuple[int, int]]]:
+    """Derive the statements and branch arcs that only a Windows run executes.
+
+    The Windows side of a platform test (see `_windows_side`) runs on Windows
+    alone. Every statement inside it is Windows-only, and so is every arc out of
+    an ``if`` inside it. The arc from the platform test into that side is
+    Windows-only too; a test without an ``else`` hands Windows to the statement
+    after it. A construct whose arcs this does not model is refused by name.
+
+    Parameters
+    ----------
+    source : str
+        One recorder module's text.
+
+    Returns
+    -------
+    tuple[set[int], set[tuple[int, int]]]
+        The Windows-only statement lines and branch arcs, numbered as coverage
+        numbers them.
+    """
+    lines: set[int] = set()
+    arcs: set[tuple[int, int]] = set()
+
+    def false_side(statement: ast.If, after: int | None) -> int:
+        if statement.orelse:
+            return statement.orelse[0].lineno
+        assert after is not None, f"no statement follows line {statement.lineno} in its block"
+        return after
+
+    def windows_only(block: list[ast.stmt], follower: int | None) -> None:
+        for index, statement in enumerate(block):
+            after = block[index + 1].lineno if index + 1 < len(block) else follower
+            lines.add(statement.lineno)
+            if isinstance(statement, ast.If):
+                arcs.add((statement.lineno, statement.body[0].lineno))
+                arcs.add((statement.lineno, false_side(statement, after)))
+                windows_only(statement.body, after)
+                windows_only(statement.orelse, after)
+            elif isinstance(statement, ast.With):
+                windows_only(statement.body, None)
+            else:
+                assert not any(
+                    isinstance(child, ast.stmt) for child in ast.iter_child_nodes(statement)
+                ), f"unmodelled Windows-only construct at line {statement.lineno}"
+
+    def visit(block: list[ast.stmt], follower: int | None) -> None:
+        for index, statement in enumerate(block):
+            after = block[index + 1].lineno if index + 1 < len(block) else follower
+            if isinstance(statement, ast.If):
+                side = _windows_side(statement.test)
+                if side == "body":
+                    arcs.add((statement.lineno, statement.body[0].lineno))
+                    windows_only(statement.body, after)
+                    visit(statement.orelse, after)
+                elif side == "orelse":
+                    arcs.add((statement.lineno, false_side(statement, after)))
+                    windows_only(statement.orelse, after)
+                    visit(statement.body, after)
+                else:
+                    visit(statement.body, after)
+                    visit(statement.orelse, after)
+                continue
+            for field in ("body", "orelse", "finalbody"):
+                children = getattr(statement, field, None)
+                if isinstance(children, list):
+                    visit(children, None)
+            for handler in getattr(statement, "handlers", []):
+                visit(handler.body, None)
+
+    visit(ast.parse(source).body, None)
+    return lines, arcs
+
+
+def _heredoc_program(run: str) -> ast.Module:
+    """Parse the Python heredoc of one workflow step.
+
+    Parameters
+    ----------
+    run : str
+        The step's shell text.
+
+    Returns
+    -------
+    ast.Module
+        The program between ``python - <<'PY'`` and its closing ``PY`` line.
+    """
+    match = re.search(r"^python - <<'PY'\n(.*?)\nPY$", run, re.DOTALL | re.MULTILINE)
+    assert match is not None, "the step must run one Python heredoc"
+    return ast.parse(match.group(1))
+
+
+def _recorder_allowances(
+    job: dict[str, Any],
+) -> tuple[set[int], dict[str, tuple[set[int], set[tuple[int, int]]]]]:
+    """Read the Windows-only lines that the recorder job's two Python steps pin.
+
+    Parameters
+    ----------
+    job : dict[str, Any]
+        The reusable workflow's ``recorder-coverage`` job.
+
+    Returns
+    -------
+    tuple[set[int], dict[str, tuple[set[int], set[tuple[int, int]]]]]
+        The lines the proof step requires Windows to have run, and the floor
+        step's allowed missing lines and branch arcs per recorder source.
+    """
+    steps = {step.get("name"): step for step in job["steps"]}
+    proof = _heredoc_program(steps["Prove canonical paths and actual Windows contribution"]["run"])
+    native = [
+        node.value.right
+        for node in ast.walk(proof)
+        if isinstance(node, ast.Assign)
+        and [ast.unparse(target) for target in node.targets] == ["native_lines"]
+        and isinstance(node.value, ast.BinOp)
+    ]
+    assert len(native) == 1, "the proof step must pin its Windows-only lines once"
+    floor = _heredoc_program(steps["Enforce the production recorder branch floor"]["run"])
+    allowed = [
+        node.value
+        for node in ast.walk(floor)
+        if isinstance(node, ast.AnnAssign) and ast.unparse(node.target) == "allowed"
+    ]
+    assert len(allowed) == 1 and isinstance(allowed[0], ast.Dict), (
+        "the floor must pin one allowance table"
+    )
+    table: dict[str, tuple[set[int], set[tuple[int, int]]]] = {}
+    for key, value in zip(allowed[0].keys, allowed[0].values, strict=True):
+        assert key is not None and isinstance(value, ast.Tuple) and len(value.elts) == 2
+        lines, arcs = (
+            set() if ast.unparse(part) == "set()" else ast.literal_eval(part) for part in value.elts
+        )
+        table[ast.literal_eval(key)] = (lines, arcs)
+    return ast.literal_eval(native[0]), table
+
+
+def test_windows_only_derivation_reproduces_the_reviewed_allowances() -> None:
+    """The derivation gives the pinned sets that were reviewed against the original layout.
+
+    The recorder at ``de9cc74c7`` placed its Windows-only code at lines 75-76
+    and 170-171; those numbers and six branches were the reviewed allowance.
+    """
+    source = """\
+import sys
+def read(descriptor, size):
+    if size == 0:
+        return b""
+    if sys.platform == "win32":
+        with open(descriptor) as captured:
+            return captured
+    return b""
+if sys.platform != "win32":
+    def wait():
+        return None
+def run(process, timed_out):
+    try:
+        code = process.wait()
+        if sys.platform != "win32" and os.name == "posix":
+            wait()
+        captured = read(1, 2)
+    except OSError:
+        pass
+    if timed_out:
+        if sys.platform != "win32" and os.name == "posix":
+            os.killpg(process.pid, 9)
+        elif process.poll() is None:
+            process.kill()
+        code = process.wait()
+    return code
+"""
+    lines, arcs = _windows_only_code(source)
+    assert lines == {6, 7, 23, 24}
+    assert arcs == {(5, 6), (9, 12), (15, 17), (21, 23), (23, 24), (23, 25)}
+
+
+def test_windows_only_derivation_follows_both_sides_of_a_nested_if() -> None:
+    """Both arcs out of an ``if`` inside a Windows-only block are Windows-only."""
+    source = """\
+import sys
+if sys.platform == "win32":
+    if flag:
+        value = 1
+    else:
+        value = 2
+else:
+    value = 3
+done = value
+"""
+    lines, arcs = _windows_only_code(source)
+    assert lines == {3, 4, 6}
+    assert arcs == {(2, 3), (3, 4), (3, 6)}
+
+
+@pytest.mark.parametrize(
+    ("source", "message"),
+    [
+        (
+            'import sys\nif sys.platform == "win32" and flag:\n    pass\n',
+            "unsupported platform test at line 2",
+        ),
+        (
+            'import sys\nif sys.platform == "win32":\n    for item in items:\n        pass\n',
+            "unmodelled",
+        ),
+        ('import sys\nif sys.platform != "win32":\n    pass\n', "no statement follows line 2"),
+    ],
+)
+def test_windows_only_derivation_refuses_what_it_does_not_model(source: str, message: str) -> None:
+    """An unmodelled platform shape fails by name instead of yielding a wrong set.
+
+    Parameters
+    ----------
+    source : str
+        A module with one unmodelled shape.
+    message : str
+        The text the refusal must carry.
+    """
+    with pytest.raises(AssertionError, match=message):
+        _windows_only_code(source)
+
+
+def test_recorder_windows_allowances_follow_the_recorder_source() -> None:
+    """The recorder job's pinned Windows-only numbers move with the source.
+
+    Both Python steps of ``recorder-coverage.yml`` pin coverage numbers: the
+    proof requires Windows to have run one of the Windows-only lines, and the
+    floor allows exactly those lines and branches to stay uncovered. A source
+    edit above them shifts the numbers, which the job only notices after the
+    push. Each pinned set must equal the one derived from the current source.
+    """
+    import yaml
+
+    reusable = yaml.safe_load(
+        (_ROOT / ".github/workflows/recorder-coverage.yml").read_text(encoding="utf-8")
+    )
+    native, table = _recorder_allowances(reusable["jobs"]["recorder-coverage"])
+    derived = {
+        path: _windows_only_code((_ROOT / path).read_text(encoding="utf-8"))
+        for path in _RECORDER_SOURCES
+    }
+    assert set(table) == set(_RECORDER_SOURCES)
+    for path in _RECORDER_SOURCES:
+        assert table[path] == derived[path], (
+            f"{path}: the floor pins {table[path]}, the source derives {derived[path]}"
+        )
+    assert native == derived["tools/facet_receipt_evidence.py"][0], (
+        f"the proof pins {native}, the source derives {derived['tools/facet_receipt_evidence.py'][0]}"
+    )
+
+
+def _imports_a_recorder_tool(path: Path) -> bool:
+    """Report whether a test module imports one of the recorder tools.
+
+    Parameters
+    ----------
+    path : Path
+        A test module.
+
+    Returns
+    -------
+    bool
+        True when an ``import`` anywhere in the module names a recorder module.
+    """
+    text = path.read_text(encoding="utf-8")
+    if "facet_receipt" not in text:
+        return False
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.Import) and any(
+            alias.name in _RECORDER_MODULES for alias in node.names
+        ):
+            return True
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            if node.module in _RECORDER_MODULES:
+                return True
+            if any(f"{node.module}.{alias.name}" in _RECORDER_MODULES for alias in node.names):
+                return True
+    return False
+
+
+@pytest.mark.parametrize(
+    ("text", "imports"),
+    [
+        ("import tools.facet_receipt_evidence\n", True),
+        ("from tools.facet_receipt import run_command\n", True),
+        ("from tools import facet_receipt_runtime\n", True),
+        ("def check():\n    from tools.facet_receipt_evidence import capture_execution\n", True),
+        ("from tools import helper\nfrom . import facet_receipt\n", False),
+        ("NAME = 'tools/facet_receipt.py'\n", False),
+        ("import json\n", False),
+    ],
+)
+def test_recorder_import_reader_names_each_import_form(
+    tmp_path: Path, text: str, imports: bool
+) -> None:
+    """Every import form counts; a path in data or a relative import does not.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Folder for the probed module.
+    text : str
+        The module's text.
+    imports : bool
+        Whether the module imports a recorder tool.
+    """
+    module = tmp_path / "test_probe.py"
+    module.write_text(text, encoding="utf-8")
+    assert _imports_a_recorder_tool(module) is imports
+
+
+def test_every_recorder_importing_test_feeds_the_linux_recorder_data() -> None:
+    """A recorder test outside the primary producer leaves its lines to the floor.
+
+    The recorder floor reads the primary leg's listed tests and the Windows
+    reaping test only. A test module that imports a recorder tool but is not
+    listed covers its lines in the ordinary shards alone; the floor then
+    refuses those lines as uncovered portable statements after the push.
+    """
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    producer = [
+        step
+        for step in workflow["jobs"]["test"]["steps"]
+        if step.get("name") == "Recorder execution and publication branch coverage"
+    ]
+    assert len(producer) == 1
+    listed = set(re.findall(r"\btests/\S+\.py\b", producer[0]["run"]))
+    importing = {
+        path.relative_to(_ROOT).as_posix()
+        for path in (_ROOT / "tests").rglob("test_*.py")
+        if _imports_a_recorder_tool(path)
+    }
+    assert "tests/test_facet_receipt_process.py" in importing
+    assert importing <= listed, (
+        f"recorder tests the producer does not run: {sorted(importing - listed)}"
+    )
 
 
 @pytest.mark.parametrize("result", ["success", "failure", "cancelled", "skipped"])
