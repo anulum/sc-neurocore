@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Rust documentation ratchet refuses an original-image folder named
+  through a link instead of following it, and reads the folder's owner and
+  mode from the folder it has opened. The folder it checks is therefore the
+  folder it locks and uses: no link or other folder can take its place
+  between the check and the use.
+
 - Tab and Shift+Tab now leave the ODE equation editor, as they do
   everywhere else in the Studio. The editor kept them, together with Escape
   then Tab, and only its own Ctrl+M toggle let a keyboard reader out, which

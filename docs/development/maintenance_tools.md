@@ -310,8 +310,11 @@ The sources are then extracted afresh, so the override must name a folder of
 its own. A non-empty folder without the marker is refused and left whole. The
 folder is created for the current account alone (mode 0700). A link, a folder
 of another account and one that group or others can write are refused. The
-build outputs persist, so the original's dependencies, Z3 from C++ source
-among them, are built once and not on every run; a cold build could outlast
+folder is opened without following a link, and its owner and mode are read from
+that open folder, so the folder checked is the folder locked and used; an
+override that names a link is refused, not followed. The build outputs persist,
+so the original's dependencies, Z3 from C++ source among them, are built once
+and not on every run; a cold build could outlast
 the measurement's own timeout. The folder can hold several gigabytes. It may
 be deleted when no run holds it, and the next run is then cold again. A run
 holds an exclusive lock on the folder; a second run says on stderr that it

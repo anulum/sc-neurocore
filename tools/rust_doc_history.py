@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+import errno
 import hashlib
 import io
 import json
@@ -70,19 +71,24 @@ def original_image_directory(root: Path) -> Path:
     Returns
     -------
     Path
-        The folder named by ``SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR``, else
-        ``sc-neurocore-rust-doc-original`` in the temporary directory.
+        The folder named by ``SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR``, made
+        absolute without following a link, else
+        ``sc-neurocore-rust-doc-original`` in the temporary directory. A link
+        is returned as the link, so that opening it refuses it instead of
+        following it to a folder the check never saw.
 
     Raises
     ------
     RustMeasurementError
-        If the override names a folder inside the repository.
+        If the override names a folder inside the repository, directly or
+        through a link.
     """
     named = os.environ.get(ORIGINAL_IMAGE_ENV)
     if not named:
         return Path(tempfile.gettempdir()) / ORIGINAL_IMAGE_DIR
-    folder = Path(named).resolve()
-    if folder.is_relative_to(root.resolve()):
+    folder = Path(os.path.abspath(named))
+    checkout = root.resolve()
+    if folder.is_relative_to(checkout) or folder.resolve().is_relative_to(checkout):
         raise RustMeasurementError(
             f"{ORIGINAL_IMAGE_ENV} names {folder}, inside the measured checkout; "
             "the original revision is measured in a folder outside it."
@@ -90,33 +96,69 @@ def original_image_directory(root: Path) -> Path:
     return folder
 
 
-def _private_folder(image: Path) -> None:
-    """Create the image folder for this account alone, and refuse one another account could alter."""
+def _private_folder(image: Path) -> int | None:
+    """Create the image folder for this account alone, and refuse one another account could alter.
+
+    On POSIX the folder is opened without following a link, and its owner and
+    mode are read from that descriptor. The folder that passes the checks is
+    therefore the one the caller locks and uses: no link or other folder can
+    take its place between a check by path and an open by path. Elsewhere the
+    folder is read with ``lstat`` and no owner is checked.
+
+    Parameters
+    ----------
+    image : Path
+        The image folder, created with mode 0700 when absent.
+
+    Returns
+    -------
+    int | None
+        On POSIX, the open descriptor of the checked folder, which the caller
+        closes; elsewhere ``None``.
+
+    Raises
+    ------
+    RustMeasurementError
+        If the folder is a link or not a directory, or, on POSIX, if another
+        account owns it or group or others can write it.
+    """
     image.parent.mkdir(parents=True, exist_ok=True)
     try:
         image.mkdir(mode=0o700)
     except FileExistsError:
         pass
-    status = os.lstat(image)
-    if stat.S_ISLNK(status.st_mode) or not stat.S_ISDIR(status.st_mode):
-        raise RustMeasurementError(f"The original source image folder {image} is not a directory.")
-    if _LOCKED and (status.st_uid != os.getuid() or status.st_mode & (stat.S_IWGRP | stat.S_IWOTH)):
+    not_a_directory = f"The original source image folder {image} is not a directory."
+    if not _LOCKED:
+        status = os.lstat(image)
+        if stat.S_ISLNK(status.st_mode) or not stat.S_ISDIR(status.st_mode):
+            raise RustMeasurementError(not_a_directory)
+        return None
+    try:
+        descriptor = os.open(image, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except OSError as error:
+        # ELOOP: the last component is a link; ENOTDIR: it is not a folder.
+        if error.errno in (errno.ELOOP, errno.ENOTDIR):
+            raise RustMeasurementError(not_a_directory) from error
+        raise
+    status = os.fstat(descriptor)
+    if status.st_uid != os.getuid() or status.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+        os.close(descriptor)
         raise RustMeasurementError(
             f"The original source image folder {image} must belong to this account and be "
             "writable by it alone; it is not used."
         )
+    return descriptor
 
 
 @contextmanager
 def _exclusive(image: Path) -> Iterator[None]:
     """Hold the image for one measurement; a concurrent run says so and waits for its turn."""
-    _private_folder(image)
-    if not _LOCKED:
+    descriptor = _private_folder(image)
+    if descriptor is None:
         yield
         return
     import fcntl
 
-    descriptor = os.open(image, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         try:
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)

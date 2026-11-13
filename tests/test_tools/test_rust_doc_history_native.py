@@ -16,6 +16,7 @@ from io import StringIO
 import os
 from pathlib import Path
 import runpy
+import stat
 import subprocess
 import sys
 import tempfile
@@ -810,6 +811,110 @@ def test_a_linked_or_non_directory_folder_is_refused(tmp_path: Path) -> None:
             pass
 
 
+def test_a_linked_override_is_refused_not_followed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An override that is a link names the link; the link is refused when it is opened.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Names the link as the override.
+    tmp_path : Path
+        Holds the checkout, the real folder and the link.
+    """
+    root = tmp_path / "checkout"
+    root.mkdir()
+    (tmp_path / "real").mkdir(mode=0o700)
+    linked = tmp_path / "linked"
+    linked.symlink_to(tmp_path / "real")
+    monkeypatch.setenv(rust_doc_history.ORIGINAL_IMAGE_ENV, str(linked))
+    image = rust_doc_history.original_image_directory(root)
+    assert image == linked
+    with (
+        pytest.raises(RustMeasurementError, match="is not a directory"),
+        rust_doc_history._exclusive(image),
+    ):
+        pass
+    assert list((tmp_path / "real").iterdir()) == []
+
+
+def test_a_linked_override_into_the_checkout_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A link outside the checkout that points inside it is refused like a folder inside it.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Names the link as the override.
+    tmp_path : Path
+        Holds the checkout and the link.
+    """
+    root = tmp_path / "checkout"
+    (root / "target").mkdir(parents=True)
+    linked = tmp_path / "linked"
+    linked.symlink_to(root / "target")
+    monkeypatch.setenv(rust_doc_history.ORIGINAL_IMAGE_ENV, str(linked))
+    with pytest.raises(RustMeasurementError, match="inside the measured checkout"):
+        rust_doc_history.original_image_directory(root)
+
+
+def test_the_owner_and_mode_are_read_from_the_opened_folder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The checks read the folder through the descriptor that is locked, not through its path.
+
+    A check by path and an open by path leave a window in which the folder
+    could be swapped. Here the opened folder reports another owner while its
+    path still looks like this account's, so only a check on the descriptor
+    refuses it.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Makes the opened folder report another owner.
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    image.mkdir(mode=0o700)
+    inode = image.stat().st_ino
+    real_fstat = os.fstat
+
+    def foreign(descriptor: int) -> os.stat_result:
+        status = real_fstat(descriptor)
+        if status.st_ino != inode:
+            return status
+        values = list(status)
+        values[stat.ST_UID] = status.st_uid + 1
+        return os.stat_result(values)
+
+    monkeypatch.setattr(os, "fstat", foreign)
+    with (
+        pytest.raises(RustMeasurementError, match="must belong to this account"),
+        rust_doc_history._exclusive(image),
+    ):
+        pass
+
+
+def test_a_folder_that_cannot_be_opened_keeps_its_own_error(tmp_path: Path) -> None:
+    """Only a link or a non-directory is reported as such; any other refusal to open is raised as it is.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the image.
+    """
+    image = tmp_path / "image"
+    image.mkdir(mode=0o000)
+    try:
+        with pytest.raises(PermissionError), rust_doc_history._exclusive(image):
+            pass
+    finally:
+        image.chmod(0o700)
+
+
 def test_a_folder_of_another_account_is_refused(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -912,3 +1017,29 @@ def test_without_posix_locks_the_image_is_used_unlocked(
     with rust_doc_history._exclusive(image):
         assert (tmp_path / "a").is_dir() and image.is_dir()
     assert not list((tmp_path / "a").glob("*.lock"))
+
+
+def test_without_posix_locks_a_link_or_file_is_still_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Without descriptors to check, the folder is read with ``lstat``, which still refuses a link or a file.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Turns the POSIX lock off.
+    tmp_path : Path
+        Holds the link and the file.
+    """
+    monkeypatch.setattr(rust_doc_history, "_LOCKED", False)
+    (tmp_path / "real").mkdir()
+    linked = tmp_path / "linked"
+    linked.symlink_to(tmp_path / "real")
+    plain = tmp_path / "plain"
+    plain.write_text("not a folder")
+    for image in (linked, plain):
+        with (
+            pytest.raises(RustMeasurementError, match="is not a directory"),
+            rust_doc_history._exclusive(image),
+        ):
+            pass
