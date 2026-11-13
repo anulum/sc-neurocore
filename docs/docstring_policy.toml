@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1940
+expected_file_count = 1941
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7806,6 +7806,10 @@ rationale = "Eight AI-optimised neuron models, each documented as its step compu
 [[file]]
 path = "tests/test_tools/test_ci_frontend_coverage_ledger_contract.py"
 rationale = "Bind the frontend coverage ledger into the hosted frontend job: the checker after Vitest, the kept summary, the package script's order, the Vitest summary path and the committed, sorted, licensed ledger."
+
+[[file]]
+path = "tests/test_tools/test_ci_frontend_lint_contract.py"
+rationale = "Bind the frontend lint into the hosted frontend job between the install and the tests, keep the package script refusing warnings, and hold the job and the local preflight to one lint command."
 
 [[file]]
 path = "tests/test_tools/test_hdl_toolchain_published_sdk_contract.py"

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "test": "vitest run && npm run test:build && npm run test:render-timing-report",
     "test:compiler-coverage": "vitest run --config vitest.compiler.config.ts",
     "test:e2e": "playwright test && npm run test:federation",

@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The hosted CI lints the Studio frontend. The frontend job runs
+  `npm run lint` after installing and before the tests; until now only the
+  local preflight ran it, so a lint regression pushed without the hook
+  reached main unseen. The script also fails on a warning now
+  (`--max-warnings=0`): an `eslint-disable` comment that no longer
+  suppresses anything is a warning, and it used to pass. The whole package
+  passes today. A contract test holds the job's step, the script and the
+  preflight's lint to one command.
+
 - Thirteen Studio components that had no test of their own now have one:
   the admin panel and its audit-archive section, the capability strip, the
   cohort panel, the model comparison, the custom-equation editor, the model
@@ -32,8 +41,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `make install-hooks` installs never ran, and pushes went out without the
   preflight. It passed `--all-gates`, which runs every gate whatever was
   touched, including the lints of the whole Rust workspace; the default runs
-  only the gates of what the push touches. The hosted CI runs every gate and
-  the whole suite on every push.
+  only the gates of what the push touches. The hosted CI runs the whole
+  suite on every push.
   A test now pushes through the stored hook and checks that the preflight
   runs and that a failing preflight stops the push.
 

@@ -215,6 +215,13 @@ jobs:
         working-directory: studio/frontend
         run: npm ci
 
+      # The whole package at strictTypeChecked, stylisticTypeChecked and the
+      # jsdoc error preset; a warning fails it too. Before this step only the
+      # local preflight ran it, so a lint regression could reach main.
+      - name: Frontend lint
+        working-directory: studio/frontend
+        run: npm run lint
+
       - name: Vitest
         working-directory: studio/frontend
         run: npm test
