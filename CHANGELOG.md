@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The dependency-lock audit retries a transient OSV failure instead of
+  failing on one slow answer. A transport failure (such as a timeout or a
+  reset connection) or HTTP 429, 500, 502, 503 or 504 is retried after 2 and
+  then 6 seconds, three attempts in all. A failed certificate check and any
+  other status, such as a 400 refusal, are final at once. Each page's receipt
+  lists every retried attempt with its exception types or its status and body
+  digest, and each retried body is kept beside the final one. Exception text
+  and headers are still not kept.
+
 - The Studio marks on the browser's performance timeline when it draws a
   catalogue, a trace, a chosen view, a network and a training epoch, and when
   an epoch arrives from its stream; the marks change nothing on screen. A

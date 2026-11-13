@@ -10,16 +10,30 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+import ssl
+import time
+from typing import Any, Protocol
 import urllib.error
 import urllib.request
 
 OSV_ENDPOINT = "https://api.osv.dev/v1/querybatch"
 OSV_RESPONSE_LIMIT = 16 * 1024 * 1024
 OSV_PAGE_LIMIT = 100
+OSV_TIMEOUT_SECONDS = 30
+OSV_ATTEMPTS = 3
+OSV_RETRY_DELAYS = (2.0, 6.0)
+OSV_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+
+
+class OsvOpener(Protocol):
+    """Send one prepared OSV request; `urllib.request.urlopen` is the default."""
+
+    def __call__(self, request: urllib.request.Request, /, *, timeout: float) -> Any:
+        """Return the response, or raise `HTTPError` or another `OSError`."""
 
 
 def osv_page_outcome(
@@ -83,7 +97,116 @@ def osv_page_outcome(
     return findings, following
 
 
-def audit_osv_queries(queries: tuple[dict[str, Any], ...], output_dir: Path) -> dict[str, Any]:
+def send_osv_page(
+    request_bytes: bytes,
+    number: int,
+    output_dir: Path,
+    opener: OsvOpener = urllib.request.urlopen,
+    sleep: Callable[[float], None] = time.sleep,
+) -> tuple[int | None, bytes]:
+    """Send one OSV page, retrying a transient failure a bounded number of times.
+
+    Parameters
+    ----------
+    request_bytes : bytes
+        The page's JSON request body, already written as `request-<number>.json`.
+    number : int
+        One-based number of this page within the audit.
+    output_dir : Path
+        Directory that receives the page's response, receipt and failed attempts.
+    opener : OsvOpener
+        Sends the request; tests pass a proxied or recording opener.
+    sleep : callable
+        Waits before the next attempt.
+
+    Returns
+    -------
+    tuple
+        The final HTTP status and the response body read with one detection byte.
+
+    Raises
+    ------
+    OSError
+        Every one of the `OSV_ATTEMPTS` attempts failed in transport, or the
+        server's certificate failed verification; the receipt keeps each
+        failure's exception types, never its text or headers.
+
+    Notes
+    -----
+    A transport failure, or HTTP 429, 500, 502, 503 or 504, is retried after
+    `OSV_RETRY_DELAYS`. A failed certificate check and any other status, such
+    as a 400 refusal, are final at once. Each retried HTTP body is kept as
+    `response-<number>-attempt-<k>.json`, and the receipt lists every retried
+    attempt in order.
+    """
+    receipt: dict[str, Any] = {
+        "endpoint": OSV_ENDPOINT,
+        "request_sha256": hashlib.sha256(request_bytes).hexdigest(),
+        "http_status": None,
+        "retried_attempts": [],
+    }
+    receipt_path = output_dir / f"response-{number}-receipt.json"
+    attempt = 0
+    while True:
+        attempt += 1
+        request = urllib.request.Request(
+            OSV_ENDPOINT,
+            data=request_bytes,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        status: int | None = None
+        try:
+            try:
+                response = opener(request, timeout=OSV_TIMEOUT_SECONDS)
+            except urllib.error.HTTPError as error:
+                response = error
+            with response:
+                status = response.status
+                raw = response.read(OSV_RESPONSE_LIMIT + 1)
+        except OSError as error:
+            # Only URLError wraps the underlying failure; an ssl.SSLError's own
+            # `reason` attribute is a text code, not an exception.
+            reason = error.reason if isinstance(error, urllib.error.URLError) else error
+            failure = {
+                "http_status": status,
+                "error_type": type(error).__name__,
+                "reason_type": type(reason).__name__,
+            }
+            # A failed certificate check is not transient: it is final at once.
+            if attempt < OSV_ATTEMPTS and not isinstance(reason, ssl.SSLCertVerificationError):
+                receipt["retried_attempts"].append(failure)
+                sleep(OSV_RETRY_DELAYS[attempt - 1])
+                continue
+            receipt.update(failure)
+            receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+            raise
+        if status in OSV_RETRY_STATUSES and attempt < OSV_ATTEMPTS:
+            (output_dir / f"response-{number}-attempt-{attempt}.json").write_bytes(raw)
+            receipt["retried_attempts"].append(
+                {
+                    "http_status": status,
+                    "response_bytes": len(raw),
+                    "response_sha256": hashlib.sha256(raw).hexdigest(),
+                }
+            )
+            sleep(OSV_RETRY_DELAYS[attempt - 1])
+            continue
+        break
+    receipt["http_status"] = status
+    (output_dir / f"response-{number}.json").write_bytes(raw)
+    receipt["response_bytes"] = len(raw)
+    receipt["response_sha256"] = hashlib.sha256(raw).hexdigest()
+    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    return status, raw
+
+
+def audit_osv_queries(
+    queries: tuple[dict[str, Any], ...],
+    output_dir: Path,
+    opener: OsvOpener = urllib.request.urlopen,
+    sleep: Callable[[float], None] = time.sleep,
+) -> dict[str, Any]:
     """Query every exact identity and retain all OSV response pages.
 
     Parameters
@@ -92,6 +215,10 @@ def audit_osv_queries(queries: tuple[dict[str, Any], ...], output_dir: Path) -> 
         OSV package/version identities extracted from a committed manifest.
     output_dir : Path
         Fresh directory for requests, raw response bytes and transport receipts.
+    opener : OsvOpener
+        Sends each request; see `send_osv_page`.
+    sleep : callable
+        Waits between the attempts `send_osv_page` retries.
 
     Returns
     -------
@@ -108,6 +235,8 @@ def audit_osv_queries(queries: tuple[dict[str, Any], ...], output_dir: Path) -> 
     -----
     HTTP refusals retain their status and bounded response body. Transport
     failures retain exception types without exception text or response headers.
+    A transient failure is retried within `send_osv_page`'s bound, and every
+    retried attempt stays in the page's receipt.
     """
     if not queries:
         raise ValueError("An OSV audit requires exact package identities.")
@@ -120,38 +249,8 @@ def audit_osv_queries(queries: tuple[dict[str, Any], ...], output_dir: Path) -> 
         number = len(pages) + 1
         request_bytes = json.dumps({"queries": [query for _, query in pending]}).encode("utf-8")
         (output_dir / f"request-{number}.json").write_bytes(request_bytes)
-        request = urllib.request.Request(
-            OSV_ENDPOINT,
-            data=request_bytes,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        receipt: dict[str, str | int | None] = {
-            "endpoint": OSV_ENDPOINT,
-            "request_sha256": hashlib.sha256(request_bytes).hexdigest(),
-            "http_status": None,
-        }
-        receipt_path = output_dir / f"response-{number}-receipt.json"
-        try:
-            try:
-                response = urllib.request.urlopen(  # nosec B310 - fixed https OSV_ENDPOINT
-                    request, timeout=30
-                )
-            except urllib.error.HTTPError as error:
-                response = error
-            with response:
-                receipt["http_status"] = response.status
-                raw = response.read(OSV_RESPONSE_LIMIT + 1)
-        except OSError as error:
-            receipt["error_type"] = type(error).__name__
-            receipt["reason_type"] = type(getattr(error, "reason", error)).__name__
-            receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-            raise
-        (output_dir / f"response-{number}.json").write_bytes(raw)
-        receipt["response_bytes"] = len(raw)
-        receipt["response_sha256"] = hashlib.sha256(raw).hexdigest()
-        receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-        if receipt["http_status"] != 200:
+        status, raw = send_osv_page(request_bytes, number, output_dir, opener, sleep)
+        if status != 200:
             raise ValueError("OSV query did not return HTTP 200.")
         findings, pending = osv_page_outcome(number, raw, pending, seen)
         for index, finding in findings:
