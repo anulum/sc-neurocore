@@ -7777,7 +7777,7 @@ rationale = "Record which backend lane a model's last complete run executed and 
 
 [[file]]
 path = "src/sc_neurocore/accel/lapicque.py"
-rationale = "Load and run the Lapicque lanes, name the native libraries a loaded lane runs and answer which lanes can run here; enrolled because part A4 changes it."
+rationale = "Load and run the Lapicque lanes, name the native libraries a loaded lane runs and answer which lanes can run here."
 
 [[file]]
 path = "tests/test_lane_evidence.py"

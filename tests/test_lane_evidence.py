@@ -458,7 +458,7 @@ def test_the_fixture_writes_the_lane_and_the_library_digest(inner_report: tuple[
 def test_the_report_names_the_lane_that_ran_not_the_one_asked_for(
     inner_report: tuple[str, str],
 ) -> None:
-    """A model that falls back to the floor is reported on the floor (decision A-D9)."""
+    """A model that falls back to the floor is reported on the floor, the lane that actually ran."""
     xml, _output = inner_report
     cases, _problems = junit_lane_evidence(xml)
     assert CaseLane("test_inner.test_fallback", "python", ()) in cases
