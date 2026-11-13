@@ -188,7 +188,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
-| Python test files | 5655 |
+| Python test files | 5656 |
 | Public documentation pages | 673 |
 | GitHub Actions workflows | 27 |
 
@@ -368,7 +368,7 @@ runtime dependency. Source-only extended modules such as `analysis`, `viz`,
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + tests)
+make preflight             # verify setup (the gates for what you changed)
 ```
 
 If you are changing the Rust bridge locally, install `bridge/` in the same

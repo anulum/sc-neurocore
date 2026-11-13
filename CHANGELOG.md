@@ -12,6 +12,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- `tools/preflight.py` checks what a change touched and runs no whole test
+  suite by default. Each gate declares the kinds of file it guards; a gate the
+  change does not touch prints `not applicable to this change: <gate>` and
+  does not run. The capability manifest, SPDX header and benchmark evidence
+  gates always run, and every gate runs when the touched files cannot be
+  determined or the tool itself changed. A new `frontend` gate runs, for a
+  change under `studio/frontend/`, the frontend's lint, its type check and the
+  Vitest tests related to the touched files, and fails when `npm` or `npx` is
+  missing. `--all-gates` runs every gate whatever was touched, and the push
+  hook passes it, so a push is checked as before; `--full-suite` adds the
+  whole pytest suite (`make preflight-full`); `--no-tests` stays accepted as
+  the default. `sc-neurocore preflight` keeps running every gate and the whole
+  suite.
+
 - The `LapicqueNeuron` descriptor and the `lapicque` schema profile (TOML and
   JSON) use British spelling in their descriptive values: the units
   (`normalised polarisation`, `normalised capacitance`, `normalised

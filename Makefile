@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast install-hooks docker-build docker-run
+.PHONY: test lint fmt docs bench clean build bridge preflight preflight-fast preflight-full bandit sast install-hooks docker-build docker-run
 
 test:
 	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=100
@@ -32,6 +32,9 @@ preflight:
 
 preflight-fast:
 	python tools/preflight.py --no-tests
+
+preflight-full:
+	python tools/preflight.py --full-suite --all-gates
 
 docs:
 	mkdocs serve

@@ -30,8 +30,14 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 
 ## Preflight Gate
 
-Every push is guarded by `tools/preflight.py`, which runs the same checks as CI. The push base is the
-merge base of `HEAD` with the branch it pushes to (`origin/main` when no upstream is set). Among its gates:
+Every push is guarded by `tools/preflight.py`. The push hook runs every gate (`--all-gates`) and no test
+suite; the hosted CI runs the whole suite on every push. Run by hand, the command runs the gates that guard
+the files your change touched: each gate declares its kinds of file, and a gate the change does not touch
+prints `not applicable to this change: <gate>` and does not run. The capability manifest, SPDX header and
+benchmark evidence gates always run, and every gate runs when the touched files cannot be determined or
+`tools/preflight.py` itself changed. The whole test suite runs only with `--full-suite`. The touched files
+and the push base are both read against the merge base of `HEAD` with the branch it pushes to
+(`origin/main` when no upstream is set). Among its gates:
 
 | Gate | What it checks |
 |------|----------------|
@@ -39,16 +45,19 @@ merge base of `HEAD` with the branch it pushes to (`origin/main` when no upstrea
 | **ruff check** | Code quality and import hygiene |
 | **bandit** | Security static analysis |
 | **spdx-guard** | SPDX license headers on all source files |
-| **pytest** | 3 376+ tests with 100% coverage gate |
+| **frontend** | For a change under `studio/frontend/`: `npm run lint`, `npx tsc -b`, then `npx vitest related --run` over the touched files; fails when `npm` or `npx` is missing |
+| **pytest** | The whole suite with the coverage floor, only with `--full-suite` (`make preflight-full`); the current test count is in the generated [capability snapshot](docs/_generated/capability_snapshot.md) |
 | **docstring-scope-range** | Every Python file changed since the push base is enrolled in the docstring policy, as the hosted push check requires |
 | **pre-commit-range** | The pre-commit hooks over the files changed since the push base, or over all files when a hook configuration changed; the hooks that compare with a baseline, such as the Go and Rust documentation ratchets, compare with the push base. Both range gates refuse a checkout with uncommitted or untracked changes, because the hooks read the working tree and a push sends only commits |
 
 ```bash
-make preflight          # full gate (lint + tests)
-make preflight-fast     # lint-only (~5s)
+make preflight          # the gates that guard what the change touched; no test suite
+make preflight-full     # every gate and the whole test suite
+make preflight-fast     # the same as make preflight (kept for existing habits)
 ```
 
-The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `git push`. Install it with `make install-hooks`.
+The `.githooks/pre-push` hook runs `python tools/preflight.py --all-gates` before every `git push`: every
+gate, no test suite. Install it with `make install-hooks`.
 
 ## Development Guidelines
 
@@ -325,7 +334,7 @@ docs(readme): update benchmark table for v3.8
 
 ## Submitting a Pull Request
 
-1. Run `make preflight` — all gates must pass
+1. Run `make preflight` — every gate it runs must pass
 2. Add a changelog entry if the change is user-visible
 3. Ensure SPDX headers are present on new files
 4. Open a PR against `main` with a clear description
@@ -342,8 +351,9 @@ docs(readme): update benchmark table for v3.8
 | `make fmt` | Auto-format Python + Rust |
 | `make bandit` | Security static analysis |
 | `make sast` | Alias for bandit |
-| `make preflight` | Full CI-equivalent gate |
-| `make preflight-fast` | Lint-only (~5s) |
+| `make preflight` | The gates that guard what the change touched; no test suite |
+| `make preflight-full` | Every gate and the whole test suite |
+| `make preflight-fast` | The same as `make preflight` |
 | `make install-hooks` | Install git pre-push hook |
 | `make bench` | Python benchmarks |
 | `make bench-rust` | Rust Criterion benchmarks |

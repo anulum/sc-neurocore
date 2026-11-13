@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1934
+expected_file_count = 1936
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7790,3 +7790,11 @@ rationale = "Write a model's last lane run into the running test's JUnit report 
 [[file]]
 path = "tests/test_backend_lane_receipts.py"
 rationale = "Bind what the receipt of a backend lane must show of its run: each case on the facet's lane, the artefacts exactly the reported libraries, the claim scope the descriptor's word of today, freshness carried by the sources, and real recordings of the reference and Rust lanes with the toolchain read in the lane's build folder."
+
+[[file]]
+path = "tests/test_tools/test_preflight_gate_selection.py"
+rationale = "Bind which preflight gates a change selects, observed through recording stand-ins on real Git repositories: the frontend gate's lint, type check and related tests, gates that know what they guard, every gate when the change is unknown, and no whole test suite without --full-suite."
+
+[[file]]
+path = "tests/test_cli_maintenance.py"
+rationale = "Bind the maintenance commands' delegation: the benchmark suite in one child process, and the preflight with every gate and the whole test suite, as that command always ran."

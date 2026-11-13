@@ -7837,7 +7837,7 @@ int
     Child process exit status.
 
 ### Function `run_preflight(args)`
-Run the repository preflight script in a child interpreter.
+Run the repository preflight script in a child interpreter, every gate and the suite.
 
 Parameters
 ----------

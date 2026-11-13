@@ -422,7 +422,10 @@ sc-neurocore preflight
 ```
 
 These commands delegate to the repository benchmark and preflight tools and
-return their subprocess status unchanged.
+return their subprocess status unchanged. `sc-neurocore preflight` runs
+`tools/preflight.py --full-suite --all-gates`: every gate and the whole test
+suite, as it always has. For the gates that guard what a change touched, and no
+test suite, run `make preflight` (see the contributor guide).
 
 ## Package architecture
 

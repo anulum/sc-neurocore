@@ -34,8 +34,11 @@ def add_maintenance_commands(
 
     preflight = subparsers.add_parser(
         "preflight",
-        help="Run the repository preflight gate",
-        description="Delegate to tools/preflight.py from a source checkout.",
+        help="Run the repository preflight gate with the whole test suite",
+        description=(
+            "Delegate to tools/preflight.py --full-suite --all-gates from a source checkout: "
+            "every gate and the whole test suite, as this command always ran."
+        ),
     )
     preflight.set_defaults(handler=run_preflight)
 
@@ -61,7 +64,7 @@ def run_benchmark(args: argparse.Namespace) -> int:
 
 
 def run_preflight(args: argparse.Namespace) -> int:
-    """Run the repository preflight script in a child interpreter.
+    """Run the repository preflight script in a child interpreter, every gate and the suite.
 
     Parameters
     ----------
@@ -75,6 +78,6 @@ def run_preflight(args: argparse.Namespace) -> int:
     """
     del args
     return subprocess.run(
-        [sys.executable, "tools/preflight.py"],
+        [sys.executable, "tools/preflight.py", "--full-suite", "--all-gates"],
         check=False,
     ).returncode
