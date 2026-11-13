@@ -9,6 +9,8 @@
 
 # SC-NeuroCore
 
+> This repository is a public mirror of ANULUM's canonical source; development history predating publication is held privately.
+
 <p align="center">
   <img src="docs/assets/sc_neurocore_header.png" width="1280" alt="SC-NeuroCore — Stochastic Computing & Neuromorphic Engine">
 </p>

@@ -12,6 +12,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The README states at its top that this repository is a public mirror of
+  ANULUM's canonical source, with the development history before publication
+  held privately.
+
 - The Studio frontend has a coverage ledger:
   `studio/frontend/coverage-ledger.json` records the statement and branch
   coverage of every source file under `src`, and `npm run
