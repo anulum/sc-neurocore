@@ -461,6 +461,8 @@ def _record(
         recorded_at="2026-11-12T17:00:00Z",
         timeout=300,
     )
+    # The recorder is loaded from its file, so its return type is not seen by the type checker.
+    assert isinstance(receipt, FacetReceipt)
     return receipt
 
 
