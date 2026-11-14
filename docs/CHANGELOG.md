@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The SC four-state GLIF neuron states six behaviour cases, the event
+  counts its Q16.16 test enrols for the hand model, the schema and the
+  RTL: silent at rest and at a current of 15, then 23, 54, 86 and 95
+  events in 1000 steps at currents 22, 30, 45 and 50. Its public class
+  holds them, and each of the 15 sign variants of its four equations
+  breaks one. Eight of the 185 catalogue models now state cases.
+
 - The written C ABI headers of three Go adapters, adaptive_threshold_if,
   alpha and resonate_and_fire, are now named abi.h in their packages, as
   conversion/cshared's already was. A c-shared build writes cgo's own

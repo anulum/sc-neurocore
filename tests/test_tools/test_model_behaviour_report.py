@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 178
+MODELS_WITHOUT_A_CASE = 177
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -70,6 +70,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
     "IntegerQIFNeuron": [[26, 26]],
+    "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
     "SCSymmetricQuadraticIFNeuron": [
         [0, 0],
@@ -786,6 +787,30 @@ def test_the_integer_qif_model_holds_its_enrolled_count(report: dict[str, object
     assert [type(case["inputs"]["current"]) for case in cases] == [int]
     assert [case["steps"] for case in cases] == [400]
     assert [(case["held"], case["exercised"]) for case in cases] == [(True, True)]
+
+
+def test_the_four_state_glif_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:
+    """Silent at rest and below threshold, then 23, 54, 86 and 95 events in 1000 steps.
+
+    The counts are those the model's Q16.16 test enrols for the hand model, the
+    schema and the RTL alike, at currents 0, 15, 22, 30, 45 and 50.
+    """
+    row = _models(report)["SCFourStateGLIFNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 0, 23, 54, 86, 95]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": 15.0},
+        {"current": 22.0},
+        {"current": 30.0},
+        {"current": 45.0},
+        {"current": 50.0},
+    ]
+    assert {case["steps"] for case in cases} == {1000}
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, False, True, True, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

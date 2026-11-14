@@ -210,3 +210,81 @@ cosim_evidence = "tests/test_cosim_glif_q1616_precision.py"
 target_device = "Xilinx 7-series (Yosys synth_xilinx)"
 target_tier = "H2"
 terminal_reason = "Bounded Q16.16 co-simulation, synthesis, and formal safety only; timing, PPA, board, device, and silicon evidence remain open."
+
+[[behaviour]]
+name = "without a current the model stays silent for 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 15.0 stays below threshold for 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 15.0
+
+[[behaviour]]
+name = "a current of 22.0 fires 23 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    23,
+    23,
+]
+
+[behaviour.inputs]
+current = 22.0
+
+[[behaviour]]
+name = "a current of 30.0 fires 54 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    54,
+    54,
+]
+
+[behaviour.inputs]
+current = 30.0
+
+[[behaviour]]
+name = "a current of 45.0 fires 86 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    86,
+    86,
+]
+
+[behaviour.inputs]
+current = 45.0
+
+[[behaviour]]
+name = "a current of 50.0 fires 95 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    95,
+    95,
+]
+
+[behaviour.inputs]
+current = 50.0

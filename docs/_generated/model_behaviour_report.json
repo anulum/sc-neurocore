@@ -1118,10 +1118,107 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the model stays silent for 1000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 15.0
+          },
+          "kind": "interval",
+          "name": "a current of 15.0 stays below threshold for 1000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            23,
+            23
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 22.0
+          },
+          "kind": "interval",
+          "name": "a current of 22.0 fires 23 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 23,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            54,
+            54
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 30.0
+          },
+          "kind": "interval",
+          "name": "a current of 30.0 fires 54 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 54,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            86,
+            86
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 45.0
+          },
+          "kind": "interval",
+          "name": "a current of 45.0 fires 86 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 86,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            95,
+            95
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 50.0
+          },
+          "kind": "interval",
+          "name": "a current of 50.0 fires 95 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 95,
+          "steps": 1000
+        }
+      ],
+      "cases_sha256": "793db68bd3d9da91607981624756f2dd874f2e3813bfd3f897324d3f79cd4a05",
       "model": "SCFourStateGLIFNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -1697,9 +1794,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 7,
+    "held": 8,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 178
+    "no_case": 177
   }
 }

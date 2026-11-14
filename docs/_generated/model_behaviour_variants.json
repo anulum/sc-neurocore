@@ -348,6 +348,179 @@
       ]
     },
     {
+      "model": "SCFourStateGLIFNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "without a current the model stays silent for 1000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 15.0 stays below threshold for 1000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 22.0 fires 23 times in 1000 steps",
+          "observed": 23
+        },
+        {
+          "held": true,
+          "name": "a current of 30.0 fires 54 times in 1000 steps",
+          "observed": 54
+        },
+        {
+          "held": true,
+          "name": "a current of 45.0 fires 86 times in 1000 steps",
+          "observed": 86
+        },
+        {
+          "held": true,
+          "name": "a current of 50.0 fires 95 times in 1000 steps",
+          "observed": 95
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 15.0 stays below threshold for 1000 steps",
+          "equation": "v",
+          "expression": "(--(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m",
+          "observed": 100,
+          "outcome": "violated",
+          "term": "+ -(v - v_rest)",
+          "within": "-(v - v_rest) + resistance * I + i_asc1 + i_asc2"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(v - v_rest) - resistance * I + i_asc1 + i_asc2) / tau_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ resistance * I",
+          "within": "-(v - v_rest) + resistance * I + i_asc1 + i_asc2"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(v - v_rest) + resistance * I - i_asc1 + i_asc2) / tau_m",
+          "observed": 22,
+          "outcome": "violated",
+          "term": "+ i_asc1",
+          "within": "-(v - v_rest) + resistance * I + i_asc1 + i_asc2"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(v - v_rest) + resistance * I + i_asc1 - i_asc2) / tau_m",
+          "observed": 10,
+          "outcome": "violated",
+          "term": "+ i_asc2",
+          "within": "-(v - v_rest) + resistance * I + i_asc1 + i_asc2"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(-v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "without a current the model stays silent for 1000 steps",
+          "equation": "v",
+          "expression": "(-(v + v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m",
+          "observed": 207,
+          "outcome": "violated",
+          "term": "- v_rest",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "v",
+          "expression": "-((-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "theta",
+          "expression": "(-theta_inf - theta + a_theta * (v - v_rest)) / tau_theta",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ theta_inf",
+          "within": "theta_inf - theta + a_theta * (v - v_rest)"
+        },
+        {
+          "case": "without a current the model stays silent for 1000 steps",
+          "equation": "theta",
+          "expression": "(theta_inf + theta + a_theta * (v - v_rest)) / tau_theta",
+          "observed": 566,
+          "outcome": "violated",
+          "term": "- theta",
+          "within": "theta_inf - theta + a_theta * (v - v_rest)"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "theta",
+          "expression": "(theta_inf - theta - a_theta * (v - v_rest)) / tau_theta",
+          "observed": 25,
+          "outcome": "violated",
+          "term": "+ a_theta * (v - v_rest)",
+          "within": "theta_inf - theta + a_theta * (v - v_rest)"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "theta",
+          "expression": "(theta_inf - theta + a_theta * (-v - v_rest)) / tau_theta",
+          "observed": 15,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "theta",
+          "expression": "(theta_inf - theta + a_theta * (v + v_rest)) / tau_theta",
+          "observed": 30,
+          "outcome": "violated",
+          "term": "- v_rest",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "a current of 15.0 stays below threshold for 1000 steps",
+          "equation": "theta",
+          "expression": "-((theta_inf - theta + a_theta * (v - v_rest)) / tau_theta)",
+          "observed": 11,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "i_asc1",
+          "expression": "-(-i_asc1 / tau_asc1)",
+          "observed": 930,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "-i_asc1 / tau_asc1"
+        },
+        {
+          "case": "a current of 22.0 fires 23 times in 1000 steps",
+          "equation": "i_asc2",
+          "expression": "-(-i_asc2 / tau_asc2)",
+          "observed": 177,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "-i_asc2 / tau_asc2"
+        }
+      ]
+    },
+    {
       "model": "SCResettingWilsonHRNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -731,8 +904,8 @@
       ]
     }
   ],
-  "models_with_cases": 7,
-  "models_without_cases": 178,
+  "models_with_cases": 8,
+  "models_without_cases": 177,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -741,7 +914,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 6,
+    "discriminated": 7,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -750,7 +923,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 60,
-    "violated": 60
+    "total": 75,
+    "violated": 75
   }
 }
