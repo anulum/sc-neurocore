@@ -261,10 +261,178 @@
           "within": "r * (s * (x - x_rest) - z)"
         }
       ]
+    },
+    {
+      "model": "WilsonHRNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "without a current the model stays silent for 5000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.08 fires 44 upward crossings in 5000 steps",
+          "observed": 44
+        },
+        {
+          "held": true,
+          "name": "a current of 0.1 fires 46 upward crossings in 5000 steps",
+          "observed": 46
+        },
+        {
+          "held": true,
+          "name": "a current of 0.14 fires 49 upward crossings in 5000 steps",
+          "observed": 49
+        },
+        {
+          "held": true,
+          "name": "a current of 0.2 fires 52 upward crossings in 5000 steps",
+          "observed": 52
+        }
+      ],
+      "variants": [
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55)) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ -(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55)",
+          "within": "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) + 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "- 26.0 * r * (v + 0.92)",
+          "within": "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+        },
+        {
+          "case": "a current of 0.08 fires 44 upward crossings in 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) - I) / capacitance",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(-17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 17.81",
+          "within": "17.81 + 47.71 * v + 32.63 * v * v"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 - 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 47.71 * v",
+          "within": "17.81 + 47.71 * v + 32.63 * v * v"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v - 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 32.63 * v * v",
+          "within": "17.81 + 47.71 * v + 32.63 * v * v"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (-v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ v",
+          "within": "v - 0.55"
+        },
+        {
+          "case": "a current of 0.08 fires 44 upward crossings in 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v + 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- 0.55",
+          "within": "v - 0.55"
+        },
+        {
+          "case": "a current of 0.08 fires 44 upward crossings in 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (-v + 0.92) + I) / capacitance",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + 0.92"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v - 0.92) + I) / capacitance",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 0.92",
+          "within": "v + 0.92"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "v",
+          "expression": "-((-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance)",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "the whole right-hand side",
+          "within": "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "r",
+          "expression": "(--r + 1.35 * v + 1.03) / tau_r",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ -r",
+          "within": "-r + 1.35 * v + 1.03"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "r",
+          "expression": "(-r - 1.35 * v + 1.03) / tau_r",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 1.35 * v",
+          "within": "-r + 1.35 * v + 1.03"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "r",
+          "expression": "(-r + 1.35 * v - 1.03) / tau_r",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "+ 1.03",
+          "within": "-r + 1.35 * v + 1.03"
+        },
+        {
+          "case": "without a current the model stays silent for 5000 steps",
+          "equation": "r",
+          "expression": "-((-r + 1.35 * v + 1.03) / tau_r)",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "the whole right-hand side",
+          "within": "(-r + 1.35 * v + 1.03) / tau_r"
+        }
+      ]
     }
   ],
-  "models_with_cases": 3,
-  "models_without_cases": 182,
+  "models_with_cases": 4,
+  "models_without_cases": 181,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -273,7 +441,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 2,
+    "discriminated": 3,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -282,7 +450,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 21,
-    "violated": 21
+    "total": 36,
+    "violated": 36
   }
 }

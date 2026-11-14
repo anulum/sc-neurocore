@@ -124,3 +124,68 @@ synthesised = true
 synth_report = "tests/test_cosim_wilson_hr_q1616_precision.py::test_yosys_synthesises_committed_rtl"
 target_tier = "H2"
 terminal_reason = "Q16.16 co-simulation, Yosys coarse synthesis, and bounded Q8.8 formal safety cover the continuous source recurrence; timing, PPA, device evidence, and universal real-number equivalence remain open."
+
+[[behaviour]]
+name = "without a current the model stays silent for 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.08 fires 44 upward crossings in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    44,
+    44,
+]
+
+[behaviour.inputs]
+current = 0.08
+
+[[behaviour]]
+name = "a current of 0.1 fires 46 upward crossings in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    46,
+    46,
+]
+
+[behaviour.inputs]
+current = 0.1
+
+[[behaviour]]
+name = "a current of 0.14 fires 49 upward crossings in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    49,
+    49,
+]
+
+[behaviour.inputs]
+current = 0.14
+
+[[behaviour]]
+name = "a current of 0.2 fires 52 upward crossings in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    52,
+    52,
+]
+
+[behaviour.inputs]
+current = 0.2

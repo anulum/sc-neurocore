@@ -2255,7 +2255,8 @@
         {
           "attribution": "class_name",
           "changed": [
-            "engine/src/neurons/simple_spiking/wilson_hr.rs"
+            "engine/src/neurons/simple_spiking/wilson_hr.rs",
+            "src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron.toml"
           ],
           "currency": "outdated",
           "name": "bench_wilson_hr_simulate.json"

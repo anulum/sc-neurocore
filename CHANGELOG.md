@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Wilson cortical neuron states five behaviour cases, the counts its
+  Q16.16 parity test enrols for the hand model, the schema and the RTL:
+  silent without a current, then 44, 46, 49 and 52 upward crossings in
+  5000 steps at currents 0.08, 0.1, 0.14 and 0.2. Its public class holds
+  them, and each of the 15 sign variants of its two equations breaks one.
+  Four of the 185 catalogue models now state cases.
+
 - The Hindmarsh-Rose neuron states five behaviour cases, the counts its
   Q16.16 parity test enrols for the hand model, the schema and the RTL:
   silent at currents 0 and 2, then 26, 40 and 52 upward crossings in
