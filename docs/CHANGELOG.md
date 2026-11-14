@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The optics and workstation dependency locks move tornado from 6.6 to
+  6.6.1 for CVE-2026-126347 (GHSA-5cjw-f85j-cv6r). Tornado 6.6.0's fix
+  for an open redirect in its RedirectHandler was incomplete: a browser
+  reads a URL that begins with three or more slashes as a redirect to
+  another host, and Python's urllib does not. Only tornado moves; each lock
+  was regenerated with the command its header records, and the new hashes
+  are the 43 files PyPI lists for 6.6.1.
+
 - A catalogue model compile the compiler refuses now says why. 'Generate RTL'
   and the selected-model co-simulation answered every refusal HTTP 500
   `studio_job_failed`, and the Studio showed only "Studio job failed.",
