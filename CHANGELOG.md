@@ -12,6 +12,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A catalogue model compile the compiler refuses now says why. 'Generate RTL'
+  and the selected-model co-simulation answered every refusal HTTP 500
+  `studio_job_failed`, and the Studio showed only "Studio job failed.",
+  while the reason stayed in the job ledger. Sent as the Studio sends them,
+  at each model's own step, 10 of the 64 models that offer 'Generate RTL'
+  were refused that way: nine by parameter names their schema does not
+  know, one by a default Q-format that cannot hold it. A map compiled at a
+  step other than its own is refused too. The request is now checked
+  before a job is admitted, with the compiler's own resolver, and a refusal
+  is answered HTTP 422 with its reason. A fault in the server's own compile
+  configuration still goes to the job, as before.
+
 - On the network canvas and the E-I network tab, the status bar now
   reports only that tab's network. Before, a canvas whose network run the
   server refused, or that had not run yet, reported the last single-model

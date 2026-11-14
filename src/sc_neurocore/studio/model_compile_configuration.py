@@ -23,10 +23,21 @@ from sc_neurocore.compiler.hardware_numeric_contract import (
 )
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS
 
 ModelDetailGetter = Callable[[str], dict[str, object] | None]
+
+
+class ModelCompileRefused(AuthoredRefusal):
+    """A model compile request the compiler refuses, in words written for the caller.
+
+    Each message names what was refused and why: an unknown model or
+    parameter, an integrator or Q-format that is not offered, a value the
+    format cannot hold. It is a ``ValueError``, so existing handlers keep
+    working; a request boundary may show its text to the caller.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +66,6 @@ class ResolvedModelCompileConfiguration:
         selected format: every encoded value, the look-up tables and whether a
         bit-true C kernel mirrors it.
         """
-
         return {
             "dt": self.dt,
             "integrator": self.integrator,
@@ -69,7 +79,6 @@ class ResolvedModelCompileConfiguration:
 
     def to_verilog(self) -> str:
         """Compile the resolved neuron with the exact selected fixed-point geometry."""
-
         return self.neuron.to_verilog(
             module_name=self.module_name,
             data_width=self.q_format.total_bits,
@@ -90,14 +99,13 @@ def resolve_model_compile_configuration(
     initial state or step it would round to zero, refuses the compile rather
     than producing RTL for a different neuron.
     """
-
     model_name = _required_string(payload, "model_name")
     params = _float_mapping(payload.get("params"))
     requested_dt = _optional_positive_float(payload.get("dt"), "dt")
     requested_integrator = _optional_string(payload.get("integrator"), "integrator")
     q_format = _q_format(_required_string(payload, "q_format", default="Q8.8"))
     if q_format.q_label not in STUDIO_Q_FORMATS:
-        raise ValueError(
+        raise ModelCompileRefused(
             f"Q-format {q_format.q_label} is not one Studio compiles at "
             f"({', '.join(STUDIO_Q_FORMATS)})."
         )
@@ -105,12 +113,12 @@ def resolve_model_compile_configuration(
 
     detail = detail_getter(model_name)
     if detail is None:
-        raise ValueError(f"Unknown Studio model {model_name!r}.")
+        raise ModelCompileRefused(f"Unknown Studio model {model_name!r}.")
     configuration = detail.get("compile_configuration")
     if not isinstance(configuration, dict):
-        raise ValueError(f"Studio model {model_name!r} has no canonical schema.")
+        raise ModelCompileRefused(f"Studio model {model_name!r} has no canonical schema.")
 
-    schema_name = _required_string(configuration, "schema_name")
+    schema_name = _required_string(configuration, "schema_name", refusal=ValueError)
     schema = load_schema(schema_name)
     schema_sha256 = hashlib.sha256(
         json.dumps(schema, allow_nan=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
@@ -124,13 +132,13 @@ def resolve_model_compile_configuration(
     allowed_integrators = _string_list(configuration, "integrators")
     integrator = requested_integrator or default_integrator
     if integrator not in allowed_integrators:
-        raise ValueError(f"Integrator {integrator!r} is not declared for {model_name!r}.")
+        raise ModelCompileRefused(f"Integrator {integrator!r} is not declared for {model_name!r}.")
     profile_contract = detail.get("profile_contract")
     if isinstance(profile_contract, dict):
         numerical = profile_contract.get("numerical")
         admissible = numerical.get("admissible_methods") if isinstance(numerical, dict) else None
         if isinstance(admissible, list) and integrator not in admissible:
-            raise ValueError(
+            raise ModelCompileRefused(
                 f"Integrator {integrator!r} leaves the numerical family of {model_name!r} "
                 f"(admissible: {', '.join(str(item) for item in admissible)})."
             )
@@ -142,14 +150,18 @@ def resolve_model_compile_configuration(
         )
     unknown_params = sorted(set(params) - set(schema_params))
     if unknown_params:
-        raise ValueError(f"Unknown schema parameter override(s): {', '.join(unknown_params)}")
+        raise ModelCompileRefused(
+            f"Unknown schema parameter override(s): {', '.join(unknown_params)}"
+        )
 
     dt = requested_dt
     if dt is None:
-        dt = _positive_float(integration.get("dt", detail.get("dt")), "schema dt")
+        dt = _positive_float(
+            integration.get("dt", detail.get("dt")), "schema dt", refusal=ValueError
+        )
     module_name = requested_module_name or f"sc_{schema_name}_neuron"
     if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", module_name) is None:
-        raise ValueError(
+        raise ModelCompileRefused(
             "Studio model configuration field 'module_name' must be a Verilog identifier."
         )
     neuron = UniversalNeuron.from_schema(
@@ -160,7 +172,7 @@ def resolve_model_compile_configuration(
     )
     numeric_contract = hardware_numeric_contract(neuron.to_equation_neuron(), q_format)
     if not numeric_contract.representable:
-        raise ValueError(numeric_contract.refusal())
+        raise ModelCompileRefused(numeric_contract.refusal())
     return ResolvedModelCompileConfiguration(
         dt=dt,
         integrator=integrator,
@@ -178,14 +190,22 @@ def resolve_model_compile_configuration(
 def _q_format(value: str) -> QFormat:
     q_format = QFormat.from_string(value)
     if not 2 <= q_format.total_bits <= 64 or q_format.fraction_bits >= q_format.total_bits:
-        raise ValueError("Studio RTL Q-format must be signed and between 2 and 64 total bits.")
+        raise ModelCompileRefused(
+            "Studio RTL Q-format must be signed and between 2 and 64 total bits."
+        )
     return q_format
 
 
-def _required_string(payload: Mapping[str, object], key: str, *, default: str | None = None) -> str:
+def _required_string(
+    payload: Mapping[str, object],
+    key: str,
+    *,
+    default: str | None = None,
+    refusal: type[ValueError] = ModelCompileRefused,
+) -> str:
     value = payload.get(key, default)
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"Studio model configuration field {key!r} must be a non-empty string.")
+        raise refusal(f"Studio model configuration field {key!r} must be a non-empty string.")
     return value
 
 
@@ -193,7 +213,9 @@ def _optional_string(value: object, key: str) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"Studio model configuration field {key!r} must be a string or null.")
+        raise ModelCompileRefused(
+            f"Studio model configuration field {key!r} must be a string or null."
+        )
     return value
 
 
@@ -201,16 +223,16 @@ def _float_mapping(value: object) -> dict[str, float]:
     if value is None:
         return {}
     if not isinstance(value, Mapping):
-        raise ValueError("Studio model configuration field 'params' must be an object.")
+        raise ModelCompileRefused("Studio model configuration field 'params' must be an object.")
     result: dict[str, float] = {}
     for key, item in value.items():
         if not isinstance(key, str) or isinstance(item, bool) or not isinstance(item, (int, float)):
-            raise ValueError(
+            raise ModelCompileRefused(
                 "Studio model configuration parameter overrides must be finite numbers."
             )
         numeric = float(item)
         if not math.isfinite(numeric):
-            raise ValueError(
+            raise ModelCompileRefused(
                 "Studio model configuration parameter overrides must be finite numbers."
             )
         result[key] = numeric
@@ -223,12 +245,14 @@ def _optional_positive_float(value: object, key: str) -> float | None:
     return _positive_float(value, key)
 
 
-def _positive_float(value: object, key: str) -> float:
+def _positive_float(
+    value: object, key: str, *, refusal: type[ValueError] = ModelCompileRefused
+) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"Studio model configuration field {key!r} must be a positive number.")
+        raise refusal(f"Studio model configuration field {key!r} must be a positive number.")
     numeric = float(value)
     if not math.isfinite(numeric) or numeric <= 0:
-        raise ValueError(f"Studio model configuration field {key!r} must be a positive number.")
+        raise refusal(f"Studio model configuration field {key!r} must be a positive number.")
     return numeric
 
 

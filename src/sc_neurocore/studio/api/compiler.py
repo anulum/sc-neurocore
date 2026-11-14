@@ -12,9 +12,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.compiler_result import decode_equation_ir_response
 from sc_neurocore.studio.api.runtime import StudioApiContext
@@ -33,6 +34,8 @@ from sc_neurocore.studio.equation_ir_schema import (
     EquationIRRequest,
     EquationIRTextRequest,
 )
+from sc_neurocore.studio.model_catalogue import get_model_detail
+from sc_neurocore.studio.model_compile_configuration import resolve_model_compile_configuration
 from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform.equation_ir_process import (
@@ -40,6 +43,37 @@ from sc_neurocore.studio.platform.equation_ir_process import (
 )
 from sc_neurocore.studio.platform.model_compile_process import MODEL_COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform.model_cosim_process import MODEL_COSIM_PROCESS_TASK
+
+
+def refuse_before_admission(payload: dict[str, Any]) -> None:
+    """Answer a model compile the compiler would refuse with its reason, before any job runs.
+
+    The worker resolves the same request and refuses it the same way, but a
+    failed job is answered HTTP 500 "studio_job_failed" with its reason kept in
+    the job ledger, so a caller could not tell a wrong parameter from a
+    server fault. An authored refusal here is the caller's input: HTTP 422
+    with its text. Anything else the resolver raises is a fault in the
+    server's own compile configuration or code, not the caller's input. It is
+    left to the job, which meets it again and records it as before; it must
+    not reach the request boundary, which would answer a ``KeyError`` or a
+    ``TypeError`` 422 "Invalid input", as if the caller had sent it.
+
+    Parameters
+    ----------
+    payload : dict[str, Any]
+        The request as the worker receives it.
+
+    Raises
+    ------
+    HTTPException
+        HTTP 422 carrying the refusal's text.
+    """
+    try:
+        resolve_model_compile_configuration(payload, detail_getter=get_model_detail)
+    except AuthoredRefusal as refusal:
+        raise HTTPException(status_code=422, detail=str(refusal)) from None
+    except Exception:
+        return
 
 
 def build_compiler_router(context: StudioApiContext) -> APIRouter:
@@ -69,26 +103,25 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
             )
         )
 
+    def run_model_job(owner: str, task_path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Refuse a request the compiler would refuse, then run the model job."""
+        refuse_before_admission(payload)
+        return run_studio_process_job_sync(
+            kind="compiler", owner=owner, task_path=task_path, payload=payload
+        )
+
     @router.post("/api/models/compile")
     def api_model_compile(req: ModelCompileRequest) -> Any:
         return _safe(
-            lambda: run_studio_process_job_sync(
-                kind="compiler",
-                owner="studio-model-compiler",
-                task_path=MODEL_COMPILE_PROCESS_TASK,
-                payload=req.model_dump(),
+            lambda: run_model_job(
+                "studio-model-compiler", MODEL_COMPILE_PROCESS_TASK, req.model_dump()
             )
         )
 
     @router.post("/api/models/cosim")
     def api_model_cosim(req: ModelCosimRequest) -> Any:
         return _safe(
-            lambda: run_studio_process_job_sync(
-                kind="compiler",
-                owner="studio-model-cosim",
-                task_path=MODEL_COSIM_PROCESS_TASK,
-                payload=req.model_dump(),
-            )
+            lambda: run_model_job("studio-model-cosim", MODEL_COSIM_PROCESS_TASK, req.model_dump())
         )
 
     @router.post("/api/nir/compile")

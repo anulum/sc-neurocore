@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1945
+expected_file_count = 1947
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6314,6 +6314,14 @@ rationale = "Canonical unchanged FPGA target definitions and copy-returning meta
 [[file]]
 path = "tests/test_studio_model_compile_formats.py"
 rationale = "Real compile and co-simulation requests refuse unsupported formats before job admission while preserving offered geometries and existing spelling."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_compile_configuration.py"
+rationale = "Resolve a catalogue model's compile request into its canonical schema, refusing the caller's input in authored words and leaving server faults plain."
+
+[[file]]
+path = "tests/test_studio_model_compile_refusals.py"
+rationale = "A refused model compile or co-simulation is answered 422 with the compiler's reason and no job, while a server fault is left to the job."
 
 [[file]]
 path = "src/sc_neurocore/compiler/equation_state.py"

@@ -335,17 +335,27 @@ def test_model_cosim_route_is_authenticated_when_policy_is_enforced() -> None:
 
 
 @pytest.mark.parametrize(
-    "payload, expected_status",
+    "payload, reason",
     [
-        ({"model_name": "MissingNeuron", "q_format": "Q8.8"}, 500),
-        ({"model_name": "SCLapicqueLIFNeuron", "integrator": "rk4", "q_format": "Q8.8"}, 500),
-        ({"model_name": "SCLapicqueLIFNeuron", "q_format": "Q1.0"}, 422),
+        (
+            {"model_name": "MissingNeuron", "q_format": "Q8.8"},
+            "Unknown Studio model 'MissingNeuron'.",
+        ),
+        (
+            {"model_name": "SCLapicqueLIFNeuron", "integrator": "rk4", "q_format": "Q8.8"},
+            "Integrator 'rk4' is not declared for 'SCLapicqueLIFNeuron'.",
+        ),
+        ({"model_name": "SCLapicqueLIFNeuron", "q_format": "Q1.0"}, None),
     ],
 )
 def test_model_compile_route_fails_closed_for_invalid_configuration(
-    client: TestClient, payload: dict[str, JsonValue], expected_status: int
+    client: TestClient, payload: dict[str, JsonValue], reason: str | None
 ) -> None:
-    """Reject invalid formats at admission and retain safe worker-failure responses.
+    """Refuse an unknown model, an undeclared integrator and an unoffered format before any job runs.
+
+    Each is the caller's input, so each is answered 422. A model configuration
+    the compiler refuses carries the compiler's own reason; a format is refused
+    by the request schema, with its own detail.
 
     Parameters
     ----------
@@ -353,14 +363,15 @@ def test_model_compile_route_fails_closed_for_invalid_configuration(
         Real application HTTP client.
     payload : dict of str to JsonValue
         Unsupported format or model configuration to submit.
-    expected_status : int
-        Input refusal for a format, or the existing safe worker-failure status.
+    reason : str or None
+        The compiler's reason for a refused model configuration, or None for a
+        format the request schema refuses.
     """
     response = client.post("/api/models/compile", json=payload)
 
-    assert response.status_code == expected_status
-    if expected_status == 500:
-        assert response.json()["detail"] == "studio_job_failed"
+    assert response.status_code == 422
+    if reason is not None:
+        assert response.json()["detail"] == reason
 
 
 def _sha256_json(payload: dict[str, JsonValue]) -> str:

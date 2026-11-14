@@ -45988,6 +45988,29 @@ Build the catalogue and benchmark router over shared Studio runtime state.
 
 ## Module `studio.api.compiler`
 
+### Function `refuse_before_admission(payload)`
+Answer a model compile the compiler would refuse with its reason, before any job runs.
+
+The worker resolves the same request and refuses it the same way, but a
+failed job is answered HTTP 500 "studio_job_failed" with its reason kept in
+the job ledger, so a caller could not tell a wrong parameter from a
+server fault. An authored refusal here is the caller's input: HTTP 422
+with its text. Anything else the resolver raises is a fault in the
+server's own compile configuration or code, not the caller's input. It is
+left to the job, which meets it again and records it as before; it must
+not reach the request boundary, which would answer a ``KeyError`` or a
+``TypeError`` 422 "Invalid input", as if the caller had sent it.
+
+Parameters
+----------
+payload : dict&#91;str, Any&#93;
+    The request as the worker receives it.
+
+Raises
+------
+HTTPException
+    HTTP 422 carrying the refusal's text.
+
 ### Function `build_compiler_router(context)`
 Build the compiler router over shared Studio runtime state.
 
@@ -49728,6 +49751,15 @@ ModelDocumentationUnavailable
 ---
 
 ## Module `studio.model_compile_configuration`
+
+### Class `ModelCompileRefused`
+A model compile request the compiler refuses, in words written for the caller.
+
+Each message names what was refused and why: an unknown model or
+parameter, an integrator or Q-format that is not offered, a value the
+format cannot hold. It is a ``ValueError``, so existing handlers keep
+working; a request boundary may show its text to the caller.
+
 
 ### Class `ResolvedModelCompileConfiguration`
 Validated schema, compiler options and instantiated universal neuron.

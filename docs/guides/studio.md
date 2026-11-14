@@ -581,8 +581,8 @@ with that reason.
 | POST | `/api/export/replay-pack` | Export a sealed pack another installation can run and compare |
 | POST | `/api/export/replay-notebook` | Export a cited Jupyter notebook that carries and replays a sealed pack |
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
-| POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
-| POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |
+| POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format; a request the compiler refuses is answered HTTP 422 with its reason before any job runs |
+| POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity; refused like `/api/models/compile` |
 | POST | `/api/ir/build` | Lower a versioned authored equation model and numeric profile through the native compiler |
 | POST | `/api/ir/verify` | Inspect native graph structure without claiming semantic replay |
 | POST | `/api/ir/replay` | Reconstruct bound equation source and require the same native graph |
