@@ -1658,6 +1658,11 @@ export interface ModelCompileSourcePayload {
   model_name: string;
   params: ModelParameters;
   q_format: string;
+  /**
+   * The LFSR seed a stochastic model's RTL starts from. Present only when the
+   * compile carried one, so a deterministic model's input, and its digest, has none.
+   */
+  rng_seed?: number;
   schema_name: string;
   schema_sha256: string;
 }
@@ -1686,6 +1691,8 @@ export interface ModelCompileResultConfiguration {
   /** What the RTL holds at `q_format`; the compile was refused unless representable. */
   numeric_contract?: HardwareNumericContract;
   q_format: string;
+  /** The LFSR seed the RTL starts from; null for a model whose RTL starts no LFSR. */
+  rng_seed?: number | null;
   schema_name: string;
   schema_sha256: string;
 }
