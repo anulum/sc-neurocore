@@ -24,7 +24,7 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: c0f278f1254ccc8fb09676bcdb8d847e7db493e5  # v0.17.4
+    rev: ef6cf06c079dd6b299dfc720b0f14400c9d168e1  # v0.17.5
     hooks:
       - id: ruff
         exclude: '^data/'
@@ -34,7 +34,7 @@ repos:
         exclude: '^data/'
 
   - repo: https://github.com/crate-ci/typos
-    rev: 4c8b7f51ca60df14e3c5ca82770dfbbe6c3dae85  # v1.52.0
+    rev: 276087d9a4f06398b3e04825487805e2d7375888  # v1.52.2
     hooks:
       - id: typos
         args: ['--config', '.typos.toml']

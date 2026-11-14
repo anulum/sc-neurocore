@@ -94,9 +94,9 @@ isoduration==20.11.0 \
     --hash=sha256:ac2f9015137935279eac671f94f89eb00584f940f5dc49462a0c4ee692ba1bd9 \
     --hash=sha256:b2904c2a4228c3d44f409c8ae8e2370eb21a26f7ac2ec5446df141dde3452042
     # via jsonschema
-jsonpointer==3.10 \
-    --hash=sha256:3b08b9e5239f1b683e31c9561c350d75ce3fa8cdd407130ca8491fdb0c9e56f3 \
-    --hash=sha256:69349c0e738c93e9efa501397091f49ad302ae686293effd05d7755c06f88ef0
+jsonpointer==3.12 \
+    --hash=sha256:7a3dcc11b64053eaa9c549e85e413f8d40a075215f793a331bed9182a14251ae \
+    --hash=sha256:89f391335ee2719ae72149e1bf30a4d4c7c5d92f15a3f53faa8d20cc7c6c7f19
     # via jsonschema
 jsonschema[format-nongpl]==4.26.0 \
     --hash=sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326 \

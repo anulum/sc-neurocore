@@ -16,5 +16,5 @@
 -r lint.txt
 -r runtime.txt
 -r studio-desktop-linux-x86_64.txt
-uv==0.13.7
+uv==0.13.8
 pip==26.2.2

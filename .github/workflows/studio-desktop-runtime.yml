@@ -379,7 +379,7 @@ jobs:
                   command, math.floor(deadline - time.time()), namespace / "diagnostics" / name
               )
               if name == "uv-version":
-                  assert result.stdout.decode().split()[1] == "0.13.7"
+                  assert result.stdout.decode().split()[1] == "0.13.8"
           PY
       - name: Qualify the complete six-module cohort and exact coverage
         env:

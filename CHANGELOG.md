@@ -278,6 +278,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Move every dependency declaration that no recorded hold keeps back to
+  its newest compatible release: ruff 0.17.5 in every declaration and
+  the pre-commit hook, the typos hook 1.52.2, semgrep 1.185.0,
+  pymdown-extensions 13.1 and uv 0.13.8; the hash-locked Python profiles
+  regenerated with the commands their headers record, with coverage
+  7.17.3, fastapi 0.162.7, filelock 4.2.10, markdown-it-py 4.3.0,
+  stevedore 5.10.0 and further patch releases; the Rust locks at their
+  current patch releases, the bundled Z3 504.1.0 among them; and the
+  Studio frontend's @module-federation/vite 1.24.0, Playwright 1.65.1,
+  ESLint 10.15.0, eslint-plugin-jsdoc 65.4.7, DOMPurify 3.4.18 and
+  minimatch 11.0.8.
+
 - The written C ABI headers of three Go adapters, adaptive_threshold_if, alpha
   and resonate_and_fire, are named `abi.h` in their packages, as
   conversion/cshared's already was, apart from the `lib<name>.h` that a

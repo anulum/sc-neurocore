@@ -40,9 +40,9 @@ checksum = "95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797"
 
 [[package]]
 name = "cc"
-version = "1.11.1"
+version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ff2a8126fff0f8c839080d619675a585e61720bb12d2baceae45769fd66f155"
+checksum = "33ef9e3e8154a45c7a95cff4c1299702106ad94062d7bb85fdc5d3a5afd91d45"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -697,9 +697,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.13.5"
+version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adb6935a6f5c20170eeceb1a3835a49e12e19d792f6dd344ccc76a985ca5a6ca"
+checksum = "8c447be3a2abfa84b2d91680c56600bd6b2873866de27b36ec911be705e291da"
 
 [[package]]
 name = "transpose"
@@ -767,18 +767,18 @@ dependencies = [
 
 [[package]]
 name = "z3-src"
-version = "503.3.0"
+version = "504.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfb8cac8650fc9a7e536c4583f8f68a4ce63eba9f13832ee5a30bce79bd71a6b"
+checksum = "fac5ca92a7c69b2aa3359eff9745299b6c53921abe376c5d2a92353c771d5dde"
 dependencies = [
  "cmake",
 ]
 
 [[package]]
 name = "z3-sys"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df0e4954175989c52d98ebfa46f48bce05d34b76ba9ee9f741134054b858975b"
+checksum = "3c38c58e9de00b081506ec9266daccca60bfb315d0fdd8d709317cc1b835d81c"
 dependencies = [
  "pkg-config",
  "z3-src",
