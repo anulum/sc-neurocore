@@ -51,6 +51,7 @@ from sc_neurocore.studio.platform.storage_launcher_protocol import (
 from sc_neurocore.studio.platform.storage_peer import require_storage_peer
 from sc_neurocore.studio.platform.storage_transport import read_frame, write_frame
 from sc_neurocore.studio.platform.storage_worker_spawn import (
+    check_worker_interpreter,
     compute_identity_processes,
     generation_spool_ready,
     spawn_worker_bootstrap,
@@ -94,7 +95,11 @@ class WorkerLauncher:
         return os.geteuid() == 0
 
     def start(self) -> None:
-        """Become a subreaper and bind the API-only endpoint.
+        """Check identities and the worker interpreter, become a subreaper, bind the endpoint.
+
+        The interpreter check runs once, here, so that a worker interpreter that
+        cannot import the bootstrap is named with its reason before any job is
+        admitted, not as the bare exit status of every launched worker.
 
         Raises
         ------
@@ -104,6 +109,9 @@ class WorkerLauncher:
             The compute identity differs from this process but it is not
             privileged, a privileged launcher finds processes of the compute
             identity it does not own, or the socket parent is unsafe.
+        WorkerInterpreterRefused
+            The configured interpreter cannot import the worker bootstrap as a worker
+            will run it.
         FileExistsError
             The endpoint already exists.
         OSError
@@ -120,6 +128,7 @@ class WorkerLauncher:
             )
         if self.privileged and compute_identity_processes(config.worker_uid):
             raise PermissionError("compute identity has processes this launcher does not own")
+        check_worker_interpreter(config, privileged=self.privileged)
         become_child_subreaper()
         endpoint = LauncherEndpoint(config.socket_path)
         self._listener = endpoint.open()

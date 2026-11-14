@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1961
+expected_file_count = 1963
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -3403,6 +3403,14 @@ rationale = "The single-use grant endpoint: it verifies the launched worker, end
 [[file]]
 path = "tests/test_studio_storage_worker_grant.py"
 rationale = "The grant endpoint's refusals, deadline, early end on a worker reported gone, and cleanup of only its own socket."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_worker_spawn.py"
+rationale = "Starts the fixed worker bootstrap under the compute identity with an environment built only from configuration, reads spool readiness and compute-identity processes, and refuses by its reason a worker interpreter that cannot import the bootstrap with -s."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_worker_launcher.py"
+rationale = "The direct-spawn launcher profile: it refuses to start under another identity it cannot take, as a privileged launcher beside processes of the compute identity, or with a worker interpreter that cannot import the bootstrap; then it starts and stops fixed worker generations for the API only."
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_isolated_jobs.py"

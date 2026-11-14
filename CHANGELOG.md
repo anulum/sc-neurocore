@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio worker launcher now checks once, at its start, that its
+  configured interpreter imports the worker bootstrap as a worker runs
+  it: with -s, the worker's environment and, for a privileged launcher,
+  the worker's identity. If it cannot, the launcher refuses to start and
+  names the interpreter and the reason: it cannot be run, the import's
+  last error line, or no answer within 60 s. Such an interpreter let
+  every launched worker exit before asking for its grant, reported only
+  by its exit status.
+
 - The SC resetting Wilson neuron states three behaviour cases, the event
   counts its Q16.16 test enrols for the hand model, the schema and the
   RTL: silent without a current, then 1 and 4 events in 5000 steps at

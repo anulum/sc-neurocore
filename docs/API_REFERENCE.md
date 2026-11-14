@@ -56948,7 +56948,7 @@ replies resolve to the same outcome.
 - **privileged**()
   - Return whether this launcher can switch to a different compute UID.
 - **start**()
-  - Become a subreaper and bind the API-only endpoint.
+  - Check identities and the worker interpreter, become a subreaper, bind the endpoint.
 - **maintain**()
   - Observe trees, collect leader exits and handle adopted processes.
 - **serve_once**()
@@ -56965,6 +56965,10 @@ replies resolve to the same outcome.
 ---
 
 ## Module `studio.platform.storage_worker_spawn`
+
+### Class `WorkerInterpreterRefused`
+The configured worker interpreter cannot run the bootstrap; the text names it and why.
+
 
 ### Function `generation_spool_ready(root, job_id, generation, owner)`
 Return whether the API-prepared job and generation directories exist.
@@ -57012,6 +57016,31 @@ Raises
 ------
 OSError
     The interpreter cannot be executed or the identity switch fails.
+
+### Function `check_worker_interpreter(config, *, privileged, timeout)`
+Refuse a worker interpreter that cannot import the bootstrap as a worker will run it.
+
+The bootstrap runs with ``-s``, so packages in the user site are not seen,
+and with only the configured import roots. An interpreter that cannot import
+it would let every launch fail before the worker asks for its grant. The
+check imports the bootstrap once, with the worker's flags, environment and,
+for a privileged launcher, its identity, so the launcher can refuse to start
+and say why.
+
+Parameters
+----------
+config : LauncherConfiguration
+    Operator configuration supplying the interpreter, import roots and identity.
+privileged : bool
+    Whether this launcher switches to the configured compute identity.
+timeout : float
+    Seconds to wait for the import.
+
+Raises
+------
+WorkerInterpreterRefused
+    The interpreter cannot be run, fails the import (the last line of its error
+    output, or its exit status, is named), or does not finish within ``timeout``.
 
 ---
 

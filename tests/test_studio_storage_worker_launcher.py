@@ -38,7 +38,13 @@ from sc_neurocore.studio.platform.storage_launcher_protocol import (
     LauncherOperation,
 )
 from sc_neurocore.studio.platform.storage_transport import write_frame
-from sc_neurocore.studio.platform.storage_worker_spawn import compute_identity_processes
+from sc_neurocore.studio.platform.storage_launcher_configuration import LauncherConfiguration
+from sc_neurocore.studio.platform.storage_worker_spawn import (
+    BOOTSTRAP_MODULE,
+    WorkerInterpreterRefused,
+    check_worker_interpreter,
+    compute_identity_processes,
+)
 from sc_neurocore.studio.platform.storage_worker_grant import (
     GRANT_ENDPOINT_NAME,
     ExpectedWorker,
@@ -170,10 +176,249 @@ def test_record_budget_retires_only_stopped_generations(base: Path) -> None:
         shutdown(running)
 
 
-def test_unstartable_bootstrap_is_reported_unavailable(base: Path) -> None:
-    """A spawn failure is a refusal, not an invented worker identity."""
-    running = start(base, python_executable=str(base / "missing-python"))
+def test_a_launcher_whose_interpreter_cannot_run_refuses_to_start(base: Path) -> None:
+    """A worker interpreter that cannot be run is refused when the launcher starts, by name.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    missing = base / "missing-python"
+    with pytest.raises(AssertionError) as refused:
+        start(base, python_executable=str(missing))
+    assert f"worker interpreter {missing} cannot be run: No such file or directory" in str(
+        refused.value
+    )
+    assert not (base / "sock" / "launcher.sock").exists()
+
+
+def test_an_interpreter_that_cannot_import_the_bootstrap_refuses_the_start(base: Path) -> None:
+    """An interpreter whose environment lacks the bootstrap's packages is refused with its own error.
+
+    This is the failure that once surfaced only as a grant that never came: the
+    worker runs with ``-s``, so packages in the user site are not seen.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    interpreter = base / "no-packages-python"
+    interpreter.write_text(
+        "#!/bin/sh\n"
+        "echo 'Traceback (most recent call last):' >&2\n"
+        "echo \"ModuleNotFoundError: No module named 'pydantic'\" >&2\n"
+        "exit 1\n",
+        encoding="utf-8",
+    )
+    interpreter.chmod(0o755)
+    with pytest.raises(AssertionError) as refused:
+        start(base, python_executable=str(interpreter))
+    assert (
+        f"worker interpreter {interpreter} cannot import the worker bootstrap with -s: "
+        "ModuleNotFoundError: No module named 'pydantic'"
+    ) in str(refused.value)
+
+
+def _interpreter(base: Path, name: str, script: str) -> LauncherConfiguration:
+    """Return the launcher configuration of a base with a scripted stand-in interpreter.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    name : str
+        The stand-in's file name.
+    script : str
+        Its shell script body.
+
+    Returns
+    -------
+    LauncherConfiguration
+        The default configuration with that interpreter.
+    """
+    interpreter = base / name
+    interpreter.write_text("#!/bin/sh\n" + script, encoding="utf-8")
+    interpreter.chmod(0o755)
+    return LauncherConfiguration.model_validate_json(
+        json.dumps(configuration(base, python_executable=str(interpreter))), strict=True
+    )
+
+
+def test_an_interpreter_that_hangs_is_refused_at_its_deadline(base: Path) -> None:
+    """The start check does not wait for an interpreter that never finishes its import.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    config = _interpreter(base, "hanging-python", "exec sleep 60\n")
+    started = time.monotonic()
+    with pytest.raises(WorkerInterpreterRefused) as refused:
+        check_worker_interpreter(config, privileged=False, timeout=0.5)
+    # Far below the stand-in's 60 s and the module's own 60 s default, and far
+    # above 0.5 s, so a loaded host cannot make it fail.
+    assert time.monotonic() - started < 10.0
+    assert str(refused.value) == (
+        f"worker interpreter {config.python_executable} did not import the worker bootstrap "
+        "within 0.5 s"
+    )
+
+
+def _gone(pid: int) -> bool:
+    """Return whether a process no longer runs: absent, or a zombie awaiting its parent.
+
+    Parameters
+    ----------
+    pid : int
+        The process.
+
+    Returns
+    -------
+    bool
+        True when it no longer runs.
+    """
     try:
+        stat = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return True
+    return stat.rsplit(")", 1)[1].split()[0] == "Z"
+
+
+def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: Path) -> None:
+    """At the deadline the check's whole session is killed, not only the interpreter.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    child = base / "child.pid"
+    config = _interpreter(
+        base, "forking-python", f'sleep 30 &\necho $! > "{child}"\nexec sleep 60\n'
+    )
+    # Seconds, not the half second of the hang test: the stand-in must write the
+    # child's pid before the deadline, also on a loaded host.
+    with pytest.raises(WorkerInterpreterRefused):
+        check_worker_interpreter(config, privileged=False, timeout=5.0)
+    pid = int(child.read_text(encoding="utf-8"))
+    deadline = time.monotonic() + 10.0
+    while not _gone(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert _gone(pid)
+
+
+def test_error_output_that_is_not_utf8_is_refused_in_words(base: Path) -> None:
+    """An executable that writes bytes no codec reads is refused, its bytes replaced.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    config = _interpreter(
+        base, "binary-python", "printf '\\377\\376 not an interpreter\\n' >&2\nexit 2\n"
+    )
+    with pytest.raises(WorkerInterpreterRefused) as refused:
+        check_worker_interpreter(config, privileged=False)
+    assert str(refused.value) == (
+        f"worker interpreter {config.python_executable} cannot import the worker bootstrap "
+        "with -s: �� not an interpreter"
+    )
+
+
+def test_an_interpreter_that_fails_silently_is_refused_with_its_status(base: Path) -> None:
+    """With no error output, the refusal names the exit status.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    config = _interpreter(base, "silent-python", "exit 3\n")
+    with pytest.raises(WorkerInterpreterRefused) as refused:
+        check_worker_interpreter(config, privileged=False)
+    assert str(refused.value) == (
+        f"worker interpreter {config.python_executable} cannot import the worker bootstrap "
+        "with -s: exit status 3"
+    )
+
+
+def test_the_project_interpreter_passes_the_check(base: Path) -> None:
+    """The interpreter that runs these tests imports the bootstrap with -s and the checkout's src.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    check_worker_interpreter(
+        LauncherConfiguration.model_validate_json(json.dumps(configuration(base)), strict=True),
+        privileged=False,
+    )
+
+
+#: Variables a POSIX shell may add to the environment it passes on.
+_SHELL_ADDED = frozenset({"PWD", "OLDPWD", "SHLVL", "_"})
+
+
+def test_the_check_runs_the_interpreter_as_a_worker_runs_it(base: Path) -> None:
+    """The check's flags, working directory and environment are the worker's, not the launcher's.
+
+    A stand-in records what it was given, then runs the real interpreter. An
+    import that passes only with the launcher's environment, its working
+    directory or the user site would let the check pass for an interpreter
+    every worker then fails with.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    record = base / "record.json"
+    recorder = (
+        "import json, os, sys; json.dump({'args': sys.argv[2:], 'cwd': os.getcwd(), "
+        "'env': dict(os.environ)}, open(sys.argv[1], 'w', encoding='utf-8'))"
+    )
+    config = _interpreter(
+        base,
+        "recording-python",
+        f'"{sys.executable}" -I -c "{recorder}" "{record}" "$@"\nexec "{sys.executable}" "$@"\n',
+    )
+    check_worker_interpreter(config, privileged=False)
+    seen = json.loads(record.read_text(encoding="utf-8"))
+    assert seen["args"] == ["-s", "-B", "-c", f"import {BOOTSTRAP_MODULE}"]
+    assert seen["cwd"] == "/"
+    environment = {key: value for key, value in seen["env"].items() if key not in _SHELL_ADDED}
+    assert environment == {
+        "PATH": "/usr/bin:/bin",
+        "PYTHONPATH": os.pathsep.join(str(path) for path in config.python_path),
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "LANG": "C.UTF-8",
+    }
+
+
+def test_unstartable_bootstrap_is_reported_unavailable(base: Path) -> None:
+    """A spawn failure after a good start is a refusal, not an invented worker identity.
+
+    The interpreter passes the start check, then disappears before the launch. It
+    is a script that runs this interpreter, not a link to it: a link outside the
+    virtual environment would start the base interpreter without its packages,
+    which the start check refuses.
+
+    Parameters
+    ----------
+    base : Path
+        The launcher's private base folder.
+    """
+    interpreter = base / "vanishing-python"
+    interpreter.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n', encoding="utf-8")
+    interpreter.chmod(0o755)
+    running = start(base, python_executable=str(interpreter))
+    try:
+        interpreter.unlink()
         prepare(running.spool_root, JOB_A, GEN_A)
         refused = send(running, "launch", JOB_A, GEN_A)
         assert (refused.state, refused.reason, refused.pid) == ("refused", "unavailable", None)
