@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 174
+MODELS_WITHOUT_A_CASE = 173
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -69,6 +69,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [266, 266],
     ],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
+    "FitzHughRinzelNeuron": [[7, 7], [8, 8], [8, 8], [83, 83]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
@@ -887,6 +888,29 @@ def test_the_courbage_nekorkin_map_holds_its_enrolled_and_measured_cases(
     assert [case["steps"] for case in cases] == [128, 512, 620, 128, 41, 41]
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False, False, True, True, True, True]
+
+
+def test_the_fitzhugh_rinzel_model_holds_its_enrolled_and_measured_counts(
+    report: dict[str, object],
+) -> None:
+    """Three counts its RTL test enrols over 3000 steps, and one over 39600 measured with the class.
+
+    The model's Q16.16 test enrols 7, 8 and 8 events in 3000 steps at currents
+    0.4, 0.5 and 0.6. Over 3000 steps the ultra-slow variable y moves by about a
+    hundredth, so the signs of its terms change no count. Over 39600 steps at
+    0.4 it shapes the bursts: the public class, which the schema matches, fires
+    83 times, and the nearest event of any perturbed run is 1226 steps from the
+    horizon.
+    """
+    row = _models(report)["FitzHughRinzelNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [7, 8, 8, 83]
+    assert [case["inputs"] for case in cases] == [{"current": c} for c in (0.4, 0.5, 0.6, 0.4)]
+    assert [case["steps"] for case in cases] == [3000, 3000, 3000, 39600]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

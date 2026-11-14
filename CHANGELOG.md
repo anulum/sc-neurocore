@@ -28,6 +28,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The FitzHugh-Rinzel neuron states four behaviour cases: the event counts its
+  Q16.16 test enrols for the hand model, the schema and the RTL (7, 8 and 8 in
+  3000 steps at currents 0.4, 0.5 and 0.6), and 83 events in 39600 steps at
+  0.4, measured with its public class and matched by the schema. Each of the
+  13 sign variants of its three equations breaks a case. Twelve of the 185
+  catalogue models now state cases.
 - The Courbage-Nekorkin map neuron (`CourageNekorkinMapNeuron`) states six
   behaviour cases: the four event counts its Q16.16 and Q32.32 tests enrol for
   the hand model, both schema files and the RTL (none in 128 steps at a current

@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 11
+MODELS_WITH_CASES = 12
 
 
 def _accumulator() -> dict[str, object]:
@@ -391,6 +391,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
         "FitzHughNagumoNeuron",
+        "FitzHughRinzelNeuron",
         "HindmarshRoseNeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
@@ -406,7 +407,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 10,
+        "discriminated": 11,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -749,6 +750,46 @@ def test_every_variant_of_the_courbage_nekorkin_map_breaks_a_case(
     assert [index for index, variant in enumerate(variants) if variant["case"] == upper] == [9, 13]
 
 
+def test_every_variant_of_the_fitzhugh_rinzel_model_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Thirteen signs of three equations; the ultra-slow variable's four need the long count.
+
+    Over 3000 steps y moves by about a hundredth, so the enrolled counts leave
+    the sign of y in the fast equation and three signs of y's own equation
+    undecided. Over 39600 steps at 0.4 each of those variants fires a different
+    number of times than the model's 83.
+    """
+    row = _rows(report)["FitzHughRinzelNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [7, 8, 8, 83]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("v", "+ v"),
+        ("v", "- v * v * v / 3.0"),
+        ("v", "- w"),
+        ("v", "+ y"),
+        ("v", "+ I"),
+        ("w", "+ a"),
+        ("w", "+ v"),
+        ("w", "- b * w"),
+        ("w", "the whole right-hand side"),
+        ("y", "+ c"),
+        ("y", "- v"),
+        ("y", "- d * y"),
+        ("y", "the whole right-hand side"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    long_count = "a current of 0.4 fires 83 times in 39600 steps"
+    decided_late = [
+        index for index, variant in enumerate(variants) if variant["case"] == long_count
+    ]
+    assert decided_late == [3, 10, 11, 12]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -760,10 +801,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+10$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+11$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 137, of them violated 137, not discriminated 0" in summary
+    assert "variants: 150, of them violated 150, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

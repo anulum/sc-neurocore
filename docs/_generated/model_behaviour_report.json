@@ -649,10 +649,75 @@
       "state": "held"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            7,
+            7
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.4
+          },
+          "kind": "interval",
+          "name": "a current of 0.4 fires 7 times in 3000 steps",
+          "observable": "spikes",
+          "observed": 7,
+          "steps": 3000
+        },
+        {
+          "bounds": [
+            8,
+            8
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 8 times in 3000 steps",
+          "observable": "spikes",
+          "observed": 8,
+          "steps": 3000
+        },
+        {
+          "bounds": [
+            8,
+            8
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.6
+          },
+          "kind": "interval",
+          "name": "a current of 0.6 fires 8 times in 3000 steps",
+          "observable": "spikes",
+          "observed": 8,
+          "steps": 3000
+        },
+        {
+          "bounds": [
+            83,
+            83
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.4
+          },
+          "kind": "interval",
+          "name": "a current of 0.4 fires 83 times in 39600 steps",
+          "observable": "spikes",
+          "observed": 83,
+          "steps": 39600
+        }
+      ],
+      "cases_sha256": "660f6f304e720505599f82de12bf084874e78301bc69d6850698a04ecea2ec4b",
       "model": "FitzHughRinzelNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2053,9 +2118,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 11,
+    "held": 12,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 174
+    "no_case": 173
   }
 }

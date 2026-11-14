@@ -690,7 +690,8 @@
         {
           "attribution": "class_name",
           "changed": [
-            "engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs"
+            "engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs",
+            "src/sc_neurocore/neurons/model_descriptors/FitzHughRinzelNeuron.toml"
           ],
           "currency": "outdated",
           "name": "bench_fitzhugh_rinzel_simulate.json"

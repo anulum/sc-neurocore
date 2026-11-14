@@ -322,6 +322,151 @@
       ]
     },
     {
+      "model": "FitzHughRinzelNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 0.4 fires 7 times in 3000 steps",
+          "observed": 7
+        },
+        {
+          "held": true,
+          "name": "a current of 0.5 fires 8 times in 3000 steps",
+          "observed": 8
+        },
+        {
+          "held": true,
+          "name": "a current of 0.6 fires 8 times in 3000 steps",
+          "observed": 8
+        },
+        {
+          "held": true,
+          "name": "a current of 0.4 fires 83 times in 39600 steps",
+          "observed": 83
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "v",
+          "expression": "-v - v * v * v / 3.0 - w + y + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v * v * v / 3.0 - w + y + I"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "v",
+          "expression": "v + v * v * v / 3.0 - w + y + I",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "- v * v * v / 3.0",
+          "within": "v - v * v * v / 3.0 - w + y + I"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 + w + y + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- w",
+          "within": "v - v * v * v / 3.0 - w + y + I"
+        },
+        {
+          "case": "a current of 0.4 fires 83 times in 39600 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 - w - y + I",
+          "observed": 98,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "v - v * v * v / 3.0 - w + y + I"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 - w + y - I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "v - v * v * v / 3.0 - w + y + I"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "w",
+          "expression": "delta * (-a + v - b * w)",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ a",
+          "within": "a + v - b * w"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "w",
+          "expression": "delta * (a - v - b * w)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "a + v - b * w"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "w",
+          "expression": "delta * (a + v + b * w)",
+          "observed": 4,
+          "outcome": "violated",
+          "term": "- b * w",
+          "within": "a + v - b * w"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "w",
+          "expression": "-(delta * (a + v - b * w))",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "the whole right-hand side",
+          "within": "delta * (a + v - b * w)"
+        },
+        {
+          "case": "a current of 0.4 fires 7 times in 3000 steps",
+          "equation": "y",
+          "expression": "mu * (-c - v - d * y)",
+          "observed": 8,
+          "outcome": "violated",
+          "term": "+ c",
+          "within": "c - v - d * y"
+        },
+        {
+          "case": "a current of 0.4 fires 83 times in 39600 steps",
+          "equation": "y",
+          "expression": "mu * (c + v - d * y)",
+          "observed": 14,
+          "outcome": "violated",
+          "term": "- v",
+          "within": "c - v - d * y"
+        },
+        {
+          "case": "a current of 0.4 fires 83 times in 39600 steps",
+          "equation": "y",
+          "expression": "mu * (c - v + d * y)",
+          "observed": 64,
+          "outcome": "violated",
+          "term": "- d * y",
+          "within": "c - v - d * y"
+        },
+        {
+          "case": "a current of 0.4 fires 83 times in 39600 steps",
+          "equation": "y",
+          "expression": "-(mu * (c - v - d * y))",
+          "observed": 99,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "mu * (c - v - d * y)"
+        }
+      ]
+    },
+    {
       "model": "HindmarshRoseNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -1566,8 +1711,8 @@
       ]
     }
   ],
-  "models_with_cases": 11,
-  "models_without_cases": 174,
+  "models_with_cases": 12,
+  "models_without_cases": 173,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -1576,7 +1721,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 10,
+    "discriminated": 11,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -1585,7 +1730,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 137,
-    "violated": 137
+    "total": 150,
+    "violated": 150
   }
 }

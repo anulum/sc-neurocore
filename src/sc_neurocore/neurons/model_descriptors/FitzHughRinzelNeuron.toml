@@ -165,3 +165,55 @@ synthesised = true
 synth_report = "tests/test_cosim_fitzhugh_rinzel_q1616_precision.py::test_yosys_synthesises_committed_rtl"
 target_tier = "H2"
 terminal_reason = "Q16.16 RK4 co-simulation preserves the enrolled 7/8/8 upward-crossing counts at I=0.4/0.5/0.6, the committed RTL passes Yosys coarse synthesis, and the generated family carries depth-4 reset/output safety. Timing, PPA, device evidence, and physical silicon remain open."
+
+[[behaviour]]
+name = "a current of 0.4 fires 7 times in 3000 steps"
+kind = "interval"
+steps = 3000
+observable = "spikes"
+bounds = [
+    7,
+    7,
+]
+
+[behaviour.inputs]
+current = 0.4
+
+[[behaviour]]
+name = "a current of 0.5 fires 8 times in 3000 steps"
+kind = "interval"
+steps = 3000
+observable = "spikes"
+bounds = [
+    8,
+    8,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 0.6 fires 8 times in 3000 steps"
+kind = "interval"
+steps = 3000
+observable = "spikes"
+bounds = [
+    8,
+    8,
+]
+
+[behaviour.inputs]
+current = 0.6
+
+[[behaviour]]
+name = "a current of 0.4 fires 83 times in 39600 steps"
+kind = "interval"
+steps = 39600
+observable = "spikes"
+bounds = [
+    83,
+    83,
+]
+
+[behaviour.inputs]
+current = 0.4
