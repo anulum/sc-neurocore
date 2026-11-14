@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5666
+    "test_files": 5669
   },
   "documentation": {
     "public_pages": [
@@ -5104,6 +5104,7 @@
       "tests/test_equation_compiler_edge_case_coverage.py",
       "tests/test_equation_compiler_equation_to_fpga.py",
       "tests/test_equation_compiler_review_fixes.py",
+      "tests/test_equation_compiler_rtl_refusals.py",
       "tests/test_equation_compiler_testbench_generator.py",
       "tests/test_equation_compiler_transcendental_functions.py",
       "tests/test_equation_compiler_verilog_syntax.py",
@@ -7066,6 +7067,7 @@
       "tests/test_notebooks/test_nir_passport_notebook.py",
       "tests/test_notebooks/test_one_model_five_views_notebook.py",
       "tests/test_notebooks/test_posner_ibm_readiness_notebook.py",
+      "tests/test_notebooks/test_python_to_proven_silicon_notebook.py",
       "tests/test_notebooks/test_self_hosted_hub_notebook.py",
       "tests/test_notebooks/test_shd_real_spike_walkthrough_notebook.py",
       "tests/test_notebooks/test_shd_vertex_notebook.py",
@@ -8075,6 +8077,7 @@
       "tests/test_studio_codegen_export.py",
       "tests/test_studio_compile_process.py",
       "tests/test_studio_compile_traceability.py",
+      "tests/test_studio_compile_work_bound.py",
       "tests/test_studio_compiler_cosim.py",
       "tests/test_studio_compiler_ir_build.py",
       "tests/test_studio_compiler_ir_verify.py",

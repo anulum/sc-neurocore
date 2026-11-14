@@ -12,6 +12,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The RTL compile of an equation neuron refuses, in words, what the RTL
+  cannot bind: an equation that reads a name which is not a state, a
+  parameter or a constant (such as `dv/dt = -v / tau` with no `tau`)
+  compiled to RTL that read a net declared nowhere and did not elaborate;
+  an unknown function and a reset of a name that is not a state failed
+  with unmarked faults. The Python model still reads names passed to its
+  step. The ODE editor's 'Generate RTL' now answers each of these with
+  HTTP 422 and the reason, as it does for a parse refusal, instead of
+  HTTP 500: its check before admission runs the compile task's own
+  parse and emit on the job's payload. The co-simulation receipts of the
+  four bound silicon facets were recorded again on the new compiler.
+  One equation compile is bounded before the RTL emitter runs, on
+  '/api/compile' and '/api/ir/emit-sv-direct' alike: at most 128
+  function calls and 16,384 characters over its equations, threshold
+  and reset, refused in words over either. The emitter writes about
+  11,000 characters of RTL per call, in the API process. The largest
+  catalogue model calls 25 functions. Notebooks 27 and 29 compiled a
+  threshold and a reset that read 'V_th' and 'V_reset' without
+  declaring them; they now pass both as parameters, and notebook 27
+  is run by a test.
+
 - The Studio worker launcher now checks once, at its start, that its
   configured interpreter imports the worker bootstrap as a worker runs
   it: with -s, the worker's environment and, for a privileged launcher,

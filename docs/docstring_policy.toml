@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1963
+expected_file_count = 1969
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7906,3 +7906,27 @@ rationale = "Keep every optional-extra CI lane, the gdsfactory-gated optics lane
 [[file]]
 path = "tests/test_studio_ode_compile_refusals.py"
 rationale = "An equation compile the parser refuses is answered 422 with its reason and no job, while a server fault is left to the job."
+
+[[file]]
+path = "src/sc_neurocore/compiler/rtl_refusals.py"
+rationale = "Refuse, with text for the caller, an equation the RTL compile cannot bind or emit."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/compile_process.py"
+rationale = "Compile one Studio ODE payload to RTL, the same way for the isolated task and the check before admission."
+
+[[file]]
+path = "tests/test_equation_compiler_rtl_refusals.py"
+rationale = "The RTL compile refuses in words a name, a function or a reset target it cannot bind, and the Python model keeps its run-time names."
+
+[[file]]
+path = "src/sc_neurocore/studio/compile_work_bound.py"
+rationale = "Bound one equation compile's function calls and characters, refused in words, before the RTL emitter runs in the API process."
+
+[[file]]
+path = "tests/test_studio_compile_work_bound.py"
+rationale = "An equation compile over the bound is refused before the emitter runs, on both routes that emit in the API process, and no legitimate source is refused."
+
+[[file]]
+path = "tests/test_notebooks/test_python_to_proven_silicon_notebook.py"
+rationale = "Notebook 27 runs from its first code cell to its last, and its RTL declares the threshold and reset levels it reads."

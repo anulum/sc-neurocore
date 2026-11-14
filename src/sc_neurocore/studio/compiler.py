@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from sc_neurocore.studio.compile_traceability import build_compile_traceability
+from sc_neurocore.studio.compile_work_bound import refuse_compile_work_over_bound
 
 
 def emit_sv_from_equation(
@@ -23,9 +24,14 @@ def emit_sv_from_equation(
     init: dict[str, float] | None = None,
     module_name: str = "sc_ode_neuron",
 ) -> dict[str, Any]:
-    """Direct equation → SystemVerilog via the Python equation compiler."""
+    """Direct equation → SystemVerilog via the Python equation compiler.
+
+    The work is bounded before the emitter runs, by
+    :func:`~sc_neurocore.studio.compile_work_bound.refuse_compile_work_over_bound`.
+    """
     from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
+    refuse_compile_work_over_bound(equations, threshold, reset)
     ir_repr, verilog = equation_to_fpga(
         *equations,
         threshold=threshold,

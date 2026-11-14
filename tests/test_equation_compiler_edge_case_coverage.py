@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from sc_neurocore.compiler.rtl_refusals import RtlCompileRefusal
 from tests.equation_compiler_support import *  # noqa: F403
 
 
@@ -80,15 +83,20 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="lte_cmp")
         assert "<=" in verilog
 
-    def test_unknown_name_passthrough(self) -> None:
-        """Unknown names pass through as-is (for external signals)."""
+    def test_an_unknown_name_is_refused(self) -> None:
+        """A name the module declares no port or register for is refused, not emitted.
+
+        It used to pass through as a bare identifier "for external signals", but the
+        module declares no port for it, so nothing outside can drive it, and the RTL
+        reads a net declared nowhere, which Verilator refuses to elaborate.
+        """
         neuron = EquationNeuron(
             equations={"v": "external_signal + I"},
             state={"v": 0.0},
             dt=1.0,
         )
-        verilog = compile_to_verilog(neuron, module_name="ext_sig")
-        assert "external_signal" in verilog
+        with pytest.raises(RtlCompileRefusal, match="the equation reads 'external_signal', which"):
+            compile_to_verilog(neuron, module_name="ext_sig")
 
     def test_runtime_division(self) -> None:
         """Division by non-constant produces raw Verilog division."""

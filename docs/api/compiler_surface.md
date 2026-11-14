@@ -106,6 +106,7 @@ can change without a deprecation window.
 | `reciprocal_root_units` | internal build tool | Independent integer reciprocal-root reference with explicit positive domain, half-up rounding and saturation. |
 | `resource_estimator` | internal build tool | Deployment estimator reached through `deployment`. |
 | `riscv_driver` | direct public module | RISC-V driver generator has direct tests and documentation. |
+| `rtl_refusals` | direct public module | `RtlCompileRefusal`, the authored refusal of an equation the RTL cannot bind (a name with no signal, an unknown function, a reset of a name that is not a state); a `ValueError`. |
 | `sby_formal` | internal build tool | SymbiYosys script generator reached through `deployment`. |
 | `sensitivity_analysis` | direct public module | Sensitivity analysis has direct tests and adaptive-precision usage. |
 | `slr_placement` | internal build tool | Placement helper reached through `deployment`. |

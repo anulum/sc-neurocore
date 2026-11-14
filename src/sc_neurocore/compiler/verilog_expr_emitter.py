@@ -14,12 +14,12 @@ import ast
 import math
 from collections.abc import Sequence
 
-from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
 from .function_unit_ir import Program, emit_verilog
 from .power_unit_programs import power_program
 from .function_unit_programs import program
 from .random_unit_programs import program as random_program
+from .rtl_refusals import RtlCompileRefusal
 from .verilog_compiler_config import Q88
 
 
@@ -360,7 +360,12 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if name in expr_lut_tables.NAMED_CONSTANTS:
             # The Python model binds ``pi``; an undeclared ``pi`` net would not elaborate.
             return str(self.q.encode_signed_literal(expr_lut_tables.NAMED_CONSTANTS[name]))
-        return str(sanitize_ident(name, context="expression identifier"))
+        # Any other name would be a net declared nowhere, which the RTL does not
+        # elaborate; the Python model may read it from its step's inputs instead.
+        raise RtlCompileRefusal(
+            f"the equation reads {name!r}, which is not a state, a parameter or a constant "
+            "of this neuron; the RTL has no signal for it"
+        )
 
     def visit_Constant(self, node: ast.Constant) -> str:
         """Encode a numeric constant as a Verilog signed literal in Q-format."""
@@ -423,7 +428,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if len(node.args) < 1:
             raise ValueError(f"Function {fname} requires at least 1 argument")
         if fname not in expr_lut_tables.SUPPORTED_FUNCTIONS:
-            raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
+            raise RtlCompileRefusal(f"Unsupported function '{fname}' in Verilog compilation.")
         expr_lut_tables.check_call_arguments(fname, node)
         if fname in expr_lut_tables.RANDOM_FUNCTIONS:
             return self._emit_random(fname, node)

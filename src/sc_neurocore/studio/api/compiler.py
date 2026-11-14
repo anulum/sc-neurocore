@@ -15,7 +15,6 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
-from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.compiler_result import decode_equation_ir_response
@@ -38,7 +37,10 @@ from sc_neurocore.studio.equation_ir_schema import (
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_compile_configuration import resolve_model_compile_configuration
 from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
-from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
+from sc_neurocore.studio.platform.compile_process import (
+    COMPILE_PROCESS_TASK,
+    compile_equation_payload,
+)
 from sc_neurocore.studio.platform.equation_ir_process import (
     EQUATION_IR_PROCESS_TASK,
 )
@@ -78,16 +80,17 @@ def refuse_before_admission(payload: dict[str, Any]) -> None:
 
 
 def refuse_equations_before_admission(request: CompileRequest) -> None:
-    """Answer an equation compile the parser would refuse with its reason, before any job runs.
+    """Answer an equation compile the compiler would refuse with its reason, before any job runs.
 
-    The worker's ``equation_to_fpga`` parses the same equations, threshold
-    and reset before it emits RTL, and refuses them the same way, but a failed
-    job is answered HTTP 500 "studio_job_failed" with its reason kept in the
-    job ledger. This parse splits ODEs joined by ``;`` as that function does.
-    An authored refusal here is the caller's input: HTTP 422 with its text.
-    Anything else the parse raises is left to the job, as in
-    :func:`refuse_before_admission`. Refusals the RTL emitter raises after the
-    parse are not checked here.
+    The check runs the compile task's own :func:`compile_equation_payload` on the
+    payload the job is given: the parse of the equations, threshold and reset,
+    and the RTL emitter. A failed job is answered HTTP 500 "studio_job_failed",
+    and a worker's text never crosses the process boundary as authored, so the
+    refusal is computed here, in the API process. An authored refusal is the
+    caller's input: HTTP 422 with its text. Anything else is left to the job,
+    as in :func:`refuse_before_admission`. The shared compile bounds its work
+    before the emitter runs (:mod:`sc_neurocore.studio.compile_work_bound`), as
+    ``/api/ir/emit-sv-direct``, which also emits in this process, does.
 
     Parameters
     ----------
@@ -99,15 +102,8 @@ def refuse_equations_before_admission(request: CompileRequest) -> None:
     HTTPException
         HTTP 422 carrying the refusal's text.
     """
-    equations = [part.strip() for text in request.equations for part in text.split(";")]
     try:
-        from_equations(
-            *(equation for equation in equations if equation),
-            threshold=request.threshold,
-            reset=request.reset,
-            params=request.params,
-            init=request.init,
-        )
+        compile_equation_payload(request.model_dump())
     except AuthoredRefusal as refusal:
         raise HTTPException(status_code=422, detail=str(refusal)) from None
     except Exception:

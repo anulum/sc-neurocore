@@ -16116,6 +16116,36 @@ str
 
 ---
 
+## Module `compiler.rtl_refusals`
+
+### Class `RtlCompileRefusal`
+An equation the RTL compile cannot bind or emit, refused with text for the caller.
+
+It is a ``ValueError``, as the faults it replaces were.
+
+
+### Function `reset_target_signal(state_signals, target)`
+Return the register a reset assigns, or refuse a target that is not a state.
+
+Parameters
+----------
+state_signals : Mapping&#91;str, str&#93;
+    Each state variable's RTL signal name.
+target : str
+    The name the reset assigns.
+
+Returns
+-------
+str
+    The target's signal name.
+
+Raises
+------
+RtlCompileRefusal
+    If the neuron holds no state register for the target.
+
+---
+
 ## Module `compiler.sby_formal`
 
 ### Function `generate_sby_script(module_name, *, sva_file, depth, mode, solver, engine)`
@@ -46012,16 +46042,17 @@ HTTPException
     HTTP 422 carrying the refusal's text.
 
 ### Function `refuse_equations_before_admission(request)`
-Answer an equation compile the parser would refuse with its reason, before any job runs.
+Answer an equation compile the compiler would refuse with its reason, before any job runs.
 
-The worker's ``equation_to_fpga`` parses the same equations, threshold
-and reset before it emits RTL, and refuses them the same way, but a failed
-job is answered HTTP 500 "studio_job_failed" with its reason kept in the
-job ledger. This parse splits ODEs joined by ``;`` as that function does.
-An authored refusal here is the caller's input: HTTP 422 with its text.
-Anything else the parse raises is left to the job, as in
-:func:`refuse_before_admission`. Refusals the RTL emitter raises after the
-parse are not checked here.
+The check runs the compile task's own :func:`compile_equation_payload` on the
+payload the job is given: the parse of the equations, threshold and reset,
+and the RTL emitter. A failed job is answered HTTP 500 "studio_job_failed",
+and a worker's text never crosses the process boundary as authored, so the
+refusal is computed here, in the API process. An authored refusal is the
+caller's input: HTTP 422 with its text. Anything else is left to the job,
+as in :func:`refuse_before_admission`. The shared compile bounds its work
+before the emitter runs (:mod:`sc_neurocore.studio.compile_work_bound`), as
+``/api/ir/emit-sv-direct``, which also emits in this process, does.
 
 Parameters
 ----------
@@ -47872,10 +47903,70 @@ and so its digest, has no seed and stays as it was.
 
 ---
 
+## Module `studio.compile_work_bound`
+
+### Class `CompileWorkRefused`
+An equation compile over the bound on its work, refused with text for the caller.
+
+
+### Class `CompileWork`
+The work one equation compile asks for.
+
+Attributes
+----------
+function_calls : int
+    Function calls over every expression the compile parses.
+characters : int
+    Characters of the equations, the threshold and the reset together.
+
+
+### Function `measure_compile_work(equations, threshold, reset)`
+Measure the work one equation compile asks for.
+
+Parameters
+----------
+equations : Sequence&#91;str&#93;
+    The request's equations.
+threshold : str or None
+    The request's threshold.
+reset : str or None
+    The request's reset.
+
+Returns
+-------
+CompileWork
+    Its function calls and its characters.
+
+### Function `refuse_compile_work_over_bound(equations, threshold, reset)`
+Refuse an equation compile whose work is over the bound, before anything parses it.
+
+The characters are counted first, so an oversized request is refused without
+being parsed.
+
+Parameters
+----------
+equations : Sequence&#91;str&#93;
+    The request's equations.
+threshold : str or None
+    The request's threshold.
+reset : str or None
+    The request's reset.
+
+Raises
+------
+CompileWorkRefused
+    Over :data:`MAX_EXPRESSION_CHARACTERS` characters, or over
+    :data:`MAX_FUNCTION_CALLS` function calls.
+
+---
+
 ## Module `studio.compiler`
 
 ### Function `emit_sv_from_equation(equations, params, threshold, reset, init, module_name)`
 Direct equation → SystemVerilog via the Python equation compiler.
+
+The work is bounded before the emitter runs, by
+:func:`~sc_neurocore.studio.compile_work_bound.refuse_compile_work_over_bound`.
 
 ### Function `cosim_traces(equations, threshold, reset, params, init, dt, duration, current, *, protocol, frequency_hz, q_format, overflow, rounding)`
 Run the float64 reference and the bit-true fixed-point kernel side by side.
@@ -51651,6 +51742,11 @@ Build the default capability registry for the current Studio backend.
 
 ## Module `studio.platform.compile_process`
 
+### Class `EquationCompileRequest`
+Validated JSON payload for an equation compile.
+
+- **__init__**(\*, equations, threshold, reset, params, init, module_name)
+
 ### Function `run_compile_process_task(context, payload)`
 Compile one Studio ODE payload in an isolated process.
 
@@ -51670,6 +51766,30 @@ Raises
 ------
 ValueError
     If the payload does not match the JSON-serializable compile contract.
+
+### Function `compile_equation_payload(payload)`
+Validate a compile payload and compile it to RTL, as the compile task does.
+
+The task and the Studio's check before admission both call this, on the same
+payload, so the check refuses exactly what the task would refuse. The work
+is bounded before the emitter runs, by
+:func:`~sc_neurocore.studio.compile_work_bound.refuse_compile_work_over_bound`.
+
+Parameters
+----------
+payload : Mapping&#91;str, object&#93;
+    JSON object matching the public ``/api/compile`` request contract.
+
+Returns
+-------
+tuple&#91;EquationCompileRequest, str&#93;
+    The validated request and the RTL compiled from it.
+
+Raises
+------
+ValueError
+    If the payload does not match the contract, or the parse or the RTL
+    compile refuses it; an authored refusal names the caller's input.
 
 ---
 

@@ -15,6 +15,7 @@ from collections.abc import Mapping
 
 from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 from sc_neurocore.studio.compile_traceability import build_compile_traceability
+from sc_neurocore.studio.compile_work_bound import refuse_compile_work_over_bound
 from sc_neurocore.studio.platform.action_evidence import (
     write_studio_action_evidence_manifest,
 )
@@ -46,16 +47,7 @@ def run_compile_process_task(
     ValueError
         If the payload does not match the JSON-serializable compile contract.
     """
-
-    request = _compile_request_from_payload(payload)
-    _, verilog = equation_to_fpga(
-        *request.equations,
-        threshold=request.threshold,
-        reset=request.reset,
-        params=request.params,
-        init=request.init,
-        module_name=request.module_name,
-    )
+    request, verilog = compile_equation_payload(payload)
     result: dict[str, object] = {
         "chars": len(verilog),
         "compile_traceability": build_compile_traceability(
@@ -86,8 +78,45 @@ def run_compile_process_task(
     return result
 
 
-class _CompileProcessRequest:
-    """Validated JSON payload for an isolated compiler task."""
+def compile_equation_payload(payload: Mapping[str, object]) -> tuple[EquationCompileRequest, str]:
+    """Validate a compile payload and compile it to RTL, as the compile task does.
+
+    The task and the Studio's check before admission both call this, on the same
+    payload, so the check refuses exactly what the task would refuse. The work
+    is bounded before the emitter runs, by
+    :func:`~sc_neurocore.studio.compile_work_bound.refuse_compile_work_over_bound`.
+
+    Parameters
+    ----------
+    payload : Mapping[str, object]
+        JSON object matching the public ``/api/compile`` request contract.
+
+    Returns
+    -------
+    tuple[EquationCompileRequest, str]
+        The validated request and the RTL compiled from it.
+
+    Raises
+    ------
+    ValueError
+        If the payload does not match the contract, or the parse or the RTL
+        compile refuses it; an authored refusal names the caller's input.
+    """
+    request = _compile_request_from_payload(payload)
+    refuse_compile_work_over_bound(request.equations, request.threshold, request.reset)
+    _, verilog = equation_to_fpga(
+        *request.equations,
+        threshold=request.threshold,
+        reset=request.reset,
+        params=request.params,
+        init=request.init,
+        module_name=request.module_name,
+    )
+    return request, verilog
+
+
+class EquationCompileRequest:
+    """Validated JSON payload for an equation compile."""
 
     def __init__(
         self,
@@ -107,8 +136,8 @@ class _CompileProcessRequest:
         self.module_name = module_name
 
 
-def _compile_request_from_payload(payload: Mapping[str, object]) -> _CompileProcessRequest:
-    return _CompileProcessRequest(
+def _compile_request_from_payload(payload: Mapping[str, object]) -> EquationCompileRequest:
+    return EquationCompileRequest(
         equations=_string_list_field(payload, "equations"),
         threshold=_optional_string_field(payload, "threshold"),
         reset=_optional_string_field(payload, "reset"),
@@ -171,5 +200,7 @@ def _serialize_worker_result(result: Mapping[str, object]) -> str:
 
 __all__ = [
     "COMPILE_PROCESS_TASK",
+    "EquationCompileRequest",
+    "compile_equation_payload",
     "run_compile_process_task",
 ]

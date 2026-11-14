@@ -23,6 +23,7 @@ from ._verilog_integrators import (
     _emit_rk4_deriv_wires,
 )
 from .verilog_compiler_config import Q88
+from .rtl_refusals import reset_target_signal
 from .verilog_expr_emitter import _emit_expr
 
 
@@ -362,7 +363,7 @@ def _build_neuron_core(
     )
     reset_expressions: dict[str, str] = {}
     for var, expr_str in neuron.reset_rules.items():
-        safe_var = state_var_map[var]
+        safe_var = reset_target_signal(state_var_map, var)
         rexpr, r_intermediates, _mc, _tc, r_pregs = _emit_expr(
             expr_str,
             {},

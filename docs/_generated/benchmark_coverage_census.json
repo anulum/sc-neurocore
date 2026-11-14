@@ -2319,6 +2319,8 @@
     },
     {
       "changed": [
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/descriptor_generator.py",
         "src/sc_neurocore/neurons/expression_derivative.py",
         "src/sc_neurocore/neurons/facet_receipts.py",
@@ -2568,6 +2570,8 @@
         "engine/src/ir/emit_sv.rs",
         "engine/src/ir/mod.rs",
         "engine/src/ir/sv_target.rs",
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/expression_derivative.py"
       ],
       "currency": "outdated",
@@ -2583,6 +2587,8 @@
         "engine/src/ir/emit_sv.rs",
         "engine/src/ir/mod.rs",
         "engine/src/ir/sv_target.rs",
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/expression_derivative.py"
       ],
       "currency": "outdated",

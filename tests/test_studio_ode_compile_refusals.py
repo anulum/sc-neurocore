@@ -14,7 +14,9 @@ Measured before this was written: with the reset garbled to
 error "Studio job failed.", while the job ledger kept the parser's reason. A
 garbled threshold and an equation that is not an ODE were answered the same
 way. Each is refused by the equation parse the worker runs before the RTL
-emitter, with text written for the caller.
+emitter, with text written for the caller. The RTL emitter's own refusals (a name
+the RTL has no signal for, an unknown function, a reset of a name that is not a
+state) were answered the same way; the check now runs the worker's whole compile.
 """
 
 from pathlib import Path
@@ -25,13 +27,12 @@ import httpx2
 import pytest
 from starlette.testclient import TestClient
 
-from sc_neurocore.compiler.fpga_wrapper import equation_to_fpga
-from sc_neurocore.neurons.equation_builder import from_equations
-from sc_neurocore.neurons.equation_refusals import EquationRefusal
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.api.compiler import refuse_equations_before_admission
 from sc_neurocore.studio.api.schemas import CompileRequest
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings
+from sc_neurocore.studio.platform.compile_process import compile_equation_payload
 
 #: The ODE editor's request with every field valid; each refusal changes one field.
 VALID: dict[str, Any] = {
@@ -47,6 +48,16 @@ REFUSALS: list[tuple[dict[str, Any], str]] = [
     ({"reset": "v = -65 = (-v + 1) / 10"}, "Invalid equation syntax: '-65 = (-v + 1) / 10'"),
     ({"threshold": "v >"}, "Invalid equation syntax: 'v >'"),
     ({"equations": ["v = 1"]}, "Cannot parse equation: 'v = 1'. Expected 'd<var>/dt = <expr>'"),
+    (
+        {"equations": ["dv/dt = -v / tau"]},
+        "the equation reads 'tau', which is not a state, a parameter or a constant of "
+        "this neuron; the RTL has no signal for it",
+    ),
+    (
+        {"equations": ["dv/dt = frobnicate(v)"]},
+        "Unsupported function 'frobnicate' in Verilog compilation.",
+    ),
+    ({"reset": "w = 0"}, "the reset assigns 'w', which is not a state of this neuron"),
 ]
 
 
@@ -111,27 +122,11 @@ def test_a_refused_equation_compile_answers_422_with_its_reason_and_runs_no_job(
         assert client.get("/api/studio/jobs").json() == before
 
 
-def worker_fields(request: dict[str, Any]) -> dict[str, Any]:
-    """Return the keyword fields the worker passes to ``equation_to_fpga``.
-
-    Parameters
-    ----------
-    request : dict[str, Any]
-        A compile request body.
-
-    Returns
-    -------
-    dict[str, Any]
-        Its threshold, reset, parameters and initial state.
-    """
-    return {key: request[key] for key in ("threshold", "reset", "params", "init")}
-
-
 @pytest.mark.parametrize(("change", "reason"), REFUSALS)
 def test_the_check_refuses_what_the_worker_compile_refuses(
     change: dict[str, Any], reason: str
 ) -> None:
-    """The check and the worker's compile refuse the same request with the same text.
+    """The check and the worker's compile refuse the same payload with the same text.
 
     The worker's refusal is an authored one, the class the check answers 422.
 
@@ -142,58 +137,56 @@ def test_the_check_refuses_what_the_worker_compile_refuses(
     reason : str
         The whole refusal message.
     """
-    request = {**VALID, **change}
-    with pytest.raises(EquationRefusal) as compiled:
-        equation_to_fpga(*request["equations"], **worker_fields(request))
+    request = CompileRequest(**{**VALID, **change})
+    with pytest.raises(AuthoredRefusal) as compiled:
+        compile_equation_payload(request.model_dump())
     with pytest.raises(HTTPException) as checked:
-        refuse_equations_before_admission(CompileRequest(**request))
+        refuse_equations_before_admission(request)
     assert checked.value.status_code == 422
     assert checked.value.detail == str(compiled.value) == reason
 
 
 @pytest.mark.parametrize(
-    "equations",
+    "request_body",
     [
-        ["dv/dt = -w / tau; dw/dt = v"],
-        [" dv/dt = -w / tau ;; dw/dt = v ; "],
-        ["dv/dt = -w / tau", "dw/dt = v;"],
+        VALID,
+        {**VALID, "equations": [" dv/dt = -w / tau ;; dw/dt = v ; "], "params": {"tau": 10.0}},
+        {**VALID, "module_name": "sc_named_module"},
     ],
+    ids=["one-ode", "semicolon-joined", "module-name"],
 )
-def test_the_check_parses_the_neuron_the_worker_compile_parses(
-    monkeypatch: pytest.MonkeyPatch, equations: list[str]
+def test_the_check_runs_the_worker_compile_on_the_payload_the_job_receives(
+    monkeypatch: pytest.MonkeyPatch, request_body: dict[str, Any]
 ) -> None:
-    """The check parses the neuron the worker compiles, whatever ';', blanks and empty parts it gets.
+    """The check compiles exactly what the job is given, so it never refuses what the job accepts.
 
     Parameters
     ----------
     monkeypatch : pytest.MonkeyPatch
-        Records the neuron the check parses.
-    equations : list[str]
-        Equation strings as a caller may send them.
+        Records what the check compiles.
+    request_body : dict[str, Any]
+        A request the worker compiles.
     """
     import sc_neurocore.studio.api.compiler as compiler_routes
 
-    parsed: list[Any] = []
+    seen: list[object] = []
 
-    def recording_parse(*args: Any, **kwargs: Any) -> Any:
-        parsed.append(from_equations(*args, **kwargs))
-        return parsed[-1]
+    def recording_compile(payload: Any) -> Any:
+        seen.append(payload)
+        return compile_equation_payload(payload)
 
-    monkeypatch.setattr(compiler_routes, "from_equations", recording_parse)
-    request = {
-        **VALID,
-        "equations": equations,
-        "params": {"tau": 10.0},
-        "init": {"v": 0.5, "w": 0.0},
-    }
-    refuse_equations_before_admission(CompileRequest(**request))
-    compiled, _ = equation_to_fpga(*equations, **worker_fields(request))
-    assert len(parsed) == 1
-    for attribute in ("equations", "parameters", "initial_state", "threshold_expr", "reset_rules"):
-        assert getattr(parsed[0], attribute) == getattr(compiled, attribute), attribute
-    assert compiled.equations == {"v": "-w / tau", "w": "v"}
-    assert compiled.parameters == {"tau": 10.0}
-    assert compiled.initial_state == {"v": 0.5, "w": 0.0}
+    monkeypatch.setattr(compiler_routes, "compile_equation_payload", recording_compile)
+    request = CompileRequest(**request_body)
+    refuse_equations_before_admission(request)
+    assert seen == [request.model_dump()]
+
+
+def test_the_compile_task_names_the_module_it_is_given() -> None:
+    """The shared compile emits the module under the payload's name, as the job returns it."""
+    request = CompileRequest(**{**VALID, "module_name": "sc_named_module"})
+    compiled, verilog = compile_equation_payload(request.model_dump())
+    assert compiled.module_name == "sc_named_module"
+    assert "module sc_named_module" in verilog
 
 
 @pytest.mark.parametrize(
@@ -220,16 +213,16 @@ def test_a_fault_that_is_not_an_authored_refusal_is_left_to_the_job(
     tmp_path : pathlib.Path
         Test-owned jobs and audit location.
     monkeypatch : pytest.MonkeyPatch
-        Makes the check's parse meet such a fault; the worker parses on its own.
+        Makes the check's compile meet such a fault; the worker compiles on its own.
     fault : Exception
-        What the check's parse raises.
+        What the check's compile raises.
     """
     import sc_neurocore.studio.api.compiler as compiler_routes
 
-    def faulty_parse(*_args: object, **_kwargs: object) -> None:
+    def faulty_compile(*_args: object, **_kwargs: object) -> None:
         raise fault
 
-    monkeypatch.setattr(compiler_routes, "from_equations", faulty_parse)
+    monkeypatch.setattr(compiler_routes, "compile_equation_payload", faulty_compile)
     with studio_client(tmp_path) as client:
         response = post_compile(client, VALID)
         assert response.status_code == 200, response.text
