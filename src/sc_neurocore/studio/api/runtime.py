@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+import atexit
+import os
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -125,6 +128,41 @@ class StudioApiContext:
         raise HTTPException(500, "studio_job_failed")
 
 
+def _remove_scratch_job_root(root: Path, owner_pid: int) -> None:
+    """Remove a scratch job root, but only in the process that made it.
+
+    A forked child inherits the exit handlers of its parent; it must not remove
+    the root the parent still uses. Process workers start through an exec and
+    inherit none.
+
+    Parameters
+    ----------
+    root : Path
+        The scratch root.
+    owner_pid : int
+        The process that made it.
+    """
+    if os.getpid() == owner_pid:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def _scratch_job_root() -> Path:
+    """Make this process's private scratch job root and remove it when the process exits.
+
+    An unconfigured root is scratch: no later process reconciles it, and its
+    records go with the process. One fixed shared path would hand every Studio
+    on the host the same ledger, so each process makes its own.
+
+    Returns
+    -------
+    Path
+        The new scratch root, registered for removal at exit.
+    """
+    root = Path(tempfile.mkdtemp(prefix="sc-neurocore-studio-jobs-"))
+    atexit.register(_remove_scratch_job_root, root, os.getpid())
+    return root
+
+
 def build_studio_api_context(
     app: FastAPI,
     runtime_settings: StudioRuntimeSettings | None = None,
@@ -204,7 +242,7 @@ def build_studio_api_context(
         studio_job_root = (
             Path(settings.job_root_path)
             if settings.job_root_path is not None
-            else Path(tempfile.mkdtemp(prefix="sc-neurocore-studio-jobs-"))
+            else _scratch_job_root()
         )
         studio_job_manager = StudioJobManager(
             root=studio_job_root,

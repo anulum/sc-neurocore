@@ -402,6 +402,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A Studio started without a configured job root removes its private scratch job
+  root when its process exits normally; only the process that made the root
+  removes it, and a configured root is kept. A process killed outright, as by
+  SIGKILL, still leaves its root. Each such start left one
+  `sc-neurocore-studio-jobs-*` folder in the temporary directory: one run of the
+  112 test files that build the Studio app left 287.
 - The RTL compile of an equation neuron refuses in words what the RTL cannot
   bind: an equation that reads a name which is not a state, a parameter or a
   constant (such as `dv/dt = -v / tau` with no `tau`) compiled to RTL that read

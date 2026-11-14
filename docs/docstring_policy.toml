@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1977
+expected_file_count = 1978
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7962,3 +7962,7 @@ rationale = "The dual alpha-synapse LIF model's Go and Mojo C ABI: aliasing and 
 [[file]]
 path = "tests/test_resonate_and_fire_native_abi.py"
 rationale = "The resonate-and-fire model's Go and Mojo C ABI: aliasing and null refusals without writes, the numerical statuses, and the written abi.h and the LLVM IR holding a signed 32-bit count and status."
+
+[[file]]
+path = "tests/test_studio_scratch_job_root.py"
+rationale = "Studio scratch job root: removed when its process exits, a configured root kept, and only the creating process removes it."
