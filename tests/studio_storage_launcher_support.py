@@ -60,8 +60,24 @@ _PR_SET_PDEATHSIG = 1
 _PRCTL = ctypes.CDLL(None, use_errno=True).prctl if sys.platform == "linux" else None
 
 
-def short_root() -> Path:
-    """Return a temporary folder under which every launcher socket path fits the Unix limit.
+def short_root(
+    *,
+    base_name: str = BASE_NAME,
+    longest_suffix: str = LONGEST_SOCKET_SUFFIX,
+    purpose: str = "the launcher's sockets",
+) -> Path:
+    """Return a temporary folder under which every socket path of a test's base fits the Unix limit.
+
+    Parameters
+    ----------
+    base_name : str
+        The longest name of the base folder made under the returned one, with its
+        leading ``/``; the launcher's by default.
+    longest_suffix : str
+        The longest socket path below that base, with its leading ``/``; the
+        launcher's by default.
+    purpose : str
+        What the sockets are, for the refusal's message.
 
     Returns
     -------
@@ -75,13 +91,13 @@ def short_root() -> Path:
         If neither folder is short enough; the message names the largest length that
         fits, so the run can set ``TMPDIR`` to a shorter folder.
     """
-    room = UNIX_SOCKET_PATH_LIMIT - 1 - len(BASE_NAME) - len(LONGEST_SOCKET_SUFFIX)
+    room = UNIX_SOCKET_PATH_LIMIT - 1 - len(base_name) - len(longest_suffix)
     candidates = (tempfile.gettempdir(), os.environ.get("XDG_RUNTIME_DIR", ""))
     for candidate in candidates:
         if candidate and os.path.isdir(candidate) and len(os.fsencode(candidate)) <= room:
             return Path(candidate)
     raise AssertionError(
-        f"no temporary folder of at most {room} bytes for the launcher's sockets; "
+        f"no temporary folder of at most {room} bytes for {purpose}; "
         f"TMPDIR is {tempfile.gettempdir()!r} and XDG_RUNTIME_DIR "
         f"{os.environ.get('XDG_RUNTIME_DIR', '')!r}; set TMPDIR to a shorter folder"
     )

@@ -36,15 +36,34 @@ from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
 from sc_neurocore.studio.platform.storage_service import StorageService, load_service_configuration
 from tests.studio_seccomp_support import REPOSITORY
+from tests.studio_storage_launcher_support import UNIX_SOCKET_PATH_LIMIT, short_root
 from tests.studio_storage_supervision_support import JOB, admit
 
 DEAD_JOB = "sj_" + "d" * 16
+#: The base folder's name as ``mkdtemp(prefix="scs")`` makes it, and the service's one socket below it.
+SERVICE_BASE_NAME = "/scs" + "0" * 8
+SERVICE_SOCKET = "/endpoint/storage.sock"
 
 
 @pytest.fixture
 def base() -> Iterator[Path]:
-    """Short private base so the service socket path fits the Unix limit."""
-    path = Path(tempfile.mkdtemp(prefix="scs"))
+    """Short private base so the service socket path fits the Unix limit.
+
+    The base is made under the run's TMPDIR when that is short enough, else under
+    ``XDG_RUNTIME_DIR``; when neither is, the run is told how short TMPDIR must be,
+    rather than the service failing to start without a word.
+
+    Yields
+    ------
+    Path
+        A new folder with ``authority`` and ``endpoint``; it is removed afterwards.
+    """
+    root = short_root(
+        base_name=SERVICE_BASE_NAME,
+        longest_suffix=SERVICE_SOCKET,
+        purpose="the storage service's socket",
+    )
+    path = Path(tempfile.mkdtemp(prefix="scs", dir=root))
     (path / "authority").mkdir(mode=0o700)
     (path / "endpoint").mkdir(mode=0o2750)
     (path / "endpoint").chmod(0o2750)
@@ -106,6 +125,46 @@ def _dead_identity() -> str:
     identity = supervisor_identity(child.pid)
     child.wait(timeout=30)
     return identity
+
+
+def test_the_base_leaves_room_for_the_service_socket(base: Path) -> None:
+    """The service's socket path under the test's base fits the Unix limit.
+
+    Parameters
+    ----------
+    base : Path
+        The service's private namespace.
+    """
+    assert base.name.startswith("scs") and len("/" + base.name) == len(SERVICE_BASE_NAME)
+    assert len(os.fsencode(str(base) + SERVICE_SOCKET)) < UNIX_SOCKET_PATH_LIMIT
+
+
+def test_no_folder_short_enough_for_the_service_socket_is_named(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Under folders too long for the socket, the run is told the length that fits.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Points TMPDIR and ``XDG_RUNTIME_DIR`` at a long folder.
+    tmp_path : Path
+        Holds the long folder.
+    """
+    long_folder = tmp_path / ("x" * 90)
+    long_folder.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(long_folder))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(long_folder))
+    room = UNIX_SOCKET_PATH_LIMIT - 1 - len(SERVICE_BASE_NAME) - len(SERVICE_SOCKET)
+    with pytest.raises(
+        AssertionError,
+        match=f"no temporary folder of at most {room} bytes for the storage service's socket",
+    ):
+        short_root(
+            base_name=SERVICE_BASE_NAME,
+            longest_suffix=SERVICE_SOCKET,
+            purpose="the storage service's socket",
+        )
 
 
 def test_configuration_is_exact(base: Path) -> None:
