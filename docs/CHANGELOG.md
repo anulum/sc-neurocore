@@ -12,354 +12,130 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-- The Rulkov map neuron states six behaviour cases: the three event
-  counts its Q16.16 test enrols for the hand model, the schema and the
-  RTL (0, 7 and 10 events in 30 steps at currents 0, 0.5 and 1.5), and
-  three counts over 1000 steps at the same currents measured with its
-  public class, which the schema matches (0, 34 and 130). The enrolled
-  counts alone left the 3 sign variants of its slow equation undecided;
-  with the measured ones each of the 17 variants breaks a case. Ten of
-  the 185 catalogue models now state cases.
+### Security
 
-- A Go accelerator build puts its library in place as a new file: the
-  builder copies it beside its target under a temporary name and renames
-  it over the target. The copy wrote into the existing file, so a
-  process with the former library loaded saw its mapped code change, and
-  a library path that was a symbolic link had the file it named
-  overwritten; in one local checkout such a link pointed into another
-  checkout's folder. The library keeps the mode the build gave it, and
-  a copy that fails leaves the former library and no partial file.
-
-- The Ibarz-Tanaka map neuron states four behaviour cases: the two event
-  counts its Q16.16 test enrols for the hand model, the schema and the
-  RTL (none in 4 steps at a current of -0.5, 3 in 30 steps at 0.2), and
-  two counts measured with its public class, which the schema matches:
-  7 events in 1583 steps at -0.5 and 18 in 1582 steps at 0. Their
-  horizons were chosen where the count holds under perturbations far
-  below rounding, with no event of a perturbed run within 17 steps of
-  the horizon. The enrolled counts alone left 7 of the 26 sign variants
-  of its map undecided; with the measured ones each variant breaks a
-  case. Nine of the 185 catalogue models now state cases.
-
-- The Go accelerator builds no longer write over the committed C headers.
-  `go build -buildmode=c-shared` writes a header beside its output, and
-  the builds wrote their output beside the source, where the tracked
-  header is a committed ABI: five loading tests compare a fresh build's
-  header with it byte for byte, and three headers are written by hand.
-  `tools/build_accel_backends.py` and the CI and audit workflows now
-  build into a temporary folder and copy only the library. The builder
-  compares cgo's header with the tracked one and names any that differ,
-  without writing them; in CI the pins are therefore compared with the
-  committed headers rather than with a header the same run just wrote.
-
-- The SC four-state GLIF neuron states six behaviour cases, the event
-  counts its Q16.16 test enrols for the hand model, the schema and the
-  RTL: silent at rest and at a current of 15, then 23, 54, 86 and 95
-  events in 1000 steps at currents 22, 30, 45 and 50. Its public class
-  holds them, and each of the 15 sign variants of its four equations
-  breaks one. Eight of the 185 catalogue models now state cases.
-
-- The written C ABI headers of three Go adapters, adaptive_threshold_if,
-  alpha and resonate_and_fire, are now named abi.h in their packages, as
-  conversion/cshared's already was. A c-shared build writes cgo's own
-  lib<name>.h beside the library, and so replaced the written ABI with
-  cgo's text on every local build. The wheel ships
-  accel/go/adaptive_threshold_if/abi.h in place of
-  libadaptive_threshold_if.h, and conversion/cshared ships its abi.h
-  only, not whatever header a local build left beside it.
-
-- The integer quadratic integrate-and-fire neuron states one behaviour
-  case, the count its RTL test enrols for the source, both RTL forms and
-  the schema: 26 events in 400 steps at an integer current of 10. Its
-  public class holds it, and each of the 8 sign variants of its map
-  breaks it. A case's drive now keeps the type it is written in: a whole
-  number written without a point stays an integer, so a model whose step
-  takes an int32 current, as this one does, can be driven. Every drive
-  stated before is written with a point and is unchanged. Seven of the
-  185 catalogue models now state cases.
-
-- The RTL compile of an equation neuron refuses, in words, what the RTL
-  cannot bind: an equation that reads a name which is not a state, a
-  parameter or a constant (such as `dv/dt = -v / tau` with no `tau`)
-  compiled to RTL that read a net declared nowhere and did not elaborate;
-  an unknown function and a reset of a name that is not a state failed
-  with unmarked faults. The Python model still reads names passed to its
-  step. The ODE editor's 'Generate RTL' now answers each of these with
-  HTTP 422 and the reason, as it does for a parse refusal, instead of
-  HTTP 500: its check before admission runs the compile task's own
-  parse and emit on the job's payload. The co-simulation receipts of the
-  four bound silicon facets were recorded again on the new compiler.
-  One equation compile is bounded before the RTL emitter runs, on
-  '/api/compile' and '/api/ir/emit-sv-direct' alike: at most 128
-  function calls and 16,384 characters over its equations, threshold
-  and reset, refused in words over either. The emitter writes about
-  11,000 characters of RTL per call, in the API process. The largest
-  catalogue model calls 25 functions. Notebooks 27 and 29 compiled a
-  threshold and a reset that read 'V_th' and 'V_reset' without
-  declaring them; they now pass both as parameters, and notebook 27
-  is run by a test.
-
-- The Studio worker launcher now checks once, at its start, that its
-  configured interpreter imports the worker bootstrap as a worker runs
-  it: with -s, the worker's environment and, for a privileged launcher,
-  the worker's identity. If it cannot, the launcher refuses to start and
-  names the interpreter and the reason: it cannot be run, the import's
-  last error line, or no answer within 60 s. Such an interpreter let
-  every launched worker exit before asking for its grant, reported only
-  by its exit status.
-
-- The SC resetting Wilson neuron states three behaviour cases, the event
-  counts its Q16.16 test enrols for the hand model, the schema and the
-  RTL: silent without a current, then 1 and 4 events in 5000 steps at
-  currents 2 and 10. Its public class holds them, and each of the 14 sign
-  variants of its two equations breaks one. Six of the 185 catalogue
-  models now state cases.
-
-- The symmetric SC quadratic integrate-and-fire neuron states eight
-  behaviour cases, the event counts its Q16.16 test enrols for the hand
-  model, the schemas and the RTL: silent without a current, then 2, 3, 6,
-  11, 26, 100 and 250 events in 1000 steps at currents 0.333, 0.5, 1, 2,
-  5, 20 and 50. Its public class holds them, and each of the two sign
-  variants of its equation breaks one. Five of the 185 catalogue models
-  now state cases.
-
-- A Studio worker that connects for its grant and exits before the grant is
-  given is now reported as such: "exited with N after requesting its grant,
-  before it was given". Within one poll of the launcher's report, such a
-  worker was reported as never having asked.
-
-- The Wilson cortical neuron states five behaviour cases, the counts its
-  Q16.16 parity test enrols for the hand model, the schema and the RTL:
-  silent without a current, then 44, 46, 49 and 52 upward crossings in
-  5000 steps at currents 0.08, 0.1, 0.14 and 0.2. Its public class holds
-  them, and each of the 15 sign variants of its two equations breaks one.
-  Four of the 185 catalogue models now state cases.
-
-- The Hindmarsh-Rose neuron states five behaviour cases, the counts its
-  Q16.16 parity test enrols for the hand model, the schema and the RTL:
-  silent at currents 0 and 2, then 26, 40 and 52 upward crossings in
-  2000 steps at currents 3, 4 and 5. Its public class holds them, and each
-  of the 13 sign variants of its three equations breaks one, so the
-  cases depend on every sign. Three of the 185 catalogue models now state
-  cases.
-
-- Screen readers and speech input now get the Studio's own names. A
-  model in the library is named by the label it shows, such as "AdEx",
-  with its contract line (validation, integrator, terminal tier) as its
-  description; its name used to run the label into that line
-  ("AdExvalidation parity ..."). The RTL panel's co-simulation controls
-  are a named group, and its read-only RTL viewer is named "Generated
-  RTL" instead of the editor's default "Editor content".
-
-- The ODE editor's 'Generate RTL' answers an equation, threshold or reset
-  it cannot parse with HTTP 422 and the parser's reason, for example
-  "Invalid equation syntax: '-65 = (-v + 1) / 10'" for a garbled reset.
-  It was answered HTTP 500 "studio_job_failed", while simulating the
-  same input was refused as invalid. The compile now runs the parse the
-  worker runs before it admits a job, so no job is started for such a
-  request; a fault that is not the caller's input is still left to the
-  job.
-
-- 'Generate RTL' offers a model only the Q-formats that hold the neuron
-  the Studio compiles. The formats were judged on the schema's own
-  defaults, but the Studio sends the catalogue's, and for the scaled-reset
-  adaptive integrate-and-fire neuron they differ in eight parameters: Q8.8
-  was offered as its default and then refused, since it cannot hold
-  tau_2 = 200. Q16.16 is now its only offered format and its default.
-  Across the catalogue, every offered format compiles the request the
-  Studio sends.
-
-- 'Generate RTL' now compiles the catalogue models whose parameters the
-  Studio names differently from their canonical schema; nine were refused
-  as "Unknown schema parameter override(s)". The compile translates each
-  one as the model's class and its schema both state: a rename (AdEx's b,
-  c_m and delta_t are the schema's b_adapt, C and delta_T; Brunel-Wang's
-  C_m; the Hodgkin-Huxley and Wang-Buzsaki conductances; Resonate-and-Fire's
-  threshold), a derivation (Jansen-Rit's four couplings from c; the Amari
-  field's sampled kernel weights from its kernel parameters and dx), and the
-  seed of the escape-rate and Poisson neurons, which seeds the schema's
-  16-bit LFSR and is now recorded with the compile, in its traceability
-  input and in the co-simulation cross-check. Each translation was checked
-  by running the model's class and the compiled schema neuron side by side
-  at values other than the defaults. The Amari field compiles only as the
-  schema's fixed field of four sites, so its default of 64 sites is refused
-  with that reason, and a request in its catalogue names samples the kernel
-  at the request's own dx. A seed the LFSR cannot take, or one parameter
-  sent under both of its names, is refused in words.
-
-- A Studio storage-profile job whose worker exits before asking for its
-  grant now fails at once, as "Studio process worker exited with N before
-  requesting its grant.". It waited out the whole grant deadline, 60 s by
-  default, and then reported only "Studio worker grant failed.". The
-  supervisor now asks the launcher, while it waits, whether the worker
-  still runs. A grant endpoint path too long for a Unix socket is refused
-  with its length, in place of "Studio worker could not start: grant
-  endpoint.".
-
-- The Studio's storage service now stops on SIGTERM or SIGINT whatever
-  signal mask the process that starts it hands down. A process inherits
-  its starter's blocked signals; with the two blocked, the service's stop
-  handlers never ran and SIGTERM left it serving. It now unblocks both at
-  start, as the worker launcher service already does.
-
-- The version audit (`tools/version_surface_audit.py`) now also holds the
-  release metadata to the project version: `.zenodo.json`, which an archived
-  release records, `CITATION.cff` and `conda/meta.yaml`. Before, a release
-  could change the package and engine versions and leave these three at the
-  previous one with the audit passing. A file among them that states no
-  version is refused by name. A stale checked-in file is now told to be
-  edited; the reinstall the audit used to suggest for every failure only
-  refreshes an installed distribution.
-
-- The optics and workstation dependency locks move tornado from 6.6 to
-  6.6.1 for CVE-2026-126347 (GHSA-5cjw-f85j-cv6r). Tornado 6.6.0's fix
-  for an open redirect in its RedirectHandler was incomplete: a browser
-  reads a URL that begins with three or more slashes as a redirect to
-  another host, and Python's urllib does not. Only tornado moves; each lock
-  was regenerated with the command its header records, and the new hashes
-  are the 43 files PyPI lists for 6.6.1.
-
-- A catalogue model compile the compiler refuses now says why. 'Generate RTL'
-  and the selected-model co-simulation answered every refusal HTTP 500
-  `studio_job_failed`, and the Studio showed only "Studio job failed.",
-  while the reason stayed in the job ledger. Sent as the Studio sends them,
-  at each model's own step, 10 of the 64 models that offer 'Generate RTL'
-  were refused that way: nine by parameter names their schema does not
-  know, one by a default Q-format that cannot hold it. A map compiled at a
-  step other than its own is refused too. The request is now checked
-  before a job is admitted, with the compiler's own resolver, and a refusal
-  is answered HTTP 422 with its reason. A fault in the server's own compile
-  configuration still goes to the job, as before.
-
-- On the network canvas and the E-I network tab, the status bar now
-  reports only that tab's network. Before, a canvas whose network run the
-  server refused, or that had not run yet, reported the last single-model
-  run there, and a screen reader announced it. When a run is refused before
-  it starts because the network has problems, the canvas says how many
-  problems were found, rather than the previous run's counts, which were
-  announced as if the run had just finished. A run the server refuses says
-  so, with its reasons.
-
-- The evidence cart now says in words why a finished run was not queued.
-  It passed the reason on as given, so a reason that is a code, such as
-  analysis_result_identity_invalid, would have been shown and announced as
-  that code. A run or analysis whose result carries no readable digest was
-  skipped without a word, or called unchanged; it is now named as such. A
-  failed or unchanged run still says nothing. The export's read-back check
-  names a failure in words, in place of "payload_sha256 mismatch": which
-  entry, or the bundle, no longer matches its SHA-256 digest, and that the
-  cart was not exported.
-
+- Move tornado in the optics and workstation dependency locks from 6.6 to
+  6.6.1 for CVE-2026-126347 (GHSA-5cjw-f85j-cv6r): tornado 6.6.0's fix for an
+  open redirect in `RedirectHandler` missed URLs that begin with three or more
+  slashes. Only tornado moves; each lock is regenerated with the command its
+  header records, with the 43 file hashes PyPI lists for 6.6.1.
+- Move Go from 1.27.3 to 1.27.4 in every module and workflow for
+  GO-2026-6859 (CVE-2026-97054), an HTTP/1 server crash in `net/http` that
+  the locked-dependency audit reported for all five Go modules.
 - The Rust documentation ratchet refuses an original-image folder named
-  through a link instead of following it, and reads the folder's owner and
-  mode from the folder it has opened. The folder it checks is therefore the
-  folder it locks and uses: no link or other folder can take its place
-  between the check and the use.
+  through a link, and reads the folder's owner and mode from the folder it has
+  opened, so the folder it checks is the folder it locks and uses.
 
-- Tab and Shift+Tab now leave the ODE equation editor, as they do
-  everywhere else in the Studio. The editor kept them, together with Escape
-  then Tab, and only its own Ctrl+M toggle let a keyboard reader out, which
-  its name did not say (WCAG 2.1.2). Equations need no tab characters, so
-  the editor now moves focus on Tab, and it is named "Equations" after its
-  visible heading, in place of the generic "Editor content". A bundle built
-  from the change was checked in Chromium by keyboard, with and without
-  forced colours.
+### Added
 
-- The keyboard focus is now visible and lands somewhere named. When the
-  first-run tour closes, by Escape, Skip tour or its last step, focus moves
-  to the Studio's title; before, it fell to the page body, so a keyboard
-  reader had no place to go on from. The focus ring was a dark band that
-  measured 1.44:1 against the panel behind it, under the 3:1 that WCAG asks
-  of the indicator of a state; it is now a 2px band of the accent colour,
-  framed by a 2px gap so it also shows around a control filled with the
-  accent, and the palette check holds it to 3:1 on every control surface.
-  Under forced colours (Windows contrast themes), which drop every shadow
-  and with it the ring, focused controls now draw an outline in the
-  system's highlight colour; before, they showed no indicator at all. A
-  bundle built from the change was checked in Chromium by keyboard, with
-  and without forced colours.
-
-- Exporting a saved project's evidence bundle works again after a network
-  canvas projection's seed is emptied or its rule is set to all_to_all.
-  Both edits left the field in the projection with the value `undefined`
-  (the emptied seed, or the probability that all_to_all drops). Running the
-  network was not affected, but the project export seals the project's
-  state, the seal refuses `undefined`, and the browser refused the export
-  with "undefined is not a sealable JSON value." before sending it. A
-  cleared field now leaves the projection, as a saved project is read
-  back. A bundle built from the change was checked in Chromium: after
-  either edit the export is sent, as it is without them.
-
-- Typing an equation in the Studio's ODE editor no longer scrambles it.
-  The editor showed the Studio's own rendering of the equations, threshold
-  and reset, and the Studio keeps only what the text means. As soon as a
-  typed line read as an equation, such as `dv/dt` after selecting all, that
-  rendering replaced the text under the caret and moved the caret to the
-  end, so the rest of the line landed in the reset expression: the run was
-  refused and compiling it failed. Typing `/` in the editor only became
-  possible with the recent keyboard fix, which is what exposed this. The
-  editor now keeps the typed text for as long as the Studio holds exactly
-  what it reads, and still shows a change made elsewhere, such as a chosen
-  template. A bundle built from the change was checked in Chromium by
-  keyboard: the equation typed after selecting all is kept, runs and
-  compiles.
-
-- The Studio now announces what an action did to screen readers. The bar
-  along the bottom is always drawn, and its run report is a status: a model
-  run starting and finishing, and a finished network canvas run with its
-  neuron, spike and step counts, are announced, with the shortcut hint kept
-  out of the message. The bar also wraps in a narrow window, so it no longer
-  overflows the page at 320 CSS px. The model list's count, the network
-  canvas's population and projection count, the training run's state (read as
-  "Training running", "Training stopped") and the evidence cart's count are
-  statuses too. The cart's last export now says that it passed its own
-  round-trip verification, and an export failure is announced in the same
-  place. Before, these were drawn but not announced, or announced only when
-  they first appeared. A bundle built from the change was checked in
-  Chromium by keyboard on the five accessibility journeys.
-
-- The Rust documentation ratchet builds its original revision's dependencies
-  once, not on every run. The original Git revision is now extracted into a
-  persistent folder outside the checkout: `sc-neurocore-rust-doc-original` in
-  the temporary directory, or the one `SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR`
-  names. Before, it went to a new temporary directory each time. Its sources
-  are extracted afresh on every run, while Cargo's build outputs in the folder
-  persist, so Z3 is no longer compiled from C++ source each time. That cold
-  build had outlasted the measurement's own 1800 s timeout on a loaded host,
-  and the pre-push hook then refused a push. A killed run no longer leaves a
-  new multi-gigabyte folder behind each time: the one folder is reused. The
-  folder is created for the current account alone (mode 0700). A link, a
-  folder another account could write, and a non-empty folder without the
-  ratchet's marker are refused, so an override cannot empty a folder of
-  someone else's. An exclusive lock lets concurrent runs take turns, and a
-  waiting run says so.
-
-- Clearing a training setting no longer blanks the Studio. After a run had
-  completed or failed, clearing an optional setting left it in the
-  configuration as `undefined`: choosing another dataset, clearing the seed
-  or the gradient norm limit, switching back to the spiking model,
-  withdrawing the preregistered criterion or clearing the event input. The
-  guided flow seals the training configuration while it renders, the seal
-  refuses `undefined`, and with no error boundary the whole page went blank.
-  A cleared setting now leaves the configuration, as a saved project is read
-  back. A test clears each optional setting, and a bundle built from the
-  change was checked in Chromium after a completed run.
-
-- The equation editor keeps every `/` and `?` typed into it. In
-  Chromium-based browsers (Chrome, Edge) the keyboard help took both keys
-  whenever focus was not in an input or a text area, and the editor
-  focuses neither there: it receives text through EditContext. So `dv/dt`
-  could not be typed, only pasted. The help's `?` and `/` now act only
-  when focus is outside a text control (fields, selects, editable regions
-  and anything with a text-entry role). On buttons and links they still
-  open it, and Escape closes it wherever focus is. A test types both keys
-  into each kind of text control, an EditContext-like textbox among them,
-  and a bundle built from the change was checked in Chromium.
-
-- One toolchain manifest, `tools/toolchain_manifest.toml`, gives the answer
-  for every tool version the CI declares, and `python -m
-  tools.toolchain_manifest --check`, also a pre-commit hook, refuses four
-  things:
+- The Rulkov map neuron states six behaviour cases: 0, 7 and 10 events in 30
+  steps at currents 0, 0.5 and 1.5, the counts its Q16.16 test enrols for the
+  hand model, the schema and the RTL; and 0, 34 and 130 events in 1000 steps
+  at the same currents, measured with its public class and matched by the
+  schema. Each of the 17 sign variants of its equations breaks a case. Ten of
+  the 185 catalogue models now state cases.
+- The Ibarz-Tanaka map neuron states four behaviour cases: none in 4 steps at
+  a current of -0.5 and 3 events in 30 steps at 0.2, the counts its Q16.16 test
+  enrols for the hand model, the schema and the RTL; and 7 events in 1583
+  steps at -0.5 and 18 in 1582 steps at 0, measured with its public class and
+  matched by the schema, at horizons at least 17 steps from the nearest event
+  of any perturbed run. Each of the 26 sign variants of its map breaks a
+  case. Nine of the 185 catalogue models now state cases.
+- The SC four-state GLIF neuron states six behaviour cases, the event counts
+  its Q16.16 test enrols for the hand model, the schema and the RTL: none at
+  rest and at a current of 15, then 23, 54, 86 and 95 events in 1000 steps at
+  currents 22, 30, 45 and 50. Its public class holds them, and each of the 15
+  sign variants of its four equations breaks one. Eight of the 185 catalogue
+  models now state cases.
+- The integer quadratic integrate-and-fire neuron states one behaviour case,
+  the count its RTL test enrols for the source, both RTL forms and the schema:
+  26 events in 400 steps at an integer current of 10. Its public class holds
+  it, and each of the 8 sign variants of its map breaks it. A case's drive
+  keeps the type it is written in: a whole number written without a point is
+  an integer, so a model whose step takes an int32 current can be driven.
+  Every drive stated before is written with a point and is unchanged. Seven of
+  the 185 catalogue models now state cases.
+- The SC resetting Wilson neuron states three behaviour cases, the event
+  counts its Q16.16 test enrols for the hand model, the schema and the RTL:
+  none without a current, then 1 and 4 events in 5000 steps at currents 2 and
+  10. Its public class holds them, and each of the 14 sign variants of its two
+  equations breaks one. Six of the 185 catalogue models now state cases.
+- The symmetric SC quadratic integrate-and-fire neuron states eight behaviour
+  cases, the event counts its Q16.16 test enrols for the hand model, the
+  schemas and the RTL: none without a current, then 2, 3, 6, 11, 26, 100 and
+  250 events in 1000 steps at currents 0.333, 0.5, 1, 2, 5, 20 and 50. Its
+  public class holds them, and each of the two sign variants of its equation
+  breaks one. Five of the 185 catalogue models now state cases.
+- The Wilson cortical neuron states five behaviour cases, the counts its
+  Q16.16 parity test enrols for the hand model, the schema and the RTL: none
+  without a current, then 44, 46, 49 and 52 upward crossings in 5000 steps at
+  currents 0.08, 0.1, 0.14 and 0.2. Its public class holds them, and each of
+  the 15 sign variants of its two equations breaks one. Four of the 185
+  catalogue models now state cases.
+- The Hindmarsh-Rose neuron states five behaviour cases, the counts its Q16.16
+  parity test enrols for the hand model, the schema and the RTL: none at
+  currents 0 and 2, then 26, 40 and 52 upward crossings in 2000 steps at
+  currents 3, 4 and 5. Its public class holds them, and each of the 13 sign
+  variants of its three equations breaks one. Three of the 185 catalogue
+  models now state cases.
+- `tools/model_behaviour_variants.py` asks whether a model's behaviour cases
+  depend on the signs of its equations. For a catalogue model that states
+  cases and has a bound schema, it builds every variant of the schema with the
+  sign of one term of one equation changed (on the equation's syntax tree,
+  sums inside a factor or a function call included), runs the unchanged schema
+  first, which must hold every case, and runs each variant on the cases up to
+  the first one it breaks. `--check` fails on a variant that holds every case,
+  on a schema that does not hold its model's cases, and on a stale
+  `docs/_generated/model_behaviour_variants.json`. A schema runs through the
+  Universal DSL as the Studio runs a candidate, with a case's current as the
+  one input; a model without a bound schema, with a schema the engine refuses,
+  or with cases of another shape is reported as such. In the behaviour report
+  a step that returns a truth value counts as a spike or none, and an error a
+  step raises makes the case invalid with the error's name. The
+  FitzHugh-Nagumo descriptor states five cases from the model's band test:
+  none without a current, 26, 28 and 28 spikes at currents 0.5, 0.8 and 1.0,
+  and one spike at 2.0, in 10000 steps; its class and its schema hold them,
+  and each of the eight variants of its two equations breaks one.
+- `tools/model_behaviour_report.py` runs the behaviour cases that model
+  descriptors state and writes `docs/_generated/model_behaviour_report.json`.
+  Each case runs through the model's public class, on a newly built model,
+  with its constant inputs passed by name, and is written as stated with what
+  was observed, whether it held and whether it was exercised (a spike, a state
+  variable leaving its starting value, or a contrast held). A model whose
+  cases all hold while none is exercised is `held_vacuously`. `--check` fails
+  on that, on a failed case, on a case that cannot be run (at most 100000
+  steps) and on a stale report. Each model that states cases carries
+  `cases_sha256`, the digest of its cases as parsed. The dendritic NMDA
+  descriptor states eight cases and holds them: neither input alone fires the
+  soma, both together give 59 spikes in 20000 steps, glutamate adds 17 spikes
+  at a soma current of 40, glutamate alone moves the dendrite to its balance
+  point near -59.52, and the lane anchor is 266 spikes. The cases are the
+  author's statement of what the model does, not an independent reference. A
+  drive is constant finite numbers, and a spike count needs a step that
+  returns 0 or 1; a model whose step returns a rate or several values can
+  state cases on its state variables only.
+- A model descriptor may state behaviour cases in an optional `[[behaviour]]`
+  list. An `interval` bounds one observable (the spike count, or the final
+  value of a declared state variable as `state:<name>`) after a number of
+  steps at constant named inputs, with both ends; equal ends state an exact
+  value. A `contrast` states that the observable at one drive exceeds the
+  observable at a second drive by at least a positive margin. A bound with one
+  end, an order without a margin, an undeclared observable, an empty drive, a
+  key the kind does not take, spike bounds spanning or exceeding the whole
+  range of a run, and a fractional spike margin or one above the number of
+  steps are refused when the descriptor is parsed. A drive is a table of finite
+  numbers. The cases take no part in a readiness tier or in the contract
+  digest of a receipt, and the descriptor generator keeps them when it
+  refreshes a descriptor from the model code.
+- The Studio worker launcher checks once, at its start, that its configured
+  interpreter imports the worker bootstrap as a worker runs it: with `-s`, the
+  worker's environment and, for a privileged launcher, the worker's identity.
+  If it cannot, the launcher refuses to start and names the interpreter and
+  the reason: it cannot be run, the import's last error line, or no answer
+  within 60 s.
+- One toolchain manifest, `tools/toolchain_manifest.toml`, gives every tool
+  version the CI declares, and `python -m tools.toolchain_manifest --check`,
+  also a pre-commit hook, refuses:
   - a declaration that differs from it;
   - a floating runner, an undated nightly, or an unpinned `apt`, `apt-get` or
     `choco` install of a listed tool;
@@ -367,647 +143,631 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
     `inputs` reference;
   - a setup action it does not know, in a workflow or a composite action.
 
-  The hosted jobs now name their images. Every job that asked for
-  `ubuntu-latest`, which had moved to Ubuntu 26.04, runs on `ubuntu-24.04`, as
-  the development host and the other jobs already did. The Windows and macOS
-  legs name `windows-2025-vs2026` and `macos-26`, the images `*-latest` gave on
-  2026-11-13. Other pins:
-  - the nightly Rust of the docs, fuzz, release and scanner jobs is
-    `nightly-2026-11-13`, which the cargo-fuzz runner reads from the manifest;
-  - Julia 1.13 is 1.13.3;
-  - Icarus Verilog, Verilator, cvc5 and ShellCheck installs name their Ubuntu
-    24.04 versions.
-
-  The engine wheel artefacts follow the image names
-  (`engine-wheel-ubuntu-24.04-py…`). `--check-host` asks the tools on `PATH`
-  for their versions.
-
-- The hosted CI lints the Studio frontend. The frontend job runs
-  `npm run lint` after installing and before the tests; until now only the
-  local preflight ran it, so a lint regression pushed without the hook
-  reached main unseen. The script also fails on a warning now
-  (`--max-warnings=0`): an `eslint-disable` comment that no longer
-  suppresses anything is a warning, and it used to pass. The whole package
-  passes today. A contract test holds the job's step, the script and the
-  preflight's lint to one command.
-
-- Thirteen Studio components that had no test of their own now have one:
-  the admin panel and its audit-archive section, the capability strip, the
-  cohort panel, the model comparison, the custom-equation editor, the model
-  capability list, the network controls, the synthesis evidence controls,
-  the template list, the text prompt, and a training run's event input and
-  preregistered criterion. Three of them were run by no test at all before
-  (0 % in the coverage ledger). Each test mounts its component and drives
-  it as a user does, and a deliberate fault in each component's source made
-  its test fail. Ten of the components are at 100 % of their statements and
-  branches. The admin panel, the text prompt and the model comparison stop
-  short only at defensive guards that no user action reaches. The frontend
-  coverage ledger records the gains. It also records six files that tests
-  already on main had raised, and the render-timing module, new at 100 %.
-
-- `.githooks/pre-push` is stored executable, and it runs the preflight's
-  default: the gates that guard what the push touches, and no test suite.
-  Git skips a hook that is not executable, so the hook that
-  `make install-hooks` installs never ran, and pushes went out without the
-  preflight. It passed `--all-gates`, which runs every gate whatever was
-  touched, including the lints of the whole Rust workspace; the default runs
-  only the gates of what the push touches. The hosted CI runs the whole
-  suite on every push.
-  A test now pushes through the stored hook and checks that the preflight
-  runs and that a failing preflight stops the push.
-
-- The dependency-lock audit retries a transient OSV failure instead of
-  failing on one slow answer. A transport failure (such as a timeout or a
-  reset connection) or HTTP 429, 500, 502, 503 or 504 is retried after 2 and
-  then 6 seconds, three attempts in all. A failed certificate check and any
-  other status, such as a 400 refusal, are final at once. Each page's receipt
-  lists every retried attempt with its exception types or its status and body
-  digest, and each retried body is kept beside the final one. Exception text
-  and headers are still not kept.
-
+  The hosted jobs name their images: `ubuntu-24.04` in place of
+  `ubuntu-latest`, `windows-2025-vs2026` and `macos-26`. Other pins: the
+  nightly Rust of the docs, fuzz, release and scanner jobs is
+  `nightly-2026-11-13`, which the cargo-fuzz runner reads from the manifest;
+  Julia 1.13 is 1.13.3; the Icarus Verilog, Verilator, cvc5 and ShellCheck
+  installs name their Ubuntu 24.04 versions. The engine wheel artefacts follow
+  the image names (`engine-wheel-ubuntu-24.04-py…`). `--check-host` asks the
+  tools on `PATH` for their versions.
 - The Studio marks on the browser's performance timeline when it draws a
   catalogue, a trace, a chosen view, a network and a training epoch, and when
-  an epoch arrives from its stream; the marks change nothing on screen. A
-  browser measurement over the built bundle and a real backend, `npm run
-  test:e2e:timing`, takes ten samples of each measure across declared
-  workloads (a catalogue load, simulations of about 1 000, 10 000 and 100 000
-  steps, model and view switches, networks of 2, 10 and 50 populations, a
-  50-epoch training stream) and writes a `studio.render-timing.v1` artefact
-  with every sample, p50, p95, host, load, browser and commit, labelled
-  `functional-non-isolated` unless it ran on reserved cores.
-  `docs/studio/performance-measurement.md` explains it. No budget is checked.
-
-- The shared HDL toolchain workflow restores one published SDK archive
-  instead of building the tools on each runner: the `scn-hdl.tar.gz` asset of
-  release `hdl-sdk-yosys070-yices270-524357fd`, SHA-256
-  `49a65847681b69ae5a42f2801562d464f7d9d52af6c87e7744c180a6a70668c3`. A cache
-  miss on a newer runner image had rebuilt Yices from the same pinned sources
-  into a different binary, and the formal validation refused it, because the
-  committed receipts bind the solver binary they ran. The workflow checks the
-  archive's hash, refuses members outside `scn-hdl/` and anything but plain
-  files and folders, checks the Yices and Z3 binaries against the receipts'
-  digests, runs the same version, licence and smoke checks, and hands the
-  archive on unchanged. A build from source runs only when a caller passes
-  `rebuild_sdk: true`. The release also carries the Yices and GMP sources the
-  binary was built from.
-
-- The README states at its top that this repository is a public mirror of
-  ANULUM's canonical source, with the development history before publication
-  held privately.
-
-- The Studio frontend has a coverage ledger:
-  `studio/frontend/coverage-ledger.json` records the statement and branch
-  coverage of every source file under `src`, and `npm run
-  test:coverage-ledger` runs the suite with v8 coverage and refuses a file
-  that falls below its recorded value or a new file below 100 %.
-  `scripts/coverage-ledger.ts accept` writes the ledger again only when
-  nothing fell. The CI frontend job runs the check after Vitest and keeps the
-  measured summary as an artefact.
-
-- `tools/preflight.py` checks what a change touched and runs no whole test
-  suite by default. Each gate declares the kinds of file it guards; a gate the
-  change does not touch prints `not applicable to this change: <gate>` and
-  does not run. The capability manifest, SPDX header and benchmark evidence
-  gates always run, and every gate runs when the touched files cannot be
-  determined or the tool itself changed. A new `frontend` gate runs, for a
-  change under `studio/frontend/`, the frontend's lint, its type check and the
-  Vitest tests related to the touched files, and fails when `npm` or `npx` is
-  missing. `--all-gates` runs every gate whatever was touched; `--full-suite`
-  adds the whole pytest suite (`make preflight-full`); `--no-tests` stays
-  accepted as the default. `sc-neurocore preflight` keeps running every gate
-  and the whole suite.
-
-- The `LapicqueNeuron` descriptor and the `lapicque` schema profile (TOML and
-  JSON) use British spelling in their descriptive values: the units
-  (`normalised polarisation`, `normalised capacitance`, `normalised
-  resistance`), the meanings, display name, summary, scope, notes and
-  validation text. So do the model module's docstrings and its two error
-  messages (`polarisation`). Keys, the schema's `family` identifier and
-  test identifiers keep their spelling. No unit, value or behaviour
-  changes.
-
-- A backend lane's receipt carries what its run showed: the recorder reads
-  the lane and the library digests each test case wrote into the retained
-  JUnit report, records the libraries as `native-binary` artefacts, and marks
-  the run `error` when a case ran another lane, named no lane, or named no
-  library on a lane that builds one. Its claim scope is the parity word the
-  descriptor gives the lane (`reference` for the Python lane); the recorder
-  refuses a lane without one, and the verifier reads a receipt `invalid` when
-  the descriptor's word has changed since. The receipt also holds the version
-  lines of the lane's toolchain. No shipped descriptor names a lane's
-  evidence yet, so no status changes.
-
-- A complete run of `LapicqueNeuron` records the backend lane that executed
-  and the native library files it loaded, outside the model's attributes
-  (`sc_neurocore.neurons.lane_runs`); the Lapicque accelerator names a loaded
+  an epoch arrives from its stream; the marks change nothing on screen.
+  `npm run test:e2e:timing` measures the built bundle against a real backend:
+  ten samples of each measure across declared workloads (a catalogue load,
+  simulations of about 1 000, 10 000 and 100 000 steps, model and view
+  switches, networks of 2, 10 and 50 populations, a 50-epoch training stream),
+  written as a `studio.render-timing.v1` artefact with every sample, p50, p95,
+  host, load, browser and commit, labelled `functional-non-isolated` unless it
+  ran on reserved cores. `docs/studio/performance-measurement.md` explains it.
+  No budget is checked.
+- A backend lane's receipt carries what its run showed: the recorder reads the
+  lane and the library digests each test case wrote into the retained JUnit
+  report, records the libraries as `native-binary` artefacts, and marks the run
+  `error` when a case ran another lane, named no lane, or named no library on a
+  lane that builds one. Its claim scope is the parity word the descriptor gives
+  the lane (`reference` for the Python lane); the recorder refuses a lane
+  without one, and the verifier reads a receipt `invalid` when the
+  descriptor's word has changed since. The receipt also holds the version lines
+  of the lane's toolchain. No shipped descriptor names a lane's evidence yet,
+  so no status changes.
+- A complete run of `LapicqueNeuron` records the backend lane that executed and
+  the native library files it loaded, outside the model's attributes
+  (`sc_neurocore.neurons.lane_runs`). The Lapicque accelerator names a loaded
   lane's libraries and answers which lanes can run (`backend_available`), so
-  the repository's lane gate skips an unbuilt Go or Mojo lane locally and
-  fails it where the lane is required. A test fixture writes the lane and the
-  library digests into a test's JUnit report, and `junit_lane_evidence`
-  returns them per executed test case with every inconsistency. The recorder
-  does not read them yet.
-
+  the lane gate skips an unbuilt Go or Mojo lane locally and fails it where the
+  lane is required. A test fixture writes the lane and the library digests into
+  a test's JUnit report, and `junit_lane_evidence` returns them per executed
+  test case with every inconsistency.
 - The readiness facet of a native backend lane binds the lane's sources and
-  build inputs as its `native-backend` subjects, and the Rust lane also every
+  build inputs as its `native-backend` subjects; the Rust lane also binds every
   tracked file of the engine's Python package and of the vendored rayon-core
   crate its build compiles. A source counts only when it is a tracked file
   spelled as Git spells it (in the index of a Git checkout, compared as
-  written; elsewhere in normal form; the file must exist). A declared lane
-  that lists any other source reads `unavailable` and the problem names the
-  path; where a checkout's index cannot be read, the problem says why.
-  `lane_source_problems` reports them. A descriptor's `python` lane takes no
-  sources: its code is the model module. No shipped descriptor lists a
-  source yet, so no status changes.
-
+  written; elsewhere in normal form; the file must exist). A declared lane that
+  lists any other source reads `unavailable`, and the problem names the path
+  or says why a checkout's index cannot be read; `lane_source_problems`
+  reports them. A descriptor's `python` lane takes no sources. No shipped
+  descriptor lists a source yet, so no status changes.
 - Every backend lane a descriptor may declare has a readiness facet: sixteen
   facets, with `backend:rust_safety` new. A lane's facet reads its evidence
   from the `evidence` text of the lane's `[backends.<lane>]` table and requires
   the lane's sources as subjects. The library a run loaded is an artefact of
-  the receipt and never a subject: a receipt of `backend:rust`,
+  the receipt, never a subject: a receipt of `backend:rust`,
   `backend:rust_safety`, `backend:go` or `backend:mojo` credits only when it
-  carries it, and a receipt of any other facet credits only without an
-  artefact. `LANE_BUILD_INPUTS` names the tracked manifests, lock files, build
-  configurations and tool pins that fix each lane's build. The readiness
+  carries it, and a receipt of any other facet only without an artefact.
+  `LANE_BUILD_INPUTS` names the tracked manifests, lock files, build
+  configurations and tool pins that fix each lane's build, and the readiness
   ledger's facet block lists the required artefacts. A declared lane without a
   bound receipt is listed on its profile's row and does not decide the
-  profile's admission. The recorder does not yet derive a lane's subjects, so
-  no lane has a receipt.
-
-- The Morris-Lecar Mojo kernel compiles under the pinned Mojo 1.0.0 again: its
-  functions are declared with `def`, which replaced `fn`. Its own check reproduces
-  the Python reference's spike counts (0, 3 and 5 over 2000 steps at currents 0,
-  50 and 100), and the five-runtime Morris-Lecar benchmark was run again: every
-  backend, Mojo included, counts 476 spikes, and the model page shows the new
-  timings.
-
-- The Studio worker launcher service unblocks SIGTERM and SIGINT when it
-  starts, so a blocked-signal mask handed down by the process that starts it
-  can no longer keep it from stopping in order. The launcher test support
-  places its sockets under a folder short enough for the Unix socket path
-  limit under any temporary folder, kills and reports a launcher that does
-  not stop on SIGTERM, and on Linux ends a launcher together with the test
-  that started it.
-
-- The Rust documentation measurement runs the toolchain the measured crate
-  pins (`engine/rust-toolchain.toml` for the engine) in every compiler call,
-  also for the original revision it compiles in a temporary directory, whatever
-  toolchain, compiler or compiler wrapper the caller's environment or a Cargo
-  configuration file names. A pinned toolchain that does not run, or a
-  compiler that does not report exactly the pinned release, is refused by
-  name, and rustup is not allowed to fetch one.
-
-- The unit strings of the `SCLapicqueLIFNeuron` and
-  `SCUnitCapacitanceRespiratoryNeuron` descriptors and of the `sc_lapicque_lif`
-  schema profile use British spelling (`normalised voltage`, `normalised
-  resistance`, `normalised`). No unit, value or behaviour changes.
-
+  profile's admission. No lane has a receipt yet.
 - A model descriptor's `[backends.<lane>]` table takes its lane name from a
   closed list (`python`, `rust`, `rust_safety`, `julia`, `go`, `mojo`; the
-  earlier name `rust_engine` is still read) and may state `evidence`, the tests
-  that are the lane's evidence, and `sources`, the tracked files that implement
-  the model in that lane. A table under another name, a table without a status
-  or with a key outside those four, a lane that is neither a table nor a status
-  word, evidence that is not text, and a source that is absolute, passes
-  through a parent folder, is empty or is listed twice are refused. No shipped
-  descriptor changes and every model keeps its tier. No readiness facet reads
-  the two fields yet.
+  earlier `rust_engine` is still read) and may state `evidence`, the tests that
+  are the lane's evidence, and `sources`, the tracked files that implement the
+  model in that lane. A table under another name, a table without a status or
+  with another key, a lane that is neither a table nor a status word, evidence
+  that is not text, and a source that is absolute, passes through a parent
+  folder, is empty or is listed twice are refused. No shipped descriptor
+  changes and every model keeps its tier.
+- The benchmark coverage census says whether each record still describes the
+  sources in the tree: `current` (every bound source has the recorded digest),
+  `outdated` (a bound source changed or is gone; the changed paths are listed)
+  or `unbound` (no source is named by a path). An outdated record describes
+  earlier bytes; it does not say that the measured value changed. The census
+  lists this for the records a catalogue model cites and, separately, for every
+  other record under `benchmarks/results` that binds sources; records that key
+  digests by lane are bound through the evidence gate's manifest where it
+  names their paths. An edit of any bound source regenerates the census in the
+  same commit. The evidence gate gains `current_source_hash_failures`. Census
+  schema version 2; the three model states and their totals are unchanged.
+- `mux_dot_product_variance` gives the variance of one output stream behind a
+  uniformly random multiplexer (`q_mean (1 - q_mean) / N`), and
+  `interleaved_dot_product_variance` that of a round-robin multiplexer
+  (`sum q_k (1 - q_k) / (K N)`; a length that is not a multiple of the number
+  of terms is refused with `GuaranteeNotDetermined`). Each states its
+  assumptions on the select input and on the independence of the streams.
+  `dot_product_variance` is now described as what it computes, the variance of
+  averaging every product stream in full (`sum q_k (1 - q_k) / (K^2 N)`), and
+  returns the same values. For two constant terms 0 and 1 and `N = 100` the
+  random multiplexer has variance 0.0025, where the averaged form gives 0.
+- The wheel ships the core spike-train statistics as
+  `sc_neurocore.spike_train_statistics`: spike times, inter-spike intervals,
+  rate, count, binning, power spectrum, ISI coefficient of variation, Fano
+  factor and permutation entropy. NumPy is its only dependency, and
+  `sc_neurocore.analysis` re-exports the nine functions under their existing
+  names. The identity health check and director monitor run from an installed
+  wheel; state extraction and the decoder still need a source checkout for PCA
+  and functional connectivity, and say so. Permutation entropy is computed
+  with NumPy array operations, ties ranked by position as in the Rust helper,
+  and an order or delay below 1 raises `ValueError`.
+- A documentation page on what each kind of evidence establishes and what it
+  does not: records of a run, agreement between implementations,
+  co-simulation, formal results, reports of design tools, benchmark artefacts
+  and measurements on a device. The architecture overview names, for each of
+  its five contracts, the test or hosted step that checks it and how far that
+  check reaches.
+- The standalone Linux desktop runtime is assembled from the complete selected
+  original wheel set, with installed records and wheel payloads validated and
+  relocatable console launchers generated; original commands, diagnostics and
+  process receipts are retained. A hash-locked CI input producer and a
+  consumer check source binding, types, documentation, formatting and complete
+  statement and branch coverage of the six assembly tools.
+- `benchmarks/capture_lapicque_samples.py` retains all seven original timing
+  samples for each of the five Lapicque backends, and
+  `benchmarks/validate_lapicque_samples.py` rejects damaged, instrumented or
+  source-mismatched evidence. Both run in CI with complete statement and
+  branch coverage, and three guides document the commands, provenance checks
+  and external performance-isolation boundary. No performance result or model
+  readiness changes.
+
+### Changed
+
+- The written C ABI headers of three Go adapters, adaptive_threshold_if, alpha
+  and resonate_and_fire, are named `abi.h` in their packages, as
+  conversion/cshared's already was, apart from the `lib<name>.h` that a
+  c-shared build writes beside the library. The wheel ships
+  `accel/go/adaptive_threshold_if/abi.h` in place of
+  `libadaptive_threshold_if.h`, and conversion/cshared ships its `abi.h` only.
+- The version audit (`tools/version_surface_audit.py`) holds the release
+  metadata to the project version: `.zenodo.json`, `CITATION.cff` and
+  `conda/meta.yaml`. A file among them that states no version is refused by
+  name, and a stale checked-in file is reported as one to edit, not to
+  reinstall.
+- The benchmark coverage census counts a model as measured when a committed
+  record measures it, also where the record does not hold the model's class
+  name: a record that binds by path the benchmark scripts that produced it is
+  attributed to the model those scripts name when they name exactly one, and
+  to neither when they name two. Each cited record states how it is attributed
+  (`class_name` or `bound_script`, with the script). A script names a model
+  only by its class name as a whole identifier, so `NMDANeuron` is no longer
+  named by a script that names `DendriticNMDANeuron`. Measured models go from
+  28 to 84 of 185, and models with a script and no record from 73 to 17; 84
+  have neither, as before. No record was measured again: 61 records listed as
+  naming no model are now attributed, with their currency unchanged. Census
+  schema version 3.
+- Readiness evidence is recorded from the validator's actual interpreter, and
+  exact raw execution artefacts are retained privately. Public receipts keep
+  repository-relative commands and projected output without host identity.
+- Verified silicon readiness is derived through the descriptor's canonical
+  tier rules, and symbolic differentiation is typed through the existing SymPy
+  interfaces.
+- The README states at its top that this repository is a public mirror of
+  ANULUM's canonical source, with the development history before publication
+  held privately.
+- The architecture overview page is replaced by an entry point to the
+  architecture: what the programme is for, the loop from model to evidence,
+  the three tiers that exist today, the contracts between them, which
+  established tools are integrated and what is built here, what ships and what
+  is research, and what is planned. It states no counts and links to the
+  generated capability snapshot; the navigation lists it first. The system map
+  and two pages that described the old content are reworded, and two stale
+  counts are removed from `ARCHITECTURE.md`.
+- The integration and performance-tuning guides are rewritten from the code
+  and records. The integration guide covers the SHD accelerator: what is
+  co-simulated and synthesised, that a bitstream from the block-design script
+  carries no trained model, how to build it, the driver and its register map,
+  and the steps before a first board run. The performance guide covers
+  bitstream length and precision, with lengths computed by `adaptive_length`,
+  the packed, CuPy, sparse, Rust and GPU paths, the one committed timing
+  result, and the absence of any power measurement. The PYNQ demo and driver
+  use the block-design instance name `sc_shd_0`; the demo no longer prints a
+  throughput from core cycles alone, and gives the 75.2 % accuracy as the
+  floating-point model's. The hardware-claims test reads both guides.
+- The engine's 10 multi-compartment models are documented in full, each file
+  read against its code: how each step integrates (Euler sub-steps, RK4 or the
+  implicit cable solve), which compartment receives the input, where the spike
+  is detected, and what a refused step returns. The astrocyte LIF docstrings
+  (Rust and Python) now divide the whole membrane sum by `tau_m`, as both codes
+  do, and the Marder STG descriptor gives `f_ca` the unit `uM*cm^2/uA`. The
+  astrocyte LIF Python module documents its public methods in NumPy form and is
+  enrolled in the docstring policy.
+- The engine's 22 simple spiking models are documented in full, and the Rust
+  documentation ceiling is lowered from 3004 to 2712 undocumented items. The
+  documentation states each model's integrator and step size, its spike rule,
+  which inputs are refused and what a refusal returns (some models return -1,
+  others 0), and whether reset keeps the parameters. The McKean descriptor
+  describes `mu` as the height of the Heaviside excitation step added where
+  `v` reaches `a`, not a left-branch gain.
+- The engine's 24 biophysical conductance models and the shared `safe_rate`
+  helper are documented in full, and the Rust documentation ceiling is lowered
+  from 3490 to 3004 undocumented items. The documentation states each model's
+  integration scheme, spike rule, validation and reset, and each file denies
+  missing documentation. Corrected: the Traub-Miles documentation no longer
+  claims an M-current the model does not have; the GLIF resistance is in GOhm,
+  not MOhm; the GIF adaptation increment moves `eta`, not the threshold; the
+  Mainen-Sejnowski coupling and capacitance belong to the axonal compartment;
+  the Huber-Braun Rust model's documentation says it adds no membrane noise,
+  unlike the Python model.
+- The engine's cerebellar models are documented in full, and the Rust
+  documentation ceiling is lowered from 3646 to 3490 undocumented items: every
+  field, constructor, step and reset of the Golgi, deep cerebellar nuclei,
+  granule, Lugaro, stellate and unipolar brush cell models, and each file
+  denies missing documentation. `tools/rust_model_field_docs.py` writes a
+  field's meaning and unit from the neuron model descriptors where the Rust
+  field has no documentation yet, and never replaces existing documentation.
+  The Lugaro descriptor describes `a_adapt` as the subthreshold adaptation
+  coupling, as both models use it, not a per-spike increment.
+- British spelling in the descriptive values of the `LapicqueNeuron`
+  descriptor and the `lapicque` schema profile (TOML and JSON): the units
+  (`normalised polarisation`, `normalised capacitance`, `normalised
+  resistance`), the meanings, display name, summary, scope, notes and
+  validation text, the model module's docstrings and its two error messages.
+  Keys, the schema's `family` identifier and test identifiers are unchanged,
+  and no unit, value or behaviour changes.
+- British spelling in the unit strings of the `SCLapicqueLIFNeuron` and
+  `SCUnitCapacitanceRespiratoryNeuron` descriptors and of the
+  `sc_lapicque_lif` schema profile (`normalised voltage`, `normalised
+  resistance`, `normalised`). No unit, value or behaviour changes.
+- British spelling in the descriptive text of eight neuron model descriptors
+  (`normalised`, `energised`, `specialisation`, `synthesises`,
+  `repolarisation`, `behaviour`). Unit strings and the Lapicque descriptor are
+  unchanged.
+- Move the Studio frontend's Vite pin from 8.3.7 to 8.3.8 in `package.json`
+  and the lock.
+- Refresh the dependency pins no pending change holds: patch updates of itoa,
+  syn and const-oid in the nine separate Rust crate locks; Vite 8.3.7, the
+  React plugin for Vite 6.3.0 and typescript-eslint 8.72.2 in the Studio
+  frontend; and the typos hook 1.52.0. The engine's lock and the Python, Go and
+  Mojo pins are left for the change that fixes them; Rust stays on 1.98.1
+  while its recorded migration constraint remains, and TypeScript 7 waits for
+  typescript-eslint, which supports TypeScript below 6.1.
+
+### Fixed
+
+- The RTL compile of an equation neuron refuses in words what the RTL cannot
+  bind: an equation that reads a name which is not a state, a parameter or a
+  constant (such as `dv/dt = -v / tau` with no `tau`) compiled to RTL that read
+  an undeclared net and did not elaborate, and an unknown function or a reset
+  of a name that is not a state failed with unmarked faults. The ODE editor's
+  'Generate RTL' answers each of these with HTTP 422 and the reason, in place
+  of HTTP 500, by running the compile task's own parse and emit before
+  admission. One equation compile is bounded before the RTL emitter runs, on
+  `/api/compile` and `/api/ir/emit-sv-direct` alike: at most 128 function
+  calls and 16,384 characters over its equations, threshold and reset, refused
+  in words over either. The co-simulation receipts of the four bound silicon
+  facets are recorded again on the new compiler. Notebooks 27 and 29 pass
+  `V_th` and `V_reset` as parameters, and notebook 27 is run by a test.
+- The ODE editor's 'Generate RTL' answers an equation, threshold or reset it
+  cannot parse with HTTP 422 and the parser's reason, for example "Invalid
+  equation syntax: '-65 = (-v + 1) / 10'", in place of HTTP 500
+  "studio_job_failed". The compile runs the worker's parse before it admits a
+  job, so no job is started for such a request; a fault that is not the
+  caller's input is still left to the job.
+- A catalogue model compile the compiler refuses is answered HTTP 422 with its
+  reason, in place of HTTP 500 `studio_job_failed` and "Studio job failed.",
+  by 'Generate RTL' and the selected-model co-simulation. Sent as the Studio
+  sends them, 10 of the 64 models that offer 'Generate RTL' were refused that
+  way: nine by parameter names their schema does not know, one by a default
+  Q-format that cannot hold it. A map compiled at a step other than its own is
+  refused too. The request is checked before a job is admitted with the
+  compiler's own resolver; a fault in the server's own compile configuration
+  still goes to the job.
+- 'Generate RTL' compiles the nine catalogue models whose parameters the Studio
+  names differently from their canonical schema, which were refused as
+  "Unknown schema parameter override(s)". The compile translates each as the
+  model's class and its schema both state: a rename (AdEx's b, c_m and delta_t
+  are the schema's b_adapt, C and delta_T; Brunel-Wang's C_m; the
+  Hodgkin-Huxley and Wang-Buzsaki conductances; Resonate-and-Fire's
+  threshold), a derivation (Jansen-Rit's four couplings from c; the Amari
+  field's sampled kernel weights from its kernel parameters and dx), and the
+  seed of the escape-rate and Poisson neurons, which seeds the schema's 16-bit
+  LFSR and is recorded with the compile, in its traceability input and in the
+  co-simulation cross-check. The Amari field compiles only as the schema's
+  fixed field of four sites, so its default of 64 sites is refused with that
+  reason, and a request in its catalogue names samples the kernel at the
+  request's own dx. A seed the LFSR cannot take, or one parameter sent under
+  both of its names, is refused in words.
+- 'Generate RTL' offers a model only the Q-formats that hold the neuron the
+  Studio compiles, judged on the catalogue's parameters the Studio sends, not
+  the schema's defaults. For the scaled-reset adaptive integrate-and-fire
+  neuron, Q8.8 was offered as the default and then refused, since it cannot
+  hold tau_2 = 200; Q16.16 is now its only offered format and its default.
+  Across the catalogue, every offered format compiles the request the Studio
+  sends.
+- A Studio storage-profile job whose worker exits before asking for its grant
+  fails at once as "Studio process worker exited with N before requesting its
+  grant.", in place of waiting out the grant deadline (60 s by default) and
+  reporting "Studio worker grant failed.". The supervisor asks the launcher,
+  while it waits, whether the worker still runs. A grant endpoint path too long
+  for a Unix socket is refused with its length.
+- A Studio worker that connects for its grant and exits before the grant is
+  given is reported as "exited with N after requesting its grant, before it was
+  given"; within one poll of the launcher's report it was reported as never
+  having asked.
+- The Studio's storage service stops on SIGTERM or SIGINT whatever signal mask
+  the process that starts it hands down: it unblocks both at start, as the
+  worker launcher service does.
+- The Studio worker launcher service unblocks SIGTERM and SIGINT when it
+  starts, so an inherited blocked-signal mask cannot keep it from stopping in
+  order. The launcher test support places its sockets under a folder short
+  enough for the Unix socket path limit, kills and reports a launcher that
+  does not stop on SIGTERM, and on Linux ends a launcher together with the
+  test that started it.
+- Screen readers and speech input get the Studio's own names. A model in the
+  library is named by the label it shows, such as "AdEx", with its contract
+  line (validation, integrator, terminal tier) as its description, in place of
+  the label run into that line ("AdExvalidation parity ..."). The RTL panel's
+  co-simulation controls are a named group, and its read-only RTL viewer is
+  named "Generated RTL" in place of "Editor content".
+- The Studio announces what an action did to screen readers. The bottom bar is
+  always drawn and its run report is a status: a model run starting and
+  finishing, and a finished network canvas run with its neuron, spike and step
+  counts, are announced, without the shortcut hint. The bar wraps in a narrow
+  window and no longer overflows the page at 320 CSS px. The model list's
+  count, the network canvas's population and projection count, the training
+  run's state ("Training running", "Training stopped") and the evidence cart's
+  count are statuses too. The cart's last export says that it passed its own
+  round-trip verification, and an export failure is announced in the same
+  place.
+- On the network canvas and the E-I network tab, the status bar reports only
+  that tab's network, not the last single-model run. A run refused before it
+  starts because the network has problems says how many problems were found,
+  and a run the server refuses says so, with its reasons.
+- The evidence cart says in words why a finished run was not queued, in place
+  of passing on a code such as analysis_result_identity_invalid. A run or
+  analysis whose result carries no readable digest is named as such, in place
+  of being skipped without a word or called unchanged; a failed or unchanged
+  run still says nothing. The export's read-back check names a failure in
+  words, in place of "payload_sha256 mismatch": which entry, or the bundle, no
+  longer matches its SHA-256 digest, and that the cart was not exported.
+- Tab and Shift+Tab leave the ODE equation editor, as everywhere else in the
+  Studio; the editor kept them, with only its own Ctrl+M toggle as a way out
+  (WCAG 2.1.2). The editor moves focus on Tab, and is named "Equations" after
+  its visible heading, in place of "Editor content".
+- The keyboard focus is visible and lands somewhere named. When the first-run
+  tour closes, by Escape, Skip tour or its last step, focus moves to the
+  Studio's title, not the page body. The focus ring, which measured 1.44:1
+  against the panel behind it, is a 2px band of the accent colour framed by a
+  2px gap, and the palette check holds it to 3:1 on every control surface.
+  Under forced colours (Windows contrast themes), focused controls draw an
+  outline in the system's highlight colour, where they showed no indicator.
+- Typing an equation in the ODE editor no longer scrambles it. As soon as a
+  typed line read as an equation, such as `dv/dt` after selecting all, the
+  Studio's rendering replaced the text under the caret and moved the caret to
+  the end, so the rest of the line landed in the reset expression. The editor
+  keeps the typed text for as long as the Studio holds exactly what it reads,
+  and still shows a change made elsewhere, such as a chosen template.
+- The equation editor keeps every `/` and `?` typed into it. In
+  Chromium-based browsers the keyboard help took both keys whenever focus was
+  not in an input or a text area, which the editor (EditContext) is not, so
+  `dv/dt` could only be pasted. The help's `?` and `/` act only when focus is
+  outside a text control (fields, selects, editable regions and anything with
+  a text-entry role); on buttons and links they still open it, and Escape
+  closes it wherever focus is.
+- Clearing a training setting no longer blanks the Studio. After a completed or
+  failed run, clearing an optional setting (choosing another dataset, clearing
+  the seed or the gradient norm limit, switching back to the spiking model,
+  withdrawing the preregistered criterion or clearing the event input) left it
+  in the configuration as `undefined`, which the configuration seal refuses. A
+  cleared setting now leaves the configuration, as a saved project is read
+  back, and a test clears each optional setting.
+- Exporting a saved project's evidence bundle works after a network canvas
+  projection's seed is emptied or its rule is set to all_to_all. Both edits
+  left the field as `undefined`, and the browser refused the export with
+  "undefined is not a sealable JSON value."; a cleared field now leaves the
+  projection, as a saved project is read back.
+- The Morris-Lecar Mojo kernel compiles under the pinned Mojo 1.0.0: its
+  functions are declared with `def`, which replaced `fn`. Its own check
+  reproduces the Python reference's spike counts (0, 3 and 5 over 2000 steps
+  at currents 0, 50 and 100), and in the five-runtime Morris-Lecar benchmark,
+  run again, every backend counts 476 spikes; the model page shows the new
+  timings.
+- The sign of the NMDA current in the dendritic NMDA neuron: the current
+  `g_NMDA * glutamate * B(V_d) * (V_d - E_NMDA)` was added to the dendrite's
+  equation, so below `E_NMDA` glutamate lowered the dendritic potential and
+  removed spikes. It now depolarises below `E_NMDA`, as in the library's other
+  NMDA models, in every lane: Python, the Rust engine, the Rust safety mirror,
+  Go, Julia and Mojo. With the default parameters a somatic current of 20
+  alone and glutamate alone stay below threshold, and both together fire. The
+  20,000-step anchor at current 50 and glutamate 0.5 moves from 253 to 266
+  spikes. Results computed with this model before the fix have the glutamate
+  effect inverted. The tests hold two-sided bounds on the spike counts and the
+  dendrite's balance point solved from the documented equations. The Mojo
+  kernel is rewritten for Mojo 1.0.0, the model's page states the sign
+  convention, corrects the coincidence table and names the test files that
+  exist, and the benchmark record is measured again.
+- `low_discrepancy_error_bound(length)` returns `1/N` only for a power of two,
+  where the first `N` radical-inverse points form the grid `j/N`, and refuses
+  any other length with the new `GuaranteeNotDetermined` (a `ValueError`); it
+  returned `1/N` for every length, although five Halton points encode 0.3 as
+  0.6. The new `threshold_encoding_error_bound(points)` returns the exact
+  worst-case decoding error of a point set (its one-dimensional star
+  discrepancy).
+- `bipolar_decode` and `bipolar_multiply` check their bit arguments in the
+  representation the caller gave, before converting them to one byte per bit;
+  `[0.9, 1.9]` was decoded as the bits 0 and 1, `256` became 0 and `NaN` became
+  0 with a warning. Such input, and text, bytes, objects and complex numbers,
+  is refused with a `ValueError` that names the argument; exact 0/1 values in
+  boolean, integer or real containers of any shape give the same result as
+  before. The check is one function, `sc_neurocore.core.bit_input.as_bit_array`,
+  shared with the cross-correlation diagnostics, and the two bipolar functions
+  are annotated as taking any array-like input.
+- The stochastic cross-correlation diagnostics (`estimate_scc`,
+  `observed_and_bias`, `correlation_diagnostic`) check their input in its
+  original representation before converting it to bits. Fractional values,
+  integers other than 0 and 1, `NaN`, infinity, text, bytes, objects and
+  complex numbers are refused with a `ValueError`; exact 0/1 input in boolean,
+  integer or real form gives the same result as before.
+- The benchmark coverage census reads the files Git tracks, staged ones
+  included, so a local run left beside the committed records, or a folder Git
+  ignores, no longer changes its counts. Outside a repository (a packaged or
+  temporary tree, or where no `git` program can be started) the directories
+  are read as they are. The evidence gate gains `tracked_files`; a tracked file
+  whose name is not UTF-8 is listed in the form a directory walk gives it. The
+  committed census is unchanged.
+- Every subpackage that the wheel ships imports from an installed wheel:
+  `sc_neurocore.identity` and `sc_neurocore.experimental` import
+  `sc_neurocore.analysis` and `sc_neurocore.physics`, which the wheel leaves
+  out, where they are used rather than at module level. A feature that needs
+  one of them, such as the identity substrate's health check or the
+  heat-diffusion comparison route, names the missing package and says that it
+  ships only in a source checkout; a missing third-party dependency is raised
+  unchanged. A test blocks every package the wheel leaves out and imports
+  every shipped subpackage.
+- Every job-ledger database connection is closed when the Studio application
+  shuts down, including the connections opened by worker threads that have
+  ended; Python 3.13 and later reported them as unclosed-database warnings in
+  unrelated code.
+- `compile --synthesize` and `deploy` report a failed open-source synthesis
+  flow as a failure: a nextpnr place-and-route error or a bitstream packer
+  error exits with status 1, as a Yosys failure already did, in place of
+  printing "PnR failed" and exiting with 0. A step that exceeds its time limit
+  (300 s for Yosys and nextpnr, 60 s for packing) is reported instead of
+  raising a traceback, a missing nextpnr or packer is reported as a skipped
+  step, and `deploy` no longer says "Yosys not found" when an installed Yosys
+  fails.
+- Validator interruptions and bounded process cleanup are preserved when a
+  group leader exits or a detached output writer retains its stream.
+- The README's MNIST figure for the surrogate-gradient example names ATan, the
+  example's default surrogate, and the committed 10-epoch benchmark of the
+  same network that reached 95.9 %, in place of ~95 % for FastSigmoid,
+  SuperSpike and ATan alike.
+- The hand-written test matrix of VALIDATION.md and one workflow row of the
+  README. The Python row points to the README's generated test-file count, in
+  place of 3,376 tests in 145 files; the formal row gives the 91 SymbiYosys
+  proof jobs under `hdl/formal/`, in place of 67 checks in 7 files; the Rust
+  engine row is CI-listed; the engine tests run on Ubuntu, Windows and macOS.
+  The generated coverage-scope block is regenerated. The README describes
+  `benchmark.yml` as a workflow started by hand with a run reason and change
+  reference, not as performance regression tracking.
+- Statements on the documentation home page and two overview pages that the
+  code contradicts or no record supports. The MPI line and the
+  getting-started guide no longer claim billion-neuron runs. The analysis
+  toolkit has 25 modules and the visualisation package 12 plot functions, both
+  marked as source-checkout only. The equation compiler is described as
+  handling supported ODE models, with a link to the supported modes. The NIR
+  paragraph names the other ecosystem members as such and no longer calls the
+  FPGA backend the missing one. The product overview calls the package's entry
+  points supported, matching its beta status, and the market page states
+  SC-NeuroCore's own focus without an unsourced comparison with other
+  frameworks.
+- README statements that the code or its records contradict. The Zenith
+  quickstart passes the one scalar weight the Rust plasticity layer accepts,
+  so the snippet runs, and says that no call yet copies trained Torch weights
+  into the Rust layer. The example table describes the Zenith demo by what it
+  does. The core tier is the supported core surface of the beta package. The
+  Rust engine section gives the largest committed scaling run, 100K neurons,
+  says which SIMD paths are chosen at run time and that the SVE and RISC-V V
+  paths are compiled only on request. Two crate test counts match
+  `cargo test -- --list`: 22 for autonomous_learning and 34 for
+  stochastic_doctor_core.
+- The SCPN example is described by what it builds: the README row and the
+  docstring of `examples/05_scpn_stack.py` call it a 16-layer SCPN (Stochastic
+  Coupled Phase-oscillator Network) stack with inter-layer coupling and global
+  coherence metrics, in place of seven layers.
+- No page claims that the event-driven neuron's power is proportional to spike
+  rate; no power measurement of `hdl/sc_event_neuron.v` exists, and its leak
+  counter and threshold compare run on every clock. The README, the
+  architecture file and the documentation home page say that it integrates on
+  input events and decays on leak ticks. The RTL header drops an unmeasured
+  saving of more than 99 % and an event-address check the module does not
+  have. `examples/power_comparison.py` derives its summary from its own rows
+  (both counts fall with activity; a 38-fold reduction), labels its figures as
+  toggles, not power savings, and a test keeps the summary bound to the rows.
+- No page claims hardware results that no record supports: the system map's
+  SHD pipeline proven on silicon, the research-labs guide's spikes identical on
+  silicon, and the formal page's safety monitor enforcing its invariants in
+  silicon at 100 MHz or more on the PYNQ-Z2. Each page states the
+  co-simulation and synthesis evidence and that no board run has validated it
+  yet. The formal page lists the monitor's six runtime checks and
+  violation-flag bits, and notes that its precision check is a simplified
+  range check. A test finds these claims without regard to case, line breaks
+  or emphasis.
+- The README, the external formal evidence page and the formal workflow's job
+  summary say that full formal qualification remains incomplete, or is not
+  claimed, until the `formal-all` gate is green, in place of saying that Core
+  4.1.0 is blocked by it.
+- Documentation errors that a record proves. The delay-training page names
+  the published authors of its first two references and the venue of the
+  first, the co-simulation guide lists the models and tolerances its tests
+  enforce, the Studio guide counts its 16 analysis views, and the README gives
+  the firing-rate range of the non-parity Rust rows at 10,000-100,000 neurons
+  as the artefact records it (3.2-17x above Brian2). The hardware engineers'
+  guide adds current Yosys and nextpnr measurements beside the figures for
+  which no source was found; no figure is removed.
+
+### Removed
 
 - The internal Rust safety crate no longer exports seven placeholder codec
   modules that returned constant values (`aer_codec`, `codec`, `delta_codec`,
   `entropy`, `predictive_codec`, `streaming_codec`, `waveform_codec`). Their
   source files stay in the repository as unsupported source and are not
-  compiled; the crate is marked `publish = false`. The production Rust codec
-  components are those of the engine crate. The Go, Julia and Mojo codec
-  mirrors stay unsupported sources; the mirror-authority guide says what each
-  is. The engine workflow now runs the safety crate's tests, among them seven
-  doctests that must fail to compile if an export returns.
+  compiled, and the crate is marked `publish = false`. The production Rust
+  codec components are those of the engine crate; the Go, Julia and Mojo codec
+  mirrors stay unsupported sources, as the mirror-authority guide says. The
+  engine workflow runs the safety crate's tests, among them seven doctests
+  that must fail to compile if an export returns.
 
-- A new tool, `tools/model_behaviour_variants.py`, asks a model's behaviour
-  cases whether they depend on the signs of its equations. For a catalogue
-  model that states cases and has a bound schema it builds every variant of
-  the schema: the same schema with the sign of one term of one equation
-  changed, on the syntax tree of the equation, sums inside a factor or a
-  function call included. The unchanged schema is run first and must hold
-  every case; each variant is then run on the cases in order, up to the first
-  case it breaks. A variant that holds every case names a term whose sign no
-  case decides; `--check` fails on it, on a schema that does not hold its
-  model's cases, and on a stale
-  `docs/_generated/model_behaviour_variants.json`. A schema is run through
-  the Universal DSL as the Studio runs a candidate, with the current of a
-  case as the one input; a model without a bound schema, with a schema the
-  engine refuses, or with cases of another shape is reported as such and has
-  no variants. The FitzHugh-Nagumo descriptor states five cases from the
-  model's own band test: silent without a current, 26, 28 and 28 spikes at
-  currents 0.5, 0.8 and 1.0, and one spike at 2.0, in 10000 steps. Its class
-  holds them, its schema holds them, and each of the eight variants of its
-  two equations breaks one. The dendritic NMDA model has no bound schema and
-  so no variants. A variant that breaks a case shows that the case depends on
-  that sign, not that the sign is right. In the behaviour report a step that
-  returns a truth value is counted as a spike or none, and any error a step
-  raises makes the case invalid with the error's name. 183 catalogue models
-  state no case yet.
+### Repository hygiene
 
-- Record readiness evidence from the validator's actual interpreter and retain
-  exact raw execution artifacts privately. Public receipts keep repository-relative
-  commands and projected output without host identity.
-- Preserve validator interruptions and bounded process cleanup when a group leader
-  exits or a detached output writer retains its stream.
-- Derive verified silicon readiness through the descriptor's canonical tier rules
-  and type symbolic differentiation through the existing SymPy interfaces.
-
-- A new tool, `tools/model_behaviour_report.py`, runs the behaviour cases that
-  model descriptors state and writes
-  `docs/_generated/model_behaviour_report.json`. Every case runs through the
-  model's public class, from a newly built model, with the case's constant
-  inputs passed by name. Each case is written as stated, with what was
-  observed, whether it held and whether it was exercised: a spike was
-  observed, a state variable left its starting value, or a contrast held. A
-  model whose cases all hold while none is exercised is reported as
-  `held_vacuously`; `--check` fails on it, on a failed case, on a case that
-  cannot be run (a case may ask for at most 100000 steps) and on a stale
-  report. Each model that states cases carries
-  `cases_sha256`, the digest of its cases as parsed, which ties the result to
-  the text that was run. The dendritic NMDA descriptor is the first to state
-  cases, eight of them, and holds them: neither input alone fires the soma,
-  both together give 59 spikes in 20000 steps, glutamate adds 17 spikes at a
-  soma current of 40, glutamate alone moves the dendrite to its balance point
-  near -59.52, and the lane anchor is 266 spikes. The other 184 catalogue
-  models state no case yet. The cases are the author's statement of what the
-  model does, not an independent reference. Limits of the form: a drive is
-  constant finite numbers passed as floats, so a model whose step takes a
-  vector, or requires a truth value or a whole number, cannot state a case;
-  a spike count needs a step that returns 0 or 1, so a model whose step
-  returns a rate or several values can state cases on its state variables
-  only.
-
-- A model descriptor may state behaviour cases: what the model does at a named
-  drive, in a form that can fail. The optional `[[behaviour]]` list holds two
-  kinds. An `interval` bounds one observable (the spike count, or the final
-  value of a declared state variable as `state:<name>`) after a number of
-  steps at constant named inputs, with both ends; equal ends state an exact
-  value. A `contrast` states that the observable at one drive exceeds the
-  observable at a second drive by at least a positive margin. A bound with
-  one end, an order without a margin, an observable the descriptor does not
-  declare, an empty drive, and any key the kind does not take are refused when
-  the descriptor is parsed. A spike count of a run lies between zero and the
-  number of steps, so spike bounds that span that whole range or reach above
-  it, and a spike margin that is fractional or above the number of steps, are
-  refused as well. A drive is a table of finite numbers; a model whose step
-  takes a vector or a truth value cannot state a case in this form yet. The
-  cases are the author's statement and take no part in a readiness tier or in
-  the contract digest of a receipt. The descriptor generator keeps them when
-  it refreshes a descriptor from the model code. No shipped descriptor states
-  a case yet, and nothing runs them yet.
-
-- The benchmark coverage census counts a model as measured when a committed
-  record measures it, also where the record does not hold the model's class
-  name. A record that binds by path the benchmark scripts that produced it is
-  now attributed to the model those scripts name, when they name exactly one;
-  a record whose scripts name two models is credited to neither. Each cited
-  record states how it is attributed (`class_name` or `bound_script`, with the
-  script). A model is named by a script only when its class name appears there
-  as a whole identifier, so `NMDANeuron` is no longer named by a script that
-  names `DendriticNMDANeuron`. Measured models go from 28 to 84 of 185, models
-  with a script and no record from 73 to 17; 84 have neither, as before. The
-  records are the same files as before and nothing was measured again: 61
-  records that were listed as naming no model are now attributed, and their
-  currency is unchanged (most of them describe earlier sources). Census schema
-  version 3.
-
-- The benchmark coverage census reads the files Git tracks. It walked the
-  results and script directories on disk, so a local run left beside the
-  committed records, or a folder Git ignores, changed its counts: in a
-  checkout with such files the census check failed although nothing committed
-  had changed, while a clean checkout passed. In a repository only tracked
-  files, staged ones included, are read now; outside a repository (a packaged
-  or temporary tree, or where no `git` program can be started) the directories
-  are read as they are. The evidence gate gains `tracked_files` for this. The
-  committed census is unchanged. A tracked file whose name is not UTF-8 is
-  listed in the form a directory walk gives it; the first form of
-  `tracked_files` raised on such a name.
-
-- `bipolar_decode` and `bipolar_multiply` now check their bit arguments in
-  the representation the caller gave, before converting them to one byte per
-  bit. Before, the conversion came first, so `[0.9, 1.9]` was decoded as the
-  bits 0 and 1, `256` became 0 and `NaN` became 0 with a warning. Such input,
-  and text, bytes, objects and complex numbers, is now refused with a
-  `ValueError` that names the argument; exact 0/1 values in boolean, integer
-  or real containers of any shape give the same result as before. The check
-  is the one the cross-correlation diagnostics received earlier and is now a
-  single function, `sc_neurocore.core.bit_input.as_bit_array`, used by both
-  modules; the diagnostics' behaviour is unchanged. The two bipolar functions
-  are annotated as taking any array-like input.
-
-- The benchmark coverage census now says whether each record still describes
-  the sources in the tree. A record that binds sources by path carries one of
-  three words: `current` (every bound source has the recorded digest),
-  `outdated` (a bound source changed or is gone; the changed paths are listed)
-  or `unbound` (no source is named by a path, so nothing can be said). An
-  outdated record describes earlier bytes; it does not say that the measured
-  value changed. The census lists this for the records a catalogue model
-  cites and, separately, for every other record under `benchmarks/results`
-  that binds sources, since most records do not carry a model's class name;
-  records that key digests by lane are bound through the evidence gate's
-  manifest where it names their paths. Counts over all records are given
-  beside those of the cited ones. Because the census is a checked generated
-  file, an edit of any bound source now has to regenerate it in the same
-  commit. The evidence gate gains `current_source_hash_failures`, the same
-  comparison as its commit-time check but against the tree as it is now.
-  Census schema version 2; the three model states and their totals are
-  unchanged.
-
-- Separate the variance contracts of the stochastic dot product by circuit.
-  `dot_product_variance` was described as the variance of a multiplexer tree
-  but computes the variance of averaging every product stream in full
-  (`sum q_k (1 - q_k) / (K^2 N)`); it now says so. Two functions are new:
-  `mux_dot_product_variance` for one output stream behind a uniformly random
-  multiplexer (`q_mean (1 - q_mean) / N`), and
-  `interleaved_dot_product_variance` for a round-robin multiplexer
-  (`sum q_k (1 - q_k) / (K N)`; a length that is not a multiple of the number
-  of terms is refused with `GuaranteeNotDetermined`). Each states its
-  assumptions on the select input and on the independence of the streams.
-  For two constant terms 0 and 1 and `N = 100` the random multiplexer has
-  variance 0.0025, where the averaged form gives 0. The returned values of
-  `dot_product_variance` are unchanged.
-
-- Fix the sign of the NMDA current in the dendritic NMDA neuron. The current
-  `g_NMDA * glutamate * B(V_d) * (V_d - E_NMDA)` was added to the dendrite's
-  equation. Below `E_NMDA` it is negative, so glutamate lowered the dendritic
-  potential and removed spikes, the opposite of the model's stated behaviour.
-  It now depolarises below `E_NMDA`, as in the library's other NMDA models, in
-  every lane: Python, the Rust engine, the Rust safety mirror, Go, Julia and
-  Mojo. With the default parameters a somatic current of 20 alone and
-  glutamate alone stay below threshold, and both together fire. The
-  20,000-step anchor at current 50
-  and glutamate 0.5 moves from 253 to 266 spikes. Results computed with this
-  model before the fix have the glutamate effect inverted. The tests now hold
-  the behaviour in a form that can fail: two-sided bounds on the spike counts
-  and the dendrite's balance point solved from the documented equations. The
-  Mojo kernel is rewritten for Mojo 1.0.0, under which the previous file did not
-  compile. The model's page states the sign convention, corrects the
-  coincidence table and names the test files that exist. The benchmark record
-  is measured again.
-
-- State the deterministic error bound of threshold encoding for the points
-  actually used. The new `threshold_encoding_error_bound(points)` returns the
-  exact worst-case decoding error of a point set (its one-dimensional star
-  discrepancy). `low_discrepancy_error_bound(length)` keeps `1/N` only for a
-  power of two, where the first `N` radical-inverse points form the grid
-  `j/N`, and refuses any other length with the new `GuaranteeNotDetermined`
-  (a `ValueError`). Before, it returned `1/N` for every length, although five
-  Halton points encode 0.3 as 0.6.
-
-- Check the input of the stochastic cross-correlation diagnostics
-  (`estimate_scc`, `observed_and_bias`, `correlation_diagnostic`) in its
-  original representation before converting it to bits. Fractional values,
-  integers other than 0 and 1, `NaN`, infinity, text, bytes, objects and
-  complex numbers are refused with a `ValueError`; before, the conversion to
-  one byte turned some of them into bits. Exact 0/1 input in boolean, integer
-  or real form gives the same result as before.
-
-- Move the Studio frontend's Vite pin from 8.3.7 to 8.3.8, the newest patch
-  release, in `package.json` and the lock.
-
-- Use British spelling in the descriptive text of eight neuron model
-  descriptors (`normalised`, `energised`, `specialisation`, `synthesises`,
-  `repolarisation`, `behaviour`). Unit strings and the Lapicque descriptor are
-  unchanged.
-
-- Document the engine's 10 multi-compartment models in full, each file read
-  against its code: how each step integrates (Euler sub-steps, RK4 or the
-  implicit cable solve), which compartment receives the input, where the spike
-  is detected, and what a refused step returns. Two corrections: the astrocyte
-  LIF docstrings (Rust and Python) wrote the membrane equation with only the
-  leak divided by `tau_m`, while both codes divide the whole sum, and the Marder
-  STG descriptor gave `f_ca` the unit `cm^2/(uA*ms)`, where the model's calcium
-  equation needs `uM*cm^2/uA`. The astrocyte LIF Python module now documents
-  its public methods in NumPy form and is enrolled in the docstring policy.
-
-- Document the engine's 22 simple spiking models in full and lower the Rust
-  documentation ceiling from 3004 to 2712 undocumented items, each file read
-  against its code. The documentation states each model's integrator and step
-  size, its spike rule, which inputs are refused and what a refusal returns
-  (some models return -1, others 0), and whether reset keeps the parameters.
-  The McKean descriptor described `mu` as a left-branch gain; it is the height
-  of the Heaviside excitation step added where `v` reaches `a`, and the
-  descriptor now says so.
-
-- Move the body of the shared `safe_rate` helper of the biophysical neuron
-  models into its own module, `biophysical/rate_functions.rs`. The facade
-  `engine/src/neurons/biophysical.rs` keeps a documented `safe_rate` function
-  that calls it, so existing imports are unchanged. The facade's line ceiling in
-  the engine monolith guard is lowered from 54 to 50.
-
-- Document the engine's 24 biophysical conductance models and the shared
-  `safe_rate` helper in full, and lower the Rust documentation ceiling from
-  3490 to 3004 undocumented items. Each file was read against its code; the
-  documentation states each model's integration scheme, spike rule, validation
-  and reset, and each file denies missing documentation. Corrections made on
-  the way: the Traub-Miles documentation claimed an M-current that the model
-  does not have; the GLIF resistance is in GOhm, not MOhm, given its pF, pA,
-  mV and ms; the GIF adaptation increment moves `eta`, not the threshold; and
-  the Mainen-Sejnowski coupling and capacitance belong to the axonal
-  compartment, not a dendritic one. The Huber-Braun Rust model adds no
-  membrane noise, unlike the Python model; its documentation now says so.
-
-- Document the engine's cerebellar models in full and lower the Rust
-  documentation ceiling from 3646 to 3490 undocumented items. Every field,
-  constructor, step and reset of the Golgi, deep cerebellar nuclei, granule,
-  Lugaro, stellate and unipolar brush cell models now has rustdoc read against
-  its code, and each file denies missing documentation. A new tool,
-  `tools/rust_model_field_docs.py`, writes a field's meaning and unit from the
-  neuron model descriptors where the Rust field has no documentation yet, and
-  never replaces existing documentation. The Lugaro descriptor described
-  `a_adapt` as a per-spike increment; in both the Python and the Rust model it
-  is the subthreshold adaptation coupling, and the descriptor now says so.
-
-- Check the whole push range before a push leaves the machine. The preflight now
-  finds the commit a push starts from and runs the documentation scope guard
-  from it (`--since`), and runs the pre-commit hooks over the files changed in the
-  range, or over all files when a hook configuration changed, as the hosted
-  Pre-commit run does. The hooks receive the same commit through
-  `SC_NEUROCORE_POLICY_BASELINE`, so the Go and Rust documentation ratchets also
-  compare with the push base, as CI does with the push event. The hooks read the working tree while a push sends only
-  commits, so the range gates refuse a checkout with uncommitted or untracked
-  changes. Two hosted failures on 2026-11-11 had passed every local
-  check: unenrolled tests changed earlier in a pushed range, and a typos release
-  that read a word in an existing file differently.
-
-- Assemble the standalone Linux desktop runtime from the complete selected
-  original wheel set, validate installed records and wheel payloads, and generate
-  relocatable console launchers. Retain original commands, diagnostics and
-  process receipts. Add a hash-locked CI input producer and a consumer that
-  checks source binding, types, documentation, formatting and complete statement
-  and branch coverage of the six assembly tools.
-
-- Move Go to 1.27.4 in every module and workflow. Go 1.27.3's standard library is
-  affected by GO-2026-6859 (CVE-2026-97054), an HTTP/1 server crash in net/http, fixed
-  in 1.27.4. The locked-dependency audit reports it for all five Go modules.
-
-- Refresh the dependency pins that no pending change holds: patch updates of itoa, syn
-  and const-oid in the nine separate Rust crate locks; Vite 8.3.7, the React plugin for
-  Vite 6.3.0 and typescript-eslint 8.72.2 in the Studio frontend; and the typos hook
-  1.52.0, the newest release published to PyPI. The engine's lock and the Python, Go and
-  Mojo pins wait for a pending change that fixes them. Rust stays on 1.98.1 while its
-  recorded migration constraint remains, and TypeScript 7 waits for typescript-eslint,
-  which supports TypeScript below 6.1.
-
-- Ship the core spike-train statistics in the wheel as `sc_neurocore.spike_train_statistics`:
-  spike times, inter-spike intervals, rate, count, binning, power spectrum, ISI
-  coefficient of variation, Fano factor and permutation entropy. NumPy is its only
-  dependency and it imports nothing from `sc_neurocore.analysis`, which re-exports these
-  nine functions under its existing names. The identity health check and director
-  monitor now run from an installed wheel; state extraction and the decoder still need
-  a source checkout for PCA and functional connectivity, and say so. Permutation
-  entropy is computed with NumPy array operations instead of a per-window Python loop;
-  ties are ranked by position, as in the Rust helper. An order or delay
-  below 1 now raises `ValueError`.
-
-- Bind the README's MNIST figure for the surrogate-gradient example to its record. The row
-  gave ~95% for FastSigmoid, SuperSpike and ATan alike. The example uses the default ATan
-  surrogate, and the committed 10-epoch benchmark of the same network with ATan reached
-  95.9%. No record gives that figure for the other two. The row now names ATan and the
-  run.
-
-- Add a page on what each kind of evidence establishes and what it does not: records
-  of a run, agreement between implementations, co-simulation, formal results, reports
-  of design tools, benchmark artefacts and measurements on a device. The architecture
-  overview now names, for each of its five contracts, the test or hosted step that
-  checks it and how far that check reaches.
-
-- Correct the hand-written test matrix of VALIDATION.md and one workflow row of the
-  README. The matrix counted 3,376 Python tests in 145 files and 67 formal checks in 7
-  files. The Python row now points to the README's generated test-file count. The formal
-  row gives the 91 SymbiYosys proof jobs under hdl/formal/, which the README's test-bound
-  count also states. The Rust engine row is CI-listed, as in the README. The engine tests
-  run on Ubuntu, Windows and macOS, not only Ubuntu and Windows. The generated
-  coverage-scope block, which three earlier changes had left out of date, is regenerated.
-  The README described benchmark.yml as performance regression tracking, but the workflow
-  starts only by hand with a run reason and change reference.
-
-- Correct statements on the documentation home page and two overview pages that the code
-  contradicts or that no record supports. The MPI line and the getting-started guide no
-  longer claim billion-neuron runs, for which no record exists. The analysis toolkit has
-  25 modules and the visualization package has 12 plot functions, and both are marked as
-  source-checkout only. The equation compiler is described as handling supported ODE
-  models, with a link to the supported modes. The NIR paragraph names the other ecosystem
-  members as such and no longer calls the FPGA backend the missing one. The product
-  overview calls the package's entry points supported, matching its beta status, and the
-  market page states SC-NeuroCore's own focus without an unsourced comparison with other
-  frameworks.
-
-- Import every subpackage that the wheel ships from an installed wheel.
-  sc_neurocore.identity and sc_neurocore.experimental imported sc_neurocore.analysis and
-  sc_neurocore.physics at module level, and the wheel leaves both out, so importing them
-  from an installed wheel failed. They now import those packages where they are used. A
-  feature that needs one of them, such as the identity substrate's health check or the
-  heat-diffusion comparison route, names the missing package and says that it ships only
-  in a source checkout. A missing third-party dependency is still raised unchanged. A new
-  test blocks every package the wheel leaves out and imports every shipped subpackage.
-
-- Correct README statements that the code or its records contradict. The Zenith quickstart
-  passed a weight array to the Rust plasticity layer, which accepts one scalar weight, so
-  the snippet raised a TypeError; it now runs, and it says that no call yet copies trained
-  Torch weights into the Rust layer, instead of promising an export to hardware. The
-  example table describes the Zenith demo by what it does. The core tier is called the
-  supported core surface of the beta package, matching the package classifier. The Rust
-  engine section gives the largest committed scaling run, 100K neurons, instead of 100K+.
-  It says which SIMD paths are chosen at run time and that the SVE and RISC-V V paths are
-  compiled only on request. Two crate test counts now match `cargo test -- --list`: 22 for
-  autonomous_learning and 34 for stochastic_doctor_core.
-
-- Rewrite the integration and performance-tuning guides from the code and records. The
-  integration guide described APIs that do not exist, a deployed PYNQ-Z2 overlay and a
-  hardware interrupt. It now covers the SHD accelerator: what is co-simulated and
-  synthesised, that a bitstream from the block-design script carries no trained model, how
-  to build it, the driver and its register map, and the steps before a first board run.
-  The performance guide gave a 250 MHz board clock, resource and power figures and
-  latencies with no record behind them. It now covers bitstream length and precision, with
-  lengths computed by `adaptive_length`, the packed, CuPy, sparse, Rust and GPU paths, the
-  one committed timing result, and the absence of any power measurement. The PYNQ demo and
-  driver use the block-design instance name `sc_shd_0`. The demo no longer prints a
-  throughput from core cycles alone, and it gives the 75.2 % accuracy as the
-  floating-point model's. The hardware-claims test now reads both guides.
-
-- Describe the SCPN example by what it builds. The README gave examples/05_scpn_stack.py
-  seven layers and a non-technical reading of SCPN; the example builds 16 layers. The
-  README row and the example's docstring now call it a 16-layer SCPN (Stochastic Coupled
-  Phase-oscillator Network) stack with inter-layer coupling and global coherence metrics,
-  the reading the SCPN API page already uses.
-
-- Stop claiming that the event-driven neuron's power is proportional to spike rate. No
-  power measurement of hdl/sc_event_neuron.v exists, and its leak counter and threshold
-  compare run on every clock. The README, the architecture file and the documentation home
-  page now say that it integrates on input events and decays on leak ticks instead of
-  every cycle. The RTL header drops an unmeasured saving of more than 99 % and an
-  event-address check the module does not have. The toggle-count example
-  examples/power_comparison.py derives its summary from its own rows. Its old summary said
-  that clock-driven toggles stay constant and that the event-driven model makes about 100
-  times fewer toggles at 0.1 % activity, while its rows showed both counts falling with
-  activity and a 38-fold reduction. It now labels its figures as toggles, not power
-  savings, and a test keeps the summary bound to the rows.
-
-- Replace the architecture overview page. The old page was a package listing with
-  counts from mid-2026 that the system map already called stale. The new page is the
-  entry point to the architecture: what the programme is for, the loop from model to
-  evidence, the three tiers that exist today, the contracts between them, which
-  established tools are integrated and what is built here, what ships and what is
-  research, and what is planned. It states no counts and links to the generated
-  capability snapshot instead. The navigation lists it first. The system map and two
-  pages that described the old content are reworded, and two stale counts are removed
-  from the repository's `ARCHITECTURE.md`.
-
-- Stop claiming hardware results that no record supports. The system map said the SHD
-  pipeline was proven on silicon, the research-labs guide said simulated spikes fire
-  identically on silicon, and the formal page said the safety monitor enforces its
-  invariants in silicon at 100 MHz or more on the PYNQ-Z2. No board run has been made and
-  no synthesis report for the monitor is committed, so each page now states the
-  co-simulation and synthesis evidence and says that no board run has validated it yet.
-  The formal page also lists the monitor's six runtime checks and violation-flag bits in
-  place of assertions the RTL does not contain, and notes that its precision check is a
-  simplified range check. A test now finds these claims without regard to case, line
-  breaks or emphasis.
-
-- Close every job-ledger database connection when the Studio application shuts down,
-  including the connections opened by worker threads that have ended. They were
-  previously left to the garbage collector, which on Python 3.13 and later reported
-  them as unclosed-database warnings in unrelated code.
-
-- Stop saying that Core 4.1.0 is blocked by the red `formal-all` gate, which the README,
-  the external formal evidence page and the formal workflow's job summary still stated
-  after 4.1.0 was released. All three now say that full formal qualification remains
-  incomplete, or is not claimed, until that gate is green.
-
-- Install everything the package needs from `requirements.txt` and `requirements-dev.txt`.
-  The runtime file now lists `defusedxml`, `tomli-w` and `typing-extensions` from the
-  package dependencies, and the development file lists the six development dependencies it
-  lacked and the exact `mypy` and `ruff` versions of the `dev` extra. A test keeps both
-  files in step with `pyproject.toml`.
-
-- Correct documentation errors that a record proves. The delay-training page names the
-  published authors of its first two references and the venue of the first, the co-
-  simulation guide lists the models and tolerances its tests enforce, the Studio guide
-  counts its 16 analysis views, and the README gives the firing-rate range of the non-
-  parity Rust rows at 10,000-100,000 neurons as the artefact records it (3.2-17x above
-  Brian2). The hardware engineers' guide adds current Yosys and nextpnr measurements
-  beside the figures for which no source was found; no figure is removed.
-
-- Report a failed open-source synthesis flow as a failure in `compile --synthesize`
-  and `deploy`. A nextpnr place-and-route error or a bitstream packer error used to
-  print "PnR failed" and still exit with status 0; it now exits with status 1, as a
-  Yosys failure already did. A step that exceeds its time limit (300 s for Yosys and
-  nextpnr, 60 s for packing) is reported instead of raising a traceback, a missing
-  nextpnr or packer is reported as a skipped step, and `deploy` no longer says
-  "Yosys not found" when an installed Yosys fails.
-
-- Retain all seven original timing samples for each of the five Lapicque
-  backends with `benchmarks/capture_lapicque_samples.py`, and reject damaged,
-  instrumented or source-mismatched evidence with
-  `benchmarks/validate_lapicque_samples.py`. The capture and validation checks
-  run in CI with complete statement and branch coverage. Three guides document
-  the commands, provenance checks and external performance-isolation boundary.
-  This adds measurement tooling; it publishes no performance results or model
-  readiness changes.
+- The changelog's unreleased entries are sorted into the standard categories,
+  Security, Added, Changed, Fixed, Removed and Repository hygiene, and state
+  the change without its rationale. A test holds every unreleased entry under
+  one of these headings, in that order, with no heading left empty.
+- A Go accelerator build puts its library in place as a new file: the builder
+  copies it beside its target under a temporary name and renames it over the
+  target, in place of writing into the existing file, which changed the mapped
+  code of a process with the former library loaded and wrote through a
+  symbolic link to the file it named. The library keeps the mode the build
+  gave it, and a copy that fails leaves the former library and no partial
+  file.
+- The Go accelerator builds no longer write over the committed C headers:
+  `tools/build_accel_backends.py` and the CI and audit workflows build into a
+  temporary folder and copy only the library. The builder compares cgo's
+  header with the tracked one and names any that differ, without writing them,
+  so in CI the five loading tests compare a fresh build's header with the
+  committed one.
+- The hosted CI lints the Studio frontend: the frontend job runs `npm run lint`
+  after installing and before the tests, and the script fails on a warning
+  (`--max-warnings=0`), an unused `eslint-disable` comment included. A
+  contract test holds the job's step, the script and the preflight's lint to
+  one command.
+- Thirteen Studio components get a test of their own: the admin panel and its
+  audit-archive section, the capability strip, the cohort panel, the model
+  comparison, the custom-equation editor, the model capability list, the
+  network controls, the synthesis evidence controls, the template list, the
+  text prompt, and a training run's event input and preregistered criterion.
+  Each test mounts its component and drives it as a user does, and a
+  deliberate fault in each component's source made its test fail. Ten of the
+  components are at 100 % of their statements and branches; the admin panel,
+  the text prompt and the model comparison stop short only at defensive guards
+  no user action reaches. The frontend coverage ledger records the gains, six
+  files that earlier tests had raised, and the render-timing module at 100 %.
+- The Studio frontend has a coverage ledger:
+  `studio/frontend/coverage-ledger.json` records the statement and branch
+  coverage of every source file under `src`, and `npm run
+  test:coverage-ledger` runs the suite with v8 coverage and refuses a file that
+  falls below its recorded value or a new file below 100 %.
+  `scripts/coverage-ledger.ts accept` writes the ledger again only when nothing
+  fell. The CI frontend job runs the check after Vitest and keeps the measured
+  summary as an artefact.
+- `.githooks/pre-push` is stored executable, so the hook that
+  `make install-hooks` installs runs, and it runs the preflight's default (the
+  gates that guard what the push touches, and no test suite) in place of
+  `--all-gates`. A test pushes through the stored hook and checks that the
+  preflight runs and that a failing preflight stops the push.
+- `tools/preflight.py` checks what a change touched and runs no whole test
+  suite by default. Each gate declares the kinds of file it guards; a gate the
+  change does not touch prints `not applicable to this change: <gate>` and does
+  not run. The capability manifest, SPDX header and benchmark evidence gates
+  always run, and every gate runs when the touched files cannot be determined
+  or the tool itself changed. A `frontend` gate runs, for a change under
+  `studio/frontend/`, the frontend's lint, its type check and the Vitest tests
+  related to the touched files, and fails when `npm` or `npx` is missing.
+  `--all-gates` runs every gate; `--full-suite` adds the whole pytest suite
+  (`make preflight-full`); `--no-tests` stays accepted as the default.
+  `sc-neurocore preflight` keeps running every gate and the whole suite.
+- The preflight checks the whole push range: it finds the commit a push
+  starts from, runs the documentation scope guard from it (`--since`), and runs
+  the pre-commit hooks over the files changed in the range, or over all files
+  when a hook configuration changed, as the hosted pre-commit run does. The
+  hooks receive the same commit through `SC_NEUROCORE_POLICY_BASELINE`, so the
+  Go and Rust documentation ratchets compare with the push base. The range
+  gates refuse a checkout with uncommitted or untracked changes.
+- The dependency-lock audit retries a transient OSV failure: a transport
+  failure (such as a timeout or a reset connection) or HTTP 429, 500, 502, 503
+  or 504 is retried after 2 and then 6 seconds, three attempts in all; a failed
+  certificate check and any other status, such as a 400 refusal, are final at
+  once. Each page's receipt lists every retried attempt with its exception
+  types or its status and body digest, and each retried body is kept beside
+  the final one. Exception text and headers are still not kept.
+- The shared HDL toolchain workflow restores one published SDK archive in
+  place of building the tools on each runner: the `scn-hdl.tar.gz` asset of
+  release `hdl-sdk-yosys070-yices270-524357fd`, SHA-256
+  `49a65847681b69ae5a42f2801562d464f7d9d52af6c87e7744c180a6a70668c3`. The
+  workflow checks the archive's hash, refuses members outside `scn-hdl/` and
+  anything but plain files and folders, checks the Yices and Z3 binaries
+  against the receipts' digests, runs the same version, licence and smoke
+  checks, and hands the archive on unchanged. A build from source runs only
+  when a caller passes `rebuild_sdk: true`. The release also carries the Yices
+  and GMP sources the binary was built from.
+- The Rust documentation ratchet extracts its original revision into one
+  persistent folder outside the checkout, `sc-neurocore-rust-doc-original` in
+  the temporary directory or the one `SC_NEUROCORE_RUST_DOC_ORIGINAL_DIR`
+  names, so Cargo's build outputs persist and Z3 is not compiled from C++
+  source on every run; the sources are extracted afresh each time. The folder
+  is created for the current account alone (mode 0700); a link, a folder
+  another account could write, and a non-empty folder without the ratchet's
+  marker are refused. An exclusive lock lets concurrent runs take turns, and a
+  waiting run says so.
+- The Rust documentation measurement runs the toolchain the measured crate
+  pins (`engine/rust-toolchain.toml` for the engine) in every compiler call,
+  also for the original revision, whatever toolchain, compiler or compiler
+  wrapper the environment or a Cargo configuration file names. A pinned
+  toolchain that does not run, or a compiler that does not report exactly the
+  pinned release, is refused by name, and rustup may not fetch one.
+- The body of the shared `safe_rate` helper of the biophysical neuron models
+  moves into its own module, `biophysical/rate_functions.rs`; the facade
+  `engine/src/neurons/biophysical.rs` keeps a documented `safe_rate` that calls
+  it, and its line ceiling in the engine monolith guard is lowered from 54 to
+  50.
+- `requirements.txt` and `requirements-dev.txt` install everything the package
+  needs: the runtime file lists `defusedxml`, `tomli-w` and
+  `typing-extensions`, and the development file the six development
+  dependencies it lacked and the exact `mypy` and `ruff` versions of the `dev`
+  extra. A test keeps both files in step with `pyproject.toml`.
 
 ## [4.1.0] - 2026-11-08
 
