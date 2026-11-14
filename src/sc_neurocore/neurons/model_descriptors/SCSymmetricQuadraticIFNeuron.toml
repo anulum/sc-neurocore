@@ -105,3 +105,107 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_quadratic_if.py"
 target_tier = "H1"
 terminal_reason = "Preserved SC QIF retains its dedicated RTL, co-simulation, and depth-20 formal safety; synthesis evidence remains assigned only to the source profile."
+
+[[behaviour]]
+name = "without a current the model stays silent for 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.333 fires 2 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    2,
+    2,
+]
+
+[behaviour.inputs]
+current = 0.333
+
+[[behaviour]]
+name = "a current of 0.5 fires 3 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    3,
+    3,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 1 fires 6 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    6,
+    6,
+]
+
+[behaviour.inputs]
+current = 1.0
+
+[[behaviour]]
+name = "a current of 2 fires 11 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    11,
+    11,
+]
+
+[behaviour.inputs]
+current = 2.0
+
+[[behaviour]]
+name = "a current of 5 fires 26 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    26,
+    26,
+]
+
+[behaviour.inputs]
+current = 5.0
+
+[[behaviour]]
+name = "a current of 20 fires 100 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    100,
+    100,
+]
+
+[behaviour.inputs]
+current = 20.0
+
+[[behaviour]]
+name = "a current of 50 fires 250 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    250,
+    250,
+]
+
+[behaviour.inputs]
+current = 50.0

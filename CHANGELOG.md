@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The symmetric SC quadratic integrate-and-fire neuron states eight
+  behaviour cases, the event counts its Q16.16 test enrols for the hand
+  model, the schemas and the RTL: silent without a current, then 2, 3, 6,
+  11, 26, 100 and 250 events in 1000 steps at currents 0.333, 0.5, 1, 2,
+  5, 20 and 50. Its public class holds them, and each of the two sign
+  variants of its equation breaks one. Five of the 185 catalogue models
+  now state cases.
+
 - A Studio worker that connects for its grant and exits before the grant is
   given is now reported as such: "exited with N after requesting its grant,
   before it was given". Within one poll of the launcher's report, such a
