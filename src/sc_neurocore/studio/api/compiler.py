@@ -15,6 +15,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
+from sc_neurocore.neurons.equation_builder import from_equations
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.compiler_result import decode_equation_ir_response
@@ -76,6 +77,43 @@ def refuse_before_admission(payload: dict[str, Any]) -> None:
         return
 
 
+def refuse_equations_before_admission(request: CompileRequest) -> None:
+    """Answer an equation compile the parser would refuse with its reason, before any job runs.
+
+    The worker's ``equation_to_fpga`` parses the same equations, threshold
+    and reset before it emits RTL, and refuses them the same way, but a failed
+    job is answered HTTP 500 "studio_job_failed" with its reason kept in the
+    job ledger. This parse splits ODEs joined by ``;`` as that function does.
+    An authored refusal here is the caller's input: HTTP 422 with its text.
+    Anything else the parse raises is left to the job, as in
+    :func:`refuse_before_admission`. Refusals the RTL emitter raises after the
+    parse are not checked here.
+
+    Parameters
+    ----------
+    request : CompileRequest
+        The request as the route receives it.
+
+    Raises
+    ------
+    HTTPException
+        HTTP 422 carrying the refusal's text.
+    """
+    equations = [part.strip() for text in request.equations for part in text.split(";")]
+    try:
+        from_equations(
+            *(equation for equation in equations if equation),
+            threshold=request.threshold,
+            reset=request.reset,
+            params=request.params,
+            init=request.init,
+        )
+    except AuthoredRefusal as refusal:
+        raise HTTPException(status_code=422, detail=str(refusal)) from None
+    except Exception:
+        return
+
+
 def build_compiler_router(context: StudioApiContext) -> APIRouter:
     """Build the compiler router over shared Studio runtime state."""
     router = APIRouter()
@@ -94,6 +132,7 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/compile")
     def api_compile(req: CompileRequest) -> Any:
+        refuse_equations_before_admission(req)
         return _safe(
             lambda: run_studio_process_job_sync(
                 kind="compiler",

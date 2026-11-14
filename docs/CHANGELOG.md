@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The ODE editor's 'Generate RTL' answers an equation, threshold or reset
+  it cannot parse with HTTP 422 and the parser's reason, for example
+  "Invalid equation syntax: '-65 = (-v + 1) / 10'" for a garbled reset.
+  It was answered HTTP 500 "studio_job_failed", while simulating the
+  same input was refused as invalid. The compile now runs the parse the
+  worker runs before it admits a job, so no job is started for such a
+  request; a fault that is not the caller's input is still left to the
+  job.
+
 - 'Generate RTL' offers a model only the Q-formats that hold the neuron
   the Studio compiles. The formats were judged on the schema's own
   defaults, but the Studio sends the catalogue's, and for the scaled-reset

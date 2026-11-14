@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1960
+expected_file_count = 1961
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7894,3 +7894,7 @@ rationale = "Bind the checkout to its toolchain manifest, refuse each kind of dr
 [[file]]
 path = "tests/test_tools/test_optics_extra_ci_contract.py"
 rationale = "Keep every optional-extra CI lane, the gdsfactory-gated optics lane among them, explicit in the workflow and synchronized with the public dependency documentation."
+
+[[file]]
+path = "tests/test_studio_ode_compile_refusals.py"
+rationale = "An equation compile the parser refuses is answered 422 with its reason and no job, while a server fault is left to the job."

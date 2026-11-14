@@ -46011,6 +46011,28 @@ Raises
 HTTPException
     HTTP 422 carrying the refusal's text.
 
+### Function `refuse_equations_before_admission(request)`
+Answer an equation compile the parser would refuse with its reason, before any job runs.
+
+The worker's ``equation_to_fpga`` parses the same equations, threshold
+and reset before it emits RTL, and refuses them the same way, but a failed
+job is answered HTTP 500 "studio_job_failed" with its reason kept in the
+job ledger. This parse splits ODEs joined by ``;`` as that function does.
+An authored refusal here is the caller's input: HTTP 422 with its text.
+Anything else the parse raises is left to the job, as in
+:func:`refuse_before_admission`. Refusals the RTL emitter raises after the
+parse are not checked here.
+
+Parameters
+----------
+request : CompileRequest
+    The request as the route receives it.
+
+Raises
+------
+HTTPException
+    HTTP 422 carrying the refusal's text.
+
 ### Function `build_compiler_router(context)`
 Build the compiler router over shared Studio runtime state.
 
