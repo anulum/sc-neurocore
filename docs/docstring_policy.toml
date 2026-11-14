@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1969
+expected_file_count = 1970
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7930,3 +7930,7 @@ rationale = "An equation compile over the bound is refused before the emitter ru
 [[file]]
 path = "tests/test_notebooks/test_python_to_proven_silicon_notebook.py"
 rationale = "Notebook 27 runs from its first code cell to its last, and its RTL declares the threshold and reset levels it reads."
+
+[[file]]
+path = "tests/test_studio_compiler_router_functions.py"
+rationale = "The compiler routes stay in functions of at most 50 lines and keep their paths, order and endpoint names."

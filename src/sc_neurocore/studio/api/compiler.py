@@ -111,26 +111,37 @@ def refuse_equations_before_admission(request: CompileRequest) -> None:
 
 
 def build_compiler_router(context: StudioApiContext) -> APIRouter:
-    """Build the compiler router over shared Studio runtime state."""
-    router = APIRouter()
-    run_studio_process_job_sync = context.run_studio_process_job_sync
+    """Build the compiler router over shared Studio runtime state.
 
-    def run_equation_ir(operation: IROperation, request: BaseModel) -> dict[str, Any]:
-        """Validate the bounded worker outcome and retain its exact job receipt."""
-        response = run_studio_process_job_sync(
-            kind="compiler",
-            owner="studio-equation-ir",
-            task_path=EQUATION_IR_PROCESS_TASK,
-            payload={"operation": operation, "request": request.model_dump(mode="json")},
-            include_job_receipt=True,
-        )
-        return decode_equation_ir_response(response)
+    Routes are registered in this order: the equation compile, the model compile
+    and co-simulation, the NIR compile, then the equation IR routes.
+
+    Parameters
+    ----------
+    context : StudioApiContext
+        Shared Studio runtime state, with its process-job runner.
+
+    Returns
+    -------
+    APIRouter
+        The router serving every compiler route.
+    """
+    router = APIRouter()
+    _add_equation_compile_route(router, context)
+    _add_model_routes(router, context)
+    _add_nir_route(router)
+    _add_equation_ir_routes(router, context)
+    return router
+
+
+def _add_equation_compile_route(router: APIRouter, context: StudioApiContext) -> None:
+    """Register ``POST /api/compile``, refused before admission when the compiler would refuse it."""
 
     @router.post("/api/compile")
     def api_compile(req: CompileRequest) -> Any:
         refuse_equations_before_admission(req)
         return _safe(
-            lambda: run_studio_process_job_sync(
+            lambda: context.run_studio_process_job_sync(
                 kind="compiler",
                 owner="studio-compiler",
                 task_path=COMPILE_PROCESS_TASK,
@@ -138,10 +149,14 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
             )
         )
 
+
+def _add_model_routes(router: APIRouter, context: StudioApiContext) -> None:
+    """Register the catalogue-model compile and co-simulation routes."""
+
     def run_model_job(owner: str, task_path: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Refuse a request the compiler would refuse, then run the model job."""
         refuse_before_admission(payload)
-        return run_studio_process_job_sync(
+        return context.run_studio_process_job_sync(
             kind="compiler", owner=owner, task_path=task_path, payload=payload
         )
 
@@ -159,6 +174,10 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
             lambda: run_model_job("studio-model-cosim", MODEL_COSIM_PROCESS_TASK, req.model_dump())
         )
 
+
+def _add_nir_route(router: APIRouter) -> None:
+    """Register ``POST /api/nir/compile`` for an uploaded NIR graph."""
+
     @router.post("/api/nir/compile")
     async def api_nir_compile(
         request: Request,
@@ -170,6 +189,21 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
         return _safe(
             lambda: compile_nir_file_bytes(data, module_name=module_name, source_kind=kind)
         )
+
+
+def _add_equation_ir_routes(router: APIRouter, context: StudioApiContext) -> None:
+    """Register the equation IR routes and the direct SystemVerilog emitter."""
+
+    def run_equation_ir(operation: IROperation, request: BaseModel) -> dict[str, Any]:
+        """Validate the bounded worker outcome and retain its exact job receipt."""
+        response = context.run_studio_process_job_sync(
+            kind="compiler",
+            owner="studio-equation-ir",
+            task_path=EQUATION_IR_PROCESS_TASK,
+            payload={"operation": operation, "request": request.model_dump(mode="json")},
+            include_job_receipt=True,
+        )
+        return decode_equation_ir_response(response)
 
     @router.post("/api/ir/build")
     def api_ir_build(req: EquationIRRequest) -> Any:
@@ -199,5 +233,3 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
                 module_name=req.module_name,
             )
         )
-
-    return router

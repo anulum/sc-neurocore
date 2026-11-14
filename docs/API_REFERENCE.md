@@ -46067,6 +46067,19 @@ HTTPException
 ### Function `build_compiler_router(context)`
 Build the compiler router over shared Studio runtime state.
 
+Routes are registered in this order: the equation compile, the model compile
+and co-simulation, the NIR compile, then the equation IR routes.
+
+Parameters
+----------
+context : StudioApiContext
+    Shared Studio runtime state, with its process-job runner.
+
+Returns
+-------
+APIRouter
+    The router serving every compiler route.
+
 ---
 
 ## Module `studio.api.compiler_result`
