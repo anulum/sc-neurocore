@@ -122,6 +122,20 @@ def test_a_contrast_case_parses_with_its_reference_drive_and_margin() -> None:
     assert case.bounds is None
 
 
+def test_a_drive_keeps_the_type_it_is_written_in() -> None:
+    """A whole number written without a point stays an integer, one written with a point a float.
+
+    A model whose step takes an integer, as an int32 current, refuses a float;
+    a case can drive it only with the integer its author wrote.
+    """
+    case_text = _changed(_CONTRAST, inputs={"i_soma": 40, "glutamate": 1.0})
+    case_text["reference_inputs"] = {"i_soma": 40, "glutamate": 0}
+    (case,) = parse_model_descriptor(_payload(case_text)).behaviour
+    assert case.inputs == (("glutamate", 1.0), ("i_soma", 40))
+    assert [type(value) for _, value in case.inputs] == [float, int]
+    assert [type(value) for _, value in case.reference_inputs] == [int, int]
+
+
 def test_a_declared_state_variable_is_an_observable() -> None:
     """The final value of a state variable the descriptor declares can be bounded."""
     (case,) = parse_model_descriptor(_payload(_STATE)).behaviour

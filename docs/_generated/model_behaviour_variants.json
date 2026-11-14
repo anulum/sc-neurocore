@@ -263,6 +263,91 @@
       ]
     },
     {
+      "model": "IntegerQIFNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "an integer current of 10 fires 26 times in 400 steps",
+          "observed": 26
+        }
+      ],
+      "variants": [
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, -v + (a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I)"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v - (a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I)",
+          "observed": 28,
+          "outcome": "violated",
+          "term": "+ a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8",
+          "within": "v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I)"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v + (a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) - I)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I)"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v + ((a * (-v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I))",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v_rest",
+          "within": "v_rest - v"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v + ((a * (v_rest + v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I))",
+          "observed": 40,
+          "outcome": "violated",
+          "term": "- v",
+          "within": "v_rest - v"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v + ((a * (v_rest - v) // 8 if v < branch_point else b * (-v - v_threshold) // 8) + I))",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v_threshold"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "max(v_min, v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v + v_threshold) // 8) + I))",
+          "observed": 57,
+          "outcome": "violated",
+          "term": "- v_threshold",
+          "within": "v - v_threshold"
+        },
+        {
+          "case": "an integer current of 10 fires 26 times in 400 steps",
+          "equation": "v",
+          "expression": "-max(v_min, v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I))",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "max(v_min, v + ((a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8) + I))"
+        }
+      ]
+    },
+    {
       "model": "SCResettingWilsonHRNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -646,8 +731,8 @@
       ]
     }
   ],
-  "models_with_cases": 6,
-  "models_without_cases": 179,
+  "models_with_cases": 7,
+  "models_without_cases": 178,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -656,7 +741,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 5,
+    "discriminated": 6,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -665,7 +750,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 52,
-    "violated": 52
+    "total": 60,
+    "violated": 60
   }
 }

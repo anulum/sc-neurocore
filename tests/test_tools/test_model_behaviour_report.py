@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 179
+MODELS_WITHOUT_A_CASE = 178
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -69,6 +69,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     ],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
+    "IntegerQIFNeuron": [[26, 26]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
     "SCSymmetricQuadraticIFNeuron": [
         [0, 0],
@@ -768,6 +769,23 @@ def test_the_resetting_wilson_model_holds_its_enrolled_counts(report: dict[str, 
     assert {case["steps"] for case in cases} == {5000}
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False, True, True]
+
+
+def test_the_integer_qif_model_holds_its_enrolled_count(report: dict[str, object]) -> None:
+    """26 events in 400 steps at the integer current 10, as the model's RTL test enrols them.
+
+    The class takes an int32 current and refuses a float, so the case passes the
+    integer its descriptor writes, and the report keeps it an integer.
+    """
+    row = _models(report)["IntegerQIFNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [26]
+    assert [case["inputs"] for case in cases] == [{"current": 10}]
+    assert [type(case["inputs"]["current"]) for case in cases] == [int]
+    assert [case["steps"] for case in cases] == [400]
+    assert [(case["held"], case["exercised"]) for case in cases] == [(True, True)]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

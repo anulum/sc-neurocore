@@ -168,3 +168,16 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_iqif.py::test_iqif_q320_registered_and_folded_match_source_trace"
 target_tier = "H1"
 terminal_reason = "The integer map has compile-clean registered and folded Q32.0 RTL, exact source-trace co-simulation and bounded catalogue formal safety; higher tiers require synthesis, timing, equivalence and hardware evidence."
+
+[[behaviour]]
+name = "an integer current of 10 fires 26 times in 400 steps"
+kind = "interval"
+steps = 400
+observable = "spikes"
+bounds = [
+    26,
+    26,
+]
+
+[behaviour.inputs]
+current = 10

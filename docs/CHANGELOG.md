@@ -12,6 +12,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The integer quadratic integrate-and-fire neuron states one behaviour
+  case, the count its RTL test enrols for the source, both RTL forms and
+  the schema: 26 events in 400 steps at an integer current of 10. Its
+  public class holds it, and each of the 8 sign variants of its map
+  breaks it. A case's drive now keeps the type it is written in: a whole
+  number written without a point stays an integer, so a model whose step
+  takes an int32 current, as this one does, can be driven. Every drive
+  stated before is written with a point and is unchanged. Seven of the
+  185 catalogue models now state cases.
+
 - The RTL compile of an equation neuron refuses, in words, what the RTL
   cannot bind: an equation that reads a name which is not a state, a
   parameter or a constant (such as `dv/dt = -v / tau` with no `tau`)

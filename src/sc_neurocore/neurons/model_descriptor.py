@@ -341,7 +341,9 @@ class BehaviourCase:
     they can fail; a margin between two spike counts is a whole number from one
     to the number of steps, so it can hold. A drive is a table of finite
     numbers: a model whose step takes a vector or a truth value cannot state a
-    case in this form. A whole-number input is kept as a float.
+    case in this form. An input written as a whole number without a point is
+    kept as an integer, so a model whose step takes one can be driven; one
+    written with a point is a float.
 
     Parameters
     ----------
@@ -370,9 +372,9 @@ class BehaviourCase:
     kind: str
     steps: int
     observable: str
-    inputs: tuple[tuple[str, float], ...]
+    inputs: tuple[tuple[str, int | float], ...]
     bounds: tuple[float, float] | None = None
-    reference_inputs: tuple[tuple[str, float], ...] = ()
+    reference_inputs: tuple[tuple[str, int | float], ...] = ()
     margin: float | None = None
 
 
@@ -866,15 +868,20 @@ def _finite_number(value: object) -> float | None:
     return number if math.isfinite(number) else None
 
 
-def _behaviour_drive(value: object, where: str, key: str) -> tuple[tuple[str, float], ...]:
+def _behaviour_drive(value: object, where: str, key: str) -> tuple[tuple[str, int | float], ...]:
+    """Return a case's drive, each input as written: an integer stays an integer.
+
+    A model whose step takes an integer, as an int32 current, refuses a float, so
+    a whole number written without a point is passed on as the integer it is.
+    """
     if not isinstance(value, Mapping) or not value:
         raise ModelDescriptorError(f"{where}: {key} must be a non-empty table of named inputs")
-    drive: list[tuple[str, float]] = []
+    drive: list[tuple[str, int | float]] = []
     for name, written in sorted(value.items()):
         number = _finite_number(written)
         if number is None:
             raise ModelDescriptorError(f"{where}: {key}.{name} must be a finite number")
-        drive.append((str(name), number))
+        drive.append((str(name), written if isinstance(written, int) else number))
     return tuple(drive)
 
 

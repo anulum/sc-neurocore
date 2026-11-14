@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 6
+MODELS_WITH_CASES = 7
 
 
 def _accumulator() -> dict[str, object]:
@@ -391,6 +391,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "DendriticNMDANeuron",
         "FitzHughNagumoNeuron",
         "HindmarshRoseNeuron",
+        "IntegerQIFNeuron",
         "SCResettingWilsonHRNeuron",
         "SCSymmetricQuadraticIFNeuron",
         "WilsonHRNeuron",
@@ -401,7 +402,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 5,
+        "discriminated": 6,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -564,6 +565,30 @@ def test_every_variant_of_the_resetting_wilson_model_breaks_a_case(
     assert all(variant["outcome"] == "violated" for variant in variants)
 
 
+def test_every_variant_of_the_integer_qif_model_breaks_its_case(
+    report: dict[str, object],
+) -> None:
+    """Eight signs of the integer QIF map, each decided by its one enrolled count."""
+    row = _rows(report)["IntegerQIFNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [26]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("v", "+ v"),
+        ("v", "+ a * (v_rest - v) // 8 if v < branch_point else b * (v - v_threshold) // 8"),
+        ("v", "+ I"),
+        ("v", "+ v_rest"),
+        ("v", "- v"),
+        ("v", "+ v"),
+        ("v", "- v_threshold"),
+        ("v", "the whole right-hand side"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -575,10 +600,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+5$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+6$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 52, of them violated 52, not discriminated 0" in summary
+    assert "variants: 60, of them violated 60, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

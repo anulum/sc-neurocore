@@ -31140,7 +31140,9 @@ it are whole numbers within that range and leave at least one count out, so
 they can fail; a margin between two spike counts is a whole number from one
 to the number of steps, so it can hold. A drive is a table of finite
 numbers: a model whose step takes a vector or a truth value cannot state a
-case in this form. A whole-number input is kept as a float.
+case in this form. An input written as a whole number without a point is
+kept as an integer, so a model whose step takes one can be driven; one
+written with a point is a float.
 
 Parameters
 ----------
