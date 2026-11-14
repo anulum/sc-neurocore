@@ -156,3 +156,68 @@ synthesised = true
 synth_report = "tests/test_cosim_pernarowski_q1616_precision.py::test_yosys_synthesises_committed_rtl"
 target_tier = "H2"
 terminal_reason = "Q16.16 RK4 co-simulation preserves 17 upward crossings at I=-0.1/0/0.1/0.2, the committed RTL passes Yosys coarse synthesis, and the paired Q8.8 formal lane carries depth-4 reset/output safety. Timing, PPA, device evidence, physical silicon, and universal real-number equivalence remain open."
+
+[[behaviour]]
+name = "a current of -0.1 crosses the threshold 17 times in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    17,
+    17,
+]
+
+[behaviour.inputs]
+current = -0.1
+
+[[behaviour]]
+name = "without a current the model crosses the threshold 17 times in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    17,
+    17,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.1 crosses the threshold 17 times in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    17,
+    17,
+]
+
+[behaviour.inputs]
+current = 0.1
+
+[[behaviour]]
+name = "a current of 0.2 crosses the threshold 17 times in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    17,
+    17,
+]
+
+[behaviour.inputs]
+current = 0.2
+
+[[behaviour]]
+name = "a current of -0.1 crosses the threshold 54 times in 16049 steps"
+kind = "interval"
+steps = 16049
+observable = "spikes"
+bounds = [
+    54,
+    54,
+]
+
+[behaviour.inputs]
+current = -0.1

@@ -28,6 +28,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Pernarowski neuron states five behaviour cases: the crossing counts its
+  Q16.16 test enrols for the hand model, the schema and the RTL (17 in 5000
+  steps at each of the currents -0.1, 0, 0.1 and 0.2), and 54 crossings in
+  16049 steps at -0.1, measured with its public class and matched by the
+  schema. Each of the 14 sign variants of its three equations breaks a case.
+  Thirteen of the 185 catalogue models now state cases.
 - The FitzHugh-Rinzel neuron states four behaviour cases: the event counts its
   Q16.16 test enrols for the hand model, the schema and the RTL (7, 8 and 8 in
   3000 steps at currents 0.4, 0.5 and 0.6), and 83 events in 39600 steps at

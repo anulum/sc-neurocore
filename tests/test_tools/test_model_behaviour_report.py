@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 173
+MODELS_WITHOUT_A_CASE = 172
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -73,6 +73,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
+    "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
@@ -909,6 +910,30 @@ def test_the_fitzhugh_rinzel_model_holds_its_enrolled_and_measured_counts(
     assert [case["observed"] for case in cases] == [7, 8, 8, 83]
     assert [case["inputs"] for case in cases] == [{"current": c} for c in (0.4, 0.5, 0.6, 0.4)]
     assert [case["steps"] for case in cases] == [3000, 3000, 3000, 39600]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_pernarowski_model_holds_its_enrolled_and_measured_counts(
+    report: dict[str, object],
+) -> None:
+    """Four counts its RTL test enrols over 5000 steps, and one over 16049 measured with the class.
+
+    The model's Q16.16 test enrols 17 crossings in 5000 steps at each of the
+    currents -0.1, 0, 0.1 and 0.2: the oscillator is autonomous, so the current
+    shifts its orbit without changing that count. Over 16049 steps at -0.1 the
+    public class, which the schema matches, crosses 54 times, and the nearest
+    crossing of any perturbed run is 132 steps from the horizon.
+    """
+    row = _models(report)["PernarowskiNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [17, 17, 17, 17, 54]
+    assert [case["inputs"] for case in cases] == [
+        {"current": c} for c in (-0.1, 0.0, 0.1, 0.2, -0.1)
+    ]
+    assert [case["steps"] for case in cases] == [5000, 5000, 5000, 5000, 16049]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

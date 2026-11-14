@@ -1420,7 +1420,8 @@
         {
           "attribution": "class_name",
           "changed": [
-            "engine/src/neurons/simple_spiking/pernarowski.rs"
+            "engine/src/neurons/simple_spiking/pernarowski.rs",
+            "src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron.toml"
           ],
           "currency": "outdated",
           "name": "bench_pernarowski_simulate.json"

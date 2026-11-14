@@ -1225,10 +1225,91 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            17,
+            17
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": -0.1
+          },
+          "kind": "interval",
+          "name": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "observable": "spikes",
+          "observed": 17,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            17,
+            17
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the model crosses the threshold 17 times in 5000 steps",
+          "observable": "spikes",
+          "observed": 17,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            17,
+            17
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.1
+          },
+          "kind": "interval",
+          "name": "a current of 0.1 crosses the threshold 17 times in 5000 steps",
+          "observable": "spikes",
+          "observed": 17,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            17,
+            17
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.2
+          },
+          "kind": "interval",
+          "name": "a current of 0.2 crosses the threshold 17 times in 5000 steps",
+          "observable": "spikes",
+          "observed": 17,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            54,
+            54
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": -0.1
+          },
+          "kind": "interval",
+          "name": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "observable": "spikes",
+          "observed": 54,
+          "steps": 16049
+        }
+      ],
+      "cases_sha256": "10fdcde6760be1b1fcab8762ef938b331cad805ab37dff909516e27dbcba1e94",
       "model": "PernarowskiNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2118,9 +2199,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 12,
+    "held": 13,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 173
+    "no_case": 172
   }
 }

@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 12
+MODELS_WITH_CASES = 13
 
 
 def _accumulator() -> dict[str, object]:
@@ -395,6 +395,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "HindmarshRoseNeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
+        "PernarowskiNeuron",
         "RulkovMapNeuron",
         "SCFourStateGLIFNeuron",
         "SCResettingWilsonHRNeuron",
@@ -407,7 +408,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 11,
+        "discriminated": 12,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -790,6 +791,47 @@ def test_every_variant_of_the_fitzhugh_rinzel_model_breaks_a_case(
     assert decided_late == [3, 10, 11, 12]
 
 
+def test_every_variant_of_the_pernarowski_model_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Fourteen signs of three equations; nine leave the 5000-step count unchanged.
+
+    The oscillator crosses 17 times in 5000 steps whatever the current, and so
+    does each of nine variants. Over 16049 steps at -0.1 each of those nine
+    crosses 52, 53 or 55 times, where the model crosses 54, and no crossing of a
+    variant lies closer than 20 steps to the horizon.
+    """
+    row = _rows(report)["PernarowskiNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [17, 17, 17, 17, 54]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("v", "+ v"),
+        ("v", "- v * v * v / 3.0"),
+        ("v", "- w"),
+        ("v", "- z"),
+        ("v", "+ I"),
+        ("w", "+ v"),
+        ("w", "- gamma * w"),
+        ("w", "+ alpha"),
+        ("w", "the whole right-hand side"),
+        ("z", "+ beta * (v + 0.7)"),
+        ("z", "- z"),
+        ("z", "+ v"),
+        ("z", "+ 0.7"),
+        ("z", "the whole right-hand side"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    long_count = "a current of -0.1 crosses the threshold 54 times in 16049 steps"
+    decided_late = [
+        index for index, variant in enumerate(variants) if variant["case"] == long_count
+    ]
+    assert decided_late == [3, 4, 6, 7, 9, 10, 11, 12, 13]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -801,10 +843,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+11$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+12$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 150, of them violated 150, not discriminated 0" in summary
+    assert "variants: 164, of them violated 164, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

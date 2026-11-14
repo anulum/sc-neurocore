@@ -964,6 +964,165 @@
       ]
     },
     {
+      "model": "PernarowskiNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "observed": 17
+        },
+        {
+          "held": true,
+          "name": "without a current the model crosses the threshold 17 times in 5000 steps",
+          "observed": 17
+        },
+        {
+          "held": true,
+          "name": "a current of 0.1 crosses the threshold 17 times in 5000 steps",
+          "observed": 17
+        },
+        {
+          "held": true,
+          "name": "a current of 0.2 crosses the threshold 17 times in 5000 steps",
+          "observed": 17
+        },
+        {
+          "held": true,
+          "name": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "observed": 54
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "equation": "v",
+          "expression": "-v - v * v * v / 3.0 - w - z + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v * v * v / 3.0 - w - z + I"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "equation": "v",
+          "expression": "v + v * v * v / 3.0 - w - z + I",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "- v * v * v / 3.0",
+          "within": "v - v * v * v / 3.0 - w - z + I"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 + w - z + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- w",
+          "within": "v - v * v * v / 3.0 - w - z + I"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 - w + z + I",
+          "observed": 55,
+          "outcome": "violated",
+          "term": "- z",
+          "within": "v - v * v * v / 3.0 - w - z + I"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "v",
+          "expression": "v - v * v * v / 3.0 - w - z - I",
+          "observed": 55,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "v - v * v * v / 3.0 - w - z + I"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "equation": "w",
+          "expression": "eps1 * (-v - gamma * w + alpha)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - gamma * w + alpha"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "w",
+          "expression": "eps1 * (v + gamma * w + alpha)",
+          "observed": 53,
+          "outcome": "violated",
+          "term": "- gamma * w",
+          "within": "v - gamma * w + alpha"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "w",
+          "expression": "eps1 * (v - gamma * w - alpha)",
+          "observed": 55,
+          "outcome": "violated",
+          "term": "+ alpha",
+          "within": "v - gamma * w + alpha"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 17 times in 5000 steps",
+          "equation": "w",
+          "expression": "-(eps1 * (v - gamma * w + alpha))",
+          "outcome": "violated",
+          "stopped": "EquationStateFailure",
+          "term": "the whole right-hand side",
+          "within": "eps1 * (v - gamma * w + alpha)"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "z",
+          "expression": "eps2 * (-(beta * (v + 0.7)) - z)",
+          "observed": 55,
+          "outcome": "violated",
+          "term": "+ beta * (v + 0.7)",
+          "within": "beta * (v + 0.7) - z"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "z",
+          "expression": "eps2 * (beta * (v + 0.7) + z)",
+          "observed": 52,
+          "outcome": "violated",
+          "term": "- z",
+          "within": "beta * (v + 0.7) - z"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "z",
+          "expression": "eps2 * (beta * (-v + 0.7) - z)",
+          "observed": 53,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + 0.7"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "z",
+          "expression": "eps2 * (beta * (v - 0.7) - z)",
+          "observed": 55,
+          "outcome": "violated",
+          "term": "+ 0.7",
+          "within": "v + 0.7"
+        },
+        {
+          "case": "a current of -0.1 crosses the threshold 54 times in 16049 steps",
+          "equation": "z",
+          "expression": "-(eps2 * (beta * (v + 0.7) - z))",
+          "observed": 53,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "eps2 * (beta * (v + 0.7) - z)"
+        }
+      ]
+    },
+    {
       "model": "RulkovMapNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -1711,8 +1870,8 @@
       ]
     }
   ],
-  "models_with_cases": 12,
-  "models_without_cases": 173,
+  "models_with_cases": 13,
+  "models_without_cases": 172,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -1721,7 +1880,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 11,
+    "discriminated": 12,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -1730,7 +1889,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 150,
-    "violated": 150
+    "total": 164,
+    "violated": 164
   }
 }
