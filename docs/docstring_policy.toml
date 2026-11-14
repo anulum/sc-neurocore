@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1947
+expected_file_count = 1949
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6354,6 +6354,14 @@ rationale = "Measured JUnit durations and complete deterministic module assignme
 [[file]]
 path = "tools/ci_install_common.py"
 rationale = "Same-run engine wheel admission and the existing local build and checkout extension alignment."
+
+[[file]]
+path = "tools/version_surface_audit.py"
+rationale = "Hold every checked-in and installed version surface, the release metadata among them, to the project version, and name the remedy for each kind of surface."
+
+[[file]]
+path = "tests/test_version_surface_audit.py"
+rationale = "A stale or missing version on any surface is refused by name, and a checked-in file is told to be edited rather than reinstalled."
 
 [[file]]
 path = "tests/test_tools/test_pytest_shards.py"

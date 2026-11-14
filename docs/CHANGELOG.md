@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The version audit (`tools/version_surface_audit.py`) now also holds the
+  release metadata to the project version: `.zenodo.json`, which an archived
+  release records, `CITATION.cff` and `conda/meta.yaml`. Before, a release
+  could change the package and engine versions and leave these three at the
+  previous one with the audit passing. A file among them that states no
+  version is refused by name. A stale checked-in file is now told to be
+  edited; the reinstall the audit used to suggest for every failure only
+  refreshes an installed distribution.
+
 - The optics and workstation dependency locks move tornado from 6.6 to
   6.6.1 for CVE-2026-126347 (GHSA-5cjw-f85j-cv6r). Tornado 6.6.0's fix
   for an open redirect in its RedirectHandler was incomplete: a browser

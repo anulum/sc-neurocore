@@ -199,7 +199,11 @@ python tools/version_surface_audit.py
 The audit checks installed distribution metadata as well as `pyproject.toml`,
 `src/sc_neurocore/__init__.py`, `engine/Cargo.toml`, and
 `bridge/pyproject.toml`; stale `.dist-info` or `.egg-info` metadata must be
-refreshed rather than ignored.
+refreshed rather than ignored. It also holds the release metadata to the
+project version: `.zenodo.json`, which an archived release records,
+`CITATION.cff`, and `conda/meta.yaml`. A file among these that states no
+version is refused by name. A stale checked-in file is fixed by editing it
+to the project version; reinstalling only refreshes installed metadata.
 
 ## Optional extras
 
