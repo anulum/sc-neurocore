@@ -110,7 +110,16 @@ jobs:
         run: python tools/capability_manifest.py --check
 
       - name: Historical benchmark evidence
-        run: python tools/benchmark_evidence_gate.py --output "$RUNNER_TEMP/benchmark-evidence-gate.json"
+        # The tracked report must be what the gate writes now: a change that moves a gate id,
+        # a path, a failure or a count commits the report again. The comparison runs here,
+        # after the commit, because under artefact_commit a staged record fails the gate.
+        run: |
+          python tools/benchmark_evidence_gate.py --output "$RUNNER_TEMP/benchmark-evidence-gate.json"
+          if ! cmp -s "$RUNNER_TEMP/benchmark-evidence-gate.json" benchmarks/results/benchmark_evidence_gate_report.json; then
+            echo "::error file=benchmarks/results/benchmark_evidence_gate_report.json::the committed benchmark evidence gate report is not what the gate writes; run python tools/benchmark_evidence_gate.py and commit benchmarks/results/benchmark_evidence_gate_report.json"
+            diff -u benchmarks/results/benchmark_evidence_gate_report.json "$RUNNER_TEMP/benchmark-evidence-gate.json" || true
+            exit 1
+          fi
 
       - name: Engine monolith no-growth guard
         run: python tools/engine_monolith_guard.py --check

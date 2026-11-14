@@ -670,6 +670,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The hosted CI holds the committed benchmark evidence gate report to what the
+  gate writes: the lint job's gate step compares its output with
+  `benchmarks/results/benchmark_evidence_gate_report.json` and fails, naming the
+  file and showing the difference, when they differ. Three tests run the step's
+  own script with a stand-in gate.
 - The changelog's unreleased entries are sorted into the standard categories,
   Security, Added, Changed, Fixed, Removed and Repository hygiene, and state
   the change without its rationale. A test holds every unreleased entry under

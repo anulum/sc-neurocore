@@ -40,6 +40,13 @@ Do not publish benchmark claims from a changed source tree until the relevant
 benchmark producer has been rerun and the gate report is regenerated from the
 same checkout.
 
+The hosted CI runs the gate into its own temporary folder and fails when the
+committed `benchmarks/results/benchmark_evidence_gate_report.json` is not what
+the gate writes, showing the difference. A change that moves a gate id, a path,
+a failure or a count commits the report again, written after the record it
+gates is committed: under the `artefact_commit` policy a staged record fails the
+gate, so the comparison cannot run before the commit.
+
 ## Scripts
 
 | Script | Description |

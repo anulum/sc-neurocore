@@ -754,3 +754,106 @@ def test_repository_gate_cli_reports_its_real_verdict(tmp_path: Path) -> None:
     assert report["gate_count"] == len(manifest["gates"])
     assert report["source_hash_policy"] == "artefact_commit"
     assert result.returncode == (0 if report["passed"] else 1)
+
+
+#: The tracked gate report the CI step holds the gate's output to.
+TRACKED_REPORT = "benchmarks/results/benchmark_evidence_gate_report.json"
+
+
+def _ci_gate_step() -> dict[str, Any]:
+    """Return the CI lint job's step that runs the benchmark evidence gate.
+
+    Returns
+    -------
+    dict
+        The step as the workflow states it.
+    """
+    import yaml
+
+    root = Path(__file__).resolve().parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["lint"]["steps"]
+    return next(step for step in steps if step.get("name") == "Historical benchmark evidence")
+
+
+def _run_ci_gate_step(tmp_path: Path, written: bytes) -> subprocess.CompletedProcess[str]:
+    """Run the CI step's own script with a ``python`` that writes the given report.
+
+    The script runs as the workflow runs it, in the repository, with ``RUNNER_TEMP``
+    a fresh folder. Only the gate is replaced: a stand-in ``python`` on ``PATH``
+    writes ``written`` to the path after ``--output``, so the comparison that
+    follows is the step's own.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A fresh folder for the stand-in and for ``RUNNER_TEMP``.
+    written : bytes
+        What the stand-in gate writes as its report.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The script's exit status and output.
+    """
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    payload = tmp_path / "payload.json"
+    payload.write_bytes(written)
+    stand_in = bin_dir / "python"
+    stand_in.write_text(
+        "#!/bin/sh\n"
+        'while [ "$#" -gt 0 ]; do\n'
+        '  if [ "$1" = "--output" ]; then cp "' + str(payload) + '" "$2"; exit 0; fi\n'
+        "  shift\n"
+        "done\n"
+        "exit 2\n",
+        encoding="utf-8",
+    )
+    stand_in.chmod(0o755)
+    runner_temp = tmp_path / "runner"
+    runner_temp.mkdir()
+    env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"}
+    env["RUNNER_TEMP"] = str(runner_temp)
+    return subprocess.run(
+        ["bash", "-e", "-c", _ci_gate_step()["run"]],
+        cwd=Path(__file__).resolve().parents[2],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_ci_holds_the_gate_report_to_the_tracked_one() -> None:
+    """CI writes the gate's report to its own temporary folder and compares it with the tracked one.
+
+    The report holds gate ids, paths, failures, counts, the verdict and the
+    policy, so a change that moves any of them must commit the report again.
+    """
+    run = _ci_gate_step()["run"]
+    assert (
+        'tools/benchmark_evidence_gate.py --output "$RUNNER_TEMP/benchmark-evidence-gate.json"'
+        in run
+    )
+    assert f'cmp -s "$RUNNER_TEMP/benchmark-evidence-gate.json" {TRACKED_REPORT}' in run
+
+
+def test_the_ci_step_fails_on_a_report_that_differs(tmp_path: Path) -> None:
+    """A gate output other than the tracked report fails the step and names the file."""
+    result = _run_ci_gate_step(tmp_path, b'{"passed": true}\n')
+    assert result.returncode == 1
+    assert (
+        f"::error file={TRACKED_REPORT}::the committed benchmark evidence gate report is not "
+        "what the gate writes; run python tools/benchmark_evidence_gate.py and commit "
+        f"{TRACKED_REPORT}"
+    ) in result.stdout
+    assert f"--- {TRACKED_REPORT}" in result.stdout
+
+
+def test_the_ci_step_passes_when_the_report_is_the_tracked_one(tmp_path: Path) -> None:
+    """The tracked report's own bytes pass the comparison."""
+    root = Path(__file__).resolve().parents[2]
+    result = _run_ci_gate_step(tmp_path, (root / TRACKED_REPORT).read_bytes())
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "::error" not in result.stdout
