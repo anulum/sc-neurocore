@@ -53,6 +53,36 @@ ROOT = Path(__file__).resolve().parents[2]
 #: deliberate change here, in the unit that adds or removes cases.
 MODELS_WITHOUT_A_CASE = 179
 
+#: Every case's stated limit, in the descriptor's order: an interval's bounds or a
+#: contrast's least margin. The observed counts alone do not hold a case's claim: a
+#: bound widened in the descriptor, with both reports written again, would still pass.
+STATED_LIMITS: dict[str, list[object]] = {
+    "DendriticNMDANeuron": [
+        [0, 0],
+        [0, 0],
+        [-60.0, -59.0],
+        [50, 70],
+        [180, 200],
+        [200, 220],
+        10,
+        [266, 266],
+    ],
+    "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
+    "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
+    "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
+    "SCSymmetricQuadraticIFNeuron": [
+        [0, 0],
+        [2, 2],
+        [3, 3],
+        [6, 6],
+        [11, 11],
+        [26, 26],
+        [100, 100],
+        [250, 250],
+    ],
+    "WilsonHRNeuron": [[0, 0], [44, 44], [46, 46], [49, 49], [52, 52]],
+}
+
 
 class _Integrator:
     """Accumulate an eighth of the current each step; fire and reset when the level reaches one.
@@ -526,6 +556,31 @@ def _models(report: dict[str, object]) -> dict[str, dict[str, object]]:
     rows = report["models"]
     assert isinstance(rows, list)
     return {str(row["model"]): row for row in rows}
+
+
+@pytest.mark.parametrize("model_name", sorted(STATED_LIMITS))
+def test_every_case_states_the_limit_this_test_pins(
+    report: dict[str, object], model_name: str
+) -> None:
+    """A case's bounds or margin are its claim; a widened one fails even with the reports written again.
+
+    Parameters
+    ----------
+    report : dict[str, object]
+        The report as the tool computes it.
+    model_name : str
+        A model that states cases.
+    """
+    cases = _models(report)[model_name]["cases"]
+    assert isinstance(cases, list)
+    stated = [case["bounds"] if case["kind"] == "interval" else case["margin"] for case in cases]
+    assert stated == STATED_LIMITS[model_name]
+
+
+def test_the_pinned_limits_cover_every_model_that_states_cases(report: dict[str, object]) -> None:
+    """A model that gains cases has its limits pinned here as well."""
+    stating = sorted(name for name, row in _models(report).items() if row["state"] != "no_case")
+    assert stating == sorted(STATED_LIMITS)
 
 
 def test_the_committed_report_is_what_the_tool_computes(report: dict[str, object]) -> None:
