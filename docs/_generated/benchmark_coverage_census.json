@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 34,
-    "outdated": 93,
+    "current": 35,
+    "outdated": 92,
     "unbound": 191
   },
   "all_records": 318,
@@ -2320,18 +2320,7 @@
       "name": "bench_bioware.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
-        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
-        "src/sc_neurocore/neurons/descriptor_generator.py",
-        "src/sc_neurocore/neurons/expression_derivative.py",
-        "src/sc_neurocore/neurons/facet_receipts.py",
-        "src/sc_neurocore/neurons/model_descriptor.py",
-        "src/sc_neurocore/neurons/profile_registry.py",
-        "src/sc_neurocore/neurons/readiness.py",
-        "src/sc_neurocore/neurons/receipt_execution.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "bench_function_call_domains.json"
     },
     {

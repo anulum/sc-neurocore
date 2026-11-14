@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,8 @@ from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "benchmarks/results/bench_verilog_compiler.json"
+REFERENCE = ROOT / "docs/api/compiler.md"
+TUTORIAL = ROOT / "docs/tutorials/33_equation_to_verilog.md"
 EXPECTED_CASES = {
     "initial_state_map_registered",
     "initial_state_map_folded",
@@ -53,6 +56,36 @@ def _mapping(value: object) -> dict[str, object]:
 def _payload(path: Path = ARTIFACT) -> dict[str, object]:
     """Load one compiler benchmark payload."""
     return cast(dict[str, object], json.loads(path.read_text(encoding="utf-8")))
+
+
+_TIMING_ROW = re.compile(
+    r"^\| (?P<label>[^|]+?) \| (?P<median>[0-9.]+) ms \|(?: (?P<lines>[0-9]+) \|)?$"
+)
+
+
+def _timing_rows(path: Path, heading: str) -> list[tuple[str, str, int | None]]:
+    """Return the timing rows of one documentation table.
+
+    Parameters
+    ----------
+    path : Path
+        The Markdown page.
+    heading : str
+        The heading line of the section that holds the table.
+
+    Returns
+    -------
+    list of tuple
+        Each row's label, median text in milliseconds and output lines, when the table has them.
+    """
+    section = path.read_text(encoding="utf-8").split(heading, maxsplit=1)[1]
+    rows = []
+    for line in section.split("\n#", maxsplit=1)[0].splitlines():
+        match = _TIMING_ROW.match(line)
+        if match:
+            lines = match["lines"]
+            rows.append((match["label"], match["median"], int(lines) if lines else None))
+    return rows
 
 
 def test_committed_evidence_discloses_loaded_host_scope() -> None:
@@ -155,3 +188,30 @@ def test_reduced_cli_executes_real_compiler_paths(tmp_path: Path) -> None:
     assert set(_mapping(payload["cases"])) == EXPECTED_CASES
     assert _mapping(payload["workload"])["samples_per_case"] == 2
     assert set(_mapping(payload["source_sha256"])) == set(benchmark.SOURCE_PATHS)
+
+
+def test_the_compiler_reference_quotes_every_recorded_median() -> None:
+    """Each reference row is one recorded case, found by its output lines, with its median."""
+    cases = {
+        cast(int, _mapping(row)["output_lines"]): _mapping(row)
+        for row in _mapping(_payload()["cases"]).values()
+    }
+    rows = _timing_rows(REFERENCE, "### 7.1 Loaded-host compiler timings")
+
+    assert len(cases) == len(EXPECTED_CASES)
+    assert sorted(cast(int, lines) for _, _, lines in rows) == sorted(cases)
+    for label, median, lines in rows:
+        assert median == f"{cast(float, cases[cast(int, lines)]['median_ms']):.6f}", label
+
+
+def test_the_tutorial_quotes_the_reference_medians() -> None:
+    """Each tutorial row repeats the reference row of the same workload."""
+    reference = {
+        label: median
+        for label, median, _ in _timing_rows(REFERENCE, "### 7.1 Loaded-host compiler timings")
+    }
+    rows = _timing_rows(TUTORIAL, "## 10. Measured local compiler timings")
+
+    assert rows
+    for label, median, _ in rows:
+        assert reference.get(label) == median, label

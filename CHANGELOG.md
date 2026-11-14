@@ -278,6 +278,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Measure the Verilog compiler and function-call-domain benchmark records
+  again on the current sources: they bound earlier bytes of 8 of their 43
+  and 9 of their 146 sources. The function-call gate also binds the two
+  sources that benchmark now reads. Every generated output and serialised
+  contract is unchanged. The timings come from a loaded workstation; old
+  and new code run alternately there differ by less than the load's
+  spread, so they show no change in speed either way. The compiler
+  reference, the equation-to-Verilog tutorial and the function-call guide
+  quote the new medians and how the run was made, and two tests hold the
+  compiler reference's and the tutorial's tables to the record.
+
 - Move the toolchains to their newest releases in the toolchain manifest
   and every declaration it checks: Node 26.13.1; npm 12.2.2, installed by
   the npm setup action from its verified registry archive and named by

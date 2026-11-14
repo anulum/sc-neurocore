@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-11-06T21:38:14.555609+00:00",
+  "generated_at": "2026-11-14T20:14:40.999159+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -21,8 +21,8 @@
     "architecture": "x86_64",
     "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "logical_cpu_count": 12,
-    "ram_bytes": 33422090240,
-    "operating_system": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+    "ram_bytes": 33422053376,
+    "operating_system": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
     "python_version": "3.12.16",
     "numpy_version": "2.5.4",
     "host_load": "workstation under concurrent load during capture",
@@ -31,21 +31,21 @@
       3
     ],
     "load_average_before": [
-      5.64599609375,
-      6.17578125,
-      5.884765625
+      11.21875,
+      11.6220703125,
+      14.6171875
     ],
     "load_average_after": [
-      5.9951171875,
-      6.23974609375,
-      5.9072265625
+      10.5791015625,
+      11.4599609375,
+      14.515625
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 4389.423,
-      "max_observed_mhz": 4411.956,
+      "min_observed_mhz": 3799.863,
+      "max_observed_mhz": 3800.155,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -57,7 +57,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "6ab3977d3a91258527d67d01b3f1cf2866946cc3",
+  "source_head_at_capture": "f50fab961466895622d520ed446328623a4cb592",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -66,7 +66,7 @@
     "src/sc_neurocore/compiler/_sby_runner.py": "8b337c49519dc82fc18ec1858fc30a183957c6c48d96ad74608a15cf60afe576",
     "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
     "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
-    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "f6cd7b462f074fd37784937667c1ebbf8043ae2fcccfebd958576e7c4ddcb27a",
+    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "49ee375424f8cad7f050ba7eb4db7d77933c35e8851e64ae718e7bdb5460af7d",
     "src/sc_neurocore/compiler/_verilog_registered_module.py": "83686edf6c575f71c2b7e6e707c09dc0e675bc2b19cf5211bd8e089c5c56f812",
     "src/sc_neurocore/compiler/adaptive_precision.py": "cc30a86672df225fbbc9321b3060237b767e405d02dc326d70efac301654acb5",
     "src/sc_neurocore/compiler/auto_tune.py": "b255846676d2145f9731553ad2db00de3c122b21db59dc02af48e133e04d9e9f",
@@ -147,6 +147,7 @@
     "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
     "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
     "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
+    "src/sc_neurocore/compiler/rtl_refusals.py": "7d7b5054d2aba0521a5067175b54e8b3d7623ea287048d618218deecfb4f5666",
     "src/sc_neurocore/compiler/sby_formal.py": "69ae2b5d7ec0110cac11305bd8e68d77599c421ff476a6330675cb45dc4b9332",
     "src/sc_neurocore/compiler/sensitivity_analysis.py": "104dd137733397908f59135f4921960fb94cc6c605cc217f4609db1091922a2b",
     "src/sc_neurocore/compiler/slr_placement.py": "42de08c4a7ff246f6ad35d51f8b326751e2c45c8a8e0ea430500e8c30f1ac3de",
@@ -158,7 +159,7 @@
     "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
     "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
     "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
-    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "6737c50072aa3dc1d8f8f283901504f7369d137d99131772e703e58bc5a7b674",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "519cc13b1b5dd42bd8f1fd392a23e893f5faee55d8e92557a75cbddad0724d04",
     "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
     "src/sc_neurocore/neurons/__init__.py": "a27b960e16776ce16f9bd70d9441a92cb808bdcffc3ebb5df32018b0e7b66598",
     "src/sc_neurocore/neurons/__main__.py": "7512aab0b175e42dba8b28b3826508f3202c1d30cb7ee663777a56feb64547ea",
@@ -167,7 +168,7 @@
     "src/sc_neurocore/neurons/base.py": "0cb339b37aaf52c3eb66b44ad186d432d76326c3ead5ef99bb9276bda22557b3",
     "src/sc_neurocore/neurons/behavior_taxonomy.py": "63388c92861adde7ccbcba610e73ef999fd92284c34f168ab0af8465ece6640a",
     "src/sc_neurocore/neurons/dendritic.py": "0599007b6f7ba07b7e247458d017204e0a67d65fea51733b27a7d59ba3dacaf0",
-    "src/sc_neurocore/neurons/descriptor_generator.py": "0a2bfb40c0920599303c2925522e37a26b002cf4a482e1e3d9760a7f45aaf34d",
+    "src/sc_neurocore/neurons/descriptor_generator.py": "54679a0ab320f618a8ef827911f0d65259445c5dfc7bcc503364455790a555db",
     "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
     "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
     "src/sc_neurocore/neurons/equation_builder.py": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
@@ -179,20 +180,21 @@
     "src/sc_neurocore/neurons/equation_safety.py": "2627e82d2be63efd7bbb33eba5248a37aed969c9eb67de2468d3e66f987d0386",
     "src/sc_neurocore/neurons/equation_units_runtime.py": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
     "src/sc_neurocore/neurons/evidence_references.py": "033152ba8c881df43d0a45b324928364e950b0e72d223876cc722ba5fd027f12",
-    "src/sc_neurocore/neurons/expression_derivative.py": "eb010dedeeb34d0f82921943479099f7b8a02f20ff895aa97c427e0f7a8dde5c",
-    "src/sc_neurocore/neurons/facet_receipts.py": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+    "src/sc_neurocore/neurons/expression_derivative.py": "d2a0b09f0710dd6c2a0f46960b1d792b99dae300d182440d931a86654e51b1e2",
+    "src/sc_neurocore/neurons/facet_receipts.py": "bf48981c63d5bf9ed56768a0b2df1a30d8137d13b5bf7440868ca43b80a92098",
     "src/sc_neurocore/neurons/fixed_point_lif.py": "ee7a4da29078537ca6356cf9098b8c628de805b3a63dfa3c74eba91ac642a623",
     "src/sc_neurocore/neurons/homeostatic_lif.py": "d8ca8274da7f2c5919fd8d143a4635ffaaa2ef57ed7790f6676e7e04eda7dbda",
+    "src/sc_neurocore/neurons/lane_runs.py": "64812ad1f29d5f6d51c77391e0798468d4c46ca84b77558050e3b57b717430a0",
     "src/sc_neurocore/neurons/model_catalogue.py": "bdccedfe00872bb567b1be4c8f951e641dbdca38e82645394f32d7e8c5a008ea",
-    "src/sc_neurocore/neurons/model_descriptor.py": "9316d8dc73991cf5972e27f5d84056737b5db9170fe5c34e80956bf9dcbe907b",
+    "src/sc_neurocore/neurons/model_descriptor.py": "dbdab7f647b73b40156e1f1b8a084819732067952c3d10b0b53e32ef39433f3e",
     "src/sc_neurocore/neurons/model_identity.py": "794dcf0aabbdd8509fb18bf7eee34ae73201f836a216100ec65b49ad32edba52",
     "src/sc_neurocore/neurons/model_profile.py": "f218c52ef0533358b6dd152da9dc728aecc6e8e14c82f7a372232519ca1670ed",
     "src/sc_neurocore/neurons/model_receipts.py": "894002e60353c5b86b3949a21ff78f793b1933f59e577f7b1cca92bcdf67fb26",
     "src/sc_neurocore/neurons/model_registry.py": "c46738d783fc94275dc3e35600afc63a7bd071ffa4421281a650a9e616e32ee4",
     "src/sc_neurocore/neurons/model_taxonomy.py": "b8b8e5bbed3deda0fe92136f01221744a6c8852bc102e87da4ec7cef84ce5bed",
-    "src/sc_neurocore/neurons/profile_registry.py": "30fe6bc2b1d72b8ae096352bfb390ea8ef83b1a665727ea75232247d59f52d8c",
-    "src/sc_neurocore/neurons/readiness.py": "003d04510cade55f34455b6aeb7560d882abbd5854a888d767f23f95f19bd638",
-    "src/sc_neurocore/neurons/receipt_execution.py": "757c044dfc80cf275874175106585096c3b80bd2226bb52978429e6ff5716049",
+    "src/sc_neurocore/neurons/profile_registry.py": "de87535902d50a3f62abe71c6678f322d3ad5699e626c802b6982b641e191dc8",
+    "src/sc_neurocore/neurons/readiness.py": "9e0de77ac9143b45d6a1b76c9a607b816b26ed90bcb38bd5784ef51f842ad1da",
+    "src/sc_neurocore/neurons/receipt_execution.py": "214d129d90ac752d796d3ad0e666da745656e5c52a3818216996ca4308f2e4ba",
     "src/sc_neurocore/neurons/reference_trace_contracts.py": "7238a0f0474042f2634ba337d2f804ca5fb53e63d43c578d2e89172ebd5d42c1",
     "src/sc_neurocore/neurons/reference_trace_io.py": "8f47c9041470cb0fedd1b3c07a29519cc3c8ba4d0966b05f8f72d68cb3efb01a",
     "src/sc_neurocore/neurons/reference_trace_mutations.py": "321e51f6a687772dd180f1992de7499afa88f877a7bf5e3ff660946fac9692df",
@@ -210,17 +212,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 1926976,
+      "first_call_ns": 7586974,
       "cached_ns_per_call": [
-        95036.84,
-        94764.57,
-        88845.36,
-        89294.8,
-        93391.42,
-        95849.7,
-        88034.65
+        153143.28,
+        163586.0,
+        175069.87,
+        153092.61,
+        147841.79,
+        143630.93,
+        140361.0
       ],
-      "cached_median_ns_per_call": 93391.42,
+      "cached_median_ns_per_call": 153092.61,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -321,17 +323,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 89642763,
+      "first_call_ns": 131988939,
       "cached_ns_per_call": [
-        194418.22,
-        162611.61,
-        164660.3,
-        166040.79,
-        165710.03,
-        170605.05,
-        148782.77
+        279308.28,
+        247150.68,
+        253437.12,
+        231320.73,
+        216858.15,
+        242097.23,
+        262353.25
       ],
-      "cached_median_ns_per_call": 165710.03,
+      "cached_median_ns_per_call": 247150.68,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -404,17 +406,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 737737602,
+      "first_call_ns": 1143628966,
       "cached_ns_per_call": [
-        219664.31,
-        185513.84,
-        184998.14,
-        175001.99,
-        169998.65,
-        172775.02,
-        175548.87
+        335756.4,
+        337215.51,
+        286674.93,
+        323943.05,
+        302366.5,
+        268008.92,
+        258885.6
       ],
-      "cached_median_ns_per_call": 175548.87,
+      "cached_median_ns_per_call": 302366.5,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -541,17 +543,17 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 7546614,
+      "first_call_ns": 28144038,
       "cached_ns_per_call": [
-        278398.79,
-        257285.27,
-        267705.62,
-        275656.81,
-        288653.98,
-        275654.02,
-        243031.82
+        330669.32,
+        319620.58,
+        327662.23,
+        342074.23,
+        339537.41,
+        345075.58,
+        418025.94
       ],
-      "cached_median_ns_per_call": 275654.02,
+      "cached_median_ns_per_call": 339537.41,
       "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
       "contracts": [
         {

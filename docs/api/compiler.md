@@ -1057,26 +1057,26 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.105499 ms | 50 |
-| Euler folded with parameter port | 0.118398 ms | 38 |
-| RK4 registered | 0.293785 ms | 92 |
-| Four-substep RK4 registered | 0.571696 ms | 136 |
-| Escape-rate registered | 1.096564 ms | 902 |
-| Square-root map registered | 0.105176 ms | 65 |
-| Negative half-LSB nearest map registered | 0.075978 ms | 45 |
-| Quadrant-aware angle map registered | 1.142903 ms | 3225 |
-| Softplus exponential Euler registered | 3.799519 ms | 11374 |
-| Ties-to-even round map registered | 0.095535 ms | 64 |
-| Heaviside map registered | 0.122198 ms | 62 |
-| Euclidean norm map registered | 0.203416 ms | 210 |
-| Reciprocal square-root map registered | 0.285818 ms | 305 |
-| Constant power map registered | 1.038125 ms | 1692 |
-| Dynamic power map registered | 1.047099 ms | 1698 |
-| Partial initial state with powers, registered | 2.335119 ms | 3356 |
-| Partial initial state with powers, folded | 2.139217 ms | 3342 |
-| Held-state RK4 registered | 0.430287 ms | 100 |
+| Euler registered | 0.162602 ms | 50 |
+| Euler folded with parameter port | 0.218105 ms | 38 |
+| RK4 registered | 0.402840 ms | 92 |
+| Four-substep RK4 registered | 0.890725 ms | 136 |
+| Escape-rate registered | 1.662526 ms | 902 |
+| Square-root map registered | 0.182266 ms | 65 |
+| Negative half-LSB nearest map registered | 0.121873 ms | 45 |
+| Quadrant-aware angle map registered | 1.772372 ms | 3225 |
+| Softplus exponential Euler registered | 5.854867 ms | 11374 |
+| Ties-to-even round map registered | 0.158562 ms | 64 |
+| Heaviside map registered | 0.195394 ms | 62 |
+| Euclidean norm map registered | 0.353406 ms | 210 |
+| Reciprocal square-root map registered | 0.430939 ms | 305 |
+| Constant power map registered | 1.565179 ms | 1692 |
+| Dynamic power map registered | 1.736980 ms | 1698 |
+| Partial initial state with powers, registered | 3.334770 ms | 3356 |
+| Partial initial state with powers, folded | 2.955792 ms | 3342 |
+| Held-state RK4 registered | 0.605844 ms | 100 |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process was capped at one CPU with nice 19 on a non-exclusive workstation. No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 8.57 11.33 16.05 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
