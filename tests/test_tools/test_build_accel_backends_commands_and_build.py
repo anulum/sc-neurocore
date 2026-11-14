@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import os
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -94,6 +96,63 @@ def test_a_go_build_whose_header_matches_the_tracked_one_reports_nothing(tmp_pat
     result = MOD.build_target(target, runner=_go_runner(b"\x7fELF", b"/* cgo */\n", []))
     assert result.ok and result.header_differs is False
     assert result.detail == "CGO_ENABLED=1"
+
+
+def test_a_go_build_replaces_a_link_to_a_library_and_leaves_the_linked_file(
+    tmp_path: Path,
+) -> None:
+    """A library path that links elsewhere becomes the new library; the linked file stays."""
+    target = _target(tmp_path, "go")
+    elsewhere = tmp_path / "another_checkout" / "libx.so"
+    elsewhere.parent.mkdir()
+    elsewhere.write_bytes(b"another checkout's library")
+    target.output.symlink_to(elsewhere)
+    result = MOD.build_target(target, runner=_go_runner(b"\x7fELF", None, []))
+    assert result.ok
+    assert not target.output.is_symlink()
+    assert target.output.read_bytes() == b"\x7fELF"
+    assert elsewhere.read_bytes() == b"another checkout's library"
+
+
+def test_a_go_build_gives_the_library_a_new_file_with_the_build_mode(tmp_path: Path) -> None:
+    """A process holding the former library keeps reading it; the new one has the build's mode."""
+    target = _target(tmp_path, "go")
+    target.output.write_bytes(b"former library")
+    built: list[Path] = []
+    write = _go_runner(b"\x7fELF", None, built)
+
+    def runner(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+        completed: subprocess.CompletedProcess[str] = write(cmd, cwd)
+        built[-1].chmod(0o751)
+        return completed
+
+    with target.output.open("rb") as holder:
+        former = os.fstat(holder.fileno()).st_ino
+        result = MOD.build_target(target, runner=runner)
+        assert holder.read() == b"former library"
+    assert result.ok
+    assert target.output.read_bytes() == b"\x7fELF"
+    assert target.output.stat().st_ino != former
+    assert stat.S_IMODE(target.output.stat().st_mode) == 0o751
+
+
+def test_a_failed_library_copy_leaves_the_former_library_and_no_partial_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A copy that fails removes its partial file and leaves the former library in place."""
+    target = _target(tmp_path, "go")
+    target.output.write_bytes(b"former library")
+    before = sorted(path.name for path in tmp_path.iterdir())
+
+    def full_disk(source: Path, destination: str | Path) -> None:
+        Path(destination).write_bytes(b"\x7f")
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(MOD.shutil, "copyfile", full_disk)
+    with pytest.raises(OSError, match="No space left on device"):
+        MOD.build_target(target, runner=_go_runner(b"\x7fELF", None, []))
+    assert target.output.read_bytes() == b"former library"
+    assert sorted(path.name for path in tmp_path.iterdir()) == before
 
 
 def test_mojo_command(tmp_path: Path) -> None:

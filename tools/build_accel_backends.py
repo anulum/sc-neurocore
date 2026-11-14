@@ -400,7 +400,7 @@ def _build_go(
             return failed
         if not built.is_file():
             return BuildResult(target, False, "build reported success but no library produced")
-        shutil.copyfile(built, target.output)
+        _install_library(built, target.output)
         pinned = target.output.with_suffix(".h")
         written = built.with_suffix(".h")
         differs = (
@@ -410,6 +410,29 @@ def _build_go(
         note = f"; cgo wrote a header that differs from {pinned.name} (not written)"
         return BuildResult(target, True, "CGO_ENABLED=1" + note, header_differs=True)
     return BuildResult(target, True, "CGO_ENABLED=1")
+
+
+def _install_library(built: Path, output: Path) -> None:
+    """Put the built library at ``output`` as a new file: a copy beside it, then a rename.
+
+    The rename replaces the folder entry, not the file it named. A process
+    that has the former library loaded keeps reading the former file, and an
+    ``output`` that is a symbolic link is replaced by the library instead of
+    written through, so the file the link named is left as it was. The copy
+    takes the mode the build gave the library. A copy that fails removes its
+    partial file and leaves the former library in place.
+    """
+    handle, staged = tempfile.mkstemp(
+        prefix=f".{output.name}.", suffix=".partial", dir=output.parent
+    )
+    os.close(handle)
+    try:
+        shutil.copyfile(built, staged)
+        shutil.copymode(built, staged)
+        os.replace(staged, output)
+    except BaseException:
+        Path(staged).unlink(missing_ok=True)
+        raise
 
 
 def _default_runner(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:

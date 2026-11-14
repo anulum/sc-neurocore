@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A Go accelerator build puts its library in place as a new file: the
+  builder copies it beside its target under a temporary name and renames
+  it over the target. The copy wrote into the existing file, so a
+  process with the former library loaded saw its mapped code change, and
+  a library path that was a symbolic link had the file it named
+  overwritten; in one local checkout such a link pointed into another
+  checkout's folder. The library keeps the mode the build gave it, and
+  a copy that fails leaves the former library and no partial file.
+
 - The Ibarz-Tanaka map neuron states four behaviour cases: the two event
   counts its Q16.16 test enrols for the hand model, the schema and the
   RTL (none in 4 steps at a current of -0.5, 3 in 30 steps at 0.2), and
