@@ -439,6 +439,7 @@ def _run_stages(
         q_format=configuration.q_format.q_label,
         module_name=configuration.module_name,
         verilog=verilog,
+        rng_seed=configuration.rng_seed,
     ).to_public_dict()
     recorder.write_json("rtl/compile_traceability.json", traceability)
     recorder.write_json("rtl/configuration.json", configuration.to_public_dict())

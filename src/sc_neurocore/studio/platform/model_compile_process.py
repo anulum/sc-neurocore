@@ -31,7 +31,6 @@ def run_model_compile_process_task(
     payload: Mapping[str, object],
 ) -> dict[str, object]:
     """Resolve and compile one catalogue model through its canonical schema."""
-
     configuration = resolve_model_compile_configuration(payload, detail_getter=get_model_detail)
     verilog = configuration.to_verilog()
     result: dict[str, object] = {
@@ -47,6 +46,7 @@ def run_model_compile_process_task(
             q_format=configuration.q_format.q_label,
             module_name=configuration.module_name,
             verilog=verilog,
+            rng_seed=configuration.rng_seed,
         ).to_public_dict(),
         "module_name": configuration.module_name,
         "verilog": verilog,

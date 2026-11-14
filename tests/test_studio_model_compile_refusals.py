@@ -34,7 +34,9 @@ from sc_neurocore.studio.model_compile_configuration import (
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 
 
-def studio_request(model_name: str, *, dt: float | None = None) -> dict[str, object]:
+def studio_request(
+    model_name: str, *, dt: float | None = None, extra: dict[str, float] | None = None
+) -> dict[str, object]:
     """Build a compile request the way the Studio's 'Generate RTL' does.
 
     Parameters
@@ -44,6 +46,8 @@ def studio_request(model_name: str, *, dt: float | None = None) -> dict[str, obj
     dt : float or None
         The step to send. None sends the model's own step, which the Studio
         takes on when the model is selected.
+    extra : dict of str to float, optional
+        Parameters added to the catalogue's, such as a name no side knows.
 
     Returns
     -------
@@ -53,28 +57,36 @@ def studio_request(model_name: str, *, dt: float | None = None) -> dict[str, obj
     detail = get_model_detail(model_name)
     assert detail is not None
     configuration = detail["compile_configuration"]
+    params = {parameter["name"]: parameter["default"] for parameter in detail["params"]}
+    params.update(extra or {})
     return {
         "model_name": model_name,
         "dt": detail["dt"] if dt is None else dt,
         "integrator": configuration["default_integrator"],
         "q_format": configuration["default_q_format"],
-        "params": {parameter["name"]: parameter["default"] for parameter in detail["params"]},
+        "params": params,
     }
 
 
-#: One model per kind of refusal, with the reason's opening and the step sent (None: the model's own).
-#: The map is sent 0.1, a step other than its declared 1.0, which the reader can set in the Studio.
+#: One model per kind of refusal: the reason's opening, the step sent (None: the model's own) and any
+#: parameter added. The map is sent 0.1, a step other than its declared 1.0, which the reader can set in
+#: the Studio; AdEx is sent a parameter name neither its catalogue nor its schema knows.
 REFUSALS = [
-    ("AdExNeuron", "Unknown schema parameter override(s): b, c_m, delta_t", None),
-    ("RulkovMapNeuron", "recurrence 'Rulkov Map' has no continuous timebase", 0.1),
-    ("SCScaledResetAdaptiveIFNeuron", "Q8.8 cannot hold this neuron", None),
+    ("AdExNeuron", "Unknown schema parameter override(s): bogus", None, {"bogus": 1.0}),
+    ("RulkovMapNeuron", "recurrence 'Rulkov Map' has no continuous timebase", 0.1, None),
+    ("SCScaledResetAdaptiveIFNeuron", "Q8.8 cannot hold this neuron", None, None),
 ]
 
 
 @pytest.mark.parametrize("route", ["/api/models/compile", "/api/models/cosim"])
-@pytest.mark.parametrize(("model_name", "reason", "dt"), REFUSALS)
+@pytest.mark.parametrize(("model_name", "reason", "dt", "extra"), REFUSALS)
 def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
-    tmp_path: Path, route: str, model_name: str, reason: str, dt: float | None
+    tmp_path: Path,
+    route: str,
+    model_name: str,
+    reason: str,
+    dt: float | None,
+    extra: dict[str, float] | None,
 ) -> None:
     """The caller is told what the compiler refused, and no job is admitted for it.
 
@@ -90,6 +102,8 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         The opening of the reason the caller must be given.
     dt : float or None
         The step sent; None sends the model's own.
+    extra : dict of str to float or None
+        Parameters added to the catalogue's.
     """
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
@@ -99,7 +113,7 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         before = client.get("/api/studio/jobs").json()
         response = client.post(
             route,
-            json=studio_request(model_name, dt=dt),
+            json=studio_request(model_name, dt=dt, extra=extra),
             headers={"Origin": "http://127.0.0.1:5173"},
         )
         assert response.status_code == 422, response.text
@@ -109,9 +123,9 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         assert client.get("/api/studio/jobs").json() == before
 
 
-@pytest.mark.parametrize(("model_name", "reason", "dt"), REFUSALS)
+@pytest.mark.parametrize(("model_name", "reason", "dt", "extra"), REFUSALS)
 def test_each_refusal_is_an_authored_compile_refusal(
-    model_name: str, reason: str, dt: float | None
+    model_name: str, reason: str, dt: float | None, extra: dict[str, float] | None
 ) -> None:
     """The resolver marks each refusal as text written for the caller.
 
@@ -123,10 +137,12 @@ def test_each_refusal_is_an_authored_compile_refusal(
         The opening of the refusal's message.
     dt : float or None
         The step sent; None sends the model's own.
+    extra : dict of str to float or None
+        Parameters added to the catalogue's.
     """
     with pytest.raises(ValueError, match=re.escape(reason)) as refused:
         resolve_model_compile_configuration(
-            studio_request(model_name, dt=dt), detail_getter=get_model_detail
+            studio_request(model_name, dt=dt, extra=extra), detail_getter=get_model_detail
         )
     # The request boundary answers 422 for exactly this class. A map's missing
     # timebase is refused by the profile admission; the others by the resolver.
@@ -226,3 +242,50 @@ def test_a_map_at_its_own_step_compiles(tmp_path: Path) -> None:
         )
         assert response.status_code == 200, response.text
         assert "module sc_" in response.json()["verilog"]
+
+
+def test_a_schema_without_a_step_is_a_server_fault(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With no step in the request, the schema or the catalogue, the fault is the server's, not the caller's.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Gives the resolver a schema whose integration states no step.
+    """
+    from sc_neurocore.neurons.universal_dsl import load_schema
+
+    detail = get_model_detail("SCLapicqueLIFNeuron")
+    assert detail is not None
+    stepless = {**load_schema("sc_lapicque_lif"), "integration": {"method": "exp_euler"}}
+    monkeypatch.setattr(
+        "sc_neurocore.studio.model_compile_configuration.load_schema", lambda _name: stepless
+    )
+    without_step = {key: value for key, value in detail.items() if key != "dt"}
+    with pytest.raises(ValueError) as fault:
+        resolve_model_compile_configuration(
+            {"model_name": "SCLapicqueLIFNeuron", "q_format": "Q16.16"},
+            detail_getter=lambda _name: without_step,
+        )
+    assert str(fault.value) == (
+        "Studio model configuration field 'schema dt' must be a positive number."
+    )
+    assert not isinstance(fault.value, AuthoredRefusal)
+
+
+def test_a_configuration_without_a_schema_name_is_a_server_fault() -> None:
+    """A compile configuration that names no schema is the server's catalogue at fault, not the caller."""
+    detail = get_model_detail("SCLapicqueLIFNeuron")
+    assert detail is not None
+    configuration = {
+        key: value for key, value in detail["compile_configuration"].items() if key != "schema_name"
+    }
+    nameless = {**detail, "compile_configuration": configuration}
+    with pytest.raises(ValueError) as fault:
+        resolve_model_compile_configuration(
+            {"model_name": "SCLapicqueLIFNeuron", "q_format": "Q16.16"},
+            detail_getter=lambda _name: nameless,
+        )
+    assert str(fault.value) == (
+        "Studio model configuration field 'schema_name' must be a non-empty string."
+    )
+    assert not isinstance(fault.value, AuthoredRefusal)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1953
+expected_file_count = 1959
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6330,6 +6330,30 @@ rationale = "Resolve a catalogue model's compile request into its canonical sche
 [[file]]
 path = "tests/test_studio_model_compile_refusals.py"
 rationale = "A refused model compile or co-simulation is answered 422 with the compiler's reason and no job, while a server fault is left to the job."
+
+[[file]]
+path = "src/sc_neurocore/studio/model_compile_parameters.py"
+rationale = "Translate a catalogue model's parameters into its schema's overrides as the class and the schema both state, refusing in words what the schema cannot take."
+
+[[file]]
+path = "tests/test_studio_model_compile_parameters.py"
+rationale = "Each translated catalogue model compiles from the Studio's request, and its class and compiled schema neuron follow one trajectory off the defaults."
+
+[[file]]
+path = "tests/test_studio_model_compile_process.py"
+rationale = "The catalogue-model compile worker writes RTL and its evidence, or refuses before writing any."
+
+[[file]]
+path = "tests/test_studio_synthesis_terminal.py"
+rationale = "The selected-RTL terminal binds its netlist and routed design to the RTL's compile and co-simulation evidence, the seed included, or refuses a broken chain."
+
+[[file]]
+path = "src/sc_neurocore/studio/compile_traceability.py"
+rationale = "Build path-free compile traceability whose declared input determines its RTL, the LFSR seed included when a compile carries one."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/model_compile_process.py"
+rationale = "The catalogue-model compile worker resolves the request, writes the RTL and records its traceability and evidence."
 
 [[file]]
 path = "src/sc_neurocore/compiler/equation_state.py"

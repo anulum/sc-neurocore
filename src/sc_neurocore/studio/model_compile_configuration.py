@@ -25,6 +25,7 @@ from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_catalogue import get_model_detail
+from sc_neurocore.studio.model_compile_parameters import to_schema_parameters
 from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS
 
 ModelDetailGetter = Callable[[str], dict[str, object] | None]
@@ -52,6 +53,7 @@ class ResolvedModelCompileConfiguration:
     numeric_contract: HardwareNumericContract
     params: dict[str, float]
     q_format: QFormat
+    rng_seed: int | None
     schema_name: str
     schema_sha256: str
 
@@ -64,7 +66,9 @@ class ResolvedModelCompileConfiguration:
         the RTL was generated from the authored profile or from an admitted
         override. ``numeric_contract`` states what the RTL holds at the
         selected format: every encoded value, the look-up tables and whether a
-        bit-true C kernel mirrors it.
+        bit-true C kernel mirrors it. ``rng_seed`` is the LFSR16 seed the RTL
+        starts from when the request carried one, which the profile's
+        randomness entry does not state.
         """
         return {
             "dt": self.dt,
@@ -73,6 +77,7 @@ class ResolvedModelCompileConfiguration:
             "numeric_contract": self.numeric_contract.to_public_dict(),
             "profile": self.neuron.realised_profile(),
             "q_format": self.q_format.q_label,
+            "rng_seed": self.rng_seed,
             "schema_name": self.schema_name,
             "schema_sha256": self.schema_sha256,
         }
@@ -98,6 +103,11 @@ def resolve_model_compile_configuration(
     in it: a value the format would wrap, or a non-zero parameter, constant,
     initial state or step it would round to zero, refuses the compile rather
     than producing RTL for a different neuron.
+
+    The parameters are the model's catalogue parameters, as the Studio shows
+    and sends them; they are translated into the schema's names and values
+    first (:mod:`sc_neurocore.studio.model_compile_parameters`), and only a
+    name that neither side knows is refused as unknown.
     """
     model_name = _required_string(payload, "model_name")
     params = _float_mapping(payload.get("params"))
@@ -148,6 +158,10 @@ def resolve_model_compile_configuration(
         raise ValueError(
             f"Studio model compile configuration for {model_name!r} has invalid parameters."
         )
+    translated = to_schema_parameters(
+        model_name, params, catalogue_defaults=_catalogue_defaults(detail), schema=schema
+    )
+    params = translated.parameters
     unknown_params = sorted(set(params) - set(schema_params))
     if unknown_params:
         raise ModelCompileRefused(
@@ -169,6 +183,7 @@ def resolve_model_compile_configuration(
         parameter_overrides=params,
         dt_override=dt,
         method_override=integrator,
+        rng_seed_override=translated.rng_seed,
     )
     numeric_contract = hardware_numeric_contract(neuron.to_equation_neuron(), q_format)
     if not numeric_contract.representable:
@@ -182,9 +197,42 @@ def resolve_model_compile_configuration(
         numeric_contract=numeric_contract,
         params=params,
         q_format=q_format,
+        rng_seed=translated.rng_seed,
         schema_name=schema_name,
         schema_sha256=schema_sha256,
     )
+
+
+def _catalogue_defaults(detail: Mapping[str, object]) -> dict[str, float]:
+    """Return each catalogue parameter's default, by name.
+
+    Parameters
+    ----------
+    detail : Mapping[str, object]
+        The model's catalogue detail.
+
+    Returns
+    -------
+    dict[str, float]
+        The defaults; a parameter without a numeric default is left out.
+
+    Raises
+    ------
+    ValueError
+        When the catalogue detail lists its parameters in another shape, a fault
+        of the server's catalogue rather than of the request.
+    """
+    listed = detail.get("params", [])
+    if not isinstance(listed, list):
+        raise ValueError("Studio model detail 'params' must be a list.")
+    defaults: dict[str, float] = {}
+    for parameter in listed:
+        if not isinstance(parameter, Mapping) or not isinstance(parameter.get("name"), str):
+            raise ValueError("Studio model detail parameters must be objects with a name.")
+        default = parameter.get("default")
+        if isinstance(default, (int, float)) and not isinstance(default, bool):
+            defaults[parameter["name"]] = float(default)
+    return defaults
 
 
 def _q_format(value: str) -> QFormat:

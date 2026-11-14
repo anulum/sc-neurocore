@@ -12,6 +12,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- 'Generate RTL' now compiles the catalogue models whose parameters the
+  Studio names differently from their canonical schema; nine were refused
+  as "Unknown schema parameter override(s)". The compile translates each
+  one as the model's class and its schema both state: a rename (AdEx's b,
+  c_m and delta_t are the schema's b_adapt, C and delta_T; Brunel-Wang's
+  C_m; the Hodgkin-Huxley and Wang-Buzsaki conductances; Resonate-and-Fire's
+  threshold), a derivation (Jansen-Rit's four couplings from c; the Amari
+  field's sampled kernel weights from its kernel parameters and dx), and the
+  seed of the escape-rate and Poisson neurons, which seeds the schema's
+  16-bit LFSR and is now recorded with the compile, in its traceability
+  input and in the co-simulation cross-check. Each translation was checked
+  by running the model's class and the compiled schema neuron side by side
+  at values other than the defaults. The Amari field compiles only as the
+  schema's fixed field of four sites, so its default of 64 sites is refused
+  with that reason, and a request in its catalogue names samples the kernel
+  at the request's own dx. A seed the LFSR cannot take, or one parameter
+  sent under both of its names, is refused in words.
+
 - A Studio storage-profile job whose worker exits before asking for its
   grant now fails at once, as "Studio process worker exited with N before
   requesting its grant.". It waited out the whole grant deadline, 60 s by

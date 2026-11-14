@@ -77,7 +77,6 @@ class StudioCompileTraceability:
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free traceability payload."""
-
         source_payload = self.source_payload_override or {
             "equations": list(self.equations),
             "init": cast(dict[str, JsonValue], self.init),
@@ -145,7 +144,6 @@ def build_compile_traceability(
     ValueError
         If no equations are supplied.
     """
-
     if not equations:
         raise ValueError("At least one equation is required for compile traceability.")
     return StudioCompileTraceability(
@@ -170,9 +168,15 @@ def build_model_compile_traceability(
     q_format: str,
     module_name: str,
     verilog: str,
+    rng_seed: int | None = None,
 ) -> StudioCompileTraceability:
-    """Build path-free traceability for catalogue-model RTL compilation."""
+    """Build path-free traceability for catalogue-model RTL compilation.
 
+    ``rng_seed`` is the LFSR seed a stochastic model's RTL starts from. It is
+    part of the input when the compile carried one, so two seeds never share
+    an input digest while their RTL differs; a deterministic model's input,
+    and so its digest, has no seed and stays as it was.
+    """
     if not model_name or not schema_name or len(schema_sha256) != 64:
         raise ValueError("Model, schema, and schema digest are required for compile traceability.")
     source_payload: dict[str, JsonValue] = {
@@ -184,6 +188,8 @@ def build_model_compile_traceability(
         "schema_name": schema_name,
         "schema_sha256": schema_sha256,
     }
+    if rng_seed is not None:
+        source_payload["rng_seed"] = rng_seed
     return StudioCompileTraceability(
         equations=(),
         threshold=None,
@@ -199,13 +205,11 @@ def build_model_compile_traceability(
 
 def _sha256_text(value: str) -> str:
     """Return a SHA-256 digest for UTF-8 text."""
-
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _sha256_json(payload: Mapping[str, JsonValue]) -> str:
     """Return a stable SHA-256 digest over canonical JSON."""
-
     encoded = json.dumps(
         payload,
         allow_nan=False,

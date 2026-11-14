@@ -264,6 +264,8 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
         "integrator": "exp_euler",
         "model_name": "SCLapicqueLIFNeuron",
         "q_format": "Q8.8",
+        # A deterministic model's RTL starts no LFSR, so it records no seed.
+        "rng_seed": None,
         "schema_name": "sc_lapicque_lif",
         "schema_sha256": payload["compile_traceability"]["source_payload"]["schema_sha256"],
     }

@@ -47840,8 +47840,13 @@ Raises
 ValueError
     If no equations are supplied.
 
-### Function `build_model_compile_traceability(*, model_name, schema_name, schema_sha256, params, dt, integrator, q_format, module_name, verilog)`
+### Function `build_model_compile_traceability(*, model_name, schema_name, schema_sha256, params, dt, integrator, q_format, module_name, verilog, rng_seed)`
 Build path-free traceability for catalogue-model RTL compilation.
+
+``rng_seed`` is the LFSR seed a stochastic model's RTL starts from. It is
+part of the input when the compile carried one, so two seeds never share
+an input digest while their RTL differs; a deterministic model's input,
+and so its digest, has no seed and stays as it was.
 
 ---
 
@@ -49777,6 +49782,58 @@ requested parameter overrides, step and integrator, must be representable
 in it: a value the format would wrap, or a non-zero parameter, constant,
 initial state or step it would round to zero, refuses the compile rather
 than producing RTL for a different neuron.
+
+The parameters are the model's catalogue parameters, as the Studio shows
+and sends them; they are translated into the schema's names and values
+first (:mod:`sc_neurocore.studio.model_compile_parameters`), and only a
+name that neither side knows is refused as unknown.
+
+---
+
+## Module `studio.model_compile_parameters`
+
+### Class `CatalogueParametersRefused`
+A catalogue parameter the schema cannot take, in words written for the caller.
+
+
+### Class `SchemaParameters`
+What a catalogue request becomes in the schema.
+
+Attributes
+----------
+parameters : dict&#91;str, float&#93;
+    Schema parameter overrides.
+rng_seed : int or None
+    The seed of the schema's LFSR16, for a model whose catalogue carries one.
+
+
+### Function `to_schema_parameters(model_name, params, *, catalogue_defaults, schema)`
+Translate a request's catalogue parameters into its schema's overrides.
+
+Names the schema already uses pass through, as before; a name neither side
+knows is left for the caller's unknown-parameter check.
+
+Parameters
+----------
+model_name : str
+    The catalogue model.
+params : Mapping&#91;str, float&#93;
+    The request's parameters.
+catalogue_defaults : Mapping&#91;str, float&#93;
+    The catalogue's default for each of the model's parameters.
+schema : Mapping&#91;str, object&#93;
+    The model's canonical schema.
+
+Returns
+-------
+SchemaParameters
+    The schema overrides and the LFSR16 seed.
+
+Raises
+------
+CatalogueParametersRefused
+    When a request names one parameter twice, by its catalogue and its
+    schema name, or carries a value the schema cannot take.
 
 ---
 

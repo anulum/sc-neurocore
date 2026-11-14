@@ -6,11 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio selected-RTL synthesis and PnR terminal
 
+"""The selected-RTL terminal binds its netlist and routed design to the RTL's evidence, or refuses a broken chain."""
+
 from __future__ import annotations
 
 import shutil
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -26,8 +29,8 @@ HAS_TERMINAL_TOOLS = all(
 )
 
 
-def _source_chain(verilog: str) -> tuple[dict[str, object], dict[str, object]]:
-    compile_traceability = build_model_compile_traceability(
+def _source_chain(verilog: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    compile_traceability: dict[str, Any] = build_model_compile_traceability(
         model_name="ExampleNeuron",
         schema_name="example",
         schema_sha256="a" * 64,
@@ -38,7 +41,7 @@ def _source_chain(verilog: str) -> tuple[dict[str, object], dict[str, object]]:
         module_name="example_neuron",
         verilog=verilog,
     ).to_public_dict()
-    cosim_parity: dict[str, object] = {
+    cosim_parity: dict[str, Any] = {
         "bit_exact": True,
         "configuration": {
             "dt": 0.25,
@@ -51,7 +54,7 @@ def _source_chain(verilog: str) -> tuple[dict[str, object], dict[str, object]]:
         "module_name": "example_neuron",
         "reference": {"trace_sha256": "b" * 64},
         "rtl": {
-            "source_sha256": compile_traceability["output"]["rtl_sha256"],  # type: ignore[index]
+            "source_sha256": compile_traceability["output"]["rtl_sha256"],
             "trace_sha256": "b" * 64,
         },
         "schema_version": "studio.cosim-parity.v1",
@@ -65,12 +68,22 @@ def test_terminal_binds_netlist_and_routed_artifact_digests(
     monkeypatch: pytest.MonkeyPatch,
     browser_round_trip: bool,
 ) -> None:
+    """The report binds the netlist and the routed design to the selected RTL's compile evidence.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Stands in the synthesis and place-and-route tools.
+    browser_round_trip : bool
+        Whether the evidence went through a browser's JSON round trip, which
+        turns a float parameter such as 2.0 into the integer 2.
+    """
     import sc_neurocore.studio.synthesis as synthesis
 
     verilog = "module example_neuron(input clk, output q); assign q = clk; endmodule"
     compile_traceability, cosim_parity = _source_chain(verilog)
     if browser_round_trip:
-        compile_traceability["source_payload"]["params"]["gain"] = 2  # type: ignore[index]
+        compile_traceability["source_payload"]["params"]["gain"] = 2
 
     def fake_synthesis(
         _verilog: str,
@@ -131,11 +144,9 @@ def test_terminal_binds_netlist_and_routed_artifact_digests(
     assert execution.report["status"] == "completed"
     assert (
         execution.report["source_chain"]["rtl_sha256"]
-        == (  # type: ignore[index]
-            compile_traceability["output"]["rtl_sha256"]  # type: ignore[index]
-        )
+        == (compile_traceability["output"]["rtl_sha256"])
     )
-    assert execution.report["artifacts"] == {  # type: ignore[index]
+    assert execution.report["artifacts"] == {
         "netlist_sha256": "ab6b54e2978d53a10c1db5983b4712ee25ed937b2da8b7e3ba43f7a184da2fdb",
         "routed_design_sha256": "466edbb65d32d109e3950417bd7ce667f390c483b528db79ff6427f6fbf0e009",
     }
@@ -151,24 +162,37 @@ def test_terminal_binds_netlist_and_routed_artifact_digests(
         ("cosim_rtl", "co-simulated source digest"),
         ("cosim_parity", "not bit-exact"),
         ("configuration", "field 'q_format'"),
+        ("seed", "field 'rng_seed'"),
         ("trace_digest", "evidence digest"),
     ],
 )
 def test_terminal_rejects_broken_selected_rtl_chain(mutation: str, message: str) -> None:
+    """Each break of the compile or co-simulation evidence, the seed among them, is refused by name.
+
+    Parameters
+    ----------
+    mutation : str
+        Which part of the evidence chain is broken.
+    message : str
+        A pattern the refusal must match.
+    """
     verilog = "module example_neuron; endmodule"
     compile_traceability, cosim_parity = _source_chain(verilog)
     if mutation == "compile_rtl":
-        compile_traceability["output"]["rtl_sha256"] = "0" * 64  # type: ignore[index]
+        compile_traceability["output"]["rtl_sha256"] = "0" * 64
     elif mutation == "compile_trace":
         compile_traceability["traceability_sha256"] = "0" * 64
     elif mutation == "cosim_rtl":
-        cosim_parity["rtl"]["source_sha256"] = "0" * 64  # type: ignore[index]
+        cosim_parity["rtl"]["source_sha256"] = "0" * 64
     elif mutation == "cosim_parity":
         cosim_parity["bit_exact"] = False
     elif mutation == "configuration":
-        cosim_parity["configuration"]["q_format"] = "Q16.16"  # type: ignore[index]
+        cosim_parity["configuration"]["q_format"] = "Q16.16"
+    elif mutation == "seed":
+        # The co-simulated RTL started its LFSR from a seed the compile did not record.
+        cosim_parity["configuration"]["rng_seed"] = 7
     else:
-        cosim_parity["reference"]["trace_sha256"] = "z" * 64  # type: ignore[index]
+        cosim_parity["reference"]["trace_sha256"] = "z" * 64
 
     with pytest.raises(ValueError, match=message):
         run_synthesis_terminal(
@@ -180,6 +204,7 @@ def test_terminal_rejects_broken_selected_rtl_chain(mutation: str, message: str)
 
 
 def test_terminal_rejects_target_without_pnr() -> None:
+    """A target with no place-and-route terminal is refused before any tool runs."""
     verilog = "module example_neuron; endmodule"
     compile_traceability, cosim_parity = _source_chain(verilog)
 
@@ -194,6 +219,7 @@ def test_terminal_rejects_target_without_pnr() -> None:
 
 @pytest.mark.skipif(not HAS_TERMINAL_TOOLS, reason="selected-model EDA tools are required")
 def test_real_ecp5_terminal_routes_selected_model_rtl() -> None:
+    """With the EDA tools present, a selected model's RTL is synthesised and routed for ECP5."""
     configuration = resolve_model_compile_configuration(
         {
             "integrator": "map",
@@ -223,7 +249,7 @@ def test_real_ecp5_terminal_routes_selected_model_rtl() -> None:
     )
 
     assert execution.report["success"] is True
-    assert execution.report["place_and_route"]["max_freq_mhz"] > 0  # type: ignore[index]
+    assert execution.report["place_and_route"]["max_freq_mhz"] > 0
     assert execution.netlist_json
     assert execution.routed_design
     assert b"design.v" in execution.netlist_json

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio catalogue-model compiler process contracts
 
+"""The catalogue-model compile worker writes RTL and its evidence, or refuses before writing any."""
+
 from __future__ import annotations
 
 import json
@@ -32,6 +34,13 @@ def _context(tmp_path: Path) -> StudioJobContext:
 
 
 def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) -> None:
+    """A compile writes the RTL, the configuration and profile it was built from, and its evidence.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned job directory.
+    """
     context = _context(tmp_path)
 
     result = run_model_compile_process_task(
@@ -59,6 +68,8 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
         "integrator": "exp_euler",
         "model_name": "SCLapicqueLIFNeuron",
         "q_format": "Q16.16",
+        # A deterministic model's RTL starts no LFSR, so it records no seed.
+        "rng_seed": None,
         "schema_name": "sc_lapicque_lif",
         "schema_sha256": source_payload["schema_sha256"],
     }
@@ -81,6 +92,13 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
 
 
 def test_model_compile_process_uses_schema_defaults(tmp_path: Path) -> None:
+    """A request naming only the model and format takes the schema's step, integrator and module name.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned job directory.
+    """
     context = _context(tmp_path)
 
     result = run_model_compile_process_task(
@@ -115,6 +133,17 @@ def test_model_compile_process_uses_schema_defaults(tmp_path: Path) -> None:
 def test_model_compile_process_rejects_invalid_payloads(
     tmp_path: Path, payload: dict[str, object], message: str
 ) -> None:
+    """An invalid request is refused with a message naming the fault, and nothing is written.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned job directory.
+    payload : dict of str to object
+        The invalid request.
+    message : str
+        A pattern the refusal's message must match.
+    """
     context = _context(tmp_path)
 
     with pytest.raises(ValueError, match=message):
@@ -126,6 +155,15 @@ def test_model_compile_process_rejects_invalid_payloads(
 def test_model_compile_process_rejects_corrupt_catalogue_configuration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A catalogue compile configuration that declares no integrator is refused, and nothing is written.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned job directory.
+    monkeypatch : pytest.MonkeyPatch
+        Replaces the worker's catalogue lookup with a corrupt record.
+    """
     context = _context(tmp_path)
     monkeypatch.setattr(
         model_compile_process,
@@ -157,6 +195,19 @@ def test_model_compile_process_rejects_corrupt_schema_sections(
     schema: dict[str, object],
     message: str,
 ) -> None:
+    """A schema whose integration or parameters section has the wrong shape is refused before any RTL.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned job directory.
+    monkeypatch : pytest.MonkeyPatch
+        Replaces the schema loader with one that returns the corrupt schema.
+    schema : dict of str to object
+        The corrupt schema.
+    message : str
+        A pattern the refusal's message must match.
+    """
     context = _context(tmp_path)
     monkeypatch.setattr(
         "sc_neurocore.studio.model_compile_configuration.load_schema",

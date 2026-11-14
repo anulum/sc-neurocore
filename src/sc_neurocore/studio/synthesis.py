@@ -583,7 +583,15 @@ def _validate_selected_rtl_chain(
         raise ValueError("Selected RTL co-simulation evidence is malformed.")
     if rtl.get("source_sha256") != actual_rtl_sha256:
         raise ValueError("Selected RTL does not match the co-simulated source digest.")
-    for key in ("dt", "integrator", "model_name", "q_format", "schema_name", "schema_sha256"):
+    for key in (
+        "dt",
+        "integrator",
+        "model_name",
+        "q_format",
+        "rng_seed",
+        "schema_name",
+        "schema_sha256",
+    ):
         if configuration.get(key) != source_payload.get(key):
             raise ValueError(f"Selected RTL compile/co-simulation field {key!r} does not match.")
     if cosim_parity.get("module_name") != output.get("module_name"):
