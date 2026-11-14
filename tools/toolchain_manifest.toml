@@ -54,20 +54,20 @@ nightly = "nightly-2026-11-13"
 version = "1.27.4"
 
 [node]
-version = "26.13.0"
+version = "26.13.1"
 
 [npm]
 # Installed by .github/actions/setup-npm from the registry archive, by digest.
-version = "12.2.1"
-sha256 = "228bd64aaef23270dbdbd2cf3d5ef5c467602ef38c4066246cef1984adab9a67"
+version = "12.2.2"
+sha256 = "07fecbf753e2c3bc10ebeb3e9ed8738f6a0cc1292998b79e2e9f1dd2a5525e0c"
 
 [pixi]
-version = "v0.83.0"
+version = "v0.84.2"
 
 [julia]
-# 1.11.9 is the runtime juliacall accepts; 1.13.3 is the release the
-# native-parity tests also run (installed on 2026-11-13 for "1.13").
-versions = ["1.11.9", "1.13.3"]
+# 1.11.9 is the runtime juliacall accepts; 1.13.4 is the release the
+# native-parity tests also run (installed on 2026-11-14 as juliaup channel "1.13.4").
+versions = ["1.11.9", "1.13.4"]
 
 [mojo]
 version = "1.0.0"

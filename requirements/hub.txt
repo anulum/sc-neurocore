@@ -31,9 +31,9 @@ click==8.5.1 \
     --hash=sha256:8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37 \
     --hash=sha256:9bbfada76703fd1d784b83eea012e3e8c6a001a876543ef104fa56aaaeb072b4
     # via uvicorn
-fastapi==0.162.7 \
-    --hash=sha256:b7503029c8ef2d2d5fea9049294cf8d0f2805c6621f4677ede269fce19f01efb \
-    --hash=sha256:fa3be857122ec8d91d4d234e86ac19acf4ef23f5c6c3dfcce78ec0c27c0c5ab4
+fastapi==0.163.0 \
+    --hash=sha256:7572550ab4935e3ff373dc0191aea410d6c48127cc5477bc290b992fe539e345 \
+    --hash=sha256:ef55fa066d74b922aac7231af7869c4469b88ca00cac5d0421e42ceee213a902
     # via -r requirements/hub.in
 flexcache==0.3 \
     --hash=sha256:18743bd5a0621bfe2cf8d519e4c3bfdf57a269c15d1ced3fb4b64e0ff4600656 \

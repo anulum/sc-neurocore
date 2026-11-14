@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: matrix.ecosystem == 'npm'
         with:
-          node-version: "26.13.0"
+          node-version: "26.13.1"
       - name: Install verified npm
         if: matrix.ecosystem == 'npm'
         uses: ./.github/actions/setup-npm
@@ -57,7 +57,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         if: matrix.ecosystem == 'pixi'
         with:
-          pixi-version: v0.83.0
+          pixi-version: v0.84.2
           run-install: false
       - name: Install pinned Conda audit scanners
         if: matrix.ecosystem == 'pixi'

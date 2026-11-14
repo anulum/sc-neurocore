@@ -213,7 +213,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "26.13.0"
+          node-version: "26.13.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 
@@ -550,7 +550,7 @@ jobs:
       - id: julia-release
         uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
         with:
-          version: "1.13.3"
+          version: "1.13.4"
           show-versioninfo: "never"
 
       # juliacall 0.9.x currently constrains Julia to 1.10.3-1.11. GitHub's
@@ -602,7 +602,7 @@ jobs:
           # downloads/executes a moving target). Residual: the pinned release is
           # still fetched from the official prefix-dev endpoint without a
           # per-artifact digest — accepted + tracked (ci_supply_chain_residuals).
-          pixi-version: v0.83.0
+          pixi-version: v0.84.2
           manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
 
       - name: Expose mojo without shadowing the CI Python
@@ -666,7 +666,7 @@ jobs:
       # own locked ESLint; they refuse to run without that installation.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "26.13.0"
+          node-version: "26.13.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 

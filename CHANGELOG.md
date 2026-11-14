@@ -278,6 +278,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Move the toolchains to their newest releases in the toolchain manifest
+  and every declaration it checks: Node 26.13.1; npm 12.2.2, installed by
+  the npm setup action from its verified registry archive and named by
+  the frontend's packageManager and the contributing guide; pixi 0.84.2;
+  and Julia 1.13.4 for the native-parity lanes.
+
 - Move every dependency declaration that no recorded hold keeps back to
   its newest compatible release: ruff 0.17.5 in every declaration and
   the pre-commit hook, the typos hook 1.52.2, semgrep 1.185.0,

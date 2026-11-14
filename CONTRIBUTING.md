@@ -180,9 +180,9 @@ version shapes a result.
 
 ### Frontend toolchain
 
-Use the Node version pinned in the workflows and npm 12.2.1, as declared by
+Use the Node version pinned in the workflows and npm 12.2.2, as declared by
 `studio/frontend/package.json`. When the installed npm version differs, run
-`npx --yes npm@12.2.1 ci` from `studio/frontend`; the same prefix can run the
+`npx --yes npm@12.2.2 ci` from `studio/frontend`; the same prefix can run the
 package scripts without changing the shared machine's global npm installation.
 The producer and federation test host use matching React singleton versions.
 

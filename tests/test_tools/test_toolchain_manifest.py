@@ -163,7 +163,7 @@ def test_the_scan_finds_every_kind_of_declaration() -> None:
             "iverilog --version=12.0",
             "'12.0'",
         ),
-        (".github/workflows/ci.yml", 'version: "1.13.3"', 'version: "1.13"', "julia '1.13'"),
+        (".github/workflows/ci.yml", 'version: "1.13.4"', 'version: "1.13"', "julia '1.13'"),
         (".github/workflows/ci.yml", "openmpi-bin", "openmpi-bin iverilog", "'iverilog'"),
         (
             ".github/workflows/stale.yml",
@@ -179,7 +179,7 @@ def test_the_scan_finds_every_kind_of_declaration() -> None:
         ),
         (
             ".github/actions/setup-npm/action.yml",
-            "npm/-/npm-12.2.1.tgz",
+            "npm/-/npm-12.2.2.tgz",
             "npm/-/npm-12.2.0.tgz",
             "npm '12.2.0'",
         ),
@@ -426,7 +426,7 @@ def test_an_unreadable_rust_toolchain_file_is_reported(repo: Path) -> None:
         ('nightly = "nightly-2026-11-13"', 'nightly = "nightly"', "dated nightly"),
         ('main = "3.12.16"', 'main = "3.12.15"', "python.main"),
         (
-            '[node]\nversion = "26.13.0"',
+            '[node]\nversion = "26.13.1"',
             '[node]\nversion = ""',
             "version must be a non-empty string",
         ),
@@ -549,9 +549,9 @@ def test_the_host_check_runs_each_tool_and_compares_its_line(tmp_path: Path) -> 
         "python": "echo 'Python 3.12.16'",
         "rustc": "echo 'rustc 1.98.1 (48a229cea 2026-09-01)'",
         "go": "echo 'go version go1.27.4 linux/amd64'",
-        "node": "echo v26.13.0",
-        "npm": "echo 12.2.1",
-        "julia": "echo 'julia version 1.13.3'",
+        "node": "echo v26.13.1",
+        "npm": "echo 12.2.2",
+        "julia": "echo 'julia version 1.13.4'",
         "mojo": "echo 'Mojo 1.0.0 (ed45d567)'",
     }
     for host_tool in manifest.host_tools:
