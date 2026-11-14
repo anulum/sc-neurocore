@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- 'Generate RTL' offers a model only the Q-formats that hold the neuron
+  the Studio compiles. The formats were judged on the schema's own
+  defaults, but the Studio sends the catalogue's, and for the scaled-reset
+  adaptive integrate-and-fire neuron they differ in eight parameters: Q8.8
+  was offered as its default and then refused, since it cannot hold
+  tau_2 = 200. Q16.16 is now its only offered format and its default.
+  Across the catalogue, every offered format compiles the request the
+  Studio sends.
+
 - 'Generate RTL' now compiles the catalogue models whose parameters the
   Studio names differently from their canonical schema; nine were refused
   as "Unknown schema parameter override(s)". The compile translates each

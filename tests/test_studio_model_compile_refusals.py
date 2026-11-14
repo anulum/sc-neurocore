@@ -35,7 +35,11 @@ from sc_neurocore.studio.platform import StudioRuntimeSettings
 
 
 def studio_request(
-    model_name: str, *, dt: float | None = None, extra: dict[str, float] | None = None
+    model_name: str,
+    *,
+    dt: float | None = None,
+    extra: dict[str, float] | None = None,
+    q_format: str | None = None,
 ) -> dict[str, object]:
     """Build a compile request the way the Studio's 'Generate RTL' does.
 
@@ -48,6 +52,8 @@ def studio_request(
         takes on when the model is selected.
     extra : dict of str to float, optional
         Parameters added to the catalogue's, such as a name no side knows.
+    q_format : str, optional
+        The format asked for; None asks for the model's default.
 
     Returns
     -------
@@ -63,23 +69,25 @@ def studio_request(
         "model_name": model_name,
         "dt": detail["dt"] if dt is None else dt,
         "integrator": configuration["default_integrator"],
-        "q_format": configuration["default_q_format"],
+        "q_format": configuration["default_q_format"] if q_format is None else q_format,
         "params": params,
     }
 
 
-#: One model per kind of refusal: the reason's opening, the step sent (None: the model's own) and any
-#: parameter added. The map is sent 0.1, a step other than its declared 1.0, which the reader can set in
-#: the Studio; AdEx is sent a parameter name neither its catalogue nor its schema knows.
+#: One model per kind of refusal: the reason's opening, the step sent (None: the model's own), any
+#: parameter added, and the format asked for (None: the model's default). The map is sent 0.1, a step
+#: other than its declared 1.0, which the reader can set in the Studio; AdEx is sent a parameter name
+#: neither its catalogue nor its schema knows; the scaled-reset neuron is asked for Q8.8, a format the
+#: reader can choose and that cannot hold its tau_2 = 200.
 REFUSALS = [
-    ("AdExNeuron", "Unknown schema parameter override(s): bogus", None, {"bogus": 1.0}),
-    ("RulkovMapNeuron", "recurrence 'Rulkov Map' has no continuous timebase", 0.1, None),
-    ("SCScaledResetAdaptiveIFNeuron", "Q8.8 cannot hold this neuron", None, None),
+    ("AdExNeuron", "Unknown schema parameter override(s): bogus", None, {"bogus": 1.0}, None),
+    ("RulkovMapNeuron", "recurrence 'Rulkov Map' has no continuous timebase", 0.1, None, None),
+    ("SCScaledResetAdaptiveIFNeuron", "Q8.8 cannot hold this neuron", None, None, "Q8.8"),
 ]
 
 
 @pytest.mark.parametrize("route", ["/api/models/compile", "/api/models/cosim"])
-@pytest.mark.parametrize(("model_name", "reason", "dt", "extra"), REFUSALS)
+@pytest.mark.parametrize(("model_name", "reason", "dt", "extra", "q_format"), REFUSALS)
 def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
     tmp_path: Path,
     route: str,
@@ -87,6 +95,7 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
     reason: str,
     dt: float | None,
     extra: dict[str, float] | None,
+    q_format: str | None,
 ) -> None:
     """The caller is told what the compiler refused, and no job is admitted for it.
 
@@ -104,6 +113,8 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         The step sent; None sends the model's own.
     extra : dict of str to float or None
         Parameters added to the catalogue's.
+    q_format : str or None
+        The format asked for; None asks for the model's default.
     """
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
@@ -113,7 +124,7 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         before = client.get("/api/studio/jobs").json()
         response = client.post(
             route,
-            json=studio_request(model_name, dt=dt, extra=extra),
+            json=studio_request(model_name, dt=dt, extra=extra, q_format=q_format),
             headers={"Origin": "http://127.0.0.1:5173"},
         )
         assert response.status_code == 422, response.text
@@ -123,9 +134,13 @@ def test_a_refused_compile_answers_422_with_its_reason_and_runs_no_job(
         assert client.get("/api/studio/jobs").json() == before
 
 
-@pytest.mark.parametrize(("model_name", "reason", "dt", "extra"), REFUSALS)
+@pytest.mark.parametrize(("model_name", "reason", "dt", "extra", "q_format"), REFUSALS)
 def test_each_refusal_is_an_authored_compile_refusal(
-    model_name: str, reason: str, dt: float | None, extra: dict[str, float] | None
+    model_name: str,
+    reason: str,
+    dt: float | None,
+    extra: dict[str, float] | None,
+    q_format: str | None,
 ) -> None:
     """The resolver marks each refusal as text written for the caller.
 
@@ -139,10 +154,13 @@ def test_each_refusal_is_an_authored_compile_refusal(
         The step sent; None sends the model's own.
     extra : dict of str to float or None
         Parameters added to the catalogue's.
+    q_format : str or None
+        The format asked for; None asks for the model's default.
     """
     with pytest.raises(ValueError, match=re.escape(reason)) as refused:
         resolve_model_compile_configuration(
-            studio_request(model_name, dt=dt, extra=extra), detail_getter=get_model_detail
+            studio_request(model_name, dt=dt, extra=extra, q_format=q_format),
+            detail_getter=get_model_detail,
         )
     # The request boundary answers 422 for exactly this class. A map's missing
     # timebase is refused by the profile admission; the others by the resolver.

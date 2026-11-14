@@ -29,6 +29,7 @@ from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.model_registry import MODEL_MODULES
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.model_run_contract import (
     ModelInputError,
     model_parameter_contracts,
@@ -288,11 +289,12 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     and an ODE never offers ``map``. A schema whose profile is contradictory or
     a descriptive record has no compile configuration.
 
-    Q-formats are offered only where the schema's neuron is representable (see
-    :mod:`sc_neurocore.studio.model_numeric_contracts`), smallest word first,
-    and the first is the default; ``numeric_contracts`` states what the RTL
-    holds at every candidate format, including the refused ones and why. A
-    neuron no candidate can hold has no default and no offered format.
+    Q-formats are offered only where the neuron the Studio compiles by default
+    is representable (see :mod:`sc_neurocore.studio.model_numeric_contracts`
+    and :func:`_studio_default_neuron`), smallest word first, and the first is
+    the default; ``numeric_contracts`` states what the RTL holds at every
+    candidate format, including the refused ones and why. A neuron no
+    candidate can hold has no default and no offered format.
     ``cosim_integrators`` keeps only integrators whose neuron a generated
     bit-true C kernel mirrors, since the co-simulation compares against it.
     """
@@ -316,7 +318,9 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     ]
     if default_integrator not in integrators:
         integrators.insert(0, default_integrator)
-    contracts = studio_numeric_contracts(UniversalNeuron.from_schema(schema_name))
+    contracts = studio_numeric_contracts(
+        _studio_default_neuron(descriptor, schema_name, schema, default_integrator)
+    )
     q_formats = [label for label, contract in contracts.items() if contract.representable]
     return {
         "schema_name": schema_name,
@@ -335,6 +339,62 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
             label: contract.to_public_dict() for label, contract in contracts.items()
         },
     }
+
+
+def _studio_default_neuron(
+    descriptor: ModelDescriptor,
+    schema_name: str,
+    schema: dict[str, Any],
+    integrator: str,
+) -> UniversalNeuron:
+    """Return the neuron the Studio compiles for a model at its defaults.
+
+    The Studio sends the model's catalogue parameters at their defaults, at the
+    model's own step. They are translated into the schema's names as the
+    compile translates them, so the formats offered are judged on the neuron
+    the reader would compile, not only on the schema's own defaults, which can
+    differ. When that request is itself refused in words (a value the schema
+    cannot take, or a name it does not know), the schema's own neuron stands
+    in: it is what the reader compiles after following the refusal.
+
+    Parameters
+    ----------
+    descriptor : ModelDescriptor
+        The catalogue model.
+    schema_name : str
+        Its canonical schema.
+    schema : dict[str, Any]
+        The schema document.
+    integrator : str
+        The default integrator.
+
+    Returns
+    -------
+    UniversalNeuron
+        The neuron whose representability decides the offered formats.
+    """
+    from sc_neurocore.studio.model_compile_parameters import to_schema_parameters
+
+    defaults = {
+        parameter.name: float(parameter.default)
+        for parameter in descriptor.parameters
+        if isinstance(parameter.default, (int, float)) and not isinstance(parameter.default, bool)
+    }
+    try:
+        translated = to_schema_parameters(
+            descriptor.class_name, defaults, catalogue_defaults=defaults, schema=schema
+        )
+        if not set(translated.parameters) <= set(schema.get("parameters", {})):
+            return UniversalNeuron.from_schema(schema_name)
+        return UniversalNeuron.from_schema(
+            schema_name,
+            parameter_overrides=translated.parameters,
+            dt_override=descriptor.dt,
+            method_override=integrator,
+            rng_seed_override=translated.rng_seed,
+        )
+    except AuthoredRefusal:
+        return UniversalNeuron.from_schema(schema_name)
 
 
 def _selected_profile(class_name: str) -> str | None:
