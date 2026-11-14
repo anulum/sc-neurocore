@@ -642,10 +642,91 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the model stays silent for 2000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 still leaves the model silent for 2000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            26,
+            26
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 3.0
+          },
+          "kind": "interval",
+          "name": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "observable": "spikes",
+          "observed": 26,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            40,
+            40
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 4.0
+          },
+          "kind": "interval",
+          "name": "a current of 4.0 bursts with 40 upward crossings in 2000 steps",
+          "observable": "spikes",
+          "observed": 40,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            52,
+            52
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 5.0
+          },
+          "kind": "interval",
+          "name": "a current of 5.0 bursts with 52 upward crossings in 2000 steps",
+          "observable": "spikes",
+          "observed": 52,
+          "steps": 2000
+        }
+      ],
+      "cases_sha256": "8dcc1ca23cccec3cb1e2c9c2cdb72e5201ecbf432aadd186ed421730f4a4b454",
       "model": "HindmarshRoseNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -1340,9 +1421,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 2,
+    "held": 3,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 183
+    "no_case": 182
   }
 }

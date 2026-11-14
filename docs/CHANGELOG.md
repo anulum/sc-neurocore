@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Hindmarsh-Rose neuron states five behaviour cases, the counts its
+  Q16.16 parity test enrols for the hand model, the schema and the RTL:
+  silent at currents 0 and 2, then 26, 40 and 52 upward crossings in
+  2000 steps at currents 3, 4 and 5. Its public class holds them, and each
+  of the 13 sign variants of its three equations breaks one, so the
+  cases depend on every sign. Three of the 185 catalogue models now state
+  cases.
+
 - Screen readers and speech input now get the Studio's own names. A
   model in the library is named by the label it shows, such as "AdEx",
   with its contract line (validation, integrator, terminal tier) as its

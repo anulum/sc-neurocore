@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 183
+MODELS_WITHOUT_A_CASE = 182
 
 
 class _Integrator:
@@ -620,11 +620,34 @@ def test_the_fitzhugh_nagumo_model_holds_the_cases_of_its_band(report: dict[str,
     assert [case["exercised"] for case in cases] == [False, True, True, True, True]
 
 
+def test_the_hindmarsh_rose_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:
+    """Silent at currents 0 and 2, then 26, 40 and 52 upward crossings in 2000 steps.
+
+    The counts are those the model's Q16.16 parity test enrols for the hand model,
+    the schema and the RTL alike.
+    """
+    row = _models(report)["HindmarshRoseNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 0, 26, 40, 52]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": 2.0},
+        {"current": 3.0},
+        {"current": 4.0},
+        {"current": 5.0},
+    ]
+    assert {case["steps"] for case in cases} == {2000}
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, False, True, True, True]
+
+
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models state cases and how many hold them."""
     summary = render_summary(report)
     assert "catalogue models: 185" in summary
-    assert re.search(r"^  held\s+2$", summary, flags=re.M)
+    assert re.search(rf"^  held\s+{185 - MODELS_WITHOUT_A_CASE}$", summary, flags=re.M)
     assert re.search(rf"^  no_case\s+{MODELS_WITHOUT_A_CASE}$", summary, flags=re.M)
     for note in REPORT_NOTES:
         assert note in summary
@@ -655,7 +678,8 @@ def test_the_script_runs_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(SystemExit) as finished:
         runpy.run_path(str(script), run_name="__main__")
     assert finished.value.code == 0
-    assert json.loads((ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))["totals"]["held"] == 2
+    held = json.loads((ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))["totals"]["held"]
+    assert held == 185 - MODELS_WITHOUT_A_CASE
 
 
 class _Diverges:

@@ -842,7 +842,8 @@
         {
           "attribution": "class_name",
           "changed": [
-            "engine/src/neurons/simple_spiking/hindmarsh_rose.rs"
+            "engine/src/neurons/simple_spiking/hindmarsh_rose.rs",
+            "src/sc_neurocore/neurons/model_descriptors/HindmarshRoseNeuron.toml"
           ],
           "currency": "outdated",
           "name": "bench_hindmarsh_rose_simulate.json"

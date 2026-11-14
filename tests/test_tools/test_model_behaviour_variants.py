@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 2
+MODELS_WITH_CASES = 3
 
 
 def _accumulator() -> dict[str, object]:
@@ -387,14 +387,14 @@ def test_the_committed_report_is_what_the_tool_computes(report: dict[str, object
 def test_the_report_lists_the_models_that_state_cases(report: dict[str, object]) -> None:
     """Only a model with cases has a row; the others are counted."""
     rows = _rows(report)
-    assert sorted(rows) == ["DendriticNMDANeuron", "FitzHughNagumoNeuron"]
+    assert sorted(rows) == ["DendriticNMDANeuron", "FitzHughNagumoNeuron", "HindmarshRoseNeuron"]
     assert report["models_with_cases"] == MODELS_WITH_CASES
     assert report["models_without_cases"] == 185 - MODELS_WITH_CASES
     totals = report["totals"]
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 1,
+        "discriminated": 2,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -436,6 +436,46 @@ def test_every_variant_of_the_fitzhugh_nagumo_model_breaks_a_case(
     assert "observed" not in runaway
 
 
+def test_every_variant_of_the_hindmarsh_rose_model_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Thirteen signs over three equations, and the enrolled counts tell each from the model."""
+    row = _rows(report)["HindmarshRoseNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [0, 0, 26, 40, 52]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("x", "+ y"),
+        ("x", "- x ** 3"),
+        ("x", "+ b * x ** 2"),
+        ("x", "- z"),
+        ("x", "+ I"),
+        ("y", "+ 1"),
+        ("y", "- 5 * x ** 2"),
+        ("y", "- y"),
+        ("z", "+ s * (x - x_rest)"),
+        ("z", "- z"),
+        ("z", "+ x"),
+        ("z", "- x_rest"),
+        ("z", "the whole right-hand side"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    # Five signs of the fast subsystem send the state past the finite numbers.
+    assert [index for index, variant in enumerate(variants) if "stopped" in variant] == [
+        0,
+        1,
+        2,
+        6,
+        7,
+    ]
+    without_input = variants[4]
+    assert without_input["case"] == "a current of 3.0 bursts with 26 upward crossings in 2000 steps"
+    assert without_input["observed"] == 0
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -446,11 +486,11 @@ def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, o
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
-    assert "models that state cases: 2 of 185" in summary
-    assert re.search(r"^  discriminated\s+1$", summary, flags=re.M)
+    assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
+    assert re.search(r"^  discriminated\s+2$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 8, of them violated 8, not discriminated 0" in summary
+    assert "variants: 21, of them violated 21, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 
@@ -504,7 +544,7 @@ def test_no_argument_prints_the_summary(
 ) -> None:
     """The bare command prints the summary and writes nothing."""
     assert main([], build=lambda: report) == 0
-    assert "models that state cases: 2 of 185" in capsys.readouterr().out
+    assert f"models that state cases: {MODELS_WITH_CASES} of 185" in capsys.readouterr().out
 
 
 def test_the_script_runs_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:

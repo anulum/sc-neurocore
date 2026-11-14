@@ -111,10 +111,160 @@
           "within": "epsilon * (v + a - b * w)"
         }
       ]
+    },
+    {
+      "model": "HindmarshRoseNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "without a current the model stays silent for 2000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 2.0 still leaves the model silent for 2000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "observed": 26
+        },
+        {
+          "held": true,
+          "name": "a current of 4.0 bursts with 40 upward crossings in 2000 steps",
+          "observed": 40
+        },
+        {
+          "held": true,
+          "name": "a current of 5.0 bursts with 52 upward crossings in 2000 steps",
+          "observed": 52
+        }
+      ],
+      "variants": [
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "x",
+          "expression": "-y - x ** 3 + b * x ** 2 - z + I",
+          "outcome": "violated",
+          "stopped": "EquationOverflowFailure",
+          "term": "+ y",
+          "within": "y - x ** 3 + b * x ** 2 - z + I"
+        },
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "x",
+          "expression": "y + x ** 3 + b * x ** 2 - z + I",
+          "outcome": "violated",
+          "stopped": "EquationOverflowFailure",
+          "term": "- x ** 3",
+          "within": "y - x ** 3 + b * x ** 2 - z + I"
+        },
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "x",
+          "expression": "y - x ** 3 - b * x ** 2 - z + I",
+          "outcome": "violated",
+          "stopped": "EquationOverflowFailure",
+          "term": "+ b * x ** 2",
+          "within": "y - x ** 3 + b * x ** 2 - z + I"
+        },
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "x",
+          "expression": "y - x ** 3 + b * x ** 2 + z + I",
+          "observed": 50,
+          "outcome": "violated",
+          "term": "- z",
+          "within": "y - x ** 3 + b * x ** 2 - z + I"
+        },
+        {
+          "case": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "equation": "x",
+          "expression": "y - x ** 3 + b * x ** 2 - z - I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "y - x ** 3 + b * x ** 2 - z + I"
+        },
+        {
+          "case": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "equation": "y",
+          "expression": "-1 - 5 * x ** 2 - y",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1",
+          "within": "1 - 5 * x ** 2 - y"
+        },
+        {
+          "case": "a current of 2.0 still leaves the model silent for 2000 steps",
+          "equation": "y",
+          "expression": "1 + 5 * x ** 2 - y",
+          "outcome": "violated",
+          "stopped": "EquationOverflowFailure",
+          "term": "- 5 * x ** 2",
+          "within": "1 - 5 * x ** 2 - y"
+        },
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "y",
+          "expression": "1 - 5 * x ** 2 + y",
+          "outcome": "violated",
+          "stopped": "EquationOverflowFailure",
+          "term": "- y",
+          "within": "1 - 5 * x ** 2 - y"
+        },
+        {
+          "case": "a current of 2.0 still leaves the model silent for 2000 steps",
+          "equation": "z",
+          "expression": "r * (-(s * (x - x_rest)) - z)",
+          "observed": 6,
+          "outcome": "violated",
+          "term": "+ s * (x - x_rest)",
+          "within": "s * (x - x_rest) - z"
+        },
+        {
+          "case": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "equation": "z",
+          "expression": "r * (s * (x - x_rest) + z)",
+          "observed": 15,
+          "outcome": "violated",
+          "term": "- z",
+          "within": "s * (x - x_rest) - z"
+        },
+        {
+          "case": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "equation": "z",
+          "expression": "r * (s * (-x - x_rest) - z)",
+          "observed": 20,
+          "outcome": "violated",
+          "term": "+ x",
+          "within": "x - x_rest"
+        },
+        {
+          "case": "without a current the model stays silent for 2000 steps",
+          "equation": "z",
+          "expression": "r * (s * (x + x_rest) - z)",
+          "observed": 3,
+          "outcome": "violated",
+          "term": "- x_rest",
+          "within": "x - x_rest"
+        },
+        {
+          "case": "a current of 3.0 bursts with 26 upward crossings in 2000 steps",
+          "equation": "z",
+          "expression": "-(r * (s * (x - x_rest) - z))",
+          "observed": 36,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "r * (s * (x - x_rest) - z)"
+        }
+      ]
     }
   ],
-  "models_with_cases": 2,
-  "models_without_cases": 183,
+  "models_with_cases": 3,
+  "models_without_cases": 182,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -123,7 +273,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 1,
+    "discriminated": 2,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -132,7 +282,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 8,
-    "violated": 8
+    "total": 21,
+    "violated": 21
   }
 }

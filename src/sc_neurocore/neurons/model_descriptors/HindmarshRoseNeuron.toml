@@ -147,3 +147,68 @@ synthesised = true
 synth_report = "tests/test_cosim_hindmarsh_rose_q1616_precision.py::test_yosys_synthesises_committed_rtl"
 target_tier = "H2"
 terminal_reason = "Q16.16 RK4 co-simulation preserves the enrolled bounded upward-crossing counts, the committed RTL passes Yosys coarse synthesis, and the curated Q8.8 family carries depth-4 reset/output safety. Long-window chaotic identity, timing, PPA, device evidence, and physical silicon remain open."
+
+[[behaviour]]
+name = "without a current the model stays silent for 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 2.0 still leaves the model silent for 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 2.0
+
+[[behaviour]]
+name = "a current of 3.0 bursts with 26 upward crossings in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    26,
+    26,
+]
+
+[behaviour.inputs]
+current = 3.0
+
+[[behaviour]]
+name = "a current of 4.0 bursts with 40 upward crossings in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    40,
+    40,
+]
+
+[behaviour.inputs]
+current = 4.0
+
+[[behaviour]]
+name = "a current of 5.0 bursts with 52 upward crossings in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    52,
+    52,
+]
+
+[behaviour.inputs]
+current = 5.0
