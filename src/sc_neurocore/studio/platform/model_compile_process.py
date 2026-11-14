@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-from sc_neurocore.studio.compile_traceability import build_model_compile_traceability
 from sc_neurocore.studio.model_compile_configuration import (
     resolve_model_compile_configuration,
 )
@@ -36,18 +35,7 @@ def run_model_compile_process_task(
     result: dict[str, object] = {
         "chars": len(verilog),
         "compile_configuration": configuration.to_public_dict(),
-        "compile_traceability": build_model_compile_traceability(
-            model_name=configuration.model_name,
-            schema_name=configuration.schema_name,
-            schema_sha256=configuration.schema_sha256,
-            params=configuration.params,
-            dt=configuration.dt,
-            integrator=configuration.integrator,
-            q_format=configuration.q_format.q_label,
-            module_name=configuration.module_name,
-            verilog=verilog,
-            rng_seed=configuration.rng_seed,
-        ).to_public_dict(),
+        "compile_traceability": configuration.to_traceability(verilog).to_public_dict(),
         "module_name": configuration.module_name,
         "verilog": verilog,
     }

@@ -24,6 +24,10 @@ from sc_neurocore.compiler.hardware_numeric_contract import (
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron, load_schema
 from sc_neurocore.refusals import AuthoredRefusal
+from sc_neurocore.studio.compile_traceability import (
+    StudioCompileTraceability,
+    build_model_compile_traceability,
+)
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_compile_parameters import to_schema_parameters
 from sc_neurocore.studio.model_numeric_contracts import STUDIO_Q_FORMATS
@@ -88,6 +92,35 @@ class ResolvedModelCompileConfiguration:
             module_name=self.module_name,
             data_width=self.q_format.total_bits,
             fraction=self.q_format.fraction_bits,
+        )
+
+    def to_traceability(self, verilog: str) -> StudioCompileTraceability:
+        """Bind this configuration, its seed included, to the RTL compiled from it.
+
+        Every recorder of a model compile builds its traceability here, so the
+        recorded input states each field this configuration states.
+
+        Parameters
+        ----------
+        verilog : str
+            The RTL compiled from this configuration.
+
+        Returns
+        -------
+        StudioCompileTraceability
+            The path-free source-to-RTL record.
+        """
+        return build_model_compile_traceability(
+            model_name=self.model_name,
+            schema_name=self.schema_name,
+            schema_sha256=self.schema_sha256,
+            params=self.params,
+            dt=self.dt,
+            integrator=self.integrator,
+            q_format=self.q_format.q_label,
+            module_name=self.module_name,
+            verilog=verilog,
+            rng_seed=self.rng_seed,
         )
 
 

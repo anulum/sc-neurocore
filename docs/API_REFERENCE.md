@@ -49795,6 +49795,8 @@ Validated schema, compiler options and instantiated universal neuron.
   - Return the path-free configuration attached to Studio evidence.
 - **to_verilog**()
   - Compile the resolved neuron with the exact selected fixed-point geometry.
+- **to_traceability**(verilog)
+  - Bind this configuration, its seed included, to the RTL compiled from it.
 
 ### Function `resolve_model_compile_configuration(payload, *, detail_getter)`
 Validate a model-mode compiler payload and instantiate its canonical schema.

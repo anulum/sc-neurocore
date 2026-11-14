@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 import shutil
 from typing import cast
 
@@ -26,6 +27,8 @@ from sc_neurocore.studio.compile_traceability import (
     build_compile_traceability,
     build_model_compile_traceability,
 )
+from sc_neurocore.studio.model_catalogue import get_model_detail
+from sc_neurocore.studio.model_compile_configuration import resolve_model_compile_configuration
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 
 LIF_COMPILE_REQUEST: dict[str, JsonValue] = {
@@ -126,6 +129,136 @@ def test_build_model_compile_traceability_requires_schema_identity() -> None:
             module_name="sc_lapicque",
             verilog="module sc_lapicque; endmodule\n",
         )
+
+
+def _studio_model_request(model_name: str, seed: int | None) -> dict[str, object]:
+    """Build a model compile request the way the Studio's 'Generate RTL' does.
+
+    Parameters
+    ----------
+    model_name : str
+        A catalogue model with an RTL path.
+    seed : int or None
+        A seed to send in place of the catalogue's; None sends the defaults alone.
+
+    Returns
+    -------
+    dict[str, object]
+        The model's step, default integrator and Q-format, and catalogue defaults.
+    """
+    detail = get_model_detail(model_name)
+    assert detail is not None
+    choices = detail["compile_configuration"]
+    params = {parameter["name"]: parameter["default"] for parameter in detail["params"]}
+    if seed is not None:
+        params["seed"] = float(seed)
+    return {
+        "model_name": model_name,
+        "dt": detail["dt"],
+        "integrator": choices["default_integrator"],
+        "q_format": choices["default_q_format"],
+        "params": params,
+    }
+
+
+def _stated_source_payload(model_name: str, seed: int | None) -> dict[str, JsonValue]:
+    """Return the traceability input the resolved Studio request states, field by field.
+
+    Parameters
+    ----------
+    model_name : str
+        A catalogue model with an RTL path.
+    seed : int or None
+        A seed to send in place of the catalogue's; None sends the defaults alone.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        The configuration's step, integrator, model, format, schema and translated
+        parameters, with its seed when it has one.
+    """
+    configuration = resolve_model_compile_configuration(_studio_model_request(model_name, seed))
+    assert configuration.rng_seed == seed
+    stated = configuration.to_public_dict()
+    payload: dict[str, JsonValue] = {
+        key: cast(JsonValue, stated[key])
+        for key in ("dt", "integrator", "model_name", "q_format", "schema_name", "schema_sha256")
+    }
+    payload["params"] = cast(dict[str, JsonValue], dict(configuration.params))
+    if seed is not None:
+        payload["rng_seed"] = seed
+    return payload
+
+
+#: Two seeded models with a seed other than the catalogue's, and a deterministic one.
+SEEDED_AND_DETERMINISTIC = [
+    ("EscapeRateNeuron", 1234),
+    ("PoissonNeuron", 977),
+    ("LapicqueNeuron", None),
+]
+
+
+@pytest.mark.parametrize(("model_name", "seed"), SEEDED_AND_DETERMINISTIC)
+def test_a_resolved_model_compile_states_its_configuration_in_its_traceability(
+    model_name: str, seed: int | None
+) -> None:
+    """The traceability a resolved compile builds states its configuration, seed included.
+
+    The model compile worker and the hardware path both record this traceability,
+    so neither can leave out a field the configuration states. A seeded model's
+    request carries its seed; a deterministic model's input has none.
+
+    Parameters
+    ----------
+    model_name : str
+        A catalogue model with an RTL path.
+    seed : int or None
+        The seed sent with a seeded model; None for a deterministic one.
+    """
+    configuration = resolve_model_compile_configuration(_studio_model_request(model_name, seed))
+    verilog = configuration.to_verilog()
+
+    traceability = configuration.to_traceability(verilog).to_public_dict()
+
+    assert traceability["source"] == "model"
+    assert traceability["source_payload"] == _stated_source_payload(model_name, seed)
+    output = cast(dict[str, JsonValue], traceability["output"])
+    assert output["module_name"] == configuration.module_name
+    assert output["rtl_sha256"] == hashlib.sha256(verilog.encode("utf-8")).hexdigest()
+
+
+@pytest.mark.parametrize(("model_name", "seed"), SEEDED_AND_DETERMINISTIC)
+def test_the_model_compile_route_binds_its_traceability_to_its_request_and_rtl(
+    tmp_path: Path, model_name: str, seed: int | None
+) -> None:
+    """The compile worker's traceability states the request it resolved and the RTL it returns.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Test-owned jobs and audit location.
+    model_name : str
+        A catalogue model with an RTL path.
+    seed : int or None
+        The seed sent with a seeded model; None for a deterministic one.
+    """
+    settings = StudioRuntimeSettings(
+        job_root_path=str(tmp_path / "jobs"), audit_log_path=str(tmp_path / "audit.jsonl")
+    )
+    with TestClient(create_app(settings), base_url="http://127.0.0.1") as studio:
+        response = studio.post(
+            "/api/models/compile",
+            json=_studio_model_request(model_name, seed),
+            headers={"Origin": "http://127.0.0.1:5173"},
+        )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    traceability = cast(dict[str, JsonValue], payload["compile_traceability"])
+    assert traceability["source_payload"] == _stated_source_payload(model_name, seed)
+    assert payload["compile_configuration"]["rng_seed"] == seed
+    output = cast(dict[str, JsonValue], traceability["output"])
+    assert output["module_name"] == payload["module_name"]
+    assert output["rtl_sha256"] == hashlib.sha256(payload["verilog"].encode("utf-8")).hexdigest()
 
 
 def test_compile_traceability_rejects_unknown_evidence_classification() -> None:

@@ -18,9 +18,8 @@ this order, and writes every artefact into one output directory:
    or its tool is not installed, the path records that it was not run and why.
 2. **Configuration and RTL.**
    :func:`~sc_neurocore.studio.model_compile_configuration.resolve_model_compile_configuration`
-   resolves the schema, and its RTL is written with the
-   :func:`~sc_neurocore.studio.compile_traceability.build_model_compile_traceability`
-   record.
+   resolves the schema, and its RTL is written with the traceability record
+   the resolved configuration's ``to_traceability`` builds.
 3. **Co-simulation.** :func:`~sc_neurocore.studio.model_cosim.run_model_cosim`
    compares the RTL with the generated bit-true C kernel. A report that is not
    bit-exact is written and the path stops: RTL that disagrees with its
@@ -59,7 +58,6 @@ from pathlib import Path
 from typing import Any
 
 from sc_neurocore.compiler.guarantee_summary import GUARANTEE_CLASSES
-from sc_neurocore.studio.compile_traceability import build_model_compile_traceability
 from sc_neurocore.studio.model_capabilities import FORMAL_INVENTORY, model_capabilities
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_compile_configuration import (
@@ -429,18 +427,7 @@ def _run_stages(
     verilog = configuration.to_verilog()
     rtl_relative = f"rtl/{configuration.module_name}.v"
     rtl_sha256 = recorder.write(rtl_relative, verilog.encode("utf-8"))
-    traceability = build_model_compile_traceability(
-        model_name=configuration.model_name,
-        schema_name=configuration.schema_name,
-        schema_sha256=configuration.schema_sha256,
-        params=configuration.params,
-        dt=configuration.dt,
-        integrator=configuration.integrator,
-        q_format=configuration.q_format.q_label,
-        module_name=configuration.module_name,
-        verilog=verilog,
-        rng_seed=configuration.rng_seed,
-    ).to_public_dict()
+    traceability = configuration.to_traceability(verilog).to_public_dict()
     recorder.write_json("rtl/compile_traceability.json", traceability)
     recorder.write_json("rtl/configuration.json", configuration.to_public_dict())
     recorder.stage(
