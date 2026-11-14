@@ -56237,6 +56237,11 @@ Returns
 int
     ``0`` after an orderly stop. Startup refusal raises instead.
 
+Notes
+-----
+SIGTERM and SIGINT are unblocked at start, so a mask blocking them, handed
+down by the starting process, cannot keep the service from stopping.
+
 ---
 
 ## Module `studio.platform.storage_snapshot`

@@ -133,6 +133,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     -------
     int
         ``0`` after an orderly stop. Startup refusal raises instead.
+
+    Notes
+    -----
+    SIGTERM and SIGINT are unblocked at start, so a mask blocking them, handed
+    down by the starting process, cannot keep the service from stopping.
     """
     parser = argparse.ArgumentParser(prog="studio-storage-service")
     parser.add_argument("--configuration", required=True)
@@ -146,6 +151,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     signal.signal(signal.SIGTERM, request_stop)
     signal.signal(signal.SIGINT, request_stop)
+    # A process inherits its starter's blocked-signal mask; blocked, the two
+    # handlers above would never run and the service could not stop in order.
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGTERM, signal.SIGINT})
     service.reconcile()
     with service.listener:
         print("ready", flush=True)

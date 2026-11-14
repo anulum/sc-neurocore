@@ -12,6 +12,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Studio's storage service now stops on SIGTERM or SIGINT whatever
+  signal mask the process that starts it hands down. A process inherits
+  its starter's blocked signals; with the two blocked, the service's stop
+  handlers never ran and SIGTERM left it serving. It now unblocks both at
+  start, as the worker launcher service already does.
+
 - The version audit (`tools/version_surface_audit.py`) now also holds the
   release metadata to the project version: `.zenodo.json`, which an archived
   release records, `CITATION.cff` and `conda/meta.yaml`. Before, a release

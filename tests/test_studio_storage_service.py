@@ -12,6 +12,7 @@ The service runs as its own process through its command-line entry over a
 real namespace this test prepares. The test process is not the configured
 API identity, so its connection is the real refusal of a foreign peer; the
 service keeps running. Abandoned work is left by real processes that exit.
+It stops on SIGTERM even when the process that started it blocked the signal.
 """
 
 from __future__ import annotations
@@ -54,6 +55,19 @@ def base() -> Iterator[Path]:
 
 
 def _configuration(base: Path) -> dict[str, object]:
+    """Return a complete service configuration over the test's namespace.
+
+    Parameters
+    ----------
+    base : Path
+        The private namespace from the ``base`` fixture.
+
+    Returns
+    -------
+    dict[str, object]
+        The configuration, with this process's uid as the storage identity and
+        other uids for the API and the workers.
+    """
     return {
         "boundary": {
             "storage_uid": os.getuid(),
@@ -81,6 +95,13 @@ def _configuration(base: Path) -> dict[str, object]:
 
 
 def _dead_identity() -> str:
+    """Return the supervisor identity of a process that has already exited.
+
+    Returns
+    -------
+    str
+        The identity, taken while the process ran and returned after it ended.
+    """
     child = subprocess.Popen([sys.executable, "-c", "pass"])
     identity = supervisor_identity(child.pid)
     child.wait(timeout=30)
@@ -159,6 +180,79 @@ def test_the_service_recovers_reconciles_refuses_strangers_and_stops(base: Path)
     finally:
         service.send_signal(signal.SIGTERM)
         assert service.wait(timeout=30) == 0, service.stderr.read() if service.stderr else ""
+    assert not (base / "endpoint" / "storage.sock").exists()
+
+
+def _blocked_signals(pid: int) -> int:
+    """Return the blocked-signal mask of a process, read from ``/proc``.
+
+    Parameters
+    ----------
+    pid : int
+        The process.
+
+    Returns
+    -------
+    int
+        The ``SigBlk`` bit mask: bit ``n - 1`` is set when signal ``n`` is blocked.
+    """
+    for line in Path(f"/proc/{pid}/status").read_text(encoding="ascii").splitlines():
+        if line.startswith("SigBlk:"):
+            return int(line.split()[1], 16)
+    raise AssertionError(f"no SigBlk line for process {pid}")
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="the signal mask is read from /proc")
+def test_the_service_stops_on_sigterm_although_its_starter_blocked_it(base: Path) -> None:
+    """A mask blocking SIGTERM and SIGINT, handed down at start, does not keep the service running.
+
+    A process inherits the blocked-signal mask of the one that starts it. With
+    the two blocked, the service's handlers would never run, and SIGTERM would
+    leave it serving.
+
+    Parameters
+    ----------
+    base : Path
+        The service's private namespace.
+    """
+    config = base / "service.json"
+    config.write_text(json.dumps(_configuration(base)))
+    handled = {signal.SIGTERM, signal.SIGINT}
+    previous = signal.pthread_sigmask(signal.SIG_BLOCK, handled)
+    try:
+        service = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "sc_neurocore.studio.platform.storage_service",
+                "--configuration",
+                str(config),
+            ],
+            cwd=REPOSITORY,
+            env={**os.environ, "PYTHONPATH": str(REPOSITORY / "src")},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous)
+    try:
+        assert service.stdout is not None
+        assert service.stdout.readline() == b"ready\n"
+        blocked = _blocked_signals(service.pid)
+        service.send_signal(signal.SIGTERM)
+        try:
+            returncode = service.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            returncode = None
+    finally:
+        if service.poll() is None:
+            service.kill()
+            service.wait(timeout=30)
+        for stream in (service.stdout, service.stderr):
+            if stream is not None:
+                stream.close()
+    assert returncode == 0, "the service did not stop on SIGTERM within 10 s and was killed"
+    assert blocked & ((1 << (signal.SIGTERM - 1)) | (1 << (signal.SIGINT - 1))) == 0
     assert not (base / "endpoint" / "storage.sock").exists()
 
 
