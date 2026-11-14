@@ -53,6 +53,7 @@ export default function VerilogPreview() {
       {sourceMode === "model" && (
         <div
           aria-label="Selected model RTL co-simulation"
+          role="group"
           style={{
             alignItems: "center",
             background: "var(--bg-secondary)",
@@ -112,6 +113,9 @@ export default function VerilogPreview() {
         defaultLanguage="systemverilog"
         value={verilogSrc}
         options={{
+          // Named for what it shows; Monaco's default is "Editor content". Monaco
+          // marks its text area readonly, so the name need not say so.
+          ariaLabel: "Generated RTL",
           readOnly: true,
           minimap: { enabled: false },
           fontSize: 12,

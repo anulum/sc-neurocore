@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { shortModelLabels } from "../modelShortName";
 import { useStudioStore } from "../stores/studio";
 import {
@@ -302,6 +302,8 @@ export default function ModelBrowser() {
     // Unique across the whole catalogue, not the filtered list, so a label
     // does not change as the filter narrows the rows around it.
     const labels = useMemo(() => shortModelLabels(models.map((m) => m.name)), [models]);
+    // Prefix of each row's name, state and contract ids, unique to this list.
+    const rowIdBase = useId();
     const modelScan = useModelScanJob();
     const behaviors = modelScan.state.behaviors;
     const scanMetadata = modelScan.state.scanMetadata;
@@ -657,6 +659,8 @@ export default function ModelBrowser() {
                             {ms.map((m) => {
                                 const beh = behaviors[m.name];
                                 const selected = m.name === selectedModelName;
+                                const rowId = `${rowIdBase}-${m.name}`;
+                                const showsState = m.metadata_state !== "available";
                                 return (
                                     <div
                                         key={m.name}
@@ -684,17 +688,24 @@ export default function ModelBrowser() {
                                             type="button"
                                             className="model-row-select"
                                             aria-current={selected ? "true" : undefined}
+                                            aria-labelledby={
+                                                showsState ? `${rowId}-name ${rowId}-state` : `${rowId}-name`
+                                            }
+                                            aria-describedby={`${rowId}-contract`}
                                             style={MODEL_ROW_BUTTON}
                                             title={m.description ? `${m.name}: ${m.description}` : m.name}
                                             onClick={() => { void selectModel(m.name); }}
                                         >
                                             {/* Name and state on one line that ends in an ellipsis:
                                                 a long name ran on under the badges beside it. The
-                                                full name is in the button's title and accessible name. */}
+                                                button is named by the label it shows and the state,
+                                                so speech input matches it, and the contract line
+                                                describes it; the full name is in its title. */}
                                             <span style={MODEL_ROW_NAME}>
-                                            <span style={MODEL_ROW_NAME_TEXT}>{labels.get(m.name) ?? m.name}</span>
-                                            {m.metadata_state !== "available" && (
+                                            <span id={`${rowId}-name`} style={MODEL_ROW_NAME_TEXT}>{labels.get(m.name) ?? m.name}</span>
+                                            {showsState && (
                                                 <span
+                                                    id={`${rowId}-state`}
                                                     data-testid={`model-metadata-state-${m.name}`}
                                                     title={
                                                         m.metadata_error ??
@@ -714,6 +725,7 @@ export default function ModelBrowser() {
                                             )}
                                             </span>
                                             <span
+                                                id={`${rowId}-contract`}
                                                 data-testid={`model-contract-${m.name}`}
                                                 style={{
                                                     display: "block",

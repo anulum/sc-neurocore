@@ -102,14 +102,17 @@ describe("ModelBrowser render timing", () => {
   });
 
   it("draws the same markup whether or not the timeline takes marks", async () => {
+    // A row's name and description ids come from React's useId, which is unique to
+    // each mount; this compares two mounts, so it compares the markup without them.
+    const markup = (): string => container.innerHTML.replace(/_r_[0-9a-z]+_/g, "_r_");
     await show([MODEL]);
-    const marked = container.innerHTML;
+    const marked = markup();
     await act(async () => { root?.unmount(); await Promise.resolve(); });
     root = createRoot(container);
     vi.spyOn(performance, "mark").mockImplementation(() => {
       throw new Error("no timeline");
     });
     await show([MODEL]);
-    expect(container.innerHTML).toBe(marked);
+    expect(markup()).toBe(marked);
   });
 });

@@ -235,7 +235,10 @@ describe("ModelBrowser", () => {
     // Each row is a list item whose name is a real button; the chosen one is current.
     expect(html).toContain("role=\"list\" aria-label=\"IF models\"");
     expect(html).toMatch(/<button type="button" class="model-row-select" aria-current="true"[^>]*>(?:(?!<\/button>).)*LIF/s);
-    expect(html).toMatch(/<button type="button" class="model-row-select" style="[^"]*" title="ThetaNeuron: Theta">/);
+    // A row that is not chosen is not current; its name and description are its own spans.
+    expect(html).toMatch(
+      /<button type="button" class="model-row-select" aria-labelledby="[^"]*ThetaNeuron-name[^"]*" aria-describedby="[^"]*ThetaNeuron-contract" style="[^"]*" title="ThetaNeuron: Theta">/,
+    );
     // The DOI link says which model's source it is, not only "DOI".
     expect(html).toContain("aria-label=\"DOI 10.1000/lif (LIFNeuron source)\"");
     // A link is never nested inside the selecting button.

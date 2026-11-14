@@ -12,6 +12,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Screen readers and speech input now get the Studio's own names. A
+  model in the library is named by the label it shows, such as "AdEx",
+  with its contract line (validation, integrator, terminal tier) as its
+  description; its name used to run the label into that line
+  ("AdExvalidation parity ..."). The RTL panel's co-simulation controls
+  are a named group, and its read-only RTL viewer is named "Generated
+  RTL" instead of the editor's default "Editor content".
+
 - The ODE editor's 'Generate RTL' answers an equation, threshold or reset
   it cannot parse with HTTP 422 and the parser's reason, for example
   "Invalid equation syntax: '-65 = (-v + 1) / 10'" for a garbled reset.
