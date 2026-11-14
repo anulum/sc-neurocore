@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 176
+MODELS_WITHOUT_A_CASE = 175
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -71,6 +71,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
+    "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
     "SCSymmetricQuadraticIFNeuron": [
@@ -840,6 +841,25 @@ def test_the_ibarz_tanaka_map_holds_its_enrolled_and_measured_counts(
     assert [case["steps"] for case in cases] == [4, 30, 1583, 1582]
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False, True, True, True]
+
+
+def test_the_rulkov_map_holds_its_enrolled_and_measured_counts(report: dict[str, object]) -> None:
+    """Three counts its RTL test enrols over 30 steps, and three over 1000 measured with the class.
+
+    The map's Q16.16 test enrols 0, 7 and 10 events in 30 steps at currents 0,
+    0.5 and 1.5. Those leave the slow variable's terms undecided, so 0, 34 and
+    130 events in 1000 steps at the same currents were measured with the public
+    class, which the schema matches.
+    """
+    row = _models(report)["RulkovMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 7, 10, 0, 34, 130]
+    assert [case["inputs"] for case in cases] == [{"current": c} for c in (0.0, 0.5, 1.5) * 2]
+    assert [case["steps"] for case in cases] == [30, 30, 30, 1000, 1000, 1000]
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True, False, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

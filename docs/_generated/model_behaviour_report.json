@@ -1141,10 +1141,107 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the map stays silent for 30 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            7,
+            7
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 7 times in 30 steps",
+          "observable": "spikes",
+          "observed": 7,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            10,
+            10
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.5
+          },
+          "kind": "interval",
+          "name": "a current of 1.5 fires 10 times in 30 steps",
+          "observable": "spikes",
+          "observed": 10,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the map stays silent for 1000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            34,
+            34
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 34 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 34,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            130,
+            130
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.5
+          },
+          "kind": "interval",
+          "name": "a current of 1.5 fires 130 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 130,
+          "steps": 1000
+        }
+      ],
+      "cases_sha256": "8d4be4619f31f2ef864237b7d09406f122850fb64e67b7cb91feb78f90f75b41",
       "model": "RulkovMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -1859,9 +1956,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 9,
+    "held": 10,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 176
+    "no_case": 175
   }
 }

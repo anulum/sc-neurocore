@@ -127,3 +127,81 @@ synth_report = "hdl/reports/yosys_rulkov_map_q1616_2026-08-28.json"
 target_device = "Xilinx 7-series (Yosys synth_xilinx)"
 target_tier = "H2"
 terminal_reason = "Q16.16 short-window co-simulation, Yosys synthesis, and bounded formal safety cover the source map. H2 is terminal because long-window fixed-point trajectory identity is not a valid metric for sensitive map dynamics; timing, PPA, device, board, and silicon evidence remain open."
+
+[[behaviour]]
+name = "without a current the map stays silent for 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.5 fires 7 times in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    7,
+    7,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 1.5 fires 10 times in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    10,
+    10,
+]
+
+[behaviour.inputs]
+current = 1.5
+
+[[behaviour]]
+name = "without a current the map stays silent for 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.5 fires 34 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    34,
+    34,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 1.5 fires 130 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    130,
+    130,
+]
+
+[behaviour.inputs]
+current = 1.5

@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Rulkov map neuron states six behaviour cases: the three event
+  counts its Q16.16 test enrols for the hand model, the schema and the
+  RTL (0, 7 and 10 events in 30 steps at currents 0, 0.5 and 1.5), and
+  three counts over 1000 steps at the same currents measured with its
+  public class, which the schema matches (0, 34 and 130). The enrolled
+  counts alone left the 3 sign variants of its slow equation undecided;
+  with the measured ones each of the 17 variants breaks a case. Ten of
+  the 185 catalogue models now state cases.
+
 - A Go accelerator build puts its library in place as a new file: the
   builder copies it beside its target under a temporary name and renames
   it over the target. The copy wrote into the existing file, so a

@@ -610,6 +610,197 @@
       ]
     },
     {
+      "model": "RulkovMapNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "without a current the map stays silent for 30 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.5 fires 7 times in 30 steps",
+          "observed": 7
+        },
+        {
+          "held": true,
+          "name": "a current of 1.5 fires 10 times in 30 steps",
+          "observed": 10
+        },
+        {
+          "held": true,
+          "name": "without a current the map stays silent for 1000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.5 fires 34 times in 1000 steps",
+          "observed": 34
+        },
+        {
+          "held": true,
+          "name": "a current of 1.5 fires 130 times in 1000 steps",
+          "observed": 130
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "-(alpha / (1.0 - x)) + y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ alpha / (1.0 - x)",
+          "within": "alpha / (1.0 - x) + y + I"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) - y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0",
+          "observed": 15,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "alpha / (1.0 - x) + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y - I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "alpha / (1.0 - x) + y + I"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "x",
+          "expression": "alpha / (-1.0 - x) + y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0",
+          "outcome": "violated",
+          "stopped": "EquationDivisionFailure",
+          "term": "+ 1.0",
+          "within": "1.0 - x"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 + x) + y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0",
+          "outcome": "violated",
+          "stopped": "EquationDivisionFailure",
+          "term": "- x",
+          "within": "1.0 - x"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else alpha + y + I if x < -alpha + y + I else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ alpha",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else alpha + y + I if x < alpha - y + I else -1.0",
+          "observed": 27,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else alpha + y + I if x < alpha + y - I else -1.0",
+          "observed": 6,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else -alpha + y + I if x < alpha + y + I else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ alpha",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else alpha - y + I if x < alpha + y + I else -1.0",
+          "observed": 6,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "alpha / (1.0 - x) + y + I if x <= 0 else alpha + y - I if x < alpha + y + I else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "alpha + y + I"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "x",
+          "expression": "-(alpha / (1.0 - x) + y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0)",
+          "observed": 29,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "alpha / (1.0 - x) + y + I if x <= 0 else alpha + y + I if x < alpha + y + I else -1.0"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "y",
+          "expression": "-y - mu * (x + 1.0) + mu * sigma",
+          "observed": 14,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "y - mu * (x + 1.0) + mu * sigma"
+        },
+        {
+          "case": "a current of 0.5 fires 34 times in 1000 steps",
+          "equation": "y",
+          "expression": "y + mu * (x + 1.0) + mu * sigma",
+          "observed": 26,
+          "outcome": "violated",
+          "term": "- mu * (x + 1.0)",
+          "within": "y - mu * (x + 1.0) + mu * sigma"
+        },
+        {
+          "case": "without a current the map stays silent for 30 steps",
+          "equation": "y",
+          "expression": "y - mu * (x + 1.0) - mu * sigma",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ mu * sigma",
+          "within": "y - mu * (x + 1.0) + mu * sigma"
+        },
+        {
+          "case": "a current of 0.5 fires 34 times in 1000 steps",
+          "equation": "y",
+          "expression": "y - mu * (-x + 1.0) + mu * sigma",
+          "observed": 32,
+          "outcome": "violated",
+          "term": "+ x",
+          "within": "x + 1.0"
+        },
+        {
+          "case": "without a current the map stays silent for 1000 steps",
+          "equation": "y",
+          "expression": "y - mu * (x - 1.0) + mu * sigma",
+          "observed": 51,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "x + 1.0"
+        }
+      ]
+    },
+    {
       "model": "SCFourStateGLIFNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -1166,8 +1357,8 @@
       ]
     }
   ],
-  "models_with_cases": 9,
-  "models_without_cases": 176,
+  "models_with_cases": 10,
+  "models_without_cases": 175,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -1176,7 +1367,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 8,
+    "discriminated": 9,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -1185,7 +1376,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 101,
-    "violated": 101
+    "total": 118,
+    "violated": 118
   }
 }
