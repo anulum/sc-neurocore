@@ -9,6 +9,7 @@
 """Verify the public wheel resource boundary and HDL resource helpers."""
 
 from fnmatch import fnmatchcase
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,100 @@ from zipfile import ZipFile
 import pytest
 
 from tests.public_api_support import _package_root, _project_metadata
+
+# Installed dataset, conversion and adaptive-threshold adapters own these
+# runtime resources. Other neuron/research native trees stay source-only.
+RUNTIME_ASSETS = (
+    "accel/julia/datasets/*.jl",
+    "accel/julia/conversion/*.jl",
+    "accel/julia/neurons/adaptive_threshold_if.jl",
+    "accel/go/go.mod",
+    "accel/go/adaptive_threshold_if/*.go",
+    "accel/go/adaptive_threshold_if/abi.h",
+    "accel/go/conversion/*.go",
+    "accel/go/conversion/cshared/*.go",
+    "accel/go/conversion/cshared/abi.h",
+    "accel/go/conversion/qcfscshared/*.go",
+    "accel/mojo/kernels/ann_to_snn*.mojo",
+    "accel/mojo/kernels/qcfs.mojo",
+    "accel/mojo/kernels/adaptive_threshold_if.mojo",
+    "accel/mojo/adaptive_threshold_if/*.mojo",
+)
+REQUIRED_NATIVE_ASSETS = {
+    "accel/julia/datasets/shd_cli.jl",
+    "accel/julia/conversion/ann_to_snn_native.jl",
+    "accel/julia/neurons/adaptive_threshold_if.jl",
+    "accel/go/go.mod",
+    "accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
+    "accel/go/conversion/cshared/main.go",
+    "accel/go/conversion/qcfscshared/main.go",
+    "accel/mojo/kernels/ann_to_snn_native.mojo",
+    "accel/mojo/kernels/qcfs.mojo",
+    "accel/mojo/kernels/adaptive_threshold_if.mojo",
+    "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
+}
+
+
+def _tree_state(root: Path) -> dict[str, tuple[bool, int, int]]:
+    """Map every path under ``root`` to whether it is a folder, its size and its modification time."""
+    state = {}
+    for path in root.rglob("*"):
+        info = path.lstat()
+        state[path.relative_to(root).as_posix()] = (path.is_dir(), info.st_size, info.st_mtime_ns)
+    return state
+
+
+def _config_value(path: Path) -> str:
+    """Write ``path`` as a config value; setuptools' parser reads ``%`` as interpolation."""
+    return str(path).replace("%", "%%")
+
+
+def _outside_build_config(work: Path) -> Path:
+    """Write a setuptools config that keeps the build and egg-info folders under ``work``.
+
+    In place, setuptools reuses ``build/lib`` and copies into the wheel every
+    file a former build left there, even one no longer in the sources; it also
+    reads an existing ``SOURCES.txt``. Folders of their own under ``work`` give
+    the build a clean start, as on a fresh checkout, and leave the project
+    untouched.
+    """
+    egg_base = work / "egg-info"
+    egg_base.mkdir()
+    config = work / "build_outside_the_project.cfg"
+    config.write_text(
+        f"[build]\nbuild_base = {_config_value(work / 'build')}\n\n"
+        f"[egg_info]\negg_base = {_config_value(egg_base)}\n",
+        encoding="utf-8",
+    )
+    return config
+
+
+def _build_wheel(project: Path, work: Path) -> Path:
+    """Build ``project``'s wheel in the empty folder ``work`` and return its one wheel file."""
+    wheel_dir = work / "wheel"
+    wheel_dir.mkdir()
+    environment = {**os.environ, "DIST_EXTRA_CONFIG": str(_outside_build_config(work))}
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--no-build-isolation",
+            "--wheel-dir",
+            str(wheel_dir),
+            str(project),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=120,
+        env=environment,
+    )
+    wheels = list(wheel_dir.glob("*.whl"))
+    assert len(wheels) == 1
+    return wheels[0]
 
 
 def test_hdl_install_profile_packages_source_artefacts() -> None:
@@ -138,57 +233,9 @@ def test_packaged_primitives_match_the_canonical_emitter_dependencies() -> None:
 def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -> None:
     """Build the public wheel and confine native assets to installed runtime dependencies."""
     root = Path(__file__).resolve().parents[1]
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            "--no-deps",
-            "--no-build-isolation",
-            "--wheel-dir",
-            str(tmp_path),
-            str(root),
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=120,
-    )
-    wheels = list(tmp_path.glob("sc_neurocore-*.whl"))
-    assert len(wheels) == 1
-    # Installed dataset, conversion and adaptive-threshold adapters own these
-    # runtime resources. Other neuron/research native trees stay source-only.
-    runtime_assets = (
-        "accel/julia/datasets/*.jl",
-        "accel/julia/conversion/*.jl",
-        "accel/julia/neurons/adaptive_threshold_if.jl",
-        "accel/go/go.mod",
-        "accel/go/adaptive_threshold_if/*.go",
-        "accel/go/adaptive_threshold_if/abi.h",
-        "accel/go/conversion/*.go",
-        "accel/go/conversion/cshared/*.go",
-        "accel/go/conversion/cshared/abi.h",
-        "accel/go/conversion/qcfscshared/*.go",
-        "accel/mojo/kernels/ann_to_snn*.mojo",
-        "accel/mojo/kernels/qcfs.mojo",
-        "accel/mojo/kernels/adaptive_threshold_if.mojo",
-        "accel/mojo/adaptive_threshold_if/*.mojo",
-    )
-    required = {
-        "accel/julia/datasets/shd_cli.jl",
-        "accel/julia/conversion/ann_to_snn_native.jl",
-        "accel/julia/neurons/adaptive_threshold_if.jl",
-        "accel/go/go.mod",
-        "accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
-        "accel/go/conversion/cshared/main.go",
-        "accel/go/conversion/qcfscshared/main.go",
-        "accel/mojo/kernels/ann_to_snn_native.mojo",
-        "accel/mojo/kernels/qcfs.mojo",
-        "accel/mojo/kernels/adaptive_threshold_if.mojo",
-        "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
-    }
-    with ZipFile(wheels[0]) as wheel:
+    built = _build_wheel(root, tmp_path)
+    assert built.name.startswith("sc_neurocore-")
+    with ZipFile(built) as wheel:
         from sc_neurocore.hdl.resources import list_baseline_primitive_rtl
 
         for name in list_baseline_primitive_rtl():
@@ -204,10 +251,39 @@ def test_base_wheel_does_not_package_polyglot_research_sources(tmp_path: Path) -
             )
             and not name.endswith(".py")
         }
-        assert required <= native
+        assert REQUIRED_NATIVE_ASSETS.issubset(native)
         for name in native:
-            assert any(fnmatchcase(name, pattern) for pattern in runtime_assets), name
+            assert any(fnmatchcase(name, pattern) for pattern in RUNTIME_ASSETS), name
             assert (
                 wheel.read("sc_neurocore/" + name)
                 == (root / "src/sc_neurocore" / name).read_bytes()
             )
+
+
+def test_wheel_build_leaves_the_project_and_its_stale_build_folder_alone(tmp_path: Path) -> None:
+    """A file left in the project's ``build/lib`` stays out of the wheel, and the build writes nothing there."""
+    project = tmp_path / "project"
+    package = project / "src" / "stale_probe"
+    package.mkdir(parents=True)
+    (project / "pyproject.toml").write_text(
+        '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"\n\n'
+        '[project]\nname = "stale-probe"\nversion = "0"\n\n'
+        '[tool.setuptools.package-data]\nstale_probe = ["*.txt"]\n',
+        encoding="utf-8",
+    )
+    (package / "__init__.py").write_text('"""A package for the build probe."""\n', encoding="utf-8")
+    (package / "kept.txt").write_text("in the sources\n", encoding="utf-8")
+    stale = project / "build" / "lib" / "stale_probe" / "removed.txt"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("removed from the sources, left by an earlier build\n", encoding="utf-8")
+    before = _tree_state(project)
+    # A space and a percent sign: the config must carry any folder name.
+    work = tmp_path / "work at 100%"
+    work.mkdir()
+
+    with ZipFile(_build_wheel(project, work)) as wheel:
+        names = set(wheel.namelist())
+
+    assert "stale_probe/kept.txt" in names
+    assert "stale_probe/removed.txt" not in names
+    assert _tree_state(project) == before
