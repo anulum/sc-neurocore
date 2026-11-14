@@ -206,12 +206,14 @@ class GenerationSupervisor:
         except StartRefused as refused:
             return refused.outcome, refused.error, None
         except WorkerExitedBeforeGrant as gone:
+            when = (
+                "after requesting its grant, before it was given"
+                if gone.requested
+                else "before requesting its grant"
+            )
             return (
                 "failed",
-                authored_job_error(
-                    f"Studio process worker exited with {gone.exit_status} "
-                    "before requesting its grant."
-                ),
+                authored_job_error(f"Studio process worker exited with {gone.exit_status} {when}."),
                 gone.exit_status,
             )
         except (OSError, ValueError) as exc:

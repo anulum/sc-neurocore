@@ -118,8 +118,56 @@ def test_a_worker_reported_gone_ends_the_wait_with_its_status(
             poll_seconds=0.05,
         )
     assert gone.value.exit_status == 2
+    assert gone.value.requested is False
     assert str(gone.value) == "launched worker exited with 2 before requesting its grant"
     assert len(polls) == 2
+    assert not (path / NAME).exists()
+
+
+def test_a_worker_that_asked_then_ended_within_one_poll_is_not_reported_as_never_asking(
+    grant_dir: tuple[int, Path],
+) -> None:
+    """A connection waiting in the backlog when the launcher reports the worker gone was a request.
+
+    The worker connected after the last poll's wait and ended before the next
+    question to its launcher; the endpoint says it ended after asking, not
+    before.
+
+    Parameters
+    ----------
+    grant_dir : tuple[int, Path]
+        The held directory and its path.
+    """
+    descriptor, path = grant_dir
+    endpoint = WorkerGrantEndpoint(descriptor, path, NAME)
+    endpoint.open()
+    late = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    polls: list[float] = []
+
+    def exited() -> int | None:
+        """Connect as the worker does, then report it gone, both within this poll."""
+        polls.append(time.monotonic())
+        if len(polls) == 1:
+            late.connect(str(path / NAME))
+            return 2
+        return None
+
+    try:
+        with pytest.raises(WorkerExitedBeforeGrant) as gone:
+            endpoint.grant(
+                ExpectedWorker(uid=os.getuid(), pid=1, start_token="1"),
+                deadline=time.monotonic() + 30.0,
+                max_refusals=1,
+                register=lambda identity: None,
+                exited=exited,
+                poll_seconds=0.05,
+            )
+    finally:
+        late.close()
+    assert gone.value.exit_status == 2
+    assert gone.value.requested is True
+    assert str(gone.value) == "launched worker exited with 2 after requesting its grant"
+    assert len(polls) == 1
     assert not (path / NAME).exists()
 
 

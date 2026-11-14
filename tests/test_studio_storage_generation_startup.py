@@ -34,7 +34,10 @@ from sc_neurocore.studio.platform.storage_generation_supervisor import (
     supervise_generation,
 )
 from sc_neurocore.studio.platform.storage_launcher_protocol import LauncherResponse
-from sc_neurocore.studio.platform.storage_worker_grant import WorkerGrantEndpoint
+from sc_neurocore.studio.platform.storage_worker_grant import (
+    WorkerExitedBeforeGrant,
+    WorkerGrantEndpoint,
+)
 from tests.studio_storage_generation_support import Authority, LauncherRelay
 from tests.studio_storage_launcher_support import (
     Launcher,
@@ -106,6 +109,45 @@ def test_a_worker_that_exits_before_asking_for_its_grant_is_reported_as_such(
     assert (record.status, record.error, record.public_error) == ("failed", expected, expected)
     assert record.to_public_dict()["error"] == record.public_error
     assert (record.started_at_utc, workers(ledger), reservations(ledger)) == (None, 0, [])
+
+
+def test_a_worker_that_asked_then_ended_is_reported_as_having_asked(
+    base: Path,
+    launcher: Launcher,
+    ledger: StudioJobLedger,
+    authority: Authority,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A worker that connected for its grant and ended before it was given is told apart.
+
+    Parameters
+    ----------
+    base : Path
+        The test's namespace.
+    launcher : Launcher
+        The real launcher service.
+    ledger : StudioJobLedger
+        The real ledger.
+    authority : Authority
+        The real storage authority handlers.
+    monkeypatch : pytest.MonkeyPatch
+        Makes the grant end as the endpoint ends it for a connection left in the backlog.
+    """
+
+    def asked_then_ended(self: object, *args: object, **kwargs: object) -> str:
+        """End the grant as a worker that connected and then exited with 3 ends it."""
+        raise WorkerExitedBeforeGrant(3, requested=True)
+
+    monkeypatch.setattr(WorkerGrantEndpoint, "grant", asked_then_ended)
+    admit(ledger, supervisor=supervisor_identity())
+    runtime = api_runtime(base, authority)
+    sealed(supervise_generation(runtime, analysis_job(SIMULATE), cancel=threading.Event()))
+    record = ledger.record(JOB)
+    expected = (
+        "Studio process worker exited with 3 after requesting its grant, before it was given."
+    )
+    assert (record.status, record.error, record.public_error) == ("failed", expected, expected)
+    assert reservations(ledger) == []
 
 
 def test_a_worker_whose_exit_is_not_reported_is_waited_for_until_the_grant_deadline(

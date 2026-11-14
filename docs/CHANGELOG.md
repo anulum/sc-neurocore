@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A Studio worker that connects for its grant and exits before the grant is
+  given is now reported as such: "exited with N after requesting its grant,
+  before it was given". Within one poll of the launcher's report, such a
+  worker was reported as never having asked.
+
 - The Wilson cortical neuron states five behaviour cases, the counts its
   Q16.16 parity test enrols for the hand model, the schema and the RTL:
   silent without a current, then 44, 46, 49 and 52 upward crossings in

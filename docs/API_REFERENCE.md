@@ -56841,15 +56841,18 @@ The grant endpoint's path does not fit a Unix socket address; the text names its
 
 
 ### Class `WorkerExitedBeforeGrant`
-The launched worker ended before it connected for its grant.
+The launched worker ended before it was granted.
 
 Attributes
 ----------
 exit_status : int
     The worker's exit status, as its launcher observed it.
+requested : bool
+    Whether it had connected for its grant first: its connection was
+    waiting, not yet accepted, when its launcher reported it gone.
 
-- **__init__**(exit_status)
-  - Retain the observed exit status and state it in the message.
+- **__init__**(exit_status, \*, requested)
+  - Retain the observed exit status and whether it had asked, and state both.
 
 ### Class `ExpectedWorker`
 Worker process generation reported by the trusted launcher.

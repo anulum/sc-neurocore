@@ -48,18 +48,23 @@ class GrantEndpointPathTooLong(AuthoredRefusal):
 
 
 class WorkerExitedBeforeGrant(Exception):
-    """The launched worker ended before it connected for its grant.
+    """The launched worker ended before it was granted.
 
     Attributes
     ----------
     exit_status : int
         The worker's exit status, as its launcher observed it.
+    requested : bool
+        Whether it had connected for its grant first: its connection was
+        waiting, not yet accepted, when its launcher reported it gone.
     """
 
-    def __init__(self, exit_status: int) -> None:
-        """Retain the observed exit status and state it in the message."""
-        super().__init__(f"launched worker exited with {exit_status} before requesting its grant")
+    def __init__(self, exit_status: int, *, requested: bool = False) -> None:
+        """Retain the observed exit status and whether it had asked, and state both."""
+        when = "after" if requested else "before"
+        super().__init__(f"launched worker exited with {exit_status} {when} requesting its grant")
         self.exit_status = exit_status
+        self.requested = requested
 
 
 @dataclass(frozen=True, slots=True)
@@ -295,7 +300,11 @@ class WorkerGrantEndpoint:
                     # will connect, so its launcher's word ends the wait.
                     status = None if exited is None else exited()
                     if status is not None:
-                        raise WorkerExitedBeforeGrant(status)
+                        # A worker that connected and ended within this poll left
+                        # its connection in the backlog: it did ask, and is not
+                        # reported as never having asked.
+                        pending = bool(select.select([listener], [], [], 0)[0])
+                        raise WorkerExitedBeforeGrant(status, requested=pending)
                     continue
                 channel, _ = listener.accept()
                 with channel:
