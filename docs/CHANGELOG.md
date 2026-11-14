@@ -12,6 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The SC resetting Wilson neuron states three behaviour cases, the event
+  counts its Q16.16 test enrols for the hand model, the schema and the
+  RTL: silent without a current, then 1 and 4 events in 5000 steps at
+  currents 2 and 10. Its public class holds them, and each of the 14 sign
+  variants of its two equations breaks one. Six of the 185 catalogue
+  models now state cases.
+
 - The symmetric SC quadratic integrate-and-fire neuron states eight
   behaviour cases, the event counts its Q16.16 test enrols for the hand
   model, the schemas and the RTL: silent without a current, then 2, 3, 6,

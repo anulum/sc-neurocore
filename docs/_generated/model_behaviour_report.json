@@ -1149,10 +1149,59 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "without a current the model stays silent for 5000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 fires once in 5000 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 5000
+        },
+        {
+          "bounds": [
+            4,
+            4
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 10.0
+          },
+          "kind": "interval",
+          "name": "a current of 10.0 fires 4 times in 5000 steps",
+          "observable": "spikes",
+          "observed": 4,
+          "steps": 5000
+        }
+      ],
+      "cases_sha256": "e3e5338be4f00d88544f9be33dfba724e09199bbe1ea68fb1e56d9a580590a04",
       "model": "SCResettingWilsonHRNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -1631,9 +1680,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 5,
+    "held": 6,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 180
+    "no_case": 179
   }
 }

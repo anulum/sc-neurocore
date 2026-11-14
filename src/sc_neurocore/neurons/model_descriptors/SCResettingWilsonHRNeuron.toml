@@ -113,3 +113,42 @@ synthesised = true
 synth_report = "tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py::test_yosys_synthesises_committed_rtl"
 target_tier = "H2"
 terminal_reason = "Q16.16 three-way spike-count co-simulation, Yosys coarse synthesis, and bounded Q8.8 formal safety cover the retained project recurrence; timing, PPA, device evidence, and universal real-number equivalence remain open."
+
+[[behaviour]]
+name = "without a current the model stays silent for 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 2.0 fires once in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 2.0
+
+[[behaviour]]
+name = "a current of 10.0 fires 4 times in 5000 steps"
+kind = "interval"
+steps = 5000
+observable = "spikes"
+bounds = [
+    4,
+    4,
+]
+
+[behaviour.inputs]
+current = 10.0

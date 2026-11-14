@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 180
+MODELS_WITHOUT_A_CASE = 179
 
 
 class _Integrator:
@@ -692,6 +692,27 @@ def test_the_symmetric_quadratic_if_model_holds_its_enrolled_counts(
     assert {case["steps"] for case in cases} == {1000}
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False] + [True] * 7
+
+
+def test_the_resetting_wilson_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:
+    """Silent without a current, then 1 and 4 events in 5000 steps at currents 2 and 10.
+
+    The counts are those the model's Q16.16 test enrols for the hand model, the
+    schema and the RTL alike.
+    """
+    row = _models(report)["SCResettingWilsonHRNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 1, 4]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": 2.0},
+        {"current": 10.0},
+    ]
+    assert {case["steps"] for case in cases} == {5000}
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
