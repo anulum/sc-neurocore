@@ -93,9 +93,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Build a Go c-shared library in a temporary folder and copy only the library
+          # beside its source: cgo also writes a C header beside its output, and the
+          # tracked header beside the source is a committed ABI that tests pin byte for byte.
+          go_cshared() {
+            local dir="$1" lib="$2" out
+            shift 2
+            out="$(mktemp -d)"
+            ( cd "$dir" && go build -buildmode=c-shared -o "$out/$lib" "$@" )
+            cp "$out/$lib" "$dir/$lib"
+            rm -rf "$out"
+          }
           for model in rk4_neurons wilson_cowan; do
-            ( cd "src/sc_neurocore/accel/go/${model}" \
-                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+            go_cshared "src/sc_neurocore/accel/go/${model}" "lib${model}.so" "${model}.go"
             ( cd "src/sc_neurocore/accel/mojo/${model}" \
                 && mojo build --emit shared-lib --target-cpu x86-64-v3 \
                   -o "lib${model}.so" "${model}.mojo" )

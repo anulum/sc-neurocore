@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1973
+expected_file_count = 1977
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7934,6 +7934,22 @@ rationale = "Notebook 27 runs from its first code cell to its last, and its RTL 
 [[file]]
 path = "tests/test_studio_compiler_router_functions.py"
 rationale = "The compiler routes stay in functions of at most 50 lines and keep their paths, order and endpoint names."
+
+[[file]]
+path = "tools/build_accel_backends.py"
+rationale = "Build the Go and Mojo accelerator libraries beside their sources, a Go library out of tree so the committed cgo header there is compared and never overwritten."
+
+[[file]]
+path = "tests/test_tools/test_build_accel_backends_commands_and_build.py"
+rationale = "A Go build writes only its library beside its source; a header cgo writes differently from the tracked one is reported and the tracked one is left as committed."
+
+[[file]]
+path = "tests/test_tools/test_build_accel_backends_main_cli.py"
+rationale = "The builder's command line counts what was built, fails on a required backend, and names every cgo header that differs from the tracked one."
+
+[[file]]
+path = "tests/test_tools/test_ci_go_cache_contract.py"
+rationale = "The CI workflow caches the Go modules, builds the required backends, and builds every Go library out of the source tree."
 
 [[file]]
 path = "tests/test_adaptive_threshold_if_native_abi.py"

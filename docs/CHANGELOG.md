@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Go accelerator builds no longer write over the committed C headers.
+  `go build -buildmode=c-shared` writes a header beside its output, and
+  the builds wrote their output beside the source, where the tracked
+  header is a committed ABI: five loading tests compare a fresh build's
+  header with it byte for byte, and three headers are written by hand.
+  `tools/build_accel_backends.py` and the CI and audit workflows now
+  build into a temporary folder and copy only the library. The builder
+  compares cgo's header with the tracked one and names any that differ,
+  without writing them; in CI the pins are therefore compared with the
+  committed headers rather than with a header the same run just wrote.
+
 - The SC four-state GLIF neuron states six behaviour cases, the event
   counts its Q16.16 test enrols for the hand model, the schema and the
   RTL: silent at rest and at a current of 15, then 23, 54, 86 and 95

@@ -7,7 +7,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — compiled Go/Mojo accelerator backend builder
 
-"""Build the compiled Go and Mojo accelerator shared libraries.
+r"""Build the compiled Go and Mojo accelerator shared libraries.
 
 Each neuron backend is loaded through a ``ctypes`` loader that opens a
 ``lib<name>.so`` sitting **beside its own source file** (the Go source under
@@ -21,6 +21,11 @@ The shared libraries are gitignored build artefacts, so CI must run this before
 the backend/benchmark tests, otherwise every compiled-backend test fails with
 ``RuntimeError: lib<name>.so is not built``.
 
+A Go library is built into a temporary folder and only the ``.so`` is copied
+beside its source: cgo also writes a C header beside its output, and the
+header beside the source is the committed ABI that tests pin byte for byte.
+A header cgo writes differently is reported in the summary, never written.
+
 On a failed build, print the complete compiler output so the first error is
 available in the CI log even when many later warnings follow it. Required
 backend failures still exit non-zero.
@@ -29,7 +34,7 @@ Usage::
 
     python tools/build_accel_backends.py --language all
     python tools/build_accel_backends.py --language go --require theta,adex
-    python tools/build_accel_backends.py --language mojo \\
+    python tools/build_accel_backends.py --language mojo \
         --mojo-command "pixi run --manifest-path src/sc_neurocore/accel/mojo/pixi.toml mojo"
 """
 
@@ -40,8 +45,10 @@ import ast
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,6 +84,7 @@ class BuildResult:
     target: BackendTarget
     ok: bool
     detail: str
+    header_differs: bool = False  # cgo wrote a header unlike the one beside the source
 
 
 def _read_text(paths: Iterable[Path]) -> str:
@@ -299,17 +307,21 @@ def _required_name(target_name: str) -> str:
     return _REQUIRED_NAME_ALIASES.get(target_name, target_name)
 
 
-def _go_command(target: BackendTarget) -> list[str]:
-    # Package mode ("." rather than the single source file) is the reproducible
-    # build the loaders document: it compiles every non-test file in the
-    # backend directory and emits the exact committed C header, so a
-    # multi-file backend links and the generated header stays byte-stable.
+def _go_command(output: Path) -> list[str]:
+    """Return the package-mode c-shared build of the working folder, writing to ``output``.
+
+    Package mode ("." rather than the single source file) is the reproducible
+    build the loaders document: it compiles every non-test file in the backend
+    directory, so a multi-file backend links. cgo writes its C header beside
+    ``output``, which is a temporary folder, so the committed header beside the
+    source is never overwritten.
+    """
     return [
         "go",
         "build",
         "-buildmode=c-shared",
         "-o",
-        target.output.name,
+        str(output),
         ".",
     ]
 
@@ -342,30 +354,62 @@ def build_target(
     runner: Callable[[list[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> BuildResult:
     """Build one target; retain both compiler streams if it fails."""
-    if target.language == "go":
-        cmd = _go_command(target)
-        env_note = "CGO_ENABLED=1"
-    else:
-        cmd = _mojo_command(target, mojo_command)
-        env_note = ""
     run = runner if runner is not None else _default_runner
+    if target.language == "go":
+        return _build_go(target, run)
+    failed = _run_build(run, _mojo_command(target, mojo_command), target)
+    if failed is not None:
+        return failed
+    if not target.output.is_file():
+        return BuildResult(target, False, "build reported success but no library produced")
+    return BuildResult(target, True, "ok")
+
+
+def _run_build(
+    run: Callable[[list[str], Path], subprocess.CompletedProcess[str]],
+    cmd: list[str],
+    target: BackendTarget,
+) -> BuildResult | None:
+    """Run one build in the source's folder; return the failure, or ``None`` on exit 0."""
     try:
         completed = run(cmd, target.source.parent)
     except FileNotFoundError as exc:
         return BuildResult(target, False, f"toolchain missing: {exc}")
-    if completed.returncode != 0:
-        streams = [
-            f"{name}:\n{output.rstrip()}"
-            for name, output in (("stdout", completed.stdout), ("stderr", completed.stderr))
-            if output
-        ]
-        detail = f"exit {completed.returncode}; source={target.source}"
-        if streams:
-            detail += "\n" + "\n".join(streams)
-        return BuildResult(target, False, detail)
-    if not target.output.is_file():
-        return BuildResult(target, False, "build reported success but no library produced")
-    return BuildResult(target, True, env_note or "ok")
+    if completed.returncode == 0:
+        return None
+    streams = [
+        f"{name}:\n{output.rstrip()}"
+        for name, output in (("stdout", completed.stdout), ("stderr", completed.stderr))
+        if output
+    ]
+    detail = f"exit {completed.returncode}; source={target.source}"
+    if streams:
+        detail += "\n" + "\n".join(streams)
+    return BuildResult(target, False, detail)
+
+
+def _build_go(
+    target: BackendTarget,
+    run: Callable[[list[str], Path], subprocess.CompletedProcess[str]],
+) -> BuildResult:
+    """Build a Go library in a temporary folder and copy only the ``.so`` beside its source."""
+    with tempfile.TemporaryDirectory(prefix="sc-go-cshared-") as scratch:
+        built = Path(scratch) / target.output.name
+        failed = _run_build(run, _go_command(built), target)
+        if failed is not None:
+            return failed
+        if not built.is_file():
+            return BuildResult(target, False, "build reported success but no library produced")
+        shutil.copyfile(built, target.output)
+        pinned = target.output.with_suffix(".h")
+        written = built.with_suffix(".h")
+        differs = (
+            pinned.is_file() and written.is_file() and written.read_bytes() != pinned.read_bytes()
+        )
+    if differs:
+        note = f"; cgo wrote a header that differs from {pinned.name} (not written)"
+        return BuildResult(target, True, "CGO_ENABLED=1" + note, header_differs=True)
+    return BuildResult(target, True, "CGO_ENABLED=1")
 
 
 def _default_runner(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -427,6 +471,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     built = sum(1 for r in results if r.ok)
     failed = [r for r in results if not r.ok]
     print(f"built {built}/{len(results)} backend libraries; {len(failed)} failed")
+    drifted = sorted(r.target.name for r in results if r.header_differs)
+    if drifted:
+        print(f"cgo headers that differ from the tracked ones (not written): {', '.join(drifted)}")
 
     required_failures = [r for r in failed if _required_name(r.target.name) in required]
     if required_failures:

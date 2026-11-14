@@ -6,25 +6,48 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (main_cli) from former test_build_accel_backends.py
 
+"""The command line of the accelerator backend builder: summaries, required backends, languages."""
+
 from __future__ import annotations
 
 from build_accel_backends_support import *  # noqa: F403
 
 
 def test_main_all_ok(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Every target built gives exit 0 and a summary of the count."""
     monkeypatch.setattr(MOD, "discover_targets", lambda lang, **k: _stub_targets(MOD, ["theta"]))
     monkeypatch.setattr(MOD, "build_target", lambda t, **k: MOD.BuildResult(t, True, "ok"))
     assert MOD.main(["--language", "go"]) == 0
     assert "built 1/1" in capsys.readouterr().out
 
 
+def test_main_names_the_headers_that_differ(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A header that no longer matches is named in the summary; the build still succeeds."""
+    monkeypatch.setattr(
+        MOD, "discover_targets", lambda lang, **k: _stub_targets(MOD, ["theta", "adex"])
+    )
+    monkeypatch.setattr(
+        MOD,
+        "build_target",
+        lambda t, **k: MOD.BuildResult(t, True, "ok", header_differs=t.name == "adex"),
+    )
+    assert MOD.main(["--language", "go"]) == 0
+    assert "cgo headers that differ from the tracked ones (not written): adex" in (
+        capsys.readouterr().out
+    )
+
+
 def test_main_required_failure_returns_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A required backend that fails to build gives exit 1."""
     monkeypatch.setattr(MOD, "discover_targets", lambda lang, **k: _stub_targets(MOD, ["theta"]))
     monkeypatch.setattr(MOD, "build_target", lambda t, **k: MOD.BuildResult(t, False, "exit 1"))
     assert MOD.main(["--language", "go", "--require", "theta"]) == 1
 
 
 def test_main_required_never_discovered_returns_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A required backend that is never discovered gives exit 1."""
     monkeypatch.setattr(MOD, "discover_targets", lambda lang, **k: _stub_targets(MOD, ["theta"]))
     monkeypatch.setattr(MOD, "build_target", lambda t, **k: MOD.BuildResult(t, True, "ok"))
     assert MOD.main(["--language", "go", "--require", "adex"]) == 1
@@ -33,6 +56,7 @@ def test_main_required_never_discovered_returns_one(monkeypatch: pytest.MonkeyPa
 def test_main_accepts_shared_name_for_ermentrout_mojo_target(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The Mojo target of the Ermentrout-Kopell map satisfies the shared required name."""
     monkeypatch.setattr(
         MOD,
         "discover_targets",
@@ -43,6 +67,7 @@ def test_main_accepts_shared_name_for_ermentrout_mojo_target(
 
 
 def test_main_all_languages_and_mojo_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``--language all`` builds Go, then Mojo, with the Mojo command it is given."""
     seen: list[str] = []
 
     def fake_discover(language: str, **kwargs: Any) -> list[Any]:
@@ -56,6 +81,7 @@ def test_main_all_languages_and_mojo_command(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_main_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without arguments beyond the language, nothing discovered is nothing to fail."""
     monkeypatch.setattr(sys, "argv", ["build_accel_backends.py", "--language", "go"])
     monkeypatch.setattr(MOD, "discover_targets", lambda lang, **k: [])
     assert MOD.main() == 0

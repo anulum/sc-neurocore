@@ -60,7 +60,10 @@ def test_ci_builds_the_required_go_and_mojo_libraries() -> None:
     """Keep both strict runtime loaders enrolled in the aggregate CI build."""
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     assert "go/neurons/cazelles_map" in workflow
-    assert "go build -buildmode=c-shared -o libcazelles.so cazelles_map.go" in workflow
+    assert (
+        "go_cshared src/sc_neurocore/accel/go/neurons/cazelles_map libcazelles.so cazelles_map.go"
+        in workflow
+    )
     assert "-o src/sc_neurocore/accel/mojo/neurons/libcazelles.so" in workflow
     assert "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo" in workflow
 
