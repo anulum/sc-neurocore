@@ -41,6 +41,7 @@ from sc_neurocore.studio.platform.storage_worker_grant import (
     ExpectedWorker,
     WorkerGrantEndpoint,
 )
+from tests.studio_storage_launcher_support import UNIX_SOCKET_PATH_LIMIT, short_root
 
 _JOB = "sj_" + "c" * 16
 _GENERATION = "e" * 32
@@ -85,10 +86,31 @@ def _write_descriptor(spool: Spool, content: bytes) -> None:
     path.chmod(0o640)
 
 
+#: The spool root's longest name, as ``mkdtemp(prefix="scs")`` makes it, and the grant
+#: endpoint below it: the one socket of these tests.
+SPOOL_BASE_NAME = "/scs" + "0" * 8
+GRANT_SUFFIX = f"/{_JOB}/{_GENERATION}/{GRANT_ENDPOINT_NAME}"
+
+
+def _spool_folder() -> Path:
+    """Return the folder the spool root is made in, short enough for the grant endpoint.
+
+    Returns
+    -------
+    Path
+        The run's temporary folder or, when that is too long, ``XDG_RUNTIME_DIR``.
+    """
+    return short_root(
+        base_name=SPOOL_BASE_NAME,
+        longest_suffix=GRANT_SUFFIX,
+        purpose="the bootstrap's grant endpoint",
+    )
+
+
 @pytest.fixture
 def spool() -> Iterator[Spool]:
     """Build the API side of one generation spool under a short private root."""
-    root = Path(tempfile.mkdtemp(prefix="scs"))
+    root = Path(tempfile.mkdtemp(prefix="scs", dir=_spool_folder()))
     generation = root / _JOB / _GENERATION
     (generation / "input").mkdir(parents=True)
     (generation / _JOB).mkdir()
@@ -101,6 +123,43 @@ def spool() -> Iterator[Spool]:
         yield built
     finally:
         shutil.rmtree(root)
+
+
+def test_the_spool_grant_endpoint_fits_a_unix_socket_path(spool: Spool) -> None:
+    """The fixture's grant endpoint path is shorter than the Unix limit, whatever TMPDIR is.
+
+    Parameters
+    ----------
+    spool : Spool
+        The generation spool the bootstrap tests use.
+    """
+    endpoint = spool.generation / GRANT_ENDPOINT_NAME
+    assert len(os.fsencode(endpoint)) < UNIX_SOCKET_PATH_LIMIT
+    assert len(spool.root.name) == len(SPOOL_BASE_NAME) - 1
+
+
+def test_no_folder_short_enough_for_the_grant_endpoint_is_named(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Under folders too long for the grant endpoint, the run is told the length that fits.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Points TMPDIR and ``XDG_RUNTIME_DIR`` at a long folder.
+    tmp_path : Path
+        Holds the long folder.
+    """
+    long_folder = tmp_path / ("x" * 90)
+    long_folder.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(long_folder))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(long_folder))
+    room = UNIX_SOCKET_PATH_LIMIT - 1 - len(SPOOL_BASE_NAME) - len(GRANT_SUFFIX)
+    with pytest.raises(
+        AssertionError,
+        match=f"no temporary folder of at most {room} bytes for the bootstrap's grant endpoint",
+    ):
+        _spool_folder()
 
 
 def _read(spool: Spool, *, job_id: str = _JOB, generation: str = _GENERATION) -> None:
