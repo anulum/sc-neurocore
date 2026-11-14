@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 33,
-    "outdated": 94,
+    "current": 34,
+    "outdated": 93,
     "unbound": 191
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 15,
-    "outdated": 71,
+    "current": 16,
+    "outdated": 70,
     "unbound": 1
   },
   "rows": [
@@ -1757,10 +1757,7 @@
       "records": [
         {
           "attribution": "class_name",
-          "changed": [
-            "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "bench_sc_resetting_wilson_hr_simulate.json"
         }
       ],
