@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 177
+MODELS_WITHOUT_A_CASE = 176
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -69,6 +69,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     ],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
+    "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
@@ -811,6 +812,34 @@ def test_the_four_state_glif_model_holds_its_enrolled_counts(report: dict[str, o
     assert {case["steps"] for case in cases} == {1000}
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False, False, True, True, True, True]
+
+
+def test_the_ibarz_tanaka_map_holds_its_enrolled_and_measured_counts(
+    report: dict[str, object],
+) -> None:
+    """Two counts its RTL test enrols, and two measured with the class at robust horizons.
+
+    The map's Q16.16 test enrols no event in 4 steps at a current of -0.5 and 3
+    in 30 at 0.2. Those leave the constant branch's terms and the slow variable's
+    undecided, so 7 events in 1583 steps at -0.5 and 18 in 1582 at 0 were
+    measured with the public class, which the schema matches. At those horizons
+    the count holds under perturbations far below rounding, with the nearest
+    event of any perturbed run 34 and 17 steps away.
+    """
+    row = _models(report)["IbarzTanakaMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 3, 7, 18]
+    assert [case["inputs"] for case in cases] == [
+        {"current": -0.5},
+        {"current": 0.2},
+        {"current": -0.5},
+        {"current": 0.0},
+    ]
+    assert [case["steps"] for case in cases] == [4, 30, 1583, 1582]
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

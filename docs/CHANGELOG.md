@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The Ibarz-Tanaka map neuron states four behaviour cases: the two event
+  counts its Q16.16 test enrols for the hand model, the schema and the
+  RTL (none in 4 steps at a current of -0.5, 3 in 30 steps at 0.2), and
+  two counts measured with its public class, which the schema matches:
+  7 events in 1583 steps at -0.5 and 18 in 1582 steps at 0. Their
+  horizons were chosen where the count holds under perturbations far
+  below rounding, with no event of a perturbed run within 17 steps of
+  the horizon. The enrolled counts alone left 7 of the 26 sign variants
+  of its map undecided; with the measured ones each variant breaks a
+  case. Nine of the 185 catalogue models now state cases.
+
 - The Go accelerator builds no longer write over the committed C headers.
   `go build -buildmode=c-shared` writes a header beside its output, and
   the builds wrote their output beside the source, where the tracked

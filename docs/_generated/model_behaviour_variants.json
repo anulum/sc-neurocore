@@ -263,6 +263,268 @@
       ]
     },
     {
+      "model": "IbarzTanakaMapNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of -0.5 stays silent for 4 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.2 fires 3 times in 30 steps",
+          "observed": 3
+        },
+        {
+          "held": true,
+          "name": "a current of -0.5 fires 7 times in 1583 steps",
+          "observed": 7
+        },
+        {
+          "held": true,
+          "name": "without a current the map fires 18 times in 1582 steps",
+          "observed": 18
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < --1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ -1.0",
+          "within": "-1.0 - alpha / 2.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 + alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- alpha / 2.0",
+          "within": "-1.0 - alpha / 2.0"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "v",
+          "expression": "-(-(alpha * alpha) / 4.0) - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 4,
+          "outcome": "violated",
+          "term": "+ -(alpha * alpha) / 4.0",
+          "within": "-(alpha * alpha) / 4.0 - alpha + I + u"
+        },
+        {
+          "case": "a current of -0.5 stays silent for 4 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 + alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "- alpha",
+          "within": "-(alpha * alpha) / 4.0 - alpha + I + u"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha - I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "-(alpha * alpha) / 4.0 - alpha + I + u"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I - u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ u",
+          "within": "-(alpha * alpha) / 4.0 - alpha + I + u"
+        },
+        {
+          "case": "a current of -0.5 stays silent for 4 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else -(alpha * v) + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ alpha * v",
+          "within": "alpha * v + (v + 1.0) * (v + 1.0) + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v - (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ (v + 1.0) * (v + 1.0)",
+          "within": "alpha * v + (v + 1.0) * (v + 1.0) + I + u"
+        },
+        {
+          "case": "a current of -0.5 stays silent for 4 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) - I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "alpha * v + (v + 1.0) * (v + 1.0) + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I - u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 6,
+          "outcome": "violated",
+          "term": "+ u",
+          "within": "alpha * v + (v + 1.0) * (v + 1.0) + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (-v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 5,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + 1.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v - 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "v + 1.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (-v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 5,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + 1.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v - 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "v + 1.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < -1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 - I + u else -1.0",
+          "observed": 2,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I - u else -1.0",
+          "observed": 24,
+          "outcome": "violated",
+          "term": "+ u",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else -1.0 + I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 - I + u if v < 1.0 + I + u else -1.0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "v",
+          "expression": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I - u if v < 1.0 + I + u else -1.0",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ u",
+          "within": "1.0 + I + u"
+        },
+        {
+          "case": "a current of -0.5 stays silent for 4 steps",
+          "equation": "v",
+          "expression": "-(-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0)",
+          "observed": 3,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "-(alpha * alpha) / 4.0 - alpha + I + u if v < -1.0 - alpha / 2.0 else alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else 1.0 + I + u if v < 1.0 + I + u else -1.0"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "u",
+          "expression": "-u - mu * (v + 1.0 - sigma)",
+          "observed": 4,
+          "outcome": "violated",
+          "term": "+ u",
+          "within": "u - mu * (v + 1.0 - sigma)"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "u",
+          "expression": "u + mu * (v + 1.0 - sigma)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- mu * (v + 1.0 - sigma)",
+          "within": "u - mu * (v + 1.0 - sigma)"
+        },
+        {
+          "case": "a current of 0.2 fires 3 times in 30 steps",
+          "equation": "u",
+          "expression": "u - mu * (-v + 1.0 - sigma)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + 1.0 - sigma"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "u",
+          "expression": "u - mu * (v - 1.0 - sigma)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "v + 1.0 - sigma"
+        },
+        {
+          "case": "a current of -0.5 fires 7 times in 1583 steps",
+          "equation": "u",
+          "expression": "u - mu * (v + 1.0 + sigma)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- sigma",
+          "within": "v + 1.0 - sigma"
+        }
+      ]
+    },
+    {
       "model": "IntegerQIFNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -904,8 +1166,8 @@
       ]
     }
   ],
-  "models_with_cases": 8,
-  "models_without_cases": 177,
+  "models_with_cases": 9,
+  "models_without_cases": 176,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -914,7 +1176,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 7,
+    "discriminated": 8,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -923,7 +1185,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 75,
-    "violated": 75
+    "total": 101,
+    "violated": 101
   }
 }
