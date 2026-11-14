@@ -143,6 +143,17 @@ def test_every_identical_active_region_pair_is_rejected_without_writes(
     left: str,
     right: str,
 ) -> None:
+    """Two output regions at one address are refused with status 1, the arena unwritten.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    left : str
+        One output region.
+    right : str
+        Another output region.
+    """
     offsets = _default_offsets()
     offsets[right] = offsets[left]
     arena, pointers = _arena_pointers(offsets)
@@ -158,6 +169,17 @@ def test_every_multielement_region_rejects_partial_overlap_without_writes(
     left: str,
     right: str,
 ) -> None:
+    """A region overlapping another by one element is refused with status 1, unwritten.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    left : str
+        One output region.
+    right : str
+        Another output region.
+    """
     offsets = _default_offsets()
     if _REGION_LENGTHS[left] > 1:
         offsets[right] = offsets[left] + 1
@@ -171,6 +193,13 @@ def test_every_multielement_region_rejects_partial_overlap_without_writes(
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_adjacent_regions_are_accepted(backend: str) -> None:
+    """Regions that touch without overlapping are accepted and match the Python model.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    """
     offsets = {
         "current": 0,
         "v_trace": 2,
@@ -197,6 +226,15 @@ def test_null_required_pointer_returns_status_one_without_writes(
     backend: str,
     missing_pointer: str,
 ) -> None:
+    """A required pointer passed as null is refused with status 1, and nothing is written.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    missing_pointer : str
+        The required pointer passed as null.
+    """
     buffers = _separate_buffers(np.asarray([22.0, 24.0]))
     pointers = _pointers(buffers)
     pointers[missing_pointer] = 0
@@ -207,6 +245,13 @@ def test_null_required_pointer_returns_status_one_without_writes(
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_negative_step_count_returns_status_one_without_writes(backend: str) -> None:
+    """A negative step count is refused with status 1, and nothing is written.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    """
     buffers = _separate_buffers(np.asarray([22.0, 24.0]))
     before = _output_snapshot(buffers)
     assert _call(_module(backend)._lib, -1, _pointers(buffers)) == 1
@@ -215,6 +260,13 @@ def test_negative_step_count_returns_status_one_without_writes(backend: str) -> 
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_empty_batch_accepts_only_distinct_final_receipts(backend: str) -> None:
+    """With no step, finals take the initial state; two finals at one address are refused.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    """
     v_final = np.full(1, _SENTINEL, dtype=np.float64)
     theta_final = np.full(1, _SENTINEL, dtype=np.float64)
     spike_count = np.full(1, _SENTINEL, dtype=np.float64)
@@ -254,6 +306,22 @@ def test_numerical_statuses_leave_every_output_unchanged(
     configuration: tuple[float, ...],
     drive: npt.NDArray[np.float64],
 ) -> None:
+    """Statuses 2, 3 and 4 leave every output as it was.
+
+    Status 2 is an invalid configuration, 3 a drive that is not finite, and 4 a run
+    that leaves the finite numbers.
+
+    Parameters
+    ----------
+    backend : str
+        The native backend under test, Go or Mojo.
+    status : int
+        The status the call must return.
+    configuration : tuple[float, ...]
+        The model's configuration for the call.
+    drive : numpy.ndarray
+        The input current, one value per step.
+    """
     buffers = _separate_buffers(drive)
     before = _output_snapshot(buffers)
     assert (
@@ -269,9 +337,10 @@ def test_numerical_statuses_leave_every_output_unchanged(
 
 
 def test_go_header_uses_signed_32_bit_count_and_status() -> None:
-    header = (
-        _ROOT / "src/sc_neurocore/accel/go/adaptive_threshold_if/libadaptive_threshold_if.h"
-    ).read_text(encoding="utf-8")
+    """The written C ABI, ``abi.h``, declares a signed 32-bit count and status."""
+    header = (_ROOT / "src/sc_neurocore/accel/go/adaptive_threshold_if/abi.h").read_text(
+        encoding="utf-8"
+    )
     signature = re.search(
         r"extern\s+int32_t\s+adaptive_threshold_if_simulate_c\s*\(\s*int32_t\s+n\b",
         header,
@@ -280,6 +349,15 @@ def test_go_header_uses_signed_32_bit_count_and_status() -> None:
 
 
 def test_mojo_llvm_uses_signed_32_bit_count_and_status(tmp_path: Path, pixi_cli: str) -> None:
+    """The Mojo kernel's LLVM IR takes and returns a signed 32-bit count and status.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Holds the LLVM IR file.
+    pixi_cli : str
+        The pixi command that runs the pinned Mojo.
+    """
     manifest = _ROOT / "src/sc_neurocore/accel/mojo/pixi.toml"
     source = _ROOT / "src/sc_neurocore/accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo"
     llvm_path = tmp_path / "adaptive_threshold_if.ll"
@@ -323,6 +401,7 @@ def _load_builder() -> Any:
 
 
 def test_real_builder_discovers_model41_for_both_native_languages() -> None:
+    """The builder finds the adaptive-threshold IF model for Go and Mojo by its library name."""
     builder = _load_builder()
     for language in _BACKENDS:
         targets = {target.name: target for target in builder.discover_targets(language)}
@@ -331,6 +410,7 @@ def test_real_builder_discovers_model41_for_both_native_languages() -> None:
 
 
 def test_ci_requires_model41_for_both_native_builds() -> None:
+    """The CI workflow requires the adaptive-threshold IF model in both native builds."""
     workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     required_line = next(
         line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")

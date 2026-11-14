@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- The written C ABI headers of three Go adapters, adaptive_threshold_if,
+  alpha and resonate_and_fire, are now named abi.h in their packages, as
+  conversion/cshared's already was. A c-shared build writes cgo's own
+  lib<name>.h beside the library, and so replaced the written ABI with
+  cgo's text on every local build. The wheel ships
+  accel/go/adaptive_threshold_if/abi.h in place of
+  libadaptive_threshold_if.h, and conversion/cshared ships its abi.h
+  only, not whatever header a local build left beside it.
+
 - The integer quadratic integrate-and-fire neuron states one behaviour
   case, the count its RTL test enrols for the source, both RTL forms and
   the schema: 26 events in 400 steps at an integer current of 10. Its

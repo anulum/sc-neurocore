@@ -73,7 +73,7 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
     assert {
         "accel/julia/neurons/adaptive_threshold_if.jl",
         "accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
-        "accel/go/adaptive_threshold_if/libadaptive_threshold_if.h",
+        "accel/go/adaptive_threshold_if/abi.h",
         "accel/mojo/kernels/adaptive_threshold_if.mojo",
         "accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
     } <= set(report["polyglot_runtime_files"])
@@ -411,7 +411,7 @@ def test_audit_cli_refuses_research_and_broadened_runtime_patterns(
         "accel/julia/datasets/*.jl",
         "accel/julia/neurons/adaptive_threshold_if.jl",
         "accel/go/adaptive_threshold_if/*.go",
-        "accel/go/adaptive_threshold_if/*.h",
+        "accel/go/adaptive_threshold_if/abi.h",
         "accel/mojo/kernels/adaptive_threshold_if.mojo",
         "accel/mojo/adaptive_threshold_if/*.mojo",
     ],

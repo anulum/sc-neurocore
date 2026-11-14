@@ -90,6 +90,11 @@ src/sc_neurocore/accel/go/services/*/aer_router
 src/sc_neurocore/accel/go/services/**/services_ext_bench
 src/sc_neurocore/accel/go/services/**/*_bench
 src/sc_neurocore/accel/go/evo_substrate/evo_substrate_bench
+# The header cgo writes beside a c-shared build of these three packages. Their
+# stable C ABI is the written abi.h; cgo's own text is build output there.
+src/sc_neurocore/accel/go/adaptive_threshold_if/libadaptive_threshold_if.h
+src/sc_neurocore/accel/go/alpha/libalpha.h
+src/sc_neurocore/accel/go/resonate_and_fire/libresonate_and_fire.h
 
 # Ad-hoc fix scripts
 auto_fix*.py

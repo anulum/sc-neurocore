@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1970
+expected_file_count = 1973
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7934,3 +7934,15 @@ rationale = "Notebook 27 runs from its first code cell to its last, and its RTL 
 [[file]]
 path = "tests/test_studio_compiler_router_functions.py"
 rationale = "The compiler routes stay in functions of at most 50 lines and keep their paths, order and endpoint names."
+
+[[file]]
+path = "tests/test_adaptive_threshold_if_native_abi.py"
+rationale = "The adaptive-threshold IF model's Go and Mojo C ABI: aliasing and null refusals without writes, the numerical statuses, and the written abi.h and the LLVM IR holding a signed 32-bit count and status."
+
+[[file]]
+path = "tests/test_alpha_native_abi.py"
+rationale = "The dual alpha-synapse LIF model's Go and Mojo C ABI: aliasing and null refusals without writes, the numerical statuses, and the written abi.h and the LLVM IR holding a signed 32-bit count and status."
+
+[[file]]
+path = "tests/test_resonate_and_fire_native_abi.py"
+rationale = "The resonate-and-fire model's Go and Mojo C ABI: aliasing and null refusals without writes, the numerical statuses, and the written abi.h and the LLVM IR holding a signed 32-bit count and status."
