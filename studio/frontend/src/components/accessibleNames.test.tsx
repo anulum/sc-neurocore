@@ -108,6 +108,21 @@ describe("model list rows", () => {
       "validation parity · integrator euler · terminal H1: RTL parity target met.",
     );
   });
+
+  it("keeps every row reference unique when two model lists share one page", async () => {
+    // One list alone cannot tell a per-list id prefix from none: its row ids are
+    // unique either way. Two lists on one page share each model's name.
+    const { default: ModelBrowser } = await import("./ModelBrowser");
+    const body = mount(<><ModelBrowser /><ModelBrowser /></>);
+    const buttons = [...body.querySelectorAll("button.model-row-select")];
+
+    expect(buttons).toHaveLength(4);
+    const labels = buttons.map((button) => referencedText(button.getAttribute("aria-labelledby")));
+    expect(labels).toEqual(["AdEx", "Theta [unavailable]", "AdEx", "Theta [unavailable]"]);
+    for (const button of buttons) {
+      referencedText(button.getAttribute("aria-describedby"));
+    }
+  });
 });
 
 describe("RTL panel", () => {
