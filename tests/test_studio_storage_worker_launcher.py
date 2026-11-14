@@ -282,7 +282,8 @@ def _gone(pid: int) -> bool:
     """
     try:
         stat = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
+        # Absent before the open, or reaped between the open and the read (ESRCH).
         return True
     return stat.rsplit(")", 1)[1].split()[0] == "Z"
 
@@ -308,6 +309,27 @@ def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: P
     while not _gone(pid) and time.monotonic() < deadline:
         time.sleep(0.05)
     assert _gone(pid)
+
+
+def test_a_process_that_ends_while_its_stat_is_read_counts_as_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A process reaped between opening and reading its stat file is gone, not an error.
+
+    Linux answers that read with ESRCH, which Python raises as ProcessLookupError;
+    the hosted 3.13 run met it once while the killed session was being reaped.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Replaces the read of the stat file with the kernel's answer for a reaped process.
+    """
+
+    def reaped(path: Path, *args: object, **kwargs: object) -> str:
+        raise ProcessLookupError(3, "No such process")
+
+    monkeypatch.setattr(Path, "read_text", reaped)
+    assert _gone(1)
 
 
 def test_error_output_that_is_not_utf8_is_refused_in_words(base: Path) -> None:
