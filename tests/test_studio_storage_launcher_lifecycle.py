@@ -140,36 +140,42 @@ def test_a_started_launcher_ends_when_its_starter_dies() -> None:
 
 
 def test_the_base_lies_under_the_temporary_folder_when_it_is_short(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A short temporary folder is used as it is."""
-    short = Path(tempfile.mkdtemp(prefix="t", dir=short_root()))
-    try:
-        monkeypatch.setattr(tempfile, "tempdir", str(short))
-        assert short_root() == short
-        with launcher_base() as base:
-            assert base.parent == short
-            assert len(os.fsencode(str(base) + LONGEST_SOCKET_SUFFIX)) < UNIX_SOCKET_PATH_LIMIT
-    finally:
-        short.rmdir()
+    """A short temporary folder is used as it is.
+
+    The short folder is the one this run already has, not a folder made below it,
+    so the test holds when that folder is exactly as long as the room.
+    """
+    short = short_root()
+    monkeypatch.setattr(tempfile, "tempdir", str(short))
+    # A runtime folder that also fits, and differs from the temporary folder: only
+    # a short_root that tries the temporary folder first returns ``short``. "/" is
+    # never written to: the base is made in ``short``, or the assertion fails first.
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/")
+    assert short_root() == short
+    with launcher_base() as base:
+        assert base.parent == short
+        assert len(os.fsencode(str(base) + LONGEST_SOCKET_SUFFIX)) < UNIX_SOCKET_PATH_LIMIT
 
 
 def test_a_long_temporary_folder_gives_way_to_the_runtime_folder(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Under a temporary folder too long for the sockets, the user's runtime folder is used."""
+    """Under a temporary folder too long for the sockets, the user's runtime folder is used.
+
+    The runtime folder is the short folder this run already has, not a folder made
+    below it, so the test holds when that folder is exactly as long as the room.
+    """
+    runtime = short_root()
     long_folder = tmp_path / ("x" * 60)
     long_folder.mkdir()
-    runtime = Path(tempfile.mkdtemp(prefix="r", dir=short_root()))
-    try:
-        monkeypatch.setattr(tempfile, "tempdir", str(long_folder))
-        monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime))
-        assert short_root() == runtime
-        with launcher_base() as base:
-            assert base.parent == runtime
-            assert len(os.fsencode(str(base) + LONGEST_SOCKET_SUFFIX)) < UNIX_SOCKET_PATH_LIMIT
-    finally:
-        runtime.rmdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(long_folder))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime))
+    assert short_root() == runtime
+    with launcher_base() as base:
+        assert base.parent == runtime
+        assert len(os.fsencode(str(base) + LONGEST_SOCKET_SUFFIX)) < UNIX_SOCKET_PATH_LIMIT
 
 
 def test_no_short_folder_is_refused_with_the_length_that_fits(
