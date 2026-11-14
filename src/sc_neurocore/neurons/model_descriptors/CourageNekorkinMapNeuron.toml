@@ -166,3 +166,81 @@ synth_report = "hdl/reports/yosys_courbage_nekorkin_map_q3232_2026-08-28.json"
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
 terminal_reason = "Generated fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."
+
+[[behaviour]]
+name = "a current of -0.3 keeps the map silent for 128 steps"
+kind = "interval"
+steps = 128
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = -0.3
+
+[[behaviour]]
+name = "without a current the map stays silent for 512 steps"
+kind = "interval"
+steps = 512
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "without a current the map fires once in 620 steps"
+kind = "interval"
+steps = 620
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.3 fires once in 128 steps"
+kind = "interval"
+steps = 128
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 0.3
+
+[[behaviour]]
+name = "a current of 0.1 fires 3 times in 41 steps"
+kind = "interval"
+steps = 41
+observable = "spikes"
+bounds = [
+    3,
+    3,
+]
+
+[behaviour.inputs]
+current = 0.1
+
+[[behaviour]]
+name = "after 41 steps at a current of 0.1 x is on the upper branch"
+kind = "interval"
+steps = 41
+observable = "state:x"
+bounds = [
+    0.5,
+    0.625,
+]
+
+[behaviour.inputs]
+current = 0.1

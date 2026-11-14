@@ -28,6 +28,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Courbage-Nekorkin map neuron (`CourageNekorkinMapNeuron`) states six
+  behaviour cases: the four event counts its Q16.16 and Q32.32 tests enrol for
+  the hand model, both schema files and the RTL (none in 128 steps at a current
+  of -0.3, none in 512 and one in 620 without a current, one in 128 at 0.3);
+  3 events in 41 steps at 0.1, measured with its public class and matched by
+  the schema; and its fast variable after those 41 steps on the upper branch
+  of the map, between 0.5 and 0.625. Each of the 19 sign variants of its
+  equations breaks a case. Eleven of the 185 catalogue models now state cases.
 - The Rulkov map neuron states six behaviour cases: 0, 7 and 10 events in 30
   steps at currents 0, 0.5 and 1.5, the counts its Q16.16 test enrols for the
   hand model, the schema and the RTL; and 0, 34 and 130 events in 1000 steps

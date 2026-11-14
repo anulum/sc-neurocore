@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 10
+MODELS_WITH_CASES = 11
 
 
 def _accumulator() -> dict[str, object]:
@@ -388,6 +388,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     """Only a model with cases has a row; the others are counted."""
     rows = _rows(report)
     assert sorted(rows) == [
+        "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
         "FitzHughNagumoNeuron",
         "HindmarshRoseNeuron",
@@ -405,7 +406,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 9,
+        "discriminated": 10,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -698,6 +699,56 @@ def test_every_variant_of_the_rulkov_map_breaks_a_case(
     assert all(variant["outcome"] == "violated" for variant in variants)
 
 
+def test_every_variant_of_the_courbage_nekorkin_map_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Nineteen signs of the piecewise map; the upper branch's two are decided by its state.
+
+    The sign of x in the upper branch, and of m0 in the denominator of its
+    breakpoint, change nothing while x stays below that breakpoint, and no count
+    over the enrolled windows reaches the branch's return. After 41 steps at a
+    current of 0.1 the model sits on the upper branch near 0.555; those two
+    variants leave it, so the state case breaks them.
+    """
+    row = _rows(report)["CourageNekorkinMapNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [0, 0, 1, 1, 3, 0.555102]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    branch = (
+        "-m0 * x if x <= a * m1 / (m0 + m1) else m1 * (x - a) if x < (m0 + a * m1) / (m0 + m1) "
+        "else -m0 * (x - 1.0)"
+    )
+    assert [
+        (variant["equation"], variant["term"], variant["within"][:12]) for variant in variants
+    ] == [
+        ("x", "+ x", "x + (-m0 * x"),
+        ("x", f"+ {branch}", "x + (-m0 * x"),
+        ("x", "- y", "x + (-m0 * x"),
+        ("x", "- beta * (1.0 if x >= d else 0.0)", "x + (-m0 * x"),
+        ("x", "+ I", "x + (-m0 * x"),
+        ("x", "+ m0", "m0 + m1"),
+        ("x", "+ m1", "m0 + m1"),
+        ("x", "+ m0", "m0 + a * m1"),
+        ("x", "+ a * m1", "m0 + a * m1"),
+        ("x", "+ m0", "m0 + m1"),
+        ("x", "+ m1", "m0 + m1"),
+        ("x", "+ x", "x - a"),
+        ("x", "- a", "x - a"),
+        ("x", "+ x", "x - 1.0"),
+        ("x", "- 1.0", "x - 1.0"),
+        ("y", "+ y", "y + eps * (x"),
+        ("y", "+ eps * (x - j)", "y + eps * (x"),
+        ("y", "+ x", "x - j"),
+        ("y", "- j", "x - j"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    upper = "after 41 steps at a current of 0.1 x is on the upper branch"
+    assert [index for index, variant in enumerate(variants) if variant["case"] == upper] == [9, 13]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -709,10 +760,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+9$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+10$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 118, of them violated 118, not discriminated 0" in summary
+    assert "variants: 137, of them violated 137, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 
