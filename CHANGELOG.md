@@ -12,6 +12,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- A Studio storage-profile job whose worker exits before asking for its
+  grant now fails at once, as "Studio process worker exited with N before
+  requesting its grant.". It waited out the whole grant deadline, 60 s by
+  default, and then reported only "Studio worker grant failed.". The
+  supervisor now asks the launcher, while it waits, whether the worker
+  still runs. A grant endpoint path too long for a Unix socket is refused
+  with its length, in place of "Studio worker could not start: grant
+  endpoint.".
+
 - The Studio's storage service now stops on SIGTERM or SIGINT whatever
   signal mask the process that starts it hands down. A process inherits
   its starter's blocked signals; with the two blocked, the service's stop

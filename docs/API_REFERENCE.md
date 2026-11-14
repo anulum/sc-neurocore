@@ -56755,6 +56755,21 @@ int
 
 ## Module `studio.platform.storage_worker_grant`
 
+### Class `GrantEndpointPathTooLong`
+The grant endpoint's path does not fit a Unix socket address; the text names its length.
+
+
+### Class `WorkerExitedBeforeGrant`
+The launched worker ended before it connected for its grant.
+
+Attributes
+----------
+exit_status : int
+    The worker's exit status, as its launcher observed it.
+
+- **__init__**(exit_status)
+  - Retain the observed exit status and state it in the message.
+
 ### Class `ExpectedWorker`
 Worker process generation reported by the trusted launcher.
 
@@ -56779,7 +56794,7 @@ created. The endpoint grants at most one worker and then closes its listener.
   - Return the absolute endpoint path the worker must connect to.
 - **open**()
   - Bind and listen on a new socket inode through the held directory.
-- **grant**(expected, \*, deadline, max_refusals, register)
+- **grant**(expected, \*, deadline, max_refusals, register, exited, poll_seconds)
   - Verify the launched worker, commit its identity and send one grant.
 - **close**()
   - Close the listener and remove only this endpoint's unchanged socket.

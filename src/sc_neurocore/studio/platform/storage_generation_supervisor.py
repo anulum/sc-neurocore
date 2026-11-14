@@ -52,6 +52,8 @@ from sc_neurocore.studio.platform.storage_worker_bootstrap import WorkerDescript
 from sc_neurocore.studio.platform.storage_worker_grant import (
     GRANT_ENDPOINT_NAME,
     ExpectedWorker,
+    GrantEndpointPathTooLong,
+    WorkerExitedBeforeGrant,
     WorkerGrantEndpoint,
 )
 
@@ -178,17 +180,40 @@ class GenerationSupervisor:
                     )
             self._cancel.wait(runtime.poll_seconds)
 
+    def _worker_exit_status(self) -> int | None:
+        """Return the launched worker's exit status once its launcher reports it stopped."""
+        status = self._exchanges.launcher("status")
+        if status is not None and status.state == "stopped":
+            return status.exit_status
+        return None
+
     def _grant(self, endpoint: WorkerGrantEndpoint, pid: int, token: str) -> _Verdict | None:
-        """Grant the launched worker; a verdict when it must not run."""
+        """Grant the launched worker; a verdict when it must not run.
+
+        The launcher is asked at every poll whether the worker still runs, so a
+        worker that ends before connecting is reported as such at once rather
+        than after the whole grant deadline.
+        """
         try:
             endpoint.grant(
                 ExpectedWorker(uid=self._runtime.worker_uid, pid=pid, start_token=token),
                 deadline=time.monotonic() + self._runtime.grant_timeout_seconds,
                 max_refusals=self._runtime.attempts,
                 register=self._exchanges.register,
+                exited=self._worker_exit_status,
+                poll_seconds=self._runtime.poll_seconds,
             )
         except StartRefused as refused:
             return refused.outcome, refused.error, None
+        except WorkerExitedBeforeGrant as gone:
+            return (
+                "failed",
+                authored_job_error(
+                    f"Studio process worker exited with {gone.exit_status} "
+                    "before requesting its grant."
+                ),
+                gone.exit_status,
+            )
         except (OSError, ValueError) as exc:
             return (
                 "failed",
@@ -207,6 +232,10 @@ class GenerationSupervisor:
         endpoint = WorkerGrantEndpoint(staged.directory, staged.path, GRANT_ENDPOINT_NAME)
         try:
             endpoint.open()
+        except GrantEndpointPathTooLong as refusal:
+            return self._failed(
+                authored_job_error(f"Studio worker could not start: {refusal}."), reaped=True
+            )
         except (OSError, ValueError) as exc:
             return self._failed(
                 job_failure(

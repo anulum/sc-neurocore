@@ -21,6 +21,7 @@ Peer verification, not the endpoint's file mode, authorises the grant.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import os
 from pathlib import Path
 import select
@@ -30,6 +31,7 @@ import time
 from collections.abc import Callable
 from types import TracebackType
 
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.platform.jobs_worker_registration import await_worker_registration
 from sc_neurocore.studio.platform.storage_peer import (
     require_storage_peer,
@@ -39,6 +41,25 @@ from sc_neurocore.studio.platform.storage_peer import (
 GRANT_ENDPOINT_NAME = "grant.sock"
 _READY = b"ready\n"
 _UNIX_PATH_LIMIT = 108
+
+
+class GrantEndpointPathTooLong(AuthoredRefusal):
+    """The grant endpoint's path does not fit a Unix socket address; the text names its length."""
+
+
+class WorkerExitedBeforeGrant(Exception):
+    """The launched worker ended before it connected for its grant.
+
+    Attributes
+    ----------
+    exit_status : int
+        The worker's exit status, as its launcher observed it.
+    """
+
+    def __init__(self, exit_status: int) -> None:
+        """Retain the observed exit status and state it in the message."""
+        super().__init__(f"launched worker exited with {exit_status} before requesting its grant")
+        self.exit_status = exit_status
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,15 +151,20 @@ class WorkerGrantEndpoint:
             The held directory no longer names the canonical path.
         FileExistsError
             An entry with the endpoint name already exists.
-        ValueError
-            The endpoint path exceeds the Unix socket path limit.
+        GrantEndpointPathTooLong
+            The endpoint path exceeds the Unix socket path limit; the refusal
+            names its length and is a ``ValueError``.
         OSError
             Bind, mode change or listen fails.
         """
         if self._listener is not None:
             raise RuntimeError("worker grant endpoint is already open")
-        if len(os.fsencode(str(self.path))) >= _UNIX_PATH_LIMIT:
-            raise ValueError("worker grant endpoint path exceeds the Unix limit")
+        length = len(os.fsencode(str(self.path)))
+        if length >= _UNIX_PATH_LIMIT:
+            raise GrantEndpointPathTooLong(
+                f"its grant endpoint path is {length} bytes; a Unix socket path must be "
+                f"shorter than {_UNIX_PATH_LIMIT} bytes"
+            )
         held = os.fstat(self._directory_fd)
         named = os.stat(self._directory_path, follow_symlinks=False)
         if not stat.S_ISDIR(held.st_mode) or (held.st_dev, held.st_ino) != (
@@ -190,6 +216,8 @@ class WorkerGrantEndpoint:
         deadline: float,
         max_refusals: int,
         register: Callable[[str], None],
+        exited: Callable[[], int | None] | None = None,
+        poll_seconds: float = 0.25,
     ) -> str:
         """Verify the launched worker, commit its identity and send one grant.
 
@@ -204,6 +232,12 @@ class WorkerGrantEndpoint:
         register : Callable[[str], None]
             Durable registration of the verified ``host:pid:token`` identity.
             It runs after verification and before ``ready`` is written.
+        exited : Callable[[], int | None] or None
+            Asked at every poll while no worker has connected: the launched
+            worker's exit status once it has ended, else ``None``. ``None``
+            (the default) waits for a connection until the deadline.
+        poll_seconds : float
+            Positive, finite interval between the questions to ``exited``.
 
         Returns
         -------
@@ -215,9 +249,12 @@ class WorkerGrantEndpoint:
         RuntimeError
             The endpoint is not open.
         ValueError
-            The refusal budget is not a positive integer.
+            The refusal budget is not a positive integer, or the poll interval
+            is not a positive finite number.
         TimeoutError
             No verified worker connected and received the grant in time.
+        WorkerExitedBeforeGrant
+            ``exited`` reported the worker gone before it connected.
         PermissionError
             More unverified connections arrived than the refusal budget allows.
         OSError
@@ -239,12 +276,27 @@ class WorkerGrantEndpoint:
             raise RuntimeError("worker grant endpoint is not open")
         if type(max_refusals) is not int or max_refusals <= 0:
             raise ValueError("worker grant refusal budget must be positive")
+        if (
+            isinstance(poll_seconds, bool)
+            or not isinstance(poll_seconds, (int, float))
+            or not math.isfinite(poll_seconds)
+            or poll_seconds <= 0
+        ):
+            raise ValueError("worker grant poll interval must be a positive finite number")
         refusals = 0
         try:
             while True:
                 remaining = deadline - time.monotonic()
-                if remaining <= 0 or not select.select([listener], [], [], remaining)[0]:
+                if remaining <= 0:
                     raise TimeoutError("launched worker did not request its grant in time")
+                wait = remaining if exited is None else min(remaining, poll_seconds)
+                if not select.select([listener], [], [], wait)[0]:
+                    # No connection yet: a worker that has already ended never
+                    # will connect, so its launcher's word ends the wait.
+                    status = None if exited is None else exited()
+                    if status is not None:
+                        raise WorkerExitedBeforeGrant(status)
+                    continue
                 channel, _ = listener.accept()
                 with channel:
                     try:

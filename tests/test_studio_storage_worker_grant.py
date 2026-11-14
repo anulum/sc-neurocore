@@ -23,8 +23,11 @@ from typing import cast
 import pytest
 
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.platform.storage_worker_grant import (
     ExpectedWorker,
+    GrantEndpointPathTooLong,
+    WorkerExitedBeforeGrant,
     WorkerGrantEndpoint,
     receive_socket_grant,
     validate_grant_name,
@@ -85,6 +88,86 @@ def test_deadline_without_connection_closes_endpoint(grant_dir: tuple[int, Path]
         )
 
 
+def test_a_worker_reported_gone_ends_the_wait_with_its_status(
+    grant_dir: tuple[int, Path],
+) -> None:
+    """A worker that exits before connecting ends the wait at the next poll, not at the deadline.
+
+    Parameters
+    ----------
+    grant_dir : tuple[int, Path]
+        The held directory and its path.
+    """
+    descriptor, path = grant_dir
+    polls: list[float] = []
+
+    def exited() -> int | None:
+        """Report the worker running at the first poll and gone, with status 2, at the second."""
+        polls.append(time.monotonic())
+        return None if len(polls) == 1 else 2
+
+    endpoint = WorkerGrantEndpoint(descriptor, path, NAME)
+    endpoint.open()
+    with pytest.raises(WorkerExitedBeforeGrant) as gone:
+        endpoint.grant(
+            ExpectedWorker(uid=os.getuid(), pid=1, start_token="1"),
+            deadline=time.monotonic() + 30.0,
+            max_refusals=1,
+            register=lambda identity: None,
+            exited=exited,
+            poll_seconds=0.05,
+        )
+    assert gone.value.exit_status == 2
+    assert str(gone.value) == "launched worker exited with 2 before requesting its grant"
+    assert len(polls) == 2
+    assert not (path / NAME).exists()
+
+
+def test_a_worker_still_running_keeps_the_wait_to_its_deadline(
+    grant_dir: tuple[int, Path],
+) -> None:
+    """A worker the launcher reports running is waited for until the deadline, polled meanwhile.
+
+    Parameters
+    ----------
+    grant_dir : tuple[int, Path]
+        The held directory and its path.
+    """
+    descriptor, path = grant_dir
+    polls: list[float] = []
+
+    def exited() -> int | None:
+        """Report the worker running at every poll."""
+        polls.append(time.monotonic())
+        return None
+
+    endpoint = WorkerGrantEndpoint(descriptor, path, NAME)
+    endpoint.open()
+    with pytest.raises(TimeoutError, match="did not request its grant in time"):
+        endpoint.grant(
+            ExpectedWorker(uid=os.getuid(), pid=1, start_token="1"),
+            deadline=time.monotonic() + 0.3,
+            max_refusals=1,
+            register=lambda identity: None,
+            exited=exited,
+            poll_seconds=0.05,
+        )
+    assert len(polls) >= 2
+    assert not (path / NAME).exists()
+    # An invalid poll interval is refused before the wait, like an invalid refusal budget.
+    with WorkerGrantEndpoint(descriptor, path, NAME) as again:
+        for poll in (0, -0.1, True, float("nan"), float("inf")):
+            with pytest.raises(ValueError, match="poll interval"):
+                again.grant(
+                    ExpectedWorker(uid=os.getuid(), pid=1, start_token="1"),
+                    deadline=time.monotonic() + 0.3,
+                    max_refusals=1,
+                    register=lambda identity: None,
+                    exited=exited,
+                    poll_seconds=cast(float, poll),
+                )
+
+
 def test_existing_entry_is_never_adopted(grant_dir: tuple[int, Path]) -> None:
     """A stale or planted entry with the endpoint name refuses and stays untouched."""
     descriptor, path = grant_dir
@@ -138,8 +221,13 @@ def test_endpoint_lifecycle_and_argument_contracts(grant_dir: tuple[int, Path]) 
                     register=lambda identity: None,
                 )
     deep = Path("/" + "d" * 100)
-    with pytest.raises(ValueError, match="Unix limit"):
+    with pytest.raises(GrantEndpointPathTooLong) as too_long:
         WorkerGrantEndpoint(descriptor, deep, NAME).open()
+    # The refusal is written for the operator and names the length to cut: 1 + 100 + 1 + 10 bytes.
+    assert isinstance(too_long.value, AuthoredRefusal)
+    assert str(too_long.value) == (
+        "its grant endpoint path is 112 bytes; a Unix socket path must be shorter than 108 bytes"
+    )
     for name in ("grant-" + "a" * 32 + ".sock", "Grant.sock", "../" + NAME, NAME + "x"):
         with pytest.raises(ValueError, match="name is invalid"):
             validate_grant_name(name)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1951
+expected_file_count = 1953
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -3395,6 +3395,14 @@ rationale = "Studio storage operations, wire protocols, clients and generation c
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_generation_supervisor.py"
 rationale = "Studio storage operations, wire protocols, clients and generation custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/storage_worker_grant.py"
+rationale = "The single-use grant endpoint: it verifies the launched worker, ends its wait when the launcher reports the worker gone, and refuses a path too long for a Unix socket by its length."
+
+[[file]]
+path = "tests/test_studio_storage_worker_grant.py"
+rationale = "The grant endpoint's refusals, deadline, early end on a worker reported gone, and cleanup of only its own socket."
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/storage_isolated_jobs.py"
