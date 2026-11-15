@@ -650,6 +650,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine's timed Rust tests in the cerebellar, channel, interneuron,
+  sensory, simple-spiking and miscellaneous neuron modules are held to a
+  budget derived from the host that runs them, not to a fixed number of
+  milliseconds. A fixed limit held on the machine it was written on and failed
+  on a slower or busier one: during a full `cargo test` on a loaded host the
+  Golgi cell's 50 ms limit failed while the test alone passed. A test's budget
+  is the policy margin times its reference ratio times a calibration taken in
+  the test's own thread just before and just after its work, on the thread's
+  CPU clock where the platform has one. The ratios, the reference hosts and
+  their runs, and the margin are kept in `engine/test_host_profiles.toml`; a
+  test holds every ratio to its rule and refuses a new literal millisecond
+  limit in the engine. The six interneuron timing tests, opt-in until now for
+  the same reason, run by default again. Eight tests that dropped each step's
+  result now keep it, so a release build cannot remove the work they time.
 - A formal resource attempt refused for a Python traceback in its solver
   log now names the first exception the traceback reports, not only its
   first line, which names no cause; a traceback cut short by another tool

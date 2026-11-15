@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1993
+expected_file_count = 1994
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8026,3 +8026,7 @@ rationale = "Motor-unit model whose twitch description was corrected to the firs
 [[file]]
 path = "tests/test_model_fractional_lif_engine_reset.py"
 rationale = "Compare the engine fractional LIF with the Python model through a reset, step by step."
+
+[[file]]
+path = "tests/test_engine_rust_performance_guards.py"
+rationale = "Every timed engine test is held to a budget derived from the running host, its reference ratio follows from the recorded runs, and no new literal millisecond limit enters the engine."

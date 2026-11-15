@@ -202,6 +202,7 @@ impl Default for InnerHairCell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn ihc_depolarises_with_displacement() {
@@ -319,11 +320,11 @@ mod tests {
     #[test]
     fn ihc_performance() {
         let mut c = InnerHairCell::new();
-        let start = std::time::Instant::now();
-        for _ in 0..100_000 {
-            c.step(50.0);
-        }
-        assert!(start.elapsed().as_millis() < 50);
+        host_budget::assert_within(module_path!(), "ihc_performance", || {
+            for _ in 0..100_000 {
+                std::hint::black_box(c.step(50.0));
+            }
+        });
     }
 
     #[test]

@@ -126,6 +126,7 @@ impl GradedSynapseNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Graded Synapse Neuron tests --
 
@@ -251,16 +252,12 @@ mod tests {
 
     #[test]
     fn graded_performance_100k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = GradedSynapseNeuron::new();
-        for _ in 0..100_000 {
-            std::hint::black_box(n.step(100.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "100k steps must complete in <50ms"
-        );
+        host_budget::assert_within(module_path!(), "graded_performance_100k_steps", || {
+            let mut n = GradedSynapseNeuron::new();
+            for _ in 0..100_000 {
+                std::hint::black_box(n.step(100.0));
+            }
+        });
     }
 
     #[test]

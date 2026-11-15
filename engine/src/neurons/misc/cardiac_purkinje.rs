@@ -242,6 +242,7 @@ impl CardiacPurkinjeFibre {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Cardiac Purkinje Fibre tests --
 
@@ -339,13 +340,12 @@ mod tests {
 
     #[test]
     fn cardiac_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = CardiacPurkinjeFibre::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(3.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "cardiac_performance_1k_steps", || {
+            let mut n = CardiacPurkinjeFibre::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 
     #[test]

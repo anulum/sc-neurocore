@@ -581,6 +581,7 @@ impl MyelinatedAxon {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Frankenhaeuser-Huxley Axon tests --
 
@@ -702,17 +703,13 @@ mod tests {
 
     #[test]
     fn fh_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = FrankenhaeUserHuxleyAxon::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(1500.0));
-        }
-        let elapsed = start.elapsed();
         // 50 sub-steps per step → 50k total iterations
-        assert!(
-            elapsed.as_millis() < 100,
-            "1k steps must complete in <100ms"
-        );
+        host_budget::assert_within(module_path!(), "fh_performance_1k_steps", || {
+            let mut n = FrankenhaeUserHuxleyAxon::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(1500.0));
+            }
+        });
     }
 
     // -- Node of Ranvier (MRG 2002) tests --
@@ -831,13 +828,12 @@ mod tests {
 
     #[test]
     fn nor_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = NodeOfRanvier::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(500.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "nor_performance_1k_steps", || {
+            let mut n = NodeOfRanvier::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(500.0));
+            }
+        });
     }
 
     // -- Myelinated Axon tests --
@@ -936,13 +932,12 @@ mod tests {
 
     #[test]
     fn myelin_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = MyelinatedAxon::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(500.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "myelin_performance_1k_steps", || {
+            let mut n = MyelinatedAxon::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(500.0));
+            }
+        });
     }
 
     #[test]

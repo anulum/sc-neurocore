@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 38,
-    "outdated": 106,
+    "current": 35,
+    "outdated": 109,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 13,
-    "outdated": 73,
+    "current": 10,
+    "outdated": 76,
     "unbound": 1
   },
   "rows": [
@@ -486,7 +486,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
           "name": "local_python_2026-06-26_dendritic_nmda_rk4.json",
           "script": "bench_model_dendritic_nmda.py"
         }
@@ -599,6 +602,7 @@
             "Cargo.lock",
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/Cargo.toml",
+            "engine/src/neurons/mod.rs",
             "pyproject.toml",
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/mojo/pixi.lock",
@@ -834,7 +838,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
           "name": "bench_hill_tononi.json",
           "script": "bench_model_hill_tononi.py"
         }
@@ -979,7 +986,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/mod.rs"
           ],
           "currency": "outdated",
           "name": "bench_jansen_rit.json",
@@ -1244,7 +1252,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/Cargo.toml"
+          ],
+          "currency": "outdated",
           "name": "local_python_2026-06-17_morris_lecar_rk4.json",
           "script": "bench_model_morris_lecar.py"
         }

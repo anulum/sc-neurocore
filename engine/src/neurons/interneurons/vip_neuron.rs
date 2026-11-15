@@ -181,6 +181,7 @@ impl Default for VIPNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn vip_fires_with_input() {
@@ -239,13 +240,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn vip_performance_10k_steps() {
         let mut n = VIPNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(3.0);
-        }
-        assert!(start.elapsed().as_millis() < 100);
+        host_budget::assert_within(module_path!(), "vip_performance_10k_steps", || {
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 }

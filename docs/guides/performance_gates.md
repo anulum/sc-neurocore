@@ -92,3 +92,38 @@ small timing thresholds inside existing behaviour tests, not a replacement for
 isolated benchmark artefacts under `benchmarks/results/`. Public benchmark
 claims still require the benchmark-evidence rules described in
 [Benchmarks](../benchmarks/BENCHMARKS.md).
+
+## Rust Engine Timing Tests
+
+The engine's timed Rust unit tests run in every `cargo test` and
+`cargo test --release`. Their limit is not a fixed number of milliseconds,
+which would hold on the machine it was written on and fail on a slower or
+busier one. A timed test passes when its work stays within
+
+```text
+margin × ratio × calibration
+```
+
+- **calibration** is the time the running host takes, in the running build,
+  for a fixed reference workload. It is measured in the test's own thread on
+  the test's clock, five times just before the work and five times just
+  after; the larger of the two medians is used.
+- **ratio** is the test's work over the calibration on the reference hosts,
+  one value for builds with debug assertions and one for builds without.
+  The ratios, the reference hosts and every run they came from are kept in
+  `engine/test_host_profiles.toml`.
+- **margin** is the policy value in the same file, 5 for every test.
+
+The clock is the thread's CPU time on Unix (`CLOCK_THREAD_CPUTIME_ID`), so
+the time a test thread spends waiting for a core is not counted; other
+platforms use the wall clock. A failing test names its time, every term of
+its budget, the clock and the load average.
+
+A timed test calls `host_budget::assert_within(module_path!(), "<test>", ||
+{ ... })` (`engine/src/neurons/host_budget.rs`) with its whole timed workload
+in the closure. To give a new one its ratio, run it on each reference host in
+both builds with `SCN_ENGINE_BUDGET_RECORD=<file>` set, at least five times;
+the profile file's header gives the rule that turns those runs into a ratio.
+`tests/test_engine_rust_performance_guards.py` holds every ratio to that rule
+and every timed test to a ratio, and refuses a new literal millisecond limit
+in the engine.

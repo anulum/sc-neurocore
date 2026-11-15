@@ -194,6 +194,7 @@ impl EndocrineBetaCell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Endocrine Beta Cell tests --
 
@@ -298,13 +299,12 @@ mod tests {
 
     #[test]
     fn beta_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = EndocrineBetaCell::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(2.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "beta_performance_1k_steps", || {
+            let mut n = EndocrineBetaCell::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(2.0));
+            }
+        });
     }
 
     #[test]

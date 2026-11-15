@@ -164,6 +164,7 @@ impl GapJunctionNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Gap Junction Neuron tests --
 
@@ -308,16 +309,12 @@ mod tests {
 
     #[test]
     fn gap_performance_100k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = GapJunctionNeuron::new();
-        for _ in 0..100_000 {
-            std::hint::black_box(n.step(-20.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "100k steps must complete in <50ms"
-        );
+        host_budget::assert_within(module_path!(), "gap_performance_100k_steps", || {
+            let mut n = GapJunctionNeuron::new();
+            for _ in 0..100_000 {
+                std::hint::black_box(n.step(-20.0));
+            }
+        });
     }
 
     #[test]

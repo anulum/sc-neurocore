@@ -157,6 +157,7 @@ impl UnipolarBrushCell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Unipolar Brush Cell tests --
 
@@ -310,13 +311,12 @@ mod tests {
 
     #[test]
     fn ubc_performance_10k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = UnipolarBrushCell::new();
-        for _ in 0..10_000 {
-            std::hint::black_box(n.step(5.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "10k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "ubc_performance_10k_steps", || {
+            let mut n = UnipolarBrushCell::new();
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(5.0));
+            }
+        });
     }
 
     #[test]

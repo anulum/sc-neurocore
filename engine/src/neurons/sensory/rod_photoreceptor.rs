@@ -151,6 +151,7 @@ impl Default for RodPhotoreceptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn rod_hyperpolarises_with_light() {
@@ -237,11 +238,11 @@ mod tests {
     #[test]
     fn rod_performance() {
         let mut r = RodPhotoreceptor::new();
-        let start = std::time::Instant::now();
-        for _ in 0..100_000 {
-            r.step(50.0);
-        }
-        assert!(start.elapsed().as_millis() < 50);
+        host_budget::assert_within(module_path!(), "rod_performance", || {
+            for _ in 0..100_000 {
+                std::hint::black_box(r.step(50.0));
+            }
+        });
     }
 
     #[test]

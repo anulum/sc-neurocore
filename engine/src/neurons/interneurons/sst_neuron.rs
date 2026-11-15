@@ -221,6 +221,7 @@ impl Default for SSTNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn sst_fires_with_input() {
@@ -273,18 +274,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn sst_performance_10k_steps() {
         let mut n = SSTNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(5.0);
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 500,
-            "10k SST steps took {:?}",
-            elapsed
-        );
+        host_budget::assert_within(module_path!(), "sst_performance_10k_steps", || {
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(5.0));
+            }
+        });
     }
 }

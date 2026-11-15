@@ -17,6 +17,8 @@ pub mod courage_nekorkin_map;
 pub mod ermentrout_kopell_map;
 pub mod ermentrout_kopell_pop;
 pub mod hardware;
+#[cfg(test)]
+pub(crate) mod host_budget;
 pub mod ibarz_tanaka_map;
 pub mod interneurons;
 pub mod jansen_rit;

@@ -68,6 +68,15 @@ z3 = { version = "0.22", features = ["bundled"], optional = true }
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
 proptest = "1.4"
+# Reads engine/test_host_profiles.toml for the performance tests' host-derived budgets
+# (engine/src/neurons/host_budget.rs): the parser only, so no crate enters Cargo.lock. The version is the one
+# Cargo.lock already holds for other crates.
+toml_edit = { version = "0.25.19", default-features = false, features = ["parse"] }
+
+# The thread CPU clock (`clock_gettime(CLOCK_THREAD_CPUTIME_ID)`) that the performance tests' host-derived budgets are
+# timed on (engine/src/neurons/host_budget.rs). The version is the one Cargo.lock already holds for other crates.
+[target.'cfg(unix)'.dev-dependencies]
+libc = "0.2.191"
 
 [[example]]
 name = "bench_block_floating_dense"

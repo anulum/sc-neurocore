@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Reference host profiles for the engine's performance-test budgets
+
+# A performance test's budget is margin * ratio * calibration (engine/src/neurons/host_budget.rs):
+# - calibration: this host's time for a fixed reference workload, taken in the test's thread on its clock;
+# - ratio: the test's work over the calibration, from the reference hosts below;
+# - margin: the policy value below.
+#
+# How a ratio is set:
+# 1. On each reference host, in each build (`cargo test` and `cargo test --release`, from engine/), run the test
+#    with SCN_ENGINE_BUDGET_RECORD=<file> at least five times. Each run appends one line per budgeted test:
+#    test, build, clock, elapsed ns, calibration before ns, calibration after ns, load average.
+# 2. A run's ratio is elapsed / max(calibration before, calibration after), to four significant figures. The runs
+#    go under [measurement.<host>.<build>].
+# 3. The test's ratio for a build is the largest of the hosts' medians, rounded up to two significant figures.
+# tests/test_engine_rust_performance_guards.py holds every ratio to that rule, every budgeted test to a ratio, and
+# the margin to its policy value.
+#
+# One reference host is measured so far, ML350. The workstation follows as a second one, with the motor tests: it
+# was too loaded when these were recorded. A second host can only raise a ratio, never lower one.
+
+schema_version = 1
+
+# Policy, not a measurement: how far beyond its reference ratio a test may go before it fails. One value for every
+# test; a test given another margin needs a written reason here and a test that holds it.
+margin = 5.0
+
+[reference_hosts.ml350]
+cpu = "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz"
+logical_cpus = 24
+kernel = "6.8.0-149-generic"
+rustc = "rustc 1.98.1 (48a229cea 2026-09-01)"
+measured_at = "2026-11-15T18:20:35Z"
+load_average_before = "3.08 8.11 10.45"
+
+[measurement.ml350.debug]
+"neurons::cerebellar::dcn::tests::dcn_performance_1k_steps" = [26.62, 28.12, 27.39, 21.49, 28.36]
+"neurons::cerebellar::golgi::tests::golgi_performance_1k_steps" = [18.47, 19.46, 19.59, 19.98, 20.41]
+"neurons::cerebellar::granule::tests::granule_performance_10k_steps" = [77.96, 76.04, 56.37, 64.14, 79.61]
+"neurons::cerebellar::lugaro::tests::lugaro_performance_10k_steps" = [3.666, 3.749, 3.776, 3.804, 3.738]
+"neurons::cerebellar::stellate::tests::stellate_performance_1k_steps" = [59.14, 56.12, 40.86, 58.78, 47.14]
+"neurons::cerebellar::unipolar_brush::tests::ubc_performance_10k_steps" = [4.307, 4.395, 4.277, 4.342, 4.228]
+"neurons::channels::a_type_k::tests::atype_performance_1k_steps" = [17.82, 19.84, 21.84, 19.39, 20.62]
+"neurons::channels::bk::tests::bk_performance_1k_steps" = [18.36, 18.3, 18.38, 17.95, 19.97]
+"neurons::channels::ih::tests::ih_performance_1k_steps" = [37.51, 31.32, 33.54, 34.14, 34.24]
+"neurons::channels::persistent_na::tests::nap_performance_1k_steps" = [31.73, 26.44, 26.82, 37.05, 35.31]
+"neurons::channels::sk::tests::sk_performance_1k_steps" = [41.42, 34.4, 22.5, 34.78, 40.18]
+"neurons::channels::t_type_ca::tests::ttype_performance_1k_steps" = [31.5, 40.46, 33.02, 32.63, 37.08]
+"neurons::interneurons::cerebellar_basket_neuron::tests::basket_performance_5k_steps" = [91.67, 73.64, 75.08, 74.21, 76.45]
+"neurons::interneurons::chandelier_neuron::tests::chandelier_performance_5k_steps" = [79.11, 84.3, 77.44, 77.63, 72.67]
+"neurons::interneurons::martinotti_neuron::tests::martinotti_performance_10k_steps" = [114.4, 98.79, 78.37, 87.45, 104.9]
+"neurons::interneurons::pv_fast_spiking::tests::pv_performance_5k_steps" = [284.3, 246.5, 242.1, 251.8, 243.5]
+"neurons::interneurons::sst_neuron::tests::sst_performance_10k_steps" = [131.6, 92.24, 85.26, 96.33, 124.9]
+"neurons::interneurons::vip_neuron::tests::vip_performance_10k_steps" = [51.94, 52.26, 47.91, 61.68, 47.73]
+"neurons::misc::cardiac_purkinje::tests::cardiac_performance_1k_steps" = [5.307, 5.957, 5.523, 5.564, 5.56]
+"neurons::misc::endocrine_beta_cell::tests::beta_performance_1k_steps" = [0.795, 0.8139, 0.8007, 0.8049, 0.7925]
+"neurons::misc::gap_junction::tests::gap_performance_100k_steps" = [8.611, 8.321, 8.165, 8.585, 8.402]
+"neurons::misc::graded_synapse::tests::graded_performance_100k_steps" = [4.181, 4.794, 4.732, 4.976, 4.799]
+"neurons::misc::myelinated_axon::tests::fh_performance_1k_steps" = [28.59, 26.97, 28.67, 29.41, 27.16]
+"neurons::misc::myelinated_axon::tests::myelin_performance_1k_steps" = [7.633, 7.665, 7.241, 7.906, 7.207]
+"neurons::misc::myelinated_axon::tests::nor_performance_1k_steps" = [7.022, 7.521, 7.341, 7.916, 7.071]
+"neurons::misc::smooth_muscle::tests::smooth_performance_1k_steps" = [1.186, 1.312, 1.305, 1.301, 1.248]
+"neurons::sensory::inner_hair_cell::tests::ihc_performance" = [16.95, 18.39, 16.92, 17.01, 16.99]
+"neurons::sensory::rod_photoreceptor::tests::rod_performance" = [22.6, 20.63, 21.86, 16.79, 20.89]
+"neurons::simple_spiking::brunel_wang::tests::brunel_wang_performance" = [4.441, 4.591, 4.639, 4.457, 4.521]
+
+[measurement.ml350.release]
+"neurons::cerebellar::dcn::tests::dcn_performance_1k_steps" = [25.13, 21.25, 23.96, 25.19, 25.1]
+"neurons::cerebellar::golgi::tests::golgi_performance_1k_steps" = [21.24, 21.36, 21.22, 21.17, 21.72]
+"neurons::cerebellar::granule::tests::granule_performance_10k_steps" = [46.55, 55.68, 53.52, 57.17, 57.94]
+"neurons::cerebellar::lugaro::tests::lugaro_performance_10k_steps" = [1.746, 1.693, 1.726, 1.769, 1.739]
+"neurons::cerebellar::stellate::tests::stellate_performance_1k_steps" = [43.96, 43.73, 42.89, 43.11, 42.4]
+"neurons::cerebellar::unipolar_brush::tests::ubc_performance_10k_steps" = [1.877, 1.867, 1.894, 1.852, 1.94]
+"neurons::channels::a_type_k::tests::atype_performance_1k_steps" = [29.62, 27.78, 27.45, 28.65, 27.97]
+"neurons::channels::bk::tests::bk_performance_1k_steps" = [24.39, 27.43, 26.94, 24.31, 24.53]
+"neurons::channels::ih::tests::ih_performance_1k_steps" = [29.28, 29.66, 28.66, 27.96, 24.6]
+"neurons::channels::persistent_na::tests::nap_performance_1k_steps" = [26.79, 28.71, 27.59, 27.36, 26.37]
+"neurons::channels::sk::tests::sk_performance_1k_steps" = [24.76, 25.11, 20.85, 23.24, 25.33]
+"neurons::channels::t_type_ca::tests::ttype_performance_1k_steps" = [30.12, 31.97, 30.38, 30.14, 27.86]
+"neurons::interneurons::cerebellar_basket_neuron::tests::basket_performance_5k_steps" = [116.5, 120.8, 75.2, 130.2, 114.2]
+"neurons::interneurons::chandelier_neuron::tests::chandelier_performance_5k_steps" = [111.9, 114.5, 111.3, 130.9, 132.2]
+"neurons::interneurons::martinotti_neuron::tests::martinotti_performance_10k_steps" = [114.3, 102.6, 66.03, 101.2, 111.3]
+"neurons::interneurons::pv_fast_spiking::tests::pv_performance_5k_steps" = [356.1, 329.2, 328.3, 355.2, 333.9]
+"neurons::interneurons::sst_neuron::tests::sst_performance_10k_steps" = [115.6, 111.6, 71.46, 118.4, 122.8]
+"neurons::interneurons::vip_neuron::tests::vip_performance_10k_steps" = [66.24, 79.77, 64.38, 79.69, 64.82]
+"neurons::misc::cardiac_purkinje::tests::cardiac_performance_1k_steps" = [6.365, 6.477, 6.381, 6.462, 6.47]
+"neurons::misc::endocrine_beta_cell::tests::beta_performance_1k_steps" = [0.9853, 0.9049, 0.9821, 0.9826, 1.018]
+"neurons::misc::gap_junction::tests::gap_performance_100k_steps" = [7.858, 7.854, 7.797, 7.944, 7.837]
+"neurons::misc::graded_synapse::tests::graded_performance_100k_steps" = [2.015, 2.039, 2.053, 2.017, 2.056]
+"neurons::misc::myelinated_axon::tests::fh_performance_1k_steps" = [25.3, 27.08, 29.08, 18.01, 15.02]
+"neurons::misc::myelinated_axon::tests::myelin_performance_1k_steps" = [8.667, 8.452, 8.482, 7.732, 8.562]
+"neurons::misc::myelinated_axon::tests::nor_performance_1k_steps" = [8.303, 6.309, 8.786, 8.29, 8.84]
+"neurons::misc::smooth_muscle::tests::smooth_performance_1k_steps" = [1.482, 1.273, 1.402, 1.418, 1.412]
+"neurons::sensory::inner_hair_cell::tests::ihc_performance" = [17.12, 17.38, 19.43, 17.05, 18.08]
+"neurons::sensory::rod_photoreceptor::tests::rod_performance" = [16.62, 16.55, 15.44, 16.5, 16.54]
+"neurons::simple_spiking::brunel_wang::tests::brunel_wang_performance" = [0.9795, 0.947, 0.9483, 0.9534, 0.9658]
+
+[ratio]
+"neurons::cerebellar::dcn::tests::dcn_performance_1k_steps" = { debug = 28, release = 26 }
+"neurons::cerebellar::golgi::tests::golgi_performance_1k_steps" = { debug = 20, release = 22 }
+"neurons::cerebellar::granule::tests::granule_performance_10k_steps" = { debug = 77, release = 56 }
+"neurons::cerebellar::lugaro::tests::lugaro_performance_10k_steps" = { debug = 3.8, release = 1.8 }
+"neurons::cerebellar::stellate::tests::stellate_performance_1k_steps" = { debug = 57, release = 44 }
+"neurons::cerebellar::unipolar_brush::tests::ubc_performance_10k_steps" = { debug = 4.4, release = 1.9 }
+"neurons::channels::a_type_k::tests::atype_performance_1k_steps" = { debug = 20, release = 28 }
+"neurons::channels::bk::tests::bk_performance_1k_steps" = { debug = 19, release = 25 }
+"neurons::channels::ih::tests::ih_performance_1k_steps" = { debug = 35, release = 29 }
+"neurons::channels::persistent_na::tests::nap_performance_1k_steps" = { debug = 32, release = 28 }
+"neurons::channels::sk::tests::sk_performance_1k_steps" = { debug = 35, release = 25 }
+"neurons::channels::t_type_ca::tests::ttype_performance_1k_steps" = { debug = 34, release = 31 }
+"neurons::interneurons::cerebellar_basket_neuron::tests::basket_performance_5k_steps" = { debug = 76, release = 120 }
+"neurons::interneurons::chandelier_neuron::tests::chandelier_performance_5k_steps" = { debug = 78, release = 120 }
+"neurons::interneurons::martinotti_neuron::tests::martinotti_performance_10k_steps" = { debug = 99, release = 110 }
+"neurons::interneurons::pv_fast_spiking::tests::pv_performance_5k_steps" = { debug = 250, release = 340 }
+"neurons::interneurons::sst_neuron::tests::sst_performance_10k_steps" = { debug = 97, release = 120 }
+"neurons::interneurons::vip_neuron::tests::vip_performance_10k_steps" = { debug = 52, release = 67 }
+"neurons::misc::cardiac_purkinje::tests::cardiac_performance_1k_steps" = { debug = 5.6, release = 6.5 }
+"neurons::misc::endocrine_beta_cell::tests::beta_performance_1k_steps" = { debug = 0.81, release = 0.99 }
+"neurons::misc::gap_junction::tests::gap_performance_100k_steps" = { debug = 8.5, release = 7.9 }
+"neurons::misc::graded_synapse::tests::graded_performance_100k_steps" = { debug = 4.8, release = 2.1 }
+"neurons::misc::myelinated_axon::tests::fh_performance_1k_steps" = { debug = 29, release = 26 }
+"neurons::misc::myelinated_axon::tests::myelin_performance_1k_steps" = { debug = 7.7, release = 8.5 }
+"neurons::misc::myelinated_axon::tests::nor_performance_1k_steps" = { debug = 7.4, release = 8.4 }
+"neurons::misc::smooth_muscle::tests::smooth_performance_1k_steps" = { debug = 1.4, release = 1.5 }
+"neurons::sensory::inner_hair_cell::tests::ihc_performance" = { debug = 17, release = 18 }
+"neurons::sensory::rod_photoreceptor::tests::rod_performance" = { debug = 21, release = 17 }
+"neurons::simple_spiking::brunel_wang::tests::brunel_wang_performance" = { debug = 4.6, release = 0.96 }

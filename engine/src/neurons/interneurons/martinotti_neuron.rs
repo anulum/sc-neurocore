@@ -205,6 +205,7 @@ impl Default for MartinottiNeuron {
 mod tests {
     use super::super::SSTNeuron;
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn martinotti_fires_with_input() {
@@ -269,13 +270,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn martinotti_performance_10k_steps() {
         let mut n = MartinottiNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(4.0);
-        }
-        assert!(start.elapsed().as_millis() < 100);
+        host_budget::assert_within(module_path!(), "martinotti_performance_10k_steps", || {
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(4.0));
+            }
+        });
     }
 }

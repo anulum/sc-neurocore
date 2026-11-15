@@ -183,6 +183,7 @@ impl BKNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- BK Neuron tests --
 
@@ -301,15 +302,11 @@ mod tests {
 
     #[test]
     fn bk_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = BKNeuron::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(3.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 200,
-            "1k steps must complete in <200ms"
-        );
+        host_budget::assert_within(module_path!(), "bk_performance_1k_steps", || {
+            let mut n = BKNeuron::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 }

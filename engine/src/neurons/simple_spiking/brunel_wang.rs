@@ -229,6 +229,7 @@ impl Default for BrunelWangNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn default_matches_constructor_state() {
@@ -367,16 +368,11 @@ mod tests {
 
     #[test]
     fn brunel_wang_performance() {
-        let start = std::time::Instant::now();
-        let mut n = BrunelWangNeuron::new();
-        for _ in 0..10_000 {
-            std::hint::black_box(n.step(3.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "10k steps in <50ms, took {}ms",
-            elapsed.as_millis()
-        );
+        host_budget::assert_within(module_path!(), "brunel_wang_performance", || {
+            let mut n = BrunelWangNeuron::new();
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 }

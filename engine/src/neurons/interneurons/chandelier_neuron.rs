@@ -155,6 +155,7 @@ impl Default for ChandelierNeuron {
 mod tests {
     use super::super::PVFastSpikingNeuron;
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn chandelier_fires_with_input() {
@@ -210,17 +211,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn chandelier_performance_5k_steps() {
         let mut n = ChandelierNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..5_000 {
-            n.step(3.0);
-        }
-        assert!(
-            start.elapsed().as_millis() < 500,
-            "5k steps took {:?}",
-            start.elapsed()
-        );
+        host_budget::assert_within(module_path!(), "chandelier_performance_5k_steps", || {
+            for _ in 0..5_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 }

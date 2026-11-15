@@ -1555,6 +1555,7 @@ dependencies = [
  "core_affinity",
  "criterion",
  "crossbeam-channel",
+ "libc",
  "nalgebra",
  "ndarray",
  "numpy",
@@ -1568,6 +1569,7 @@ dependencies = [
  "rayon",
  "rustfft",
  "sha2",
+ "toml_edit",
  "wgpu",
  "z3",
 ]

@@ -180,6 +180,7 @@ impl Default for PVFastSpikingNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     #[test]
     fn pv_fires_with_input() {
@@ -235,17 +236,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn pv_performance_5k_steps() {
         let mut n = PVFastSpikingNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..5_000 {
-            n.step(3.0);
-        }
-        assert!(
-            start.elapsed().as_millis() < 500,
-            "5k steps took {:?}",
-            start.elapsed()
-        );
+        host_budget::assert_within(module_path!(), "pv_performance_5k_steps", || {
+            for _ in 0..5_000 {
+                std::hint::black_box(n.step(3.0));
+            }
+        });
     }
 }

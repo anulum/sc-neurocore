@@ -219,6 +219,7 @@ impl SmoothMuscleCell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // -- Smooth Muscle Cell tests --
 
@@ -304,13 +305,12 @@ mod tests {
 
     #[test]
     fn smooth_performance_1k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = SmoothMuscleCell::new();
-        for _ in 0..1_000 {
-            std::hint::black_box(n.step(2.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+        host_budget::assert_within(module_path!(), "smooth_performance_1k_steps", || {
+            let mut n = SmoothMuscleCell::new();
+            for _ in 0..1_000 {
+                std::hint::black_box(n.step(2.0));
+            }
+        });
     }
 
     #[test]
