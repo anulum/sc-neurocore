@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 16
+MODELS_WITH_CASES = 17
 
 
 def _accumulator() -> dict[str, object]:
@@ -398,6 +398,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "IntegerQIFNeuron",
         "PernarowskiNeuron",
         "RulkovMapNeuron",
+        "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",
         "SCInclusivePerfectIntegratorNeuron",
         "SCResettingWilsonHRNeuron",
@@ -411,7 +412,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 15,
+        "discriminated": 16,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -927,6 +928,42 @@ def test_every_variant_of_the_upward_crossing_rulkov_map_breaks_a_case(
     assert decided_late == [("x", "+ y", "alpha + y + I"), ("y", "+ x", "x + 1.0")]
 
 
+def test_every_variant_of_the_clipped_logistic_bursting_map_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Ten signs of the clipped fast map and the slow drift; five need the chaotic window.
+
+    The windows at 0.5, 1.0 and 2.0 fire within their first four steps and
+    clip the fast map low from the sixth step at the latest, so the sign of y
+    in the fast map and every sign of the slow equation leave their events
+    unchanged. At 0.05 the map stays inside the clip for all 30 steps and fires
+    7 times, and each of those five variants fires 9 or 2 times.
+    """
+    row = _rows(report)["SCClippedLogisticBurstingMapNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [2, 1, 1, 7]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 10
+    assert [variant["equation"] for variant in variants] == ["x"] * 6 + ["y"] * 4
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    chaotic = "a current of 0.05 fires 7 times in 30 steps"
+    decided_late = [
+        (variant["equation"], variant["term"], variant["within"])
+        for variant in variants
+        if variant["case"] == chaotic
+    ]
+    assert decided_late == [
+        ("x", "- y", "a * x * (1.0 - x) - y + I"),
+        ("y", "+ y", "y + epsilon * (x - sigma)"),
+        ("y", "+ epsilon * (x - sigma)", "y + epsilon * (x - sigma)"),
+        ("y", "+ x", "x - sigma"),
+        ("y", "- sigma", "x - sigma"),
+    ]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -938,10 +975,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+15$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+16$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 191, of them violated 191, not discriminated 0" in summary
+    assert "variants: 201, of them violated 201, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

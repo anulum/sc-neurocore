@@ -1414,6 +1414,124 @@
       ]
     },
     {
+      "model": "SCClippedLogisticBurstingMapNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 0.5 fires 2 times in 30 steps",
+          "observed": 2
+        },
+        {
+          "held": true,
+          "name": "a current of 1.0 fires once in 30 steps",
+          "observed": 1
+        },
+        {
+          "held": true,
+          "name": "a current of 2.0 fires once in 30 steps",
+          "observed": 1
+        },
+        {
+          "held": true,
+          "name": "a current of 0.05 fires 7 times in 30 steps",
+          "observed": 7
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.5 fires 2 times in 30 steps",
+          "equation": "x",
+          "expression": "min(2.0, max(-2.0, -(a * x * (1.0 - x)) - y + I))",
+          "observed": 26,
+          "outcome": "violated",
+          "term": "+ a * x * (1.0 - x)",
+          "within": "a * x * (1.0 - x) - y + I"
+        },
+        {
+          "case": "a current of 0.05 fires 7 times in 30 steps",
+          "equation": "x",
+          "expression": "min(2.0, max(-2.0, a * x * (1.0 - x) + y + I))",
+          "observed": 9,
+          "outcome": "violated",
+          "term": "- y",
+          "within": "a * x * (1.0 - x) - y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 2 times in 30 steps",
+          "equation": "x",
+          "expression": "min(2.0, max(-2.0, a * x * (1.0 - x) - y - I))",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "a * x * (1.0 - x) - y + I"
+        },
+        {
+          "case": "a current of 0.5 fires 2 times in 30 steps",
+          "equation": "x",
+          "expression": "min(2.0, max(-2.0, a * x * (-1.0 - x) - y + I))",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "1.0 - x"
+        },
+        {
+          "case": "a current of 0.5 fires 2 times in 30 steps",
+          "equation": "x",
+          "expression": "min(2.0, max(-2.0, a * x * (1.0 + x) - y + I))",
+          "observed": 30,
+          "outcome": "violated",
+          "term": "- x",
+          "within": "1.0 - x"
+        },
+        {
+          "case": "a current of 0.5 fires 2 times in 30 steps",
+          "equation": "x",
+          "expression": "-min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))",
+          "observed": 29,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))"
+        },
+        {
+          "case": "a current of 0.05 fires 7 times in 30 steps",
+          "equation": "y",
+          "expression": "-y + epsilon * (x - sigma)",
+          "observed": 9,
+          "outcome": "violated",
+          "term": "+ y",
+          "within": "y + epsilon * (x - sigma)"
+        },
+        {
+          "case": "a current of 0.05 fires 7 times in 30 steps",
+          "equation": "y",
+          "expression": "y - epsilon * (x - sigma)",
+          "observed": 9,
+          "outcome": "violated",
+          "term": "+ epsilon * (x - sigma)",
+          "within": "y + epsilon * (x - sigma)"
+        },
+        {
+          "case": "a current of 0.05 fires 7 times in 30 steps",
+          "equation": "y",
+          "expression": "y + epsilon * (-x - sigma)",
+          "observed": 2,
+          "outcome": "violated",
+          "term": "+ x",
+          "within": "x - sigma"
+        },
+        {
+          "case": "a current of 0.05 fires 7 times in 30 steps",
+          "equation": "y",
+          "expression": "y + epsilon * (x + sigma)",
+          "observed": 2,
+          "outcome": "violated",
+          "term": "- sigma",
+          "within": "x - sigma"
+        }
+      ]
+    },
+    {
       "model": "SCFourStateGLIFNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -2192,8 +2310,8 @@
       ]
     }
   ],
-  "models_with_cases": 16,
-  "models_without_cases": 169,
+  "models_with_cases": 17,
+  "models_without_cases": 168,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -2202,7 +2320,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 15,
+    "discriminated": 16,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -2211,7 +2329,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 191,
-    "violated": 191
+    "total": 201,
+    "violated": 201
   }
 }

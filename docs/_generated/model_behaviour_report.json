@@ -1564,10 +1564,75 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            2,
+            2
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 2 times in 30 steps",
+          "observable": "spikes",
+          "observed": 2,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.0
+          },
+          "kind": "interval",
+          "name": "a current of 1.0 fires once in 30 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 fires once in 30 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            7,
+            7
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.05
+          },
+          "kind": "interval",
+          "name": "a current of 0.05 fires 7 times in 30 steps",
+          "observable": "spikes",
+          "observed": 7,
+          "steps": 30
+        }
+      ],
+      "cases_sha256": "9a658f4421557c7aa8873fbd0c01af84dc063578f2a433d499c0390f75659d28",
       "model": "SCClippedLogisticBurstingMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2378,9 +2443,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 16,
+    "held": 17,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 169
+    "no_case": 168
   }
 }

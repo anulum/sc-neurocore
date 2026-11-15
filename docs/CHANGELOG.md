@@ -28,6 +28,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The SC clipped-logistic bursting map neuron states four behaviour cases:
+  the event counts over the 30-step windows its Q16.16 test runs for the
+  hand model, the schema and the RTL (2, 1 and 1 at currents 0.5, 1.0 and
+  2.0), and the 7 events in 30 steps at 0.05 that its sensitive-boundary
+  test enrols for the hand model. Each of the 10 sign variants of its two
+  equations breaks a case. Seventeen of the 185 catalogue models now state
+  cases.
 - The upward-crossing SC Rulkov map neuron states five behaviour cases: the
   event counts over the 30-step windows its Q16.16 test runs for the hand
   model, the schema and the RTL (none, 7 and 10 at currents 0, 0.5 and

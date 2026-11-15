@@ -134,3 +134,55 @@ synth_report = "hdl/reports/yosys_sc_clipped_logistic_bursting_map_q88_2026-08-2
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
 terminal_reason = "Retained generated fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."
+
+[[behaviour]]
+name = "a current of 0.5 fires 2 times in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    2,
+    2,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 1.0 fires once in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 1.0
+
+[[behaviour]]
+name = "a current of 2.0 fires once in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 2.0
+
+[[behaviour]]
+name = "a current of 0.05 fires 7 times in 30 steps"
+kind = "interval"
+steps = 30
+observable = "spikes"
+bounds = [
+    7,
+    7,
+]
+
+[behaviour.inputs]
+current = 0.05
