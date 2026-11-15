@@ -110,6 +110,21 @@ def test_hodgkin_huxley_descriptor_tracks_the_public_default_profile() -> None:
     assert descriptor.integration_method == "baseline_euler"
 
 
+def test_dendritic_nmda_descriptor_names_its_runtime_integrator() -> None:
+    """The descriptor names the RK4 path the class runs by default, as every backend lane does.
+
+    The model has no v1 schema, so without its structural entry the generator wrote the
+    generic ``euler`` default into the descriptor.
+    """
+    from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+    from sc_neurocore.neurons.models.dendritic_nmda import DendriticNMDANeuron
+
+    descriptor = generate_descriptor("DendriticNMDANeuron")
+
+    assert DendriticNMDANeuron().integrator == "rk4"
+    assert descriptor.integration_method == "rk4"
+
+
 def test_public_rng_state_properties_are_materialised() -> None:
     """Seeded stochastic descriptors expose replay state from their public property."""
     from sc_neurocore.neurons.descriptor_generator import generate_descriptor

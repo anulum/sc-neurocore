@@ -470,6 +470,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The dendritic NMDA neuron's descriptor names its integration method RK4,
+  the path its class runs by default and every backend lane uses; it said
+  Euler, the generator's default for a model without a v1 schema.
 - At interpreter exit the Studio job ledger closes only the connections no
   live thread can be using: those of the exiting thread and of threads that
   have ended. It closed every connection before, also that of a process-job

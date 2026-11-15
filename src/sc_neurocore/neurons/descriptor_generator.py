@@ -132,6 +132,10 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
         "parameters": {"theta", "dt"},
     },
     "SCWBNMDAMagnesiumBlockNeuron": {"method": "euler-50-substeps"},
+    # No v1 schema gives this model's method, so the generic Euler default would
+    # stand in the descriptor; the class runs RK4 by default and so does every
+    # backend lane (Rust, Go, Julia, Mojo).
+    "DendriticNMDANeuron": {"method": "rk4"},
     # ``n`` is the number of ring sites, fixed at construction and read by every
     # step without ever being written.  The classifier recognises the name only
     # because ``n`` is the Hodgkin-Huxley potassium activation gate, so it

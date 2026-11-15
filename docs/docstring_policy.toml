@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1987
+expected_file_count = 1988
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8002,3 +8002,7 @@ rationale = "Studio API runtime builders: the audit sink, the job manager and th
 [[file]]
 path = "tests/test_testbench_waveform_opt_in.py"
 rationale = "A generated testbench writes its VCD waveform only with the +vcd plusarg: the guarded dump, a run without it leaving no file, a run with it writing the waveform, and the hint compile --testbench prints."
+
+[[file]]
+path = "tests/test_tools/test_generate_model_descriptors.py"
+rationale = "The descriptor generator writes the corpus the code implies: the SPDX header, aliases kept off canonical descriptors, schema and event-only integration contracts, and each model's runtime integrator where no v1 schema names it."
