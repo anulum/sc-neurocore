@@ -444,6 +444,11 @@
           "held": true,
           "name": "a current of 0.4 fires 83 times in 39600 steps",
           "observed": 83
+        },
+        {
+          "held": true,
+          "name": "a current of 2.0 fires once in 10000 steps",
+          "observed": 1
         }
       ],
       "variants": [

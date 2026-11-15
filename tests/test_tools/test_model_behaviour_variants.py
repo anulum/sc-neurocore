@@ -764,13 +764,14 @@ def test_every_variant_of_the_fitzhugh_rinzel_model_breaks_a_case(
     Over 3000 steps y moves by about a hundredth, so the enrolled counts leave
     the sign of y in the fast equation and three signs of y's own equation
     undecided. Over 39600 steps at 0.4 each of those variants fires a different
-    number of times than the model's 83.
+    number of times than the model's 83. The schema also gives the 1 event in
+    10000 steps at 2.0 that tells the crossing's direction; no variant needs it.
     """
     row = _rows(report)["FitzHughRinzelNeuron"]
     assert row["state"] == "discriminated"
     unchanged = row["unchanged"]
     assert isinstance(unchanged, list)
-    assert [entry["observed"] for entry in unchanged] == [7, 8, 8, 83]
+    assert [entry["observed"] for entry in unchanged] == [7, 8, 8, 83, 1]
     variants = row["variants"]
     assert isinstance(variants, list)
     assert [(variant["equation"], variant["term"]) for variant in variants] == [

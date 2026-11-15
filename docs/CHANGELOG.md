@@ -28,6 +28,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The FitzHugh-Rinzel neuron states a fifth behaviour case: 1 event in
+  10000 steps at a current of 2.0, the window its dynamics test enrols for
+  the public class; the schema matches. v crosses the threshold upward once
+  and stays above it, so a step that counted downward crossings would give
+  none. Each of the four windows it stated before holds as many downward
+  crossings as upward ones.
 - The SC adaptive-threshold map neuron states two behaviour cases: 3 events
   over the 32-step window at a current of 0.4 that its Q8.24 test runs for
   the hand model and the RTL, which must give the same events, and 4 events

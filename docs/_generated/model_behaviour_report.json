@@ -778,9 +778,25 @@
           "observable": "spikes",
           "observed": 83,
           "steps": 39600
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 fires once in 10000 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 10000
         }
       ],
-      "cases_sha256": "660f6f304e720505599f82de12bf084874e78301bc69d6850698a04ecea2ec4b",
+      "cases_sha256": "49f18697a01b91fbd6b42dc710f506e1fbfc44ef4e48506033dbe6db5535ee51",
       "model": "FitzHughRinzelNeuron",
       "state": "held"
     },

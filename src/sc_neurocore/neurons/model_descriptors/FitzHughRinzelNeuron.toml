@@ -217,3 +217,16 @@ bounds = [
 
 [behaviour.inputs]
 current = 0.4
+
+[[behaviour]]
+name = "a current of 2.0 fires once in 10000 steps"
+kind = "interval"
+steps = 10000
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 2.0
