@@ -668,13 +668,29 @@ def _parse_parameters(section: Mapping[str, object]) -> tuple[ParameterSpec, ...
 
 
 def _parse_dynamics(section: Mapping[str, object]) -> dict[str, str]:
+    """Read each ``[dynamics]`` entry as the text of its expression.
+
+    An entry is the expression itself, or a table that holds it as text under
+    ``expr`` and has no other key. Any other entry is refused with its name, so
+    it can neither drop out of the descriptor nor read as an empty equation.
+    """
     dynamics: dict[str, str] = {}
     for name, value in section.items():
-        if isinstance(value, Mapping):
-            expr = value.get("expr", "")
-            dynamics[name] = str(expr) if isinstance(expr, str) else ""
-        elif isinstance(value, str):
+        if isinstance(value, str):
             dynamics[name] = value
+        elif isinstance(value, Mapping):
+            expr = value.get("expr")
+            if set(value) != {"expr"} or not isinstance(expr, str):
+                raise ModelDescriptorError(
+                    f"descriptor dynamics {name!r} table must hold only its expression, "
+                    f"as text under 'expr', got {value!r}"
+                )
+            dynamics[name] = expr
+        else:
+            raise ModelDescriptorError(
+                f"descriptor dynamics {name!r} must be an expression or a table with one, "
+                f"got {value!r}"
+            )
     return dynamics
 
 

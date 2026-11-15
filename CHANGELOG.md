@@ -588,6 +588,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A model descriptor's `[dynamics]` entry must be its expression text, or a
+  table that holds only that text under `expr`; anything else is refused,
+  naming the entry. A number, a truth value or a list used to be left out of
+  the parsed descriptor without a word, a table whose `expr` was not text read
+  as an empty equation, and a table's other keys were dropped. Every shipped
+  descriptor gives its 420 dynamics entries as text, so none is refused.
 - The benchmark coverage census reads the source digests a record keys by
   repository path under `source_sha256` or `source_files_sha256`, where the
   record binds no path under `source_hashes` and the evidence gate's manifest

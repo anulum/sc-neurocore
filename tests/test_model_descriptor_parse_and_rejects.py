@@ -6,6 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (parse_and_rejects) from former test_model_descriptor.py
 
+"""What a model descriptor's parser accepts and what it refuses, with the refusal's words.
+
+The accepted forms include the legacy scalar and table spellings; the refused
+ones include a missing or wrong metadata field, a controlled field outside its
+vocabulary, and a dynamics entry that is neither its expression text nor a
+table holding only that text.
+"""
+
 from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
@@ -13,7 +21,6 @@ from tests.model_descriptor_support import *  # noqa: F403
 
 def test_parse_minimal_descriptor() -> None:
     """A minimal valid payload parses into a Tier-0 descriptor."""
-
     descriptor = parse_model_descriptor(_minimal_payload())
     assert descriptor.class_name == "AdExNeuron"
     assert descriptor.schema_version == MODEL_DESCRIPTOR_SCHEMA_VERSION
@@ -40,6 +47,7 @@ def test_parse_reads_doi_is_translation_flag() -> None:
 
 
 def test_parse_rejects_missing_class_name() -> None:
+    """A descriptor without its class name is refused, naming the field."""
     payload = _minimal_payload()
     del payload["metadata"]["class_name"]
     with pytest.raises(ModelDescriptorError, match="class_name"):
@@ -47,6 +55,7 @@ def test_parse_rejects_missing_class_name() -> None:
 
 
 def test_parse_rejects_unknown_schema_version() -> None:
+    """A schema version the parser does not know is refused, naming the field."""
     payload = _minimal_payload()
     payload["metadata"]["schema_version"] = 1
     with pytest.raises(ModelDescriptorError, match="schema_version"):
@@ -55,7 +64,6 @@ def test_parse_rejects_unknown_schema_version() -> None:
 
 def test_parse_rejects_missing_required_metadata_section() -> None:
     """The metadata table is mandatory for every model descriptor."""
-
     payload = _minimal_payload()
     del payload["metadata"]
 
@@ -65,7 +73,6 @@ def test_parse_rejects_missing_required_metadata_section() -> None:
 
 def test_parse_rejects_non_table_sections() -> None:
     """Section values must be TOML-style tables, not sequences or scalars."""
-
     payload = _minimal_payload()
     payload["state"] = ["v"]
 
@@ -75,7 +82,6 @@ def test_parse_rejects_non_table_sections() -> None:
 
 def test_parse_rejects_string_tag_fields() -> None:
     """Discovery tag fields must be lists so scalar strings do not split silently."""
-
     payload = _minimal_payload()
     payload["metadata"]["intended_use"] = "simulation"
 
@@ -103,6 +109,15 @@ def test_parse_rejects_invalid_controlled_fields(
     mutate: Callable[[dict[str, Any]], None],
     match: str,
 ) -> None:
+    """A controlled field outside its vocabulary or type is refused, naming the field.
+
+    Parameters
+    ----------
+    mutate : callable
+        Puts one controlled field of a valid payload out of bounds.
+    match : str
+        A pattern the refusal's message must contain.
+    """
     payload = _minimal_payload()
     mutate(payload)
     with pytest.raises(ModelDescriptorError, match=match):
@@ -167,7 +182,6 @@ def test_parse_rejects_invalid_shape_and_numeric_fields(
     match: str,
 ) -> None:
     """Malformed numeric and structured fields fail with descriptor errors."""
-
     payload = _minimal_payload()
     mutate(payload)
 
@@ -177,14 +191,12 @@ def test_parse_rejects_invalid_shape_and_numeric_fields(
 
 def test_parse_accepts_legacy_scalar_and_mapping_forms() -> None:
     """Legacy scalar fields and compact backend forms normalize deterministically."""
-
     payload = _minimal_payload()
     payload["provenance"] = {"author": "Brette"}
     payload["state"] = {"v": -65.0}
     payload["parameters"] = {"tau": 20}
     payload["dynamics"] = {
         "v": {"expr": "(-v + input) / tau"},
-        "w": {"expr": 3.0},
         "u": "du/dt",
     }
     payload["backends"] = {"python": "implemented"}
@@ -196,7 +208,53 @@ def test_parse_accepts_legacy_scalar_and_mapping_forms() -> None:
     assert [(parameter.name, parameter.default) for parameter in descriptor.parameters] == [
         ("tau", 20.0)
     ]
-    assert descriptor.dynamics == {"v": "(-v + input) / tau", "w": "", "u": "du/dt"}
+    assert descriptor.dynamics == {"v": "(-v + input) / tau", "u": "du/dt"}
     assert [(backend.name, backend.status, backend.parity) for backend in descriptor.backends] == [
         ("python", "implemented", "n/a")
     ]
+
+
+@pytest.mark.parametrize("value", [3.0, 7, True, ["(-v + input) / tau"]])
+def test_a_dynamics_entry_of_another_kind_is_refused(value: object) -> None:
+    """A number, a truth value or a list in place of an equation is refused, with the entry's name.
+
+    Parameters
+    ----------
+    value : object
+        What stands where an expression or a table with one is expected.
+    """
+    payload = _minimal_payload()
+    payload["dynamics"] = {"v": "(-v + input) / tau", "w": value}
+    with pytest.raises(ModelDescriptorError) as caught:
+        parse_model_descriptor(payload)
+    assert str(caught.value) == (
+        f"descriptor dynamics 'w' must be an expression or a table with one, got {value!r}"
+    )
+
+
+@pytest.mark.parametrize(
+    "table",
+    [
+        {"expr": 3.0},
+        {},
+        {"expression": "(-v + input) / tau"},
+        {"expr": "(-v + input) / tau", "unit": "mV/ms"},
+    ],
+)
+def test_a_dynamics_table_must_hold_only_its_expression_text(table: dict[str, object]) -> None:
+    """A table holds its expression as text under ``expr`` and no other key, or it is refused.
+
+    Parameters
+    ----------
+    table : dict
+        A table whose expression is not text, is missing, sits under another key, or has a key
+        beside it that the parser would drop.
+    """
+    payload = _minimal_payload()
+    payload["dynamics"] = {"w": table}
+    with pytest.raises(ModelDescriptorError) as caught:
+        parse_model_descriptor(payload)
+    assert str(caught.value) == (
+        "descriptor dynamics 'w' table must hold only its expression, as text under 'expr', "
+        f"got {table!r}"
+    )

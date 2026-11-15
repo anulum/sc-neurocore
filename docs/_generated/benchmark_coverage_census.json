@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 40,
-    "outdated": 104,
+    "current": 39,
+    "outdated": 105,
     "unbound": 174
   },
   "all_records": 318,
@@ -2365,7 +2365,10 @@
       "name": "bench_equation_program.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/neurons/model_descriptor.py"
+      ],
+      "currency": "outdated",
       "name": "bench_function_call_domains.json"
     },
     {
