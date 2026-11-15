@@ -17,10 +17,29 @@ run then.
 
 from __future__ import annotations
 
+import atexit
 import sqlite3
 import threading
 import weakref
 from pathlib import Path
+
+#: Every registry whose owner is still alive, for the exit handler below.
+_LIVE_REGISTRIES: weakref.WeakSet[LedgerConnectionRegistry] = weakref.WeakSet()
+
+
+def _close_at_exit() -> None:
+    """At interpreter exit, close what no live thread can be using; leave the rest open.
+
+    A daemon thread can still be running then and using its connection: a
+    process-job supervisor of a Studio that exits with a job running is one.
+    Its connection is retired, as :meth:`LedgerConnectionRegistry.close_all`
+    does, and the process's end releases it.
+    """
+    for registry in list(_LIVE_REGISTRIES):
+        registry.close_all()
+
+
+atexit.register(_close_at_exit)
 
 
 class LedgerConnectionRegistry:
@@ -35,13 +54,19 @@ class LedgerConnectionRegistry:
     """
 
     def __init__(self, *, owner: object) -> None:
-        """Track connections for ``owner``; all are closed when ``owner`` is collected."""
+        """Track connections for ``owner``; all are closed when ``owner`` is collected.
+
+        At interpreter exit ``owner`` may still be alive and in use by a daemon
+        thread, so the finalizer does not run then; the module's exit handler
+        closes only the connections no live thread can be using.
+        """
         self._lock = threading.Lock()
         self._connections: list[tuple[threading.Thread, sqlite3.Connection]] = []
         self._generation = 0
         # The callback holds this registry, never the owner, so it cannot keep the owner alive.
         # Once the owner is unreachable no thread can be using its connections.
-        weakref.finalize(owner, self._close_every)
+        weakref.finalize(owner, self._close_every).atexit = False
+        _LIVE_REGISTRIES.add(self)
 
     def current(
         self, entry: tuple[int, sqlite3.Connection] | None, path: Path, busy_timeout_ms: int

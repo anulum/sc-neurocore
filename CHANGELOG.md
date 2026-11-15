@@ -463,6 +463,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- At interpreter exit the Studio job ledger closes only the connections no
+  live thread can be using: those of the exiting thread and of threads that
+  have ended. It closed every connection before, also that of a process-job
+  supervisor still running in a daemon thread, whose next ledger write then
+  raised `sqlite3.ProgrammingError: Cannot operate on a closed database` in
+  the thread. A connection a live thread still holds is released by the end of
+  the process.
 - The Rust safety crate compiles three source-parity files it did not declare:
   `sc_compte_wm_network.rs`, `sc_resetting_mat.rs` and
   `sc_unit_capacitance_respiratory.rs`, so their tests run with the crate's
