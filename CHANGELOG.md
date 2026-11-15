@@ -469,6 +469,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 9 hardware-emulator models (Akida, BrainScaleS AdEx, DPI,
+  Loihi 2, Loihi CUBA, Neurogrid, SpiNNaker 2, SpiNNaker LIF, TrueNorth) are
+  documented in full, each file read against its code: the integer update
+  order of the Loihi and SpiNNaker steps (divisions truncate towards zero, a
+  time constant of 0 panics, the fixed-point decay product wraps), the
+  rank-order weighting of the Akida neuron, the dendritic input and capped
+  soma of the Neurogrid neuron, and what each reset restores. The DPI
+  neuron's documentation moves from its trace alias to the struct. The
+  TrueNorth descriptor says that the leak is subtracted, as every runtime
+  does.
 - The engine's 12 AI-oriented neuron models are documented in full, each file
   read against its code: each step's update order and event rule, what reset
   keeps (the Arcane neuron keeps its deep compartment, learned self-model and

@@ -6,21 +6,33 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — SpiNNaker LIF Neuron Emulator
 
+#![deny(missing_docs)]
+
 /// SpiNNaker LIF — ARM Cortex-M4 digital LIF with refractory. Furber et al. 2014.
 #[derive(Clone, Debug)]
 pub struct SpiNNakerLIFNeuron {
+    /// Membrane potential (mV); a spike sets it to `v_reset`.
     pub v: f64,
+    /// Resting / leak reversal potential (mV).
     pub v_rest: f64,
+    /// Membrane potential reset to after a spike (mV).
     pub v_reset: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Constant offset (bias) input current (nA).
     pub i_offset: f64,
+    /// Absolute refractory period (ms).
     pub tau_refrac: f64,
+    /// Refractory time left (ms); a spike sets it to `tau_refrac`.
     pub refrac_count: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl SpiNNakerLIFNeuron {
+    /// Create a neuron at rest (-70 mV) with the default parameters and `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -34,6 +46,12 @@ impl SpiNNakerLIFNeuron {
             dt: 1.0,
         }
     }
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// While `refrac_count` is positive, the step counts it down by `dt`, leaves `v`
+    /// unchanged and returns 0. Otherwise `v` gains
+    /// `(-(v - v_rest) + current + i_offset) / tau_m * dt`, and reaching `v_threshold` sets
+    /// `v` to `v_reset` and starts the refractory period. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         if self.refrac_count > 0.0 {
             self.refrac_count -= self.dt;
@@ -48,6 +66,7 @@ impl SpiNNakerLIFNeuron {
             0
         }
     }
+    /// Return `v` to `v_rest` and clear the refractory time; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refrac_count = 0.0;
@@ -60,40 +79,5 @@ impl Default for SpiNNakerLIFNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn spinnaker_fires() {
-        let mut n = SpiNNakerLIFNeuron::new();
-        let t: i32 = (0..200).map(|_| n.step(30.0)).sum();
-        assert!(t > 0);
-    }
-    #[test]
-    fn spinnaker_silent() {
-        let mut n = SpiNNakerLIFNeuron::new();
-        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
-        assert_eq!(t, 0);
-    }
-    #[test]
-    fn spinnaker_reset() {
-        let mut n = SpiNNakerLIFNeuron::new();
-        for _ in 0..50 {
-            n.step(30.0);
-        }
-        n.reset();
-        assert!((n.v - n.v_rest).abs() < 1e-10);
-    }
-    #[test]
-    fn spinnaker_bounded() {
-        let mut n = SpiNNakerLIFNeuron::new();
-        for _ in 0..1000 {
-            n.step(1e4);
-        }
-        assert!(n.v.is_finite());
-    }
-    #[test]
-    fn spinnaker_nan_no_panic() {
-        SpiNNakerLIFNeuron::new().step(f64::NAN);
-    }
-}
+#[path = "spinnaker_lif_tests.rs"]
+mod tests;

@@ -38,7 +38,7 @@ init = 0.0
 [parameters.leak]
 default = 0.0
 unit = "1"
-meaning = "integer leak added to the membrane each timestep"
+meaning = "integer leak subtracted from the membrane each timestep"
 range = [
     -256.0,
     256.0,

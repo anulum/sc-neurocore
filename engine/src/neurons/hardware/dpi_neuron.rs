@@ -6,37 +6,64 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — DPI Neuron Circuit Emulator
 
+#![deny(missing_docs)]
+
+mod contract;
+
+/// Complete DPI trace from `simulate_complete`: the membrane current, the adaptation
+/// current and the remaining refractory time after each step, and the event flag of each
+/// step.
+pub type DpiCompleteTrace = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<u8>);
+
 /// DPI current-mode adaptive integrate-and-fire circuit.
 ///
 /// Implements Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3). The
 /// normalised operating point, explicit-Euler macro-step, constant resting
 /// input, threshold event, and digital refractory scheduling are maintained
 /// numerical choices around the source circuit equations.
-pub type DpiCompleteTrace = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<u8>);
-
 #[derive(Clone, Debug)]
 pub struct DPINeuron {
+    /// Membrane DPI output current (normalised current).
     pub i_mem: f64,
+    /// After-hyperpolarisation adaptation DPI current (normalised current).
     pub i_ahp: f64,
+    /// Remaining spike/refractory pulse duration (normalised time).
     pub refractory_time: f64,
+    /// Post-Euler membrane-current event threshold (normalised current).
     pub i_threshold: f64,
+    /// Membrane current held during the refractory pulse (normalised current).
     pub i_reset: f64,
+    /// Constant resting input current added to injected drive (normalised current).
     pub i_rest: f64,
+    /// Membrane DPI leakage current (normalised current).
     pub i_tau: f64,
+    /// Membrane input saturation current (normalised current).
     pub i_g: f64,
+    /// Adaptation DPI leakage current (normalised current).
     pub i_tau_ahp: f64,
+    /// Adaptation input saturation current (normalised current).
     pub i_ga: f64,
+    /// Current injected into the adaptation DPI while the spike pulse is active (normalised current).
     pub i_spike: f64,
+    /// Subthreshold transistor reference current in the positive-feedback term (normalised current).
     pub i_0: f64,
+    /// Subthreshold slope factor (dimensionless).
     pub kappa: f64,
+    /// Inverter transition steepness in the positive-feedback gate (1 / normalised current).
     pub alpha: f64,
+    /// Membrane DPI time constant (normalised time).
     pub tau: f64,
+    /// Adaptation DPI time constant (normalised time).
     pub tau_ahp: f64,
+    /// Spike pulse duration that drives adaptation and holds the membrane reset (normalised time).
     pub refractory_period: f64,
+    /// Explicit-Euler step (normalised time); it must not exceed `refractory_period`.
     pub dt: f64,
 }
 
 impl DPINeuron {
+    /// Create a neuron at the normalised operating point with the default parameters and
+    /// `dt` = 0.1.
     pub fn new() -> Self {
         Self {
             i_mem: 0.01,
@@ -58,47 +85,6 @@ impl DPINeuron {
             refractory_period: 2.0,
             dt: 0.1,
         }
-    }
-
-    fn valid(&self) -> bool {
-        self.i_mem.is_finite()
-            && self.i_mem > 0.0
-            && self.i_ahp.is_finite()
-            && self.i_ahp >= 0.0
-            && self.refractory_time.is_finite()
-            && self.refractory_time >= 0.0
-            && self.i_threshold.is_finite()
-            && self.i_threshold > 0.0
-            && self.i_reset.is_finite()
-            && self.i_reset > 0.0
-            && self.i_reset < self.i_threshold
-            && self.i_rest.is_finite()
-            && self.i_rest >= 0.0
-            && self.i_tau.is_finite()
-            && self.i_tau > 0.0
-            && self.i_g.is_finite()
-            && self.i_g > 0.0
-            && self.i_tau_ahp.is_finite()
-            && self.i_tau_ahp > 0.0
-            && self.i_ga.is_finite()
-            && self.i_ga > 0.0
-            && self.i_spike.is_finite()
-            && self.i_spike > 0.0
-            && self.i_0.is_finite()
-            && self.i_0 > 0.0
-            && self.kappa.is_finite()
-            && self.kappa > 0.0
-            && self.alpha.is_finite()
-            && self.alpha > 0.0
-            && self.tau.is_finite()
-            && self.tau > 0.0
-            && self.tau_ahp.is_finite()
-            && self.tau_ahp > 0.0
-            && self.refractory_period.is_finite()
-            && self.refractory_period > 0.0
-            && self.dt.is_finite()
-            && self.dt > 0.0
-            && self.refractory_period >= self.dt
     }
 
     fn sigmoid(value: f64) -> f64 {
@@ -205,6 +191,8 @@ impl DPINeuron {
         Ok((i_mem_trace, i_ahp_trace, refractory_trace, events))
     }
 
+    /// Set `i_mem` to `i_reset` and `i_ahp` to `i_0`, and clear the refractory time; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.i_mem = self.i_reset;
         self.i_ahp = self.i_0;

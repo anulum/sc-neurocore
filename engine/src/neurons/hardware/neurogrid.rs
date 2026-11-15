@@ -6,23 +6,38 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — NeuroGrid Neuron Emulator
 
+#![deny(missing_docs)]
+
 /// NeuroGrid — Boahen 2014 subthreshold analog 2-compartment.
 #[derive(Clone, Debug)]
 pub struct NeuroGridNeuron {
+    /// Somatic potential (mV); it carries the exponential spike initiation.
     pub v_s: f64,
+    /// Dendritic potential (mV); it receives the input current.
     pub v_d: f64,
+    /// Somatic membrane time constant (ms).
     pub tau_s: f64,
+    /// Dendritic membrane time constant (ms).
     pub tau_d: f64,
+    /// Normalised soma-dendrite coupling conductance (dimensionless).
     pub g_c: f64,
+    /// Slope factor of the exponential spike initiation (mV).
     pub delta_t: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Spike-initiation threshold (mV).
     pub v_threshold: f64,
+    /// Spike cutoff (peak) potential (mV).
     pub v_peak: f64,
+    /// Reset potential (mV).
     pub v_reset: f64,
+    /// RK4 step (ms); each call takes one.
     pub dt: f64,
 }
 
 impl NeuroGridNeuron {
+    /// Create a neuron with both compartments at -65 mV, the default parameters and
+    /// `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v_s: -65.0,
@@ -78,6 +93,14 @@ impl NeuroGridNeuron {
         )
     }
 
+    /// Advance one classical RK4 step with `current` injected into the dendrite; return 1
+    /// when the soma reaches `v_peak`, else 0.
+    ///
+    /// The dendrite relaxes to `v_rest` and couples to the soma through `g_c`. The soma adds
+    /// `delta_t * exp((v_s - v_threshold) / delta_t)`; the exponent is capped at 20, and
+    /// `v_s` is capped at `v_peak` inside the equations. A spike sets `v_s` to `v_reset`; the
+    /// dendrite takes its new value and is not reset. A non-finite input, an invalid state or
+    /// parameter, or a non-finite result returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid() {
             return 0;
@@ -95,6 +118,7 @@ impl NeuroGridNeuron {
             0
         }
     }
+    /// Set both compartments to -65 mV (not `v_rest` or `v_reset`); the parameters are kept.
     pub fn reset(&mut self) {
         self.v_s = -65.0;
         self.v_d = -65.0;
@@ -107,58 +131,5 @@ impl Default for NeuroGridNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn neurogrid_fires() {
-        let mut n = NeuroGridNeuron::new();
-        let t: i32 = (0..2000).map(|_| n.step(500.0)).sum();
-        assert!(t > 0);
-    }
-    #[test]
-    fn neurogrid_silent() {
-        let mut n = NeuroGridNeuron::new();
-        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
-        assert_eq!(t, 0);
-    }
-    #[test]
-    fn neurogrid_reset() {
-        let mut n = NeuroGridNeuron::new();
-        for _ in 0..100 {
-            n.step(500.0);
-        }
-        n.reset();
-        assert!((n.v_s - (-65.0)).abs() < 1e-10);
-    }
-    #[test]
-    fn neurogrid_bounded() {
-        let mut n = NeuroGridNeuron::new();
-        for _ in 0..2000 {
-            n.step(1e4);
-        }
-        assert!(n.v_s.is_finite());
-    }
-    #[test]
-    fn neurogrid_nan_no_panic() {
-        NeuroGridNeuron::new().step(f64::NAN);
-    }
-    #[test]
-    fn neurogrid_rk4_anchor() {
-        let mut n = NeuroGridNeuron::new();
-        let spikes: i32 = (0..20_000).map(|_| n.step(100.0)).sum();
-        assert_eq!(spikes, 94);
-        assert!(n.v_s.is_finite());
-        assert!(n.v_d.is_finite());
-    }
-    #[test]
-    fn neurogrid_invalid_input_preserves_state() {
-        let mut n = NeuroGridNeuron::new();
-        for _ in 0..10 {
-            n.step(100.0);
-        }
-        let old = (n.v_s, n.v_d);
-        assert_eq!(n.step(f64::INFINITY), 0);
-        assert_eq!((n.v_s, n.v_d), old);
-    }
-}
+#[path = "neurogrid_tests.rs"]
+mod tests;

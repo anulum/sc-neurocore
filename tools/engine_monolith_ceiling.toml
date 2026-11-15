@@ -107,39 +107,39 @@ max_lines = 29
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/hardware/akida.rs"]
-max_lines = 82
+max_lines = 72
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/hardware/brainscales_adex.rs"]
-max_lines = 108
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/dpi_neuron.rs"]
-max_lines = 222
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/loihi2.rs"]
-max_lines = 105
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/loihi_cuba.rs"]
-max_lines = 85
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/neurogrid.rs"]
-max_lines = 164
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/spinnaker2.rs"]
-max_lines = 93
-max_pyfunctions = 0
-
-[targets."engine/src/neurons/hardware/spinnaker_lif.rs"]
 max_lines = 99
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/hardware/dpi_neuron.rs"]
+max_lines = 210
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/hardware/loihi2.rs"]
+max_lines = 94
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/hardware/loihi_cuba.rs"]
+max_lines = 69
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/hardware/neurogrid.rs"]
+max_lines = 135
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/hardware/spinnaker2.rs"]
+max_lines = 84
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/hardware/spinnaker_lif.rs"]
+max_lines = 83
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/hardware/truenorth.rs"]
-max_lines = 71
+max_lines = 58
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/interneurons.rs"]

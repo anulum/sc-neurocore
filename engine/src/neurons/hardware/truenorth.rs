@@ -6,16 +6,23 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — TrueNorth Neuron Emulator
 
+#![deny(missing_docs)]
+
 /// TrueNorth — IBM TrueNorth digital crossbar neuron. Merolla et al. 2014.
 #[derive(Clone, Debug)]
 pub struct TrueNorthNeuron {
+    /// Membrane potential (integer); a spike sets it to `v_reset`.
     pub v: i32,
+    /// Integer leak subtracted from the membrane each timestep (dimensionless).
     pub leak: i32,
+    /// Integer firing threshold (dimensionless).
     pub threshold: i32,
+    /// Integer reset value (dimensionless).
     pub v_reset: i32,
 }
 
 impl TrueNorthNeuron {
+    /// Create a neuron at 0 with the given threshold, no leak and reset value 0.
     pub fn new(threshold: i32) -> Self {
         Self {
             v: 0,
@@ -24,6 +31,8 @@ impl TrueNorthNeuron {
             v_reset: 0,
         }
     }
+    /// Add `weighted_input - leak` to `v` and return 1 when `v` reaches `threshold`, which
+    /// sets `v` to `v_reset`; else 0.
     pub fn step(&mut self, weighted_input: i32) -> i32 {
         self.v += weighted_input - self.leak;
         if self.v >= self.threshold {
@@ -33,6 +42,7 @@ impl TrueNorthNeuron {
             0
         }
     }
+    /// Set `v` to 0 (not `v_reset`); the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0;
     }
@@ -44,28 +54,5 @@ impl Default for TrueNorthNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn truenorth_fires() {
-        let mut n = TrueNorthNeuron::default();
-        let t: i32 = (0..10).map(|_| n.step(50)).sum();
-        assert!(t > 0);
-    }
-    #[test]
-    fn truenorth_silent() {
-        let mut n = TrueNorthNeuron::default();
-        let t: i32 = (0..100).map(|_| n.step(0)).sum();
-        assert_eq!(t, 0);
-    }
-    #[test]
-    fn truenorth_reset() {
-        let mut n = TrueNorthNeuron::default();
-        for _ in 0..10 {
-            n.step(50);
-        }
-        n.reset();
-        assert_eq!(n.v, 0);
-    }
-}
+#[path = "truenorth_tests.rs"]
+mod tests;

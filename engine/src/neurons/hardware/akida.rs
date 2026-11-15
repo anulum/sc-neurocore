@@ -6,17 +6,27 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Akida Neuron Emulator
 
+#![deny(missing_docs)]
+
 /// Akida — BrainChip event-domain rank-order neuron.
 #[derive(Clone, Debug)]
 pub struct AkidaNeuron {
+    /// Integer membrane accumulator.
     pub v: i32,
+    /// Membrane threshold for an output spike (integer accumulator units) (dimensionless).
     pub threshold: i32,
+    /// Rank-order decay factor applied per spike rank (dimensionless).
     pub modulation: f64,
+    /// Input events accepted since the last reset; the next event is weighted by
+    /// `modulation^rank`.
     pub rank: i32,
+    /// Whether the neuron has fired since the last reset; it fires at most once per
+    /// presentation.
     pub spiked: bool,
 }
 
 impl AkidaNeuron {
+    /// Create a neuron with the given threshold and `modulation` = 0.75.
     pub fn new(threshold: i32) -> Self {
         Self {
             v: 0,
@@ -26,6 +36,11 @@ impl AkidaNeuron {
             spiked: false,
         }
     }
+    /// Accept one input event and return 1 when the accumulator reaches `threshold`, else 0.
+    ///
+    /// The event adds `weight * modulation^rank`, truncated towards zero to an integer (the
+    /// cast saturates; NaN adds 0), and the rank grows by 1. After the first spike, every
+    /// later event is ignored and returns 0 until `reset`.
     pub fn step(&mut self, weight: f64) -> i32 {
         if self.spiked {
             return 0;
@@ -39,6 +54,7 @@ impl AkidaNeuron {
             0
         }
     }
+    /// Clear the accumulator, the rank and the spiked flag; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0;
         self.rank = 0;
@@ -52,31 +68,5 @@ impl Default for AkidaNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn akida_fires() {
-        let mut n = AkidaNeuron::default();
-        let t: i32 = (0..10).map(|_| n.step(50.0)).sum();
-        assert!(t > 0);
-    }
-    #[test]
-    fn akida_silent() {
-        let mut n = AkidaNeuron::default();
-        let t: i32 = (0..100).map(|_| n.step(0.0)).sum();
-        assert_eq!(t, 0);
-    }
-    #[test]
-    fn akida_reset() {
-        let mut n = AkidaNeuron::default();
-        for _ in 0..10 {
-            n.step(50.0);
-        }
-        n.reset();
-    }
-    #[test]
-    fn akida_nan_no_panic() {
-        AkidaNeuron::default().step(f64::NAN);
-    }
-}
+#[path = "akida_tests.rs"]
+mod tests;

@@ -6,25 +6,44 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — BrainScaleS AdEx Neuron Emulator
 
+#![deny(missing_docs)]
+
 /// BrainScaleS AdEx — Heidelberg analog wafer-scale. Schemmel et al. 2010.
 #[derive(Clone, Debug)]
 pub struct BrainScaleSAdExNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Adaptation, in the units of the input; it is subtracted from the input in the
+    /// membrane equation.
     pub w: f64,
+    /// Resting / leak reversal potential (mV).
     pub v_rest: f64,
+    /// Membrane potential reset to after a spike (mV).
     pub v_reset: f64,
+    /// Voltage cutoff at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Slope factor of the exponential spike initiation (mV).
     pub delta_t: f64,
+    /// Rheobase threshold of the exponential term (mV).
     pub v_rh: f64,
+    /// Membrane time constant (biological-time equivalent) (ms).
     pub tau: f64,
+    /// Adaptation time constant (biological-time equivalent) (ms).
     pub tau_w: f64,
+    /// Subthreshold adaptation conductance (nS).
     pub a: f64,
+    /// Spike-triggered adaptation current increment (pA).
     pub b: f64,
+    /// Hardware acceleration factor relative to biological time (dimensionless). The step does
+    /// not read it; it labels the emulated hardware.
     pub hw_speedup: f64,
+    /// Euler step in biological time (ms).
     pub dt: f64,
 }
 
 impl BrainScaleSAdExNeuron {
+    /// Create a neuron at rest (-65 mV, no adaptation) with the default parameters and
+    /// `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -42,6 +61,12 @@ impl BrainScaleSAdExNeuron {
             dt: 0.1,
         }
     }
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// `tau dv/dt = -(v - v_rest) + delta_t * exp((v - v_rh) / delta_t) - w + current`, with
+    /// the exponent clamped to `[-20, 20]`, and `tau_w dw/dt = a * (v - v_rest) - w`; both
+    /// use the old state. Reaching `v_threshold` sets `v` to `v_reset` and adds `b` to `w`.
+    /// The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
         let exp_term = self.delta_t * exp_arg.exp();
@@ -57,6 +82,7 @@ impl BrainScaleSAdExNeuron {
             0
         }
     }
+    /// Return `v` to `v_rest` and clear `w`; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.w = 0.0;
@@ -69,40 +95,5 @@ impl Default for BrainScaleSAdExNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn brainscales_fires() {
-        let mut n = BrainScaleSAdExNeuron::new();
-        let t: i32 = (0..2000).map(|_| n.step(500.0)).sum();
-        assert!(t > 0);
-    }
-    #[test]
-    fn brainscales_silent() {
-        let mut n = BrainScaleSAdExNeuron::new();
-        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
-        assert_eq!(t, 0);
-    }
-    #[test]
-    fn brainscales_reset() {
-        let mut n = BrainScaleSAdExNeuron::new();
-        for _ in 0..100 {
-            n.step(500.0);
-        }
-        n.reset();
-        assert!((n.v - n.v_rest).abs() < 1e-10);
-    }
-    #[test]
-    fn brainscales_bounded() {
-        let mut n = BrainScaleSAdExNeuron::new();
-        for _ in 0..2000 {
-            n.step(1e4);
-        }
-        assert!(n.v.is_finite());
-    }
-    #[test]
-    fn brainscales_nan_no_panic() {
-        BrainScaleSAdExNeuron::new().step(f64::NAN);
-    }
-}
+#[path = "brainscales_adex_tests.rs"]
+mod tests;
