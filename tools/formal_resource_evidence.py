@@ -32,10 +32,31 @@ from tools.formal_resource_accounting import validate_resource_measurement
 from tools.formal_resource_policy import YICES_RETRY, next_attempt, select_contract
 
 
+#: The line that ends a Python traceback: an exception name, optionally dotted, then nothing or ``:``.
+_EXCEPTION_LINE = re.compile(r"[A-Za-z_][\w.]*(?::.*)?")
+
+
 def _log_line(log: str, offset: int) -> str:
-    """Return the log line holding ``offset``, stripped and bounded to 200 characters."""
+    """Return the log line holding ``offset``, stripped and bounded to 200 characters.
+
+    A Python traceback's first line names no cause, so for one the line is followed by the
+    first exception it reports: the first later line that is not indented. A chained
+    traceback therefore names its first exception, the cause. When that line is not an
+    exception, because the output was cut short and another tool line follows, the
+    traceback is marked "(no exception line)" instead of naming that line.
+    """
     start = log.rfind("\n", 0, offset) + 1
-    return log[start:].split("\n", 1)[0].strip()[:200]
+    first, *later = log[start:].split("\n")
+    line = first.strip()
+    if line.startswith("Traceback "):
+        following = next(
+            (text.strip() for text in later if text.strip() and not text[0].isspace()), None
+        )
+        if following is not None and _EXCEPTION_LINE.fullmatch(following):
+            line = f"{line} ... {following}"
+        elif following is not None:
+            line = f"{line} (no exception line)"
+    return line[:200]
 
 
 def validate_resource_attempt(

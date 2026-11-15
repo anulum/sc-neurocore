@@ -650,6 +650,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A formal resource attempt refused for a Python traceback in its solver
+  log now names the first exception the traceback reports, not only its
+  first line, which names no cause; a traceback cut short by another tool
+  line is marked "(no exception line)". A hosted run failed this way once
+  with only "Traceback (most recent call last):" to show, and its log was
+  gone with the runner.
 - The engine's fractional-order LIF neuron now keeps the potential after a
   reset in its memory, as the Python model does. It kept the value from
   before the reset, so the memory term undid every reset: after its first

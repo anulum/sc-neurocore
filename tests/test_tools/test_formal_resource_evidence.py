@@ -165,6 +165,51 @@ def test_resource_log_tool_failure_cannot_be_relabelled(
         _check(case)
 
 
+def test_a_traceback_in_the_log_names_its_exception(case: NativeEvidence) -> None:
+    """A traceback's first line names no cause; the refusal adds the exception that ends it."""
+    path = case.repository / "primary-public.log"
+    traceback = (
+        "Traceback (most recent call last):\n"
+        '  File "/usr/bin/sby", line 22, in <module>\n'
+        "    main()\n"
+        "KeyboardInterrupt\n"
+        "SBY 18:53:15 a later line\n"
+    )
+    path.write_text(path.read_text() + "\n" + traceback)
+    _change(case.repository / "receipt.json", "log.normalized_sha256", digest(path))
+    expected = "tool failure or counterexample: Traceback \\(most recent call last\\): ... KeyboardInterrupt$"
+    with pytest.raises(ValueError, match=expected):
+        _check(case)
+
+
+@pytest.mark.parametrize(
+    ("tail", "named"),
+    [
+        ("RuntimeError: solver stopped\n", "... RuntimeError: solver stopped"),
+        ("sby.core.SbyAbort\n", "... sby.core.SbyAbort"),
+        (
+            "SBY 18:53:15 [primary] engine_0: ##   0:00:05  Checking assertions in step 12..\n",
+            "(no exception line)",
+        ),
+    ],
+)
+def test_a_traceback_names_an_exception_line_only(
+    case: NativeEvidence, tail: str, named: str
+) -> None:
+    """A traceback cut short by another tool line is marked, not named after that line."""
+    path = case.repository / "primary-public.log"
+    traceback = (
+        "Traceback (most recent call last):\n"
+        '  File "/usr/bin/sby", line 22, in <module>\n'
+        "    main()\n" + tail
+    )
+    path.write_text(path.read_text() + "\n" + traceback)
+    _change(case.repository / "receipt.json", "log.normalized_sha256", digest(path))
+    expected = "Traceback \\(most recent call last\\): " + re.escape(named) + "$"
+    with pytest.raises(ValueError, match=expected):
+        _check(case)
+
+
 @pytest.mark.parametrize("attempts", [None, {}, [], [None, None, None, None]])
 def test_incomplete_or_unbounded_history_refuses(case: NativeEvidence, attempts: object) -> None:
     """Require a finite explicit admitted chain through the public row entry."""
