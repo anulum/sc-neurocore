@@ -284,6 +284,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Move soupsieve to 4.1.1 in the documentation, workstation and desktop
+  assembly tools locks, and bracex to 3.2.3 in the semgrep lock; only those
+  pins move.
+
 - Measure the Verilog compiler and function-call-domain benchmark records
   again on the current sources: they bound earlier bytes of 8 of their 43
   and 9 of their 146 sources. The function-call gate also binds the two
