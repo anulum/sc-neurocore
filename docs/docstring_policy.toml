@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1988
+expected_file_count = 1989
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -2483,6 +2483,10 @@ rationale = "Public variants report: what a variant of a schema is, the seven mo
 [[file]]
 path = "tests/test_tools/test_model_behaviour_variants.py"
 rationale = "Bind the variants of an equation on its syntax tree and their evaluation with small real schemas: discriminated, not discriminated, a schema that differs, the states without variants, the check mode, and the eight variants of the FitzHugh-Nagumo model."
+
+[[file]]
+path = "tests/test_tools/test_model_behaviour_crossing_direction.py"
+rationale = "Hold every crossing-count case model to the direction rule: each spike case is run through the public class, every returned event must be an upward crossing of the named variable, one case must hold more upward crossings than downward ones, and every case model must be classified as a crossing model or a reset or level one."
 
 [[file]]
 path = "tests/test_tools/test_benchmark_evidence_gate.py"

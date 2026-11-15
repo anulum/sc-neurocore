@@ -926,6 +926,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- A test holds every crossing-count case model to the direction rule: a
+  model whose step reports an upward crossing of a threshold with no reset
+  must state a spike case that holds more upward crossings than downward
+  ones, so a step that counted the other direction would break it. The test
+  runs each spike case through the public class, checks that every event it
+  returns is an upward crossing of the variable it names, and requires every
+  case model to be classified as such a model or as a reset or level one. It
+  holds the nine crossing models, among them the four whose direction cases
+  were added for it (FitzHugh-Rinzel, Hindmarsh-Rose, Pernarowski,
+  Wilson-HR).
 - The storage service's stop-on-SIGTERM test runs on every POSIX host. It
   was skipped off Linux because it reads the service's blocked-signal mask
   from `/proc`; that one check now runs where `/proc` has the process, and
