@@ -500,12 +500,16 @@ def test_every_variant_of_the_hindmarsh_rose_model_breaks_a_case(
 
 
 def test_every_variant_of_the_wilson_hr_model_breaks_a_case(report: dict[str, object]) -> None:
-    """Every sign of the two polynomial equations is decided by the enrolled counts."""
+    """Every sign of the two polynomial equations is decided by the enrolled counts.
+
+    The schema also gives the 1 event in 20 steps at 0.1 that tells the
+    crossing's direction; no variant needs it.
+    """
     row = _rows(report)["WilsonHRNeuron"]
     assert row["state"] == "discriminated"
     unchanged = row["unchanged"]
     assert isinstance(unchanged, list)
-    assert [entry["observed"] for entry in unchanged] == [0, 44, 46, 49, 52]
+    assert [entry["observed"] for entry in unchanged] == [0, 44, 46, 49, 52, 1]
     variants = row["variants"]
     assert isinstance(variants, list)
     assert [(variant["equation"], variant["term"]) for variant in variants] == [

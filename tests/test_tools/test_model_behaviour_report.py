@@ -92,7 +92,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [250, 250],
     ],
     "SCUpwardCrossingRulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [11, 11], [11, 11]],
-    "WilsonHRNeuron": [[0, 0], [44, 44], [46, 46], [49, 49], [52, 52]],
+    "WilsonHRNeuron": [[0, 0], [44, 44], [46, 46], [49, 49], [52, 52], [1, 1]],
 }
 
 
@@ -716,27 +716,33 @@ def test_the_hindmarsh_rose_model_holds_its_enrolled_and_direction_counts(
     assert [case["exercised"] for case in cases] == [False, False, True, True, True, True]
 
 
-def test_the_wilson_hr_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:
-    """Silent without a current, then 44, 46, 49 and 52 upward crossings in 5000 steps.
+def test_the_wilson_hr_model_holds_its_enrolled_and_direction_counts(
+    report: dict[str, object],
+) -> None:
+    """Silent without a current, 44, 46, 49 and 52 upward crossings, then one that tells the direction.
 
-    The counts are those the model's Q16.16 parity test enrols for the hand model,
-    the schema and the RTL alike.
+    The first five counts over 5000 steps are those the model's Q16.16 parity
+    test enrols for the hand model, the schema and the RTL alike. Each of those
+    windows holds as many downward crossings of v_peak as upward ones. Over 20
+    steps at 0.1 v has crossed upward once and not yet fallen back: 1 event,
+    where a count of downward crossings gives 0.
     """
     row = _models(report)["WilsonHRNeuron"]
     assert row["state"] == "held"
     cases = row["cases"]
     assert isinstance(cases, list)
-    assert [case["observed"] for case in cases] == [0, 44, 46, 49, 52]
+    assert [case["observed"] for case in cases] == [0, 44, 46, 49, 52, 1]
     assert [case["inputs"] for case in cases] == [
         {"current": 0.0},
         {"current": 0.08},
         {"current": 0.1},
         {"current": 0.14},
         {"current": 0.2},
+        {"current": 0.1},
     ]
-    assert {case["steps"] for case in cases} == {5000}
+    assert [case["steps"] for case in cases] == [5000, 5000, 5000, 5000, 5000, 20]
     assert all(case["held"] for case in cases)
-    assert [case["exercised"] for case in cases] == [False, True, True, True, True]
+    assert [case["exercised"] for case in cases] == [False, True, True, True, True, True]
 
 
 def test_the_symmetric_quadratic_if_model_holds_its_enrolled_counts(

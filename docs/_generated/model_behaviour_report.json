@@ -2497,9 +2497,25 @@
           "observable": "spikes",
           "observed": 52,
           "steps": 5000
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.1
+          },
+          "kind": "interval",
+          "name": "a current of 0.1 fires 1 upward crossing in 20 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 20
         }
       ],
-      "cases_sha256": "dd318f962a74a94a18a879ea1f94f44d7eedd2f41145c3539c37f0d101a53bb8",
+      "cases_sha256": "c693a8bf3ababd322c0a2e394dba48c525f50a65e6b1819e414235d63e91ab16",
       "model": "WilsonHRNeuron",
       "state": "held"
     },

@@ -189,3 +189,16 @@ bounds = [
 
 [behaviour.inputs]
 current = 0.2
+
+[[behaviour]]
+name = "a current of 0.1 fires 1 upward crossing in 20 steps"
+kind = "interval"
+steps = 20
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 0.1

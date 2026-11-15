@@ -2283,6 +2283,11 @@
           "held": true,
           "name": "a current of 0.2 fires 52 upward crossings in 5000 steps",
           "observed": 52
+        },
+        {
+          "held": true,
+          "name": "a current of 0.1 fires 1 upward crossing in 20 steps",
+          "observed": 1
         }
       ],
       "variants": [

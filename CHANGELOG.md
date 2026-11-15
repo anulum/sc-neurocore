@@ -28,6 +28,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Wilson-HR neuron states a sixth behaviour case: 1 upward crossing in
+  20 steps at a current of 0.1, measured with its public class and matched
+  by the schema. The window ends after v's first upward crossing of v_peak
+  and before it falls back, so a step that counted downward crossings would
+  give none. Each of the five windows it stated before holds as many
+  downward crossings as upward ones.
 - The Pernarowski neuron states a sixth behaviour case: 1 upward crossing
   in 160 steps at a current of 0.2, measured with its public class and
   matched by the schema. The window ends after v's first upward crossing of
