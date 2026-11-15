@@ -74,7 +74,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52], [1, 1]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
-    "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54]],
+    "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54], [1, 1]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCAdaptiveThresholdMapNeuron": [[3, 3], [4, 4]],
     "SCClippedLogisticBurstingMapNeuron": [[2, 2], [1, 1], [1, 1], [7, 7]],
@@ -928,26 +928,29 @@ def test_the_fitzhugh_rinzel_model_holds_its_enrolled_measured_and_direction_cou
     assert all(case["exercised"] for case in cases)
 
 
-def test_the_pernarowski_model_holds_its_enrolled_and_measured_counts(
+def test_the_pernarowski_model_holds_its_enrolled_measured_and_direction_counts(
     report: dict[str, object],
 ) -> None:
-    """Four counts its RTL test enrols over 5000 steps, and one over 16049 measured with the class.
+    """Four counts its RTL test enrols, one over 16049 steps, and one that tells the direction.
 
     The model's Q16.16 test enrols 17 crossings in 5000 steps at each of the
     currents -0.1, 0, 0.1 and 0.2: the oscillator is autonomous, so the current
     shifts its orbit without changing that count. Over 16049 steps at -0.1 the
     public class, which the schema matches, crosses 54 times, and the nearest
-    crossing of any perturbed run is 132 steps from the horizon.
+    crossing of any perturbed run is 132 steps from the horizon. Each of those
+    windows holds as many downward crossings of the threshold as upward ones.
+    Over 160 steps at 0.2 v has crossed upward once and not yet fallen back: 1
+    event, where a count of downward crossings gives 0.
     """
     row = _models(report)["PernarowskiNeuron"]
     assert row["state"] == "held"
     cases = row["cases"]
     assert isinstance(cases, list)
-    assert [case["observed"] for case in cases] == [17, 17, 17, 17, 54]
+    assert [case["observed"] for case in cases] == [17, 17, 17, 17, 54, 1]
     assert [case["inputs"] for case in cases] == [
-        {"current": c} for c in (-0.1, 0.0, 0.1, 0.2, -0.1)
+        {"current": c} for c in (-0.1, 0.0, 0.1, 0.2, -0.1, 0.2)
     ]
-    assert [case["steps"] for case in cases] == [5000, 5000, 5000, 5000, 16049]
+    assert [case["steps"] for case in cases] == [5000, 5000, 5000, 5000, 16049, 160]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

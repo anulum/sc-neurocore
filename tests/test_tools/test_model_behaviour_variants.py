@@ -809,13 +809,15 @@ def test_every_variant_of_the_pernarowski_model_breaks_a_case(
     The oscillator crosses 17 times in 5000 steps whatever the current, and so
     does each of nine variants. Over 16049 steps at -0.1 each of those nine
     crosses 52, 53 or 55 times, where the model crosses 54, and no crossing of a
-    variant lies closer than 20 steps to the horizon.
+    variant lies closer than 20 steps to the horizon. The schema also gives the 1
+    event in 160 steps at 0.2 that tells the crossing's direction; no variant
+    needs it.
     """
     row = _rows(report)["PernarowskiNeuron"]
     assert row["state"] == "discriminated"
     unchanged = row["unchanged"]
     assert isinstance(unchanged, list)
-    assert [entry["observed"] for entry in unchanged] == [17, 17, 17, 17, 54]
+    assert [entry["observed"] for entry in unchanged] == [17, 17, 17, 17, 54, 1]
     variants = row["variants"]
     assert isinstance(variants, list)
     assert [(variant["equation"], variant["term"]) for variant in variants] == [

@@ -1402,9 +1402,25 @@
           "observable": "spikes",
           "observed": 54,
           "steps": 16049
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.2
+          },
+          "kind": "interval",
+          "name": "a current of 0.2 crosses the threshold once in 160 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 160
         }
       ],
-      "cases_sha256": "10fdcde6760be1b1fcab8762ef938b331cad805ab37dff909516e27dbcba1e94",
+      "cases_sha256": "9b7cded36d0d97511879177900cf6f8eeb67eda0fb319f85e69aa0e0a13149e1",
       "model": "PernarowskiNeuron",
       "state": "held"
     },
