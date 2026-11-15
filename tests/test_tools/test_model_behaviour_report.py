@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 170
+MODELS_WITHOUT_A_CASE = 169
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -89,6 +89,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [100, 100],
         [250, 250],
     ],
+    "SCUpwardCrossingRulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [11, 11], [11, 11]],
     "WilsonHRNeuron": [[0, 0], [44, 44], [46, 46], [49, 49], [52, 52]],
 }
 
@@ -984,6 +985,31 @@ def test_the_ermentrout_kopell_map_holds_its_enrolled_and_measured_counts(
     assert [case["steps"] for case in cases] == [2000, 2000, 2000, 1111]
     assert all(case["held"] for case in cases)
     assert [case["exercised"] for case in cases] == [False, True, True, True]
+
+
+def test_the_upward_crossing_rulkov_map_holds_its_window_and_measured_counts(
+    report: dict[str, object],
+) -> None:
+    """Three 30-step windows its RTL test runs, and two counts measured with the class.
+
+    The map's Q16.16 test requires the hand model, the schema and the RTL to give
+    the same events over 30 steps at currents 0, 0.5 and 1.5: none, 7 and 10. At
+    0.2 the map fires 11 times within its first hundred steps and then falls
+    silent, so over 200 steps the public class, which the schema matches, counts
+    11, and no event of any perturbed run lies within 104 steps of the horizon.
+    Each of those windows holds as many downward crossings as upward ones. Over
+    31 steps at 1.5 the window ends on the step of the eleventh upward crossing,
+    before x falls back: 11 events, where a count of downward crossings gives 10.
+    """
+    row = _models(report)["SCUpwardCrossingRulkovMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 7, 10, 11, 11]
+    assert [case["inputs"] for case in cases] == [{"current": c} for c in (0.0, 0.5, 1.5, 0.2, 1.5)]
+    assert [case["steps"] for case in cases] == [30, 30, 30, 200, 31]
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

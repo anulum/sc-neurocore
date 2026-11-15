@@ -1998,10 +1998,91 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "a current of 0 fires no event in 30 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            7,
+            7
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 7 times in 30 steps",
+          "observable": "spikes",
+          "observed": 7,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            10,
+            10
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.5
+          },
+          "kind": "interval",
+          "name": "a current of 1.5 fires 10 times in 30 steps",
+          "observable": "spikes",
+          "observed": 10,
+          "steps": 30
+        },
+        {
+          "bounds": [
+            11,
+            11
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.2
+          },
+          "kind": "interval",
+          "name": "a current of 0.2 fires 11 times in 200 steps",
+          "observable": "spikes",
+          "observed": 11,
+          "steps": 200
+        },
+        {
+          "bounds": [
+            11,
+            11
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.5
+          },
+          "kind": "interval",
+          "name": "a current of 1.5 fires 11 times in 31 steps",
+          "observable": "spikes",
+          "observed": 11,
+          "steps": 31
+        }
+      ],
+      "cases_sha256": "80de084f19b588a609a7d43db88d873c8254b04fd4be1c3c430044ada9a4e65c",
       "model": "SCUpwardCrossingRulkovMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2297,9 +2378,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 15,
+    "held": 16,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 170
+    "no_case": 169
   }
 }

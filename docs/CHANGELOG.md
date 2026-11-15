@@ -28,6 +28,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The upward-crossing SC Rulkov map neuron states five behaviour cases: the
+  event counts over the 30-step windows its Q16.16 test runs for the hand
+  model, the schema and the RTL (none, 7 and 10 at currents 0, 0.5 and
+  1.5), 11 events in 200 steps at 0.2, and 11 events in 31 steps at 1.5, a
+  window that ends on an upward crossing; the last two are measured with
+  its public class and matched by the schema. Each of the 17 sign variants
+  of its two equations breaks a case. Sixteen of the 185 catalogue models
+  now state cases.
 - The Ermentrout-Kopell map neuron states four behaviour cases: the event
   counts its Q16.16 test enrols for the hand schema and the RTL (none, 45
   and 64 in 2000 steps at currents -0.5, 0.5 and 1.0), and 5 events in 1111
