@@ -6,13 +6,20 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Self-referential neuron model
 
+#![deny(missing_docs)]
+
 /// Introspects on its own spike history; adjusts tau based on firing rate.
 #[derive(Clone, Debug)]
 pub struct SelfReferentialNeuron {
+    /// Membrane potential (dimensionless); a spike sets it to 0.
     pub v: f64,
+    /// Base membrane time constant (ms).
     pub tau: f64,
+    /// Firing threshold (dimensionless).
     pub theta: f64,
+    /// Target self-firing fraction (spikes per window) (dimensionless).
     pub target_rate: f64,
+    /// Step (ms).
     pub dt: f64,
     history: Vec<u8>,
     head: usize,
@@ -20,6 +27,8 @@ pub struct SelfReferentialNeuron {
 }
 
 impl SelfReferentialNeuron {
+    /// Create a neuron at rest with a 50-step spike history, `tau` = 10 ms, threshold 1,
+    /// target rate 0.1 and `dt` = 1 ms.
     pub fn new() -> Self {
         let window = 50;
         Self {
@@ -34,6 +43,12 @@ impl SelfReferentialNeuron {
         }
     }
 
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// The time constant is `tau * (1 + rate / target_rate)`, where `rate` is the fraction of
+    /// the last 50 steps with a spike, so more firing slows the membrane; at the target rate
+    /// the time constant is doubled. Reaching `theta` sets `v` to 0. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let n_spikes: u32 = self.history.iter().map(|&x| x as u32).sum();
         let rate = n_spikes as f64 / self.window as f64;
@@ -50,6 +65,7 @@ impl SelfReferentialNeuron {
         fired
     }
 
+    /// Clear `v` and the spike history; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.history.fill(0);

@@ -6,18 +6,28 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Predictive-coding neuron model
 
+#![deny(missing_docs)]
+
 /// Fires only on prediction errors. Silent when input matches prediction.
 #[derive(Clone, Debug)]
 pub struct PredictiveCodingNeuron {
+    /// Membrane potential (dimensionless), integrating the surprise; a spike sets it to 0.
     pub v: f64,
+    /// Prediction of the input; it follows the input with `tau_pred`.
     pub pred: f64,
+    /// Membrane (surprise-integration) time constant (ms).
     pub tau: f64,
+    /// Prediction-update time constant (ms).
     pub tau_pred: f64,
+    /// Firing threshold (dimensionless).
     pub theta: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl PredictiveCodingNeuron {
+    /// Create a neuron at rest with a zero prediction, the default parameters and
+    /// `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v: 0.0,
@@ -29,6 +39,11 @@ impl PredictiveCodingNeuron {
         }
     }
 
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// The surprise `|current - pred|` is taken with the old prediction. Then `pred` moves
+    /// towards `current` with `tau_pred`, and `v` towards the surprise with `tau`. Reaching
+    /// `theta` sets `v` to 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let surprise = (current - self.pred).abs();
         self.pred += (current - self.pred) / self.tau_pred * self.dt;
@@ -41,6 +56,7 @@ impl PredictiveCodingNeuron {
         }
     }
 
+    /// Clear `v` and the prediction; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.pred = 0.0;

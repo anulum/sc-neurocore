@@ -462,6 +462,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 12 AI-oriented neuron models are documented in full, each file
+  read against its code: each step's update order and event rule, what reset
+  keeps (the Arcane neuron keeps its deep compartment, learned self-model and
+  novelty history), and the inputs that make a step panic (an empty
+  key-value state or a window longer than its buffer in the hybrid linear
+  attention neuron). The differentiable-surrogate descriptor describes
+  `alpha` as the per-step membrane decay, not a surrogate-gradient scale.
 - The engine's 6 interneuron models (basket, chandelier, PV fast-spiking,
   Martinotti, SST, VIP) are documented in full, each file read against its
   code: the Wang-Buzsáki family's sub-steps of `dt` up to about 0.5 ms per

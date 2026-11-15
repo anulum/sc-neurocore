@@ -29,7 +29,7 @@ behavior_tags = [
 
 [state.u]
 unit = "1"
-meaning = "activity of each ring unit; one entry per n_units, the bump position over them being the continuous value the attractor holds"
+meaning = "activity of each ring unit; one entry per unit, and the bump's position over them is the value the attractor holds"
 
 [parameters.n_units]
 default = 16.0

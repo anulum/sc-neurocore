@@ -6,19 +6,27 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Continuous-attractor neuron model
 
+#![deny(missing_docs)]
+
 /// Ring attractor for continuous working memory.
 /// Mexican hat connectivity; a bump set in `u` persists at its position.
 /// The scalar current drives every unit alike, so it cannot place or move a bump.
 #[derive(Clone, Debug)]
 pub struct ContinuousAttractorNeuron {
+    /// Activity of each ring unit; one entry per unit, and the bump's position over them is the value the attractor holds (dimensionless).
     pub u: Vec<f64>,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// Step (ms).
     pub dt: f64,
     weights: Vec<Vec<f64>>,
     n_units: usize,
 }
 
 impl ContinuousAttractorNeuron {
+    /// Create a ring of `n_units` units at rest, `tau` = 10 ms and `dt` = 1 ms.
+    ///
+    /// The weights are `4 * exp(-d^2 / 2) - 0.5`, with `d` the distance around the ring.
     pub fn new(n_units: usize) -> Self {
         let sigma_e: f64 = 1.0;
         let excitation: f64 = 4.0;
@@ -47,6 +55,12 @@ impl ContinuousAttractorNeuron {
         r * r / (1.0 + r * r)
     }
 
+    /// Advance one forward-Euler step with `current` added to every unit; return 1 when the
+    /// largest activity exceeds 1, else 0.
+    ///
+    /// Each unit gains `(-u + recurrent + current) / tau * dt`. The recurrent input sums the
+    /// weights times `r^2 / (1 + r^2)` with `r = max(u, 0)`. All units update from the old
+    /// state. Nothing is reset by an event. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let mut new_u = vec![0.0; self.n_units];
         for i in 0..self.n_units {
@@ -65,6 +79,8 @@ impl ContinuousAttractorNeuron {
         }
     }
 
+    /// Return the index of the most active unit, the highest index among equal maxima, 0 for
+    /// an empty ring; a NaN activity counts as equal to any value it is compared with.
     pub fn bump_position(&self) -> usize {
         self.u
             .iter()
@@ -74,6 +90,7 @@ impl ContinuousAttractorNeuron {
             .unwrap_or(0)
     }
 
+    /// Set every unit to 0; the weights and parameters are kept.
     pub fn reset(&mut self) {
         self.u.fill(0.0);
     }

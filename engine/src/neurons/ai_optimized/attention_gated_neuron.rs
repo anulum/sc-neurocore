@@ -6,20 +6,30 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Attention-gated neuron model
 
+#![deny(missing_docs)]
+
 /// Spiking neuron whose input passes a sigmoid attention gate.
 /// The key and query weights are parameters; this type does not change them.
 /// gate = sigmoid(w_key * I + w_query * v), modulates input before integration.
 #[derive(Clone, Debug)]
 pub struct AttentionGatedNeuron {
+    /// Membrane potential (dimensionless); a spike sets it to 0.
     pub v: f64,
+    /// Attention-gate weight on the input current (dimensionless).
     pub w_key: f64,
+    /// Attention-gate weight on the membrane potential (dimensionless).
     pub w_query: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// Firing threshold (dimensionless).
     pub theta: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl AttentionGatedNeuron {
+    /// Create a neuron at rest with the default gate weights, `tau` = 10 ms, threshold 1
+    /// and `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v: 0.0,
@@ -31,6 +41,11 @@ impl AttentionGatedNeuron {
         }
     }
 
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// The gate `sigmoid(w_key * current + w_query * v)`, taken with the old `v`, scales the
+    /// input, and `v` gains `(-v + gate * current) / tau * dt`. Reaching `theta` sets `v` to
+    /// 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let gate = 1.0 / (1.0 + (-(self.w_key * current + self.w_query * self.v)).exp());
         self.v += (-self.v + gate * current) / self.tau * self.dt;
@@ -42,6 +57,7 @@ impl AttentionGatedNeuron {
         }
     }
 
+    /// Clear the membrane potential; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
     }

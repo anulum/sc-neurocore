@@ -6,21 +6,33 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Compositional-binding neuron model
 
+#![deny(missing_docs)]
+
 /// Phase-coding neuron for compositional variable binding.
 /// Spike when amplitude * cos(phase) > threshold, on every step while it holds.
 /// The phase advances freely: there is no input phase and `coupling` is not used.
 #[derive(Clone, Debug)]
 pub struct CompositionalBindingNeuron {
+    /// Phase (rad); it advances by `omega * dt` each step and is not wrapped.
     pub phi: f64,
+    /// Amplitude (dimensionless); it relaxes towards the input with `tau`.
     pub amplitude: f64,
+    /// Intrinsic phase oscillation frequency (rad/ms).
     pub omega: f64,
+    /// Phase-coupling strength to the input oscillation (dimensionless). No step reads it:
+    /// the phase has no input term.
     pub coupling: f64,
+    /// Amplitude time constant (ms).
     pub tau: f64,
+    /// Firing threshold on `amplitude * cos(phi)` (dimensionless).
     pub theta: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl CompositionalBindingNeuron {
+    /// Create a neuron at phase 0 and amplitude 0 with the default parameters and
+    /// `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             phi: 0.0,
@@ -33,6 +45,11 @@ impl CompositionalBindingNeuron {
         }
     }
 
+    /// Advance one step and return 1 when `amplitude * cos(phi)` exceeds `theta`, else 0.
+    ///
+    /// The phase advances by `omega * dt`, and the amplitude takes a forward-Euler step
+    /// towards `current` with `tau`. Nothing is reset by an event. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.phi += self.omega * self.dt;
         self.amplitude += (-self.amplitude + current) / self.tau * self.dt;
@@ -43,6 +60,7 @@ impl CompositionalBindingNeuron {
         }
     }
 
+    /// Return the phase and the amplitude to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.phi = 0.0;
         self.amplitude = 0.0;

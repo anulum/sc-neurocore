@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Arcane neuron model
 
+#![deny(missing_docs)]
+
 /// ArcaneNeuron — unified self-referential cognition model.
 ///
 /// 3-compartment (fast/working/deep) with attention gate, predictive
@@ -15,24 +17,46 @@
 /// Original design: Šotek & Arcane Sapience 2026.
 #[derive(Clone, Debug)]
 pub struct ArcaneNeuron {
+    /// Fast (perceptual) compartment; a spike sets it to 0.
     pub v_fast: f64,
+    /// Working-memory compartment; each spike adds `alpha_w * v_fast * dt / tau_work`, and
+    /// it decays with `tau_work`.
     pub v_work: f64,
+    /// Deep (identity) compartment, driven by `alpha_d * v_work * novelty` with `tau_deep`;
+    /// `reset` keeps it.
     pub v_deep: f64,
+    /// Fast (perceptual) compartment time constant (ms).
     pub tau_fast: f64,
+    /// Working-memory compartment time constant (ms).
     pub tau_work: f64,
+    /// Deep (identity) compartment time constant (ms).
     pub tau_deep: f64,
+    /// Fast-to-working-memory coupling weight (dimensionless).
     pub alpha_w: f64,
+    /// Working-to-deep coupling weight (dimensionless).
     pub alpha_d: f64,
+    /// Base firing threshold, before the deep-state and confidence factors (dimensionless).
     pub theta: f64,
+    /// Deep-state gain on the adaptive threshold (dimensionless).
     pub gamma: f64,
+    /// Confidence-driven reduction of the firing threshold (dimensionless).
     pub delta_conf: f64,
+    /// Attention-gate weights on the input, `v_fast`, `v_work` and the confidence.
     pub w_gate: [f64; 4],
+    /// Self-model weights predicting `v_fast` from `v_fast`, `v_work` and `v_deep`; learned
+    /// online and kept at unit norm.
     pub w_pred: [f64; 3],
+    /// Steepness of the novelty (surprise) sigmoid (dimensionless).
     pub kappa: f64,
+    /// Baseline surprise subtracted before the novelty sigmoid (dimensionless).
     pub surprise_baseline: f64,
+    /// Baseline meta-learning rate (dimensionless).
     pub lr_base: f64,
+    /// Novelty modulation strength of the learning rate (dimensionless).
     pub eta: f64,
+    /// Recurrent inhibition weight on the fast compartment (dimensionless).
     pub w_inh: f64,
+    /// Step (ms).
     pub dt: f64,
     prediction: f64,
     surprise: f64,
@@ -46,6 +70,8 @@ pub struct ArcaneNeuron {
 }
 
 impl ArcaneNeuron {
+    /// Create a neuron with every compartment at 0, the default parameters, `dt` = 1 ms, a
+    /// 50-step spike history and a 20-step novelty history at 0.5 (confidence 0.5).
     pub fn new() -> Self {
         Self {
             v_fast: 0.0,
@@ -79,6 +105,22 @@ impl ArcaneNeuron {
         }
     }
 
+    /// Advance one step with `current` and return 1 on a spike, else 0.
+    ///
+    /// In order:
+    /// 1. The confidence is 1 minus the mean of the novelty history.
+    /// 2. The attention gate is the logistic of `w_gate` applied to the input, `v_fast`,
+    ///    `v_work` and the confidence, and it scales the input.
+    /// 3. `v_fast` takes an Euler step with the gated input and the inhibition
+    ///    `w_inh * spike_rate`, where the spike rate is taken over the history window.
+    /// 4. The prediction, surprise and novelty follow from the new `v_fast`.
+    /// 5. The threshold is `max(theta * (1 + gamma * v_deep) * (1 - delta_conf * confidence), 0.1)`.
+    /// 6. A spike feeds `v_work` and sets `v_fast` to 0.
+    /// 7. `v_work` and `v_deep` decay and integrate.
+    /// 8. `w_pred` takes a novelty-modulated learning step on the prediction error and is
+    ///    renormalised.
+    ///
+    /// The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let sh_len = self.spike_history.len() as f64;
         let nh_len = self.novelty_history.len() as f64;
@@ -141,6 +183,9 @@ impl ArcaneNeuron {
         spike
     }
 
+    /// Clear the fast and working compartments, the prediction, the surprise, the novelty
+    /// and the spike history. `v_deep`, the learned `w_pred`, the novelty history (and so
+    /// the confidence) and every parameter are kept.
     pub fn reset(&mut self) {
         self.v_fast = 0.0;
         self.v_work = 0.0;

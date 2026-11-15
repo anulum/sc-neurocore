@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Hybrid linear-attention neuron model
 
+#![deny(missing_docs)]
+
 /// Hybrid linear attention neuron for spiking environments.
 ///
 /// Combines local windowed attention with linear (kernel-based) global attention,
@@ -21,17 +23,25 @@
 /// where φ is an elu+1 feature map.
 #[derive(Clone, Debug)]
 pub struct HybridLinearAttentionNeuron {
+    /// Last output, `0.5 * global + 0.5 * local`.
     pub v: f64,
     state_kv: Vec<f64>,
+    /// Dimension of the recurrent key-value state (dimensionless).
     pub dim: usize,
+    /// Per-step decay of every key-value slot.
     pub lambda: f64,
+    /// Length of the local averaging window. It must not exceed the 16-entry buffer that
+    /// `new` allocates, or the step panics.
     pub window_size: usize,
     window_buf: Vec<f64>,
     window_idx: usize,
+    /// Step length; the step does not read it.
     pub dt: f64,
 }
 
 impl HybridLinearAttentionNeuron {
+    /// Create a neuron with a `dim`-slot key-value state (`dim` must be positive; 0 makes
+    /// the step panic), `lambda` = 0.95, a 16-step window and `dt` = 1.
     pub fn new(dim: usize) -> Self {
         Self {
             v: 0.0,
@@ -46,6 +56,11 @@ impl HybridLinearAttentionNeuron {
     }
 
     /// Step with query, key, value (each scalar projections).
+    ///
+    /// Every slot decays by `lambda`. The key selects the slot `floor(|phi(k)| * dim) % dim`,
+    /// which gains `phi(k) * value`, and the global term is `phi(q)` times that slot. The
+    /// local term is the mean of the last `window_size` values. The result `v` is their
+    /// equal-weight sum, and it is returned.
     pub fn step_qkv(&mut self, query: f64, key: f64, value: f64) -> f64 {
         // Feature map: elu(x) + 1.
         let phi_q = if query > 0.0 {
@@ -76,6 +91,8 @@ impl HybridLinearAttentionNeuron {
     }
 
     /// Simple step (input treated as combined qkv).
+    ///
+    /// Returns 1 when the output exceeds 1, else 0.
     pub fn step(&mut self, current: f64) -> i32 {
         let out = self.step_qkv(current, current, current);
         if out > 1.0 {
@@ -85,6 +102,7 @@ impl HybridLinearAttentionNeuron {
         }
     }
 
+    /// Clear the output, the key-value state and the window; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.state_kv.fill(0.0);

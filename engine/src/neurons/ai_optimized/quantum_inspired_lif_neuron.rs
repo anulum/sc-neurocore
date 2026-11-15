@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Quantum-inspired LIF neuron model
 
+#![deny(missing_docs)]
+
 /// Quantum-inspired LIF neuron with non-classical probability logic.
 ///
 /// Extends standard LIF by maintaining a complex-valued amplitude z = a + bi
@@ -19,16 +21,25 @@
 /// Reference: Quantum-neural hybrid models, IBM Heron r2 noise models.
 #[derive(Clone, Debug)]
 pub struct QuantumInspiredLIFNeuron {
+    /// Real part of the membrane amplitude (dimensionless).
     pub z_re: f64,
+    /// Imaginary part of the membrane amplitude (dimensionless).
     pub z_im: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// Amplitude scale: the firing probability is `|z|^2 / theta^2`, capped at 1
+    /// (dimensionless).
     pub theta: f64,
+    /// Step (ms).
     pub dt: f64,
+    /// Post-spike reset of the membrane amplitude (normalised) (dimensionless).
     pub v_reset: f64,
     rng_state: u64,
 }
 
 impl QuantumInspiredLIFNeuron {
+    /// Create a neuron at `z` = 0 with `tau` = 20 ms, `theta` = 1, `dt` = 0.1 ms, and the
+    /// xorshift generator seeded with 12345.
     pub fn new() -> Self {
         Self {
             z_re: 0.0,
@@ -42,6 +53,11 @@ impl QuantumInspiredLIFNeuron {
     }
 
     /// Step with real and imaginary current components.
+    ///
+    /// `z` takes a forward-Euler step towards the complex input with `tau`. An event occurs
+    /// with probability `min(|z|^2 / theta^2, 1)`, drawn from the low 32 bits of a 64-bit
+    /// xorshift generator; it sets both parts of `z` to `v_reset`. Returns 1 on an event,
+    /// else 0. Inputs are not validated.
     pub fn step_complex(&mut self, i_re: f64, i_im: f64) -> i32 {
         let dz_re = (-self.z_re + i_re) / self.tau;
         let dz_im = (-self.z_im + i_im) / self.tau;
@@ -76,6 +92,7 @@ impl QuantumInspiredLIFNeuron {
         p.min(1.0)
     }
 
+    /// Set `z` to 0 (not `v_reset`); the parameters and the generator state are kept.
     pub fn reset(&mut self) {
         self.z_re = 0.0;
         self.z_im = 0.0;

@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Adaptive-threshold mixture-of-experts neuron model
 
+#![deny(missing_docs)]
+
 /// Adaptive threshold spiking neuron matching the SpikingBrain architecture.
 ///
 /// Converts activations into integer spike counts via data-dependent threshold,
@@ -36,6 +38,7 @@ pub struct AdaptiveThresholdMoENeuron {
 }
 
 impl AdaptiveThresholdMoENeuron {
+    /// Create a neuron at `v` = 0 with `k` = 4, threshold 1 and an EMA factor of 0.1.
     pub fn new() -> Self {
         Self {
             v: 0.0,
@@ -46,6 +49,7 @@ impl AdaptiveThresholdMoENeuron {
         }
     }
 
+    /// Create a neuron with the firing-rate control `k`; everything else as in `new`.
     pub fn with_k(k: f64) -> Self {
         Self { k, ..Self::new() }
     }
@@ -53,6 +57,9 @@ impl AdaptiveThresholdMoENeuron {
     /// Returns integer spike count (0 or more) — not binary.
     ///
     /// Implements: V_th = (1/k)·mean(|x|), s = round(v/V_th), soft reset v -= V_th·s.
+    ///
+    /// The mean is a running EMA of `|current|`. A negative rounded count still applies
+    /// its soft reset to `v`, but the step returns 0 for it.
     pub fn step(&mut self, current: f64) -> i32 {
         // Update running mean of |activation|.
         self.mean_abs_x = (1.0 - self.ema_alpha) * self.mean_abs_x + self.ema_alpha * current.abs();
@@ -104,6 +111,7 @@ impl AdaptiveThresholdMoENeuron {
         }
     }
 
+    /// Clear `v` and the running mean and set the threshold back to 1; `k` is kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.mean_abs_x = 0.0;

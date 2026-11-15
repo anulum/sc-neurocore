@@ -6,24 +6,39 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Multi-timescale neuron model
 
+#![deny(missing_docs)]
+
 /// Three-compartment memory neuron (fast/medium/slow timescales).
 /// Slow compartment accumulates context, modulating excitability.
 #[derive(Clone, Debug)]
 pub struct MultiTimescaleNeuron {
+    /// Fast compartment, driven by the input; a spike sets it to 0.
     pub v_fast: f64,
+    /// Medium compartment, driven by `alpha` times the spike output.
     pub v_medium: f64,
+    /// Slow compartment, driven by `beta * v_medium`; it lowers the threshold by
+    /// `gamma * v_slow`.
     pub v_slow: f64,
+    /// Fast-compartment time constant (ms).
     pub tau_fast: f64,
+    /// Medium-compartment time constant (ms).
     pub tau_medium: f64,
+    /// Slow-compartment time constant (ms).
     pub tau_slow: f64,
+    /// Fast-to-medium spike coupling weight (dimensionless).
     pub alpha: f64,
+    /// Medium-to-slow coupling weight (dimensionless).
     pub beta: f64,
+    /// Slow-state feedback weight onto the threshold (dimensionless).
     pub gamma: f64,
+    /// Baseline firing threshold (dimensionless).
     pub theta_base: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl MultiTimescaleNeuron {
+    /// Create a neuron with every compartment at 0, the default parameters and `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v_fast: 0.0,
@@ -40,6 +55,12 @@ impl MultiTimescaleNeuron {
         }
     }
 
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// `v_fast` moves towards `current`. A spike occurs when it reaches
+    /// `theta_base - gamma * v_slow`. `v_medium` moves towards `alpha` times the spike, and
+    /// `v_slow` towards `beta * v_medium` (the new value). Only then does a spike set
+    /// `v_fast` to 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v_fast += (-self.v_fast + current) / self.tau_fast * self.dt;
         let theta_eff = self.theta_base - self.gamma * self.v_slow;
@@ -52,6 +73,7 @@ impl MultiTimescaleNeuron {
         fired
     }
 
+    /// Clear the three compartments; the parameters are kept.
     pub fn reset(&mut self) {
         self.v_fast = 0.0;
         self.v_medium = 0.0;
