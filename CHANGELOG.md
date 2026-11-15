@@ -429,6 +429,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Rust safety crate compiles three source-parity files it did not declare:
+  `sc_compte_wm_network.rs`, `sc_resetting_mat.rs` and
+  `sc_unit_capacitance_respiratory.rs`, so their tests run with the crate's
+  tests. `safety/mod.rs`, which no build reads, no longer holds a second module
+  list; that list had drifted from `lib.rs` by three names. The file stays, with
+  only a comment. A test fails when a `.rs` file in the folder is neither
+  compiled nor one of the seven codec transcripts kept as unsupported source,
+  when `mod.rs` declares a module, or when a declaration of `lib.rs` depends on
+  a `cfg`; comments count for nothing.
 - A Studio started without a configured job root removes its private scratch job
   root when its process exits normally; only the process that made the root
   removes it, and a configured root is kept. A process killed outright, as by

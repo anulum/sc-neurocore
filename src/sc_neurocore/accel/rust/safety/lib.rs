@@ -399,6 +399,8 @@ pub mod sc_adaptive_threshold_map_neuron;
 pub mod sc_chaotic_map_neuron;
 pub mod sc_clipped_logistic_bursting_map;
 pub mod sc_clipped_rational_recovery_map;
+/// SC Compte working-memory network safety mirror.
+pub mod sc_compte_wm_network;
 pub mod sc_conv_layer;
 pub mod sc_decoupled_adaptation_ion_mass;
 pub mod sc_dense_layer;
@@ -413,6 +415,8 @@ pub mod sc_non_resetting_adaptive_lif;
 pub mod sc_normalized_energy_lif;
 pub mod sc_optimizer;
 pub mod sc_quantum_compiler;
+/// SC resetting-MAT safety mirror; the engine's configuration test also includes it.
+pub mod sc_resetting_mat;
 pub mod sc_resetting_wilson_hr;
 pub mod sc_runtime;
 pub mod sc_scaled_reset_adaptive_if;
@@ -422,6 +426,8 @@ pub mod sc_stochastic_rate_adaptation;
 pub mod sc_synapse;
 pub mod sc_three_state_phantom;
 pub mod sc_triangular_mckean;
+/// SC unit-capacitance Butera respiratory safety mirror.
+pub mod sc_unit_capacitance_respiratory;
 pub mod sc_upward_crossing_rulkov_map;
 pub mod sc_wb_nmda_magnesium_block;
 pub mod schedulers;

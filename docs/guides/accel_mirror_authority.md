@@ -46,6 +46,13 @@ the placeholder modules `aer_codec`, `codec`, `delta_codec`, `entropy`,
 in `src/sc_neurocore/accel/rust/safety/` as unsupported source and are not compiled
 into the crate. Use the production engine for real Rust codec components.
 
+Every other `.rs` file in that folder is compiled: the crate's one module list,
+`safety/lib.rs`, declares it, or a native crate in the folder includes it through
+`#[path]`, so the tests inside it run with the crate's tests. The exception is
+`safety/mod.rs`, which no build reads and which therefore holds no module list.
+`tests/test_rust_safety_crate_sources.py` fails when a file is left out or
+`mod.rs` declares a module.
+
 The following source mirrors also remain unsupported as codec backends:
 
 | Language | Retained source area | Qualification boundary |

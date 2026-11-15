@@ -24,6 +24,7 @@ REPO_ROOT = Path(__file__).parents[2]
 
 
 def test_facade_defines_no_new_public_behaviour() -> None:
+    """The ``chiplet_gen`` facade only re-exports: no definitions, 36 names, at most 150 lines."""
     facade = PACKAGE_ROOT / "chiplet_gen.py"
     facade_lines = facade.read_text(encoding="utf-8").splitlines()
     tree = ast.parse("\n".join(facade_lines))
@@ -38,6 +39,7 @@ def test_facade_defines_no_new_public_behaviour() -> None:
 
 
 def test_responsibility_modules_partition_the_legacy_surface() -> None:
+    """Each public chiplet symbol has exactly one owning module, within its size ceiling."""
     modules = (topology, routing, thermal, rtl, link_protocols, power, partition)
     owners: dict[str, str] = {}
     for module in modules:
@@ -57,6 +59,7 @@ def test_responsibility_modules_partition_the_legacy_surface() -> None:
 
 
 def test_focused_import_graph_is_acyclic() -> None:
+    """The chiplet modules import exactly the expected dependencies, without a cycle."""
     expected_dependencies = {
         "_sv": set(),
         "topology": set(),
@@ -92,6 +95,7 @@ def test_focused_import_graph_is_acyclic() -> None:
 
 
 def test_pickle_qualified_names_survive_the_move() -> None:
+    """Values made before the split pickle back to equal values of the same type."""
     values = [
         ChipletDie(3),
         ChipletTopology.ring(2),
@@ -104,6 +108,7 @@ def test_pickle_qualified_names_survive_the_move() -> None:
 
 
 def test_false_polyglot_mirrors_and_registry_entries_are_absent() -> None:
+    """No chiplet generator mirror exists, and the Rust safety crate declares none."""
     absent = [
         "src/sc_neurocore/accel/rust/safety/chiplet_gen.rs",
         "src/sc_neurocore/accel/go/services/chiplet_gen/chiplet_gen.go",
@@ -111,8 +116,5 @@ def test_false_polyglot_mirrors_and_registry_entries_are_absent() -> None:
         "src/sc_neurocore/accel/mojo/kernels/chiplet_gen.mojo",
     ]
     assert all(not (REPO_ROOT / relative).exists() for relative in absent)
-    for registry in (
-        REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs",
-        REPO_ROOT / "src/sc_neurocore/accel/rust/safety/mod.rs",
-    ):
-        assert "pub mod chiplet_gen;" not in registry.read_text(encoding="utf-8")
+    registry = REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs"
+    assert "pub mod chiplet_gen;" not in registry.read_text(encoding="utf-8")

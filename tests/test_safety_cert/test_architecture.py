@@ -160,8 +160,5 @@ def test_false_certification_mirrors_are_absent_but_monitor_chain_remains() -> N
     )
     assert all(not (_REPO_ROOT / relative).exists() for relative in removed)
     assert all((_REPO_ROOT / relative).is_file() for relative in retained)
-    for registry in ("lib.rs", "mod.rs"):
-        text = (
-            _REPO_ROOT / "src" / "sc_neurocore" / "accel" / "rust" / "safety" / registry
-        ).read_text(encoding="utf-8")
-        assert "pub mod safety_cert;" not in text
+    registry = _REPO_ROOT / "src" / "sc_neurocore" / "accel" / "rust" / "safety" / "lib.rs"
+    assert "pub mod safety_cert;" not in registry.read_text(encoding="utf-8")

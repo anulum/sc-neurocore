@@ -143,8 +143,5 @@ def test_unwired_generated_polyglot_compiler_stubs_and_exports_are_absent() -> N
         "src/sc_neurocore/accel/rust/safety/equation_compiler.rs",
     )
     assert all(not (_REPO_ROOT / relative).exists() for relative in removed)
-    for crate_root in ("lib.rs", "mod.rs"):
-        source = (_REPO_ROOT / "src/sc_neurocore/accel/rust/safety" / crate_root).read_text(
-            encoding="utf-8"
-        )
-        assert "pub mod equation_compiler;" not in source
+    crate_root = _REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs"
+    assert "pub mod equation_compiler;" not in crate_root.read_text(encoding="utf-8")

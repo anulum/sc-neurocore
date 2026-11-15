@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1978
+expected_file_count = 1985
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7966,3 +7966,31 @@ rationale = "The resonate-and-fire model's Go and Mojo C ABI: aliasing and null 
 [[file]]
 path = "tests/test_studio_scratch_job_root.py"
 rationale = "Studio scratch job root: removed when its process exits, a configured root kept, and only the creating process removes it."
+
+[[file]]
+path = "tests/test_rust_safety_crate_sources.py"
+rationale = "Rust safety crate: every .rs file in its folder is declared by lib.rs or included by a native crate, apart from the seven codec transcripts the mirror-authority guide names; the uncompiled mod.rs declares no module."
+
+[[file]]
+path = "tests/test_asic_flow/test_architecture.py"
+rationale = "ASIC flow architecture: symbol ownership, compatibility, acyclic dependencies, and no fabricated acceleration mirror or Rust registry entry."
+
+[[file]]
+path = "tests/test_bioware/test_architecture.py"
+rationale = "Bioware architecture: no generated placeholder backend in any language mirror or in the Rust safety crate's module list."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_architecture.py"
+rationale = "Chiplet split architecture: historical compatibility, and no removed chiplet generator mirror or Rust safety module."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_architecture.py"
+rationale = "Hierarchical partitioner: facade identity, dependency direction, size ceilings, and which polyglot mirrors are maintained."
+
+[[file]]
+path = "tests/test_rust_safety_module_registry.py"
+rationale = "Rust safety crate: every module that its one module list, lib.rs, declares resolves to a source file."
+
+[[file]]
+path = "tests/test_safety_cert/test_architecture.py"
+rationale = "Safety certification architecture: facade, ownership and size contracts, and no removed polyglot mirror or Rust safety module declaration."

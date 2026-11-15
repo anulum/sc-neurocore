@@ -199,14 +199,10 @@ def test_nonfunctional_polyglot_mirrors_are_absent() -> None:
     mirror_files = [
         path for path in ACCEL_DIR.rglob("*") if path.is_file() and "asic_flow" in path.parts
     ]
-    rust_registries = [
-        ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs",
-        ROOT / "src/sc_neurocore/accel/rust/safety/mod.rs",
-    ]
+    rust_registry = ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs"
 
     assert mirror_files == []
-    for registry in rust_registries:
-        assert "pub mod asic_flow;" not in registry.read_text(encoding="utf-8")
+    assert "pub mod asic_flow;" not in rust_registry.read_text(encoding="utf-8")
 
 
 def test_benchmark_evidence_is_bound_to_live_sources() -> None:

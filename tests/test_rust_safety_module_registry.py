@@ -5,7 +5,7 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
-"""Keep Rust safety module registries aligned with checked-in sources."""
+"""Keep the Rust safety crate's module list, ``safety/lib.rs``, aligned with checked-in sources."""
 
 from __future__ import annotations
 
@@ -27,16 +27,15 @@ def _declared_modules(path: Path) -> tuple[str, ...]:
     return tuple(modules)
 
 
-def test_safety_module_registries_reference_real_sources() -> None:
-    """Every declaration in both intentionally distinct registries must resolve."""
-    missing: dict[str, list[str]] = {}
-    for registry_name in ("lib.rs", "mod.rs"):
-        modules = _declared_modules(_SAFETY_ROOT / registry_name)
-        missing[registry_name] = [
-            module
-            for module in modules
-            if not (_SAFETY_ROOT / f"{module}.rs").is_file()
-            and not (_SAFETY_ROOT / module / "mod.rs").is_file()
-        ]
+def test_safety_module_registry_references_real_sources() -> None:
+    """Every declaration of the crate's one module list, ``lib.rs``, must resolve."""
+    modules = _declared_modules(_SAFETY_ROOT / "lib.rs")
+    missing = [
+        module
+        for module in modules
+        if not (_SAFETY_ROOT / f"{module}.rs").is_file()
+        and not (_SAFETY_ROOT / module / "mod.rs").is_file()
+    ]
 
-    assert missing == {"lib.rs": [], "mod.rs": []}
+    assert modules
+    assert missing == []

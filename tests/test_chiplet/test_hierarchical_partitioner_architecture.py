@@ -38,6 +38,38 @@ SPLIT_MODULES = (
     "hierarchical_refinement",
     "hierarchical_reporting",
 )
+#: The documented one-way dependency DAG of the responsibility modules.
+EXPECTED_DEPENDENCIES: dict[str, set[str]] = {
+    "hierarchical_backend_runtime": set(),
+    "hierarchical_backends": {
+        "hierarchical_backend_runtime",
+        "hierarchical_graph",
+    },
+    "hierarchical_balancing": {
+        "hierarchical_boundary",
+        "hierarchical_graph",
+        "hierarchical_metrics",
+    },
+    "hierarchical_bisection": {"hierarchical_graph"},
+    "hierarchical_boundary": {
+        "hierarchical_graph",
+        "hierarchical_metrics",
+    },
+    "hierarchical_core": {
+        "hierarchical_backends",
+        "hierarchical_bisection",
+        "hierarchical_graph",
+        "hierarchical_refinement",
+    },
+    "hierarchical_graph": set(),
+    "hierarchical_metrics": {"hierarchical_graph"},
+    "hierarchical_refinement": {"hierarchical_graph"},
+    "hierarchical_reporting": {
+        "hierarchical_boundary",
+        "hierarchical_graph",
+        "hierarchical_metrics",
+    },
+}
 
 
 def test_facade_is_thin_and_defines_only_dynamic_diagnostics() -> None:
@@ -88,52 +120,37 @@ def test_split_modules_and_tests_are_bounded_and_licensed() -> None:
         assert len(path.read_text(encoding="utf-8").splitlines()) <= 300
 
 
+def _chiplet_dependencies(module_name: str) -> set[str]:
+    """Return the responsibility modules that one responsibility module imports.
+
+    Parameters
+    ----------
+    module_name : str
+        A module in ``sc_neurocore.chiplet``.
+
+    Returns
+    -------
+    set of str
+        The names in ``EXPECTED_DEPENDENCIES`` it imports, by module or from the package.
+    """
+    tree = ast.parse((PACKAGE_ROOT / f"{module_name}.py").read_text(encoding="utf-8"))
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            tail = node.module.rsplit(".", maxsplit=1)[-1]
+            if tail in EXPECTED_DEPENDENCIES:
+                found.add(tail)
+            if node.module == "sc_neurocore.chiplet":
+                found.update(
+                    alias.name for alias in node.names if alias.name in EXPECTED_DEPENDENCIES
+                )
+    return found
+
+
 def test_focused_import_graph_is_acyclic() -> None:
     """The responsibility modules form the documented one-way dependency DAG."""
-    expected = {
-        "hierarchical_backend_runtime": set(),
-        "hierarchical_backends": {
-            "hierarchical_backend_runtime",
-            "hierarchical_graph",
-        },
-        "hierarchical_balancing": {
-            "hierarchical_boundary",
-            "hierarchical_graph",
-            "hierarchical_metrics",
-        },
-        "hierarchical_bisection": {"hierarchical_graph"},
-        "hierarchical_boundary": {
-            "hierarchical_graph",
-            "hierarchical_metrics",
-        },
-        "hierarchical_core": {
-            "hierarchical_backends",
-            "hierarchical_bisection",
-            "hierarchical_graph",
-            "hierarchical_refinement",
-        },
-        "hierarchical_graph": set(),
-        "hierarchical_metrics": {"hierarchical_graph"},
-        "hierarchical_refinement": {"hierarchical_graph"},
-        "hierarchical_reporting": {
-            "hierarchical_boundary",
-            "hierarchical_graph",
-            "hierarchical_metrics",
-        },
-    }
-    dependencies: dict[str, set[str]] = {}
-    for module_name in expected:
-        tree = ast.parse((PACKAGE_ROOT / f"{module_name}.py").read_text(encoding="utf-8"))
-        found: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                tail = node.module.rsplit(".", maxsplit=1)[-1]
-                if tail in expected:
-                    found.add(tail)
-                if node.module == "sc_neurocore.chiplet":
-                    found.update(alias.name for alias in node.names if alias.name in expected)
-        dependencies[module_name] = found
-    assert dependencies == expected
+    dependencies = {name: _chiplet_dependencies(name) for name in EXPECTED_DEPENDENCIES}
+    assert dependencies == EXPECTED_DEPENDENCIES
 
     resolved: set[str] = set()
     remaining = dict(dependencies)
@@ -179,13 +196,8 @@ def test_false_mirrors_are_absent_and_real_kernels_remain() -> None:
         "src/sc_neurocore/accel/mojo/kernels/hierarchical_partitioner.mojo",
     )
     assert all(not (REPO_ROOT / path).exists() for path in false_mirrors)
-    for registry in (
-        "src/sc_neurocore/accel/rust/safety/lib.rs",
-        "src/sc_neurocore/accel/rust/safety/mod.rs",
-    ):
-        assert "pub mod hierarchical_partitioner;" not in (REPO_ROOT / registry).read_text(
-            encoding="utf-8"
-        )
+    registry = REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs"
+    assert "pub mod hierarchical_partitioner;" not in registry.read_text(encoding="utf-8")
 
     maintained = {
         "engine/src/partition.rs": "pub fn kl_refine",

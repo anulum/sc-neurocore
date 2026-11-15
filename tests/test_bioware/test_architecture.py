@@ -68,6 +68,7 @@ def _assert_acyclic(graph: dict[str, set[str]]) -> None:
 
 
 def test_historical_facade_contains_no_implementation_definitions() -> None:
+    """The historical ``bioware.py`` facade defines no class or function of its own."""
     definitions = {
         node.name
         for node in _tree(SOURCE_DIR / "bioware.py").body
@@ -78,6 +79,7 @@ def test_historical_facade_contains_no_implementation_definitions() -> None:
 
 
 def test_responsibility_import_graph_is_acyclic() -> None:
+    """The Bioware responsibility modules import each other without a cycle."""
     graph = {
         module_name: _module_dependencies(module_name) for module_name in RESPONSIBILITY_MODULES
     }
@@ -86,6 +88,7 @@ def test_responsibility_import_graph_is_acyclic() -> None:
 
 
 def test_package_exports_reuse_historical_objects_and_qualified_names() -> None:
+    """The package re-exports the facade's own objects, under their historical module."""
     for name in historical.__all__:
         definition = getattr(historical, name)
         assert getattr(package, name) is definition
@@ -94,6 +97,7 @@ def test_package_exports_reuse_historical_objects_and_qualified_names() -> None:
 
 
 def test_established_pickle_paths_remain_stable() -> None:
+    """Each established public object pickles back to the same object."""
     for name in (
         "AEREvent",
         "BioHybridFrameResult",
@@ -108,6 +112,7 @@ def test_established_pickle_paths_remain_stable() -> None:
 
 
 def test_source_tests_and_benchmarks_remain_responsibility_sized() -> None:
+    """Sources, tests, the benchmark and its probe stay within their line ceilings."""
     source_sizes = {
         path.name: len(path.read_text(encoding="utf-8").splitlines())
         for path in SOURCE_DIR.glob("*.py")
@@ -124,6 +129,7 @@ def test_source_tests_and_benchmarks_remain_responsibility_sized() -> None:
 
 
 def test_benchmark_evidence_is_source_bound_and_byte_identical() -> None:
+    """The benchmark record binds the live sources and records a byte-identical output."""
     payload = json.loads(RESULT_PATH.read_text(encoding="utf-8"))
     source_paths = sorted(SOURCE_DIR.glob("*.py"))
     expected_hashes = {
@@ -174,6 +180,7 @@ def test_ci_enforces_exact_bioware_coverage_on_python_312() -> None:
 
 
 def test_bioware_has_no_placeholder_polyglot_mirrors() -> None:
+    """No placeholder Go, Julia, Mojo or Rust mirror of Bioware exists."""
     false_mirrors = (
         "src/sc_neurocore/accel/go/services/bioware/__init__.py",
         "src/sc_neurocore/accel/go/services/bioware/bioware.go",
@@ -187,9 +194,7 @@ def test_bioware_has_no_placeholder_polyglot_mirrors() -> None:
 
 
 def test_rust_safety_registry_does_not_publish_bioware_placeholder() -> None:
-    registries = (
-        REPO_ROOT / "src/sc_neurocore/accel/rust/safety/mod.rs",
-        REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs",
-    )
+    """The Rust safety crate's module list declares no Bioware module."""
+    registry = REPO_ROOT / "src/sc_neurocore/accel/rust/safety/lib.rs"
 
-    assert all("pub mod bioware;" not in path.read_text(encoding="utf-8") for path in registries)
+    assert "pub mod bioware;" not in registry.read_text(encoding="utf-8")

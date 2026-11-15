@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5671
+    "test_files": 5672
   },
   "documentation": {
     "public_pages": [
@@ -7495,6 +7495,7 @@
       "tests/test_rust_integration_rust_neurons.py",
       "tests/test_rust_python_neuron_parity.py",
       "tests/test_rust_rk4_neuron_parity.py",
+      "tests/test_rust_safety_crate_sources.py",
       "tests/test_rust_safety_module_registry.py",
       "tests/test_safety/test_safety_monitor.py",
       "tests/test_safety_cert/__init__.py",
