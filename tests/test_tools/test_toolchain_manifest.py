@@ -298,6 +298,7 @@ def test_a_run_script_matrix_reference_without_a_value_is_refused(repo: Path) ->
         "sudo apt install -y iverilog",
         "sudo apt -q -y install iverilog",
         "sudo apt-get -o Dpkg::Use-Pty=0 install -y iverilog",
+        "sudo apt-get -oDpkg::Use-Pty=0 install -y iverilog",
         "sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends iverilog",
     ],
 )
@@ -313,6 +314,24 @@ def test_every_apt_spelling_of_an_unpinned_install_is_refused(repo: Path, instal
     """
     _edit(repo, STALE, STEPS, STEPS + f"      - run: {install}\n")
     assert any("stale.yml:stale: apt install 'iverilog'" in p for p in _problems(repo))
+
+
+def test_a_line_of_options_without_install_is_refused_in_linear_time() -> None:
+    """The apt pattern reads each option one way only, so a long line of them is refused at once.
+
+    With an option two branches could match, 40 copies of `` -o -!`` after ``apt-get``
+    took about 2^40 steps to refuse; the search runs in a child process with a time limit, so
+    such a pattern fails this test instead of hanging the run.
+    """
+    code = (
+        "from tools.toolchain_manifest import APT_INSTALL\n"
+        "assert APT_INSTALL.search('apt-get' + ' -o -!' * 40) is None\n"
+        "assert APT_INSTALL.search('apt-get' + ' -o x -q' * 20000 + ' install y') is not None\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_a_pinned_apt_install_in_another_spelling_is_accepted(repo: Path) -> None:

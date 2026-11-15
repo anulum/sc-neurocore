@@ -14,6 +14,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The toolchain manifest's `apt install` pattern now reads each option one
+  way only (`-o` with its value, or another word that starts with a dash).
+  An option two branches could both match made a line of options that
+  never reaches `install` take exponential time to refuse (CodeQL
+  `py/redos`, error); 22 copies of ` -o -!` took 0.9 s, each 2 more four
+  times as long. The matches over every workflow are unchanged, and a test
+  bounds the refusal of 40 copies in a child process with a time limit.
 - Move tornado in the optics and workstation dependency locks from 6.6 to
   6.6.1 for CVE-2026-126347 (GHSA-5cjw-f85j-cv6r): tornado 6.6.0's fix for an
   open redirect in `RedirectHandler` missed URLs that begin with three or more

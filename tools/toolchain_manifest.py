@@ -53,7 +53,12 @@ NPM_ARCHIVE = re.compile(r"npm/-/npm-(\d+\.\d+\.\d+)\.tgz")
 SHA256 = re.compile(r"\b[0-9a-f]{64}\b")
 CHOCO_INSTALL = re.compile(r"choco install (\S+)([^\n]*)")
 #: ``apt-get install`` and ``apt install``, with options before the verb (``-y``, ``-o key=value``).
-APT_INSTALL = re.compile(r"\bapt(?:-get)?(?:\s+(?:-o\s+\S+|-\S+))*\s+install\b((?:[^\n\\]|\\\n)*)")
+#: Each option matches one way only: ``-o`` and its value, or any other word that starts with a dash.
+#: An option that two branches could both match made a line of options without ``install`` take
+#: exponential time to refuse; this form refuses it in linear time.
+APT_INSTALL = re.compile(
+    r"\bapt(?:-get)?(?:\s+-o\s+[^\s-]\S*|\s+-(?!o\s)\S+)*\s+install\b((?:[^\n\\]|\\\n)*)"
+)
 MATRIX_REFERENCE = re.compile(r"\$\{\{\s*matrix\.([\w-]+)\s*\}\}")
 #: Setup actions the manifest answers, by action path without its ref.
 KNOWN_SETUP = {
