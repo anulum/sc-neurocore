@@ -13,8 +13,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import sys
 from pathlib import Path
+from types import FrameType
 from typing import Literal, cast
 
 
@@ -113,7 +115,19 @@ def run_studio(args: argparse.Namespace) -> int:
     Returns
     -------
     int
-        Zero after a clean shutdown, otherwise one for missing extras or invalid settings.
+        Zero after a clean shutdown, a SIGTERM's included, otherwise one for missing extras or
+        invalid settings.
+
+    Notes
+    -----
+    Uvicorn drains the server on SIGTERM, restores the handler it found and raises
+    the signal again. Under Python's default action that ends the process before
+    any exit handler runs, so the private scratch job root and the ledger's
+    connections would be left behind. The handler installed here only asks the
+    server to stop, so the repeated signal ends in a clean return. It is held
+    only while the server runs: the handler found before is restored when the
+    server returns or raises, or the default action when the one found was not
+    installed from Python.
     """
     try:
         import uvicorn
@@ -183,7 +197,17 @@ def run_studio(args: argparse.Namespace) -> int:
         log_level="warning",
         callback_notify=_open_browser_once,
     )
-    uvicorn.Server(config).run()
+    server = uvicorn.Server(config)
+
+    def _stop_on_sigterm(_number: int, _frame: FrameType | None) -> None:
+        """Keep a clean return when Uvicorn restores and repeats SIGTERM after draining."""
+        server.should_exit = True
+
+    found = signal.signal(signal.SIGTERM, _stop_on_sigterm)
+    try:
+        server.run()
+    finally:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL if found is None else found)
     return 0
 
 

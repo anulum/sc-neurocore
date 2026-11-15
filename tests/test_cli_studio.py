@@ -11,8 +11,11 @@
 from __future__ import annotations
 
 import io
+import signal
 import sys
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from types import FrameType
 from unittest import mock
 
 import pytest
@@ -71,6 +74,75 @@ def test_studio_command_routes_custom_port() -> None:
     assert rc == 0
     open_browser.assert_not_called()
     assert run_server.call_args.args[0].config.port == 9000
+
+
+@pytest.fixture
+def host_sigterm_handler() -> Iterator[Callable[[int, FrameType | None], None]]:
+    """Install a stand-in for the SIGTERM handler of a process that runs the Studio.
+
+    The original handler is put back after the test.
+
+    Yields
+    ------
+    callable
+        The stand-in handler, which only the test could have installed.
+    """
+
+    def host_handler(_number: int, _frame: FrameType | None) -> None:
+        """Stand in for the host process's own SIGTERM handling."""
+
+    original = signal.signal(signal.SIGTERM, host_handler)
+    try:
+        yield host_handler
+    finally:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL if original is None else original)
+
+
+def test_studio_restores_the_sigterm_handler_it_found(
+    host_sigterm_handler: Callable[[int, FrameType | None], None],
+) -> None:
+    """Hold the Studio's SIGTERM handler only while serving, then give back the one found before.
+
+    A Studio run inside a longer-lived process, such as this test run, must not leave its
+    handler behind, or a later SIGTERM would only ask a finished server to stop.
+
+    Parameters
+    ----------
+    host_sigterm_handler : callable
+        The handler the host process had installed before the Studio ran.
+    """
+    while_serving: list[object] = []
+    with (
+        mock.patch(
+            "uvicorn.Server.run",
+            autospec=True,
+            side_effect=lambda _server: while_serving.append(signal.getsignal(signal.SIGTERM)),
+        ),
+        mock.patch("webbrowser.open"),
+    ):
+        assert run_cli("studio") == 0
+    assert len(while_serving) == 1
+    assert while_serving[0] is not host_sigterm_handler
+    assert signal.getsignal(signal.SIGTERM) is host_sigterm_handler
+
+
+def test_studio_restores_the_sigterm_handler_when_serving_fails(
+    host_sigterm_handler: Callable[[int, FrameType | None], None],
+) -> None:
+    """Give back the SIGTERM handler found before when the server raises.
+
+    Parameters
+    ----------
+    host_sigterm_handler : callable
+        The handler the host process had installed before the Studio ran.
+    """
+    with (
+        mock.patch("uvicorn.Server.run", autospec=True, side_effect=OSError("address in use")),
+        mock.patch("webbrowser.open"),
+        pytest.raises(OSError, match="address in use"),
+    ):
+        run_cli("studio")
+    assert signal.getsignal(signal.SIGTERM) is host_sigterm_handler
 
 
 def test_studio_backup_plan_reports_invalid_configuration(

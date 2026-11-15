@@ -54,7 +54,11 @@ with Path(sys.argv[1]).open("a") as output:
 
 @contextmanager
 def _launch_studio(
-    root: Path, port: int, overrides: dict[str, str] | None = None
+    root: Path,
+    port: int,
+    overrides: dict[str, str] | None = None,
+    *,
+    scratch_job_root: bool = False,
 ) -> Iterator[tuple[subprocess.Popen[str], Path]]:
     opener = root / "opener.py"
     marker = root / "opened.jsonl"
@@ -78,6 +82,9 @@ def _launch_studio(
         BROWSER=shlex.join((sys.executable, str(opener), str(marker), "%s")),
     )
     env.update(overrides or {})
+    if scratch_job_root:
+        # No configured root: the Studio makes a private one in TMPDIR and removes it at exit.
+        del env["SC_NEUROCORE_STUDIO_JOB_ROOT"]
     with (root / "cli.log").open("w") as log:
         process = subprocess.Popen(
             [sys.executable, "-m", "sc_neurocore.cli", "studio", "--port", str(port)],
@@ -93,7 +100,7 @@ def _launch_studio(
             if process.poll() is None:
                 # Exercise console shutdown; Uvicorn re-raises the received
                 # signal after draining. SIGINT unwinds Python and preserves
-                # subprocess coverage, whereas re-raised SIGTERM skips atexit.
+                # subprocess coverage; SIGTERM has its own test below.
                 process.send_signal(signal.SIGINT)
             try:
                 process.wait(timeout=5)
@@ -136,6 +143,34 @@ def test_studio_opens_a_serving_entry_once(tmp_path: Path) -> None:
         assert process.poll() is None
         assert len(marker.read_text().splitlines()) == 1
     assert process.returncode is not None
+
+
+def test_a_studio_stopped_by_sigterm_returns_cleanly_and_removes_its_scratch_root(
+    tmp_path: Path,
+) -> None:
+    """A service manager's SIGTERM ends the Studio as a clean return, so its exit handlers run.
+
+    With no job root configured the Studio makes a private scratch root in its
+    temporary folder and removes it at exit. Uvicorn drains the server on the
+    signal, restores the handler it found and raises the signal again; with
+    Python's default SIGTERM action that ends the process before any exit
+    handler, and the root stays behind.
+
+    Parameters
+    ----------
+    tmp_path:
+        Disposable launcher, opener-observation and temporary directory.
+    """
+    with socket.socket() as selected:
+        selected.bind(("127.0.0.1", 0))
+        port = selected.getsockname()[1]
+    with _launch_studio(tmp_path, port, scratch_job_root=True) as (process, marker):
+        _wait_for_opening(process, marker)
+        roots = list((tmp_path / "tmp").glob("sc-neurocore-studio-jobs-*"))
+        assert len(roots) == 1, roots
+        process.send_signal(signal.SIGTERM)
+        assert process.wait(timeout=20) == 0, (tmp_path / "cli.log").read_text()
+    assert not roots[0].exists()
 
 
 def test_studio_bind_failure_does_not_open_a_browser(tmp_path: Path) -> None:

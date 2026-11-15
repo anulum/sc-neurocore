@@ -7973,7 +7973,19 @@ args : argparse.Namespace
 Returns
 -------
 int
-    Zero after a clean shutdown, otherwise one for missing extras or invalid settings.
+    Zero after a clean shutdown, a SIGTERM's included, otherwise one for missing extras or
+    invalid settings.
+
+Notes
+-----
+Uvicorn drains the server on SIGTERM, restores the handler it found and raises
+the signal again. Under Python's default action that ends the process before
+any exit handler runs, so the private scratch job root and the ledger's
+connections would be left behind. The handler installed here only asks the
+server to stop, so the repeated signal ends in a clean return. It is held
+only while the server runs: the handler found before is restored when the
+server returns or raises, or the default action when the one found was not
+installed from Python.
 
 ### Function `run_studio_backup_plan(args)`
 Emit the Studio durable-state backup and restore plan.

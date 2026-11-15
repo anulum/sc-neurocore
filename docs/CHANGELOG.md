@@ -588,6 +588,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `sc-neurocore studio` stopped with SIGTERM, as a service manager or
+  `docker stop` stops it, now ends as a clean return and runs its exit
+  handlers. Uvicorn drains the server on the signal, restores the handler it
+  found and raises the signal again; under Python's default action the
+  process then ended before any exit handler, so an unconfigured Studio left
+  its private scratch job root in the temporary folder, and the ledger's
+  connections were not closed. The installed-wheel acceptance stops the
+  Studio this way, which is why its distribution test left one root behind.
+  The Studio holds its SIGTERM handler only while it serves and restores the
+  one it found when the server returns, so a Studio run inside another
+  process leaves that process's SIGTERM as it was.
 - A model descriptor's `[dynamics]` entry must be its expression text, or a
   table that holds only that text under `expr`; anything else is refused,
   naming the entry. A number, a truth value or a list used to be left out of
