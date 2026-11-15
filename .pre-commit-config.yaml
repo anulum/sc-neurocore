@@ -100,3 +100,11 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.pre-commit-config\.yaml|src/.*\.py|scripts/generate_docs\.py|docs/API_REFERENCE\.md)$'
+      # A benchmark record can bind any tracked file, so whatever a commit changes can
+      # make the committed census describe earlier bytes: the check runs on every commit.
+      - id: benchmark-coverage-census-drift
+        name: benchmark coverage census drift
+        entry: python tools/benchmark_coverage_census.py --check
+        language: system
+        pass_filenames: false
+        always_run: true

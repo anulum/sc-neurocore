@@ -34,6 +34,7 @@ import subprocess
 import sys
 
 import pytest
+import yaml
 
 from tools.benchmark_coverage_census import (
     CENSUS_SCHEMA,
@@ -914,3 +915,26 @@ class TestTheCommandLineIsTheDriftGate:
             runpy.run_path(str(script), run_name="__main__")
         assert stopped.value.code == 0
         assert "is up to date" in capsys.readouterr().out
+
+
+#: The configured hook that keeps a commit from carrying a stale census.
+CENSUS_HOOK = {
+    "id": "benchmark-coverage-census-drift",
+    "name": "benchmark coverage census drift",
+    "entry": "python tools/benchmark_coverage_census.py --check",
+    "language": "system",
+    "pass_filenames": False,
+    "always_run": True,
+}
+
+
+def test_every_commit_checks_the_census() -> None:
+    """The configured hooks refuse a commit whose census no longer matches its sources.
+
+    A record can bind any tracked file, so the hook runs whatever the commit changed. The
+    preflight's pre-commit range gate runs the same hooks over a push, and the hosted pre-commit
+    workflow runs them over every file.
+    """
+    config = yaml.safe_load((REPO_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8"))
+    local = [hook for repo in config["repos"] if repo["repo"] == "local" for hook in repo["hooks"]]
+    assert [hook for hook in local if hook["id"] == CENSUS_HOOK["id"]] == [CENSUS_HOOK]

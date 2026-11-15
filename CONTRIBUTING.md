@@ -99,6 +99,13 @@ and must not create duplicate scientific provenance.
 - All new Python APIs must have pytest coverage in `tests/`.
 - SIMD paths must include portable fallback — never assume AVX-512 or AVX2 availability.
 
+Benchmark records bind the digests of the sources they were measured on, and
+the benchmark coverage census says which records still describe the sources in
+the tree. A commit that changes a bound source writes the census again with
+`python tools/benchmark_coverage_census.py --write`. The pre-commit hook
+`benchmark-coverage-census-drift` checks the census on every commit, and the
+preflight's pre-commit range runs it before a push.
+
 Python coverage includes isolated worker processes through the configured
 `subprocess` patch and source directory, including scripts that run without
 importing the package. The `_exit` patch saves watchdog observations before an
