@@ -26,6 +26,24 @@ pytest.importorskip("nirtorch")
 _ROOT = Path(__file__).resolve().parents[1]
 
 
+def _producer(relative: str) -> Path:
+    """Return the producer file a record key names, in this checkout's package or the installed one.
+
+    Parameters
+    ----------
+    relative : str
+        A ``source_hashes`` key: the producer's repository path, under ``src/``.
+
+    Returns
+    -------
+    Path
+        The same file below the parent of the imported ``sc_neurocore`` package.
+    """
+    assert relative.startswith("src/sc_neurocore/"), relative
+    package_parent = Path(sc_neurocore.__file__).resolve().parent.parent
+    return package_parent / relative.removeprefix("src/")
+
+
 def test_real_framework_benchmark_checks_each_path_before_reporting_times(tmp_path: Path) -> None:
     """Measure both reset conventions and bind actual traces to their imported producers."""
     script = _ROOT / "benchmarks/bench_nir_interop.py"
@@ -57,9 +75,8 @@ def test_real_framework_benchmark_checks_each_path_before_reporting_times(tmp_pa
     report = json.loads(output.read_text())
     assert report["benchmark_sha256"] == hashlib.sha256(script.read_bytes()).hexdigest()
     assert report["source_hashes"]
-    package_parent = Path(sc_neurocore.__file__).resolve().parent.parent
     for relative, expected in report["source_hashes"].items():
-        assert hashlib.sha256((package_parent / relative).read_bytes()).hexdigest() == expected
+        assert hashlib.sha256(_producer(relative).read_bytes()).hexdigest() == expected
     assert report["configuration"]["dtype"] == "float64"
     assert report["configuration"]["device"] == "cpu"
     assert report["measurement_context"]["production_rerun_requirement"]
@@ -88,9 +105,9 @@ def test_committed_framework_measurements_remain_bound_to_actual_producers() -> 
         report["benchmark_sha256"]
         == hashlib.sha256((_ROOT / "benchmarks/bench_nir_interop.py").read_bytes()).hexdigest()
     )
-    package_parent = Path(sc_neurocore.__file__).resolve().parent.parent
     for relative, expected in report["source_hashes"].items():
-        assert hashlib.sha256((package_parent / relative).read_bytes()).hexdigest() == expected
+        assert (_ROOT / relative).is_file(), relative
+        assert hashlib.sha256(_producer(relative).read_bytes()).hexdigest() == expected
     for case in report["cases"]:
         assert case["spikes_identical"] and case["spikes_per_trace"] > 0
         for path in case["paths"].values():

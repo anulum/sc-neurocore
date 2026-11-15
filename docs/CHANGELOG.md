@@ -314,6 +314,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Key the NIR interoperability benchmark's producers by their repository paths
+  (`src/sc_neurocore/...`) and measure the record again with the documented
+  command: its nine producer digests are unchanged, but keyed relative to the
+  package they named no tracked file, so the benchmark coverage census called
+  the record outdated. Its tests resolve each key in the checkout or in the
+  installed package and require the repository path.
+
 - A generated equation-neuron testbench writes its VCD waveform only when the
   simulation is run with the plusarg `+vcd` (`vvp sim +vcd`); without it the
   run writes no file. `compile --testbench` says how to ask for the waveform.

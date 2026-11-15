@@ -41,17 +41,28 @@ _MODULES = (
 
 
 def _producer_hashes() -> dict[str, str]:
+    """Hash the imported NIR producers, keyed by their repository paths.
+
+    The bytes are read from the modules that were imported, in a checkout or an installed
+    package; the keys are the repository paths (``src/sc_neurocore/...``), so the benchmark
+    evidence gate and the coverage census find the files the record binds.
+
+    Returns
+    -------
+    dict of str to str
+        Repository path of each producer to the SHA-256 of its bytes.
+    """
     result = {}
     for name in _MODULES:
         qualified = "sc_neurocore.nir_bridge" + ("" if name == "__init__" else f".{name}")
         module = import_module(qualified)
         assert module.__file__ is not None
-        result[f"sc_neurocore/nir_bridge/{name}.py"] = hashlib.sha256(
+        result[f"src/sc_neurocore/nir_bridge/{name}.py"] = hashlib.sha256(
             Path(module.__file__).read_bytes()
         ).hexdigest()
     schema = import_module("sc_neurocore.ir.scnir_schema")
     assert schema.__file__ is not None
-    result["sc_neurocore/ir/scnir_schema.py"] = hashlib.sha256(
+    result["src/sc_neurocore/ir/scnir_schema.py"] = hashlib.sha256(
         Path(schema.__file__).read_bytes()
     ).hexdigest()
     return result

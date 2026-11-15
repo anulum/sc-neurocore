@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 35,
-    "outdated": 92,
+    "current": 36,
+    "outdated": 91,
     "unbound": 191
   },
   "all_records": 318,
@@ -2344,18 +2344,7 @@
       "name": "bench_nir_graph.json"
     },
     {
-      "changed": [
-        "sc_neurocore/ir/scnir_schema.py",
-        "sc_neurocore/nir_bridge/__init__.py",
-        "sc_neurocore/nir_bridge/execution_metadata.py",
-        "sc_neurocore/nir_bridge/export.py",
-        "sc_neurocore/nir_bridge/graph_identity.py",
-        "sc_neurocore/nir_bridge/interchange_notes.py",
-        "sc_neurocore/nir_bridge/node_map.py",
-        "sc_neurocore/nir_bridge/parser.py",
-        "sc_neurocore/nir_bridge/snntorch_bridge.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "bench_nir_interop.json"
     },
     {
