@@ -6,17 +6,26 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Siegert transfer-function model
 
+#![deny(missing_docs)]
+
 /// Siegert transfer function — analytical stationary firing rate of a LIF neuron.
 #[derive(Clone, Debug)]
 pub struct SiegertTransferFunction {
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Absolute refractory period (ms).
     pub tau_rp: f64,
+    /// Firing threshold (mV).
     pub v_threshold: f64,
+    /// Reset potential (mV).
     pub v_reset: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
 }
 
 impl SiegertTransferFunction {
+    /// Create the default LIF parameter set: `tau_m` 20 ms, `tau_rp` 2 ms, threshold
+    /// -50 mV, reset -70 mV, rest -65 mV.
     pub fn new() -> Self {
         Self {
             tau_m: 20.0,
@@ -26,6 +35,15 @@ impl SiegertTransferFunction {
             v_rest: -65.0,
         }
     }
+    /// Return the stationary firing rate (Hz) for the mean input `current` (mV, added to
+    /// `v_rest`); nothing is stored.
+    ///
+    /// The noise amplitude is not a parameter: `sigma = 0.1 * max(|current|, 1e-6)`. The
+    /// mean ISI is `tau_rp + tau_m * sqrt(pi) * I`, where `I` integrates
+    /// `exp(u^2) * (1 + erf(u))` from `(v_reset - mu) / sigma` to
+    /// `(v_threshold - mu) / sigma`. The integral uses 20-point Gauss-Legendre quadrature,
+    /// the Abramowitz-Stegun erf approximation, and `exp(u^2)` capped at `exp(50)`. The
+    /// rate is `1000 / max(ISI, 0.01)`.
     pub fn step(&self, current: f64) -> f64 {
         let mu = self.v_rest + current;
         let sigma = current.abs().max(1e-6) * 0.1;

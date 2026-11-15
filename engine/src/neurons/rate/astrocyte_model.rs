@@ -6,25 +6,43 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Li-Rinzel astrocyte model
 
+#![deny(missing_docs)]
+
 /// Li-Rinzel IP3R astrocyte model — Ca²⁺ dynamics.
 #[derive(Clone, Debug)]
 pub struct AstrocyteModel {
+    /// Cytosolic calcium (uM).
     pub ca: f64,
+    /// IP3-receptor inactivation gate (dimensionless).
     pub h: f64,
+    /// IP3 concentration (uM); the step holds it constant.
     pub ip3: f64,
+    /// Maximal calcium flux through the IP3 receptor (1/s).
     pub v_er: f64,
+    /// SERCA pump half-activation calcium concentration (uM). The step also uses it as the
+    /// leak rate in `k_er * (ca_er - ca)`.
     pub k_er: f64,
+    /// Maximal SERCA pump uptake rate (uM/s).
     pub v_serca: f64,
+    /// IP3 dissociation constant of the IP3 receptor (uM).
     pub d1: f64,
+    /// Calcium-inhibition dissociation constant (uM).
     pub d2: f64,
+    /// IP3 dissociation constant (inhibitory site) (uM).
     pub d3: f64,
+    /// Calcium-activation dissociation constant (uM).
     pub d5: f64,
+    /// Total cell calcium (cytosol plus ER) (uM).
     pub c0: f64,
+    /// ER-to-cytosol volume ratio (dimensionless).
     pub c1: f64,
+    /// Euler step (s); the rates are per second.
     pub dt: f64,
 }
 
 impl AstrocyteModel {
+    /// Create a cell with `ca` = 0.05 uM, `h` = 0.8 and `ip3` = 0.5 uM, the default
+    /// parameters and `dt` = 0.01 s.
     pub fn new() -> Self {
         Self {
             ca: 0.05,
@@ -42,6 +60,14 @@ impl AstrocyteModel {
             dt: 0.01,
         }
     }
+    /// Advance one forward-Euler step with `current`, a calcium influx (uM/s), and return
+    /// the new calcium.
+    ///
+    /// The ER calcium is `(c0 - ca) / c1`. The channel flux is
+    /// `v_er * (m_inf * n_inf * h)^3 * (ca_er - ca)`, the leak `k_er * (ca_er - ca)`, and the
+    /// pump `v_serca * ca^2 / (ca^2 + k_er^2)`. `ca` is floored at 0. `h` relaxes towards
+    /// `q2 / (q2 + ca)` at rate `0.2 * (q2 + ca)`, both from the old `ca`. The input is not
+    /// validated: a NaN `current` sets `ca` to 0, because `f64::max` returns its other operand.
     pub fn step(&mut self, current: f64) -> f64 {
         let ca_er = (self.c0 - self.ca) / self.c1;
         let m_inf = self.ip3 / (self.ip3 + self.d1);
@@ -57,6 +83,7 @@ impl AstrocyteModel {
         self.h += (h_inf - self.h) / tau_h * self.dt;
         self.ca
     }
+    /// Restore `ca`, `h` and `ip3` to 0.05, 0.8 and 0.5; the parameters are kept.
     pub fn reset(&mut self) {
         self.ca = 0.05;
         self.h = 0.8;

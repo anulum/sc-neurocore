@@ -8,6 +8,8 @@
 
 //! k-order sliding Parallel Spiking Neuron — Fang et al. (2023).
 
+#![deny(missing_docs)]
+
 /// k-order sliding PSN — Fang et al. (2023), NeurIPS.
 ///
 /// Streaming form of the PSN family (paper Eqs. 14–15):
@@ -25,14 +27,19 @@
 /// repository defaults.
 #[derive(Clone, Debug)]
 pub struct ParallelSpikingNeuron {
+    /// Kernel weights `W_0` to `W_(k-1)`; `weights[k-1]` multiplies the newest input.
     pub weights: Vec<f64>,
+    /// The last `k` inputs, oldest first; it must have the same length as `weights`.
     pub history: Vec<f64>,
+    /// Firing threshold compared against the hidden state; trained in the paper (dimensionless).
     pub v_threshold: f64,
+    /// Hidden state `H[t]` of the last accepted step.
     pub hidden: f64,
 }
 
 impl ParallelSpikingNeuron {
-    /// Construct with the uniform repository default weights `1/k`.
+    /// Construct with the uniform repository default weights `1/k`; a `kernel_size` of 0
+    /// is taken as 1.
     pub fn new(kernel_size: usize, v_threshold: f64) -> Self {
         let k = kernel_size.max(1);
         Self {

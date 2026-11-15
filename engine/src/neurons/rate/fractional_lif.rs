@@ -6,15 +6,24 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Fractional LIF neuron model
 
+#![deny(missing_docs)]
+
 /// Fractional-order LIF — Grünwald-Letnikov approximation. Teka et al. 2014.
 #[derive(Clone, Debug)]
 pub struct FractionalLIFNeuron {
+    /// Membrane potential (dimensionless).
     pub v: f64,
+    /// Resting / leak reversal potential (dimensionless).
     pub v_rest: f64,
+    /// Membrane potential reset to after a spike (dimensionless).
     pub v_reset: f64,
+    /// Voltage at which a spike is registered (dimensionless).
     pub v_threshold: f64,
+    /// Fractional-derivative order (memory exponent; 1 recovers the standard LIF) (dimensionless).
     pub alpha: f64,
+    /// Normalised membrane resistance (R=1 in the project's normalised-current convention) (dimensionless).
     pub resistance: f64,
+    /// Step; the drive is scaled by `dt^alpha`.
     pub dt: f64,
     history: Vec<f64>,
     gl_coeffs: Vec<f64>,
@@ -22,6 +31,10 @@ pub struct FractionalLIFNeuron {
 }
 
 impl FractionalLIFNeuron {
+    /// Create a neuron at rest with fractional order `alpha` and `max_hist` steps of memory.
+    ///
+    /// The Grünwald-Letnikov weights `c_j = c_(j-1) * (1 - (alpha + 1) / j)` are computed
+    /// here once, so a later change of the `alpha` field does not change them.
     pub fn new(alpha: f64, max_hist: usize) -> Self {
         let mut coeffs = vec![0.0; max_hist + 1];
         coeffs[0] = 1.0;
@@ -41,6 +54,12 @@ impl FractionalLIFNeuron {
             _max_hist: max_hist,
         }
     }
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `v` becomes `(-(v - v_rest) + resistance * current) * dt^alpha - sum_j c_j v_(n-j)`
+    /// over the stored history, all `max_hist` values of it. Reaching `v_threshold` sets `v`
+    /// to `v_reset`; the history then stores `v` after any reset, so the memory holds the
+    /// reset value, as in the Python model. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         // Grünwald-Letnikov: D^α v ≈ (1/dt^α) Σ_j c_j v(t-j·dt)
         let mut gl_sum = 0.0;
@@ -65,6 +84,8 @@ impl FractionalLIFNeuron {
         }
         i32::from(spiked)
     }
+    /// Return `v` to `v_rest` and fill the history with `v_rest`; the weights and the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.history.fill(self.v_rest);

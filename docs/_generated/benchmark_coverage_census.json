@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 39,
-    "outdated": 105,
+    "current": 38,
+    "outdated": 106,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 14,
-    "outdated": 72,
+    "current": 13,
+    "outdated": 73,
     "unbound": 1
   },
   "rows": [
@@ -127,7 +127,10 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/rate/amari_neural_field.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_amari_field.json"
         }
       ],
@@ -373,6 +376,7 @@
         {
           "attribution": "class_name",
           "changed": [
+            "engine/src/neurons/rate/compte_wm.rs",
             "src/sc_neurocore/accel/rust/safety/compte_wm.rs"
           ],
           "currency": "outdated",
@@ -1169,6 +1173,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/rate/mcculloch_pitts.rs",
             "src/sc_neurocore/accel/mojo/kernels/mcculloch_pitts.mojo",
             "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
           ],
@@ -2026,7 +2031,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/rate/sigmoid_rate.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-07-14_sigmoid_rate.json",
@@ -2161,7 +2167,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/rate/threshold_linear_rate.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-07-14_threshold_linear_rate.json",

@@ -8,6 +8,8 @@
 
 //! Source-bounded Compte pyramidal-cell and incoming channel dynamics.
 
+#![deny(missing_docs)]
+
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;
 const GATE_MAX: f64 = 1.0e6;

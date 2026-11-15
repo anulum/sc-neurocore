@@ -479,6 +479,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 10 undocumented rate-model files (Li-Rinzel astrocyte,
+  fractional-order LIF, leaky compete-and-fire, liquid time-constant,
+  McCulloch-Pitts, parallel spiking, Siegert transfer function, sigmoid
+  rate, threshold-linear rate, Tsodyks-Markram) are documented in full, each
+  file read against its code; the Amari field and the Compte working-memory
+  model, already documented, deny missing docs too. Stated by reading: the
+  astrocyte's `k_er` is both its ER leak rate and its SERCA half-activation,
+  and a NaN current sets its calcium to 0; the liquid time-constant neuron's
+  `bias` enters only its time-constant sigmoid (its descriptor now says so),
+  and a threshold of 1 is reached only by overshooting, when `dt / tau`
+  exceeds 1, or by rounding onto a target `tanh` has saturated to exactly 1;
+  the Siegert noise amplitude is a tenth of the input's magnitude, not a
+  parameter; the leaky compete-and-fire units inhibit each other in index
+  order.
 - The engine's 5 motor-system models (alpha and gamma motor neurons, motor
   unit, Renshaw cell, upper motor neuron) are documented in full, each file
   read against its code: the alpha neuron's sub-steps with its persistent

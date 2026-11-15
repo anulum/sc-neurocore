@@ -6,18 +6,28 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Leaky compete-and-fire neuron model
 
+#![deny(missing_docs)]
+
 /// Leaky Compete-and-Fire — winner-take-all with lateral inhibition. Oster et al. 2009.
 #[derive(Clone, Debug)]
 pub struct LeakyCompeteFireNeuron {
+    /// Normalised membrane potential of each competing unit; one entry per n_units, compared against the shared v_threshold (dimensionless).
     pub v: Vec<f64>,
+    /// Number of competing units in the winner-take-all network (dimensionless).
     pub n_units: usize,
+    /// Integration time constant (ms).
     pub tau: f64,
+    /// Normalised firing threshold (dimensionless).
     pub v_threshold: f64,
+    /// Strength of the global inhibitory (competition) feedback (dimensionless).
     pub w_inh: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl LeakyCompeteFireNeuron {
+    /// Create `n_units` units at rest with `tau` = 10 ms, threshold 1, `w_inh` = 0.5 and
+    /// `dt` = 1 ms.
     pub fn new(n_units: usize) -> Self {
         Self {
             v: vec![0.0; n_units],
@@ -29,6 +39,13 @@ impl LeakyCompeteFireNeuron {
         }
     }
 
+    /// Advance one step with one current per unit and return one spike flag per unit.
+    ///
+    /// Each unit takes a forward-Euler step towards its current; missing currents count as
+    /// 0. Then the units are checked in index order. A unit that reaches `v_threshold`
+    /// fires and resets to 0, and every other unit loses `w_inh` (floored at 0) at once, so
+    /// a later unit may no longer fire in the same step. `v` must hold `n_units` entries.
+    /// Inputs are not validated.
     pub fn step(&mut self, currents: &[f64]) -> Vec<i32> {
         let n = self.n_units;
         for i in 0..n {
@@ -50,6 +67,7 @@ impl LeakyCompeteFireNeuron {
         spikes
     }
 
+    /// Set every unit to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.v.fill(0.0);
     }

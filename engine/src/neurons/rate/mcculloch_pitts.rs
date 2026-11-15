@@ -6,9 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — McCulloch-Pitts neuron model
 
+#![deny(missing_docs)]
+
 /// McCulloch-Pitts 1943 — excitatory-count threshold with absolute inhibition.
 #[derive(Clone, Debug)]
 pub struct McCullochPittsNeuron {
+    /// Positive number of simultaneously active excitatory afferents required in the absence of inhibition (active afferents).
     pub theta: i32,
 }
 

@@ -6,25 +6,42 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Tsodyks-Markram neuron model
 
+#![deny(missing_docs)]
+
 /// Tsodyks-Markram 1997 — LIF with short-term synaptic plasticity.
 #[derive(Clone, Debug)]
 pub struct TsodyksMarkramNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Available synaptic resources (dimensionless); they recover towards 1 with `tau_d`.
     pub x: f64,
+    /// Utilisation (dimensionless); it relaxes towards `u_se` with `tau_f`.
     pub u: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Reset potential (mV).
     pub v_reset: f64,
+    /// Firing threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Synaptic depression recovery time constant (ms).
     pub tau_d: f64,
+    /// Synaptic facilitation time constant (ms).
     pub tau_f: f64,
+    /// Utilisation of synaptic efficacy (release probability) (dimensionless).
     pub u_se: f64,
+    /// Absolute synaptic efficacy (maximal synaptic weight) (dimensionless).
     pub a_se: f64,
+    /// Normalised membrane resistance (dimensionless).
     pub r_m: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl TsodyksMarkramNeuron {
+    /// Create a neuron at rest with full resources (`x` = 1), `u` = `u_se`, the default
+    /// parameters and `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -42,6 +59,12 @@ impl TsodyksMarkramNeuron {
             dt: 0.1,
         }
     }
+    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    ///
+    /// `x` recovers and `u` relaxes first. On a presynaptic spike, `u` gains
+    /// `u_se * (1 - u)`, the synaptic current is `a_se * u * x` for this step only, and `x`
+    /// loses `u * x`. `v` then gains `(-(v - v_rest) + r_m * (i_syn + current)) / tau_m * dt`,
+    /// and reaching `v_threshold` sets it to `v_reset`. Inputs are not validated.
     pub fn step(&mut self, current: f64, presynaptic_spike: bool) -> i32 {
         self.x += (1.0 - self.x) / self.tau_d * self.dt;
         self.u += (self.u_se - self.u) / self.tau_f * self.dt;
@@ -59,6 +82,7 @@ impl TsodyksMarkramNeuron {
             0
         }
     }
+    /// Return `v` to `v_rest`, `x` to 1 and `u` to `u_se`; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.x = 1.0;

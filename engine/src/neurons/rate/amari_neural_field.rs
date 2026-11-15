@@ -8,6 +8,8 @@
 
 //! Periodic-grid specialization of Amari's 1977 equation (3).
 
+#![deny(missing_docs)]
+
 /// Finite periodic Amari field with source-level Heaviside activity.
 #[derive(Clone, Debug)]
 pub struct AmariNeuralField {

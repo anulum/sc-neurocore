@@ -6,16 +6,22 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Threshold-linear rate neuron model
 
+#![deny(missing_docs)]
+
 /// Threshold-linear continuous-rate transfer with cached output.
 #[derive(Clone, Debug)]
 pub struct ThresholdLinearRateNeuron {
+    /// Cached latest continuous output; not integrated state or a binary spike (rate).
     pub r: f64,
+    /// Input level at which the rectified response begins (input).
     pub theta: f64,
+    /// Non-negative slope of the response above threshold (rate/input).
     pub gain: f64,
 }
 
 impl ThresholdLinearRateNeuron {
-    /// Construct the maintained factory-default transfer.
+    /// Construct the maintained factory-default transfer: `r` = 0, `theta` = 0 and
+    /// `gain` = 1.
     pub fn new() -> Self {
         Self::with_parameters(0.0, 0.0, 1.0)
             .expect("the factory-default threshold-linear contract is valid")
@@ -58,7 +64,8 @@ impl ThresholdLinearRateNeuron {
         Ok(candidate)
     }
 
-    /// Evaluate one input through the legacy non-throwing engine boundary.
+    /// Evaluate one input through the legacy non-throwing engine boundary; a refused input
+    /// returns the unchanged `r`.
     pub fn step(&mut self, current: f64) -> f64 {
         self.try_step(current).unwrap_or(self.r)
     }

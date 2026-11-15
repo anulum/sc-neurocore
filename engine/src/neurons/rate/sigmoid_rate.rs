@@ -6,18 +6,26 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sigmoid rate neuron model
 
+#![deny(missing_docs)]
+
 /// Sigmoid rate neuron — Wilson-Cowan-style single unit.
 #[derive(Clone, Debug)]
 pub struct SigmoidRateNeuron {
+    /// Live continuous rate constrained to \[0,1\] (normalised population activity).
     pub r: f64,
+    /// Rate-variable time constant (ms).
     pub tau: f64,
+    /// Steepness of the sigmoidal input-output function (dimensionless).
     pub beta: f64,
+    /// Midpoint of the logistic transfer (input).
     pub theta: f64,
+    /// Step (ms); the rate relaxes exactly by `exp(-dt / tau)` towards the sigmoid.
     pub dt: f64,
 }
 
 impl SigmoidRateNeuron {
-    /// Construct the maintained factory-default rate unit.
+    /// Construct the maintained factory-default rate unit: `r` = 0, `tau` = 10 ms,
+    /// `beta` = 1, `theta` = 0 and `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self::with_parameters(0.0, 10.0, 1.0, 0.0, 0.1)
             .expect("the factory-default sigmoid-rate contract is valid")
@@ -77,7 +85,8 @@ impl SigmoidRateNeuron {
         Ok(candidate)
     }
 
-    /// Advance one step through the legacy non-throwing engine boundary.
+    /// Advance one step through the legacy non-throwing engine boundary; a refused step
+    /// returns the unchanged `r`.
     pub fn step(&mut self, current: f64) -> f64 {
         self.try_step(current).unwrap_or(self.r)
     }

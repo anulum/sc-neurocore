@@ -74,7 +74,7 @@ range = [
 [parameters.bias]
 default = 0.0
 unit = "1"
-meaning = "constant bias term"
+meaning = "bias of the time-constant sigmoid; the target has none"
 range = [
     -10.0,
     10.0,
