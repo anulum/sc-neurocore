@@ -165,7 +165,9 @@ is empty and the engine can run every model:
    (`rust_dispatch.draws_process_random`). The probe behind this check and
    check 5 constructs and steps default neurons inside a generator
    transaction, so checking, a fallback and a refusal leave the caller's
-   generators exactly where they were.
+   generators exactly where they were. Its answer is remembered for the model
+   name together with the class the name resolves to, so a class later put
+   under the same name is probed in its own right.
 7. The model name means the same model on both sides: `LapicqueNeuron` is the
    SC LIF compatibility profile in Python but the 1907 source profile in the
    engine, so it is refused; `SCLapicqueLIFNeuron` is the same on both.

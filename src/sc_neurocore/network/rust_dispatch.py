@@ -104,7 +104,23 @@ def _reference_neuron(model_name: str) -> object | None:
         the question cannot be answered, which this module treats as a
         difference.
     """
-    model = getattr(_model_registry, model_name, None)
+    return _default_instance(getattr(_model_registry, model_name, None))
+
+
+def _default_instance(model: object) -> object | None:
+    """Return ``model()`` built inside a generator transaction, or ``None``.
+
+    Parameters
+    ----------
+    model : object
+        What the registry resolves a model name to.
+
+    Returns
+    -------
+    object or None
+        A default-constructed neuron, or ``None`` when ``model`` is missing,
+        not callable, or cannot be built with no arguments.
+    """
     if model is None or not callable(model):
         return None
     try:
@@ -200,9 +216,17 @@ def _numpy_global_state() -> tuple[Any, ...]:
     return (state[0], state[1].tobytes(), state[2], state[3], state[4])
 
 
-@cache
 def _probe(model_name: str) -> tuple[tuple[str, ...] | None, bool]:
     """Step a default neuron inside a generator transaction; see :func:`evolving_state`.
+
+    The answer is remembered for the name together with the object the
+    registry resolves it to now. Remembered by the name alone, the first
+    model asked about answered for any other later put under that name.
+
+    Parameters
+    ----------
+    model_name : str
+        The model the bridge would build.
 
     Returns
     -------
@@ -210,12 +234,32 @@ def _probe(model_name: str) -> tuple[tuple[str, ...] | None, bool]:
         The evolving state (``None`` when undecidable) and whether stepping
         drew from the process-wide NumPy or standard ``random`` generator.
     """
+    return _probe_model(model_name, getattr(_model_registry, model_name, None))
+
+
+@cache
+def _probe_model(model_name: str, model: object) -> tuple[tuple[str, ...] | None, bool]:
+    """Step two default instances of ``model`` and compare them; see :func:`_probe`.
+
+    Parameters
+    ----------
+    model_name : str
+        The name whose descriptor declares the state.
+    model : object
+        What the registry resolves ``model_name`` to; part of the cache key.
+
+    Returns
+    -------
+    tuple
+        The evolving state (``None`` when undecidable) and whether stepping
+        drew from a process-wide generator.
+    """
     descriptor = load_descriptor(model_name)
     if descriptor is None:
         return None, False
     declared = tuple(spec.name for spec in descriptor.state if spec.name != "v")
-    stepped = _reference_neuron(model_name)
-    fresh = _reference_neuron(model_name)
+    stepped = _default_instance(model)
+    fresh = _default_instance(model)
     step: Any = getattr(stepped, "step", None)
     if stepped is None or fresh is None or not callable(step):
         return None, False

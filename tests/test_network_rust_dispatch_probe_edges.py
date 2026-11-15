@@ -39,10 +39,10 @@ MODEL = "SCLapicqueLIFNeuron"
 
 @pytest.fixture(autouse=True)
 def _fresh_probe_cache() -> Iterator[None]:
-    """Clear the per-name probe cache around every test."""
-    rust_dispatch._probe.cache_clear()
+    """Clear the probe cache (one answer per name and resolved model) around every test."""
+    rust_dispatch._probe_model.cache_clear()
     yield
-    rust_dispatch._probe.cache_clear()
+    rust_dispatch._probe_model.cache_clear()
 
 
 def _registered(monkeypatch: pytest.MonkeyPatch, model: type[Any]) -> Population:

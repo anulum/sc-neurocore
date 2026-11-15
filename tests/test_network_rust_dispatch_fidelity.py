@@ -40,6 +40,7 @@ from sc_neurocore.network import (
 )
 from sc_neurocore.network.rust_dispatch import (
     BRIDGE_CONSTRUCTOR_ARGUMENTS,
+    evolving_state,
     network_divergences,
     population_divergence,
     projection_divergences,
@@ -83,6 +84,22 @@ def _stub_population(
     monkeypatch.setattr(model_registry, MODEL, model, raising=False)
     population.neurons = [model() for _ in range(count)]
     return population
+
+
+class _StillStepper:
+    """The ``step`` of a stub whose population should match: it moves nothing.
+
+    The state probe steps the model the name resolves to, so a stub without a
+    ``step`` reads as "cannot be stepped" and its population diverges before
+    any attribute is compared. ``__slots__`` stays empty so a slotted stub keeps
+    no instance dictionary.
+    """
+
+    __slots__ = ()
+
+    def step(self, _current: float) -> int:
+        """Consume one drive sample, move nothing and never spike."""
+        return 0
 
 
 class TestPopulationDivergence:
@@ -278,7 +295,7 @@ class TestPopulationDivergence:
 
             __hash__ = None  # type: ignore[assignment] # deliberately unhashable
 
-        class SettledNeuron:
+        class SettledNeuron(_StillStepper):
             """A model holding a value that compares equal across instances."""
 
             def __init__(self) -> None:
@@ -292,7 +309,7 @@ class TestPopulationDivergence:
     ) -> None:
         """A string or a boolean is not a number, and is compared as itself."""
 
-        class FlaggedNeuron:
+        class FlaggedNeuron(_StillStepper):
             """A model whose configuration is a profile name and a flag."""
 
             def __init__(self) -> None:
@@ -334,7 +351,7 @@ class TestPopulationDivergence:
         check may never take.
         """
 
-        class SlottedNeuron:
+        class SlottedNeuron(_StillStepper):
             """A model whose attributes live in slots rather than a dictionary."""
 
             __slots__ = ("v", "v_rest")
@@ -354,7 +371,7 @@ class TestPopulationDivergence:
     ) -> None:
         """A declared slot that was never assigned is absent, exactly as for a key."""
 
-        class PartiallyAssignedNeuron:
+        class PartiallyAssignedNeuron(_StillStepper):
             """A model that declares a slot it does not always fill."""
 
             __slots__ = ("v", "optional_register")
@@ -493,6 +510,39 @@ class TestStateAndIdentity:
         reason = population_divergence(Population("LapicqueNeuron", 2))
         assert "1907" in reason and "SCLapicqueLIFNeuron" in reason
         assert population_divergence(Population("SCLapicqueLIFNeuron", 2)) == ""
+
+    def test_the_state_probe_answers_for_the_model_the_name_resolves_to_now(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A remembered answer belongs to the model that gave it, not only to its name.
+
+        The probe steps whatever the registry resolves a name to. Remembered by
+        the name alone, the first model asked about answered for every later
+        one: a test that put another class under the name, as these tests do,
+        left that class's answer behind on its worker, and every later default
+        population there read "cannot be stepped".
+        """
+        real = evolving_state(MODEL)
+        assert real is not None
+
+        class Drifting:
+            """A model under the same name that moves one more attribute as it steps."""
+
+            def __init__(self) -> None:
+                self.v = 0.0
+                self.drift = 0.0
+
+            def step(self, _current: float) -> int:
+                """Move ``drift`` whatever the drive, and never spike."""
+                self.drift += 1.0
+                return 0
+
+        with monkeypatch.context() as patch:
+            patch.setattr(model_registry, MODEL, Drifting, raising=False)
+            stepped = evolving_state(MODEL)
+            assert stepped is not None and "drift" in stepped
+        assert evolving_state(MODEL) == real
+        assert population_divergence(Population(MODEL, 2)) == ""
 
 
 def _edge(**options: Any) -> tuple[Network, Population]:

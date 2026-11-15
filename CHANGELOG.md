@@ -470,6 +470,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The network's Rust dispatch check remembers its state probe for a model
+  name together with the class the name resolves to. Remembered by the name
+  alone, a class put under a catalogue name kept answering for it until the
+  process ended: after a test put a stub under `SCLapicqueLIFNeuron`, a
+  default population of that model read "cannot be stepped" and ran in
+  Python, on whichever test worker that happened.
 - `ARCHITECTURE.md` and `ROADMAP.md` give the Q8.8 SHD reference's accuracy
   as reported on 2026-04-11, 76.06% against PyTorch's 75.66% on the
   2264-sample test set, with its source and no committed record, in place of
