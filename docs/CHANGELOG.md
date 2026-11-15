@@ -470,6 +470,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `ARCHITECTURE.md` and `ROADMAP.md` give the Q8.8 SHD reference's accuracy
+  as reported on 2026-04-11, 76.06% against PyTorch's 75.66% on the
+  2264-sample test set, with its source and no committed record, in place of
+  a 4% gap. The directory map and data flow of
+  `ARCHITECTURE.md` name directories without counts and point to the
+  generated capability snapshot; a test keeps counts out of them. The
+  architecture contract table says that the hosted SHD step also runs the
+  whole core on synthetic weights against a fixed expectation. The research
+  labs guide names all five runtime dependencies, which a test reads from
+  `pyproject.toml`.
 - The dendritic NMDA neuron's descriptor names its integration method RK4,
   the path its class runs by default and every backend lane uses; it said
   Euler, the generator's default for a model without a v1 schema.

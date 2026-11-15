@@ -1,11 +1,12 @@
 # Architecture
 
-> **Canonical map: [`docs/architecture/SYSTEM_MAP.md`](docs/architecture/SYSTEM_MAP.md) (2026-07-06).**
-> This file is retained for the SHD FPGA pipeline detail. Inventory figures were
-> refreshed from `tools/capability_manifest.py` and live `hdl/` counts on
-> 2026-07-06; use SYSTEM_MAP.md as the canonical package map.
+> **Canonical map: [`docs/architecture/SYSTEM_MAP.md`](docs/architecture/SYSTEM_MAP.md).**
+> This file is retained for the SHD FPGA pipeline detail. The directory map below
+> names directories only; the counts (model modules, documentation pages, test
+> files and more) are generated in
+> [`docs/_generated/capability_snapshot.md`](docs/_generated/capability_snapshot.md).
 
-> Last updated: 2026-07-06 (v3.16.0)
+> Last updated: 2026-11-15
 
 SC-NeuroCore is a three-tier stochastic computing framework: a Rust SIMD
 engine, a Python simulation layer, and Verilog RTL for FPGA deployment.
@@ -27,8 +28,8 @@ sc-neurocore/
 │   │   ├── gpu/            wgpu compute shader backend (feature-gated)
 │   │   ├── simd/           AVX2 / AVX-512 / NEON / SVE / portable fallback
 │   │   └── scpn/           Kuramoto phase solver + metrics
-│   ├── tests/              Rust unit + integration tests (1,549)
-├── crates/                 Research Rust crates (168 tests)
+│   ├── tests/              Rust unit + integration tests
+├── crates/                 Research Rust crates
 │   ├── tinysc_riscv/       RISC-V SC instruction set simulator
 │   ├── core_engine/        SC arithmetic core
 │   ├── autonomous_learning/ Self-modifying plasticity rules
@@ -39,7 +40,7 @@ sc-neurocore/
 ├── bridge/                 PyO3 Python ↔ Rust bridge (maturin build)
 │
 ├── src/sc_neurocore/       Python package (pip install -e ".[dev]")
-│   ├── neurons/            152 model source modules (models/ subdir) + core SC neurons
+│   ├── neurons/            Model source modules (models/ subdir) + core SC neurons
 │   ├── synapses/           Bitstream synapses (static, STDP, R-STDP)
 │   ├── layers/             SC dense, conv2d, recurrent, vectorized, fusion, attention
 │   ├── sources/            Current sources (bitstream, Poisson)
@@ -55,7 +56,7 @@ sc-neurocore/
 │   ├── bioware/            MEA ↔ SC ↔ opto closed-loop (BioHybridSession, SpikeSorter)
 │   ├── optics/             Photonic SC + FDTD (Berenger PML) + GDSII export
 │   ├── evo_substrate/      Self-replicating SC organisms (Genome + FormalSafetyGuard)
-│   ├── formal/             FormalProofEngine → Lean 4 safety_bounds.lean (6 theorems)
+│   ├── formal/             FormalProofEngine → Lean 4 safety_bounds.lean
 │   ├── edge/               AERRoutingDaemon — Python façade over Go AER UDP router
 │   ├── debug/              Offline SpikeTracer + live HILServerDaemon / HILDebugger
 │   ├── proto/              core.proto + telemetry.proto (wire contract for HIL)
@@ -72,7 +73,7 @@ sc-neurocore/
 │   ├── quantum_cognition/  Fisher-Posner quantum cognition (experimental) + GOTM Brain
 │   ├── adapters/           SCPN layer adapters (L1-L16), holonomic (JAX)
 │   ├── scpn/               SCPN layer implementations (L1-L16)
-│   ├── analysis/           127-function spike train analysis toolkit
+│   ├── analysis/           Spike train analysis toolkit
 │   ├── math/               SC arithmetic (add, mul, div, CORDIV)
 │   ├── solvers/            ODE solvers (RK4, Euler)
 │   ├── graphs/             Petri nets, graph algorithms
@@ -101,19 +102,19 @@ sc-neurocore/
 │   ├── sc_aer_router.v     AER event distribution to target neurons
 │   ├── sc_cordiv.v         CORDIV stochastic division
 │   ├── sc_stdp_synapse.v   On-chip STDP learning
-│   ├── formal/             SymbiYosys formal verification (32 jobs: 18 legacy + 14 catalogue perfect)
+│   ├── formal/             SymbiYosys formal verification jobs (legacy and catalogue)
 │   ├── constraints/        XDC timing constraints (PYNQ-Z2)
 │   ├── reports/            Vivado synthesis reports (committed)
 │   ├── pynq/               PYNQ-Z2 deployment (driver, demo, Tcl)
-│   └── tb_*.v              Co-simulation testbenches (18 files; 16 tb_sc_*.v)
+│   └── tb_*.v              Co-simulation testbenches
 │
 ├── data/masquelier_shd/    SHD training scripts + cloud results + FPGA artifacts
-├── examples/               20 runnable demo scripts (SC, MNIST, NIR, JAX, snnTorch)
+├── examples/               Runnable demo scripts (SC, MNIST, NIR, JAX, snnTorch)
 ├── tools/                  Weight extraction, Q8.8 reference, cosim harness
 ├── benchmarks/             Python benchmark suite
 ├── scripts/                Co-simulation + utility scripts
 ├── paper/                  JOSS paper source
-└── docs/                   MkDocs site source (175 model documentation pages)
+└── docs/                   MkDocs site source, the model documentation pages among it
 ```
 
 ## Data Flow
@@ -121,7 +122,7 @@ sc-neurocore/
 ```
                     +---------------------------------------------+
                     |           Python API                        |
-                    |  (152 model modules, training, analysis)      |
+                    |  (model modules, training, analysis)        |
                     +----------+------------------+---------------+
                                |                  |
                                v                  v
@@ -172,7 +173,9 @@ Weight extraction (tools/extract_shd_weights.py)
     |  int8 weights, integer delays, Q16.16 scales
     v
 Q8.8 reference simulator (tools/shd_q88_reference.py)
-    |  bit-true Python model, 4% gap vs PyTorch
+    |  bit-true Python model; 76.06% against PyTorch's 75.66% on the
+    |  2264-sample test set, as reported in 1616c7628 (2026-04-11);
+    |  no committed record holds that run, and it was not measured again
     v
 Verilog modules (hdl/sc_shd_top.v + 4 submodules)
     |  3-stage pipeline: AxDelay -> Dense -> Vmin_LIF

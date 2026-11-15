@@ -139,7 +139,7 @@ def _compact_whitespace(text: str) -> str:
 def _public_markdown_files() -> list[Path]:
     """Return tracked public Markdown claim surfaces for slogan checks."""
     root = _repo_root()
-    candidates = [root / "README.md", root / "ROADMAP.md"]
+    candidates = [root / "README.md", root / "ROADMAP.md", root / "ARCHITECTURE.md"]
     candidates.extend((root / "docs").rglob("*.md"))
     candidates.extend((root / "paper").rglob("*.md"))
     excluded_parts = {
@@ -597,3 +597,41 @@ def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:
                 offenders.append(f"{relative}: unanchored 512x-class speedup claim")
 
     assert offenders == []
+
+
+#: A typed count: a number, at most two words, then what it counts; or a bare number in brackets.
+_TYPED_COUNT = re.compile(
+    r"\b\d[\d,]*[ -](?:[a-z]+ ){0,2}"
+    r"(?:tests?|files?|jobs?|theorems?|pages?|modules?|scripts?|functions?)\b"
+    r"|\(\d[\d,]*\)"
+)
+
+
+def test_the_architecture_directory_map_names_directories_without_counts() -> None:
+    """The hand-written directory map and data flow carry no counts; the generated snapshot does.
+
+    Counts typed into them on 2026-07-06 had all drifted by 2026-11-15 (1,549 Rust tests
+    against 2403, 32 formal jobs against 91, 152 model modules against 176).
+    """
+    text = (_repo_root() / "ARCHITECTURE.md").read_text(encoding="utf-8")
+    start = text.index("## Directory Map")
+    end = text.index("## SHD FPGA Pipeline", start)
+    found = _TYPED_COUNT.findall(text[start:end])
+    assert found == []
+    assert "docs/_generated/capability_snapshot.md" in text[:start]
+
+
+def test_the_research_labs_guide_names_every_runtime_dependency() -> None:
+    """The guide's list of hard runtime dependencies is the project's dependency list."""
+    project = _load_toml_object(_repo_root() / "pyproject.toml")["project"]
+    names = [
+        re.split(r"[<>=!~;\[ ]", requirement, maxsplit=1)[0]
+        for requirement in project["dependencies"]
+    ]
+    guide = _compact_whitespace(
+        (_repo_root() / "docs/guides/FOR_RESEARCH_LABS.md").read_text(encoding="utf-8")
+    )
+    sentence = re.search(r"([^.]*) (?:is|are) the hard runtime dependenc(?:y|ies)\.", guide)
+    assert sentence is not None
+    named = re.findall(r"`([^`]+)`", sentence.group(1))
+    assert sorted(named) == sorted(names)

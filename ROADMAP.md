@@ -204,7 +204,9 @@ Heidelberg Digits (SHD) speech classification targeting Zynq XC7Z020
   parser fixtures under `tests/fixtures/vivado/`
 - **PYNQ deployment package:** driver and demo; the synthesised design has no
   weight or delay load path yet
-- **Q8.8 co-simulation:** bit-true Python reference matches Verilog, 4% gap vs PyTorch
+- **Q8.8 co-simulation:** bit-true Python reference matches Verilog; on the 2264-sample
+  SHD test set it scored 76.06% against PyTorch's 75.66%, as reported in 1616c7628 on 2026-04-11
+  (no committed record holds that run, and it was not measured again)
 - **Collaboration:** Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo)
 
 ### ~~GPU compute backend (wgpu)~~ ✓

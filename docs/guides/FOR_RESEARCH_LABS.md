@@ -23,8 +23,8 @@ print(f'{spikes} spikes in 500 steps')
 "
 ```
 
-That's it. NumPy and SciPy are the hard runtime dependencies. Everything else
-is optional.
+That's it. `numpy`, `scipy`, `defusedxml`, `tomli-w` and `typing-extensions`
+are the hard runtime dependencies. Everything else is optional.
 
 ## Which Install Path?
 

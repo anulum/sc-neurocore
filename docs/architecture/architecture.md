@@ -108,7 +108,7 @@ states none, so that it cannot go stale.
 | --- | --- | --- |
 | 1 | `tests/test_sc_forward_bit_identical.py` | Exact equality of the accelerated and the reference path for one seed, over three layer shapes and three stream lengths. Hosted runs require the compiled engine. |
 | 2 | Stated per pipeline in the repository's `ARCHITECTURE.md` | One pipeline. No automated check holds the stated gap. |
-| 3 | A hosted step runs `hdl/test_shd_axi.sh` and three co-simulation tools, one per stage of the spoken-digits pipeline; `tests/test_shd_int_core_cosim.py` compares the integer core with its reference | The stages and the integer core, on every change. The whole-pipeline comparison is run by hand with `tools/cosim_shd_top_verilog.py` and needs extracted weights. |
+| 3 | A hosted step runs `hdl/test_shd_axi.sh` and three co-simulation tools, one per stage of the spoken-digits pipeline; `tests/test_shd_int_core_cosim.py` compares the integer core with its reference | The stages and the integer core, on every change. The same hosted step runs the whole core behind its AXI wrapper on synthetic weights against `hdl/fixtures/shd_axi_expected.hex`. The comparison with the trained weights is run by hand with `tools/cosim_shd_top_verilog.py` and needs extracted weights. |
 | 4 | `tests/test_studio_evidence_chain.py`, `tests/test_tools_studio_evidence_verify.py`, `tests/test_studio_evidence_seal.py` and the browser-side seal test | Packs exported from the Studio, on both runtimes. |
 | 5 | The refusal tests of each surface | Per surface. Elsewhere it is an aim. |
 
