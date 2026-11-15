@@ -50,7 +50,12 @@ impl FractionalLIFNeuron {
         }
         let rhs = -(self.v - self.v_rest) + self.resistance * current;
         self.v = rhs * self.dt.powf(self.alpha) - gl_sum;
-        // Shift history
+        let spiked = self.v >= self.v_threshold;
+        if spiked {
+            self.v = self.v_reset;
+        }
+        // The memory keeps the potential after the reset, as the Python model does; keeping the
+        // value before it let the memory term undo every reset.
         let len = self.history.len();
         if len > 0 {
             for i in 0..len - 1 {
@@ -58,16 +63,11 @@ impl FractionalLIFNeuron {
             }
             self.history[len - 1] = self.v;
         }
-        if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            1
-        } else {
-            0
-        }
+        i32::from(spiked)
     }
     pub fn reset(&mut self) {
         self.v = self.v_rest;
-        self.history.fill(0.0);
+        self.history.fill(self.v_rest);
     }
 }
 
@@ -90,6 +90,42 @@ mod tests {
         }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+
+    #[test]
+    fn frac_lif_reset_holds_against_a_subthreshold_drive() {
+        // One supra-threshold step, then a drive below threshold. A plain Euler LIF with
+        // dt = tau = 1 settles at the drive, 0.5, and alpha = 1 must do the same.
+        let mut n = FractionalLIFNeuron::new(1.0, 50);
+        assert_eq!(n.step(1.5), 1);
+        for _ in 0..6 {
+            assert_eq!(n.step(0.5), 0);
+            assert!((n.v - 0.5).abs() < 1e-12, "v = {}", n.v);
+        }
+    }
+
+    #[test]
+    fn frac_lif_memory_stores_the_reset_value() {
+        let mut n = FractionalLIFNeuron::new(0.8, 50);
+        assert_eq!(n.step(1.5), 1);
+        assert_eq!(n.history[49], n.v_reset);
+        // With the reset value in memory: 0.5, then 0.5 - 0.5 + 0.8 * 0.5 = 0.4.
+        assert_eq!(n.step(0.5), 0);
+        assert!((n.v - 0.5).abs() < 1e-12, "v = {}", n.v);
+        assert_eq!(n.step(0.5), 0);
+        assert!((n.v - 0.4).abs() < 1e-12, "v = {}", n.v);
+    }
+
+    #[test]
+    fn frac_lif_reset_fills_the_memory_with_v_rest() {
+        let mut n = FractionalLIFNeuron::new(0.8, 10);
+        n.v_rest = -0.25;
+        for _ in 0..20 {
+            n.step(0.7);
+        }
+        n.reset();
+        assert!(n.history.iter().all(|&h| h == -0.25));
+        assert_eq!(n.v, -0.25);
     }
 
     #[test]

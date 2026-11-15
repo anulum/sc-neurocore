@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5676
+    "test_files": 5677
   },
   "documentation": {
     "public_pages": [
@@ -6217,6 +6217,7 @@
       "tests/test_model_fitzhugh_rinzel_fhr_performance.py",
       "tests/test_model_fitzhugh_rinzel_fhr_pipeline.py",
       "tests/test_model_fitzhugh_rinzel_fhr_three_timescales.py",
+      "tests/test_model_fractional_lif_engine_reset.py",
       "tests/test_model_fractional_lif_flif_dynamics.py",
       "tests/test_model_fractional_lif_flif_isolation.py",
       "tests/test_model_fractional_lif_flif_parameters.py",

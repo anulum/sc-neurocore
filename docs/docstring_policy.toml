@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1992
+expected_file_count = 1993
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8022,3 +8022,7 @@ rationale = "The descriptor generator writes the corpus the code implies: the SP
 [[file]]
 path = "src/sc_neurocore/neurons/models/motor_unit.py"
 rationale = "Motor-unit model whose twitch description was corrected to the first-order form both runtimes implement; public surface documented in NumPy form from the code."
+
+[[file]]
+path = "tests/test_model_fractional_lif_engine_reset.py"
+rationale = "Compare the engine fractional LIF with the Python model through a reset, step by step."

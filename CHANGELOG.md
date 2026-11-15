@@ -629,6 +629,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine's fractional-order LIF neuron now keeps the potential after a
+  reset in its memory, as the Python model does. It kept the value from
+  before the reset, so the memory term undid every reset: after its first
+  spike the engine fired on every step, even under a drive below threshold
+  (one step at 1.5, then 0.5: the Python model settles at 0.5, the engine
+  fired on each step). `reset` also fills the memory with `v_rest`, as the
+  Python model does, rather than with 0. The Go, Julia and Rust safety-crate
+  runtimes already stored the reset value, so the engine was the only one
+  out of line; a network of the network runner's `FractionalLIF` neurons
+  now resets as well. A test compares the engine with the Python model step
+  by step through two spikes.
 - `POST /api/models/cosim` answers HTTP 422 with its reason, before any job
   runs, when the model offers no bit-exact co-simulation path for the
   integrator or the current lies outside the Q-format's range. Both used to be
