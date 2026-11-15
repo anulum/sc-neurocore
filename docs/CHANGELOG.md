@@ -739,6 +739,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The Studio API context builder is split by responsibility: the audit sink,
+  the identity store, the browser session guards, the job manager, the
+  assembly of the context and its exposure on the app state each come from
+  their own function, and the synchronous process-job runner hands its receipt
+  and its refusals to two more. No function of the module exceeds 50 lines,
+  which a test holds; startup makes the collaborators in the same order as
+  before.
 - The hosted CI holds the committed benchmark evidence gate report to what the
   gate writes: the lint job's gate step compares its output with
   `benchmarks/results/benchmark_evidence_gate_report.json` and fails, naming the

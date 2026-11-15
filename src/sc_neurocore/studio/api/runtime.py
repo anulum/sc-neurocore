@@ -16,7 +16,7 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from fastapi import FastAPI, HTTPException
 
@@ -41,7 +41,10 @@ from sc_neurocore.studio.platform import (
     load_studio_identity_store,
 )
 from sc_neurocore.studio.platform.api_process_lock import hold_identity_store
+from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
+from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 from sc_neurocore.studio.platform.storage_isolated_runtime import build_isolated_job_manager
+from sc_neurocore.studio.platform.storage_launcher_client_settings import LauncherClientSettings
 from sc_neurocore.studio.platform.storage_mode import require_available_storage
 from sc_neurocore.studio.platform.storage_preflight import require_isolated_preflight
 from sc_neurocore.studio.platform.studio_job_service import StudioJobService
@@ -106,26 +109,55 @@ class StudioApiContext:
             submitted.job_id,
             timeout_seconds=self.settings.job_default_timeout_seconds + 1.0,
         )
-        if completed.status == "completed" and completed.result is not None:
-            if include_job_receipt:
-                return {
-                    **completed.result,
-                    "studio_job_receipt": {
-                        "schema_version": "studio.job-receipt.v1",
-                        "job_id": completed.job_id,
-                        "kind": completed.kind,
-                        "status": completed.status,
-                        "artifacts": [
-                            artifact.to_public_dict() for artifact in completed.artifacts
-                        ],
-                    },
-                }
-            return cast(dict[str, Any], completed.result)
-        if completed.status in {"pending", "running", "cancelling"}:
-            raise HTTPException(503, "studio_job_wait_exceeded")
-        if completed.status == "timed_out":
-            raise HTTPException(504, "studio_job_timed_out")
-        raise HTTPException(500, "studio_job_failed")
+        if completed.status != "completed" or completed.result is None:
+            _refuse_incomplete_job(completed.status)
+        if include_job_receipt:
+            return {**completed.result, "studio_job_receipt": _job_receipt(completed)}
+        return cast(dict[str, Any], completed.result)
+
+
+def _job_receipt(completed: StudioJobRecord) -> dict[str, Any]:
+    """Return the path-free receipt of a completed process job.
+
+    Parameters
+    ----------
+    completed : StudioJobRecord
+        The completed job record.
+
+    Returns
+    -------
+    dict
+        Schema version, job identity, kind, status, and the public digest of
+        every artifact.
+    """
+    return {
+        "schema_version": "studio.job-receipt.v1",
+        "job_id": completed.job_id,
+        "kind": completed.kind,
+        "status": completed.status,
+        "artifacts": [artifact.to_public_dict() for artifact in completed.artifacts],
+    }
+
+
+def _refuse_incomplete_job(status: str) -> NoReturn:
+    """Refuse a synchronous process job that did not complete with a result.
+
+    Parameters
+    ----------
+    status : str
+        The job's status when the wait ended.
+
+    Raises
+    ------
+    HTTPException
+        503 while the job is still pending, running or cancelling; 504 when it
+        timed out; 500 otherwise, also for a completed job without a result.
+    """
+    if status in {"pending", "running", "cancelling"}:
+        raise HTTPException(503, "studio_job_wait_exceeded")
+    if status == "timed_out":
+        raise HTTPException(504, "studio_job_timed_out")
+    raise HTTPException(500, "studio_job_failed")
 
 
 def _remove_scratch_job_root(root: Path, owner_pid: int) -> None:
@@ -163,6 +195,191 @@ def _scratch_job_root() -> Path:
     return root
 
 
+def _build_audit_sink(settings: StudioRuntimeSettings) -> AuditSink:
+    """Return the JSONL audit sink at the configured path, or an in-memory one.
+
+    Parameters
+    ----------
+    settings : StudioRuntimeSettings
+        The validated runtime settings.
+
+    Returns
+    -------
+    AuditSink
+        The sink that records every policy decision.
+    """
+    if settings.audit_log_path is None:
+        return InMemoryAuditSink()
+    return JsonlAuditSink(
+        Path(settings.audit_log_path),
+        rotation_bytes=settings.audit_rotation_bytes,
+        retained_files=settings.audit_retained_files,
+    )
+
+
+def _build_identity(settings: StudioRuntimeSettings) -> StudioIdentityAuthenticator | None:
+    """Return the identity authenticator and hold its store, or ``None`` without a store.
+
+    Sessions and login throttles live in this process: one process serves the
+    store, and another that tries is refused.
+
+    Parameters
+    ----------
+    settings : StudioRuntimeSettings
+        The validated runtime settings.
+
+    Returns
+    -------
+    StudioIdentityAuthenticator or None
+        The authenticator over the loaded store, or ``None`` when no identity
+        file is configured.
+    """
+    if settings.identity_file_path is None:
+        return None
+    path = Path(settings.identity_file_path)
+    authenticator = StudioIdentityAuthenticator(load_studio_identity_store(path))
+    hold_identity_store(path)
+    return authenticator
+
+
+def _build_browser_guards(
+    settings: StudioRuntimeSettings,
+) -> tuple[StudioBrowserSessionManager, StudioBrowserLoginThrottle]:
+    """Return the browser session manager and the login throttle the settings bound.
+
+    Parameters
+    ----------
+    settings : StudioRuntimeSettings
+        The validated runtime settings.
+
+    Returns
+    -------
+    tuple
+        The session manager and the login throttle.
+    """
+    sessions = StudioBrowserSessionManager(ttl_seconds=settings.browser_session_ttl_seconds)
+    throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=settings.browser_login_max_failures,
+        failure_window_seconds=settings.browser_login_failure_window_seconds,
+        cooldown_seconds=settings.browser_login_cooldown_seconds,
+        max_buckets=settings.browser_login_max_buckets,
+    )
+    return sessions, throttle
+
+
+def _build_job_manager(
+    settings: StudioRuntimeSettings,
+    isolated: tuple[StorageBoundaryConfiguration, LauncherClientSettings] | None,
+) -> StudioJobService:
+    """Return the job manager for the storage mode and the configured root.
+
+    In isolated mode every durable job operation goes to the storage authority,
+    and this process owns no job root and no ledger. Otherwise a configured
+    root is durable: its ledger outlives the process, and recovery reconciles
+    what a departed supervisor left behind. An unconfigured root is scratch,
+    private to this process; one fixed path under the system temp directory
+    would be shared by every Studio on the host, accumulating another run's
+    records, and on a multi-user machine owned by whichever user made it first.
+
+    Parameters
+    ----------
+    settings : StudioRuntimeSettings
+        The validated runtime settings.
+    isolated : tuple or None
+        The storage boundary and launcher settings the isolated preflight
+        accepted, or ``None`` outside isolated mode.
+
+    Returns
+    -------
+    StudioJobService
+        The job manager the routers submit to.
+    """
+    if isolated is not None:
+        return build_isolated_job_manager(
+            *isolated,
+            allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
+            default_timeout_seconds=settings.job_default_timeout_seconds,
+            max_artifact_bytes=settings.job_max_artifact_bytes,
+        )
+    configured = settings.job_root_path is not None
+    return StudioJobManager(
+        root=Path(settings.job_root_path)
+        if settings.job_root_path is not None
+        else _scratch_job_root(),
+        allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
+        default_timeout_seconds=settings.job_default_timeout_seconds,
+        max_artifact_bytes=settings.job_max_artifact_bytes,
+        configured=configured,
+    )
+
+
+def _assemble_context(
+    app: FastAPI,
+    settings: StudioRuntimeSettings,
+    isolated: tuple[StorageBoundaryConfiguration, LauncherClientSettings] | None,
+) -> StudioApiContext:
+    """Build every collaborator, in the order startup has always made them.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The application the context belongs to.
+    settings : StudioRuntimeSettings
+        The validated runtime settings.
+    isolated : tuple or None
+        The accepted isolated preflight, or ``None`` outside isolated mode.
+
+    Returns
+    -------
+    StudioApiContext
+        The shared runtime state.
+    """
+    analysis_budget = _analysis_budget_from_settings(settings)
+    capabilities = build_default_studio_capability_registry()
+    route_policies = build_default_studio_route_policy_registry()
+    audit_sink = _build_audit_sink(settings)
+    identity = _build_identity(settings)
+    sessions, throttle = _build_browser_guards(settings)
+    return StudioApiContext(
+        app=app,
+        settings=settings,
+        analysis_budget=analysis_budget,
+        studio_capabilities=capabilities,
+        studio_route_policies=route_policies,
+        studio_audit_sink=audit_sink,
+        studio_identity_authenticator=identity,
+        studio_browser_session_manager=sessions,
+        studio_browser_login_throttle=throttle,
+        studio_job_manager=_build_job_manager(settings, isolated),
+        studio_policy_gateway=PolicyGateway(audit_sink=audit_sink),
+        eda_process_limits=EdaProcessLimits(
+            cpu_seconds=settings.eda_process_cpu_seconds,
+            address_space_bytes=settings.eda_process_memory_bytes,
+        ),
+    )
+
+
+def _expose_on_app_state(app: FastAPI, context: StudioApiContext) -> None:
+    """Put the settings and every shared collaborator on the app state, where routers read them.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The application whose state receives them.
+    context : StudioApiContext
+        The shared runtime state.
+    """
+    app.state.studio_runtime_settings = context.settings
+    app.state.studio_capabilities = context.studio_capabilities
+    app.state.studio_route_policies = context.studio_route_policies
+    app.state.studio_audit_sink = context.studio_audit_sink
+    app.state.studio_identity_authenticator = context.studio_identity_authenticator
+    app.state.studio_browser_session_manager = context.studio_browser_session_manager
+    app.state.studio_browser_login_throttle = context.studio_browser_login_throttle
+    app.state.studio_job_manager = context.studio_job_manager
+    app.state.studio_policy_gateway = context.studio_policy_gateway
+
+
 def build_studio_api_context(
     app: FastAPI,
     runtime_settings: StudioRuntimeSettings | None = None,
@@ -192,90 +409,6 @@ def build_studio_api_context(
     require_available_storage(settings.storage_mode)
     # Isolated startup is checked before any collaborator or file exists.
     isolated = require_isolated_preflight(settings) if settings.storage_mode == "isolated" else None
-    analysis_budget = _analysis_budget_from_settings(settings)
-    studio_capabilities = build_default_studio_capability_registry()
-    studio_route_policies = build_default_studio_route_policy_registry()
-    studio_audit_sink: AuditSink = (
-        JsonlAuditSink(
-            Path(settings.audit_log_path),
-            rotation_bytes=settings.audit_rotation_bytes,
-            retained_files=settings.audit_retained_files,
-        )
-        if settings.audit_log_path is not None
-        else InMemoryAuditSink()
-    )
-    studio_identity_authenticator = (
-        StudioIdentityAuthenticator(load_studio_identity_store(Path(settings.identity_file_path)))
-        if settings.identity_file_path is not None
-        else None
-    )
-    if settings.identity_file_path is not None:
-        # Sessions and login throttles below live in this process: one process
-        # serves the store, and another that tries is refused.
-        hold_identity_store(Path(settings.identity_file_path))
-    studio_browser_session_manager = StudioBrowserSessionManager(
-        ttl_seconds=settings.browser_session_ttl_seconds
-    )
-    studio_browser_login_throttle = StudioBrowserLoginThrottle(
-        max_failed_attempts=settings.browser_login_max_failures,
-        failure_window_seconds=settings.browser_login_failure_window_seconds,
-        cooldown_seconds=settings.browser_login_cooldown_seconds,
-        max_buckets=settings.browser_login_max_buckets,
-    )
-    # A configured root is durable: its ledger outlives the process, and
-    # recovery reconciles what a departed supervisor left behind. An
-    # unconfigured root is scratch, so it is private to this process. One fixed
-    # path under the system temp directory would otherwise be shared by every
-    # Studio on the host — accumulating another run's records, and on a
-    # multi-user machine owned by whichever user created it first.
-    studio_job_manager: StudioJobService
-    if isolated is not None:
-        # Every durable job operation goes to the storage authority; this
-        # process owns no job root and no ledger.
-        studio_job_manager = build_isolated_job_manager(
-            *isolated,
-            allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
-            default_timeout_seconds=settings.job_default_timeout_seconds,
-            max_artifact_bytes=settings.job_max_artifact_bytes,
-        )
-    else:
-        studio_job_root = (
-            Path(settings.job_root_path)
-            if settings.job_root_path is not None
-            else _scratch_job_root()
-        )
-        studio_job_manager = StudioJobManager(
-            root=studio_job_root,
-            allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
-            default_timeout_seconds=settings.job_default_timeout_seconds,
-            max_artifact_bytes=settings.job_max_artifact_bytes,
-            configured=settings.job_root_path is not None,
-        )
-    studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
-    context = StudioApiContext(
-        app=app,
-        settings=settings,
-        analysis_budget=analysis_budget,
-        studio_capabilities=studio_capabilities,
-        studio_route_policies=studio_route_policies,
-        studio_audit_sink=studio_audit_sink,
-        studio_identity_authenticator=studio_identity_authenticator,
-        studio_browser_session_manager=studio_browser_session_manager,
-        studio_browser_login_throttle=studio_browser_login_throttle,
-        studio_job_manager=studio_job_manager,
-        studio_policy_gateway=studio_policy_gateway,
-        eda_process_limits=EdaProcessLimits(
-            cpu_seconds=settings.eda_process_cpu_seconds,
-            address_space_bytes=settings.eda_process_memory_bytes,
-        ),
-    )
-    app.state.studio_runtime_settings = settings
-    app.state.studio_capabilities = studio_capabilities
-    app.state.studio_route_policies = studio_route_policies
-    app.state.studio_audit_sink = studio_audit_sink
-    app.state.studio_identity_authenticator = studio_identity_authenticator
-    app.state.studio_browser_session_manager = studio_browser_session_manager
-    app.state.studio_browser_login_throttle = studio_browser_login_throttle
-    app.state.studio_job_manager = studio_job_manager
-    app.state.studio_policy_gateway = studio_policy_gateway
+    context = _assemble_context(app, settings, isolated)
+    _expose_on_app_state(app, context)
     return context
