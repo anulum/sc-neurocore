@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 13
+MODELS_WITH_CASES = 14
 
 
 def _accumulator() -> dict[str, object]:
@@ -398,6 +398,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "PernarowskiNeuron",
         "RulkovMapNeuron",
         "SCFourStateGLIFNeuron",
+        "SCInclusivePerfectIntegratorNeuron",
         "SCResettingWilsonHRNeuron",
         "SCSymmetricQuadraticIFNeuron",
         "WilsonHRNeuron",
@@ -408,7 +409,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 12,
+        "discriminated": 13,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -832,6 +833,36 @@ def test_every_variant_of_the_pernarowski_model_breaks_a_case(
     assert decided_late == [3, 4, 6, 7, 9, 10, 11, 12, 13]
 
 
+def test_every_variant_of_the_sc_inclusive_perfect_integrator_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Two signs of one step; with either flipped, no candidate reaches the threshold.
+
+    The schema's step is v + I * dt / c_m. With the sign of v flipped, v swings
+    between 0 and the step's increment, 0.5 at a current of 5, and never reaches
+    1.0; with the sign of the increment flipped, v only falls. Both fire no
+    event where the model fires 500 times, so the first case breaks both; the
+    second, which keeps every candidate 0.1 from the threshold, would too.
+    """
+    row = _rows(report)["SCInclusivePerfectIntegratorNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [500, 500]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("v", "+ v"),
+        ("v", "+ I * dt / c_m"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    boundary = "a current of 5 fires 500 times in 1000 steps on the inclusive boundary"
+    assert [(variant["case"], variant["observed"]) for variant in variants] == [
+        (boundary, 0),
+        (boundary, 0),
+    ]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -843,10 +874,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+12$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+13$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 164, of them violated 164, not discriminated 0" in summary
+    assert "variants: 166, of them violated 166, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 172
+MODELS_WITHOUT_A_CASE = 171
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -76,6 +76,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
+    "SCInclusivePerfectIntegratorNeuron": [[500, 500], [500, 500]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
     "SCSymmetricQuadraticIFNeuron": [
         [0, 0],
@@ -934,6 +935,30 @@ def test_the_pernarowski_model_holds_its_enrolled_and_measured_counts(
         {"current": c} for c in (-0.1, 0.0, 0.1, 0.2, -0.1)
     ]
     assert [case["steps"] for case in cases] == [5000, 5000, 5000, 5000, 16049]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_sc_inclusive_perfect_integrator_holds_its_boundary_and_margin_counts(
+    report: dict[str, object],
+) -> None:
+    """500 events in 1000 steps at current 5 on the inclusive boundary, and 500 in 2000 at 3.
+
+    The source receipt's test enrols the first count for this class: each step
+    adds exactly 0.5, so every second candidate equals the threshold 1.0 and an
+    inclusive comparison fires there, where a strict one would fire 333 times.
+    The count is exact in every arithmetic form of the step, but it sits on the
+    boundary by design: a current smaller by 1e-12 gives 333. The second count,
+    measured with the class, which the schema matches, keeps every candidate at
+    least 0.1 from the threshold, so no perturbed run moves it.
+    """
+    row = _models(report)["SCInclusivePerfectIntegratorNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [500, 500]
+    assert [case["inputs"] for case in cases] == [{"current": 5.0}, {"current": 3.0}]
+    assert [case["steps"] for case in cases] == [1000, 2000]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

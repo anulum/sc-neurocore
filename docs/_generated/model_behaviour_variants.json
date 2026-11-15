@@ -1487,6 +1487,42 @@
       ]
     },
     {
+      "model": "SCInclusivePerfectIntegratorNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 5 fires 500 times in 1000 steps on the inclusive boundary",
+          "observed": 500
+        },
+        {
+          "held": true,
+          "name": "a current of 3 fires 500 times in 2000 steps",
+          "observed": 500
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 5 fires 500 times in 1000 steps on the inclusive boundary",
+          "equation": "v",
+          "expression": "-v + I * dt / c_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v + I * dt / c_m"
+        },
+        {
+          "case": "a current of 5 fires 500 times in 1000 steps on the inclusive boundary",
+          "equation": "v",
+          "expression": "v - I * dt / c_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I * dt / c_m",
+          "within": "v + I * dt / c_m"
+        }
+      ]
+    },
+    {
       "model": "SCResettingWilsonHRNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -1870,8 +1906,8 @@
       ]
     }
   ],
-  "models_with_cases": 13,
-  "models_without_cases": 172,
+  "models_with_cases": 14,
+  "models_without_cases": 171,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -1880,7 +1916,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 12,
+    "discriminated": 13,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -1889,7 +1925,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 164,
-    "violated": 164
+    "total": 166,
+    "violated": 166
   }
 }

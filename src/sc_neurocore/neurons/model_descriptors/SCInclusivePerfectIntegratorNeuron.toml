@@ -114,3 +114,29 @@ cosim_validated = false
 cosim_evidence = ""
 target_tier = "H1"
 terminal_reason = "The preserved SC profile has dedicated Q8.8 RTL (hdl/formal/catalogue/sc_perfect_integrator.v) and depth-20 formal reset/event safety; no RTL trace co-simulation test exists for the retained sc_perfect_integrator schema, so the H1 co-simulation rung is open together with synthesis, timing, PPA, device, board, and physical-silicon evidence."
+
+[[behaviour]]
+name = "a current of 5 fires 500 times in 1000 steps on the inclusive boundary"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    500,
+    500,
+]
+
+[behaviour.inputs]
+current = 5.0
+
+[[behaviour]]
+name = "a current of 3 fires 500 times in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    500,
+    500,
+]
+
+[behaviour.inputs]
+current = 3.0

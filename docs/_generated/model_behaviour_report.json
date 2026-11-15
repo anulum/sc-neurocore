@@ -1626,10 +1626,43 @@
       "state": "held"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            500,
+            500
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 5.0
+          },
+          "kind": "interval",
+          "name": "a current of 5 fires 500 times in 1000 steps on the inclusive boundary",
+          "observable": "spikes",
+          "observed": 500,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            500,
+            500
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 3.0
+          },
+          "kind": "interval",
+          "name": "a current of 3 fires 500 times in 2000 steps",
+          "observable": "spikes",
+          "observed": 500,
+          "steps": 2000
+        }
+      ],
+      "cases_sha256": "c2eb0d92114a54628793c087cae532de86cddb15ea0c0df33fb03c47b974bc7f",
       "model": "SCInclusivePerfectIntegratorNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2199,9 +2232,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 13,
+    "held": 14,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 172
+    "no_case": 171
   }
 }

@@ -28,6 +28,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The inclusive-threshold perfect integrator
+  (`SCInclusivePerfectIntegratorNeuron`) states two behaviour cases: 500
+  events in 1000 steps at a current of 5, the count its source receipt test
+  enrols for this class, where every second candidate equals the threshold
+  exactly and an inclusive comparison fires (a strict one fires 333); and 500
+  events in 2000 steps at 3, measured with its public class and matched by
+  the schema, with every candidate at least 0.1 from the threshold. Both
+  sign variants of its step break a case. Fourteen of the 185 catalogue
+  models now state cases.
 - The Pernarowski neuron states five behaviour cases: the crossing counts its
   Q16.16 test enrols for the hand model, the schema and the RTL (17 in 5000
   steps at each of the currents -0.1, 0, 0.1 and 0.2), and 54 crossings in
