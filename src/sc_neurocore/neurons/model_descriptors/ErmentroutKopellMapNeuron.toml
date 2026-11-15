@@ -105,3 +105,55 @@ synth_report = "hdl/reports/yosys_ermentrout_kopell_map_q88_2026-08-28.json"
 target_device = "generic synchronous logic (Yosys coarse synthesis)"
 target_tier = "H2"
 terminal_reason = "Q16.16 bounded co-simulation preserves the enrolled class metric, while the tracked Q8.8 catalogue RTL passes Yosys synthesis and depth-4 reset safety. Timing, PPA, device, board, full formal equivalence, and physical silicon remain unclaimed."
+
+[[behaviour]]
+name = "a current of -0.5 fires no event in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    0,
+    0,
+]
+
+[behaviour.inputs]
+current = -0.5
+
+[[behaviour]]
+name = "a current of 0.5 fires 45 times in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    45,
+    45,
+]
+
+[behaviour.inputs]
+current = 0.5
+
+[[behaviour]]
+name = "a current of 1.0 fires 64 times in 2000 steps"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    64,
+    64,
+]
+
+[behaviour.inputs]
+current = 1.0
+
+[[behaviour]]
+name = "a current of 0.02 fires 5 times in 1111 steps"
+kind = "interval"
+steps = 1111
+observable = "spikes"
+bounds = [
+    5,
+    5,
+]
+
+[behaviour.inputs]
+current = 0.02

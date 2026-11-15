@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 171
+MODELS_WITHOUT_A_CASE = 170
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -68,6 +68,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         10,
         [266, 266],
     ],
+    "ErmentroutKopellMapNeuron": [[0, 0], [45, 45], [64, 64], [5, 5]],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "FitzHughRinzelNeuron": [[7, 7], [8, 8], [8, 8], [83, 83]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
@@ -961,6 +962,28 @@ def test_the_sc_inclusive_perfect_integrator_holds_its_boundary_and_margin_count
     assert [case["steps"] for case in cases] == [1000, 2000]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
+
+
+def test_the_ermentrout_kopell_map_holds_its_enrolled_and_measured_counts(
+    report: dict[str, object],
+) -> None:
+    """Three counts its RTL test enrols over 2000 steps, and one over 1111 measured with the class.
+
+    The map's Q16.16 test enrols 0, 45 and 64 events in 2000 steps at currents
+    -0.5, 0.5 and 1.0 for the hand schema and the RTL. At a current of 0.02 the
+    phase takes about 222 steps per turn; the public class, which the schema
+    matches, fires 5 times in 1111 steps, and the nearest event of any perturbed
+    run is 110 steps from the horizon.
+    """
+    row = _models(report)["ErmentroutKopellMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [0, 45, 64, 5]
+    assert [case["inputs"] for case in cases] == [{"current": c} for c in (-0.5, 0.5, 1.0, 0.02)]
+    assert [case["steps"] for case in cases] == [2000, 2000, 2000, 1111]
+    assert all(case["held"] for case in cases)
+    assert [case["exercised"] for case in cases] == [False, True, True, True]
 
 
 def test_the_summary_counts_the_states(report: dict[str, object]) -> None:

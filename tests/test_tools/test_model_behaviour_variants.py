@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 14
+MODELS_WITH_CASES = 15
 
 
 def _accumulator() -> dict[str, object]:
@@ -390,6 +390,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert sorted(rows) == [
         "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
+        "ErmentroutKopellMapNeuron",
         "FitzHughNagumoNeuron",
         "FitzHughRinzelNeuron",
         "HindmarshRoseNeuron",
@@ -409,7 +410,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 13,
+        "discriminated": 14,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -863,6 +864,40 @@ def test_every_variant_of_the_sc_inclusive_perfect_integrator_breaks_a_case(
     ]
 
 
+def test_every_variant_of_the_ermentrout_kopell_map_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Eight signs of the phase map; the increment's own sign needs the slow count.
+
+    With the whole increment flipped the phase turns backwards, and over the
+    enrolled windows it still crosses as often as the model does. At a current
+    of 0.02 over 1111 steps it does not: the model fires 5 times there.
+    """
+    row = _rows(report)["ErmentroutKopellMapNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [0, 45, 64, 5]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [(variant["equation"], variant["term"]) for variant in variants] == [
+        ("theta", "+ theta"),
+        ("theta", "+ 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)"),
+        ("theta", "+ 1.0"),
+        ("theta", "- cos(theta)"),
+        ("theta", "+ (1.0 + cos(theta)) * gain * I"),
+        ("theta", "+ 1.0"),
+        ("theta", "+ cos(theta)"),
+        ("theta", "the whole right-hand side"),
+    ]
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    slow_count = "a current of 0.02 fires 5 times in 1111 steps"
+    decided_late = [
+        index for index, variant in enumerate(variants) if variant["case"] == slow_count
+    ]
+    assert decided_late == [1]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -874,10 +909,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+13$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+14$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 166, of them violated 166, not discriminated 0" in summary
+    assert "variants: 174, of them violated 174, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

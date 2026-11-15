@@ -538,10 +538,75 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            0,
+            0
+          ],
+          "exercised": false,
+          "held": true,
+          "inputs": {
+            "current": -0.5
+          },
+          "kind": "interval",
+          "name": "a current of -0.5 fires no event in 2000 steps",
+          "observable": "spikes",
+          "observed": 0,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            45,
+            45
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.5
+          },
+          "kind": "interval",
+          "name": "a current of 0.5 fires 45 times in 2000 steps",
+          "observable": "spikes",
+          "observed": 45,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            64,
+            64
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.0
+          },
+          "kind": "interval",
+          "name": "a current of 1.0 fires 64 times in 2000 steps",
+          "observable": "spikes",
+          "observed": 64,
+          "steps": 2000
+        },
+        {
+          "bounds": [
+            5,
+            5
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.02
+          },
+          "kind": "interval",
+          "name": "a current of 0.02 fires 5 times in 1111 steps",
+          "observable": "spikes",
+          "observed": 5,
+          "steps": 1111
+        }
+      ],
+      "cases_sha256": "f35547eb65b67ad8a4ca201b8b1a512ddd39b6ceac0dbac23858a0dafaaf296f",
       "model": "ErmentroutKopellMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2232,9 +2297,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 14,
+    "held": 15,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 171
+    "no_case": 170
   }
 }

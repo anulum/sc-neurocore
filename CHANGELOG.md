@@ -28,6 +28,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Ermentrout-Kopell map neuron states four behaviour cases: the event
+  counts its Q16.16 test enrols for the hand schema and the RTL (none, 45
+  and 64 in 2000 steps at currents -0.5, 0.5 and 1.0), and 5 events in 1111
+  steps at 0.02, measured with its public class and matched by the schema.
+  Each of the 8 sign variants of its phase map breaks a case. Fifteen of the
+  185 catalogue models now state cases.
 - The inclusive-threshold perfect integrator
   (`SCInclusivePerfectIntegratorNeuron`) states two behaviour cases: 500
   events in 1000 steps at a current of 5, the count its source receipt test

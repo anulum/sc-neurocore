@@ -217,6 +217,106 @@
       "variants": []
     },
     {
+      "model": "ErmentroutKopellMapNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of -0.5 fires no event in 2000 steps",
+          "observed": 0
+        },
+        {
+          "held": true,
+          "name": "a current of 0.5 fires 45 times in 2000 steps",
+          "observed": 45
+        },
+        {
+          "held": true,
+          "name": "a current of 1.0 fires 64 times in 2000 steps",
+          "observed": 64
+        },
+        {
+          "held": true,
+          "name": "a current of 0.02 fires 5 times in 1111 steps",
+          "observed": 5
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.5 fires 45 times in 2000 steps",
+          "equation": "theta",
+          "expression": "(-theta + 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ theta",
+          "within": "theta + 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)"
+        },
+        {
+          "case": "a current of 0.02 fires 5 times in 1111 steps",
+          "equation": "theta",
+          "expression": "(theta - 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 4,
+          "outcome": "violated",
+          "term": "+ 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)",
+          "within": "theta + 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)"
+        },
+        {
+          "case": "a current of 0.5 fires 45 times in 2000 steps",
+          "equation": "theta",
+          "expression": "(theta + 0.1 * (-1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I"
+        },
+        {
+          "case": "a current of -0.5 fires no event in 2000 steps",
+          "equation": "theta",
+          "expression": "(theta + 0.1 * (1.0 + cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 1800,
+          "outcome": "violated",
+          "term": "- cos(theta)",
+          "within": "1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I"
+        },
+        {
+          "case": "a current of -0.5 fires no event in 2000 steps",
+          "equation": "theta",
+          "expression": "(theta + 0.1 * (1.0 - cos(theta) - (1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 45,
+          "outcome": "violated",
+          "term": "+ (1.0 + cos(theta)) * gain * I",
+          "within": "1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I"
+        },
+        {
+          "case": "a current of 0.5 fires 45 times in 2000 steps",
+          "equation": "theta",
+          "expression": "(theta + 0.1 * (1.0 - cos(theta) + (-1.0 + cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ 1.0",
+          "within": "1.0 + cos(theta)"
+        },
+        {
+          "case": "a current of 0.5 fires 45 times in 2000 steps",
+          "equation": "theta",
+          "expression": "(theta + 0.1 * (1.0 - cos(theta) + (1.0 - cos(theta)) * gain * I)) % 6.283185307179586",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ cos(theta)",
+          "within": "1.0 + cos(theta)"
+        },
+        {
+          "case": "a current of 0.5 fires 45 times in 2000 steps",
+          "equation": "theta",
+          "expression": "-((theta + 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "(theta + 0.1 * (1.0 - cos(theta) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586"
+        }
+      ]
+    },
+    {
       "model": "FitzHughNagumoNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -1906,8 +2006,8 @@
       ]
     }
   ],
-  "models_with_cases": 14,
-  "models_without_cases": 171,
+  "models_with_cases": 15,
+  "models_without_cases": 170,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -1916,7 +2016,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 13,
+    "discriminated": 14,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -1925,7 +2025,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 166,
-    "violated": 166
+    "total": 174,
+    "violated": 174
   }
 }
