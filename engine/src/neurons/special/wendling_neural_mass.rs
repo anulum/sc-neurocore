@@ -8,24 +8,43 @@
 
 //! Wendling extended Jansen-Rit dynamics with slow GABA_B inhibition.
 
+#![deny(missing_docs)]
+
 /// Wendling et al. 2002 — extended Jansen-Rit with slow GABA_B.
 #[derive(Clone, Debug)]
 pub struct WendlingNeuron {
+    /// State (mV and mV/s). `y[0]` is the pyramidal potential that drives the three
+    /// interneuron loops. `y[1]`, `y[2]` and `y[3]` are the excitatory, fast-inhibitory and
+    /// slow-inhibitory potentials on the pyramidal cells. `y[5]` to `y[8]` are the time
+    /// derivatives of `y[0]` to `y[3]`. `y[4]` and `y[9]` are not used.
     pub y: [f64; 10],
+    /// Excitatory synaptic gain (mV).
     pub a_exc: f64,
+    /// Fast (GABA-A) inhibitory synaptic gain (mV).
     pub b_fast: f64,
+    /// Slow (GABA-B) inhibitory synaptic gain (mV).
     pub g_slow: f64,
+    /// Excitatory synaptic rate constant (1/s).
     pub a_rate: f64,
+    /// Fast inhibitory synaptic rate constant (1/s).
     pub b_rate: f64,
+    /// Slow inhibitory synaptic rate constant (1/s).
     pub g_rate: f64,
+    /// Average synaptic connectivity within the column (dimensionless).
     pub c: f64,
+    /// Half of the maximum population firing rate (Hz).
     pub e0: f64,
+    /// Midpoint of the sigmoidal firing-rate function (mV).
     pub v0: f64,
+    /// Steepness of the sigmoidal firing-rate function (1/mV).
     pub r: f64,
+    /// Euler step (s); the rate constants are per second.
     pub dt: f64,
 }
 
 impl WendlingNeuron {
+    /// Create a column at rest (every state 0) with the default parameters and
+    /// `dt` = 0.001 s.
     pub fn new() -> Self {
         Self {
             y: [0.0; 10],
@@ -45,6 +64,13 @@ impl WendlingNeuron {
     fn sigmoid(&self, x: f64) -> f64 {
         2.0 * self.e0 / (1.0 + (self.r * (self.v0 - x)).exp())
     }
+    /// Advance one forward-Euler step with the external input `p_ext` (pulses/s) and return
+    /// the EEG-like output `y[1] - y[2] - y[3]` (mV).
+    ///
+    /// Each of the four second-order loops follows
+    /// `y'' = gain * rate * input - 2 * rate * y' - rate^2 * y`. The sigmoid is
+    /// `2 * e0 / (1 + exp(r * (v0 - x)))`, and the interneuron loops read `y[0]` scaled by
+    /// `0.8 c`, `0.25 c` and `0.1 c`. Inputs are not validated.
     pub fn step(&mut self, p_ext: f64) -> f64 {
         let sig_main = self.sigmoid(self.y[1] - self.y[2] - self.y[3]);
         let sig_0 = self.sigmoid(self.c * 0.8 * self.y[0]);
@@ -75,6 +101,7 @@ impl WendlingNeuron {
         self.y[8] += dy8 * self.dt;
         self.y[1] - self.y[2] - self.y[3]
     }
+    /// Clear every state; the parameters are kept.
     pub fn reset(&mut self) {
         self.y = [0.0; 10];
     }

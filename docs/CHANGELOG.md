@@ -462,6 +462,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 7 special-module files (the Larter-Breakspear and Wendling
+  neural masses, the retained decoupled ion mass, the spike response and GLM
+  neurons, the stochastic point processes and spiking models, the Wilson-Cowan
+  unit) are documented in full, each file read against its code. Corrected by
+  reading: the Larter-Breakspear descriptor named `v_ca`, `v_na` and `v_k`
+  half-activation thresholds, but they are reversal potentials, and `b` is the
+  inhibitory population's rate factor, not a calcium slope; the
+  Galves-Löcherbach `threshold_rate` is the centre of the firing sigmoid, not
+  its scale; the spike response neuron's reset no longer carries the GLM's
+  documentation; the stochastic IF `sigma` is the noise amplitude, not the
+  standard deviation of the membrane noise; the Wilson-Cowan states name the
+  range of the shifted sigmoid they relax towards.
 - The engine's 6 remaining cell and connection models (cardiac Purkinje fibre,
   pancreatic beta cell, gap junction, graded synapse, myelinated axon, smooth
   muscle) are documented in full, each file read against its code: the

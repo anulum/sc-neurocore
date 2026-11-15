@@ -58,7 +58,7 @@ range = [
 [parameters.threshold_rate]
 default = 0.5
 unit = "1"
-meaning = "scale of the sigmoidal per-step firing intensity"
+meaning = "centre of the sigmoidal per-step firing probability, where it is one half"
 range = [
     0.0,
     5.0,

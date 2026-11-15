@@ -8,22 +8,34 @@
 
 //! Kernel-based SRM0 and point-process generalised linear models.
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// SRM0 — Spike Response Model (kernel-based). Gerstner 1995.
 #[derive(Clone, Debug)]
 pub struct SpikeResponseNeuron {
+    /// Membrane potential (dimensionless): the refractory kernel plus the response to this
+    /// step's input.
     pub v: f64,
+    /// Firing threshold (normalised) (dimensionless).
     pub v_threshold: f64,
+    /// Time constant of the refractory (eta) kernel (ms).
     pub tau_eta: f64,
+    /// Time constant of the input (kappa) response kernel (ms).
     pub tau_kappa: f64,
+    /// Amplitude of the refractory reset kernel (dimensionless).
     pub eta_reset: f64,
+    /// Time since the last spike (ms); 1000 at the start, meaning no recent spike.
     pub time_since_spike: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl SpikeResponseNeuron {
+    /// Create a neuron with no recent spike (`time_since_spike` = 1000 ms), the default
+    /// kernels and `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v: 0.0,
@@ -35,6 +47,15 @@ impl SpikeResponseNeuron {
             dt: 1.0,
         }
     }
+    /// Advance one step with `weighted_input`; return 1 when `v` reaches `v_threshold`, else
+    /// 0.
+    ///
+    /// `time_since_spike` first grows by `dt`; then
+    /// `v = eta_reset * exp(-time_since_spike / tau_eta) + weighted_input * (1 - exp(-dt / tau_kappa))`.
+    /// Only this step's input enters; earlier inputs are not kept. A spike sets
+    /// `time_since_spike` to 0 and leaves `v` as computed. The input is not validated. The
+    /// Python model computes the kernel before the time advance, cuts it off after 100 ms,
+    /// and sets `v` to 0 on a spike.
     pub fn step(&mut self, weighted_input: f64) -> i32 {
         self.time_since_spike += self.dt;
         let eta = self.eta_reset * (-self.time_since_spike / self.tau_eta).exp();
@@ -47,7 +68,8 @@ impl SpikeResponseNeuron {
             0
         }
     }
-    /// Clear both history buffers, preserving the filters and generator.
+    /// Set `v` to 0 and `time_since_spike` to 1000 ms (no recent spike); the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.time_since_spike = 1000.0;
@@ -63,9 +85,13 @@ impl Default for SpikeResponseNeuron {
 /// GLM neuron — point-process generalized linear model. Pillow et al. 2008.
 #[derive(Clone, Debug)]
 pub struct GLMNeuron {
+    /// Baseline log-firing-rate offset (dimensionless).
     pub mu: f64,
+    /// Timestep (ms).
     pub dt_ms: f64,
+    /// Stimulus filter, one coefficient per stimulus-history tap (most recent first).
     pub k: Vec<f64>,
+    /// Spike-history filter, one coefficient per spike-history tap (most recent first).
     pub h: Vec<f64>,
     stim_buf: Vec<f64>,
     spike_buf: Vec<f64>,
@@ -73,6 +99,12 @@ pub struct GLMNeuron {
 }
 
 impl GLMNeuron {
+    /// Create a GLM with `n_k` stimulus taps and `n_h` spike-history taps.
+    ///
+    /// The reference filters are `k[i] = 0.5 * exp(-i / 3)` and
+    /// `h[t] = -5 * exp(-t / 2) + 0.5 * exp(-t / 10)`. The baseline `mu` is -3, `dt_ms` is
+    /// 1, the stimulus and spike histories start as `n_k` and `n_h` zeros, and a
+    /// Xoshiro256++ generator is seeded with `seed`.
     pub fn new(n_k: usize, n_h: usize, seed: u64) -> Self {
         // Reference filters (Pillow 2008 discrete specialisation), matching
         // the Python reference implementation exactly.
@@ -180,6 +212,8 @@ impl GLMNeuron {
         self.try_step(stimulus, None).unwrap_or(0)
     }
 
+    /// Clear both history buffers; the filters, the parameters and the generator state are
+    /// kept.
     pub fn reset(&mut self) {
         self.stim_buf.fill(0.0);
         self.spike_buf.fill(0.0);

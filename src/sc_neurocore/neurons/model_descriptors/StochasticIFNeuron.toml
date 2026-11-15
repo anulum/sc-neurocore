@@ -83,7 +83,7 @@ range = [
 [parameters.sigma]
 default = 3.0
 unit = "mV"
-meaning = "standard deviation of the membrane-potential noise"
+meaning = "noise amplitude; the per-step membrane noise has standard deviation sigma * sqrt(dt / tau_m), and the free membrane's stationary one is close to sigma / sqrt(2)"
 range = [
     0.0,
     20.0,

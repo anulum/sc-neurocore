@@ -43,12 +43,12 @@ url = "https://pmc.ncbi.nlm.nih.gov/articles/PMC1484078/"
 [state.e]
 init = 0.1
 unit = "normalised excitatory population activity"
-meaning = "continuous excitatory population rate in the normalised [-beta, 1] state envelope"
+meaning = "continuous excitatory population rate; it relaxes towards the shifted sigmoid, whose values lie in (-beta, 1 - beta) with beta = 1 / (1 + exp(a * theta))"
 
 [state.i]
 init = 0.05
 unit = "normalised inhibitory population activity"
-meaning = "continuous inhibitory population rate in the normalised [-beta, 1] state envelope"
+meaning = "continuous inhibitory population rate; it relaxes towards the shifted sigmoid, whose values lie in (-beta, 1 - beta) with beta = 1 / (1 + exp(a * theta))"
 
 [parameters.w_ee]
 default = 10.0

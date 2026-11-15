@@ -8,19 +8,27 @@
 
 //! Homogeneous Poisson, inhomogeneous Poisson, and gamma-renewal processes.
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// Homogeneous Poisson binary-bin generator with a replayable LFSR16 stream.
 #[derive(Clone, Debug)]
 pub struct PoissonNeuron {
+    /// Constant event intensity of the homogeneous point process (Hz).
     pub rate_hz: f64,
+    /// Positive binary-bin width used to integrate the event intensity (ms).
     pub dt_ms: f64,
+    /// Non-zero 16-bit execution state used by the next eight-advance Bernoulli sample (integer).
     pub rng_state: u16,
+    /// Non-zero 16-bit seed that `reset` restores into `rng_state`.
     pub initial_seed: u16,
 }
 
 impl PoissonNeuron {
+    /// Create a generator with the given rate and bin width. The seed is the low 16 bits
+    /// of `seed`, or `0xACE1` when those are zero.
     pub fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> Self {
         let narrowed = (seed & u64::from(u16::MAX)) as u16;
         let initial_seed = if narrowed == 0 { 0xACE1 } else { narrowed };
@@ -32,6 +40,8 @@ impl PoissonNeuron {
         }
     }
 
+    /// Whether the rate is finite and non-negative, `dt_ms` is finite and positive, and both
+    /// 16-bit states are non-zero.
     pub fn valid(&self) -> bool {
         self.rate_hz.is_finite()
             && self.rate_hz >= 0.0
@@ -41,6 +51,14 @@ impl PoissonNeuron {
             && self.initial_seed != 0
     }
 
+    /// Draw one bin and return `Ok(1)` on an event, else `Ok(0)`.
+    ///
+    /// The rate `r` is `rate_override` when it is non-negative and `rate_hz` otherwise.
+    /// The event probability is `p = 1 - exp(-r * dt_ms / 1000)`. The 16-bit LFSR advances
+    /// eight bits, and an event occurs when its value is below `floor(p * 65535) + 1`
+    /// (always at `p = 1`, never at `p = 0`). Returns an error, with the state unchanged,
+    /// if the state is invalid, the override is non-finite, `r * dt_ms / 1000` is not a
+    /// finite non-negative hazard, or the probability is invalid.
     pub fn try_step(&mut self, rate_override: f64) -> Result<i32, &'static str> {
         if !self.valid() || !rate_override.is_finite() {
             return Err("invalid Poisson state or rate override");
@@ -78,10 +96,14 @@ impl PoissonNeuron {
     }
 
     /// Preserve the engine runner's infallible dispatch boundary.
+    ///
+    /// Returns 0, with the state unchanged, where `try_step` returns an error.
     pub fn step(&mut self, rate_override: f64) -> i32 {
         self.try_step(rate_override).unwrap_or(0)
     }
 
+    /// Restore `rng_state` to `initial_seed`, so the event sequence repeats; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.rng_state = self.initial_seed;
     }
@@ -90,17 +112,24 @@ impl PoissonNeuron {
 /// Inhomogeneous Poisson — rate passed per step.
 #[derive(Clone, Debug)]
 pub struct InhomogeneousPoissonNeuron {
+    /// Timestep used to convert the time-varying rate to a per-step spike probability (ms).
     pub dt_ms: f64,
     rng: Xoshiro256PlusPlus,
 }
 
 impl InhomogeneousPoissonNeuron {
+    /// Create a generator with bin width `dt_ms` and a Xoshiro256++ generator seeded with
+    /// `seed`.
     pub fn new(dt_ms: f64, seed: u64) -> Self {
         Self {
             dt_ms,
             rng: Xoshiro256PlusPlus::seed_from_u64(seed),
         }
     }
+    /// Draw one bin with the rate `rate_hz` (Hz) and return 1 on an event, else 0.
+    ///
+    /// An event occurs when a uniform sample falls below `max(rate_hz, 0) * dt_ms / 1000`,
+    /// the first-order probability rather than `1 - exp(-...)`. A NaN rate counts as 0.
     pub fn step(&mut self, rate_hz: f64) -> i32 {
         let p = rate_hz.max(0.0) * self.dt_ms / 1000.0;
         if self.rng.random::<f64>() < p {
@@ -109,20 +138,27 @@ impl InhomogeneousPoissonNeuron {
             0
         }
     }
+    /// Do nothing: the process has no state besides its generator, which is not reseeded.
     pub fn reset(&mut self) {}
 }
 
 /// Gamma-renewal process — order-k Poisson with refractory ISI structure.
 #[derive(Clone, Debug)]
 pub struct GammaRenewalNeuron {
+    /// Mean firing rate of the gamma renewal process (Hz).
     pub rate_hz: f64,
+    /// Shape parameter of the gamma inter-spike-interval distribution (dimensionless).
     pub shape_k: u32,
+    /// Timestep (ms).
     pub dt_ms: f64,
     time_since_spike: f64,
     rng: Xoshiro256PlusPlus,
 }
 
 impl GammaRenewalNeuron {
+    /// Create a renewal process with mean rate `rate_hz` and shape `shape_k`, `dt_ms` = 1,
+    /// the clock at 0 (as if a spike had just occurred), and a Xoshiro256++ generator seeded
+    /// with `seed`.
     pub fn new(rate_hz: f64, shape_k: u32, seed: u64) -> Self {
         Self {
             rate_hz,
@@ -135,6 +171,13 @@ impl GammaRenewalNeuron {
     fn log_gamma_int(k: u32) -> f64 {
         (1..k).map(|i| (i as f64).ln()).sum()
     }
+    /// Advance one bin and return 1 on an event, else 0.
+    ///
+    /// The clock grows by `dt_ms`. The rate `r` is `rate_override` when non-negative and
+    /// `rate_hz` otherwise. The hazard of a gamma ISI distribution with shape `k` and rate
+    /// `k * r / 1000` per ms is evaluated at the clock. An event occurs with probability
+    /// `hazard * dt_ms` (above 1 means certain), and restarts the clock. Inputs are not
+    /// validated.
     pub fn step(&mut self, rate_override: f64) -> i32 {
         self.time_since_spike += self.dt_ms;
         let r = if rate_override < 0.0 {
@@ -177,6 +220,7 @@ impl GammaRenewalNeuron {
         }
         1.0 - (-x).exp() * sum
     }
+    /// Restart the clock at 0, as after a spike; the generator is not reseeded.
     pub fn reset(&mut self) {
         self.time_since_spike = 0.0;
     }

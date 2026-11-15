@@ -8,44 +8,82 @@
 
 //! Source-faithful three-state population dynamics with classical RK4 integration.
 
+#![deny(missing_docs)]
+
 /// Complete source state and numeric configuration.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LarterBreakspearNeuron {
+    /// Normalised mean excitatory membrane potential (dimensionless).
     pub v: f64,
+    /// Open potassium-channel fraction (dimensionless).
     pub w: f64,
+    /// Normalised mean inhibitory membrane potential (dimensionless).
     pub z: f64,
+    /// Normalised calcium conductance (dimensionless).
     pub g_ca: f64,
+    /// Normalised sodium conductance (dimensionless).
     pub g_na: f64,
+    /// Normalised potassium conductance (dimensionless).
     pub g_k: f64,
+    /// Normalised leak conductance (dimensionless).
     pub g_l: f64,
+    /// Normalised calcium reversal potential (dimensionless).
     pub v_ca: f64,
+    /// Normalised sodium reversal potential (dimensionless).
     pub v_na: f64,
+    /// Normalised potassium reversal potential (dimensionless).
     pub v_k: f64,
+    /// Normalised leak reversal potential (dimensionless).
     pub v_l: f64,
+    /// Normalised calcium activation midpoint (dimensionless).
     pub t_ca: f64,
+    /// Normalised sodium activation midpoint (dimensionless).
     pub t_na: f64,
+    /// Normalised potassium activation midpoint (dimensionless).
     pub t_k: f64,
+    /// Positive calcium activation width (dimensionless).
     pub delta_ca: f64,
+    /// Positive sodium activation width (dimensionless).
     pub delta_na: f64,
+    /// Positive potassium activation width (dimensionless).
     pub delta_k: f64,
+    /// Temperature scaling factor of the potassium kinetics (dimensionless).
     pub phi: f64,
+    /// Normalised potassium relaxation timescale (dimensionless).
     pub tau_k: f64,
+    /// Rate factor of the inhibitory population, which multiplies its whole drive (dimensionless).
     pub b: f64,
+    /// Excitatory self-coupling strength (dimensionless).
     pub a_ee: f64,
+    /// Excitatory drive gain of the inhibitory population (dimensionless).
     pub a_ei: f64,
+    /// Inhibitory feedback gain onto excitatory voltage (dimensionless).
     pub a_ie: f64,
+    /// External-drive gain onto the excitatory population (dimensionless).
     pub a_ne: f64,
+    /// External-drive gain onto the inhibitory population (dimensionless).
     pub a_ni: f64,
+    /// Non-negative NMDA modulation ratio of excitatory calcium conductance (dimensionless).
     pub r_nmda: f64,
+    /// Fraction of external versus local excitatory firing-rate drive (dimensionless).
     pub coupling_balance: f64,
+    /// Normalised excitatory firing-rate midpoint (dimensionless).
     pub v_t: f64,
+    /// Normalised inhibitory firing-rate midpoint (dimensionless).
     pub z_t: f64,
+    /// Positive excitatory firing-rate width (dimensionless).
     pub delta_v: f64,
+    /// Positive inhibitory firing-rate width (dimensionless).
     pub delta_z: f64,
+    /// Non-negative maximum excitatory population firing rate (dimensionless).
     pub q_v_max: f64,
+    /// Non-negative maximum inhibitory population firing rate (dimensionless).
     pub q_z_max: f64,
+    /// Normalised external input (dimensionless).
     pub i_ext: f64,
+    /// Positive global derivative timescale multiplier (dimensionless).
     pub t_scale: f64,
+    /// RK4 step, in the model's normalised time; each call takes one step.
     pub dt: f64,
 }
 
@@ -186,6 +224,12 @@ impl LarterBreakspearNeuron {
     }
 
     /// Advance one source-faithful RK4 step without partial mutation on failure.
+    ///
+    /// `coupling` is the external excitatory firing rate, and the result is the new `v`.
+    /// Returns an error, with the state unchanged, in three cases: a state or parameter is
+    /// invalid (non-finite; a negative conductance, NMDA ratio or rate maximum; a
+    /// non-positive width, `phi`, `tau_k`, `b`, `t_scale` or `dt`; `w` or `coupling_balance`
+    /// outside `[0, 1]`); `coupling` is non-finite; or the candidate state is invalid.
     pub fn try_step(&mut self, coupling: f64) -> Result<f64, &'static str> {
         if !self.valid() || !coupling.is_finite() {
             return Err("invalid Larter-Breakspear input");

@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 41,
-    "outdated": 103,
+    "current": 40,
+    "outdated": 104,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 15,
-    "outdated": 71,
+    "current": 14,
+    "outdated": 72,
     "unbound": 1
   },
   "rows": [
@@ -1037,7 +1037,12 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/special/larter_breakspear_neural_mass.rs",
+            "engine/src/neurons/special/sc_decoupled_adaptation_ion_mass.rs",
+            "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml"
+          ],
+          "currency": "outdated",
           "name": "bench_larter_breakspear.json"
         }
       ],
@@ -1651,7 +1656,12 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/special/larter_breakspear_neural_mass.rs",
+            "engine/src/neurons/special/sc_decoupled_adaptation_ion_mass.rs",
+            "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml"
+          ],
+          "currency": "outdated",
           "name": "bench_larter_breakspear.json"
         }
       ],
@@ -2256,7 +2266,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml"
           ],
           "currency": "outdated",
           "name": "bench_wilson_cowan.json",

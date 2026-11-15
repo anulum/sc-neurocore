@@ -92,7 +92,7 @@ range = [
 [parameters.v_ca]
 default = 1.0
 unit = "1"
-meaning = "normalised half-activation threshold of the calcium current"
+meaning = "normalised calcium reversal potential"
 range = [
     -1.0,
     2.0,
@@ -101,7 +101,7 @@ range = [
 [parameters.v_na]
 default = 0.53
 unit = "1"
-meaning = "normalised half-activation threshold of the sodium current"
+meaning = "normalised sodium reversal potential"
 range = [
     -1.0,
     2.0,
@@ -110,7 +110,7 @@ range = [
 [parameters.v_k]
 default = -0.7
 unit = "1"
-meaning = "normalised half-activation threshold of the potassium current"
+meaning = "normalised potassium reversal potential"
 range = [
     -2.0,
     1.0,
@@ -200,7 +200,7 @@ range = [
 [parameters.b]
 default = 0.1
 unit = "1"
-meaning = "calcium-current slope (sharpness) parameter"
+meaning = "rate factor of the inhibitory population, which multiplies its whole drive"
 range = [
     1e-12,
     2.0,

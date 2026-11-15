@@ -6,29 +6,53 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Retained three-state project ion-mass recurrence
 
+#![deny(missing_docs)]
+
+/// Retained three-state project ion-mass recurrence, kept under its own identity and
+/// without Larter-Breakspear attribution. `z` follows `v + 0.5` with rate `b` and does not
+/// feed back into `v` or `w`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SCDecoupledAdaptationIonMassNeuron {
+    /// Normalised membrane-like project state (dimensionless).
     pub v: f64,
+    /// Open potassium-channel fraction (dimensionless).
     pub w: f64,
+    /// Decoupled adaptation state (dimensionless).
     pub z: f64,
+    /// Positive normalised calcium conductance (dimensionless).
     pub g_ca: f64,
+    /// Positive normalised sodium conductance (dimensionless).
     pub g_na: f64,
+    /// Positive normalised potassium conductance (dimensionless).
     pub g_k: f64,
+    /// Normalised calcium reversal potential (dimensionless).
     pub v_ca: f64,
+    /// Normalised sodium reversal potential (dimensionless).
     pub v_na: f64,
+    /// Normalised potassium reversal potential (dimensionless).
     pub v_k: f64,
+    /// Normalised leak reversal potential (dimensionless).
     pub v_l: f64,
+    /// Positive normalised leak conductance (dimensionless).
     pub g_l: f64,
+    /// Positive potassium-gate kinetic multiplier (dimensionless).
     pub phi: f64,
+    /// Positive normalised potassium relaxation timescale (dimensionless).
     pub tau_k: f64,
+    /// Positive decoupled-adaptation rate (dimensionless).
     pub b: f64,
+    /// Retained linear self-coupling coefficient (dimensionless).
     pub a_ee: f64,
+    /// Normalised potassium activation midpoint (dimensionless).
     pub v0: f64,
+    /// Normalised constant external drive (dimensionless).
     pub i_ext: f64,
+    /// RK4 step, in the model's normalised time; each call takes one step.
     pub dt: f64,
 }
 
 impl SCDecoupledAdaptationIonMassNeuron {
+    /// Create the retained project profile (`v` = -0.5, `w` = `z` = 0, `dt` = 0.01).
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -91,6 +115,14 @@ impl SCDecoupledAdaptationIonMassNeuron {
             .all(|x| *x > 0.0)
     }
 
+    /// Advance one classical RK4 step with the input `coupling` and return the new `v`.
+    ///
+    /// `dv/dt` holds calcium, sodium, potassium and leak terms (the calcium and sodium gate
+    /// midpoints and widths are fixed), plus `i_ext + coupling + a_ee * v`. `w` relaxes
+    /// towards the potassium gate at rate `phi / tau_k`, and `z` towards `v + 0.5` at rate `b`.
+    /// Returns an error, with the state unchanged, if a value or `coupling` is non-finite,
+    /// `w` is outside `[0, 1]`, a conductance, `phi`, `tau_k`, `b` or `dt` is not positive,
+    /// or the candidate state is invalid.
     pub fn try_step(&mut self, coupling: f64) -> Result<f64, &'static str> {
         if !self.valid() || !coupling.is_finite() {
             return Err("invalid SC ion-mass input");
@@ -121,9 +153,12 @@ impl SCDecoupledAdaptationIonMassNeuron {
         Ok(self.v)
     }
 
+    /// Advance as `try_step` does and return the new `v`; an error returns NaN and leaves the
+    /// state unchanged.
     pub fn step(&mut self, coupling: f64) -> f64 {
         self.try_step(coupling).unwrap_or(f64::NAN)
     }
+    /// Restore `v`, `w` and `z` to -0.5, 0 and 0; the parameters are kept.
     pub fn reset(&mut self) {
         (self.v, self.w, self.z) = (-0.5, 0.0, 0.0);
     }
