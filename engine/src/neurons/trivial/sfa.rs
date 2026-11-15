@@ -6,23 +6,38 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Spike-Frequency Adaptation Neuron
 
+#![deny(missing_docs)]
+
 /// Spike-Frequency Adaptation LIF. Benda & Herz 2003.
 #[derive(Clone, Debug)]
 pub struct SFANeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Adaptation conductance relative to the leak (dimensionless); it decays with
+    /// `tau_sfa` and gains `delta_g` at each spike.
     pub g_sfa: f64,
+    /// Resting / leak reversal potential (mV).
     pub v_rest: f64,
+    /// Membrane potential reset to after a spike (mV).
     pub v_reset: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Adaptation time constant of the spike-frequency-adaptation conductance (ms).
     pub tau_sfa: f64,
+    /// Normalised adaptation-conductance increment added at each spike (dimensionless).
     pub delta_g: f64,
+    /// Potassium (adaptation) reversal potential (mV).
     pub e_k: f64,
+    /// Normalised membrane resistance (R=1 in the project's normalised-current convention) (dimensionless).
     pub resistance: f64,
+    /// Integration step (ms).
     pub dt: f64,
 }
 
 impl SFANeuron {
+    /// Create a neuron at rest with the descriptor defaults and `dt` = 1 ms.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -39,6 +54,12 @@ impl SFANeuron {
         }
     }
 
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `v` takes a forward-Euler step of
+    /// `tau_m dv/dt = -(v - v_rest) - g_sfa * (v - e_k) + resistance * current`; then
+    /// `g_sfa` decays by `exp(-dt / tau_sfa)`. Reaching `v_threshold` sets `v` to `v_reset`
+    /// and adds `delta_g` to `g_sfa`. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v += (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k)
             + self.resistance * current)
@@ -54,6 +75,7 @@ impl SFANeuron {
         }
     }
 
+    /// Return `v` to `v_rest` and clear `g_sfa`; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.g_sfa = 0.0;

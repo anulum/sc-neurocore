@@ -72,7 +72,7 @@ range = [
 
 [parameters.a]
 default = 0.04
-unit = "1/(mV*ms)"
+unit = "uA/(cm^2*mV^2)"
 meaning = "quadratic curvature coefficient of the membrane nonlinearity"
 range = [
     0.01,
@@ -81,7 +81,7 @@ range = [
 
 [parameters.b]
 default = 0.5
-unit = "1"
+unit = "mS/cm^2"
 meaning = "subthreshold adaptation coupling strength"
 range = [
     0.0,

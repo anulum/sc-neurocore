@@ -90,8 +90,8 @@ range = [
 
 [parameters.alpha]
 default = 0.1
-unit = "1/ms"
-meaning = "energy depletion coupling"
+unit = "1"
+meaning = "energy removed from epsilon by each spike"
 range = [
     0.0,
     1000000.0,

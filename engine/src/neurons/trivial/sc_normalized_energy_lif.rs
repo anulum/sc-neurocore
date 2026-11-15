@@ -8,22 +8,36 @@
 
 //! Retained normalized energy-gated exact-flow SC model.
 
+#![deny(missing_docs)]
+
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;
 
 /// Complete retained exact-flow state and reset configuration.
 #[derive(Clone, Debug)]
 pub struct SCNormalizedEnergyLIFNeuron {
+    /// Membrane potential (mV); a step whose candidate leaves `[-200, 100]` is refused.
     pub v: f64,
+    /// Normalised energy in `[0, epsilon_0]`. It relaxes towards `epsilon_0` with `tau_e`,
+    /// scales the input drive, and loses `alpha` on each spike; a spike needs it above 0.1.
     pub epsilon: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Post-spike reset voltage (mV).
     pub v_reset: f64,
+    /// Firing voltage threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_m: f64,
+    /// Energy recovery time constant (ms).
     pub tau_e: f64,
+    /// Energy removed from epsilon by each spike (dimensionless).
     pub alpha: f64,
+    /// Normalised energy capacity (dimensionless).
     pub epsilon_0: f64,
+    /// Input resistance (mV/current).
     pub resistance: f64,
+    /// Integration step (ms), at most `tau_m` and at most `tau_e`.
     pub dt: f64,
 }
 
@@ -112,6 +126,9 @@ impl SCNormalizedEnergyLIFNeuron {
         Ok(0)
     }
     /// Advance the retained sentinel-returning Rust interface.
+    ///
+    /// Returns 1 on a spike and 0 otherwise; an error returns -1 and leaves the state
+    /// unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(-1)
     }

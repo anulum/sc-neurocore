@@ -6,23 +6,39 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Nonlinear LIF Neuron
 
-/// Nonlinear LIF — cubic f-I curve with adaptation. Touboul & Brette 2008.
+#![deny(missing_docs)]
+
+/// Nonlinear LIF — quadratic membrane nonlinearity with adaptation. Touboul & Brette 2008.
 #[derive(Clone, Debug)]
 pub struct NonlinearLIFNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Adaptation current, in the units of the input current; it is subtracted from the
+    /// membrane drive.
     pub w: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Critical spike-initiation potential (mV).
     pub v_crit: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
+    /// Post-spike reset potential (mV).
     pub v_reset: f64,
+    /// Quadratic curvature coefficient of the membrane nonlinearity (uA/(cm^2*mV^2)).
     pub a: f64,
+    /// Subthreshold adaptation coupling strength (mS/cm^2).
     pub b: f64,
+    /// Adaptation current time constant (ms).
     pub tau_w: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Integration step (ms).
     pub dt: f64,
 }
 
 impl NonlinearLIFNeuron {
+    /// Create a neuron at rest (`v = v_rest`, `w = 0`) with the descriptor defaults and
+    /// `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -39,6 +55,14 @@ impl NonlinearLIFNeuron {
         }
     }
 
+    /// Advance one forward-Euler step with the input `current` and return 1 on a spike,
+    /// else 0.
+    ///
+    /// `v` gains `(a * (v - v_rest) * (v - v_crit) - w + current) / c_m * dt`; then `w`
+    /// gains `(b * (v - v_rest) - w) / tau_w * dt`, computed with the new `v`. A spike needs
+    /// an upward crossing: the new `v` reaches `v_threshold` while the previous `v` was
+    /// below it. `v` is then set to `v_reset` and `w` is kept. Neither the input nor the
+    /// parameters are validated. This is not the validated RK4 step of the Python model.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit);
@@ -52,6 +76,7 @@ impl NonlinearLIFNeuron {
         }
     }
 
+    /// Return `v` to `v_rest` and clear `w`; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.w = 0.0;

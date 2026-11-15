@@ -7,6 +7,8 @@
 
 //! Source-faithful Fardet-Levina energy-based LIF.
 
+#![deny(missing_docs)]
+
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;
 const ENERGY_MAX: f64 = 5.0;
@@ -14,21 +16,37 @@ const ENERGY_MAX: f64 = 5.0;
 /// Complete state and configuration for the authors' Brian RK4 profile.
 #[derive(Clone, Debug)]
 pub struct EnergyLIFNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Available normalised energy (dimensionless).
     pub epsilon: f64,
+    /// Membrane capacitance (pF).
     pub capacitance: f64,
+    /// Leak conductance (nS).
     pub g_leak: f64,
+    /// Fully energised leak reversal potential (mV).
     pub e_0: f64,
+    /// Energy-dependent leak reversal endpoint (mV).
     pub e_u: f64,
+    /// Voltage-cost upper reference (mV).
     pub e_d: f64,
+    /// Voltage-cost lower reference (mV).
     pub e_f: f64,
+    /// Energy-gated firing voltage (mV).
     pub v_threshold: f64,
+    /// Post-spike reset voltage (mV).
     pub v_reset: f64,
+    /// Energetic health multiplier (dimensionless).
     pub alpha: f64,
+    /// Reference normalised energy (dimensionless).
     pub epsilon_0: f64,
+    /// Minimum energy required for firing (dimensionless).
     pub epsilon_c: f64,
+    /// Normalised energy cost per spike (dimensionless).
     pub delta: f64,
+    /// Energy recovery time constant (ms).
     pub tau_e: f64,
+    /// Runge-Kutta step (ms), at most 1 and at most `tau_e`; one per step.
     pub dt: f64,
 }
 

@@ -6,17 +6,24 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Theta Neuron
 
+#![deny(missing_docs)]
+
 /// Theta neuron — Ermentrout & Kopell canonical form.
 /// dθ/dt = (1 - cosθ) + (1 + cosθ)·I, spike at θ crossing π.
 #[derive(Clone, Debug)]
 pub struct ThetaNeuron {
+    /// Phase (rad), kept in `[-pi, pi)`; a spike is a crossing of pi.
     pub theta: f64,
+    /// Step length (dimensionless time) over which the input is held.
     pub dt: f64,
 }
 
+/// Complete theta batch result: the phase after each step, the spike flag of each step,
+/// and the final phase.
 pub type ThetaCompleteTrace = (Vec<f64>, Vec<u8>, f64);
 
 impl ThetaNeuron {
+    /// Create a neuron at phase 0 with step `dt`.
     pub fn new(dt: f64) -> Self {
         Self { theta: 0.0, dt }
     }
@@ -78,6 +85,16 @@ impl ThetaNeuron {
         )
     }
 
+    /// Advance one step with `current` held over `dt` and return `Ok(1)` when the phase
+    /// crosses pi, else `Ok(0)`.
+    ///
+    /// With `y = tan(theta / 2)` the model becomes `dy/dt = y^2 + current`; the step uses
+    /// that exact flow and wraps the result to `[-pi, pi)`. The phase is not reset: after a
+    /// crossing it continues from -pi.
+    ///
+    /// Returns an error, with the state unchanged, if a value is non-finite, `dt` is not
+    /// positive, a positive input could cross pi more than once in the step
+    /// (`sqrt(current) * dt > pi`), or the candidate is non-finite.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() || !self.valid() {
             return Err("theta state/current must be finite with positive dt");
@@ -93,6 +110,8 @@ impl ThetaNeuron {
         Ok(i32::from(spiked))
     }
 
+    /// Advance one step as `try_step` does and return 1 on a crossing, else 0. An error also
+    /// returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
@@ -117,6 +136,7 @@ impl ThetaNeuron {
         Ok((phase, events, candidate.theta))
     }
 
+    /// Return the phase to 0; `dt` is kept.
     pub fn reset(&mut self) {
         self.theta = 0.0;
     }

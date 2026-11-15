@@ -6,17 +6,25 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Gated LIF Neuron
 
+#![deny(missing_docs)]
+
 /// Gated LIF — learnable decay and input gates.
 #[derive(Clone, Debug)]
 pub struct GatedLIFNeuron {
+    /// Membrane potential (dimensionless); a spike subtracts `v_threshold`.
     pub v: f64,
+    /// Learnable gate on the membrane-decay pathway (dimensionless).
     pub gate_v: f64,
+    /// Learnable gate on the input-integration pathway (dimensionless).
     pub gate_i: f64,
+    /// Firing threshold (normalised) (dimensionless).
     pub v_threshold: f64,
+    /// Step length; the gated update does not use it.
     pub dt: f64,
 }
 
 impl GatedLIFNeuron {
+    /// Create a neuron at rest with the given gates and threshold.
     pub fn new(gate_v: f64, gate_i: f64, v_threshold: f64) -> Self {
         Self {
             v: 0.0,
@@ -27,6 +35,9 @@ impl GatedLIFNeuron {
         }
     }
 
+    /// Advance one step: `v` becomes `gate_v * v + gate_i * current`, and reaching
+    /// `v_threshold` subtracts it (soft reset) and returns 1, else 0. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v = self.gate_v * self.v + self.gate_i * current;
         if self.v >= self.v_threshold {
@@ -37,6 +48,7 @@ impl GatedLIFNeuron {
         }
     }
 
+    /// Clear the membrane potential; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
     }

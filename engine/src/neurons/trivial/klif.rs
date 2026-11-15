@@ -6,17 +6,26 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — KLIF Neuron
 
+#![deny(missing_docs)]
+
 /// KLIF — learnable LIF with scaling factor k. Eshraghian et al. 2021.
 #[derive(Clone, Debug)]
 pub struct KLIFNeuron {
+    /// Membrane potential (dimensionless).
     pub v: f64,
+    /// Learnable input gain; the update adds k times the input current (dimensionless).
     pub k: f64,
+    /// Per-step leak factor, `exp(-dt / tau)`.
     pub alpha: f64,
+    /// Firing threshold (normalised) (dimensionless).
     pub v_threshold: f64,
+    /// Membrane potential reset to after a spike (normalised) (dimensionless).
     pub v_reset: f64,
 }
 
 impl KLIFNeuron {
+    /// Create a neuron at rest with leak factor `exp(-dt / tau)` and input gain `k`; the
+    /// threshold is 1 and the reset value 0.
     pub fn new(tau: f64, k: f64, dt: f64) -> Self {
         Self {
             v: 0.0,
@@ -27,6 +36,8 @@ impl KLIFNeuron {
         }
     }
 
+    /// Advance one step: `v` becomes `alpha * v + k * current`, and reaching `v_threshold`
+    /// sets `v` to `v_reset` and returns 1, else 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         self.v = self.alpha * self.v + self.k * current;
         if self.v >= self.v_threshold {
@@ -37,6 +48,7 @@ impl KLIFNeuron {
         }
     }
 
+    /// Set the membrane potential to 0 (not `v_reset`); the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
     }

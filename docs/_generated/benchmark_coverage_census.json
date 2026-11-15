@@ -543,6 +543,7 @@
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
             "engine/src/bindings/fixed_point_lif/array_allocation.rs",
+            "engine/src/neurons/trivial/energy_lif.rs",
             "src/sc_neurocore/neurons/model_descriptors/EnergyLIFNeuron.toml"
           ],
           "currency": "outdated",
@@ -616,6 +617,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/trivial/escape_rate.rs",
             "src/sc_neurocore/neurons/model_schemas/escape_rate.json",
             "src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
             "src/sc_neurocore/neurons/models/escape_rate.py"
@@ -938,7 +940,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/trivial/integer_qif.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-07-14_iqif.json",
@@ -1384,6 +1387,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "engine/src/neurons/trivial/perfect_integrator.rs",
             "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
             "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml"
           ],
@@ -1510,6 +1514,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "engine/src/neurons/trivial/quadratic_if.rs",
             "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
             "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml"
           ],
@@ -1712,6 +1717,7 @@
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
             "engine/src/bindings/fixed_point_lif/array_allocation.rs",
+            "engine/src/neurons/trivial/sc_normalized_energy_lif.rs",
             "src/sc_neurocore/neurons/model_descriptors/SCNormalizedEnergyLIFNeuron.toml"
           ],
           "currency": "outdated",
@@ -1785,7 +1791,8 @@
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
-            "engine/src/bindings/fixed_point_lif/array_allocation.rs"
+            "engine/src/bindings/fixed_point_lif/array_allocation.rs",
+            "engine/src/neurons/trivial/sc_sigma_delta_accumulator.rs"
           ],
           "currency": "outdated",
           "name": "bench_sc_sigma_delta_accumulator.json"
@@ -2110,6 +2117,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/trivial/theta.rs",
             "src/sc_neurocore/neurons/descriptor_generator.py",
             "tools/emit_catalogue_formal.py",
             "tools/readiness_evidence_index.py"

@@ -430,6 +430,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 17 trivial-module models are documented in full, each file
+  read against its code: each update and spike rule, what is validated and what
+  a refused step returns, and what reset restores. Where the engine differs
+  from the Python model the documentation says so: the nonlinear LIF takes an
+  unvalidated forward-Euler step and spikes only on an upward crossing, not the
+  validated RK4 step, and the parametric LIF returns the spike of the stored
+  potential, one step behind. Its struct names a quadratic, not a cubic,
+  nonlinearity. Three descriptors are corrected: the KLIF `k` is the input gain;
+  the nonlinear LIF's `a` and `b` are in `uA/(cm^2*mV^2)` and `mS/cm^2`; the SC
+  normalised-energy LIF's `alpha` is the dimensionless energy each spike
+  removes.
 - The engine's 10 multi-compartment models are documented in full, each file
   read against its code: how each step integrates (Euler sub-steps, RK4 or the
   implicit cable solve), which compartment receives the input, where the spike

@@ -6,20 +6,31 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Closed-form Continuous-depth Neuron
 
+#![deny(missing_docs)]
+
 /// Closed-form Continuous-depth (CfC) neuron. Hasani et al. 2022.
 #[derive(Clone, Debug)]
 pub struct ClosedFormContinuousNeuron {
+    /// State (dimensionless); a spike subtracts `v_threshold` from it.
     pub x: f64,
+    /// Input weight modulating the input-dependent time constant (dimensionless).
     pub w_tau: f64,
+    /// Recurrent (self) weight on the membrane state (dimensionless).
     pub w_x: f64,
+    /// Input weight on the injected drive (dimensionless).
     pub w_in: f64,
+    /// Baseline membrane time constant (ms).
     pub tau_base: f64,
+    /// Constant bias term (dimensionless).
     pub bias: f64,
+    /// Normalised firing threshold (dimensionless).
     pub v_threshold: f64,
+    /// Step length (ms), in the time unit of `tau_base`.
     pub dt: f64,
 }
 
 impl ClosedFormContinuousNeuron {
+    /// Create a neuron with the default parameters and initial state of its model descriptor.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -33,6 +44,11 @@ impl ClosedFormContinuousNeuron {
         }
     }
 
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// `x` relaxes exactly over `dt` towards `tanh(w_x * x + w_in * current)` with the time
+    /// constant `max(tau_base * sigmoid(w_tau * current + bias), 0.1)`. Reaching
+    /// `v_threshold` subtracts it from `x` (soft reset). The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let sigma_tau = 1.0 / (1.0 + (-(self.w_tau * current + self.bias)).exp());
         let tau_eff = (self.tau_base * sigma_tau).max(0.1);
@@ -47,6 +63,7 @@ impl ClosedFormContinuousNeuron {
         }
     }
 
+    /// Clear the state; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.0;
     }

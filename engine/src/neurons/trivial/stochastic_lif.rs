@@ -6,26 +6,40 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Stochastic LIF Neuron
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// Stochastic LIF — LIF with Gaussian noise.
 #[derive(Clone, Debug)]
 pub struct StochasticLIFNeuron {
+    /// Normalised membrane potential (dimensionless).
     pub v: f64,
+    /// Normalised resting potential (dimensionless).
     pub v_rest: f64,
+    /// Normalised post-spike reset potential (dimensionless).
     pub v_reset: f64,
+    /// Normalised firing threshold (dimensionless).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau_mem: f64,
+    /// Integration step (ms).
     pub dt: f64,
+    /// Euler–Maruyama noise scale (zero = deterministic) (dimensionless).
     pub noise_std: f64,
+    /// Normalised membrane resistance (absorbed into current scale) (dimensionless).
     pub resistance: f64,
+    /// Absolute refractory duration in discrete timesteps (steps).
     pub refractory_period: i32,
+    /// Refractory steps left; a spike sets it to `refractory_period`.
     pub refractory_counter: i32,
     rng: Xoshiro256PlusPlus,
 }
 
 impl StochasticLIFNeuron {
+    /// Create a neuron at rest with the descriptor defaults (no noise, no refractory
+    /// period) and a Xoshiro256++ generator seeded with `seed`.
     pub fn new(seed: u64) -> Self {
         Self {
             v: 0.0,
@@ -42,6 +56,14 @@ impl StochasticLIFNeuron {
         }
     }
 
+    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    ///
+    /// While `refractory_counter` is positive, the step counts it down, holds `v` at
+    /// `v_rest`, draws no noise and returns 0. Otherwise `v` gains
+    /// `-(v - v_rest) * dt / tau_mem + resistance * current * dt`, plus
+    /// `noise_std * sqrt(dt) * z` when `noise_std` is positive, with `z` a Box-Muller
+    /// standard normal sample. Reaching `v_threshold` sets `v` to `v_reset` and starts the
+    /// refractory count. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         if self.refractory_counter > 0 {
             self.refractory_counter -= 1;
@@ -67,6 +89,8 @@ impl StochasticLIFNeuron {
         }
     }
 
+    /// Return `v` to `v_rest` and clear the refractory count; the parameters and the
+    /// generator state are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;

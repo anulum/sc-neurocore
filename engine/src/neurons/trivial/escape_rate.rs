@@ -6,23 +6,38 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Escape-Rate Neuron
 
+#![deny(missing_docs)]
+
 /// Escape-rate neuron — stochastic IF with exponential hazard. Gerstner 2000.
 #[derive(Clone, Debug)]
 pub struct EscapeRateNeuron {
+    /// Membrane voltage after the most recent complete finite step (mV).
     pub v: f64,
+    /// Resting membrane potential and public reset destination (mV).
     pub v_rest: f64,
+    /// Membrane potential committed after an escape event (mV).
     pub v_reset: f64,
+    /// Reference voltage in the exponential soft-threshold intensity (mV).
     pub v_threshold: f64,
+    /// Positive passive-membrane time constant (ms).
     pub tau_m: f64,
+    /// Positive instantaneous escape intensity at v_threshold (1/ms).
     pub rho_0: f64,
+    /// Positive voltage scale controlling exponential threshold softness (mV).
     pub delta_u: f64,
+    /// Positive normalised resistance mapping injected current to steady-state voltage (mV/current-unit).
     pub resistance: f64,
+    /// Step length (ms).
     pub dt: f64,
+    /// Non-zero 16-bit state used by the next eight-advance Bernoulli sample (integer).
     pub rng_state: u16,
+    /// Non-zero 16-bit seed that [`EscapeRateNeuron::reset`] restores into `rng_state`.
     pub initial_seed: u16,
 }
 
 impl EscapeRateNeuron {
+    /// Create a neuron with the default parameters of its model descriptor and a generator
+    /// seeded with the low 16 bits of `seed`, or `0xACE1` when those are zero.
     pub fn new(seed: u64) -> Self {
         let narrowed = (seed & u64::from(u16::MAX)) as u16;
         let initial_seed = if narrowed == 0 { 0xACE1 } else { narrowed };
@@ -41,6 +56,9 @@ impl EscapeRateNeuron {
         }
     }
 
+    /// Whether the state and parameters satisfy the model's contract: finite potentials,
+    /// positive `tau_m`, `rho_0`, `delta_u`, `resistance` and `dt`, and a non-zero generator
+    /// state.
     pub fn valid(&self) -> bool {
         self.v.is_finite()
             && self.v_rest.is_finite()
@@ -59,6 +77,16 @@ impl EscapeRateNeuron {
             && self.rng_state != 0
     }
 
+    /// Advance one step with the input `current` and return 1 on an escape event, else 0.
+    ///
+    /// The membrane potential relaxes exactly over `dt` towards
+    /// `v_rest + resistance * current`, giving the candidate `v'`. The escape probability is
+    /// `1 - exp(-rho_0 * exp((v' - v_threshold) / delta_u) * dt)`, the inner exponent
+    /// clamped to plus or minus 700. The 16-bit generator advances eight bits, and an event
+    /// occurs when its value is below `floor(p * 65535) + 1` (always at `p = 1`, never at
+    /// `p = 0`). An event sets the potential to `v_reset`; otherwise it becomes `v'`. An invalid state, parameter or
+    /// current, or a non-finite intermediate, returns an error and leaves the neuron
+    /// unchanged.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.v.is_finite()
             || !self.v_rest.is_finite()
@@ -119,10 +147,13 @@ impl EscapeRateNeuron {
         }
     }
 
+    /// Advance like [`EscapeRateNeuron::try_step`], returning 0 where it returns an error.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Return the potential to `v_rest` and the generator to `initial_seed`, so the event
+    /// sequence repeats; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.rng_state = self.initial_seed;

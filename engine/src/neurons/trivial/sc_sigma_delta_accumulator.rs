@@ -7,10 +7,14 @@
 
 //! Retained project bipolar sigma-delta accumulator.
 
+#![deny(missing_docs)]
+
 /// Historical one-event-per-sample project state.
 #[derive(Clone, Debug)]
 pub struct SCSigmaDeltaAccumulatorNeuron {
+    /// Signed accumulated residual (dimensionless).
     pub sigma: f64,
+    /// Symmetric signed event threshold and subtraction quantum (dimensionless).
     pub v_threshold: f64,
 }
 

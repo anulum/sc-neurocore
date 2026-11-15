@@ -6,16 +6,23 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Complementary LIF Neuron
 
+#![deny(missing_docs)]
+
 /// Complementary LIF — dual-path excitatory/inhibitory.
 #[derive(Clone, Debug)]
 pub struct ComplementaryLIFNeuron {
+    /// Potential of the excitatory path, driven by the positive part of the input.
     pub v_pos: f64,
+    /// Potential of the inhibitory path, driven by the negative part of the input.
     pub v_neg: f64,
+    /// Per-step decay factor of both paths, `exp(-dt / tau)`.
     pub alpha: f64,
+    /// Firing threshold (normalised, symmetric positive/negative paths) (dimensionless).
     pub v_threshold: f64,
 }
 
 impl ComplementaryLIFNeuron {
+    /// Create a neuron at rest with decay factor `exp(-dt / tau)` and the given threshold.
     pub fn new(tau: f64, dt: f64, v_threshold: f64) -> Self {
         Self {
             v_pos: 0.0,
@@ -25,6 +32,11 @@ impl ComplementaryLIFNeuron {
         }
     }
 
+    /// Advance one step with the input `current`.
+    ///
+    /// Each path decays by `alpha` and adds its part of the input. Returns 1 when
+    /// `v_pos - v_neg` reaches `v_threshold`, -1 when it reaches `-v_threshold`, and 0
+    /// otherwise; either event clears both paths. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let inp_pos = current.max(0.0);
         let inp_neg = (-current).max(0.0);
@@ -44,6 +56,7 @@ impl ComplementaryLIFNeuron {
         }
     }
 
+    /// Clear both paths; the parameters are kept.
     pub fn reset(&mut self) {
         self.v_pos = 0.0;
         self.v_neg = 0.0;

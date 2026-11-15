@@ -6,20 +6,33 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Integer QIF Neuron
 
+#![deny(missing_docs)]
+
 /// Wu et al. (2021) IQIF — piecewise-linear integer soma for digital hardware.
 #[derive(Clone, Debug)]
 pub struct IntegerQIFNeuron {
+    /// Live integer membrane state (integer).
     pub v: i64,
+    /// Resting state and public reset target (integer).
     pub v_rest: i64,
+    /// Upper restoring-force reference; the event boundary is v_max (integer).
     pub v_threshold: i64,
+    /// Hard-reset state after a candidate strictly exceeds v_max (integer).
     pub v_reset: i64,
+    /// Non-negative lower-branch restoring-force coefficient divided by eight (Q0.3 numerator).
     pub a: i64,
+    /// Non-negative upper-branch restoring-force coefficient divided by eight (Q0.3 numerator).
     pub b: i64,
+    /// Strict upper candidate boundary for spike emission (integer).
     pub v_max: i64,
+    /// Inclusive lower clamp for non-spiking candidates (integer).
     pub v_min: i64,
 }
 
 impl IntegerQIFNeuron {
+    /// Create a neuron from signed 32-bit values, widened to `i64`; `v` is the initial state.
+    ///
+    /// Returns an error unless the result passes `valid`.
     #[allow(clippy::too_many_arguments)]
     pub fn with_parameters(
         v: i32,
@@ -48,6 +61,9 @@ impl IntegerQIFNeuron {
         }
     }
 
+    /// Return true when every field fits in `i32`, `a` and `b` are non-negative with a
+    /// positive sum, `v_min < v_rest < v_threshold < v_max`, and both `v_reset` and `v` lie
+    /// in `[v_min, v_max]`.
     pub fn valid(&self) -> bool {
         let i32_range = |value: i64| i64::from(i32::MIN) <= value && value <= i64::from(i32::MAX);
         [
@@ -72,6 +88,10 @@ impl IntegerQIFNeuron {
             && (self.v_min..=self.v_max).contains(&self.v)
     }
 
+    /// Return the voltage where the force switches branch,
+    /// `(b * v_threshold + a * v_rest) / (a + b)`, rounded towards zero.
+    ///
+    /// Call it on a valid state: `a + b` = 0 panics.
     pub fn branch_point(&self) -> i64 {
         let numerator = self.b * self.v_threshold + self.a * self.v_rest;
         let denominator = self.a + self.b;
@@ -82,6 +102,16 @@ impl IntegerQIFNeuron {
         }
     }
 
+    /// Advance one step with the integer input `current`; return `Ok(1)` on a spike, else
+    /// `Ok(0)`.
+    ///
+    /// Below the branch point the force is `a * (v_rest - v)`, otherwise
+    /// `b * (v - v_threshold)`. The candidate is `v + (force >> 3) + current`; the shift
+    /// rounds down. A candidate above `v_max` sets `v` to `v_reset` and spikes. Otherwise `v`
+    /// becomes the candidate, raised to `v_min` if below it.
+    ///
+    /// Returns an error, with the state unchanged, if the state is not `valid` or an
+    /// operation overflows.
     pub fn try_step(&mut self, current: i32) -> Result<i32, &'static str> {
         if !self.valid() {
             return Err("invalid IQIF runtime state or parameter ordering");
@@ -109,11 +139,15 @@ impl IntegerQIFNeuron {
         }
     }
 
+    /// Advance one step as `try_step` does and return 1 on a spike, else 0.
+    ///
+    /// Panics where `try_step` returns an error.
     pub fn step(&mut self, current: i32) -> i32 {
         self.try_step(current)
             .expect("IQIF step requires a validated signed-int32 contract")
     }
 
+    /// Return the membrane to `v_rest` (not `v_reset`); the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
     }

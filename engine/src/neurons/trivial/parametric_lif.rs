@@ -6,15 +6,21 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Parametric LIF Neuron
 
+#![deny(missing_docs)]
+
 /// Parametric LIF — learnable decay via sigmoid(a). Fang et al. 2021.
 #[derive(Clone, Debug)]
 pub struct ParametricLIFNeuron {
+    /// Membrane potential (dimensionless).
     pub v: f64,
+    /// Trainable parameter setting the membrane decay (the leak is a function of a) (dimensionless).
     pub a: f64,
+    /// Firing threshold (normalised) (dimensionless).
     pub threshold: f64,
 }
 
 impl ParametricLIFNeuron {
+    /// Create a neuron at rest with decay parameter `a` and the given threshold.
     pub fn new(a: f64, threshold: f64) -> Self {
         Self {
             v: 0.0,
@@ -23,6 +29,12 @@ impl ParametricLIFNeuron {
         }
     }
 
+    /// Advance one step with the input `current` and return the spike of the stored `v`.
+    ///
+    /// The spike is read before the update: 1 if the stored `v` has reached `threshold`,
+    /// else 0. Then `v` becomes `sigmoid(a) * v + current`, with the decay term dropped
+    /// when that spike fired. The returned spike therefore belongs to the previous update;
+    /// the Python model returns the spike of the new `v`. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let alpha = 1.0 / (1.0 + (-self.a).exp());
         let spike = if self.v >= self.threshold { 1 } else { 0 };
@@ -30,6 +42,7 @@ impl ParametricLIFNeuron {
         spike
     }
 
+    /// Clear the membrane potential; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
     }

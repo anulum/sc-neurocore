@@ -6,13 +6,20 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Naud-Gerstner perfect integrator + preserved SC profile
 
+#![deny(missing_docs)]
+
 /// Profile-explicit perfect-integrator state used by the production engine.
 #[derive(Clone, Debug)]
 pub struct PerfectIntegratorNeuron {
+    /// Membrane potential (dimensionless).
     pub v: f64,
+    /// Normalised membrane capacitance (dimensionless).
     pub c_m: f64,
+    /// Firing threshold (normalised) (dimensionless).
     pub v_threshold: f64,
+    /// Membrane potential reset to after a spike (normalised) (dimensionless).
     pub v_reset: f64,
+    /// Integration step; each step adds `current * dt / c_m` to `v`.
     pub dt: f64,
     /// `true` selects Naud-Gerstner's strict `>` boundary; `false` preserves SC `>=`.
     pub source_profile: bool,
@@ -102,6 +109,7 @@ impl PerfectIntegratorNeuron {
         Ok((voltage, events, candidate.v))
     }
 
+    /// Return the membrane to `v_reset`; the parameters and the profile are kept.
     pub fn reset(&mut self) {
         self.v = self.v_reset;
     }

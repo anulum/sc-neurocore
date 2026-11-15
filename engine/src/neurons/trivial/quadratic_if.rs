@@ -6,20 +6,32 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Latham QIF + preserved symmetric SC profile
 
+#![deny(missing_docs)]
+
 /// Quadratic Integrate-and-Fire — canonical Type-I excitability.
 /// dv/dt = v² + I, reset at v_peak.
 #[derive(Clone, Debug)]
 pub struct QuadraticIFNeuron {
+    /// Membrane variable (dimensionless).
     pub v: f64,
+    /// Dimensionless value v is reset to after reaching the peak (dimensionless).
     pub v_reset: f64,
+    /// Dimensionless peak at which a spike is registered and reset applied (dimensionless).
     pub v_peak: f64,
+    /// Step length (dimensionless time) over which the input is held.
     pub dt: f64,
+    /// Marks the Latham et al. (2000) profile. The step does not read it, so both profiles
+    /// follow the same flow.
     pub source_profile: bool,
 }
 
+/// Complete failure-atomic quadratic-IF batch result: the voltage after each step, the
+/// spike flag of each step, and the final voltage.
 pub type QuadraticIFCompleteTrace = (Vec<f64>, Vec<u8>, f64);
 
 impl QuadraticIFNeuron {
+    /// Create a neuron at `v_reset` with the given peak and step, in the SC profile
+    /// (`source_profile` false).
     pub fn new(v_reset: f64, v_peak: f64, dt: f64) -> Self {
         Self {
             v: v_reset,
@@ -51,6 +63,18 @@ impl QuadraticIFNeuron {
             && self.dt > 0.0
     }
 
+    /// Advance one step with `current` held over `dt` and return `Ok(1)` on a spike, else
+    /// `Ok(0)`.
+    ///
+    /// The step uses the exact solution of `dv/dt = v^2 + current`: tangent flow for a
+    /// positive input, `v / (1 - v * dt)` for zero, and the hyperbolic flow for a negative
+    /// input, where `v` exactly at the stable point `-sqrt(-current)` stays there. A spike
+    /// is registered when the flow reaches `v_peak` or blows up within the step; `v` is then
+    /// set to `v_reset`, and the rest of the step is not integrated.
+    ///
+    /// Returns an error, with the state unchanged, if a value is non-finite, `v` or
+    /// `v_reset` is not below `v_peak`, `dt` is not positive, or the candidate is
+    /// non-finite.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return Err("quadratic-IF state/current violates its finite profile contract");
@@ -63,6 +87,8 @@ impl QuadraticIFNeuron {
         Ok(i32::from(spiked))
     }
 
+    /// Advance one step as `try_step` does and return 1 on a spike, else 0. An error also
+    /// returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
@@ -87,6 +113,7 @@ impl QuadraticIFNeuron {
         Ok((voltage, events, candidate.v))
     }
 
+    /// Return the membrane variable to `v_reset`; the parameters and the profile are kept.
     pub fn reset(&mut self) {
         self.v = self.v_reset;
     }
