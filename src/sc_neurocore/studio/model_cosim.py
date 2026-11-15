@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import tempfile
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,9 +22,11 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
     c_word_type,
     generate_bittrue_kernel_from_neuron,
 )
+from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.compiler.verilog_compiler_config import Q88
 from sc_neurocore.hdl_gen import sanitize_ident
 from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.bit_true_execution import (
     NATIVE_TOOL_NAMES,
     native_tool_version,
@@ -54,6 +57,64 @@ _TOOL_NAMES = NATIVE_TOOL_NAMES
 _resolve_tool = resolve_native_tool
 _run_checked = run_native_command
 _tool_version = native_tool_version
+
+
+class ModelCosimRefused(AuthoredRefusal):
+    """A co-simulation request the Studio refuses, in words written for the caller.
+
+    Each message names what was refused and why: an integrator the model offers
+    no bit-exact path for, or a current its Q-format cannot hold. It is a
+    ``ValueError``, so existing handlers keep working; a request boundary may
+    show its text to the caller.
+    """
+
+
+def refuse_cosim_request(
+    configuration: ResolvedModelCompileConfiguration,
+    *,
+    current: float,
+    cosim_integrators: Sequence[str],
+) -> None:
+    """Refuse a co-simulation the Studio does not run, before any tool starts.
+
+    The model's catalogue offers co-simulation only for the integrators whose
+    neuron a generated bit-true C kernel mirrors (its ``cosim_integrators``,
+    which the Studio's own request builder checks); another integrator has no
+    reference to compare the RTL against. A current outside the Q-format's
+    range, both ends included, would wrap its input word.
+
+    Parameters
+    ----------
+    configuration : ResolvedModelCompileConfiguration
+        The resolved compile request: model, integrator and Q-format.
+    current : float
+        The constant input of the requested run.
+    cosim_integrators : sequence of str
+        The integrators the model's catalogue offers for co-simulation.
+
+    Raises
+    ------
+    ModelCosimRefused
+        If the integrator is not offered, or the format cannot hold the current.
+    """
+    if configuration.integrator not in cosim_integrators:
+        offered = ", ".join(cosim_integrators) if cosim_integrators else "none"
+        raise ModelCosimRefused(
+            f"Integrator {configuration.integrator!r} has no bit-exact co-simulation path for "
+            f"{configuration.model_name!r}; it offers {offered}."
+        )
+    _input_word(configuration.q_format, float(current))
+
+
+def _input_word(q_format: QFormat, current: float) -> int:
+    """Return the input word of a current, refusing one the format would wrap."""
+    q = Q88(data_width=q_format.total_bits, fraction=q_format.fraction_bits)
+    if not q.min_value <= current <= q.max_value:
+        raise ModelCosimRefused(
+            f"Studio model co-simulation current {current!r} is outside "
+            f"{q_format.q_label} [{q.min_value!r}, {q.max_value!r}]; its input word would wrap."
+        )
+    return signed_q(q, current)
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,13 +201,7 @@ def run_model_cosim(
     if missing:
         raise RuntimeError(f"Studio model co-simulation tools unavailable: {', '.join(missing)}.")
 
-    q = Q88(data_width=q_format.total_bits, fraction=q_format.fraction_bits)
-    if not q.min_value <= current_float <= q.max_value:
-        raise ValueError(
-            f"Studio model co-simulation current {current_float!r} is outside "
-            f"{q_format.q_label} [{q.min_value!r}, {q.max_value!r}]; its input word would wrap."
-        )
-    current_q = signed_q(q, current_float)
+    current_q = _input_word(q_format, current_float)
     requested = (StimulusPhase(current_q, n_steps),)
     stress = stress_schedule(current_q, q_format.total_bits)
     stress_steps = sum(phase.steps for phase in stress)

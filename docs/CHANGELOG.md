@@ -629,6 +629,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `POST /api/models/cosim` answers HTTP 422 with its reason, before any job
+  runs, when the model offers no bit-exact co-simulation path for the
+  integrator or the current lies outside the Q-format's range. Both used to be
+  admitted as a job and answered HTTP 500 `studio_job_failed`, with the reason
+  kept only in the job ledger. The Studio's own request builder already
+  refused the first; a direct caller met both.
 - `sc-neurocore studio` stopped with SIGTERM, as a service manager or
   `docker stop` stops it, now ends as a clean return and runs its exit
   handlers. Uvicorn drains the server on the signal, restores the handler it

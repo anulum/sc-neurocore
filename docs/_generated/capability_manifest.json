@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5675
+    "test_files": 5676
   },
   "documentation": {
     "public_pages": [
@@ -8267,6 +8267,7 @@
       "tests/test_studio_model_compile_refusals.py",
       "tests/test_studio_model_cosim.py",
       "tests/test_studio_model_cosim_process.py",
+      "tests/test_studio_model_cosim_refusals.py",
       "tests/test_studio_model_documentation_availability.py",
       "tests/test_studio_model_numeric_contracts.py",
       "tests/test_studio_model_readiness_verified.py",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1991
+expected_file_count = 1992
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6342,6 +6342,10 @@ rationale = "Resolve a catalogue model's compile request into its canonical sche
 [[file]]
 path = "tests/test_studio_model_compile_refusals.py"
 rationale = "A refused model compile or co-simulation is answered 422 with the compiler's reason and no job, while a server fault is left to the job."
+
+[[file]]
+path = "tests/test_studio_model_cosim_refusals.py"
+rationale = "A co-simulation the Studio does not run, an integrator without a bit-exact path or a current its format cannot hold, is answered 422 with its reason and no job; both ends of the range are admitted, and a server fault is left to the job."
 
 [[file]]
 path = "src/sc_neurocore/studio/model_compile_parameters.py"

@@ -46070,6 +46070,40 @@ Raises
 HTTPException
     HTTP 422 carrying the refusal's text.
 
+### Function `cosim_integrators_of(model_name)`
+Return the integrators a catalogue model offers for co-simulation.
+
+Parameters
+----------
+model_name : str
+    A model the compile has resolved, so the catalogue knows it.
+
+Returns
+-------
+list of str
+    Its compile configuration's ``cosim_integrators``.
+
+### Function `refuse_cosim_before_admission(payload)`
+Answer a co-simulation the Studio would not run with its reason, before any job runs.
+
+It refuses what the compile would refuse, as :func:`refuse_before_admission`
+does, and then what the co-simulation would: an integrator the model offers
+no bit-exact path for, and a current its Q-format cannot hold
+(:func:`~sc_neurocore.studio.model_cosim.refuse_cosim_request`). A failed
+job is answered HTTP 500 "studio_job_failed", so without this check a caller
+could not tell either from a server fault. An authored refusal is the
+caller's input: HTTP 422 with its text. Anything else is left to the job.
+
+Parameters
+----------
+payload : dict&#91;str, Any&#93;
+    The request as the worker receives it.
+
+Raises
+------
+HTTPException
+    HTTP 422 carrying the refusal's text.
+
 ### Function `refuse_equations_before_admission(request)`
 Answer an equation compile the compiler would refuse with its reason, before any job runs.
 
@@ -49996,6 +50030,15 @@ CatalogueParametersRefused
 
 ## Module `studio.model_cosim`
 
+### Class `ModelCosimRefused`
+A co-simulation request the Studio refuses, in words written for the caller.
+
+Each message names what was refused and why: an integrator the model offers
+no bit-exact path for, or a current its Q-format cannot hold. It is a
+``ValueError``, so existing handlers keep working; a request boundary may
+show its text to the caller.
+
+
 ### Class `StimulusPhase`
 One stretch of a co-simulation schedule.
 
@@ -50012,6 +50055,29 @@ Public parity report plus complete private artifacts for job custody.
 ### Class `PhaseSimulation`
 What one RTL and generated-kernel run printed, and the sources it ran.
 
+
+### Function `refuse_cosim_request(configuration, *, current, cosim_integrators)`
+Refuse a co-simulation the Studio does not run, before any tool starts.
+
+The model's catalogue offers co-simulation only for the integrators whose
+neuron a generated bit-true C kernel mirrors (its ``cosim_integrators``,
+which the Studio's own request builder checks); another integrator has no
+reference to compare the RTL against. A current outside the Q-format's
+range, both ends included, would wrap its input word.
+
+Parameters
+----------
+configuration : ResolvedModelCompileConfiguration
+    The resolved compile request: model, integrator and Q-format.
+current : float
+    The constant input of the requested run.
+cosim_integrators : sequence of str
+    The integrators the model's catalogue offers for co-simulation.
+
+Raises
+------
+ModelCosimRefused
+    If the integrator is not offered, or the format cannot hold the current.
 
 ### Function `stress_schedule(current_q, data_width)`
 Return the fixed stress schedule run after the requested one.

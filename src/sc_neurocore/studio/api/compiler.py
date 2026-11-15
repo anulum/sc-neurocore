@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -36,6 +37,7 @@ from sc_neurocore.studio.equation_ir_schema import (
 )
 from sc_neurocore.studio.model_catalogue import get_model_detail
 from sc_neurocore.studio.model_compile_configuration import resolve_model_compile_configuration
+from sc_neurocore.studio.model_cosim import refuse_cosim_request
 from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
 from sc_neurocore.studio.platform.compile_process import (
     COMPILE_PROCESS_TASK,
@@ -73,6 +75,61 @@ def refuse_before_admission(payload: dict[str, Any]) -> None:
     """
     try:
         resolve_model_compile_configuration(payload, detail_getter=get_model_detail)
+    except AuthoredRefusal as refusal:
+        raise HTTPException(status_code=422, detail=str(refusal)) from None
+    except Exception:
+        return
+
+
+def cosim_integrators_of(model_name: str) -> list[str]:
+    """Return the integrators a catalogue model offers for co-simulation.
+
+    Parameters
+    ----------
+    model_name : str
+        A model the compile has resolved, so the catalogue knows it.
+
+    Returns
+    -------
+    list of str
+        Its compile configuration's ``cosim_integrators``.
+    """
+    detail = get_model_detail(model_name)
+    if detail is None:
+        raise LookupError(
+            f"Studio model {model_name!r} left the catalogue after its compile resolved."
+        )
+    return [str(integrator) for integrator in detail["compile_configuration"]["cosim_integrators"]]
+
+
+def refuse_cosim_before_admission(payload: dict[str, Any]) -> None:
+    """Answer a co-simulation the Studio would not run with its reason, before any job runs.
+
+    It refuses what the compile would refuse, as :func:`refuse_before_admission`
+    does, and then what the co-simulation would: an integrator the model offers
+    no bit-exact path for, and a current its Q-format cannot hold
+    (:func:`~sc_neurocore.studio.model_cosim.refuse_cosim_request`). A failed
+    job is answered HTTP 500 "studio_job_failed", so without this check a caller
+    could not tell either from a server fault. An authored refusal is the
+    caller's input: HTTP 422 with its text. Anything else is left to the job.
+
+    Parameters
+    ----------
+    payload : dict[str, Any]
+        The request as the worker receives it.
+
+    Raises
+    ------
+    HTTPException
+        HTTP 422 carrying the refusal's text.
+    """
+    try:
+        configuration = resolve_model_compile_configuration(payload, detail_getter=get_model_detail)
+        refuse_cosim_request(
+            configuration,
+            current=float(payload["current"]),
+            cosim_integrators=cosim_integrators_of(configuration.model_name),
+        )
     except AuthoredRefusal as refusal:
         raise HTTPException(status_code=422, detail=str(refusal)) from None
     except Exception:
@@ -153,9 +210,14 @@ def _add_equation_compile_route(router: APIRouter, context: StudioApiContext) ->
 def _add_model_routes(router: APIRouter, context: StudioApiContext) -> None:
     """Register the catalogue-model compile and co-simulation routes."""
 
-    def run_model_job(owner: str, task_path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        """Refuse a request the compiler would refuse, then run the model job."""
-        refuse_before_admission(payload)
+    def run_model_job(
+        owner: str,
+        task_path: str,
+        payload: dict[str, Any],
+        refuse: Callable[[dict[str, Any]], None],
+    ) -> dict[str, Any]:
+        """Refuse a request the Studio would refuse, then run the model job."""
+        refuse(payload)
         return context.run_studio_process_job_sync(
             kind="compiler", owner=owner, task_path=task_path, payload=payload
         )
@@ -164,14 +226,22 @@ def _add_model_routes(router: APIRouter, context: StudioApiContext) -> None:
     def api_model_compile(req: ModelCompileRequest) -> Any:
         return _safe(
             lambda: run_model_job(
-                "studio-model-compiler", MODEL_COMPILE_PROCESS_TASK, req.model_dump()
+                "studio-model-compiler",
+                MODEL_COMPILE_PROCESS_TASK,
+                req.model_dump(),
+                refuse_before_admission,
             )
         )
 
     @router.post("/api/models/cosim")
     def api_model_cosim(req: ModelCosimRequest) -> Any:
         return _safe(
-            lambda: run_model_job("studio-model-cosim", MODEL_COSIM_PROCESS_TASK, req.model_dump())
+            lambda: run_model_job(
+                "studio-model-cosim",
+                MODEL_COSIM_PROCESS_TASK,
+                req.model_dump(),
+                refuse_cosim_before_admission,
+            )
         )
 
 
