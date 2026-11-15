@@ -462,6 +462,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 6 interneuron models (basket, chandelier, PV fast-spiking,
+  Martinotti, SST, VIP) are documented in full, each file read against its
+  code: the Wang-Buzsáki family's sub-steps of `dt` up to about 0.5 ms per
+  call (a `dt` above 0.5 ms advances nothing), the four RK4 sub-steps of the
+  Martinotti, SST and VIP models (VIP with its own kinetics), each channel's
+  gate and time constant, and the spike as an upward crossing with no reset
+  of `v`.
 - The engine's 7 special-module files (the Larter-Breakspear and Wendling
   neural masses, the retained decoupled ion mass, the spike response and GLM
   neurons, the stochastic point processes and spiking models, the Wilson-Cowan

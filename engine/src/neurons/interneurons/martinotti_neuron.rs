@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Martinotti interneuron model
 
+#![deny(missing_docs)]
+
 /// Martinotti cell — adapting interneuron targeting layer 1 apical dendrites.
 ///
 /// Biophysics: Na+, K+, M-current (Kv7, strong adaptation), T-type Ca2+
@@ -15,29 +17,49 @@
 /// Based on Silberberg & Markram 2007 / Toledo-Rodriguez et al. 2005.
 #[derive(Clone, Debug)]
 pub struct MartinottiNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium activation gate (dimensionless); Traub-Miles kinetics with V_T = -56.2 mV.
     pub m: f64,
+    /// Sodium inactivation gate (dimensionless).
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless).
     pub n: f64,
-    pub p: f64, // M-current activation
-    pub s: f64, // T-type Ca2+ inactivation
+    /// M-current activation gate (dimensionless).
+    pub p: f64,
+    /// T-type Ca2+ inactivation gate (dimensionless).
+    pub s: f64,
     // Conductances
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal slow non-inactivating (M-type) potassium conductance (mS/cm^2).
     pub g_m: f64,
+    /// Maximal low-threshold (T-type) calcium conductance (mS/cm^2).
     pub g_t: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// RK4 sub-step (ms); each call takes four, so it covers `4 * dt`.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl MartinottiNeuron {
+    /// Create a cell at -65 mV with the default gates and parameters and `dt` = 0.025 ms
+    /// (0.1 ms per call).
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -133,6 +155,12 @@ impl MartinottiNeuron {
         out
     }
 
+    /// Advance four classical RK4 sub-steps of `dt` with `current` (uA/cm^2) held constant;
+    /// return 1 when `v` crosses `v_threshold` upwards between the start and the end of the
+    /// call, else 0.
+    ///
+    /// All six states are integrated together. `v` is never reset. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let mut st = [self.v, self.m, self.h, self.n, self.p, self.s];
@@ -152,6 +180,7 @@ impl MartinottiNeuron {
         }
     }
 
+    /// Restore the six states to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.m = 0.02;

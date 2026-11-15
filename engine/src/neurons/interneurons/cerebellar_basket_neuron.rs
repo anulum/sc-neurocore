@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cerebellar basket-cell model
 
+#![deny(missing_docs)]
+
 use super::super::biophysical::safe_rate;
 
 /// Cerebellar basket cell — perisomatic-targeting interneuron.
@@ -17,29 +19,51 @@ use super::super::biophysical::safe_rate;
 /// Based on Midtgaard 1992 / Häusser & Clark 1997 / WB 1996.
 #[derive(Clone, Debug)]
 pub struct CerebellarBasketNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); Wang-Buzsáki kinetics scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); kinetics scaled by
+    /// `phi`.
     pub n: f64,
+    /// A-type potassium activation gate (dimensionless); time constant 5 ms divided by `phi`.
     pub a: f64,
+    /// A-type potassium inactivation gate (dimensionless); time constant 50 ms, not scaled
+    /// by `phi`.
     pub b: f64,
-    pub ca: f64, // Intracellular [Ca2+] (µM)
+    /// Intracellular \[Ca2+\] (µM).
+    pub ca: f64,
     // Conductances
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// A-type transient potassium conductance (mS/cm^2).
     pub g_a: f64,
+    /// Calcium-activated potassium conductance (mS/cm^2).
     pub g_kca: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor for gating kinetics (dimensionless).
     pub phi: f64,
+    /// Sub-step (ms). Each call runs `floor(0.5 / max(dt, 0.001))` sub-steps, about 0.5 ms;
+    /// a `dt` above 0.5 ms advances nothing.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
 }
 
 impl CerebellarBasketNeuron {
+    /// Create a cell at -65 mV with the default gates and parameters and `dt` = 0.01 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -63,6 +87,15 @@ impl CerebellarBasketNeuron {
         }
     }
 
+    /// Advance about 0.5 ms of forward-Euler sub-steps (see `dt`) with the input `current`
+    /// (uA/cm^2); return 1 when `v` crosses `v_threshold` upwards between the start and the
+    /// end of the call, else 0.
+    ///
+    /// Each sub-step first updates `h`, `n`, `a` and `b` from the present `v`. It then takes
+    /// the Ca-activated K activation `ca / (ca + 0.2)` from the old `ca`, and updates `ca`:
+    /// entry `0.01 * (v + 20)` above -20 mV, decay with 80 ms, then a floor at 0. Last, it
+    /// advances `v` with the five currents (sodium activation at its steady state). `v` is
+    /// never reset. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let n_sub = (0.5 / self.dt.max(0.001)) as usize;
@@ -114,6 +147,8 @@ impl CerebellarBasketNeuron {
         }
     }
 
+    /// Restore the state (`v`, `h`, `n`, `a`, `b`, `ca`) to its initial values; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.8;

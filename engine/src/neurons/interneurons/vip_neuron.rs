@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — VIP interneuron model
 
+#![deny(missing_docs)]
+
 /// VIP (vasoactive intestinal peptide) irregular-spiking interneuron.
 ///
 /// Biophysics: Na+, K+, A-type K+ (Kv4, transient outward, causes
@@ -16,26 +18,43 @@
 /// Based on Porter et al. 1998 / Bhatt et al. 2019 parameterisation.
 #[derive(Clone, Debug)]
 pub struct VIPNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); sodium activation is at its steady state.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless).
     pub n: f64,
-    pub a: f64, // A-type K+ activation
-    pub b: f64, // A-type K+ inactivation
+    /// A-type K+ activation gate (dimensionless).
+    pub a: f64,
+    /// A-type K+ inactivation gate (dimensionless).
+    pub b: f64,
     // Conductances
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal transient A-type potassium conductance (mS/cm^2).
     pub g_a: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// RK4 sub-step (ms); each call takes four, so it covers `4 * dt`.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl VIPNeuron {
+    /// Create a cell at -65 mV with the default gates and parameters and `dt` = 0.025 ms
+    /// (0.1 ms per call).
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -114,6 +133,13 @@ impl VIPNeuron {
         out
     }
 
+    /// Advance four classical RK4 sub-steps of `dt` with `current` (uA/cm^2) held constant;
+    /// return 1 when `v` crosses `v_threshold` upwards between the start and the end of the
+    /// call, else 0.
+    ///
+    /// The five states are integrated together. The A-type gates relax with fixed time
+    /// constants (5 ms activation, 50 ms inactivation). `v` is never reset. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let mut s = [self.v, self.h, self.n, self.a, self.b];
@@ -132,6 +158,7 @@ impl VIPNeuron {
         }
     }
 
+    /// Restore the five states to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.8;

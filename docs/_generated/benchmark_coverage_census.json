@@ -1148,7 +1148,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "engine/Cargo.toml"
+            "engine/Cargo.toml",
+            "engine/src/neurons/interneurons/martinotti_neuron.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_martinotti_neuron_rk4.json",
@@ -1364,7 +1365,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "engine/Cargo.toml"
+            "engine/Cargo.toml",
+            "engine/src/neurons/interneurons/pv_fast_spiking.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_pv_fast_spiking_rk4.json",
@@ -1958,7 +1960,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "engine/Cargo.toml"
+            "engine/Cargo.toml",
+            "engine/src/neurons/interneurons/sst_neuron.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_sst_neuron_rk4.json",
@@ -2224,7 +2227,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "engine/Cargo.toml"
+            "engine/Cargo.toml",
+            "engine/src/neurons/interneurons/vip_neuron.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_vip_neuron_rk4.json",

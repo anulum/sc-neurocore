@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — PV fast-spiking interneuron model
 
+#![deny(missing_docs)]
+
 use super::super::biophysical::safe_rate;
 
 /// PV+ (parvalbumin) fast-spiking interneuron.
@@ -18,26 +20,44 @@ use super::super::biophysical::safe_rate;
 /// Wang & Buzsáki 1996, J Neurosci 16:6402-6413 + Kv3.1 extension.
 #[derive(Clone, Debug)]
 pub struct PVFastSpikingNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); Wang-Buzsáki kinetics scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); kinetics scaled by
+    /// `phi`.
     pub n: f64,
-    pub p: f64, // Kv3.1 activation
+    /// Kv3.1 activation gate (dimensionless).
+    pub p: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal Kv3-type potassium conductance (mS/cm^2).
     pub g_kv3: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// RK4 sub-step (ms). Each call runs `floor(0.5 / max(dt, 0.001))` sub-steps, about
+    /// 0.5 ms; a `dt` above 0.5 ms advances nothing.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl PVFastSpikingNeuron {
+    /// Create a cell at -65 mV with the default gates and parameters and `dt` = 0.01 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -113,6 +133,13 @@ impl PVFastSpikingNeuron {
         out
     }
 
+    /// Advance about 0.5 ms of classical RK4 sub-steps (see `dt`) with `current` (uA/cm^2)
+    /// held constant; return 1 when `v` crosses `v_threshold` upwards between the start and
+    /// the end of the call, else 0.
+    ///
+    /// The four states are integrated together. The Kv3.1 gate relaxes towards
+    /// `1 / (1 + exp(-(v + 10) / 10))` at rate `phi` per ms. `v` is never reset. The input
+    /// is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let n_sub = (0.5 / self.dt.max(0.001)) as usize;
@@ -131,6 +158,7 @@ impl PVFastSpikingNeuron {
         }
     }
 
+    /// Restore the four states to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.8;
