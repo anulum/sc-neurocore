@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — A-type potassium channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// A-type K+ (IA) neuron — WB base + transient outward K+ current.
@@ -23,22 +25,40 @@ use crate::neurons::biophysical::safe_rate;
 /// Connor & Stevens, J Physiol 213:31, 1971; Hoffman et al., Nature 387:869, 1997.
 #[derive(Clone, Debug)]
 pub struct ATypeKNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); its kinetics are scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); its kinetics are scaled
+    /// by `phi`.
     pub n: f64,
-    pub a: f64, // IA activation (fast)
-    pub b: f64, // IA inactivation (slow)
+    /// IA activation (fast).
+    pub a: f64,
+    /// IA inactivation (slow).
+    pub b: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// A-type transient potassium conductance (mS/cm^2).
     pub g_a: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor for gating kinetics (dimensionless).
     pub phi: f64,
+    /// Outer step (ms); `step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected drive (dimensionless).
     pub gain: f64,
 }
 
@@ -49,6 +69,8 @@ impl Default for ATypeKNeuron {
 }
 
 impl ATypeKNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -71,6 +93,18 @@ impl ATypeKNeuron {
         }
     }
 
+    /// Advance `dt` in 50 forward-Euler sub-steps with the drive `gain * current`; return 1
+    /// if any sub-step spiked, else 0.
+    ///
+    /// Each sub-step first updates the gates `h`, `n`, `a` and `b` from the old `v`. It then
+    /// computes the currents with the updated gates (sodium activation at its steady state;
+    /// A-current `g_a * a^3 * b * (v - e_k)`) and advances `v`. A sub-step that reaches
+    /// `v_threshold` sets `v` to -65 mV and keeps the gates.
+    ///
+    /// After the sub-steps `v` is clamped to `[-100, 60]` mV. A non-finite `v` restores `v`,
+    /// `h` and `n` to their initial values. The four gates are clamped to `[0, 1]` (a NaN
+    /// gate stays NaN). The input is not validated. The Python model refuses a candidate
+    /// outside `[-100, 60]` mV instead of clamping it.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let sub_steps = 50;
@@ -129,6 +163,8 @@ impl ATypeKNeuron {
         fired
     }
 
+    /// Restore every field to `new()`, parameters included. The Python model's reset
+    /// restores only the state.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

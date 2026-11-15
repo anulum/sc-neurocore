@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — T-type calcium channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// T-type Ca2+ (IT) neuron — WB base + low-voltage-activated Ca2+ current.
@@ -24,24 +26,41 @@ use crate::neurons::biophysical::safe_rate;
 /// Huguenard, Annu Rev Physiol 58:329, 1996; Destexhe et al., J Neurophysiol 76:2049, 1996.
 #[derive(Clone, Debug)]
 pub struct TTypeCaNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64, // Na+ inactivation
-    pub n: f64, // Kdr activation
-    pub s: f64, // T-type Ca2+ inactivation (slow)
+    /// Na+ inactivation.
+    pub h: f64,
+    /// Kdr activation.
+    pub n: f64,
+    /// T-type Ca2+ inactivation (slow).
+    pub s: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal low-threshold (T-type) calcium conductance (mS/cm^2).
     pub g_t: f64, // T-type Ca2+
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Outer step (ms), in `(0, 1]`; `try_step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -52,6 +71,8 @@ impl Default for TTypeCaNeuron {
 }
 
 impl TTypeCaNeuron {
+    /// Create a neuron at the descriptor's initial state (T-type gate `s` = 0.9,
+    /// de-inactivated) with its default parameters and `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,

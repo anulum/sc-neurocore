@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Hyperpolarisation-activated channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// Ih (hyperpolarisation-activated cation current) neuron — WB base + HCN.
@@ -25,24 +27,41 @@ use crate::neurons::biophysical::safe_rate;
 /// recurrence is an experimental composite, not a publication-exact model.
 #[derive(Clone, Debug)]
 pub struct IhNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64, // Na+ inactivation
-    pub n: f64, // Kdr activation
-    pub r: f64, // Ih activation (activates on hyperpolarisation)
+    /// Na+ inactivation.
+    pub h: f64,
+    /// Kdr activation.
+    pub n: f64,
+    /// Ih activation (activates on hyperpolarisation).
+    pub r: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal hyperpolarisation-activated (Ih) conductance (mS/cm^2).
     pub g_h: f64, // Ih conductance
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Reversal potential of the hyperpolarisation-activated current (mV).
     pub e_h: f64, // Ih reversal (~-40 mV, mixed cation)
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Outer step (ms), in `(0, 1]`; `try_step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -53,6 +72,8 @@ impl Default for IhNeuron {
 }
 
 impl IhNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -118,6 +139,21 @@ impl IhNeuron {
             && (0.0..=10.0).contains(&self.gain)
     }
 
+    /// Advance `dt` in 50 forward-Euler sub-steps with the drive `gain * current`; return
+    /// `Ok(1)` if any sub-step spiked, else `Ok(0)`.
+    ///
+    /// Each sub-step updates `h`, `n` and `r` from the old `v`, then computes the currents
+    /// with the updated gates and advances `v`. Sodium activation is at its steady state.
+    /// The Ih gate relaxes towards `1 / (1 + exp((v + 80) / 10))` with the time constant
+    /// `100 + 200 / (1 + exp((v + 70) / 10))` ms, and the Ih current is
+    /// `g_h * r * (v - e_h)`. A sub-step that reaches `v_threshold` sets `v` to -65 mV and
+    /// keeps the gates. After the sub-steps `v` is clamped to `[-100, 60]` mV and the gates
+    /// to `[0, 1]`.
+    ///
+    /// Returns an error, with the state unchanged, if `current` is non-finite, any state or
+    /// parameter is non-finite or outside its public bound (for example `v` in
+    /// `[-100, 60]` mV, the gates in `[0, 1]`, `dt` in `(0, 1]`), or a sub-step gives a
+    /// non-finite state.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -188,10 +224,13 @@ impl IhNeuron {
         Ok(fired)
     }
 
+    /// Advance as `try_step` does and return 1 on a spike, else 0. An error also returns 0
+    /// and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Restore the state (`v`, `h`, `n`, `r`) to its initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;

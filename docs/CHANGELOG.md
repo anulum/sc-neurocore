@@ -462,6 +462,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 8 ion-channel models are documented in full, each file read
+  against its code: the 50 forward-Euler sub-steps of the six Wang-Buzsaki
+  based models (gates from the old potential, currents from the updated
+  gates), each channel's gate and current, the midpoint step and magnesium
+  block of the NMDA autapse model, and what a refused step returns. Where the
+  engine differs from the Python models it says so: the A-type and BK models
+  clamp and repair where Python refuses, and their reset also restores the
+  parameters; the BK half-activation uses the calcium before its decay. The
+  input-driven NMDA project model gains its struct documentation.
 - The engine's 17 trivial-module models are documented in full, each file
   read against its code: each update and spike rule, what is validated and what
   a refused step returns, and what reset restores. Where the engine differs

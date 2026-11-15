@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Persistent sodium channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// Persistent Na+ (INaP) neuron — WB base + non-inactivating Na+ current.
@@ -22,23 +24,39 @@ use crate::neurons::biophysical::safe_rate;
 /// is an experimental composite, not a publication-exact model.
 #[derive(Clone, Debug)]
 pub struct PersistentNaNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64, // Transient Na+ inactivation
-    pub n: f64, // Kdr activation
-    pub p: f64, // INaP activation (slow)
+    /// Transient Na+ inactivation.
+    pub h: f64,
+    /// Kdr activation.
+    pub n: f64,
+    /// INaP activation (slow).
+    pub p: f64,
     // Conductances (mS/cm²)
-    pub g_na: f64,  // Transient Na+
+    /// Maximal sodium conductance (mS/cm^2).
+    pub g_na: f64, // Transient Na+
+    /// Maximal persistent sodium conductance (mS/cm^2).
     pub g_nap: f64, // Persistent Na+
-    pub g_k: f64,   // Kdr
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
+    pub g_k: f64, // Kdr
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Outer step (ms), in `(0, 1]`; `try_step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -49,6 +67,8 @@ impl Default for PersistentNaNeuron {
 }
 
 impl PersistentNaNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -111,6 +131,21 @@ impl PersistentNaNeuron {
             && (0.0..=10.0).contains(&self.gain)
     }
 
+    /// Advance `dt` in 50 forward-Euler sub-steps with the drive `gain * current`; return
+    /// `Ok(1)` if any sub-step spiked, else `Ok(0)`.
+    ///
+    /// Each sub-step updates `h`, `n` and `p` from the old `v`, then computes the currents
+    /// with the updated gates and advances `v`. Transient sodium activation is at its
+    /// steady state. The persistent gate relaxes towards `1 / (1 + exp(-(v + 48) / 5))` with
+    /// the time constant `10 + 40 / (1 + ((v + 48) / 10)^2)` ms, and the persistent current
+    /// is `g_nap * p * (v - e_na)`. A sub-step that reaches `v_threshold` sets `v` to
+    /// -65 mV and keeps the gates. After the sub-steps `v` is clamped to `[-100, 60]` mV and
+    /// the gates to `[0, 1]`.
+    ///
+    /// Returns an error, with the state unchanged, if `current` is non-finite, any state or
+    /// parameter is non-finite or outside its public bound (for example `v` in
+    /// `[-100, 60]` mV, the gates in `[0, 1]`, `dt` in `(0, 1]`), or a sub-step gives a
+    /// non-finite state.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -181,10 +216,13 @@ impl PersistentNaNeuron {
         Ok(fired)
     }
 
+    /// Advance as `try_step` does and return 1 on a spike, else 0. An error also returns 0
+    /// and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Restore the state (`v`, `h`, `n`, `p`) to its initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;

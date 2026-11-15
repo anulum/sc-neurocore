@@ -6,33 +6,60 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Retained WB plus input-driven NMDA project recurrence
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
+/// Retained project model: Wang-Buzsaki sodium and potassium currents plus an NMDA
+/// current with magnesium block, whose gate is driven by the input current rather than by
+/// spikes.
 #[derive(Clone, Debug)]
 pub struct SCWBNMDAMagnesiumBlockNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless).
     pub h: f64,
+    /// Potassium activation gate (dimensionless).
     pub n: f64,
+    /// Project NMDA gate fraction (dimensionless).
     pub s_nmda: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Project NMDA conductance (mS/cm^2).
     pub g_nmda: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// NMDA reversal potential (mV).
     pub e_nmda: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Gating-kinetic scale (dimensionless).
     pub phi: f64,
+    /// Extracellular magnesium concentration (mM).
     pub mg_conc: f64,
+    /// Project gate rise time constant (ms).
     pub tau_rise: f64,
+    /// Project gate decay time constant (ms).
     pub tau_decay: f64,
+    /// Outer step (ms), in `(0, 1]`; the membrane takes 50 forward-Euler sub-steps per step.
     pub dt: f64,
+    /// Project event threshold (mV).
     pub v_threshold: f64,
+    /// Applied-current gain (dimensionless).
     pub gain: f64,
 }
 
 impl SCWBNMDAMagnesiumBlockNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -106,6 +133,21 @@ impl SCWBNMDAMagnesiumBlockNeuron {
             && (0.0..=10.0).contains(&self.gain)
     }
 
+    /// Advance one step with the drive `input = gain * current`; return `Ok(1)` if any
+    /// sub-step spiked, else `Ok(0)`.
+    ///
+    /// First `s_nmda` takes one Euler step of length `dt` towards `input / (input + 5)` (0
+    /// for a non-positive input), with `tau_rise` when that target is above `s_nmda` and
+    /// `tau_decay` otherwise, and is clamped to `[0, 1]`. Then 50 forward-Euler sub-steps
+    /// update `h` and `n` from the old `v` and advance `v` with the updated gates. The NMDA
+    /// current is `g_nmda * s_nmda * B(v) * (v - e_nmda)`, with
+    /// `B(v) = 1 / (1 + mg_conc / 3.57 * exp(-0.062 * v))`. A sub-step that reaches
+    /// `v_threshold` sets `v` to -65 mV. Finally `v` is clamped to `[-100, 60]` mV and the
+    /// gates to `[0, 1]`.
+    ///
+    /// Returns an error, with the state unchanged, if `current` is non-finite, any state or
+    /// parameter is non-finite or outside its public bound, or a sub-step gives a
+    /// non-finite state.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -160,9 +202,13 @@ impl SCWBNMDAMagnesiumBlockNeuron {
         Ok(fired)
     }
 
+    /// Advance as `try_step` does and return 1 on a spike, else 0. An error also returns 0
+    /// and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
+    /// Restore the state (`v`, `h`, `n`, `s_nmda`) to its initial values; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;

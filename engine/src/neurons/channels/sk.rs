@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — SK calcium-activated potassium channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// SK channel neuron — WB base + Ca2+-only-dependent K+ current.
@@ -27,22 +29,41 @@ use crate::neurons::biophysical::safe_rate;
 /// recurrence.
 #[derive(Clone, Debug)]
 pub struct SKNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); its kinetics are scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); its kinetics are scaled
+    /// by `phi`.
     pub n: f64,
+    /// Intracellular calcium (dimensionless, non-negative). It decays with `tau_ca`, gains
+    /// 0.2 at each spike, and activates the SK current as `ca^2 / (ca^2 + 0.25)`.
     pub ca: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal small-conductance calcium-activated potassium (SK) conductance (mS/cm^2).
     pub g_sk: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Calcium removal time constant (ms).
     pub tau_ca: f64,
+    /// Outer step (ms), in `(0, 1]`; `try_step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
 }
 
@@ -53,6 +74,8 @@ impl Default for SKNeuron {
 }
 
 impl SKNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,

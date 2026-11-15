@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — BK calcium-activated potassium channel neuron
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// BK channel neuron — WB base + voltage- and Ca2+-dependent K+ current.
@@ -25,24 +27,41 @@ use crate::neurons::biophysical::safe_rate;
 /// Bhatt & Storm, J Physiol 557:329, 2003; Faber & Bhatt, PNAS 100:2813, 2003.
 #[derive(Clone, Debug)]
 pub struct BKNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
-    pub h: f64,  // Na+ inactivation
-    pub n: f64,  // Kdr activation
-    pub ca: f64, // Intracellular Ca2+ concentration
+    /// Na+ inactivation.
+    pub h: f64,
+    /// Kdr activation.
+    pub n: f64,
+    /// Intracellular Ca2+ concentration.
+    pub ca: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Large-conductance calcium-activated (BK) potassium conductance (mS/cm^2).
     pub g_bk: f64, // BK conductance
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor for gating kinetics (dimensionless).
     pub phi: f64,
+    /// Intracellular calcium decay time constant (ms).
     pub tau_ca: f64, // Ca2+ decay time constant (ms)
+    /// Outer step (ms); `step` splits it into 50 forward-Euler sub-steps.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
+    /// Gain applied to the injected drive (dimensionless).
     pub gain: f64,
 }
 
@@ -53,6 +72,8 @@ impl Default for BKNeuron {
 }
 
 impl BKNeuron {
+    /// Create a neuron at the descriptor's initial state with its default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -75,6 +96,21 @@ impl BKNeuron {
         }
     }
 
+    /// Advance `dt` in 50 forward-Euler sub-steps with the drive `gain * current`; return 1
+    /// if any sub-step spiked, else 0.
+    ///
+    /// The BK activation is instantaneous: a sigmoid of slope 15 mV around the
+    /// half-activation `10 - 30 * ca / (ca + 0.5)` mV, computed from `ca` before this
+    /// sub-step's decay. Each sub-step then decays `ca` with `tau_ca`, updates `h` and `n`
+    /// from the old `v`, computes the currents with the updated gates (sodium activation at
+    /// its steady state; BK current `g_bk * bk_inf * (v - e_k)`) and advances `v`. A
+    /// sub-step that reaches `v_threshold` sets `v` to -65 mV and adds 0.3 to `ca`.
+    ///
+    /// After the sub-steps `v` is clamped to `[-100, 60]` mV. A non-finite `v` restores `v`,
+    /// `h` and `n` to their initial values, and a non-finite `ca` becomes 0. `h` and `n`
+    /// are clamped to `[0, 1]`, and `ca` is raised to 0 if negative. The input is not
+    /// validated. The Python model computes the half-activation from the decayed `ca`
+    /// and refuses invalid candidates instead of repairing them.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let sub_steps = 50;
@@ -137,6 +173,8 @@ impl BKNeuron {
         fired
     }
 
+    /// Restore every field to `new()`, parameters included. The Python model's reset
+    /// restores only the state.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

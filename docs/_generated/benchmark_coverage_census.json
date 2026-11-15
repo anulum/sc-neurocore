@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 42,
-    "outdated": 102,
+    "current": 41,
+    "outdated": 103,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 16,
-    "outdated": 70,
+    "current": 15,
+    "outdated": 71,
     "unbound": 1
   },
   "rows": [
@@ -1278,7 +1278,11 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/channels/nmda.rs",
+            "engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_nmda.json"
         }
       ],
@@ -1886,7 +1890,11 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/channels/nmda.rs",
+            "engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_nmda.json"
         }
       ],
