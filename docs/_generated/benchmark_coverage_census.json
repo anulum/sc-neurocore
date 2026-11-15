@@ -1,8 +1,8 @@
 {
   "all_record_currency_totals": {
-    "current": 36,
-    "outdated": 91,
-    "unbound": 191
+    "current": 40,
+    "outdated": 100,
+    "unbound": 178
   },
   "all_records": 318,
   "attribution_totals": {
@@ -2321,6 +2321,15 @@
       "name": "bench_bioware.json"
     },
     {
+      "changed": [
+        "benchmarks/_benchmark_context.py",
+        "src/sc_neurocore/neurons/equation_builder.py",
+        "src/sc_neurocore/neurons/equation_safety.py"
+      ],
+      "currency": "outdated",
+      "name": "bench_equation_program.json"
+    },
+    {
       "currency": "current",
       "name": "bench_function_call_domains.json"
     },
@@ -2349,10 +2358,50 @@
     },
     {
       "changed": [
+        "bridge/sc_neurocore_engine/__init__.py"
+      ],
+      "currency": "outdated",
+      "name": "bench_predictive_model.json"
+    },
+    {
+      "changed": [
         "src/sc_neurocore/accel/sc_chaotic_map.py"
       ],
       "currency": "outdated",
       "name": "bench_sc_chaotic_map.json"
+    },
+    {
+      "currency": "current",
+      "name": "bench_sc_compte_wm_behavior_ensemble.json"
+    },
+    {
+      "changed": [
+        "src/sc_neurocore/network/sc_compte_wm_network.py"
+      ],
+      "currency": "outdated",
+      "name": "bench_sc_compte_wm_network.json"
+    },
+    {
+      "currency": "current",
+      "name": "bench_sc_compte_wm_network_all_runtimes.json"
+    },
+    {
+      "changed": [
+        "src/sc_neurocore/accel/go/go.mod"
+      ],
+      "currency": "outdated",
+      "name": "bench_sc_compte_wm_network_go.json"
+    },
+    {
+      "changed": [
+        "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py"
+      ],
+      "currency": "outdated",
+      "name": "bench_sc_compte_wm_network_mojo.json"
+    },
+    {
+      "currency": "current",
+      "name": "bench_sc_compte_wm_ring16.json"
     },
     {
       "changed": [
@@ -2360,6 +2409,10 @@
       ],
       "currency": "outdated",
       "name": "bench_sc_stochastic_rate_adaptation.json"
+    },
+    {
+      "currency": "current",
+      "name": "bench_verilog_compiler.json"
     },
     {
       "currency": "current",
@@ -2471,6 +2524,25 @@
     },
     {
       "changed": [
+        "benchmarks/_benchmark_context.py",
+        "engine/src/ir/bindings.rs",
+        "engine/src/ir/builder.rs",
+        "engine/src/ir/dense_contract.rs",
+        "engine/src/ir/emit_mlir.rs",
+        "engine/src/ir/emit_sv.rs",
+        "engine/src/ir/emit_sv/probability.rs",
+        "engine/src/ir/graph.rs",
+        "engine/src/ir/mod.rs",
+        "engine/src/ir/parser.rs",
+        "engine/src/ir/printer.rs",
+        "engine/src/ir/sv_target.rs",
+        "engine/src/ir/verify.rs"
+      ],
+      "currency": "outdated",
+      "name": "local_python_2026-10-20_ultrascale_plus_target.json"
+    },
+    {
+      "changed": [
         "engine/src/ir/bindings.rs",
         "engine/src/ir/builder.rs",
         "engine/src/ir/dense_contract.rs",
@@ -2524,6 +2596,58 @@
       "changed": [
         "Cargo.lock",
         "benchmarks/_benchmark_context.py",
+        "benchmarks/bench_equation_ir.py",
+        "bridge/sc_neurocore_engine/_ir_native.py",
+        "bridge/sc_neurocore_engine/ir.py",
+        "engine/Cargo.toml",
+        "engine/src/ir/bindings.rs",
+        "engine/src/ir/dense_contract.rs",
+        "engine/src/ir/emit_mlir.rs",
+        "engine/src/ir/emit_mlir/primitives.rs",
+        "engine/src/ir/emit_sv.rs",
+        "engine/src/ir/emit_sv/probability.rs",
+        "engine/src/ir/graph.rs",
+        "engine/src/ir/mod.rs",
+        "engine/src/ir/stream_contract.rs",
+        "engine/src/ir/sv_target.rs",
+        "engine/src/ir/verify.rs",
+        "engine/src/ir/word_contract.rs",
+        "src/sc_neurocore/compiler/__init__.py",
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/c_expr_emitter.py",
+        "src/sc_neurocore/compiler/c_fixed_emitter.py",
+        "src/sc_neurocore/compiler/compiler_impl.py",
+        "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/expr_lut_tables.py",
+        "src/sc_neurocore/compiler/function_unit_ir.py",
+        "src/sc_neurocore/compiler/function_unit_programs.py",
+        "src/sc_neurocore/compiler/function_units.py",
+        "src/sc_neurocore/compiler/hardware_numeric_contract.py",
+        "src/sc_neurocore/compiler/lut_accuracy.py",
+        "src/sc_neurocore/compiler/native_equation/arithmetic.py",
+        "src/sc_neurocore/compiler/native_equation/clock.py",
+        "src/sc_neurocore/compiler/native_equation/division.py",
+        "src/sc_neurocore/compiler/native_equation/events.py",
+        "src/sc_neurocore/compiler/native_equation/expressions.py",
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "src/sc_neurocore/compiler/native_program.py",
+        "src/sc_neurocore/compiler/testbench_gen.py",
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
+        "src/sc_neurocore/neurons/_units.py",
+        "src/sc_neurocore/neurons/equation_builder.py",
+        "src/sc_neurocore/neurons/equation_namespace.py",
+        "src/sc_neurocore/neurons/equation_random.py",
+        "src/sc_neurocore/neurons/equation_safety.py",
+        "src/sc_neurocore/neurons/equation_units_runtime.py",
+        "src/sc_neurocore/neurons/expression_derivative.py"
+      ],
+      "currency": "outdated",
+      "name": "local_python_2026-10-23_equation_ir.json"
+    },
+    {
+      "changed": [
+        "Cargo.lock",
+        "benchmarks/_benchmark_context.py",
         "engine/Cargo.toml",
         "engine/src/ir/bindings.rs",
         "engine/src/ir/dense_contract.rs",
@@ -2540,6 +2664,44 @@
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-23_equation_ir_target.json"
+    },
+    {
+      "changed": [
+        "Cargo.lock",
+        "benchmarks/_benchmark_context.py",
+        "benchmarks/bench_equation_ir.py",
+        "bridge/sc_neurocore_engine/_ir_native.py",
+        "bridge/sc_neurocore_engine/ir.py",
+        "engine/Cargo.toml",
+        "engine/src/ir/bindings.rs",
+        "engine/src/ir/dense_contract.rs",
+        "engine/src/ir/emit_mlir.rs",
+        "engine/src/ir/emit_mlir/primitives.rs",
+        "engine/src/ir/emit_sv.rs",
+        "engine/src/ir/emit_sv/probability.rs",
+        "engine/src/ir/graph.rs",
+        "engine/src/ir/mod.rs",
+        "engine/src/ir/stream_contract.rs",
+        "engine/src/ir/sv_target.rs",
+        "engine/src/ir/verify.rs",
+        "engine/src/ir/word_contract.rs",
+        "src/sc_neurocore/compiler/__init__.py",
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/compiler_impl.py",
+        "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/hardware_numeric_contract.py",
+        "src/sc_neurocore/compiler/lut_accuracy.py",
+        "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "src/sc_neurocore/compiler/testbench_gen.py",
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
+        "src/sc_neurocore/neurons/equation_builder.py",
+        "src/sc_neurocore/neurons/equation_random.py",
+        "src/sc_neurocore/neurons/equation_safety.py",
+        "src/sc_neurocore/neurons/equation_units_runtime.py",
+        "src/sc_neurocore/neurons/expression_derivative.py"
+      ],
+      "currency": "outdated",
+      "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
       "changed": [
@@ -2576,6 +2738,25 @@
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
+    },
+    {
+      "changed": [
+        "benchmarks/_benchmark_context.py",
+        "engine/src/ir/bindings.rs",
+        "engine/src/ir/builder.rs",
+        "engine/src/ir/dense_contract.rs",
+        "engine/src/ir/emit_mlir.rs",
+        "engine/src/ir/emit_sv.rs",
+        "engine/src/ir/emit_sv/probability.rs",
+        "engine/src/ir/graph.rs",
+        "engine/src/ir/mod.rs",
+        "engine/src/ir/parser.rs",
+        "engine/src/ir/printer.rs",
+        "engine/src/ir/sv_target.rs",
+        "engine/src/ir/verify.rs"
+      ],
+      "currency": "outdated",
+      "name": "local_rust_2026-10-20_ultrascale_plus_target.json"
     },
     {
       "changed": [

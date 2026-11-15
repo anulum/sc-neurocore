@@ -588,6 +588,206 @@ class TestTheGateManifestNamesThePathsOfLaneKeyedRecords:
         ]
 
 
+#: The fields besides ``source_hashes`` under which committed records key their
+#: source digests by repository path.
+_OTHER_PATH_KEYED_FIELDS = ("source_sha256", "source_files_sha256")
+
+
+def _record_keyed_under(root: Path, field: str) -> tuple[Path, Path, Path]:
+    """Write two sources and a record that keys both digests by path under ``field``."""
+    source = root / "src" / "chiplet.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("LINKS = 4\n", encoding="utf-8")
+    other = root / "src" / "router.rs"
+    other.write_text("fn route() {}\n", encoding="utf-8")
+    record = root / "benchmarks" / "results" / "bench_chiplet.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(
+        json.dumps(
+            {
+                "benchmark": "chiplet",
+                "benchmark_sha256": "0" * 64,
+                field: {"src/chiplet.py": _digest(source), "src/router.rs": _digest(other)},
+            }
+        ),
+        encoding="utf-8",
+    )
+    return source, other, record
+
+
+class TestDigestsKeyedByPathUnderAnotherFieldAreRead:
+    """A record that keys its digests by path under another field is not unbound."""
+
+    @pytest.mark.parametrize("field", _OTHER_PATH_KEYED_FIELDS)
+    def test_unchanged_sources_make_it_current(self, tmp_path: Path, field: str) -> None:
+        """Both sources still have the recorded digests."""
+        _record_keyed_under(tmp_path, field)
+        census = build_census(tmp_path)
+        assert census["uncited_bound_records"] == [
+            {"name": "bench_chiplet.json", "currency": "current"}
+        ]
+        assert census["all_record_currency_totals"] == {"current": 1, "outdated": 0, "unbound": 0}
+
+    @pytest.mark.parametrize("field", _OTHER_PATH_KEYED_FIELDS)
+    def test_a_changed_source_is_named_by_its_path(self, tmp_path: Path, field: str) -> None:
+        """Only the source that changed is listed, by its repository path."""
+        _source, other, _record = _record_keyed_under(tmp_path, field)
+        other.write_text("fn route() { /* edited */ }\n", encoding="utf-8")
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "outdated",
+            "changed": ["src/router.rs"],
+        }
+
+    @pytest.mark.parametrize("field", _OTHER_PATH_KEYED_FIELDS)
+    def test_a_removed_source_is_named(self, tmp_path: Path, field: str) -> None:
+        """A bound source that no longer exists is a change, not a pass."""
+        source, _other, _record = _record_keyed_under(tmp_path, field)
+        source.unlink()
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "outdated",
+            "changed": ["src/chiplet.py"],
+        }
+
+    @pytest.mark.parametrize(
+        "digests",
+        [{"python": "0" * 64, "go": "1" * 64}, "0" * 64, {}],
+        ids=["keyed-by-lane", "one-digest", "empty"],
+    )
+    def test_a_field_that_names_no_path_binds_nothing(
+        self, tmp_path: Path, digests: object
+    ) -> None:
+        """Lane keys, a single digest or an empty map name no source to compare."""
+        _source, _other, record = _record_keyed_under(tmp_path, "source_sha256")
+        record.write_text(json.dumps({"source_sha256": digests}), encoding="utf-8")
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "unbound",
+        }
+
+    def test_a_map_whose_keys_name_no_directory_binds_nothing(self, tmp_path: Path) -> None:
+        """Bare file names are keyed relative to a folder the record does not state.
+
+        Read from the repository root they would all look removed, and the
+        record would be called outdated although nothing changed.
+        """
+        source, other, record = _record_keyed_under(tmp_path, "source_sha256")
+        record.write_text(
+            json.dumps(
+                {"source_sha256": {"chiplet.py": _digest(source), "router.rs": _digest(other)}}
+            ),
+            encoding="utf-8",
+        )
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "unbound",
+        }
+
+    def test_a_root_file_in_a_map_of_repository_paths_is_read(self, tmp_path: Path) -> None:
+        """Beside paths with a folder, a key such as ``Cargo.lock`` names the root file."""
+        _source, _other, record = _record_keyed_under(tmp_path, "source_sha256")
+        lock = tmp_path / "Cargo.lock"
+        lock.write_text("version = 4\n", encoding="utf-8")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["source_sha256"]["Cargo.lock"] = _digest(lock)
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        assert record_currency("bench_chiplet.json", tmp_path)["currency"] == "current"
+        lock.write_text("version = 4\n# edited\n", encoding="utf-8")
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "outdated",
+            "changed": ["Cargo.lock"],
+        }
+
+    @pytest.mark.parametrize(
+        "content",
+        [b"\xff\xfe not text", b"{", b"[1, 2]"],
+        ids=["not-utf8", "not-json", "not-an-object"],
+    )
+    def test_a_record_that_cannot_be_read_is_unbound(self, tmp_path: Path, content: bytes) -> None:
+        """Nothing is read from it, and nothing is raised."""
+        _source, _other, record = _record_keyed_under(tmp_path, "source_files_sha256")
+        record.write_bytes(content)
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "unbound",
+        }
+
+    def test_source_hashes_keyed_by_path_come_first(self, tmp_path: Path) -> None:
+        """A record that binds paths under ``source_hashes`` is judged by those alone."""
+        source, other, record = _record_keyed_under(tmp_path, "source_sha256")
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        payload["source_hashes"] = {"src/chiplet.py": _digest(source)}
+        record.write_text(json.dumps(payload), encoding="utf-8")
+        other.write_text("fn route() { /* edited */ }\n", encoding="utf-8")
+        assert record_currency("bench_chiplet.json", tmp_path) == {
+            "name": "bench_chiplet.json",
+            "currency": "current",
+        }
+
+    def test_the_gate_manifest_comes_before_the_field(self, tmp_path: Path) -> None:
+        """Where the evidence gate's manifest maps the record, its map is the one read.
+
+        The manifest is the gate's declared map for records that key digests
+        under another field; the census reads the same sources as the gate.
+        """
+        _source, other, _record = _record_keyed_under(tmp_path, "source_sha256")
+        manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "gates": [
+                        {
+                            "artefact": "benchmarks/results/bench_chiplet.json",
+                            "source_hashes": {"src/chiplet.py": "source_sha256.src/chiplet.py"},
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        other.write_text("fn route() { /* edited */ }\n", encoding="utf-8")
+        assert build_census(tmp_path)["uncited_bound_records"] == [
+            {"name": "bench_chiplet.json", "currency": "current"}
+        ]
+
+    def test_the_committed_census_binds_every_such_record(self, census: dict[str, object]) -> None:
+        """No tracked record that keys a digest by path under these fields is counted unbound."""
+        listed = subprocess.run(
+            ["git", "ls-files", "-z", "--", "benchmarks/results"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout.split(b"\0")
+        keyed: set[str] = set()
+        for name in listed:
+            if not name.endswith(b".json"):
+                continue
+            try:
+                payload = json.loads((REPO_ROOT / os.fsdecode(name)).read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+            for field in _OTHER_PATH_KEYED_FIELDS:
+                digests = payload.get(field)
+                if isinstance(digests, dict) and any("/" in str(key) for key in digests):
+                    keyed.add(os.fsdecode(name).removeprefix("benchmarks/results/"))
+        assert len(keyed) >= 13
+        cited = {
+            str(record["name"]): record["currency"]
+            for row in _rows(census)
+            for record in _records(row)
+        }
+        others = census["uncited_bound_records"]
+        assert isinstance(others, list)
+        bound = {str(entry["name"]) for entry in others} | {
+            name for name, word in cited.items() if word != "unbound"
+        }
+        assert sorted(keyed - bound) == []
+
+
 def _add_untracked_and_ignored(root: Path) -> None:
     """Put a record and a script on disk that a repository would not track."""
     local = root / "benchmarks" / "results" / "experimental_runs"

@@ -478,6 +478,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The benchmark coverage census reads the source digests a record keys by
+  repository path under `source_sha256` or `source_files_sha256`, where the
+  record binds no path under `source_hashes` and the evidence gate's manifest
+  does not map it. Thirteen committed records it counted as `unbound` now carry
+  a currency: 4 are `current` and 9 `outdated`, each by changed sources; none
+  is gone. A field whose keys name no folder still binds nothing:
+  `bench_chiplet.json` keys its sources by bare file name, and read from the
+  repository root every one of them would look removed. Over all records the
+  totals move from 36 current, 91 outdated and 191 unbound to 40, 100 and 178;
+  the cited records and the model totals are unchanged.
+
 - The network's Rust dispatch check remembers its state probe for a model
   name together with the class the name resolves to. Remembered by the name
   alone, a class put under a catalogue name kept answering for it until the

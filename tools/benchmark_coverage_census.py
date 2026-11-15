@@ -45,7 +45,10 @@ Every record a model cites also carries a currency word:
     the record binds no source by path, so nothing can be said.
 
 A record that keys its digests by lane names no path itself. Where the evidence
-gate's manifest names the paths for it, those are used.
+gate's manifest names the paths for it, those are used. Some records key their
+digests by path under ``source_sha256`` or ``source_files_sha256`` instead of
+``source_hashes``; where the manifest does not map such a record, those keys are
+read.
 
 A record under ``benchmarks/results`` in which no catalogue model's class name
 appears measures no model in the sense above, yet it may bind sources. Every
@@ -86,6 +89,8 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
 from tools.benchmark_evidence_gate import (  # noqa: E402
+    _SOURCE_PATH_SUFFIXES,
+    GateFailure,
     current_source_hash_failures,
     tracked_files,
 )
@@ -123,6 +128,11 @@ _UNBOUND_REASONS = frozenset(
         "missing_path_keyed_source_hashes",
     }
 )
+
+#: Fields besides ``source_hashes`` under which some records key their source
+#: digests by repository path. They are read for a record that binds no path
+#: under ``source_hashes`` and that the evidence gate's manifest does not map.
+OTHER_PATH_KEYED_FIELDS = ("source_sha256", "source_files_sha256")
 
 
 def model_names() -> tuple[str, ...]:
@@ -305,6 +315,58 @@ def manifest_source_paths(repo_root: Path = REPO_ROOT) -> dict[str, dict[str, st
     return named
 
 
+def _binds_no_path(failures: Sequence[GateFailure]) -> bool:
+    """Say whether the gate's failures only state that no source is named by a path."""
+    return bool(failures) and all(failure.reason in _UNBOUND_REASONS for failure in failures)
+
+
+def _other_path_keyed_digests(artefact: Path) -> dict[str, str]:
+    """Map each source a record keys by path under another digest field to its place.
+
+    Parameters
+    ----------
+    artefact : Path
+        The record file.
+
+    Returns
+    -------
+    dict
+        Source path to the dotted place of its digest inside the record, for
+        every key under :data:`OTHER_PATH_KEYED_FIELDS` that the evidence gate
+        would take for a repository path. Empty when the record cannot be read
+        or names no such path.
+
+    Notes
+    -----
+    A field is read only when at least one of its keys names a folder. A map
+    of bare file names is keyed relative to a folder the record does not
+    state; read from the repository root, every source would look removed.
+    Beside keys with a folder, a bare key such as ``Cargo.lock`` names the
+    file at the root.
+    """
+    try:
+        payload = json.loads(artefact.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    places: dict[str, str] = {}
+    for field in OTHER_PATH_KEYED_FIELDS:
+        digests = payload.get(field)
+        if not isinstance(digests, dict):
+            continue
+        paths = [
+            path
+            for path in digests
+            if isinstance(path, str) and path.endswith(_SOURCE_PATH_SUFFIXES)
+        ]
+        if not any("/" in path for path in paths):
+            continue
+        for path in paths:
+            places.setdefault(path, f"{field}.{path}")
+    return places
+
+
 def record_currency(
     record: str,
     repo_root: Path = REPO_ROOT,
@@ -320,24 +382,39 @@ def record_currency(
         Repository root whose committed sources are compared.
     source_paths : mapping of str to str, optional
         Source path to the place of its digest inside the record, as the
-        evidence gate's manifest names them. Used only when the record itself
-        keys no digest by a path; a named digest the record lacks counts as a
-        changed source.
+        evidence gate's manifest names them. Used only when the record keys no
+        digest by a path under ``source_hashes``; a named digest the record
+        lacks counts as a changed source.
 
     Returns
     -------
     dict
         ``name`` and ``currency`` (one of :data:`CURRENCIES`); an outdated
         record also lists the ``changed`` source paths, sorted.
+
+    Notes
+    -----
+    The digests are read from the first of three places that names a path:
+    the record's ``source_hashes``, the manifest's map, and the record's own
+    path keys under :data:`OTHER_PATH_KEYED_FIELDS`. The manifest comes before
+    those fields because it is the evidence gate's declared map for records
+    that key digests under another field, so both tools read the same sources.
     """
     artefact = repo_root / RESULTS_DIR / record
     failures = current_source_hash_failures(artefact, repo_root=repo_root)
     named: dict[str, str] = {}
-    if source_paths and failures and all(f.reason in _UNBOUND_REASONS for f in failures):
+    if source_paths and _binds_no_path(failures):
         failures = current_source_hash_failures(
             artefact, repo_root=repo_root, source_hash_paths=source_paths
         )
         named = {place: source for source, place in source_paths.items()}
+    if _binds_no_path(failures):
+        own = _other_path_keyed_digests(artefact)
+        if own:
+            failures = current_source_hash_failures(
+                artefact, repo_root=repo_root, source_hash_paths=own
+            )
+            named = {place: source for source, place in own.items()}
     if not failures:
         return {"name": record, "currency": "current"}
     if all(failure.reason in _UNBOUND_REASONS for failure in failures):
