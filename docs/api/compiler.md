@@ -229,7 +229,7 @@ sc-neurocore compile "dv/dt = -(v-E_L)/tau_m + I/C" \
 | `--init` | None | Initial state `key=val` pairs |
 | `--target` | `ice40` | FPGA target (`ice40`, `ecp5`, `artix7`, `zynq`) |
 | `--module-name` | `sc_equation_neuron` | Generated Verilog module name |
-| `--testbench` | off | Generate simulation testbench |
+| `--testbench` | off | Generate simulation testbench `tb_MODULE.v`; run it with `vvp sim +vcd` to also write the waveform `tb_MODULE.vcd` |
 | `--synthesize` | off | Run Yosys synthesis (requires Yosys in PATH) |
 | `-o` / `--output` | `build` | Output directory |
 
@@ -1057,26 +1057,26 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.162602 ms | 50 |
-| Euler folded with parameter port | 0.218105 ms | 38 |
-| RK4 registered | 0.402840 ms | 92 |
-| Four-substep RK4 registered | 0.890725 ms | 136 |
-| Escape-rate registered | 1.662526 ms | 902 |
-| Square-root map registered | 0.182266 ms | 65 |
-| Negative half-LSB nearest map registered | 0.121873 ms | 45 |
-| Quadrant-aware angle map registered | 1.772372 ms | 3225 |
-| Softplus exponential Euler registered | 5.854867 ms | 11374 |
-| Ties-to-even round map registered | 0.158562 ms | 64 |
-| Heaviside map registered | 0.195394 ms | 62 |
-| Euclidean norm map registered | 0.353406 ms | 210 |
-| Reciprocal square-root map registered | 0.430939 ms | 305 |
-| Constant power map registered | 1.565179 ms | 1692 |
-| Dynamic power map registered | 1.736980 ms | 1698 |
-| Partial initial state with powers, registered | 3.334770 ms | 3356 |
-| Partial initial state with powers, folded | 2.955792 ms | 3342 |
-| Held-state RK4 registered | 0.605844 ms | 100 |
+| Euler registered | 0.213064 ms | 50 |
+| Euler folded with parameter port | 0.268201 ms | 38 |
+| RK4 registered | 0.584360 ms | 92 |
+| Four-substep RK4 registered | 1.179836 ms | 136 |
+| Escape-rate registered | 2.275219 ms | 902 |
+| Square-root map registered | 0.208587 ms | 65 |
+| Negative half-LSB nearest map registered | 0.151585 ms | 45 |
+| Quadrant-aware angle map registered | 2.014483 ms | 3225 |
+| Softplus exponential Euler registered | 7.325814 ms | 11374 |
+| Ties-to-even round map registered | 0.203417 ms | 64 |
+| Heaviside map registered | 0.231653 ms | 62 |
+| Euclidean norm map registered | 0.438535 ms | 210 |
+| Reciprocal square-root map registered | 0.608818 ms | 305 |
+| Constant power map registered | 1.997505 ms | 1692 |
+| Dynamic power map registered | 2.300571 ms | 1698 |
+| Partial initial state with powers, registered | 4.298616 ms | 3356 |
+| Partial initial state with powers, folded | 4.150275 ms | 3342 |
+| Held-state RK4 registered | 0.897810 ms | 100 |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 8.57 11.33 16.05 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 14.38 11.75 11.65 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 

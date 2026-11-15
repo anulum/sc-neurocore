@@ -504,8 +504,10 @@ module tb_sc_lif;
     integer spike_count;
 
     initial begin
-        $dumpfile("tb_sc_lif.vcd");
-        $dumpvars(0, tb_sc_lif);
+        if ($test$plusargs("vcd")) begin
+            $dumpfile("tb_sc_lif.vcd");
+            $dumpvars(0, tb_sc_lif);
+        end
         spike_count = 0;
 
         // Reset phase
@@ -528,6 +530,9 @@ module tb_sc_lif;
     end
 endmodule
 ```
+
+The testbench writes its waveform `tb_sc_lif.vcd` only when the simulation is
+run with the plusarg `+vcd` (`vvp sim +vcd`); a run without it writes no file.
 
 Key timing details:
 

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1986
+expected_file_count = 1987
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -7998,3 +7998,7 @@ rationale = "Safety certification architecture: facade, ownership and size contr
 [[file]]
 path = "tests/test_studio_api_runtime_builders.py"
 rationale = "Studio API runtime builders: the audit sink, the job manager and the refusal of a job that did not complete each come from their own function, every collaborator reaches the app state, and no runtime function exceeds 50 lines."
+
+[[file]]
+path = "tests/test_testbench_waveform_opt_in.py"
+rationale = "A generated testbench writes its VCD waveform only with the +vcd plusarg: the guarded dump, a run without it leaving no file, a run with it writing the waveform, and the hint compile --testbench prints."

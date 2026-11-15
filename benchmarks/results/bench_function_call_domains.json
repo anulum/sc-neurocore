@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-11-14T20:14:40.999159+00:00",
+  "generated_at": "2026-11-14T23:40:08.935986+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -31,21 +31,21 @@
       3
     ],
     "load_average_before": [
-      11.21875,
-      11.6220703125,
-      14.6171875
+      14.83251953125,
+      11.88330078125,
+      11.6923828125
     ],
     "load_average_after": [
-      10.5791015625,
-      11.4599609375,
-      14.515625
+      15.16650390625,
+      12.00146484375,
+      11.73193359375
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 3799.863,
-      "max_observed_mhz": 3800.155,
+      "min_observed_mhz": 3799.232,
+      "max_observed_mhz": 3800.224,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -57,7 +57,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "f50fab961466895622d520ed446328623a4cb592",
+  "source_head_at_capture": "ec86cd6d44047c00c4135805cae2383d331692b4",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -155,7 +155,7 @@
     "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
     "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
     "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
-    "src/sc_neurocore/compiler/testbench_gen.py": "dbba5586242d95f55b304c337f3ed103e85aa1e73ccd6a6dd8ad8cdb62f84487",
+    "src/sc_neurocore/compiler/testbench_gen.py": "dafc6a3516a0d0c482a0763e62f0296394952663ef4c8a7ab1df6b906e267f28",
     "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
     "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
     "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
@@ -212,17 +212,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 7586974,
+      "first_call_ns": 4814761,
       "cached_ns_per_call": [
-        153143.28,
-        163586.0,
-        175069.87,
-        153092.61,
-        147841.79,
-        143630.93,
-        140361.0
+        207952.55,
+        221500.36,
+        204659.06,
+        196285.85,
+        201178.44,
+        200208.41,
+        197170.94
       ],
-      "cached_median_ns_per_call": 153092.61,
+      "cached_median_ns_per_call": 201178.44,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -323,17 +323,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 131988939,
+      "first_call_ns": 210130572,
       "cached_ns_per_call": [
-        279308.28,
-        247150.68,
-        253437.12,
-        231320.73,
-        216858.15,
-        242097.23,
-        262353.25
+        287562.57,
+        315829.04,
+        564373.97,
+        371342.25,
+        261992.17,
+        261900.74,
+        278077.29
       ],
-      "cached_median_ns_per_call": 247150.68,
+      "cached_median_ns_per_call": 287562.57,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -406,17 +406,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 1143628966,
+      "first_call_ns": 1304000100,
       "cached_ns_per_call": [
-        335756.4,
-        337215.51,
-        286674.93,
-        323943.05,
-        302366.5,
-        268008.92,
-        258885.6
+        274159.44,
+        308498.47,
+        277119.03,
+        267352.33,
+        269885.64,
+        286442.56,
+        250514.32
       ],
-      "cached_median_ns_per_call": 302366.5,
+      "cached_median_ns_per_call": 274159.44,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -543,17 +543,17 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 28144038,
+      "first_call_ns": 9541970,
       "cached_ns_per_call": [
-        330669.32,
-        319620.58,
-        327662.23,
-        342074.23,
-        339537.41,
-        345075.58,
-        418025.94
+        431416.2,
+        388344.09,
+        322793.34,
+        356858.02,
+        336188.95,
+        389971.59,
+        307682.4
       ],
-      "cached_median_ns_per_call": 339537.41,
+      "cached_median_ns_per_call": 356858.02,
       "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
       "contracts": [
         {

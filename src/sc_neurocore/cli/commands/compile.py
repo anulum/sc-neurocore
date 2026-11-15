@@ -576,4 +576,5 @@ def run_compile(args: argparse.Namespace) -> int:
     if args.testbench:
         print(f"  tb_{args.module_name}.v — simulation testbench")
         print(f"  Run: iverilog -o sim {args.module_name}.v tb_{args.module_name}.v && vvp sim")
+        print(f"  Add +vcd (vvp sim +vcd) to also write the waveform tb_{args.module_name}.vcd")
     return 0

@@ -299,6 +299,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- A generated equation-neuron testbench writes its VCD waveform only when the
+  simulation is run with the plusarg `+vcd` (`vvp sim +vcd`); without it the
+  run writes no file. `compile --testbench` says how to ask for the waveform.
+
 - Move soupsieve to 4.1.1 in the documentation, workstation and desktop
   assembly tools locks, and bracex to 3.2.3 in the semgrep lock; only those
   pins move.

@@ -26,8 +26,9 @@ def generate_testbench(
 ) -> str:
     """Generate a Verilog testbench for a compiled equation neuron.
 
-    Drives the module with constant current for ``n_steps`` logical steps and
-    monitors spike_out and state outputs, producing a VCD waveform.
+    Drives the module with constant current for ``n_steps`` logical steps and monitors
+    spike_out and state outputs. Run with the plusarg ``+vcd`` (``vvp sim +vcd``), it also
+    writes the waveform ``tb_<module_name>.vcd`` in its working directory; otherwise no file.
 
     Parameters
     ----------
@@ -57,75 +58,88 @@ def generate_testbench(
     """
     if cycles_per_step < 1:
         raise ValueError(f"cycles_per_step must be >= 1, got {cycles_per_step}")
-    total_cycles = n_steps * cycles_per_step
-    q = Q88(data_width=data_width, fraction=fraction)
-    i_val = q.encode_signed_literal(input_current)
-
+    fixed_point = Q88(data_width=data_width, fraction=fraction)
+    current_literal = fixed_point.encode_signed_literal(input_current)
     state_vars = list(prepare_neuron(neuron).equations)
-    port_connections = [
-        "    .clk(clk),",
-        "    .rst_n(rst_n),",
-        f"    .I_t({i_val}),",
-        "    .spike_out(spike_out),",
-    ]
-    wire_decls = []
-    for var in state_vars:
-        port_connections.append(f"    .{var}_out({var}_out),")
-        wire_decls.append(f"wire signed [{data_width - 1}:0] {var}_out;")
-    port_connections[-1] = port_connections[-1].rstrip(",")
+    q_format = f"Q{data_width - fraction}.{fraction}"
+    lines = _module_header(module_name, state_vars, data_width, current_literal)
+    lines += _stimulus_block(module_name, state_vars, q_format, n_steps, cycles_per_step)
+    return "\n".join(lines)
 
-    lines = [
-        f"// Auto-generated testbench for {module_name}",
-        "// SC-NeuroCore equation compiler",
-        "`timescale 1ns / 1ps",
-        "",
-        f"module tb_{module_name};",
-        "",
-        "reg clk;",
-        "reg rst_n;",
-        "wire spike_out;",
+
+def _module_header(
+    module_name: str, state_vars: list[str], data_width: int, current_literal: str
+) -> list[str]:
+    """Return the testbench's declarations, the instance of the module and its clock.
+
+    Parameters
+    ----------
+    module_name : str
+        The module under test.
+    state_vars : list of str
+        The state variables, each with an ``<name>_out`` port.
+    data_width : int
+        Bit width of the state outputs.
+    current_literal : str
+        The Verilog literal of the constant input current.
+
+    Returns
+    -------
+    list of str
+        The source lines up to and including the spike counter's declaration.
+    """
+    ports = ["    .clk(clk),", "    .rst_n(rst_n),", f"    .I_t({current_literal}),"]
+    ports.append("    .spike_out(spike_out),")
+    ports.extend(f"    .{var}_out({var}_out)," for var in state_vars)
+    ports[-1] = ports[-1].rstrip(",")
+    lines = [f"// Auto-generated testbench for {module_name}", "// SC-NeuroCore equation compiler"]
+    lines += ["`timescale 1ns / 1ps", "", f"module tb_{module_name};", ""]
+    lines += ["reg clk;", "reg rst_n;", "wire spike_out;"]
+    lines += [f"wire signed [{data_width - 1}:0] {var}_out;" for var in state_vars]
+    lines += ["", f"{module_name} uut (", *ports, ");", ""]
+    lines += ["// Clock: 10ns period (100 MHz)", "initial clk = 0;", "always #5 clk = ~clk;", ""]
+    return [*lines, "integer spike_count;", ""]
+
+
+def _stimulus_block(
+    module_name: str, state_vars: list[str], q_format: str, n_steps: int, cycles_per_step: int
+) -> list[str]:
+    """Return the reset, the run, the reports and the end of the testbench.
+
+    The waveform dump is guarded by the plusarg ``+vcd``.
+
+    Parameters
+    ----------
+    module_name : str
+        The module under test.
+    state_vars : list of str
+        The state variables whose final values are reported.
+    q_format : str
+        The state outputs' fixed-point format, such as ``Q8.8``, for the reports.
+    n_steps : int
+        Logical steps to run.
+    cycles_per_step : int
+        Clock cycles per logical step.
+
+    Returns
+    -------
+    list of str
+        The source lines from ``initial begin`` to ``endmodule``.
+    """
+    total_cycles = n_steps * cycles_per_step
+    lines = ["initial begin", '    if ($test$plusargs("vcd")) begin']
+    lines += [
+        f'        $dumpfile("tb_{module_name}.vcd");',
+        f"        $dumpvars(0, tb_{module_name});",
     ]
-    lines.extend(wire_decls)
-    lines.append("")
-    lines.append(f"{module_name} uut (")
-    lines.extend(port_connections)
-    lines.append(");")
-    lines.append("")
-    lines.append("// Clock: 10ns period (100 MHz)")
-    lines.append("initial clk = 0;")
-    lines.append("always #5 clk = ~clk;")
-    lines.append("")
-    lines.append("integer spike_count;")
-    lines.append("")
-    lines.append("initial begin")
-    lines.append(f'    $dumpfile("tb_{module_name}.vcd");')
-    lines.append(f"    $dumpvars(0, tb_{module_name});")
-    lines.append("    spike_count = 0;")
-    lines.append("")
-    lines.append("    // Reset")
-    lines.append("    rst_n = 0;")
-    # 20ns reset
-    lines.append("    #20;")
-    lines.append("    rst_n = 1;")
-    lines.append("    @(posedge clk);  // 1 settling cycle after reset")
-    lines.append("")
+    lines += ["    end", "    spike_count = 0;", "", "    // Reset", "    rst_n = 0;", "    #20;"]
+    lines += ["    rst_n = 1;", "    @(posedge clk);  // 1 settling cycle after reset", ""]
     lines.append(f"    // Run {n_steps} logical step(s) × {cycles_per_step} cycle(s)/step")
-    lines.append(f"    repeat ({total_cycles}) begin")
-    lines.append("        @(posedge clk);")
-    lines.append("        #1;  // let combinational outputs settle")
-    lines.append("        if (spike_out) spike_count = spike_count + 1;")
-    lines.append("    end")
-    lines.append("")
+    lines += [f"    repeat ({total_cycles}) begin", "        @(posedge clk);"]
+    lines += ["        #1;  // let combinational outputs settle"]
+    lines += ["        if (spike_out) spike_count = spike_count + 1;", "    end", ""]
     lines.append(
         f'    $display("Simulation complete: %0d spikes in {total_cycles} cycles", spike_count);'
     )
-    for var in state_vars:
-        lines.append(
-            f'    $display("Final {var} = %0d (Q{data_width - fraction}.{fraction})", {var}_out);'
-        )
-    lines.append("    $finish;")
-    lines.append("end")
-    lines.append("")
-    lines.append("endmodule")
-
-    return "\n".join(lines)
+    lines += [f'    $display("Final {var} = %0d ({q_format})", {var}_out);' for var in state_vars]
+    return [*lines, "    $finish;", "end", "", "endmodule"]

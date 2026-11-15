@@ -96,6 +96,11 @@ sc-neurocore compile \
   --output build/lif
 ```
 
+With `--testbench`, `tb_lif_demo.v` drives the module for a fixed number of steps
+and prints its spike count; in `build/lif`, run `iverilog -o sim lif_demo.v tb_lif_demo.v && vvp sim`.
+Add the plusarg `+vcd` (`vvp sim +vcd`) to also write the waveform
+`tb_lif_demo.vcd` in the working directory; without it the run writes no file.
+
 `compile` supports three explicit datapath modes:
 
 - Standard RTL (default).

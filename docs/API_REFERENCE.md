@@ -16361,8 +16361,9 @@ total_error_bound:
 ### Function `generate_testbench(neuron, module_name, n_steps, input_current, data_width, fraction, cycles_per_step)`
 Generate a Verilog testbench for a compiled equation neuron.
 
-Drives the module with constant current for ``n_steps`` logical steps and
-monitors spike_out and state outputs, producing a VCD waveform.
+Drives the module with constant current for ``n_steps`` logical steps and monitors
+spike_out and state outputs. Run with the plusarg ``+vcd`` (``vvp sim +vcd``), it also
+writes the waveform ``tb_<module_name>.vcd`` in its working directory; otherwise no file.
 
 Parameters
 ----------

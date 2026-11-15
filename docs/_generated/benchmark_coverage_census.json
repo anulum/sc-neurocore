@@ -2563,6 +2563,7 @@
         "engine/src/ir/mod.rs",
         "engine/src/ir/sv_target.rs",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/testbench_gen.py",
         "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/expression_derivative.py"
       ],
@@ -2580,6 +2581,7 @@
         "engine/src/ir/mod.rs",
         "engine/src/ir/sv_target.rs",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "src/sc_neurocore/compiler/testbench_gen.py",
         "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/expression_derivative.py"
       ],
