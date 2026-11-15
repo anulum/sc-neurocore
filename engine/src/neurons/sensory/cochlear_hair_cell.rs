@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 /// Cochlear inner hair cell: mechano-electrical transduction.
 ///
 /// Converts basilar membrane displacement (mechanical) into receptor potential
@@ -15,22 +17,35 @@
 ///   I_MET = g_max · P_open · (V - E_MET)
 ///   C dV/dt = -g_L(V - E_L) - I_MET + I_ext
 ///
+/// This implementation has no external current: the input of `step` is the displacement.
+///
 /// Reference: Meddis (2006), Zilany et al. (2009, 2014).
 #[derive(Clone, Debug)]
 pub struct CochlearHairCell {
+    /// Receptor potential (mV).
     pub v: f64,
+    /// Maximum mechano-electrical-transduction (MET) channel conductance (nS).
     pub g_max: f64,
+    /// MET channel reversal potential (mV).
     pub e_met: f64,
+    /// Leak conductance (nS).
     pub g_l: f64,
+    /// Leak reversal / resting potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (pF).
     pub cap: f64,
+    /// Boltzmann half-activation hair-bundle displacement (nm).
     pub x0: f64,
+    /// Boltzmann slope factor (displacement sensitivity) (nm).
     pub delta: f64,
+    /// Step (ms).
     pub dt: f64,
+    /// Graded glutamate release (dimensionless), `max(v + 60, 0) / 40` after each step.
     pub glutamate_release: f64,
 }
 
 impl CochlearHairCell {
+    /// Create a cell at rest (-60 mV) with the descriptor defaults and `dt` = 0.01 ms.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -81,6 +96,12 @@ impl CochlearHairCell {
     }
 
     /// Step with basilar membrane displacement.
+    ///
+    /// The MET conductance `g_max * P_open(displacement)` and the leak relax `v` exactly
+    /// over `dt` towards their reversal-weighted mean, with rate `(g_l + g_met) / cap`.
+    /// Returns 1 when the new release exceeds 0.5 (`v` above -40 mV), else 0. An invalid
+    /// state or parameter, a non-finite displacement or a non-finite result returns 0 and
+    /// leaves the state unchanged.
     pub fn step(&mut self, displacement: f64) -> i32 {
         if !self.valid_runtime() || !displacement.is_finite() {
             return 0;
@@ -108,6 +129,7 @@ impl CochlearHairCell {
         }
     }
 
+    /// Return `v` to `e_l` and clear the release; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.e_l;
         self.glutamate_release = 0.0;

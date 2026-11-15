@@ -462,6 +462,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 12 sensory models are documented in full, each file read
+  against its code: each transduction stage, its integrator and clamps, and
+  what an invalid input or state does. Corrected by reading: the outer hair
+  cell's length change is `L_max * (0.5 - charge/Q_max)`, contraction
+  positive, and its nonlinear capacitance is not modelled; the retinal
+  ganglion cell's rate is per ms in effect, not in Hz; the olfactory receptor's
+  two feedback pathways are named by their time constants, and its CaM pathway
+  scales cAMP production rather than acting on the CNG channels. The
+  documentation records that the direction-selective ganglion cell reads no
+  direction, and that the rod's dark calcium settles near 9, not 1.
 - The engine's 8 ion-channel models are documented in full, each file read
   against its code: the 50 forward-Euler sub-steps of the six Wang-Buzsaki
   based models (gates from the old potential, currents from the updated

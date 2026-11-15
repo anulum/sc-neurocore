@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Olfactory Receptor Neuron
 // ═══════════════════════════════════════════════════════════════════
@@ -16,29 +18,47 @@
 /// Produces spiking output to olfactory bulb.
 ///
 /// Adaptation via two pathways:
-/// - **Ca²⁺/CaM feedback** on CNG channels (fast, ~500 ms)
-/// - **PDE4 negative feedback** on cAMP (slow, ~300 ms): cAMP → PKA → PDE4 ↑ → cAMP ↓
+/// - **Ca²⁺/CaM feedback**: reduces cAMP production by up to 80 % (time constant
+///   `tau_adapt`, 500 ms by default)
+/// - **PDE4 negative feedback** on cAMP (`tau_pde4`, 300 ms by default):
+///   cAMP → PKA → PDE4 ↑ → cAMP ↓
 ///
 /// Based on Rospars et al. 2008 / Firestein 2001.
 #[derive(Clone, Debug)]
 pub struct OlfactoryReceptorNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Potential after a spike (mV).
     pub v_reset: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
-    pub camp: f64,      // Normalised cAMP [0, 1]
-    pub adapt: f64,     // Ca²⁺/CaM adaptation
-    pub pde4: f64,      // PDE4 activity (tracks cAMP with delay)
-    pub tau_camp: f64,  // cAMP dynamics (ms)
-    pub tau_adapt: f64, // CaM adaptation tau
-    pub tau_pde4: f64,  // PDE4 activation tau (ms)
-    pub k_pde4: f64,    // PDE4 degradation rate on cAMP
+    /// Normalised cAMP \[0, 1\].
+    pub camp: f64,
+    /// Ca²⁺/CaM adaptation.
+    pub adapt: f64,
+    /// PDE4 activity (tracks cAMP with delay).
+    pub pde4: f64,
+    /// Time constant of the cAMP dynamics (ms).
+    pub tau_camp: f64,
+    /// Time constant of the Ca²⁺/CaM adaptation (ms).
+    pub tau_adapt: f64,
+    /// PDE4 activation tau (ms).
+    pub tau_pde4: f64,
+    /// PDE4 degradation rate on cAMP.
+    pub k_pde4: f64,
+    /// Membrane drive per unit of cAMP, in units of 50 mV.
     pub gain: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl OlfactoryReceptorNeuron {
+    /// Create a cell at rest (-65 mV, no cAMP, adaptation or PDE4 activity) with the
+    /// default parameters and `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -59,6 +79,16 @@ impl OlfactoryReceptorNeuron {
     }
 
     /// Step with odorant concentration (arbitrary units, ≥ 0). Returns spike (1/0).
+    ///
+    /// Forward-Euler steps, in this order, each using the values already updated:
+    /// - `camp` moves towards `c / (c + 1) * (1 - 0.8 * adapt) - k_pde4 * pde4 * camp`
+    ///   (floored at 0) with `tau_camp`, where `c` is the concentration floored at 0;
+    /// - `pde4` moves towards `camp` with `tau_pde4`;
+    /// - `v` relaxes towards `v_rest + 50 * gain * camp` with `tau`;
+    /// - `adapt` moves towards `max(v - v_rest, 0) / 20` with `tau_adapt`.
+    ///
+    /// `camp`, `pde4` and `adapt` are clamped to `[0, 1]`. Reaching `v_threshold` sets `v` to
+    /// `v_reset`. The input is not validated (NaN counts as 0).
     pub fn step(&mut self, concentration: f64) -> i32 {
         let conc = concentration.max(0.0);
 
@@ -94,6 +124,8 @@ impl OlfactoryReceptorNeuron {
         }
     }
 
+    /// Return `v` to `v_rest` and clear cAMP, adaptation and PDE4 activity; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.camp = 0.0;

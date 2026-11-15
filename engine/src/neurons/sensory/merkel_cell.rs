@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Merkel Cell — slowly adapting type I mechanoreceptor
 // ═══════════════════════════════════════════════════════════════════
@@ -19,19 +21,31 @@
 /// Based on Lesniak et al. 2014.
 #[derive(Clone, Debug)]
 pub struct MerkelCell {
+    /// Membrane potential (mV), kept within `[-100, 60]`.
     pub v: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Potential after a spike (mV).
     pub v_reset: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
-    pub adapt: f64,     // Slow adaptation variable
-    pub tau_adapt: f64, // Adaptation time constant (ms)
-    pub a_adapt: f64,   // Adaptation coupling
+    /// Slow adaptation variable.
+    pub adapt: f64,
+    /// Adaptation time constant (ms).
+    pub tau_adapt: f64,
+    /// Adaptation coupling.
+    pub a_adapt: f64,
+    /// Depolarisation per unit of pressure (mV per unit).
     pub gain: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl MerkelCell {
+    /// Create a cell at rest (-65 mV, no adaptation) with the default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -79,6 +93,12 @@ impl MerkelCell {
     }
 
     /// Step with pressure (arbitrary units, ≥ 0). Returns spike (1/0).
+    ///
+    /// `v` relaxes exactly over `dt` towards `v_rest + gain * max(pressure, 0) - adapt` with
+    /// `tau`. Then `adapt` relaxes towards `a_adapt * max(v - v_rest, 0)`, using the new
+    /// `v`, with `tau_adapt`. Reaching `v_threshold` sets `v` to `v_reset` and returns 1;
+    /// otherwise `v` is clamped to `[-100, 60]` mV. An invalid state or parameter, a
+    /// non-finite pressure or a non-finite result returns 0 and leaves the state unchanged.
     pub fn step(&mut self, pressure: f64) -> i32 {
         if !self.is_valid() || !pressure.is_finite() {
             return 0;
@@ -104,6 +124,7 @@ impl MerkelCell {
         }
     }
 
+    /// Return `v` to `v_rest` and clear the adaptation; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.adapt = 0.0;

@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Outer Hair Cell (OHC) — auditory, electromotility
 // ═══════════════════════════════════════════════════════════════════
@@ -21,11 +23,13 @@
 /// 1. MET transduction (stereocilia → receptor potential)
 /// 2. Prestin electromotility with two-state Boltzmann charge
 ///    movement and asymmetric length change
-/// 3. Nonlinear capacitance (NLC) that peaks near V_pk
+///
+/// The nonlinear capacitance (NLC) that peaks near V_pk is not modelled: `v_pk` is only
+/// the Boltzmann midpoint, and `q_max` is not read.
 ///
 /// Prestin motility (Santos-Sacchi 2006):
 ///   charge = Q_max / (1 + exp(z_e*(V-V_pk)/(kT)))
-///   ΔL = L_max * (charge/Q_max - 0.5) * asym(V)
+///   ΔL = L_max * (0.5 - charge/Q_max) * asym(V)
 ///
 /// where asym(V) = 1 + a_factor*(V-V_pk)/|V-V_pk+eps| gives
 /// asymmetric contraction (depolarised) vs elongation (hyperpolarised).
@@ -34,24 +38,41 @@
 /// Santos-Sacchi et al., J Neurosci 26:3992, 2006.
 #[derive(Clone, Debug)]
 pub struct OuterHairCell {
+    /// Receptor potential (mV).
     pub v: f64,
+    /// Resting potential (mV), the target of the leak.
     pub v_rest: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// MET conductance relative to the leak (dimensionless).
     pub g_met: f64,
+    /// Half-activation displacement of the MET channels (nm).
     pub x_half: f64,
+    /// Boltzmann slope of the MET activation (nm).
     pub s_met: f64,
     // Prestin parameters
-    pub motility: f64,    // Somatic length change (nm, + = contraction)
-    pub l_max: f64,       // Maximum length change (nm)
-    pub v_pk: f64,        // Peak NLC voltage (mV), ~-40
-    pub z_e: f64,         // Prestin charge valence (~0.7)
-    pub v_t: f64,         // kT/e thermal voltage (~26 mV at 37°C)
-    pub q_max: f64,       // Maximum charge moved (pC)
-    pub asym_factor: f64, // Asymmetry: contraction/elongation ratio > 1
+    /// Somatic length change (nm, + = contraction).
+    pub motility: f64,
+    /// Maximum length change (nm).
+    pub l_max: f64,
+    /// Boltzmann midpoint of the prestin charge (mV), the peak-NLC voltage, about -40 mV.
+    pub v_pk: f64,
+    /// Prestin charge valence (~0.7).
+    pub z_e: f64,
+    /// kT/e thermal voltage (mV), about 26 mV at 37 °C.
+    pub v_t: f64,
+    /// Maximum charge moved (pC); the step does not read it.
+    pub q_max: f64,
+    /// Asymmetry factor: contraction is scaled by `1 + asym_factor` and elongation by
+    /// `1 - asym_factor`.
+    pub asym_factor: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl OuterHairCell {
+    /// Create a cell at rest (-70 mV, no motility) with the default parameters and
+    /// `dt` = 0.025 ms.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -79,6 +100,12 @@ impl OuterHairCell {
     }
 
     /// Step with displacement (nm). Returns receptor potential (mV).
+    ///
+    /// One forward-Euler step of `v` with the MET current `g_met * P_open * (0 - v)`,
+    /// relative to the leak. Then `motility` is set from the new `v` as
+    /// `l_max * (0.5 - compact)`, scaled by `1 + asym_factor` for contraction and
+    /// `1 - asym_factor` for elongation. A non-finite `v` is then replaced by `v_rest`. The
+    /// input is not validated.
     pub fn step(&mut self, displacement: f64) -> f64 {
         let p_open = 1.0 / (1.0 + (-(displacement - self.x_half) / self.s_met).exp());
         let i_met = self.g_met * p_open * (0.0 - self.v);
@@ -103,6 +130,7 @@ impl OuterHairCell {
         self.v
     }
 
+    /// Return `v` to `v_rest` and clear the motility; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.motility = 0.0;

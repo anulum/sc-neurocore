@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 /// Direction-selective retinal ganglion cell (DS-RGC) with On/Off sub-types.
 ///
 /// Models the centre-surround receptive field with temporal derivative
@@ -19,19 +21,31 @@
 /// Masland (2012) "The neuronal organization of the retina".
 #[derive(Clone, Debug)]
 pub struct DirectionSelectiveRGC {
+    /// Membrane state (dimensionless); it relaxes towards the drive with `tau` and is reset
+    /// to 0 by a spike.
     pub v: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// Spike threshold of `v` (dimensionless).
     pub theta: f64,
+    /// Step (ms).
     pub dt: f64,
+    /// `true` for an On-centre cell (driven by increments), `false` for an Off-centre cell
+    /// (driven by decrements).
     pub is_on_centre: bool,
     prev_intensity: f64,
     surround: f64,
+    /// Centre receptive-field weight (dimensionless).
     pub w_centre: f64,
+    /// Surround receptive-field weight (dimensionless).
     pub w_surround: f64,
+    /// Preferred motion direction (rad). No step reads it: the response has no direction
+    /// term.
     pub direction_pref: f64,
 }
 
 impl DirectionSelectiveRGC {
+    /// Create an On-centre cell at rest with the descriptor defaults and `dt` = 1 ms.
     pub fn new_on() -> Self {
         Self {
             v: 0.0,
@@ -47,6 +61,7 @@ impl DirectionSelectiveRGC {
         }
     }
 
+    /// Create an Off-centre cell; otherwise the same as `new_on`.
     pub fn new_off() -> Self {
         let mut cell = Self::new_on();
         cell.is_on_centre = false;
@@ -77,6 +92,13 @@ impl DirectionSelectiveRGC {
     }
 
     /// Step with local intensity and surround mean intensity.
+    ///
+    /// The centre drive is `w_centre * (intensity - previous intensity)`, negated for an
+    /// Off-centre cell. The surround trace moves 10 % of the way to `surround_mean` and
+    /// inhibits with `w_surround`. `v` relaxes exactly over `dt` towards the drive with
+    /// `tau`. Reaching `theta` resets `v` to 0 and returns 1, else 0. A negative or
+    /// non-finite input, an invalid state or parameter, or a non-finite intermediate returns
+    /// 0 and leaves the state unchanged.
     pub fn step_rf(&mut self, intensity: f64, surround_mean: f64) -> i32 {
         if !intensity.is_finite()
             || !surround_mean.is_finite()
@@ -119,10 +141,15 @@ impl DirectionSelectiveRGC {
     }
 
     /// Simple step (no surround).
+    ///
+    /// Calls `step_rf` with a surround mean of 0; the existing surround trace still decays
+    /// and inhibits.
     pub fn step(&mut self, current: f64) -> i32 {
         self.step_rf(current, 0.0)
     }
 
+    /// Clear `v`, the previous intensity and the surround trace; the parameters and the cell
+    /// type are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.prev_intensity = 0.0;

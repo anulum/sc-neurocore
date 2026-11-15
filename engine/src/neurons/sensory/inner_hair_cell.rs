@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Inner Hair Cell (IHC) — auditory
 // ═══════════════════════════════════════════════════════════════════
@@ -41,33 +43,57 @@
 #[derive(Clone, Debug)]
 pub struct InnerHairCell {
     // Membrane
-    pub v: f64, // Receptor potential (mV)
+    /// Receptor potential (mV).
+    pub v: f64,
+    /// Resting potential (mV), the target of the leak.
     pub v_rest: f64,
-    pub tau: f64,    // Membrane time constant (ms)
-    pub g_met: f64,  // MET channel max conductance
-    pub x_half: f64, // Boltzmann half-activation (nm)
-    pub s_met: f64,  // Boltzmann slope
+    /// Membrane time constant (ms).
+    pub tau: f64,
+    /// MET channel max conductance.
+    pub g_met: f64,
+    /// Boltzmann half-activation (nm).
+    pub x_half: f64,
+    /// Boltzmann slope.
+    pub s_met: f64,
     // Ca²⁺
-    pub ca: f64,        // Intracellular Ca²⁺ (µM)
-    pub tau_ca: f64,    // Ca²⁺ decay time constant (ms)
-    pub g_ca: f64,      // Ca²⁺ entry gain
-    pub v_ca_half: f64, // Ca²⁺ channel half-activation (mV)
-    pub s_ca: f64,      // Ca²⁺ channel slope
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
+    /// Ca²⁺ decay time constant (ms).
+    pub tau_ca: f64,
+    /// Ca²⁺ entry gain.
+    pub g_ca: f64,
+    /// Ca²⁺ channel half-activation (mV).
+    pub v_ca_half: f64,
+    /// Ca²⁺ channel slope.
+    pub s_ca: f64,
     // Meddis vesicle pool
-    pub q: f64,      // Available vesicles (free pool) [0, M]
-    pub c: f64,      // Cleft transmitter concentration
-    pub w: f64,      // Reprocessing store
-    pub m_pool: f64, // Maximum vesicle pool size
-    pub y: f64,      // Replenishment rate (ms⁻¹)
-    pub x_r: f64,    // Recovery rate from reprocessing (ms⁻¹)
-    pub k_rel: f64,  // Release rate constant (ms⁻¹)
-    pub l: f64,      // Loss rate from cleft (ms⁻¹)
-    pub r_up: f64,   // Reuptake rate (ms⁻¹)
-    pub k_d: f64,    // Ca²⁺ half-saturation for release (µM)
+    /// Available vesicles (free pool) \[0, M\].
+    pub q: f64,
+    /// Cleft transmitter concentration.
+    pub c: f64,
+    /// Reprocessing store.
+    pub w: f64,
+    /// Maximum vesicle pool size.
+    pub m_pool: f64,
+    /// Replenishment rate (ms⁻¹).
+    pub y: f64,
+    /// Recovery rate from reprocessing (ms⁻¹).
+    pub x_r: f64,
+    /// Release rate constant (ms⁻¹).
+    pub k_rel: f64,
+    /// Loss rate from cleft (ms⁻¹).
+    pub l: f64,
+    /// Reuptake rate (ms⁻¹).
+    pub r_up: f64,
+    /// Ca²⁺ half-saturation for release (µM).
+    pub k_d: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl InnerHairCell {
+    /// Create a cell at rest (`v` = -60 mV, `q` = 8 of 10 vesicles) with the default
+    /// parameters and `dt` = 0.025 ms.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -105,6 +131,12 @@ impl InnerHairCell {
     }
 
     /// Step with stereocilia displacement (nm). Returns receptor potential (mV).
+    ///
+    /// One forward-Euler step of the membrane (MET current `g_met * P_open * (0 - v)`,
+    /// relative to the leak), then of calcium (entry `g_ca * m_ca^2`), then of the vesicle
+    /// pools with the updated calcium. `q` is clamped to `[0, m_pool]`; `ca`, `c` and `w`
+    /// are kept non-negative; a non-finite state value is replaced by its reset value. The
+    /// input is not validated.
     pub fn step(&mut self, displacement: f64) -> f64 {
         // 1. MET transduction
         let p_open = 1.0 / (1.0 + (-(displacement - self.x_half) / self.s_met).exp());
@@ -150,6 +182,8 @@ impl InnerHairCell {
         self.v
     }
 
+    /// Restore `v` to `v_rest` and the calcium and pool state to its initial values
+    /// (`ca` = 0.05, `q` = 8, `c` = `w` = 0); the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.ca = 0.05;

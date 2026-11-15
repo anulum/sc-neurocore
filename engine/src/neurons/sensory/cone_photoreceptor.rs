@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Cone Photoreceptor — photopic vision
 // ═══════════════════════════════════════════════════════════════════
@@ -18,17 +20,26 @@
 /// Based on Schnapf et al. 1990 / Baylor 1987.
 #[derive(Clone, Debug)]
 pub struct ConePhotoreceptor {
+    /// Membrane potential (mV), between `v_hyper` and `v_dark`.
     pub v: f64,
+    /// Dark potential (mV), reached at full cGMP.
     pub v_dark: f64,
+    /// Fully hyperpolarised potential (mV), reached at zero cGMP.
     pub v_hyper: f64,
+    /// Normalised cGMP concentration in `[0, 1]`; 1 in the dark.
     pub cgmp: f64,
+    /// Time constant of light-driven cGMP hydrolysis (ms).
     pub tau_act: f64,
+    /// Time constant of cGMP recovery towards 1 (ms).
     pub tau_rec: f64,
+    /// Hydrolysis per unit of light intensity (dimensionless).
     pub sensitivity: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl ConePhotoreceptor {
+    /// Create a dark-adapted cone (`cgmp` = 1, `v` = `v_dark` = -40 mV) with `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -40.0,
@@ -42,6 +53,11 @@ impl ConePhotoreceptor {
         }
     }
 
+    /// Advance one forward-Euler step with the light intensity `light` and return the new `v`.
+    ///
+    /// Negative and NaN intensities count as 0. `cgmp` changes by
+    /// `-sensitivity * light * cgmp / tau_act + (1 - cgmp) / tau_rec` per ms and is clamped
+    /// to `[0, 1]`; then `v = v_hyper + (v_dark - v_hyper) * cgmp^3`.
     pub fn step(&mut self, light: f64) -> f64 {
         let light_clamped = light.max(0.0);
         let d_cgmp = -self.sensitivity * light_clamped * self.cgmp / self.tau_act
@@ -54,6 +70,7 @@ impl ConePhotoreceptor {
         self.v
     }
 
+    /// Return to the dark state (`v` = `v_dark`, `cgmp` = 1); the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_dark;
         self.cgmp = 1.0;

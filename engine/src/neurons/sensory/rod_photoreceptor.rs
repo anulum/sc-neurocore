@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Rod Photoreceptor — scotopic vision
 // ═══════════════════════════════════════════════════════════════════
@@ -32,22 +34,39 @@
 /// Hamer et al., J Gen Physiol 125:287, 2005.
 #[derive(Clone, Debug)]
 pub struct RodPhotoreceptor {
+    /// Membrane potential (mV), between `v_hyper` and `v_dark`.
     pub v: f64,
+    /// Dark potential (mV), with the CNG channels fully open.
     pub v_dark: f64,
+    /// Fully hyperpolarised potential (mV), with the CNG channels closed.
     pub v_hyper: f64,
-    pub cgmp: f64,    // cGMP concentration (normalised)
-    pub ca: f64,      // Ca²⁺ concentration (normalised, ~1.0 in dark)
-    pub tau_act: f64, // PDE activation time constant (ms)
-    pub tau_ca: f64,  // Ca²⁺ extrusion time constant (ms)
+    /// cGMP concentration (normalised), 1 at the start; clamped to `[0, 1.5]`.
+    pub cgmp: f64,
+    /// Ca²⁺ concentration (normalised). It starts at 1, but in the dark it approaches
+    /// `eta_ca * tau_ca` (9 with the defaults).
+    pub ca: f64,
+    /// PDE activation time constant (ms).
+    pub tau_act: f64,
+    /// Ca²⁺ extrusion time constant (ms).
+    pub tau_ca: f64,
+    /// PDE activation per unit of light (dimensionless); the hydrolysis rate is
+    /// `sensitivity * light / tau_act`.
     pub sensitivity: f64,
-    pub alpha_max: f64, // Max GC synthesis rate
-    pub k_gc: f64,      // Ca²⁺ half-inhibition of GC
-    pub n_gc: f64,      // Hill coefficient for GC inhibition
-    pub eta_ca: f64,    // Ca²⁺ entry per unit CNG current
+    /// Max GC synthesis rate.
+    pub alpha_max: f64,
+    /// Ca²⁺ half-inhibition of GC.
+    pub k_gc: f64,
+    /// Hill coefficient for GC inhibition.
+    pub n_gc: f64,
+    /// Ca²⁺ entry per unit CNG current.
+    pub eta_ca: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl RodPhotoreceptor {
+    /// Create a rod with `cgmp` = 1, `ca` = 1 and `v` = `v_dark` = -40 mV, the default
+    /// parameters and `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -40.0,
@@ -76,6 +95,13 @@ impl RodPhotoreceptor {
     }
 
     /// Step with light intensity (≥ 0). Returns membrane potential (mV).
+    ///
+    /// One forward-Euler step. Per ms, `cgmp` changes by
+    /// `gc - sensitivity * light / tau_act * cgmp + 0.001 * (1 - cgmp)` and is clamped to
+    /// `[0, 1.5]`, with `gc = alpha_max * k_gc^n_gc / (k_gc^n_gc + ca^n_gc)`. The CNG
+    /// fraction is `min(cgmp^3, 1)`. Then `ca` changes by `eta_ca * cng - ca / tau_ca`
+    /// (floored at 0), and `v = v_hyper + (v_dark - v_hyper) * cng`. Negative and NaN light
+    /// count as 0. A non-finite state value is replaced by its reset value.
     pub fn step(&mut self, light: f64) -> f64 {
         let light_clamped = light.max(0.0);
 
@@ -108,6 +134,7 @@ impl RodPhotoreceptor {
         self.v
     }
 
+    /// Return `v` to `v_dark` and `cgmp` and `ca` to 1; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_dark;
         self.cgmp = 1.0;

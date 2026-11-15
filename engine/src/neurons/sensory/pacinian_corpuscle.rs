@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Pacinian Corpuscle — rapidly adapting mechanoreceptor
 // ═══════════════════════════════════════════════════════════════════
@@ -19,19 +21,31 @@
 /// Based on Loewenstein & Skalak 1966 / Bell et al. 1994.
 #[derive(Clone, Debug)]
 pub struct PacinianCorpuscle {
+    /// Membrane potential (mV), kept within `[-100, 60]`.
     pub v: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Potential after a spike (mV).
     pub v_reset: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
+    /// Pressure of the previous accepted step (arbitrary units).
     pub prev_pressure: f64,
+    /// Adaptation subtracted from the drive (mV); it relaxes towards half the positive drive.
     pub adapt: f64,
+    /// Adaptation time constant (ms).
     pub tau_adapt: f64,
+    /// Depolarisation per unit of `|dp/dt|` (mV per pressure unit per ms).
     pub gain: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl PacinianCorpuscle {
+    /// Create a cell at rest (-65 mV, no adaptation, previous pressure 0) with the default
+    /// parameters and `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -78,6 +92,13 @@ impl PacinianCorpuscle {
     }
 
     /// Step with pressure (arbitrary units). Returns spike (1/0).
+    ///
+    /// The drive is `gain * |pressure - prev_pressure| / dt - adapt`. `v` relaxes exactly
+    /// over `dt` towards `v_rest + drive` with `tau`, and `adapt` towards
+    /// `0.5 * max(drive, 0)` with `tau_adapt`. Reaching `v_threshold` sets `v` to `v_reset`
+    /// and returns 1; otherwise `v` is clamped to `[-100, 60]` mV. An invalid state or
+    /// parameter, a non-finite pressure or a non-finite result returns 0 and leaves the
+    /// state unchanged.
     pub fn step(&mut self, pressure: f64) -> i32 {
         if !self.is_valid() || !pressure.is_finite() {
             return 0;
@@ -105,6 +126,8 @@ impl PacinianCorpuscle {
         }
     }
 
+    /// Return `v` to `v_rest` and clear the previous pressure and the adaptation; the
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.prev_pressure = 0.0;

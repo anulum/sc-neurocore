@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Nociceptor — pain receptor
 // ═══════════════════════════════════════════════════════════════════
@@ -19,19 +21,31 @@
 /// Based on Basbaum et al. 2009 / Gold & Gebhart 2010.
 #[derive(Clone, Debug)]
 pub struct Nociceptor {
+    /// Membrane potential (mV), kept within `[-100, 60]`.
     pub v: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Potential after a spike (mV).
     pub v_reset: f64,
+    /// Spike threshold before sensitisation (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
-    pub sensitisation: f64, // Threshold reduction (mV)
-    pub tau_sens: f64,      // Sensitisation decay (ms)
-    pub sens_rate: f64,     // Sensitisation buildup rate
+    /// Threshold reduction (mV).
+    pub sensitisation: f64,
+    /// Sensitisation decay (ms).
+    pub tau_sens: f64,
+    /// Sensitisation buildup rate.
+    pub sens_rate: f64,
+    /// Depolarisation per unit of stimulus (mV per unit).
     pub gain: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl Nociceptor {
+    /// Create a cell at rest (-65 mV, no sensitisation) with the default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -77,6 +91,13 @@ impl Nociceptor {
     }
 
     /// Step with noxious stimulus intensity (≥ 0). Returns spike (1/0).
+    ///
+    /// `v` relaxes exactly over `dt` towards `v_rest + gain * max(stimulus, 0)` with `tau`.
+    /// The threshold is `v_threshold - sensitisation`. A spike sets `v` to `v_reset` and
+    /// adds `sens_rate` (mV) to the sensitisation, capped at 10 mV. Otherwise the
+    /// sensitisation decays towards 0 with `tau_sens`, and `v` is clamped to `[-100, 60]`
+    /// mV. An invalid state or parameter, a non-finite stimulus or a non-finite result
+    /// returns 0 and leaves the state unchanged.
     pub fn step(&mut self, stimulus: f64) -> i32 {
         if !self.is_valid() || !stimulus.is_finite() {
             return 0;
@@ -107,6 +128,7 @@ impl Nociceptor {
         }
     }
 
+    /// Return `v` to `v_rest` and clear the sensitisation; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.sensitisation = 0.0;

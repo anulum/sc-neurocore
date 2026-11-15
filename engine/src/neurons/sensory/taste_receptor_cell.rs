@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Taste Receptor Cell
 // ═══════════════════════════════════════════════════════════════════
@@ -19,19 +21,31 @@
 /// Based on Chaudhari & Roper 2010 / Liman et al. 2014.
 #[derive(Clone, Debug)]
 pub struct TasteReceptorCell {
+    /// Receptor potential (mV).
     pub v: f64,
+    /// Resting potential (mV).
     pub v_rest: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
-    pub ca: f64,  // Intracellular Ca2+ (normalised)
-    pub ip3: f64, // IP3 concentration (normalised)
+    /// Intracellular Ca2+ (normalised).
+    pub ca: f64,
+    /// IP3 concentration (normalised).
+    pub ip3: f64,
+    /// Time constant of IP3 production (ms).
     pub tau_ip3: f64,
+    /// Time constant of the Ca²⁺ pump (ms).
     pub tau_ca: f64,
+    /// TRPM5 drive per unit of Ca²⁺, in units of 20 mV.
     pub gain: f64,
-    pub atp_release: f64, // Output: ATP release rate
+    /// Output: ATP release rate.
+    pub atp_release: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl TasteReceptorCell {
+    /// Create a cell at rest (-50 mV, no IP3 or Ca²⁺) with the default parameters and
+    /// `dt` = 0.5 ms.
     pub fn new() -> Self {
         Self {
             v: -50.0,
@@ -48,6 +62,14 @@ impl TasteReceptorCell {
     }
 
     /// Step with tastant concentration (≥ 0). Returns receptor potential (mV).
+    ///
+    /// Forward-Euler steps, each using the values already updated:
+    /// - `ip3` moves towards `c / (c + 0.5)` with `tau_ip3`, where `c` is the concentration
+    ///   floored at 0 (NaN counts as 0);
+    /// - `ca` changes by `ip3^2 * (1 - ca) - ca / tau_ca` per ms;
+    /// - `v` relaxes towards `v_rest + 20 * gain * ca` with `tau`.
+    ///
+    /// `ip3` and `ca` are clamped to `[0, 1]`, and `atp_release` is set to `ca`.
     pub fn step(&mut self, tastant: f64) -> f64 {
         let conc = tastant.max(0.0);
         // GPCR → IP3
@@ -70,6 +92,8 @@ impl TasteReceptorCell {
         self.v
     }
 
+    /// Return `v` to `v_rest` and clear IP3, Ca²⁺ and the ATP release; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.ca = 0.0;

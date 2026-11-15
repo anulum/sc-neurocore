@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Sensory Neuron Models
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Retinal Ganglion Cell (ON/OFF) — spiking output of retina
 // ═══════════════════════════════════════════════════════════════════
@@ -28,7 +30,8 @@
 ///
 /// 3. **Exponential nonlinearity**:
 ///    λ(t) = exp(k·s(t) + h·spike_history + b)
-///    where λ is the instantaneous firing rate (Hz).
+///    where λ is the instantaneous firing rate, per ms in effect: `step` compares
+///    λ·dt with the threshold, with dt in ms.
 ///
 /// 4. **Spike generation**: deterministic threshold on λ(t).
 ///    Spike emitted when λ(t) * dt > threshold (proxy for
@@ -42,19 +45,31 @@
 #[derive(Clone, Debug)]
 pub struct RetinalGanglionCell {
     // Stimulus filter (biphasic temporal kernel)
-    pub stim_buffer: Vec<f64>, // Ring buffer of past stimuli
-    pub stim_kernel: Vec<f64>, // Temporal filter coefficients (k)
-    pub stim_idx: usize,       // Current write position
+    /// Ring buffer of past stimuli.
+    pub stim_buffer: Vec<f64>,
+    /// Temporal filter coefficients (k).
+    pub stim_kernel: Vec<f64>,
+    /// Current write position.
+    pub stim_idx: usize,
 
     // Post-spike history filter
-    pub hist_buffer: Vec<f64>, // Ring buffer of past spike times (1.0/0.0)
-    pub hist_kernel: Vec<f64>, // History filter coefficients (h)
+    /// Ring buffer of past spike times (1.0/0.0).
+    pub hist_buffer: Vec<f64>,
+    /// History filter coefficients (h).
+    pub hist_kernel: Vec<f64>,
+    /// Write position in the spike-history ring buffer.
     pub hist_idx: usize,
 
-    pub baseline: f64,        // Baseline log-rate (b)
-    pub on_centre: bool,      // true = ON, false = OFF (inverts stimulus)
-    pub spike_threshold: f64, // λ*dt threshold for spike emission
+    /// Baseline log-rate (b).
+    pub baseline: f64,
+    /// True = ON, false = OFF (inverts stimulus).
+    pub on_centre: bool,
+    /// λ\*dt threshold for spike emission.
+    pub spike_threshold: f64,
+    /// Step (ms). The default kernels assume 0.5 ms taps and are not rescaled when `dt`
+    /// changes.
     pub dt: f64,
+    /// Gain applied to the input before the stimulus filter (dimensionless).
     pub gain: f64,
 }
 
@@ -108,6 +123,7 @@ impl RetinalGanglionCell {
         }
     }
 
+    /// Create an OFF-centre cell, which inverts the input; otherwise the same as `new`.
     pub fn off_centre() -> Self {
         Self {
             on_centre: false,
@@ -131,6 +147,13 @@ impl RetinalGanglionCell {
     /// Step with bipolar cell input. Returns spike (1/0).
     ///
     /// GLM pipeline: stimulus filter → history filter → exp nonlinearity → spike
+    ///
+    /// The input (negated for an OFF cell) times `gain` enters the stimulus ring buffer.
+    /// `λ = min(exp(k·s + h·history + baseline), 1000)`, and a spike is emitted when
+    /// `λ * dt > spike_threshold`; the spike is written to the history buffer. The input is
+    /// not validated: a NaN input gives λ = 1000 (the cap ignores NaN), and the cell spikes
+    /// while the NaN stays in the stimulus buffer. A buffer shorter than its kernel, or an
+    /// empty kernel, panics.
     pub fn step(&mut self, input: f64) -> i32 {
         let effective = if self.on_centre { input } else { -input };
         let stimulus = self.gain * effective;
@@ -165,6 +188,8 @@ impl RetinalGanglionCell {
         spiked
     }
 
+    /// Clear both ring buffers and their write positions; the kernels and the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.stim_buffer.fill(0.0);
         self.hist_buffer.fill(0.0);
