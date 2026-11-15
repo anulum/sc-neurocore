@@ -314,6 +314,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Move the three stages of `deploy/Dockerfile` to the current digest of
+  `python:3.12.16-slim` (`sha256:5e2bdb1b…`), the tag's rebuilt image.
+
 - Key the NIR interoperability benchmark's producers by their repository paths
   (`src/sc_neurocore/...`) and measure the record again with the documented
   command: its nine producer digests are unchanged, but keyed relative to the

@@ -11,7 +11,7 @@ ARG PYTHON_VERSION=3.12.16
 ARG RUST_VERSION=1.98.1
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS rust-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b AS rust-builder
 
 ARG RUST_VERSION
 ARG BUILD_JOBS
@@ -44,7 +44,7 @@ RUN if [ -n "${BUILD_JOBS:-}" ]; then \
     && ls /build/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS py-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b AS py-builder
 
 ARG INSTALL_EXTRAS=""
 
@@ -82,7 +82,7 @@ COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
 RUN python -m installer --prefix=/install /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS runtime
+FROM python:${PYTHON_VERSION}-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b AS runtime
 
 LABEL org.opencontainers.image.title="SC-NeuroCore" \
       org.opencontainers.image.description="Universal Stochastic Computing Framework for Neuromorphic Hardware" \
