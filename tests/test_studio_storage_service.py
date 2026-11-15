@@ -242,32 +242,67 @@ def test_the_service_recovers_reconciles_refuses_strangers_and_stops(base: Path)
     assert not (base / "endpoint" / "storage.sock").exists()
 
 
-def _blocked_signals(pid: int) -> int:
-    """Return the blocked-signal mask of a process, read from ``/proc``.
+def _blocked_signals(pid: int, *, proc: Path = Path("/proc")) -> int | None:
+    """Return the blocked-signal mask of a process, read from ``/proc``, or ``None`` without an entry.
 
     Parameters
     ----------
     pid : int
         The process.
+    proc : Path
+        The process file system; a host without one has no entry to read.
 
     Returns
     -------
-    int
-        The ``SigBlk`` bit mask: bit ``n - 1`` is set when signal ``n`` is blocked.
+    int or None
+        The ``SigBlk`` bit mask: bit ``n - 1`` is set when signal ``n`` is blocked;
+        ``None`` when ``proc`` holds no status entry for the process.
     """
-    for line in Path(f"/proc/{pid}/status").read_text(encoding="ascii").splitlines():
+    status = proc / str(pid) / "status"
+    if not status.exists():
+        return None
+    for line in status.read_text(encoding="ascii").splitlines():
         if line.startswith("SigBlk:"):
             return int(line.split()[1], 16)
     raise AssertionError(f"no SigBlk line for process {pid}")
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="the signal mask is read from /proc")
+def test_the_mask_reader_parses_a_status_entry(tmp_path: Path) -> None:
+    """A process's ``SigBlk`` line is read as its blocked-signal mask.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A folder standing in for ``/proc``.
+    """
+    (tmp_path / "4242").mkdir()
+    (tmp_path / "4242" / "status").write_text(
+        "Name:\tpython\nSigBlk:\t0000000000004002\nSigIgn:\t0\n", encoding="ascii"
+    )
+    assert _blocked_signals(4242, proc=tmp_path) == 0x4002
+
+
+def test_the_mask_reader_answers_none_where_proc_has_no_entry(tmp_path: Path) -> None:
+    """Where ``/proc`` holds no entry for the process, as on a host without it, there is no mask to read.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        An empty folder standing in for ``/proc``.
+    """
+    assert _blocked_signals(4242, proc=tmp_path) is None
+
+
+@pytest.mark.skipif(
+    not hasattr(signal, "pthread_sigmask"), reason="the service needs POSIX signal masks"
+)
 def test_the_service_stops_on_sigterm_although_its_starter_blocked_it(base: Path) -> None:
     """A mask blocking SIGTERM and SIGINT, handed down at start, does not keep the service running.
 
     A process inherits the blocked-signal mask of the one that starts it. With
     the two blocked, the service's handlers would never run, and SIGTERM would
-    leave it serving.
+    leave it serving. The stop is checked on every POSIX host; the service's own
+    mask is read where ``/proc`` has it.
 
     Parameters
     ----------
@@ -311,7 +346,8 @@ def test_the_service_stops_on_sigterm_although_its_starter_blocked_it(base: Path
             if stream is not None:
                 stream.close()
     assert returncode == 0, "the service did not stop on SIGTERM within 10 s and was killed"
-    assert blocked & ((1 << (signal.SIGTERM - 1)) | (1 << (signal.SIGINT - 1))) == 0
+    if blocked is not None:
+        assert blocked & ((1 << (signal.SIGTERM - 1)) | (1 << (signal.SIGINT - 1))) == 0
     assert not (base / "endpoint" / "storage.sock").exists()
 
 

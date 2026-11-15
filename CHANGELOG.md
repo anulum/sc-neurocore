@@ -926,6 +926,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The storage service's stop-on-SIGTERM test runs on every POSIX host. It
+  was skipped off Linux because it reads the service's blocked-signal mask
+  from `/proc`; that one check now runs where `/proc` has the process, and
+  the stop itself is checked everywhere the service runs.
 - The configured pre-commit hooks check the benchmark coverage census on every
   commit (`benchmark-coverage-census-drift`), so a commit that changes a source
   a benchmark record binds cannot carry a stale census; the preflight's
