@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import os
@@ -857,3 +858,109 @@ def test_the_ci_step_passes_when_the_report_is_the_tracked_one(tmp_path: Path) -
     result = _run_ci_gate_step(tmp_path, (root / TRACKED_REPORT).read_bytes())
     assert result.returncode == 0, result.stdout + result.stderr
     assert "::error" not in result.stdout
+
+
+#: Records that key their source digests by runtime lane, each with the
+#: benchmark script that wrote it and the field that holds the digests.
+LANE_KEYED_RECORDS = {
+    "benchmarks/results/bench_bertram_phantom.json": (
+        "benchmarks/bench_model_bertram_phantom.py",
+        "source_hashes",
+    ),
+    "benchmarks/results/bench_glif_simulate.json": (
+        "benchmarks/bench_glif_simulate.py",
+        "source_sha256",
+    ),
+    "benchmarks/results/bench_sc_four_state_glif.json": (
+        "benchmarks/bench_sc_four_state_glif.py",
+        "source_sha256",
+    ),
+}
+
+
+def _script_lane_paths(script: Path) -> dict[str, str]:
+    """Read the lane-to-path map a benchmark script assigns to ``sources``.
+
+    Parameters
+    ----------
+    script : Path
+        A benchmark script whose ``sources`` map is a literal: each value a
+        repository path, as a string or as ``ROOT / "path"``.
+
+    Returns
+    -------
+    dict
+        Lane name to repository path.
+    """
+    tree = ast.parse(script.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign) or not isinstance(node.value, ast.Dict):
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "sources" for target in node.targets
+        ):
+            continue
+        lanes: dict[str, str] = {}
+        for key, value in zip(node.value.keys, node.value.values, strict=True):
+            if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Div):
+                value = value.right
+            assert isinstance(key, ast.Constant) and isinstance(value, ast.Constant)
+            lanes[str(key.value)] = str(value.value)
+        return lanes
+    raise AssertionError(f"{script} assigns no literal sources map")
+
+
+@pytest.mark.parametrize("artefact", sorted(LANE_KEYED_RECORDS))
+def test_a_lane_keyed_record_is_bound_by_the_paths_its_script_hashed(artefact: str) -> None:
+    """The manifest maps each lane digest to the file the script hashed for that lane.
+
+    Such a record names no path itself, so the gate's map is what binds it to
+    its sources: the gate checks the digests at the record's commit, and the
+    benchmark coverage census reads the same map for the sources now.
+    """
+    root = Path(__file__).resolve().parents[2]
+    script, field = LANE_KEYED_RECORDS[artefact]
+    manifest = json.loads(
+        (root / "benchmarks" / "benchmark_regression_gates.json").read_text(encoding="utf-8")
+    )
+    gates = [gate for gate in manifest["gates"] if gate["artefact"] == artefact]
+    assert len(gates) == 1
+    lanes = _script_lane_paths(root / script)
+    assert gates[0]["source_hashes"] == {path: f"{field}.{lane}" for lane, path in lanes.items()}
+    record = json.loads((root / artefact).read_text(encoding="utf-8"))
+    assert set(record[field]) == set(lanes)
+
+
+#: The MNIST accuracy record, which names its checkpoint and training log by
+#: path beside their digests.
+MNIST_RECORD = "benchmarks/results/mnist_conv_accuracy_reproducibility.json"
+
+
+def test_the_mnist_record_is_bound_by_the_files_it_names() -> None:
+    """The manifest maps the checkpoint's and the log's digests to the paths the record gives."""
+    root = Path(__file__).resolve().parents[2]
+    manifest = json.loads(
+        (root / "benchmarks" / "benchmark_regression_gates.json").read_text(encoding="utf-8")
+    )
+    gates = [gate for gate in manifest["gates"] if gate["artefact"] == MNIST_RECORD]
+    assert len(gates) == 1
+    record = json.loads((root / MNIST_RECORD).read_text(encoding="utf-8"))
+    assert gates[0]["source_hashes"] == {
+        record["checkpoint"]["path"]: "checkpoint.sha256",
+        record["training_log"]["path"]: "training_log.sha256",
+    }
+
+
+def test_the_tracked_report_passes_the_gates_that_map_digests() -> None:
+    """The tracked report evaluates the four gates and holds no failure of theirs."""
+    root = Path(__file__).resolve().parents[2]
+    report = json.loads((root / TRACKED_REPORT).read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (root / "benchmarks" / "benchmark_regression_gates.json").read_text(encoding="utf-8")
+    )
+    artefacts = {*LANE_KEYED_RECORDS, MNIST_RECORD}
+    ids = {gate["id"] for gate in manifest["gates"] if gate["artefact"] in artefacts}
+    evaluated = {entry["id"] for entry in report["evaluated_gates"]}
+    assert len(ids) == len(artefacts)
+    assert ids <= evaluated
+    assert not [failure for failure in report["failures"] if failure["gate_id"] in ids]

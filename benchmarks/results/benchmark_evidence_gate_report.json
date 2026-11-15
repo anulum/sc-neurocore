@@ -340,11 +340,27 @@
     {
       "artefact": "benchmarks/results/local_rust_2026-10-29_compound_ir.json",
       "id": "compound-ir-public-compile"
+    },
+    {
+      "artefact": "benchmarks/results/bench_bertram_phantom.json",
+      "id": "bertram-phantom-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_glif_simulate.json",
+      "id": "glif-simulate-multibackend-source-binding"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_four_state_glif.json",
+      "id": "sc-four-state-glif-multibackend-source-binding"
+    },
+    {
+      "artefact": "benchmarks/results/mnist_conv_accuracy_reproducibility.json",
+      "id": "mnist-conv-accuracy-committed-run"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 85,
+  "gate_count": 89,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1",

@@ -6352,6 +6352,39 @@
         "src/sc_neurocore/hdl/primitives/sc_softmax_attention.v": "source_sha256.src/sc_neurocore/hdl/primitives/sc_softmax_attention.v",
         "src/sc_neurocore/hdl/resources.py": "source_sha256.src/sc_neurocore/hdl/resources.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_bertram_phantom.json",
+      "description": "Bertram phantom burster event parity across five runtimes; the record keys its source digests by lane, and this map names their paths.",
+      "expected_values": {"benchmark": "Bertram et al. 2000 four-state phantom burster", "evidence_class": "local_regression_non_isolated", "hardware_measurement_claimed": false, "production_speed_claim": false, "repeats": 3, "steps": 10000},
+      "id": "bertram-phantom-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.events", "backend_summary.rust.events", "backend_summary.go.events", "backend_summary.julia.events", "backend_summary.mojo.events"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns", "backend_summary.rust.median_ns", "backend_summary.go.median_ns", "backend_summary.julia.median_ns", "backend_summary.mojo.median_ns", "max_native_state_error"],
+      "source_hashes": {"src/sc_neurocore/accel/go/services/bertram_phantom.go": "source_hashes.go", "src/sc_neurocore/accel/julia/neurons/bertram_phantom.jl": "source_hashes.julia", "src/sc_neurocore/accel/mojo/kernels/bertram_phantom.mojo": "source_hashes.mojo", "src/sc_neurocore/accel/rust/safety/bertram_phantom.rs": "source_hashes.rust", "src/sc_neurocore/neurons/models/bertram_phantom.py": "source_hashes.python"}
+    },
+    {
+      "artefact": "benchmarks/results/bench_glif_simulate.json",
+      "description": "GLIF simulation across five runtimes: the workload and the six sources the record keys by lane. Its per-lane results form a list, which gate paths do not address.",
+      "expected_values": {"benchmark": "glif_simulate", "workload.current": 30.0, "workload.n_steps": 2000000, "workload.repeats": 5},
+      "id": "glif-simulate-multibackend-source-binding",
+      "required_numbers": ["workload.current", "workload.n_steps", "workload.repeats"],
+      "source_hashes": {"engine/src/neurons/biophysical/glif.rs": "source_sha256.rust", "src/sc_neurocore/accel/go/neurons/glif/glif.go": "source_sha256.go", "src/sc_neurocore/accel/julia/neurons/glif.jl": "source_sha256.julia", "src/sc_neurocore/accel/mojo/neurons/glif.mojo": "source_sha256.mojo", "src/sc_neurocore/neurons/models/glif.py": "source_sha256.python", "src/sc_neurocore/neurons/reference_receipts/glif5_teeter_2018.json": "source_sha256.receipt"}
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_four_state_glif.json",
+      "description": "SC four-state GLIF simulation across five runtimes: the workload and the six sources the record keys by lane. Its per-lane results form a list, which gate paths do not address.",
+      "expected_values": {"benchmark": "sc_four_state_glif", "environment.hardware_measurement_claimed": false, "workload.current": 30.0, "workload.n_steps": 2000000, "workload.repeats": 3},
+      "id": "sc-four-state-glif-multibackend-source-binding",
+      "required_numbers": ["workload.current", "workload.n_steps", "workload.repeats"],
+      "source_hashes": {"engine/src/neurons/biophysical/sc_four_state_glif.rs": "source_sha256.rust", "src/sc_neurocore/accel/go/neurons/sc_four_state_glif/sc_four_state_glif.go": "source_sha256.go", "src/sc_neurocore/accel/julia/neurons/sc_four_state_glif.jl": "source_sha256.julia", "src/sc_neurocore/accel/mojo/neurons/sc_four_state_glif.mojo": "source_sha256.mojo", "src/sc_neurocore/neurons/models/sc_four_state_glif.py": "source_sha256.python", "src/sc_neurocore/neurons/reference_receipts/sc_four_state_glif_project.json": "source_sha256.receipt"}
+    },
+    {
+      "artefact": "benchmarks/results/mnist_conv_accuracy_reproducibility.json",
+      "description": "ConvSpikingNet MNIST test accuracy of the committed training run, bound to the checkpoint and training log the record names by path and digest.",
+      "expected_values": {"benchmark_id": "mnist_conv_spiking_net_99_49_2026_03_26", "dataset.test_examples": 10000, "result.best_test_accuracy_percent": 99.49, "result.claim_boundary": "committed_training_log_and_checkpoint"},
+      "id": "mnist-conv-accuracy-committed-run",
+      "required_numbers": ["result.best_test_accuracy_percent", "result.final_test_accuracy_percent"],
+      "source_hashes": {"examples/mnist_conv_train/results/conv_spiking_net_best.pt": "checkpoint.sha256", "examples/mnist_conv_train/results/mnist_training.log": "training_log.sha256"}
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

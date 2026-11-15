@@ -1,8 +1,8 @@
 {
   "all_record_currency_totals": {
-    "current": 40,
-    "outdated": 100,
-    "unbound": 178
+    "current": 42,
+    "outdated": 102,
+    "unbound": 174
   },
   "all_records": 318,
   "attribution_totals": {
@@ -2318,6 +2318,10 @@
     },
     {
       "currency": "current",
+      "name": "bench_bertram_phantom.json"
+    },
+    {
+      "currency": "current",
       "name": "bench_bioware.json"
     },
     {
@@ -2332,6 +2336,13 @@
     {
       "currency": "current",
       "name": "bench_function_call_domains.json"
+    },
+    {
+      "changed": [
+        "engine/src/neurons/biophysical/glif.rs"
+      ],
+      "currency": "outdated",
+      "name": "bench_glif_simulate.json"
     },
     {
       "changed": [
@@ -2402,6 +2413,13 @@
     {
       "currency": "current",
       "name": "bench_sc_compte_wm_ring16.json"
+    },
+    {
+      "changed": [
+        "engine/src/neurons/biophysical/sc_four_state_glif.rs"
+      ],
+      "currency": "outdated",
+      "name": "bench_sc_four_state_glif.json"
     },
     {
       "changed": [
@@ -2849,6 +2867,10 @@
       ],
       "currency": "outdated",
       "name": "local_rust_2026-10-29_compound_ir.json"
+    },
+    {
+      "currency": "current",
+      "name": "mnist_conv_accuracy_reproducibility.json"
     }
   ]
 }

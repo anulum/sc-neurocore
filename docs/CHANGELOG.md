@@ -314,6 +314,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The benchmark evidence gate binds four more records whose digests name no
+  path it reads. Three key their source digests by runtime lane, as the
+  Benda-Herz record does: the Bertram phantom burster
+  (`bench_bertram_phantom.json`, event parity across five runtimes) and the
+  two GLIF simulations (`bench_glif_simulate.json`,
+  `bench_sc_four_state_glif.json`, their workloads); each lane's digest is
+  mapped to the file its benchmark script hashed. The MNIST accuracy record
+  (`mnist_conv_accuracy_reproducibility.json`) is bound to the checkpoint and
+  training log it names by path. At each record's commit every digest equals
+  its file; the tracked gate report counts 89 gates. The benchmark coverage
+  census reads the same maps: the Bertram and MNIST records are current, and
+  each GLIF record is outdated by its Rust source.
+
 - Move the Mojo environment lock to the newest compatible builds of click
   (8.5.1), platformdirs (4.14.5), python-dateutil (4.0.0, which no longer
   needs six), pyzmq (27.3.0), tornado (6.6.1) and libuuid (build 1); Mojo
