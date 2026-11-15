@@ -34464,8 +34464,9 @@ Integrator options:
 Motor unit — alpha motor neuron + muscle fibre.
 
 Each spike triggers a muscle twitch. Force output is summation of
-overlapping twitches (rate coding). Twitch modelled as critically-
-damped second-order: f(t) = A · (t/τ) · exp(1 - t/τ).
+overlapping twitches (rate coding). The twitch is first-order: each
+spike adds ``twitch_amp`` to the force (capped at 1), which then decays
+with ``tau_twitch``.
 
 Reference: Fuglevand et al. (1993) J Neurophysiol 70(6);
 Heckman & Enoka (2012) Compr Physiol 2(4).
@@ -34475,7 +34476,9 @@ Heckman & Enoka (2012) Compr Physiol 2(4).
 - **fast**()
   - Fast motor unit (type FF): large, fatigable, high force.
 - **step**(drive)
+  - Advance one step with the descending drive.
 - **reset**()
+  - Return ``v`` to ``v_rest`` and clear the adaptation and the force.
 
 ---
 

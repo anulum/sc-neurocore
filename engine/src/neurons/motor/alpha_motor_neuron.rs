@@ -8,6 +8,8 @@
 
 //! Alpha motor-neuron biophysics and plateau-potential dynamics.
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// Alpha motor neuron — spinal cord, innervates extrafusal muscle fibres.
@@ -28,33 +30,61 @@ use crate::neurons::biophysical::safe_rate;
 /// Heckman & Enoka, Compr. Physiol. 2(4), 2012.
 #[derive(Clone, Debug)]
 pub struct AlphaMotorNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); Wang-Buzsáki kinetics scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); kinetics scaled by
+    /// `phi`.
     pub n: f64,
-    pub m_pic: f64,  // PIC (L-type Ca²⁺) activation
-    pub h_pic: f64,  // PIC slow inactivation (tau ~200 ms)
-    pub ca: f64,     // Intracellular Ca²⁺ (µM)
-    pub ca_buf: f64, // Bound Ca²⁺ (buffered fraction)
+    /// PIC (L-type Ca²⁺) activation gate (dimensionless); time constant 50 ms, centred at -40 mV.
+    pub m_pic: f64,
+    /// PIC slow inactivation gate (dimensionless), held in [0, 1]; time constant 200 to 300 ms
+    /// (300 ms at -40 mV).
+    pub h_pic: f64,
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
+    /// Buffered (bound) Ca²⁺ (µM); it takes the part of each calcium entry that `buf_ratio`
+    /// does not leave free, and decays with `5 * tau_ca`.
+    pub ca_buf: f64,
     // Conductances (mS/cm²)
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
-    pub g_pic: f64, // Persistent inward current
-    pub g_ahp: f64, // Ca²⁺-dependent K⁺ (AHP)
+    /// Persistent inward calcium current conductance (mS/cm^2).
+    pub g_pic: f64,
+    /// Calcium-dependent potassium (afterhyperpolarisation) conductance; its current is
+    /// driven by `v - e_k` (mS/cm^2).
+    pub g_ahp: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials (mV)
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor for gating kinetics (dimensionless).
     pub phi: f64,
-    pub tau_ca: f64,    // Ca²⁺ decay (ms)
-    pub buf_ratio: f64, // Buffering ratio (fraction of Ca²⁺ bound)
+    /// Intracellular calcium decay time constant (ms).
+    pub tau_ca: f64,
+    /// Free fraction of each calcium entry; the rest is buffered (dimensionless).
+    pub buf_ratio: f64,
+    /// Sub-step (ms). Each call runs `floor(0.5 / max(dt, 0.001))` sub-steps, about 0.5 ms;
+    /// a `dt` above 0.5 ms advances nothing.
     pub dt: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
 }
 
 impl AlphaMotorNeuron {
+    /// Create a neuron at -65 mV with the default gates and parameters and `dt` = 0.01 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -82,6 +112,19 @@ impl AlphaMotorNeuron {
         }
     }
 
+    /// Advance about 0.5 ms of forward-Euler sub-steps (see `dt`) with the input `current`
+    /// (uA/cm^2); return 1 when `v` crosses `v_threshold` upwards between the start and the
+    /// end of the call, else 0.
+    ///
+    /// Each sub-step does the following:
+    /// - updates `h`, `n` and the PIC gates (activation τ 50 ms, centred at -40 mV; slow
+    ///   inactivation) from the present `v`;
+    /// - computes the calcium entry, `0.001 * max(-i_pic, 0)` plus 0.02 above -10 mV, which
+    ///   adds the `buf_ratio` part to `ca` and the rest to `ca_buf` (decay `5 * tau_ca`);
+    /// - drives the AHP with `c^2 / (c^2 + 0.25)`, where `c = ca + 0.01 * ca_buf`;
+    /// - advances `v` with the five currents.
+    ///
+    /// `v` is never reset. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let n_sub = (0.5 / self.dt.max(0.001)) as usize;
@@ -99,7 +142,7 @@ impl AlphaMotorNeuron {
             self.n += self.phi * (an * (1.0 - self.n) - bn * self.n) * self.dt;
 
             // PIC (L-type Ca²⁺): activation + slow inactivation
-            // Activation: m_pic, tau ~50 ms, half-act -50 mV
+            // Activation: m_pic, tau ~50 ms, half-act -40 mV
             let m_pic_inf = 1.0 / (1.0 + (-(self.v + 40.0) / 5.0).exp());
             self.m_pic += (m_pic_inf - self.m_pic) / 50.0 * self.dt;
             // Inactivation: h_pic, tau ~200 ms, half-inact -40 mV
@@ -151,6 +194,7 @@ impl AlphaMotorNeuron {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

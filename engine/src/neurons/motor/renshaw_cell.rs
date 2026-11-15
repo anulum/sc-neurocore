@@ -8,6 +8,8 @@
 
 //! Renshaw-cell recurrent-inhibition dynamics.
 
+#![deny(missing_docs)]
+
 use crate::neurons::biophysical::safe_rate;
 
 /// Renshaw cell — spinal inhibitory interneuron for recurrent inhibition.
@@ -23,25 +25,44 @@ use crate::neurons::biophysical::safe_rate;
 /// Renshaw 1941 (discovery); Windhorst, Prog. Neurobiol. 46(5), 1996.
 #[derive(Clone, Debug)]
 pub struct RenshawCell {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Sodium inactivation gate (dimensionless); Wang-Buzsáki rates scaled by `phi`.
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless); rates scaled by `phi`.
     pub n: f64,
+    /// Adaptation gate in `[0, 1]`; it relaxes with `tau_adapt` towards a sigmoid centred at
+    /// -30 mV.
     pub adapt: f64,
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal spike-frequency-adaptation conductance (mS/cm^2).
     pub g_adapt: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Temperature scaling factor of the gating kinetics (dimensionless).
     pub phi: f64,
+    /// Spike-frequency-adaptation time constant (ms).
     pub tau_adapt: f64,
+    /// Sub-step (ms). Each call runs `max(floor(0.5 / max(dt, 0.001)), 1)` sub-steps, about
+    /// 0.5 ms for `dt` up to 0.5 ms.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl RenshawCell {
+    /// Create a cell at -65 mV with the default gates and parameters and `dt` = 0.01 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -125,6 +146,15 @@ impl RenshawCell {
             && self.dt > 0.0
     }
 
+    /// Advance about 0.5 ms of exponential sub-steps (see `dt`) with the input `current`
+    /// (uA/cm^2); return 1 when `v` crosses `v_threshold` upwards between the start and the
+    /// end of the call, else 0.
+    ///
+    /// Each sub-step relaxes `h`, `n` and `adapt` exactly from the present `v`. It then
+    /// relaxes `v` exactly towards the conductance-weighted reversal potential, with the
+    /// sodium (`m_inf^3 h`), potassium (`n^4`), adaptation and leak conductances held over
+    /// the sub-step. A non-finite input, an invalid state or parameter, or a sub-step result
+    /// outside the voltage or gate range returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !current.is_finite() || !self.valid_state() {
             return 0;
@@ -198,6 +228,8 @@ impl RenshawCell {
         }
     }
 
+    /// Restore the state (`v`, `h`, `n`, `adapt`) to its initial values; the parameters are
+    /// kept.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.8;

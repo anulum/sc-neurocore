@@ -79,7 +79,7 @@ range = [
 [parameters.g_ahp]
 default = 3.0
 unit = "mS/cm^2"
-meaning = "calcium-dependent afterhyperpolarisation conductance"
+meaning = "calcium-dependent potassium (afterhyperpolarisation) conductance"
 range = [
     0.0,
     20.0,
@@ -160,7 +160,7 @@ range = [
 [parameters.buf_ratio]
 default = 0.003
 unit = "1"
-meaning = "free-calcium buffering fraction"
+meaning = "free fraction of each calcium entry; the rest is buffered"
 range = [
     0.0,
     1.0,

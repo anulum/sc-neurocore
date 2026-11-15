@@ -8,37 +8,57 @@
 
 //! Motor-unit neural drive and muscle-force dynamics.
 
+#![deny(missing_docs)]
+
 /// Motor unit — functional unit of motor control: alpha motor neuron + muscle fibre.
 ///
 /// Each spike from the embedded LIF motor neuron triggers a muscle twitch.
 /// Force output is the summation of overlapping twitches (rate coding).
 /// Higher firing rates → more twitch overlap → higher force (tetanus).
 ///
-/// Muscle twitch modelled as a critically-damped second-order system:
-/// f(t) = A * (t/τ) * exp(1 - t/τ), giving a smooth rise-then-decay.
+/// The twitch is first-order: each spike adds `twitch_amp` to the force (capped at 1),
+/// which then decays with `tau_twitch`.
 ///
 /// Fuglevand et al., J. Neurophysiol. 70(6), 1993.
 /// Heckman & Enoka, Compr. Physiol. 2(4), 2012.
 #[derive(Clone, Debug)]
 pub struct MotorUnit {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Membrane potential reset to after a spike (mV).
     pub v_reset: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
-    pub tau_m: f64, // Membrane time constant (ms)
+    /// Membrane time constant (ms).
+    pub tau_m: f64,
+    /// Adaptation (mV), subtracted from the drive; it relaxes towards
+    /// `a_adapt * (v - v_rest)`.
     pub adapt: f64,
+    /// Spike-frequency-adaptation time constant (ms).
     pub tau_adapt: f64,
+    /// Subthreshold adaptation coupling; `adapt` relaxes towards `a_adapt * (v - v_rest)`
+    /// (dimensionless).
     pub a_adapt: f64,
+    /// Gain applied to the injected input current (dimensionless).
     pub gain: f64,
     // Muscle fibre
-    pub force: f64,       // Current force output (normalised)
-    pub twitch_amp: f64,  // Peak twitch amplitude
-    pub tau_twitch: f64,  // Twitch contraction time (ms)
-    pub force_decay: f64, // Force decay per step
+    /// Current force output (normalised).
+    pub force: f64,
+    /// Normalised peak twitch force of the motor unit (dimensionless).
+    pub twitch_amp: f64,
+    /// Decay time constant of the force after each twitch (ms).
+    pub tau_twitch: f64,
+    /// Per-step decay factor of the accumulated force (dimensionless). The step reads it only
+    /// in its validity check (it must be finite); the force decays with `tau_twitch`.
+    pub force_decay: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl MotorUnit {
+    /// Create a slow (type S) motor unit, the same as `slow`.
     pub fn new() -> Self {
         Self::slow()
     }
@@ -121,6 +141,13 @@ impl MotorUnit {
     }
 
     /// Step with descending drive (≥ 0). Returns spike (1/0). Force accessible via `.force`.
+    ///
+    /// The force first decays by `exp(-dt / tau_twitch)`. `v` relaxes exactly towards
+    /// `v_rest + gain * max(drive, 0) - adapt` with `tau_m`; then `adapt` relaxes towards
+    /// `a_adapt * (v - v_rest)` of that new `v`, before any reset, with `tau_adapt`. Reaching
+    /// `v_threshold` sets `v` to `v_reset` and adds `twitch_amp` to the force, capped at 1.
+    /// An invalid state or parameter, a non-finite drive, or a candidate outside the voltage
+    /// or force range returns 0 and leaves the state unchanged.
     pub fn step(&mut self, drive: f64) -> i32 {
         if !drive.is_finite() || !self.valid_state() {
             return 0;
@@ -162,6 +189,7 @@ impl MotorUnit {
         spike
     }
 
+    /// Return `v` to `v_rest` and clear the adaptation and the force; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.adapt = 0.0;

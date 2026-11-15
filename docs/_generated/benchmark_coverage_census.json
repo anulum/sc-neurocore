@@ -2211,7 +2211,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "engine/Cargo.toml"
+            "engine/Cargo.toml",
+            "engine/src/neurons/motor/upper_motor_neuron.rs"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_upper_motor_neuron_exp_euler.json",

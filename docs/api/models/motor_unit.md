@@ -42,19 +42,19 @@ $$\tau_{adapt} \frac{d(adapt)}{dt} = a_{adapt}(V - V_{rest}) - adapt$$
 
 ### Exact numerical update
 
-The runtime uses the closed-form LIF membrane relaxation for fixed drive and adaptation, then updates adaptation by closed-form first-order relaxation toward (V - V_{rest})1 Candidate states are committed transactionally only if voltage, force, and parameters remain finite and physiological. Invalid, infinite, or excess drive returns no spike and preserves the pre-step state.
+The runtime relaxes $V$ exactly over `dt` towards $V_{rest} + g \cdot \max(drive, 0) - adapt$, then relaxes $adapt$ exactly towards $a_{adapt}(V - V_{rest})$ of the new $V$, before any reset. A candidate state is committed only if the voltage stays in [-150, 100] mV, the force in [0, 1] and every parameter is valid. A non-finite drive, an invalid state or a candidate outside these ranges returns no spike and leaves the state unchanged.
 
 ### Muscle force model
 
-On each spike:
-
-$$force \leftarrow \min(force + A_{twitch}, 1.0)$$
-
-Between spikes:
+On every step the force first decays:
 
 $$force \leftarrow force \cdot \exp(-dt / \tau_{twitch})$$
 
-where $A_{twitch}$ is the peak twitch amplitude and $\tau_{twitch}$ is the contraction time.
+On a spike it then gains one twitch:
+
+$$force \leftarrow \min(force + A_{twitch}, 1.0)$$
+
+where $A_{twitch}$ is the peak twitch amplitude and $\tau_{twitch}$ is the decay time constant of the force.
 
 ---
 
@@ -73,7 +73,7 @@ where $A_{twitch}$ is the peak twitch amplitude and $\tau_{twitch}$ is the contr
 | `gain` | 1.0 | 1.0 | — | Input scaling |
 | `force` | 0.0 | 0.0 | — | Normalised force [0, 1] |
 | `twitch_amp` | 0.05 | 0.3 | — | Peak twitch amplitude |
-| `tau_twitch` | 90.0 | 30.0 | ms | Contraction time |
+| `tau_twitch` | 90.0 | 30.0 | ms | Decay time constant of the force |
 | `dt` | 0.5 | 0.5 | ms | Integration timestep |
 
 ---

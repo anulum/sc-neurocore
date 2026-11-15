@@ -479,6 +479,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 5 motor-system models (alpha and gamma motor neurons, motor
+  unit, Renshaw cell, upper motor neuron) are documented in full, each file
+  read against its code: the alpha neuron's sub-steps with its persistent
+  inward current, calcium buffering and afterhyperpolarisation, the exact
+  relaxations of the Renshaw cell, the upper motor neuron's four exponential
+  sub-steps and its clamp of `v` to [-150, 100] mV, and what each reset
+  restores. Corrected by reading: the motor unit's twitch is first-order in
+  both runtimes, not a critically damped second-order response (the Rust
+  and Python docstrings now say so); its descriptor's `a_adapt` is a
+  subthreshold coupling, not a per-spike increment in mV, and its
+  `tau_twitch` is the decay time constant of the force; the alpha neuron's
+  `buf_ratio` is the free fraction of entering calcium, its
+  afterhyperpolarisation conductance is a potassium one, and its persistent
+  inward current is centred at -40 mV.
 - The engine's 9 hardware-emulator models (Akida, BrainScaleS AdEx, DPI,
   Loihi 2, Loihi CUBA, Neurogrid, SpiNNaker 2, SpiNNaker LIF, TrueNorth) are
   documented in full, each file read against its code: the integer update

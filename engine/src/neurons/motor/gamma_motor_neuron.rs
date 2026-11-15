@@ -8,32 +8,48 @@
 
 //! Gamma motor-neuron fusimotor-drive dynamics.
 
+#![deny(missing_docs)]
+
 /// Gamma motor neuron — innervates intrafusal fibres of muscle spindles.
 ///
 /// Regulates proprioceptive sensitivity by adjusting spindle tension.
 /// Smaller soma than alpha, lower firing rates (5-30 Hz), no PIC.
 /// Simple LIF with spike-frequency adaptation (slow K+ current).
-/// Two subtypes: dynamic (bag1, velocity-sensitive) and static
-/// (bag2/chain, length-sensitive) — controlled by `dynamic` flag.
+/// Two subtypes, labelled by the `dynamic` flag: dynamic (bag1,
+/// velocity-sensitive) and static (bag2/chain, length-sensitive). They
+/// differ through their time constants and adaptation coupling.
 ///
 /// Prochazka & Hulliger, Prog. Brain Res. 80, 1989.
 /// Taylor et al., J. Physiol. 519(3), 1999.
 #[derive(Clone, Debug)]
 pub struct GammaMotorNeuron {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Resting membrane potential (mV).
     pub v_rest: f64,
+    /// Post-spike reset potential (mV).
     pub v_reset: f64,
+    /// Spike-detection threshold (mV).
     pub v_threshold: f64,
+    /// Membrane time constant (ms).
     pub tau: f64,
-    pub adapt: f64,     // Slow adaptation current
-    pub tau_adapt: f64, // Adaptation time constant (ms)
-    pub a_adapt: f64,   // Adaptation coupling strength
-    pub gain: f64,      // Input gain (fusimotor drive → mV)
-    pub dynamic: bool,  // true = dynamic (bag1), false = static (bag2/chain)
+    /// Adaptation (mV), subtracted from the drive; it relaxes towards `a_adapt * (v - v_rest)`.
+    pub adapt: f64,
+    /// Spike-frequency adaptation time constant (ms).
+    pub tau_adapt: f64,
+    /// Subthreshold adaptation coupling strength (dimensionless).
+    pub a_adapt: f64,
+    /// Gain from the fusimotor drive to mV in the target potential (mV per drive unit).
+    pub gain: f64,
+    /// True = dynamic (bag1), false = static (bag2/chain). The step does not read it; the
+    /// two subtypes differ through `tau`, `tau_adapt` and `a_adapt`.
+    pub dynamic: bool,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl GammaMotorNeuron {
+    /// Create a dynamic gamma motor neuron, the same as `dynamic`.
     pub fn new() -> Self {
         Self::dynamic()
     }
@@ -67,6 +83,12 @@ impl GammaMotorNeuron {
     }
 
     /// Step with fusimotor drive (arbitrary units, ≥ 0). Returns spike (1/0).
+    ///
+    /// `v` relaxes exactly over `dt` towards `v_rest + gain * max(drive, 0) - adapt` with
+    /// `tau`. Then `adapt` relaxes towards `a_adapt * (v - v_rest)`, using the new `v`, with
+    /// `tau_adapt`. Reaching `v_threshold` sets `v` to `v_reset`. An invalid state or
+    /// parameter, a non-finite drive or a non-finite result returns 0 and leaves the state
+    /// unchanged.
     pub fn step(&mut self, drive: f64) -> i32 {
         if !self.is_valid() || !drive.is_finite() {
             return 0;
@@ -93,6 +115,7 @@ impl GammaMotorNeuron {
         }
     }
 
+    /// Return `v` to `v_rest` and clear the adaptation; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.adapt = 0.0;

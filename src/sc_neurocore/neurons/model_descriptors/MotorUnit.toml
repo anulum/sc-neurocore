@@ -89,8 +89,8 @@ range = [
 
 [parameters.a_adapt]
 default = 0.2
-unit = "mV"
-meaning = "voltage-equivalent adaptation increment added at each spike"
+unit = "1"
+meaning = "subthreshold adaptation coupling; adapt relaxes towards a_adapt times (v - v_rest)"
 range = [
     0.0,
     20.0,
@@ -117,7 +117,7 @@ range = [
 [parameters.tau_twitch]
 default = 90.0
 unit = "ms"
-meaning = "contraction time of the twitch force response"
+meaning = "decay time constant of the force after each twitch"
 range = [
     1.0,
     200.0,

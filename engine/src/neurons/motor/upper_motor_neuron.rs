@@ -8,6 +8,8 @@
 
 //! Upper motor-neuron corticospinal dynamics.
 
+#![deny(missing_docs)]
+
 /// Upper motor neuron — layer 5 pyramidal cell, corticospinal projection.
 ///
 /// Biophysics: Pospischil 2008 RS parameterisation (Na+, K+, M-current)
@@ -19,29 +21,51 @@
 /// Larkum, Trends Neurosci. 36(3), 2013 (dendritic Ca2+ spikes).
 #[derive(Clone, Debug)]
 pub struct UpperMotorNeuron {
+    /// Membrane potential (mV), kept within `[-150, 100]`.
     pub v: f64,
+    /// Sodium activation gate (dimensionless); Pospischil kinetics with V_T = -56.2 mV.
     pub m: f64,
+    /// Sodium inactivation gate (dimensionless).
     pub h: f64,
+    /// Delayed-rectifier potassium activation gate (dimensionless).
     pub n: f64,
-    pub p: f64, // M-current (Kv7) activation
-    pub s: f64, // High-threshold Ca2+ activation
+    /// M-current (Kv7) activation gate (dimensionless); a sigmoid centred at -35 mV with a
+    /// voltage-dependent time constant.
+    pub p: f64,
+    /// High-threshold Ca²⁺ activation gate (dimensionless); a sigmoid centred at -20 mV with
+    /// time constant 10 ms.
+    pub s: f64,
     // Conductances
+    /// Maximal sodium conductance (mS/cm^2).
     pub g_na: f64,
+    /// Maximal delayed-rectifier potassium conductance (mS/cm^2).
     pub g_k: f64,
+    /// Maximal slow non-inactivating (M-type) potassium conductance (mS/cm^2).
     pub g_m: f64,
+    /// Maximal calcium conductance (mS/cm^2).
     pub g_ca: f64,
+    /// Maximal leak conductance (mS/cm^2).
     pub g_l: f64,
     // Reversal potentials
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Exponential sub-step (ms); each call takes four, so it covers `4 * dt`.
     pub dt: f64,
+    /// Voltage at which a spike is registered (mV).
     pub v_threshold: f64,
 }
 
 impl UpperMotorNeuron {
+    /// Create a neuron at -70 mV with the default gates and parameters and `dt` = 0.025 ms
+    /// (0.1 ms per call).
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -194,6 +218,14 @@ impl UpperMotorNeuron {
         ))
     }
 
+    /// Advance four exponential sub-steps of `dt` with the input `current` (uA/cm^2); return
+    /// 1 when `v` crosses `v_threshold` upwards between the start and the end of the call,
+    /// else 0.
+    ///
+    /// Each sub-step relaxes the five gates exactly from the present `v`. It then relaxes `v`
+    /// exactly towards the conductance-weighted reversal potential, with the conductances
+    /// held, and clamps `v` to `[-150, 100]` mV. An invalid configuration, state or input,
+    /// or a non-finite sub-step result, returns 0 and leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_configuration() || !self.valid_state() || !current.is_finite() {
             return 0;
@@ -215,6 +247,7 @@ impl UpperMotorNeuron {
         }
     }
 
+    /// Restore the six states to their initial values; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -70.0;
         self.m = 0.05;

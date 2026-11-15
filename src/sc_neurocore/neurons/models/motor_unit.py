@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Motor Unit (Alpha Motor Neuron + Muscle Fibre)
 
+"""Motor unit: an LIF alpha motor neuron driving a first-order muscle twitch."""
+
 from __future__ import annotations
 
 import math
@@ -35,8 +37,9 @@ class MotorUnit:
     """Motor unit — alpha motor neuron + muscle fibre.
 
     Each spike triggers a muscle twitch. Force output is summation of
-    overlapping twitches (rate coding). Twitch modelled as critically-
-    damped second-order: f(t) = A · (t/τ) · exp(1 - t/τ).
+    overlapping twitches (rate coding). The twitch is first-order: each
+    spike adds ``twitch_amp`` to the force (capped at 1), which then decays
+    with ``tau_twitch``.
 
     Reference: Fuglevand et al. (1993) J Neurophysiol 70(6);
     Heckman & Enoka (2012) Compr Physiol 2(4).
@@ -101,6 +104,26 @@ class MotorUnit:
         )
 
     def step(self, drive: float = 0.0) -> int:
+        """Advance one step with the descending drive.
+
+        The force first decays by ``exp(-dt / tau_twitch)``. ``v`` relaxes exactly
+        towards ``v_rest + gain * max(drive, 0) - adapt`` with ``tau_m``; then
+        ``adapt`` relaxes towards ``a_adapt * (v - v_rest)`` of that new ``v``,
+        before any reset, with ``tau_adapt``. Reaching ``v_threshold`` sets ``v``
+        to ``v_reset`` and adds ``twitch_amp`` to the force, capped at 1.
+
+        Parameters
+        ----------
+        drive : float, optional
+            Descending drive; negative values count as 0. Default 0.
+
+        Returns
+        -------
+        int
+            1 on a spike, else 0. A non-finite drive, an invalid state, or a
+            candidate outside the voltage or force range also returns 0 and
+            leaves the state unchanged.
+        """
         if not math.isfinite(drive) or not self._valid_state():
             return 0
 
@@ -133,6 +156,7 @@ class MotorUnit:
         return 0
 
     def reset(self) -> None:
+        """Return ``v`` to ``v_rest`` and clear the adaptation and the force."""
         self.v = self.v_rest
         self.adapt = 0.0
         self.force = 0.0
