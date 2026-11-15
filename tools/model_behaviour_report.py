@@ -13,7 +13,9 @@ A model descriptor may state behaviour cases: what the model does at a named
 drive, in a form that can fail (an interval with both ends, or a contrast with
 a least margin). This tool runs them. Every case is run through the model's
 public class, the code a user runs, from a newly built model, with the case's
-constant inputs passed by name to ``step``.
+constant inputs passed by name to ``step``. A case that sets parameters runs a
+model built with them, for both drives of a contrast, so whether it was
+exercised is judged on that model.
 
 Each case is reported with what was observed, whether it held, and whether it
 was *exercised*: an interval on the spike count is exercised when at least one
@@ -30,7 +32,8 @@ starting value, a contrast when it held. A model is then in one state:
 ``invalid``
     a case could not be run: it names an input the model's step does not take
     or leaves a required one out, its state variable is not held by the model
-    or is not one finite number, the step raised an error at the drive, a
+    or is not one finite number, the model refused to be built with the
+    case's parameters, the step raised an error at the drive, a
     spike count was asked of a step that returned something other than 0 or 1
     (a truth value counts as one of them), or it asks for more than
     :data:`MAX_CASE_STEPS` steps.
@@ -46,11 +49,11 @@ a model whose step takes a vector, or requires a truth value or a whole
 number, cannot be driven. A spike count needs a step that returns 0 or 1; a model whose step
 returns a rate or several values can state cases on its state variables only.
 
-Each case is written into the report as stated (steps, inputs, bounds or the
-reference drive and margin) beside what was observed. Each model that states
-cases carries ``cases_sha256``, the SHA-256 of its cases as parsed, in the
-descriptor's order: the contract digest of a receipt does not cover the cases,
-so this digest is what ties a result to the text that was run.
+Each case is written into the report as stated (steps, inputs, the parameters
+it sets, bounds or the reference drive and margin) beside what was observed.
+Each model that states cases carries ``cases_sha256``, the SHA-256 of its cases
+as parsed, in the descriptor's order: the contract digest of a receipt does not
+cover the cases, so this digest is what ties a result to the text that was run.
 
 Observed spike counts are exact. A final state value is written with six
 significant digits, so the committed report is the same on every machine that
@@ -146,17 +149,34 @@ def _check_inputs(model: type[Any], inputs: Mapping[str, float]) -> None:
         raise _CannotRun(f"the step requires the input {missing}")
 
 
+def _built(model: type[Any], parameters: Mapping[str, int | float]) -> Any:
+    """Return a new model, built with the case's parameters when it sets any."""
+    if not parameters:
+        try:
+            return model()
+        except TypeError as error:
+            raise _CannotRun("the model cannot be built without arguments") from error
+    try:
+        return model(**parameters)
+    except Exception as error:  # the model's own validation: whatever it raises is reported
+        raise _CannotRun(
+            f"the model cannot be built with the parameters {sorted(parameters)}: "
+            f"{type(error).__name__}"
+        ) from error
+
+
 def _observe(
-    model: type[Any], inputs: Mapping[str, float], steps: int, observable: str
+    model: type[Any],
+    inputs: Mapping[str, float],
+    steps: int,
+    observable: str,
+    parameters: Mapping[str, int | float],
 ) -> tuple[float, bool]:
     """Run a new model for ``steps`` steps and return the observable and whether it moved."""
     if steps > MAX_CASE_STEPS:
         raise _CannotRun(f"the case asks for more than {MAX_CASE_STEPS} steps")
     _check_inputs(model, inputs)
-    try:
-        instance = model()
-    except TypeError as error:
-        raise _CannotRun("the model cannot be built without arguments") from error
+    instance = _built(model, parameters)
     state = observable[len(_STATE_PREFIX) :] if observable != BEHAVIOUR_SPIKE_OBSERVABLE else None
     start: object = None
     if state is not None:
@@ -228,6 +248,8 @@ def _evaluate_case(model: type[Any], case: BehaviourCase) -> dict[str, object]:
         "steps": case.steps,
         "inputs": dict(case.inputs),
     }
+    if case.parameters:
+        entry["parameters"] = dict(case.parameters)
     if case.bounds is not None:
         entry["bounds"] = [_stated(end, case.observable) for end in case.bounds]
     else:
@@ -235,13 +257,18 @@ def _evaluate_case(model: type[Any], case: BehaviourCase) -> dict[str, object]:
         entry["reference_inputs"] = dict(case.reference_inputs)
         entry["margin"] = _stated(case.margin, case.observable)
     try:
-        observed, moved = _observe(model, dict(case.inputs), case.steps, case.observable)
+        parameters = dict(case.parameters)
+        observed, moved = _observe(
+            model, dict(case.inputs), case.steps, case.observable, parameters
+        )
         entry["observed"] = as_written(observed, case.observable)
         if case.kind == "interval":
             entry["held"] = case_holds(case, observed)
             entry["exercised"] = moved
         else:
-            reference, _ = _observe(model, dict(case.reference_inputs), case.steps, case.observable)
+            reference, _ = _observe(
+                model, dict(case.reference_inputs), case.steps, case.observable, parameters
+            )
             entry["reference_observed"] = as_written(reference, case.observable)
             entry["held"] = case_holds(case, observed, reference)
             entry["exercised"] = entry["held"]
@@ -265,9 +292,18 @@ def cases_digest(cases: Sequence[BehaviourCase]) -> str:
     -------
     str
         The hexadecimal SHA-256 of the canonical JSON of the cases: every
-        field of every case, keys sorted, no white space.
+        field of every case, keys sorted, no white space. A case that sets
+        no parameter is read without that field, so the digest of a case
+        written before parameters could be set is what it was.
     """
-    stated = [dataclasses.asdict(case) for case in cases]
+    stated = [
+        {
+            field: value
+            for field, value in dataclasses.asdict(case).items()
+            if field != "parameters" or value
+        }
+        for case in cases
+    ]
     canonical = json.dumps(stated, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -288,8 +324,9 @@ def evaluate_model(model: type[Any], cases: Sequence[BehaviourCase]) -> dict[str
         ``state`` (one of :data:`MODEL_STATES`); ``cases_sha256``
         (:func:`cases_digest`, ``None`` without cases); and ``cases``, one
         entry per case: the case as stated (``name``, ``kind``,
-        ``observable``, ``steps``, ``inputs`` and ``bounds``, or
-        ``reference_inputs`` and ``margin``), then ``held``, ``exercised`` and
+        ``observable``, ``steps``, ``inputs``, ``parameters`` when it sets
+        any, and ``bounds``, or ``reference_inputs`` and ``margin``), then
+        ``held``, ``exercised`` and
         either ``observed`` (and ``reference_observed`` for a contrast) or the
         ``reason`` it could not be run.
     """

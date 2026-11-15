@@ -31157,6 +31157,11 @@ case in this form. An input written as a whole number without a point is
 kept as an integer, so a model whose step takes one can be driven; one
 written with a point is a float.
 
+A case may also set parameters of the model it runs, in either form; a
+contrast runs both drives with them. Each is a declared parameter with a
+declared range, set to a finite number within that range, both ends
+included. A state variable is not a parameter.
+
 Parameters
 ----------
 name:
@@ -31178,6 +31183,10 @@ reference_inputs:
     interval.
 margin:
     The least difference of a contrast; ``None`` for an interval.
+parameters:
+    The value of each parameter the case sets on the model it runs, as
+    ``(name, value)`` pairs sorted by name; empty when it sets none, so the
+    model runs as it is built by default.
 
 
 ### Class `ModelDescriptor`
@@ -31228,7 +31237,9 @@ ModelDescriptorError
     If any required identifier is missing, a controlled-vocabulary field
     carries an unknown value, or a behaviour case is malformed or could not
     fail (a bound with one end, an order without a margin, an observable the
-    descriptor does not declare).
+    descriptor does not declare), or sets a parameter it may not (one the
+    descriptor does not declare, a state variable, one without a declared
+    range, or a value outside that range).
 
 ---
 

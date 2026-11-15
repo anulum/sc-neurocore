@@ -18,6 +18,7 @@ schema is, and the catalogue's own report is built once.
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 from pathlib import Path
 import re
@@ -1077,3 +1078,49 @@ def test_the_script_runs_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(SystemExit) as finished:
         runpy.run_path(str(script), run_name="__main__")
     assert finished.value.code == 0
+
+
+_FIRES_WITH_A_GAIN_OF_A_HALF = BehaviourCase(
+    name="with a gain of a half, a current of 2 fires at every step",
+    kind="interval",
+    steps=100,
+    observable="spikes",
+    inputs=(("current", 2.0),),
+    bounds=(100, 100),
+    parameters=(("gain", 0.5),),
+)
+
+
+def test_a_case_s_parameters_are_set_on_the_schema_and_on_every_variant() -> None:
+    """The unchanged schema and each variant run with the case's gain on top of the schema's.
+
+    With the schema's own gain of a quarter, a current of 2 fires once in a hundred
+    steps, and the variants that change the first two signs fire 20 and 50 times.
+    With the case's gain of a half, all three fire at every step, so those two
+    variants hold the case only because the gain was set on them too.
+    """
+    schema = _accumulator()
+    before = copy.deepcopy(schema)
+    result = evaluate_schema(schema, (_FIRES_WITH_A_GAIN_OF_A_HALF,))
+    assert schema == before
+    assert result["unchanged"] == [
+        {"name": _FIRES_WITH_A_GAIN_OF_A_HALF.name, "observed": 100, "held": True}
+    ]
+    assert [variant["outcome"] for variant in result["variants"]] == [
+        "not_discriminated",
+        "not_discriminated",
+        "violated",
+    ]
+    assert result["state"] == "not_discriminated"
+
+
+def test_a_schema_without_a_parameter_a_case_sets_differs_from_the_model() -> None:
+    """The case cannot run on that schema as stated, so the schema and the class differ."""
+    case = dataclasses.replace(_FIRES_WITH_A_GAIN_OF_A_HALF, parameters=(("tau", 2.0),))
+    result = evaluate_schema(_accumulator(), (case,))
+    assert result == {
+        "state": "schema_differs",
+        "unchanged": [],
+        "variants": [],
+        "reason": f"case {case.name!r} sets the parameter 'tau', which the schema does not declare",
+    }

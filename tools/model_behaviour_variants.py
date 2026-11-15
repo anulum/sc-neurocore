@@ -23,8 +23,9 @@ equation, never by a search in its text.
 The unchanged schema is run first and must hold every case. Then every
 variant is run on the cases in the descriptor's order, and stops at the first
 case it breaks. A schema is run as the Studio runs a candidate: through the
-Universal DSL, with the current of the case as the one input. A model is then
-in one state:
+Universal DSL, with the current of the case as the one input. A case that sets
+parameters has them set on top of the schema's parameters, for the unchanged
+schema and for every variant. A model is then in one state:
 
 ``discriminated``
     the schema holds every case and every variant breaks one.
@@ -34,7 +35,9 @@ in one state:
     from the model is what removes it.
 ``schema_differs``
     the unchanged schema does not hold a case that the model's class holds
-    (the behaviour report runs the class). This makes the check fail.
+    (the behaviour report runs the class), or a case sets a parameter the
+    schema does not declare, so it cannot run there as stated; the reason is
+    then given. This makes the check fail.
 ``no_schema``
     the model has no bound schema.
 ``schema_not_executable``
@@ -250,9 +253,19 @@ def _observe(schema: Mapping[str, Any], current: float, steps: int, observable: 
     return float(neuron.state[observable[len(_STATE_PREFIX) :]])
 
 
+def _with_parameters(schema: Mapping[str, Any], case: BehaviourCase) -> Mapping[str, Any]:
+    """Return the schema with the case's parameters set on top of its own; a copy when it sets any."""
+    if not case.parameters:
+        return schema
+    changed = copy.deepcopy(dict(schema))
+    changed["parameters"].update(dict(case.parameters))
+    return changed
+
+
 def _case_entry(schema: Mapping[str, Any], case: BehaviourCase) -> dict[str, object]:
     """Run one case on a schema and return what was observed and whether it held."""
     entry: dict[str, object] = {"name": case.name}
+    schema = _with_parameters(schema, case)
     try:
         observed = _observe(schema, dict(case.inputs)[_INPUT], case.steps, case.observable)
         entry["observed"] = as_written(observed, case.observable)
@@ -326,7 +339,9 @@ def evaluate_schema(schema: Mapping[str, Any], cases: Sequence[BehaviourCase]) -
         ``expression``, ``outcome`` (``violated`` or ``not_discriminated``)
         and, when violated, the first ``case`` it broke with what was
         observed or the error that ``stopped`` the run; and ``reason`` for
-        the states ``schema_not_executable`` and ``cases_not_drivable``.
+        the states ``schema_not_executable`` and ``cases_not_drivable``, and for
+        ``schema_differs`` when a case sets a parameter the schema does not
+        declare.
     """
     result: dict[str, Any] = {"state": "no_variant", "unchanged": [], "variants": []}
     try:
@@ -336,6 +351,14 @@ def evaluate_schema(schema: Mapping[str, Any], cases: Sequence[BehaviourCase]) -
     reason = _not_drivable(schema, cases)
     if reason is not None:
         return {**result, "state": "cases_not_drivable", "reason": reason}
+    for case in cases:
+        for name, _ in case.parameters:
+            if name not in schema["parameters"]:
+                reason = (
+                    f"case {case.name!r} sets the parameter {name!r}, which the schema does "
+                    "not declare"
+                )
+                return {**result, "state": "schema_differs", "reason": reason}
     variants = [
         (equation, variant)
         for equation, expression in schema["dynamics"].items()

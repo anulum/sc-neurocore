@@ -72,9 +72,20 @@ BEHAVIOUR_KINDS = frozenset({"interval", "contrast"})
 BEHAVIOUR_SPIKE_OBSERVABLE = "spikes"
 _BEHAVIOUR_STATE_PREFIX = "state:"
 _BEHAVIOUR_KEYS = {
-    "interval": frozenset({"name", "kind", "steps", "observable", "inputs", "bounds"}),
+    "interval": frozenset(
+        {"name", "kind", "steps", "observable", "inputs", "parameters", "bounds"}
+    ),
     "contrast": frozenset(
-        {"name", "kind", "steps", "observable", "inputs", "reference_inputs", "margin"}
+        {
+            "name",
+            "kind",
+            "steps",
+            "observable",
+            "inputs",
+            "parameters",
+            "reference_inputs",
+            "margin",
+        }
     ),
 }
 
@@ -345,6 +356,11 @@ class BehaviourCase:
     kept as an integer, so a model whose step takes one can be driven; one
     written with a point is a float.
 
+    A case may also set parameters of the model it runs, in either form; a
+    contrast runs both drives with them. Each is a declared parameter with a
+    declared range, set to a finite number within that range, both ends
+    included. A state variable is not a parameter.
+
     Parameters
     ----------
     name:
@@ -366,6 +382,10 @@ class BehaviourCase:
         interval.
     margin:
         The least difference of a contrast; ``None`` for an interval.
+    parameters:
+        The value of each parameter the case sets on the model it runs, as
+        ``(name, value)`` pairs sorted by name; empty when it sets none, so the
+        model runs as it is built by default.
     """
 
     name: str
@@ -376,6 +396,7 @@ class BehaviourCase:
     bounds: tuple[float, float] | None = None
     reference_inputs: tuple[tuple[str, int | float], ...] = ()
     margin: float | None = None
+    parameters: tuple[tuple[str, int | float], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -482,7 +503,9 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         If any required identifier is missing, a controlled-vocabulary field
         carries an unknown value, or a behaviour case is malformed or could not
         fail (a bound with one end, an order without a margin, an observable the
-        descriptor does not declare).
+        descriptor does not declare), or sets a parameter it may not (one the
+        descriptor does not declare, a state variable, one without a declared
+        range, or a value outside that range).
     """
     metadata = _section(payload, "metadata")
     version = metadata.get("schema_version", 1)
@@ -536,7 +559,11 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
     table = payload.get("behaviour")
     if table is None:
         return descriptor
-    cases = _parse_behaviour(table, {spec.name for spec in descriptor.state})
+    cases = _parse_behaviour(
+        table,
+        {spec.name for spec in descriptor.state},
+        {spec.name: spec for spec in descriptor.parameters},
+    )
     return replace(descriptor, behaviour=cases)
 
 
@@ -795,7 +822,9 @@ def _parse_reproducibility(section: Mapping[str, object]) -> Reproducibility:
     )
 
 
-def _parse_behaviour(table: object, state_names: set[str]) -> tuple[BehaviourCase, ...]:
+def _parse_behaviour(
+    table: object, state_names: set[str], parameters: Mapping[str, ParameterSpec]
+) -> tuple[BehaviourCase, ...]:
     if (
         not isinstance(table, Sequence)
         or isinstance(table, str)
@@ -805,7 +834,7 @@ def _parse_behaviour(table: object, state_names: set[str]) -> tuple[BehaviourCas
     cases: list[BehaviourCase] = []
     seen: set[str] = set()
     for entry in table:
-        case = _parse_behaviour_case(entry, state_names)
+        case = _parse_behaviour_case(entry, state_names, parameters)
         if case.name in seen:
             raise ModelDescriptorError(f"behaviour case {case.name!r} is stated more than once")
         seen.add(case.name)
@@ -813,7 +842,9 @@ def _parse_behaviour(table: object, state_names: set[str]) -> tuple[BehaviourCas
     return tuple(cases)
 
 
-def _parse_behaviour_case(entry: Mapping[str, object], state_names: set[str]) -> BehaviourCase:
+def _parse_behaviour_case(
+    entry: Mapping[str, object], state_names: set[str], parameters: Mapping[str, ParameterSpec]
+) -> BehaviourCase:
     name = entry.get("name")
     if not isinstance(name, str) or not name:
         raise ModelDescriptorError("a behaviour case requires a non-empty 'name'")
@@ -837,6 +868,7 @@ def _parse_behaviour_case(entry: Mapping[str, object], state_names: set[str]) ->
             f"'{_BEHAVIOUR_STATE_PREFIX}<name>' of a declared state variable"
         )
     inputs = _behaviour_drive(entry.get("inputs"), where, "inputs")
+    overrides = _behaviour_parameters(entry.get("parameters"), where, parameters, state_names)
     if kind == "interval":
         return BehaviourCase(
             name=name,
@@ -845,6 +877,7 @@ def _parse_behaviour_case(entry: Mapping[str, object], state_names: set[str]) ->
             observable=observable,
             inputs=inputs,
             bounds=_behaviour_bounds(entry.get("bounds"), where, observable, steps),
+            parameters=overrides,
         )
     reference = _behaviour_drive(entry.get("reference_inputs"), where, "reference_inputs")
     if [key for key, _ in reference] != [key for key, _ in inputs]:
@@ -866,6 +899,7 @@ def _parse_behaviour_case(entry: Mapping[str, object], state_names: set[str]) ->
         inputs=inputs,
         reference_inputs=reference,
         margin=margin,
+        parameters=overrides,
     )
 
 
@@ -899,6 +933,51 @@ def _behaviour_drive(value: object, where: str, key: str) -> tuple[tuple[str, in
             raise ModelDescriptorError(f"{where}: {key}.{name} must be a finite number")
         drive.append((str(name), written if isinstance(written, int) else number))
     return tuple(drive)
+
+
+def _behaviour_parameters(
+    value: object,
+    where: str,
+    parameters: Mapping[str, ParameterSpec],
+    state_names: set[str],
+) -> tuple[tuple[str, int | float], ...]:
+    """Return the parameters a case sets, each value as written: an integer stays an integer.
+
+    Each name must be a declared parameter with a declared range, and each value
+    a finite number within it. A declared range is a closed interval: both ends
+    may be set. A declared state variable is refused with its own message, so
+    the author is not told that a declared name is undeclared.
+    """
+    if value is None:
+        return ()
+    if not isinstance(value, Mapping) or not value:
+        raise ModelDescriptorError(
+            f"{where}: parameters must be a non-empty table of declared parameters"
+        )
+    overrides: list[tuple[str, int | float]] = []
+    for name, written in sorted(value.items()):
+        if name in state_names:
+            raise ModelDescriptorError(
+                f"{where}: parameters.{name} names a state variable, not a parameter"
+            )
+        spec = parameters.get(name)
+        if spec is None:
+            raise ModelDescriptorError(f"{where}: parameters.{name} is not a declared parameter")
+        number = _finite_number(written)
+        if number is None:
+            raise ModelDescriptorError(f"{where}: parameters.{name} must be a finite number")
+        if spec.value_range is None:
+            raise ModelDescriptorError(
+                f"{where}: parameters.{name} has no declared range, so a case may not set it"
+            )
+        low, high = spec.value_range
+        if not low <= number <= high:
+            raise ModelDescriptorError(
+                f"{where}: parameters.{name} = {written!r} lies outside its declared range "
+                f"[{low}, {high}]"
+            )
+        overrides.append((str(name), written if isinstance(written, int) else number))
+    return tuple(overrides)
 
 
 def _behaviour_bounds(

@@ -15,6 +15,10 @@ and an observable the descriptor does not declare are refused. A spike count
 of a run lies between zero and the number of steps, so bounds that span that
 whole range, an end above it and a margin above it are refused as well: a case
 that cannot fail, or cannot hold, cannot be written.
+
+A case may also set parameters of the model it runs: each must be a declared
+parameter with a declared range, its value a finite number within that range,
+both ends included. A state variable is not a parameter and is refused as one.
 """
 
 from __future__ import annotations
@@ -40,7 +44,10 @@ def _payload(*cases: dict[str, Any]) -> dict[str, Any]:
             "module": "dendritic_nmda",
         },
         "state": {"v_soma": {"init": -65.0}, "v_dend": {"init": -65.0}},
-        "parameters": {"g_nmda": {"default": 1.5}},
+        "parameters": {
+            "g_nmda": {"default": 1.5, "range": [0.0, 10.0]},
+            "tau_nmda": {"default": 100.0},
+        },
         "integration": {"dt": 0.1},
     }
     if cases:
@@ -74,6 +81,17 @@ _STATE: dict[str, Any] = {
     "observable": "state:v_dend",
     "inputs": {"i_soma": 0.0, "glutamate": 1.0},
     "bounds": [-60.0, -59.0],
+}
+
+
+_WITH_PARAMETERS: dict[str, Any] = {
+    "name": "a stronger NMDA conductance fires the soma more",
+    "kind": "interval",
+    "steps": 20000,
+    "observable": "spikes",
+    "inputs": {"i_soma": 20.0, "glutamate": 1.0},
+    "parameters": {"g_nmda": 3.0},
+    "bounds": [80, 100],
 }
 
 
@@ -274,6 +292,38 @@ _REFUSED: dict[str, tuple[Any, str]] = {
         [_changed(_CONTRAST, reference_inputs={"i_soma": -(10**400), "glutamate": 0.0})],
         "reference_inputs.i_soma must be a finite number",
     ),
+    "parameters that are not a table": (
+        [_changed(_WITH_PARAMETERS, parameters=[3.0])],
+        "parameters must be a non-empty table of declared parameters",
+    ),
+    "an empty parameters table": (
+        [_changed(_WITH_PARAMETERS, parameters={})],
+        "parameters must be a non-empty table of declared parameters",
+    ),
+    "a parameter the descriptor does not declare": (
+        [_changed(_WITH_PARAMETERS, parameters={"g_ampa": 1.0})],
+        "parameters.g_ampa is not a declared parameter",
+    ),
+    "a parameter without a declared range": (
+        [_changed(_WITH_PARAMETERS, parameters={"tau_nmda": 50.0})],
+        "parameters.tau_nmda has no declared range",
+    ),
+    "a parameter below its declared range": (
+        [_changed(_WITH_PARAMETERS, parameters={"g_nmda": -0.5})],
+        "parameters.g_nmda = -0.5 lies outside its declared range",
+    ),
+    "a parameter value that is not a number": (
+        [_changed(_WITH_PARAMETERS, parameters={"g_nmda": "high"})],
+        "parameters.g_nmda must be a finite number",
+    ),
+    "a boolean parameter value": (
+        [_changed(_WITH_PARAMETERS, parameters={"g_nmda": True})],
+        "parameters.g_nmda must be a finite number",
+    ),
+    "a parameter value too large for a float": (
+        [_changed(_WITH_PARAMETERS, parameters={"g_nmda": 10**400})],
+        "parameters.g_nmda must be a finite number",
+    ),
 }
 
 
@@ -347,4 +397,74 @@ def test_the_cases_survive_the_generator_s_serialisation() -> None:
     assert (
         parse_model_descriptor(reread).behaviour
         == parse_model_descriptor(_payload(_INTERVAL, _CONTRAST, _STATE)).behaviour
+    )
+
+
+def test_a_case_may_set_declared_parameters() -> None:
+    """A case names the parameters it runs with; each keeps the type it is written in."""
+    (case,) = parse_model_descriptor(_payload(_WITH_PARAMETERS)).behaviour
+    assert case.parameters == (("g_nmda", 3.0),)
+    whole = _changed(_WITH_PARAMETERS, parameters={"g_nmda": 3})
+    (written_whole,) = parse_model_descriptor(_payload(whole)).behaviour
+    assert written_whole.parameters == (("g_nmda", 3),)
+    assert type(written_whole.parameters[0][1]) is int
+
+
+def test_a_case_without_the_table_sets_no_parameter() -> None:
+    """Every case written before the table runs the model as it is built by default."""
+    (case,) = parse_model_descriptor(_payload(_INTERVAL)).behaviour
+    assert case.parameters == ()
+
+
+def test_a_contrast_sets_its_parameters_for_both_drives() -> None:
+    """One table serves both drives of a contrast."""
+    contrast = _changed(_CONTRAST, parameters={"g_nmda": 2.0})
+    (case,) = parse_model_descriptor(_payload(contrast)).behaviour
+    assert case.parameters == (("g_nmda", 2.0),)
+
+
+@pytest.mark.parametrize("value", [0.0, 10.0, 0, 10])
+def test_a_declared_range_is_a_closed_interval(value: float) -> None:
+    """Both ends of a parameter's declared range may be set.
+
+    Parameters
+    ----------
+    value : float
+        One end of the range ``[0.0, 10.0]``, written with or without a point.
+    """
+    at_an_end = _changed(_WITH_PARAMETERS, parameters={"g_nmda": value})
+    (case,) = parse_model_descriptor(_payload(at_an_end)).behaviour
+    assert case.parameters == (("g_nmda", value),)
+
+
+def test_a_value_outside_the_range_is_refused_naming_the_value_range_and_parameter() -> None:
+    """The refusal says which value, which range and which parameter."""
+    outside = _changed(_WITH_PARAMETERS, parameters={"g_nmda": 10.5})
+    with pytest.raises(ModelDescriptorError) as caught:
+        parse_model_descriptor(_payload(outside))
+    assert str(caught.value) == (
+        "behaviour case 'a stronger NMDA conductance fires the soma more': "
+        "parameters.g_nmda = 10.5 lies outside its declared range [0.0, 10.0]"
+    )
+
+
+def test_a_state_variable_set_as_a_parameter_is_refused_as_a_state() -> None:
+    """A declared state is not called undeclared: the refusal says it is a state variable."""
+    a_state = _changed(_WITH_PARAMETERS, parameters={"v_dend": -60.0})
+    with pytest.raises(ModelDescriptorError) as caught:
+        parse_model_descriptor(_payload(a_state))
+    assert str(caught.value) == (
+        "behaviour case 'a stronger NMDA conductance fires the soma more': "
+        "parameters.v_dend names a state variable, not a parameter"
+    )
+
+
+def test_a_merge_and_the_serialisation_keep_a_case_s_parameters() -> None:
+    """The generator keeps the table and writes it so that it parses back the same."""
+    merged = merge_descriptor_payloads(_payload(_WITH_PARAMETERS), _payload())
+    assert merged["behaviour"][0]["parameters"] == {"g_nmda": 3.0}
+    reread = tomllib.loads(tomli_w.dumps(merged))
+    assert (
+        parse_model_descriptor(reread).behaviour
+        == parse_model_descriptor(_payload(_WITH_PARAMETERS)).behaviour
     )

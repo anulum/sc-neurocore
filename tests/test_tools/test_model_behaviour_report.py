@@ -211,6 +211,29 @@ class _NeedsAnArgument:
         return 0
 
 
+class _Gain:
+    """Accumulate the current times a gain each step; fire and reset when the level reaches one.
+
+    The gain is a constructor parameter, as a catalogue model's parameters are,
+    and a negative gain is refused, as a model's own validation refuses a value.
+    By default a unit current fires on every fourth step.
+    """
+
+    def __init__(self, gain: float = 0.25) -> None:
+        if gain < 0:
+            raise ValueError("gain must not be negative")
+        self.gain = gain
+        self.level = 0.0
+
+    def step(self, current: float) -> int:
+        """Advance one step and return 1 on a spike."""
+        self.level += self.gain * current
+        if self.level >= 1.0:
+            self.level = 0.0
+            return 1
+        return 0
+
+
 def _interval(
     name: str,
     inputs: dict[str, float],
@@ -218,6 +241,7 @@ def _interval(
     *,
     observable: str = "spikes",
     steps: int = 100,
+    parameters: dict[str, float] | None = None,
 ) -> BehaviourCase:
     return BehaviourCase(
         name=name,
@@ -226,6 +250,7 @@ def _interval(
         observable=observable,
         inputs=tuple(sorted(inputs.items())),
         bounds=bounds,
+        parameters=tuple(sorted((parameters or {}).items())),
     )
 
 
@@ -498,16 +523,30 @@ def test_a_bound_is_written_exactly_as_stated() -> None:
     assert spike_margin == 50 and type(spike_margin) is int
 
 
+def _as_digested(case: BehaviourCase) -> dict[str, object]:
+    """Return a case as the digest reads it: every field, the parameters only when it sets some."""
+    return {
+        field: value
+        for field, value in dataclasses.asdict(case).items()
+        if field != "parameters" or value
+    }
+
+
 def test_the_stated_cases_of_a_model_are_bound_by_one_digest() -> None:
-    """The digest is of the cases as stated, in order; any change of a statement changes it."""
+    """The digest is of the cases as stated, in order; any change of a statement changes it.
+
+    A case that sets no parameter is digested without the field, so the digest
+    of every case written before parameters could be set is what it was.
+    """
     first = _interval("silent without drive", {"current": 0.0}, (0, 0))
     second = _interval("fires", {"current": 1.0}, (12, 12))
     result = evaluate_model(_Integrator, (first, second))
     canonical = json.dumps(
-        [dataclasses.asdict(first), dataclasses.asdict(second)],
+        [_as_digested(first), _as_digested(second)],
         sort_keys=True,
         separators=(",", ":"),
     )
+    assert "parameters" not in canonical
     assert result["cases_sha256"] == hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     assert result["cases_sha256"] == cases_digest((first, second))
     assert cases_digest((second, first)) != result["cases_sha256"]
@@ -516,6 +555,7 @@ def test_the_stated_cases_of_a_model_are_bound_by_one_digest() -> None:
         dataclasses.replace(second, steps=101),
         dataclasses.replace(second, inputs=(("current", 1.5),)),
         dataclasses.replace(second, name="fires twelve times"),
+        dataclasses.replace(second, parameters=(("gain", 0.125),)),
     ):
         assert cases_digest((first, changed)) != result["cases_sha256"]
 
@@ -1181,3 +1221,101 @@ def test_the_check_names_a_model_that_fails_or_holds_vacuously() -> None:
         == []
     )
     assert len(check_problems(report, None)) == 2
+
+
+_WITH_A_GAIN_OF_AN_EIGHTH = _interval(
+    "with a gain of an eighth, a unit current fires on every eighth step",
+    {"current": 1.0},
+    (12, 12),
+    parameters={"gain": 0.125},
+)
+
+
+def test_a_case_runs_a_model_built_with_its_parameters() -> None:
+    """The case's parameters build the model; the entry shows them next to the inputs."""
+    result = evaluate_model(_Gain, (_WITH_A_GAIN_OF_AN_EIGHTH,))
+    assert result["state"] == "held"
+    (entry,) = result["cases"]
+    assert entry == {
+        "name": _WITH_A_GAIN_OF_AN_EIGHTH.name,
+        "kind": "interval",
+        "observable": "spikes",
+        "steps": 100,
+        "inputs": {"current": 1.0},
+        "parameters": {"gain": 0.125},
+        "bounds": [12, 12],
+        "observed": 12,
+        "held": True,
+        "exercised": True,
+    }
+    assert list(entry)[4:6] == ["inputs", "parameters"]
+
+
+def test_a_case_can_hold_only_with_its_parameters() -> None:
+    """The same statement on the model as built by default fails: the parameters are what holds it."""
+    by_default = dataclasses.replace(_WITH_A_GAIN_OF_AN_EIGHTH, parameters=())
+    result = evaluate_model(_Gain, (by_default,))
+    assert result["state"] == "failed"
+    assert result["cases"][0]["observed"] == 25
+    assert "parameters" not in result["cases"][0]
+
+
+def test_whether_a_case_was_exercised_is_judged_on_the_model_with_its_parameters() -> None:
+    """At a gain of zero nothing fires, though the model as built by default fires at this drive."""
+    silent = _interval(
+        "with no gain a unit current fires nothing",
+        {"current": 1.0},
+        (0, 0),
+        parameters={"gain": 0.0},
+    )
+    result = evaluate_model(_Gain, (silent,))
+    assert result["state"] == "held_vacuously"
+    assert (result["cases"][0]["observed"], result["cases"][0]["exercised"]) == (0, False)
+
+
+def test_a_contrast_runs_both_drives_with_the_case_s_parameters() -> None:
+    """At a gain of an eighth a unit current fires 12 times and half of it 6 times.
+
+    Built by default, the half current would fire 12 times and the margin would fail.
+    """
+    contrast = BehaviourCase(
+        name="with a gain of an eighth, a unit current fires 6 more than half of it",
+        kind="contrast",
+        steps=100,
+        observable="spikes",
+        inputs=(("current", 1.0),),
+        reference_inputs=(("current", 0.5),),
+        margin=6.0,
+        parameters=(("gain", 0.125),),
+    )
+    result = evaluate_model(_Gain, (contrast,))
+    assert result["state"] == "held"
+    (entry,) = result["cases"]
+    assert (entry["observed"], entry["reference_observed"]) == (12, 6)
+    assert entry["parameters"] == {"gain": 0.125}
+
+
+@pytest.mark.parametrize(
+    ("parameters", "reason"),
+    [
+        ({"gain": -1.0}, "the model cannot be built with the parameters ['gain']: ValueError"),
+        ({"bias": 1.0}, "the model cannot be built with the parameters ['bias']: TypeError"),
+    ],
+)
+def test_a_model_that_refuses_a_case_s_parameters_makes_it_invalid(
+    parameters: dict[str, float], reason: str
+) -> None:
+    """A value the model's validation refuses, or a name its constructor does not take, is reported.
+
+    Parameters
+    ----------
+    parameters : dict
+        What the case sets.
+    reason : str
+        The reason the report must give.
+    """
+    case = _interval("refused", {"current": 1.0}, (12, 12), parameters=parameters)
+    result = evaluate_model(_Gain, (case,))
+    assert result["state"] == "invalid"
+    assert result["cases"][0]["reason"] == reason
+    assert result["cases"][0]["parameters"] == parameters
