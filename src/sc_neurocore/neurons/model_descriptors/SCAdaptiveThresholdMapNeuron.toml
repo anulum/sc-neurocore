@@ -140,3 +140,29 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_sc_adaptive_threshold_map.py"
 target_tier = "H1"
 terminal_reason = "Q8.24 sigmoid-LUT datapath preserves bounded state and upward-crossing semantics over the committed 32-step I=0.4 horizon."
+
+[[behaviour]]
+name = "a current of 0.4 fires 3 times in 32 steps"
+kind = "interval"
+steps = 32
+observable = "spikes"
+bounds = [
+    3,
+    3,
+]
+
+[behaviour.inputs]
+current = 0.4
+
+[[behaviour]]
+name = "a current of 0.4 fires 4 times in 38 steps"
+kind = "interval"
+steps = 38
+observable = "spikes"
+bounds = [
+    4,
+    4,
+]
+
+[behaviour.inputs]
+current = 0.4

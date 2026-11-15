@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 168
+MODELS_WITHOUT_A_CASE = 167
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -76,6 +76,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "IntegerQIFNeuron": [[26, 26]],
     "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
+    "SCAdaptiveThresholdMapNeuron": [[3, 3], [4, 4]],
     "SCClippedLogisticBurstingMapNeuron": [[2, 2], [1, 1], [1, 1], [7, 7]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCInclusivePerfectIntegratorNeuron": [[500, 500], [500, 500]],
@@ -1032,6 +1033,28 @@ def test_the_clipped_logistic_bursting_map_holds_its_enrolled_counts(
     assert [case["observed"] for case in cases] == [2, 1, 1, 7]
     assert [case["inputs"] for case in cases] == [{"current": c} for c in (0.5, 1.0, 2.0, 0.05)]
     assert [case["steps"] for case in cases] == [30, 30, 30, 30]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_adaptive_threshold_map_holds_its_window_and_direction_counts(
+    report: dict[str, object],
+) -> None:
+    """The 32-step window its RTL test runs, and a longer window that tells the crossing's direction.
+
+    The map's Q8.24 test requires the hand model and the RTL to give the same events
+    over 32 steps at a current of 0.4: 3, read from the class. That window holds as
+    many downward crossings as upward ones. Over 38 steps it ends after the fourth
+    upward crossing, before x falls back below the threshold: 4 events, where a
+    count of downward crossings gives 3.
+    """
+    row = _models(report)["SCAdaptiveThresholdMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [3, 4]
+    assert [case["inputs"] for case in cases] == [{"current": 0.4}, {"current": 0.4}]
+    assert [case["steps"] for case in cases] == [32, 38]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

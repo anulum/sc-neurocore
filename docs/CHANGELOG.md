@@ -28,6 +28,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The SC adaptive-threshold map neuron states two behaviour cases: 3 events
+  over the 32-step window at a current of 0.4 that its Q8.24 test runs for
+  the hand model and the RTL, which must give the same events, and 4 events
+  over 38 steps at 0.4, measured with its public class and matched by the
+  schema, a window that ends on an upward crossing. Each of the 9 sign
+  variants of its two equations breaks a case. Eighteen of the 185 catalogue
+  models now state cases.
 - The SC clipped-logistic bursting map neuron states four behaviour cases:
   the event counts over the 30-step windows its Q16.16 test runs for the
   hand model, the schema and the RTL (2, 1 and 1 at currents 0.5, 1.0 and

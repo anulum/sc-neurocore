@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 17
+MODELS_WITH_CASES = 18
 
 
 def _accumulator() -> dict[str, object]:
@@ -398,6 +398,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "IntegerQIFNeuron",
         "PernarowskiNeuron",
         "RulkovMapNeuron",
+        "SCAdaptiveThresholdMapNeuron",
         "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",
         "SCInclusivePerfectIntegratorNeuron",
@@ -412,7 +413,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 16,
+        "discriminated": 17,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -964,6 +965,29 @@ def test_every_variant_of_the_clipped_logistic_bursting_map_breaks_a_case(
     ]
 
 
+def test_every_variant_of_the_adaptive_threshold_map_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Nine signs of the clipped fast map and the adaptive threshold; the RTL window decides all.
+
+    Over 32 steps at 0.4 the map fires 3 times. Every sign variant of either
+    equation changes that count, so no variant needs the 38-step window, which is
+    there to tell the crossing's direction.
+    """
+    row = _rows(report)["SCAdaptiveThresholdMapNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [3, 4]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert [variant["equation"] for variant in variants] == ["x"] * 6 + ["theta"] * 3
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    assert {variant["case"] for variant in variants} == {
+        "a current of 0.4 fires 3 times in 32 steps"
+    }
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -975,10 +999,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+16$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+17$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 201, of them violated 201, not discriminated 0" in summary
+    assert "variants: 210, of them violated 210, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 
