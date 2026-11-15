@@ -28,6 +28,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Hindmarsh-Rose neuron states a sixth behaviour case: 1 upward
+  crossing in 2000 steps at a current of 20.0, measured with its public
+  class and matched by the schema. At that drive x crosses the threshold
+  once and is held above it, so a step that counted downward crossings
+  would give none. Each of the five windows it stated before holds as many
+  downward crossings as upward ones, and so does each window its Q16.16
+  test enrols.
 - The FitzHugh-Rinzel neuron states a fifth behaviour case: 1 event in
   10000 steps at a current of 2.0, the window its dynamics test enrols for
   the public class; the schema matches. v crosses the threshold upward once

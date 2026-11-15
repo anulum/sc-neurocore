@@ -599,6 +599,11 @@
           "held": true,
           "name": "a current of 5.0 bursts with 52 upward crossings in 2000 steps",
           "observed": 52
+        },
+        {
+          "held": true,
+          "name": "a current of 20.0 crosses upward once in 2000 steps and holds x above the threshold",
+          "observed": 1
         }
       ],
       "variants": [

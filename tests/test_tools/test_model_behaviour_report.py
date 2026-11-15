@@ -71,7 +71,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "ErmentroutKopellMapNeuron": [[0, 0], [45, 45], [64, 64], [5, 5]],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "FitzHughRinzelNeuron": [[7, 7], [8, 8], [8, 8], [83, 83], [1, 1]],
-    "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52]],
+    "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52], [1, 1]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
     "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54]],
@@ -687,27 +687,33 @@ def test_the_fitzhugh_nagumo_model_holds_the_cases_of_its_band(report: dict[str,
     assert [case["exercised"] for case in cases] == [False, True, True, True, True]
 
 
-def test_the_hindmarsh_rose_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:
-    """Silent at currents 0 and 2, then 26, 40 and 52 upward crossings in 2000 steps.
+def test_the_hindmarsh_rose_model_holds_its_enrolled_and_direction_counts(
+    report: dict[str, object],
+) -> None:
+    """Silent at currents 0 and 2, 26, 40 and 52 upward crossings, then one that tells the direction.
 
-    The counts are those the model's Q16.16 parity test enrols for the hand model,
-    the schema and the RTL alike.
+    The first five counts over 2000 steps are those the model's Q16.16 parity test
+    enrols for the hand model, the schema and the RTL alike. Each of those windows
+    holds as many downward crossings of the threshold as upward ones. At 20.0 x
+    crosses upward once and is held above the threshold for the rest of the
+    window: 1 event, where a count of downward crossings gives 0.
     """
     row = _models(report)["HindmarshRoseNeuron"]
     assert row["state"] == "held"
     cases = row["cases"]
     assert isinstance(cases, list)
-    assert [case["observed"] for case in cases] == [0, 0, 26, 40, 52]
+    assert [case["observed"] for case in cases] == [0, 0, 26, 40, 52, 1]
     assert [case["inputs"] for case in cases] == [
         {"current": 0.0},
         {"current": 2.0},
         {"current": 3.0},
         {"current": 4.0},
         {"current": 5.0},
+        {"current": 20.0},
     ]
     assert {case["steps"] for case in cases} == {2000}
     assert all(case["held"] for case in cases)
-    assert [case["exercised"] for case in cases] == [False, False, True, True, True]
+    assert [case["exercised"] for case in cases] == [False, False, True, True, True, True]
 
 
 def test_the_wilson_hr_model_holds_its_enrolled_counts(report: dict[str, object]) -> None:

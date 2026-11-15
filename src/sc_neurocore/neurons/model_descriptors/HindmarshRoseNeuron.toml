@@ -212,3 +212,16 @@ bounds = [
 
 [behaviour.inputs]
 current = 5.0
+
+[[behaviour]]
+name = "a current of 20.0 crosses upward once in 2000 steps and holds x above the threshold"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 20.0

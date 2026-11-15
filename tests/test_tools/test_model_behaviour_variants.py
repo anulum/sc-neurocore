@@ -458,12 +458,16 @@ def test_every_variant_of_the_fitzhugh_nagumo_model_breaks_a_case(
 def test_every_variant_of_the_hindmarsh_rose_model_breaks_a_case(
     report: dict[str, object],
 ) -> None:
-    """Thirteen signs over three equations, and the enrolled counts tell each from the model."""
+    """Thirteen signs over three equations, and the enrolled counts tell each from the model.
+
+    The schema also gives the 1 event in 2000 steps at 20.0 that tells the
+    crossing's direction; no variant needs it.
+    """
     row = _rows(report)["HindmarshRoseNeuron"]
     assert row["state"] == "discriminated"
     unchanged = row["unchanged"]
     assert isinstance(unchanged, list)
-    assert [entry["observed"] for entry in unchanged] == [0, 0, 26, 40, 52]
+    assert [entry["observed"] for entry in unchanged] == [0, 0, 26, 40, 52, 1]
     variants = row["variants"]
     assert isinstance(variants, list)
     assert [(variant["equation"], variant["term"]) for variant in variants] == [

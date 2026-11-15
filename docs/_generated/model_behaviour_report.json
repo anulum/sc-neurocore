@@ -965,9 +965,25 @@
           "observable": "spikes",
           "observed": 52,
           "steps": 2000
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 20.0
+          },
+          "kind": "interval",
+          "name": "a current of 20.0 crosses upward once in 2000 steps and holds x above the threshold",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 2000
         }
       ],
-      "cases_sha256": "8dcc1ca23cccec3cb1e2c9c2cdb72e5201ecbf432aadd186ed421730f4a4b454",
+      "cases_sha256": "4e6c2cad4615802f47de8349330bb21a3f47917db93e1d8529dc1077d859ce51",
       "model": "HindmarshRoseNeuron",
       "state": "held"
     },
