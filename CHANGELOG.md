@@ -314,6 +314,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Move the Mojo environment lock to the newest compatible builds of click
+  (8.5.1), platformdirs (4.14.5), python-dateutil (4.0.0, which no longer
+  needs six), pyzmq (27.3.0), tornado (6.6.1) and libuuid (build 1); Mojo
+  stays at 1.0.0.
+
 - Move the three stages of `deploy/Dockerfile` to the current digest of
   `python:3.12.16-slim` (`sha256:5e2bdb1b…`), the tag's rebuilt image.
 
