@@ -8,6 +8,8 @@
 
 //! Glucose-dependent pancreatic beta-cell bursting dynamics.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Endocrine Beta Cell (Pancreatic)
 // ═══════════════════════════════════════════════════════════════════
@@ -33,23 +35,41 @@
 /// Sherman et al., Biophys J 54:411, 1988.
 #[derive(Clone, Debug)]
 pub struct EndocrineBetaCell {
+    /// Membrane potential (mV), clamped to `[-100, 40]` after each step.
     pub v: f64,
-    pub n: f64,  // K_dr activation
-    pub ca: f64, // Intracellular Ca²⁺ (µM)
+    /// K_dr activation.
+    pub n: f64,
+    /// Intracellular Ca²⁺ (µM).
+    pub ca: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
-    pub g_cal: f64,  // L-type Ca²⁺
-    pub g_kdr: f64,  // Delayed rectifier K
-    pub g_katp: f64, // ATP-sensitive K (glucose-dependent)
-    pub g_kca: f64,  // Ca²⁺-activated K (SK, burst termination)
+    /// L-type Ca²⁺ conductance.
+    pub g_cal: f64,
+    /// Delayed-rectifier K conductance.
+    pub g_kdr: f64,
+    /// ATP-sensitive K conductance (glucose-dependent).
+    pub g_katp: f64,
+    /// Ca²⁺-activated K conductance (SK, burst termination).
+    pub g_kca: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV), shared by the three potassium currents.
     pub e_k: f64,
+    /// Leak reversal potential (mV), depolarised.
     pub e_l: f64,
-    pub tau_ca: f64,    // Ca²⁺ decay (ms)
-    pub kd_kca: f64,    // SK Ca²⁺ Kd (µM)
-    pub atp_level: f64, // ATP/ADP ratio (proxy for glucose, 0-1)
+    /// Ca²⁺ decay (ms).
+    pub tau_ca: f64,
+    /// SK Ca²⁺ Kd (µM).
+    pub kd_kca: f64,
+    /// ATP/ADP ratio (proxy for glucose, 0-1).
+    pub atp_level: f64,
+    /// Outer step (ms).
     pub dt: f64,
+    /// Forward-Euler sub-steps per `dt`.
     pub sub_steps: usize,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -60,6 +80,8 @@ impl Default for EndocrineBetaCell {
 }
 
 impl EndocrineBetaCell {
+    /// Create a cell at -70 mV with the default state and parameters (ATP level 0.3),
+    /// `dt` = 0.5 ms and 4 sub-steps.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -88,6 +110,21 @@ impl EndocrineBetaCell {
         1.0 / (1.0 + (-(v - vh) / k).exp())
     }
 
+    /// Advance `dt` in `sub_steps` forward-Euler sub-steps with the drive
+    /// `gain * current`; return 1 when `v` crosses -20 mV upwards over the whole step,
+    /// else 0.
+    ///
+    /// Each sub-step updates `n` from the old `v`, then advances `v` with five currents:
+    /// - CaL with instantaneous Boltzmann activation;
+    /// - delayed-rectifier K with `n^4`;
+    /// - K-ATP with conductance `g_katp * (1 - atp_level)`;
+    /// - SK with `ca^2 / (ca^2 + kd_kca^2)`;
+    /// - the leak.
+    ///
+    /// `ca` then gains `0.002 * max(-i_cal, 0)` and decays with `tau_ca`. Only the start and
+    /// end of the outer step are compared for the spike. After the sub-steps `v` is clamped
+    /// to `[-100, 40]` mV, and a non-finite value is replaced by its initial value. The
+    /// input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
@@ -148,6 +185,7 @@ impl EndocrineBetaCell {
         }
     }
 
+    /// Restore every field to `new()`, parameters (including `atp_level`) included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

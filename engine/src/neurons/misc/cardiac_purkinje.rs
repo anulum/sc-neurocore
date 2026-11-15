@@ -8,6 +8,8 @@
 
 //! DiFrancesco-Noble cardiac Purkinje fibre dynamics.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Cardiac Purkinje Fibre
 // ═══════════════════════════════════════════════════════════════════
@@ -34,31 +36,56 @@
 ///
 /// Uses 10 sub-steps (dt_sub = 0.05 ms) for Na gating stability.
 ///
+/// This is a simplified formulation: Boltzmann steady states with bell-shaped time
+/// constants, an instantaneous IK1, and no ion concentrations, pumps or exchangers.
+///
 /// DiFrancesco & Noble, Phil Trans R Soc Lond B 307:353, 1985.
 /// Noble, J Physiol 353:1, 1984 (review).
 #[derive(Clone, Debug)]
 pub struct CardiacPurkinjeFibre {
+    /// Membrane potential (mV), clamped to `[-120, 60]` after each step.
     pub v: f64,
-    pub m: f64,   // Na activation
-    pub h: f64,   // Na inactivation
-    pub d: f64,   // CaL activation
-    pub f: f64,   // CaL inactivation
-    pub x_r: f64, // IKr activation
-    pub y: f64,   // If (HCN) activation
+    /// Na activation.
+    pub m: f64,
+    /// Na inactivation.
+    pub h: f64,
+    /// CaL activation.
+    pub d: f64,
+    /// CaL inactivation.
+    pub f: f64,
+    /// IKr activation.
+    pub x_r: f64,
+    /// If (HCN) activation.
+    pub y: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
+    /// Fast sodium maximal conductance (mS/cm^2).
     pub g_na: f64,
+    /// L-type calcium maximal conductance (mS/cm^2).
     pub g_cal: f64,
+    /// Rapid delayed-rectifier potassium conductance (mS/cm^2).
     pub g_kr: f64,
+    /// Inward-rectifier potassium conductance (mS/cm^2).
     pub g_k1: f64,
-    pub g_f: f64, // Funny current conductance
+    /// Funny current conductance.
+    pub g_f: f64,
+    /// Leak conductance (mS/cm^2).
     pub g_l: f64,
+    /// Sodium reversal potential (mV).
     pub e_na: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV), shared by IKr and IK1.
     pub e_k: f64,
-    pub e_f: f64, // If reversal (~-20 mV, mixed cation)
+    /// If reversal (~-20 mV, mixed cation).
+    pub e_f: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
+    /// Outer step (ms).
     pub dt: f64,
+    /// Forward-Euler sub-steps per `dt`.
     pub sub_steps: usize,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -69,6 +96,8 @@ impl Default for CardiacPurkinjeFibre {
 }
 
 impl CardiacPurkinjeFibre {
+    /// Create a fibre at rest (-85 mV) with the default gates and parameters, `dt` = 0.5 ms
+    /// and 10 sub-steps.
     pub fn new() -> Self {
         Self {
             v: -85.0,
@@ -101,6 +130,16 @@ impl CardiacPurkinjeFibre {
         1.0 / (1.0 + (-(v - vh) / k).exp())
     }
 
+    /// Advance `dt` in `sub_steps` forward-Euler sub-steps with the drive
+    /// `gain * current`; return 1 when `v` crosses -20 mV upwards over the whole step,
+    /// else 0.
+    ///
+    /// Each sub-step moves the six gates towards their Boltzmann steady states from the old
+    /// `v`, clamps them to `[0, 1]`, and advances `v` with the six currents computed from
+    /// the updated gates. Only the start and end of the outer step are compared, so a
+    /// crossing that returns below -20 mV within the step is not reported. After the
+    /// sub-steps `v` is clamped to `[-120, 60]` mV, and a non-finite value is replaced by its
+    /// initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
@@ -194,6 +233,7 @@ impl CardiacPurkinjeFibre {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

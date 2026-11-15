@@ -8,6 +8,8 @@
 
 //! Non-spiking interneuron with graded transmitter release.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Graded Synapse Neuron (non-spiking interneuron)
 // ═══════════════════════════════════════════════════════════════════
@@ -32,17 +34,29 @@
 /// Roberts & Bush, J Comp Physiol A 185:549, 1999.
 #[derive(Clone, Debug)]
 pub struct GradedSynapseNeuron {
-    pub v: f64,           // Membrane potential (mV)
-    pub c_m: f64,         // Membrane capacitance (normalised)
-    pub g_l: f64,         // Leak conductance
-    pub e_l: f64,         // Leak reversal potential (mV)
-    pub g_in: f64,        // Input conductance scaling
-    pub v_half: f64,      // Release sigmoid half-activation (mV)
-    pub k_release: f64,   // Release sigmoid slope
-    pub v_min: f64,       // Saturation floor (mV)
-    pub v_max: f64,       // Saturation ceiling (mV)
-    pub v_threshold: f64, // "Spike" detection threshold (mV)
+    /// Membrane potential (mV).
+    pub v: f64,
+    /// Membrane capacitance (normalised).
+    pub c_m: f64,
+    /// Leak conductance.
+    pub g_l: f64,
+    /// Leak reversal potential (mV).
+    pub e_l: f64,
+    /// Input conductance scaling.
+    pub g_in: f64,
+    /// Release sigmoid half-activation (mV).
+    pub v_half: f64,
+    /// Release sigmoid slope.
+    pub k_release: f64,
+    /// Saturation floor (mV).
+    pub v_min: f64,
+    /// Saturation ceiling (mV).
+    pub v_max: f64,
+    /// "Spike" detection threshold (mV).
+    pub v_threshold: f64,
+    /// Step (ms).
     pub dt: f64,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -53,6 +67,7 @@ impl Default for GradedSynapseNeuron {
 }
 
 impl GradedSynapseNeuron {
+    /// Create a neuron at rest (-60 mV) with the default parameters and `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -75,6 +90,12 @@ impl GradedSynapseNeuron {
         1.0 / (1.0 + (-(self.v - self.v_half) / self.k_release).exp())
     }
 
+    /// Advance one forward-Euler step of `C dV/dt = -g_L (V - E_L) + g_in * gain * current`
+    /// and return 1 when `v` crosses `v_threshold` upwards, else 0.
+    ///
+    /// `v` is clamped to `[v_min, v_max]`, and a non-finite value becomes `e_l`; there is
+    /// no reset. The input is not validated. Panics if `v_min > v_max` or either is NaN
+    /// (from `f64::clamp`).
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let v_prev = self.v;
@@ -96,6 +117,7 @@ impl GradedSynapseNeuron {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

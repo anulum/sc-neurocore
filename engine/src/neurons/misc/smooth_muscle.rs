@@ -8,6 +8,8 @@
 
 //! Calcium-dependent smooth-muscle electrical dynamics.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Smooth Muscle Cell
 // ═══════════════════════════════════════════════════════════════════
@@ -30,28 +32,51 @@
 /// Imtiaz et al., Biophys J 83:1877, 2002.
 #[derive(Clone, Debug)]
 pub struct SmoothMuscleCell {
+    /// Membrane potential (mV), clamped to `[-100, 40]` after each step.
     pub v: f64,
-    pub d: f64,        // CaL activation
-    pub f: f64,        // CaL inactivation
-    pub ca: f64,       // Cytosolic Ca²⁺ (µM)
-    pub ca_store: f64, // ER/SR Ca²⁺ store (µM)
+    /// CaL activation.
+    pub d: f64,
+    /// CaL inactivation.
+    pub f: f64,
+    /// Cytosolic Ca²⁺ (µM).
+    pub ca: f64,
+    /// ER/SR Ca²⁺ store (µM).
+    pub ca_store: f64,
+    /// Membrane capacitance (uF/cm^2).
     pub c_m: f64,
-    pub g_cal: f64, // L-type Ca²⁺
-    pub g_bk: f64,  // BK channel
-    pub g_l: f64,   // Leak
+    /// L-type Ca²⁺ conductance.
+    pub g_cal: f64,
+    /// BK channel conductance.
+    pub g_bk: f64,
+    /// Leak conductance.
+    pub g_l: f64,
+    /// Calcium reversal potential (mV).
     pub e_ca: f64,
+    /// Potassium reversal potential (mV).
     pub e_k: f64,
+    /// Leak reversal potential (mV).
     pub e_l: f64,
-    pub tau_ca: f64,   // Ca²⁺ decay (ms)
-    pub v_serca: f64,  // SERCA pump max rate
-    pub k_serca: f64,  // SERCA Km (µM)
-    pub ip3: f64,      // IP3 concentration (µM, constant or input-driven)
-    pub v_ip3r: f64,   // IP3R max release rate
-    pub k_ip3: f64,    // IP3R half-activation (µM)
-    pub k_ca_ip3: f64, // Ca²⁺ co-activation of IP3R (µM)
-    pub kd_bk: f64,    // BK Ca²⁺ half-activation (µM)
+    /// Ca²⁺ decay (ms).
+    pub tau_ca: f64,
+    /// SERCA pump max rate.
+    pub v_serca: f64,
+    /// SERCA Km (µM).
+    pub k_serca: f64,
+    /// IP3 concentration (µM, constant or input-driven).
+    pub ip3: f64,
+    /// IP3R max release rate.
+    pub v_ip3r: f64,
+    /// IP3R half-activation (µM).
+    pub k_ip3: f64,
+    /// Ca²⁺ co-activation of IP3R (µM).
+    pub k_ca_ip3: f64,
+    /// BK Ca²⁺ half-activation (µM).
+    pub kd_bk: f64,
+    /// Outer step (ms).
     pub dt: f64,
+    /// Forward-Euler sub-steps per `dt`.
     pub sub_steps: usize,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -62,6 +87,8 @@ impl Default for SmoothMuscleCell {
 }
 
 impl SmoothMuscleCell {
+    /// Create a cell at -60 mV with a full store (100 µM), the default parameters,
+    /// `dt` = 1 ms and 4 sub-steps.
     pub fn new() -> Self {
         Self {
             v: -60.0,
@@ -95,6 +122,19 @@ impl SmoothMuscleCell {
         1.0 / (1.0 + (-(v - vh) / k).exp())
     }
 
+    /// Advance `dt` in `sub_steps` forward-Euler sub-steps with the drive
+    /// `gain * current`; return 1 when `v` crosses -30 mV upwards over the whole step
+    /// (a slow-wave event), else 0.
+    ///
+    /// Each sub-step does the following:
+    /// - updates `d` and `f` from the old `v`;
+    /// - advances `v` with ICaL (`d f`), BK (`ca^2 / (ca^2 + kd_bk^2)` times a voltage
+    ///   Boltzmann) and the leak;
+    /// - advances `ca` and `ca_store` with entry `0.01 * max(-i_cal, 0)`, IP3R release
+    ///   proportional to `ca_store`, SERCA uptake and the decay `ca / tau_ca`.
+    ///
+    /// After the sub-steps `v` is clamped to `[-100, 40]` mV, and a non-finite value is
+    /// replaced by its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
@@ -170,6 +210,7 @@ impl SmoothMuscleCell {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }

@@ -462,6 +462,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 6 remaining cell and connection models (cardiac Purkinje fibre,
+  pancreatic beta cell, gap junction, graded synapse, myelinated axon, smooth
+  muscle) are documented in full, each file read against its code: the
+  sub-step scheme, the currents, the spike or event rule over the whole outer
+  step, the clamps and what reset restores. Corrected by reading: the node of
+  Ranvier has no fast potassium current; the Frankenhaeuser-Huxley
+  permeabilities are effective current densities, `P * F * [C]o / 1000`, and
+  the potassium concentration ratio is 48 by default, not about 30; the
+  myelinated-axon step states how it approximates the node-internode coupling.
 - The engine's 12 sensory models are documented in full, each file read
   against its code: each transduction stage, its integrator and clamps, and
   what an invalid input or state does. Corrected by reading: the outer hair

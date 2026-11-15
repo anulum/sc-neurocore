@@ -8,6 +8,8 @@
 
 //! Frankenhaeuser-Huxley and MRG nodal models for myelinated axons.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Frankenhaeuser-Huxley Axon
 // ═══════════════════════════════════════════════════════════════════
@@ -37,23 +39,41 @@
 /// Frankenhaeuser, J Physiol 160:46, 1962 (rate constants).
 #[derive(Clone, Debug)]
 pub struct FrankenhaeUserHuxleyAxon {
-    pub v: f64,    // Membrane potential (mV, relative to rest)
-    pub m: f64,    // Na activation
-    pub h: f64,    // Na inactivation
-    pub n: f64,    // K delayed rectifier
-    pub p: f64,    // Slow non-specific
-    pub c_m: f64,  // µF/cm²
-    pub p_na: f64, // Na permeability (10⁻³ cm/s, FH units)
-    pub p_k: f64,  // K permeability
-    pub p_p: f64,  // Slow current permeability
-    pub g_l: f64,  // Leak conductance (mS/cm²)
-    pub e_l: f64,  // Leak reversal (mV relative to rest)
+    /// Membrane potential (mV, relative to rest).
+    pub v: f64,
+    /// Na activation.
+    pub m: f64,
+    /// Na inactivation.
+    pub h: f64,
+    /// K delayed rectifier.
+    pub n: f64,
+    /// Slow non-specific.
+    pub p: f64,
+    /// Membrane capacitance (μF/cm²).
+    pub c_m: f64,
+    /// Effective sodium permeability, `P_Na * F * [Na]_o / 1000`: the current density at
+    /// unit gating and unit GHK factor.
+    pub p_na: f64,
+    /// Effective potassium permeability, `P_K * F * [K]_o / 1000`.
+    pub p_k: f64,
+    /// Effective permeability of the slow non-specific current, `P_p * F * [Na]_o / 1000`.
+    pub p_p: f64,
+    /// Leak conductance (mS/cm²).
+    pub g_l: f64,
+    /// Leak reversal (mV relative to rest).
+    pub e_l: f64,
     // Concentration ratios (C_i / C_o) for GHK
-    pub na_ratio: f64, // [Na]_i / [Na]_o (~0.1 for frog)
-    pub k_ratio: f64,  // [K]_i / [K]_o (~30 for frog)
-    pub v_t: f64,      // RT/F thermal voltage (mV), ~25.3 at 20°C
+    /// \[Na\]_i / \[Na\]_o (~0.1 for frog).
+    pub na_ratio: f64,
+    /// \[K\]_i / \[K\]_o; 48 (120 / 2.5 mM) by default.
+    pub k_ratio: f64,
+    /// RT/F thermal voltage (mV), ~25.3 at 20°C.
+    pub v_t: f64,
+    /// Outer step (ms).
     pub dt: f64,
+    /// Forward-Euler sub-steps per `dt` (50 by default, 0.01 ms each).
     pub sub_steps: usize,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -64,6 +84,8 @@ impl Default for FrankenhaeUserHuxleyAxon {
 }
 
 impl FrankenhaeUserHuxleyAxon {
+    /// Create an axon at rest (`v` = 0, relative to rest) with the default gates and
+    /// parameters, `dt` = 0.5 ms and 50 sub-steps.
     pub fn new() -> Self {
         Self {
             v: 0.0, // Relative to resting potential
@@ -114,6 +136,17 @@ impl FrankenhaeUserHuxleyAxon {
         }
     }
 
+    /// Advance `dt` in `sub_steps` forward-Euler sub-steps with the drive
+    /// `gain * current`; return 1 when `v` crosses 40 mV (relative to rest) upwards over
+    /// the whole step, else 0.
+    ///
+    /// Each sub-step updates the four gates from the old `v` with the alpha/beta rates,
+    /// clamps them to `[0, 1]`, and advances `v` with the GHK currents `p_na m^2 h`,
+    /// `p_k n^2`, `p_p p^2` and the leak. Within 0.1 mV of each removable singularity a
+    /// rate is replaced by a constant, and these constants are not the limits of the
+    /// expressions (for example 1.87 for `bm` at 13 mV, where the limit is 8). After the
+    /// sub-steps `v` is clamped to `[-50, 150]` mV, and a non-finite value is replaced by
+    /// its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
@@ -232,6 +265,7 @@ impl FrankenhaeUserHuxleyAxon {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }
@@ -249,7 +283,7 @@ impl FrankenhaeUserHuxleyAxon {
 /// - **INaT** (transient Na, Nav1.6): m³h gating, fast activation
 /// - **INaP** (persistent Na, Nav1.6): p³ gating, subthreshold amplification
 /// - **IKs** (slow K, Kv7/KCNQ): s gating, membrane stabilisation
-/// - **IKf** (fast K, Kv3.1-like): fast repolarisation (n⁴ HH-style, optional)
+/// - **IKf** (fast K, Kv3.1-like): not implemented in this struct
 /// - **IL** (leak)
 ///
 /// The persistent Na current (INaP) is critical — it provides subthreshold
@@ -264,21 +298,37 @@ impl FrankenhaeUserHuxleyAxon {
 /// McIntyre, Richardson & Grill, J Neurophysiol 87:995, 2002.
 #[derive(Clone, Debug)]
 pub struct NodeOfRanvier {
-    pub v: f64,     // Membrane potential (mV)
-    pub m: f64,     // Nav1.6 transient activation
-    pub h: f64,     // Nav1.6 transient inactivation
-    pub p: f64,     // Nav1.6 persistent activation
-    pub s: f64,     // Kv7 slow K activation
-    pub c_m: f64,   // Nodal capacitance (µF/cm²)
-    pub g_nat: f64, // Transient Na conductance (mS/cm²)
-    pub g_nap: f64, // Persistent Na conductance
-    pub g_ks: f64,  // Slow K (Kv7) conductance
-    pub g_l: f64,   // Leak conductance
-    pub e_na: f64,  // Na reversal (mV)
-    pub e_k: f64,   // K reversal (mV)
-    pub e_l: f64,   // Leak reversal (mV)
-    pub dt: f64,    // External time step (ms)
+    /// Membrane potential (mV).
+    pub v: f64,
+    /// Nav1.6 transient activation.
+    pub m: f64,
+    /// Nav1.6 transient inactivation.
+    pub h: f64,
+    /// Nav1.6 persistent activation.
+    pub p: f64,
+    /// Kv7 slow K activation.
+    pub s: f64,
+    /// Nodal capacitance (µF/cm²).
+    pub c_m: f64,
+    /// Transient Na conductance (mS/cm²).
+    pub g_nat: f64,
+    /// Persistent Na conductance.
+    pub g_nap: f64,
+    /// Slow K (Kv7) conductance.
+    pub g_ks: f64,
+    /// Leak conductance.
+    pub g_l: f64,
+    /// Na reversal (mV).
+    pub e_na: f64,
+    /// K reversal (mV).
+    pub e_k: f64,
+    /// Leak reversal (mV).
+    pub e_l: f64,
+    /// External time step (ms).
+    pub dt: f64,
+    /// Forward-Euler sub-steps per `dt` (20 by default).
     pub sub_steps: usize,
+    /// Gain applied to the input current (dimensionless).
     pub gain: f64,
 }
 
@@ -289,6 +339,8 @@ impl Default for NodeOfRanvier {
 }
 
 impl NodeOfRanvier {
+    /// Create a node at -80 mV with the default gates and parameters, `dt` = 0.5 ms and
+    /// 20 sub-steps.
     pub fn new() -> Self {
         Self {
             v: -80.0,
@@ -316,6 +368,15 @@ impl NodeOfRanvier {
         1.0 / (1.0 + (-(v - v_half) / k).exp())
     }
 
+    /// Advance `dt` in `sub_steps` forward-Euler sub-steps with the drive
+    /// `gain * current`; return 1 when `v` crosses -10 mV upwards over the whole step,
+    /// else 0.
+    ///
+    /// Each sub-step moves the four gates towards their Boltzmann steady states from the
+    /// old `v`, clamps them to `[0, 1]`, and advances `v` with INaT (`m^3 h`), INaP
+    /// (`p^3`), IKs (`s`) and the leak. After the sub-steps `v` is clamped to `[-120, 60]`
+    /// mV, and a non-finite value is replaced by its initial value. The input is not
+    /// validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
@@ -390,6 +451,7 @@ impl NodeOfRanvier {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }
@@ -422,19 +484,30 @@ impl NodeOfRanvier {
 /// V_node equation: C_n dV_n/dt = I_ionic(node) + g_para*(V_i - V_n) + I_ext
 /// V_internode equation: C_i dV_i/dt = -g_l_myelin*(V_i - E_l) + g_para*(V_n - V_i)
 ///
+/// The implementation approximates this coupling; `step` states how.
+///
 /// McIntyre, Richardson & Grill, J Neurophysiol 87:995, 2002.
 /// Richardson et al., Clin Neurophysiol 111:2175, 2000.
 #[derive(Clone, Debug)]
 pub struct MyelinatedAxon {
     // Node (active, MRG)
+    /// The active node, a full `NodeOfRanvier` with its own `dt`, sub-steps and gain.
     pub node: NodeOfRanvier,
     // Internode (passive cable)
-    pub v_inter: f64,    // Internode voltage (mV)
-    pub c_inter: f64,    // Internode capacitance (µF/cm², very low)
-    pub g_l_myelin: f64, // Myelin leak conductance (very low)
-    pub e_l_myelin: f64, // Myelin leak reversal
-    pub g_para: f64,     // Paranodal seal conductance
+    /// Internode voltage (mV).
+    pub v_inter: f64,
+    /// Internode capacitance (µF/cm², very low).
+    pub c_inter: f64,
+    /// Myelin leak conductance (very low).
+    pub g_l_myelin: f64,
+    /// Myelin leak reversal.
+    pub e_l_myelin: f64,
+    /// Paranodal seal conductance.
+    pub g_para: f64,
+    /// Nominal step (ms). The step does not read it; the node's `dt` sets the time
+    /// advanced.
     pub dt: f64,
+    /// Gain applied to the input before the node's own gain (dimensionless).
     pub gain: f64,
 }
 
@@ -445,6 +518,7 @@ impl Default for MyelinatedAxon {
 }
 
 impl MyelinatedAxon {
+    /// Create a segment with a default node and the internode at -80 mV.
     pub fn new() -> Self {
         Self {
             node: NodeOfRanvier::new(),
@@ -458,6 +532,15 @@ impl MyelinatedAxon {
         }
     }
 
+    /// Advance one step with the upstream input `current` and return the node's spike flag.
+    ///
+    /// The paranodal current `g_para * (v_inter - node.v)` is computed once from the old
+    /// voltages. The internode takes a single Euler step of length
+    /// `node.dt / node.sub_steps`, one node sub-step and not the node's whole `dt`. It is
+    /// clamped to `[-120, 60]` mV, and a non-finite value becomes -80 mV. The node then
+    /// advances its full `dt` with `gain * current + 100 * i_para`, where the factor 100
+    /// stands in for the capacitance scaling and the paranodal current is held fixed across
+    /// the node's sub-steps. `self.dt` is not read.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
 
@@ -487,6 +570,8 @@ impl MyelinatedAxon {
         self.node.v
     }
 
+    /// Reset the node to `NodeOfRanvier::new()` and `v_inter` to -80 mV; the internode
+    /// parameters are kept.
     pub fn reset(&mut self) {
         self.node.reset();
         self.v_inter = -80.0;

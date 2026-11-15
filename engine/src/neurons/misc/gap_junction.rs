@@ -8,6 +8,8 @@
 
 //! Electrical-synapse neuron with voltage-dependent gap-junction coupling.
 
+#![deny(missing_docs)]
+
 // ═══════════════════════════════════════════════════════════════════
 // Gap Junction Neuron
 // ═══════════════════════════════════════════════════════════════════
@@ -39,21 +41,36 @@
 /// Vervaeke et al., Neuron 65:801, 2010 (Cx36 voltage gating).
 #[derive(Clone, Debug)]
 pub struct GapJunctionNeuron {
-    pub v: f64,       // Membrane potential (mV)
-    pub c_m: f64,     // Membrane capacitance
-    pub g_l: f64,     // Leak conductance
-    pub e_l: f64,     // Leak reversal (mV)
-    pub g_gap: f64,   // Maximal gap junction conductance
-    pub i_tonic: f64, // Tonic depolarising current
+    /// Membrane potential (mV).
+    pub v: f64,
+    /// Membrane capacitance.
+    pub c_m: f64,
+    /// Leak conductance.
+    pub g_l: f64,
+    /// Leak reversal (mV).
+    pub e_l: f64,
+    /// Maximal gap junction conductance.
+    pub g_gap: f64,
+    /// Tonic depolarising current.
+    pub i_tonic: f64,
+    /// Spike threshold (mV).
     pub v_threshold: f64,
+    /// Potential after a spike (mV).
     pub v_reset: f64,
-    pub refractory: f64, // Refractory period (ms)
+    /// Refractory period (ms).
+    pub refractory: f64,
+    /// Refractory time left (ms); a spike sets it to `refractory`.
     pub refrac_timer: f64,
     // Voltage-dependent rectification (Cx36)
-    pub rect_v0: f64,   // Half-inactivation voltage (mV), ~30 for Cx36
-    pub rect_a: f64,    // Voltage sensitivity (mV⁻¹), ~0.1 for Cx36
-    pub rect_gmin: f64, // Residual conductance fraction [0,1], ~0.1
+    /// Half-inactivation voltage (mV), ~30 for Cx36.
+    pub rect_v0: f64,
+    /// Voltage sensitivity (mV⁻¹), ~0.1 for Cx36.
+    pub rect_a: f64,
+    /// Residual conductance fraction \[0,1\], ~0.1.
+    pub rect_gmin: f64,
+    /// Step (ms).
     pub dt: f64,
+    /// Scale applied to the step input, the neighbour voltage (dimensionless).
     pub gain: f64,
 }
 
@@ -64,6 +81,8 @@ impl Default for GapJunctionNeuron {
 }
 
 impl GapJunctionNeuron {
+    /// Create a neuron at rest (-65 mV) with the default Cx36 rectification, no tonic
+    /// drive and `dt` = 0.1 ms.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -95,6 +114,15 @@ impl GapJunctionNeuron {
             + (1.0 - self.rect_gmin) / (1.0 + (self.rect_a * (v_j.abs() - self.rect_v0)).exp())
     }
 
+    /// Advance one forward-Euler step with the neighbour voltage `gain * current` (mV);
+    /// return 1 on a spike, else 0.
+    ///
+    /// While `refrac_timer` is positive, the step counts it down by `dt`, leaves `v`
+    /// unchanged and returns 0. Otherwise the gap current is
+    /// `g_gap * g_inf(V_j) * V_j`, with `V_j` the neighbour voltage minus `v`, and `v`
+    /// advances with the leak, that current and `i_tonic`. `v` is then clamped to
+    /// `[-100, 40]` mV, and a non-finite value becomes `e_l`. Reaching `v_threshold` sets
+    /// `v` to `v_reset` and starts the refractory period. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         // current = mean neighbour voltage or external drive
         let input = self.gain * current;
@@ -127,6 +155,7 @@ impl GapJunctionNeuron {
         0
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }
