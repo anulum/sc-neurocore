@@ -7617,7 +7617,7 @@ rationale = "Reach the director, decoder and analysis variability branches that 
 
 [[file]]
 path = "tests/test_cazelles_map_backends.py"
-rationale = "Pin Cazelles map backend parity, published parameters, breakpoints and failure-atomic validation."
+rationale = "Pin Cazelles map backend parity, published parameters, breakpoints and failure-atomic validation, and hold the descriptor to what the bound schemas do outside the map domain."
 
 [[file]]
 path = "tests/test_sc_clipped_rational_recovery_map_backends.py"

@@ -208,7 +208,7 @@ golden_trace_sha256 = "4b796bfdfe67be814057bcaa30d2c3d035e8d701f11c4d1aeaabb260b
 
 [documentation]
 slug = "models/cazelles_map"
-notes = "Slow-regime entry is the maintained burst-cycle event; current is an additive extension and exact breakpoints are right-continuous."
+notes = "Slow-regime entry is the maintained burst-cycle event; current is an additive extension and exact breakpoints are right-continuous. The class and its native runtimes snap a candidate near an edge onto the edge and refuse one outside [x0, x4]. With m = max(1, |x0|, |x4|), the class and the Julia runtime snap within 8 * ulp(m), and the Rust, Go and Mojo runtimes within 8 * epsilon * m; the two agree, at 8 ulp, where m is a power of two, as at the default domain [0, 1]. The bound schemas, and RTL compiled from them, have no domain guard: they continue by the last linear piece and keep stepping where the class stops. A current of 0.5 leaves the domain at the third step (x = 1.365625 in the schema, a FloatingPointError in the class)."
 
 [validation]
 dynamics_faithful = true

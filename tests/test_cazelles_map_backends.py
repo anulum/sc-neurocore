@@ -10,11 +10,14 @@
 
 Every compiled backend must reproduce the Python reference bit for bit; the
 remaining tests pin the published parameters, the breakpoints, the input
-extensions and the failure-atomic validation.
+extensions, the failure-atomic validation, and what the bound schemas do
+where the class refuses.
 """
 
 from __future__ import annotations
 
+import math
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -23,8 +26,10 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from tests.julia_requirement import require_julia
 
 
@@ -150,6 +155,44 @@ def test_nonfinite_and_out_of_domain_updates_are_atomic() -> None:
     with pytest.raises(FloatingPointError, match="left its configured domain"):
         neuron.step(2.0)
     assert neuron.x == before
+
+
+def test_the_schemas_extend_the_map_where_the_class_refuses_and_the_descriptor_says_so() -> None:
+    """At a current of 0.5 the class refuses its third candidate, and the bound schemas step on.
+
+    The class, like its native runtimes, snaps a candidate near an edge onto the
+    edge and refuses one outside [x0, x4]: within 8 * ulp(m) in the class and Julia,
+    within 8 * epsilon * m in Rust, Go and Mojo, m = max(1, |x0|, |x4|). The two
+    agree at the default domain [0, 1], where m is 1. The TOML and JSON schemas, and
+    the RTL compiled from them, have no domain guard and continue by the last
+    linear piece. The descriptor's notes say so; when either side changes, this
+    test and the notes change together.
+    """
+    hand = CazellesMapNeuron()
+    toml = UniversalNeuron.from_schema("cazelles_map")
+    json_model = UniversalNeuron.from_schema(
+        _ROOT / "src/sc_neurocore/neurons/model_schemas/cazelles_map.json"
+    )
+    for _ in range(2):
+        hand.step(0.5)
+        toml.step(I=0.5)
+        json_model.step(I=0.5)
+        assert toml.state == json_model.state == {"x": hand.x}
+    with pytest.raises(FloatingPointError, match="left its configured domain"):
+        hand.step(0.5)
+    toml.step(I=0.5)
+    json_model.step(I=0.5)
+    assert toml.state == json_model.state == {"x": 1.365625}
+    descriptor = load_descriptor("CazellesMapNeuron")
+    assert descriptor is not None
+    assert "no domain guard" in descriptor.notes
+    assert (
+        "the class and the Julia runtime snap within 8 * ulp(m), and the Rust, Go and Mojo "
+        "runtimes within 8 * epsilon * m"
+    ) in descriptor.notes
+    assert "default domain [0, 1]" in descriptor.notes
+    m = max(1.0, abs(hand.x0), abs(hand.x4))
+    assert 8 * math.ulp(m) == 8 * sys.float_info.epsilon * m
 
 
 def test_simulation_validation_and_state_commit() -> None:

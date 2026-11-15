@@ -346,6 +346,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The Cazelles map descriptor states where its class and its bound schemas
+  part. The class and its native runtimes snap a candidate near an edge onto
+  the edge, within 8 ulp at the default domain, and refuse one outside the
+  map's domain. The schemas,
+  and the RTL compiled from them, have no domain guard and continue by the
+  last linear piece. A current of 0.5 leaves the domain at the third step. A
+  test holds the descriptor's notes to that behaviour.
 - The benchmark evidence gate binds four more records whose digests name no
   path it reads. Three key their source digests by runtime lane, as the
   Benda-Herz record does: the Bertram phantom burster
