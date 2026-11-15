@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5677
+    "test_files": 5678
   },
   "documentation": {
     "public_pages": [
@@ -6126,6 +6126,7 @@
       "tests/test_model_connor_stevens_cs_pipeline.py",
       "tests/test_model_connor_stevens_cs_type_i.py",
       "tests/test_model_connor_stevens_free_tests.py",
+      "tests/test_model_continuous_attractor_engine_parity.py",
       "tests/test_model_courage_nekorkin_map_cn_analytical.py",
       "tests/test_model_courage_nekorkin_map_cn_dynamics.py",
       "tests/test_model_courage_nekorkin_map_cn_isolation.py",

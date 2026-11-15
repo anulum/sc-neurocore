@@ -32021,7 +32021,7 @@ derivative at the current ``v``.
 ### Class `ContinuousAttractorNeuron`
 Ring attractor for continuous working memory.
 
-u_i += (-u_i + f(sum_j w_ij u_j) + I_i) / tau * dt
+u_i += (-u_i + sum_j w_ij f(u_j) + I) / tau * dt
 f(x) = max(0,x)^2 / (1 + max(0,x)^2)
 w_ij = A * exp(-d_ij^2 / (2*sigma_e^2)) - B   (Mexican hat)
 
@@ -32036,7 +32036,7 @@ it cannot place or move a bump. ``step`` reports whether the peak exceeds
 - **step**(current)
   - Advance every unit one Euler step from the activities before the step.
 - **bump_position**()
-  - Return the index of the most active unit (the first one on a tie).
+  - Return the index of the most active unit, the first of equal maxima, as the engine does.
 - **reset**()
   - Set every unit's activity to 0; the weights are kept.
 

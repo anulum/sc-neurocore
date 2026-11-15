@@ -79,15 +79,19 @@ impl ContinuousAttractorNeuron {
         }
     }
 
-    /// Return the index of the most active unit, the highest index among equal maxima, 0 for
-    /// an empty ring; a NaN activity counts as equal to any value it is compared with.
+    /// Return the index of the most active unit, the first of equal maxima as in the Python
+    /// model, and 0 for an empty ring.
+    ///
+    /// A unit takes the position only when it is strictly more active than the one holding it,
+    /// so a NaN activity never takes it, and holds it only as unit 0.
     pub fn bump_position(&self) -> usize {
-        self.u
-            .iter()
-            .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(i, _)| i)
-            .unwrap_or(0)
+        let mut position = 0;
+        for (index, &activity) in self.u.iter().enumerate().skip(1) {
+            if activity > self.u[position] {
+                position = index;
+            }
+        }
+        position
     }
 
     /// Set every unit to 0; the weights and parameters are kept.
@@ -121,6 +125,36 @@ mod tests {
         }
         let peak = n.u.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
         assert!(peak > 0.0);
+    }
+
+    #[test]
+    fn the_bump_is_the_first_of_equal_maxima() {
+        let mut n = ContinuousAttractorNeuron::new(16);
+        assert_eq!(n.bump_position(), 0, "every unit at rest is a tie");
+        n.u = vec![0.0, 3.0, 1.0, 3.0];
+        assert_eq!(n.bump_position(), 1);
+        n.u = vec![1.0, 2.0, 0.5, 2.0, 1.5];
+        assert_eq!(n.bump_position(), 1);
+        n.u = vec![0.2; 16];
+        assert_eq!(n.bump_position(), 0);
+    }
+
+    #[test]
+    fn a_nan_activity_never_takes_the_bump() {
+        let mut n = ContinuousAttractorNeuron::new(4);
+        n.u = vec![1.0, f64::NAN, 2.0, 0.0];
+        assert_eq!(n.bump_position(), 2);
+        n.u = vec![f64::NAN, 1.0, 2.0, 0.0];
+        assert_eq!(
+            n.bump_position(),
+            0,
+            "nothing is more active than unit 0's NaN"
+        );
+    }
+
+    #[test]
+    fn an_empty_ring_puts_the_bump_at_zero() {
+        assert_eq!(ContinuousAttractorNeuron::new(0).bump_position(), 0);
     }
 
     #[test]

@@ -347,7 +347,7 @@ class DifferentiableSurrogateNeuron:
 class ContinuousAttractorNeuron:
     """Ring attractor for continuous working memory.
 
-    u_i += (-u_i + f(sum_j w_ij u_j) + I_i) / tau * dt
+    u_i += (-u_i + sum_j w_ij f(u_j) + I) / tau * dt
     f(x) = max(0,x)^2 / (1 + max(0,x)^2)
     w_ij = A * exp(-d_ij^2 / (2*sigma_e^2)) - B   (Mexican hat)
 
@@ -394,6 +394,10 @@ class ContinuousAttractorNeuron:
     def step(self, current: float) -> int:
         """Advance every unit one Euler step from the activities before the step.
 
+        Each unit's recurrent input is summed left to right over the ring, as the engine sums
+        it. The built-in ``sum`` compensates rounding from Python 3.12 on, which would make the
+        last bits, and on an even ring the unit that holds the bump, depend on the Python version.
+
         Parameters
         ----------
         current : float
@@ -406,16 +410,16 @@ class ContinuousAttractorNeuron:
         """
         new_u = [0.0] * self.n_units
         for i in range(self.n_units):
-            recurrent = sum(
-                self._weights[i][j] * self._activation(self.u[j]) for j in range(self.n_units)
-            )
+            recurrent = 0.0
+            for j in range(self.n_units):
+                recurrent += self._weights[i][j] * self._activation(self.u[j])
             new_u[i] = self.u[i] + (-self.u[i] + recurrent + current) / self.tau * self.dt
         self.u = new_u
         peak = max(self.u)
         return int(peak > 1.0)
 
     def bump_position(self) -> int:
-        """Return the index of the most active unit (the first one on a tie).
+        """Return the index of the most active unit, the first of equal maxima, as the engine does.
 
         Returns
         -------

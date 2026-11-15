@@ -163,7 +163,7 @@ search for SNNs.
 
 ### Equations
 
-$$u_i += \frac{-u_i + f\left(\sum_j w_{ij} u_j\right) + I}{\tau} \cdot dt$$
+$$u_i += \frac{-u_i + \sum_j w_{ij} f(u_j) + I}{\tau} \cdot dt$$
 $$w_{ij} = A \exp\left(-\frac{d_{ij}^2}{2\sigma_e^2}\right) - B$$
 $$f(x) = \frac{\max(0,x)^2}{1 + \max(0,x)^2}$$
 
@@ -175,6 +175,13 @@ can be positioned anywhere on the ring and persists without input.
 
 **Application:** Head direction cells, path integration, continuous
 working memory (angular position).
+
+### Parity with the engine
+
+Each unit's recurrent input is summed left to right over the ring, in the
+Python model and in the engine alike, so the two agree bit for bit on every
+step. `bump_position()` returns the first of equal maxima in both; on a ring
+that is still even, as at rest, that is unit 0.
 
 ---
 

@@ -650,6 +650,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine's continuous-attractor ring and the Python model now agree bit
+  for bit, and both put the bump at the first of equal maxima. The engine
+  took the last of them, so at rest it named unit 15 where the Python model
+  named unit 0. The Python model summed each unit's recurrent input with the
+  built-in `sum`, which compensates rounding from Python 3.12 on, so its last
+  bits, and on an even ring the unit holding the bump, depended on the
+  Python version: after 50 steps at 2.0 Python 3.12 named unit 0, Python 3.11
+  unit 7 and the engine unit 12. It now sums left to right, as the engine
+  does, and all three name unit 7. The model page and the class docstring
+  also wrote the recurrent input as `f(sum_j w_ij u_j)`; both runtimes sum
+  `w_ij f(u_j)`, and the equation now says so.
 - The engine's timed Rust tests in the cerebellar, channel, interneuron,
   sensory, simple-spiking and miscellaneous neuron modules are held to a
   budget derived from the host that runs them, not to a fixed number of
