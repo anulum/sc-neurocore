@@ -222,3 +222,37 @@ synth_report = "hdl/reports/yosys_mihalas_niebur_q3232_2026-08-28.json"
 target_device = "Xilinx 7-series (Yosys synth_xilinx)"
 target_tier = "H2"
 terminal_reason = "Bounded generated Q32.32 co-simulation, coarse synthesis, and formal port safety only; timing, PPA, board, device, and silicon evidence remain open."
+
+[[behaviour]]
+name = "with panel M's current jumps, a current of 0.002 fires 8 times in 400 steps, its first burst"
+kind = "interval"
+steps = 400
+observable = "spikes"
+bounds = [
+    8,
+    8,
+]
+
+[behaviour.inputs]
+current = 0.002
+
+[behaviour.parameters]
+current_jump_1 = 0.01
+current_jump_2 = -0.0006
+
+[[behaviour]]
+name = "with panel M's current jumps, a current of 0.002 fires 14 times in 2000 steps, in two bursts"
+kind = "interval"
+steps = 2000
+observable = "spikes"
+bounds = [
+    14,
+    14,
+]
+
+[behaviour.inputs]
+current = 0.002
+
+[behaviour.parameters]
+current_jump_1 = 0.01
+current_jump_2 = -0.0006

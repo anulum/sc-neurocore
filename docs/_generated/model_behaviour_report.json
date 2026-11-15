@@ -1238,10 +1238,51 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            8,
+            8
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.002
+          },
+          "kind": "interval",
+          "name": "with panel M's current jumps, a current of 0.002 fires 8 times in 400 steps, its first burst",
+          "observable": "spikes",
+          "observed": 8,
+          "parameters": {
+            "current_jump_1": 0.01,
+            "current_jump_2": -0.0006
+          },
+          "steps": 400
+        },
+        {
+          "bounds": [
+            14,
+            14
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.002
+          },
+          "kind": "interval",
+          "name": "with panel M's current jumps, a current of 0.002 fires 14 times in 2000 steps, in two bursts",
+          "observable": "spikes",
+          "observed": 14,
+          "parameters": {
+            "current_jump_1": 0.01,
+            "current_jump_2": -0.0006
+          },
+          "steps": 2000
+        }
+      ],
+      "cases_sha256": "cf011f23371bff436aba5d8bd8ed7cb536ad9ab3d0c3ac956a902b2a0df27598",
       "model": "MihalasNieburNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2540,9 +2581,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 18,
+    "held": 19,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 167
+    "no_case": 166
   }
 }

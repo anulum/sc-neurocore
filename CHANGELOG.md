@@ -35,6 +35,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Mihalas-Niebur neuron states two behaviour cases, the first that set
+  parameters of their model: with panel M's current jumps (0.01 and
+  -0.0006, the ones its reference receipt and RTL test run), a current of
+  0.002 fires 8 times in 400 steps, its first burst, and 14 times in 2000
+  steps, in two bursts, measured with its public class and matched by the
+  schema. The class as built by default leaves both jumps at 0 and fires 2
+  and 10 times over those windows. Each of the 14 sign variants of its four
+  equations breaks the first case; without the jumps the four terms that act
+  through the internal currents would hold every case. Nineteen of the 185
+  catalogue models now state cases.
 - A model descriptor's behaviour case may set parameters of the model it
   runs, in a `[behaviour.parameters]` table. Each must be a declared
   parameter with a declared range, set to a finite number within that range,
@@ -43,8 +53,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   range and the parameter. The behaviour report builds the model with them,
   for both drives of a contrast, and shows them next to the inputs; the
   variants report sets them on the schema and on every variant, and a schema
-  that does not declare one differs from the model. No shipped case sets a
-  parameter yet, so both reports and every cases digest are unchanged.
+  that does not declare one differs from the model. A case that sets none
+  keeps its digest, so the reports were unchanged by the format.
 - The Wilson-HR neuron states a sixth behaviour case: 1 upward crossing in
   20 steps at a current of 0.1, measured with its public class and matched
   by the schema. The window ends after v's first upward crossing of v_peak

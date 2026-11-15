@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 167
+MODELS_WITHOUT_A_CASE = 166
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -74,6 +74,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52], [1, 1]],
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
+    "MihalasNieburNeuron": [[8, 8], [14, 14]],
     "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54], [1, 1]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCAdaptiveThresholdMapNeuron": [[3, 3], [4, 4]],
@@ -1258,6 +1259,36 @@ def test_a_case_can_hold_only_with_its_parameters() -> None:
     assert result["state"] == "failed"
     assert result["cases"][0]["observed"] == 25
     assert "parameters" not in result["cases"][0]
+
+
+def test_the_mihalas_niebur_cases_hold_only_with_panel_m_s_current_jumps(
+    report: dict[str, object],
+) -> None:
+    """Both cases set the two current jumps, which the class leaves at 0, and fail without them.
+
+    With panel M's jumps the first burst brings 8 spikes in 400 steps and both bursts 14 in
+    2000; the class as built by default fires regularly, 2 and 10 times.
+
+    Parameters
+    ----------
+    report : dict[str, object]
+        The report as the tool computes it.
+    """
+    from sc_neurocore.neurons.model_catalogue import load_descriptor
+    from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
+
+    row = _models(report)["MihalasNieburNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    jumps = {"current_jump_1": 0.01, "current_jump_2": -0.0006}
+    assert [(case["parameters"], case["observed"]) for case in cases] == [(jumps, 8), (jumps, 14)]
+    descriptor = load_descriptor("MihalasNieburNeuron")
+    assert descriptor is not None
+    by_default = tuple(dataclasses.replace(case, parameters=()) for case in descriptor.behaviour)
+    result = evaluate_model(MihalasNieburNeuron, by_default)
+    assert result["state"] == "failed"
+    assert [case["observed"] for case in result["cases"]] == [2, 10]
 
 
 def test_whether_a_case_was_exercised_is_judged_on_the_model_with_its_parameters() -> None:

@@ -58,6 +58,7 @@ RESET_OR_LEVEL_MODELS = frozenset(
         "DendriticNMDANeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
+        "MihalasNieburNeuron",
         "RulkovMapNeuron",
         "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",
@@ -102,7 +103,7 @@ def _crossings(model: str) -> tuple[tuple[str, int, int, int, int], ...]:
     for case in descriptor.behaviour:
         if case.observable != BEHAVIOUR_SPIKE_OBSERVABLE:
             continue
-        neuron = getattr(_models, model)()
+        neuron = getattr(_models, model)(**dict(case.parameters))
         threshold = float(getattr(neuron, threshold_name))
         before = float(getattr(neuron, variable))
         offset = 0.0

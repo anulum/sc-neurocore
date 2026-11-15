@@ -132,3 +132,32 @@ def test_public_rng_state_properties_are_materialised() -> None:
     for model in ("EscapeRateNeuron", "PoissonNeuron"):
         state = {item.name: item.init for item in generate_descriptor(model).state}
         assert state["rng_state"] == 44257.0
+
+
+def test_a_refresh_keeps_a_curated_case_that_sets_parameters() -> None:
+    """A curated behaviour case keeps its ``[behaviour.parameters]`` through a corpus refresh.
+
+    The Mihalas-Niebur cases set both current jumps, which the class leaves at 0, so that
+    the jump terms act. A refresh regenerates the structural tables from the model code and
+    merges the committed curation back. The cases must come out as committed, their
+    parameters included, and the descriptor parser must read the same overrides from the
+    refreshed text.
+    """
+    import tomllib
+
+    from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
+    from sc_neurocore.neurons.model_descriptor import parse_model_descriptor
+
+    tool = _load_tool()
+    committed = load_descriptor_payload("MihalasNieburNeuron")
+    assert committed is not None
+    with_parameters = [case for case in committed.get("behaviour", []) if case.get("parameters")]
+    assert with_parameters, "the Mihalas-Niebur descriptor states no case that sets parameters"
+
+    refreshed = tomllib.loads(tool._rendered_descriptor("MihalasNieburNeuron"))
+
+    assert refreshed["behaviour"] == committed["behaviour"]
+    read_back = parse_model_descriptor(refreshed).behaviour
+    assert [dict(case.parameters) for case in read_back if case.parameters] == [
+        case["parameters"] for case in with_parameters
+    ]

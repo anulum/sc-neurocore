@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 18
+MODELS_WITH_CASES = 19
 
 
 def _accumulator() -> dict[str, object]:
@@ -397,6 +397,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "HindmarshRoseNeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
+        "MihalasNieburNeuron",
         "PernarowskiNeuron",
         "RulkovMapNeuron",
         "SCAdaptiveThresholdMapNeuron",
@@ -414,7 +415,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 17,
+        "discriminated": 18,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -849,6 +850,80 @@ def test_every_variant_of_the_pernarowski_model_breaks_a_case(
     assert decided_late == [3, 4, 6, 7, 9, 10, 11, 12, 13]
 
 
+_MIHALAS_NIEBUR_JUMP_TERMS = [
+    ("v", "+ i1"),
+    ("v", "+ i2"),
+    ("i1", "the whole right-hand side"),
+    ("i2", "the whole right-hand side"),
+]
+
+
+def test_every_variant_of_the_mihalas_niebur_model_breaks_a_case(
+    report: dict[str, object],
+) -> None:
+    """Fourteen signs of four equations, all decided by the first burst under panel M's jumps.
+
+    Both cases set the two current jumps. The first burst, 8 spikes in 400 steps,
+    breaks every variant; the four that act through the internal currents give 1,
+    16, 13 and 5 spikes.
+
+    Parameters
+    ----------
+    report : dict[str, object]
+        The report as the tool computes it.
+    """
+    row = _rows(report)["MihalasNieburNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [8, 14]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 14
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    first_burst = str(unchanged[0]["name"])
+    assert {variant["case"] for variant in variants} == {first_burst}
+    through_the_currents = {
+        (variant["equation"], variant["term"]): variant["observed"]
+        for variant in variants
+        if (variant["equation"], variant["term"]) in _MIHALAS_NIEBUR_JUMP_TERMS
+    }
+    assert through_the_currents == {
+        ("v", "+ i1"): 1,
+        ("v", "+ i2"): 16,
+        ("i1", "the whole right-hand side"): 13,
+        ("i2", "the whole right-hand side"): 5,
+    }
+
+
+def test_without_the_jumps_no_mihalas_niebur_case_decides_the_current_terms() -> None:
+    """The same windows on the model as built by default leave exactly the four current terms open.
+
+    With both jumps at 0 the internal currents stay 0, so a variant that flips a term
+    acting through them changes nothing: restated at their default counts (2 and 10),
+    the two cases decide every other sign and none of those four. This is why the cases
+    set the jumps.
+    """
+    from sc_neurocore.neurons.model_catalogue import load_descriptor
+
+    descriptor = load_descriptor("MihalasNieburNeuron")
+    assert descriptor is not None
+    schema = json.loads(candidate_from_catalogue("MihalasNieburNeuron")["candidate_text"])["model"]
+    by_default = tuple(
+        dataclasses.replace(case, parameters=(), bounds=(count, count))
+        for case, count in zip(descriptor.behaviour, (2, 10), strict=True)
+    )
+    result = evaluate_schema(schema, by_default)
+    assert [entry["observed"] for entry in result["unchanged"]] == [2, 10]
+    assert result["state"] == "not_discriminated"
+    open_terms = [
+        (variant["equation"], variant["term"])
+        for variant in result["variants"]
+        if variant["outcome"] == "not_discriminated"
+    ]
+    assert open_terms == _MIHALAS_NIEBUR_JUMP_TERMS
+
+
 def test_every_variant_of_the_sc_inclusive_perfect_integrator_breaks_a_case(
     report: dict[str, object],
 ) -> None:
@@ -1011,10 +1086,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+17$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+18$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 210, of them violated 210, not discriminated 0" in summary
+    assert "variants: 224, of them violated 224, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 
