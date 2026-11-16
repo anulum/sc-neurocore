@@ -964,3 +964,194 @@ def test_the_tracked_report_passes_the_gates_that_map_digests() -> None:
     assert len(ids) == len(artefacts)
     assert ids <= evaluated
     assert not [failure for failure in report["failures"] if failure["gate_id"] in ids]
+
+
+#: Gates whose record also hashes sources inside a list, once per variant, as ``variants.<i>.source_hashes.<path>``.
+#: The gate's ``_path_value`` stops at a list, and a map keyed by source path points at one place per path, so these
+#: digests are not checked against the source. Their number per gate is held here, so a new one is noticed.
+_LIST_HELD_DIGESTS = {
+    "autonomous-learning-modularisation-local-diagnostics": 32,
+    "bioware-modularisation-local-diagnostics": 14,
+    "nir-graph-modularisation-local-diagnostics": 26,
+}
+
+
+def _is_digest(value: Any) -> bool:
+    """Return whether ``value`` is a lowercase hexadecimal SHA-256 digest.
+
+    Parameters
+    ----------
+    value : Any
+        A value read from a record.
+    """
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _path_keyed_digests(
+    record: Any, suffixes: tuple[str, ...], prefix: str = ""
+) -> dict[str, tuple[str, str]]:
+    """Return every place in a record's tables, at any depth, that holds the SHA-256 of a repository path.
+
+    Parameters
+    ----------
+    record : Any
+        A committed benchmark record, or a table within one.
+    suffixes : tuple of str
+        The file suffixes that mark a key as a repository path, as the gate reads them.
+    prefix : str
+        The dotted place of ``record`` in the whole record; empty for the record itself.
+
+    Returns
+    -------
+    dict of str to tuple of (str, str)
+        Each dotted place, as the gate's ``_path_value`` reads it, with the path and the digest held there. A list is
+        not entered; ``_list_held_digests`` counts what lies inside one.
+    """
+    places: dict[str, tuple[str, str]] = {}
+    if not isinstance(record, dict):
+        return places
+    for key, value in record.items():
+        place = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            places.update(_path_keyed_digests(value, suffixes, place))
+        elif key.endswith(suffixes) and _is_digest(value):
+            places[place] = (key, value)
+    return places
+
+
+def _list_held_digests(value: Any, suffixes: tuple[str, ...], in_list: bool = False) -> int:
+    """Count the path-keyed digests that sit somewhere inside a list of a record.
+
+    Parameters
+    ----------
+    value : Any
+        A committed benchmark record, or a part of one.
+    suffixes : tuple of str
+        The file suffixes that mark a key as a repository path, as the gate reads them.
+    in_list : bool
+        Whether ``value`` lies inside a list.
+
+    Returns
+    -------
+    int
+        The number of such digests.
+    """
+    if isinstance(value, list):
+        return sum(_list_held_digests(item, suffixes, True) for item in value)
+    if not isinstance(value, dict):
+        return 0
+    return sum(
+        1
+        if in_list and key.endswith(suffixes) and _is_digest(item)
+        else _list_held_digests(item, suffixes, in_list)
+        for key, item in value.items()
+    )
+
+
+def _unchecked_digests(gate: dict[str, Any], record: Any, tool: Any) -> list[str]:
+    """Return the places of a record's path-keyed table digests that its gate does not check.
+
+    A digest is checked when the gate's map points at its place. It is also checked when the map points at another
+    place for the same path that holds the same digest, since the gate compares that one with the source.
+
+    Parameters
+    ----------
+    gate : dict of str to Any
+        A manifest gate with a ``source_hashes`` map.
+    record : Any
+        The gate's committed record.
+    tool : Any
+        The loaded gate module.
+
+    Returns
+    -------
+    list of str
+        The unchecked places, sorted.
+    """
+    mapping = gate["source_hashes"]
+    mapped = set(mapping.values())
+    unchecked = []
+    for place, (path, digest) in sorted(
+        _path_keyed_digests(record, tool._SOURCE_PATH_SUFFIXES).items()
+    ):
+        if place in mapped:
+            continue
+        if path in mapping and tool._path_value(record, mapping[path]) == digest:
+            continue
+        unchecked.append(place)
+    return unchecked
+
+
+def test_a_digest_is_found_in_a_table_at_any_depth_but_not_in_a_list() -> None:
+    """The walk reads tables at any depth, each place one the gate can address, and leaves lists to their count."""
+    tool = _load_tool()
+    digest = "ab" * 32
+    record = {
+        "src/top.py": digest,
+        "source_hashes": {"src/a.py": digest, "label": "x", "src/short.py": "abc"},
+        "source_manifest": {"files": {"engine/src/b.rs": digest}, "runner_sha256": digest},
+        "variants": [{"source_hashes": {"src/c.py": digest}}, {"name": "v2"}],
+    }
+    places = _path_keyed_digests(record, (".py", ".rs"))
+    assert places == {
+        "src/top.py": ("src/top.py", digest),
+        "source_hashes.src/a.py": ("src/a.py", digest),
+        "source_manifest.files.engine/src/b.rs": ("engine/src/b.rs", digest),
+    }
+    assert {place: tool._path_value(record, place) for place in places} == {
+        place: held for place, (_path, held) in places.items()
+    }
+    assert _list_held_digests(record, (".py", ".rs")) == 1
+
+
+def test_a_digest_held_twice_is_checked_through_its_mapped_twin_only_when_equal() -> None:
+    """A second digest of a mapped path is checked only when it equals the one the gate compares."""
+    tool = _load_tool()
+    digest, other = "ab" * 32, "cd" * 32
+    gate = {"source_hashes": {"src/a.py": "gate_hashes.src__a_py"}}
+    twin = {"gate_hashes": {"src__a_py": digest}, "manifest": {"files": {"src/a.py": digest}}}
+    differs = {"gate_hashes": {"src__a_py": digest}, "manifest": {"files": {"src/a.py": other}}}
+    unmapped = {"gate_hashes": {"src__a_py": digest}, "manifest": {"files": {"src/b.py": digest}}}
+    assert _unchecked_digests(gate, twin, tool) == []
+    assert _unchecked_digests(gate, differs, tool) == ["manifest.files.src/a.py"]
+    assert _unchecked_digests(gate, unmapped, tool) == ["manifest.files.src/b.py"]
+
+
+def _mapped_gates_and_records() -> list[tuple[dict[str, Any], Any]]:
+    """Return each manifest gate with a ``source_hashes`` map, with its committed record."""
+    root = Path(__file__).resolve().parents[2]
+    manifest = json.loads(
+        (root / "benchmarks" / "benchmark_regression_gates.json").read_text(encoding="utf-8")
+    )
+    return [
+        (gate, json.loads((root / gate["artefact"]).read_text(encoding="utf-8")))
+        for gate in manifest["gates"]
+        if isinstance(gate.get("source_hashes"), dict)
+    ]
+
+
+def test_every_manifest_map_checks_every_path_digest_in_its_record_tables() -> None:
+    """A gate that maps its record's digests checks every one its record's tables hold, at any depth.
+
+    A source the record hashes but the gate does not check could change, or differ from the record's own digest at
+    its commit, and the gate would not say so.
+    """
+    tool = _load_tool()
+    pairs = _mapped_gates_and_records()
+    assert pairs
+    gaps = {gate["id"]: _unchecked_digests(gate, record, tool) for gate, record in pairs}
+    assert {gate_id: places for gate_id, places in gaps.items() if places} == {}
+
+
+def test_the_digests_held_in_lists_are_the_known_ones() -> None:
+    """Only the known records hash sources inside a list, each with its known number of digests."""
+    tool = _load_tool()
+    held = {
+        gate["id"]: _list_held_digests(record, tool._SOURCE_PATH_SUFFIXES)
+        for gate, record in _mapped_gates_and_records()
+    }
+    assert {gate_id: count for gate_id, count in held.items() if count} == _LIST_HELD_DIGESTS

@@ -782,6 +782,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The benchmark evidence gate now checks every source digest its records
+  hold in their tables. In 23 gates the manifest's map named only part of
+  its record's path-keyed digests, 243 paths in all, so a record whose
+  digest for one of the others was wrong at its own commit would still have
+  passed; the two equation-IR records alone held 15 and 14 such paths. Each
+  map now names every such path, and every one of them matches the source
+  at the record's commit. A test refuses a digest in a record's tables, at
+  any depth, that the gate does not check, either at its own place or
+  through the same digest of the same path where the map points. Three
+  records also hash their sources once per variant inside a list, 72
+  digests the gate cannot address yet; the test holds their number per
+  gate.
 - Corrected 85 citations in 25 model pages, the transcriptomic page, three
   engine docs, two model sources, one descriptor summary and two test
   docstrings, where a recurring false co-author, "Bhatt", stood in place of

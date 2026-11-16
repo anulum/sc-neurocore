@@ -399,7 +399,8 @@
         "tests/test_expif_backends_batch_atomicity.py": "source_hashes.tests/test_expif_backends_batch_atomicity.py",
         "tests/test_expif_engine_binding.py": "source_hashes.tests/test_expif_engine_binding.py",
         "tests/test_model_expif_source_contract.py": "source_hashes.tests/test_model_expif_source_contract.py",
-        "tests/test_reference_expif_source_receipt.py": "source_hashes.tests/test_reference_expif_source_receipt.py"
+        "tests/test_reference_expif_source_receipt.py": "source_hashes.tests/test_reference_expif_source_receipt.py",
+        "engine/src/neuron/exp_if_tests.rs": "source_hashes.engine/src/neuron/exp_if_tests.rs"
       }
     },
     {
@@ -562,7 +563,15 @@
       },
       "source_hashes": {
         "benchmarks/bench_model_theta.py": "source_hashes.benchmarks/bench_model_theta.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/trivial/theta.rs": "source_hashes.engine/src/bindings/trivial/theta.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
+        "engine/src/network_runner/neuron_variant.rs": "source_hashes.engine/src/network_runner/neuron_variant.rs",
         "engine/src/neurons/trivial/theta.rs": "source_hashes.engine/src/neurons/trivial/theta.rs",
+        "hdl/formal/catalogue/sc_theta.sby": "source_hashes.hdl/formal/catalogue/sc_theta.sby",
+        "hdl/formal/catalogue/sc_theta.v": "source_hashes.hdl/formal/catalogue/sc_theta.v",
+        "hdl/formal/catalogue/sc_theta_formal.v": "source_hashes.hdl/formal/catalogue/sc_theta_formal.v",
+        "hdl/reports/yosys_theta_q1616_2026-08-30.json": "source_hashes.hdl/reports/yosys_theta_q1616_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/theta/theta.go": "source_hashes.src/sc_neurocore/accel/go/neurons/theta/theta.go",
         "src/sc_neurocore/accel/go/services/theta.go": "source_hashes.src/sc_neurocore/accel/go/services/theta.go",
         "src/sc_neurocore/accel/go/services/theta_test.go": "source_hashes.src/sc_neurocore/accel/go/services/theta_test.go",
@@ -572,7 +581,16 @@
         "src/sc_neurocore/accel/rust/examples/theta_trace.rs": "source_hashes.src/sc_neurocore/accel/rust/examples/theta_trace.rs",
         "src/sc_neurocore/accel/rust/safety/theta.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/theta.rs",
         "src/sc_neurocore/accel/theta.py": "source_hashes.src/sc_neurocore/accel/theta.py",
-        "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py"
+        "src/sc_neurocore/neurons/descriptor_generator.py": "source_hashes.src/sc_neurocore/neurons/descriptor_generator.py",
+        "src/sc_neurocore/neurons/model_descriptors/ThetaNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/ThetaNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/theta.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/theta.json",
+        "src/sc_neurocore/neurons/model_schemas/theta.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/theta.toml",
+        "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py",
+        "src/sc_neurocore/neurons/reference_receipts/theta_ermentrout_kopell_1986.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/theta_ermentrout_kopell_1986.json",
+        "tests/test_cosim_theta.py": "source_hashes.tests/test_cosim_theta.py",
+        "tests/test_reference_theta.py": "source_hashes.tests/test_reference_theta.py",
+        "tools/emit_catalogue_formal.py": "source_hashes.tools/emit_catalogue_formal.py",
+        "tools/readiness_evidence_index.py": "source_hashes.tools/readiness_evidence_index.py"
       }
     },
     {
@@ -642,7 +660,14 @@
       },
       "source_hashes": {
         "benchmarks/bench_model_dpi_neuron.py": "source_hashes.benchmarks/bench_model_dpi_neuron.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/hardware/dpi.rs": "source_hashes.engine/src/bindings/hardware/dpi.rs",
         "engine/src/neurons/hardware/dpi_neuron.rs": "source_hashes.engine/src/neurons/hardware/dpi_neuron.rs",
+        "engine/src/neurons/hardware/dpi_neuron_tests.rs": "source_hashes.engine/src/neurons/hardware/dpi_neuron_tests.rs",
+        "hdl/formal/catalogue/sc_dpineuron.sby": "source_hashes.hdl/formal/catalogue/sc_dpineuron.sby",
+        "hdl/formal/catalogue/sc_dpineuron.v": "source_hashes.hdl/formal/catalogue/sc_dpineuron.v",
+        "hdl/formal/catalogue/sc_dpineuron_formal.v": "source_hashes.hdl/formal/catalogue/sc_dpineuron_formal.v",
+        "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json": "source_hashes.hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json",
         "src/sc_neurocore/accel/dpi_neuron.py": "source_hashes.src/sc_neurocore/accel/dpi_neuron.py",
         "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
         "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h",
@@ -653,9 +678,23 @@
         "src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo",
         "src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs": "source_hashes.src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs",
         "src/sc_neurocore/accel/rust/safety/dpi_neuron.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/dpi_neuron.rs",
+        "src/sc_neurocore/neurons/model_descriptors/DPINeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/DPINeuron.toml",
         "src/sc_neurocore/neurons/model_schemas/dpi_neuron.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/dpi_neuron.json",
         "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml",
-        "src/sc_neurocore/neurons/models/dpi_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/dpi_neuron.py"
+        "src/sc_neurocore/neurons/models/dpi_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/dpi_neuron.py",
+        "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json",
+        "tests/cosim_reference_dpi_neuron.py": "source_hashes.tests/cosim_reference_dpi_neuron.py",
+        "tests/test_cosim_dpi_neuron.py": "source_hashes.tests/test_cosim_dpi_neuron.py",
+        "tests/test_dpi_neuron_backend_loading.py": "source_hashes.tests/test_dpi_neuron_backend_loading.py",
+        "tests/test_dpi_neuron_backends_auto_dispatch.py": "source_hashes.tests/test_dpi_neuron_backends_auto_dispatch.py",
+        "tests/test_dpi_neuron_backends_backend_parity.py": "source_hashes.tests/test_dpi_neuron_backends_backend_parity.py",
+        "tests/test_dpi_neuron_backends_rejects_and_hints.py": "source_hashes.tests/test_dpi_neuron_backends_rejects_and_hints.py",
+        "tests/test_model_descriptor_reproducibility.py": "source_hashes.tests/test_model_descriptor_reproducibility.py",
+        "tests/test_model_dpi_neuron_contract_rejects.py": "source_hashes.tests/test_model_dpi_neuron_contract_rejects.py",
+        "tests/test_model_dpi_neuron_dynamics_and_golden.py": "source_hashes.tests/test_model_dpi_neuron_dynamics_and_golden.py",
+        "tests/test_model_dpi_neuron_rust_and_reset.py": "source_hashes.tests/test_model_dpi_neuron_rust_and_reset.py",
+        "tests/test_reference_dpi_neuron.py": "source_hashes.tests/test_reference_dpi_neuron.py",
+        "tools/emit_catalogue_formal.py": "source_hashes.tools/emit_catalogue_formal.py"
       }
     },
     {
@@ -801,7 +840,8 @@
         "src/sc_neurocore/neurons/model_schemas/lapicque.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/lapicque.toml",
         "src/sc_neurocore/neurons/models/lapicque.py": "source_hashes.src/sc_neurocore/neurons/models/lapicque.py",
         "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json",
-        "src/sc_neurocore/accel/lapicque.py": "source_hashes.src/sc_neurocore/accel/lapicque.py"
+        "src/sc_neurocore/accel/lapicque.py": "source_hashes.src/sc_neurocore/accel/lapicque.py",
+        "engine/src/neuron/lapicque_tests.rs": "source_hashes.engine/src/neuron/lapicque_tests.rs"
       }
     },
     {
@@ -2370,7 +2410,12 @@
         "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py",
         "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go",
         "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl",
-        "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo"
+        "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo",
+        "engine/src/bindings/ermentrout_kopell_map.rs": "source_hashes.engine/src/bindings/ermentrout_kopell_map.rs",
+        "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_map_neuron.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/ermentrout_kopell_map_neuron.rs",
+        "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.json",
+        "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.toml",
+        "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json"
       }
     },
     {
@@ -2441,13 +2486,18 @@
       "source_hashes": {
         "benchmarks/bench_ibarz_tanaka_map.py": "source_hashes.benchmarks/bench_ibarz_tanaka_map.py",
         "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/ibarz_tanaka_map.rs": "source_hashes.engine/src/bindings/ibarz_tanaka_map.rs",
         "engine/src/neurons/ibarz_tanaka_map.rs": "source_hashes.engine/src/neurons/ibarz_tanaka_map.rs",
         "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go",
         "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h": "source_hashes.src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h",
         "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl",
         "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo",
         "src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs",
-        "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": "source_hashes.src/sc_neurocore/neurons/models/ibarz_tanaka_map.py"
+        "src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.json",
+        "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.toml",
+        "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": "source_hashes.src/sc_neurocore/neurons/models/ibarz_tanaka_map.py",
+        "src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov.json"
       }
     },
     {
@@ -3231,12 +3281,22 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_mat.py": "source_hashes.benchmarks/bench_model_mat.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/trivial/mat.rs": "source_hashes.engine/src/bindings/trivial/mat.rs",
+        "engine/src/neurons/trivial/mat.rs": "source_hashes.engine/src/neurons/trivial/mat.rs",
+        "src/sc_neurocore/accel/go/mat/mat.go": "source_hashes.src/sc_neurocore/accel/go/mat/mat.go",
         "src/sc_neurocore/accel/go/services/mat.go": "source_hashes.src/sc_neurocore/accel/go/services/mat.go",
         "src/sc_neurocore/accel/go/services/mat_test.go": "source_hashes.src/sc_neurocore/accel/go/services/mat_test.go",
         "src/sc_neurocore/accel/julia/neurons/mat.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/mat.jl",
+        "src/sc_neurocore/accel/mat.py": "source_hashes.src/sc_neurocore/accel/mat.py",
         "src/sc_neurocore/accel/mojo/kernels/mat.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/mat.mojo",
+        "src/sc_neurocore/accel/mojo/mat/mat.mojo": "source_hashes.src/sc_neurocore/accel/mojo/mat/mat.mojo",
         "src/sc_neurocore/accel/rust/safety/mat.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/mat.rs",
-        "src/sc_neurocore/neurons/models/mat.py": "source_hashes.src/sc_neurocore/neurons/models/mat.py"
+        "src/sc_neurocore/neurons/model_descriptors/MATNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/MATNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/mat.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/mat.json",
+        "src/sc_neurocore/neurons/model_schemas/mat.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/mat.toml",
+        "src/sc_neurocore/neurons/models/mat.py": "source_hashes.src/sc_neurocore/neurons/models/mat.py",
+        "src/sc_neurocore/neurons/reference_trace_data/mat_2009_rs.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/mat_2009_rs.json"
       }
     },
     {
@@ -3288,11 +3348,22 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_sc_resetting_mat.py": "source_hashes.benchmarks/bench_model_sc_resetting_mat.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/trivial/sc_resetting_mat.rs": "source_hashes.engine/src/bindings/trivial/sc_resetting_mat.rs",
+        "engine/src/neurons/trivial/sc_resetting_mat.rs": "source_hashes.engine/src/neurons/trivial/sc_resetting_mat.rs",
+        "src/sc_neurocore/accel/go/sc_resetting_mat/sc_resetting_mat.go": "source_hashes.src/sc_neurocore/accel/go/sc_resetting_mat/sc_resetting_mat.go",
         "src/sc_neurocore/accel/go/services/sc_resetting_mat.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_resetting_mat.go",
+        "src/sc_neurocore/accel/go/services/sc_resetting_mat_test.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_resetting_mat_test.go",
         "src/sc_neurocore/accel/julia/neurons/sc_resetting_mat.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_resetting_mat.jl",
         "src/sc_neurocore/accel/mojo/kernels/sc_resetting_mat.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_resetting_mat.mojo",
+        "src/sc_neurocore/accel/mojo/sc_resetting_mat/sc_resetting_mat.mojo": "source_hashes.src/sc_neurocore/accel/mojo/sc_resetting_mat/sc_resetting_mat.mojo",
         "src/sc_neurocore/accel/rust/safety/sc_resetting_mat.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_resetting_mat.rs",
-        "src/sc_neurocore/neurons/models/sc_resetting_mat.py": "source_hashes.src/sc_neurocore/neurons/models/sc_resetting_mat.py"
+        "src/sc_neurocore/accel/sc_resetting_mat.py": "source_hashes.src/sc_neurocore/accel/sc_resetting_mat.py",
+        "src/sc_neurocore/neurons/model_descriptors/SCResettingMATNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCResettingMATNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.toml",
+        "src/sc_neurocore/neurons/models/sc_resetting_mat.py": "source_hashes.src/sc_neurocore/neurons/models/sc_resetting_mat.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_mat_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_resetting_mat_project.json"
       }
     },
     {
@@ -3343,12 +3414,26 @@
         "backend_summary.mojo.spikes"
       ],
       "source_hashes": {
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
         "benchmarks/bench_model_non_resetting_lif.py": "source_hashes.benchmarks/bench_model_non_resetting_lif.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/non_resetting_lif.rs": "source_hashes.engine/src/bindings/trivial/non_resetting_lif.rs",
+        "engine/src/neurons/trivial/non_resetting_lif.rs": "source_hashes.engine/src/neurons/trivial/non_resetting_lif.rs",
+        "src/sc_neurocore/accel/go/non_resetting_lif/non_resetting_lif.go": "source_hashes.src/sc_neurocore/accel/go/non_resetting_lif/non_resetting_lif.go",
         "src/sc_neurocore/accel/go/services/non_resetting_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/non_resetting_lif.go",
+        "src/sc_neurocore/accel/go/services/non_resetting_lif_test.go": "source_hashes.src/sc_neurocore/accel/go/services/non_resetting_lif_test.go",
         "src/sc_neurocore/accel/julia/neurons/non_resetting_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/non_resetting_lif.jl",
         "src/sc_neurocore/accel/mojo/kernels/non_resetting_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/non_resetting_lif.mojo",
+        "src/sc_neurocore/accel/mojo/non_resetting_lif/non_resetting_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/non_resetting_lif/non_resetting_lif.mojo",
+        "src/sc_neurocore/accel/non_resetting_lif.py": "source_hashes.src/sc_neurocore/accel/non_resetting_lif.py",
         "src/sc_neurocore/accel/rust/safety/non_resetting_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/non_resetting_lif.rs",
-        "src/sc_neurocore/neurons/models/non_resetting_lif.py": "source_hashes.src/sc_neurocore/neurons/models/non_resetting_lif.py"
+        "src/sc_neurocore/neurons/model_descriptors/NonResettingLIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/NonResettingLIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/non_resetting_lif.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/non_resetting_lif.json",
+        "src/sc_neurocore/neurons/model_schemas/non_resetting_lif.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/non_resetting_lif.toml",
+        "src/sc_neurocore/neurons/models/non_resetting_lif.py": "source_hashes.src/sc_neurocore/neurons/models/non_resetting_lif.py",
+        "src/sc_neurocore/neurons/reference_trace_data/non_resetting_lif_mat1.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/non_resetting_lif_mat1.json"
       }
     },
     {
@@ -3399,12 +3484,26 @@
         "backend_summary.mojo.spikes"
       ],
       "source_hashes": {
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
         "benchmarks/bench_model_sc_non_resetting_adaptive_lif.py": "source_hashes.benchmarks/bench_model_sc_non_resetting_adaptive_lif.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/sc_non_resetting_adaptive_lif.rs": "source_hashes.engine/src/bindings/trivial/sc_non_resetting_adaptive_lif.rs",
+        "engine/src/neurons/trivial/sc_non_resetting_adaptive_lif.rs": "source_hashes.engine/src/neurons/trivial/sc_non_resetting_adaptive_lif.rs",
+        "src/sc_neurocore/accel/go/sc_non_resetting_adaptive_lif/sc_non_resetting_adaptive_lif.go": "source_hashes.src/sc_neurocore/accel/go/sc_non_resetting_adaptive_lif/sc_non_resetting_adaptive_lif.go",
         "src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif.go",
+        "src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif_test.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif_test.go",
         "src/sc_neurocore/accel/julia/neurons/sc_non_resetting_adaptive_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_non_resetting_adaptive_lif.jl",
         "src/sc_neurocore/accel/mojo/kernels/sc_non_resetting_adaptive_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_non_resetting_adaptive_lif.mojo",
+        "src/sc_neurocore/accel/mojo/sc_non_resetting_adaptive_lif/sc_non_resetting_adaptive_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/sc_non_resetting_adaptive_lif/sc_non_resetting_adaptive_lif.mojo",
         "src/sc_neurocore/accel/rust/safety/sc_non_resetting_adaptive_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_non_resetting_adaptive_lif.rs",
-        "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py"
+        "src/sc_neurocore/accel/sc_non_resetting_adaptive_lif.py": "source_hashes.src/sc_neurocore/accel/sc_non_resetting_adaptive_lif.py",
+        "src/sc_neurocore/neurons/model_descriptors/SCNonResettingAdaptiveLIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCNonResettingAdaptiveLIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_non_resetting_adaptive_lif.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_non_resetting_adaptive_lif.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_non_resetting_adaptive_lif.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_non_resetting_adaptive_lif.toml",
+        "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_non_resetting_adaptive_lif_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_non_resetting_adaptive_lif_project.json"
       }
     },
     {
@@ -3873,7 +3972,19 @@
       ],
       "source_hashes": {
         "benchmarks/_bioware_probe.py": "probe_sha256",
-        "benchmarks/bench_bioware.py": "benchmark_sha256"
+        "benchmarks/bench_bioware.py": "benchmark_sha256",
+        "src/sc_neurocore/bioware/__init__.py": "source_hashes.src/sc_neurocore/bioware/__init__.py",
+        "src/sc_neurocore/bioware/bioware.py": "source_hashes.src/sc_neurocore/bioware/bioware.py",
+        "src/sc_neurocore/bioware/bioware_acquisition.py": "source_hashes.src/sc_neurocore/bioware/bioware_acquisition.py",
+        "src/sc_neurocore/bioware/bioware_analysis.py": "source_hashes.src/sc_neurocore/bioware/bioware_analysis.py",
+        "src/sc_neurocore/bioware/bioware_audit.py": "source_hashes.src/sc_neurocore/bioware/bioware_audit.py",
+        "src/sc_neurocore/bioware/bioware_contracts.py": "source_hashes.src/sc_neurocore/bioware/bioware_contracts.py",
+        "src/sc_neurocore/bioware/bioware_encoding.py": "source_hashes.src/sc_neurocore/bioware/bioware_encoding.py",
+        "src/sc_neurocore/bioware/bioware_experiment.py": "source_hashes.src/sc_neurocore/bioware/bioware_experiment.py",
+        "src/sc_neurocore/bioware/bioware_fitness.py": "source_hashes.src/sc_neurocore/bioware/bioware_fitness.py",
+        "src/sc_neurocore/bioware/bioware_plasticity.py": "source_hashes.src/sc_neurocore/bioware/bioware_plasticity.py",
+        "src/sc_neurocore/bioware/bioware_session.py": "source_hashes.src/sc_neurocore/bioware/bioware_session.py",
+        "src/sc_neurocore/bioware/bioware_validation.py": "source_hashes.src/sc_neurocore/bioware/bioware_validation.py"
       }
     },
     {
@@ -3937,7 +4048,23 @@
       "source_hashes": {
         "benchmarks/_learning_benchmark_support.py": "support_sha256",
         "benchmarks/_learning_bridge_probe.py": "probe_sha256",
-        "benchmarks/bench_autonomous_learning.py": "benchmark_sha256"
+        "benchmarks/bench_autonomous_learning.py": "benchmark_sha256",
+        "crates/autonomous_learning/src/lib.rs": "source_hashes.crates/autonomous_learning/src/lib.rs",
+        "crates/autonomous_learning/src/state_codec.rs": "source_hashes.crates/autonomous_learning/src/state_codec.rs",
+        "crates/autonomous_learning/src/wgpu_backend.rs": "source_hashes.crates/autonomous_learning/src/wgpu_backend.rs",
+        "src/sc_neurocore/_native/learning_bridge.py": "source_hashes.src/sc_neurocore/_native/learning_bridge.py",
+        "src/sc_neurocore/_native/learning_factory.py": "source_hashes.src/sc_neurocore/_native/learning_factory.py",
+        "src/sc_neurocore/_native/learning_runtime.py": "source_hashes.src/sc_neurocore/_native/learning_runtime.py",
+        "src/sc_neurocore/_native/learning_rust.py": "source_hashes.src/sc_neurocore/_native/learning_rust.py",
+        "src/sc_neurocore/_native/learning_rust_layer.py": "source_hashes.src/sc_neurocore/_native/learning_rust_layer.py",
+        "src/sc_neurocore/_native/learning_torch.py": "source_hashes.src/sc_neurocore/_native/learning_torch.py",
+        "src/sc_neurocore/_native/learning_torch_autograd.py": "source_hashes.src/sc_neurocore/_native/learning_torch_autograd.py",
+        "src/sc_neurocore/_native/learning_torch_precision.py": "source_hashes.src/sc_neurocore/_native/learning_torch_precision.py",
+        "src/sc_neurocore/_native/learning_torch_support.py": "source_hashes.src/sc_neurocore/_native/learning_torch_support.py",
+        "src/sc_neurocore/_native/learning_validation.py": "source_hashes.src/sc_neurocore/_native/learning_validation.py",
+        "src/sc_neurocore/_native/learning_wgpu.py": "source_hashes.src/sc_neurocore/_native/learning_wgpu.py",
+        "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "source_hashes.src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go",
+        "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "source_hashes.src/sc_neurocore/accel/julia/_native/learning_bridge.jl"
       }
     },
     {
@@ -4363,7 +4490,8 @@
         "src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml",
         "src/sc_neurocore/neurons/model_schemas/wilson_cowan.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_cowan.json",
         "src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml",
-        "src/sc_neurocore/neurons/models/wilson_cowan.py": "source_hashes.src/sc_neurocore/neurons/models/wilson_cowan.py"
+        "src/sc_neurocore/neurons/models/wilson_cowan.py": "source_hashes.src/sc_neurocore/neurons/models/wilson_cowan.py",
+        "engine/src/bindings/wilson_cowan.rs": "source_hashes.engine/src/bindings/wilson_cowan.rs"
       }
     },
     {
@@ -4382,12 +4510,25 @@
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
       "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
       "source_hashes": {
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
+        "benchmarks/_sigma_delta_benchmark.py": "source_hashes.benchmarks/_sigma_delta_benchmark.py",
         "benchmarks/bench_model_sigma_delta.py": "source_hashes.benchmarks/bench_model_sigma_delta.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/sigma_delta.rs": "source_hashes.engine/src/bindings/trivial/sigma_delta.rs",
+        "engine/src/neurons/trivial/sigma_delta.rs": "source_hashes.engine/src/neurons/trivial/sigma_delta.rs",
         "src/sc_neurocore/accel/go/services/sigma_delta.go": "source_hashes.src/sc_neurocore/accel/go/services/sigma_delta.go",
+        "src/sc_neurocore/accel/go/sigma_delta/sigma_delta.go": "source_hashes.src/sc_neurocore/accel/go/sigma_delta/sigma_delta.go",
         "src/sc_neurocore/accel/julia/neurons/sigma_delta.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sigma_delta.jl",
         "src/sc_neurocore/accel/mojo/kernels/sigma_delta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sigma_delta.mojo",
+        "src/sc_neurocore/accel/mojo/sigma_delta/sigma_delta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/sigma_delta/sigma_delta.mojo",
         "src/sc_neurocore/accel/rust/safety/sigma_delta.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sigma_delta.rs",
-        "src/sc_neurocore/neurons/models/sigma_delta.py": "source_hashes.src/sc_neurocore/neurons/models/sigma_delta.py"
+        "src/sc_neurocore/accel/sigma_delta.py": "source_hashes.src/sc_neurocore/accel/sigma_delta.py",
+        "src/sc_neurocore/neurons/model_descriptors/SigmaDeltaNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SigmaDeltaNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sigma_delta.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sigma_delta.json",
+        "src/sc_neurocore/neurons/model_schemas/sigma_delta.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sigma_delta.toml",
+        "src/sc_neurocore/neurons/models/sigma_delta.py": "source_hashes.src/sc_neurocore/neurons/models/sigma_delta.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sigma_delta_apsdm.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sigma_delta_apsdm.json"
       }
     },
     {
@@ -4406,12 +4547,25 @@
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
       "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
       "source_hashes": {
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
+        "benchmarks/_sigma_delta_benchmark.py": "source_hashes.benchmarks/_sigma_delta_benchmark.py",
         "benchmarks/bench_model_sc_sigma_delta_accumulator.py": "source_hashes.benchmarks/bench_model_sc_sigma_delta_accumulator.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/sc_sigma_delta_accumulator.rs": "source_hashes.engine/src/bindings/trivial/sc_sigma_delta_accumulator.rs",
+        "engine/src/neurons/trivial/sc_sigma_delta_accumulator.rs": "source_hashes.engine/src/neurons/trivial/sc_sigma_delta_accumulator.rs",
+        "src/sc_neurocore/accel/go/sc_sigma_delta_accumulator/sc_sigma_delta_accumulator.go": "source_hashes.src/sc_neurocore/accel/go/sc_sigma_delta_accumulator/sc_sigma_delta_accumulator.go",
         "src/sc_neurocore/accel/go/services/sc_sigma_delta_accumulator.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_sigma_delta_accumulator.go",
         "src/sc_neurocore/accel/julia/neurons/sc_sigma_delta_accumulator.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_sigma_delta_accumulator.jl",
         "src/sc_neurocore/accel/mojo/kernels/sc_sigma_delta_accumulator.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_sigma_delta_accumulator.mojo",
+        "src/sc_neurocore/accel/mojo/sc_sigma_delta_accumulator/sc_sigma_delta_accumulator.mojo": "source_hashes.src/sc_neurocore/accel/mojo/sc_sigma_delta_accumulator/sc_sigma_delta_accumulator.mojo",
         "src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs",
-        "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py": "source_hashes.src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
+        "src/sc_neurocore/accel/sc_sigma_delta_accumulator.py": "source_hashes.src/sc_neurocore/accel/sc_sigma_delta_accumulator.py",
+        "src/sc_neurocore/neurons/model_descriptors/SCSigmaDeltaAccumulatorNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCSigmaDeltaAccumulatorNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_sigma_delta_accumulator.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_sigma_delta_accumulator.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_sigma_delta_accumulator.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_sigma_delta_accumulator.toml",
+        "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py": "source_hashes.src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_sigma_delta_accumulator_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_sigma_delta_accumulator_project.json"
       }
     },
     {
@@ -4430,12 +4584,25 @@
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
       "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
       "source_hashes": {
+        "benchmarks/_energy_lif_benchmark.py": "source_hashes.benchmarks/_energy_lif_benchmark.py",
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
         "benchmarks/bench_model_energy_lif.py": "source_hashes.benchmarks/bench_model_energy_lif.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/energy_lif.rs": "source_hashes.engine/src/bindings/trivial/energy_lif.rs",
+        "engine/src/neurons/trivial/energy_lif.rs": "source_hashes.engine/src/neurons/trivial/energy_lif.rs",
+        "src/sc_neurocore/accel/energy_lif.py": "source_hashes.src/sc_neurocore/accel/energy_lif.py",
+        "src/sc_neurocore/accel/go/energy_lif/energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/energy_lif/energy_lif.go",
         "src/sc_neurocore/accel/go/services/energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/energy_lif.go",
         "src/sc_neurocore/accel/julia/neurons/energy_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/energy_lif.jl",
+        "src/sc_neurocore/accel/mojo/energy_lif/energy_lif_abi.mojo": "source_hashes.src/sc_neurocore/accel/mojo/energy_lif/energy_lif_abi.mojo",
         "src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo",
         "src/sc_neurocore/accel/rust/safety/energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/energy_lif.rs",
-        "src/sc_neurocore/neurons/models/energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/energy_lif.py"
+        "src/sc_neurocore/neurons/model_descriptors/EnergyLIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/EnergyLIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/energy_lif.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/energy_lif.json",
+        "src/sc_neurocore/neurons/model_schemas/energy_lif.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/energy_lif.toml",
+        "src/sc_neurocore/neurons/models/energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/energy_lif.py",
+        "src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json"
       }
     },
     {
@@ -4454,12 +4621,25 @@
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
       "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
       "source_hashes": {
+        "benchmarks/_energy_lif_benchmark.py": "source_hashes.benchmarks/_energy_lif_benchmark.py",
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
         "benchmarks/bench_model_sc_normalized_energy_lif.py": "source_hashes.benchmarks/bench_model_sc_normalized_energy_lif.py",
+        "engine/src/bindings/fixed_point_lif.rs": "source_hashes.engine/src/bindings/fixed_point_lif.rs",
+        "engine/src/bindings/fixed_point_lif/array_allocation.rs": "source_hashes.engine/src/bindings/fixed_point_lif/array_allocation.rs",
+        "engine/src/bindings/trivial/sc_normalized_energy_lif.rs": "source_hashes.engine/src/bindings/trivial/sc_normalized_energy_lif.rs",
+        "engine/src/neurons/trivial/sc_normalized_energy_lif.rs": "source_hashes.engine/src/neurons/trivial/sc_normalized_energy_lif.rs",
+        "src/sc_neurocore/accel/go/sc_normalized_energy_lif/sc_normalized_energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/sc_normalized_energy_lif/sc_normalized_energy_lif.go",
         "src/sc_neurocore/accel/go/services/sc_normalized_energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_normalized_energy_lif.go",
         "src/sc_neurocore/accel/julia/neurons/sc_normalized_energy_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_normalized_energy_lif.jl",
         "src/sc_neurocore/accel/mojo/kernels/sc_normalized_energy_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_normalized_energy_lif.mojo",
+        "src/sc_neurocore/accel/mojo/sc_normalized_energy_lif/sc_normalized_energy_lif_abi.mojo": "source_hashes.src/sc_neurocore/accel/mojo/sc_normalized_energy_lif/sc_normalized_energy_lif_abi.mojo",
         "src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs",
-        "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py"
+        "src/sc_neurocore/accel/sc_normalized_energy_lif.py": "source_hashes.src/sc_neurocore/accel/sc_normalized_energy_lif.py",
+        "src/sc_neurocore/neurons/model_descriptors/SCNormalizedEnergyLIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCNormalizedEnergyLIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_normalized_energy_lif.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_normalized_energy_lif.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_normalized_energy_lif.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_normalized_energy_lif.toml",
+        "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_normalized_energy_lif_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_normalized_energy_lif_project.json"
       }
     },
     {
@@ -4819,6 +4999,17 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_nmda.py": "source_hashes.benchmarks/bench_model_nmda.py",
+        "engine/examples/bench_nmda_rk2.rs": "source_hashes.engine/examples/bench_nmda_rk2.rs",
+        "engine/src/neurons/channels/nmda.rs": "source_hashes.engine/src/neurons/channels/nmda.rs",
+        "engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs": "source_hashes.engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs",
+        "src/sc_neurocore/accel/go/services/nmda_neuron.go": "source_hashes.src/sc_neurocore/accel/go/services/nmda_neuron.go",
+        "src/sc_neurocore/accel/go/services/sc_wb_nmda_magnesium_block.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_wb_nmda_magnesium_block.go",
+        "src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl",
+        "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl",
+        "src/sc_neurocore/accel/mojo/kernels/nmda_neuron.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/nmda_neuron.mojo",
+        "src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block.mojo",
+        "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/nmda_neuron.rs",
+        "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs",
         "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml",
         "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml",
         "src/sc_neurocore/neurons/model_schemas/nmda_neuron.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/nmda_neuron.json",
@@ -4859,6 +5050,17 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_larter_breakspear.py": "source_hashes.benchmarks/bench_model_larter_breakspear.py",
+        "engine/examples/bench_larter_breakspear_rk4.rs": "source_hashes.engine/examples/bench_larter_breakspear_rk4.rs",
+        "engine/src/neurons/special/larter_breakspear_neural_mass.rs": "source_hashes.engine/src/neurons/special/larter_breakspear_neural_mass.rs",
+        "engine/src/neurons/special/sc_decoupled_adaptation_ion_mass.rs": "source_hashes.engine/src/neurons/special/sc_decoupled_adaptation_ion_mass.rs",
+        "src/sc_neurocore/accel/go/services/larter_breakspear.go": "source_hashes.src/sc_neurocore/accel/go/services/larter_breakspear.go",
+        "src/sc_neurocore/accel/go/services/sc_decoupled_adaptation_ion_mass.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_decoupled_adaptation_ion_mass.go",
+        "src/sc_neurocore/accel/julia/neurons/larter_breakspear.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/larter_breakspear.jl",
+        "src/sc_neurocore/accel/julia/neurons/sc_decoupled_adaptation_ion_mass.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_decoupled_adaptation_ion_mass.jl",
+        "src/sc_neurocore/accel/mojo/kernels/larter_breakspear.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/larter_breakspear.mojo",
+        "src/sc_neurocore/accel/mojo/kernels/sc_decoupled_adaptation_ion_mass.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_decoupled_adaptation_ion_mass.mojo",
+        "src/sc_neurocore/accel/rust/safety/larter_breakspear.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/larter_breakspear.rs",
+        "src/sc_neurocore/accel/rust/safety/sc_decoupled_adaptation_ion_mass.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_decoupled_adaptation_ion_mass.rs",
         "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml",
         "src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml",
         "src/sc_neurocore/neurons/model_schemas/larter_breakspear.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/larter_breakspear.json",
@@ -4896,7 +5098,14 @@
         "src/sc_neurocore/neurons/model_schemas/mckean.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/mckean.json",
         "src/sc_neurocore/neurons/model_schemas/mckean.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/mckean.toml",
         "src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json",
-        "src/sc_neurocore/neurons/models/mckean.py": "source_hashes.src/sc_neurocore/neurons/models/mckean.py"
+        "src/sc_neurocore/neurons/models/mckean.py": "source_hashes.src/sc_neurocore/neurons/models/mckean.py",
+        "benchmarks/_mckean_benchmark.py": "source_hashes.benchmarks/_mckean_benchmark.py",
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
+        "engine/src/bindings/mckean.rs": "source_hashes.engine/src/bindings/mckean.rs",
+        "engine/src/neurons/simple_spiking/mckean.rs": "source_hashes.engine/src/neurons/simple_spiking/mckean.rs",
+        "src/sc_neurocore/accel/go/mckean/mckean.go": "source_hashes.src/sc_neurocore/accel/go/mckean/mckean.go",
+        "src/sc_neurocore/accel/mckean.py": "source_hashes.src/sc_neurocore/accel/mckean.py",
+        "src/sc_neurocore/accel/mojo/mckean/mckean_abi.mojo": "source_hashes.src/sc_neurocore/accel/mojo/mckean/mckean_abi.mojo"
       }
     },
     {
@@ -4924,7 +5133,12 @@
         "src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.json",
         "src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.toml",
         "src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json",
-        "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
+        "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
+        "benchmarks/_mckean_benchmark.py": "source_hashes.benchmarks/_mckean_benchmark.py",
+        "benchmarks/_non_resetting_lif_benchmark.py": "source_hashes.benchmarks/_non_resetting_lif_benchmark.py",
+        "engine/src/bindings/sc_triangular_mckean.rs": "source_hashes.engine/src/bindings/sc_triangular_mckean.rs",
+        "engine/src/neurons/simple_spiking/sc_triangular_mckean.rs": "source_hashes.engine/src/neurons/simple_spiking/sc_triangular_mckean.rs",
+        "src/sc_neurocore/accel/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/accel/sc_triangular_mckean.py"
       }
     },
     {
@@ -5454,7 +5668,22 @@
         "src/sc_neurocore/neurons/equation_refusals.py": "source_sha256.src/sc_neurocore/neurons/equation_refusals.py",
         "src/sc_neurocore/neurons/equation_safety.py": "source_sha256.src/sc_neurocore/neurons/equation_safety.py",
         "src/sc_neurocore/neurons/equation_units_runtime.py": "source_sha256.src/sc_neurocore/neurons/equation_units_runtime.py",
-        "src/sc_neurocore/neurons/expression_derivative.py": "source_sha256.src/sc_neurocore/neurons/expression_derivative.py"
+        "src/sc_neurocore/neurons/expression_derivative.py": "source_sha256.src/sc_neurocore/neurons/expression_derivative.py",
+        "engine/src/ir/arithmetic_contract.rs": "source_sha256.engine/src/ir/arithmetic_contract.rs",
+        "engine/src/ir/emit_mlir/arithmetic.rs": "source_sha256.engine/src/ir/emit_mlir/arithmetic.rs",
+        "engine/src/ir/emit_mlir/dcls.rs": "source_sha256.engine/src/ir/emit_mlir/dcls.rs",
+        "engine/src/ir/emit_mlir/dense.rs": "source_sha256.engine/src/ir/emit_mlir/dense.rs",
+        "engine/src/ir/emit_mlir/kernels.rs": "source_sha256.engine/src/ir/emit_mlir/kernels.rs",
+        "engine/src/ir/emit_mlir/kernels/attention.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/attention.rs",
+        "engine/src/ir/emit_mlir/kernels/graph.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/graph.rs",
+        "engine/src/ir/emit_mlir/kernels/kuramoto.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/kuramoto.rs",
+        "engine/src/ir/emit_mlir/lif.rs": "source_sha256.engine/src/ir/emit_mlir/lif.rs",
+        "engine/src/ir/emit_mlir/ops.rs": "source_sha256.engine/src/ir/emit_mlir/ops.rs",
+        "engine/src/ir/emit_sv/arithmetic.rs": "source_sha256.engine/src/ir/emit_sv/arithmetic.rs",
+        "engine/src/ir/kernel_contract.rs": "source_sha256.engine/src/ir/kernel_contract.rs",
+        "engine/src/ir/neuron_contract.rs": "source_sha256.engine/src/ir/neuron_contract.rs",
+        "src/sc_neurocore/compiler/equation_state.py": "source_sha256.src/sc_neurocore/compiler/equation_state.py",
+        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py"
       }
     },
     {
@@ -5793,7 +6022,21 @@
         "src/sc_neurocore/neurons/equation_refusals.py": "source_sha256.src/sc_neurocore/neurons/equation_refusals.py",
         "src/sc_neurocore/neurons/equation_safety.py": "source_sha256.src/sc_neurocore/neurons/equation_safety.py",
         "src/sc_neurocore/neurons/equation_units_runtime.py": "source_sha256.src/sc_neurocore/neurons/equation_units_runtime.py",
-        "src/sc_neurocore/neurons/expression_derivative.py": "source_sha256.src/sc_neurocore/neurons/expression_derivative.py"
+        "src/sc_neurocore/neurons/expression_derivative.py": "source_sha256.src/sc_neurocore/neurons/expression_derivative.py",
+        "engine/src/ir/arithmetic_contract.rs": "source_sha256.engine/src/ir/arithmetic_contract.rs",
+        "engine/src/ir/emit_mlir/arithmetic.rs": "source_sha256.engine/src/ir/emit_mlir/arithmetic.rs",
+        "engine/src/ir/emit_mlir/dcls.rs": "source_sha256.engine/src/ir/emit_mlir/dcls.rs",
+        "engine/src/ir/emit_mlir/dense.rs": "source_sha256.engine/src/ir/emit_mlir/dense.rs",
+        "engine/src/ir/emit_mlir/kernels.rs": "source_sha256.engine/src/ir/emit_mlir/kernels.rs",
+        "engine/src/ir/emit_mlir/kernels/attention.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/attention.rs",
+        "engine/src/ir/emit_mlir/kernels/graph.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/graph.rs",
+        "engine/src/ir/emit_mlir/kernels/kuramoto.rs": "source_sha256.engine/src/ir/emit_mlir/kernels/kuramoto.rs",
+        "engine/src/ir/emit_mlir/lif.rs": "source_sha256.engine/src/ir/emit_mlir/lif.rs",
+        "engine/src/ir/emit_mlir/ops.rs": "source_sha256.engine/src/ir/emit_mlir/ops.rs",
+        "engine/src/ir/emit_sv/arithmetic.rs": "source_sha256.engine/src/ir/emit_sv/arithmetic.rs",
+        "engine/src/ir/kernel_contract.rs": "source_sha256.engine/src/ir/kernel_contract.rs",
+        "engine/src/ir/neuron_contract.rs": "source_sha256.engine/src/ir/neuron_contract.rs",
+        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py"
       }
     },
     {

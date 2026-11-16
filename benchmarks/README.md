@@ -30,6 +30,15 @@ version, SPDX marker, unique gate IDs, unique artefact paths, and at least one
 required metric or expected-value contract per gate. A malformed or weakened
 manifest is a gate failure, not a bypass.
 
+A gate that maps its record's source digests (`source_hashes`) checks every
+digest of a path the record holds in its tables, at any depth, against the
+source at the record's commit: the map points at it, or at another place
+holding the same digest of the same path.
+`tests/test_tools/test_benchmark_evidence_gate.py` refuses a table digest the
+gate does not check. A digest inside a list, such as a record's per-variant
+`variants.<i>.source_hashes`, cannot be addressed by the gate yet; the test
+holds the number of those per gate, so a new one is noticed.
+
 ```bash
 python tools/benchmark_evidence_gate.py \
   --manifest benchmarks/benchmark_regression_gates.json \
