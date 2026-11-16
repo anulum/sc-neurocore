@@ -13,17 +13,17 @@
 pub struct SpiNNaker2Neuron {
     /// Membrane potential (integer fixed-point units); a spike sets it to `v_reset`.
     pub v: i32,
-    /// Resting potential (integer fixed-point units) (dimensionless).
+    /// Resting potential (integer fixed-point units).
     pub v_rest: i32,
-    /// Post-spike reset potential (integer fixed-point units) (dimensionless).
+    /// Post-spike reset potential (integer fixed-point units).
     pub v_reset: i32,
-    /// Firing threshold (integer fixed-point units) (dimensionless).
+    /// Firing threshold (integer fixed-point units).
     pub v_threshold: i32,
     /// Integer multiplier for the exponential membrane decay (dimensionless).
     pub decay_mult: i32,
     /// Right-shift amount paired with the decay multiplier (dimensionless).
     pub decay_shift: i32,
-    /// Refractory period in simulation time-steps (dimensionless).
+    /// Refractory period (steps).
     pub refrac_steps: i32,
     /// Refractory steps left; a spike sets it to `refrac_steps`.
     pub refrac_count: i32,

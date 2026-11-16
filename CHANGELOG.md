@@ -681,6 +681,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Eleven parameters of the hardware neurons' descriptors, and one of the
+  self-referential neuron, named a unit in their meaning while declaring
+  the unit "1", so the engine's field docs read two units side by side, for
+  example "Resting potential (integer fixed-point units) (dimensionless)".
+  Each now declares its unit (integer fixed-point, integer accumulator or
+  integer units, or steps) and its meaning no longer repeats it. The Loihi
+  CUBA `tau_v` meaning said it decays the membrane current where it decays
+  the voltage, and the Akida `modulation` meaning spoke of spike ranks where
+  the rank counts input events; both now say what the step does. The engine
+  docs are rendered again from the descriptors, and a test refuses a
+  dimensionless field whose meaning names a unit.
 - The engine's continuous-attractor ring and the Python model now agree bit
   for bit, and both put the bump at the first of equal maxima. The engine
   took the last of them, so at rest it named unit 15 where the Python model

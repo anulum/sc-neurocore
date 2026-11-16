@@ -17,11 +17,11 @@ pub struct Loihi2Neuron {
     pub s2: i32,
     /// State variable 3, the spike-driven trace (integer); a spike adds `s3_incr`.
     pub s3: i32,
-    /// Decay time constant of state variable 1 (chip time-steps) (dimensionless).
+    /// Decay time constant of state variable 1; each step removes s1 / tau1 (steps).
     pub tau1: i32,
-    /// Decay time constant of state variable 2 (chip time-steps) (dimensionless).
+    /// Decay time constant of state variable 2; each step removes s2 / tau2 (steps).
     pub tau2: i32,
-    /// Decay time constant of state variable 3 (chip time-steps) (dimensionless).
+    /// Decay time constant of state variable 3; each step removes s3 / tau3 (steps).
     pub tau3: i32,
     /// Cross-coupling weight from state 2 into state 1 (dimensionless).
     pub w12: i32,
@@ -29,7 +29,7 @@ pub struct Loihi2Neuron {
     pub w13: i32,
     /// Cross-coupling weight from state 3 into state 2 (dimensionless).
     pub w23: i32,
-    /// Firing threshold on state variable 1 (integer units) (dimensionless).
+    /// Firing threshold on state variable 1 (integer units).
     pub s1_threshold: i32,
     /// Post-spike reset value of state variable 1 (dimensionless).
     pub s1_reset: i32,

@@ -13,9 +13,9 @@
 pub struct AkidaNeuron {
     /// Integer membrane accumulator.
     pub v: i32,
-    /// Membrane threshold for an output spike (integer accumulator units) (dimensionless).
+    /// Membrane threshold for an output spike (integer accumulator units).
     pub threshold: i32,
-    /// Rank-order decay factor applied per spike rank (dimensionless).
+    /// Rank-order decay factor: each input event since the last reset is weighted by one more factor of modulation than the one before it (dimensionless).
     pub modulation: f64,
     /// Input events accepted since the last reset; the next event is weighted by
     /// `modulation^rank`.

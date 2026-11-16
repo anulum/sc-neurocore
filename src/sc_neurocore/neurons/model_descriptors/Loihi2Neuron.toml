@@ -38,8 +38,8 @@ init = 0.0
 
 [parameters.tau1]
 default = 10.0
-unit = "1"
-meaning = "decay time constant of state variable 1 (chip time-steps)"
+unit = "steps"
+meaning = "decay time constant of state variable 1; each step removes s1 / tau1"
 range = [
     1.0,
     1000.0,
@@ -47,8 +47,8 @@ range = [
 
 [parameters.tau2]
 default = 5.0
-unit = "1"
-meaning = "decay time constant of state variable 2 (chip time-steps)"
+unit = "steps"
+meaning = "decay time constant of state variable 2; each step removes s2 / tau2"
 range = [
     1.0,
     1000.0,
@@ -56,8 +56,8 @@ range = [
 
 [parameters.tau3]
 default = 50.0
-unit = "1"
-meaning = "decay time constant of state variable 3 (chip time-steps)"
+unit = "steps"
+meaning = "decay time constant of state variable 3; each step removes s3 / tau3"
 range = [
     1.0,
     1000.0,
@@ -92,8 +92,8 @@ range = [
 
 [parameters.s1_threshold]
 default = 1000.0
-unit = "1"
-meaning = "firing threshold on state variable 1 (integer units)"
+unit = "integer units"
+meaning = "firing threshold on state variable 1"
 range = [
     0.0,
     100000.0,

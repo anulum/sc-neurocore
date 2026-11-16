@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import subprocess
 import sys
+import tomllib
 
 import pytest
 
@@ -218,3 +220,95 @@ def test_the_command_line_entry_point_reports_through_its_exit_status(tmp_path: 
     )
     assert result.returncode == 1
     assert "3 described Rust fields lack documentation." in result.stdout
+
+
+#: A meaning that names a unit of its own (units, steps, time-steps or timesteps) in parentheses, or as
+#: "in ... time-steps"; with the unit ``"1"`` the tool would add a second one, "dimensionless". A count
+#: "per timestep" names no unit.
+_NAMED_UNIT = re.compile(
+    r"\([^()]*\b(?:units|(?:time-?)?steps?)\b[^()]*\)|\bin (?:\w+ )?time-?steps?\b|\bin timesteps?\b"
+)
+
+#: A rendered doc that carries a named unit and "dimensionless" side by side.
+_TWO_UNITS = re.compile(r"\([^()]*\b(?:units|(?:time-?)?steps?)\b[^()]*\) \(dimensionless\)")
+
+
+def test_a_dimensionless_descriptor_field_names_no_unit_in_its_meaning() -> None:
+    """A field whose meaning names a unit declares that unit, so its doc does not also read "dimensionless"."""
+    clashing = []
+    for path in sorted((REPO_ROOT / DESCRIPTOR_DIRECTORY).glob("*.toml")):
+        descriptor = tomllib.loads(path.read_text(encoding="utf-8"))
+        for table in ("parameters", "state"):
+            for name, spec in descriptor.get(table, {}).items():
+                if not isinstance(spec, dict) or str(spec.get("unit", "")).strip() != "1":
+                    continue
+                if _NAMED_UNIT.search(str(spec.get("meaning", ""))):
+                    clashing.append(f"{path.stem}.{name}: {spec['meaning']!r}")
+    assert clashing == []
+
+
+def test_no_engine_field_doc_names_a_unit_and_dimensionless() -> None:
+    """The docs the tool rendered before the descriptors named their units carry no such pair."""
+    pairs = [
+        f"{source.relative_to(REPO_ROOT)}:{number}"
+        for source in sorted((REPO_ROOT / ENGINE_SOURCE).rglob("*.rs"))
+        for number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), start=1)
+        if line.lstrip().startswith("///") and _TWO_UNITS.search(line)
+    ]
+    assert pairs == []
+
+
+@pytest.mark.parametrize(
+    "meaning",
+    [
+        "refractory period (steps)",
+        "window (in time-steps)",
+        "delay (timesteps)",
+        "a single delay (step)",
+        "threshold (integer units)",
+        "delay in time-steps",
+    ],
+)
+def test_the_named_unit_guard_finds_every_spelling(meaning: str) -> None:
+    """Each spelling of a step or a unit that the descriptors use is a named unit, the bare "steps" included.
+
+    Parameters
+    ----------
+    meaning : str
+        A meaning that names a unit.
+    """
+    assert _NAMED_UNIT.search(meaning)
+
+
+@pytest.mark.parametrize(
+    "doc",
+    [
+        "/// Membrane-voltage decay time constant (steps) (dimensionless).",
+        "/// Refractory period (time-steps) (dimensionless).",
+        "/// Delay (timesteps) (dimensionless).",
+        "/// Resting potential (integer fixed-point units) (dimensionless).",
+    ],
+)
+def test_the_two_unit_guard_finds_every_spelling(doc: str) -> None:
+    """A rendered doc with any spelling of a named unit next to "dimensionless" is caught, the bare "steps" included.
+
+    Parameters
+    ----------
+    doc : str
+        A rendered field doc with two units.
+    """
+    assert _TWO_UNITS.search(doc)
+
+
+@pytest.mark.parametrize(
+    "meaning", ["spike count per timestep", "sub-steps per timestep", "membrane threshold"]
+)
+def test_the_named_unit_guard_leaves_a_rate_or_a_plain_meaning(meaning: str) -> None:
+    """A count per timestep, sub-steps per timestep and a plain meaning name no unit.
+
+    Parameters
+    ----------
+    meaning : str
+        A meaning that names no unit.
+    """
+    assert not _NAMED_UNIT.search(meaning)

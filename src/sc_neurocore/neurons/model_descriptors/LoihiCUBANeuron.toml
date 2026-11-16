@@ -40,8 +40,8 @@ init = 0.0
 
 [parameters.tau_v]
 default = 10.0
-unit = "1"
-meaning = "membrane-current decay time constant (in timesteps, fixed-point)"
+unit = "steps"
+meaning = "membrane-voltage decay time constant; each step removes v / tau_v"
 range = [
     1.0,
     4096.0,
@@ -49,8 +49,8 @@ range = [
 
 [parameters.tau_u]
 default = 5.0
-unit = "1"
-meaning = "synaptic-current decay time constant (in timesteps, fixed-point)"
+unit = "steps"
+meaning = "synaptic-current decay time constant; each step removes u / tau_u"
 range = [
     1.0,
     4096.0,

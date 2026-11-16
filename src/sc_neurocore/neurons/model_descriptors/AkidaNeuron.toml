@@ -32,8 +32,8 @@ init = 0.0
 
 [parameters.threshold]
 default = 100.0
-unit = "1"
-meaning = "membrane threshold for an output spike (integer accumulator units)"
+unit = "integer accumulator units"
+meaning = "membrane threshold for an output spike"
 range = [
     0.0,
     1000.0,
@@ -42,7 +42,7 @@ range = [
 [parameters.modulation]
 default = 0.75
 unit = "1"
-meaning = "rank-order decay factor applied per spike rank"
+meaning = "rank-order decay factor: each input event since the last reset is weighted by one more factor of modulation than the one before it"
 range = [
     0.0,
     1.0,

@@ -32,8 +32,8 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = "1"
-meaning = "resting potential (integer fixed-point units)"
+unit = "integer fixed-point units"
+meaning = "resting potential"
 range = [
     0.0,
     65535.0,
@@ -41,8 +41,8 @@ range = [
 
 [parameters.v_reset]
 default = 0.0
-unit = "1"
-meaning = "post-spike reset potential (integer fixed-point units)"
+unit = "integer fixed-point units"
+meaning = "post-spike reset potential"
 range = [
     0.0,
     65535.0,
@@ -50,8 +50,8 @@ range = [
 
 [parameters.v_threshold]
 default = 1024.0
-unit = "1"
-meaning = "firing threshold (integer fixed-point units)"
+unit = "integer fixed-point units"
+meaning = "firing threshold"
 range = [
     0.0,
     65535.0,
@@ -77,8 +77,8 @@ range = [
 
 [parameters.refrac_steps]
 default = 2.0
-unit = "1"
-meaning = "refractory period in simulation time-steps"
+unit = "steps"
+meaning = "refractory period"
 range = [
     0.0,
     100.0,

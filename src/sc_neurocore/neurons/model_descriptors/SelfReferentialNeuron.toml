@@ -54,8 +54,8 @@ range = [
 
 [parameters.window]
 default = 50.0
-unit = "1"
-meaning = "spike-history window length in time-steps"
+unit = "steps"
+meaning = "spike-history window length"
 range = [
     1.0,
     1000.0,
