@@ -14,6 +14,8 @@
 //! 2. **Cross-hybridization** — O(n²) pairwise alignment scoring (rayon-parallelized)
 //! 3. **Kinetic simulation** — RK4 mass-action integrator with Arrhenius scaling
 
+#![deny(missing_docs)]
+
 pub(crate) mod bindings;
 
 use rand::RngExt;
@@ -176,35 +178,62 @@ pub fn check_cross_hybridization(
 // ── Kinetic Simulator (RK4 + Arrhenius) ──────────────────────────────
 
 /// Gate types for kinetic simulation.
+///
+/// Each kind sets the gate's effective rate `k_eff` from the input concentrations, which
+/// are looked up by name (a missing name reads as 0) and scaled by `1e-9` before `k_hyb`;
+/// the gate's `leak_rate` is then added.
 #[derive(Clone, Copy, Debug)]
 pub enum DnaGateType {
+    /// `k_hyb * min(inputs) * 1e-9` when every input is above 0, else 0.
     And,
+    /// `k_hyb * max(inputs) * 1e-9`.
     Or,
+    /// `k_disp * (1 - min(input / max_conc, 1))`, from the first input.
     Not,
+    /// `k_hyb * max(input - threshold * max_conc, 0) * 1e-9`, from the first input.
     Threshold,
+    /// Inputs (select, a, b): `k_hyb * (s * a + (1 - s) * b) * 1e-9`, with
+    /// `s = min(select / max_conc, 1)`.
     Mux,
+    /// `k_hyb * input * 1e-9 * 5`, from the first input.
     Amplifier,
+    /// `k_disp * min(input / max_conc, 1)`, from the first input.
     Buffer,
+    /// No rate law: the effective rate is the leak alone.
     Nand,
+    /// No rate law: the effective rate is the leak alone.
     Xor,
 }
 
 /// A gate in the DNA circuit.
 #[derive(Clone, Debug)]
 pub struct DnaGateSpec {
+    /// The gate's rate law.
     pub gate_type: DnaGateType,
+    /// Names of the input species. `Mux` reads the first three as (select, a, b) and the
+    /// single-input kinds the first; neither checks that they are there.
     pub input_names: Vec<String>,
+    /// Key of the gate's output trace in the simulation result.
     pub output_name: String,
+    /// Fraction of `max_conc` the input must exceed; read by `Threshold` only.
     pub threshold: f64,
+    /// Rate added to the gate's effective rate, for every kind (1/s).
     pub leak_rate: f64,
 }
 
 /// Kinetic simulation configuration.
 pub struct KineticConfig {
+    /// Hybridisation rate at 37 °C, per molar per second (concentrations are scaled by
+    /// `1e-9`); scaled to `temperature_c` with an activation energy of 15 kcal/mol.
     pub k_hyb: f64,
+    /// Displacement rate at 37 °C (1/s), scaled to `temperature_c` the same way.
     pub k_disp: f64,
+    /// Operating temperature of the Arrhenius scaling (°C).
     pub temperature_c: f64,
+    /// Ceiling every output approaches and is clamped to; `Not`, `Buffer` and `Mux` also
+    /// divide an input by it.
     pub max_conc: f64,
+    /// RK4 when true, forward Euler when false, for `dc/dt = k_eff (max_conc - c)`.
     pub use_rk4: bool,
 }
 
@@ -284,6 +313,10 @@ fn compute_k_eff(gate: &DnaGateSpec, inputs: &HashMap<String, f64>, config: &Kin
 }
 
 /// Run kinetic simulation, returning time traces per output.
+///
+/// Each gate's `k_eff` is computed once from `input_concentrations`, and its output follows
+/// `dc/dt = k_eff (max_conc - c)` from 0 in `floor(duration_s / dt)` samples, the first at 0,
+/// each clamped to `[0, max_conc]`. The result holds `"time"` and one trace per `output_name`.
 pub fn simulate_kinetics(
     gates: &[DnaGateSpec],
     input_concentrations: &HashMap<String, f64>,

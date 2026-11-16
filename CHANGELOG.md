@@ -546,6 +546,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   documented, and `spike_directionality`'s doc, which sat on the `use`
   statement above it, is back on the function and now says which spikes
   it counts.
+- The engine's DNA circuit module (`engine/src/dna.rs`) documents its
+  gate kinds, each with the rate law it gives (the NAND and XOR gates
+  have none and run on their leak alone), and the fields of a gate and
+  of the kinetic configuration, with the units the rates are scaled in.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file
