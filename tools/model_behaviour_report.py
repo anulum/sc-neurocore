@@ -88,13 +88,13 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from sc_neurocore.neurons import models as _models  # noqa: E402
-from sc_neurocore.neurons.model_catalogue import load_descriptor  # noqa: E402
-from sc_neurocore.neurons.model_descriptor import (  # noqa: E402
+from sc_neurocore.neurons import models as _models
+from sc_neurocore.neurons.model_catalogue import load_descriptor
+from sc_neurocore.neurons.model_descriptor import (
     BEHAVIOUR_SPIKE_OBSERVABLE,
     BehaviourCase,
 )
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
+from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 #: Schema of the emitted report.
 REPORT_SCHEMA = "sc-neurocore.model-behaviour-report.v1"

@@ -35,12 +35,8 @@ import hashlib
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
-import sys
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover - the repository runs 3.12; kept for the declared floor
-    import tomli as tomllib
+import tomllib
 
 from tools.source_code_equivalence import same_code
 

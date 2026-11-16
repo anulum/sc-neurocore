@@ -97,15 +97,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT))
 
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
-from tools.benchmark_evidence_gate import (  # noqa: E402
+from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from tools.benchmark_evidence_gate import (
     _SOURCE_PATH_SUFFIXES,
     GateFailure,
     _path_value,
     current_source_hash_failures,
     tracked_files,
 )
-from tools.source_change_reviews import Review, load_reviews, review_accepted  # noqa: E402
+from tools.source_change_reviews import Review, load_reviews, review_accepted
 
 #: Schema of the emitted census.
 CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v4"

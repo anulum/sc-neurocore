@@ -85,19 +85,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT))
 
-from sc_neurocore.neurons.equation_refusals import EquationRefusal  # noqa: E402
-from sc_neurocore.neurons.model_catalogue import load_descriptor  # noqa: E402
-from sc_neurocore.neurons.model_descriptor import (  # noqa: E402
+from sc_neurocore.neurons.equation_refusals import EquationRefusal
+from sc_neurocore.neurons.model_catalogue import load_descriptor
+from sc_neurocore.neurons.model_descriptor import (
     BEHAVIOUR_SPIKE_OBSERVABLE,
     BehaviourCase,
 )
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
-from sc_neurocore.neurons.universal_dsl import UniversalNeuron  # noqa: E402
-from sc_neurocore.studio.candidate_catalogue import (  # noqa: E402
+from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+from sc_neurocore.studio.candidate_catalogue import (
     CatalogueCandidateUnavailable,
     candidate_from_catalogue,
 )
-from tools.model_behaviour_report import MAX_CASE_STEPS, as_written, case_holds  # noqa: E402
+from tools.model_behaviour_report import MAX_CASE_STEPS, as_written, case_holds
 
 #: Schema of the emitted report.
 REPORT_SCHEMA = "sc-neurocore.model-behaviour-variants.v1"
