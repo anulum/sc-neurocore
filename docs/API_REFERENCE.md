@@ -30841,9 +30841,10 @@ by ``1 - trace_decay``, and the threshold moves by
 ``adaptation_rate * (rate_trace - target_rate)``, clamped to
 ``&#91;THRESHOLD_FLOOR, initial_threshold * THRESHOLD_CEILING_MULT&#93;`` (0.1, and 10 times the
 threshold at construction). A step's spike is decided with the threshold before that step's
-adaptation. The inherited :meth:`reset_state` returns ``v`` to rest and clears the refractory
-counter; it keeps the adapted threshold and the rate trace, unlike the engine's
-``HomeostaticLif::reset``, which restores both.
+adaptation. :meth:`reset_state` returns the neuron to the state it was built with: ``v`` at
+rest, no refractory count, and the threshold and rate trace given at construction, as the
+engine's ``HomeostaticLif::reset`` does. The step is not the engine's: this one is the
+stochastic LIF's (``tau_mem``, ``dt``, noise and refractory period).
 
 Example
 -------
@@ -30854,7 +30855,9 @@ Example
 True
 
 - **__post_init__**()
-  - Check the homeostasis parameters, after the parent's checks, and record the threshold.
+  - Record the initial threshold and rate trace, then check every parameter.
+- **reset_state**()
+  - Return to rest with no refractory count, and restore the threshold and the rate trace.
 - **step**(input_current)
   - Advance the stochastic LIF one step, then adapt the threshold; return the spike.
 - **get_state**()

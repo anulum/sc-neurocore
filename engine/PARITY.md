@@ -37,6 +37,10 @@ Python reference implementation (`src/sc_neurocore/`).
 | Homeostatic LIF | `HomeostaticLIFNeuron` | `neuron.rs::HomeostaticLif` | Done |
 | Dendritic neuron | `DendriticNeuron` | `neuron.rs::DendriticNeuron` | Done |
 
+Homeostatic LIF: the reset agrees (both return `v` to rest and restore the threshold and the
+rate trace); the step does not. The engine's is a deterministic leak with a fixed 20-step time
+constant and no `dt`, noise or refractory period; the Python model steps the stochastic LIF.
+
 ## Extended Neuron Models (106 bio + 1 AI in `neurons/`)
 
 | Category | Count | Rust module | Status |

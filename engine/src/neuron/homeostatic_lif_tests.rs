@@ -36,6 +36,20 @@ fn zero_input_remains_silent() {
 }
 
 #[test]
+fn reset_restores_the_threshold_and_clears_the_trace() {
+    let mut neuron = HomeostaticLif::with_defaults();
+    for _ in 0..500 {
+        neuron.step(25.0);
+    }
+    assert!((neuron.v_threshold - 1.0).abs() > 1e-6 && neuron.rate_trace > 0.0);
+    neuron.reset();
+    assert_eq!(neuron.v, neuron.v_rest);
+    assert_eq!(neuron.rate_trace, 0.0);
+    assert_eq!(neuron.v_threshold, 1.0);
+    assert_eq!(neuron.target_rate, 0.1);
+}
+
+#[test]
 fn adaptive_threshold_remains_bounded() {
     let mut neuron = HomeostaticLif::with_defaults();
     for _ in 0..10_000 {

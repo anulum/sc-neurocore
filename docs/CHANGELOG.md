@@ -706,6 +706,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `HomeostaticLIFNeuron.reset_state` now restores the threshold and the rate
+  trace the neuron was built with, as well as returning `v` to rest. It
+  inherited the stochastic LIF's reset, which kept both adapted values, so a
+  reset neuron did not repeat its first run; the base contract asks a reset
+  for every internal state's initial value, and the engine's
+  `HomeostaticLif::reset` already restored both. The two steps still differ:
+  the engine's is a deterministic leak with a fixed 20-step time constant,
+  the Python model's the stochastic LIF, which the Python docstring and
+  `engine/PARITY.md` now say.
+
 - The bit-true fixed-point LFSR refuses a register it could never leave. It
   checked only for a seed of 0 before masking, so a non-zero seed whose low
   `width` bits are 0 (0x10000 at 16 bits) loaded a zero register, and

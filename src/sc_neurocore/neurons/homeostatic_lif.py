@@ -38,9 +38,10 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     ``adaptation_rate * (rate_trace - target_rate)``, clamped to
     ``[THRESHOLD_FLOOR, initial_threshold * THRESHOLD_CEILING_MULT]`` (0.1, and 10 times the
     threshold at construction). A step's spike is decided with the threshold before that step's
-    adaptation. The inherited :meth:`reset_state` returns ``v`` to rest and clears the refractory
-    counter; it keeps the adapted threshold and the rate trace, unlike the engine's
-    ``HomeostaticLif::reset``, which restores both.
+    adaptation. :meth:`reset_state` returns the neuron to the state it was built with: ``v`` at
+    rest, no refractory count, and the threshold and rate trace given at construction, as the
+    engine's ``HomeostaticLif::reset`` does. The step is not the engine's: this one is the
+    stochastic LIF's (``tau_mem``, ``dt``, noise and refractory period).
 
     Example
     -------
@@ -57,7 +58,7 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     trace_decay: float = HOMEOSTATIC_TRACE_DECAY
 
     def __post_init__(self) -> None:
-        """Check the homeostasis parameters, after the parent's checks, and record the threshold.
+        """Record the initial threshold and rate trace, then check every parameter.
 
         Raises
         ------
@@ -65,6 +66,9 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
             If ``target_rate``, ``rate_trace`` or ``trace_decay`` is non-finite or outside
             ``[0, 1]``, or ``adaptation_rate`` is non-finite or negative.
         """
+        # Recorded first: the parent's checks end in reset_state, which restores these.
+        self.initial_threshold: float = self.v_threshold
+        self.initial_rate_trace: float = self.rate_trace
         super().__post_init__()
         if not math.isfinite(self.target_rate) or not 0.0 <= self.target_rate <= 1.0:
             raise ValueError("target_rate must be finite and within [0, 1]")
@@ -75,7 +79,15 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
         if not math.isfinite(self.trace_decay) or not 0.0 <= self.trace_decay <= 1.0:
             raise ValueError("trace_decay must be finite and within [0, 1]")
 
-        self.initial_threshold: float = self.v_threshold
+    def reset_state(self) -> None:
+        """Return to rest with no refractory count, and restore the threshold and the rate trace.
+
+        Both are restored to their values at construction, so every state the step adapts is
+        reset, as :meth:`BaseNeuron.reset_state` asks; the parameters are kept.
+        """
+        super().reset_state()
+        self.v_threshold = self.initial_threshold
+        self.rate_trace = self.initial_rate_trace
 
     def step(self, input_current: float) -> int:
         """Advance the stochastic LIF one step, then adapt the threshold; return the spike.
