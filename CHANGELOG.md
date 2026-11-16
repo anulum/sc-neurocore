@@ -515,6 +515,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   for a small step, which the struct doc now says, and `step` draws its two
   samples before the checks, so a refused step still advances the random
   stream.
+- The engine's six synapse models (`engine/src/synapses/mod.rs`: STDP,
+  reward STDP, static, triplet STDP, short-term plasticity, dopamine STDP)
+  are documented in full, each read against its code. Corrected by
+  reading: the fixed-point STDP step's doc gave a pre spike a weight
+  increase, but the code depresses there (by `trace_post * |a_minus|`,
+  floored at `w_min`) and potentiates on a post spike, so simultaneous
+  spikes potentiate; the triplet rule's formulas paired the pair amplitude
+  with the slow trace, where the code adds `A3 * o2` (and `A3 * r2`) to the
+  pair amplitude. The static synapse's `delay` is not applied by
+  `transmit`, which its doc now says.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

@@ -11,15 +11,22 @@
 //! Implements Spike-Timing-Dependent Plasticity (STDP) for stochastic bitstreams.
 //! Optimized for on-chip adaptation.
 
+#![deny(missing_docs)]
+
 use crate::neuron::mask;
 
 /// Parameters for the STDP rule.
 #[derive(Clone, Copy, Debug)]
 pub struct StdpParams {
+    /// Pre-trace increment on a pre spike; its magnitude scales potentiation (fixed-point).
     pub a_plus: i16,
+    /// Post-trace increment on a post spike; its magnitude scales depression (fixed-point).
     pub a_minus: i16,
+    /// Trace decay factor per step: `trace * decay >> fraction` (fixed-point).
     pub decay: i16,
+    /// Lower weight bound, applied by depression (fixed-point).
     pub w_min: i16,
+    /// Upper weight bound, applied by potentiation (fixed-point).
     pub w_max: i16,
 }
 
@@ -39,6 +46,7 @@ pub struct StdpSynapse {
 }
 
 impl StdpSynapse {
+    /// Create a synapse with the given weight and fixed-point format and both traces at 0.
     pub fn new(initial_weight: i16, data_width: u32, fraction: u32) -> Self {
         Self {
             weight: initial_weight,
@@ -51,10 +59,14 @@ impl StdpSynapse {
 
     /// Update traces and weight based on pre and post spikes.
     ///
-    /// This is a simplified, hardware-friendly STDP rule:
-    ///   - On pre-spike: trace_pre += A_plus; weight += trace_post * rate
-    ///   - On post-spike: trace_post += A_minus; weight += trace_pre * rate
-    ///   - Traces decay over time.
+    /// This is a simplified, hardware-friendly STDP rule, in order:
+    ///   - both traces decay: `trace = trace * decay >> fraction`;
+    ///   - a pre spike adds `a_plus` to `trace_pre`, a post spike `a_minus` to `trace_post`;
+    ///   - a post spike adds `(trace_pre * |a_plus|) >> fraction` to the weight, capped at
+    ///     `w_max`; otherwise a pre spike subtracts `(trace_post * |a_minus|) >> fraction`,
+    ///     floored at `w_min`. Simultaneous spikes therefore potentiate.
+    ///
+    /// Every result is masked to `data_width` bits.
     pub fn step(&mut self, pre_spike: bool, post_spike: bool, params: &StdpParams) {
         // 1. Decay traces
         self.trace_pre = mask(
@@ -101,16 +113,25 @@ impl StdpSynapse {
 /// Izhikevich, Cerebral Cortex 17(10), 2007.
 #[derive(Clone, Debug)]
 pub struct RewardStdpSynapse {
+    /// Synaptic weight, kept within `[w_min, w_max]` by the reward update.
     pub weight: f64,
+    /// Lower weight bound.
     pub w_min: f64,
+    /// Upper weight bound.
     pub w_max: f64,
+    /// Eligibility trace of recent pre/post coincidences.
     pub eligibility: f64,
+    /// Per-step decay factor of the eligibility trace.
     pub trace_decay: f64,
+    /// Eligibility removed by a pre spike without a post spike.
     pub anti_hebbian_scale: f64,
+    /// Scale of the reward update.
     pub learning_rate: f64,
 }
 
 impl RewardStdpSynapse {
+    /// Create a synapse with the given weight and bounds, no eligibility, trace decay 0.95,
+    /// anti-Hebbian scale 0.5 and learning rate 0.01.
     pub fn new(w: f64, w_min: f64, w_max: f64) -> Self {
         Self {
             weight: w,
@@ -124,6 +145,9 @@ impl RewardStdpSynapse {
     }
 
     /// Accumulate eligibility trace from pre/post spike coincidence.
+    ///
+    /// Pre and post together add 1, a pre spike alone subtracts `anti_hebbian_scale`, and a
+    /// post spike alone adds nothing; the trace then decays by `trace_decay`.
     pub fn step(&mut self, pre: bool, post: bool) {
         if pre && post {
             self.eligibility += 1.0;
@@ -143,12 +167,16 @@ impl RewardStdpSynapse {
 /// Static synapse with excitatory/inhibitory polarity.
 #[derive(Clone, Debug)]
 pub struct StaticSynapse {
+    /// Weight magnitude; `new` stores the absolute value.
     pub weight: f64,
+    /// Polarity: a spike transmits `+weight` when true, `-weight` when false.
     pub is_excitatory: bool,
+    /// Transmission delay in steps; `transmit` does not apply it.
     pub delay: u32,
 }
 
 impl StaticSynapse {
+    /// Create a synapse of the given polarity with the weight's magnitude and no delay.
     pub fn new(weight: f64, is_excitatory: bool) -> Self {
         Self {
             weight: weight.abs(),
@@ -176,36 +204,54 @@ impl StaticSynapse {
 /// Extends pair-based STDP with a slow post-synaptic trace o2 that gates
 /// potentiation and a slow pre-synaptic trace r2 that gates depression:
 ///
-///   Δw⁺ = A₂⁺ · r1(t) · o2(t-ε)   (triplet LTP)
-///   Δw⁻ = A₂⁻ · o1(t) · r2(t-ε)   (triplet LTD)
+///   Δw⁺ = r1(t) · (A₂⁺ + A₃⁺ · o2(t-ε))   (pair and triplet LTP, on a post spike)
+///   Δw⁻ = -o1(t) · (A₂⁻ + A₃⁻ · r2(t-ε))  (pair and triplet LTD, on a pre spike)
 ///
 /// Reference: Pfister & Gerstner (2006) "Triplet of spikes in a model of
 /// spike timing-dependent plasticity", J. Neuroscience 26(38).
 #[derive(Clone, Debug)]
 pub struct TripletStdpSynapse {
+    /// Synaptic weight, kept within `[w_min, w_max]`.
     pub weight: f64,
+    /// Lower weight bound.
     pub w_min: f64,
+    /// Upper weight bound.
     pub w_max: f64,
     // Fast traces (pair-based).
+    /// Fast pre-synaptic trace; a pre spike adds 1.
     pub r1: f64,
+    /// Fast post-synaptic trace; a post spike adds 1.
     pub o1: f64,
     // Slow traces (triplet).
+    /// Slow pre-synaptic trace; a pre spike adds 1.
     pub r2: f64,
+    /// Slow post-synaptic trace; a post spike adds 1.
     pub o2: f64,
     // Time constants.
+    /// Decay time constant of `r1` (ms).
     pub tau_plus: f64,
+    /// Decay time constant of `o1` (ms).
     pub tau_minus: f64,
+    /// Decay time constant of `r2` (ms).
     pub tau_x: f64,
+    /// Decay time constant of `o2` (ms).
     pub tau_y: f64,
     // Amplitudes.
+    /// Pair potentiation amplitude.
     pub a2_plus: f64,
+    /// Pair depression amplitude.
     pub a2_minus: f64,
+    /// Triplet potentiation amplitude, scaled by `o2`.
     pub a3_plus: f64,
+    /// Triplet depression amplitude, scaled by `r2`.
     pub a3_minus: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl TripletStdpSynapse {
+    /// Create a synapse with the given weight and bounds, empty traces, the time constants
+    /// 16.8, 33.7, 101 and 125 ms, the amplitudes 0.005, 0.007, 0.006 and 0.002, and `dt` 1 ms.
     pub fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
         Self {
             weight,
@@ -227,6 +273,10 @@ impl TripletStdpSynapse {
         }
     }
 
+    /// Advance one step. The four traces decay exponentially. A pre spike applies the
+    /// depression, reading `r2` before its increment, then adds 1 to `r1` and `r2`. A post
+    /// spike then applies the potentiation, reading `o2` before its increment and `r1` after
+    /// this step's, and adds 1 to `o1` and `o2`. The weight is clamped after each update.
     pub fn step(&mut self, pre_spike: bool, post_spike: bool) {
         // Decay all traces.
         self.r1 *= (-self.dt / self.tau_plus).exp();
@@ -265,12 +315,19 @@ impl TripletStdpSynapse {
 /// Reference: Tsodyks & Markram (1997), Markram et al. (1998).
 #[derive(Clone, Debug)]
 pub struct ShortTermPlasticitySynapse {
+    /// Available resources, floored at 0 after a spike.
     pub x: f64,
+    /// Release probability.
     pub u: f64,
+    /// Baseline release probability `U`: the rest value of `u` and its jump scale.
     pub u_base: f64,
+    /// Recovery time constant of `x` (ms).
     pub tau_d: f64,
+    /// Relaxation time constant of `u` towards `u_base` (ms).
     pub tau_f: f64,
+    /// Scale `A` of the post-synaptic current.
     pub amplitude: f64,
+    /// Euler step (ms).
     pub dt: f64,
 }
 
@@ -302,6 +359,10 @@ impl ShortTermPlasticitySynapse {
     }
 
     /// Step: returns post-synaptic current.
+    ///
+    /// `x` recovers and `u` relaxes by one Euler step. A spike then raises `u` by
+    /// `u_base (1 - u)`, returns `amplitude u x` from the raised `u` and the undepleted
+    /// `x`, and depletes `x` by `u x`, floored at 0; without a spike the step returns 0.
     pub fn step(&mut self, pre_spike: bool) -> f64 {
         // Recover between spikes.
         self.x += (1.0 - self.x) / self.tau_d * self.dt;
@@ -321,6 +382,8 @@ impl ShortTermPlasticitySynapse {
         }
     }
 
+    /// Restore full resources (`x = 1`) and the baseline release probability; the parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.x = 1.0;
         self.u = self.u_base;
@@ -340,24 +403,42 @@ impl ShortTermPlasticitySynapse {
 /// linkage of STDP and dopamine signaling", Cerebral Cortex 17(10).
 #[derive(Clone, Debug)]
 pub struct DopamineStdpSynapse {
+    /// Synaptic weight, kept within `[w_min, w_max]`.
     pub weight: f64,
+    /// Lower weight bound.
     pub w_min: f64,
+    /// Upper weight bound.
     pub w_max: f64,
+    /// Eligibility trace `e` of the STDP coincidences.
     pub eligibility: f64,
+    /// Dopamine level `DA`, driven by the reward.
     pub dopamine: f64,
+    /// Pre-synaptic spike trace; a pre spike adds 1.
     pub trace_pre: f64,
+    /// Post-synaptic spike trace; a post spike adds 1.
     pub trace_post: f64,
+    /// Decay time constant of the eligibility trace (ms).
     pub tau_e: f64,
+    /// Decay time constant of the dopamine level (ms).
     pub tau_da: f64,
+    /// Decay time constant of `trace_pre` (ms).
     pub tau_pre: f64,
+    /// Decay time constant of `trace_post` (ms).
     pub tau_post: f64,
+    /// Eligibility added per unit of `trace_pre` at a post spike.
     pub a_plus: f64,
+    /// Eligibility added per unit of `trace_post` at a pre spike (negative: depression).
     pub a_minus: f64,
+    /// Learning rate of the dopamine-gated update.
     pub lr: f64,
+    /// Step (ms).
     pub dt: f64,
 }
 
 impl DopamineStdpSynapse {
+    /// Create a synapse with the given weight and bounds, empty traces and no dopamine, and the
+    /// default constants (`tau_e` 1000, `tau_da` 200, both spike traces 20 ms, `a_plus` 1,
+    /// `a_minus` -1, `lr` 0.001, `dt` 1 ms).
     pub fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
         Self {
             weight,
@@ -378,6 +459,13 @@ impl DopamineStdpSynapse {
         }
     }
 
+    /// Advance one step with the given reward.
+    ///
+    /// The spike traces and the eligibility decay exponentially, and the dopamine takes one
+    /// Euler step of `-DA / tau_da + reward`. A pre spike adds `a_minus * trace_post` to the
+    /// eligibility and 1 to `trace_pre`; a post spike then adds `a_plus * trace_pre` and 1 to
+    /// `trace_post`. Every step, spike or not, adds `lr * DA * e * dt` to the weight, which is
+    /// then clamped.
     pub fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f64) {
         // Decay traces.
         self.trace_pre *= (-self.dt / self.tau_pre).exp();
@@ -401,6 +489,8 @@ impl DopamineStdpSynapse {
         self.weight = (self.weight + dw).clamp(self.w_min, self.w_max);
     }
 
+    /// Clear the eligibility, the dopamine and both spike traces; the weight and parameters
+    /// are kept.
     pub fn reset(&mut self) {
         self.eligibility = 0.0;
         self.dopamine = 0.0;
