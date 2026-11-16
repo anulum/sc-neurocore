@@ -23,7 +23,7 @@ from sc_neurocore.utils.numerics import (
 )
 
 
-def test_safe_exponential_and_hyperbolic_functions_remain_finite_at_extreme_voltage():
+def test_safe_exponential_and_hyperbolic_functions_remain_finite_at_extreme_voltage() -> None:
     """The clipped exp, cosh and tanh stay finite at a voltage of 1000."""
     assert math.isfinite(safe_exp(1_000.0))
     assert safe_exp(1_000.0) == pytest.approx(math.exp(500.0))
@@ -33,7 +33,7 @@ def test_safe_exponential_and_hyperbolic_functions_remain_finite_at_extreme_volt
     assert safe_tanh(-1_000.0) == pytest.approx(-1.0)
 
 
-def test_boltzmann_curves_are_bounded_and_monotone_around_half_activation():
+def test_boltzmann_curves_are_bounded_and_monotone_around_half_activation() -> None:
     """Both Boltzmann curves lie in (0, 1), rise with v and reach 0.5 at v_half."""
     low = boltzmann(-80.0, v_half=-40.0, k=6.0)
     mid = boltzmann(-40.0, v_half=-40.0, k=6.0)
@@ -44,7 +44,7 @@ def test_boltzmann_curves_are_bounded_and_monotone_around_half_activation():
     assert boltzmann_inv(-40.0, v_half=-40.0, k=6.0) == pytest.approx(0.5)
 
 
-def test_gating_and_voltage_clamps_enforce_physiological_bounds():
+def test_gating_and_voltage_clamps_enforce_physiological_bounds() -> None:
     """The gating clamp holds [0, 1] and the voltage clamp its default or given range."""
     assert clip_gating(-0.25) == 0.0
     assert clip_gating(0.5) == 0.5
@@ -54,7 +54,7 @@ def test_gating_and_voltage_clamps_enforce_physiological_bounds():
     assert clip_voltage(250.0, v_min=-80.0, v_max=40.0) == 40.0
 
 
-def test_trunc_div_truncates_towards_zero_for_every_sign():
+def test_trunc_div_truncates_towards_zero_for_every_sign() -> None:
     """The quotient is the one C, Rust and Verilog give: rounded towards zero, odd in each argument."""
     assert trunc_div(7, 5) == 1 and trunc_div(-7, 5) == -1
     assert trunc_div(7, -5) == -1 and trunc_div(-7, -5) == 1
