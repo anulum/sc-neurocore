@@ -89,9 +89,9 @@ impl TUMNetwork {
     /// crosses `r_threshold` upwards, else 0.
     ///
     /// `x` and `u` are updated first, from the old rate. The rate then uses the effective
-    /// coupling `u * x * j` with the new `u` and `x`. `r` is clamped to `[0, 200]` and `x`
-    /// and `u` to `[0, 1]`, and a non-finite value is replaced by its initial value. The
-    /// input is not validated.
+    /// coupling `u * x * j` with the new `u` and `x` before their clamp. `r`, `x` and `u`
+    /// are then clamped to `[0, 200]`, `[0, 1]` and `[0, 1]`; a NaN, which the clamp keeps,
+    /// is replaced by its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let r_prev = self.r;

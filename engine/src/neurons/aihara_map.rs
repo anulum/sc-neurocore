@@ -71,7 +71,7 @@ impl AiharaMapNeuron {
     /// Checked Eq. 10 update; failures never mutate state.
     ///
     /// The new state is `k * y - alpha * f(y) + bias + current`. Returns 1 when `f` of the new
-    /// state reaches 0.5, else 0.
+    /// state is at least 0.5 (a level event, not a crossing), else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, AiharaMapError> {
         if !self.valid() {
             return Err(AiharaMapError::InvalidConfiguration);
@@ -145,6 +145,10 @@ pub struct AiharaMapBatchResult {
 }
 
 /// Run an atomically validated piecewise-stimulus batch.
+///
+/// The step count (at most `i32::MAX`), the configuration and every current are checked
+/// before the first step. A non-finite candidate can still stop the run part-way; the
+/// batch builds its own state, so nothing outside the call changes.
 pub fn simulate_aihara_map(
     y: f64,
     k: f64,

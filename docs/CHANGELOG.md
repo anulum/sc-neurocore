@@ -496,6 +496,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- Seven docs of the engine's population and map models now say exactly
+  what the code does, after a second reading: the clamps come first, so
+  an infinite rate or state is clamped and only a NaN is replaced by its
+  initial value; the Tsodyks-Uziel-Markram rate uses the new resources
+  and utilisation before their clamp; the Montbrió-Pazó-Roxin event is
+  an upward crossing and the Aihara event a level, not a crossing; the
+  Aihara batch checks its step count, configuration and currents before
+  the first step but can still stop part-way; and the Ibarz-Tanaka reset
+  branch needs a positive `v` as well as `v >= top`.
 - The engine's 12 top-level map and neural-mass models (Aihara, Cazelles,
   Chialvo, Courbage-Nekorkin-Vdovin, Ermentrout-Kopell, Ibarz-Tanaka,
   Jansen-Rit, Medvedev, Rulkov, and the SC clipped-logistic,

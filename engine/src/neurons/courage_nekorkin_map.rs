@@ -95,8 +95,8 @@ impl CourageNekorkinMapNeuron {
     ///
     /// `x' = x + F(x) - y - beta * H(x - d) + current`, where `F` is the three-branch
     /// piecewise-linear field and `H` the Heaviside step, 1 at `x = d`, and
-    /// `y' = y + eps * (x - j)`. Both
-    /// use the old state. Returns 1 when `x` crosses `x_threshold` upwards, else 0.
+    /// `y' = y + eps * (x - j)`. Both use the old state. Returns 1 when `x` crosses
+    /// `x_threshold` upwards, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.parameters_are_valid() {
             return Err("invalid Courbage runtime state");

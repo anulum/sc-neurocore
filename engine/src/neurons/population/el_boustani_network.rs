@@ -100,8 +100,8 @@ impl ElBoustaniNetwork {
     /// when `r_e` crosses `r_threshold` upwards, else 0.
     ///
     /// `s` is updated first. The excitatory drive then uses the new `s` with the old rates.
-    /// The rates are clamped to `[0, 200]` and `s` to `[0, 1]`, and a non-finite value is
-    /// replaced by its initial value. The input is not validated.
+    /// The rates are clamped to `[0, 200]` and `s` to `[0, 1]`, and a NaN, which the clamp
+    /// keeps, is replaced by its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let r_e_prev = self.r_e;

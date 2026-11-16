@@ -21,7 +21,7 @@
 /// where delta = heterogeneity width, eta = mean excitability,
 /// tau = membrane time constant, J = synaptic coupling, I = external input.
 ///
-/// Spike emitted when r exceeds a threshold (proxy for population burst).
+/// A spike is emitted when r crosses `r_threshold` upwards (a proxy for a population burst).
 ///
 /// Montbrio, Pazo & Roxin, Phys Rev X 5:021028, 2015.
 #[derive(Clone, Debug)]
@@ -72,8 +72,8 @@ impl MontbrioMeanField {
     /// Advance one forward-Euler step of both equations with the input `gain * current`;
     /// return 1 when `r` crosses `r_threshold` upwards, else 0.
     ///
-    /// `r` is then clamped to `[0, 100]` and `v` to `[-50, 50]`, and a non-finite value is
-    /// replaced by its initial value. The input is not validated.
+    /// `r` is then clamped to `[0, 100]` and `v` to `[-50, 50]`, and a NaN, which the clamp
+    /// keeps, is replaced by its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let r_prev = self.r;

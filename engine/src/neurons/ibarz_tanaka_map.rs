@@ -77,7 +77,8 @@ impl IbarzTanakaMapNeuron {
     /// - below `-1 - alpha / 2`, `-alpha^2 / 4 - alpha + current + u`, the same for every `v`;
     /// - up to 0, `alpha * v + (v + 1)^2 + current + u`;
     /// - above 0 and below `top`, the value `top`;
-    /// - at or above `top`, a reset to -1, which returns 1 (every other branch returns 0).
+    /// - above 0 and at or above `top`, a reset to -1, which returns 1 (every other branch
+    ///   returns 0).
     ///
     /// `u` becomes `u - mu * (v + 1 - sigma)`, from the old `v`.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {

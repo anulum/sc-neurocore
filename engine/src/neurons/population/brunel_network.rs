@@ -90,8 +90,8 @@ impl BrunelNetwork {
     /// Advance one forward-Euler step of both rate equations with the external input
     /// `gain * current`; return 1 when `r_e` crosses `r_threshold` upwards, else 0.
     ///
-    /// Both drives use the old rates. The rates are then floored at 0 and capped at 200,
-    /// and a non-finite rate is replaced by 0.1. The input is not validated.
+    /// Both drives use the old rates. The rates are then floored at 0 and capped at 200;
+    /// a NaN rate, which both bounds keep, becomes 0.1. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let r_e_prev = self.r_e;
