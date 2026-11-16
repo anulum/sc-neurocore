@@ -8,6 +8,8 @@
 
 //! Multi-modal fusion layer using stochastic multiplexing.
 
+#![deny(missing_docs)]
+
 /// Weighted stochastic fusion across modalities.
 ///
 /// Computes P(out) = Σ_i w_i · P(in_i) for normalized weights.
@@ -15,12 +17,17 @@
 pub struct FusionLayer {
     /// Normalized fusion weights (sum to 1.0).
     pub weights: Vec<f64>,
+    /// Number of modalities, the length of `weights`.
     pub n_modalities: usize,
+    /// Number of features per modality and of the output.
     pub n_features: usize,
 }
 
 impl FusionLayer {
     /// Create with raw weights (will be normalized internally).
+    ///
+    /// They are divided by their sum when it is positive; otherwise every modality gets the
+    /// same weight.
     pub fn new(raw_weights: &[f64], n_features: usize) -> Self {
         let total: f64 = raw_weights.iter().sum();
         let weights: Vec<f64> = if total > 0.0 {
@@ -37,6 +44,10 @@ impl FusionLayer {
 
     /// Forward pass: inputs is flat `[n_modalities * n_features]`.
     /// Returns `[n_features]`.
+    ///
+    /// # Panics
+    ///
+    /// If `inputs` does not hold `n_modalities * n_features` values.
     pub fn forward(&self, inputs: &[f64]) -> Vec<f64> {
         assert_eq!(inputs.len(), self.n_modalities * self.n_features);
         let mut out = vec![0.0; self.n_features];
@@ -55,12 +66,20 @@ impl FusionLayer {
 /// Prezioso et al., Nature 521:61-64, 2015.
 #[derive(Clone, Debug)]
 pub struct MemristiveLayer {
+    /// The dense layer, with the noisy and stuck weights written in.
     pub inner: crate::layer::DenseLayer,
+    /// Whether each weight is stuck, row-major `n_neurons * n_inputs`.
     pub stuck_mask: Vec<bool>,
+    /// The value of each stuck weight, 0 or 1; 0 for a weight that is not stuck.
     pub stuck_values: Vec<f64>,
 }
 
 impl MemristiveLayer {
+    /// Build a dense layer and write the non-idealities into its weights.
+    ///
+    /// Each weight gains uniform write noise in `[-variability, variability)` and is clamped
+    /// to `[0, 1]`; it is then stuck with probability `stuck_rate`, at 0 or 1 with even odds.
+    /// The draws come from a generator seeded with `seed + 0xDEFEC7`.
     pub fn new(
         n_inputs: usize,
         n_neurons: usize,
@@ -103,6 +122,11 @@ impl MemristiveLayer {
         }
     }
 
+    /// Run the inner layer's fused bitstream forward pass with the given seed.
+    ///
+    /// # Errors
+    ///
+    /// Those of [`crate::layer::DenseLayer::forward_fused`].
     pub fn forward(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
         self.inner.forward_fused(input_values, seed)
     }
@@ -111,13 +135,18 @@ impl MemristiveLayer {
 /// Online STDP-integrated learning layer.
 #[derive(Clone, Debug)]
 pub struct LearningLayer {
+    /// Number of inputs.
     pub n_inputs: usize,
+    /// Number of neurons.
     pub n_neurons: usize,
+    /// One row of `n_inputs` weights per neuron, kept within `[0, 1]` by the update.
     pub weights: Vec<Vec<f64>>,
+    /// Increase of a weight on a coincident spike; a decrease is half of it.
     pub learning_rate: f64,
 }
 
 impl LearningLayer {
+    /// Create a layer whose weights are drawn uniform in `[0, 1)` from the seed.
     pub fn new(n_inputs: usize, n_neurons: usize, learning_rate: f64, seed: u64) -> Self {
         use rand::{RngExt, SeedableRng};
         use rand_chacha::ChaCha8Rng;
@@ -136,6 +165,14 @@ impl LearningLayer {
 
     /// Forward pass with STDP weight update.
     /// Returns which neurons spiked.
+    ///
+    /// A neuron fires when the summed weights of the inputs that spiked exceed `threshold`.
+    /// The update uses this step only: an input that spiked gains `learning_rate` (capped at
+    /// 1) when the neuron fired and loses half of it (floored at 0) when it did not.
+    ///
+    /// # Panics
+    ///
+    /// If `input_spikes` does not hold `n_inputs` values.
     #[allow(clippy::needless_range_loop)]
     pub fn step(&mut self, input_spikes: &[bool], threshold: f64) -> Vec<bool> {
         assert_eq!(input_spikes.len(), self.n_inputs);

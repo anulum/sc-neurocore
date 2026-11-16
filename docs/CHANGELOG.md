@@ -559,6 +559,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   degree-normalised aggregation, the layout of the transform weights
   (which the bitstream pass clamps to [0, 1]), and the checks and panics
   of its constructors.
+- The engine's fusion, memristive and learning layers
+  (`engine/src/fusion.rs`) document their fields and constructors: the
+  fusion weights' normalisation, the memristive write noise and stuck-at
+  faults, and the learning layer's update, which uses the spikes of the
+  same step only.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file
