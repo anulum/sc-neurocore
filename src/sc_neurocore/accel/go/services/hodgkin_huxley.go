@@ -125,16 +125,17 @@ func (s *HodgkinHuxleyNeuronState) validState(v, m, h, n float64) bool {
 		m >= -0.05 && m <= 1.05 && h >= -0.05 && h <= 1.05 && n >= -0.05 && n <= 1.05
 }
 
-// eulerCandidate advances one macro step over round(1/dt) explicit-Euler sub-steps into a
-// candidate that Step only commits on success. Gates update first, then the membrane voltage
-// uses the freshly-updated gates (the models/hodgkin_huxley.py _step_baseline_euler order).
+// eulerCandidate advances one macro step over round(1/dt) explicit-Euler sub-steps, a half
+// rounded to even as Python's round does, into a candidate that Step only commits on success.
+// Gates update first, then the membrane voltage uses the freshly-updated gates (the
+// models/hodgkin_huxley.py _step_baseline_euler order).
 // Fail-closed: returns ok=false (state untouched) on any non-finite parameter/current/intermediate.
 func (s *HodgkinHuxleyNeuronState) eulerCandidate(current float64) (hodgkinHuxleyState, bool) {
 	if !s.validStatic() || !finiteHodgkin(current) || !s.validState(s.V, s.M, s.H, s.N) {
 		return hodgkinHuxleyState{}, false
 	}
 	state := hodgkinHuxleyState{v: s.V, m: s.M, h: s.H, n: s.N}
-	substeps := int(math.Round(1.0 / s.Dt))
+	substeps := int(math.RoundToEven(1.0 / s.Dt))
 	for i := 0; i < substeps; i++ {
 		am, ok := hodgkinAlphaM(state.v)
 		if !ok {

@@ -37,4 +37,18 @@ using .HodgkinHuxleyAccel
     before2 = (s2.v, s2.m, s2.h, s2.n)
     @test HodgkinHuxleyAccel.step!(s2, 10.0; dt=0.0) == -1
     @test (s2.v, s2.m, s2.h, s2.n) == before2
+
+    # Where 1/dt is a half-integer, the Python model runs round(1/dt) sub-steps and Python rounds a
+    # half to even: dt 0.4, 2/9 and 2/13 give 2, 4 and 6 sub-steps, and dt 2 none. Each state is the
+    # Python model's after one macro step at I = 10 from the defaults.
+    for (dt, python) in (
+        (0.4, (-56.00630831519619, 0.09547477716734626, 0.5923767115876822, 0.3244914919575375)),
+        (2 / 9, (-56.01081822375738, 0.10112513277783045, 0.5864793692830991, 0.32816421566612297)),
+        (2 / 13, (-56.049500601211975, 0.10331990553856767, 0.5843154160461137, 0.32948115970033937)),
+        (2.0, (-65.0, 0.05, 0.6, 0.32)),
+    )
+        s3 = HodgkinHuxleyAccel.HodgkinHuxleyNeuronState()
+        @test HodgkinHuxleyAccel.step!(s3, 10.0; dt=dt) == 0
+        @test all(abs.((s3.v, s3.m, s3.h, s3.n) .- python) .< 1e-9)
+    end
 end

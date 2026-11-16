@@ -10,9 +10,10 @@
 //!
 //! Mirrors the historical explicit-Euler path of `models/hodgkin_huxley.py`
 //! (`_step_baseline_euler`): one macro step advances `round(1/dt)` explicit
-//! sub-steps in which the gating variables update first and the membrane
-//! voltage then uses the freshly-updated gates. Every sub-step is validated;
-//! any non-finite intermediate leaves the caller's state untouched.
+//! sub-steps, a half rounded to even as Python's `round` does. In each, the
+//! gating variables update first and the membrane voltage then uses the
+//! freshly-updated gates. Every sub-step is validated; any non-finite
+//! intermediate leaves the caller's state untouched.
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct HodgkinHuxleyNeuron {
@@ -135,7 +136,7 @@ impl HodgkinHuxleyNeuron {
             return None;
         }
         let (mut v, mut m, mut h, mut n) = (self.v, self.m, self.h, self.n);
-        let substeps = (1.0 / self.dt).round() as usize;
+        let substeps = (1.0 / self.dt).round_ties_even() as usize;
         for _ in 0..substeps {
             let am = Self::alpha_m(v)?;
             let bm = Self::beta_m(v)?;
@@ -208,6 +209,56 @@ mod tests {
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
         assert!(validate_hodgkin_huxley(&state));
+    }
+
+    /// Where 1/dt is a half-integer, `models/hodgkin_huxley.py` runs `round(1/dt)` sub-steps and
+    /// Python rounds a half to even: dt 0.4, 2/9 and 2/13 give 2, 4 and 6 sub-steps, and dt 2
+    /// none. Each expected state is the Python model's after one macro step at I = 10 from the
+    /// defaults; rounding away from zero would run one sub-step more.
+    #[test]
+    fn substeps_round_a_half_to_even_as_python_does() {
+        let cases = [
+            (
+                0.4,
+                [
+                    -56.00630831519619,
+                    0.09547477716734626,
+                    0.5923767115876822,
+                    0.3244914919575375,
+                ],
+            ),
+            (
+                2.0 / 9.0,
+                [
+                    -56.01081822375738,
+                    0.10112513277783045,
+                    0.5864793692830991,
+                    0.32816421566612297,
+                ],
+            ),
+            (
+                2.0 / 13.0,
+                [
+                    -56.049500601211975,
+                    0.10331990553856767,
+                    0.5843154160461137,
+                    0.32948115970033937,
+                ],
+            ),
+            (2.0, [-65.0, 0.05, 0.6, 0.32]),
+        ];
+        for (dt, python) in cases {
+            let mut state = HodgkinHuxleyNeuron::new();
+            state.dt = dt;
+            state.step(10.0);
+            let got = [state.v, state.m, state.h, state.n];
+            for (value, expected) in got.iter().zip(python) {
+                assert!(
+                    (value - expected).abs() < 1e-9,
+                    "dt {dt}: state {got:?}, Python's {python:?}"
+                );
+            }
+        }
     }
 
     #[test]

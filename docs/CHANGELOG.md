@@ -782,6 +782,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Go and Rust safety kernels of the Hodgkin-Huxley model now run as
+  many explicit-Euler sub-steps as the Python model where 1/dt is a
+  half-integer. The Python model runs round(1/dt) sub-steps, and Python
+  rounds a half to even; both kernels rounded it away from zero, so at dt
+  0.4 they ran 3 sub-steps where the Python model runs 2, and at dt 2 one
+  where it runs none. The Julia and Mojo kernels already rounded to even.
+  Each of the three kernels' tests now holds the Python model's state after
+  one step at dt 0.4, 2/9, 2/13 and 2. The default dt of 0.01 gives 100
+  sub-steps either way, so no benchmark number changes.
+
 - The engine's timed motor-system tests (alpha, gamma and upper motor
   neurons, the motor unit and the Renshaw cell) are held to host-derived
   budgets as well, not to a fixed number of milliseconds; the budgeted tests

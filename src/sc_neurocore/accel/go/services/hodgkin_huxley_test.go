@@ -27,7 +27,7 @@ func hhReferenceOpeningRate(scale, shift, denom, limit, v float64) float64 {
 // arithmetic ordering (gates first, then voltage on the fresh gates).
 func hhReferenceStep(s HodgkinHuxleyNeuronState, current float64) hodgkinHuxleyState {
 	st := hodgkinHuxleyState{v: s.V, m: s.M, h: s.H, n: s.N}
-	substeps := int(math.Round(1.0 / s.Dt))
+	substeps := int(math.RoundToEven(1.0 / s.Dt))
 	for i := 0; i < substeps; i++ {
 		am := hhReferenceOpeningRate(0.1, 40.0, 10.0, 1.0, st.v)
 		bm := 4.0 * math.Exp(-(st.v+65.0)/18.0)
@@ -67,6 +67,34 @@ func TestHodgkinHuxleyMatchesIndependentEuler(t *testing.T) {
 		math.Abs(neuron.H-expected.h) > 1e-10 || math.Abs(neuron.N-expected.n) > 1e-10 {
 		t.Fatalf("state mismatch got (%g,%g,%g,%g) expected (%g,%g,%g,%g)",
 			neuron.V, neuron.M, neuron.H, neuron.N, expected.v, expected.m, expected.h, expected.n)
+	}
+}
+
+// TestHodgkinHuxleySubstepsRoundHalfToEvenAsPython pins the sub-step count where 1/dt is a
+// half-integer. models/hodgkin_huxley.py runs round(1/dt) sub-steps, and Python rounds a half to
+// even: dt 0.4, 2/9 and 2/13 give 2, 4 and 6 sub-steps, and dt 2 gives none. Each expected state
+// is the Python model's after one macro step at I=10 from the defaults; away from zero would run
+// one sub-step more.
+func TestHodgkinHuxleySubstepsRoundHalfToEvenAsPython(t *testing.T) {
+	for _, tc := range []struct {
+		dt         float64
+		v, m, h, n float64
+	}{
+		{0.4, -56.00630831519619, 0.09547477716734626, 0.5923767115876822, 0.3244914919575375},
+		{2.0 / 9.0, -56.01081822375738, 0.10112513277783045, 0.5864793692830991, 0.32816421566612297},
+		{2.0 / 13.0, -56.049500601211975, 0.10331990553856767, 0.5843154160461137, 0.32948115970033937},
+		{2.0, -65.0, 0.05, 0.6, 0.32},
+	} {
+		neuron := NewHodgkinHuxleyNeuron()
+		neuron.Dt = tc.dt
+		if _, err := neuron.Step(10.0); err != nil {
+			t.Fatalf("dt=%g: step returned error: %v", tc.dt, err)
+		}
+		if math.Abs(neuron.V-tc.v) > 1e-9 || math.Abs(neuron.M-tc.m) > 1e-9 ||
+			math.Abs(neuron.H-tc.h) > 1e-9 || math.Abs(neuron.N-tc.n) > 1e-9 {
+			t.Fatalf("dt=%g: state (%v,%v,%v,%v), Python's (%v,%v,%v,%v)",
+				tc.dt, neuron.V, neuron.M, neuron.H, neuron.N, tc.v, tc.m, tc.h, tc.n)
+		}
 	}
 }
 

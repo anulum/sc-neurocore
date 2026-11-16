@@ -895,6 +895,10 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/biophysical/hodgkin_huxley.rs",
+            "src/sc_neurocore/accel/go/services/hodgkin_huxley.go",
+            "src/sc_neurocore/accel/go/services/hodgkin_huxley_test.go",
+            "src/sc_neurocore/accel/julia/hodgkin_huxley_parity_test.jl",
+            "src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs",
             "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json",
             "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml"
           ],
