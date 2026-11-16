@@ -811,6 +811,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The surrogate LIF's gradient on a spike step is taken at the membrane
+  that crossed threshold, before the reset. Its forward pass cached the
+  voltage the fixed-point step returns, which is the reset voltage on a
+  spike step, so backward evaluated the surrogate there: with the defaults a
+  spike got about 1/24 of the gradient of the membrane that fired, and less
+  than a near miss. The surrogate stands in for the derivative of
+  S[n] = Θ(U[n] − ϑ), with the reset acting on U[n + 1] (Neftci, Mostafa and
+  Zenke 2019, arXiv:1901.09948, eq. 5). The fixed-point LIF gains a
+  crate-internal step that also returns that membrane, and its public step
+  returns the same values as before. A refractory step's gradient is now
+  exactly 0: the step returns no spike and the rest voltage whatever the
+  membrane is, so a surrogate value there was a gradient the forward pass
+  does not have.
+
 - A surrogate LIF built with a configuration the fixed-point LIF refuses
   raises ValueError with the reason, through the extension's class and
   through sc_neurocore_engine.grad.SurrogateLif. The constructor panicked,

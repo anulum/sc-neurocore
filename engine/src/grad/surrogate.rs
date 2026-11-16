@@ -93,16 +93,23 @@ impl SurrogateType {
 
 /// LIF neuron with surrogate gradient support.
 ///
-/// Each `forward` caches the offset from threshold, `(v - v_threshold) / 2^fraction`, of the
-/// voltage the step returns, which is the voltage after the step. On a spike step the
-/// surrogate therefore sees `v_reset`, not the membrane that crossed threshold; on a
-/// refractory step it sees the held `v_rest`.
+/// Each `forward` caches the offset from threshold, `(u - v_threshold) / 2^fraction`, of the
+/// membrane `u` before any reset: the integrated value the step compared with the threshold.
+/// On a spike step that is the membrane that crossed threshold, not the `v_reset` the step
+/// returns, because the surrogate stands in for the derivative of the spike
+/// `S[n] = Θ(U[n] - ϑ)` and the reset acts on `U[n + 1]` (Neftci, Mostafa & Zenke 2019,
+/// arXiv:1901.09948v2, p. 5, eq. 5). On a refractory step the step returns no spike and the
+/// held `v_rest` whatever the membrane and input are, so the output does not depend on the
+/// membrane there: `backward` gives exactly 0 for that step, the derivative of the forward
+/// pass, not a surrogate value.
 pub struct SurrogateLif {
     /// The fixed-point LIF that runs each step.
     pub lif: crate::neuron::FixedPointLif,
     /// Surrogate evaluated by `backward` at a cached offset.
     pub surrogate: SurrogateType,
-    membrane_trace: Vec<(f32, f32)>,
+    /// Per cached step: the membrane's offset from threshold, and whether the step was
+    /// refractory.
+    membrane_trace: Vec<(f32, bool)>,
 }
 
 impl SurrogateLif {
@@ -164,29 +171,34 @@ impl SurrogateLif {
         })
     }
 
-    /// Forward LIF step while caching trace for backward pass.
+    /// Forward LIF step, returning what the LIF's `step` returns and caching, for the backward
+    /// pass, the offset of the membrane before any reset and whether the step was refractory.
     pub fn forward(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
-        let (spike, v_out) = self.lif.step(leak_k, gain_k, i_t, noise_in);
+        let refractory = self.lif.refractory_counter > 0;
+        let (spike, v_out, membrane) = self.lif.step_with_membrane(leak_k, gain_k, i_t, noise_in);
         let scale = (1_u32 << self.lif.fraction) as f32;
-        let v_norm = (v_out as f32 - self.lif.v_threshold as f32) / scale;
-        self.membrane_trace.push((v_norm, spike as f32));
+        let v_norm = (membrane as f32 - self.lif.v_threshold as f32) / scale;
+        self.membrane_trace.push((v_norm, refractory));
         (spike, v_out)
     }
 
     /// Backward pass through last cached membrane value.
     ///
     /// The value is removed, so repeated calls walk back through the cached steps, latest
-    /// first. Returns `grad_output` times the surrogate at the value; the cached spike is
-    /// not used.
+    /// first. Returns `grad_output` times the surrogate at the value, or 0 for a refractory
+    /// step, whose output does not depend on the membrane.
     ///
     /// # Errors
     ///
     /// When no step is cached.
     pub fn backward(&mut self, grad_output: f32) -> Result<f32, String> {
-        let (v_norm, _spike) = self
+        let (v_norm, refractory) = self
             .membrane_trace
             .pop()
             .ok_or_else(|| "backward() called without matching forward()".to_string())?;
+        if refractory {
+            return Ok(0.0);
+        }
         Ok(grad_output * self.surrogate.grad(v_norm))
     }
 

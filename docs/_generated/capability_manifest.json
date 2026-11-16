@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5685
+    "test_files": 5686
   },
   "documentation": {
     "public_pages": [
@@ -8488,6 +8488,7 @@
       "tests/test_studio_workspace_routes.py",
       "tests/test_supply_chain_audit.py",
       "tests/test_supported_workflows.py",
+      "tests/test_surrogate_lif_gradient_at_the_pre_reset_membrane.py",
       "tests/test_surrogate_lif_refuses_invalid_configuration.py",
       "tests/test_surrogate_python_differentiable_dense_layer.py",
       "tests/test_surrogate_python_surrogate_lif.py",

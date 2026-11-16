@@ -103,7 +103,9 @@ class SurrogateLif:
         Returns
         -------
         float
-            Native surrogate gradient for that timestep.
+            ``grad_output`` times the surrogate at that timestep's membrane offset from threshold, taken before
+            any reset, so on a spike step at the membrane that crossed threshold; or 0 for a refractory step,
+            whose output does not depend on the membrane.
         """
         return float(self._engine.backward(float(grad_output)))
 

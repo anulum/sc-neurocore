@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2030
+expected_file_count = 2031
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8174,3 +8174,6 @@ rationale = "Fixtures and integer reference traces for the NIR command-line test
 [[file]]
 path = "tests/test_cosim_sc_wb_nmda_magnesium_block.py"
 rationale = "Co-simulation of the NMDA magnesium-block RTL against its integer oracle and its source model."
+[[file]]
+path = "tests/test_surrogate_lif_gradient_at_the_pre_reset_membrane.py"
+rationale = "Pin the surrogate LIF gradient at the membrane before any reset on spike and sub-threshold steps, and 0 while refractory."

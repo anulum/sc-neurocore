@@ -155,3 +155,44 @@ fn try_new_accepts_the_default_configuration() {
 fn new_keeps_its_documented_panic() {
     let _ = SurrogateLif::new(17, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 });
 }
+
+// The surrogate replaces the derivative of the spike S[n] = Theta(U[n] - threshold), and the reset
+// acts on U[n + 1] (Neftci, Mostafa & Zenke 2019, arXiv:1901.09948v2, p. 5, eq. 5), so on a spike
+// step it is evaluated at the membrane that crossed threshold, not at the reset voltage.
+
+#[test]
+fn backward_on_a_spike_step_uses_the_membrane_before_the_reset() {
+    let surrogate = SurrogateType::FastSigmoid { k: 25.0 };
+    let mut surr = SurrogateLif::new(16, 8, 0, 0, 256, 2, surrogate.clone());
+    // From v = 0 with no leak, (300 * 256) >> 8 = 300 crosses the threshold of 256.
+    assert_eq!(surr.forward(0, 256, 300, 0), (1, 0));
+    let grad = surr.backward(1.0).unwrap();
+    assert_eq!(grad, surrogate.grad(44.0 / 256.0));
+    // The reset voltage's offset, which the step used to cache, gives about 1/24 of it.
+    assert!(grad > 20.0 * surrogate.grad(-1.0));
+}
+
+#[test]
+fn backward_on_a_refractory_step_is_zero() {
+    let surrogate = SurrogateType::FastSigmoid { k: 25.0 };
+    let mut surr = SurrogateLif::new(16, 8, 0, -128, 256, 2, surrogate.clone());
+    assert_eq!(surr.forward(0, 256, 300, 0), (1, -128));
+    // While refractory the step returns (0, v_rest) whatever the membrane and input are, so its
+    // output has no derivative with respect to the membrane.
+    assert_eq!(surr.forward(0, 256, 300, 0), (0, 0));
+    assert_eq!(surr.backward(1.0).unwrap(), 0.0);
+    assert_eq!(surr.backward(1.0).unwrap(), surrogate.grad(44.0 / 256.0));
+    // The period is 2 steps: the second is 0 too, and the step after it is differentiated again.
+    assert_eq!(surr.forward(0, 256, 300, 0), (0, 0));
+    assert_eq!(surr.forward(0, 256, 100, 0), (0, 100));
+    assert_eq!(surr.backward(1.0).unwrap(), surrogate.grad(-156.0 / 256.0));
+    assert_eq!(surr.backward(1.0).unwrap(), 0.0);
+}
+
+#[test]
+fn backward_below_threshold_uses_the_integrated_membrane() {
+    let surrogate = SurrogateType::FastSigmoid { k: 25.0 };
+    let mut surr = SurrogateLif::new(16, 8, 0, 0, 256, 2, surrogate.clone());
+    assert_eq!(surr.forward(0, 256, 100, 0), (0, 100));
+    assert_eq!(surr.backward(1.0).unwrap(), surrogate.grad(-156.0 / 256.0));
+}
