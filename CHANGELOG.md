@@ -505,6 +505,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Aihara batch checks its step count, configuration and currents before
   the first step but can still stop part-way; and the Ibarz-Tanaka reset
   branch needs a positive `v` as well as `v >= top`.
+- The engine's Wong-Wang decision circuit (`engine/src/wong_wang.rs`) is
+  documented in full: its eleven described fields from the model
+  descriptor, and the rest from the code. The step's equations, the
+  transfer function's guarded branches, the refusals that leave the state
+  unchanged, the batch's sample layout and its error behaviour are stated.
+  The Ornstein-Uhlenbeck update makes the noise's stationary standard
+  deviation `sigma / sqrt(2 - dt / tau_ampa)`, close to `sigma / sqrt(2)`
+  for a small step, which the struct doc now says, and `step` draws its two
+  samples before the checks, so a refused step still advances the random
+  stream.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

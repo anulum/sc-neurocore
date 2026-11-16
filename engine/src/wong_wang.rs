@@ -10,6 +10,8 @@
 //! current noise.  The deterministic sample-taking boundary is shared by the
 //! scalar engine class and the batch accelerator.
 
+#![deny(missing_docs)]
+
 use rand::RngExt;
 use rand::SeedableRng;
 use rand_xoshiro::Xoshiro256PlusPlus;
@@ -19,19 +21,40 @@ const B: f64 = 108.0;
 const D: f64 = 0.154;
 
 /// Four dynamic states of one reduced Wong-Wang decision circuit.
+///
+/// A step takes, from the old state, the currents
+/// `I1 = j_n s1 - j_cross s2 + i_0 + stim1 + noise1` (and the mirror for `I2`), the rates
+/// `r = (a I - b) / (1 - exp(-d (a I - b)))` with `a` = 270, `b` = 108 and `d` = 0.154 (1 / `d`
+/// where `a I - b` is near 0, 0 where `-d (a I - b)` exceeds 700, negative values clamped
+/// to 0), `s1' = s1 + dt (-s1 / tau_s + (1 - s1) gamma r1)`, and the Ornstein-Uhlenbeck noise
+/// `noise1' = noise1 - (dt / tau_ampa) noise1 + sqrt(dt / tau_ampa) sigma xi1`. The noise's
+/// stationary standard deviation is `sigma / sqrt(2 - dt / tau_ampa)`, close to
+/// `sigma / sqrt(2)` for a small step (0.716 sigma at the defaults).
 #[derive(Clone, Debug)]
 pub struct WongWangUnit {
+    /// NMDA gating fraction of selective population one (dimensionless).
     pub s1: f64,
+    /// NMDA gating fraction of selective population two (dimensionless).
     pub s2: f64,
+    /// Ornstein-Uhlenbeck AMPA input-current state of population one (nA).
     pub noise1: f64,
+    /// Ornstein-Uhlenbeck AMPA input-current state of population two (nA).
     pub noise2: f64,
+    /// NMDA gating-variable time constant (s).
     pub tau_s: f64,
+    /// AMPA input-noise time constant (s).
     pub tau_ampa: f64,
+    /// NMDA kinetic conversion factor (dimensionless).
     pub gamma: f64,
+    /// Recurrent self-coupling strength (nA).
     pub j_n: f64,
+    /// Cross-population inhibitory coupling magnitude (nA).
     pub j_cross: f64,
+    /// Constant background input current (nA).
     pub i_0: f64,
+    /// Stationary amplitude of the AMPA input-current noise (nA).
     pub sigma: f64,
+    /// Euler step (s).
     pub dt: f64,
     rng: Xoshiro256PlusPlus,
 }
@@ -57,6 +80,11 @@ impl WongWangUnit {
     }
 
     /// Construct one configured state while retaining the supplied RNG seed.
+    ///
+    /// # Errors
+    ///
+    /// A non-finite value, a gating state outside `[0, 1]`, a `tau_s`, `tau_ampa`, `gamma` or
+    /// `dt` that is not positive, or a negative `j_n`, `j_cross` or `sigma`.
     #[allow(clippy::too_many_arguments)]
     pub fn with_parameters(
         s1: f64,
@@ -143,6 +171,10 @@ impl WongWangUnit {
     }
 
     /// Advance one Euler/OU update from externally supplied normal samples.
+    ///
+    /// Returns the two rates of the old state (Hz). The state and parameters are checked
+    /// first, the stimuli and samples must be finite, and a candidate with a non-finite value
+    /// or a gating state outside `[0, 1]` is refused; every refusal leaves the state unchanged.
     pub fn step_with_gaussian_samples(
         &mut self,
         stim1: f64,
@@ -185,6 +217,9 @@ impl WongWangUnit {
     }
 
     /// Advance one stochastic update using the internal seeded RNG.
+    ///
+    /// Two standard normal samples are drawn first, by the cosine branch of Box-Muller from two
+    /// uniforms each, so the RNG advances even when the step is then refused.
     pub fn step(&mut self, stim1: f64, stim2: f64) -> Result<(f64, f64), String> {
         let xi1 = self.randn();
         let xi2 = self.randn();
@@ -197,7 +232,8 @@ impl WongWangUnit {
         (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
     }
 
-    /// Restore only dynamic state variables.
+    /// Restore only dynamic state variables: `s1 = s2 = 0.1` and both noise states 0. The
+    /// parameters and the RNG position are kept.
     pub fn reset(&mut self) {
         self.s1 = 0.1;
         self.s2 = 0.1;
@@ -208,19 +244,34 @@ impl WongWangUnit {
 
 /// Per-step state and rate traces returned by the batch implementation.
 pub struct WongWangTrace {
+    /// `s1` after each step.
     pub s1: Vec<f64>,
+    /// `s2` after each step.
     pub s2: Vec<f64>,
+    /// `noise1` after each step (nA).
     pub noise1: Vec<f64>,
+    /// `noise2` after each step (nA).
     pub noise2: Vec<f64>,
+    /// Rate of population one at each step, from the state before it (Hz).
     pub rate1: Vec<f64>,
+    /// Rate of population two at each step, from the state before it (Hz).
     pub rate2: Vec<f64>,
+    /// `s1` after the batch; the initial value for an empty batch.
     pub final_s1: f64,
+    /// `s2` after the batch; the initial value for an empty batch.
     pub final_s2: f64,
+    /// `noise1` after the batch; the initial value for an empty batch.
     pub final_noise1: f64,
+    /// `noise2` after the batch; the initial value for an empty batch.
     pub final_noise2: f64,
 }
 
 /// Simulate a complete deterministic-sample batch.
+///
+/// `stim1` and `stim2` hold one value per step and `xi` two (`xi[2 k]` for population one,
+/// `xi[2 k + 1]` for population two). The state is built and checked by
+/// [`WongWangUnit::with_parameters`]; the first refused step returns its error and the partial
+/// trace is dropped, so nothing outside the call changes.
 #[allow(clippy::too_many_arguments)]
 pub fn simulate(
     s1: f64,
