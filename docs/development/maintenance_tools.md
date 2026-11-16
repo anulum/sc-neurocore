@@ -280,8 +280,12 @@ invocation text and the definition text; its retention cannot be checked.
 The ratchet independently compiles immutable original Git sources, selected
 like the Go ratchet's by local HEAD (or `SC_NEUROCORE_POLICY_BASELINE`) or the
 actual CI event, and checks
-original ceiling/version reproduction. `--update` records individual v2
-allowances and may only lower them. The legacy outer `source_sha256` remains a
+original ceiling/version reproduction. `--update` may only lower the ceiling,
+and it keeps the ceiling's form: an aggregate v1 record stays v1, with the
+measured revision as its `source_sha256`, and an individual v2 record keeps
+listing every case. `--individual` migrates an aggregate ceiling to v2, and
+`--record <path>` also writes the full v2 record to a path outside the
+repository, leaving the ceiling's form alone. The legacy outer `source_sha256` remains a
 Git revision; nested source pins are byte hashes. The selected default library
 configuration is measured. Other targets, platform cfgs and external
 compiler/dependency inputs need their own qualification. The engine ceiling
@@ -351,10 +355,11 @@ Two descriptors of one class, a described struct defined twice, an unclosed
 struct, an unreadable descriptor or an empty meaning stop the tool with
 status 2 before anything is written. `--check` writes nothing and fails while
 any described field lacks documentation.
-After writing, measure under the ceiling's Rust release and lower the engine's
-aggregate v1 ceiling in `engine/missing_docs_ceiling.json` to the measured figure,
-with the measured revision as `source_sha256`. `--update` would migrate the engine
-ceiling to the individual v2 record, which is a separate decision.
+After writing, run `python -m tools.rust_doc_ratchet --update` under the
+ceiling's Rust release. It lowers the engine's aggregate v1 ceiling in
+`engine/missing_docs_ceiling.json` to the measured figure, with the measured
+revision as `source_sha256`, and keeps the v1 form. Migrating the engine ceiling
+to the individual v2 record (`--individual`) is a separate decision.
 
 ### SHD Vertex corrected-selection summary
 

@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+from collections.abc import Sequence
 from pathlib import Path
 
 from tools.doc_debt_ceiling import RatchetError, Verdict, read_ceiling
@@ -38,8 +39,10 @@ __all__ = [
     "RUST_DOC_CEILING_SCHEMA_VERSION",
     "RatchetError",
     "Verdict",
+    "ceiling_form",
     "compare",
     "main",
+    "stable_argv",
     "measure",
     "read_ceiling",
     "write_ceiling",
@@ -83,6 +86,81 @@ def write_ceiling(path: Path, *, undocumented: int, files: int, provenance: dict
     )
 
 
+def ceiling_form(path: Path) -> str:
+    """Return the form ``--update`` keeps for a ceiling: its own schema, or the aggregate one for a new file.
+
+    Parameters
+    ----------
+    path : Path
+        The ceiling record.
+
+    Returns
+    -------
+    str
+        ``INDIVIDUAL_SCHEMA`` for a record that lists every case, else ``RUST_DOC_CEILING_SCHEMA_VERSION``.
+    """
+    if not path.is_file():
+        return RUST_DOC_CEILING_SCHEMA_VERSION
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(document, dict) and document.get("schema_version") == INDIVIDUAL_SCHEMA:
+        return INDIVIDUAL_SCHEMA
+    return RUST_DOC_CEILING_SCHEMA_VERSION
+
+
+def stable_argv(argv: Sequence[str]) -> str:
+    """Return the measurement's command line without its per-run ``--cfg sc_neurocore_doc_*`` arguments.
+
+    The measurement passes rustc a digest of its inputs and a fresh execution id as cfgs. They belong in the full
+    record; in the aggregate ceiling they would change the file on every update.
+
+    Parameters
+    ----------
+    argv : sequence of str
+        The measurement's argument list.
+
+    Returns
+    -------
+    str
+        The remaining arguments, joined by spaces.
+    """
+    kept: list[str] = []
+    skip = False
+    for index, argument in enumerate(argv):
+        if skip:
+            skip = False
+            continue
+        if (
+            argument == "--cfg"
+            and index + 1 < len(argv)
+            and argv[index + 1].startswith("sc_neurocore_doc_")
+        ):
+            skip = True
+            continue
+        kept.append(argument)
+    return " ".join(kept)
+
+
+def _write_record(
+    path: Path, *, undocumented: int, files: int, provenance: dict[str, object]
+) -> None:
+    """Write the full record of every case to ``path``, replacing any earlier record there.
+
+    The record is written beside its target first and then moved into place, so a reader never sees half of it.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    staging = path.with_name(path.name + ".partial")
+    staging.unlink(missing_ok=True)
+    _write_ceiling(
+        staging,
+        undocumented=undocumented,
+        files=files,
+        note=CEILING_NOTE,
+        schema_version=INDIVIDUAL_SCHEMA,
+        provenance=provenance,
+    )
+    staging.replace(path)
+
+
 def measure(root: Path, manifest: str) -> tuple[int, int, str]:
     """Run the lint and return the count, the file count and the rustc version.
 
@@ -111,13 +189,34 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--update",
         action="store_true",
-        help="lower the ceiling to the measured figure; it can never be raised",
+        help="lower the ceiling to the measured figure; it can never be raised. The ceiling keeps its form: an "
+        "aggregate record stays aggregate, one that lists every case keeps listing them",
+    )
+    parser.add_argument(
+        "--individual",
+        action="store_true",
+        help="with --update, write the ceiling in the individual form that lists every case, migrating an aggregate "
+        "ceiling; a deliberate step, since an individual ceiling cannot return to the aggregate form",
+    )
+    parser.add_argument(
+        "--record",
+        type=Path,
+        help="with --update, also write the full record of every undocumented case (the individual form) to "
+        "RECORD, which must lie outside the repository",
     )
     args = parser.parse_args(argv)
     try:
+        if args.record is not None and not args.update:
+            raise RatchetError("--record needs --update")
+        if args.individual and not args.update:
+            raise RatchetError("--individual needs --update")
+        root = args.repo.resolve()
+        if args.record is not None and args.record.resolve().is_relative_to(root):
+            raise RatchetError(
+                f"the record must be written outside the repository, not at {args.record}"
+            )
         if shutil.which("cargo") is None:
             raise RatchetError("cargo is not installed, so no measurement was taken")
-        root = args.repo.resolve()
         native = build_parser()
         measured = measure_rust_findings(root, args.manifest, parser=native)
         protected = protect_rust_debt(
@@ -131,22 +230,42 @@ def main(argv: list[str] | None = None) -> int:
             if not verdict.ok:
                 raise RatchetError("refusing to raise: " + verdict.summary())
             measured.verify(root)
-            _write_ceiling(
-                args.ceiling,
-                undocumented=measured.undocumented,
-                files=measured.files,
-                note=CEILING_NOTE,
-                schema_version=INDIVIDUAL_SCHEMA,
-                provenance={
-                    "argv": list(measured.argv),
-                    "rustc": measured.rustc_version,
-                    "source_sha256": protected.revision,
-                    "manifest": measured.manifest,
-                    "debt_cases": [case.to_public_dict() for case in sorted(measured.cases)],
-                    "measurement": measured.to_public_dict(),
-                    "original_baseline": protected.to_public_dict(),
-                },
-            )
+            full: dict[str, object] = {
+                "argv": list(measured.argv),
+                "rustc": measured.rustc_version,
+                "source_sha256": protected.revision,
+                "manifest": measured.manifest,
+                "debt_cases": [case.to_public_dict() for case in sorted(measured.cases)],
+                "measurement": measured.to_public_dict(),
+                "original_baseline": protected.to_public_dict(),
+            }
+            if args.individual or ceiling_form(args.ceiling) == INDIVIDUAL_SCHEMA:
+                _write_ceiling(
+                    args.ceiling,
+                    undocumented=measured.undocumented,
+                    files=measured.files,
+                    note=CEILING_NOTE,
+                    schema_version=INDIVIDUAL_SCHEMA,
+                    provenance=full,
+                )
+            else:
+                write_ceiling(
+                    args.ceiling,
+                    undocumented=measured.undocumented,
+                    files=measured.files,
+                    provenance={
+                        "argv": stable_argv(measured.argv),
+                        "rustc": measured.rustc_version,
+                        "source_sha256": protected.revision,
+                    },
+                )
+            if args.record is not None:
+                _write_record(
+                    args.record,
+                    undocumented=measured.undocumented,
+                    files=measured.files,
+                    provenance=full,
+                )
             print(
                 f"Ceiling now {measured.undocumented} undocumented items in {measured.files} files."
             )

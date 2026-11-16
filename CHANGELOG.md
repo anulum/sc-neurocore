@@ -706,6 +706,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `python -m tools.rust_doc_ratchet --update` keeps the ceiling's form. It
+  rewrote the engine's aggregate v1 ceiling as the individual v2 record of
+  every undocumented case, about 10 MB, while the repository keeps the v1
+  form, so each documentation unit lowered the v1 figures by hand. An
+  aggregate ceiling is now lowered in place, with the measured revision as
+  its `source_sha256`, and a ceiling that lists its cases keeps listing them.
+  `--individual` migrates an aggregate ceiling to the v2 form as a deliberate
+  step, and `--record <path>` writes the full v2 record outside the
+  repository; both refuse to run without `--update`, and the record refuses
+  a path inside the repository.
+
 - Thirteen more model descriptors name RK4, the integrator their classes run
   by default and every backend lane uses: DeSchutterPurkinje, Durstewitz
   dopamine, Golomb FS, Hay L5 pyramidal, Izhikevich 2007, Martinotti,

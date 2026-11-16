@@ -32,14 +32,16 @@ from tests.test_tools.test_rust_doc_measurement_native import rust_project
 from tools.rust_doc_ratchet import (
     RUST_DOC_CEILING_SCHEMA_VERSION,
     RatchetError,
+    ceiling_form,
     compare,
     main,
     measure,
     read_ceiling,
+    stable_argv,
     write_ceiling,
 )
 from tools.rust_toolchain_pin import pinned_toolchain
-from tools.rust_doc_history import ORIGINAL_IMAGE_ENV
+from tools.rust_doc_history import INDIVIDUAL_SCHEMA, ORIGINAL_IMAGE_ENV
 
 PROVENANCE = {
     "argv": "cargo rustc --lib --manifest-path engine/Cargo.toml -- -W missing_docs",
@@ -317,3 +319,194 @@ class TestRunningTheLint:
         monkeypatch.setenv("PATH", "")
         with pytest.raises(RatchetError, match="cargo is not installed"):
             measure(tmp_path, "Cargo.toml")
+
+
+def _document_six_items(root: Path) -> None:
+    """Document six of a ten-item fixture crate's functions, so its debt falls from ten to four.
+
+    Parameters
+    ----------
+    root : Path
+        The fixture crate from ``_native_project(root, 10)``.
+    """
+    source = root / "src/lib.rs"
+    text = source.read_text()
+    for index in range(4, 10):
+        text = text.replace(
+            f"pub fn item_{index}",
+            f"/// Return from original item {index}.\npub fn item_{index}",
+        )
+    source.write_text(text)
+
+
+def _update(root: Path, ceiling: Path, *extra: str) -> int:
+    """Run ``--update`` on a fixture crate with a ceiling, plus any further arguments."""
+    return main(
+        [
+            "--repo",
+            str(root),
+            "--manifest",
+            "Cargo.toml",
+            "--ceiling",
+            str(ceiling),
+            "--update",
+            *extra,
+        ]
+    )
+
+
+class TestTheUpdateKeepsTheCommittedForm:
+    """``--update`` writes the ceiling in the form it already has; the full record goes elsewhere on request."""
+
+    def test_an_aggregate_ceiling_stays_aggregate(self, tmp_path: Path) -> None:
+        """A v1 ceiling is lowered in place: counts, the note and three provenance fields, no case list."""
+        root = _native_project(tmp_path / "repo", 10)
+        _document_six_items(root)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        assert _update(root, path) == 0
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert document["schema_version"] == RUST_DOC_CEILING_SCHEMA_VERSION
+        assert sorted(document) == [
+            "note",
+            "provenance",
+            "schema_version",
+            "undocumented",
+            "undocumented_files",
+        ]
+        assert (document["undocumented"], document["undocumented_files"]) == (4, 1)
+        provenance = document["provenance"]
+        assert sorted(provenance) == ["argv", "rustc", "source_sha256"]
+        assert isinstance(provenance["argv"], str) and "missing_docs" in provenance["argv"]
+        # The per-run measurement and execution cfgs would change the record on every update; they stay in the record.
+        assert "sc_neurocore_doc_" not in provenance["argv"]
+        assert provenance["rustc"].startswith("rustc ")
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout.strip()
+        assert provenance["source_sha256"] == head
+
+    def test_the_record_holds_every_case_outside_the_tree(self, tmp_path: Path) -> None:
+        """``--record`` writes the individual v2 record to its own path; the ceiling still stays aggregate."""
+        root = _native_project(tmp_path / "repo", 10)
+        _document_six_items(root)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        record = tmp_path / "out" / "record.json"
+        assert _update(root, path, "--record", str(record)) == 0
+        assert (
+            json.loads(path.read_text(encoding="utf-8"))["schema_version"]
+            == RUST_DOC_CEILING_SCHEMA_VERSION
+        )
+        full = json.loads(record.read_text(encoding="utf-8"))
+        assert full["schema_version"] != RUST_DOC_CEILING_SCHEMA_VERSION
+        assert full["undocumented"] == 4
+        assert len(full["provenance"]["debt_cases"]) == 4
+
+    def test_an_individual_ceiling_stays_individual(self, tmp_path: Path) -> None:
+        """A ceiling that already lists its cases keeps listing them, so it cannot revert to an aggregate."""
+        root = _native_project(tmp_path / "repo", 10)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        record = tmp_path / "out" / "record.json"
+        assert _update(root, path, "--record", str(record)) == 0
+        path.write_text(record.read_text(encoding="utf-8"), encoding="utf-8")
+        _document_six_items(root)
+        assert _update(root, path) == 0
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert (
+            document["schema_version"]
+            == json.loads(record.read_text(encoding="utf-8"))["schema_version"]
+        )
+        assert document["undocumented"] == 4
+        assert len(document["provenance"]["debt_cases"]) == 4
+
+    def test_a_record_inside_the_repository_is_refused(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """The full record may not land in the measured tree, where it would be committed by mistake."""
+        root = _native_project(tmp_path / "repo", 10)
+        _document_six_items(root)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        assert _update(root, path, "--record", str(root / "record.json")) == 2
+        assert "outside the repository" in capsys.readouterr().out
+        assert not (root / "record.json").exists()
+        assert read_ceiling(path) == 10
+
+    def test_a_record_without_an_update_is_refused(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """``--record`` belongs to ``--update``; alone it is refused rather than ignored."""
+        root = _native_project(tmp_path / "repo", 10)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        arguments = ["--repo", str(root), "--manifest", "Cargo.toml", "--ceiling", str(path)]
+        assert main([*arguments, "--record", str(tmp_path / "record.json")]) == 2
+        assert "--record needs --update" in capsys.readouterr().out
+
+    def test_individual_migrates_an_aggregate_ceiling_when_asked(self, tmp_path: Path) -> None:
+        """``--individual`` is the deliberate step that turns an aggregate ceiling into one listing every case."""
+        root = _native_project(tmp_path / "repo", 10)
+        _document_six_items(root)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        assert _update(root, path, "--individual") == 0
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert document["schema_version"] != RUST_DOC_CEILING_SCHEMA_VERSION
+        assert document["undocumented"] == 4
+        assert len(document["provenance"]["debt_cases"]) == 4
+
+    def test_individual_without_an_update_is_refused(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """``--individual`` belongs to ``--update``; alone it is refused rather than ignored."""
+        root = _native_project(tmp_path / "repo", 10)
+        path = ceiling_at(tmp_path / "ceiling.json", 10)
+        arguments = ["--repo", str(root), "--manifest", "Cargo.toml", "--ceiling", str(path)]
+        assert main([*arguments, "--individual"]) == 2
+        assert "--individual needs --update" in capsys.readouterr().out
+        assert read_ceiling(path) == 10
+
+    def test_a_first_ceiling_is_written_in_the_aggregate_form(self, tmp_path: Path) -> None:
+        """With no ceiling yet, ``--update`` starts one in the form the repository keeps."""
+        root = _native_project(tmp_path / "repo", 3)
+        path = tmp_path / "ceiling.json"
+        assert _update(root, path) == 0
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert document["schema_version"] == RUST_DOC_CEILING_SCHEMA_VERSION
+        assert document["undocumented"] == 3
+
+
+def test_the_form_kept_is_the_ceilings_own(tmp_path: Path) -> None:
+    """A missing file or anything but an individual record is kept aggregate; an individual record stays one."""
+    missing = tmp_path / "missing.json"
+    aggregate = ceiling_at(tmp_path / "aggregate.json", 5)
+    individual = tmp_path / "individual.json"
+    individual.write_text(
+        json.dumps({"schema_version": INDIVIDUAL_SCHEMA, "undocumented": 0}), encoding="utf-8"
+    )
+    listing = tmp_path / "listing.json"
+    listing.write_text("[]", encoding="utf-8")
+    assert ceiling_form(missing) == RUST_DOC_CEILING_SCHEMA_VERSION
+    assert ceiling_form(aggregate) == RUST_DOC_CEILING_SCHEMA_VERSION
+    assert ceiling_form(individual) == INDIVIDUAL_SCHEMA
+    assert ceiling_form(listing) == RUST_DOC_CEILING_SCHEMA_VERSION
+
+
+def test_the_stable_argv_drops_only_the_per_run_cfgs() -> None:
+    """The measurement's digest and execution cfgs go; every other argument, another --cfg included, stays."""
+    argv = [
+        "cargo",
+        "rustc",
+        "--",
+        "--force-warn",
+        "missing_docs",
+        "--cfg",
+        'sc_neurocore_doc_measurement="abc"',
+        "--cfg",
+        "feature_x",
+        "--cfg",
+        'sc_neurocore_doc_execution="def"',
+    ]
+    assert stable_argv(argv) == "cargo rustc -- --force-warn missing_docs --cfg feature_x"
+    assert stable_argv(["cargo", "--cfg"]) == "cargo --cfg"

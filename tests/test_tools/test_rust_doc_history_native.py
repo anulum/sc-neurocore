@@ -122,7 +122,8 @@ def _cli(
         str(ceiling),
     ]
     if update:
-        argv.append("--update")
+        # These tests exercise the individual protocol, which ``--update`` writes only when asked.
+        argv.extend(["--update", "--individual"])
     result = subprocess.run(
         argv, cwd=REPO, env=env, capture_output=True, text=True, check=False, timeout=90
     )
