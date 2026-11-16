@@ -534,6 +534,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   budget adds, and the 300 dB isolation that stands for no coupling.
   `route_waveguides` was documented as returning tuples; it returns one
   `WaveguideResult` per connected pair.
+- The network runner's neuron dispatch (`NeuronVariant`, 179 variants) is
+  documented: each variant links the model or adapter it wraps, and
+  `soma_voltage` states what it returns for models without a membrane
+  potential (a map's `x` or output, a phase, a population rate, an
+  adaptation, accumulator or current variable, a wrapper's `v()`, the
+  retinal ganglion cell's constant baseline, or 0 for the point processes
+  and the continuous-attractor and compositional-binding models).
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

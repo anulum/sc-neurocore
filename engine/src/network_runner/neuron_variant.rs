@@ -8,6 +8,8 @@
 
 //! Runtime dispatch over every neuron model supported by the network runner.
 
+#![deny(missing_docs)]
+
 use super::input_adapters::*;
 use crate::neuron::*;
 use crate::neurons::*;
@@ -20,223 +22,402 @@ use crate::rk4_neurons::Izhikevich2007Rk4;
 #[allow(clippy::large_enum_variant)]
 pub enum NeuronVariant {
     // neuron.rs
+    /// The [`Izhikevich`] model.
     Izhikevich(Izhikevich),
+    /// The [`Izhikevich2007Rk4`] model.
     Izhikevich2007(Izhikevich2007Rk4),
+    /// The [`AdExNeuron`] model.
     AdEx(AdExNeuron),
+    /// The [`ExpIfNeuron`] model.
     ExpIF(ExpIfNeuron),
+    /// The [`LapicqueNeuron`] model.
     Lapicque(LapicqueNeuron),
+    /// The [`HomeostaticLif`] model.
     HomeostaticLif(HomeostaticLif),
 
     // biophysical/ model modules
+    /// The [`HodgkinHuxleyNeuron`] model.
     HodgkinHuxley(HodgkinHuxleyNeuron),
+    /// The [`TraubMilesNeuron`] model.
     TraubMiles(TraubMilesNeuron),
+    /// The [`WangBuzsakiNeuron`] model.
     WangBuzsaki(WangBuzsakiNeuron),
+    /// The [`ConnorStevensNeuron`] model.
     ConnorStevens(ConnorStevensNeuron),
+    /// The [`DestexheThalamicNeuron`] model.
     DestexheThalamic(DestexheThalamicNeuron),
+    /// The [`HuberBraunNeuron`] model.
     HuberBraun(HuberBraunNeuron),
+    /// The [`GolombFSNeuron`] model.
     GolombFS(GolombFSNeuron),
+    /// The [`PospischilNeuron`] model.
     Pospischil(PospischilNeuron),
+    /// The [`MainenSejnowskiNeuron`] model.
     MainenSejnowski(MainenSejnowskiNeuron),
+    /// The [`DeSchutterPurkinjeNeuron`] model.
     DeSchutterPurkinje(DeSchutterPurkinjeNeuron),
+    /// The [`PlantR15Neuron`] model.
     PlantR15(PlantR15Neuron),
+    /// The [`PrescottNeuron`] model.
     Prescott(PrescottNeuron),
+    /// The [`MihalasNieburNeuron`] model.
     MihalasNiebur(MihalasNieburNeuron),
+    /// The [`SCScaledResetAdaptiveIFNeuron`] model.
     SCScaledResetAdaptiveIF(SCScaledResetAdaptiveIFNeuron),
+    /// The [`GLIFNeuron`] model.
     GLIF(GLIFNeuron),
+    /// The [`SCFourStateGLIFNeuron`] model.
     SCFourStateGLIF(SCFourStateGLIFNeuron),
+    /// The [`GIFPopulationNeuron`] model.
     GIFPopulation(GIFPopulationNeuron),
+    /// The [`AvRonCardiacNeuron`] model.
     AvRonCardiac(AvRonCardiacNeuron),
+    /// The [`DurstewitzDopamineNeuron`] model.
     DurstewitzDopamine(DurstewitzDopamineNeuron),
+    /// The [`HillTononiNeuron`] model.
     HillTononi(HillTononiNeuron),
+    /// The [`BertramPhantomBurster`] model.
     BertramPhantom(BertramPhantomBurster),
+    /// The [`SCThreeStatePhantomBurster`] model.
     SCThreeStatePhantom(SCThreeStatePhantomBurster),
+    /// The [`YamadaNeuron`] model.
     Yamada(YamadaNeuron),
 
     // simple_spiking.rs
+    /// The [`FitzHughNagumoNeuron`] model.
     FitzHughNagumo(FitzHughNagumoNeuron),
+    /// The [`MorrisLecarNeuron`] model.
     MorrisLecar(MorrisLecarNeuron),
+    /// The [`HindmarshRoseNeuron`] model.
     HindmarshRose(HindmarshRoseNeuron),
+    /// The [`ResonateAndFireNeuron`] model.
     ResonateAndFire(ResonateAndFireNeuron),
+    /// The [`BalancedResonateAndFireNeuron`] model.
     BalancedResonateAndFire(BalancedResonateAndFireNeuron),
+    /// The [`FitzHughRinzelNeuron`] model.
     FitzHughRinzel(FitzHughRinzelNeuron),
+    /// The [`McKeanNeuron`] model.
     McKean(McKeanNeuron),
+    /// The [`SCTriangularMcKeanNeuron`] model.
     SCTriangularMcKean(SCTriangularMcKeanNeuron),
+    /// The [`TermanWangOscillator`] model.
     TermanWang(TermanWangOscillator),
+    /// The [`GutkinErmentroutNeuron`] model.
     GutkinErmentrout(GutkinErmentroutNeuron),
+    /// The [`WilsonHRNeuron`] model.
     WilsonHR(WilsonHRNeuron),
+    /// The [`SCResettingWilsonHRNeuron`] model.
     SCResettingWilsonHR(SCResettingWilsonHRNeuron),
+    /// The [`ChayNeuron`] model.
     Chay(ChayNeuron),
+    /// The [`ChayKeizerNeuron`] model.
     ChayKeizer(ChayKeizerNeuron),
+    /// The [`ShermanRinzelKeizerNeuron`] model.
     ShermanRinzelKeizer(ShermanRinzelKeizerNeuron),
+    /// The [`ButeraRespiratoryNeuron`] model.
     ButeraRespiratory(ButeraRespiratoryNeuron),
+    /// The [`EPropALIFNeuron`] model.
     EPropALIF(EPropALIFNeuron),
+    /// The [`SuperSpikeNeuron`] model.
     SuperSpike(SuperSpikeNeuron),
+    /// The [`LearnableNeuronModel`] model.
     LearnableNeuron(LearnableNeuronModel),
+    /// The [`PernarowskiNeuron`] model.
     Pernarowski(PernarowskiNeuron),
 
     // trivial.rs (simple IF variants)
+    /// The [`QuadraticIFNeuron`] model.
     QuadraticIF(QuadraticIFNeuron),
+    /// The [`ThetaNeuron`] model.
     Theta(ThetaNeuron),
+    /// The [`PerfectIntegratorNeuron`] model.
     PerfectIntegrator(PerfectIntegratorNeuron),
+    /// The [`GatedLIFNeuron`] model.
     GatedLIF(GatedLIFNeuron),
+    /// The [`NonlinearLIFNeuron`] model.
     NonlinearLIF(NonlinearLIFNeuron),
+    /// The [`SFANeuron`] model.
     SFA(SFANeuron),
+    /// The [`MATNeuron`] model.
     MAT(MATNeuron),
+    /// The [`SCResettingMATNeuron`] model.
     SCResettingMAT(SCResettingMATNeuron),
+    /// The [`KLIFNeuron`] model.
     KLIF(KLIFNeuron),
+    /// The [`InhibitoryLIFNeuron`] model.
     InhibitoryLIF(InhibitoryLIFNeuron),
+    /// The [`ComplementaryLIFNeuron`] model.
     ComplementaryLIF(ComplementaryLIFNeuron),
+    /// The [`ParametricLIFNeuron`] model.
     ParametricLIF(ParametricLIFNeuron),
+    /// The [`NonResettingLIFNeuron`] model.
     NonResettingLIF(NonResettingLIFNeuron),
+    /// The [`SCNonResettingAdaptiveLIFNeuron`] model.
     SCNonResettingAdaptiveLIF(SCNonResettingAdaptiveLIFNeuron),
+    /// The [`AdaptiveThresholdIFNeuron`] model.
     AdaptiveThresholdIF(AdaptiveThresholdIFNeuron),
+    /// The [`SigmaDeltaNeuron`] model.
     SigmaDelta(SigmaDeltaNeuron),
+    /// The [`SCSigmaDeltaAccumulatorNeuron`] model.
     SCSigmaDeltaAccumulator(SCSigmaDeltaAccumulatorNeuron),
+    /// The [`EnergyLIFNeuron`] model.
     EnergyLIF(EnergyLIFNeuron),
+    /// The [`SCNormalizedEnergyLIFNeuron`] model.
     SCNormalizedEnergyLIF(SCNormalizedEnergyLIFNeuron),
+    /// The [`ClosedFormContinuousNeuron`] model.
     ClosedFormContinuous(ClosedFormContinuousNeuron),
 
     // maps.rs
+    /// The [`ChialvoMapNeuron`] model.
     ChialvoMap(ChialvoMapNeuron),
+    /// The [`RulkovMapNeuron`] model.
     RulkovMap(RulkovMapNeuron),
+    /// The [`SCUpwardCrossingRulkovMapNeuron`] model.
     SCUpwardCrossingRulkovMap(SCUpwardCrossingRulkovMapNeuron),
+    /// The [`IbarzTanakaMapNeuron`] model.
     IbarzTanakaMap(IbarzTanakaMapNeuron),
+    /// The [`MedvedevMapNeuron`] model.
     MedvedevMap(MedvedevMapNeuron),
+    /// The [`CazellesMapNeuron`] model.
     CazellesMap(CazellesMapNeuron),
+    /// The [`SCClippedLogisticBurstingMapNeuron`] model.
     SCClippedLogisticBurstingMap(SCClippedLogisticBurstingMapNeuron),
+    /// The [`SCClippedRationalRecoveryMapNeuron`] model.
     SCClippedRationalRecoveryMap(SCClippedRationalRecoveryMapNeuron),
+    /// The [`CourageNekorkinMapNeuron`] model.
     CourageNekorkinMap(CourageNekorkinMapNeuron),
+    /// The [`AiharaMapNeuron`] model.
     AiharaMap(AiharaMapNeuron),
+    /// The [`SCChaoticMapNeuron`] model.
     SCChaoticMap(SCChaoticMapNeuron),
+    /// The [`NagumoSatoMapNeuron`] model.
     NagumoSatoMap(NagumoSatoMapNeuron),
+    /// The [`SCAdaptiveThresholdMapNeuron`] model.
     SCAdaptiveThresholdMap(SCAdaptiveThresholdMapNeuron),
+    /// The [`ErmentroutKopellMapNeuron`] model.
     ErmentroutKopellMap(ErmentroutKopellMapNeuron),
 
     // hardware.rs (f64 input subset)
+    /// The [`BrainScaleSAdExNeuron`] model.
     BrainScaleSAdEx(BrainScaleSAdExNeuron),
+    /// The [`SpiNNakerLIFNeuron`] model.
     SpiNNakerLIF(SpiNNakerLIFNeuron),
+    /// The [`NeuroGridNeuron`] model.
     NeuroGrid(NeuroGridNeuron),
+    /// The [`DPINeuron`] model.
     DPI(DPINeuron),
+    /// The [`AkidaNeuron`] model.
     Akida(AkidaNeuron),
+    /// The [`StochasticLIFNeuron`] model.
     StochasticLIF(StochasticLIFNeuron),
 
     // multi_compartment.rs (single-f64-input subset)
+    /// The [`MarderSTGNeuron`] model.
     MarderSTG(MarderSTGNeuron),
+    /// The [`RallCableNeuron`] model.
     RallCable(RallCableNeuron),
+    /// The [`BoothRinzelNeuron`] model.
     BoothRinzel(BoothRinzelNeuron),
+    /// The [`DendrifyNeuron`] model.
     Dendrify(DendrifyNeuron),
 
     // rate.rs (spiking subset with step(f64)->i32)
+    /// The [`LiquidTimeConstantNeuron`] model.
     LiquidTimeConstant(LiquidTimeConstantNeuron),
+    /// The [`ParallelSpikingNeuron`] model.
     ParallelSpiking(ParallelSpikingNeuron),
+    /// The [`FractionalLIFNeuron`] model.
     FractionalLIF(FractionalLIFNeuron),
 
     // special.rs (step(f64)->i32 subset)
+    /// The [`StochasticIFNeuron`] model.
     StochasticIF(StochasticIFNeuron),
+    /// The [`GalvesLocherbachNeuron`] model.
     GalvesLocherbach(GalvesLocherbachNeuron),
+    /// The [`SpikeResponseNeuron`] model.
     SpikeResponse(SpikeResponseNeuron),
+    /// The [`GLMNeuron`] model.
     GLM(GLMNeuron),
+    /// The [`ArcaneNeuron`] model.
     Arcane(ArcaneNeuron),
 
     // --- newly wired (step(f64)->i32 compatible) ---
     // ai_optimized.rs
+    /// The [`MultiTimescaleNeuron`] model.
     MultiTimescale(MultiTimescaleNeuron),
+    /// The [`AttentionGatedNeuron`] model.
     AttentionGated(AttentionGatedNeuron),
+    /// The [`PredictiveCodingNeuron`] model.
     PredictiveCoding(PredictiveCodingNeuron),
+    /// The [`SelfReferentialNeuron`] model.
     SelfReferential(SelfReferentialNeuron),
+    /// The [`CompositionalBindingNeuron`] model.
     CompositionalBinding(CompositionalBindingNeuron),
+    /// The [`DifferentiableSurrogateNeuron`] model.
     DifferentiableSurrogate(DifferentiableSurrogateNeuron),
+    /// The [`ContinuousAttractorNeuron`] model.
     ContinuousAttractor(ContinuousAttractorNeuron),
+    /// The [`MetaPlasticNeuron`] model.
     MetaPlastic(MetaPlasticNeuron),
     // simple_spiking.rs
+    /// The [`BendaHerzNeuron`] model.
     BendaHerz(BendaHerzNeuron),
+    /// The [`SCStochasticRateAdaptationNeuron`] model.
     SCStochasticRateAdaptation(SCStochasticRateAdaptationNeuron),
+    /// The [`BrunelWangNeuron`] model.
     BrunelWang(BrunelWangNeuron),
     // special.rs
+    /// The [`PoissonNeuron`] model.
     Poisson(PoissonNeuron),
+    /// The [`InhomogeneousPoissonNeuron`] model.
     InhomogeneousPoisson(InhomogeneousPoissonNeuron),
+    /// The [`GammaRenewalNeuron`] model.
     GammaRenewal(GammaRenewalNeuron),
+    /// The [`EscapeRateNeuron`] model.
     EscapeRate(EscapeRateNeuron),
     // interneurons.rs (step(f64)->i32)
+    /// The [`PVFastSpikingNeuron`] model.
     PVFastSpiking(PVFastSpikingNeuron),
+    /// The [`SSTNeuron`] model.
     SST(SSTNeuron),
+    /// The [`VIPNeuron`] model.
     VIP(VIPNeuron),
+    /// The [`ChandelierNeuron`] model.
     Chandelier(ChandelierNeuron),
+    /// The [`CerebellarBasketNeuron`] model.
     CerebellarBasket(CerebellarBasketNeuron),
+    /// The [`MartinottiNeuron`] model.
     Martinotti(MartinottiNeuron),
 
     // motor.rs (step(f64)->i32)
+    /// The [`AlphaMotorNeuron`] model.
     AlphaMotor(AlphaMotorNeuron),
+    /// The [`GammaMotorNeuron`] model.
     GammaMotor(GammaMotorNeuron),
+    /// The [`UpperMotorNeuron`] model.
     UpperMotor(UpperMotorNeuron),
+    /// The [`RenshawCell`] model.
     Renshaw(RenshawCell),
+    /// The [`MotorUnit`] model.
     MotorUnitCell(MotorUnit),
 
     // sensory.rs (spiking subset: step(f64)->i32)
+    /// The [`RetinalGanglionCell`] model.
     RetinalGanglion(RetinalGanglionCell),
+    /// The [`MerkelCell`] model.
     Merkel(MerkelCell),
+    /// The [`PacinianCorpuscle`] model.
     Pacinian(PacinianCorpuscle),
+    /// The [`Nociceptor`] model.
     NociceptorCell(Nociceptor),
+    /// The [`OlfactoryReceptorNeuron`] model.
     OlfactoryReceptor(OlfactoryReceptorNeuron),
 
     // cerebellar.rs (step(f64)->i32)
+    /// The [`GranuleCell`] model.
     Granule(GranuleCell),
+    /// The [`GolgiCell`] model.
     Golgi(GolgiCell),
+    /// The [`StellateCell`] model.
     Stellate(StellateCell),
+    /// The [`LugaroCell`] model.
     Lugaro(LugaroCell),
+    /// The [`UnipolarBrushCell`] model.
     UnipolarBrush(UnipolarBrushCell),
+    /// The [`DCNNeuron`] model.
     DCN(DCNNeuron),
 
     // channels.rs (step(f64)->i32)
+    /// The [`PersistentNaNeuron`] model.
     PersistentNa(PersistentNaNeuron),
+    /// The [`IhNeuron`] model.
     Ih(IhNeuron),
+    /// The [`TTypeCaNeuron`] model.
     TTypeCa(TTypeCaNeuron),
+    /// The [`ATypeKNeuron`] model.
     ATypeK(ATypeKNeuron),
+    /// The [`BKNeuron`] model.
     BK(BKNeuron),
+    /// The [`SKNeuron`] model.
     SK(SKNeuron),
+    /// The [`NMDANeuron`] model.
     NMDA(NMDANeuron),
+    /// The [`SCWBNMDAMagnesiumBlockNeuron`] model.
     SCWBNMDAMagnesiumBlock(SCWBNMDAMagnesiumBlockNeuron),
 
     // population.rs (step(f64)->i32)
+    /// The [`MontbrioMeanField`] model.
     MontbrioMPR(MontbrioMeanField),
+    /// The [`BrunelNetwork`] model.
     Brunel(BrunelNetwork),
+    /// The [`TUMNetwork`] model.
     TUM(TUMNetwork),
+    /// The [`ElBoustaniNetwork`] model.
     ElBoustani(ElBoustaniNetwork),
 
     // misc.rs (step(f64)->i32)
+    /// The [`GradedSynapseNeuron`] model.
     GradedSynapse(GradedSynapseNeuron),
+    /// The [`GapJunctionNeuron`] model.
     GapJunction(GapJunctionNeuron),
+    /// The [`FrankenhaeUserHuxleyAxon`] model.
     FHAxon(FrankenhaeUserHuxleyAxon),
+    /// The [`NodeOfRanvier`] model.
     NodeOfRanvier(NodeOfRanvier),
+    /// The [`MyelinatedAxon`] model.
     MyelinAxon(MyelinatedAxon),
+    /// The [`CardiacPurkinjeFibre`] model.
     CardiacPurkinje(CardiacPurkinjeFibre),
+    /// The [`SmoothMuscleCell`] model.
     SmoothMuscle(SmoothMuscleCell),
+    /// The [`EndocrineBetaCell`] model.
     BetaCell(EndocrineBetaCell),
 
     // Wrapped models: non-standard interfaces normalised to step(f64)->i32
     // Multi-input spiking
+    /// The [`WrAlpha`] adapter, normalised to `step(f64) -> i32`.
     WrAlphaCell(WrAlpha),
+    /// The [`WrCOBALIF`] adapter, normalised to `step(f64) -> i32`.
     WrCOBALIFCell(WrCOBALIF),
+    /// The [`WrCompteWM`] adapter, normalised to `step(f64) -> i32`.
     WrCompteWMCell(WrCompteWM),
+    /// The [`WrTsodyksMarkram`] adapter, normalised to `step(f64) -> i32`.
     WrTsodyksMarkramCell(WrTsodyksMarkram),
+    /// The [`WrPinskyRinzel`] adapter, normalised to `step(f64) -> i32`.
     WrPinskyRinzelCell(WrPinskyRinzel),
+    /// The [`WrHayL5`] adapter, normalised to `step(f64) -> i32`.
     WrHayL5Cell(WrHayL5),
+    /// The [`WrTwoCompLIF`] adapter, normalised to `step(f64) -> i32`.
     WrTwoCompLIFCell(WrTwoCompLIF),
     // Hardware integer-input
+    /// The [`WrLoihiCUBA`] adapter, normalised to `step(f64) -> i32`.
     WrLoihiCUBACell(WrLoihiCUBA),
+    /// The [`WrLoihi2`] adapter, normalised to `step(f64) -> i32`.
     WrLoihi2Cell(WrLoihi2),
+    /// The [`WrSpiNNaker2`] adapter, normalised to `step(f64) -> i32`.
     WrSpiNNaker2Cell(WrSpiNNaker2),
+    /// The [`WrTrueNorth`] adapter, normalised to `step(f64) -> i32`.
     WrTrueNorthCell(WrTrueNorth),
+    /// The [`WrIntegerQIF`] adapter, normalised to `step(f64) -> i32`.
     WrIntegerQIFCell(WrIntegerQIF),
+    /// The [`WrMcCullochPitts`] adapter, normalised to `step(f64) -> i32`.
     WrMcCullochPittsCell(WrMcCullochPitts),
     // Graded/rate output
+    /// The [`WrSigmoidRate`] adapter, normalised to `step(f64) -> i32`.
     WrSigmoidRateCell(WrSigmoidRate),
+    /// The [`WrThresholdLinear`] adapter, normalised to `step(f64) -> i32`.
     WrThresholdLinearCell(WrThresholdLinear),
+    /// The [`WrAstrocyte`] adapter, normalised to `step(f64) -> i32`.
     WrAstrocyteCell(WrAstrocyte),
+    /// The [`WrInnerHairCell`] adapter, normalised to `step(f64) -> i32`.
     WrInnerHairCellCell(WrInnerHairCell),
+    /// The [`WrOuterHairCell`] adapter, normalised to `step(f64) -> i32`.
     WrOuterHairCellCell(WrOuterHairCell),
+    /// The [`WrRodPhotoreceptor`] adapter, normalised to `step(f64) -> i32`.
     WrRodPhotoreceptorCell(WrRodPhotoreceptor),
+    /// The [`WrConePhotoreceptor`] adapter, normalised to `step(f64) -> i32`.
     WrConePhotoreceptorCell(WrConePhotoreceptor),
+    /// The [`WrTasteReceptor`] adapter, normalised to `step(f64) -> i32`.
     WrTasteReceptorCell(WrTasteReceptor),
 }
 
@@ -309,14 +490,23 @@ macro_rules! all_variants {
 }
 
 impl NeuronVariant {
+    /// Advance the wrapped model one step with `current` and return what its `step` returns.
     pub fn step(&mut self, current: f64) -> i32 {
         all_variants!(dispatch_step, self, current,)
     }
 
+    /// Reset the wrapped model with its own `reset`.
     pub fn reset(&mut self) {
         all_variants!(dispatch_reset, self,)
     }
 
+    /// Return the state the runner records as the soma voltage.
+    ///
+    /// That is `v` for most models. Others give a state of their own: a map's `x` or output, a
+    /// phase such as `theta`, a population rate, an adaptation, accumulator or current
+    /// variable, a compartment's somatic potential, or a wrapper's `v()`. The retinal
+    /// ganglion cell gives its constant `baseline`. The point processes and the
+    /// continuous-attractor and compositional-binding models give 0.
     pub fn soma_voltage(&self) -> f64 {
         match self {
             NeuronVariant::Izhikevich(n) => n.v,

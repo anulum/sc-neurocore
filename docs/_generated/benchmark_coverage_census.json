@@ -30,6 +30,7 @@
           "attribution": "bound_script",
           "changed": [
             "benchmarks/bench_adex.py",
+            "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neuron/adex.rs"
           ],
           "currency": "outdated",
@@ -340,6 +341,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neurons/chialvo_map.rs"
           ],
           "currency": "outdated",
@@ -662,6 +664,7 @@
           "changed": [
             "benchmarks/bench_model_expif.py",
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neuron/exp_if.rs",
             "src/sc_neurocore/neurons/model_schemas/exp_if.json",
             "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
@@ -2190,6 +2193,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neurons/trivial/theta.rs",
             "src/sc_neurocore/neurons/descriptor_generator.py",
             "tools/emit_catalogue_formal.py",
