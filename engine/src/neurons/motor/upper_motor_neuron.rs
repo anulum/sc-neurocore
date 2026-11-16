@@ -267,6 +267,7 @@ impl Default for UpperMotorNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // ── Upper Motor Neuron — 6-dimension coverage ──────────────────
 
@@ -459,14 +460,10 @@ mod tests {
     #[test]
     fn upper_motor_performance() {
         let mut n = UpperMotorNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(5.0);
-        }
-        assert!(
-            start.elapsed().as_millis() < 100,
-            "10k steps took {:?}",
-            start.elapsed()
-        );
+        host_budget::assert_within(module_path!(), "upper_motor_performance", || {
+            for _ in 0..10_000 {
+                std::hint::black_box(n.step(5.0));
+            }
+        });
     }
 }

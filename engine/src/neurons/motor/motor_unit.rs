@@ -206,6 +206,7 @@ impl Default for MotorUnit {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // ── Motor Unit — 6-dimension coverage ──────────────────────────
 
@@ -331,11 +332,10 @@ mod tests {
     #[test]
     fn motor_unit_performance() {
         let mut mu = MotorUnit::new();
-        let start = std::time::Instant::now();
-        for _ in 0..100_000 {
-            mu.step(20.0);
-        }
-        let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 100, "100k steps took {:?}", elapsed);
+        host_budget::assert_within(module_path!(), "motor_unit_performance", || {
+            for _ in 0..100_000 {
+                std::hint::black_box(mu.step(20.0));
+            }
+        });
     }
 }

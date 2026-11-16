@@ -126,4 +126,9 @@ both builds with `SCN_ENGINE_BUDGET_RECORD=<file>` set, at least five times;
 the profile file's header gives the rule that turns those runs into a ratio.
 `tests/test_engine_rust_performance_guards.py` holds every ratio to that rule
 and every timed test to a ratio, and refuses a new literal millisecond limit
-in the engine.
+in the engine. It keys each budget by the module path `module_path!()` gives
+at it. A file declared `mod tests;`, such as `<name>_tests.rs` included with
+`#[path = "<name>_tests.rs"] mod tests;`, is that tests module itself; a file
+that `#[path]` includes as another module keeps its inline `mod tests` below
+that module. Declarations with a visibility, and files included by files
+that are themselves included, resolve back to the crate root.

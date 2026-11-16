@@ -782,6 +782,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine's timed motor-system tests (alpha, gamma and upper motor
+  neurons, the motor unit and the Renshaw cell) are held to host-derived
+  budgets as well, not to a fixed number of milliseconds; the budgeted tests
+  number 34. Every ratio is measured again on the reference host in one
+  session. The guard that holds each budget to a ratio keys it by the module
+  path `module_path!()` gives at it: a file declared `mod tests;`, with or
+  without `#[path]`, is that tests module, and a file that `#[path]`
+  includes as another module keeps its inline tests below it, through
+  declarations with a visibility and chains of included files back to the
+  crate root. It read only an inline `mod tests`, so it refused a budget in
+  a moved test module or in the AdEx tests file, and keyed others by the
+  file's name.
+
 - The benchmark evidence gate now checks every source digest its records
   hold in their tables. In 23 gates the manifest's map named only part of
   its record's path-keyed digests, 243 paths in all, so a record whose

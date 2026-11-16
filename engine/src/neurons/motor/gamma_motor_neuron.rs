@@ -153,6 +153,7 @@ impl Default for GammaMotorNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // ── Gamma Motor Neuron — 6-dimension coverage ──────────────────
 
@@ -274,14 +275,10 @@ mod tests {
     #[test]
     fn gamma_performance() {
         let mut n = GammaMotorNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..100_000 {
-            n.step(20.0);
-        }
-        assert!(
-            start.elapsed().as_millis() < 50,
-            "100k steps took {:?}",
-            start.elapsed()
-        );
+        host_budget::assert_within(module_path!(), "gamma_performance", || {
+            for _ in 0..100_000 {
+                std::hint::black_box(n.step(20.0));
+            }
+        });
     }
 }

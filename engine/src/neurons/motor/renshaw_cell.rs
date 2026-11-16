@@ -247,6 +247,7 @@ impl Default for RenshawCell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::neurons::host_budget;
 
     // ── Renshaw Cell — 6-dimension coverage ────────────────────────
 
@@ -436,14 +437,10 @@ mod tests {
     #[test]
     fn renshaw_performance() {
         let mut n = RenshawCell::new();
-        let start = std::time::Instant::now();
-        for _ in 0..5_000 {
-            n.step(4.0);
-        }
-        assert!(
-            start.elapsed().as_millis() < 500,
-            "5k steps took {:?}",
-            start.elapsed()
-        );
+        host_budget::assert_within(module_path!(), "renshaw_performance", || {
+            for _ in 0..5_000 {
+                std::hint::black_box(n.step(4.0));
+            }
+        });
     }
 }
