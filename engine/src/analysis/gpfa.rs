@@ -361,8 +361,11 @@ pub struct GpfaResult {
     pub tau: Vec<f64>,
     /// Log-likelihoods per iteration.
     pub log_likelihoods: Vec<f64>,
+    /// Number of latent dimensions.
     pub n_latents: usize,
+    /// Number of time bins.
     pub n_bins: usize,
+    /// Number of neurons.
     pub n_neurons: usize,
 }
 

@@ -541,6 +541,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   adaptation, accumulator or current variable, a wrapper's `v()`, the
   retinal ganglion cell's constant baseline, or 0 for the point processes
   and the continuous-attractor and compositional-binding models).
+- The engine's spike train analysis modules (`engine/src/analysis`) each
+  carry a doc naming what they hold, the GPFA result's size fields are
+  documented, and `spike_directionality`'s doc, which sat on the `use`
+  statement above it, is back on the function and now says which spikes
+  it counts.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

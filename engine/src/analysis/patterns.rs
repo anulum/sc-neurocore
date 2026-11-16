@@ -6,10 +6,14 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Spike directionality, ordering, and higher-order patterns
 
-/// Spike directionality (Kreuz et al. 2015).
-/// Returns asymmetry in [-1, 1]. Positive: A leads B.
 use rayon::prelude::*;
 
+/// Spike directionality (Kreuz et al. 2015).
+/// Returns asymmetry in [-1, 1]. Positive: A leads B.
+///
+/// Each spike of A in `[t_start, t_end]` with a spike of B on both sides counts for B when
+/// the nearer of those two B spikes precedes it, and for A otherwise (ties count for A). The
+/// result is `(A - B) / counted`, or 0 when nothing is counted.
 pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_end: f64) -> f64 {
     let mut ta: Vec<f64> = times_a
         .iter()
