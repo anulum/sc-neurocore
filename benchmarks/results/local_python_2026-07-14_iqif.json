@@ -161,7 +161,7 @@
       "size_bytes": 15032
     },
     "rust_extension": {
-      "path": "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
       "sha256": "698244eea7c14ca06ad0893c4338a22a260bcd75bc1a2803d94cbfcd983bbddb",
       "size_bytes": 38815624
     }
