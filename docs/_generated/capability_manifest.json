@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5682
+    "test_files": 5684
   },
   "documentation": {
     "public_pages": [
@@ -4221,6 +4221,7 @@
       "tests/test_bench_wong_wang.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_coverage_census.py",
+      "tests/test_benchmark_coverage_census_reviews.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_evidence_provenance.py",
       "tests/test_benchmark_harness_contracts.py",
@@ -7803,6 +7804,7 @@
       "tests/test_sonata_import_import_network.py",
       "tests/test_sonata_import_import_nodes.py",
       "tests/test_sonata_import_specification.py",
+      "tests/test_source_code_equivalence.py",
       "tests/test_source_tree_ships_no_test_packages.py",
       "tests/test_sources_and_profiling_bitstream_current_source.py",
       "tests/test_sources_and_profiling_energy_metrics.py",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2023
+expected_file_count = 2027
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8146,3 +8146,19 @@ rationale = "Astrocyte model test support; its docstring names the corrected Li 
 [[file]]
 path = "tests/model_lnm_support.py"
 rationale = "Learnable neuron model test support; its docstring names Jolivet et al. 2006, not a fabricated citation."
+
+[[file]]
+path = "tools/source_code_equivalence.py"
+rationale = "Says whether two versions of a Python or Rust source differ only in documentation and comments."
+
+[[file]]
+path = "tools/source_change_reviews.py"
+rationale = "Recorded reasons for not measuring a benchmark record again, held to an unchanged code form."
+
+[[file]]
+path = "tests/test_source_code_equivalence.py"
+rationale = "Source code equivalence never calls a code change, even one inside a literal, a comment change."
+
+[[file]]
+path = "tests/test_benchmark_coverage_census_reviews.py"
+rationale = "The census accepts a source-change review only while the reviewed bytes are current and the code unchanged."

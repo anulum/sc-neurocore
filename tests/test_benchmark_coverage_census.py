@@ -88,6 +88,10 @@ class TestTheCommittedCensusIsCurrent:
         """A reader must be able to tell which contract produced the numbers."""
         assert census["schema_version"] == CENSUS_SCHEMA
 
+    def test_every_source_change_review_applies(self, census: dict[str, object]) -> None:
+        """A review left after its record was measured again is removed, not kept beside the new record."""
+        assert census["unused_source_change_reviews"] == []
+
 
 class TestTheStatesPartitionTheCatalogue:
     """Every model has exactly one of the three states."""
@@ -297,7 +301,12 @@ class TestARecordSaysWhetherItsSourcesAreStillTheSame:
         source.write_text("STEP = 3\n", encoding="utf-8")
         census = build_census(tmp_path)
         assert census["cited_records"] == 1
-        assert census["record_currency_totals"] == {"current": 0, "outdated": 1, "unbound": 0}
+        assert census["record_currency_totals"] == {
+            "current": 0,
+            "reviewed": 0,
+            "outdated": 1,
+            "unbound": 0,
+        }
         totals = census["totals"]
         assert isinstance(totals, dict)
         assert totals["measured"] == 2
@@ -402,7 +411,12 @@ class TestARecordNoModelNamesIsStillWatched:
             {"name": "local_two_compartment_rk4.json", "currency": "current"}
         ]
         assert census["all_records"] == 1
-        assert census["all_record_currency_totals"] == {"current": 1, "outdated": 0, "unbound": 0}
+        assert census["all_record_currency_totals"] == {
+            "current": 1,
+            "reviewed": 0,
+            "outdated": 0,
+            "unbound": 0,
+        }
 
     def test_a_changed_source_is_named(self, tmp_path: Path) -> None:
         """The edit that no model row would show appears here."""
@@ -416,7 +430,12 @@ class TestARecordNoModelNamesIsStillWatched:
                 "changed": ["src/lane.rs"],
             }
         ]
-        assert census["all_record_currency_totals"] == {"current": 0, "outdated": 1, "unbound": 0}
+        assert census["all_record_currency_totals"] == {
+            "current": 0,
+            "reviewed": 0,
+            "outdated": 1,
+            "unbound": 0,
+        }
 
     def test_one_that_binds_no_path_is_counted_and_not_listed(self, tmp_path: Path) -> None:
         """Nothing can be said about it, so it adds to the total only."""
@@ -425,7 +444,12 @@ class TestARecordNoModelNamesIsStillWatched:
         census = build_census(tmp_path)
         assert census["uncited_bound_records"] == []
         assert census["all_records"] == 1
-        assert census["all_record_currency_totals"] == {"current": 0, "outdated": 0, "unbound": 1}
+        assert census["all_record_currency_totals"] == {
+            "current": 0,
+            "reviewed": 0,
+            "outdated": 0,
+            "unbound": 1,
+        }
 
     def test_a_cited_record_is_not_listed_a_second_time(self, tmp_path: Path) -> None:
         """A record a model row carries is counted once in the totals over all."""
@@ -437,7 +461,12 @@ class TestARecordNoModelNamesIsStillWatched:
             {"name": "formal/receipt.json", "currency": "current"}
         ]
         assert census["all_records"] == 2
-        assert census["all_record_currency_totals"] == {"current": 2, "outdated": 0, "unbound": 0}
+        assert census["all_record_currency_totals"] == {
+            "current": 2,
+            "reviewed": 0,
+            "outdated": 0,
+            "unbound": 0,
+        }
 
     def test_a_file_that_is_not_json_is_not_a_record(self, tmp_path: Path) -> None:
         """It is neither counted nor listed."""
@@ -482,9 +511,10 @@ class TestARecordNoModelNamesIsStillWatched:
         assert names == sorted(set(names))
         assert cited.isdisjoint(names)
         for entry in others:
-            assert entry["currency"] in ("current", "outdated")
+            assert entry["currency"] in ("current", "reviewed", "outdated")
             assert ("changed" in entry) == (entry["currency"] == "outdated")
-        for word in ("current", "outdated"):
+            assert ("reviewed" in entry) == (entry["currency"] == "reviewed")
+        for word in ("current", "reviewed", "outdated"):
             listed = sum(1 for entry in others if entry["currency"] == word)
             assert int(all_totals[word]) == int(cited_totals[word]) + listed
 
@@ -564,7 +594,12 @@ class TestTheGateManifestNamesThePathsOfLaneKeyedRecords:
             manifest.write_text(content, encoding="utf-8")
         census = build_census(tmp_path)
         assert census["uncited_bound_records"] == []
-        assert census["all_record_currency_totals"] == {"current": 0, "outdated": 0, "unbound": 1}
+        assert census["all_record_currency_totals"] == {
+            "current": 0,
+            "reviewed": 0,
+            "outdated": 0,
+            "unbound": 1,
+        }
 
     def test_digests_keyed_by_path_are_read_from_the_record_itself(self, tmp_path: Path) -> None:
         """The manifest is consulted only when the record names no path."""
@@ -626,7 +661,12 @@ class TestDigestsKeyedByPathUnderAnotherFieldAreRead:
         assert census["uncited_bound_records"] == [
             {"name": "bench_chiplet.json", "currency": "current"}
         ]
-        assert census["all_record_currency_totals"] == {"current": 1, "outdated": 0, "unbound": 0}
+        assert census["all_record_currency_totals"] == {
+            "current": 1,
+            "reviewed": 0,
+            "outdated": 0,
+            "unbound": 0,
+        }
 
     @pytest.mark.parametrize("field", _OTHER_PATH_KEYED_FIELDS)
     def test_a_changed_source_is_named_by_its_path(self, tmp_path: Path, field: str) -> None:

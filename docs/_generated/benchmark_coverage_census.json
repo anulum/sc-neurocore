@@ -1,7 +1,8 @@
 {
   "all_record_currency_totals": {
     "current": 27,
-    "outdated": 117,
+    "outdated": 116,
+    "reviewed": 1,
     "unbound": 174
   },
   "all_records": 318,
@@ -14,6 +15,7 @@
   "record_currency_totals": {
     "current": 3,
     "outdated": 83,
+    "reviewed": 0,
     "unbound": 1
   },
   "rows": [
@@ -2392,7 +2394,7 @@
       "state": "apparatus_only"
     }
   ],
-  "schema_version": "sc-neurocore.benchmark-coverage-census.v3",
+  "schema_version": "sc-neurocore.benchmark-coverage-census.v4",
   "totals": {
     "absent": 84,
     "apparatus_only": 17,
@@ -2449,11 +2451,11 @@
       "name": "bench_glif_simulate.json"
     },
     {
-      "changed": [
+      "currency": "reviewed",
+      "name": "bench_kl_refine.json",
+      "reviewed": [
         "engine/src/partition.rs"
-      ],
-      "currency": "outdated",
-      "name": "bench_kl_refine.json"
+      ]
     },
     {
       "currency": "current",
@@ -2977,5 +2979,6 @@
       "currency": "current",
       "name": "mnist_conv_accuracy_reproducibility.json"
     }
-  ]
+  ],
+  "unused_source_change_reviews": []
 }

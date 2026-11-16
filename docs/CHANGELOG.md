@@ -35,6 +35,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The benchmark coverage census accepts a recorded reason for not
+  measuring a record again after a bound source changed, in
+  `benchmarks/source_change_reviews.toml`, only when the change touched
+  documentation or comments. The source must still have the reviewed
+  bytes, and its code, compared without docstrings and comments
+  (`tools/source_code_equivalence.py`, Python and Rust), must equal the code
+  of the bytes the record measured, found in the repository's history. Such
+  a record counts as `reviewed`, not `current`; a review of a code change
+  is rejected and shown, and a review that applies to nothing is listed.
+  The KL refinement record, whose partitioner changed only in Rustdoc
+  comments, is the first one reviewed.
+
 - The Mihalas-Niebur neuron states two behaviour cases, the first that set
   parameters of their model: with panel M's current jumps (0.01 and
   -0.0006, the ones its reference receipt and RTL test run), a current of

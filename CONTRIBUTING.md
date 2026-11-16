@@ -104,7 +104,11 @@ the benchmark coverage census says which records still describe the sources in
 the tree. A commit that changes a bound source writes the census again with
 `python tools/benchmark_coverage_census.py --write`. The pre-commit hook
 `benchmark-coverage-census-drift` checks the census on every commit, and the
-preflight's pre-commit range runs it before a push.
+preflight's pre-commit range runs it before a push. A change of documentation or
+comments only can be reviewed in `benchmarks/source_change_reviews.toml` instead
+of measured again; the census accepts the review only while the source has the
+reviewed bytes and its code equals the code the record measured, and any change
+of code needs a new measurement.
 
 Python coverage includes isolated worker processes through the configured
 `subprocess` patch and source directory, including scripts that run without

@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — benchmark source-change reviews
+
+# A recorded reason for not measuring a benchmark record again after a bound source changed. The coverage census
+# accepts a review only when the source still has the reviewed bytes and its code equals the code of the bytes the
+# record measured (tools/source_change_reviews.py); a change of code always needs a new measurement. Remove a review
+# once its record is measured again: the census lists a review that applies to nothing.
+
+schema_version = 1
+
+[[review]]
+record = "bench_kl_refine.json"
+path = "engine/src/partition.rs"
+source_sha256 = "989b8115d161baccb057ff59d53d5bef97e77d76adb5e0e55ce2d36f69736333"
+reason = "Only Rust doc comments changed since the record: their Rustdoc links and array notation were repaired. The code tokens equal those of the measured bytes, so the KL refinement timings and partitions cannot move."

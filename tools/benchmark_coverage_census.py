@@ -37,10 +37,18 @@ Every record a model cites also carries a currency word:
 
 ``current``
     every source the record binds by path still has the recorded digest.
+``reviewed``
+    every bound source that changed carries an accepted review in
+    ``benchmarks/source_change_reviews.toml``: the source still has the reviewed
+    bytes, and its code equals the code of the bytes the record measured, so
+    only documentation or comments changed (:mod:`tools.source_change_reviews`).
+    The reviewed paths are listed. The record was not measured again.
 ``outdated``
-    at least one bound source changed or is gone; the changed paths are listed.
-    The record describes earlier bytes. It does not say the measured value
-    changed.
+    at least one bound source changed or is gone without an accepted review;
+    those paths are listed under ``changed``, and a review that exists but is
+    rejected (a code change, other bytes, no measured bytes in the history) under
+    ``review_rejected``. The record describes earlier bytes. It does not say the
+    measured value changed.
 ``unbound``
     the record binds no source by path, so nothing can be said.
 
@@ -54,7 +62,9 @@ A record under ``benchmarks/results`` in which no catalogue model's class name
 appears measures no model in the sense above, yet it may bind sources. Every
 such record that binds a source by path is listed with its currency too
 (``uncited_bound_records``), and the totals over all records that parse are
-given beside the totals of the cited ones. An edit of any bound source
+given beside the totals of the cited ones. A review that applies to no changed
+source of its record is listed under ``unused_source_change_reviews``, so it can
+be removed once the record is measured again. An edit of any bound source
 therefore changes this file.
 
 In a repository it reads the files Git tracks and nothing else that lies in the
@@ -91,12 +101,14 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
 from tools.benchmark_evidence_gate import (  # noqa: E402
     _SOURCE_PATH_SUFFIXES,
     GateFailure,
+    _path_value,
     current_source_hash_failures,
     tracked_files,
 )
+from tools.source_change_reviews import Review, load_reviews, review_accepted  # noqa: E402
 
 #: Schema of the emitted census.
-CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v3"
+CENSUS_SCHEMA = "sc-neurocore.benchmark-coverage-census.v4"
 
 #: Where the census is committed.
 DEFAULT_OUTPUT = "docs/_generated/benchmark_coverage_census.json"
@@ -117,8 +129,8 @@ STATES = ("measured", "apparatus_only", "absent")
 #: How a cited record is tied to the model it measures.
 ATTRIBUTIONS = ("class_name", "bound_script")
 
-#: The three things that can be said about a record's bound sources.
-CURRENCIES = ("current", "outdated", "unbound")
+#: The four things that can be said about a record's bound sources.
+CURRENCIES = ("current", "reviewed", "outdated", "unbound")
 
 #: Reasons of the evidence gate that mean a record binds no source by path.
 _UNBOUND_REASONS = frozenset(
@@ -367,10 +379,76 @@ def _other_path_keyed_digests(artefact: Path) -> dict[str, str]:
     return places
 
 
+def _recorded_digest(artefact: Path, place: str) -> str | None:
+    """Return the digest a record holds at a dotted place, or ``None`` when it holds none there."""
+    try:
+        value = _path_value(json.loads(artefact.read_text(encoding="utf-8")), place)
+    except (OSError, ValueError, KeyError):
+        return None
+    return value if isinstance(value, str) else None
+
+
+def _apply_reviews(
+    record: str,
+    changed: list[str],
+    artefact: Path,
+    places: Mapping[str, str],
+    repo_root: Path,
+    reviews: Mapping[tuple[str, str], Review],
+) -> dict[str, object]:
+    """Return the currency entry of a record with changed sources, after its reviews are checked.
+
+    Parameters
+    ----------
+    record : str
+        The record, below the results directory.
+    changed : list of str
+        The bound sources that changed, sorted.
+    artefact : Path
+        The record file.
+    places : mapping of str to str
+        Source path to the place of its digest, where it is not ``source_hashes.<path>``.
+    repo_root : Path
+        The repository root.
+    reviews : mapping
+        Every review, keyed by ``(record, path)``.
+
+    Returns
+    -------
+    dict
+        ``reviewed`` when every changed source has an accepted review, else ``outdated`` with the sources left under
+        ``changed``, and any accepted or rejected reviews listed.
+    """
+    reviewed: list[str] = []
+    rejected: list[str] = []
+    for path in changed:
+        review = reviews.get((record, path))
+        if review is None:
+            continue
+        digest = _recorded_digest(artefact, places.get(path, f"source_hashes.{path}"))
+        if digest is not None and review_accepted(review, repo_root, digest):
+            reviewed.append(path)
+        else:
+            rejected.append(path)
+    if len(reviewed) == len(changed):
+        return {"name": record, "currency": "reviewed", "reviewed": reviewed}
+    entry: dict[str, object] = {
+        "name": record,
+        "currency": "outdated",
+        "changed": [path for path in changed if path not in reviewed],
+    }
+    if reviewed:
+        entry["reviewed"] = reviewed
+    if rejected:
+        entry["review_rejected"] = rejected
+    return entry
+
+
 def record_currency(
     record: str,
     repo_root: Path = REPO_ROOT,
     source_paths: Mapping[str, str] | None = None,
+    reviews: Mapping[tuple[str, str], Review] | None = None,
 ) -> dict[str, object]:
     """Say whether the sources a record binds by path are still the same files.
 
@@ -385,12 +463,16 @@ def record_currency(
         evidence gate's manifest names them. Used only when the record keys no
         digest by a path under ``source_hashes``; a named digest the record
         lacks counts as a changed source.
+    reviews : mapping, optional
+        Every source-change review, keyed by ``(record, path)``; read from the
+        repository's reviews file when omitted.
 
     Returns
     -------
     dict
         ``name`` and ``currency`` (one of :data:`CURRENCIES`); an outdated
-        record also lists the ``changed`` source paths, sorted.
+        record also lists the ``changed`` source paths, sorted, and a reviewed
+        record the ``reviewed`` ones.
 
     Notes
     -----
@@ -425,7 +507,14 @@ def record_currency(
             for failure in failures
         }
     )
-    return {"name": record, "currency": "outdated", "changed": changed}
+    return _apply_reviews(
+        record,
+        changed,
+        artefact,
+        {source: place for place, source in named.items()},
+        repo_root,
+        load_reviews(repo_root) if reviews is None else reviews,
+    )
 
 
 def _script_sources(repo_root: Path) -> list[tuple[Path, str]]:
@@ -478,8 +567,9 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
     dict
         The census payload: one row per model with its state and bindings,
         totals per state, totals of the cited records per currency word, the
-        same totals over every record that parses, and the records that bind
-        sources although no model's name appears in them.
+        same totals over every record that parses, the records that bind
+        sources although no model's name appears in them, and the reviews that
+        apply to no changed source.
     """
     attributions = record_attributions(repo_root)
     measured: dict[str, list[str]] = {}
@@ -490,10 +580,17 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
             measured.setdefault(name, []).append(record)
     apparatus = apparatus_models(repo_root)
     named_paths = manifest_source_paths(repo_root)
+    reviews = load_reviews(repo_root)
     every = {
-        record: record_currency(record, repo_root, named_paths.get(record))
+        record: record_currency(record, repo_root, named_paths.get(record), reviews)
         for record in _parsed_records(repo_root)
     }
+    applied: set[tuple[str, str]] = set()
+    for record, entry in every.items():
+        for key in ("changed", "reviewed", "review_rejected"):
+            paths = entry.get(key, [])
+            assert isinstance(paths, list)
+            applied.update((record, str(path)) for path in paths)
     cited = set(attributions)
     currency = {
         record: {
@@ -538,6 +635,9 @@ def build_census(repo_root: Path = REPO_ROOT) -> dict[str, object]:
         "all_records": len(every),
         "all_record_currency_totals": _currency_totals(every.values()),
         "uncited_bound_records": uncited_bound,
+        "unused_source_change_reviews": sorted(
+            f"{record}:{path}" for record, path in reviews if (record, path) not in applied
+        ),
         "rows": rows,
     }
 
@@ -577,7 +677,13 @@ def render_summary(census: dict[str, object]) -> str:
     others = census["uncited_bound_records"]
     assert isinstance(others, list)
     lines.append(f"bound to sources and named by no model: {len(others)}")
+    unused = census["unused_source_change_reviews"]
+    assert isinstance(unused, list)
+    lines.append(f"source-change reviews that apply to nothing: {len(unused)}")
     lines.append("an outdated record describes earlier sources; it does not say the speed changed")
+    lines.append(
+        "a reviewed record's sources changed only in documentation or comments, each change reviewed"
+    )
     return "\n".join(lines)
 
 
