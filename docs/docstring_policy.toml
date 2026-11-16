@@ -8085,7 +8085,7 @@ rationale = "Exponential integrate-and-fire benchmark whose source list names ex
 
 [[file]]
 path = "benchmarks/bench_model_lapicque.py"
-rationale = "Lapicque benchmark whose source list names lapicque/contract.rs, where valid moved."
+rationale = "Lapicque benchmark harness, kept byte for byte as the reviewed source the sample capture binds."
 
 [[file]]
 path = "benchmarks/bench_model_dpi_neuron.py"
