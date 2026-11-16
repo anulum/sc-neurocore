@@ -575,6 +575,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   ends, including with a clean result once the verifier thread has ended
   without failing a snapshot, and that the Python handle's `start` clears
   a shutdown forced before it.
+- The engine's surrogate-gradient components
+  (`engine/src/grad/surrogate.rs`) document each surrogate's parameter
+  (none is checked; a zero or negative one gives an infinite, negative or
+  unbounded derivative), the straight-through window, and that the
+  surrogate LIF caches the voltage after its step, so a spike step is
+  evaluated at the reset voltage.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

@@ -10,23 +10,47 @@
 //!
 //! Differentiable wrappers around SC forward operators.
 
+#![deny(missing_docs)]
+
 use rayon::prelude::*;
 
+/// Surrogate for the derivative of the spike step, as a function of the membrane's offset
+/// `x` from threshold.
+///
+/// The parameters are not checked and are meant to be positive. A `k` of 0 makes the fast
+/// sigmoid infinite and the SuperSpike and arctan forms 1 everywhere; a negative `k` makes
+/// the fast sigmoid negative and the SuperSpike form infinite at `|x| = -1/k`. A `width` of
+/// 0 gives 0 everywhere, and a negative one a derivative whose size grows with `|x|`,
+/// negative for the triangular pulse.
 #[derive(Clone, Debug)]
-
 pub enum SurrogateType {
     /// Fast Sigmoid: d/dx = 1 / (2k * (1 + k|x|)^2)
-    FastSigmoid { k: f32 },
+    FastSigmoid {
+        /// Steepness; the derivative peaks at `x = 0` with `1 / (2k)`.
+        k: f32,
+    },
     /// SuperSpike: d/dx = 1 / (1 + k|x|)^2
-    SuperSpike { k: f32 },
+    SuperSpike {
+        /// Steepness; the derivative peaks at `x = 0` with 1.
+        k: f32,
+    },
     /// ArcTan: d/dx = 1 / (1 + (kx)^2)
-    ArcTan { k: f32 },
-    /// Straight-through estimator.
+    ArcTan {
+        /// Steepness; the derivative peaks at `x = 0` with 1.
+        k: f32,
+    },
+    /// Straight-through estimator, as a window: 1 where `|x| < 0.5`, 0 elsewhere.
     StraightThrough,
     /// Triangular pulse: max(0, 1 - |x|/width) / width
-    Triangular { width: f32 },
+    Triangular {
+        /// Half-width of the pulse; the peak, at `x = 0`, is `1 / width`, so the area is 1.
+        width: f32,
+    },
     /// Piecewise linear: max(0, 1 - |x|/width)
-    PiecewiseLinear { width: f32 },
+    PiecewiseLinear {
+        /// Half-width of the pulse; the peak, at `x = 0`, is 1.
+        width: f32,
+    },
 }
 
 impl SurrogateType {
@@ -68,14 +92,26 @@ impl SurrogateType {
 }
 
 /// LIF neuron with surrogate gradient support.
+///
+/// Each `forward` caches the offset from threshold, `(v - v_threshold) / 2^fraction`, of the
+/// voltage the step returns, which is the voltage after the step. On a spike step the
+/// surrogate therefore sees `v_reset`, not the membrane that crossed threshold; on a
+/// refractory step it sees the held `v_rest`.
 pub struct SurrogateLif {
+    /// The fixed-point LIF that runs each step.
     pub lif: crate::neuron::FixedPointLif,
+    /// Surrogate evaluated by `backward` at a cached offset.
     pub surrogate: SurrogateType,
     membrane_trace: Vec<(f32, f32)>,
 }
 
 impl SurrogateLif {
     /// Construct a surrogate-enabled fixed-point LIF neuron.
+    ///
+    /// # Panics
+    ///
+    /// If [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) refuses the
+    /// configuration.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -109,6 +145,14 @@ impl SurrogateLif {
     }
 
     /// Backward pass through last cached membrane value.
+    ///
+    /// The value is removed, so repeated calls walk back through the cached steps, latest
+    /// first. Returns `grad_output` times the surrogate at the value; the cached spike is
+    /// not used.
+    ///
+    /// # Errors
+    ///
+    /// When no step is cached.
     pub fn backward(&mut self, grad_output: f32) -> Result<f32, String> {
         let (v_norm, _spike) = self
             .membrane_trace
@@ -136,7 +180,9 @@ impl SurrogateLif {
 
 /// Dense SC layer with surrogate gradient backward pass.
 pub struct DifferentiableDenseLayer {
+    /// The dense SC layer that runs the forward pass and holds the weights.
     pub layer: crate::layer::DenseLayer,
+    /// Surrogate evaluated by `backward` at each cached output minus 0.5.
     pub surrogate: SurrogateType,
     input_cache: Vec<f64>,
     output_cache: Vec<f64>,
@@ -160,6 +206,10 @@ impl DifferentiableDenseLayer {
     }
 
     /// Forward pass and cache activations for backward pass.
+    ///
+    /// # Errors
+    ///
+    /// Those of [`crate::layer::DenseLayer::forward`]; the cache then keeps the previous pass.
     pub fn forward(&mut self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
         let out = self.layer.forward(input_values, seed)?;
         self.input_cache = input_values.to_vec();
@@ -168,6 +218,16 @@ impl DifferentiableDenseLayer {
     }
 
     /// Backward pass producing input and weight gradients.
+    ///
+    /// Neuron `j`'s local gradient is `grad_output[j]` times the surrogate at its cached output
+    /// minus 0.5. The gradient of the weight from input `i` is that local gradient times the
+    /// cached input `i`, and input `i`'s gradient sums the local gradients times their weights
+    /// from `i`.
+    ///
+    /// # Errors
+    ///
+    /// When no valid forward pass is cached, or `grad_output` does not hold one value per
+    /// neuron.
     pub fn backward(&self, grad_output: &[f64]) -> Result<(Vec<f64>, Vec<Vec<f64>>), String> {
         if self.input_cache.len() != self.layer.n_inputs {
             return Err("backward() called before a valid forward() input cache.".to_string());
@@ -233,6 +293,9 @@ impl DifferentiableDenseLayer {
     }
 
     /// Apply gradient descent update and clamp weights to `[0, 1]`.
+    ///
+    /// Gradients that are not one row of `n_inputs` values per neuron are ignored without an
+    /// error, and the weights are left as they were.
     pub fn update_weights(&mut self, weight_grads: &[Vec<f64>], lr: f64) {
         if weight_grads.len() != self.layer.n_neurons {
             return;
