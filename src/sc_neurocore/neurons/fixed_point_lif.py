@@ -167,6 +167,39 @@ class FixedPointLIFNeuron:
         }
 
 
+#: The feedback's lowest tap is bit ``width - 6``, so a narrower register has no such bit.
+_LOWEST_TAP_FROM_TOP = 6
+
+
+def _register_from_seed(seed: int, width: int) -> int:
+    """Return the register a seed loads: its low ``width`` bits.
+
+    Parameters
+    ----------
+    seed : int
+        The seed, masked to ``width`` bits as the RTL parameter is.
+    width : int
+        The register width.
+
+    Returns
+    -------
+    int
+        The non-zero register.
+
+    Raises
+    ------
+    ValueError
+        If the low ``width`` bits are all 0, a register the LFSR never leaves.
+    """
+    register = seed & ((1 << width) - 1)
+    if register == 0:
+        raise ValueError(
+            f"LFSR seed {seed:#x} has no set bit in its low {width} bits; "
+            "a zero register never leaves 0."
+        )
+    return register
+
+
 @dataclass
 class FixedPointLFSR:
     """
@@ -187,24 +220,28 @@ class FixedPointLFSR:
     seed: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
-        """Check the seed and load the register with its low ``width`` bits.
+        """Check the width and the seed, then load the register with the seed's low ``width`` bits.
 
         Raises
         ------
         ValueError
-            If ``seed`` is 0. A non-zero seed whose low ``width`` bits are all 0 still loads a
-            zero register, which the LFSR never leaves.
+            If ``width`` is below 6, the lowest tap's distance from the top, or the seed's low
+            ``width`` bits are all 0: a zero register is one the LFSR never leaves. A seed with a
+            set bit among them is masked to ``width`` bits, as the RTL parameter is.
         """
-        if self.seed == 0:
-            raise ValueError("LFSR seed must be non-zero.")
-        self.reg: int = self.seed & ((1 << self.width) - 1)
+        if self.width < _LOWEST_TAP_FROM_TOP:
+            raise ValueError(
+                f"LFSR width must be at least {_LOWEST_TAP_FROM_TOP}, the feedback reads bit "
+                f"width - {_LOWEST_TAP_FROM_TOP}; got {self.width}."
+            )
+        self.reg: int = _register_from_seed(self.seed, self.width)
 
     def step(self) -> int:
         """Advance one clock cycle and return the new register.
 
         The feedback is the XOR of bits ``width - 1``, ``width - 3``, ``width - 4`` and
-        ``width - 6``, the 16-bit polynomial's positions counted from the top. A ``width`` below
-        6 makes a shift negative, which raises ``ValueError``.
+        ``width - 6``, the 16-bit polynomial's positions counted from the top; the constructor
+        refuses a ``width`` below 6.
         """
         w = self.width
         feedback = (
@@ -222,10 +259,14 @@ class FixedPointLFSR:
         Parameters
         ----------
         seed : int or None
-            The new seed; ``None`` reuses the constructor's. It is not checked, so a seed whose
-            low ``width`` bits are 0 leaves the register at 0.
+            The new seed; ``None`` reuses the constructor's.
+
+        Raises
+        ------
+        ValueError
+            If the seed's low ``width`` bits are all 0; the register is then left as it was.
         """
-        self.reg = (seed if seed is not None else self.seed) & ((1 << self.width) - 1)
+        self.reg = _register_from_seed(seed if seed is not None else self.seed, self.width)
 
 
 @dataclass
@@ -248,7 +289,14 @@ class FixedPointBitstreamEncoder:
     seed_init: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
-        """Create the encoder's LFSR, ``data_width`` bits wide and seeded with ``seed_init``."""
+        """Create the encoder's LFSR, ``data_width`` bits wide and seeded with ``seed_init``.
+
+        Raises
+        ------
+        ValueError
+            As :class:`FixedPointLFSR` does: a ``data_width`` below 6, or a ``seed_init`` with
+            no set bit in its low ``data_width`` bits.
+        """
         self.lfsr = FixedPointLFSR(width=self.data_width, seed=self.seed_init)
 
     def step(self, x_value: int) -> int:

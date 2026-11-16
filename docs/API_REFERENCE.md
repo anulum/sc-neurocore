@@ -30800,7 +30800,7 @@ Example
 True
 
 - **__post_init__**()
-  - Check the seed and load the register with its low ``width`` bits.
+  - Check the width and the seed, then load the register with the seed's low ``width`` bits.
 - **step**()
   - Advance one clock cycle and return the new register.
 - **reset**(seed)

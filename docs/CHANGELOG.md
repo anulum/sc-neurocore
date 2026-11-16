@@ -706,6 +706,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The bit-true fixed-point LFSR refuses a register it could never leave. It
+  checked only for a seed of 0 before masking, so a non-zero seed whose low
+  `width` bits are 0 (0x10000 at 16 bits) loaded a zero register, and
+  `reset(seed)` checked nothing; both now refuse a seed with no set bit in
+  the register, and a refused reset leaves the state as it was. A width
+  below 6, where the feedback's lowest tap (bit width - 6) does not exist,
+  is refused when the LFSR or the bitstream encoder is built, instead of
+  failing at the first step. The engine's `Lfsr16` is 16 bits wide and
+  already refuses a zero seed in both places. The RTL encoder's `SEED_INIT`
+  stays a documented parameter contract, with no check.
+
 - `python -m tools.rust_doc_ratchet --update` keeps the ceiling's form. It
   rewrote the engine's aggregate v1 ceiling as the individual v2 record of
   every undocumented case, about 10 MB, while the repository keeps the v1

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2014
+expected_file_count = 2015
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8110,3 +8110,7 @@ rationale = "Stochastic Izhikevich neuron; the noise is added to v after each st
 [[file]]
 path = "src/sc_neurocore/neurons/dendritic.py"
 rationale = "XOR dendritic neuron; the strict threshold comparison and the kept combination are stated."
+
+[[file]]
+path = "tests/test_fixed_point_lfsr_refusals.py"
+rationale = "The bit-true LFSR refuses a zero register in its constructor and reset, and a width below its lowest tap."
