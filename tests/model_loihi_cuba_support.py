@@ -6,15 +6,16 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_model_loihi_cuba.py
 
-from __future__ import annotations
-
-"""Full pipeline test for LoihiCUBANeuron (Davies et al. 2018).
+"""Shared imports and helpers of the LoihiCUBANeuron suites (Davies et al. 2018).
 
 Intel Loihi fixed-point CUBA LIF:
-u = u - u//tau_u + input
-v = v - v//tau_v + u
-Spike: v→v_reset. All integer arithmetic (// decay).
-FULL PIPELINE WIRED + PERFORMANCE."""
+u = u - trunc(u/tau_u) + input
+v = v - trunc(v/tau_v) + u
+Spike: v→v_reset. All integer arithmetic; the decay quotients truncate toward zero.
+"""
+
+from __future__ import annotations
+
 import time
 import numpy as np
 import pytest

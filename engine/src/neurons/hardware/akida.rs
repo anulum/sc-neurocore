@@ -15,13 +15,13 @@ pub struct AkidaNeuron {
     pub v: i32,
     /// Membrane threshold for an output spike (integer accumulator units).
     pub threshold: i32,
-    /// Rank-order decay factor: each input event since the last reset is weighted by one more factor of modulation than the one before it (dimensionless).
+    /// Rank-order decay factor: each input event with a nonzero weight since the last reset is weighted by one more factor of modulation than the one before it (dimensionless).
     pub modulation: f64,
-    /// Input events accepted since the last reset; the next event is weighted by
-    /// `modulation^rank`.
+    /// Input events with a nonzero weight since the last reset.
     pub rank: i32,
-    /// Whether the neuron has fired since the last reset; it fires at most once per
-    /// presentation.
+    /// The factor the next event's weight is multiplied by: 1 after a reset, times `modulation` per event.
+    pub current_modulation: f64,
+    /// Whether the neuron has fired since the last reset; it fires at most once per presentation.
     pub spiked: bool,
 }
 
@@ -33,31 +33,31 @@ impl AkidaNeuron {
             threshold,
             modulation: 0.75,
             rank: 0,
+            current_modulation: 1.0,
             spiked: false,
         }
     }
-    /// Accept one input event and return 1 when the accumulator reaches `threshold`, else 0.
+    /// Accept one input event and return 1 the first time the accumulator reaches `threshold`, else 0.
     ///
-    /// The event adds `weight * modulation^rank`, truncated towards zero to an integer (the
-    /// cast saturates; NaN adds 0), and the rank grows by 1. After the first spike, every
-    /// later event is ignored and returns 0 until `reset`.
+    /// A weight of 0 is no event: `v`, the rank and the factor stay. Any other weight adds its product
+    /// with `current_modulation` to `v`, truncated towards zero (the cast saturates; NaN adds 0), grows
+    /// the rank by 1 and multiplies `current_modulation` by `modulation`: a running product, rounded as
+    /// the Python model rounds it. It fires at most once until `reset` and integrates after its spike.
     pub fn step(&mut self, weight: f64) -> i32 {
-        if self.spiked {
-            return 0;
+        if weight != 0.0 {
+            self.v += (weight * self.current_modulation) as i32;
+            self.rank += 1;
+            self.current_modulation *= self.modulation;
         }
-        self.v += (weight * self.modulation.powi(self.rank)) as i32;
-        self.rank += 1;
-        if self.v >= self.threshold {
-            self.spiked = true;
-            1
-        } else {
-            0
-        }
+        let fires = self.v >= self.threshold && !self.spiked;
+        self.spiked |= fires;
+        i32::from(fires)
     }
-    /// Clear the accumulator, the rank and the spiked flag; the parameters are kept.
+    /// Clear the accumulator, the rank, the factor and the spiked flag; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0;
         self.rank = 0;
+        self.current_modulation = 1.0;
         self.spiked = false;
     }
 }

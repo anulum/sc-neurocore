@@ -681,6 +681,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Python Loihi CUBA and Loihi 2 models now decay each state by its
+  quotient truncated toward zero, as the engine does; they floored it. A
+  negative state therefore leaked more than the same positive one, and a
+  drive that took a state below zero gave the two runtimes different traces:
+  for the drive -7, -3, 5, -9, -1, -4 the Python Loihi CUBA neuron ended at
+  v = -33, u = -10 and the engine at v = -48, u = -13. Truncation is the
+  rounding of Loihi's sign-magnitude decay, which Lava's bit-accurate LIF
+  model also uses, and the one the Loihi CUBA page already stated. The new
+  `sc_neurocore.utils.numerics.trunc_div` gives it, and the descriptors'
+  time-constant meanings say so.
+- The engine's Akida neuron now follows the Python model: a weight of 0 is
+  no input event, the next event's weight factor is a running product of
+  `modulation` rather than a power, and the accumulator keeps integrating
+  after its one spike. The engine counted every call as an event, so in a
+  network every step without input advanced the rank, and the weights 3, 0,
+  3, 3 gave the Python model v = 6, rank 3 and the engine v = 5, rank 4.
+  The power also rounded differently from the product: 160000 at rank 4
+  with a `modulation` of 0.95 added 130321 in the engine and 130320 in the
+  Python model. A test holds the two runtimes to the same states step by
+  step for all three neurons.
+
 - Eleven parameters of the hardware neurons' descriptors, and one of the
   self-referential neuron, named a unit in their meaning while declaring
   the unit "1", so the engine's field docs read two units side by side, for

@@ -42,7 +42,7 @@ range = [
 [parameters.modulation]
 default = 0.75
 unit = "1"
-meaning = "rank-order decay factor: each input event since the last reset is weighted by one more factor of modulation than the one before it"
+meaning = "rank-order decay factor: each input event with a nonzero weight since the last reset is weighted by one more factor of modulation than the one before it"
 range = [
     0.0,
     1.0,

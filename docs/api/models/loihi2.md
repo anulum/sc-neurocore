@@ -13,7 +13,10 @@ $$s_1 \leftarrow s_1 - s_1/\tau_1 + w_{12} s_2 + w_{13} s_3$$
 
 Spike: $s_1 \geq \theta \Rightarrow s_1 \to s_{1,reset}$, $s_3 \leftarrow s_3 + \Delta_{s_3}$.
 
-All arithmetic is **integer** with division-based decay (bit-shift on hardware).
+All arithmetic is **integer** with division-based decay (bit-shift on hardware). Each
+quotient is truncated toward zero, in the Python model and in the engine, so a negative
+state decays as its positive mirror does; `tests/test_model_loihi_akida_engine_parity.py`
+holds both runtimes to the same states on every step of mixed-sign drives.
 
 ## Parameters
 

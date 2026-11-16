@@ -67,13 +67,13 @@ variable u. The computation uses only **integer addition, subtraction, and divis
 
 ### Synaptic current update
 
-$$u \leftarrow u - \lfloor u / \tau_u \rfloor + I_{weighted}$$
+$$u \leftarrow u - \operatorname{trunc}(u / \tau_u) + I_{weighted}$$
 
 where:
 - $u$ is the synaptic current state (i32)
 - $\tau_u = 5$ is the synaptic decay divisor
 - $I_{weighted}$ is the external input (i32, pre-weighted)
-- $\lfloor \cdot \rfloor$ is integer division (truncation toward zero in Rust)
+- $\operatorname{trunc}$ rounds the quotient toward zero, in the Python model and in the engine
 
 The term $u/\tau_u$ implements exponential-like decay: each step, u loses 1/5 of its
 value (20% per step). This is equivalent to a discrete leak with effective time constant:
@@ -82,7 +82,7 @@ $$\tau_{eff} \approx \frac{\tau_u}{\ln(\tau_u / (\tau_u - 1))} = \frac{5}{\ln(5/
 
 ### Membrane potential update
 
-$$v \leftarrow v - \lfloor v / \tau_v \rfloor + u$$
+$$v \leftarrow v - \operatorname{trunc}(v / \tau_v) + u$$
 
 where:
 - $v$ is the membrane potential (i32)
@@ -113,7 +113,8 @@ $$\text{if } v \geq V_\theta: \quad v \leftarrow V_{reset}, \; \text{return } 1$
 
 ### Integer division behaviour
 
-Rust's integer division truncates toward zero:
+Both runtimes divide with truncation toward zero: Rust's `/` in the engine, and
+`sc_neurocore.utils.numerics.trunc_div` in the Python model.
 - 7 / 5 = 1 (not 1.4)
 - -7 / 5 = -1 (not -2)
 - 3 / 5 = 0 (small values don't decay)
@@ -289,8 +290,9 @@ step(weighted_input: i32) → i32:
    execution claim.
 
 2. **Integer division for leak:** `u/tau_u` and `v/tau_v` use Rust's integer division
-   (truncation toward zero). This is equivalent to a right bit-shift when tau is a
-   power of 2.
+   (truncation toward zero), and the Python model divides the same way. For a
+   non-negative state and a power-of-two tau this equals a right bit-shift; an
+   arithmetic shift of a negative state would round toward minus infinity instead.
 
 3. **Input is pre-weighted:** The `weighted_input` parameter represents the sum of
    weighted presynaptic spikes. In a network, this would be computed as
@@ -344,9 +346,14 @@ Compare with continuous: v(t) = 100 × (0.9)^t → 90, 81, 72.9, 65.6, 59.0
 The integer and continuous values agree closely because τ_v = 10 provides reasonable
 resolution. For smaller τ values (e.g., τ = 2), the quantisation error increases.
 
-### Asymmetric decay for negative values
+### Decay of negative values
 
-Due to Rust's truncation toward zero:
+Truncation toward zero makes the decay odd: a negative state decays as its positive
+mirror does. Lava's bit-accurate Loihi LIF model rounds its decayed state toward zero
+in the same sign-magnitude way. `tests/test_model_loihi_akida_engine_parity.py` holds
+the Python model and the engine to the same state on every step of mixed-sign drives.
+For example:
+
 - v = 7, τ = 5: v/τ = 1, v_new = 6 (correct decay)
 - v = -7, τ = 5: v/τ = -1, v_new = -6 (correct decay toward 0)
 - v = 3, τ = 5: v/τ = 0, v_new = 3 (no decay — stuck!)

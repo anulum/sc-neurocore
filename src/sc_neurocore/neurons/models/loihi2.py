@@ -6,9 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Intel Loihi 2, 2021 — programmable 3-state-variable neuron
 
+"""Intel Loihi 2 three-state integer neuron with cross-coupling and a decay truncated toward zero."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+from sc_neurocore.utils.numerics import trunc_div
 
 
 @dataclass
@@ -17,7 +21,10 @@ class Loihi2Neuron:
 
     State variables (s1, s2, s3) with configurable decay, threshold,
     and cross-coupling. Generalises CUBA, COBA, and Izhikevich on-chip.
-    All integer arithmetic with configurable bit-shift decays.
+    All integer arithmetic: each state decays by its quotient by its time
+    constant, truncated towards zero as the engine and Loihi's
+    sign-magnitude decay round it, so a negative state decays as its
+    positive mirror does.
 
     Reference: Intel Corp. (2021). Loihi 2 Neuromorphic Processor Technical Brief.
     """
@@ -36,9 +43,10 @@ class Loihi2Neuron:
     s3_incr: int = 10  # s3 increment on spike (adaptation)
 
     def step(self, weighted_input: int) -> int:
-        self.s3 -= self.s3 // self.tau3
-        self.s2 = self.s2 - self.s2 // self.tau2 + weighted_input + self.w23 * self.s3
-        self.s1 = self.s1 - self.s1 // self.tau1 + self.w12 * self.s2 + self.w13 * self.s3
+        """Advance one chip step with the integer input; return 1 on a spike, else 0."""
+        self.s3 -= trunc_div(self.s3, self.tau3)
+        self.s2 = self.s2 - trunc_div(self.s2, self.tau2) + weighted_input + self.w23 * self.s3
+        self.s1 = self.s1 - trunc_div(self.s1, self.tau1) + self.w12 * self.s2 + self.w13 * self.s3
         if self.s1 >= self.s1_threshold:
             self.s1 = self.s1_reset
             self.s3 += self.s3_incr
@@ -46,4 +54,5 @@ class Loihi2Neuron:
         return 0
 
     def reset(self) -> None:
+        """Clear the three states; the parameters stay."""
         self.s1, self.s2, self.s3 = 0, 0, 0

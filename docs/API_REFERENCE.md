@@ -32103,14 +32103,20 @@ epsilon : float, default=0.01
 BrainChip Akida 2021 — event-domain rank-order IF neuron.
 
 Membrane integrates weighted spikes with rank-order decay:
-V += weight * modulation^rank
+V += int(weight * modulation^rank)
 Spike when V >= threshold. No leak between events.
+
+A weight of 0 is no event, so the rank counts the nonzero events. The
+factor modulation^rank is kept as a running product. The neuron fires
+at most once until reset, and V goes on integrating after the spike.
+The engine's AkidaNeuron follows the same rule.
 
 Reference: BrainChip Inc. (2021). Akida Neuromorphic Processor Reference Manual.
 
 - **step**(weight)
   - Process one input spike event with given synaptic weight.
 - **reset**()
+  - Clear the accumulator, the rank, the weight factor and the spiked flag; the parameters stay.
 
 ---
 
@@ -34108,12 +34114,17 @@ Intel Loihi 2, 2021 — programmable 3-state-variable neuron.
 
 State variables (s1, s2, s3) with configurable decay, threshold,
 and cross-coupling. Generalises CUBA, COBA, and Izhikevich on-chip.
-All integer arithmetic with configurable bit-shift decays.
+All integer arithmetic: each state decays by its quotient by its time
+constant, truncated towards zero as the engine and Loihi's
+sign-magnitude decay round it, so a negative state decays as its
+positive mirror does.
 
 Reference: Intel Corp. (2021). Loihi 2 Neuromorphic Processor Technical Brief.
 
 - **step**(weighted_input)
+  - Advance one chip step with the integer input; return 1 on a spike, else 0.
 - **reset**()
+  - Clear the three states; the parameters stay.
 
 ---
 
@@ -34122,10 +34133,16 @@ Reference: Intel Corp. (2021). Loihi 2 Neuromorphic Processor Technical Brief.
 ### Class `LoihiCUBANeuron`
 Loihi CUBA LIF — Intel Loihi fixed-point neuron. Davies 2018.
 
+Each step ``u`` decays by ``u / tau_u`` and gains the input, then ``v`` decays by ``v / tau_v`` and gains ``u``.
+The quotients are truncated towards zero, as the engine and Loihi's sign-magnitude decay round them, so a negative
+state decays as its positive mirror does.
+
 Reference: Davies, M. et al. (2018). IEEE Micro 38:82–99.
 
 - **step**(weighted_input)
+  - Advance one chip step with the integer input; return 1 on a spike, else 0.
 - **reset**()
+  - Clear both states; the parameters stay.
 
 ---
 
@@ -62362,6 +62379,24 @@ Clip gating variable to physiological range &#91;0, 1&#93;.
 
 ### Function `clip_voltage(v, v_min, v_max)`
 Clip membrane voltage to safe range (default &#91;-200, 100&#93; mV).
+
+### Function `trunc_div(numerator, divisor)`
+Divide two integers and round the quotient towards zero, as C, Rust and Verilog divide.
+
+Python's ``//`` floors instead, so ``-7 // 5`` is -2 where this gives -1. The quotient is odd in each argument, and
+exact for integers of any size.
+
+Parameters
+----------
+numerator : int
+    The integer divided.
+divisor : int
+    The integer it is divided by; 0 raises :class:`ZeroDivisionError`.
+
+Returns
+-------
+int
+    ``sign · (|numerator| // |divisor|)``.
 
 ---
 

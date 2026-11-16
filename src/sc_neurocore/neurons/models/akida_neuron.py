@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — BrainChip Akida 2021 — event-domain rank-order IF neuron
 
+"""BrainChip Akida event-domain rank-order integrate-and-fire neuron, in integer arithmetic."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,8 +18,13 @@ class AkidaNeuron:
     """BrainChip Akida 2021 — event-domain rank-order IF neuron.
 
     Membrane integrates weighted spikes with rank-order decay:
-    V += weight * modulation^rank
+    V += int(weight * modulation^rank)
     Spike when V >= threshold. No leak between events.
+
+    A weight of 0 is no event, so the rank counts the nonzero events. The
+    factor modulation^rank is kept as a running product. The neuron fires
+    at most once until reset, and V goes on integrating after the spike.
+    The engine's AkidaNeuron follows the same rule.
 
     Reference: BrainChip Inc. (2021). Akida Neuromorphic Processor Reference Manual.
     """
@@ -45,6 +52,7 @@ class AkidaNeuron:
         return 0
 
     def reset(self) -> None:
+        """Clear the accumulator, the rank, the weight factor and the spiked flag; the parameters stay."""
         self.v = 0
         self._rank = 0
         self._spiked = False

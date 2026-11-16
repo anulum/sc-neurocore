@@ -42,3 +42,35 @@ fn loihi2_bounded() {
         n.step(10000);
     }
 }
+#[test]
+fn loihi2_decay_truncates_towards_zero() {
+    let mut n = Loihi2Neuron {
+        s1: -7,
+        s2: -7,
+        s3: -23,
+        ..Loihi2Neuron::new()
+    };
+    n.step(0);
+    assert_eq!((n.s1, n.s2, n.s3), (-7 - 6, -6, -23));
+}
+#[test]
+fn loihi2_negated_drive_gives_negated_state() {
+    let drive = [41, -17, 6, 0, -33, 25, 9, -4, 2, -2];
+    let mut positive = Loihi2Neuron {
+        w13: 1,
+        s3: -120,
+        ..Loihi2Neuron::new()
+    };
+    let mut negative = Loihi2Neuron {
+        w13: 1,
+        s3: 120,
+        ..Loihi2Neuron::new()
+    };
+    for _ in 0..4 {
+        for &value in &drive {
+            assert_eq!(positive.step(value) + negative.step(-value), 0);
+            let mirrored = (-positive.s1, -positive.s2, -positive.s3);
+            assert_eq!((negative.s1, negative.s2, negative.s3), mirrored);
+        }
+    }
+}

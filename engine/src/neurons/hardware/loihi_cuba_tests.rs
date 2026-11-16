@@ -37,3 +37,23 @@ fn loihi_cuba_bounded() {
         n.step(10000);
     }
 }
+#[test]
+fn loihi_cuba_decay_truncates_towards_zero() {
+    let mut n = LoihiCUBANeuron {
+        u: -7,
+        ..LoihiCUBANeuron::new()
+    };
+    n.step(0);
+    assert_eq!((n.v, n.u), (-6, -6));
+}
+#[test]
+fn loihi_cuba_negated_drive_gives_negated_state() {
+    let drive = [37, -12, 5, 0, -40, 23, 8, -3, 1, -1];
+    let (mut positive, mut negative) = (LoihiCUBANeuron::new(), LoihiCUBANeuron::new());
+    for _ in 0..4 {
+        for &value in &drive {
+            assert_eq!(positive.step(value) + negative.step(-value), 0);
+            assert_eq!((negative.v, negative.u), (-positive.v, -positive.u));
+        }
+    }
+}

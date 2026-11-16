@@ -3,7 +3,7 @@
 **Module:** `sc_neurocore.neurons.models.akida_neuron`
 **Reference:** BrainChip Akida, IEEE ISSCC 2021; Rank-order coding: Thorpe & Gautrais 1998
 **Family:** Neuromorphic hardware (event-domain rank-order IF, integer)
-**State variables:** `v` (integer membrane potential), `_rank` (event counter), `_spiked` (fired flag)
+**State variables:** `v` (integer membrane potential), `_rank` (event counter), `_current_modulation` (weight factor of the next event), `_spiked` (fired flag)
 
 ---
 
@@ -11,11 +11,11 @@
 
 ### Membrane accumulation (event-driven)
 
-$$V \mathrel{+}= \lfloor w \cdot \mu^{rank} \rfloor$$
+$$V \mathrel{+}= \operatorname{trunc}(w \cdot \mu^{rank})$$
 
 where $w$ is the integer synaptic weight, $\mu$ is the rank-order
 modulation factor (default 0.75), and $rank$ increments with each
-non-zero input event. The $\lfloor \cdot \rfloor$ is from `int()` cast.
+non-zero input event. The $\operatorname{trunc}$ is the `int()` cast, which rounds toward zero.
 
 ### Spike condition (single-spike)
 
@@ -48,9 +48,10 @@ less — rank-order coding encodes temporal priority.
 ```python
 def step(self, weight: int) -> int:
     if weight != 0:
-        scaled = int(weight * self.modulation**self._rank)
+        scaled = int(weight * self._current_modulation)
         self.v += scaled
         self._rank += 1
+        self._current_modulation *= self.modulation
     if self.v >= self.threshold and not self._spiked:
         self._spiked = True
         return 1
@@ -70,6 +71,7 @@ Between events, the state is frozen.
 | `threshold` | 100 | int | Spike threshold |
 | `modulation` | 0.75 | float | Rank-order decay factor μ |
 | `_rank` | 0 | int | Current event rank (private) |
+| `_current_modulation` | 1.0 | float | μ^rank as a running product, the next event's factor (private) |
 | `_spiked` | False | bool | Fired flag — prevents re-firing (private) |
 
 ### Modulation factor μ
@@ -281,8 +283,9 @@ inference — at the cost of flexibility (no temporal dynamics, no recurrence).
 
 - **Integer accumulation:** V is int, weight is int (via cast). No float
   overflow risk at practical values.
-- **Modulation exponentiation:** `modulation**rank` is float. The `int()`
-  cast truncates — this is intentional (matches hardware fixed-point).
+- **Modulation factor:** μ^rank is kept as a running product, multiplied by μ
+  once per event, and the engine keeps the same product, so both round alike.
+  The `int()` cast truncates — this is intentional (matches hardware fixed-point).
 - **No decay:** V only increases (with positive weights). Once V ≥ threshold,
   the neuron fires and stays fired.
 - **_spiked flag:** Critical correctness property — prevents the neuron from
@@ -295,14 +298,16 @@ inference — at the cost of flexibility (no temporal dynamics, no recurrence).
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/akida_neuron.py` — 43 lines.
-- **Three state variables:** v (int), _rank (int), _spiked (bool).
+- **Source:** `src/sc_neurocore/neurons/models/akida_neuron.py`.
+- **Four state variables:** v (int), _rank (int), _current_modulation (float), _spiked (bool).
 - **Simplest biologically-inspired model:** No ODEs, no time constants,
   no exp() — pure accumulate-and-fire with rank decay.
 - **Dataclass:** Uses `@dataclass`.
-- **Private state:** _rank and _spiked prefixed with underscore.
-- **Rust wiring:** Compatible for integer dispatch but non-standard
-  semantics (single-spike, rank counter).
+- **Private state:** _rank, _current_modulation and _spiked prefixed with underscore.
+- **Engine:** `engine/src/neurons/hardware/akida.rs` follows the same rule: a zero
+  weight is no event, the factor is the same running product, and the accumulator
+  integrates after the spike. `tests/test_model_loihi_akida_engine_parity.py` holds both
+  runtimes to the same accumulator and rank after every event.
 
 ---
 
@@ -327,7 +332,7 @@ AkidaNeuron
 │   └── .spike_trains → dict
 ├── Analysis: ✓ VERIFIED
 │   └── spike_count works on single-spike trains
-└── Rust: compatible (non-standard semantics)
+└── Rust engine: same rule, same state after every event
 ```
 
 ---

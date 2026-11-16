@@ -15,9 +15,9 @@ pub struct LoihiCUBANeuron {
     pub v: i32,
     /// Synaptic current (integer).
     pub u: i32,
-    /// Membrane-voltage decay time constant; each step removes v / tau_v (steps).
+    /// Membrane-voltage decay time constant; each step removes v / tau_v, truncated towards zero (steps).
     pub tau_v: i32,
-    /// Synaptic-current decay time constant; each step removes u / tau_u (steps).
+    /// Synaptic-current decay time constant; each step removes u / tau_u, truncated towards zero (steps).
     pub tau_u: i32,
     /// Integer fixed-point firing threshold (dimensionless).
     pub v_threshold: i32,

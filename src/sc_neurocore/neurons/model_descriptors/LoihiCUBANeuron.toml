@@ -41,7 +41,7 @@ init = 0.0
 [parameters.tau_v]
 default = 10.0
 unit = "steps"
-meaning = "membrane-voltage decay time constant; each step removes v / tau_v"
+meaning = "membrane-voltage decay time constant; each step removes v / tau_v, truncated towards zero"
 range = [
     1.0,
     4096.0,
@@ -50,7 +50,7 @@ range = [
 [parameters.tau_u]
 default = 5.0
 unit = "steps"
-meaning = "synaptic-current decay time constant; each step removes u / tau_u"
+meaning = "synaptic-current decay time constant; each step removes u / tau_u, truncated towards zero"
 range = [
     1.0,
     4096.0,

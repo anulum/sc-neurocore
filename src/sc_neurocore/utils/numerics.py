@@ -15,6 +15,9 @@ integration), exp() returns inf/0 → NaN cascade → silent model death.
 These utilities clip arguments before evaluation. Import into any model:
 
     from sc_neurocore.utils.numerics import safe_exp, safe_cosh, clip_gating, clip_voltage
+
+Integer models of neuromorphic chips also need the division their hardware does, which truncates towards zero:
+:func:`trunc_div`.
 """
 
 from __future__ import annotations
@@ -55,3 +58,25 @@ def clip_gating(x: float) -> float:
 def clip_voltage(v: float, v_min: float = -200.0, v_max: float = 100.0) -> float:
     """Clip membrane voltage to safe range (default [-200, 100] mV)."""
     return float(np.clip(v, v_min, v_max))
+
+
+def trunc_div(numerator: int, divisor: int) -> int:
+    """Divide two integers and round the quotient towards zero, as C, Rust and Verilog divide.
+
+    Python's ``//`` floors instead, so ``-7 // 5`` is -2 where this gives -1. The quotient is odd in each argument, and
+    exact for integers of any size.
+
+    Parameters
+    ----------
+    numerator : int
+        The integer divided.
+    divisor : int
+        The integer it is divided by; 0 raises :class:`ZeroDivisionError`.
+
+    Returns
+    -------
+    int
+        ``sign · (|numerator| // |divisor|)``.
+    """
+    quotient = abs(numerator) // abs(divisor)
+    return -quotient if (numerator < 0) != (divisor < 0) else quotient

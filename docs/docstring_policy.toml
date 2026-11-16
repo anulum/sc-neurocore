@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 1995
+expected_file_count = 2005
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8034,3 +8034,43 @@ rationale = "Every timed engine test is held to a budget derived from the runnin
 [[file]]
 path = "tests/test_model_continuous_attractor_engine_parity.py"
 rationale = "The engine continuous-attractor ring follows the Python model bit for bit, and both take the first of equal maxima."
+
+[[file]]
+path = "tests/test_model_loihi_akida_engine_parity.py"
+rationale = "The engine Loihi CUBA, Loihi 2 and Akida neurons follow the Python models step by step, negative drives and zero weights included."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/akida_neuron.py"
+rationale = "Akida rank-order neuron whose zero-weight and after-spike rules the engine now follows."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/loihi2.py"
+rationale = "Loihi 2 neuron whose decay now truncates toward zero, as the engine and Loihi's sign-magnitude decay do."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/loihi_cuba.py"
+rationale = "Loihi CUBA neuron whose decay now truncates toward zero, as the engine and Loihi's sign-magnitude decay do."
+
+[[file]]
+path = "src/sc_neurocore/utils/numerics.py"
+rationale = "Numerical helpers for neuron models, including the integer division that truncates toward zero."
+
+[[file]]
+path = "tests/model_loihi2_support.py"
+rationale = "Shared imports and helpers of the Loihi 2 test suites; its description now states the truncating decay."
+
+[[file]]
+path = "tests/model_loihi_cuba_support.py"
+rationale = "Shared imports and helpers of the Loihi CUBA test suites; its description now states the truncating decay."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2_analytical.py"
+rationale = "Analytical Loihi 2 tests, including the decay of a negative state and the mirrored drive."
+
+[[file]]
+path = "tests/test_model_loihi_cuba_loihi_cuba_analytical.py"
+rationale = "Analytical Loihi CUBA tests, including the decay of a negative state and the mirrored drive."
+
+[[file]]
+path = "tests/test_numerics.py"
+rationale = "Tests of the numerical helpers for neuron models, trunc_div among them."
