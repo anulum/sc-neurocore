@@ -521,17 +521,17 @@ governor, and host load.
 
 | Workload | Median compile time |
 | --- | ---: |
-| Euler registered | 0.213064 ms |
-| Euler folded with parameter port | 0.268201 ms |
-| RK4 registered | 0.584360 ms |
-| Four-substep RK4 registered | 1.179836 ms |
-| Escape-rate registered | 2.275219 ms |
-| Square-root map registered | 0.208587 ms |
-| Negative half-LSB nearest map registered | 0.151585 ms |
-| Quadrant-aware angle map registered | 2.014483 ms |
-| Softplus exponential Euler registered | 7.325814 ms |
+| Euler registered | 0.147975 ms |
+| Euler folded with parameter port | 0.171089 ms |
+| RK4 registered | 0.397754 ms |
+| Four-substep RK4 registered | 0.803259 ms |
+| Escape-rate registered | 1.473069 ms |
+| Square-root map registered | 0.146427 ms |
+| Negative half-LSB nearest map registered | 0.109432 ms |
+| Quadrant-aware angle map registered | 1.485677 ms |
+| Softplus exponential Euler registered | 4.998718 ms |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 14.38 11.75 11.65 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact. These measurements are local regression evidence, not
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 12.48 13.21 13.33 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact. These measurements are local regression evidence, not
 promotion-grade latency or throughput claims.
 
 ## 11. CLI and hardware profiles

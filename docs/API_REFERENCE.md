@@ -10154,19 +10154,6 @@ int
     The saturated result code; a left shift that would leave the word saturates
     before it is formed.
 
-### Function `trunc_div(numerator, denominator)`
-Return the quotient truncated towards zero, as C and Verilog divide.
-
-Parameters
-----------
-numerator, denominator : int
-    Signed integers; ``denominator`` is not zero.
-
-Returns
--------
-int
-    ``sign · (|numerator| // |denominator|)``.
-
 ### Function `table(name)`
 Return the quadratic coefficients ``(a, b, c)`` of each segment, scaled by ``2**P``.
 

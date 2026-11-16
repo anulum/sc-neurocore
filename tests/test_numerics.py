@@ -8,6 +8,8 @@
 """Tests of the numerical helpers for neuron models: clipped functions, clamps and trunc_div."""
 
 import math
+import re
+from pathlib import Path
 
 import pytest
 
@@ -67,3 +69,34 @@ def test_trunc_div_truncates_towards_zero_for_every_sign() -> None:
             assert trunc_div(-numerator, divisor) == -trunc_div(numerator, divisor)
     with pytest.raises(ZeroDivisionError):
         trunc_div(1, 0)
+
+
+def test_trunc_div_has_one_home() -> None:
+    """Only this module defines the rule; the compiler, the IQIF model and the test helpers import it."""
+    root = Path(__file__).resolve().parents[1]
+    definition = re.compile(r"^\s*def _?trunc_div\(", re.MULTILINE)
+    homes = sorted(
+        path.relative_to(root).as_posix()
+        for folder in ("src", "tests")
+        for path in (root / folder).rglob("*.py")
+        if definition.search(path.read_text(encoding="utf-8"))
+    )
+    assert homes == ["src/sc_neurocore/utils/numerics.py"]
+
+
+def test_the_compiler_and_the_iqif_model_divide_with_this_trunc_div() -> None:
+    """The compiler re-exports this function, and the IQIF model divides through it."""
+    from sc_neurocore.compiler import function_units
+    from sc_neurocore.neurons.models import iqif
+
+    assert function_units.trunc_div is trunc_div
+    assert vars(iqif)["trunc_div"] is trunc_div
+
+
+def test_the_iqif_model_keeps_its_refusal_of_a_divisor_below_one() -> None:
+    """The IQIF branch point divides by a + b, which its contract keeps positive; the helper still refuses less."""
+    from sc_neurocore.neurons.models import iqif
+
+    assert iqif._positive_trunc_div(-7, 2) == trunc_div(-7, 2) == -3
+    with pytest.raises(ValueError, match="denominator must be positive"):
+        iqif._positive_trunc_div(7, 0)

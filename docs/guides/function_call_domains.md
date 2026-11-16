@@ -107,10 +107,10 @@ the table gives the median of seven samples.
 
 | Model | First collector call (ms) | Cached median per call (µs) |
 | --- | ---: | ---: |
-| Paired exponentials | 5.60 | 187.26 |
-| Clipped hypot | 139.66 | 317.84 |
-| Literal and dynamic powers | 1150.34 | 364.59 |
-| Exponential Euler with events | 40.45 | 531.12 |
+| Paired exponentials | 6.61 | 185.31 |
+| Clipped hypot | 120.41 | 302.84 |
+| Literal and dynamic powers | 948.18 | 234.08 |
+| Exponential Euler with events | 11.02 | 328.97 |
 
 These are local measurements on a shared host, with CPU, memory, affinity,
 versions and load recorded in the result. Source hashes are checked before and
@@ -119,13 +119,13 @@ They measure Python analysis cost, not generated hardware throughput. No native
 implementation of this metadata analysis is asserted; generated C, Rust and RTL
 remain separate numerical validation targets.
 
-The complete equation-IR benchmark was rerun after the lookup tables were built once per format instead of once per read: `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
+The complete equation-IR benchmark was rerun after truncating integer division moved to one home, `sc_neurocore.utils.numerics.trunc_div`: `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
 measured transactions after two warmups for each of twelve models. It includes
 source replay and both native emitters, pins all compiler source files and the
-unchanged native binary, and checks identical graph/output checksums on every
-call. It makes no throughput or speedup claim.
+native binary it loaded, and checks identical graph/output checksums on every
+call. Every output checksum equals the previous capture's. It makes no throughput or speedup claim.
 
 Both historical equation-IR result filenames contain that same twelve-case capture,
 not separate measurements. The capture records the distribution versions the
-interpreter reported (frontend metadata 3.16.0 from the editable checkout's
-installation, engine 4.0.0) and the SHA-256 of the native binary it loaded.
+interpreter reported (sc-neurocore and its engine both 4.1.0) and the SHA-256 of
+the native binary it loaded.

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2028
+expected_file_count = 2030
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8166,3 +8166,11 @@ rationale = "The census accepts a source-change review only while the reviewed b
 [[file]]
 path = "tests/test_surrogate_lif_refuses_invalid_configuration.py"
 rationale = "A refused surrogate LIF configuration raises ValueError in a live interpreter, through the extension and the wrapper."
+
+[[file]]
+path = "tests/cli_nir_test_support.py"
+rationale = "Fixtures and integer reference traces for the NIR command-line tests, dividing through the shared trunc_div."
+
+[[file]]
+path = "tests/test_cosim_sc_wb_nmda_magnesium_block.py"
+rationale = "Co-simulation of the NMDA magnesium-block RTL against its integer oracle and its source model."

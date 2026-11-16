@@ -149,7 +149,7 @@ PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_bench_iqif_gates_and_rejects.py \
   tests/test_bench_iqif_probes_and_metadata.py
 
-taskset -c 4 env PYTHONPATH=bridge:src:. .venv/bin/python \
+taskset -c 3 env PYTHONPATH=bridge:src:. .venv/bin/python \
   benchmarks/bench_model_iqif.py \
   --json benchmarks/results/local_python_2026-07-14_iqif.json
 

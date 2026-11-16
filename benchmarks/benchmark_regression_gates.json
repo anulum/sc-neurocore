@@ -5352,7 +5352,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "5ad9807d654f3ddacaf4607b9cffff20d30719d4d0b4d3ec90f2cb18867e7fd0"
+        "native_sha256": "698244eea7c14ca06ad0893c4338a22a260bcd75bc1a2803d94cbfcd983bbddb"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5683,7 +5683,10 @@
         "engine/src/ir/kernel_contract.rs": "source_sha256.engine/src/ir/kernel_contract.rs",
         "engine/src/ir/neuron_contract.rs": "source_sha256.engine/src/ir/neuron_contract.rs",
         "src/sc_neurocore/compiler/equation_state.py": "source_sha256.src/sc_neurocore/compiler/equation_state.py",
-        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py"
+        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py",
+        "engine/src/ir/ice40_calibration.rs": "source_sha256.engine/src/ir/ice40_calibration.rs",
+        "engine/src/ir/ice40_estimate.rs": "source_sha256.engine/src/ir/ice40_estimate.rs",
+        "src/sc_neurocore/compiler/rtl_refusals.py": "source_sha256.src/sc_neurocore/compiler/rtl_refusals.py"
       }
     },
     {
@@ -5697,7 +5700,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "5ad9807d654f3ddacaf4607b9cffff20d30719d4d0b4d3ec90f2cb18867e7fd0"
+        "native_sha256": "698244eea7c14ca06ad0893c4338a22a260bcd75bc1a2803d94cbfcd983bbddb"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -6036,7 +6039,10 @@
         "engine/src/ir/emit_sv/arithmetic.rs": "source_sha256.engine/src/ir/emit_sv/arithmetic.rs",
         "engine/src/ir/kernel_contract.rs": "source_sha256.engine/src/ir/kernel_contract.rs",
         "engine/src/ir/neuron_contract.rs": "source_sha256.engine/src/ir/neuron_contract.rs",
-        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py"
+        "src/sc_neurocore/compiler/guarantee_summary.py": "source_sha256.src/sc_neurocore/compiler/guarantee_summary.py",
+        "engine/src/ir/ice40_calibration.rs": "source_sha256.engine/src/ir/ice40_calibration.rs",
+        "engine/src/ir/ice40_estimate.rs": "source_sha256.engine/src/ir/ice40_estimate.rs",
+        "src/sc_neurocore/compiler/rtl_refusals.py": "source_sha256.src/sc_neurocore/compiler/rtl_refusals.py"
       }
     },
     {

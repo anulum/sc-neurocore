@@ -385,6 +385,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Truncating integer division has one home,
+  `sc_neurocore.utils.numerics.trunc_div`. The compiler's function units
+  re-export it instead of keeping their own copy, the IQIF model's branch
+  point divides through it behind its own refusal of a denominator below
+  one, and the NIR and NMDA co-simulation test helpers import it. A test
+  refuses any other definition. The four co-simulation receipts that bind
+  the compiler sources are recorded again, so their silicon labels stay.
+  The Verilog compiler, function-call domain, equation-IR and IQIF
+  benchmark records are measured again on the workstation they were taken
+  on: every output, contract and trajectory is unchanged, the documents
+  quote the new medians, and the IQIF lanes' same-host order is now Rust
+  before Mojo. The two equation-IR gates' source maps also name the three
+  sources the new measurement hashes, so the gate checks their digests.
+
 - The Cazelles map descriptor states where its class and its bound schemas
   part. The class and its native runtimes snap a candidate near an edge onto
   the edge, within 8 ulp at the default domain, and refuse one outside the

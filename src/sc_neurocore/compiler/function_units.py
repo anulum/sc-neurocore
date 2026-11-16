@@ -43,6 +43,8 @@ import math
 from collections.abc import Callable, Sequence
 from functools import cache
 
+from sc_neurocore.utils.numerics import trunc_div
+
 from .discrete_function_units import heaviside_code, round_code
 from .magnitude_function_units import hypot_code
 from .reciprocal_root_units import rsqrt_code
@@ -150,24 +152,6 @@ def scale_to_code(value: int, shift: int, data_width: int) -> int:
     if shift > 0 and abs(value).bit_length() + shift > data_width:
         return saturate(-(1 << data_width) if value < 0 else 1 << data_width, data_width)
     return saturate(shift_round(value, shift), data_width)
-
-
-def trunc_div(numerator: int, denominator: int) -> int:
-    """Return the quotient truncated towards zero, as C and Verilog divide.
-
-    Parameters
-    ----------
-    numerator, denominator : int
-        Signed integers; ``denominator`` is not zero.
-
-    Returns
-    -------
-    int
-        ``sign · (|numerator| // |denominator|)``.
-
-    """
-    quotient = abs(numerator) // abs(denominator)
-    return -quotient if (numerator < 0) != (denominator < 0) else quotient
 
 
 @cache

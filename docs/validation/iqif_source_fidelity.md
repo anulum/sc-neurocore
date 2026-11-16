@@ -103,20 +103,20 @@ is missing, any state differs, an event count differs, a final state differs,
 the process is unpinned without acknowledgement, or the standalone Rust safety
 module fails.
 
-The committed run was pinned to logical CPU 4 without claiming exclusive
+The committed run was pinned to logical CPU 3 without claiming exclusive
 isolation:
 
 | Backend | Median call | Median ns/step | Events | State mismatches | Final `v` |
 |---|---:|---:|---:|---:|---:|
-| Python | 92.358875 ms | 461.794375 | 13,333 | 0 | 165 |
-| Rust | 2.437217 ms | 12.186085 | 13,333 | 0 | 165 |
-| Julia | 5.550568 ms | 27.752840 | 13,333 | 0 | 165 |
-| Go | 5.626361 ms | 28.131805 | 13,333 | 0 | 165 |
-| Mojo | 2.261707 ms | 11.308535 | 13,333 | 0 | 165 |
+| Python | 89.279728 ms | 446.398640 | 13,333 | 0 | 165 |
+| Rust | 3.893965 ms | 19.469825 | 13,333 | 0 | 165 |
+| Julia | 6.325987 ms | 31.629935 | 13,333 | 0 | 165 |
+| Go | 7.424190 ms | 37.120950 | 13,333 | 0 | 165 |
+| Mojo | 3.906080 ms | 19.530400 | 13,333 | 0 | 165 |
 
 Every trajectory has little-endian int64 SHA-256
 `b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4`.
-The measured and same-host auto order is Mojo, Rust, Julia, Go, then Python.
+The measured and same-host auto order is Rust, Mojo, Julia, Go, then Python.
 The artifact records all raw samples, source hashes, the exact loaded
 Rust/Go/Mojo binary hashes and sizes, runtime versions, affinity, governor, and
 load averages. These numbers are local non-exclusive regression evidence, not
@@ -162,7 +162,7 @@ PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_bench_iqif_gates_and_rejects.py \
   tests/test_bench_iqif_probes_and_metadata.py
 
-taskset -c 4 env PYTHONPATH=bridge:src:. .venv/bin/python \
+taskset -c 3 env PYTHONPATH=bridge:src:. .venv/bin/python \
   benchmarks/bench_model_iqif.py \
   --json benchmarks/results/local_python_2026-07-14_iqif.json
 

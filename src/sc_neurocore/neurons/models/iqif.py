@@ -31,6 +31,8 @@ from typing import ClassVar, SupportsIndex, cast
 import numpy as np
 import numpy.typing as npt
 
+from sc_neurocore.utils.numerics import trunc_div
+
 _INT32_MIN = -(1 << 31)
 _INT32_MAX = (1 << 31) - 1
 _MAX_STEPS = (1 << 31) - 1
@@ -65,13 +67,14 @@ def _step_count(value: object) -> int:
     return result
 
 
-def _trunc_div(numerator: int, denominator: int) -> int:
-    """Divide integers with C++ truncation toward zero."""
-    if denominator <= 0:  # pragma: no cover - guarded by the public contract
+def _positive_trunc_div(numerator: int, denominator: int) -> int:
+    """Divide integers with C++ truncation toward zero, refusing a denominator below one.
+
+    The branch point divides by ``a + b``, which the public contract keeps positive.
+    """
+    if denominator <= 0:
         raise ValueError("denominator must be positive")
-    if numerator >= 0:
-        return numerator // denominator
-    return -((-numerator) // denominator)
+    return trunc_div(numerator, denominator)
 
 
 @dataclass
@@ -148,7 +151,7 @@ class IntegerQIFNeuron:
             _v_max,
             _v_min,
         ) = self._validated_values()
-        return _trunc_div(b * v_threshold + a * v_rest, a + b)
+        return _positive_trunc_div(b * v_threshold + a * v_rest, a + b)
 
     def _validated_values(self) -> tuple[int, int, int, int, int, int, int, int]:
         values = (
@@ -204,7 +207,7 @@ class IntegerQIFNeuron:
         current_i = _int32(current, "current")
         values = self._validated_values()
         v, v_rest, v_threshold, v_reset, a, b, v_max, v_min = values
-        branch_point = _trunc_div(b * v_threshold + a * v_rest, a + b)
+        branch_point = _positive_trunc_div(b * v_threshold + a * v_rest, a + b)
         self.v, spike = self._advance(
             v,
             current_i,
@@ -284,7 +287,7 @@ class IntegerQIFNeuron:
     ) -> tuple[npt.NDArray[np.int64], int, int]:
         """Evaluate a mutation-free local batch for atomic public commit."""
         v, v_rest, v_threshold, v_reset, a, b, v_max, v_min = self._validated_values()
-        branch_point = _trunc_div(b * v_threshold + a * v_rest, a + b)
+        branch_point = _positive_trunc_div(b * v_threshold + a * v_rest, a + b)
         trace = np.empty(n_steps, dtype=np.int64)
         spikes = 0
         for index in range(n_steps):

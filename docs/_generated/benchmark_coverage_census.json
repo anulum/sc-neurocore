@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 27,
-    "outdated": 116,
+    "current": 31,
+    "outdated": 112,
     "reviewed": 1,
     "unbound": 174
   },
@@ -13,8 +13,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 3,
-    "outdated": 83,
+    "current": 4,
+    "outdated": 82,
     "reviewed": 0,
     "unbound": 1
   },
@@ -976,11 +976,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            "bridge/sc_neurocore_engine/__init__.py",
-            "engine/src/neurons/trivial/integer_qif.rs"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "local_python_2026-07-14_iqif.json",
           "script": "bench_model_iqif.py"
         }
@@ -2433,13 +2429,7 @@
       "name": "bench_equation_program.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/neurons/dendritic.py",
-        "src/sc_neurocore/neurons/fixed_point_lif.py",
-        "src/sc_neurocore/neurons/homeostatic_lif.py",
-        "src/sc_neurocore/neurons/sc_izhikevich.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "bench_function_call_domains.json"
     },
     {
@@ -2813,6 +2803,7 @@
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
         "src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/function_units.py",
         "src/sc_neurocore/compiler/hardware_numeric_contract.py",
         "src/sc_neurocore/compiler/lut_accuracy.py",
         "src/sc_neurocore/compiler/native_equation/transactions.py",
@@ -2828,39 +2819,11 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/_ir_native.py",
-        "bridge/sc_neurocore_engine/ir.py",
-        "engine/Cargo.toml",
-        "engine/src/ir/bindings.rs",
-        "engine/src/ir/emit_sv.rs",
-        "engine/src/ir/mod.rs",
-        "engine/src/ir/sv_target.rs",
-        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
-        "src/sc_neurocore/compiler/testbench_gen.py",
-        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
-        "src/sc_neurocore/neurons/expression_derivative.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "bridge/sc_neurocore_engine/_ir_native.py",
-        "bridge/sc_neurocore_engine/ir.py",
-        "engine/Cargo.toml",
-        "engine/src/ir/bindings.rs",
-        "engine/src/ir/emit_sv.rs",
-        "engine/src/ir/mod.rs",
-        "engine/src/ir/sv_target.rs",
-        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
-        "src/sc_neurocore/compiler/testbench_gen.py",
-        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
-        "src/sc_neurocore/neurons/expression_derivative.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

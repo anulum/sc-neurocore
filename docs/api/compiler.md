@@ -1057,30 +1057,30 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.213064 ms | 50 |
-| Euler folded with parameter port | 0.268201 ms | 38 |
-| RK4 registered | 0.584360 ms | 92 |
-| Four-substep RK4 registered | 1.179836 ms | 136 |
-| Escape-rate registered | 2.275219 ms | 902 |
-| Square-root map registered | 0.208587 ms | 65 |
-| Negative half-LSB nearest map registered | 0.151585 ms | 45 |
-| Quadrant-aware angle map registered | 2.014483 ms | 3225 |
-| Softplus exponential Euler registered | 7.325814 ms | 11374 |
-| Ties-to-even round map registered | 0.203417 ms | 64 |
-| Heaviside map registered | 0.231653 ms | 62 |
-| Euclidean norm map registered | 0.438535 ms | 210 |
-| Reciprocal square-root map registered | 0.608818 ms | 305 |
-| Constant power map registered | 1.997505 ms | 1692 |
-| Dynamic power map registered | 2.300571 ms | 1698 |
-| Partial initial state with powers, registered | 4.298616 ms | 3356 |
-| Partial initial state with powers, folded | 4.150275 ms | 3342 |
-| Held-state RK4 registered | 0.897810 ms | 100 |
+| Euler registered | 0.147975 ms | 50 |
+| Euler folded with parameter port | 0.171089 ms | 38 |
+| RK4 registered | 0.397754 ms | 92 |
+| Four-substep RK4 registered | 0.803259 ms | 136 |
+| Escape-rate registered | 1.473069 ms | 902 |
+| Square-root map registered | 0.146427 ms | 65 |
+| Negative half-LSB nearest map registered | 0.109432 ms | 45 |
+| Quadrant-aware angle map registered | 1.485677 ms | 3225 |
+| Softplus exponential Euler registered | 4.998718 ms | 11374 |
+| Ties-to-even round map registered | 0.129400 ms | 64 |
+| Heaviside map registered | 0.176029 ms | 62 |
+| Euclidean norm map registered | 0.266205 ms | 210 |
+| Reciprocal square-root map registered | 0.381907 ms | 305 |
+| Constant power map registered | 1.450515 ms | 1692 |
+| Dynamic power map registered | 1.452576 ms | 1698 |
+| Partial initial state with powers, registered | 3.048236 ms | 3356 |
+| Partial initial state with powers, folded | 3.024987 ms | 3342 |
+| Held-state RK4 registered | 0.652663 ms | 100 |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 14.38 11.75 11.65 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
+The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 12.48 13.21 13.33 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 213.236117 ms; the held-state RK4 median is 3.771867 ms. The constant-power and dynamic-power medians are 53.679920 ms and 50.264878 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim. Both equation-IR result filenames contain this same twelve-case capture.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 266.006292 ms; the held-state RK4 median is 5.739268 ms. The constant-power and dynamic-power medians are 79.251014 ms and 78.348906 ms. The receipt pins the native binary and source hashes; these are compiler timings, with no generated-kernel execution or physical hardware claim. Both equation-IR result filenames contain this same twelve-case capture.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather

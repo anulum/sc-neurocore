@@ -19,6 +19,8 @@ from typing import Any
 import numpy as np
 import pytest
 
+from sc_neurocore.utils.numerics import trunc_div
+
 
 def _small_lif_nir_graph() -> Any:
     nir = pytest.importorskip("nir")
@@ -803,20 +805,12 @@ def _simulate_network_with_testbench(
     return run_result.stdout
 
 
-def _trunc_div(numerator: int, denominator: int) -> int:
-    """Divide with truncation toward zero, matching signed Verilog division."""
-    if denominator <= 0:
-        raise ValueError("denominator must be positive")
-    sign = -1 if numerator < 0 else 1
-    return sign * (abs(numerator) // denominator)
-
-
 def _small_direct_fixed_point_reference(
     cycles: int,
 ) -> list[tuple[int, ...]]:
     ext0 = 0x0200
     ext1 = 0x0200
-    current0 = ((ext0 * 0x0040) >> 8) + _trunc_div(ext1 * -0x0080, 1 << 8)
+    current0 = ((ext0 * 0x0040) >> 8) + trunc_div(ext1 * -0x0080, 1 << 8)
     current1 = ((ext0 * 0x00C0) >> 8) + ((ext1 * 0x0020) >> 8)
     voltages = [0, 0]
     currents = [current0, current1]
@@ -825,8 +819,8 @@ def _small_direct_fixed_point_reference(
     for cycle in range(cycles):
         row: list[int] = [cycle]
         for idx, current in enumerate(currents):
-            leak = _trunc_div((-voltages[idx]) << 8, 5120)
-            drive = _trunc_div(current << 8, 5120)
+            leak = trunc_div((-voltages[idx]) << 8, 5120)
+            drive = trunc_div(current << 8, 5120)
             next_voltage = max(-32768, min(32767, voltages[idx] + leak + drive))
             spike = int(next_voltage > 256)
             if spike:
@@ -843,8 +837,8 @@ def _small_direct_fixed_point_reference(
 
 def _lif_q88_step(voltage: int, current: int) -> tuple[int, int, int]:
     """Advance the NIR LIF recurrence and expose its post-reset output state."""
-    leak = _trunc_div((-voltage) << 8, 5120)
-    drive = _trunc_div(current << 8, 5120)
+    leak = trunc_div((-voltage) << 8, 5120)
+    drive = trunc_div(current << 8, 5120)
     next_voltage = max(-32768, min(32767, voltage + leak + drive))
     spike = int(next_voltage > 256)
     if spike:
@@ -853,8 +847,8 @@ def _lif_q88_step(voltage: int, current: int) -> tuple[int, int, int]:
 
 
 def _li_q88_step(voltage: int, current: int) -> int:
-    leak = _trunc_div((-voltage) << 8, 3840)
-    drive = _trunc_div(current << 8, 3840)
+    leak = trunc_div((-voltage) << 8, 3840)
+    drive = trunc_div(current << 8, 3840)
     return max(-32768, min(32767, voltage + leak + drive))
 
 

@@ -11,15 +11,16 @@
 from __future__ import annotations
 
 import math
-from pathlib import Path
 import re
 import subprocess
 import tempfile
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.neurons.models import SCWBNMDAMagnesiumBlockNeuron
+from sc_neurocore.utils.numerics import trunc_div
 from tests.cosim_support import HAS_IVERILOG
 from tests.toolchain_support import require_executable
 
@@ -40,11 +41,6 @@ def _q(value: float) -> int:
 
 def _qmul(left: int, right: int) -> int:
     return (left * right) >> 32
-
-
-def _trunc_div(numerator: int, denominator: int) -> int:
-    quotient = abs(numerator) // abs(denominator)
-    return -quotient if (numerator < 0) != (denominator < 0) else quotient
 
 
 def _exact_rates(voltage: float) -> tuple[float, ...]:
@@ -79,7 +75,7 @@ def _drive(current: int) -> int:
         return _DRIVE_SAMPLES[-1]
     index, remainder = divmod(current, _q(0.5))
     lower = _DRIVE_SAMPLES[index]
-    return lower + _trunc_div((_DRIVE_SAMPLES[index + 1] - lower) * remainder, _q(0.5))
+    return lower + trunc_div((_DRIVE_SAMPLES[index + 1] - lower) * remainder, _q(0.5))
 
 
 def _rates(voltage: int) -> tuple[int, ...]:
@@ -90,7 +86,7 @@ def _rates(voltage: int) -> tuple[int, ...]:
     shifted = voltage - _V_MIN
     index, remainder = divmod(shifted, 5 * _SCALE)
     return tuple(
-        lower + _trunc_div((upper - lower) * remainder, 5 * _SCALE)
+        lower + trunc_div((upper - lower) * remainder, 5 * _SCALE)
         for lower, upper in zip(_RATE_SAMPLES[index], _RATE_SAMPLES[index + 1])
     )
 
@@ -190,10 +186,12 @@ def _source_trace(current: float, steps: int) -> npt.NDArray[np.float64]:
 
 
 def test_required_cosimulation_tool_is_available() -> None:
+    """Icarus Verilog is installed, so the co-simulation tests below run."""
     assert HAS_IVERILOG
 
 
 def test_yosys_synthesises_committed_rtl() -> None:
+    """Yosys reads the committed RTL and synthesises it to the coarse stage without an error."""
     completed = subprocess.run(
         [
             require_executable("yosys"),
@@ -211,11 +209,13 @@ def test_yosys_synthesises_committed_rtl() -> None:
 
 
 def test_q3232_fsm_is_bit_exact_to_integer_oracle() -> None:
+    """The Q32.32 FSM gives the integer oracle's trace bit for bit, at rest and under a drive of 5."""
     np.testing.assert_array_equal(_rtl_trace(0.0, 64), _integer_trace(0.0, 64))
     np.testing.assert_array_equal(_rtl_trace(5.0, 32), _integer_trace(5.0, 32))
 
 
 def test_q3232_fsm_preserves_bounded_source_vectors() -> None:
+    """The FSM's events equal the floating-point model's, and each state stays within its bound of it."""
     for current, steps, bounds in (
         (0.0, 64, (0.08, 0.004, 0.0012, 1.0e-12)),
         (5.0, 32, (4.6, 0.037, 0.016, 2.0e-9)),
