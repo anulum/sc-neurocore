@@ -4,7 +4,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mask to DATA_WIDTH bits and interpret as signed two's
+# SC-NeuroCore — Bit-true fixed-point LIF neuron, LFSR and bitstream encoder
+
+"""Bit-true Python models of the Verilog fixed-point LIF neuron, LFSR and bitstream encoder.
+
+Every value is a signed two's-complement integer of ``data_width`` bits; :func:`_mask` wraps a
+result to that width as the RTL does.
+"""
 
 from __future__ import annotations
 
@@ -68,6 +74,14 @@ class FixedPointLIFNeuron:
     refractory_period: int = FP_REFRACTORY_PERIOD
 
     def __post_init__(self) -> None:
+        """Check the configuration and start at ``v = v_rest`` with no refractory count.
+
+        Raises
+        ------
+        ValueError
+            If ``data_width`` is outside ``[1, 32]``, ``fraction`` outside ``[0, data_width)``,
+            or ``refractory_period`` is negative.
+        """
         if not 1 <= self.data_width <= 32:
             raise ValueError(f"data_width must be in [1, 32], got {self.data_width}")
         if not 0 <= self.fraction < self.data_width:
@@ -78,19 +92,31 @@ class FixedPointLIFNeuron:
         self.refractory_counter: int = 0
 
     def step(self, leak_k: int, gain_k: int, I_t: int, noise_in: int = 0) -> tuple[int, int]:
-        """
-        Execute one clock cycle — bit-true match to Verilog RTL.
+        """Execute one clock cycle, bit-true to the Verilog RTL.
+
+        While refractory, the counter counts down, ``v`` is held at ``v_rest`` and the cycle
+        returns no spike. Otherwise ``v`` gains ``((v_rest - v) * leak_k) >> fraction``,
+        ``(I_t * gain_k) >> fraction`` and ``noise_in``. ``v_rest - v`` is wrapped to
+        ``2 * data_width`` bits and the sum to ``data_width`` bits, and the shifts are arithmetic,
+        so they round towards minus infinity. Reaching ``v_threshold`` sets ``v`` to ``v_reset``
+        and starts the refractory count. ``v`` keeps ``v_rest`` or ``v_reset`` as given; the
+        returned voltage is wrapped.
 
         Parameters
         ----------
-        leak_k : int   – ALPHA_LEAK in Q(FRACTION)
-        gain_k : int   – GAIN_IN in Q(FRACTION)
-        I_t    : int   – Input current in Q(FRACTION)
-        noise_in : int – External noise in Q(FRACTION)
+        leak_k : int
+            Leak factor ``ALPHA_LEAK`` in Q(``fraction``).
+        gain_k : int
+            Input gain ``GAIN_IN`` in Q(``fraction``).
+        I_t : int
+            Input current in Q(``fraction``).
+        noise_in : int
+            External noise in Q(``fraction``), added unscaled.
 
         Returns
         -------
-        (spike, v_out) : tuple[int, int]
+        tuple[int, int]
+            The spike (1 or 0) and the new ``v`` wrapped to ``data_width`` bits.
         """
         W = self.data_width
 
@@ -161,12 +187,25 @@ class FixedPointLFSR:
     seed: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
+        """Check the seed and load the register with its low ``width`` bits.
+
+        Raises
+        ------
+        ValueError
+            If ``seed`` is 0. A non-zero seed whose low ``width`` bits are all 0 still loads a
+            zero register, which the LFSR never leaves.
+        """
         if self.seed == 0:
             raise ValueError("LFSR seed must be non-zero.")
         self.reg: int = self.seed & ((1 << self.width) - 1)
 
     def step(self) -> int:
-        """Advance one clock cycle; return new register state."""
+        """Advance one clock cycle and return the new register.
+
+        The feedback is the XOR of bits ``width - 1``, ``width - 3``, ``width - 4`` and
+        ``width - 6``, the 16-bit polynomial's positions counted from the top. A ``width`` below
+        6 makes a shift negative, which raises ``ValueError``.
+        """
         w = self.width
         feedback = (
             ((self.reg >> (w - 1)) & 1)
@@ -178,6 +217,14 @@ class FixedPointLFSR:
         return self.reg
 
     def reset(self, seed: int | None = None) -> None:
+        """Reload the register with the low ``width`` bits of the given or the constructor's seed.
+
+        Parameters
+        ----------
+        seed : int or None
+            The new seed; ``None`` reuses the constructor's. It is not checked, so a seed whose
+            low ``width`` bits are 0 leaves the register at 0.
+        """
         self.reg = (seed if seed is not None else self.seed) & ((1 << self.width) - 1)
 
 
@@ -201,6 +248,7 @@ class FixedPointBitstreamEncoder:
     seed_init: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
+        """Create the encoder's LFSR, ``data_width`` bits wide and seeded with ``seed_init``."""
         self.lfsr = FixedPointLFSR(width=self.data_width, seed=self.seed_init)
 
     def step(self, x_value: int) -> int:
@@ -210,4 +258,5 @@ class FixedPointBitstreamEncoder:
         return 1 if rnd < x_value else 0
 
     def reset(self) -> None:
+        """Reload the LFSR with ``seed_init``."""
         self.lfsr.reset()

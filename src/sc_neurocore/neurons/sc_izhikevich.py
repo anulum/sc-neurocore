@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Stochastic Izhikevich neuron (software-only)
 
+"""Stochastic Izhikevich neuron: the 2003 model with optional Gaussian noise on the voltage."""
+
 from __future__ import annotations
 
 import math
@@ -33,10 +35,11 @@ class SCIzhikevichNeuron(BaseNeuron):
     Stochastic Izhikevich neuron (software-only).
 
     Standard Izhikevich model (IEEE TNN 14(6), 2003):
-    v' = 0.04*v^2 + 5*v + 140 - u + I + noise
+    v' = 0.04*v^2 + 5*v + 140 - u + I
     u' = a*(b*v - u)
 
-    When v >= 30 mV: spike, then v <- c, u <- u + d.
+    After each step, Gaussian noise of standard deviation ``noise_std`` is added to v directly,
+    not scaled by ``dt``. Then, when v >= 30 mV: spike, then v <- c, u <- u + d.
 
     Example
     -------
@@ -60,6 +63,14 @@ class SCIzhikevichNeuron(BaseNeuron):
     integrator: Literal["baseline_half_euler", "rk4"] = "baseline_half_euler"
 
     def __post_init__(self) -> None:
+        """Check the parameters, seed the noise generator and start at ``v = c``, ``u = b * c``.
+
+        Raises
+        ------
+        ValueError
+            If ``integrator`` is neither ``"baseline_half_euler"`` nor ``"rk4"``, a parameter is
+            non-finite, ``dt`` is not positive or ``noise_std`` is negative.
+        """
         if self.integrator not in {"baseline_half_euler", "rk4"}:
             raise ValueError(f"Unsupported integrator for SCIzhikevichNeuron: {self.integrator}")
         for name in ("a", "b", "c", "d"):
@@ -92,6 +103,27 @@ class SCIzhikevichNeuron(BaseNeuron):
         return result
 
     def step(self, input_current: float) -> int:
+        """Advance one step of ``dt`` with the given input.
+
+        ``baseline_half_euler`` takes two Euler half-steps of ``dt / 2``, each computing both
+        derivatives from one state; ``rk4`` takes one classical Runge-Kutta step. The noise is
+        then added to ``v``, and ``v >= 30`` sets ``v`` to ``c`` and adds ``d`` to ``u``.
+
+        Parameters
+        ----------
+        input_current : float
+            Input current ``I``.
+
+        Returns
+        -------
+        int
+            1 on a spike, else 0.
+
+        Raises
+        ------
+        ValueError
+            If ``input_current`` is not finite.
+        """
         input_current = self._require_finite("input_current", input_current)
         if self.integrator == "baseline_half_euler":
             return self._step_baseline_half_euler(input_current)
@@ -141,8 +173,10 @@ class SCIzhikevichNeuron(BaseNeuron):
         return self._apply_noise_and_threshold()
 
     def reset_state(self) -> None:
+        """Return to ``v = c`` and ``u = b * c``; the noise generator keeps its position."""
         self.v = self.c  # membrane potential
         self.u = self.b * self.v  # recovery variable
 
     def get_state(self) -> dict[str, Any]:
+        """Return ``v`` and ``u`` as floats."""
         return {"v": float(self.v), "u": float(self.u)}

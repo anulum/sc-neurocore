@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2010
+expected_file_count = 2014
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8094,3 +8094,19 @@ rationale = "DPI neuron benchmark whose source list names dpi_neuron/contract.rs
 [[file]]
 path = "benchmarks/bench_model_neurogrid.py"
 rationale = "Neurogrid RK4 benchmark whose source list names neurogrid_tests.rs, where its unit tests moved."
+
+[[file]]
+path = "src/sc_neurocore/neurons/fixed_point_lif.py"
+rationale = "Bit-true fixed-point LIF, LFSR and encoder models; the step's wraps, shifts and refractory hold are stated."
+
+[[file]]
+path = "src/sc_neurocore/neurons/homeostatic_lif.py"
+rationale = "Homeostatic LIF; the threshold update, its clamp and the inherited reset that keeps the threshold are stated."
+
+[[file]]
+path = "src/sc_neurocore/neurons/sc_izhikevich.py"
+rationale = "Stochastic Izhikevich neuron; the noise is added to v after each step, not inside v'."
+
+[[file]]
+path = "src/sc_neurocore/neurons/dendritic.py"
+rationale = "XOR dendritic neuron; the strict threshold comparison and the kept combination are stated."

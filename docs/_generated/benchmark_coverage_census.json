@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 28,
-    "outdated": 116,
+    "current": 27,
+    "outdated": 117,
     "unbound": 174
   },
   "all_records": 318,
@@ -2422,7 +2422,13 @@
       "name": "bench_equation_program.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/neurons/dendritic.py",
+        "src/sc_neurocore/neurons/fixed_point_lif.py",
+        "src/sc_neurocore/neurons/homeostatic_lif.py",
+        "src/sc_neurocore/neurons/sc_izhikevich.py"
+      ],
+      "currency": "outdated",
       "name": "bench_function_call_domains.json"
     },
     {

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — XOR-nonlinearity neuron with shunting inhibition
 
+"""Neuron whose output compares the XOR combination of two dendritic inputs with a threshold."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,6 +29,20 @@ class StochasticDendriticNeuron:
     _last_current: float = field(default=0.0, init=False, repr=False)
 
     def step(self, input_a: float, input_b: float) -> int:
+        """Return 1 when ``input_a + input_b - 2 * input_a * input_b`` exceeds ``threshold``.
+
+        The combined value is kept for :meth:`get_state`; the inputs are not validated.
+
+        Parameters
+        ----------
+        input_a, input_b : float
+            The two dendritic inputs; for binary inputs the combination is their XOR.
+
+        Returns
+        -------
+        int
+            1 when the combination is strictly above ``threshold``, else 0.
+        """
         d1 = input_a
         d2 = input_b
 

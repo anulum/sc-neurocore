@@ -29809,6 +29809,7 @@ Implements ``d1 + d2 - 2*d1*d2`` (XOR truth table for binary inputs).
 Based on Koch, *Biophysics of Computation*, 1999, Ch. 12.
 
 - **step**(input_a, input_b)
+  - Return 1 when ``input_a + input_b - 2 * input_a * input_b`` exceeds ``threshold``.
 - **reset_state**()
   - Reset internal state to defaults.
 - **get_state**()
@@ -30775,8 +30776,9 @@ True
 >>> neuron.reset()
 
 - **__post_init__**()
+  - Check the configuration and start at ``v = v_rest`` with no refractory count.
 - **step**(leak_k, gain_k, I_t, noise_in)
-  - Execute one clock cycle — bit-true match to Verilog RTL.
+  - Execute one clock cycle, bit-true to the Verilog RTL.
 - **reset**()
   - Reset neuron state to power-on defaults.
 - **reset_state**()
@@ -30798,9 +30800,11 @@ Example
 True
 
 - **__post_init__**()
+  - Check the seed and load the register with its low ``width`` bits.
 - **step**()
-  - Advance one clock cycle; return new register state.
+  - Advance one clock cycle and return the new register.
 - **reset**(seed)
+  - Reload the register with the low ``width`` bits of the given or the constructor's seed.
 
 ### Class `FixedPointBitstreamEncoder`
 Bit-true model of ``sc_bitstream_encoder.v``.
@@ -30816,9 +30820,11 @@ Example
 True
 
 - **__post_init__**()
+  - Create the encoder's LFSR, ``data_width`` bits wide and seeded with ``seed_init``.
 - **step**(x_value)
   - Return 1 if LFSR < x_value, else 0 (one clock cycle).
 - **reset**()
+  - Reload the LFSR with ``seed_init``.
 
 ---
 
@@ -30830,6 +30836,15 @@ LIF neuron with homeostatic threshold adaptation.
 Self-regulates firing rate toward a target setpoint via exponential
 moving average of spike rate. Based on Turrigiano (2012).
 
+After each step of the stochastic LIF parent, the rate trace moves towards the spike output
+by ``1 - trace_decay``, and the threshold moves by
+``adaptation_rate * (rate_trace - target_rate)``, clamped to
+``&#91;THRESHOLD_FLOOR, initial_threshold * THRESHOLD_CEILING_MULT&#93;`` (0.1, and 10 times the
+threshold at construction). A step's spike is decided with the threshold before that step's
+adaptation. The inherited :meth:`reset_state` returns ``v`` to rest and clears the refractory
+counter; it keeps the adapted threshold and the rate trace, unlike the engine's
+``HomeostaticLif::reset``, which restores both.
+
 Example
 -------
 >>> neuron = HomeostaticLIFNeuron(target_rate=0.1, noise_std=0.0)
@@ -30839,8 +30854,11 @@ Example
 True
 
 - **__post_init__**()
+  - Check the homeostasis parameters, after the parent's checks, and record the threshold.
 - **step**(input_current)
+  - Advance the stochastic LIF one step, then adapt the threshold; return the spike.
 - **get_state**()
+  - Return the parent's state with the current threshold and the rate trace added.
 
 ---
 
@@ -37167,10 +37185,11 @@ mapping of str to float
 Stochastic Izhikevich neuron (software-only).
 
 Standard Izhikevich model (IEEE TNN 14(6), 2003):
-v' = 0.04*v^2 + 5*v + 140 - u + I + noise
+v' = 0.04*v^2 + 5*v + 140 - u + I
 u' = a*(b*v - u)
 
-When v >= 30 mV: spike, then v <- c, u <- u + d.
+After each step, Gaussian noise of standard deviation ``noise_std`` is added to v directly,
+not scaled by ``dt``. Then, when v >= 30 mV: spike, then v <- c, u <- u + d.
 
 Example
 -------
@@ -37184,9 +37203,13 @@ Integrator options:
 - ``rk4`` is an explicit higher-order alternative path
 
 - **__post_init__**()
+  - Check the parameters, seed the noise generator and start at ``v = c``, ``u = b * c``.
 - **step**(input_current)
+  - Advance one step of ``dt`` with the given input.
 - **reset_state**()
+  - Return to ``v = c`` and ``u = b * c``; the noise generator keeps its position.
 - **get_state**()
+  - Return ``v`` and ``u`` as floats.
 
 ---
 

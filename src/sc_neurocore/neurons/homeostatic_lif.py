@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — LIF neuron with homeostatic threshold adaptation
 
+"""LIF neuron whose threshold adapts its spike rate towards a target (Turrigiano, 2012)."""
+
 import math
 from dataclasses import dataclass
 from typing import Any, Dict
@@ -31,6 +33,15 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     Self-regulates firing rate toward a target setpoint via exponential
     moving average of spike rate. Based on Turrigiano (2012).
 
+    After each step of the stochastic LIF parent, the rate trace moves towards the spike output
+    by ``1 - trace_decay``, and the threshold moves by
+    ``adaptation_rate * (rate_trace - target_rate)``, clamped to
+    ``[THRESHOLD_FLOOR, initial_threshold * THRESHOLD_CEILING_MULT]`` (0.1, and 10 times the
+    threshold at construction). A step's spike is decided with the threshold before that step's
+    adaptation. The inherited :meth:`reset_state` returns ``v`` to rest and clears the refractory
+    counter; it keeps the adapted threshold and the rate trace, unlike the engine's
+    ``HomeostaticLif::reset``, which restores both.
+
     Example
     -------
     >>> neuron = HomeostaticLIFNeuron(target_rate=0.1, noise_std=0.0)
@@ -46,6 +57,14 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     trace_decay: float = HOMEOSTATIC_TRACE_DECAY
 
     def __post_init__(self) -> None:
+        """Check the homeostasis parameters, after the parent's checks, and record the threshold.
+
+        Raises
+        ------
+        ValueError
+            If ``target_rate``, ``rate_trace`` or ``trace_decay`` is non-finite or outside
+            ``[0, 1]``, or ``adaptation_rate`` is non-finite or negative.
+        """
         super().__post_init__()
         if not math.isfinite(self.target_rate) or not 0.0 <= self.target_rate <= 1.0:
             raise ValueError("target_rate must be finite and within [0, 1]")
@@ -59,6 +78,18 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
         self.initial_threshold: float = self.v_threshold
 
     def step(self, input_current: float) -> int:
+        """Advance the stochastic LIF one step, then adapt the threshold; return the spike.
+
+        Parameters
+        ----------
+        input_current : float
+            Input of the parent's step.
+
+        Returns
+        -------
+        int
+            1 on a spike, else 0.
+        """
         spike = super().step(input_current)
 
         self.rate_trace = self.rate_trace * self.trace_decay + spike * (1.0 - self.trace_decay)
@@ -73,6 +104,7 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
         return spike
 
     def get_state(self) -> Dict[str, Any]:
+        """Return the parent's state with the current threshold and the rate trace added."""
         s = super().get_state()
         s["threshold"] = float(self.v_threshold)
         s["rate_trace"] = float(self.rate_trace)
