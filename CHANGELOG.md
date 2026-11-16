@@ -525,6 +525,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   with the slow trace, where the code adds `A3 * o2` (and `A3 * r2`) to the
   pair amplitude. The static synapse's `delay` is not applied by
   `transmit`, which its doc now says.
+- The engine's photonic network-on-chip results (`engine/src/photonic.rs`:
+  waveguide routing, WDM crosstalk, power budget and the evanescent
+  crosstalk of a waveguide bank or of given pairs) are documented in full:
+  each field says how its value is computed, such as the
+  `ceil(sqrt(n))` routing grid with 0.08 dB per crossing, the three
+  bandwidths that count a channel as adjacent, the MZI losses a power
+  budget adds, and the 300 dB isolation that stands for no coupling.
+  `route_waveguides` was documented as returning tuples; it returns one
+  `WaveguideResult` per connected pair.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

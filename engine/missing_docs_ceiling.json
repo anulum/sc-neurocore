@@ -3,9 +3,9 @@
   "provenance": {
     "argv": "cargo rustc --locked --lib --manifest-path engine/Cargo.toml --message-format=json -- --force-warn missing_docs",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
-    "source_sha256": "071723554842f1251532dacba7b7241d340a5103"
+    "source_sha256": "e9499f9767c1ff8aa367d39cc524d7d3a90ab1b3"
   },
   "schema_version": "sc-neurocore.rust-doc-ceiling.v1",
-  "undocumented": 827,
-  "undocumented_files": 108
+  "undocumented": 789,
+  "undocumented_files": 107
 }

@@ -14,6 +14,8 @@
 //! - **MZI transfer matrix** — 2×2 unitary matrix cascade
 //! - **Power budget** — path loss accumulation
 
+#![deny(missing_docs)]
+
 pub(crate) mod bindings;
 
 use rayon::prelude::*;
@@ -29,16 +31,24 @@ const MZI_INSERTION_LOSS_DB: f64 = 0.5;
 /// A routed waveguide segment.
 #[derive(Clone, Debug)]
 pub struct WaveguideResult {
+    /// Index of the lower node of the pair.
     pub source: usize,
+    /// Index of the higher node of the pair.
     pub target: usize,
+    /// Manhattan distance on the grid times the pitch (um).
     pub length_um: f64,
+    /// Propagation loss plus 0.08 dB per crossing (dB).
     pub loss_db: f64,
+    /// Crossings, counted as the Manhattan distance minus one.
     pub n_crossings: usize,
 }
 
 /// Route waveguides on a mesh topology from an adjacency matrix.
 ///
-/// Returns vector of (source, target, length_um, loss_db, n_crossings).
+/// Nodes sit row by row on a `ceil(sqrt(n))`-wide grid. Every pair `i < j` with
+/// `|a[i][j]| + |a[j][i]| >= 1e-12` gets one [`WaveguideResult`]: its Manhattan length times
+/// `pitch_um`, a loss of `length_um * 1e-4 * loss_db_per_cm` plus 0.08 dB per crossing, and
+/// the distance minus one as its crossings. Fewer than two nodes give no result.
 pub fn route_waveguides(
     adjacency: &[f64],
     n: usize,
@@ -138,10 +148,15 @@ fn complex_mat_mul(a: &[f64; 8], b: &[f64; 8]) -> [f64; 8] {
 /// Crosstalk result per channel.
 #[derive(Clone, Debug)]
 pub struct CrosstalkResult {
+    /// Identifier of the channel, as given.
     pub channel_id: usize,
+    /// Centre wavelength of the channel (nm).
     pub wavelength_nm: f64,
+    /// Other channels whose wavelength lies within three of this channel's bandwidths.
     pub n_adjacent: usize,
+    /// `adjacent_xt_db + 10 log10(max(n_adjacent, 1))` (dB).
     pub crosstalk_db: f64,
+    /// The channel's power minus `crosstalk_db` (dB).
     pub osnr_db: f64,
 }
 
@@ -184,11 +199,18 @@ pub fn analyze_crosstalk(
 /// Path power budget result.
 #[derive(Clone, Debug)]
 pub struct PowerBudgetResult {
+    /// Source node of the waveguide.
     pub source: usize,
+    /// Target node of the waveguide.
     pub target: usize,
+    /// The waveguide's loss plus the insertion loss of every MZI whose inputs include the
+    /// source or whose output is the target (dB).
     pub total_loss_db: f64,
+    /// Laser power minus the total loss (dBm).
     pub received_power_dbm: f64,
+    /// Received power minus the detector sensitivity (dB).
     pub margin_db: f64,
+    /// Whether the margin is at least 0 dB.
     pub passed: bool,
 }
 
@@ -242,31 +264,54 @@ pub fn analyze_power_budget(
 // - Marcatili, Bell Syst. Tech. J. 48(7):2071-2102, 1969
 // - Okamoto, *Fundamentals of Optical Waveguides*, 2006, Ch. 4
 
+/// Coupling of one waveguide pair, as [`analyze_crosstalk_pairs`] returns it.
 #[derive(Clone, Debug)]
 pub struct CrosstalkPairResult {
+    /// Index of the first waveguide, as given.
     pub index_a: usize,
+    /// Index of the second waveguide, as given.
     pub index_b: usize,
+    /// Edge-to-edge gap between the two waveguides (nm).
     pub gap_nm: f64,
+    /// Length over which the two run in parallel (um).
     pub coupling_length_um: f64,
+    /// Coupling coefficient `kappa` of the model above (1/um).
     pub coupling_coefficient_per_um: f64,
+    /// Power coupling ratio `sin^2(kappa L)`.
     pub coupling_ratio: f64,
+    /// `-10 log10(coupling_ratio)`, or 300 dB when the ratio is below 1e-15 (dB).
     pub isolation_db: f64,
 }
 
+/// Crosstalk summary of a uniform parallel-waveguide bank, as [`analyze_crosstalk_bank`]
+/// returns it.
 #[derive(Clone, Debug)]
 pub struct CrosstalkBankResult {
+    /// Waveguides in the bank.
     pub num_waveguides: usize,
+    /// Adjacent pairs, at the gap: `num_waveguides - 1`, or 0.
     pub num_near_pairs: usize,
+    /// Next-nearest pairs, at twice the gap: `num_waveguides - 2`, or 0.
     pub num_far_pairs: usize,
+    /// Edge-to-edge gap between adjacent waveguides (nm).
     pub gap_nm: f64,
+    /// Parallel length of every pair (um).
     pub coupling_length_um: f64,
+    /// Power coupling ratio of an adjacent pair.
     pub adjacent_coupling_ratio: f64,
+    /// Isolation of an adjacent pair (dB).
     pub adjacent_isolation_db: f64,
+    /// Power coupling ratio of a next-nearest pair.
     pub next_nearest_coupling_ratio: f64,
+    /// Isolation of a next-nearest pair (dB).
     pub next_nearest_isolation_db: f64,
+    /// The lower of the two isolations; infinite when the bank has no pair (dB).
     pub worst_isolation_db: f64,
+    /// Mean coupling ratio over the counted pairs; 0 when there is none.
     pub mean_coupling_ratio: f64,
+    /// The larger of the two coupling ratios; 0 when there is no pair.
     pub max_coupling_ratio: f64,
+    /// Whether the worst isolation exceeds 20 dB.
     pub crosstalk_safe: bool,
 }
 
