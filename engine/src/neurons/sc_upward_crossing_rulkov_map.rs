@@ -8,18 +8,28 @@
 
 //! Count-neutral retained upward-crossing Rulkov-map identity.
 
+#![deny(missing_docs)]
+
 /// Historical SC-NeuroCore Rulkov recurrence and event convention.
 #[derive(Clone, Debug)]
 pub struct SCUpwardCrossingRulkovMapNeuron {
+    /// Fast variable (dimensionless).
     pub x: f64,
+    /// Slow variable (dimensionless).
     pub y: f64,
+    /// Fast-map nonlinearity control parameter (dimensionless).
     pub alpha: f64,
+    /// Slow-map control parameter (dimensionless).
     pub sigma: f64,
+    /// Slow-map timescale (dimensionless).
     pub mu: f64,
+    /// Configurable rising-event level on the post-update fast state (dimensionless).
     pub x_threshold: f64,
 }
 
 impl SCUpwardCrossingRulkovMapNeuron {
+    /// Create the map at `x` = -1 and `y` = -3, with `alpha` = 4, `sigma` = -1.6,
+    /// `mu` = 0.001 and the event level at 0.
     pub fn new() -> Self {
         Self {
             x: -1.0,
@@ -67,6 +77,11 @@ impl SCUpwardCrossingRulkovMapNeuron {
     }
 
     /// Checked retained update; an invalid candidate leaves state unchanged.
+    ///
+    /// The Rulkov map: `x' = alpha / (1 - x) + y + current` for `x <= 0`;
+    /// `x' = alpha + y + current` while `x` is below that value; otherwise `x' = -1`. The slow
+    /// update is `y' = y - mu * (x + 1) + mu * sigma`. Returns `Some(1)` when `x` crosses
+    /// `x_threshold` upwards, `Some(0)` otherwise, and `None` for invalid input or state.
     pub fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return None;
@@ -79,10 +94,14 @@ impl SCUpwardCrossingRulkovMapNeuron {
         Some(event)
     }
 
+    /// Advance as `try_step` does and return its event; an invalid step returns 0 and leaves
+    /// the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Run `try_simulate`; an invalid stage returns an empty trace and 0 events, and leaves
+    /// the state unchanged.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         self.try_simulate(n_steps, current).unwrap_or_default()
     }
@@ -100,6 +119,7 @@ impl SCUpwardCrossingRulkovMapNeuron {
         Some((trace, events))
     }
 
+    /// Return `x` and `y` to -1 and -3; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = -1.0;
         self.y = -3.0;

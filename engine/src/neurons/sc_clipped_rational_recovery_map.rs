@@ -8,18 +8,31 @@
 
 //! Count-neutral mirror of the retained project recurrence.
 
+#![deny(missing_docs)]
+
+/// Retained project two-state map: a rational fast branch with a linear recovery, both
+/// clipped to `[-clip_bound, clip_bound]`.
 #[derive(Clone, Debug)]
 pub struct SCClippedRationalRecoveryMapNeuron {
+    /// Fast variable (dimensionless).
     pub x: f64,
+    /// Recovery variable (dimensionless).
     pub y: f64,
+    /// Piecewise fast-map gain (dimensionless).
     pub alpha: f64,
+    /// Recovery decrement coefficient (dimensionless).
     pub beta: f64,
+    /// Constant fast-map offset (dimensionless).
     pub j: f64,
+    /// Upward-crossing observation threshold (dimensionless).
     pub x_threshold: f64,
+    /// Symmetric state saturation bound (dimensionless).
     pub clip_bound: f64,
 }
 
 impl SCClippedRationalRecoveryMapNeuron {
+    /// Create the retained profile at `x` = `y` = 0, with `alpha` = 3, `beta` = 0.001,
+    /// `j` = 0.1, event level 1 and saturation bound 1e6.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -52,6 +65,10 @@ impl SCClippedRationalRecoveryMapNeuron {
     }
 
     /// Checked simultaneous update. Rejected input leaves state unchanged.
+    ///
+    /// The fast field is `alpha * x` for negative `x` and `alpha * x / (1 + alpha * x)`
+    /// otherwise. `x' = field + y + current + j` and `y' = y - beta * (x + 1)`, both
+    /// clipped. Returns 1 when `x` crosses `x_threshold` upwards, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.parameters_are_valid() {
             return Err("invalid SC rational-recovery runtime state");
@@ -78,10 +95,17 @@ impl SCClippedRationalRecoveryMapNeuron {
         Ok(event)
     }
 
+    /// Advance as `try_step` does and return its event; an error returns 0 and leaves the
+    /// state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Run `n_steps` checked updates with a constant `current`; return `x` after each step
+    /// and the number of events.
+    ///
+    /// This is not atomic: an error stops the run and is returned, the steps already taken
+    /// stay in the state, and the partial trace is dropped.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -96,6 +120,7 @@ impl SCClippedRationalRecoveryMapNeuron {
         Ok((trace, events))
     }
 
+    /// Set `x` and `y` to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;

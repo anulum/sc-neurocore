@@ -8,17 +8,26 @@
 
 //! Ibarz analysis profile of the Shilnikov-Rulkov discrete map neuron.
 
+#![deny(missing_docs)]
+
 /// Ibarz et al. (2007) analysis profile of the Shilnikov-Rulkov (2004) map.
 #[derive(Clone, Debug)]
 pub struct IbarzTanakaMapNeuron {
+    /// Fast variable (dimensionless).
     pub v: f64,
+    /// Slow variable (dimensionless).
     pub u: f64,
+    /// Fast-map geometry parameter in Eq. 3 (dimensionless).
     pub alpha: f64,
+    /// Positive slow-variable timescale in Eq. 2 (dimensionless).
     pub mu: f64,
+    /// Slow-nullcline offset in Eq. 2 (dimensionless).
     pub sigma: f64,
 }
 
 impl IbarzTanakaMapNeuron {
+    /// Create the analysis profile at `v` = -1 and `u` = -0.1, with `alpha` = 1,
+    /// `mu` = 0.001 and `sigma` = 0.1.
     pub fn new() -> Self {
         Self {
             v: -1.0,
@@ -63,6 +72,14 @@ impl IbarzTanakaMapNeuron {
     }
 
     /// Checked source-derived update; a rejected step leaves the state intact.
+    ///
+    /// The fast map has four branches in `v`, with `top = 1 + current + u`:
+    /// - below `-1 - alpha / 2`, `-alpha^2 / 4 - alpha + current + u`, the same for every `v`;
+    /// - up to 0, `alpha * v + (v + 1)^2 + current + u`;
+    /// - above 0 and below `top`, the value `top`;
+    /// - at or above `top`, a reset to -1, which returns 1 (every other branch returns 0).
+    ///
+    /// `u` becomes `u - mu * (v + 1 - sigma)`, from the old `v`.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.v.is_finite() || !self.u.is_finite() || !self.parameters_are_valid() {
             return Err("invalid Ibarz-Tanaka runtime state");
@@ -82,6 +99,9 @@ impl IbarzTanakaMapNeuron {
     }
 
     /// Run checked Eq. 2-3 iterations and return the post-step `v` trace.
+    ///
+    /// The batch runs on a copy and is failure-atomic: an error is returned and the state
+    /// is left unchanged.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -99,6 +119,7 @@ impl IbarzTanakaMapNeuron {
         Ok((trace, events))
     }
 
+    /// Return `v` and `u` to -1 and -0.1; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = -1.0;
         self.u = -0.1;

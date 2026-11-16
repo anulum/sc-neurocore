@@ -8,21 +8,37 @@
 
 //! Source-faithful Courbage-Nekorkin-Vdovin map with Figure-4 defaults.
 
+#![deny(missing_docs)]
+
+/// Courbage-Nekorkin-Vdovin piecewise-linear map with the source's Figure-4 defaults. The
+/// type name keeps the historical spelling `CourageNekorkin`.
 #[derive(Clone, Debug)]
 pub struct CourageNekorkinMapNeuron {
+    /// Fast variable (dimensionless).
     pub x: f64,
+    /// Slow variable (dimensionless).
     pub y: f64,
+    /// Slope of the resting branch of the piecewise fast map (dimensionless).
     pub m0: f64,
+    /// Slope of the spike-generating branch of the piecewise fast map (dimensionless).
     pub m1: f64,
+    /// Breakpoint location of the piecewise fast map (dimensionless).
     pub a: f64,
+    /// Threshold of the slow regenerative (bursting) term (dimensionless).
     pub d: f64,
+    /// Set-point of the fast variable in the slow-variable update (dimensionless).
     pub j: f64,
+    /// Strength of the slow regenerative (bursting) reinjection (dimensionless).
     pub beta: f64,
+    /// Slow-variable timescale; small values give slow bursting (dimensionless).
     pub eps: f64,
+    /// Level on x at which a spike is registered (dimensionless).
     pub x_threshold: f64,
 }
 
 impl CourageNekorkinMapNeuron {
+    /// Create the map at `x` = `y` = 0 with the Figure-4 defaults and an observation level
+    /// of 0.3.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -76,6 +92,11 @@ impl CourageNekorkinMapNeuron {
     }
 
     /// Checked simultaneous update. Rejected input leaves state unchanged.
+    ///
+    /// `x' = x + F(x) - y - beta * H(x - d) + current`, where `F` is the three-branch
+    /// piecewise-linear field and `H` the Heaviside step, 1 at `x = d`, and
+    /// `y' = y + eps * (x - j)`. Both
+    /// use the old state. Returns 1 when `x` crosses `x_threshold` upwards, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.parameters_are_valid() {
             return Err("invalid Courbage runtime state");
@@ -109,6 +130,11 @@ impl CourageNekorkinMapNeuron {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Run `n_steps` checked updates with a constant `current`; return `x` after each step
+    /// and the number of events.
+    ///
+    /// This is not atomic: an error stops the run and is returned, the steps already taken
+    /// stay in the state, and the partial trace is dropped.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -123,6 +149,7 @@ impl CourageNekorkinMapNeuron {
         Ok((trace, events))
     }
 
+    /// Set `x` and `y` to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;

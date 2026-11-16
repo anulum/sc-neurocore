@@ -8,13 +8,20 @@
 
 //! Checked implementation of Aihara's reduced one-state map (1989, Eqs. 10-12).
 
+#![deny(missing_docs)]
+
 /// Aihara's internal-state map and graded logistic output.
 #[derive(Clone, Debug)]
 pub struct AiharaMapNeuron {
+    /// Internal state `y(t)` (dimensionless); the output is `x = f(y)`.
     pub y: f64,
+    /// Refractory-memory decay (dimensionless).
     pub k: f64,
+    /// Refractory-output scale (dimensionless).
     pub alpha: f64,
+    /// Constant effective stimulus a (dimensionless).
     pub bias: f64,
+    /// Logistic steepness (dimensionless).
     pub epsilon: f64,
 }
 
@@ -25,6 +32,8 @@ impl Default for AiharaMapNeuron {
 }
 
 impl AiharaMapNeuron {
+    /// Create the source profile: `y` = 0.1, `k` = 0.7, `alpha` = 1, `bias` = 0.3968,
+    /// `epsilon` = 0.01.
     pub fn new() -> Self {
         Self {
             y: 0.1,
@@ -60,6 +69,9 @@ impl AiharaMapNeuron {
     }
 
     /// Checked Eq. 10 update; failures never mutate state.
+    ///
+    /// The new state is `k * y - alpha * f(y) + bias + current`. Returns 1 when `f` of the new
+    /// state reaches 0.5, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, AiharaMapError> {
         if !self.valid() {
             return Err(AiharaMapError::InvalidConfiguration);
@@ -76,21 +88,29 @@ impl AiharaMapNeuron {
         Ok(event)
     }
 
-    /// Compatibility update for the engine network runner.
+    /// Compatibility update for the engine network runner; a refused step returns 0 and
+    /// leaves the state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Return `y` to 0.1; the parameters are kept.
     pub fn reset(&mut self) {
         self.y = 0.1;
     }
 }
 
+/// Reasons an Aihara update or batch is refused.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AiharaMapError {
+    /// A state or parameter is non-finite, `k` is outside `[0, 1)`, or `alpha` or `epsilon`
+    /// is not positive.
     InvalidConfiguration,
+    /// An input current is non-finite.
     NonFiniteInput,
+    /// The updated state would be non-finite.
     NonFiniteCandidate,
+    /// A batch has more steps than `i32::MAX`.
     StepLimitExceeded,
 }
 
@@ -107,13 +127,20 @@ impl std::fmt::Display for AiharaMapError {
 
 impl std::error::Error for AiharaMapError {}
 
+/// Traces of a complete batch from `simulate_aihara_map`.
 #[derive(Clone, Debug)]
 pub struct AiharaMapBatchResult {
+    /// Internal state after each step.
     pub y: Vec<f64>,
+    /// Graded output `f(y)` after each step.
     pub x: Vec<f64>,
+    /// Event flag of each step.
     pub spikes: Vec<u8>,
+    /// Final internal state.
     pub y_final: f64,
+    /// Final graded output.
     pub x_final: f64,
+    /// Number of steps with an event.
     pub spike_count: usize,
 }
 

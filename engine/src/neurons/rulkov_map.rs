@@ -8,17 +8,26 @@
 
 //! Rulkov discrete map neuron.
 
+#![deny(missing_docs)]
+
 /// Rulkov (2002) piecewise nonlinear map for fast/slow bursting.
 #[derive(Clone, Debug)]
 pub struct RulkovMapNeuron {
+    /// Fast variable (dimensionless).
     pub x: f64,
+    /// Slow variable (dimensionless).
     pub y: f64,
+    /// Fast-map nonlinearity control parameter (dimensionless).
     pub alpha: f64,
+    /// Slow-map parameter setting the DC drive (dimensionless).
     pub sigma: f64,
+    /// Slow-map timescale; small values slow the recovery variable (dimensionless).
     pub mu: f64,
 }
 
 impl RulkovMapNeuron {
+    /// Create the map at `x` = -1 and `y` = -3, with `alpha` = 4, `sigma` = -1.6 and
+    /// `mu` = 0.001.
     pub fn new() -> Self {
         Self {
             x: -1.0,
@@ -63,6 +72,11 @@ impl RulkovMapNeuron {
         }
     }
     /// Checked source update; an invalid candidate leaves state unchanged.
+    ///
+    /// For `x <= 0`, `x' = alpha / (1 - x) + y + current`; for `0 < x < alpha + y + current`,
+    /// `x'` is that bound; otherwise `x' = -1`, the reset, which returns `Some(1)`. The slow
+    /// update is `y' = y - mu * (x + 1) + mu * sigma`, from the old `x`. Returns `None` for
+    /// an invalid state, input or candidate.
     pub fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return None;
@@ -77,9 +91,10 @@ impl RulkovMapNeuron {
         self.try_step(current).unwrap_or(0)
     }
     /// Run `n_steps` under a constant input, returning the `x` trace and the
-    /// reset-branch event count. Reuses `step` so the trace is bit-identical to
-    /// the per-step path and to the Python reference. The final state is left
-    /// in `self.x` / `self.y`.
+    /// reset-branch event count. Reuses `try_step` (through `try_simulate`) so the
+    /// trace is bit-identical to the per-step path and to the Python reference. The
+    /// final state is left in `self.x` / `self.y`. An invalid stage returns an empty trace
+    /// and 0 events, and leaves the state unchanged.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
         self.try_simulate(n_steps, current).unwrap_or_default()
     }
@@ -95,6 +110,7 @@ impl RulkovMapNeuron {
         *self = candidate;
         Some((trace, events))
     }
+    /// Return `x` and `y` to -1 and -3; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = -1.0;
         self.y = -3.0;

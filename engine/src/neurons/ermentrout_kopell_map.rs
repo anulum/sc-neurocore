@@ -8,6 +8,8 @@
 
 //! Ermentrout-Kopell theta map neuron.
 
+#![deny(missing_docs)]
+
 /// Ermentrout-Kopell canonical Type I — theta neuron in map form.
 ///
 /// The canonical model for Type I (saddle-node) excitability.
@@ -17,9 +19,13 @@
 /// Ermentrout & Kopell, SIAM J Appl Math 46:233, 1986.
 #[derive(Clone, Debug)]
 pub struct ErmentroutKopellMapNeuron {
-    pub theta: f64, // Phase variable [0, 2*pi)
+    /// Phase variable \[0, 2\*pi).
+    pub theta: f64,
+    /// Map step (dimensionless time).
     pub dt: f64,
+    /// Input gain applied to the phase advance (dimensionless).
     pub gain: f64,
+    /// Phase value at which a spike is registered (dimensionless).
     pub theta_threshold: f64,
 }
 
@@ -30,6 +36,7 @@ impl Default for ErmentroutKopellMapNeuron {
 }
 
 impl ErmentroutKopellMapNeuron {
+    /// Create a neuron at phase 0 with `dt` = 0.1, gain 1 and the spike level at pi.
     pub fn new() -> Self {
         Self {
             theta: 0.0,
@@ -48,6 +55,10 @@ impl ErmentroutKopellMapNeuron {
     }
 
     /// Checked update. Rejected input or candidates leave phase unchanged.
+    ///
+    /// The phase advances by `dt * ((1 - cos theta) + (1 + cos theta) * gain * current)`.
+    /// Returns 1 when the advanced phase, before wrapping, reaches `theta_threshold` from
+    /// below, else 0; the phase is then wrapped to `[0, 2*pi)`.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.parameters_are_valid() {
             return Err("invalid Ermentrout-Kopell runtime state");
@@ -85,10 +96,11 @@ impl ErmentroutKopellMapNeuron {
 
     /// Run `n_steps` under a constant input, returning the `theta` trace
     /// (wrapped to `[0, 2*pi)`) and the upward-crossing spike count. Reuses
-    /// `step` so the trace matches the per-step path; on a shared libm it also
+    /// `try_step` so the trace matches the per-step path; on a shared libm it also
     /// matches the Python reference bit-for-bit (the only transcendental is
     /// `cos`, and the non-chaotic phase flow does not amplify ULP differences).
-    /// The final state is left in `self.theta`.
+    /// The final state is left in `self.theta`. The first error stops the run and is
+    /// returned; the steps before it stay in the state.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -104,6 +116,7 @@ impl ErmentroutKopellMapNeuron {
         Ok((trace, spikes))
     }
 
+    /// Set the phase to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.theta = 0.0;
     }

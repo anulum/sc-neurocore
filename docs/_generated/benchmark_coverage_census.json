@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 35,
-    "outdated": 109,
+    "current": 28,
+    "outdated": 116,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 10,
-    "outdated": 76,
+    "current": 4,
+    "outdated": 82,
     "unbound": 1
   },
   "rows": [
@@ -286,6 +286,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "engine/src/neurons/cazelles_map.rs",
             "src/sc_neurocore/neurons/models/cazelles_map.py"
           ],
           "currency": "outdated",
@@ -334,7 +335,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/chialvo_map.rs"
           ],
           "currency": "outdated",
           "name": "bench_chialvo_map.json",
@@ -418,7 +420,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/courage_nekorkin_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_courage_nekorkin_map_simulate.json",
           "script": "bench_courage_nekorkin_map_simulate.py"
         }
@@ -583,7 +588,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/ermentrout_kopell_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_ermentrout_kopell_map.json",
           "script": "bench_ermentrout_kopell_map.py"
         }
@@ -916,6 +924,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/ibarz_tanaka_map.rs",
             "src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron.toml"
           ],
           "currency": "outdated",
@@ -987,6 +996,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/jansen_rit.rs",
             "engine/src/neurons/mod.rs"
           ],
           "currency": "outdated",
@@ -1220,7 +1230,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "bridge/sc_neurocore_engine/__init__.py"
+            "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neurons/medvedev_map.rs"
           ],
           "currency": "outdated",
           "name": "bench_medvedev_map.json",
@@ -1620,7 +1631,10 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/rulkov_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_rulkov_map.json"
         }
       ],
@@ -1646,7 +1660,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/sc_clipped_logistic_bursting_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_sc_clipped_logistic_bursting_map.json",
           "script": "bench_sc_clipped_logistic_bursting_map.py"
         }
@@ -1661,7 +1678,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/sc_clipped_rational_recovery_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_sc_clipped_rational_recovery_map.json",
           "script": "bench_sc_clipped_rational_recovery_map.py"
         }
@@ -1906,7 +1926,10 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "current",
+          "changed": [
+            "engine/src/neurons/sc_upward_crossing_rulkov_map.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_sc_upward_crossing_rulkov_map.json"
         }
       ],
@@ -2357,7 +2380,10 @@
   },
   "uncited_bound_records": [
     {
-      "currency": "current",
+      "changed": [
+        "engine/src/neurons/aihara_map.rs"
+      ],
+      "currency": "outdated",
       "name": "bench_aihara_map.json"
     },
     {

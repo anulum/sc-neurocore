@@ -8,18 +8,32 @@
 
 //! Equation-(6) dynamics and an atomic explicit-Euler batch implementation.
 
+#![deny(missing_docs)]
+
 /// One Jansen–Rit cortical column with states `[y0, y1, y2, y3, y4, y5]`.
 #[derive(Clone, Debug)]
 pub struct JansenRitUnit {
+    /// State `[y0, y1, y2, y3, y4, y5]` (mV and mV/s). `y0`, `y1` and `y2` are the
+    /// pyramidal, excitatory and inhibitory post-synaptic potentials, and `y3` to `y5` their
+    /// time derivatives.
     pub y: [f64; 6],
+    /// Excitatory synaptic gain A (mV).
     pub a_exc: f64,
+    /// Inhibitory synaptic gain B (mV).
     pub b_exc: f64,
+    /// Excitatory inverse synaptic time constant a (1/s).
     pub a_rate: f64,
+    /// Inhibitory inverse synaptic time constant b (1/s).
     pub b_rate: f64,
+    /// Base connectivity C1; C2=0.8\*C1 and C3=C4=0.25\*C1 (dimensionless).
     pub c: f64,
+    /// Half the maximum population firing rate (1/s).
     pub e0: f64,
+    /// Sigmoid midpoint (mV).
     pub v0: f64,
+    /// Sigmoid slope (1/mV).
     pub r: f64,
+    /// Euler step (s); 0.1 ms by default.
     pub dt: f64,
 }
 
@@ -41,6 +55,9 @@ impl JansenRitUnit {
     }
 
     /// Construct and validate one configured state.
+    ///
+    /// The state arguments come as `y0, y3, y1, y4, y2, y5`, each potential followed by its
+    /// derivative, and are stored as `[y0, y1, y2, y3, y4, y5]`.
     #[allow(clippy::too_many_arguments)]
     pub fn with_parameters(
         y0: f64,
@@ -183,17 +200,29 @@ impl Default for JansenRitUnit {
 
 /// Per-step state and EEG traces returned by the batch implementation.
 pub struct JansenRitTrace {
+    /// `y0` after each step.
     pub y0: Vec<f64>,
+    /// `y3` after each step.
     pub y3: Vec<f64>,
+    /// `y1` after each step.
     pub y1: Vec<f64>,
+    /// `y4` after each step.
     pub y4: Vec<f64>,
+    /// `y2` after each step.
     pub y2: Vec<f64>,
+    /// `y5` after each step.
     pub y5: Vec<f64>,
+    /// EEG-like output `y1 - y2` after each step.
     pub eeg: Vec<f64>,
+    /// State after the last step; the initial state for an empty drive.
     pub final_state: [f64; 6],
 }
 
 /// Simulate a complete external-drive batch.
+///
+/// The state and parameters are taken in the order of [`JansenRitUnit::with_parameters`],
+/// one step runs per drive value, and nothing outside the call changes; the first refused
+/// step returns its error.
 #[allow(clippy::too_many_arguments)]
 pub fn simulate(
     y0: f64,

@@ -8,19 +8,30 @@
 
 //! Chialvo discrete map neuron.
 
+#![deny(missing_docs)]
+
 /// Chialvo 1995 — 2D discrete map neuron.
 #[derive(Clone, Debug)]
 pub struct ChialvoMapNeuron {
+    /// Fast (activation) variable (dimensionless).
     pub x: f64,
+    /// Recovery variable (dimensionless).
     pub y: f64,
+    /// Recovery-variable persistence coefficient (dimensionless).
     pub a: f64,
+    /// Fast-to-recovery coupling coefficient (dimensionless).
     pub b: f64,
+    /// Additive recovery-variable offset (dimensionless).
     pub c: f64,
+    /// Constant additive fast-variable bias (dimensionless).
     pub k: f64,
+    /// Maintained upward-crossing observation level; not a source parameter (dimensionless).
     pub x_threshold: f64,
 }
 
 impl ChialvoMapNeuron {
+    /// Create the map at `x` = `y` = 0 with the default parameters (a 0.89, b 0.6, c 0.28,
+    /// k 0.04) and an observation level of 1.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -47,6 +58,11 @@ impl ChialvoMapNeuron {
     }
 
     /// Checked Chialvo update used by the production batch dispatcher.
+    ///
+    /// Both variables update from the old state: `x' = x^2 * exp(y - x) + k + current`, with
+    /// the exponent clamped to `[-500, 500]`, and `y' = a * y - b * x + c`. Returns 1 when
+    /// `x` crosses `x_threshold` upwards, else 0. A non-finite state, input or candidate
+    /// returns an error and leaves the state unchanged.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.is_valid() {
             return Err("invalid Chialvo map runtime state");
@@ -114,6 +130,7 @@ impl ChialvoMapNeuron {
         Ok((x_trace, spikes))
     }
 
+    /// Set `x` and `y` to 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;

@@ -8,24 +8,39 @@
 
 //! Medvedev first-return map neuron.
 
+#![deny(missing_docs)]
+
 /// Medvedev (2005) calibrated slow-calcium first-return map.
 #[derive(Clone, Debug)]
 pub struct MedvedevMapNeuron {
+    /// Slow calcium variable at the return section (dimensionless).
     pub u: f64,
+    /// Source bifurcation parameter defining the left/inner boundary u_0 (dimensionless).
     pub beta_0: f64,
+    /// Source homoclinic parameter defining u_HC (dimensionless).
     pub beta_hc: f64,
+    /// Source saddle-node parameter defining the Eq. 4.15 return u_SN (dimensionless).
     pub beta_sn: f64,
+    /// Slow calcium-removal coefficient used by the source branch boundaries (dimensionless).
     pub delta: f64,
+    /// Calibrated exponential-relaxation factor for Eq. 4.4 (dimensionless).
     pub decay_t0: f64,
+    /// Calibrated affine-return coefficient for Eq. 4.8 (dimensionless).
     pub alpha_t0: f64,
+    /// Calibrated fast-subsystem average on the active branch (dimensionless).
     pub f_0: f64,
+    /// Calibrated fast-subsystem average at the homoclinic boundary (dimensionless).
     pub f_1: f64,
+    /// Calibrated Eq. 4.13 boundary-layer exponent (dimensionless).
     pub homoclinic_exponent: f64,
+    /// Calibrated Eq. 4.13 logarithm argument scale (dimensionless).
     pub d: f64,
+    /// Maintained external perturbation gain on active returns; zero current recovers the source map (dimensionless).
     pub input_gain: f64,
 }
 
 impl MedvedevMapNeuron {
+    /// Create the calibrated source profile, starting at `u = u_SN`.
     pub fn new() -> Self {
         Self {
             u: 0.251_407_883_672_443_6,
@@ -109,6 +124,14 @@ impl MedvedevMapNeuron {
     }
 
     /// Checked source-derived update; a rejected step leaves the state intact.
+    ///
+    /// There are three branches:
+    /// - at or below `u_0`, the exponential relaxation towards `f_0`;
+    /// - at or below `u_HC`, the boundary-layer return through the homoclinic logarithm;
+    /// - above `u_HC`, the saddle-node return `u_SN`.
+    ///
+    /// The first two add `input_gain * current`. Returns 1 when `u` before the update is at
+    /// or below `u_HC`, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.u.is_finite() || !self.parameters_are_valid() {
             return Err("invalid Medvedev first-return runtime state");
@@ -129,6 +152,9 @@ impl MedvedevMapNeuron {
     }
 
     /// Run checked first-return iterations, returning the `u` trace and events.
+    ///
+    /// This is not atomic: the first error stops the run and is returned, the steps before
+    /// it stay in the state, and the partial trace is dropped.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -143,6 +169,7 @@ impl MedvedevMapNeuron {
         Ok((trace, events))
     }
 
+    /// Set `u` to `u_SN` when the parameters are valid; otherwise nothing changes.
     pub fn reset(&mut self) {
         if self.parameters_are_valid() {
             self.u = self.u_sn();

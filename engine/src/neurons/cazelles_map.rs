@@ -8,28 +8,47 @@
 
 //! Source-faithful scalar map from Cazelles et al. (2001).
 
+#![deny(missing_docs)]
+
 /// Four-branch map with the source's Figure-1 defaults.
 #[derive(Clone, Debug)]
 pub struct CazellesMapNeuron {
+    /// Map state (dimensionless), kept within `[x0, x4]`.
     pub x: f64,
+    /// Source self-feedback coefficient (dimensionless).
     pub alpha: f64,
+    /// Source exponent m, restricted to 1 or 2 (dimensionless).
     pub exponent: u8,
+    /// Lower map-domain boundary (dimensionless).
     pub x0: f64,
+    /// First branch breakpoint and slow-regime boundary (dimensionless).
     pub x1: f64,
+    /// Second branch breakpoint (dimensionless).
     pub x2: f64,
+    /// Third branch breakpoint (dimensionless).
     pub x3: f64,
+    /// Upper map-domain boundary (dimensionless).
     pub x4: f64,
+    /// Branch-1 intercept (dimensionless).
     pub a1: f64,
+    /// Branch-2 intercept (dimensionless).
     pub a2: f64,
+    /// Branch-3 intercept (dimensionless).
     pub a3: f64,
+    /// Branch-4 intercept (dimensionless).
     pub a4: f64,
+    /// Branch-1 slope (dimensionless).
     pub b1: f64,
+    /// Branch-2 slope (dimensionless).
     pub b2: f64,
+    /// Branch-3 slope (dimensionless).
     pub b3: f64,
+    /// Branch-4 slope (dimensionless).
     pub b4: f64,
 }
 
 impl CazellesMapNeuron {
+    /// Create the map with the source's Figure-1 defaults and `x` = 0.1.
     pub fn new() -> Self {
         Self {
             x: 0.1,
@@ -99,6 +118,11 @@ impl CazellesMapNeuron {
     }
 
     /// Checked update; rejected input leaves state unchanged.
+    ///
+    /// The new state is the branch value `a_i + b_i * x` plus `alpha * x^m` plus `current`.
+    /// A result outside `[x0, x4]` by at most `8 * f64::EPSILON * max(|x0|, |x4|, 1)` is
+    /// snapped to the boundary; one further out is refused. Returns 1 when `x` falls from at
+    /// least `x1` to below it, else 0.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.parameters_are_valid() {
             return Err("invalid Cazelles runtime state");
@@ -117,6 +141,11 @@ impl CazellesMapNeuron {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Run `n_steps` checked updates with a constant `current`; return the state after each
+    /// step and the number of events.
+    ///
+    /// This is not atomic: an error stops the run and is returned, the steps already taken
+    /// stay in the state, and the partial trace is dropped.
     pub fn simulate(
         &mut self,
         n_steps: usize,
@@ -131,6 +160,8 @@ impl CazellesMapNeuron {
         Ok((trace, events))
     }
 
+    /// Set `x` to 0.1 when that lies in `[x0, x4]`, else to `x0`. Nothing changes when the
+    /// configuration is invalid and `x0` is not below `x4`; the parameters are kept.
     pub fn reset(&mut self) {
         if self.parameters_are_valid() || self.x0 < self.x4 {
             self.x = if (self.x0..=self.x4).contains(&0.1) {

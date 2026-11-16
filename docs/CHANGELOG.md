@@ -496,6 +496,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 12 top-level map and neural-mass models (Aihara, Cazelles,
+  Chialvo, Courbage-Nekorkin-Vdovin, Ermentrout-Kopell, Ibarz-Tanaka,
+  Jansen-Rit, Medvedev, Rulkov, and the SC clipped-logistic,
+  clipped-rational and upward-crossing Rulkov maps) are documented in full,
+  each file read against its code. Each batch helper's doc says whether it
+  is failure-atomic (Chialvo, Ibarz-Tanaka, Rulkov and the upward-crossing
+  Rulkov map run on a copy) or keeps the steps before an error (Cazelles,
+  Courbage-Nekorkin, Ermentrout-Kopell, Medvedev and the clipped-rational
+  map). Stated by reading: the Cazelles snap tolerance, the Ibarz-Tanaka
+  lowest branch, which depends on the input and the slow state, the
+  Ermentrout-Kopell crossing on the phase before it is wrapped, and the
+  Jansen-Rit argument order `y0, y3, y1, y4, y2, y5`.
 - The engine's 4 population models (Brunel balanced network, El Boustani
   network, Montbrió-Pazó-Roxin mean field, Tsodyks-Uziel-Markram network)
   are documented in full, each file read against its code: which update

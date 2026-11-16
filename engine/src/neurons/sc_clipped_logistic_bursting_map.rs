@@ -8,18 +8,28 @@
 
 //! Retained project-defined clipped-logistic fast/slow map.
 
+#![deny(missing_docs)]
+
 /// Retained two-state clipped-logistic fast/slow recurrence.
 #[derive(Clone, Debug)]
 pub struct SCClippedLogisticBurstingMapNeuron {
+    /// Fast variable (dimensionless), clipped to `[-2, 2]`.
     pub x: f64,
+    /// Slow variable (dimensionless).
     pub y: f64,
+    /// Clipped-logistic fast-map coefficient (dimensionless).
     pub a: f64,
+    /// Slow-variable update coefficient (dimensionless).
     pub epsilon: f64,
+    /// Slow-variable set point (dimensionless).
     pub sigma: f64,
+    /// Maintained level-event threshold (dimensionless).
     pub x_threshold: f64,
 }
 
 impl SCClippedLogisticBurstingMapNeuron {
+    /// Create the retained profile at `x` = 0.1 and `y` = 0, with `a` = 3.8,
+    /// `epsilon` = 0.01, `sigma` = 0.5 and an event level of 0.9.
     pub fn new() -> Self {
         Self {
             x: 0.1,
@@ -30,6 +40,11 @@ impl SCClippedLogisticBurstingMapNeuron {
             x_threshold: 0.9,
         }
     }
+    /// Advance one step and return 1 when the new `x` is at or above `x_threshold` (a level
+    /// event, not a crossing), else 0.
+    ///
+    /// `x' = clamp(a * x * (1 - x) - y + current, -2, 2)` and `y' = y + epsilon * (x - sigma)`,
+    /// both from the old state. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let f = self.a * self.x * (1.0 - self.x);
         let x_new = (f - self.y + current).clamp(-2.0, 2.0);
@@ -56,6 +71,7 @@ impl SCClippedLogisticBurstingMapNeuron {
         }
         (trace, spikes)
     }
+    /// Return `x` and `y` to 0.1 and 0; the parameters are kept.
     pub fn reset(&mut self) {
         self.x = 0.1;
         self.y = 0.0;
