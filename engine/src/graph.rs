@@ -11,6 +11,8 @@
 //! Graph message-passing layer with both rate-mode and SC-mode forward paths.
 //! Supports dense O(n²) and sparse CSR O(nnz) adjacency storage.
 
+#![deny(missing_docs)]
+
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
@@ -20,13 +22,25 @@ use rayon::prelude::*;
 pub struct CsrMatrix {
     /// Length n_rows + 1. `row_offsets[i]..row_offsets[i+1]` indexes into col_indices/values.
     pub row_offsets: Vec<usize>,
+    /// Column of each stored entry, row by row.
     pub col_indices: Vec<usize>,
+    /// Value of each stored entry, in the same order.
     pub values: Vec<f64>,
+    /// Number of rows.
     pub n_rows: usize,
+    /// Number of columns.
     pub n_cols: usize,
 }
 
 impl CsrMatrix {
+    /// Build a CSR matrix after checking it.
+    ///
+    /// # Errors
+    ///
+    /// A message naming the first check that fails: `row_offsets` must have `n_rows + 1`
+    /// entries, start at 0 and not decrease, its last entry must equal the number of
+    /// entries, `col_indices` and `values` must have that length, and every column must be
+    /// below `n_cols`.
     pub fn new(
         row_offsets: Vec<usize>,
         col_indices: Vec<usize>,
@@ -84,11 +98,16 @@ impl CsrMatrix {
         })
     }
 
+    /// Number of stored entries.
     pub fn nnz(&self) -> usize {
         self.values.len()
     }
 
     /// Convert dense row-major matrix to CSR, keeping entries with |value| > threshold.
+    ///
+    /// # Panics
+    ///
+    /// If `dense` holds fewer than `n_rows * n_cols` values.
     pub fn from_dense(dense: &[f64], n_rows: usize, n_cols: usize, threshold: f64) -> Self {
         let mut row_offsets = Vec::with_capacity(n_rows + 1);
         let mut col_indices = Vec::new();
@@ -138,15 +157,37 @@ impl CsrMatrix {
 
 /// Adjacency storage: dense or sparse CSR.
 pub enum AdjStorage {
-    Dense { adj: Vec<f64> },
-    Sparse { csr: CsrMatrix },
+    /// Dense adjacency.
+    Dense {
+        /// The `n_nodes * n_nodes` adjacency, row-major.
+        adj: Vec<f64>,
+    },
+    /// Sparse adjacency.
+    Sparse {
+        /// The adjacency in CSR form, square.
+        csr: CsrMatrix,
+    },
 }
 
+/// Graph message-passing layer.
+///
+/// Each node takes the adjacency-weighted sum of its neighbours' features, divides it by its
+/// degree when that is not 0, multiplies it by `weights` and applies `tanh`.
+/// [`Self::forward`] computes this in floating point, [`Self::forward_sc`] with stochastic
+/// bitstreams.
 pub struct StochasticGraphLayer {
+    /// Number of nodes.
     pub n_nodes: usize,
+    /// Number of features per node, in and out.
     pub n_features: usize,
+    /// The adjacency, dense or CSR.
     pub storage: AdjStorage,
+    /// The `n_features * n_features` transform, row-major: `weights[g * n_features + f]`
+    /// maps input feature `g` to output `f`. Seeded uniform in `[0, 1)` at construction;
+    /// [`Self::forward_sc`] clamps it to `[0, 1]`.
     pub weights: Vec<f64>,
+    /// Each node's adjacency row sum (over the stored entries for CSR), computed at
+    /// construction; the aggregate is divided by it when it is not 0.
     pub degrees: Vec<f64>,
 }
 
@@ -177,6 +218,10 @@ fn csr_degrees(csr: &CsrMatrix) -> Vec<f64> {
 
 impl StochasticGraphLayer {
     /// Construct from dense adjacency matrix (backwards-compatible API).
+    ///
+    /// # Panics
+    ///
+    /// If `adj_flat` does not hold `n_nodes * n_nodes` values.
     pub fn new(adj_flat: Vec<f64>, n_nodes: usize, n_features: usize, seed: u64) -> Self {
         assert_eq!(
             adj_flat.len(),
@@ -213,6 +258,10 @@ impl StochasticGraphLayer {
     }
 
     /// Convert dense adjacency to CSR if density < `density_threshold` (default 0.3).
+    ///
+    /// # Panics
+    ///
+    /// If `adj_flat` does not hold `n_nodes * n_nodes` values.
     pub fn from_dense_auto(
         adj_flat: Vec<f64>,
         n_nodes: usize,
@@ -472,10 +521,17 @@ impl StochasticGraphLayer {
         Ok(out)
     }
 
+    /// Return a copy of the transform weights.
     pub fn get_weights(&self) -> Vec<f64> {
         self.weights.clone()
     }
 
+    /// Replace the transform weights.
+    ///
+    /// # Errors
+    ///
+    /// If `weights` does not hold `n_features * n_features` values; the weights are then
+    /// unchanged.
     pub fn set_weights(&mut self, weights: Vec<f64>) -> Result<(), String> {
         if weights.len() != self.n_features * self.n_features {
             return Err(format!(

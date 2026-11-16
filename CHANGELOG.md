@@ -554,6 +554,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   its format configuration, which accepts only Q8.8 data with a Q16.16
   accumulator, and each error it returns, including that the tap-index
   error covers only an index above `i64::MAX`.
+- The engine's stochastic graph layer (`engine/src/graph.rs`) documents
+  its CSR matrix, its adjacency storage and the layer itself: the
+  degree-normalised aggregation, the layout of the transform weights
+  (which the bitstream pass clamps to [0, 1]), and the checks and panics
+  of its constructors.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file
