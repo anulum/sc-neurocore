@@ -550,6 +550,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   gate kinds, each with the rate law it gives (the NAND and XOR gates
   have none and run on their leak alone), and the fields of a gate and
   of the kinetic configuration, with the units the rates are scaled in.
+- The engine's DCLS Q8.8 reference (`engine/src/scpn/dcls.rs`) documents
+  its format configuration, which accepts only Q8.8 data with a Q16.16
+  accumulator, and each error it returns, including that the tap-index
+  error covers only an index above `i64::MAX`.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

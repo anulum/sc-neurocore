@@ -7,6 +7,8 @@
 
 //! Bit-true Q8.8 reference for the delay-coded learnable-spike tent kernel.
 
+#![deny(missing_docs)]
+
 use std::error::Error;
 use std::fmt;
 
@@ -26,10 +28,16 @@ const I16_MAX_Q16_16: i64 = (i16::MAX as i64) << DEFAULT_FRACTION;
 const I16_MIN_Q16_16: i64 = (i16::MIN as i64) << DEFAULT_FRACTION;
 
 /// Configuration for the bit-true DCLS Q8.8 forward pass.
+///
+/// Only the default format is implemented: a forward pass refuses any other with
+/// [`DclsError::UnsupportedFormat`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DclsLayerConfig {
+    /// Bit width of weights and outputs; 16 is the only accepted value.
     pub data_width: u32,
+    /// Fractional bits of weights, gates and outputs; 8 is the only accepted value.
     pub fraction: u32,
+    /// Bit width of the accumulator; 32 (Q16.16) is the only accepted value.
     pub accumulator_width: u32,
 }
 
@@ -61,25 +69,44 @@ pub struct DclsForwardResult {
 /// DCLS arithmetic contract errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DclsError {
+    /// The configuration is not Q8.8 data with a Q16.16 accumulator, the only format
+    /// implemented.
     UnsupportedFormat {
+        /// The refused data width.
         data_width: u32,
+        /// The refused fractional bits.
         fraction: u32,
+        /// The refused accumulator width.
         accumulator_width: u32,
     },
+    /// No tap: an empty spike row, or `n_taps` of 0 in the batch.
     EmptyTaps,
+    /// The spike and weight rows differ in length; in the batch, either buffer differs from
+    /// channels times `n_taps`.
     MismatchedLengths {
+        /// Length of the spike buffer.
         spikes: usize,
+        /// Length of the weight buffer.
         weights: usize,
     },
+    /// A tent half-width that is not positive.
     InvalidSigma {
+        /// The refused half-width (Q8.8).
         sigma_q88: i16,
     },
+    /// A tap index above `i64::MAX`. Only that conversion is checked: the shift into Q8.8
+    /// that follows is not checked for overflow.
     TapIndexOverflow {
+        /// The refused tap index.
         tap_index: usize,
     },
+    /// No `(centre, sigma)` pair in the batch.
     EmptyChannels,
+    /// The batch's centre and sigma slices differ in length.
     ChannelLengthMismatch {
+        /// Number of centres.
         centres: usize,
+        /// Number of sigmas.
         sigmas: usize,
     },
 }
