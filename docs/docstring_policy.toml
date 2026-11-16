@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2017
+expected_file_count = 2018
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8122,3 +8122,7 @@ rationale = "The homeostatic LIF's reset restores the threshold and the rate tra
 [[file]]
 path = "tests/test_studio_storage_event_stop.py"
 rationale = "Event-stop helper and tests; the finishes are counted only after the repeat of a lost finish reply arrives."
+
+[[file]]
+path = "benchmarks/bench_photonic_crosstalk.py"
+rationale = "Photonic crosstalk benchmark whose source list names photonic/bindings.rs, where its engine calls go."

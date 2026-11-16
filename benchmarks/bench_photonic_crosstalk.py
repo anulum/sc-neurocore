@@ -48,6 +48,7 @@ SOURCES = (
     REPOSITORY / "src/sc_neurocore/accel/julia/photonic_emitter_parity_test.jl",
     MOJO_SOURCE,
     REPOSITORY / "engine/src/photonic.rs",
+    REPOSITORY / "engine/src/photonic/bindings.rs",
 )
 
 

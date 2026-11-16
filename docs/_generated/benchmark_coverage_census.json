@@ -2633,6 +2633,7 @@
     },
     {
       "changed": [
+        "benchmarks/bench_photonic_crosstalk.py",
         "engine/src/photonic.rs",
         "src/sc_neurocore/optics/_photonic_crosstalk.py"
       ],

@@ -782,6 +782,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The photonic crosstalk benchmark hashes `engine/src/photonic/bindings.rs`
+  as well. Its engine lane calls the crosstalk functions defined there since
+  the bindings moved out of `engine/src/photonic.rs`, so a change to them
+  was not recorded in a new measurement's source digests. The committed
+  record is unchanged; its digests are checked at its own commit.
+
 - A Studio event-stop test counted the storage authority's finish requests
   as soon as `wait` returned. The authority applies the first finish before
   its reply is lost, so the record is terminal before the supervising
