@@ -782,6 +782,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A Studio event-stop test counted the storage authority's finish requests
+  as soon as `wait` returned. The authority applies the first finish before
+  its reply is lost, so the record is terminal before the supervising
+  generation sends the identical repeat, and on a loaded host `wait` returned
+  in between: a hosted coverage shard saw one finish where two were expected.
+  The shared helper now waits, up to 60 seconds, for the repeat before it
+  counts, and a new test holds the repeat back for half a second, which
+  fails against the old helper.
+
 - `HomeostaticLIFNeuron.reset_state` now restores the threshold and the rate
   trace the neuron was built with, as well as returning `v` to rest. It
   inherited the stochastic LIF's reset, which kept both adapted values, so a

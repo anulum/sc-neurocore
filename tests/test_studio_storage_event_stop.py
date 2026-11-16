@@ -8,14 +8,22 @@
 
 """Stop actual event training without losing its full declared input or custody."""
 
+import socket
 import time
+from collections.abc import Sequence
 from typing import Literal
 
 import pytest
 
+from sc_neurocore.studio.platform import storage_generation_exchanges as exchanges
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.jobs_worker_recovery import worker_group_stopped
+from sc_neurocore.studio.platform.storage_finish_client import exchange_finish as real_exchange
+from sc_neurocore.studio.platform.storage_finish_protocol import (
+    StorageFinishRequest,
+    StorageFinishResponse,
+)
 from sc_neurocore.studio.platform.storage_isolated_jobs import IsolatedJobManager
 from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
 from tests.studio_storage_generation_runs import authority as authority
@@ -38,6 +46,10 @@ def exercise_event_stop(
     timeout_seconds: float = 10.0,
 ) -> StudioJobRecord:
     """Stop a running worker and resolve a lost finish reply through real sockets.
+
+    The authority applies the first finish before its reply is lost, so ``wait`` can return on
+    the terminal record before the supervising generation repeats the finish; the finishes are
+    counted only after the repeat has arrived.
 
     Parameters
     ----------
@@ -98,6 +110,12 @@ def exercise_event_stop(
     assert finished.status == ("cancelled" if mode == "cancel" else "timed_out"), finished.error
     assert finished.training_config == config
     assert worker_group_stopped(str(worker[0]), str(worker[1]), int(worker[2]))
+    # The authority applied the first finish and dropped its reply, so the record was terminal
+    # before the supervising generation sent the identical repeat: wait for that repeat.
+    deadline = time.monotonic() + 60
+    while authority.seen.count("finish") < 2:
+        assert time.monotonic() < deadline, "the finish whose reply was lost was not repeated"
+        time.sleep(0.05)
     assert authority.seen.count("finish") == 2
     assert manager.generation_failures == {}
     with request_on("/api/studio/jobs/status", "GET"):
@@ -133,3 +151,53 @@ def test_actual_event_stop_retains_complete_snapshot_and_proves_group_reaped(
 ) -> None:
     """Terminal stop, identical retry and lost reply retain one durable event job."""
     exercise_event_stop(manager, ledger, authority, event_config, mode)
+
+
+def test_a_late_repeated_finish_is_awaited_before_the_finishes_are_counted(
+    manager: IsolatedJobManager,
+    ledger: StudioJobLedger,
+    authority: Authority,
+    event_config: dict[str, object],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The record is terminal once the first finish is applied, before its repeat arrives.
+
+    The authority applies the first finish and drops its reply, so ``wait`` can return on the
+    terminal record while the supervising generation is still sending the identical repeat.
+    Holding that repeat back for half a second makes the order certain: the stop is checked
+    only after the authority has seen both finishes.
+
+    Parameters
+    ----------
+    manager, ledger, authority, event_config :
+        The collaborators of :func:`exercise_event_stop`.
+    monkeypatch : pytest.MonkeyPatch
+        Replaces the finish exchange with one that delays the second attempt.
+    """
+    attempts: list[float] = []
+
+    def late_repeat(
+        channel: socket.socket,
+        request: StorageFinishRequest,
+        payloads: Sequence[bytes],
+        *,
+        expected_service_uid: int,
+        max_bytes: int,
+        deadline: float,
+    ) -> StorageFinishResponse:
+        attempts.append(time.monotonic())
+        if len(attempts) == 2:
+            time.sleep(0.5)
+            deadline += 0.5
+        return real_exchange(
+            channel,
+            request,
+            payloads,
+            expected_service_uid=expected_service_uid,
+            max_bytes=max_bytes,
+            deadline=deadline,
+        )
+
+    monkeypatch.setattr(exchanges, "exchange_finish", late_repeat)
+    exercise_event_stop(manager, ledger, authority, event_config, "cancel")
+    assert len(attempts) == 2
