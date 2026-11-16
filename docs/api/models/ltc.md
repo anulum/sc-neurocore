@@ -494,7 +494,8 @@ println!("Spikes: {}, x: {:.3}", count, neuron.x);
 3. Chen RTQ, Rubanova Y, Bettencourt J, et al. (2018). Neural ordinary differential
    equations. *NeurIPS 2018* pp. 6571–6583.
 
-4. Lechner M, Hasani R, Bhatt DL, et al. (2020). Neural circuit policies enabling
+4. Lechner M, Hasani R, Amini A, Henzinger TA, Rus D, Grosu R (2020). Neural circuit
+   policies enabling
    auditable autonomy. *Nat Mach Intell* 2:642–652.
 
 5. Kidger P (2022). On neural differential equations. *DPhil thesis, University of Oxford*.

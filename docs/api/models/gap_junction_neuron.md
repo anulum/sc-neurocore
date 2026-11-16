@@ -523,10 +523,10 @@ depolarisations that trigger near-simultaneous firing.
 1. Connors, B. W. & Long, M. A. (2004). Electrical synapses in the
    mammalian brain. *Annu Rev Neurosci*, 27, 393–418.
 
-2. Vervaeke, K., Lőrincz, A., Gleeson, P., Farinella, M., Bhatt, D.
+2. Vervaeke, K., Lőrincz, A., Gleeson, P., Farinella, M., Nusser, Z.
    & Silver, R. A. (2010). Rapid desynchronization of an electrically
    coupled interneuron network with sparse excitatory synaptic input.
-   *Neuron*, 65(6), 801–813.
+   *Neuron*, 67(3), 435–451.
 
 3. Llinás, R., Baker, R. & Sotelo, C. (1974). Electrotonic coupling
    between neurons in cat inferior olive. *J Neurophysiol*, 37(3),
@@ -553,9 +553,10 @@ depolarisations that trigger near-simultaneous firing.
    synapses perform complementary roles in the synchronization of
    interneuronal networks. *Proc Natl Acad Sci*, 101(43), 15482–15487.
 
-9. Traub, R. D., Bhatt, D. & Bhatt, E. (2001). Gap junctions between
-   interneuron dendrites can enhance synchrony of gamma oscillations
-   in distributed networks. *J Neurosci*, 21(23), 9478–9486.
+9. Traub, R. D., Kopell, N., Bibbig, A., Buhl, E. H., LeBeau, F. E. N.
+   & Whittington, M. A. (2001). Gap junctions between interneuron
+   dendrites can enhance synchrony of gamma oscillations in distributed
+   networks. *J Neurosci*, 21(23), 9478–9486.
 
 10. Deans, M. R., Gibson, J. R., Sellitto, C., Connors, B. W. & Paul,
     D. L. (2001). Synchronous activity of inhibitory networks in

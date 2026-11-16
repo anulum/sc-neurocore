@@ -27,7 +27,8 @@
 /// The nonlinear capacitance (NLC) that peaks near V_pk is not modelled: `v_pk` is only
 /// the Boltzmann midpoint, and `q_max` is not read.
 ///
-/// Prestin motility (Santos-Sacchi 2006):
+/// Prestin motility (a form attributed to Santos-Sacchi 2006, under review: its abstract
+/// shows neither this form nor the asymmetry term):
 ///   charge = Q_max / (1 + exp(z_e*(V-V_pk)/(kT)))
 ///   ΔL = L_max * (0.5 - charge/Q_max) * asym(V)
 ///

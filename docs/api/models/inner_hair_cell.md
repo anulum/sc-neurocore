@@ -542,7 +542,7 @@ At zero displacement ($p_{open} = 0.5$ due to resting tension on tip links), the
 7. Howard, J. & Hudspeth, A. J. (1988). Compliance of the hair bundle associated with gating of mechanoelectrical transduction channels in the bullfrog's saccular hair cell. *Neuron* 1, 189–199.
 8. Russell, I. J. & Sellick, P. M. (1978). Intracellular studies of hair cells in the mammalian cochlea. *J. Physiol.* 284, 261–290.
 9. Roberts, W. M. (1993). Spatial calcium buffering in saccular hair cells. *Nature* 363, 74–76.
-10. Zilany, M. S. A., Bruce, I. C. & Bhatt, K. A. (2014). Updated parameters and expanded simulation options for a model of the auditory periphery. *J. Acoust. Soc. Am.* 135, 283–286.
+10. Zilany, M. S. A., Bruce, I. C. & Carney, L. H. (2014). Updated parameters and expanded simulation options for a model of the auditory periphery. *J. Acoust. Soc. Am.* 135, 283–286.
 11. Smith, R. L. (1977). Short-term adaptation in single auditory nerve fibres: some poststimulatory effects. *J. Neurophysiol.* 40, 1098–1111.
 12. Pangrsic, T., Lasarow, L., Reuter, K. et al. (2010). Hearing requires otoferlin-dependent efficient replenishment of synaptic vesicles in hair cells. *Nat. Neurosci.* 13, 869–876.
 

@@ -2,7 +2,7 @@
 
 **Module:** `engine/src/neurons/simple_spiking/lnm.rs`
 **Rust struct:** `LearnableNeuronModel`
-**Reference:** Jahns et al., 2025
+**Reference:** Jolivet, Rauch, Lüscher & Gerstner, *J Comput Neurosci* 21:35–49, 2006
 **Family:** Integrate-and-fire (fully learnable, parameterised activation + decay)
 **State variables:** `v` (membrane potential)
 
@@ -184,7 +184,7 @@ With γ feedback, the effective input is slightly higher, reducing ISI.
 | Dynamics | Can be bistable | Always monostable |
 | Expressiveness | Higher | Lower |
 | Computation | 1 exp + 2 mul-add | 2 mul-add |
-| Reference | Jahns et al. 2025 | Eshraghian et al. 2021 |
+| Reference | Jolivet et al. 2006 | Eshraghian et al. 2023 |
 
 ---
 
@@ -445,25 +445,26 @@ println!("Spikes: {}, v: {:.3}", count, neuron.v);
 
 ## References
 
-1. Jahns M, Bhatt DL, Bhatt SG, et al. (2025). Learnable neuron models for spiking
-   neural network optimisation. *Preprint*.
+1. Jolivet R, Rauch A, Lüscher H-R, Gerstner W (2006). Predicting spike timing of
+   neocortical pyramidal neurons by simple threshold models. *J Comput Neurosci* 21:35–49.
 
-2. Eshraghian JK, Ward M, Bhatt DL, et al. (2021). Training spiking neural networks
+2. Eshraghian JK, Ward M, Neftci EO, et al. (2023). Training spiking neural networks
    using lessons from deep learning. *Proc IEEE* 111:1016–1054.
 
 3. Neftci EO, Mostafa H, Zenke F (2019). Surrogate gradient learning in spiking neural
    networks. *IEEE Signal Process Mag* 36:51–63.
 
-4. Fang W, Yu Z, Bhatt DL, et al. (2021). Incorporating learnable membrane time constants
-   to enhance learning of spiking neural networks. *ICCV 2021* pp. 2661–2671.
+4. Fang W, Yu Z, Chen Y, Masquelier T, Huang T, Tian Y (2021). Incorporating learnable
+   membrane time constant to enhance learning of spiking neural networks. *ICCV 2021*
+   pp. 2641–2651.
 
-5. Bellec G, Salaj D, Bhatt DL, et al. (2020). A solution to the learning dilemma for
+5. Bellec G, Scherr F, Subramoney A, et al. (2020). A solution to the learning dilemma for
    recurrent networks of spiking neurons. *Nat Commun* 11:3625.
 
 6. Zenke F, Ganguli S (2018). SuperSpike: supervised learning in multilayer spiking neural
    networks. *Neural Comput* 30:1514–1541.
 
-7. Wu Y, Deng L, Bhatt DL, et al. (2018). Spatio-temporal backpropagation for training
+7. Wu Y, Deng L, Li G, Zhu J, Shi L (2018). Spatio-temporal backpropagation for training
    high-performance spiking neural networks. *Front Neurosci* 12:331.
 
 8. Gerstner W, Kistler WM (2002). *Spiking Neuron Models.* Cambridge University Press.
@@ -471,13 +472,15 @@ println!("Spikes: {}, v: {:.3}", count, neuron.v);
 9. Maass W (1997). Networks of spiking neurons: the third generation of neural network
    models. *Neural Netw* 10:1659–1671.
 
-10. Tavanaei A, Ghodrati M, Bhatt DL, et al. (2019). Deep learning in spiking neural
+10. Tavanaei A, Ghodrati M, Kheradpisheh SR, Masquelier T, Maida A (2019). Deep learning in
+    spiking neural
     networks. *Neural Netw* 111:47–63.
 
 11. Shrestha SB, Orchard G (2018). SLAYER: spike layer error reassignment in time.
     *NeurIPS 2018* pp. 1412–1421.
 
-12. Lee C, Bhatt DL, Bhatt SG, et al. (2020). Enabling spike-based backpropagation for
+12. Lee C, Sarwar SS, Panda P, Srinivasan G, Roy K (2020). Enabling spike-based
+    backpropagation for
     training deep neural network architectures. *Front Neurosci* 14:119.
 
 ---

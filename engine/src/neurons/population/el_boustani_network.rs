@@ -18,7 +18,7 @@
 /// tau_i * dr_i/dt = -r_i + phi(J_ie*r_e - J_ii*r_i)
 /// tau_s * ds/dt = -s + gamma * r_e * (1 - s)
 ///
-/// El Boustani & Bhatt, J Comput Neurosci 26:313, 2009.
+/// El Boustani & Destexhe, Neural Comput 21:46, 2009.
 #[derive(Clone, Debug)]
 pub struct ElBoustaniNetwork {
     /// Excitatory rate (Hz), kept within `[0, 200]`.

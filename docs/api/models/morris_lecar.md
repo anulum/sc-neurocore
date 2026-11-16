@@ -581,7 +581,7 @@ it became the standard pedagogical and research model for:
    *Neurocomputing*, 69(4-6), 293–316.
    DOI: [10.1016/j.neucom.2005.03.006](https://doi.org/10.1016/j.neucom.2005.03.006)
 
-6. **Prescott, S. A., De Koninck, Y., & Bhatt, D. H.** (2008).
+6. **Prescott, S. A., De Koninck, Y., & Sejnowski, T. J.** (2008).
    Biophysical basis for three distinct dynamical mechanisms of action potential initiation.
    *PLoS Computational Biology*, 4(10), e1000198.
    DOI: [10.1371/journal.pcbi.1000198](https://doi.org/10.1371/journal.pcbi.1000198)

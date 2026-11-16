@@ -526,13 +526,14 @@ println!("Spikes: {} (expected ~500)", count);
 6. Gerstner W, Kistler WM (2002). *Spiking Neuron Models.* Cambridge University Press.
    Chapter 5: Noise in spiking neuron models.
 
-7. Brown EN, Barbieri R, Bhatt DL, et al. (2002). The time-rescaling theorem and its
+7. Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The time-rescaling theorem and its
    application to neural spike train data analysis. *Neural Comput* 14:325–346.
 
 8. Kass RE, Ventura V (2001). A spike-train probability model. *Neural Comput*
    13:1713–1720.
 
-9. Nawrot MP, Boucsein C, Bhatt DL, et al. (2008). Measurement of variability dynamics
+9. Nawrot MP, Boucsein C, Rodriguez Molina V, Riehle A, Aertsen A, Rotter S (2008).
+   Measurement of variability dynamics
    in cortical spike trains. *J Neurosci Methods* 169:374–390.
 
 10. Snyder DL, Miller MI (1991). *Random Point Processes in Time and Space.* 2nd ed.

@@ -476,7 +476,7 @@ println!("Spikes: {}, v: {:.3}", spike_count, neuron.v);
 
 ## References
 
-1. Eshraghian JK, Ward M, Bhatt DL, et al. (2021). Training spiking neural networks
+1. Eshraghian JK, Ward M, Neftci EO, et al. (2023). Training spiking neural networks
    using lessons from deep learning. *Proc IEEE* 111:1016–1054.
 
 2. Neftci EO, Mostafa H, Zenke F (2019). Surrogate gradient learning in spiking neural
@@ -485,13 +485,14 @@ println!("Spikes: {}, v: {:.3}", spike_count, neuron.v);
 3. Zenke F, Ganguli S (2018). SuperSpike: supervised learning in multilayer spiking neural
    networks. *Neural Comput* 30:1514–1541.
 
-4. Fang W, Yu Z, Bhatt DL, et al. (2021). Incorporating learnable membrane time constants
-   to enhance learning of spiking neural networks. *ICCV 2021* pp. 2661–2671.
+4. Fang W, Yu Z, Chen Y, Masquelier T, Huang T, Tian Y (2021). Incorporating learnable
+   membrane time constant to enhance learning of spiking neural networks. *ICCV 2021*
+   pp. 2641–2651.
 
-5. Bellec G, Salaj D, Bhatt DL, et al. (2020). A solution to the learning dilemma for
+5. Bellec G, Scherr F, Subramoney A, et al. (2020). A solution to the learning dilemma for
    recurrent networks of spiking neurons. *Nat Commun* 11:3625.
 
-6. Wu Y, Deng L, Bhatt DL, et al. (2018). Spatio-temporal backpropagation for training
+6. Wu Y, Deng L, Li G, Zhu J, Shi L (2018). Spatio-temporal backpropagation for training
    high-performance spiking neural networks. *Front Neurosci* 12:331.
 
 7. Shrestha SB, Orchard G (2018). SLAYER: spike layer error reassignment in time.
@@ -507,7 +508,8 @@ println!("Spikes: {}, v: {:.3}", spike_count, neuron.v);
 11. Maass W (1997). Networks of spiking neurons: the third generation of neural network
     models. *Neural Netw* 10:1659–1671.
 
-12. Tavanaei A, Ghodrati M, Bhatt DL, et al. (2019). Deep learning in spiking neural
+12. Tavanaei A, Ghodrati M, Kheradpisheh SR, Masquelier T, Maida A (2019). Deep learning in
+    spiking neural
     networks. *Neural Netw* 111:47–63.
 
 ---

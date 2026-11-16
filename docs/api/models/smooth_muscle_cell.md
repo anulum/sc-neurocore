@@ -662,21 +662,21 @@ or providing external current through `gain · I_ext`.
    function. In *Bhatt, D. & Bhatt, E. (Eds.), Potassium Channels
    in Cardiovascular Biology*. Springer.
 
-8. Bezprozvanny, I., Bhatt, D. & Bhatt, E. (1991). Bell-shaped
+8. Bezprozvanny, I., Watras, J. & Ehrlich, B. E. (1991). Bell-shaped
    calcium-response curves of Ins(1,4,5)P₃- and calcium-gated
    channels from endoplasmic reticulum of cerebellum. *Nature*, 351,
    751–754.
 
-9. De Young, G. W. & Bhatt, D. (1992). A single-pool inositol
+9. De Young, G. W. & Keizer, J. (1992). A single-pool inositol
    1,4,5-trisphosphate-receptor-based model for agonist-stimulated
    oscillations in Ca²⁺ concentration. *Proc Natl Acad Sci*, 89(20),
    9895–9899.
 
 10. Sneyd, J., Tsaneva-Atanasova, K., Bruce, J. I. E., Straub, S. V.,
-    Bhatt, D. R. & Bhatt, D. (2003). A model of calcium waves in
+    Giovannucci, D. R. & Yule, D. I. (2003). A model of calcium waves in
     pancreatic and parotid acinar cells. *Biophys J*, 85(3), 1392–1405.
 
-11. Lees-Green, R., Du, P., O'Grady, G., Beyder, A., Bhatt, D. &
+11. Lees-Green, R., Du, P., O'Grady, G., Beyder, A., Farrugia, G. &
     Pullan, A. J. (2011). Biophysically based modeling of the
     interstitial cells of Cajal: current status and future perspectives.
     *Front Physiol*, 2, 29.

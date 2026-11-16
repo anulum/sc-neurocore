@@ -1000,10 +1000,10 @@ DOI: 10.1186/s13059-025-03564-3
 
 **Geneformer:**
 
-Theodoris CV, Xiao L, Chopra A, Chaffin MD, Al Sayed ZR, Hill MC, Manber H,
-Bowman AGL, Dias N, Tsao PS, Bhatt DL, Ellinor PT.
+Theodoris CV, Xiao L, Chopra A, Chaffin MD, Al Sayed ZR, Hill MC, Mantineo H,
+Brydon EM, Zeng Z, Liu XS, Ellinor PT.
 "Transfer learning enables predictions in network biology."
-*Nature* 619:616--624 (2023).
+*Nature* 618:616--624 (2023).
 DOI: 10.1038/s41586-023-06139-9
 
 ### Supporting references

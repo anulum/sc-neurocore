@@ -6,15 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_model_lnm.py
 
-from __future__ import annotations
-
-"""Full pipeline test for LearnableNeuronModel (Jahns et al. 2025).
+"""Full pipeline test for LearnableNeuronModel (Jolivet et al. 2006 threshold models).
 
 Fully parameterised learnable neuron:
 V[t+1] = α·V[t] + β·I[t] + γ·f(V[t])
 f(V) = 1/(1+exp(-f_slope·(V-f_shift)))  — learnable sigmoid.
 α=0.9, β=0.1, γ=0.05. All trainable for SNN backprop.
-FULL PIPELINE WIRED + PERFORMANCE."""
+FULL PIPELINE WIRED + PERFORMANCE.
+"""
+
+from __future__ import annotations
+
 import time
 import numpy as np
 import pytest

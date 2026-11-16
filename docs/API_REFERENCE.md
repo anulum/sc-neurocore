@@ -32274,7 +32274,7 @@ Unified self-referential cognition neuron for persistent identity.
 ## Module `neurons.models.astrocyte`
 
 ### Class `AstrocyteModel`
-Li & Bhatt 1994 — astrocyte Ca2+ signaling via IP3 receptor.
+Li & Rinzel 1994 — astrocyte Ca2+ signaling via IP3 receptor.
 
 3 ODEs: Ca (cytosolic), h (IP3R de-inactivation), IP3.
 Ca release from ER through IP3 receptor + SERCA pump + leak.
@@ -32282,9 +32282,11 @@ Ca release from ER through IP3 receptor + SERCA pump + leak.
 Reference: Postnov, D.E. et al. (2009). Neural Comput. 21:2746–2782.
 
 - **__post_init__**()
+  - Check the initial state and every parameter.
 - **step**(current)
   - Return cytosolic Ca concentration (uM). current = glutamate-driven IP3 production.
 - **reset**()
+  - Return ``ca``, ``h`` and ``ip3`` to 0.05, 0.8 and 0.5, the class defaults.
 
 ---
 
@@ -36192,10 +36194,11 @@ gate and membrane increments against mismatched states — remains reachable onl
 through the explicit ``integrator="baseline_euler"`` regression option.
 
 Reference: Porter, J.T., Cauli, B., Tsuzuki, K., Lambolez, B., Rossier, J. &
-Audinat, E. (1998). Selective excitation of subtypes of neocortical interneurons
+Audinat, E. (1999). Selective excitation of subtypes of neocortical interneurons
 by nicotinic receptors. J. Neurosci. 19:5228–5235; Bhatt et al. (2019).
 
 - **__post_init__**()
+  - Check the integrator, then coerce every state and parameter to a finite float.
 - **step**(current)
   - Advance the neuron by one ``4 * dt`` step and report a threshold crossing.
 - **reset**()

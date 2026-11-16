@@ -22,7 +22,7 @@
 /// large fusiform soma, and sensitivity to serotonergic afferents from
 /// the brainstem raphe nuclei.
 ///
-/// Dieudonné & Bhatt, J Physiol 548:97, 2003; Lainé & Bhatt, Front Syst Neurosci 1:4, 2007.
+/// Dieudonné & Dumoulin, J Neurosci 20:1837, 2000.
 #[derive(Clone, Debug)]
 pub struct LugaroCell {
     /// Membrane potential (mV).

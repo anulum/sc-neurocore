@@ -546,15 +546,16 @@ println!("Final V: {:.1}, motility: {:.3} nm", ohc.v, ohc.motility);
 1. Dallos P, Wu X, Cheatham MA, et al. (2008). Prestin-based outer hair cell motility
    is necessary for mammalian cochlear amplification. *Neuron* 58:333–339.
 
-2. Santos-Sacchi J, Song L, Bhatt DL (2006). Prestin charge-voltage relationship: models
-   and implications for the cochlear amplifier. *J Neurosci* 26:3992–3998.
+2. Santos-Sacchi J, Song L, Zheng J, Nuttall AL (2006). Control of mammalian cochlear
+   amplification by chloride anions. *J Neurosci* 26:3992–3998.
 
 3. Hudspeth AJ (2008). Making an effort to listen: mechanical amplification in the ear.
    *Neuron* 59:530–545.
 
 4. Ashmore J (2008). Cochlear outer hair cell motility. *Physiol Rev* 88:173–210.
 
-5. Zheng J, Bhatt DL, Bhatt SG, et al. (2000). Prestin is the motor protein of cochlear
+5. Zheng J, Shen W, He DZZ, Long KB, Madison LD, Dallos P (2000). Prestin is the motor
+   protein of cochlear
    outer hair cells. *Nature* 405:149–155.
 
 6. Brownell WE, Bader CR, Bertrand D, et al. (1985). Evoked mechanical responses of
@@ -569,11 +570,12 @@ println!("Final V: {:.1}, motility: {:.3} nm", ohc.v, ohc.motility);
 9. Fettiplace R, Hackney CM (2006). The sensory and motor roles of auditory hair cells.
    *Nat Rev Neurosci* 7:19–29.
 
-10. Liberman MC, Gao J, Bhatt DL, et al. (2002). Prestin is required for electromotility
+10. Liberman MC, Gao J, He DZZ, Wu X, Jia S, Zuo J (2002). Prestin is required for
+    electromotility
     of the outer hair cell and for the cochlear amplifier. *Nature* 419:300–304.
 
 11. Kemp DT (1978). Stimulated acoustic emissions from within the human auditory system.
     *J Acoust Soc Am* 64:1386–1391.
 
-12. Nobili R, Mammano F, Bhatt DL (1998). Biophysics of the cochlea. II: Stationary
+12. Nobili R, Mammano F (1996). Biophysics of the cochlea. II: Stationary
     nonlinear phenomenology. *J Acoust Soc Am* 99:2244–2255.

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2018
+expected_file_count = 2023
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8126,3 +8126,23 @@ rationale = "Event-stop helper and tests; the finishes are counted only after th
 [[file]]
 path = "benchmarks/bench_photonic_crosstalk.py"
 rationale = "Photonic crosstalk benchmark whose source list names photonic/bindings.rs, where its engine calls go."
+
+[[file]]
+path = "tests/test_reference_phantom_coauthor.py"
+rationale = "Gate that pins the remaining citations of the recurring false co-author per file, so a new one fails."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/astrocyte.py"
+rationale = "Li-Rinzel astrocyte calcium model; its citation was corrected from a false co-author to Li & Rinzel 1994."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/vip_neuron.py"
+rationale = "VIP interneuron; the Porter et al. citation carries its registry year, 1999."
+
+[[file]]
+path = "tests/model_astrocyte_support.py"
+rationale = "Astrocyte model test support; its docstring names the corrected Li & Rinzel 1994 citation."
+
+[[file]]
+path = "tests/model_lnm_support.py"
+rationale = "Learnable neuron model test support; its docstring names Jolivet et al. 2006, not a fabricated citation."

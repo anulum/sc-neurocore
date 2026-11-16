@@ -577,14 +577,14 @@ println!("Spikes: {}, cAMP: {:.3}, PDE4: {:.3}, adapt: {:.3}",
 
 ## References
 
-1. Rospars J-P, Lansky P, Bhatt DL, Bhatt SG (2008). Competitive and noncompetitive
+1. Rospars J-P, Lansky P, Chaput M, Duchamp-Viret P (2008). Competitive and noncompetitive
    odorant interactions in the early neural coding of odorant mixtures. *J Neurosci*
    28:2659–2666.
 
 2. Firestein S (2001). How the olfactory system makes sense of scents. *Nature*
    413:211–218.
 
-3. Mombaerts P, Wang F, Bhatt DL, et al. (1996). Visualising an olfactory sensory map.
+3. Mombaerts P, Wang F, Dulac C, et al. (1996). Visualizing an olfactory sensory map.
    *Cell* 87:675–686.
 
 4. Buck L, Axel R (1991). A novel multigene family may encode odorant receptors: a
@@ -593,8 +593,9 @@ println!("Spikes: {}, cAMP: {:.3}, PDE4: {:.3}, adapt: {:.3}",
 5. Kurahashi T, Menini A (1997). Mechanism of odorant adaptation in the olfactory receptor
    cell. *Nature* 385:725–729.
 
-6. Boccaccio A, Bhatt DL, Bhatt SG (2006). Calcium/calmodulin-dependent phosphodiesterase
-   modulates olfactory adaptation. *J Gen Physiol* 128:171–184.
+6. Boccaccio A, Lagostena L, Hagen V, Menini A (2006). Fast adaptation in mouse olfactory
+   sensory neurons does not require the activity of phosphodiesterase. *J Gen Physiol*
+   128:171–184.
 
 7. Song Y, Bhatt DL, Bhatt SG (2008). PDE4 regulation of olfactory adaptation.
    *J Neurophysiol* 100:1034–1041.
@@ -608,7 +609,7 @@ println!("Spikes: {}, cAMP: {:.3}, PDE4: {:.3}, adapt: {:.3}",
 10. Reisert J, Matthews HR (2001). Adaptation of the odour-induced response in frog
     olfactory receptor cells. *J Physiol* 534:179–191.
 
-11. Bhandawat V, Reisert J, Bhatt DL (2005). Elementary response of olfactory receptor
+11. Bhandawat V, Reisert J, Yau K-W (2005). Elementary response of olfactory receptor
     neurons to odorants. *Science* 308:1931–1934.
 
 12. Schild D, Restrepo D (1998). Transduction mechanisms in vertebrate olfactory receptor

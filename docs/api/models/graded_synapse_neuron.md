@@ -550,7 +550,7 @@ responds faster at higher temperatures.
 5. Marder, E. & Calabrese, R. L. (1996). Principles of rhythmic motor
    pattern generation. *Physiol Rev*, 76(3), 687–717.
 
-6. Heidelberger, R., Bhatt, D. & Bhatt, E. (2005). Synaptic
+6. Heidelberger, R., Thoreson, W. B. & Witkovsky, P. (2005). Synaptic
    transmission at retinal ribbon synapses. *Prog Retin Eye Res*,
    24(6), 682–720.
 

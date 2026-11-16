@@ -10,8 +10,7 @@
 
 **Python module:** `src/sc_neurocore/neurons/models/lugaro_cell.py`<br>
 **Rust engine:** `engine/src/neurons/cerebellar/lugaro.rs`<br>
-**Reference:** Dieudonné & Bhatt, *Journal of Physiology* 548:97, 2003;
-Lainé & Bhatt, *Frontiers in Systems Neuroscience* 1:4, 2007<br>
+**Reference:** Dieudonné & Dumoulin, *Journal of Neuroscience* 20:1837–1848, 2000<br>
 **Family:** leaky integrate-and-fire model with adaptation and serotonin gain
 
 ---

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — VIP irregular-spiking interneuron (Porter 1998 + Kv4 A-current)
 
+"""VIP irregular-spiking interneuron: a five-state Hodgkin-Huxley model with a Kv4 A-current."""
+
 from __future__ import annotations
 
 import math
@@ -54,7 +56,7 @@ class VIPNeuron:
     through the explicit ``integrator="baseline_euler"`` regression option.
 
     Reference: Porter, J.T., Cauli, B., Tsuzuki, K., Lambolez, B., Rossier, J. &
-    Audinat, E. (1998). Selective excitation of subtypes of neocortical interneurons
+    Audinat, E. (1999). Selective excitation of subtypes of neocortical interneurons
     by nicotinic receptors. J. Neurosci. 19:5228–5235; Bhatt et al. (2019).
     """
 
@@ -76,6 +78,14 @@ class VIPNeuron:
     integrator: Literal["rk4", "baseline_euler"] = "rk4"
 
     def __post_init__(self) -> None:
+        """Check the integrator, then coerce every state and parameter to a finite float.
+
+        Raises
+        ------
+        ValueError
+            If ``integrator`` is neither ``"rk4"`` nor ``"baseline_euler"``, a state or
+            parameter is not a finite number, or a sign constraint is broken.
+        """
         if self.integrator not in {"rk4", "baseline_euler"}:
             raise ValueError(f"Unsupported integrator for VIPNeuron: {self.integrator}")
         self._validate_configuration()

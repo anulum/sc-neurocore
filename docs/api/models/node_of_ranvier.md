@@ -535,17 +535,17 @@ parameters unchanged.
    the excitability of mammalian nerve fibers. *J Neurophysiol*, 87(2),
    995–1006.
 
-2. Caldwell, J. H., Schaller, K. L., Lasber, R. S., Bhatt, D. &
-   Bhatt, E. (2000). Sodium channel Nav1.6 is localized at nodes of
-   Ranvier, dendrites, and synapses. *Proc Natl Acad Sci*, 97(10),
+2. Caldwell, J. H., Schaller, K. L., Lasher, R. S., Peles, E. &
+   Levinson, S. R. (2000). Sodium channel Nav1.6 is localized at nodes
+   of Ranvier, dendrites, and synapses. *Proc Natl Acad Sci*, 97(10),
    5616–5620.
 
 3. Waxman, S. G. (2006). Axonal conduction and injury in multiple
    sclerosis: the role of sodium channels. *Nat Rev Neurosci*, 7(12),
    932–941.
 
-4. Devaux, J. J. & Bhatt, D. (2009). KCNQ2 is a nodal K⁺ channel.
-   *J Neurosci*, 24(5), 1236–1244.
+4. Devaux, J. J., Kleopa, K. A., Cooper, E. C. & Scherer, S. S. (2004).
+   KCNQ2 is a nodal K⁺ channel. *J Neurosci*, 24(5), 1236–1244.
 
 5. Hille, B. (2001). *Ion Channels of Excitable Membranes* (3rd ed.).
    Sinauer Associates. Chapters 3, 5, 20.
@@ -553,11 +553,11 @@ parameters unchanged.
 6. Rattay, F. (1989). Analysis of models for extracellular fiber
    stimulation. *IEEE Trans Biomed Eng*, 36(7), 676–682.
 
-7. Schwarz, J. R., Reid, G. & Bhatt, D. (1995). Action potentials and
+7. Schwarz, J. R., Reid, G. & Bostock, H. (1995). Action potentials and
    membrane currents in the human node of Ranvier. *Pflügers Arch*,
    430(2), 283–292.
 
-8. Bostock, H., Cikurel, K. & Bhatt, D. (1998). Threshold tracking
+8. Bostock, H., Cikurel, K. & Burke, D. (1998). Threshold tracking
    techniques in the study of human peripheral nerve. *Muscle Nerve*,
    21(2), 137–158.
 
@@ -567,7 +567,7 @@ parameters unchanged.
 10. Hodgkin, A. L. & Huxley, A. F. (1952). A quantitative description
     of membrane current. *J Physiol*, 117(4), 500–544.
 
-11. Pan, Z., Bhatt, D. & Bhatt, E. (2006). A common ankyrin-G-based
+11. Pan, Z., Kao, T., Horvath, Z., et al. (2006). A common ankyrin-G-based
     mechanism retains KCNQ and Nav channels at electrically active
     domains of the axon. *J Neurosci*, 26(10), 2599–2613.
 

@@ -1,7 +1,7 @@
 # ElBoustaniNetwork
 
 **Module:** `engine/src/neurons/population/el_boustani_network.rs`
-**Reference:** El Boustani & Bhatt, *J Comput Neurosci* 26:313–333, 2009
+**Reference:** El Boustani & Destexhe, *Neural Comput* 21:46–100, 2009
 **Family:** E/I mean-field with NMDA-mediated bistability
 **State variables:** `r_e` (excitatory rate), `r_i` (inhibitory rate), `s` (NMDA gating)
 
@@ -533,9 +533,9 @@ making it the standard choice for working memory modelling.
 
 ## References
 
-1. El Boustani, S. & Bhatt, D. (2009). A master equation formalism
+1. El Boustani, S. & Destexhe, A. (2009). A master equation formalism
    for macroscopic modeling of asynchronous irregular activity states.
-   *J Comput Neurosci*, 26(3), 313–333.
+   *Neural Comput*, 21(1), 46–100.
 
 2. Wang, X. J. (2002). Probabilistic decision making by slow reverberation
    in cortical circuits. *Neuron*, 36(5), 955–968.
@@ -562,7 +562,7 @@ making it the standard choice for working memory modelling.
    cortical network model of object working memory dominated by
    recurrent inhibition. *J Comput Neurosci*, 11(1), 63–85.
 
-9. Murray, J. D., Bernacchia, A., Bhatt, D. & Bhatt, E. (2014).
+9. Murray, J. D., Bernacchia, A., Freedman, D. J., et al. (2014).
    A hierarchy of intrinsic timescales across primate cortex. *Nat
    Neurosci*, 17(12), 1661–1663.
 

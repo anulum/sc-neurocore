@@ -1,7 +1,7 @@
 # AstrocyteModel
 
 **Module:** `sc_neurocore.neurons.models.astrocyte`
-**Reference:** Li & Rinzel, J. Theor. Biol. 166(4), 1994; De Young & Bhatt, Proc. Natl Acad. Sci. 89(20), 1992
+**Reference:** Li & Rinzel, J. Theor. Biol. 166(4), 1994; De Young & Keizer, Proc. Natl Acad. Sci. 89(20), 1992
 **Family:** Glial cell (astrocyte Ca²⁺ signalling via IP3 receptor)
 **State variables:** `ca` (cytosolic Ca²⁺), `h` (IP3R de-inactivation gate), `ip3` (IP3 concentration)
 

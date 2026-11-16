@@ -551,7 +551,7 @@ println!("Spikes: {}, adapt: {:.3}", total, cell.adapt);
 
 ## References
 
-1. Lesniak DR, Marshall KL, Bhatt DL, et al. (2014). Computation identifies structural
+1. Lesniak DR, Marshall KL, Wellnitz SA, et al. (2014). Computation identifies structural
    features that govern neuronal firing properties in slowly adapting touch receptors.
    *eLife* 3:e01488.
 
@@ -574,15 +574,15 @@ println!("Spikes: {}, adapt: {:.3}", total, cell.adapt);
 8. Johansson RS, Flanagan JR (2009). Coding and use of tactile signals from the fingertips
    in object manipulation tasks. *Nat Rev Neurosci* 10:345–359.
 
-9. Handler A, Bhatt DL, Ginty DD (2021). The mechanosensory neurons of touch and their
+9. Handler A, Ginty DD (2021). The mechanosensory neurons of touch and their
    mechanisms of activation. *Nat Rev Neurosci* 22:521–537.
 
 10. Zimmerman A, Bai L, Ginty DD (2014). The gentle touch receptors of mammalian skin.
     *Science* 346:950–954.
 
-11. Gerling GJ, Bhatt DL, Thomas GW (2014). Validating a population model of tactile
-    mechanotransduction of slowly adapting type I afferents at the surface of the primate
-    fingertip. *J Neurosci* 34:14603–14615.
+11. Gerling GJ, Rivest II, Lesniak DR, Scanlon JR, Wan L (2014). Validating a population
+    model of tactile mechanotransduction of slowly adapting type I afferents at levels of
+    skin mechanics, single-unit response and psychophysics. *IEEE Trans Haptics* 7:216–228.
 
 12. Phillips JR, Johnson KO (1981). Tactile spatial resolution. II. Neural representation
     of bars, edges, and gratings in monkey primary afferents. *J Neurophysiol* 46:1192–1203.

@@ -2286,7 +2286,8 @@
           "attribution": "bound_script",
           "changed": [
             "engine/Cargo.toml",
-            "engine/src/neurons/interneurons/vip_neuron.rs"
+            "engine/src/neurons/interneurons/vip_neuron.rs",
+            "src/sc_neurocore/neurons/models/vip_neuron.py"
           ],
           "currency": "outdated",
           "name": "local_python_2026-06-24_vip_neuron_rk4.json",

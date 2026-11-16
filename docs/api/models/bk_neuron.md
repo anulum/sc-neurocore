@@ -654,7 +654,7 @@ println!("Spikes: {}, Ca: {:.3}", spike_count, neuron.ca);
 5. Gu N, Bhatt DL, Storm JF (2007). BK channels and spike frequency adaptation in hippocampal
    neurons. *J Neurophysiol* 97:3828–3837.
 
-6. Du W, Bhatt DL, Bhatt SG, et al. (2005). Calcium-sensitive potassium channelopathy in
+6. Du W, Bautista JF, Yang H, et al. (2005). Calcium-sensitive potassium channelopathy in
    human epilepsy and paroxysmal movement disorder. *Nat Genet* 37:733–738.
 
 7. Latorre R, Brauchi S (2006). Large conductance Ca²⁺-activated K⁺ (BK) channel: activation
@@ -664,14 +664,15 @@ println!("Spikes: {}, Ca: {:.3}", spike_count, neuron.ca);
    and channel opening in large conductance (BK) potassium channels. *J Gen Physiol*
    120:267–305.
 
-9. Brenner R, Bhatt DL, Bhatt SG, et al. (2005). BK channel β4 subunit reduces dentate
-   gyrus excitability and protects against temporal lobe seizures. *Nat Neurosci* 8:1752–1759.
+9. Brenner R, Chen QH, Vilaythong A, Toney GM, Noebels JL, Aldrich RW (2005). BK channel β4
+   subunit reduces dentate gyrus excitability and protects against temporal lobe seizures.
+   *Nat Neurosci* 8:1752–1759.
 
-10. Sausbier M, Hu H, Bhatt DL, et al. (2004). Cerebellar ataxia and Purkinje cell
+10. Sausbier M, Hu H, Arntz C, et al. (2004). Cerebellar ataxia and Purkinje cell
     dysfunction caused by Ca²⁺-activated K⁺ channel deficiency. *PNAS* 101:9474–9478.
 
-11. Fakler B, Bhatt DL (2006). Ca²⁺-activated K⁺ channels: from protein complexes to
-    function. *Physiol Rev* 86:941–966.
+11. Berkefeld H, Fakler B, Schulte U (2010). Ca²⁺-activated K⁺ channels: from protein
+    complexes to function. *Physiol Rev* 90:1437–1459.
 
 12. Stocker M (2004). Ca²⁺-activated K⁺ channels: molecular determinants and function of the
     SK family. *Nat Rev Neurosci* 5:758–770.

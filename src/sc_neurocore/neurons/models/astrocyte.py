@@ -4,7 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Li & Bhatt 1994 — astrocyte Ca2+ signaling via IP3 receptor
+# SC-NeuroCore — Li & Rinzel 1994 — astrocyte Ca2+ signaling via IP3 receptor
+
+"""Li-Rinzel astrocyte calcium model driven by IP3 production."""
 
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ import numpy as np
 
 @dataclass
 class AstrocyteModel:
-    """Li & Bhatt 1994 — astrocyte Ca2+ signaling via IP3 receptor.
+    """Li & Rinzel 1994 — astrocyte Ca2+ signaling via IP3 receptor.
 
     3 ODEs: Ca (cytosolic), h (IP3R de-inactivation), IP3.
     Ca release from ER through IP3 receptor + SERCA pump + leak.
@@ -42,6 +44,16 @@ class AstrocyteModel:
     dt: float = 0.01  # s
 
     def __post_init__(self) -> None:
+        """Check the initial state and every parameter.
+
+        Raises
+        ------
+        ValueError
+            If ``ca`` or ``ip3`` is negative or not finite, ``h`` lies outside [0, 1], one of
+            ``v_er``, ``k_er``, ``v_serca``, ``d1``, ``d2``, ``d3``, ``d5``, ``a2``, ``c0``,
+            ``c1`` and ``dt`` is not finite and positive, one of ``leak``, ``ip3_prod`` and
+            ``ip3_decay`` is negative or not finite, or ``ca`` is not below ``c0``.
+        """
         if not np.isfinite(self.ca) or self.ca < 0.0:
             raise ValueError("ca must be finite and non-negative")
         if not np.isfinite(self.h) or not (0.0 <= self.h <= 1.0):
@@ -89,4 +101,8 @@ class AstrocyteModel:
         return self.ca
 
     def reset(self) -> None:
+        """Return ``ca``, ``h`` and ``ip3`` to 0.05, 0.8 and 0.5, the class defaults.
+
+        The values the instance was built with are not restored, and the parameters stay.
+        """
         self.ca, self.h, self.ip3 = 0.05, 0.8, 0.5

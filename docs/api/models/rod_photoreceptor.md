@@ -507,7 +507,7 @@ println!("V: {:.1}, cGMP: {:.3}, Ca: {:.3}", rod.v, rod.cgmp, rod.ca);
 
 ## References
 
-1. Nikonov SS, Kholodenko R, Lem J, Bhatt DL (2006). Physiological features of the S-
+1. Nikonov SS, Kholodenko R, Lem J, Pugh EN (2006). Physiological features of the S-
    and M-cone photoreceptors of wild-type mice from single-cell recordings. *J Gen Physiol*
    127:359–374.
 
@@ -524,7 +524,8 @@ println!("V: {:.1}, cGMP: {:.3}, Ca: {:.3}", rod.v, rod.cgmp, rod.ca);
 5. Fain GL, Matthews HR, Cornwall MC, et al. (2001). Adaptation in vertebrate
    photoreceptors. *Physiol Rev* 81:117–151.
 
-6. Dizhoor AM, Lowe DG, Bhatt DL, et al. (1994). The human photoreceptor membrane
+6. Dizhoor AM, Lowe DG, Olshevskaya EV, Laura RP, Hurley JB (1994). The human
+   photoreceptor membrane
    guanylyl cyclase, RetGC, is present in outer segments and is regulated by calcium and
    a soluble activator. *Neuron* 12:1345–1352.
 

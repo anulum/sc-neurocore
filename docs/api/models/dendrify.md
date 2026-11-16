@@ -402,7 +402,7 @@ NMDA-mediated dendritic plateau potentials have been directly observed:
 - **Layer 5 pyramidal cells:** Schiller et al. (2000) — basal dendrites
 - **Layer 2/3 pyramidal cells:** Branco & Häusser (2011) — tuft
   dendrites, direction selectivity via dendritic nonlinearity
-- **CA1 hippocampal neurons:** Losonczy & Bhatt (2009) — oblique
+- **CA1 hippocampal neurons:** Losonczy, Makara & Magee (2008) — oblique
   dendrites, branch-specific plasticity
 
 Measured properties matching this model:
@@ -549,7 +549,7 @@ models in the library.
    cortical pyramidal cell dendrites. *Neuron* 69(5):885–892.
    DOI: [10.1016/j.neuron.2011.02.006](https://doi.org/10.1016/j.neuron.2011.02.006)
 
-4. Losonczy A, Bhatt DK (2009). Compartmentalized dendritic plasticity
+4. Losonczy A, Makara JK, Magee JC (2008). Compartmentalized dendritic plasticity
    and input feature storage in neurons. *Nature* 452(7186):436–441.
    DOI: [10.1038/nature06725](https://doi.org/10.1038/nature06725)
 

@@ -546,22 +546,23 @@ println!("Spikes: {}, v: {}, u: {}", spike_count, neuron.v, neuron.u);
 
 5. Gerstner W, Kistler WM (2002). *Spiking Neuron Models.* Cambridge University Press.
 
-6. Merolla PA, Arthur JV, Bhatt DL, et al. (2014). A million spiking-neuron integrated
+6. Merolla PA, Arthur JV, Alvarez-Icaza R, et al. (2014). A million spiking-neuron integrated
    circuit with a scalable communication network and interface. *Science* 345:668–673.
 
 7. Furber SB, Galluppi F, Temple S, et al. (2014). The SpiNNaker Project. *Proc IEEE*
    102:652–665.
 
-8. Pei J, Bhatt DL, Bhatt SG, et al. (2019). Towards artificial general intelligence
+8. Pei J, Deng L, Song S, et al. (2019). Towards artificial general intelligence
    with hybrid Tianjic chip architecture. *Nature* 572:106–111.
 
-9. Indiveri G, Bhatt DL, Bhatt SG, et al. (2011). Neuromorphic silicon neuron circuits.
+9. Indiveri G, Linares-Barranco B, Hamilton TJ, et al. (2011). Neuromorphic silicon neuron
+   circuits.
    *Front Neurosci* 5:73.
 
 10. Roy K, Jaiswal A, Panda P (2019). Towards spike-based machine intelligence with
     neuromorphic computing. *Nature* 575:607–617.
 
-11. Schuman CD, Potok TE, Bhatt DL, et al. (2017). A survey of neuromorphic computing
+11. Schuman CD, Potok TE, Patton RM, et al. (2017). A survey of neuromorphic computing
     and neural networks in hardware. *arXiv:1705.06963*.
 
 12. Mayr C, Hoeppner S, Furber S (2019). SpiNNaker 2: a 10 million core processor system

@@ -599,9 +599,10 @@ $$I_{stim,k} = \frac{V_{e,k-1} - 2V_{e,k} + V_{e,k+1}}{R_a \cdot \Delta x^2}$$
 4. Rattay, F. (1989). Analysis of models for extracellular fiber
    stimulation. *IEEE Trans Biomed Eng*, 36(7), 676–682.
 
-5. Caldwell, J. H., Schaller, K. L., Bhatt, D. & Bhatt, E. (2000).
-   Sodium channel Nav1.6 is localized at nodes of Ranvier, dendrites,
-   and synapses. *Proc Natl Acad Sci*, 97(10), 5616–5620.
+5. Caldwell, J. H., Schaller, K. L., Lasher, R. S., Peles, E. &
+   Levinson, S. R. (2000). Sodium channel Nav1.6 is localized at nodes
+   of Ranvier, dendrites, and synapses. *Proc Natl Acad Sci*, 97(10),
+   5616–5620.
 
 6. Devaux, J. J. & Bhatt, D. (2009). An interaction between KCNQ2 and
    Na⁺ channel β1 subunit at the node of Ranvier. *Mol Cell Neurosci*,
@@ -614,7 +615,7 @@ $$I_{stim,k} = \frac{V_{e,k-1} - 2V_{e,k} + V_{e,k+1}}{R_a \cdot \Delta x^2}$$
 8. Rushton, W. A. H. (1951). A theory of the effects of fibre size in
    medullated nerve. *J Physiol*, 115(1), 101–122.
 
-9. Schwarz, J. R., Reid, G. & Bhatt, D. (1995). Action potentials and
+9. Schwarz, J. R., Reid, G. & Bostock, H. (1995). Action potentials and
    membrane currents in the human node of Ranvier. *Pflügers Arch*,
    430(2), 283–292.
 
@@ -622,7 +623,7 @@ $$I_{stim,k} = \frac{V_{e,k-1} - 2V_{e,k} + V_{e,k+1}}{R_a \cdot \Delta x^2}$$
     the myelinated nerve fibre of *Xenopus laevis* as computed on the
     basis of voltage clamp data. *J Physiol*, 171(2), 302–315.
 
-11. Brill, M. H., Waxman, S. G., Moore, J. W. & Bhatt, D. (1977).
+11. Brill, M. H., Waxman, S. G., Moore, J. W. & Joyner, R. W. (1977).
     Conduction velocity and spike configuration in myelinated fibres:
     computed dependence on internode distance. *J Neurol Neurosurg
     Psychiatry*, 40(8), 769–774.

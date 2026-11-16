@@ -537,7 +537,7 @@ depending on temporal structure:
    neocortical pyramidal neurons depends on neurotransmitter release
    probability. *Proc Natl Acad Sci*, 94(2), 719–723.
 
-3. Markram, H., Wang, Y. & Bhatt, D. (1998). Differential signaling
+3. Markram, H., Wang, Y. & Tsodyks, M. (1998). Differential signaling
    via the same axon of neocortical pyramidal neurons. *Proc Natl Acad
    Sci*, 95(9), 5323–5328.
 
@@ -547,7 +547,7 @@ depending on temporal structure:
 5. Zucker, R. S. & Regehr, W. G. (2002). Short-term synaptic
    plasticity. *Annu Rev Physiol*, 64, 355–405.
 
-6. Mongillo, G., Barak, O. & Bhatt, D. (2008). Synaptic theory of
+6. Mongillo, G., Barak, O. & Tsodyks, M. (2008). Synaptic theory of
    working memory. *Science*, 319(5869), 1543–1546.
 
 7. Fortune, E. S. & Rose, G. J. (2001). Short-term synaptic plasticity
@@ -560,13 +560,13 @@ depending on temporal structure:
    transmission. In *Methods in Neuronal Modeling* (2nd ed.),
    Koch, C. & Segev, I. (Eds.), MIT Press, 1–25.
 
-10. Markram, H., Bhatt, D. & Bhatt, E. (2015). Reconstruction and
+10. Markram, H., Muller, E., Ramaswamy, S., et al. (2015). Reconstruction and
     simulation of neocortical microcircuitry. *Cell*, 163(2), 456–492.
 
 11. Sussillo, D., Toyoizumi, T. & Maass, W. (2007). Self-tuning of
     neural circuits through short-term synaptic plasticity. *J
     Neurophysiol*, 97(6), 4079–4095.
 
-12. Fuhrmann, G., Segev, I., Markram, H. & Bhatt, D. (2002). Coding
+12. Fuhrmann, G., Segev, I., Markram, H. & Tsodyks, M. (2002). Coding
     of temporal information by activity-dependent synapses. *J
     Neurophysiol*, 87(1), 140–148.

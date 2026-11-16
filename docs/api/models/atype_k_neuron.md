@@ -533,13 +533,13 @@ extension of the single-compartment model.
 3. Hille, B. (2001). *Ion Channels of Excitable Membranes* (3rd ed.).
    Sinauer Associates. Chapter 4.
 
-4. Jerng, H. H., Pfaffinger, P. J. & Bhatt, D. (2004). Molecular
+4. Jerng, H. H., Pfaffinger, P. J. & Covarrubias, M. (2004). Molecular
    physiology and modulation of somatodendritic A-type potassium
    channels. *Mol Cell Neurosci*, 27(4), 343–369.
 
-5. Rasmusson, R. L., Bhatt, D. & Bhatt, E. (1998). A mathematical
-   model of a bullfrog cardiac pacemaker cell. *Am J Physiol*, 274(1),
-   H747–H759.
+5. Rasmusson, R. L., Clark, J. W., Giles, W. R., Shibata, E. F. &
+   Campbell, D. L. (1990). A mathematical model of a bullfrog cardiac
+   pacemaker cell. *Am J Physiol*, 259(2), H352–H369.
 
 6. Wang, X. J. & Buzsáki, G. (1996). Gamma oscillation by synaptic
    inhibition in a hippocampal interneuronal network model. *J Neurosci*,
@@ -548,9 +548,10 @@ extension of the single-compartment model.
 7. Storm, J. F. (1988). Temporal integration by a slowly inactivating
    K⁺ current in hippocampal neurons. *Nature*, 336, 379–381.
 
-8. Carrasquillo, Y., Burkhalter, A. & Bhatt, D. (2012). A-type K⁺
-   channels encoded by Kv4.2 modulate intrinsic firing properties of
-   neocortical neurons. *J Neurosci*, 32(31), 10913–10919.
+8. Carrasquillo, Y., Burkhalter, A. & Nerbonne, J. M. (2012). A-type K⁺
+   channels encoded by Kv4.2, Kv4.3 and Kv1.4 differentially regulate
+   intrinsic excitability of cortical pyramidal neurons. *J Physiol*,
+   590(16), 3877–3890.
 
 9. Izhikevich, E. M. (2007). *Dynamical Systems in Neuroscience*.
    MIT Press. Chapter 8 (Connor-Stevens model).

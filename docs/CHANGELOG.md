@@ -782,6 +782,38 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Corrected 85 citations in 25 model pages, the transcriptomic page, three
+  engine docs, two model sources, one descriptor summary and two test
+  docstrings, where a recurring false co-author, "Bhatt", stood in place of
+  the real authors. Each corrected citation is its DOI's registry record
+  (Crossref, or DataCite for one arXiv preprint), read a second time in
+  PubMed (60 works) or Semantic Scholar (5), and takes the record's year,
+  journal, volume and pages where these were wrong too: El Boustani and
+  Destexhe 2009 is in *Neural Computation* 21:46-100, Rasmusson et al. 1990
+  in *Am J Physiol* 259:H352, Vervaeke et al. 2010 in *Neuron* 67:435 and
+  Berkefeld, Fakler and Schulte in *Physiol Rev* 90:1437 (2010). Five
+  entries with a wrong title are the one record that shares their first
+  author and year and also the cited place (Boccaccio et al. 2006,
+  Santos-Sacchi et al. 2006), the journal and volume (Diana et al. 2007) or
+  the title's opening (Carrasquillo et al. 2012, Gerling et al. 2014). The
+  Lugaro page and engine doc and the learnable neuron page now cite the
+  papers that the July descriptor check named for their fabricated citations
+  (Dieudonné and Dumoulin 2000; Jolivet et al. 2006), and the astrocyte
+  model cites Li and Rinzel 1994. Twenty-two citations that no registry
+  holds, or whose cited place holds another paper, are kept as written and
+  listed for review, and so is the El Boustani page's account of the 2009
+  paper, whose abstract names no NMDA term. A new test counts the remaining
+  "Bhatt" citations per file, so a new one fails. The five Python files the
+  corrections touch join the docstring policy (2018 to 2023 files): the
+  astrocyte and VIP models gain module docstrings and documented checks, the
+  astrocyte reset is documented as returning the class defaults rather than
+  the values the model was built with, and the two test support modules have
+  their text moved above the future import, where it is the module
+  docstring. Two unipolar brush cell statements attributed to Diana et
+  al. 2007, and the outer hair cell's prestin form attributed to
+  Santos-Sacchi et al. 2006, are marked as not shown by those papers'
+  abstracts and are under review.
+
 - The photonic crosstalk benchmark hashes `engine/src/photonic/bindings.rs`
   as well. Its engine lane calls the crosstalk functions defined there since
   the bindings moved out of `engine/src/photonic.rs`, so a change to them

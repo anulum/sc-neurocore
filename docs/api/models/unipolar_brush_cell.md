@@ -9,7 +9,7 @@
 # UnipolarBrushCell
 
 **Module:** `engine/src/neurons/cerebellar/unipolar_brush.rs`
-**Reference:** Bhatt et al., *J Comp Neurol* 349:560–576, 1994; Diana et al., *J Neurosci* 27:4374–4384, 2007
+**Reference:** Bhatt et al., *J Comp Neurol* 349:560–576, 1994; Diana et al., *J Neurosci* 27:3823–3838, 2007
 **Family:** LIF + slow persistent (NMDA-like) current
 **State variables:** `v` (membrane potential), `persistent` (slow persistent current)
 
@@ -71,7 +71,8 @@ UBCs are concentrated in the vestibulocerebellum, where they process:
 
 ### ON and OFF UBC Subtypes
 
-Diana et al. (2007) distinguished two UBC subtypes:
+Two UBC subtypes are distinguished below. They have been attributed to Diana et al. (2007),
+whose abstract does not report them; the attribution is under review.
 
 | Subtype | Response to glutamate | Receptor | Function |
 |---------|---------------------|----------|----------|
@@ -227,8 +228,9 @@ of 10–30 mV per mossy fibre burst — consistent with high gain.
 
 **tau_persistent (200 ms):** The time constant of persistent current
 decay.  This matches the NMDA receptor kinetics at the giant synapse,
-where glutamate trapping prolongs receptor activation (Diana et al.,
-2007 measured ~150–300 ms post-stimulus activity).
+where glutamate trapping prolongs receptor activation (~150–300 ms of
+post-stimulus activity, attributed to Diana et al., 2007, whose abstract
+does not report it; the attribution is under review).
 
 **persistent_gain (0.5):** How much of the input drives the persistent
 current.  At 0.5, the persistent component is half the direct input
@@ -547,19 +549,21 @@ observed in the vestibular system.
    of the rat: morphology and distribution within the cerebellar
    cortex. *J Comp Neurol*, 349(4), 560–576.
 
-2. Diana, M. A., Bhatt, D. & Bhatt, E. (2007). Two distinct populations
-   of unipolar brush cells in the vestibulocerebellum. *J Neurosci*,
-   27(16), 4374–4384.
+2. Diana, M. A., Otsu, Y., Maton, G., Collin, T., Chat, M. & Dieudonné, S.
+   (2007). T-type and L-type Ca²⁺ conductances define and encode the
+   bimodal firing pattern of vestibulocerebellar unipolar brush cells.
+   *J Neurosci*, 27(14), 3823–3838.
 
 3. Mugnaini, E., Floris, A. & Wright-Goss, M. (1994). Extraordinary
    synapses of the unipolar brush cell: an electron microscopic study
    in the rat cerebellum. *Synapse*, 16(4), 284–311.
 
-4. Nunzi, M. G., Bhatt, D. & Bhatt, E. (2001). Unipolar brush cells
+4. Nunzi, M. G., Birnstiel, S., Bhattacharyya, B. J., Slater, N. T. &
+   Mugnaini, E. (2001). Unipolar brush cells
    form a glutamatergic projection system within the mouse cerebellar
    cortex. *J Comp Neurol*, 434(3), 329–341.
 
-5. Rossi, D. J., Alford, S., Bhatt, D. & Bhatt, E. (1995). Properties
+5. Rossi, D. J., Alford, S., Mugnaini, E. & Slater, N. T. (1995). Properties
    of transmission at a giant glutamatergic synapse in cerebellum:
    the mossy fiber–unipolar brush cell synapse. *J Neurophysiol*,
    74(1), 24–42.
@@ -568,8 +572,8 @@ observed in the vestibular system.
    transmission in cerebellar unipolar brush cells. *Proc Natl Acad
    Sci*, 111(14), 5403–5408.
 
-7. Balmer, T. S. & Bhatt, D. (2017). Cellular mechanisms of cerebellar
-   LTD. *Trends Neurosci*, 40(6), 376–386.
+7. Daniel, H., Levenes, C. & Crépel, F. (1998). Cellular mechanisms of
+   cerebellar LTD. *Trends Neurosci*, 21(9), 401–407.
 
 8. D'Angelo, E. & De Zeeuw, C. I. (2009). Timing and plasticity in
    the cerebellum: focus on the granular layer. *Trends Neurosci*,

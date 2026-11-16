@@ -23,7 +23,7 @@
 /// transform brief mossy fibre bursts into prolonged granule cell
 /// activation, important for vestibular signal processing and timing.
 ///
-/// Bhatt et al., J Comp Neurol 349:560, 1994; Diana et al., J Neurosci 27:4374, 2007.
+/// Bhatt et al., J Comp Neurol 349:560, 1994; Diana et al., J Neurosci 27:3823, 2007.
 #[derive(Clone, Debug)]
 pub struct UnipolarBrushCell {
     /// Membrane potential (mV).

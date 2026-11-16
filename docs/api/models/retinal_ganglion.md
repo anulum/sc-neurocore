@@ -543,7 +543,8 @@ println!("ON: {}, OFF: {}", on_count, off_count);
 
 6. Masland RH (2012). The neuronal organisation of the retina. *Neuron* 76:266–280.
 
-7. Baden T, Berens P, Bhatt DL, et al. (2016). The functional diversity of retinal
+7. Baden T, Berens P, Franke K, Román Rosón M, Bethge M, Euler T (2016). The functional
+   diversity of retinal
    ganglion cells in the mouse. *Nature* 529:345–350.
 
 8. Schwartz G, Harris R, Shrom D, et al. (2007). Detection and prediction of periodic
