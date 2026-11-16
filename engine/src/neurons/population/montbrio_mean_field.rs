@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Montbrió-Pazó-Roxin Mean-Field Model
 
+#![deny(missing_docs)]
+
 /// Montbrio-Pazo-Roxin 2015 — exact mean-field of QIF neuron population.
 ///
 /// Reduces an infinite population of quadratic integrate-and-fire (QIF)
@@ -14,24 +16,33 @@
 /// Lorentzian-distributed heterogeneity.
 ///
 /// dr/dt = (delta / (pi * tau^2)) + (2 * r * v / tau)
-/// dv/dt = (v^2 + eta + I - (pi * tau * r)^2) / tau
+/// dv/dt = (v^2 + eta + I + J * tau * r - (pi * tau * r)^2) / tau
 ///
 /// where delta = heterogeneity width, eta = mean excitability,
-/// tau = membrane time constant, I = external input.
+/// tau = membrane time constant, J = synaptic coupling, I = external input.
 ///
 /// Spike emitted when r exceeds a threshold (proxy for population burst).
 ///
 /// Montbrio, Pazo & Roxin, Phys Rev X 5:021028, 2015.
 #[derive(Clone, Debug)]
 pub struct MontbrioMeanField {
-    pub r: f64,     // Population firing rate (Hz)
-    pub v: f64,     // Mean membrane potential
-    pub delta: f64, // Heterogeneity width (Lorentzian)
-    pub eta: f64,   // Mean excitability
-    pub tau: f64,   // Membrane time constant (ms)
-    pub j: f64,     // Synaptic coupling strength
+    /// Population firing rate, in units of 1/`tau`, kept within `[0, 100]`.
+    pub r: f64,
+    /// Mean membrane potential.
+    pub v: f64,
+    /// Heterogeneity width (Lorentzian).
+    pub delta: f64,
+    /// Mean excitability.
+    pub eta: f64,
+    /// Membrane time constant (ms).
+    pub tau: f64,
+    /// Synaptic coupling strength.
+    pub j: f64,
+    /// Euler step, in the time unit of `tau`.
     pub dt: f64,
+    /// Rate whose upward crossing counts as a population burst.
     pub r_threshold: f64,
+    /// Gain applied to the external input (dimensionless).
     pub gain: f64,
 }
 
@@ -42,6 +53,8 @@ impl Default for MontbrioMeanField {
 }
 
 impl MontbrioMeanField {
+    /// Create a population at `r` = 0.01 and `v` = -2 with the default parameters and
+    /// `dt` = 0.01.
     pub fn new() -> Self {
         Self {
             r: 0.01,
@@ -56,6 +69,11 @@ impl MontbrioMeanField {
         }
     }
 
+    /// Advance one forward-Euler step of both equations with the input `gain * current`;
+    /// return 1 when `r` crosses `r_threshold` upwards, else 0.
+    ///
+    /// `r` is then clamped to `[0, 100]` and `v` to `[-50, 50]`, and a non-finite value is
+    /// replaced by its initial value. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
         let r_prev = self.r;
@@ -90,132 +108,12 @@ impl MontbrioMeanField {
         }
     }
 
+    /// Restore every field to `new()`, parameters included.
     pub fn reset(&mut self) {
         *self = Self::new();
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn mpr_fires_with_input() {
-        let mut n = MontbrioMeanField::new();
-        let mut spikes = 0;
-        for _ in 0..50_000 {
-            spikes += n.step(10.0);
-        }
-        assert!(
-            spikes > 0,
-            "MPR must produce bursts with strong input, got {spikes}"
-        );
-    }
-
-    #[test]
-    fn mpr_silent_without_input() {
-        // eta = -5 (below threshold), no input → quiescent
-        let mut n = MontbrioMeanField::new();
-        let mut spikes = 0;
-        for _ in 0..50_000 {
-            spikes += n.step(0.0);
-        }
-        assert_eq!(
-            spikes, 0,
-            "MPR must be quiescent without input (eta<0), got {spikes}"
-        );
-    }
-
-    #[test]
-    fn mpr_rate_increases_with_input() {
-        let mut low = MontbrioMeanField::new();
-        let mut high = MontbrioMeanField::new();
-        for _ in 0..10_000 {
-            low.step(3.0);
-            high.step(15.0);
-        }
-        assert!(
-            high.r > low.r,
-            "Higher input → higher rate: high={:.3} vs low={:.3}",
-            high.r,
-            low.r
-        );
-    }
-
-    #[test]
-    fn mpr_two_ode_dynamics() {
-        // Verify both r and v evolve from initial conditions
-        let mut n = MontbrioMeanField::new();
-        let r0 = n.r;
-        let v0 = n.v;
-        for _ in 0..1000 {
-            n.step(5.0);
-        }
-        assert!(
-            n.r != r0 || n.v != v0,
-            "State must evolve from initial conditions"
-        );
-    }
-
-    #[test]
-    fn mpr_rate_non_negative() {
-        let mut n = MontbrioMeanField::new();
-        for _ in 0..50_000 {
-            n.step(-10.0);
-        }
-        assert!(n.r >= 0.0, "Rate must be non-negative, r={}", n.r);
-    }
-
-    #[test]
-    fn mpr_negative_input_no_crash() {
-        let mut n = MontbrioMeanField::new();
-        for _ in 0..50_000 {
-            n.step(-100.0);
-        }
-        assert!(n.r.is_finite());
-        assert!(n.v.is_finite());
-    }
-
-    #[test]
-    fn mpr_nan_input_stays_finite() {
-        let mut n = MontbrioMeanField::new();
-        n.step(f64::NAN);
-        assert!(n.r.is_finite());
-        assert!(n.v.is_finite());
-    }
-
-    #[test]
-    fn mpr_extreme_input_bounded() {
-        let mut n = MontbrioMeanField::new();
-        for _ in 0..10_000 {
-            n.step(1e6);
-        }
-        assert!(n.r.is_finite() && n.r <= 100.0);
-        assert!(n.v.is_finite() && n.v <= 50.0);
-    }
-
-    #[test]
-    fn mpr_reset_clears_state() {
-        let mut n = MontbrioMeanField::new();
-        for _ in 0..10_000 {
-            n.step(10.0);
-        }
-        n.reset();
-        assert_eq!(n.r, 0.01);
-        assert_eq!(n.v, -2.0);
-    }
-
-    #[test]
-    fn mpr_performance_100k_steps() {
-        let start = std::time::Instant::now();
-        let mut n = MontbrioMeanField::new();
-        for _ in 0..100_000 {
-            std::hint::black_box(n.step(5.0));
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "100k steps must complete in <50ms"
-        );
-    }
-}
+#[path = "montbrio_mean_field_tests.rs"]
+mod tests;

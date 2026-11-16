@@ -496,6 +496,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   use the block-design instance name `sc_shd_0`; the demo no longer prints a
   throughput from core cycles alone, and gives the 75.2 % accuracy as the
   floating-point model's. The hardware-claims test reads both guides.
+- The engine's 4 population models (Brunel balanced network, El Boustani
+  network, Montbrió-Pazó-Roxin mean field, Tsodyks-Uziel-Markram network)
+  are documented in full, each file read against its code: which update
+  uses the old and which the new state, the bounds each step clamps to, and
+  the value a non-finite state is replaced by. The Montbrió-Pazó-Roxin
+  equation now shows the coupling term `J * tau * r` the code adds, and its
+  rate is in units of 1/`tau`, not Hz. To keep the four files under their
+  frozen line ceilings, each one's unit tests move to a sibling
+  `<name>_tests.rs`, and the ceilings fall to the new lengths.
 - The engine's 10 undocumented rate-model files (Li-Rinzel astrocyte,
   fractional-order LIF, leaky compete-and-fire, liquid time-constant,
   McCulloch-Pitts, parallel spiking, Siegert transfer function, sigmoid

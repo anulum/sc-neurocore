@@ -50,9 +50,9 @@ _LITERAL_DEADLINES_LEFT = {
     "engine/src/neurons/motor/motor_unit.rs": 1,
     "engine/src/neurons/motor/renshaw_cell.rs": 1,
     "engine/src/neurons/motor/upper_motor_neuron.rs": 1,
-    "engine/src/neurons/population/brunel_network.rs": 1,
-    "engine/src/neurons/population/montbrio_mean_field.rs": 1,
-    "engine/src/neurons/population/tum_network.rs": 1,
+    "engine/src/neurons/population/brunel_network_tests.rs": 1,
+    "engine/src/neurons/population/montbrio_mean_field_tests.rs": 1,
+    "engine/src/neurons/population/tum_network_tests.rs": 1,
 }
 
 
