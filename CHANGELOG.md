@@ -568,6 +568,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   candidate estimates (mode and decorrelator codes, power, accuracy and
   latency) and its annealing result, including that the three `pareto_*`
   vectors hold every accepted move, which `extract_pareto` then filters.
+- The engine's supervised control loop (`engine/src/supervisor.rs`)
+  documents its snapshot, shared state and errors, the Z3 check (what it
+  proves; an undecided solver counts as a failure, and a snapshot with a
+  negative marking is reported safe), the worker, and the run: when it
+  ends, including with a clean result once the verifier thread has ended
+  without failing a snapshot, and that the Python handle's `start` clears
+  a shutdown forced before it.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file

@@ -7,6 +7,8 @@
 
 //! Pure-Rust supervisory execution and verification pipeline.
 
+#![deny(missing_docs)]
+
 use core_affinity;
 use crossbeam_channel::{bounded, Receiver, Sender, TrySendError};
 use pyo3::exceptions::PyRuntimeError;
@@ -39,21 +41,31 @@ const W_OUT: [[i64; NUM_PLACES]; NUM_TRANSITIONS] = [[0, 1, 0, 0], [0, 0, 1, 1],
 /// Snapshot transferred from the RT loop to the Z3 worker.
 #[derive(Clone, Debug)]
 pub struct PetriNetSnapshot {
+    /// Control-loop step at which the snapshot was taken.
     pub step_index: u64,
+    /// Marking of the four places; place 3 is the error sink the verifier bounds.
     pub active_markings: Vec<i64>,
+    /// Rate of each of the three transitions, then the step's control output.
     pub transition_rates: Vec<f64>,
 }
 
 /// Shared supervisor state for RT loop + worker lane.
 #[derive(Clone, Debug)]
 pub struct SupervisorState {
+    /// Set by the verifier on a failed check, or by a forced shutdown; the control loop
+    /// stops when it is set.
     pub safe_shutdown_flag: Arc<AtomicBool>,
+    /// Bounded channel to the verifier; a snapshot sent while it is full is dropped.
     pub tx_snapshot: Sender<PetriNetSnapshot>,
 }
 
+/// Why a supervised run ended without a step count.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupervisorExecutionError {
+    /// `n_neurons` was 0.
     InvalidNeuronCount,
+    /// The shutdown flag was set after the run: the verifier failed a snapshot, including
+    /// one still queued when the loop ended, or a shutdown was forced.
     SafetyViolation,
 }
 
@@ -134,6 +146,14 @@ fn bind_core(core_index: usize) {
     }
 }
 
+/// Check with Z3 that no firing sequence of the transfer net reaches an unsafe marking.
+///
+/// Starting from the snapshot's marking (a missing place reads as 0), any set of the three
+/// transitions may fire at each of `depth` steps while every marking stays non-negative.
+/// Returns true when no sequence puts more than 100 tokens in place 3 after any of those
+/// steps, which is also the answer for a `depth` of 0; a sequence that does, or an
+/// undecided solver, gives false. A snapshot holding a negative marking admits no sequence
+/// at all, so it is reported safe.
 pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool {
     // Since z3 0.21 the crate manages the context globally/thread-locally; AST and Solver
     // constructors no longer take an explicit `&Context`.
@@ -209,6 +229,9 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
     }
 }
 
+/// Start the verifier thread: it checks each received snapshot at depth 4 and, on the first
+/// that fails, sets `shutdown_flag` and stops. It ends when the channel closes. The thread is
+/// pinned to `target_core` when that core exists.
 pub fn spawn_z3_verification_worker(
     rx_snapshot: Receiver<PetriNetSnapshot>,
     shutdown_flag: Arc<AtomicBool>,
@@ -314,6 +337,20 @@ fn run_supervisor_steps_with_flag(
     Ok(executed)
 }
 
+/// Run the control loop and its verifier until `max_steps` steps or a shutdown.
+///
+/// A snapshot is offered to the verifier every `snapshot_period` steps (at least 1) and is
+/// dropped when two are already waiting; the loop sleeps `step_interval_ns` between steps
+/// when that is not 0. The run ends after `max_steps` steps (0 sets no limit), when the
+/// verifier fails a snapshot, or, with `Ok`, at the first snapshot offered after the
+/// verifier thread ended without failing one, as on a panic under an unwinding profile.
+/// Returns the number of steps executed.
+///
+/// # Errors
+///
+/// [`SupervisorExecutionError::InvalidNeuronCount`] for 0 neurons, and
+/// [`SupervisorExecutionError::SafetyViolation`] when the verifier failed a snapshot,
+/// including one still queued when the loop ended.
 pub fn run_supervisor_steps(
     n_neurons: usize,
     seed: u64,
@@ -339,6 +376,12 @@ pub fn run_supervisor_steps(
     name = "PySpikingControllerPool",
     module = "sc_neurocore_engine.sc_neurocore_engine"
 )]
+/// Python handle on a supervised control loop.
+///
+/// `start` runs [`run_supervisor_steps`] with this handle's flag, which it clears first, so
+/// a shutdown forced before `start` has no effect on the run. Under an interpreter with a
+/// GIL, `start` holds it until the run ends, so no other Python thread can call
+/// `force_shutdown` meanwhile.
 pub struct PySpikingControllerPool {
     n_neurons: usize,
     seed: u64,
