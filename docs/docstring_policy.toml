@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2005
+expected_file_count = 2010
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8074,3 +8074,23 @@ rationale = "Analytical Loihi CUBA tests, including the decay of a negative stat
 [[file]]
 path = "tests/test_numerics.py"
 rationale = "Tests of the numerical helpers for neuron models, trunc_div among them."
+
+[[file]]
+path = "benchmarks/bench_adex.py"
+rationale = "AdEx benchmark whose source list names adex/step.rs, where try_step moved."
+
+[[file]]
+path = "benchmarks/bench_model_expif.py"
+rationale = "Exponential integrate-and-fire benchmark whose source list names exp_if/step.rs, where try_step moved."
+
+[[file]]
+path = "benchmarks/bench_model_lapicque.py"
+rationale = "Lapicque benchmark whose source list names lapicque/contract.rs, where valid moved."
+
+[[file]]
+path = "benchmarks/bench_model_dpi_neuron.py"
+rationale = "DPI neuron benchmark whose source list names dpi_neuron/contract.rs, where valid moved."
+
+[[file]]
+path = "benchmarks/bench_model_neurogrid.py"
+rationale = "Neurogrid RK4 benchmark whose source list names neurogrid_tests.rs, where its unit tests moved."

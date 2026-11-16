@@ -505,6 +505,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Aihara batch checks its step count, configuration and currents before
   the first step but can still stop part-way; and the Ibarz-Tanaka reset
   branch needs a positive `v` as well as `v >= top`.
+- The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
+  dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
+  homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file
+  read against its code. Stated by reading: the fixed-point LIF holds `v`
+  at `v_rest`, not `v_reset`, while refractory, and stores `v_rest` and
+  `v_reset` unmasked; the exponential integrate-and-fire's two cached
+  fields are read by no step and written by no refractory step;
+  `Izhikevich::new` takes every parameter, and only `regular_spiking`
+  fixes the regular-spiking values; the public `mask` helper panics for a
+  width of 0 or above 32. To keep the files under their frozen line
+  ceilings, three files' unit tests move to a sibling `<name>_tests.rs`
+  and six methods or helpers move to child modules, with every public
+  path unchanged; the seven ceilings fall to the new lengths. The AdEx,
+  exponential integrate-and-fire and Lapicque benchmarks list the new
+  files among their sources, and the DPI and Neurogrid benchmarks list
+  the two files the hardware emulators' earlier split created.
 - The engine's 12 top-level map and neural-mass models (Aihara, Cazelles,
   Chialvo, Courbage-Nekorkin-Vdovin, Ermentrout-Kopell, Ibarz-Tanaka,
   Jansen-Rit, Medvedev, Rulkov, and the SC clipped-logistic,

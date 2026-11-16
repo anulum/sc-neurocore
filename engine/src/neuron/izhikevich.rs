@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Floating-point Izhikevich neuron
 
+#![deny(missing_docs)]
+
 /// Izhikevich neuron (floating-point).
 ///
 /// Standard model from IEEE TNN 14(6), 2003:
@@ -14,17 +16,25 @@
 ///   if v >= 30: v ← c, u ← u + d
 #[derive(Clone, Debug)]
 pub struct Izhikevich {
+    /// Membrane potential (mV).
     pub v: f64,
+    /// Recovery variable.
     pub u: f64,
+    /// Time scale of the recovery variable.
     pub a: f64,
+    /// Sensitivity of the recovery variable to `v`.
     pub b: f64,
+    /// Reset value of `v` after a spike (mV).
     pub c: f64,
+    /// Increment of `u` at each spike.
     pub d: f64,
+    /// Step (ms); each call takes two Euler half-steps of `dt / 2`.
     pub dt: f64,
 }
 
 impl Izhikevich {
-    /// Regular spiking defaults: a=0.02, b=0.2, c=-65, d=8, dt=1.0.
+    /// Create a neuron with the given parameters at `v = c` and `u = b * c`. Regular
+    /// spiking uses a=0.02, b=0.2, c=-65, d=8, dt=1.0 ([`Self::regular_spiking`]).
     pub fn new(a: f64, b: f64, c: f64, d: f64, dt: f64) -> Self {
         Self {
             v: c,
@@ -42,7 +52,9 @@ impl Izhikevich {
         Self::new(0.02, 0.2, -65.0, 8.0, 1.0)
     }
 
-    /// Advance one step. Returns 1 on spike, 0 otherwise.
+    /// Advance one step of two Euler half-steps, each updating `v` and `u` from the same
+    /// state. Returns 1 when `v` then reaches 30, setting `v` to `c` and adding `d` to
+    /// `u`; otherwise 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let half = self.dt * 0.5;
         for _ in 0..2 {
@@ -69,47 +81,5 @@ impl Izhikevich {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::Izhikevich;
-
-    #[test]
-    fn regular_spiking_preset_fires_with_current() {
-        let mut neuron = Izhikevich::regular_spiking();
-        let spikes: i32 = (0..100).map(|_| neuron.step(10.0)).sum();
-        assert!(spikes > 0, "RS neuron must fire with I=10");
-    }
-
-    #[test]
-    fn regular_spiking_preset_is_silent_without_input() {
-        let mut neuron = Izhikevich::regular_spiking();
-        let spikes: i32 = (0..100).map(|_| neuron.step(0.0)).sum();
-        assert_eq!(spikes, 0, "no spikes without input");
-    }
-
-    #[test]
-    fn reset_restores_initial_state() {
-        let mut neuron = Izhikevich::regular_spiking();
-        for _ in 0..50 {
-            neuron.step(10.0);
-        }
-        neuron.reset();
-        assert_eq!(neuron.v, neuron.c);
-        assert!((neuron.u - neuron.b * neuron.c).abs() < 1e-12);
-    }
-
-    #[test]
-    fn chattering_preset_fires_more_than_regular_spiking() {
-        let mut chattering = Izhikevich::new(0.02, 0.2, -50.0, 2.0, 1.0);
-        let mut regular_spiking = Izhikevich::regular_spiking();
-        let mut chattering_spikes = 0;
-        let mut regular_spikes = 0;
-        for _ in 0..200 {
-            chattering_spikes += chattering.step(10.0);
-            regular_spikes += regular_spiking.step(10.0);
-        }
-        assert!(
-            chattering_spikes > regular_spikes,
-            "chattering ({chattering_spikes}) should fire more than RS ({regular_spikes})"
-        );
-    }
-}
+#[path = "izhikevich_tests.rs"]
+mod tests;

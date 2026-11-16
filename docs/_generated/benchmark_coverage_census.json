@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 29,
-    "outdated": 115,
+    "current": 28,
+    "outdated": 116,
     "unbound": 174
   },
   "all_records": 318,
@@ -12,8 +12,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 4,
-    "outdated": 82,
+    "current": 3,
+    "outdated": 83,
     "unbound": 1
   },
   "rows": [
@@ -28,7 +28,11 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "benchmarks/bench_adex.py",
+            "engine/src/neuron/adex.rs"
+          ],
+          "currency": "outdated",
           "name": "bench_adex.json",
           "script": "bench_adex.py"
         }
@@ -445,6 +449,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "benchmarks/bench_model_dpi_neuron.py",
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/hardware/dpi_neuron.rs",
             "hdl/formal/catalogue/sc_dpineuron.v",
@@ -655,7 +660,9 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "benchmarks/bench_model_expif.py",
             "bridge/sc_neurocore_engine/__init__.py",
+            "engine/src/neuron/exp_if.rs",
             "src/sc_neurocore/neurons/model_schemas/exp_if.json",
             "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
             "tests/test_model_expif_source_contract.py"
@@ -1021,6 +1028,8 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "benchmarks/bench_model_lapicque.py",
+            "engine/src/neuron/lapicque.rs",
             "src/sc_neurocore/accel/lapicque.py",
             "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
             "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml",
@@ -1337,6 +1346,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "benchmarks/bench_model_neurogrid.py",
             "engine/Cargo.toml",
             "engine/src/neurons/hardware/neurogrid.rs"
           ],

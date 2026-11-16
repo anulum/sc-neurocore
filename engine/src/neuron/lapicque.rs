@@ -6,20 +6,38 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Lapicque 1907 polarization + preserved SC hard-reset LIF
 
+#![deny(missing_docs)]
+
+mod contract;
+
 /// Profile-explicit Lapicque state used by the production engine.
 #[derive(Clone, Debug)]
 pub struct LapicqueNeuron {
+    /// Membrane (polarisation) potential, normalised.
     pub v: f64,
+    /// Resting potential of the SC profile; the source profile does not read it.
     pub v_rest: f64,
+    /// Value after a spike in the SC profile; the source profile never resets.
     pub v_reset: f64,
+    /// Excitation polarisation threshold (normalised polarisation).
     pub v_threshold: f64,
+    /// Membrane time constant of the SC profile. The source profile uses
+    /// `K * R * rho / (R + rho)` instead.
     pub tau: f64,
+    /// Input resistance of the SC profile. The source profile uses `rho / (R + rho)`.
     pub resistance: f64,
+    /// Step; the update is exact for a drive held over `dt`.
     pub dt: f64,
+    /// Lapicque circuit capacitance K (normalised capacitance).
     pub capacitance: f64,
+    /// Lapicque source-series resistance R (normalised resistance).
     pub series_resistance: f64,
+    /// Lapicque polarisation leakage resistance rho (normalised resistance).
     pub polarization_resistance: f64,
+    /// Latched first threshold attainment.
     pub excited: bool,
+    /// `true` selects the one-shot Lapicque 1907 circuit (latched event, no reset); `false`
+    /// the SC hard-reset LIF.
     pub source_profile: bool,
 }
 
@@ -52,38 +70,14 @@ impl LapicqueNeuron {
         state
     }
 
-    /// Return whether all configuration and dynamic invariants hold.
-    pub fn valid(&self) -> bool {
-        if !self.v.is_finite()
-            || !self.v_threshold.is_finite()
-            || self.v_threshold <= 0.0
-            || !self.dt.is_finite()
-            || self.dt <= 0.0
-        {
-            return false;
-        }
-        if self.source_profile {
-            return (self.excited || self.v < self.v_threshold)
-                && self.capacitance.is_finite()
-                && self.capacitance > 0.0
-                && self.series_resistance.is_finite()
-                && self.series_resistance > 0.0
-                && self.polarization_resistance.is_finite()
-                && self.polarization_resistance > 0.0;
-        }
-        !self.excited
-            && self.v_rest.is_finite()
-            && self.v_reset.is_finite()
-            && self.v_threshold > self.v_rest
-            && self.v_threshold > self.v_reset
-            && self.v < self.v_threshold
-            && self.tau.is_finite()
-            && self.tau > 0.0
-            && self.resistance.is_finite()
-            && self.resistance > 0.0
-    }
-
     /// Advance one exact constant-drive step without conflating errors with silence.
+    ///
+    /// `v` moves to `v_inf + (v - v_inf) * exp(-dt / time_constant)`. The SC profile uses
+    /// `v_inf = v_rest + resistance * drive` and `tau`; reaching `v_threshold` sets `v`
+    /// to `v_reset` and returns 1. The source profile uses
+    /// `v_inf = drive * rho / (R + rho)` and `K * R * rho / (R + rho)`; its first reach of
+    /// `v_threshold` latches `excited` and returns 1, and `v` is never reset. An error
+    /// leaves the state unchanged.
     pub fn try_step(&mut self, drive: f64) -> Result<i32, &'static str> {
         if !drive.is_finite() {
             return Err("Lapicque drive must be finite");
@@ -130,12 +124,16 @@ impl LapicqueNeuron {
         }
     }
 
-    /// Compatibility dispatch for NetworkRunner's uniform non-throwing trait.
+    /// Compatibility dispatch for NetworkRunner's uniform non-throwing trait; a refused
+    /// step returns 0 and leaves the state unchanged.
     pub fn step(&mut self, drive: f64) -> i32 {
         self.try_step(drive).unwrap_or(0)
     }
 
     /// Execute a failure-atomic complete batch against a cloned candidate.
+    ///
+    /// The receiver is never changed. The result holds the post-step `v` and event of
+    /// each step, then the final `v` and `excited`.
     pub fn simulate_complete(
         &self,
         n_steps: usize,

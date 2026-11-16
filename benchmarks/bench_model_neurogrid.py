@@ -7,6 +7,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neurogrid RK4 multi-backend local regression benchmark
 
+"""Time the Neurogrid RK4 neuron on its Python, Rust, Go, Julia and Mojo backends.
+
+Python, Go and Julia run ``STEPS`` steps at the constant input ``CURRENT``, ``REPEATS`` times; Rust runs the
+engine example ``bench_neurogrid_rk4`` and Mojo its kernel, once each. The report holds each backend's timings
+and spike count beside the expected 94 spikes, and the SHA-256 of every file in ``SOURCE_HASH_PATHS``; it is
+written to ``OUTPUT`` and printed.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -36,6 +44,8 @@ SOURCE_HASH_PATHS = {
     "engine/examples/bench_neurogrid_rk4.rs": REPO_ROOT / "engine/examples/bench_neurogrid_rk4.rs",
     "engine/src/neurons/hardware/neurogrid.rs": REPO_ROOT
     / "engine/src/neurons/hardware/neurogrid.rs",
+    "engine/src/neurons/hardware/neurogrid_tests.rs": REPO_ROOT
+    / "engine/src/neurons/hardware/neurogrid_tests.rs",
     "src/sc_neurocore/neurons/models/neurogrid.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/neurogrid.py",
     "src/sc_neurocore/accel/go/services/neurogrid.go": REPO_ROOT
@@ -246,6 +256,7 @@ def _run_mojo_backend() -> dict[str, object]:
 
 
 def main() -> None:
+    """Run the five backends, write the report to ``OUTPUT`` and print it."""
     report = {
         "benchmark": "neurogrid_rk4",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
