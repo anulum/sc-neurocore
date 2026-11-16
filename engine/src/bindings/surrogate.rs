@@ -70,17 +70,17 @@ impl PySurrogateLif {
         k: Option<f32>,
     ) -> PyResult<Self> {
         let surrogate = parse_surrogate(surrogate, k)?;
-        Ok(Self {
-            inner: grad::SurrogateLif::new(
-                data_width,
-                fraction,
-                v_rest,
-                v_reset,
-                v_threshold,
-                refractory_period,
-                surrogate,
-            ),
-        })
+        let inner = grad::SurrogateLif::try_new(
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+            surrogate,
+        )
+        .map_err(PyValueError::new_err)?;
+        Ok(Self { inner })
     }
 
     #[pyo3(signature = (leak_k, gain_k, i_t, noise_in=0))]

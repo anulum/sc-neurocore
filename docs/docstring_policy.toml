@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2027
+expected_file_count = 2028
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8162,3 +8162,7 @@ rationale = "Source code equivalence never calls a code change, even one inside 
 [[file]]
 path = "tests/test_benchmark_coverage_census_reviews.py"
 rationale = "The census accepts a source-change review only while the reviewed bytes are current and the code unchanged."
+
+[[file]]
+path = "tests/test_surrogate_lif_refuses_invalid_configuration.py"
+rationale = "A refused surrogate LIF configuration raises ValueError in a live interpreter, through the extension and the wrapper."

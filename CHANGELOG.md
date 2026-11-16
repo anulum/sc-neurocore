@@ -794,6 +794,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A surrogate LIF built with a configuration the fixed-point LIF refuses
+  raises ValueError with the reason, through the extension's class and
+  through sc_neurocore_engine.grad.SurrogateLif. The constructor panicked,
+  and the engine's release build aborts on a panic, so a data_width
+  outside [1, 16], a fraction not below it or a negative refractory period
+  ended the Python process with SIGABRT and no exception. The Rust
+  SurrogateLif gains try_new; new keeps its documented panic.
+
 - The Go and Rust safety kernels of the Hodgkin-Huxley model now run as
   many explicit-Euler sub-steps as the Python model where 1/dt is a
   half-integer. The Python model runs round(1/dt) sub-steps, and Python

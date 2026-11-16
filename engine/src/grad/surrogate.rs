@@ -111,7 +111,7 @@ impl SurrogateLif {
     /// # Panics
     ///
     /// If [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) refuses the
-    /// configuration.
+    /// configuration; [`Self::try_new`] returns the refusal instead.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -121,18 +121,47 @@ impl SurrogateLif {
         refractory_period: i32,
         surrogate: SurrogateType,
     ) -> Self {
-        Self {
-            lif: crate::neuron::FixedPointLif::new(
+        Self::try_new(
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+            surrogate,
+        )
+        .expect("invalid fixed-point LIF configuration")
+    }
+
+    /// Construct a surrogate-enabled fixed-point LIF neuron, or return why the configuration is
+    /// refused.
+    ///
+    /// # Errors
+    ///
+    /// The reason [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) gives: a
+    /// `data_width` outside `[1, 16]`, a `fraction` not below it, or a negative
+    /// `refractory_period`.
+    pub fn try_new(
+        data_width: u32,
+        fraction: u32,
+        v_rest: i16,
+        v_reset: i16,
+        v_threshold: i16,
+        refractory_period: i32,
+        surrogate: SurrogateType,
+    ) -> Result<Self, &'static str> {
+        Ok(Self {
+            lif: crate::neuron::FixedPointLif::try_new(
                 data_width,
                 fraction,
                 v_rest,
                 v_reset,
                 v_threshold,
                 refractory_period,
-            ),
+            )?,
             surrogate,
             membrane_trace: Vec::new(),
-        }
+        })
     }
 
     /// Forward LIF step while caching trace for backward pass.

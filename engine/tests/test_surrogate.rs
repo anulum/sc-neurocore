@@ -113,3 +113,45 @@ fn weight_update_changes_weights() {
     let w_after = layer.layer.get_weights();
     assert_ne!(w_before, w_after);
 }
+
+/// The configurations `FixedPointLif::try_new` refuses, each with the reason it gives.
+const REFUSED: [((u32, u32, i32), &str); 4] = [
+    ((17, 8, 2), "data_width must be in [1, 16]"),
+    ((0, 0, 2), "data_width must be in [1, 16]"),
+    ((16, 16, 2), "fraction must be less than data_width"),
+    ((16, 8, -1), "refractory_period must be nonnegative"),
+];
+
+#[test]
+fn try_new_refuses_what_the_fixed_point_lif_refuses() {
+    for ((data_width, fraction, refractory_period), reason) in REFUSED {
+        let refused = SurrogateLif::try_new(
+            data_width,
+            fraction,
+            0,
+            0,
+            256,
+            refractory_period,
+            SurrogateType::FastSigmoid { k: 25.0 },
+        );
+        assert_eq!(
+            refused.err(),
+            Some(reason),
+            "data_width {data_width}, fraction {fraction}"
+        );
+    }
+}
+
+#[test]
+fn try_new_accepts_the_default_configuration() {
+    let surr = SurrogateLif::try_new(16, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 })
+        .expect("the default configuration is valid");
+    assert_eq!(surr.trace_len(), 0);
+    assert_eq!(surr.lif.v_threshold, 256);
+}
+
+#[test]
+#[should_panic(expected = "invalid fixed-point LIF configuration")]
+fn new_keeps_its_documented_panic() {
+    let _ = SurrogateLif::new(17, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 });
+}

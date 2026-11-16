@@ -52,6 +52,13 @@ class SurrogateLif:
             Native surrogate-gradient family.
         k : float or None, optional
             Surrogate steepness, or its native family default.
+
+        Raises
+        ------
+        ValueError
+            If the surrogate name is unknown, or the fixed-point LIF refuses the configuration: a
+            ``data_width`` outside [1, 16], a ``fraction`` not below it, or a negative
+            ``refractory_period``.
         """
         self._engine: _SurrogateType = _RustSurrogateLif(
             data_width,
