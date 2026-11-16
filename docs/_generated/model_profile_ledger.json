@@ -96,8 +96,8 @@
       "not-executable": 13
     },
     "descriptor_method_agreement": {
-      "differs": 12,
-      "same": 68
+      "differs": 14,
+      "same": 66
     }
   },
   "profiles": [
@@ -8447,9 +8447,9 @@
         "recommended_precision": ""
       },
       "descriptor": {
-        "method": "euler",
+        "method": "rk4",
         "dt": 0.1,
-        "method_agreement": "same"
+        "method_agreement": "differs"
       },
       "profile_problems": [],
       "verified": {
@@ -8720,9 +8720,9 @@
         "recommended_precision": ""
       },
       "descriptor": {
-        "method": "euler",
+        "method": "rk4",
         "dt": 0.1,
-        "method_agreement": "same"
+        "method_agreement": "differs"
       },
       "profile_problems": [],
       "verified": {

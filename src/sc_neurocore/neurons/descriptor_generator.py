@@ -132,10 +132,10 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
         "parameters": {"theta", "dt"},
     },
     "SCWBNMDAMagnesiumBlockNeuron": {"method": "euler-50-substeps"},
-    # No v1 schema gives this model's method, so the generic Euler default would
-    # stand in the descriptor; the class runs RK4 by default and so does every
-    # backend lane (Rust, Go, Julia, Mojo).
-    "DendriticNMDANeuron": {"method": "rk4"},
+    # The class's runtime default ``baseline_euler`` is the explicit Euler step its
+    # v1 schema calls ``euler``; the descriptor keeps the schema's spelling, which
+    # the AdEx benchmark record binds.
+    "AdExNeuron": {"method": "euler"},
     # ``n`` is the number of ring sites, fixed at construction and read by every
     # step without ever being written.  The classifier recognises the name only
     # because ``n`` is the Hodgkin-Huxley potassium activation gate, so it
@@ -154,6 +154,71 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
 def _load_class(class_name: str) -> type:
     module = importlib.import_module(f"sc_neurocore.neurons.models.{_CLASS_TO_MODULE[class_name]}")
     return getattr(module, class_name)  # type: ignore[no-any-return]
+
+
+def _runtime_integrator(cls: type) -> str | None:
+    """Return the default of a dataclass model's ``integrator`` field, if it declares one.
+
+    The integrator a class runs by default is the method its descriptor names; a v1
+    schema may integrate the same equations otherwise for the compiler or the
+    co-simulation.
+
+    Parameters
+    ----------
+    cls : type
+        A catalogue model class.
+
+    Returns
+    -------
+    str or None
+        The field's default, or ``None`` when the class is not a dataclass or has no
+        ``integrator`` field with a string default.
+    """
+    if not dataclasses.is_dataclass(cls):
+        return None
+    default = next(
+        (field.default for field in dataclasses.fields(cls) if field.name == "integrator"), None
+    )
+    return default if isinstance(default, str) else None
+
+
+def _integration_method(
+    cls: type,
+    event_kind: str | None,
+    v1_integration: Mapping[str, Any],
+    structural: Mapping[str, Any],
+) -> str:
+    """Return the integration method a model's descriptor names.
+
+    Each source below replaces the one before it: the event kind of a stateless
+    model (``map`` or ``poisson_interval``), otherwise the v1 schema's method
+    (``euler`` when it names none); the default of the class's ``integrator``
+    field; a structural entry's ``method``.
+
+    Parameters
+    ----------
+    cls : type
+        The catalogue model class.
+    event_kind : str or None
+        The stateless event contract of the v1 schema, if it declares one.
+    v1_integration : mapping
+        The v1 schema's ``integration`` table, empty when it has none.
+    structural : mapping
+        The model's entry in the structural overrides, empty when it has none.
+
+    Returns
+    -------
+    str
+        The method the descriptor states.
+    """
+    if event_kind == "level_threshold":
+        method = "map"
+    elif event_kind == "poisson":
+        method = "poisson_interval"
+    else:
+        method = str(v1_integration.get("method", "euler"))
+    method = _runtime_integrator(cls) or method
+    return str(structural.get("method", method))
 
 
 def _field_specs(cls: type) -> list[tuple[str, float]]:
@@ -413,13 +478,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     v1_integration = v1.get("integration", {}) if isinstance(v1.get("integration"), Mapping) else {}
     event_kind = stateless_event_kind(v1)
     structural = _STRUCTURAL_OVERRIDES.get(class_name, {})
-    if event_kind == "level_threshold":
-        integration_method = "map"
-    elif event_kind == "poisson":
-        integration_method = "poisson_interval"
-    else:
-        integration_method = str(v1_integration.get("method", "euler"))
-    integration_method = str(structural.get("method", integration_method))
+    integration_method = _integration_method(cls, event_kind, v1_integration, structural)
 
     specs = _field_specs(cls)
     dyn_state = _dynamic_state_fields(cls)

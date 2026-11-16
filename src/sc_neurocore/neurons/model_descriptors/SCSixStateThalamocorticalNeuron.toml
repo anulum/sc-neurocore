@@ -183,7 +183,7 @@ range = [
 
 [integration]
 dt = 0.05
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "-(I_Na+I_K+I_h+I_T+I_KNa+I_L)+I_ext"

@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-11-15T03:31:27.927919+00:00",
+  "generated_at": "2026-11-16T01:55:44.223102+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -31,21 +31,21 @@
       3
     ],
     "load_average_before": [
-      13.12890625,
-      19.29150390625,
-      19.14453125
+      9.67626953125,
+      12.318359375,
+      11.02587890625
     ],
     "load_average_after": [
-      12.259765625,
-      18.90283203125,
-      19.01953125
+      11.658203125,
+      12.65478515625,
+      11.1494140625
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 4098.997,
-      "max_observed_mhz": 4101.074,
+      "min_observed_mhz": 3900.0,
+      "max_observed_mhz": 3900.039,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -57,7 +57,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "4eb7f648cc3654f0334f2fe70504de79dacd4825",
+  "source_head_at_capture": "94a38bc6ad291aedd5f2823ac2b93aa0a074eaea",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -168,7 +168,7 @@
     "src/sc_neurocore/neurons/base.py": "0cb339b37aaf52c3eb66b44ad186d432d76326c3ead5ef99bb9276bda22557b3",
     "src/sc_neurocore/neurons/behavior_taxonomy.py": "63388c92861adde7ccbcba610e73ef999fd92284c34f168ab0af8465ece6640a",
     "src/sc_neurocore/neurons/dendritic.py": "0599007b6f7ba07b7e247458d017204e0a67d65fea51733b27a7d59ba3dacaf0",
-    "src/sc_neurocore/neurons/descriptor_generator.py": "797d921c5bbd88b0168b78043bdacac735fb3895114ff7044756233d002ab291",
+    "src/sc_neurocore/neurons/descriptor_generator.py": "e6f3718ba1c2fc1b240627483dc44ce34ef0a8785d1b5f7d22bbc89b37bec8b8",
     "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
     "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
     "src/sc_neurocore/neurons/equation_builder.py": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
@@ -186,7 +186,7 @@
     "src/sc_neurocore/neurons/homeostatic_lif.py": "d8ca8274da7f2c5919fd8d143a4635ffaaa2ef57ed7790f6676e7e04eda7dbda",
     "src/sc_neurocore/neurons/lane_runs.py": "64812ad1f29d5f6d51c77391e0798468d4c46ca84b77558050e3b57b717430a0",
     "src/sc_neurocore/neurons/model_catalogue.py": "bdccedfe00872bb567b1be4c8f951e641dbdca38e82645394f32d7e8c5a008ea",
-    "src/sc_neurocore/neurons/model_descriptor.py": "dbdab7f647b73b40156e1f1b8a084819732067952c3d10b0b53e32ef39433f3e",
+    "src/sc_neurocore/neurons/model_descriptor.py": "92d7f6bd3154158575b53557cd4e407d0e02d0beb80fe3fc2930b974abf9894e",
     "src/sc_neurocore/neurons/model_identity.py": "794dcf0aabbdd8509fb18bf7eee34ae73201f836a216100ec65b49ad32edba52",
     "src/sc_neurocore/neurons/model_profile.py": "f218c52ef0533358b6dd152da9dc728aecc6e8e14c82f7a372232519ca1670ed",
     "src/sc_neurocore/neurons/model_receipts.py": "894002e60353c5b86b3949a21ff78f793b1933f59e577f7b1cca92bcdf67fb26",
@@ -212,17 +212,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 2102867,
+      "first_call_ns": 5600157,
       "cached_ns_per_call": [
-        154067.11,
-        124568.6,
-        123818.51,
-        104282.12,
-        116651.21,
-        146189.87,
-        160938.22
+        193277.96,
+        189626.11,
+        193466.16,
+        177629.38,
+        181526.97,
+        187264.07,
+        167996.31
       ],
-      "cached_median_ns_per_call": 124568.6,
+      "cached_median_ns_per_call": 187264.07,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -323,17 +323,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 135849385,
+      "first_call_ns": 139655023,
       "cached_ns_per_call": [
-        181712.2,
-        199892.16,
-        254633.52,
-        209871.77,
-        153361.29,
-        172962.83,
-        162597.95
+        293043.3,
+        335744.67,
+        329761.35,
+        292032.34,
+        197661.11,
+        319210.99,
+        317835.09
       ],
-      "cached_median_ns_per_call": 181712.2,
+      "cached_median_ns_per_call": 317835.09,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -406,17 +406,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 943551275,
+      "first_call_ns": 1150339173,
       "cached_ns_per_call": [
-        281916.43,
-        269688.3,
-        274400.49,
-        263688.7,
-        278066.03,
-        318196.79,
-        332108.84
+        378456.82,
+        296417.38,
+        326108.34,
+        404048.23,
+        344208.94,
+        384438.52,
+        364586.08
       ],
-      "cached_median_ns_per_call": 278066.03,
+      "cached_median_ns_per_call": 364586.08,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -543,17 +543,17 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 7651061,
+      "first_call_ns": 40453364,
       "cached_ns_per_call": [
-        285254.42,
-        355720.95,
-        344272.08,
-        288232.9,
-        315738.02,
-        300451.38,
-        350890.98
+        739670.87,
+        559623.5,
+        652279.59,
+        531117.6,
+        387936.06,
+        438498.53,
+        456456.34
       ],
-      "cached_median_ns_per_call": 315738.02,
+      "cached_median_ns_per_call": 531117.6,
       "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
       "contracts": [
         {

@@ -131,7 +131,7 @@ range = [
 
 [integration]
 dt = 0.025
-method = "euler"
+method = "rk4"
 
 [dynamics]
 

@@ -125,6 +125,42 @@ def test_dendritic_nmda_descriptor_names_its_runtime_integrator() -> None:
     assert descriptor.integration_method == "rk4"
 
 
+#: The only classes whose descriptor may name another method than their
+#: ``integrator`` default, with the method it names. AdEx's explicit Euler step is
+#: ``baseline_euler`` in the class and ``euler`` in its v1 schema; the descriptor
+#: keeps the schema's spelling because the AdEx benchmark record binds it. A new
+#: structural method entry for a class with an ``integrator`` field must be added
+#: here as well, or this test fails.
+RUNTIME_INTEGRATOR_EXCEPTIONS = {"AdExNeuron": "euler"}
+
+
+def test_every_descriptor_names_its_class_runtime_integrator() -> None:
+    """A class that declares an integrator has that integrator's default as its descriptor's method.
+
+    The expectation comes from the class and from this test's own exception table, not from
+    the generator's structural entries, so a wrong method entry added there fails here.
+    """
+    import dataclasses
+
+    from sc_neurocore.neurons.descriptor_generator import _load_class, generate_descriptor
+    from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+
+    checked: list[tuple[str, str, str]] = []
+    for name in sorted(_CLASS_TO_MODULE):
+        cls = _load_class(name)
+        if not dataclasses.is_dataclass(cls):
+            continue
+        fields = {field.name: field.default for field in dataclasses.fields(cls)}
+        default = fields.get("integrator")
+        if not isinstance(default, str):
+            continue
+        expected = RUNTIME_INTEGRATOR_EXCEPTIONS.get(name, default)
+        checked.append((name, generate_descriptor(name).integration_method, expected))
+
+    assert len(checked) == 21
+    assert [entry for entry in checked if entry[1] != entry[2]] == []
+
+
 def test_public_rng_state_properties_are_materialised() -> None:
     """Seeded stochastic descriptors expose replay state from their public property."""
     from sc_neurocore.neurons.descriptor_generator import generate_descriptor

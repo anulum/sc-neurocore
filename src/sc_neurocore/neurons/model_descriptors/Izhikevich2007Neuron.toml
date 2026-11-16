@@ -122,7 +122,7 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "(k * (v - vr) * (v - vt) - u + I) / C"

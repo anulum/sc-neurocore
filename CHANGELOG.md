@@ -681,6 +681,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Thirteen more model descriptors name RK4, the integrator their classes run
+  by default and every backend lane uses: DeSchutterPurkinje, Durstewitz
+  dopamine, Golomb FS, Hay L5 pyramidal, Izhikevich 2007, Martinotti,
+  multicompartment MCN, NeuroGrid, PV fast-spiking, Pospischil, the six-state
+  thalamocortical neuron, SST and VIP. They said Euler. The descriptor
+  generator now takes a class's integrator default as its method; a test
+  holds every class that declares one.
 - The Python Loihi CUBA and Loihi 2 models now decay each state by its
   quotient truncated toward zero, as the engine does; they floored it. A
   negative state therefore leaked more than the same positive one, and a
