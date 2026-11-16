@@ -593,10 +593,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   width of 0 or above 32. To keep the files under their frozen line
   ceilings, three files' unit tests move to a sibling `<name>_tests.rs`
   and six methods or helpers move to child modules, with every public
-  path unchanged; the seven ceilings fall to the new lengths. The AdEx,
-  exponential integrate-and-fire and Lapicque benchmarks list the new
-  files among their sources, and the DPI and Neurogrid benchmarks list
-  the two files the hardware emulators' earlier split created.
+  path unchanged; the seven ceilings fall to the new lengths. The AdEx
+  and exponential integrate-and-fire benchmarks list the new files among
+  their sources, and the DPI and Neurogrid benchmarks list the two files
+  the hardware emulators' earlier split created. The Lapicque benchmark
+  keeps its source list: the sample capture binds that harness byte for
+  byte as reviewed source, so its new child module joins the list only
+  together with a new review of the capture.
 - The engine's 12 top-level map and neural-mass models (Aihara, Cazelles,
   Chialvo, Courbage-Nekorkin-Vdovin, Ermentrout-Kopell, Ibarz-Tanaka,
   Jansen-Rit, Medvedev, Rulkov, and the SC clipped-logistic,

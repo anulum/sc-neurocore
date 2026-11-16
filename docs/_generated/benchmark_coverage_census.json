@@ -1031,7 +1031,6 @@
         {
           "attribution": "bound_script",
           "changed": [
-            "benchmarks/bench_model_lapicque.py",
             "engine/src/neuron/lapicque.rs",
             "src/sc_neurocore/accel/lapicque.py",
             "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
