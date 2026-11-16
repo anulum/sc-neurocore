@@ -11,6 +11,8 @@
 //! - Pareto frontier extraction (O(N²) dominance check)
 //! - Resource estimation batch evaluation
 
+#![deny(missing_docs)]
+
 use rayon::prelude::*;
 
 // ── Resource estimation ──────────────────────────────────────────────
@@ -18,12 +20,24 @@ use rayon::prelude::*;
 /// Pre-computed candidate config for one layer.
 #[derive(Clone, Debug)]
 pub struct Candidate {
+    /// Bitstream length the estimate is for; 1 for the deterministic candidate of
+    /// [`generate_candidates`].
     pub bitstream_length: u32,
-    pub decorrelator: u8, // 0=None,1=LFSR,2=Sobol,3=Halton,4=SCC
-    pub mode: u8,         // 0=SC, 1=Deterministic, 2=Hybrid
+    /// Decorrelator: 0 none, 1 LFSR, 2 Sobol, 3 Halton, 4 SCC. The hybrid estimate prices
+    /// only 1 and 2.
+    pub decorrelator: u8,
+    /// Mode: 0 SC, 1 deterministic, 2 hybrid (70 % of the MACs SC, 30 % deterministic);
+    /// any other value is estimated as SC.
+    pub mode: u8,
+    /// Estimated LUT count.
     pub luts: i64,
+    /// Estimated power, in the estimate's relative units: 0.5 per deterministic MAC and
+    /// 0.01 per SC MAC at length 256, in proportion to the length.
     pub power: f64,
+    /// Estimated accuracy: 1 for deterministic, at most 1 for hybrid, and within `[0.1, 1]`
+    /// for SC.
     pub accuracy: f64,
+    /// Estimated latency in cycles: 1 for deterministic, the bitstream length otherwise.
     pub latency: i64,
 }
 
@@ -176,10 +190,18 @@ impl Xoshiro256pp {
 /// SA result.
 #[derive(Clone, Debug)]
 pub struct SAResult {
-    pub best_config: Vec<usize>, // index into candidates per layer
+    /// Index into each layer's candidate list of the best configuration found.
+    pub best_config: Vec<usize>,
+    /// Its score: the sum over the layers of accuracy times weight, divided by the sum of
+    /// all the weights given.
     pub best_score: f64,
+    /// Total LUTs of each accepted move, in order. The three `pareto_*` vectors hold every
+    /// accepted configuration, not only the non-dominated ones; [`extract_pareto`] filters
+    /// them.
     pub pareto_luts: Vec<i64>,
+    /// Total power of each accepted move, in order.
     pub pareto_power: Vec<f64>,
+    /// Score of each accepted move, in order.
     pub pareto_score: Vec<f64>,
 }
 

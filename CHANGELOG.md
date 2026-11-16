@@ -564,6 +564,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   fusion weights' normalisation, the memristive write noise and stuck-at
   faults, and the learning layer's update, which uses the spikes of the
   same step only.
+- The engine's SC optimizer (`engine/src/optimizer.rs`) documents its
+  candidate estimates (mode and decorrelator codes, power, accuracy and
+  latency) and its annealing result, including that the three `pareto_*`
+  vectors hold every accepted move, which `extract_pareto` then filters.
 - The engine's 7 single-neuron models under `engine/src/neuron` (AdEx,
   dendritic XOR neuron, exponential integrate-and-fire, fixed-point LIF,
   homeostatic LIF, Izhikevich, Lapicque) are documented in full, each file
