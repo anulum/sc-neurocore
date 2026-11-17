@@ -99,6 +99,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   unchanged to studioTrainingActions.ts, with the stream and the counters
   that outdate late replies. Signing out reaches them through one release
   call. New tests cover the module fully.
+- The sign-in actions of SNN Studio's store (the stored token's session
+  check, signing in and signing out) move unchanged to
+  studioAuthActions.ts. Sign-out receives the training module's release
+  call as a parameter instead of reading it from the store factory. New
+  tests cover the module fully.
 
 ## [4.2.0] - 2026-11-17
 

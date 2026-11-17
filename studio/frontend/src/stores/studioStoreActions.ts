@@ -8,6 +8,7 @@
 // Studio store action implementations (mutations + async side effects).
 
 import { createStudioGraphActions } from "./studioGraphActions";
+import { createStudioAuthActions } from "./studioAuthActions";
 import { createStudioAdminActions } from "./studioAdminActions";
 import { createStudioTrainingActions } from "./studioTrainingActions";
 import { runStoreSimulation } from "./studioSimulation";
@@ -20,12 +21,9 @@ import {
   fetchModelDetail,
   fetchPresets,
   fetchPreset,
-  fetchStudioAuthSession,
   fetchStudioCapabilities,
   fetchStudioJobs,
   fetchStudioOperatorStatus,
-  loginStudioBrowserUser,
-  logoutStudioBrowserUser,
   fetchPrecision,
   fetchCodegen,
   fetchReplayNotebook,
@@ -49,19 +47,7 @@ import {
   listProjects as apiListProjects,
   deleteProject as apiDeleteProject,
   runPipeline as apiRunPipeline,
-  setStudioAuthToken,
 } from "../api/client";
-import {
-  clearStoredStudioAuthToken,
-  studioAuthFailureState,
-  studioAuthLoadingState,
-  studioAuthLogoutCompleteState,
-  studioAuthLogoutFailureState,
-  studioAuthSessionLoadedState,
-  studioAuthUnauthenticatedState,
-  storeStudioAuthToken,
-  syncStoredStudioAuthToken,
-} from "../studioAuthSession";
 import {
   studioSavedSessionRemovedState,
   studioSavedSessionRestoreState,
@@ -334,55 +320,7 @@ export function createStudioStoreActions(
       set(capabilityFailureState(error));
     }
   },
-  loadAuthSession: async () => {
-    const currentToken = syncStoredStudioAuthToken(setStudioAuthToken);
-    if (currentToken === null) {
-      set(studioAuthUnauthenticatedState());
-      return;
-    }
-    set(studioAuthLoadingState());
-    try {
-      const authSession = await fetchStudioAuthSession();
-      set(studioAuthSessionLoadedState(authSession));
-    } catch (error: unknown) {
-      clearStoredStudioAuthToken();
-      syncStoredStudioAuthToken(setStudioAuthToken);
-      set(studioAuthFailureState(error, "Session check failed"));
-    }
-  },
-  loginBrowserUser: async (username, password) => {
-    set(studioAuthLoadingState());
-    try {
-      const login = await loginStudioBrowserUser(username, password);
-      storeStudioAuthToken(login.access_token);
-      syncStoredStudioAuthToken(setStudioAuthToken);
-      const authSession = await fetchStudioAuthSession();
-      set(studioAuthSessionLoadedState(authSession));
-      await get().loadOperatorStatus();
-    } catch (error: unknown) {
-      clearStoredStudioAuthToken();
-      syncStoredStudioAuthToken(setStudioAuthToken);
-      set(studioAuthFailureState(error, "Login failed"));
-    }
-  },
-  logoutBrowserUser: async () => {
-    training.releaseTrainingSession();
-    set({ ...studioAuthLoadingState(), graphJobRecovery: null, graphSimResult: null });
-    try {
-      await logoutStudioBrowserUser();
-    } catch (error: unknown) {
-      set(studioAuthLogoutFailureState(error));
-    } finally {
-      clearStoredStudioAuthToken();
-      syncStoredStudioAuthToken(setStudioAuthToken);
-      set(studioAuthLogoutCompleteState());
-      set({
-        trainingJobs: [], trainingJobsError: null, trainingJobsLoading: false,
-        trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
-        trainingObservedConfig: null, trainingExperimentKey: null,
-      });
-    }
-  },
+  ...createStudioAuthActions(set, get, training),
   ...createStudioAdminActions(set, get),
   loadModels: async () => {
     const version = ++modelsLoadVersion;

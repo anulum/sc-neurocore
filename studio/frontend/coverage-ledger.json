@@ -665,6 +665,10 @@
       "statements": 86.66,
       "branches": 83.33
     },
+    "src/stores/studioAuthActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
     "src/stores/studioBundle.ts": {
       "statements": 95.23,
       "branches": 100
@@ -706,8 +710,8 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 58.74,
-      "branches": 59.85
+      "statements": 60.59,
+      "branches": 60
     },
     "src/stores/studioSynthesis.ts": {
       "statements": 95.45,
