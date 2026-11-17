@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2040
+expected_file_count = 2041
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8210,3 +8210,7 @@ rationale = "A named npm advisory passes only for a development-only package wit
 [[file]]
 path = "tests/test_tools/test_npm_advisory_exceptions.py"
 rationale = "Synthetic and maintained locks prove that production installations, other versions, released fixes, unnamed advisories, stale records and changed tables block acceptance."
+
+[[file]]
+path = "tests/test_hdl_sc_cordiv_mux_add_cosim.py"
+rationale = "An Icarus co-simulation binds sc_cordiv and sc_mux_add bit for bit to sc_divide and edge.bitstream.sc_mux on random, correlated and reset stimulus."

@@ -26,6 +26,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The stochastic-computing divider `hdl/sc_cordiv.v` and the MUX scaled
+  adder `hdl/sc_mux_add.v` have their first tests. An Icarus co-simulation
+  checks each core bit for bit against the package's own model,
+  `sc_neurocore.utils.bitstreams.sc_divide` and
+  `sc_neurocore.edge.bitstream.sc_mux`. The divider runs 4,096 random input
+  pairs that reach all eight combinations of held output and inputs, 4,096
+  pairs of streams compared against one shared random word, and a reset in
+  the middle of a stream; the adder runs all eight inputs and 1,024 random
+  ones. A divider that copies its numerator only when the denominator bit
+  is 1, or an adder with its inputs swapped, fails the tests.
+
 - The adaptive-threshold integrate-and-fire neuron states two behaviour
   cases at a current of 20.0: it fires once in 160 steps, the window its
   reference test checks against the two exact relaxations written out in

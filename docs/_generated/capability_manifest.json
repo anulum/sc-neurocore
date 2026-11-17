@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5692
+    "test_files": 5693
   },
   "documentation": {
     "public_pages": [
@@ -5607,6 +5607,7 @@
       "tests/test_hdl_gen/test_stochastic_source_emitters_ir_routing.py",
       "tests/test_hdl_gen/test_stochastic_source_emitters_lfsr_sobol_parity.py",
       "tests/test_hdl_gen/test_stochastic_source_emitters_seed_and_rejects.py",
+      "tests/test_hdl_sc_cordiv_mux_add_cosim.py",
       "tests/test_hh_validation_hodgkin_huxley_validation.py",
       "tests/test_hh_validation_native_hodgkin_huxley.py",
       "tests/test_hill_tononi_native_parity.py",
