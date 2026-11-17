@@ -40,11 +40,6 @@
       "identifier": "https://github.com/anulum/sc-neurocore",
       "relation": "isSupplementTo",
       "scheme": "url"
-    },
-    {
-      "identifier": "https://github.com/anulum/scpn-fusion-core",
-      "relation": "isPartOf",
-      "scheme": "url"
     }
   ],
   "communities": [

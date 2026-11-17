@@ -816,6 +816,9 @@ Release text.
 
 ### Fixed
 
+- `.zenodo.json` no longer relates SC-NeuroCore as part of
+  `anulum/scpn-fusion-core`, a separate repository. The deposit Zenodo
+  makes from this release carries only the relation to this repository.
 - The DNA kinetic simulators refuse a run they cannot simulate, with
   ValueError and the same words in the engine's py_dna_simulate_kinetics
   and the Python KineticSimulator, before anything is computed. A gate
