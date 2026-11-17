@@ -107,6 +107,20 @@ These change results or refuse input that 4.1.0 accepted. In each case the earli
   `sanitize_ident` is no longer importable from `sc_neurocore.compiler.verilog_expr_emitter`; its home is the
   private `sc_neurocore.hdl_gen._ident`. No name that a module defines is removed.
 
+## Changes that can need an edit in calling code
+
+4.2.0 is a minor release, and two changes can still need an edit in code written against 4.1.0:
+
+- **Five names that modules only imported** can no longer be imported from those modules; see "Names a module
+  only imported" above. Import each from its own module.
+- **Rust crate `sc_neurocore_engine`: `AkidaNeuron` has a new public field,** `current_modulation`, the factor the
+  next event's weight is multiplied by. Code that builds an `AkidaNeuron` with a struct literal must set it to `1.0`,
+  or use `AkidaNeuron::new` or `AkidaNeuron::default()`.
+
+In the Rust crate, `dna::simulate_kinetics` keeps its 4.1.0 signature and panics with the refusal's words on a run
+that `dna::check_kinetics` refuses. The new `dna::try_simulate_kinetics` returns the refusal as a `KineticsError`
+instead.
+
 ## SNN Studio: development preview
 
 SNN Studio remains a **development preview**, labelled experimental. Changes in this release:
