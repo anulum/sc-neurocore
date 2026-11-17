@@ -689,6 +689,10 @@
       "statements": 100,
       "branches": 100
     },
+    "src/stores/studioExportActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
     "src/stores/studioGraphActions.ts": {
       "statements": 100,
       "branches": 100
@@ -726,8 +730,8 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 72.5,
-      "branches": 61.9
+      "statements": 81.2,
+      "branches": 75
     },
     "src/stores/studioSynthesis.ts": {
       "statements": 95.45,

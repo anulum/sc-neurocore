@@ -123,6 +123,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   by side, the network, an imported trace, comparison, nullclines,
   frequency response and the spike-triggered average) move unchanged to
   studioRunActions.ts, covered fully by new tests.
+- The experiment exports of SNN Studio's store (the Python script with
+  its one-liner, replay script and digest, the replay pack and notebook,
+  and the trace as JSON, CSV or SVG) move unchanged to
+  studioExportActions.ts, covered fully by new tests. Repeated blank lines
+  the earlier moves left in the store's factory file are removed.
 
 ## [4.2.0] - 2026-11-17
 

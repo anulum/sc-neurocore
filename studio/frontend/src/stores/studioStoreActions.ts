@@ -8,6 +8,7 @@
 // Studio store action implementations (mutations + async side effects).
 
 import { createStudioGraphActions } from "./studioGraphActions";
+import { createStudioExportActions } from "./studioExportActions";
 import { createStudioRunActions } from "./studioRunActions";
 import { createStudioHardwareActions } from "./studioHardwareActions";
 import { createStudioSessionAndShareActions } from "./studioSessionAndShareActions";
@@ -22,9 +23,6 @@ import {
   fetchPresets,
   fetchPreset,
   fetchStudioCapabilities,
-  fetchCodegen,
-  fetchReplayNotebook,
-  fetchReplayPack,
   runPipeline as apiRunPipeline,
 } from "../api/client";
 import {
@@ -36,19 +34,6 @@ import {
   studioPipelineCompletedState,
   studioPipelineStartState,
 } from "../studioGraphRequests";
-import {
-  studioExperimentExportRequest,
-} from "../studioSimulationConfig";
-import {
-  studioAnalysisErrorState,
-  studioCodegenResultState,
-  studioCodegenStartState,
-} from "../studioAnalysisState";
-import {
-  replayPackExport,
-} from "../simulationExports";
-import { exportStudioTrace } from "./studioTraceActions";
-import { downloadBrowserArtefact } from "../browserArtefactDownload";
 
 import {
 } from "../evidenceBundles";
@@ -93,13 +78,8 @@ import type {
   StudioState,
   StudioStoreActions,
 } from "./studioTypes";
-import {
-  simulationConfigInput,
-} from "./studioHeavyAnalysis";
 import type { StudioEquationIrActions } from "./studioEquationIrActions";
 import { studioStageOutcomeState } from "./studioStageFailure";
-
-
 
 /**
  * Build every action the Studio store exposes.
@@ -310,56 +290,13 @@ export function createStudioStoreActions(
 
   ...createStudioRunActions(set, get),
 
-
   ...createStudioHardwareActions(set, get),
 
   recordStageOutcome: (stage, failure) => {
     set(studioStageOutcomeState(stage, failure, get()));
   },
 
-  runCodegen: async () => {
-    const s = get();
-    set(studioCodegenStartState());
-    try {
-      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
-        throw new Error("Selected model is still loading");
-      }
-      const res = await fetchCodegen(studioExperimentExportRequest(simulationConfigInput(s)));
-      set(studioCodegenResultState(res.script, res.oneliner, res.replay_script, res.experiment_sha256));
-    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
-  },
-
-  exportReplayPack: async () => {
-    const s = get();
-    try {
-      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
-        throw new Error("Selected model is still loading");
-      }
-      const pack = await fetchReplayPack(studioExperimentExportRequest(simulationConfigInput(s)));
-      const artefact = replayPackExport(pack);
-      downloadBrowserArtefact(artefact.blob, artefact.filename);
-    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
-  },
-
-  exportReplayNotebook: async () => {
-    const s = get();
-    try {
-      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
-        throw new Error("Selected model is still loading");
-      }
-      const notebook = await fetchReplayNotebook(studioExperimentExportRequest(simulationConfigInput(s)));
-      const stem = s.sourceMode === "model" ? s.selectedModelName : "equations";
-      downloadBrowserArtefact(
-        new Blob([JSON.stringify(notebook, null, 1)], { type: "application/x-ipynb+json" }),
-        `${stem}-replay.ipynb`,
-      );
-    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
-  },
-
-  exportData: () => { exportStudioTrace("json", get, set); },
-  exportCSV: () => { exportStudioTrace("csv", get, set); },
-  exportSVG: () => { exportStudioTrace("svg", get, set); },
-
+  ...createStudioExportActions(set, get),
 
   ...createStudioProjectActions(set, get, runRestoredExperiment),
 
