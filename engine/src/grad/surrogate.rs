@@ -17,11 +17,13 @@ use rayon::prelude::*;
 /// Surrogate for the derivative of the spike step, as a function of the membrane's offset
 /// `x` from threshold.
 ///
-/// The parameters are not checked and are meant to be positive. A `k` of 0 makes the fast
-/// sigmoid infinite and the SuperSpike and arctan forms 1 everywhere; a negative `k` makes
-/// the fast sigmoid negative and the SuperSpike form infinite at `|x| = -1/k`. A `width` of
-/// 0 gives 0 everywhere, and a negative one a derivative whose size grows with `|x|`,
-/// negative for the triangular pulse.
+/// Each parameter must be finite and above 0. The constructors ([`Self::fast_sigmoid`] and
+/// the others) and [`Self::check`] refuse any other value, and so do
+/// [`SurrogateLif::try_new`] and [`DifferentiableDenseLayer::try_new`] for a variant built
+/// directly. Unchecked, a `k` of 0 makes the fast sigmoid infinite and the SuperSpike and
+/// arctan forms 1 everywhere; a negative `k` makes the fast sigmoid negative and the
+/// SuperSpike form infinite at `|x| = -1/k`. A `width` of 0 gives 0 everywhere, and a
+/// negative one a derivative whose size grows with `|x|`, negative for the triangular pulse.
 #[derive(Clone, Debug)]
 pub enum SurrogateType {
     /// Fast Sigmoid: d/dx = 1 / (2k * (1 + k|x|)^2)
@@ -53,7 +55,95 @@ pub enum SurrogateType {
     },
 }
 
+/// Return `value` when it is finite and above 0, or `reason`.
+fn positive(value: f32, reason: &'static str) -> Result<f32, &'static str> {
+    if value.is_finite() && value > 0.0 {
+        Ok(value)
+    } else {
+        Err(reason)
+    }
+}
+
+/// Why a steepness is refused.
+const K_REFUSED: &str = "surrogate k must be finite and above 0";
+
+/// Why a width is refused.
+const WIDTH_REFUSED: &str = "surrogate width must be finite and above 0";
+
 impl SurrogateType {
+    /// A fast sigmoid of steepness `k`.
+    ///
+    /// # Errors
+    ///
+    /// When `k` is not finite and above 0.
+    pub fn fast_sigmoid(k: f32) -> Result<Self, &'static str> {
+        Ok(Self::FastSigmoid {
+            k: positive(k, K_REFUSED)?,
+        })
+    }
+
+    /// A SuperSpike surrogate of steepness `k`.
+    ///
+    /// # Errors
+    ///
+    /// When `k` is not finite and above 0.
+    pub fn super_spike(k: f32) -> Result<Self, &'static str> {
+        Ok(Self::SuperSpike {
+            k: positive(k, K_REFUSED)?,
+        })
+    }
+
+    /// An arctan surrogate of steepness `k`.
+    ///
+    /// # Errors
+    ///
+    /// When `k` is not finite and above 0.
+    pub fn arc_tan(k: f32) -> Result<Self, &'static str> {
+        Ok(Self::ArcTan {
+            k: positive(k, K_REFUSED)?,
+        })
+    }
+
+    /// A triangular pulse of half-width `width`.
+    ///
+    /// # Errors
+    ///
+    /// When `width` is not finite and above 0.
+    pub fn triangular(width: f32) -> Result<Self, &'static str> {
+        Ok(Self::Triangular {
+            width: positive(width, WIDTH_REFUSED)?,
+        })
+    }
+
+    /// A piecewise-linear pulse of half-width `width`.
+    ///
+    /// # Errors
+    ///
+    /// When `width` is not finite and above 0.
+    pub fn piecewise_linear(width: f32) -> Result<Self, &'static str> {
+        Ok(Self::PiecewiseLinear {
+            width: positive(width, WIDTH_REFUSED)?,
+        })
+    }
+
+    /// Say whether this surrogate's parameter is finite and above 0.
+    ///
+    /// # Errors
+    ///
+    /// `"surrogate k must be finite and above 0"` or `"surrogate width must be finite and
+    /// above 0"`; the straight-through window has no parameter and is always accepted.
+    pub fn check(&self) -> Result<(), &'static str> {
+        match self {
+            Self::FastSigmoid { k } | Self::SuperSpike { k } | Self::ArcTan { k } => {
+                positive(*k, K_REFUSED).map(|_| ())
+            }
+            Self::StraightThrough => Ok(()),
+            Self::Triangular { width } | Self::PiecewiseLinear { width } => {
+                positive(*width, WIDTH_REFUSED).map(|_| ())
+            }
+        }
+    }
+
     /// Evaluate surrogate derivative at membrane offset `x`.
     pub fn grad(&self, x: f32) -> f32 {
         match self {
@@ -117,8 +207,10 @@ impl SurrogateLif {
     ///
     /// # Panics
     ///
-    /// If [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) refuses the
-    /// configuration; [`Self::try_new`] returns the refusal instead.
+    /// If [`SurrogateType::check`] refuses the surrogate, or
+    /// [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) the configuration, with
+    /// the refusal's words; [`Self::try_new`] returns the refusal instead. At 4.1.0 a refused
+    /// surrogate was built.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -137,7 +229,7 @@ impl SurrogateLif {
             refractory_period,
             surrogate,
         )
-        .expect("invalid fixed-point LIF configuration")
+        .unwrap_or_else(|error| panic!("{error}"))
     }
 
     /// Construct a surrogate-enabled fixed-point LIF neuron, or return why the configuration is
@@ -145,7 +237,8 @@ impl SurrogateLif {
     ///
     /// # Errors
     ///
-    /// The reason [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) gives: a
+    /// The surrogate's refusal from [`SurrogateType::check`], checked first; else the reason
+    /// [`FixedPointLif::try_new`](crate::neuron::FixedPointLif::try_new) gives: a
     /// `data_width` outside `[1, 16]`, a `fraction` not below it, or a negative
     /// `refractory_period`.
     pub fn try_new(
@@ -157,6 +250,7 @@ impl SurrogateLif {
         refractory_period: i32,
         surrogate: SurrogateType,
     ) -> Result<Self, &'static str> {
+        surrogate.check()?;
         Ok(Self {
             lif: crate::neuron::FixedPointLif::try_new(
                 data_width,
@@ -231,6 +325,11 @@ pub struct DifferentiableDenseLayer {
 
 impl DifferentiableDenseLayer {
     /// Construct a differentiable dense SC layer.
+    ///
+    /// # Panics
+    ///
+    /// If [`SurrogateType::check`] refuses the surrogate, with the refusal's words;
+    /// [`Self::try_new`] returns the refusal instead. At 4.1.0 a refused surrogate was built.
     pub fn new(
         n_inputs: usize,
         n_neurons: usize,
@@ -238,12 +337,29 @@ impl DifferentiableDenseLayer {
         seed: u64,
         surrogate: SurrogateType,
     ) -> Self {
-        Self {
+        Self::try_new(n_inputs, n_neurons, length, seed, surrogate)
+            .unwrap_or_else(|error| panic!("{error}"))
+    }
+
+    /// Construct a differentiable dense SC layer, or return why its surrogate is refused.
+    ///
+    /// # Errors
+    ///
+    /// The surrogate's refusal from [`SurrogateType::check`].
+    pub fn try_new(
+        n_inputs: usize,
+        n_neurons: usize,
+        length: usize,
+        seed: u64,
+        surrogate: SurrogateType,
+    ) -> Result<Self, &'static str> {
+        surrogate.check()?;
+        Ok(Self {
             layer: crate::layer::DenseLayer::new(n_inputs, n_neurons, length, seed),
             surrogate,
             input_cache: Vec::new(),
             output_cache: Vec::new(),
-        }
+        })
     }
 
     /// Forward pass and cache activations for backward pass.
@@ -335,17 +451,26 @@ impl DifferentiableDenseLayer {
 
     /// Apply gradient descent update and clamp weights to `[0, 1]`.
     ///
-    /// Gradients that are not one row of `n_inputs` values per neuron are ignored without an
-    /// error, and the weights are left as they were.
-    pub fn update_weights(&mut self, weight_grads: &[Vec<f64>], lr: f64) {
+    /// # Errors
+    ///
+    /// When the gradients are not one row of `n_inputs` values per neuron; the weights are
+    /// then left as they were.
+    pub fn try_update_weights(&mut self, weight_grads: &[Vec<f64>], lr: f64) -> Result<(), String> {
         if weight_grads.len() != self.layer.n_neurons {
-            return;
+            return Err(format!(
+                "Expected {} grad rows, got {}.",
+                self.layer.n_neurons,
+                weight_grads.len()
+            ));
         }
         if weight_grads
             .iter()
             .any(|row| row.len() != self.layer.n_inputs)
         {
-            return;
+            return Err(format!(
+                "Expected each grad row to have length {}.",
+                self.layer.n_inputs
+            ));
         }
 
         for (w_row, g_row) in self.layer.weights.iter_mut().zip(weight_grads.iter()) {
@@ -355,6 +480,23 @@ impl DifferentiableDenseLayer {
         }
 
         self.layer.refresh_packed_weights();
+        Ok(())
+    }
+
+    /// Apply gradient descent update and clamp weights to `[0, 1]`, as
+    /// [`Self::try_update_weights`] does.
+    ///
+    /// This keeps the signature the method had at 4.1.0, so code written against that release
+    /// still compiles; new code should call [`Self::try_update_weights`].
+    ///
+    /// # Panics
+    ///
+    /// When the gradients are not one row of `n_inputs` values per neuron, with the words
+    /// [`Self::try_update_weights`] returns. At 4.1.0 such gradients were ignored silently.
+    pub fn update_weights(&mut self, weight_grads: &[Vec<f64>], lr: f64) {
+        if let Err(error) = self.try_update_weights(weight_grads, lr) {
+            panic!("{error}");
+        }
     }
 
     /// Clear cached forward tensors.

@@ -27,6 +27,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   The three gates opt in, all 72 digests match, and the committed gate
   report is unchanged.
 
+### Fixed
+
+- A surrogate's parameter must be finite and above 0. The Python classes
+  SurrogateLif and DifferentiableDenseLayer, native and wrapped, raise
+  ValueError for a steepness k of 0, a negative k, NaN or infinity, which
+  gave an infinite, negative or NaN gradient. In Rust, SurrogateType gains
+  constructors that refuse such a k or width (fast_sigmoid, super_spike,
+  arc_tan, triangular, piecewise_linear) and a check; SurrogateLif::try_new
+  and the new DifferentiableDenseLayer::try_new refuse a surrogate built
+  directly, and SurrogateLif::new and DifferentiableDenseLayer::new panic
+  with the refusal's words, as documented, where 4.1.0 built them.
+  DifferentiableDenseLayer::try_update_weights returns an error for
+  gradients of the wrong shape, which update_weights ignored silently;
+  update_weights keeps its 4.1.0 signature and panics with those words,
+  and the Python binding's messages are unchanged.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub

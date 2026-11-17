@@ -56,9 +56,9 @@ class SurrogateLif:
         Raises
         ------
         ValueError
-            If the surrogate name is unknown, or the fixed-point LIF refuses the configuration: a
-            ``data_width`` outside [1, 16], a ``fraction`` not below it, or a negative
-            ``refractory_period``.
+            If the surrogate name is unknown, ``k`` is not finite and above 0, or the fixed-point LIF
+            refuses the configuration: a ``data_width`` outside [1, 16], a ``fraction`` not below it,
+            or a negative ``refractory_period``.
         """
         self._engine: _SurrogateType = _RustSurrogateLif(
             data_width,
@@ -154,6 +154,12 @@ class DifferentiableDenseLayer:
             Native surrogate-gradient family.
         k : float or None, optional
             Surrogate steepness or the native family default.
+
+        Raises
+        ------
+        ValueError
+            If the surrogate name is unknown, ``k`` is not finite and above 0, or a dimension or
+            the bitstream length is 0.
         """
         self._engine = _RustDifferentiableDenseLayer(
             n_inputs,
@@ -222,6 +228,12 @@ class DifferentiableDenseLayer:
             Weight-gradient matrix in neuron-by-input order.
         lr : float
             Learning rate supplied to the native update.
+
+        Raises
+        ------
+        ValueError
+            If the gradient is not one row of ``n_inputs`` values per neuron; the weights are then
+            left as they were.
         """
         grads = np.asarray(weight_grads, dtype=np.float64)
         self._engine.update_weights(grads.tolist(), float(lr))

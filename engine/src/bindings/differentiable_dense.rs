@@ -59,9 +59,10 @@ impl PyDifferentiableDenseLayer {
         }
         crate::runtime_control_binding::ensure_parallel_runtime()?;
         Ok(Self {
-            inner: grad::DifferentiableDenseLayer::new(
+            inner: grad::DifferentiableDenseLayer::try_new(
                 n_inputs, n_neurons, length, seed, surrogate,
-            ),
+            )
+            .map_err(PyValueError::new_err)?,
         })
     }
 
@@ -83,24 +84,9 @@ impl PyDifferentiableDenseLayer {
     }
 
     fn update_weights(&mut self, weight_grads: Vec<Vec<f64>>, lr: f64) -> PyResult<()> {
-        if weight_grads.len() != self.inner.layer.n_neurons {
-            return Err(PyValueError::new_err(format!(
-                "Expected {} grad rows, got {}.",
-                self.inner.layer.n_neurons,
-                weight_grads.len()
-            )));
-        }
-        if weight_grads
-            .iter()
-            .any(|row| row.len() != self.inner.layer.n_inputs)
-        {
-            return Err(PyValueError::new_err(format!(
-                "Expected each grad row to have length {}.",
-                self.inner.layer.n_inputs
-            )));
-        }
-        self.inner.update_weights(&weight_grads, lr);
-        Ok(())
+        self.inner
+            .try_update_weights(&weight_grads, lr)
+            .map_err(PyValueError::new_err)
     }
 
     fn clear_cache(&mut self) {

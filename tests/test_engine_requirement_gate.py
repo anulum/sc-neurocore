@@ -197,6 +197,7 @@ _GUARDED_BINDING_FILES = (
     "tests/test_studio_equation_ir_process.py",
     "tests/test_studio_resource_feedback.py",
     "tests/test_surrogate_lif_gradient_at_the_pre_reset_membrane.py",
+    "tests/test_surrogate_parameters_refused.py",
     "tests/test_terman_wang_engine_binding.py",
     "tests/test_wilson_cowan_engine_binding.py",
     "tests/test_wilson_hr_engine_binding.py",
@@ -518,7 +519,7 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
     """Dominance: an unconditional module-body gate precedes every import."""
-    assert len(_GUARDED_BINDING_FILES) == 162
+    assert len(_GUARDED_BINDING_FILES) == 163
     for relative in _GUARDED_BINDING_FILES:
         analysis = _analyse(_ROOT / relative)
         assert analysis.require_engine_gate_line is not None, (

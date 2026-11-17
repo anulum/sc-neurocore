@@ -150,10 +150,31 @@ fn try_new_accepts_the_default_configuration() {
     assert_eq!(surr.lif.v_threshold, 256);
 }
 
+/// The whole message of the panic `build` raises: a constructor's panic must be the refusal's
+/// words alone, not a fixed text with the refusal appended, as `expect` would give.
+fn panic_message(build: impl FnOnce() + std::panic::UnwindSafe) -> String {
+    let payload = std::panic::catch_unwind(build).expect_err("the constructor must panic");
+    match payload.downcast::<String>() {
+        Ok(message) => *message,
+        Err(payload) => (*payload.downcast::<&str>().expect("a text panic")).to_string(),
+    }
+}
+
 #[test]
-#[should_panic(expected = "invalid fixed-point LIF configuration")]
 fn new_keeps_its_documented_panic() {
-    let _ = SurrogateLif::new(17, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 });
+    let message = panic_message(|| {
+        let _ = SurrogateLif::new(17, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 });
+    });
+    assert_eq!(message, "data_width must be in [1, 16]");
+}
+
+/// `new` checks the surrogate first, as `try_new` does, and its panic says why.
+#[test]
+fn new_panics_with_the_surrogates_refusal() {
+    let message = panic_message(|| {
+        let _ = SurrogateLif::new(16, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: -1.0 });
+    });
+    assert_eq!(message, "surrogate k must be finite and above 0");
 }
 
 // The surrogate replaces the derivative of the spike S[n] = Theta(U[n] - threshold), and the reset
@@ -195,4 +216,119 @@ fn backward_below_threshold_uses_the_integrated_membrane() {
     let mut surr = SurrogateLif::new(16, 8, 0, 0, 256, 2, surrogate.clone());
     assert_eq!(surr.forward(0, 256, 100, 0), (0, 100));
     assert_eq!(surr.backward(1.0).unwrap(), surrogate.grad(-156.0 / 256.0));
+}
+
+/// Parameters a surrogate refuses: not finite, or not above 0.
+const BAD_PARAMETERS: [f32; 6] = [0.0, -0.0, -1.0, f32::NAN, f32::INFINITY, f32::NEG_INFINITY];
+
+#[test]
+fn every_parameterised_surrogate_refuses_a_parameter_that_is_not_finite_and_above_zero() {
+    for value in BAD_PARAMETERS {
+        let k_message = Err("surrogate k must be finite and above 0");
+        let width_message = Err("surrogate width must be finite and above 0");
+        assert_eq!(SurrogateType::fast_sigmoid(value).map(|_| ()), k_message);
+        assert_eq!(SurrogateType::super_spike(value).map(|_| ()), k_message);
+        assert_eq!(SurrogateType::arc_tan(value).map(|_| ()), k_message);
+        assert_eq!(SurrogateType::triangular(value).map(|_| ()), width_message);
+        assert_eq!(
+            SurrogateType::piecewise_linear(value).map(|_| ()),
+            width_message
+        );
+        assert_eq!(SurrogateType::FastSigmoid { k: value }.check(), k_message);
+        assert_eq!(
+            SurrogateType::Triangular { width: value }.check(),
+            width_message
+        );
+    }
+}
+
+#[test]
+fn a_parameter_that_is_finite_and_above_zero_is_kept() {
+    for value in [f32::MIN_POSITIVE, 0.5, 25.0, f32::MAX] {
+        assert!(
+            matches!(SurrogateType::fast_sigmoid(value), Ok(SurrogateType::FastSigmoid { k }) if k == value)
+        );
+        assert!(
+            matches!(SurrogateType::super_spike(value), Ok(SurrogateType::SuperSpike { k }) if k == value)
+        );
+        assert!(
+            matches!(SurrogateType::arc_tan(value), Ok(SurrogateType::ArcTan { k }) if k == value)
+        );
+        assert!(
+            matches!(SurrogateType::triangular(value), Ok(SurrogateType::Triangular { width }) if width == value)
+        );
+        assert!(matches!(
+            SurrogateType::piecewise_linear(value),
+            Ok(SurrogateType::PiecewiseLinear { width }) if width == value
+        ));
+    }
+    assert_eq!(SurrogateType::StraightThrough.check(), Ok(()));
+}
+
+#[test]
+fn a_surrogate_lif_and_a_dense_layer_refuse_an_unchecked_surrogate() {
+    let bad = SurrogateType::FastSigmoid { k: -1.0 };
+    assert_eq!(
+        SurrogateLif::try_new(16, 8, 0, 0, 256, 2, bad.clone()).map(|_| ()),
+        Err("surrogate k must be finite and above 0")
+    );
+    assert_eq!(
+        DifferentiableDenseLayer::try_new(4, 2, 1024, 42, bad).map(|_| ()),
+        Err("surrogate k must be finite and above 0")
+    );
+    let layer = DifferentiableDenseLayer::try_new(4, 2, 1024, 42, SurrogateType::StraightThrough)
+        .expect("a surrogate without a parameter is valid");
+    assert_eq!(layer.layer.get_weights().len(), 2);
+}
+
+#[test]
+fn a_dense_layer_built_with_new_keeps_a_documented_panic() {
+    let message = panic_message(|| {
+        let _ =
+            DifferentiableDenseLayer::new(4, 2, 1024, 42, SurrogateType::Triangular { width: 0.0 });
+    });
+    assert_eq!(message, "surrogate width must be finite and above 0");
+}
+
+#[test]
+fn try_update_weights_refuses_a_gradient_of_the_wrong_shape_and_leaves_the_weights() {
+    let mut layer =
+        DifferentiableDenseLayer::new(4, 2, 1024, 42, SurrogateType::FastSigmoid { k: 25.0 });
+    let before = layer.layer.get_weights();
+    assert_eq!(
+        layer.try_update_weights(&[vec![0.1; 4]], 0.1),
+        Err("Expected 2 grad rows, got 1.".to_string())
+    );
+    assert_eq!(
+        layer.try_update_weights(&[vec![0.1; 4], vec![0.1; 3]], 0.1),
+        Err("Expected each grad row to have length 4.".to_string())
+    );
+    assert_eq!(layer.layer.get_weights(), before);
+    assert_eq!(
+        layer.try_update_weights(&[vec![0.1; 4], vec![0.1; 4]], 0.1),
+        Ok(())
+    );
+    assert_ne!(layer.layer.get_weights(), before);
+}
+
+/// The 4.1.0 signature updates the weights exactly as the checked form does.
+#[test]
+fn the_unchecked_update_gives_the_checked_forms_weights() {
+    let grads = [vec![0.1, -0.2, 0.3, -0.4], vec![0.5, 0.25, -0.125, 0.0625]];
+    let mut checked =
+        DifferentiableDenseLayer::new(4, 2, 1024, 42, SurrogateType::FastSigmoid { k: 25.0 });
+    let mut unchecked =
+        DifferentiableDenseLayer::new(4, 2, 1024, 42, SurrogateType::FastSigmoid { k: 25.0 });
+    checked.try_update_weights(&grads, 0.1).unwrap();
+    unchecked.update_weights(&grads, 0.1);
+    assert_eq!(unchecked.layer.get_weights(), checked.layer.get_weights());
+}
+
+/// The 4.1.0 signature panics with the refusal's words where the checked form returns them.
+#[test]
+#[should_panic(expected = "Expected each grad row to have length 4.")]
+fn the_unchecked_update_panics_with_the_refusal() {
+    let mut layer =
+        DifferentiableDenseLayer::new(4, 2, 1024, 42, SurrogateType::FastSigmoid { k: 25.0 });
+    layer.update_weights(&[vec![0.1; 4], vec![0.1; 3]], 0.1);
 }

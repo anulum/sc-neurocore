@@ -19,22 +19,24 @@ pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+/// Read a surrogate family's name, with its steepness `k` or the family's default.
+///
+/// Raises `ValueError` for an unknown name, or for a `k` that is not finite and above 0.
 pub(crate) fn parse_surrogate(name: &str, k: Option<f32>) -> PyResult<grad::SurrogateType> {
     let normalized = name.to_ascii_lowercase().replace('-', "_");
-    match normalized.as_str() {
-        "fast_sigmoid" => Ok(grad::SurrogateType::FastSigmoid {
-            k: k.unwrap_or(25.0),
-        }),
-        "superspike" | "super_spike" => Ok(grad::SurrogateType::SuperSpike {
-            k: k.unwrap_or(100.0),
-        }),
-        "arctan" | "arc_tan" => Ok(grad::SurrogateType::ArcTan { k: k.unwrap_or(10.0) }),
+    let surrogate = match normalized.as_str() {
+        "fast_sigmoid" => grad::SurrogateType::fast_sigmoid(k.unwrap_or(25.0)),
+        "superspike" | "super_spike" => grad::SurrogateType::super_spike(k.unwrap_or(100.0)),
+        "arctan" | "arc_tan" => grad::SurrogateType::arc_tan(k.unwrap_or(10.0)),
         "straightthrough" | "straight_through" | "ste" => Ok(grad::SurrogateType::StraightThrough),
-        _ => Err(PyValueError::new_err(format!(
-            "Unknown surrogate '{}'. Use one of: fast_sigmoid, superspike, arctan, straight_through.",
-            name
-        ))),
-    }
+        _ => {
+            return Err(PyValueError::new_err(format!(
+                "Unknown surrogate '{}'. Use one of: fast_sigmoid, superspike, arctan, straight_through.",
+                name
+            )))
+        }
+    };
+    surrogate.map_err(PyValueError::new_err)
 }
 
 #[pyclass(
