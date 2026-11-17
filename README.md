@@ -37,7 +37,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version:** 4.1.0
+**Version:** 4.2.0
 
 SC-NeuroCore is a research-to-hardware software stack for designing spiking and stochastic neural systems, validating their numerical behaviour, and moving selected models toward FPGA, ASIC, and embedded neuromorphic deployment. It combines a Python public API, an optional Rust acceleration engine, SystemVerilog generation paths, benchmark evidence, and polyglot research mirrors for selected kernels.
 
@@ -158,7 +158,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current status |
 | --- | --- |
-| Public Python package | Version 4.1.0 package surface with base NumPy/SciPy dependency boundary. |
+| Public Python package | Version 4.2.0 package surface with base NumPy/SciPy dependency boundary. |
 | Optional acceleration | Rust engine and optional heavy backends are opt-in; Python fallbacks remain available. |
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows, including the bounded SC Compte ring-connectivity representative; power/energy and physical-device claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
@@ -182,7 +182,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current inventory |
 |---|---:|
-| Package version | 4.1.0 |
+| Package version | 4.2.0 |
 | Public API exports | 45 |
 | Python model source modules | 176 |
 | Python model classes | 183 |
@@ -191,7 +191,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 212 |
 | Optional extras | 33 |
 | Python test files | 5689 |
-| Public documentation pages | 674 |
+| Public documentation pages | 675 |
 | GitHub Actions workflows | 27 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -639,7 +639,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v4.1.0
+git checkout v4.2.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -878,7 +878,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {4.1.0},
+  version   = {4.2.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18881374},
   url       = {https://github.com/anulum/sc-neurocore},
@@ -887,7 +887,7 @@ If you use SC-NeuroCore in your research, please cite:
 ```
 
 The DOI above identifies the software record series; no Zenodo record for
-version 4.1.0 has been deposited yet. See also [`CITATION.cff`](CITATION.cff)
+version 4.2.0 has been deposited yet. See also [`CITATION.cff`](CITATION.cff)
 for the machine-readable citation metadata.
 
 ## AI Disclosure

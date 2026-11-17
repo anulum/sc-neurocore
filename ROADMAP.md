@@ -271,7 +271,30 @@ dependabot PRs merged.
 - API documentation updated with experimental scope and hardware-validation boundaries.
 - Cross-repo bridges verified: SCPN-QUANTUM-CONTROL, SCPN-PHASE-ORCHESTRATOR.
 
-## v4.1.0 — Current release ✓ (current)
+## v4.2.0 — Current release ✓ (current)
+
+The curated summary is
+[RELEASE_NOTES_v4.2.0.md](docs/development/RELEASE_NOTES_v4.2.0.md); the complete
+list of changes is the `[4.2.0]` section of [CHANGELOG.md](CHANGELOG.md).
+
+- Behaviour cases in model descriptors, run through each model's public class,
+  with a check that every sign-flipped variant of the bound schema breaks one;
+  19 catalogue models state cases.
+- Backend lanes with their own readiness facets and receipts that record the lane
+  that ran and the libraries it loaded.
+- A benchmark coverage census that marks each record current, outdated, reviewed
+  or unbound, and an evidence gate that checks every source digest a record holds.
+- The Rust engine documented module by module: undocumented public items from
+  3,646 to 478.
+- Corrections to engine and Python models found by reading their code, and 85
+  corrected citations.
+- SNN Studio remains a development preview.
+- Only the latest 4.2.x patch receives security fixes (see
+  [SECURITY.md](SECURITY.md)).
+
+## v4.1.0 — Previous release ✓
+
+- Released 2026-11-08.
 
 The curated summary is
 [RELEASE_NOTES_v4.1.0.md](docs/development/RELEASE_NOTES_v4.1.0.md); the complete
@@ -288,10 +311,8 @@ list of changes is the `[4.1.0]` section of [CHANGELOG.md](CHANGELOG.md).
 - Engine wheels published through trusted publishing and signed build
   provenance on every release file.
 - SNN Studio remains a development preview.
-- Only the latest 4.1.x patch receives security fixes (see
-  [SECURITY.md](SECURITY.md)).
 
-## v4.0.0 — Previous release ✓
+## v4.0.0 — Earlier release ✓
 
 - Released 2026-10-29.
 

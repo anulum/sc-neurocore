@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 31,
-    "outdated": 112,
+    "current": 29,
+    "outdated": 114,
     "reviewed": 1,
     "unbound": 174
   },
@@ -2819,11 +2819,19 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

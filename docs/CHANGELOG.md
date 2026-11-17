@@ -12,6 +12,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-11-17
+
+The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub
+Release text.
+
 ### Security
 
 - The toolchain manifest's `apt install` pattern now reads each option one
