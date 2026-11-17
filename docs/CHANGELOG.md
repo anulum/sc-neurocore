@@ -14,6 +14,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The adaptive-threshold integrate-and-fire neuron states two behaviour
+  cases at a current of 20.0: it fires once in 160 steps, the window its
+  reference test checks against the two exact relaxations written out in
+  the test, and 3 times in 1000 steps, with the intervals lengthening as
+  the raised threshold relaxes. The first case breaks 9 of the 10 sign
+  variants of its two equations; the threshold's relaxation term changes
+  nothing before the first event, and the longer window breaks it too.
+  Twenty-three of the 185 catalogue models now state cases.
+
 - The sigma-delta neuron states a behaviour case: a current of 2.0 fires 42
   times in 128 steps, the window its reference test checks against
   equations written out independently of the class. Each of the 11 sign

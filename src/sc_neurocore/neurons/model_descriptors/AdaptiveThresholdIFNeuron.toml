@@ -164,3 +164,29 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector"
 target_tier = "H1"
 terminal_reason = "Generated fixed-point co-simulation is validated; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."
+
+[[behaviour]]
+name = "a current of 20.0 fires once in 160 steps"
+kind = "interval"
+steps = 160
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 20.0
+
+[[behaviour]]
+name = "a current of 20.0 fires 3 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    3,
+    3,
+]
+
+[behaviour.inputs]
+current = 20.0

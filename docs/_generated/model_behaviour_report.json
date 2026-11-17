@@ -14,10 +14,43 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 20.0
+          },
+          "kind": "interval",
+          "name": "a current of 20.0 fires once in 160 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 160
+        },
+        {
+          "bounds": [
+            3,
+            3
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 20.0
+          },
+          "kind": "interval",
+          "name": "a current of 20.0 fires 3 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 3,
+          "steps": 1000
+        }
+      ],
+      "cases_sha256": "70530a7f6924c99b86410917f58811f0d99ea2d881989716e52408feae08b228",
       "model": "AdaptiveThresholdIFNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2664,9 +2697,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 22,
+    "held": 23,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 163
+    "no_case": 162
   }
 }

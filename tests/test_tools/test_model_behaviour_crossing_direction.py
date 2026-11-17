@@ -56,6 +56,7 @@ PERIODIC: dict[str, float] = {"ErmentroutKopellMapNeuron": 2.0 * math.pi}
 #: downward crossing is not a natural fault of the step.
 RESET_OR_LEVEL_MODELS = frozenset(
     {
+        "AdaptiveThresholdIFNeuron",
         "DendriticNMDANeuron",
         "ExpIFNeuron",
         "IbarzTanakaMapNeuron",

@@ -2,6 +2,114 @@
   "catalogue_models": 185,
   "models": [
     {
+      "model": "AdaptiveThresholdIFNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 20.0 fires once in 160 steps",
+          "observed": 1
+        },
+        {
+          "held": true,
+          "name": "a current of 20.0 fires 3 times in 1000 steps",
+          "observed": 3
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "-v_rest + I + (v - (v_rest + I)) * exp(-dt / tau_m)",
+          "observed": 79,
+          "outcome": "violated",
+          "term": "+ v_rest",
+          "within": "v_rest + I + (v - (v_rest + I)) * exp(-dt / tau_m)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "v_rest - I + (v - (v_rest + I)) * exp(-dt / tau_m)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "v_rest + I + (v - (v_rest + I)) * exp(-dt / tau_m)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "v_rest + I - (v - (v_rest + I)) * exp(-dt / tau_m)",
+          "observed": 5,
+          "outcome": "violated",
+          "term": "+ (v - (v_rest + I)) * exp(-dt / tau_m)",
+          "within": "v_rest + I + (v - (v_rest + I)) * exp(-dt / tau_m)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "v_rest + I + (-v - v_rest - I) * exp(-dt / tau_m)",
+          "observed": 24,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - (v_rest + I)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "v_rest + I + (v + v_rest - I) * exp(-dt / tau_m)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- v_rest",
+          "within": "v - (v_rest + I)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "v",
+          "expression": "v_rest + I + (v - v_rest + I) * exp(-dt / tau_m)",
+          "observed": 46,
+          "outcome": "violated",
+          "term": "- I",
+          "within": "v - (v_rest + I)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "theta",
+          "expression": "-theta_rest + (theta - theta_rest) * exp(-dt / tau_theta)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ theta_rest",
+          "within": "theta_rest + (theta - theta_rest) * exp(-dt / tau_theta)"
+        },
+        {
+          "case": "a current of 20.0 fires 3 times in 1000 steps",
+          "equation": "theta",
+          "expression": "theta_rest - (theta - theta_rest) * exp(-dt / tau_theta)",
+          "observed": 9,
+          "outcome": "violated",
+          "term": "+ (theta - theta_rest) * exp(-dt / tau_theta)",
+          "within": "theta_rest + (theta - theta_rest) * exp(-dt / tau_theta)"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "theta",
+          "expression": "theta_rest + (-theta - theta_rest) * exp(-dt / tau_theta)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ theta",
+          "within": "theta - theta_rest"
+        },
+        {
+          "case": "a current of 20.0 fires once in 160 steps",
+          "equation": "theta",
+          "expression": "theta_rest + (theta + theta_rest) * exp(-dt / tau_theta)",
+          "observed": 160,
+          "outcome": "violated",
+          "term": "- theta_rest",
+          "within": "theta - theta_rest"
+        }
+      ]
+    },
+    {
       "model": "ChialvoMapNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -2865,8 +2973,8 @@
       ]
     }
   ],
-  "models_with_cases": 22,
-  "models_without_cases": 163,
+  "models_with_cases": 23,
+  "models_without_cases": 162,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -2875,7 +2983,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 21,
+    "discriminated": 22,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -2884,7 +2992,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 251,
-    "violated": 251
+    "total": 261,
+    "violated": 261
   }
 }

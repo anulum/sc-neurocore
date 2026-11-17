@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 22
+MODELS_WITH_CASES = 23
 
 
 def _accumulator() -> dict[str, object]:
@@ -389,6 +389,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     """Only a model with cases has a row; the others are counted."""
     rows = _rows(report)
     assert sorted(rows) == [
+        "AdaptiveThresholdIFNeuron",
         "ChialvoMapNeuron",
         "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
@@ -418,7 +419,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 21,
+        "discriminated": 22,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -1144,6 +1145,33 @@ def test_every_variant_of_the_sigma_delta_breaks_its_case(report: dict[str, obje
     }
 
 
+def test_the_threshold_relaxation_needs_the_longer_window(report: dict[str, object]) -> None:
+    """Ten signs of the two relaxations; the reference window decides nine of them.
+
+    Until the first event the threshold sits at its rest value, so the sign of its
+    relaxation term changes nothing before that event. The reference window ends 21
+    steps after it: the flipped sign moves the threshold in those steps but changes no
+    event count over the 160. Over 1,000 steps it drives the raised threshold below its
+    rest value after each event, and the count rises from 3 to 9.
+    """
+    row = _rows(report)["AdaptiveThresholdIFNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [1, 3]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 10
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    by_case: dict[object, list[object]] = {}
+    for variant in variants:
+        by_case.setdefault(variant["case"], []).append((variant["equation"], variant["term"]))
+    assert len(by_case["a current of 20.0 fires once in 160 steps"]) == 9
+    assert by_case["a current of 20.0 fires 3 times in 1000 steps"] == [
+        ("theta", "+ (theta - theta_rest) * exp(-dt / tau_theta)")
+    ]
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -1155,10 +1183,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+21$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+22$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 251, of them violated 251, not discriminated 0" in summary
+    assert "variants: 261, of them violated 261, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

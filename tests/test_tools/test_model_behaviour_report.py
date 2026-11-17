@@ -51,12 +51,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 163
+MODELS_WITHOUT_A_CASE = 162
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
 #: bound widened in the descriptor, with both reports written again, would still pass.
 STATED_LIMITS: dict[str, list[object]] = {
+    "AdaptiveThresholdIFNeuron": [[1, 1], [3, 3]],
     "ChialvoMapNeuron": [[3, 3], [1, 1]],
     "CourageNekorkinMapNeuron": [[0, 0], [0, 0], [1, 1], [1, 1], [3, 3], [0.5, 0.625]],
     "DendriticNMDANeuron": [
@@ -1179,6 +1180,27 @@ def test_the_sigma_delta_states_the_window_its_reference_test_runs(
     assert [case["observed"] for case in cases] == [42]
     assert [case["inputs"] for case in cases] == [{"current": 2.0}]
     assert [case["steps"] for case in cases] == [128]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_adaptive_threshold_if_states_its_reference_window_and_a_longer_one(
+    report: dict[str, object],
+) -> None:
+    """The window its reference test checks, and a longer one where the threshold relaxes.
+
+    The reference test writes the model's two exact relaxations out itself and requires
+    the committed trace's features, among them one event over 160 steps at 20.0. Over
+    1,000 steps at the same current the model fires 3 times, the intervals between them
+    lengthening as the raised threshold relaxes back towards its rest value.
+    """
+    row = _models(report)["AdaptiveThresholdIFNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [1, 3]
+    assert [case["inputs"] for case in cases] == [{"current": 20.0}, {"current": 20.0}]
+    assert [case["steps"] for case in cases] == [160, 1000]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

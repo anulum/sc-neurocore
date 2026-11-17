@@ -66,6 +66,7 @@
             "src/sc_neurocore/accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
+            "src/sc_neurocore/neurons/model_descriptors/AdaptiveThresholdIFNeuron.toml",
             "tools/build_accel_backends.py"
           ],
           "currency": "outdated",
