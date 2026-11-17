@@ -19,7 +19,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   release outside the advisory's vulnerable range. Every installation of the
   package must be the recorded version and a development dependency; every
   other advisory, a stale record and an npm error still block. The OSV lane
-  of the security packet applies the same records and proof. The first
+  of the security packet applies the same records and proof, and blocks any
+  entry of its report that it cannot read. The first
   record is GHSA-fc5q-39xc-vjpf (picomatch <= 4.0.7, no fix released), a
   development dependency of the Studio frontend's build and test tools.
 

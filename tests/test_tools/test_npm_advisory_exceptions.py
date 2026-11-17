@@ -654,18 +654,60 @@ def test_osv_blocks_a_named_finding_whose_record_does_not_hold(osv_checkout: Pat
     assert decision["blocked"][0]["evidence"]["installations"][0]["dev"] is False
 
 
-def test_osv_reads_each_lock_once_and_skips_entries_that_are_not_objects(
-    osv_checkout: Path,
-) -> None:
-    """Two findings on one lock share one lock read; non-object entries carry no finding."""
+def test_osv_reads_each_lock_once_for_several_findings(osv_checkout: Path) -> None:
+    """Two findings on one lock share one lock read and are each accepted."""
     report_ = osv_report(osv_checkout)
     package = report_["results"][0]["packages"][0]
     package["vulnerabilities"].append(package["vulnerabilities"][0])
-    package["vulnerabilities"].append("GHSA-not-an-object")
-    report_["results"][0]["packages"].append("not-a-package")
-    report_["results"].append("not-a-result")
     decision = osv_npm_decision(osv_checkout, report_, read=registry("4.0.7"), today=TODAY)
     assert decision["passed"] is True and len(decision["accepted"]) == 2
+
+
+def _unreadable(report_: dict[str, Any], where: str) -> None:
+    """Add one entry the decision cannot read, at ``where``, beside the accepted finding."""
+    package = report_["results"][0]["packages"][0]
+    if where == "result":
+        report_["results"].append("not-a-result")
+    elif where == "result-packages":
+        report_["results"].append({"source": {"path": "x"}, "packages": {"package": "picomatch"}})
+    elif where == "package":
+        report_["results"][0]["packages"].append("not-a-package")
+    elif where == "package-vulnerabilities":
+        report_["results"][0]["packages"].append({"package": {}, "vulnerabilities": "GHSA"})
+    elif where == "vulnerability":
+        package["vulnerabilities"].append("GHSA-not-an-object")
+    else:
+        package["vulnerabilities"].append(
+            {
+                **package["vulnerabilities"][0],
+                "id": {"missing": None, "empty": "", "number": 7}[where],
+            }
+        )
+        if where == "missing":
+            del package["vulnerabilities"][-1]["id"]
+
+
+@pytest.mark.parametrize(
+    "where",
+    [
+        "result",
+        "result-packages",
+        "package",
+        "package-vulnerabilities",
+        "vulnerability",
+        "missing",
+        "empty",
+        "number",
+    ],
+)
+def test_osv_blocks_every_entry_it_cannot_read(osv_checkout: Path, where: str) -> None:
+    """An exit-1 report cannot pass with an entry nobody examined, beside a finding a record proves."""
+    report_ = osv_report(osv_checkout)
+    _unreadable(report_, where)
+    decision = osv_npm_decision(osv_checkout, report_, read=registry("4.0.7"), today=TODAY)
+    assert decision["passed"] is False
+    assert [item["id"] for item in decision["accepted"]] == [ADVISORY]
+    assert len(decision["blocked"]) == 1 and "unreadable" in decision["blocked"][0]
 
 
 def test_osv_with_nothing_to_accept_does_not_pass(osv_checkout: Path) -> None:

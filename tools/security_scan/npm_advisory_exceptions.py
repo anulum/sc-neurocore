@@ -483,7 +483,8 @@ def osv_npm_decision(
     -------
     dict
         Accepted and blocked vulnerabilities and the blocking result. Every finding
-        outside an npm lock record, or whose record does not hold, is blocked.
+        outside an npm lock record, or whose record does not hold, is blocked, and so
+        is every result, package or vulnerability entry the decision cannot read.
 
     Raises
     ------
@@ -498,22 +499,37 @@ def osv_npm_decision(
     locks: dict[str, dict[str, Any]] = {}
     accepted: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
+    # An entry this decision cannot read is blocked, never skipped: an exit-1 report must
+    # not pass with a finding nobody examined.
     for result in report["results"]:
-        source = result.get("source") if isinstance(result, dict) else None
+        if not isinstance(result, dict) or not isinstance(result.get("packages", []), list):
+            blocked.append({"id": None, "package": None, "lock": None, "unreadable": "result"})
+            continue
+        source = result.get("source")
         path = source.get("path") if isinstance(source, dict) else None
         relative = None
         if isinstance(path, str) and Path(path).resolve().is_relative_to(root):
             relative = Path(path).resolve().relative_to(root).as_posix()
-        for package in result.get("packages", []) if isinstance(result, dict) else []:
-            if not isinstance(package, dict):
+        for package in result.get("packages", []):
+            if not isinstance(package, dict) or not isinstance(
+                package.get("vulnerabilities", []), list
+            ):
+                blocked.append(
+                    {"id": None, "package": None, "lock": relative, "unreadable": "package"}
+                )
                 continue
             named = package.get("package")
             info: dict[str, Any] = named if isinstance(named, dict) else {}
             for vulnerability in package.get("vulnerabilities", []):
-                if not isinstance(vulnerability, dict):
-                    continue
-                identifier = vulnerability.get("id")
+                identifier = vulnerability.get("id") if isinstance(vulnerability, dict) else None
                 finding = {"id": identifier, "package": info.get("name"), "lock": relative}
+                if (
+                    not isinstance(vulnerability, dict)
+                    or not isinstance(identifier, str)
+                    or not identifier
+                ):
+                    blocked.append({**finding, "unreadable": "vulnerability"})
+                    continue
                 chosen = [
                     record
                     for record in records

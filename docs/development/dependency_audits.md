@@ -91,9 +91,11 @@ records to the same lock. An OSV finding passes only on the scanner's findings
 status 1, when a record names its lock, its npm package and version, and its
 identifier, and when the single affected SEMVER range OSV states (from 0 to a
 last affected or a fixed release) is the record's range. The same installation
-and registry proof must hold, and every other finding blocks. The summary keeps
-the decision, or the reason it could not be made, under
-`npm_advisory_exceptions`.
+and registry proof must hold, and every other finding blocks. So does any result,
+package or vulnerability entry the decision cannot read, including a vulnerability
+without a non-empty string identifier: a report with findings never passes with an
+entry nobody examined. The summary keeps the decision, or the reason it could not
+be made, under `npm_advisory_exceptions`.
 
 The current record is
 [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
