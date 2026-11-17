@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 import importlib.util
 import json
 import subprocess
@@ -319,3 +320,121 @@ def test_runner_retries_transient_osv_resolver_failure(tmp_path: Path) -> None:
     assert summary["attempts"] == 2
     assert summary["package_count"] == 1
     assert sleeps == [5]
+
+
+_PICOMATCH = {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "aliases": ["CVE-2026-112366"],
+    "affected": [
+        {
+            "package": {"ecosystem": "npm", "name": "picomatch"},
+            "ranges": [
+                {"type": "SEMVER", "events": [{"introduced": "0"}, {"last_affected": "4.0.7"}]}
+            ],
+        }
+    ],
+}
+
+
+def _osv_on_the_studio_lock(*vulnerabilities: dict[str, Any], returncode: int) -> Any:
+    """Return a scanner stand-in that reports ``vulnerabilities`` on the maintained Studio lock."""
+
+    def fake_run(
+        command: list[str],
+        *,
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        timeout: int,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        """Write the report the real scanner gives for picomatch 4.0.7 in the Studio lock."""
+        del cwd, capture_output, text, timeout, check
+        output_path = Path(command[command.index("--output-file") + 1])
+        lock = _repo_root() / "studio" / "frontend" / "package-lock.json"
+        package = {"name": "picomatch", "version": "4.0.7", "ecosystem": "npm"}
+        result = {
+            "source": {"path": str(lock), "type": "lockfile"},
+            "packages": [{"package": package, "vulnerabilities": list(vulnerabilities)}],
+        }
+        output_path.write_text(json.dumps({"results": [result]}), encoding="utf-8")
+        return subprocess.CompletedProcess(command, returncode, stdout="", stderr="")
+
+    return fake_run
+
+
+def _registry_without_a_fix(url: str, limit: int) -> bytes:
+    """Answer the npm registry read with picomatch releases that are all inside the range."""
+    assert url == "https://registry.npmjs.org/picomatch" and limit > 1024
+    return json.dumps({"versions": {"4.0.6": {}, "4.0.7": {}}}).encode("utf-8")
+
+
+# The day before the maintained record's review date, so the tests follow each renewal of it.
+_REVIEW_BY = date.fromisoformat(
+    tomllib.loads(
+        (_repo_root() / "tools" / "security_scan" / "npm_advisory_exceptions.toml").read_text(
+            encoding="utf-8"
+        )
+    )["exception"][0]["review_by"]
+)
+_ON_REVIEW = {"read": _registry_without_a_fix, "today": _REVIEW_BY - timedelta(days=1)}
+
+
+def test_runner_passes_a_finding_the_npm_records_name_and_prove(tmp_path: Path) -> None:
+    """OSV's picomatch finding passes on exit 1 through the maintained record and lock."""
+    tool = _load_tool()
+    summary = tool.run_osv_scanner(
+        repo_root=_repo_root(),
+        output_dir=tmp_path / "packet",
+        run_command=_osv_on_the_studio_lock(_PICOMATCH, returncode=1),
+        decision_options=_ON_REVIEW,
+    )
+    assert summary["passed"] is True
+    assert summary["vulnerability_ids"] == ["GHSA-fc5q-39xc-vjpf"]
+    decision = summary["npm_advisory_exceptions"]
+    assert decision["passed"] is True and decision["blocked"] == []
+    assert decision["accepted"][0]["lock"] == "studio/frontend/package-lock.json"
+
+
+def test_runner_keeps_an_unnamed_finding_blocking_beside_an_accepted_one(tmp_path: Path) -> None:
+    """One finding no record names blocks the run, whatever the other finding's record proves."""
+    tool = _load_tool()
+    other = {**_PICOMATCH, "id": "GHSA-2222-3333-4444"}
+    summary = tool.run_osv_scanner(
+        repo_root=_repo_root(),
+        output_dir=tmp_path / "packet",
+        run_command=_osv_on_the_studio_lock(_PICOMATCH, other, returncode=1),
+        decision_options=_ON_REVIEW,
+    )
+    assert summary["passed"] is False
+    assert [item["id"] for item in summary["npm_advisory_exceptions"]["blocked"]] == [
+        "GHSA-2222-3333-4444"
+    ]
+
+
+def test_runner_needs_the_findings_exit_status_for_an_exception(tmp_path: Path) -> None:
+    """A report with findings and exit 0 is inconsistent and is not judged by the records."""
+    tool = _load_tool()
+    summary = tool.run_osv_scanner(
+        repo_root=_repo_root(),
+        output_dir=tmp_path / "packet",
+        run_command=_osv_on_the_studio_lock(_PICOMATCH, returncode=0),
+        decision_options=_ON_REVIEW,
+    )
+    assert summary["passed"] is False and summary["npm_advisory_exceptions"] is None
+
+
+def test_runner_records_an_expired_record_as_blocking(tmp_path: Path) -> None:
+    """A record past its review date stops the decision; the summary keeps the reason."""
+    tool = _load_tool()
+    summary = tool.run_osv_scanner(
+        repo_root=_repo_root(),
+        output_dir=tmp_path / "packet",
+        run_command=_osv_on_the_studio_lock(_PICOMATCH, returncode=1),
+        decision_options={"read": _registry_without_a_fix, "today": _REVIEW_BY + timedelta(days=1)},
+    )
+    assert summary["passed"] is False
+    assert summary["npm_advisory_exceptions"] == {
+        "passed": False,
+        "error": "ValueError: npm advisory exception requires renewed review.",
+    }

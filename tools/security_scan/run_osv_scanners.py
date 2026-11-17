@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import subprocess
 import sys
@@ -24,6 +25,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from tools.security_scan.locked_dependency_inventory import inventory_locks
+from tools.security_scan.npm_advisory_exceptions import osv_npm_decision
 
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
@@ -150,6 +152,7 @@ def run_osv_scanner(
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
     sleep: SleepCommand = time.sleep,
+    decision_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run all supported tracked locks and retain blocking scanner decisions.
 
@@ -163,12 +166,16 @@ def run_osv_scanner(
         Bounded subprocess executor; defaults to the real scanner invocation.
     sleep : callable
         Backoff wait between retriable service failures.
+    decision_options : dict, optional
+        Registry reader and date passed to the npm advisory exception decision;
+        the real registry and today's UTC date by default.
 
     Returns
     -------
     dict
-        Report custody and pass status. Nonzero tool exits always fail, even
-        when partial or empty JSON contains no vulnerability records.
+        Report custody and pass status. A nonzero tool exit fails, even when
+        partial or empty JSON contains no vulnerability records, except exit 1
+        with findings that the reviewed npm advisory records all name and prove.
     """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
@@ -201,14 +208,27 @@ def run_osv_scanner(
             break
         sleep(5 * attempts)
     assert result is not None
+    decision_options = decision_options or {}
     validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
         report_path
     )
     clean_report = not validation_errors and vulnerability_count == 0
     process_ok = result.returncode == 0
+    # Findings pass only on OSV-Scanner's findings status 1, when the reviewed npm records
+    # name and prove every one of them; anything else stays blocking.
+    exceptions: dict[str, Any] | None = None
+    if not validation_errors and vulnerability_count > 0 and result.returncode == 1:
+        try:
+            exceptions = osv_npm_decision(
+                repo_root, json.loads(report_path.read_text(encoding="utf-8")), **decision_options
+            )
+        except (OSError, ValueError, http.client.HTTPException) as exc:
+            # An expired record, an unreadable registry or a changed table blocks; the summary stays.
+            exceptions = {"passed": False, "error": f"{type(exc).__name__}: {exc}"}
+    excepted = exceptions is not None and exceptions["passed"] is True
     summary = {
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,
-        "passed": process_ok and clean_report,
+        "passed": (process_ok and clean_report) or excepted,
         "command": command,
         "attempts": attempts,
         "artifact": str(report_path),
@@ -219,6 +239,7 @@ def run_osv_scanner(
         "vulnerability_count": vulnerability_count,
         "vulnerability_ids": vulnerability_ids,
         "validation_errors": validation_errors,
+        "npm_advisory_exceptions": exceptions,
     }
     _write_json(security_dir / "osv_scanner_summary.json", summary)
     return summary

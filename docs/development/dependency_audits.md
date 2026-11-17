@@ -63,6 +63,52 @@ The update retains the remaining dependency graph. Its npm audit still includes
 development, optional and peer dependencies; a passing npm result does not
 qualify the other ecosystem jobs or the whole security packet.
 
+### npm advisories on development-only packages without a released fix
+
+`tools/security_scan/npm_advisory_exceptions.toml` names npm advisories that the
+audit accepts for at most two weeks per review. The audit reads every finding.
+An advisory is accepted only when all of the following hold:
+
+- a record names its lock, package, installed version, GitHub advisory
+  identifier and vulnerable range (`<=X.Y.Z` or `<X.Y.Z`);
+- npm reports that advisory for that package with exactly that range;
+- every installation of the package in the lock is the recorded version and is
+  marked as a development dependency, so no production bundle contains it;
+- the npm registry lists no final release outside the range.
+
+Any other advisory still blocks the audit. A record that matches no finding
+also blocks it, so a stale record cannot stay. A lock without a record never
+passes on findings. Every finding must rest on an advisory object, directly or
+through the findings it names, and the report's total must equal its number of
+findings. A report carrying an npm error is refused, and the exception table
+must be unchanged from the start to the end of the decision. With findings, the
+audit passes only on npm's findings status 1. It keeps its decision, with each
+installation and the registry's released fixes, in the lock's packet as
+`npm-advisory-exceptions.json`.
+
+The OSV lane of the security packet (`run_osv_scanners.py`) applies the same
+records to the same lock. An OSV finding passes only on the scanner's findings
+status 1, when a record names its lock, its npm package and version, and its
+identifier, and when the single affected SEMVER range OSV states (from 0 to a
+last affected or a fixed release) is the record's range. The same installation
+and registry proof must hold, and every other finding blocks. The summary keeps
+the decision, or the reason it could not be made, under
+`npm_advisory_exceptions`.
+
+The current record is
+[GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+(CVE-2026-112366, high): `picomatch` can take super-linear time on a glob with a
+single-branch repeated extglob. Every release is affected (`<=4.0.7`) and no fix
+is released. In the Studio lock, `picomatch` 4.0.7 is installed once, as a
+development dependency of the build and test tools (vite, vitest, tinyglobby,
+fdir and the typescript-eslint packages). The audit checks those two facts. It
+does not check what a bundle contains: on 2026-11-17 the Studio source imported
+none of these packages, its runtime dependencies were `@monaco-editor/react`,
+`@xyflow/react`, `react`, `react-dom` and `zustand`, and the globs `picomatch`
+parses came from the repository's own configuration. The record lapses on its
+review date, when npm audit stops reporting the advisory, or as soon as the
+registry lists a release outside the range. The lock then moves to that release.
+
 The installed native-wheel profile is generated from `requirements/wheels-test.in`
 with the development lock as its constraint. Its universal resolution retains
 the Python 3.11 NumPy branch and the platform-specific pytest dependencies. Regenerate it with:

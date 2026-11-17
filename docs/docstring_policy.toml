@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2038
+expected_file_count = 2040
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8203,3 +8203,10 @@ rationale = "Bind MUX, AMPLIFIER and BUFFER compilation and rate dispatch, and t
 [[file]]
 path = "tests/test_surrogate_parameters_refused.py"
 rationale = "A surrogate steepness that is not finite and above 0 raises ValueError through every class that takes one."
+[[file]]
+path = "tools/security_scan/npm_advisory_exceptions.py"
+rationale = "A named npm advisory passes only for a development-only package with no released fix, inside a two-week review, while every other advisory and every stale record block."
+
+[[file]]
+path = "tests/test_tools/test_npm_advisory_exceptions.py"
+rationale = "Synthetic and maintained locks prove that production installations, other versions, released fixes, unnamed advisories, stale records and changed tables block acceptance."

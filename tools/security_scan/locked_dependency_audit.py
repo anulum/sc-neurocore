@@ -30,11 +30,8 @@ from tools.security_scan.locked_dependency_inventory import (
 )
 from tools.security_scan.locked_dependency_reports import audit_osv_queries
 from tools.security_scan.locked_native_process import execute_command as _execute
-from tools.security_scan.locked_native_reports import (
-    npm_lock_packages,
-    npm_report_passed,
-    rust_report_passed,
-)
+from tools.security_scan.locked_native_reports import npm_lock_packages, rust_report_passed
+from tools.security_scan.npm_advisory_exceptions import npm_audit_passed
 from tools.security_scan.python_dependency_audit import run_dependency_audit
 
 ECOSYSTEMS = ("python", "rust", "npm", "go", "julia", "pixi")
@@ -75,7 +72,8 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
             "https://github.com/RustSec/advisory-db",
         ]
     elif ecosystem == "npm":
-        npm_packages = npm_lock_packages(lock.read_bytes())
+        npm_lock = lock.read_bytes()
+        npm_packages = npm_lock_packages(npm_lock)
         command = [
             "npm",
             "audit",
@@ -112,7 +110,7 @@ def _audit_lock(ecosystem: str, relative: str, repo_root: Path, directory: Path)
         (directory / "validated-packages.json").write_text(
             json.dumps(npm_packages, indent=2) + "\n", encoding="utf-8"
         )
-        return npm_report_passed(payload, len(npm_packages)) and rc == 0
+        return npm_audit_passed(repo_root, relative, npm_lock, rc, payload, directory)
     raise ValueError("Unknown native audit ecosystem.")
 
 

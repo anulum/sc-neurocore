@@ -12,6 +12,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Security
+
+- The dependency lock audit accepts a named npm advisory on a development-only
+  package for at most two weeks per review, while the npm registry lists no
+  release outside the advisory's vulnerable range. Every installation of the
+  package must be the recorded version and a development dependency; every
+  other advisory, a stale record and an npm error still block. The OSV lane
+  of the security packet applies the same records and proof. The first
+  record is GHSA-fc5q-39xc-vjpf (picomatch <= 4.0.7, no fix released), a
+  development dependency of the Studio frontend's build and test tools.
+
 ### Added
 
 - The adaptive-threshold integrate-and-fire neuron states two behaviour

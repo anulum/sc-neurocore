@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — npm advisories on development-only packages without a released fix
+
+# GHSA-fc5q-39xc-vjpf (CVE-2026-112366, high): picomatch can take super-linear time on a glob
+# with a single-branch repeated extglob. Every picomatch release is affected (<= 4.0.7) and no
+# fix is released. In the Studio lock, picomatch 4.0.7 is installed once, as a development
+# dependency of the build and test tools. The record lapses on its review date, once npm audit
+# stops reporting the advisory, or as soon as the npm registry lists a release outside the range.
+
+[[exception]]
+lock = "studio/frontend/package-lock.json"
+package = "picomatch"
+version = "4.0.7"
+advisory = "GHSA-fc5q-39xc-vjpf"
+vulnerable_range = "<=4.0.7"
+reason = "dev_only_fix_unreleased"
+review_by = "2026-12-01"
+rationale = "npm marks every installation of picomatch in the Studio lock as a development dependency of the build and test tools (vite, vitest, tinyglobby, fdir, the typescript-eslint packages), and the npm registry lists no release outside the vulnerable range; the audit checks both. Read on 2026-11-17 and not checked by the audit: the Studio source imports none of these packages, its runtime dependencies are @monaco-editor/react, @xyflow/react, react, react-dom and zustand, and the globs picomatch parses come from the repository's own configuration."
