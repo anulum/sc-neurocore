@@ -9,7 +9,8 @@
 //! Mass-action kinetics of DNA gate circuits: RK4 or forward Euler with Arrhenius scaling.
 //!
 //! [`check_kinetics`] refuses a run it cannot simulate before anything is computed, and
-//! [`simulate_kinetics`] runs the rest. The Python simulator in
+//! [`try_simulate_kinetics`] runs the rest or returns the refusal; [`simulate_kinetics`] keeps
+//! the signature it had at 4.1.0 and panics with the refusal instead. The Python simulator in
 //! `sc_neurocore.bridges.dna_simulation` makes the same refusals with the same words.
 
 use std::collections::{HashMap, HashSet};
@@ -38,9 +39,9 @@ pub enum DnaGateType {
     Amplifier,
     /// `k_disp * min(input / max_conc, 1)`, from the first input.
     Buffer,
-    /// No rate law here, so [`simulate_kinetics`] refuses it.
+    /// No rate law here, so [`check_kinetics`] refuses it.
     Nand,
-    /// No rate law here, so [`simulate_kinetics`] refuses it.
+    /// No rate law here, so [`check_kinetics`] refuses it.
     Xor,
 }
 
@@ -211,7 +212,11 @@ fn compute_k_eff(gate: &DnaGateSpec, inputs: &HashMap<String, f64>, config: &Kin
 pub const MAX_KINETIC_SAMPLES: usize = 1 << 25;
 
 /// Why [`check_kinetics`] refuses a run.
+///
+/// More refusals may be added in a minor release, so a `match` outside this crate needs a
+/// wildcard arm.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum KineticsError {
     /// `dt` is not finite or not above 0.
     InvalidStep,
@@ -368,7 +373,7 @@ pub fn check_kinetics(
 ///
 /// The run is checked by [`check_kinetics`] before anything is computed, and refused with its
 /// error.
-pub fn simulate_kinetics(
+pub fn try_simulate_kinetics(
     gates: &[DnaGateSpec],
     input_concentrations: &HashMap<String, f64>,
     duration_s: f64,
@@ -412,6 +417,25 @@ pub fn simulate_kinetics(
     Ok(result)
 }
 
+/// Run kinetic simulation, returning time traces per output, as [`try_simulate_kinetics`] does.
+///
+/// This keeps the signature the function had at 4.1.0, so code written against that release
+/// still compiles; new code should call [`try_simulate_kinetics`].
+///
+/// # Panics
+///
+/// When [`check_kinetics`] refuses the run, with the refusal's words.
+pub fn simulate_kinetics(
+    gates: &[DnaGateSpec],
+    input_concentrations: &HashMap<String, f64>,
+    duration_s: f64,
+    dt: f64,
+    config: &KineticConfig,
+) -> HashMap<String, Vec<f64>> {
+    try_simulate_kinetics(gates, input_concentrations, duration_s, dt, config)
+        .unwrap_or_else(|error| panic!("{error}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -429,7 +453,7 @@ mod tests {
         inputs.insert("A".to_string(), 200.0);
         inputs.insert("B".to_string(), 200.0);
 
-        let result = simulate_kinetics(&gates, &inputs, 1800.0, 1.0, &KineticConfig::default())
+        let result = try_simulate_kinetics(&gates, &inputs, 1800.0, 1.0, &KineticConfig::default())
             .expect("an AND gate with both inputs is simulated");
         let c = result.get("C").unwrap();
         assert!(c.last().unwrap() > &50.0);

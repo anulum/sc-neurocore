@@ -15,8 +15,8 @@
 use std::collections::HashMap;
 
 use sc_neurocore_engine::dna::{
-    check_kinetics, simulate_kinetics, DnaGateSpec, DnaGateType, KineticConfig, KineticsError,
-    MAX_KINETIC_SAMPLES,
+    check_kinetics, simulate_kinetics, try_simulate_kinetics, DnaGateSpec, DnaGateType,
+    KineticConfig, KineticsError, MAX_KINETIC_SAMPLES,
 };
 
 const ALL_KINDS: [DnaGateType; 9] = [
@@ -44,7 +44,7 @@ fn gate(kind: DnaGateType, inputs: &[&str], output: &str) -> DnaGateSpec {
 /// Run a refused simulation and return its message; the check alone gives the same refusal.
 fn refusal(gates: &[DnaGateSpec], duration_s: f64, dt: f64) -> String {
     let inputs = HashMap::from([("A".to_string(), 200.0)]);
-    let error = simulate_kinetics(gates, &inputs, duration_s, dt, &KineticConfig::default())
+    let error = try_simulate_kinetics(gates, &inputs, duration_s, dt, &KineticConfig::default())
         .expect_err("the run must be refused");
     assert_eq!(
         check_kinetics(gates, &inputs, duration_s, dt),
@@ -190,7 +190,7 @@ fn an_accepted_run_has_one_sample_per_step_for_every_kind_with_a_rate_law() {
     ]);
     let config = KineticConfig::default();
     assert_eq!(check_kinetics(&gates, &inputs, 10.0, 0.5), Ok(20));
-    let result = simulate_kinetics(&gates, &inputs, 10.0, 0.5, &config).expect("accepted");
+    let result = try_simulate_kinetics(&gates, &inputs, 10.0, 0.5, &config).expect("accepted");
     let time: Vec<f64> = (0..20).map(|step| step as f64 * 0.5).collect();
     assert_eq!(result["time"], time);
     assert_eq!(result.len(), gates.len() + 1);
@@ -215,7 +215,7 @@ fn an_input_concentration_that_is_not_finite_or_is_negative_is_refused() {
         f64::NEG_INFINITY,
     ] {
         let inputs = HashMap::from([("A".to_string(), value)]);
-        let error = simulate_kinetics(&one, &inputs, 10.0, 1.0, &config).expect_err("refused");
+        let error = try_simulate_kinetics(&one, &inputs, 10.0, 1.0, &config).expect_err("refused");
         assert_eq!(check_kinetics(&one, &inputs, 10.0, 1.0), Err(error.clone()));
         assert_eq!(
             error.to_string(),
@@ -250,4 +250,29 @@ fn the_first_refused_input_is_named_in_sorted_order_after_the_step_and_before_th
             name: "A".to_string()
         })
     );
+}
+
+/// The 4.1.0 signature returns the same traces as the checked form for an accepted run.
+#[test]
+fn the_unchecked_form_returns_the_checked_forms_traces() {
+    let gates = [
+        gate(DnaGateType::And, &["A", "B"], "C"),
+        gate(DnaGateType::Buffer, &["A"], "Y"),
+    ];
+    let inputs = HashMap::from([("A".to_string(), 150.0), ("B".to_string(), 50.0)]);
+    let config = KineticConfig::default();
+    let checked = try_simulate_kinetics(&gates, &inputs, 10.0, 0.5, &config).expect("accepted");
+    assert_eq!(
+        simulate_kinetics(&gates, &inputs, 10.0, 0.5, &config),
+        checked
+    );
+}
+
+/// The 4.1.0 signature panics with the refusal's words where the checked form returns it.
+#[test]
+#[should_panic(expected = "input 'A' must have a finite concentration of at least 0")]
+fn the_unchecked_form_panics_with_the_refusal() {
+    let one = [gate(DnaGateType::Buffer, &["A"], "Y")];
+    let inputs = HashMap::from([("A".to_string(), f64::NAN)]);
+    let _ = simulate_kinetics(&one, &inputs, 10.0, 1.0, &KineticConfig::default());
 }

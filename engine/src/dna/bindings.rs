@@ -155,7 +155,7 @@ fn py_dna_simulate_kinetics<'py>(
         use_rk4,
     };
 
-    let result = dna::simulate_kinetics(&gates, &inputs, duration_s, dt, &config)
+    let result = dna::try_simulate_kinetics(&gates, &inputs, duration_s, dt, &config)
         .map_err(|error| PyValueError::new_err(error.to_string()))?;
 
     let dict = PyDict::new(py);

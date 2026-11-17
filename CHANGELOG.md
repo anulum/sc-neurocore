@@ -837,8 +837,9 @@ Release text.
   instead of spreading the samples over duration_s; for an accepted run
   with the same integrator both give the same traces. The engine's
   kinetics moves to engine/src/dna/kinetics.rs
-  with check_kinetics and KineticsError, and simulate_kinetics returns a
-  Result.
+  with check_kinetics, KineticsError and try_simulate_kinetics, which
+  returns the refusal; simulate_kinetics keeps its 4.1.0 signature and
+  panics with the refusal's words.
 
 - The surrogate LIF's gradient on a spike step is taken at the membrane
   that crossed threshold, before the reset. Its forward pass cached the

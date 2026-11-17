@@ -20,8 +20,8 @@ pub(crate) mod bindings;
 mod kinetics;
 
 pub use kinetics::{
-    check_kinetics, simulate_kinetics, DnaGateSpec, DnaGateType, KineticConfig, KineticsError,
-    MAX_KINETIC_SAMPLES,
+    check_kinetics, simulate_kinetics, try_simulate_kinetics, DnaGateSpec, DnaGateType,
+    KineticConfig, KineticsError, MAX_KINETIC_SAMPLES,
 };
 
 use rand::RngExt;
