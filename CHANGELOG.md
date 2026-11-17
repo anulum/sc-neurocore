@@ -93,6 +93,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   log and its quarantine archives, evidence bundles, job and operator
   status, and identity accounts) move unchanged to studioAdminActions.ts,
   covered fully by new tests.
+- The training actions of SNN Studio's store (surrogates, target
+  profiles, the job list, selecting, starting and stopping a run,
+  following its event stream, and its checkpoints and weights) move
+  unchanged to studioTrainingActions.ts, with the stream and the counters
+  that outdate late replies. Signing out reaches them through one release
+  call. New tests cover the module fully.
 
 ## [4.2.0] - 2026-11-17
 

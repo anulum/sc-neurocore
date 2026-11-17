@@ -706,14 +706,18 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 51.42,
-      "branches": 51.46
+      "statements": 58.74,
+      "branches": 59.85
     },
     "src/stores/studioSynthesis.ts": {
       "statements": 95.45,
       "branches": 100
     },
     "src/stores/studioTraceActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioTrainingActions.ts": {
       "statements": 100,
       "branches": 100
     },
@@ -863,7 +867,7 @@
     },
     "src/studioTrainingRecovery.ts": {
       "statements": 95.34,
-      "branches": 96.34
+      "branches": 97.56
     },
     "src/studioTrainingStream.ts": {
       "statements": 100,
