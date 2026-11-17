@@ -18,7 +18,6 @@ impl FixedPointLif {
     /// are each masked to `data_width` bits (`v_rest - v` to twice that). Reaching
     /// `v_threshold` sets `v` to `v_reset`, starts the refractory count and returns 1.
     /// The returned voltage is the new `v` masked to `data_width` bits.
-    #[allow(non_snake_case)]
     pub fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let (spike, v_out, _membrane) = self.step_with_membrane(leak_k, gain_k, i_t, noise_in);
         (spike, v_out)

@@ -47,7 +47,7 @@ def _run(
     assert hashlib.sha256(harness.read_bytes()).hexdigest() == _HARNESS_SHA256
     status = output.parent / (output.name + "-driver-status.json")
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1")
-    result = subprocess.run(  # nosec B603 - actual repository CLI and audited fixed driver
+    result = subprocess.run(
         [
             sys.executable,
             "-B",

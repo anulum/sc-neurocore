@@ -38,7 +38,7 @@ def _read(path: Path) -> dict[str, object]:
 def _command(samples: Path, report: Path, checkout: Path) -> subprocess.CompletedProcess[str]:
     """Invoke the actual validation CLI without bypassing any check."""
     script = Path(__file__).resolve().parents[1] / "validate_lapicque_samples.py"
-    return subprocess.run(  # nosec B603 - fixed repository CLI and explicit evidence paths
+    return subprocess.run(
         [
             sys.executable,
             "-B",
