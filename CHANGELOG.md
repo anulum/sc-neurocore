@@ -81,6 +81,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   update_weights keeps its 4.1.0 signature and panics with those words,
   and the Python binding's messages are unchanged.
 
+### Repository hygiene
+
+- SNN Studio's store builds its graph-editing actions (populations,
+  projections, their undo history, validation, simulation, and the NIR and
+  notebook files) in a module of their own, studioGraphActions.ts, instead
+  of in the factory that also holds sign-in, audit, identity, training and
+  project actions. The code moves unchanged, and new tests cover it fully;
+  further tests cover the server project and share-link actions that stay.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub

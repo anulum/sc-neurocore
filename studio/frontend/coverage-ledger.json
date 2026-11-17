@@ -681,6 +681,10 @@
       "statements": 100,
       "branches": 100
     },
+    "src/stores/studioGraphActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
     "src/stores/studioHeavyAnalysis.ts": {
       "statements": 86.66,
       "branches": 85.29
@@ -698,8 +702,8 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 45.11,
-      "branches": 51.26
+      "statements": 46.57,
+      "branches": 51.46
     },
     "src/stores/studioSynthesis.ts": {
       "statements": 95.45,
