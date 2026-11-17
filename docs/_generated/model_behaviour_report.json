@@ -654,10 +654,43 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            2,
+            2
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 20.0
+          },
+          "kind": "interval",
+          "name": "a current of 20.0 fires 2 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 2,
+          "steps": 1000
+        },
+        {
+          "bounds": [
+            9,
+            9
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 100.0
+          },
+          "kind": "interval",
+          "name": "a current of 100.0 fires 9 times in 1000 steps",
+          "observable": "spikes",
+          "observed": 9,
+          "steps": 1000
+        }
+      ],
+      "cases_sha256": "b7f35235d46f4fba28c06e4e187e94422115a510396c39ac4447c10901536c8b",
       "model": "ExpIFNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [
@@ -2614,9 +2647,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 20,
+    "held": 21,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 165
+    "no_case": 164
   }
 }

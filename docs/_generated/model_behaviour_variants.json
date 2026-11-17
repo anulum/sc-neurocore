@@ -407,6 +407,96 @@
       ]
     },
     {
+      "model": "ExpIFNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 20.0 fires 2 times in 1000 steps",
+          "observed": 2
+        },
+        {
+          "held": true,
+          "name": "a current of 100.0 fires 9 times in 1000 steps",
+          "observed": 9
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(--(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+          "observed": 3,
+          "outcome": "violated",
+          "term": "+ -(min(v, v_threshold) - v_rest)",
+          "within": "-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(min(v, v_threshold) - v_rest) - delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ delta_t * exp((min(v, v_threshold) - v_rh) / delta_t)",
+          "within": "-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) - I) / tau",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(-min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ min(v, v_threshold)",
+          "within": "min(v, v_threshold) - v_rest"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(min(v, v_threshold) + v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+          "observed": 13,
+          "outcome": "violated",
+          "term": "- v_rest",
+          "within": "min(v, v_threshold) - v_rest"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((-min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+          "observed": 1000,
+          "outcome": "violated",
+          "term": "+ min(v, v_threshold)",
+          "within": "min(v, v_threshold) - v_rh"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) + v_rh) / delta_t) + I) / tau",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "- v_rh",
+          "within": "min(v, v_threshold) - v_rh"
+        },
+        {
+          "case": "a current of 20.0 fires 2 times in 1000 steps",
+          "equation": "v",
+          "expression": "-((-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau"
+        }
+      ]
+    },
+    {
       "model": "FitzHughNagumoNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -2663,8 +2753,8 @@
       ]
     }
   ],
-  "models_with_cases": 20,
-  "models_without_cases": 165,
+  "models_with_cases": 21,
+  "models_without_cases": 164,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -2673,7 +2763,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 19,
+    "discriminated": 20,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -2682,7 +2772,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 232,
-    "violated": 232
+    "total": 240,
+    "violated": 240
   }
 }

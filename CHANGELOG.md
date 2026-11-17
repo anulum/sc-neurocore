@@ -14,6 +14,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The exponential integrate-and-fire neuron states two behaviour cases, two
+  of the 1,000-step windows its Q32.32 test runs for the hand model, the
+  schema and the RTL, which must give the same event counts: a current of
+  20.0 fires 2 times, and a current of 100.0 fires 9 times. Each of the 8
+  sign variants of its membrane equation breaks the first case; the second
+  depends on the reset voltage, which leaves the first unchanged.
+  Twenty-one of the 185 catalogue models now state cases.
+
 - The Chialvo map neuron states two behaviour cases, two of the 100-step
   windows its Q16.16 test runs for the hand model and the RTL, which must
   give the same event counts: a current of 0.01 fires 3 times, and a current

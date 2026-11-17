@@ -57,6 +57,7 @@ PERIODIC: dict[str, float] = {"ErmentroutKopellMapNeuron": 2.0 * math.pi}
 RESET_OR_LEVEL_MODELS = frozenset(
     {
         "DendriticNMDANeuron",
+        "ExpIFNeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
         "MihalasNieburNeuron",

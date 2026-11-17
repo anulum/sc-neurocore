@@ -161,3 +161,29 @@ synth_report = "hdl/reports/yosys_expif_q3232_2026-08-30.json"
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
 terminal_reason = "The SC Q32.32 compatibility core preserves enrolled aggregate events plus a digest-bound complete event/state packet, synthesizes to 484938 Yosys coarse cells, and passes bounded reset/event safety; timing, PPA, target-device, board, physical-silicon, and universal-equivalence evidence remain open."
+
+[[behaviour]]
+name = "a current of 20.0 fires 2 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    2,
+    2,
+]
+
+[behaviour.inputs]
+current = 20.0
+
+[[behaviour]]
+name = "a current of 100.0 fires 9 times in 1000 steps"
+kind = "interval"
+steps = 1000
+observable = "spikes"
+bounds = [
+    9,
+    9,
+]
+
+[behaviour.inputs]
+current = 100.0

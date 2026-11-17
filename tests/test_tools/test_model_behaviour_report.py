@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 165
+MODELS_WITHOUT_A_CASE = 164
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -70,6 +70,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [266, 266],
     ],
     "ErmentroutKopellMapNeuron": [[0, 0], [45, 45], [64, 64], [5, 5]],
+    "ExpIFNeuron": [[2, 2], [9, 9]],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "FitzHughRinzelNeuron": [[7, 7], [8, 8], [8, 8], [83, 83], [1, 1]],
     "HindmarshRoseNeuron": [[0, 0], [0, 0], [26, 26], [40, 40], [52, 52], [1, 1]],
@@ -1135,6 +1136,28 @@ def test_the_chialvo_map_states_two_windows_its_q1616_test_runs(report: dict[str
     assert [case["observed"] for case in cases] == [3, 1]
     assert [case["inputs"] for case in cases] == [{"current": 0.01}, {"current": 1.0}]
     assert [case["steps"] for case in cases] == [100, 100]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_exponential_if_states_two_windows_its_q3232_test_runs(
+    report: dict[str, object],
+) -> None:
+    """Two of the 1,000-step windows its Q32.32 test runs for the hand model and the RTL.
+
+    The model's co-simulation test requires the hand model, the schema and the RTL to
+    give the same event count over 1,000 steps at six currents. At 20.0 the model fires
+    twice; the same window's complete RTL event vector is frozen as well. At 100.0 it
+    fires 9 times: there the interval between spikes depends on the reset voltage,
+    which leaves the count at 20.0 unchanged.
+    """
+    row = _models(report)["ExpIFNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [2, 9]
+    assert [case["inputs"] for case in cases] == [{"current": 20.0}, {"current": 100.0}]
+    assert [case["steps"] for case in cases] == [1000, 1000]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

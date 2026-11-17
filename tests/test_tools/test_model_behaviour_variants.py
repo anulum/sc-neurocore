@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 20
+MODELS_WITH_CASES = 21
 
 
 def _accumulator() -> dict[str, object]:
@@ -393,6 +393,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
         "ErmentroutKopellMapNeuron",
+        "ExpIFNeuron",
         "FitzHughNagumoNeuron",
         "FitzHughRinzelNeuron",
         "HindmarshRoseNeuron",
@@ -416,7 +417,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 19,
+        "discriminated": 20,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -1098,6 +1099,29 @@ def test_every_variant_of_the_chialvo_map_breaks_a_case(report: dict[str, object
     }
 
 
+def test_every_variant_of_the_exponential_if_breaks_a_case(report: dict[str, object]) -> None:
+    """Eight signs of the membrane equation; the window at 20.0 decides all of them.
+
+    Over 1,000 steps at 20.0 the model fires twice. Every sign variant of the leak,
+    the exponential spike-initiation current, the input and the whole right-hand side
+    changes that count, so no variant needs the window at 100.0, which is there for
+    the reset voltage.
+    """
+    row = _rows(report)["ExpIFNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [2, 9]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 8
+    assert {variant["equation"] for variant in variants} == {"v"}
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    assert {variant["case"] for variant in variants} == {
+        "a current of 20.0 fires 2 times in 1000 steps"
+    }
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -1109,10 +1133,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+19$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+20$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 232, of them violated 232, not discriminated 0" in summary
+    assert "variants: 240, of them violated 240, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 
