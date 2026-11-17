@@ -3928,7 +3928,8 @@
         "src/sc_neurocore/nir_bridge/neuron_graph_hierarchy.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_hierarchy.py",
         "src/sc_neurocore/nir_bridge/neuron_graph_metadata.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_metadata.py",
         "src/sc_neurocore/nir_bridge/neuron_graph_nodes.py": "source_hashes.src/sc_neurocore/nir_bridge/neuron_graph_nodes.py"
-      }
+      },
+      "variant_source_hashes": "variant_revision"
     },
     {
       "artefact": "benchmarks/results/bench_bioware.json",
@@ -3985,7 +3986,8 @@
         "src/sc_neurocore/bioware/bioware_plasticity.py": "source_hashes.src/sc_neurocore/bioware/bioware_plasticity.py",
         "src/sc_neurocore/bioware/bioware_session.py": "source_hashes.src/sc_neurocore/bioware/bioware_session.py",
         "src/sc_neurocore/bioware/bioware_validation.py": "source_hashes.src/sc_neurocore/bioware/bioware_validation.py"
-      }
+      },
+      "variant_source_hashes": "variant_revision"
     },
     {
       "artefact": "benchmarks/results/bench_learning_bridge.json",
@@ -4065,7 +4067,8 @@
         "src/sc_neurocore/_native/learning_wgpu.py": "source_hashes.src/sc_neurocore/_native/learning_wgpu.py",
         "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "source_hashes.src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go",
         "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "source_hashes.src/sc_neurocore/accel/julia/_native/learning_bridge.jl"
-      }
+      },
+      "variant_source_hashes": "variant_revision"
     },
     {
       "artefact": "benchmarks/results/bench_kl_refine.json",

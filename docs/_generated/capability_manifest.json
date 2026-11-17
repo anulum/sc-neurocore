@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5689
+    "test_files": 5690
   },
   "documentation": {
     "public_pages": [
@@ -8565,6 +8565,7 @@
       "tests/test_tools/test_audit_cadence_contract.py",
       "tests/test_tools/test_audit_model_docs.py",
       "tests/test_tools/test_benchmark_evidence_gate.py",
+      "tests/test_tools/test_benchmark_variant_source_hashes.py",
       "tests/test_tools/test_brunel_parity_check.py",
       "tests/test_tools/test_build_accel_backends_commands_and_build.py",
       "tests/test_tools/test_build_accel_backends_discover_and_paths.py",

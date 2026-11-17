@@ -35,9 +35,26 @@ digest of a path the record holds in its tables, at any depth, against the
 source at the record's commit: the map points at it, or at another place
 holding the same digest of the same path.
 `tests/test_tools/test_benchmark_evidence_gate.py` refuses a table digest the
-gate does not check. A digest inside a list, such as a record's per-variant
-`variants.<i>.source_hashes`, cannot be addressed by the gate yet; the test
-holds the number of those per gate, so a new one is noticed.
+gate does not check.
+
+A record that compares a parent revision with a candidate hashes each variant's
+sources inside a list, `variants.<i>.source_hashes`. A parent's digests describe
+the parent revision, so they cannot be checked at the record's commit. A gate
+that sets `"variant_source_hashes": "variant_revision"` checks every such digest
+at its variant's own revision, in `tools/benchmark_variant_source_hashes.py`:
+
+- a clean variant at its `git_head`, and a parent, which has none, at its
+  `source_ref`;
+- a variant measured on a dirty tree (`surface_dirty: true`) at the record's
+  commit, the only commit that can hold the bytes it hashed. Under the
+  `worktree` policy it is compared with the source on disk.
+
+The failures are `unresolvable_variant_revision`, `stale_variant_source_hash`
+and, for a dirty variant whose bytes the record's commit did not take,
+`dirty_variant_not_committed`; any other mode is
+`variant_source_hashes_has_unknown_mode`. The test holds the number of
+list-held digests per gate, so a new one is noticed, and requires each such
+gate to set the mode.
 
 ```bash
 python tools/benchmark_evidence_gate.py \

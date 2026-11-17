@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2035
+expected_file_count = 2037
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -2491,6 +2491,14 @@ rationale = "Hold every crossing-count case model to the direction rule: each sp
 [[file]]
 path = "tests/test_tools/test_benchmark_evidence_gate.py"
 rationale = "Bind the evidence gate's manifest contract and its two source-digest comparisons: at the record's commit and against the tree now."
+
+[[file]]
+path = "tools/benchmark_variant_source_hashes.py"
+rationale = "Check a record's per-variant source digests at each variant's own revision for the evidence gate."
+
+[[file]]
+path = "tests/test_tools/test_benchmark_variant_source_hashes.py"
+rationale = "Bind the variant revision rules, their failures and the gate's opt-in mode to a real Git history."
 
 [[file]]
 path = "src/sc_neurocore/studio/project.py"

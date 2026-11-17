@@ -12,6 +12,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+
+- The benchmark evidence gate checks the source digests a record holds once
+  per variant, `variants.<i>.source_hashes`, which it could not address
+  before: 72 digests in the autonomous-learning, Bioware and NIR graph
+  modularisation records. A gate opts in with `"variant_source_hashes":
+  "variant_revision"`, and each variant is checked at its own revision: a
+  clean one at its `git_head`, a parent at its `source_ref`, and one
+  measured on a dirty tree at the record's commit, the only commit that
+  can hold the bytes it hashed. A digest that differs is
+  `stale_variant_source_hash`, or `dirty_variant_not_committed` for a dirty
+  variant; a revision the history lacks is `unresolvable_variant_revision`.
+  The three gates opt in, all 72 digests match, and the committed gate
+  report is unchanged.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub

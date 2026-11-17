@@ -966,9 +966,10 @@ def test_the_tracked_report_passes_the_gates_that_map_digests() -> None:
     assert not [failure for failure in report["failures"] if failure["gate_id"] in ids]
 
 
-#: Gates whose record also hashes sources inside a list, once per variant, as ``variants.<i>.source_hashes.<path>``.
-#: The gate's ``_path_value`` stops at a list, and a map keyed by source path points at one place per path, so these
-#: digests are not checked against the source. Their number per gate is held here, so a new one is noticed.
+#: Gates whose record also hashes sources inside a list, once per variant, as ``variants.<i>.source_hashes.<path>``,
+#: with their number of such digests. A map keyed by source path points at one place per path, so these are checked by
+#: the gate's ``variant_source_hashes`` mode instead, each at its variant's own revision. The numbers are held here, so
+#: a new one is noticed.
 _LIST_HELD_DIGESTS = {
     "autonomous-learning-modularisation-local-diagnostics": 32,
     "bioware-modularisation-local-diagnostics": 14,
@@ -1055,7 +1056,7 @@ def _list_held_digests(value: Any, suffixes: tuple[str, ...], in_list: bool = Fa
 def _unchecked_digests(gate: dict[str, Any], record: Any, tool: Any) -> list[str]:
     """Return the places of a record's path-keyed table digests that its gate does not check.
 
-    A digest is checked when the gate's map points at its place. It is also checked when the map points at another
+    A digest is checked when the gate's map points at its place for its own path. It is also checked when the map points at another
     place for the same path that holds the same digest, since the gate compares that one with the source.
 
     Parameters
@@ -1073,12 +1074,11 @@ def _unchecked_digests(gate: dict[str, Any], record: Any, tool: Any) -> list[str
         The unchecked places, sorted.
     """
     mapping = gate["source_hashes"]
-    mapped = set(mapping.values())
     unchecked = []
     for place, (path, digest) in sorted(
         _path_keyed_digests(record, tool._SOURCE_PATH_SUFFIXES).items()
     ):
-        if place in mapped:
+        if mapping.get(path) == place:
             continue
         if path in mapping and tool._path_value(record, mapping[path]) == digest:
             continue
@@ -1147,11 +1147,26 @@ def test_every_manifest_map_checks_every_path_digest_in_its_record_tables() -> N
     assert {gate_id: places for gate_id, places in gaps.items() if places} == {}
 
 
-def test_the_digests_held_in_lists_are_the_known_ones() -> None:
-    """Only the known records hash sources inside a list, each with its known number of digests."""
+def test_every_digest_held_in_a_list_is_checked_by_its_gate() -> None:
+    """Only the known records hash sources inside a list, and each of their gates checks every such digest.
+
+    The unchecked count of every gate is 0: a gate whose record holds a digest in a list sets
+    ``variant_source_hashes`` to ``variant_revision``.
+    """
     tool = _load_tool()
     held = {
-        gate["id"]: _list_held_digests(record, tool._SOURCE_PATH_SUFFIXES)
+        gate["id"]: (
+            _list_held_digests(record, tool._SOURCE_PATH_SUFFIXES),
+            gate.get("variant_source_hashes"),
+        )
         for gate, record in _mapped_gates_and_records()
     }
-    assert {gate_id: count for gate_id, count in held.items() if count} == _LIST_HELD_DIGESTS
+    assert {
+        gate_id: count for gate_id, (count, _mode) in held.items() if count
+    } == _LIST_HELD_DIGESTS
+    unchecked = {
+        gate_id: count
+        for gate_id, (count, mode) in held.items()
+        if count and mode != tool.VARIANT_REVISION_MODE
+    }
+    assert unchecked == {}

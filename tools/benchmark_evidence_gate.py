@@ -17,9 +17,20 @@ import json
 import math
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
+
+# The gate runs as a script from CI and is loaded by path in tests, so the repository root is put on the path for
+# its sibling module, as the coverage census does.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(_REPO_ROOT))
+
+from tools.benchmark_variant_source_hashes import (
+    VARIANT_REVISION_MODE,
+    variant_source_hash_failures,
+)
 
 BENCHMARK_EVIDENCE_GATE_SCHEMA_VERSION = "sc-neurocore.benchmark-evidence-gate.v1"
 
@@ -225,12 +236,13 @@ def _check_source_hashes(
     artefact_path: str,
     source_hash_policy: str,
     failures: list[GateFailure],
-) -> None:
+) -> str | None:
+    """Compare each mapped source digest with its source and return the record's commit, when one was read."""
     revision = None
     if source_hashes and source_hash_policy == "artefact_commit":
         revision = _artefact_commit(repo_root, artefact_path, gate_id, failures)
         if revision is None:
-            return
+            return None
     for source_path, json_path in sorted(source_hashes.items()):
         if not _safe_repo_path(source_path):
             _fail(failures, gate_id, "invalid_source_path", source_path)
@@ -254,6 +266,37 @@ def _check_source_hashes(
             actual = _sha256(source)
         if recorded != actual:
             _fail(failures, gate_id, "source_hash_mismatch", f"{source_path}->{json_path}")
+    return revision
+
+
+def _check_variant_source_hashes(
+    *,
+    repo_root: Path,
+    gate_id: str,
+    payload: Any,
+    artefact_path: str,
+    source_hash_policy: str,
+    record_commit: str | None,
+    failures: list[GateFailure],
+) -> None:
+    """Check every variant's source digests at its own revision, for a gate that sets ``variant_source_hashes``.
+
+    ``record_commit`` is the commit the ``source_hashes`` check read, or ``None`` when the gate has no such map; under
+    the ``artefact_commit`` policy it is then found here. A commit that cannot be read is reported once, and the
+    variants are not checked.
+    """
+    if source_hash_policy == "artefact_commit" and record_commit is None:
+        record_commit = _artefact_commit(repo_root, artefact_path, gate_id, failures)
+        if record_commit is None:
+            return
+    for reason, place in variant_source_hash_failures(
+        payload,
+        repo_root=repo_root,
+        record_commit=record_commit,
+        git_bytes=_git_bytes,
+        safe_path=_safe_repo_path,
+    ):
+        _fail(failures, gate_id, reason, place)
 
 
 #: File suffixes that mark a ``source_hashes`` key as a repository path.
@@ -507,6 +550,9 @@ def _check_gate_manifest_entry(
         expected_type = list if field in {"required_numbers", "parity_groups"} else dict
         if not isinstance(value, expected_type):
             _fail(failures, gate_id, f"{field}_has_wrong_type", field)
+    mode = gate.get("variant_source_hashes", VARIANT_REVISION_MODE)
+    if mode != VARIANT_REVISION_MODE:
+        _fail(failures, gate_id, "variant_source_hashes_has_unknown_mode", "variant_source_hashes")
 
 
 def evaluate_benchmark_evidence_gate(
@@ -602,7 +648,7 @@ def evaluate_benchmark_evidence_gate(
             expected_values=dict(gate.get("expected_values", {})),
             failures=failures,
         )
-        _check_source_hashes(
+        record_commit = _check_source_hashes(
             repo_root=root,
             gate_id=gate_id,
             payload=payload,
@@ -611,6 +657,20 @@ def evaluate_benchmark_evidence_gate(
             source_hash_policy=source_hash_policy,
             failures=failures,
         )
+        if gate.get("variant_source_hashes") == VARIANT_REVISION_MODE and not (
+            gate.get("source_hashes")
+            and record_commit is None
+            and source_hash_policy == "artefact_commit"
+        ):
+            _check_variant_source_hashes(
+                repo_root=root,
+                gate_id=gate_id,
+                payload=payload,
+                artefact_path=artefact_path,
+                source_hash_policy=source_hash_policy,
+                record_commit=record_commit,
+                failures=failures,
+            )
         _check_regression_limits(
             gate_id=gate_id,
             payload=payload,
