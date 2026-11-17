@@ -17,12 +17,17 @@
 #![deny(missing_docs)]
 
 pub(crate) mod bindings;
+mod kinetics;
+
+pub use kinetics::{
+    check_kinetics, simulate_kinetics, DnaGateSpec, DnaGateType, KineticConfig, KineticsError,
+    MAX_KINETIC_SAMPLES,
+};
 
 use rand::RngExt;
 use rand::SeedableRng;
 use rand_xoshiro::Xoshiro256PlusPlus;
 use rayon::prelude::*;
-use std::collections::HashMap;
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -32,7 +37,6 @@ const GC_HIGH: f64 = 0.60;
 const MAX_HOMOPOLYMER: usize = 3;
 #[allow(dead_code)] // reserved for strand-displacement toehold heuristic
 const DEFAULT_TOEHOLD: usize = 7;
-const R_GAS: f64 = 1.987e-3; // kcal/(mol·K)
 
 // ── Sequence Designer ────────────────────────────────────────────────
 
@@ -175,192 +179,6 @@ pub fn check_cross_hybridization(
         .collect()
 }
 
-// ── Kinetic Simulator (RK4 + Arrhenius) ──────────────────────────────
-
-/// Gate types for kinetic simulation.
-///
-/// Each kind sets the gate's effective rate `k_eff` from the input concentrations, which
-/// are looked up by name (a missing name reads as 0) and scaled by `1e-9` before `k_hyb`;
-/// the gate's `leak_rate` is then added.
-#[derive(Clone, Copy, Debug)]
-pub enum DnaGateType {
-    /// `k_hyb * min(inputs) * 1e-9` when every input is above 0, else 0.
-    And,
-    /// `k_hyb * max(inputs) * 1e-9`.
-    Or,
-    /// `k_disp * (1 - min(input / max_conc, 1))`, from the first input.
-    Not,
-    /// `k_hyb * max(input - threshold * max_conc, 0) * 1e-9`, from the first input.
-    Threshold,
-    /// Inputs (select, a, b): `k_hyb * (s * a + (1 - s) * b) * 1e-9`, with
-    /// `s = min(select / max_conc, 1)`.
-    Mux,
-    /// `k_hyb * input * 1e-9 * 5`, from the first input.
-    Amplifier,
-    /// `k_disp * min(input / max_conc, 1)`, from the first input.
-    Buffer,
-    /// No rate law: the effective rate is the leak alone.
-    Nand,
-    /// No rate law: the effective rate is the leak alone.
-    Xor,
-}
-
-/// A gate in the DNA circuit.
-#[derive(Clone, Debug)]
-pub struct DnaGateSpec {
-    /// The gate's rate law.
-    pub gate_type: DnaGateType,
-    /// Names of the input species. `Mux` reads the first three as (select, a, b) and the
-    /// single-input kinds the first; neither checks that they are there.
-    pub input_names: Vec<String>,
-    /// Key of the gate's output trace in the simulation result.
-    pub output_name: String,
-    /// Fraction of `max_conc` the input must exceed; read by `Threshold` only.
-    pub threshold: f64,
-    /// Rate added to the gate's effective rate, for every kind (1/s).
-    pub leak_rate: f64,
-}
-
-/// Kinetic simulation configuration.
-pub struct KineticConfig {
-    /// Hybridisation rate at 37 °C, per molar per second (concentrations are scaled by
-    /// `1e-9`); scaled to `temperature_c` with an activation energy of 15 kcal/mol.
-    pub k_hyb: f64,
-    /// Displacement rate at 37 °C (1/s), scaled to `temperature_c` the same way.
-    pub k_disp: f64,
-    /// Operating temperature of the Arrhenius scaling (°C).
-    pub temperature_c: f64,
-    /// Ceiling every output approaches and is clamped to; `Not`, `Buffer` and `Mux` also
-    /// divide an input by it.
-    pub max_conc: f64,
-    /// RK4 when true, forward Euler when false, for `dc/dt = k_eff (max_conc - c)`.
-    pub use_rk4: bool,
-}
-
-impl Default for KineticConfig {
-    fn default() -> Self {
-        Self {
-            k_hyb: 3e5,
-            k_disp: 1.0,
-            temperature_c: 37.0,
-            max_conc: 200.0,
-            use_rk4: true,
-        }
-    }
-}
-
-/// Arrhenius temperature scaling.
-#[inline]
-fn arrhenius_scale(k_ref: f64, temperature_c: f64, ea_kcal: f64) -> f64 {
-    let t_ref = 310.15; // 37°C
-    let t_op = temperature_c + 273.15;
-    k_ref * (-(ea_kcal / R_GAS) * (1.0 / t_op - 1.0 / t_ref)).exp()
-}
-
-/// Compute effective rate constant for a gate.
-fn compute_k_eff(gate: &DnaGateSpec, inputs: &HashMap<String, f64>, config: &KineticConfig) -> f64 {
-    let k_hyb = arrhenius_scale(config.k_hyb, config.temperature_c, 15.0);
-    let k_disp = arrhenius_scale(config.k_disp, config.temperature_c, 15.0);
-
-    let k_eff = match gate.gate_type {
-        DnaGateType::And => {
-            let concs: Vec<f64> = gate
-                .input_names
-                .iter()
-                .map(|n| *inputs.get(n).unwrap_or(&0.0))
-                .collect();
-            let all_present = concs.iter().all(|&c| c > 0.0);
-            let min_c = concs.iter().cloned().fold(f64::MAX, f64::min);
-            k_hyb * min_c * 1e-9 * if all_present { 1.0 } else { 0.0 }
-        }
-        DnaGateType::Or => {
-            let concs: Vec<f64> = gate
-                .input_names
-                .iter()
-                .map(|n| *inputs.get(n).unwrap_or(&0.0))
-                .collect();
-            let max_c = concs.iter().cloned().fold(0.0f64, f64::max);
-            k_hyb * max_c * 1e-9
-        }
-        DnaGateType::Not => {
-            let inp = *inputs.get(&gate.input_names[0]).unwrap_or(&0.0);
-            k_disp * (1.0 - (inp / config.max_conc).min(1.0))
-        }
-        DnaGateType::Threshold => {
-            let inp = *inputs.get(&gate.input_names[0]).unwrap_or(&0.0);
-            let excess = (inp - gate.threshold * config.max_conc).max(0.0);
-            k_hyb * excess * 1e-9
-        }
-        DnaGateType::Mux => {
-            let sel = *inputs.get(&gate.input_names[0]).unwrap_or(&0.0);
-            let a = *inputs.get(&gate.input_names[1]).unwrap_or(&0.0);
-            let b = *inputs.get(&gate.input_names[2]).unwrap_or(&0.0);
-            let sel_frac = (sel / config.max_conc).min(1.0);
-            k_hyb * (sel_frac * a + (1.0 - sel_frac) * b) * 1e-9
-        }
-        DnaGateType::Amplifier => {
-            let inp = *inputs.get(&gate.input_names[0]).unwrap_or(&0.0);
-            k_hyb * inp * 1e-9 * 5.0
-        }
-        DnaGateType::Buffer => {
-            let inp = *inputs.get(&gate.input_names[0]).unwrap_or(&0.0);
-            k_disp * (inp / config.max_conc).min(1.0)
-        }
-        _ => 0.0,
-    };
-
-    k_eff + gate.leak_rate
-}
-
-/// Run kinetic simulation, returning time traces per output.
-///
-/// Each gate's `k_eff` is computed once from `input_concentrations`, and its output follows
-/// `dc/dt = k_eff (max_conc - c)` from 0 in `floor(duration_s / dt)` samples, the first at 0,
-/// each clamped to `[0, max_conc]`. The result holds `"time"` and one trace per `output_name`.
-pub fn simulate_kinetics(
-    gates: &[DnaGateSpec],
-    input_concentrations: &HashMap<String, f64>,
-    duration_s: f64,
-    dt: f64,
-    config: &KineticConfig,
-) -> HashMap<String, Vec<f64>> {
-    let n_steps = (duration_s / dt) as usize;
-    let max_conc = config.max_conc;
-
-    let mut result: HashMap<String, Vec<f64>> = HashMap::new();
-
-    // Time axis
-    let time: Vec<f64> = (0..n_steps).map(|t| t as f64 * dt).collect();
-    result.insert("time".to_string(), time);
-
-    for gate in gates {
-        let k_eff = compute_k_eff(gate, input_concentrations, config);
-        let mut conc = vec![0.0f64; n_steps];
-
-        if config.use_rk4 {
-            for t in 1..n_steps {
-                let c = conc[t - 1];
-                let k1 = k_eff * (max_conc - c) * dt;
-                let k2 = k_eff * (max_conc - (c + k1 / 2.0)) * dt;
-                let k3 = k_eff * (max_conc - (c + k2 / 2.0)) * dt;
-                let k4 = k_eff * (max_conc - (c + k3)) * dt;
-                conc[t] = (c + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0)
-                    .max(0.0)
-                    .min(max_conc);
-            }
-        } else {
-            for t in 1..n_steps {
-                let d = k_eff * (max_conc - conc[t - 1]) * dt;
-                conc[t] = (conc[t - 1] + d).max(0.0).min(max_conc);
-            }
-        }
-
-        result.insert(gate.output_name.clone(), conc);
-    }
-
-    result
-}
-
 // ── Hairpin Detection ────────────────────────────────────────────────
 
 /// Detect hairpins in a sequence. Returns vec of (stem_start, stem_len, loop_len).
@@ -446,31 +264,6 @@ mod tests {
         let seqs = design_orthogonal_set(3, 30, 42);
         let flags = check_cross_hybridization(&seqs, 20);
         assert!(flags.is_empty());
-    }
-
-    #[test]
-    fn test_simulate_kinetics_and_gate() {
-        let gates = vec![DnaGateSpec {
-            gate_type: DnaGateType::And,
-            input_names: vec!["A".to_string(), "B".to_string()],
-            output_name: "C".to_string(),
-            threshold: 0.5,
-            leak_rate: 1e-7,
-        }];
-        let mut inputs = HashMap::new();
-        inputs.insert("A".to_string(), 200.0);
-        inputs.insert("B".to_string(), 200.0);
-
-        let result = simulate_kinetics(&gates, &inputs, 1800.0, 1.0, &KineticConfig::default());
-        let c = result.get("C").unwrap();
-        assert!(c.last().unwrap() > &50.0);
-    }
-
-    #[test]
-    fn test_arrhenius_higher_temp_faster() {
-        let k37 = arrhenius_scale(3e5, 37.0, 15.0);
-        let k25 = arrhenius_scale(3e5, 25.0, 15.0);
-        assert!(k37 > k25);
     }
 
     #[test]

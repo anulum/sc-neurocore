@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5686
+    "test_files": 5689
   },
   "documentation": {
     "public_pages": [
@@ -3485,6 +3485,7 @@
       "tests/digital_twin_support.py",
       "tests/dispatcher_error_paths_support.py",
       "tests/distillation_support.py",
+      "tests/dna_kinetics_refusal_cases.py",
       "tests/docstring_policy_guard_support.py",
       "tests/doctor_support.py",
       "tests/dpi_neuron_backends_support.py",
@@ -4963,6 +4964,8 @@
       "tests/test_dm03_mnist_verilog_path.py",
       "tests/test_dm04_synthesis_report_reader.py",
       "tests/test_dna_hybridization_engine_binding_runtime.py",
+      "tests/test_dna_kinetic_simulator_refusals.py",
+      "tests/test_dna_kinetics_engine_refusals.py",
       "tests/test_docs/test_public_licensing_page.py",
       "tests/test_docs/test_security_scanner_ci_docs.py",
       "tests/test_docs_are_path_free.py",

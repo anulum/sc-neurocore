@@ -564,26 +564,54 @@ Initiation penalty: +1.96 kcal/mol.
 
 ### 8.1 KineticSimulator
 
-The `KineticSimulator` uses Euler-method integration of mass-action
-ODE kinetics to predict strand concentration time courses.
+The `KineticSimulator` integrates mass-action kinetics, forward Euler by
+default or RK4, to predict each gate output's concentration time course.
+Every output follows `d[out]/dt = k_eff · (C_max − [out])` from 0, clamped to
+`[0, C_max]` with `C_max` = 200 nM. A gate's `k_eff` is set once from the input
+concentrations (a missing input reads as 0), and the gate's `leak_rate` is
+added to it. `k_hyb` and `k_disp` are scaled from 37 °C to the operating
+temperature with an activation energy of 15 kcal/mol.
 
-**Rate model per gate type:**
+**Effective rate per gate type** (concentrations in nM, scaled by 10⁻⁹ before `k_hyb`):
 
-| Gate | Rate Equation |
-|------|---------------|
-| AND | `d[out]/dt = k_fwd · [A] · [B] − k_rev · [out] − k_leak` |
-| OR | `d[out]/dt = k_fwd · max([A], [B]) − k_rev · [out]` |
-| NOT | `d[out]/dt = k_fwd · (C_max − [A]) − k_rev · [out]` |
-| THRESHOLD | `d[out]/dt = k_fwd · max(0, [A] − θ) − k_rev · [out]` |
+| Gate | Inputs | `k_eff` |
+|------|--------|---------|
+| AND | one or more | `k_hyb · min(inputs) · 1e-9` when every input is above 0, else 0 |
+| OR | one or more | `k_hyb · max(inputs) · 1e-9` |
+| NOT | exactly 1 | `k_disp · (1 − min([A] / C_max, 1))` |
+| THRESHOLD | exactly 1 | `k_hyb · max([A] − θ · C_max, 0) · 1e-9` |
+| MUX | exactly 3: select, a, b | `k_hyb · (s · [a] + (1 − s) · [b]) · 1e-9`, `s = min([select] / C_max, 1)` |
+| AMPLIFIER | exactly 1 | `k_hyb · [A] · 1e-9 · 5` |
+| BUFFER | exactly 1 | `k_disp · min([A] / C_max, 1)` |
 
 **Parameters:**
 
 | Parameter | Default | Unit |
 |-----------|---------|------|
-| `k_fwd` | 1×10⁻³ | nM⁻¹·s⁻¹ |
-| `k_rev` | 1×10⁻⁵ | s⁻¹ |
+| `rate_hybridization` (`k_hyb`) | 3×10⁵ | M⁻¹·s⁻¹ |
+| `rate_displacement` (`k_disp`) | 1.0 | s⁻¹ |
+| `temperature_c` | 37.0 | °C |
+| `integrator` | `"euler"` | `"euler"` or `"rk4"` |
 | `dt` | 1.0 | s |
 | `duration_s` | 3600.0 | s |
+
+Each trace holds `floor(duration_s / dt)` samples, and `result["time"]` holds
+sample `t` at `t · dt`.
+
+**Refused runs.** `simulate` raises `ValueError` before anything is computed
+(`check_kinetics` makes the same checks alone):
+
+- `dt` that is not finite and above 0, or `duration_s` that is not finite and at least `dt`;
+- an input concentration that is not finite or is below 0 (the first by name);
+- a gate without a rate law: `NAND`, `XOR` and `CATALYTIC`, which the enzymatic
+  compiler builds but this simulator has no model for;
+- a gate with an input count its type does not read (see the table);
+- a gate output named `"time"` or already written by an earlier gate;
+- a run that would hold more than 2²⁵ samples over all its traces.
+
+The engine's `py_dna_simulate_kinetics` makes the same refusals with the same
+words, and gives the same traces for an accepted run with the same integrator
+(the engine's `use_rk4` defaults to RK4, this simulator's `integrator` to Euler).
 
 ### 8.2 Usage
 

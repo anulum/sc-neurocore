@@ -811,6 +811,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The DNA kinetic simulators refuse a run they cannot simulate, with
+  ValueError and the same words in the engine's py_dna_simulate_kinetics
+  and the Python KineticSimulator, before anything is computed. A gate
+  without its input names panicked in the engine, which the release build
+  turns into SIGABRT; an unknown gate type ran as AND; unequal lists were
+  cut to the shortest and a name given twice kept its last concentration;
+  NAND, XOR and the Python-only CATALYTIC ran on the leak alone; a gate
+  writing "time" or another gate's output replaced that trace; and a step
+  of 0, a NaN or a tiny step gave no samples or asked for an endless
+  allocation; a NaN or negative concentration ran, and OR read it as 0 in
+  the engine but not in Python. Now dt must be finite and above 0,
+  duration_s finite and at least dt, every input concentration finite and
+  at least 0, each gate must read the input count its type needs (AND and
+  OR one or more, MUX three, the others one), and a run may hold at most
+  2**25 samples. The Python time axis steps by dt, as the engine's does,
+  instead of spreading the samples over duration_s; for an accepted run
+  with the same integrator both give the same traces. The engine's
+  kinetics moves to engine/src/dna/kinetics.rs
+  with check_kinetics and KineticsError, and simulate_kinetics returns a
+  Result.
+
 - The surrogate LIF's gradient on a spike step is taken at the membrane
   that crossed threshold, before the reset. Its forward pass cached the
   voltage the fixed-point step returns, which is the reset voltage on a

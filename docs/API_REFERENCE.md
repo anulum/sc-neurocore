@@ -6341,6 +6341,37 @@ temperature_c : float
 - **analyze_design**(design, time_hr)
   - Predict degradation across all circuit strands.
 
+### Function `check_kinetics(design, input_concentrations, duration_s, dt)`
+Return a run's step count, ``floor(duration_s / dt)``, or refuse a run that cannot be simulated.
+
+The checks and their words are the engine's ``check_kinetics``, in the same order, so the first refused input or
+gate is the one named.
+
+Parameters
+----------
+design : DNACircuitDesign
+    The circuit to simulate.
+input_concentrations : dict&#91;str, float&#93;
+    The input concentrations (nM).
+duration_s : float
+    The run's duration in seconds.
+dt : float
+    The time step in seconds.
+
+Returns
+-------
+int
+    The number of samples in each trace.
+
+Raises
+------
+ValueError
+    If ``dt`` is not finite and above 0; if ``duration_s`` is not finite and at least ``dt``; for the first input,
+    by name in sorted order, whose concentration is not finite or is below 0; for the first gate
+    whose kind has no rate law, whose input name count its kind does not read (``AND`` and ``OR`` one or more,
+    ``MUX`` exactly three, the other kinds exactly one), or whose output is ``"time"`` or an earlier gate's; or
+    if the steps times the traces exceed :data:`MAX_KINETIC_SAMPLES`.
+
 ---
 
 ## Module `bridges.dna_thermodynamics`

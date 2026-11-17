@@ -23,6 +23,97 @@ from .dna_types import (
     GateType,
 )
 
+#: The most samples a kinetic run may hold over all its traces, the time axis included: 2**25 values, or 256 MiB of
+#: float64, so a tiny ``dt`` is refused instead of asking for more memory than there is. The engine's
+#: ``MAX_KINETIC_SAMPLES`` is the same.
+MAX_KINETIC_SAMPLES = 1 << 25
+
+#: The input names each kind with a rate law reads: the fewest, the most, and the words a refusal uses. A kind that is
+#: not here (``NAND``, ``XOR``, ``CATALYTIC``) has no rate law.
+_INPUT_RULES: Dict[GateType, tuple[int, float, str]] = {
+    GateType.AND: (1, math.inf, "at least 1"),
+    GateType.OR: (1, math.inf, "at least 1"),
+    GateType.NOT: (1, 1, "exactly 1"),
+    GateType.THRESHOLD: (1, 1, "exactly 1"),
+    GateType.MUX: (3, 3, "exactly 3"),
+    GateType.AMPLIFIER: (1, 1, "exactly 1"),
+    GateType.BUFFER: (1, 1, "exactly 1"),
+}
+
+
+def check_kinetics(
+    design: DNACircuitDesign,
+    input_concentrations: Dict[str, float],
+    duration_s: float,
+    dt: float,
+) -> int:
+    """Return a run's step count, ``floor(duration_s / dt)``, or refuse a run that cannot be simulated.
+
+    The checks and their words are the engine's ``check_kinetics``, in the same order, so the first refused input or
+    gate is the one named.
+
+    Parameters
+    ----------
+    design : DNACircuitDesign
+        The circuit to simulate.
+    input_concentrations : dict[str, float]
+        The input concentrations (nM).
+    duration_s : float
+        The run's duration in seconds.
+    dt : float
+        The time step in seconds.
+
+    Returns
+    -------
+    int
+        The number of samples in each trace.
+
+    Raises
+    ------
+    ValueError
+        If ``dt`` is not finite and above 0; if ``duration_s`` is not finite and at least ``dt``; for the first input,
+        by name in sorted order, whose concentration is not finite or is below 0; for the first gate
+        whose kind has no rate law, whose input name count its kind does not read (``AND`` and ``OR`` one or more,
+        ``MUX`` exactly three, the other kinds exactly one), or whose output is ``"time"`` or an earlier gate's; or
+        if the steps times the traces exceed :data:`MAX_KINETIC_SAMPLES`.
+    """
+    if not math.isfinite(dt) or dt <= 0.0:
+        raise ValueError("dt must be finite and above 0")
+    if not math.isfinite(duration_s) or duration_s < dt:
+        raise ValueError("duration_s must be finite and at least dt")
+    for name in sorted(input_concentrations):
+        concentration = input_concentrations[name]
+        if not math.isfinite(concentration) or concentration < 0.0:
+            raise ValueError(f"input '{name}' must have a finite concentration of at least 0")
+    outputs = {"time"}
+    for index, gate in enumerate(design.gates):
+        kind = gate.gate_type.name
+        rule = _INPUT_RULES.get(gate.gate_type)
+        if rule is None:
+            raise ValueError(f"gate {index} ({kind}) has no rate law, so it cannot be simulated")
+        fewest, most, needed = rule
+        count = len(gate.input_names)
+        if not fewest <= count <= most:
+            raise ValueError(
+                f"gate {index} ({kind}) has an input name count of {count}; its kind needs {needed}"
+            )
+        if gate.output_name in outputs:
+            raise ValueError(
+                f"gate {index}'s output '{gate.output_name}' is already a trace of the result"
+            )
+        outputs.add(gate.output_name)
+    # The ratio is at least 1, but it may overflow to infinity.
+    ratio = duration_s / dt
+    if (
+        not math.isfinite(ratio)
+        or math.floor(ratio) * (len(design.gates) + 1) > MAX_KINETIC_SAMPLES
+    ):
+        raise ValueError(
+            f"the run would hold more than {MAX_KINETIC_SAMPLES} samples over its traces; "
+            "use a larger dt or a shorter duration_s"
+        )
+    return math.floor(ratio)
+
 
 class KineticSimulator:
     """Mass-action kinetics simulator for DNA strand displacement.
@@ -66,7 +157,7 @@ class KineticSimulator:
         gate: "DNAGate",
         input_concentrations: Dict[str, float],
     ) -> float:
-        """Compute effective rate constant for a gate."""
+        """Compute effective rate constant for a gate that :func:`check_kinetics` accepted."""
         k_hyb = self._arrhenius_scale(self._k_hyb)
         k_disp = self._arrhenius_scale(self._k_disp)
 
@@ -99,12 +190,9 @@ class KineticSimulator:
             inp_conc = input_concentrations.get(gate.input_names[0], 0.0)
             k_eff = k_hyb * inp_conc * 1e-9 * 5.0  # catalytic turnover
 
-        elif gate.gate_type == GateType.BUFFER:
+        else:  # GateType.BUFFER, the last kind with a rate law; check_kinetics refuses the others
             inp_conc = input_concentrations.get(gate.input_names[0], 0.0)
             k_eff = k_disp * min(inp_conc / 200.0, 1.0)
-
-        else:
-            k_eff = 0.0
 
         return k_eff + gate.leak_rate
 
@@ -132,11 +220,16 @@ class KineticSimulator:
         -------
         dict[str, np.ndarray]
             Time traces for each output strand. Keys are strand names,
-            values are 1D arrays of concentrations over time.
-            Includes ``"time"`` key with the time axis.
+            values are 1D arrays of ``floor(duration_s / dt)`` concentrations.
+            Includes ``"time"`` key with the time axis: sample ``t`` at ``t * dt``.
+
+        Raises
+        ------
+        ValueError
+            Before anything is computed, for a run :func:`check_kinetics` refuses.
         """
-        n_steps = int(duration_s / dt)
-        time = np.linspace(0.0, duration_s, n_steps)
+        n_steps = check_kinetics(design, input_concentrations, duration_s, dt)
+        time = np.arange(n_steps) * dt
 
         outputs: Dict[str, np.ndarray[Any, Any]] = {"time": time}
         max_conc = 200.0

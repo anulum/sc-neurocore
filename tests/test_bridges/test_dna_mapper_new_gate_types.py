@@ -17,6 +17,7 @@ class TestNewGateTypes:
     """MUX, AMPLIFIER, and BUFFER gate compilation and simulation."""
 
     def test_mux_compiles(self) -> None:
+        """A MUX network compiles to one gate that reads select, a and b."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "MUX", "inputs": ["S", "A", "B"], "output": "Y"}],
@@ -28,6 +29,7 @@ class TestNewGateTypes:
         assert len(design.gates[0].input_names) == 3
 
     def test_amplifier_compiles(self) -> None:
+        """An AMPLIFIER network compiles to one amplifier gate."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "AMPLIFIER", "inputs": ["A"], "output": "B"}],
@@ -38,6 +40,7 @@ class TestNewGateTypes:
         assert design.gates[0].gate_type == GateType.AMPLIFIER
 
     def test_buffer_compiles(self) -> None:
+        """A BUFFER network compiles to one buffer gate."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "BUFFER", "inputs": ["A"], "output": "B"}],
@@ -48,11 +51,13 @@ class TestNewGateTypes:
         assert design.gates[0].gate_type == GateType.BUFFER
 
     def test_mux_strand_count(self) -> None:
+        """The displacement MUX gate carries at least four strands."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_mux("S", "A", "B", "Y")
         assert gate.strand_count >= 4
 
     def test_amplifier_high_fuel(self) -> None:
+        """The amplifier gate carries a fuel strand of at least 500 nM."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_amplifier("A", "B")
         fuel = [s for s in gate.strands if s.role == "fuel"]
@@ -60,6 +65,7 @@ class TestNewGateTypes:
         assert fuel[0].concentration_nM >= 500.0
 
     def test_buffer_in_cascade(self) -> None:
+        """A buffer compiles between an AND gate and a NOT gate in one network."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[
@@ -87,6 +93,17 @@ class TestNewGateTypes:
         inputs: list[str],
         concentrations: dict[str, float],
     ) -> None:
+        """Each extended kind with a rate law raises its output above 0 with the leak off.
+
+        Parameters
+        ----------
+        gate_type : GateType
+            The gate's kind.
+        inputs : list[str]
+            Its input names.
+        concentrations : dict[str, float]
+            The input concentrations (nM).
+        """
         gate = DNAGate(
             gate_id=0,
             gate_type=gate_type,
@@ -101,7 +118,8 @@ class TestNewGateTypes:
 
         assert result["Y"][-1] > 0.0
 
-    def test_kinetic_simulator_unknown_gate_fails_closed_to_leak_only(self) -> None:
+    def test_kinetic_simulator_refuses_a_gate_without_a_rate_law(self) -> None:
+        """A CATALYTIC gate is refused with ValueError, not run on its leak alone."""
         gate = DNAGate(
             gate_id=0,
             gate_type=GateType.CATALYTIC,
@@ -111,11 +129,11 @@ class TestNewGateTypes:
         )
         design = DNACircuitDesign(name="unknown_gate", gates=[gate])
 
-        result = KineticSimulator().simulate(design, {"A": 200.0}, duration_s=20.0, dt=1.0)
-
-        assert np.all(result["Y"] == 0.0)
+        with pytest.raises(ValueError, match="CATALYTIC.*has no rate law"):
+            KineticSimulator().simulate(design, {"A": 200.0}, duration_s=20.0, dt=1.0)
 
     def test_enzymatic_xor_network_compiles(self) -> None:
+        """An enzymatic XOR network compiles to one XOR gate."""
         c = BitstreamToDNA(method="enzymatic", seed=42)
         design = c.compile_network(
             gates=[{"type": "XOR", "inputs": ["A", "B"], "output": "C"}],

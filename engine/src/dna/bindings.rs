@@ -9,6 +9,7 @@
 //! Python bindings for the DNA strand-displacement acceleration primitives.
 
 use numpy::IntoPyArray;
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObject;
@@ -60,6 +61,17 @@ fn py_dna_check_cross_hybridization<'py>(
     Ok(result.into_pyobject(py)?.into())
 }
 
+/// Simulate a DNA gate circuit's kinetics; the circuit is given as lists with one entry per gate.
+///
+/// Gate types are read without regard to case. Returns a dict of NumPy arrays: ``"time"``, sample
+/// ``t`` at ``t * dt``, and one trace per gate output, in nM.
+///
+/// Raises ``ValueError`` before anything is computed when the gate lists differ in length,
+/// ``input_names`` and ``input_concs`` differ in length, a name is given twice, a gate type is
+/// unknown, or the core refuses the run: ``dt`` is not finite and above 0, ``duration_s`` is not
+/// finite and at least ``dt``, a concentration is not finite or is below 0, ``NAND`` and ``XOR``
+/// have no rate law, a gate has an input name count its kind does not read, an output is
+/// ``"time"`` or another gate's, or the run would hold more than 2**25 samples.
 #[pyfunction]
 #[pyo3(signature = (
     gate_types, gate_inputs, gate_outputs, gate_thresholds, gate_leaks,
@@ -83,38 +95,56 @@ fn py_dna_simulate_kinetics<'py>(
     temperature_c: f64,
     use_rk4: bool,
 ) -> PyResult<Py<PyAny>> {
-    let gates: Vec<dna::DnaGateSpec> = gate_types
-        .iter()
-        .zip(gate_inputs.iter())
-        .zip(gate_outputs.iter())
-        .zip(gate_thresholds.iter())
-        .zip(gate_leaks.iter())
-        .map(|((((gt, gi), go), th), lk)| {
-            let gate_type = match gt.to_uppercase().as_str() {
-                "AND" => dna::DnaGateType::And,
-                "OR" => dna::DnaGateType::Or,
-                "NOT" => dna::DnaGateType::Not,
-                "THRESHOLD" => dna::DnaGateType::Threshold,
-                "MUX" => dna::DnaGateType::Mux,
-                "AMPLIFIER" => dna::DnaGateType::Amplifier,
-                "BUFFER" => dna::DnaGateType::Buffer,
-                "NAND" => dna::DnaGateType::Nand,
-                "XOR" => dna::DnaGateType::Xor,
-                _ => dna::DnaGateType::And,
-            };
-            dna::DnaGateSpec {
-                gate_type,
-                input_names: gi.clone(),
-                output_name: go.clone(),
-                threshold: *th,
-                leak_rate: *lk,
-            }
-        })
-        .collect();
+    let lengths = [
+        gate_types.len(),
+        gate_inputs.len(),
+        gate_outputs.len(),
+        gate_thresholds.len(),
+        gate_leaks.len(),
+    ];
+    if lengths.iter().any(|&length| length != gate_types.len()) {
+        return Err(PyValueError::new_err(format!(
+            "gate_types, gate_inputs, gate_outputs, gate_thresholds and gate_leaks must have one \
+             entry per gate; got {}, {}, {}, {}, {}",
+            lengths[0], lengths[1], lengths[2], lengths[3], lengths[4]
+        )));
+    }
+    if input_names.len() != input_concs.len() {
+        return Err(PyValueError::new_err(format!(
+            "input_names and input_concs must have the same length; got {} and {}",
+            input_names.len(),
+            input_concs.len()
+        )));
+    }
 
-    let mut inputs = std::collections::HashMap::new();
+    let mut inputs = std::collections::HashMap::with_capacity(input_names.len());
     for (name, conc) in input_names.into_iter().zip(input_concs) {
+        if inputs.contains_key(&name) {
+            return Err(PyValueError::new_err(format!(
+                "input name '{name}' is given twice"
+            )));
+        }
         inputs.insert(name, conc);
+    }
+
+    let mut gates = Vec::with_capacity(gate_types.len());
+    let specs = gate_types
+        .iter()
+        .zip(gate_inputs)
+        .zip(gate_outputs)
+        .zip(gate_thresholds)
+        .zip(gate_leaks);
+    for (index, ((((kind, input_names), output_name), threshold), leak_rate)) in specs.enumerate() {
+        let gate_type = dna::DnaGateType::parse(kind).ok_or_else(|| {
+            PyValueError::new_err(format!("gate {index} has the unknown type '{kind}'"))
+        })?;
+        gates.push(dna::DnaGateSpec {
+            gate_type,
+            input_names,
+            output_name,
+            threshold,
+            leak_rate,
+        });
     }
 
     let config = dna::KineticConfig {
@@ -125,7 +155,8 @@ fn py_dna_simulate_kinetics<'py>(
         use_rk4,
     };
 
-    let result = dna::simulate_kinetics(&gates, &inputs, duration_s, dt, &config);
+    let result = dna::simulate_kinetics(&gates, &inputs, duration_s, dt, &config)
+        .map_err(|error| PyValueError::new_err(error.to_string()))?;
 
     let dict = PyDict::new(py);
     for (key, trace) in result {

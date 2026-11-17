@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2031
+expected_file_count = 2035
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8177,3 +8177,18 @@ rationale = "Co-simulation of the NMDA magnesium-block RTL against its integer o
 [[file]]
 path = "tests/test_surrogate_lif_gradient_at_the_pre_reset_membrane.py"
 rationale = "Pin the surrogate LIF gradient at the membrane before any reset on spike and sub-threshold steps, and 0 while refractory."
+[[file]]
+path = "tests/dna_kinetics_refusal_cases.py"
+rationale = "Hold the DNA kinetic runs both simulators refuse, with the one message each gives, and the circuit their accepted traces are compared on."
+
+[[file]]
+path = "tests/test_dna_kinetic_simulator_refusals.py"
+rationale = "Bind the Python kinetic simulator's refusals, sample limit and dt-stepped time axis to the engine's words."
+
+[[file]]
+path = "tests/test_dna_kinetics_engine_refusals.py"
+rationale = "Bind the engine's kinetic refusals to ValueError in a live interpreter and its accepted traces to the Python simulator's."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_new_gate_types.py"
+rationale = "Bind MUX, AMPLIFIER and BUFFER compilation and rate dispatch, and the refusal of a kind without a rate law."
