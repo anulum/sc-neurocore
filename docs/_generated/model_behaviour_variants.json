@@ -2580,6 +2580,118 @@
       ]
     },
     {
+      "model": "SigmaDeltaNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 2.0 fires 42 times in 128 steps",
+          "observed": 42
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "sigma",
+          "expression": "-sigma + dt * I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ sigma",
+          "within": "sigma + dt * I"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "sigma",
+          "expression": "sigma - dt * I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ dt * I",
+          "within": "sigma + dt * I"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "reconstruction",
+          "expression": "-(reconstruction * exp(-dt / tau_reconstruction)) + (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 63,
+          "outcome": "violated",
+          "term": "+ reconstruction * exp(-dt / tau_reconstruction)",
+          "within": "reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "reconstruction",
+          "expression": "reconstruction * exp(-dt / tau_reconstruction) - (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 126,
+          "outcome": "violated",
+          "term": "+ delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0",
+          "within": "reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "reconstruction",
+          "expression": "reconstruction * exp(-dt / tau_reconstruction) + (delta if -sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 126,
+          "outcome": "violated",
+          "term": "+ sigma",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "reconstruction",
+          "expression": "reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma - dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 96,
+          "outcome": "violated",
+          "term": "+ dt * I",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "reconstruction",
+          "expression": "reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma + dt * I + reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "- reconstruction * exp(-dt / tau_reconstruction)",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "spike_flag",
+          "expression": "1 if -sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ sigma",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "spike_flag",
+          "expression": "1 if sigma - dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0",
+          "observed": 1,
+          "outcome": "violated",
+          "term": "+ dt * I",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "spike_flag",
+          "expression": "1 if sigma + dt * I + reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0",
+          "observed": 126,
+          "outcome": "violated",
+          "term": "- reconstruction * exp(-dt / tau_reconstruction)",
+          "within": "sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction)"
+        },
+        {
+          "case": "a current of 2.0 fires 42 times in 128 steps",
+          "equation": "spike_flag",
+          "expression": "-(1 if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "1 if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0"
+        }
+      ]
+    },
+    {
       "model": "WilsonHRNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -2753,8 +2865,8 @@
       ]
     }
   ],
-  "models_with_cases": 21,
-  "models_without_cases": 164,
+  "models_with_cases": 22,
+  "models_without_cases": 163,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -2763,7 +2875,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 20,
+    "discriminated": 21,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -2772,7 +2884,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 240,
-    "violated": 240
+    "total": 251,
+    "violated": 251
   }
 }

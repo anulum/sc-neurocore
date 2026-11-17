@@ -2386,10 +2386,27 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            42,
+            42
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 2.0
+          },
+          "kind": "interval",
+          "name": "a current of 2.0 fires 42 times in 128 steps",
+          "observable": "spikes",
+          "observed": 42,
+          "steps": 128
+        }
+      ],
+      "cases_sha256": "e4eb039d3d9e6c0f44078b98cb9204764293eeb98a3540b9ad9ee15fdd83629f",
       "model": "SigmaDeltaNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2647,9 +2664,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 21,
+    "held": 22,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 164
+    "no_case": 163
   }
 }

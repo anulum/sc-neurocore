@@ -14,6 +14,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The sigma-delta neuron states a behaviour case: a current of 2.0 fires 42
+  times in 128 steps, the window its reference test checks against
+  equations written out independently of the class. Each of the 11 sign
+  variants of its three equations breaks the case, and so does a change of
+  any of its parameters. Twenty-two of the 185 catalogue models now state
+  cases.
+
 - The exponential integrate-and-fire neuron states two behaviour cases, two
   of the 1,000-step windows its Q32.32 test runs for the hand model, the
   schema and the RTL, which must give the same event counts: a current of

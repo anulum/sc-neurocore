@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 164
+MODELS_WITHOUT_A_CASE = 163
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -95,6 +95,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [250, 250],
     ],
     "SCUpwardCrossingRulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [11, 11], [11, 11]],
+    "SigmaDeltaNeuron": [[42, 42]],
     "WilsonHRNeuron": [[0, 0], [44, 44], [46, 46], [49, 49], [52, 52], [1, 1]],
 }
 
@@ -1158,6 +1159,26 @@ def test_the_exponential_if_states_two_windows_its_q3232_test_runs(
     assert [case["observed"] for case in cases] == [2, 9]
     assert [case["inputs"] for case in cases] == [{"current": 20.0}, {"current": 100.0}]
     assert [case["steps"] for case in cases] == [1000, 1000]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_sigma_delta_states_the_window_its_reference_test_runs(
+    report: dict[str, object],
+) -> None:
+    """The 128-step window at 2.0 that its reference test checks against independent equations.
+
+    The test drives 32 steps at 0, which leave the integrator and the reconstruction at
+    0, then 128 steps at 2.0, and requires the class to emit the events the equations
+    written out in the test give: 42 in that window.
+    """
+    row = _models(report)["SigmaDeltaNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [42]
+    assert [case["inputs"] for case in cases] == [{"current": 2.0}]
+    assert [case["steps"] for case in cases] == [128]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

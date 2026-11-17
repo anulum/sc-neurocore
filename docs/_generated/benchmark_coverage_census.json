@@ -2064,7 +2064,8 @@
           "changed": [
             "benchmarks/_non_resetting_lif_benchmark.py",
             "engine/src/bindings/fixed_point_lif.rs",
-            "engine/src/bindings/fixed_point_lif/array_allocation.rs"
+            "engine/src/bindings/fixed_point_lif/array_allocation.rs",
+            "src/sc_neurocore/neurons/model_descriptors/SigmaDeltaNeuron.toml"
           ],
           "currency": "outdated",
           "name": "bench_sigma_delta.json"

@@ -67,6 +67,7 @@ RESET_OR_LEVEL_MODELS = frozenset(
         "SCInclusivePerfectIntegratorNeuron",
         "SCResettingWilsonHRNeuron",
         "SCSymmetricQuadraticIFNeuron",
+        "SigmaDeltaNeuron",
     }
 )
 
