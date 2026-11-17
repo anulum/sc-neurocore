@@ -9,6 +9,7 @@
 import { createStore } from "zustand/vanilla";
 import { describe, expect, it, vi } from "vitest";
 
+import type { NeuronTemplate } from "../api/types";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioEquationIrActions } from "./studioEquationIrActions";
 import { createStudioStoreActions } from "./studioStoreActions";
@@ -86,6 +87,37 @@ describe("switching the source", () => {
     store.getState().setSourceMode("ode");
     expect(autoSimulate).toHaveBeenCalledOnce();
     expect(selectModel).not.toHaveBeenCalled();
+  });
+});
+
+describe("choosing an equation template", () => {
+  const TEMPLATE: NeuronTemplate = {
+    name: "Leaky", description: "A leaky integrator.", equations: ["dv/dt = (-v + I) / tau"],
+    threshold: "v > 1", reset: "v = 0", params: { tau: 20 }, init: { v: 0 }, dt: 0.05, current: 1.5, duration: 200,
+  };
+
+  it("loads the template's model into the ODE editor, voids what was built and simulates it", () => {
+    const { store } = workspaceStore({ sourceMode: "model", templates: [TEMPLATE] });
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation });
+    store.getState().selectTemplate("Leaky");
+    expectWritten(store.getState(), {
+      sourceMode: "ode", equations: TEMPLATE.equations, threshold: "v > 1", reset: "v = 0",
+      odeParams: { tau: 20 }, odeInit: { v: 0 }, dt: 0.05, current: 1.5, duration: 200,
+    });
+    expect(store.getState()).toMatchObject({ irText: "", svSource: "", cosimResult: null });
+    expect(runSimulation).toHaveBeenCalledOnce();
+  });
+
+  it("changes nothing and simulates nothing for a name the library does not hold", () => {
+    const { store } = workspaceStore({ templates: [TEMPLATE] });
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation });
+    // The selection returns before any write, so the whole state is still the same object.
+    const before = store.getState();
+    store.getState().selectTemplate("Missing");
+    expect(store.getState()).toBe(before);
+    expect(runSimulation).not.toHaveBeenCalled();
   });
 });
 

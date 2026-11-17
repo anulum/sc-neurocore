@@ -111,6 +111,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Both receive the store's restored-experiment step as a parameter. New
   tests cover both modules fully, and further tests cover the workspace
   setters that stay.
+- The hardware actions of SNN Studio's store (compiling the model to RTL,
+  co-simulating it, choosing the synthesis target, single- and
+  multi-target synthesis, the resource estimate and the tool check) move
+  unchanged to studioHardwareActions.ts. New tests cover the module
+  fully, including each refusal to route a catalogue model whose RTL
+  lacks current bit-exact co-simulation parity.
 
 ## [4.2.0] - 2026-11-17
 
