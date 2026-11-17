@@ -89,6 +89,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   of in the factory that also holds sign-in, audit, identity, training and
   project actions. The code moves unchanged, and new tests cover it fully;
   further tests cover the server project and share-link actions that stay.
+- The operator administration actions of SNN Studio's store (the audit
+  log and its quarantine archives, evidence bundles, job and operator
+  status, and identity accounts) move unchanged to studioAdminActions.ts,
+  covered fully by new tests.
 
 ## [4.2.0] - 2026-11-17
 

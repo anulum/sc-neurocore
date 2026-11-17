@@ -7,8 +7,8 @@
 // SC-NeuroCore — Studio Zustand store
 // Studio store action implementations (mutations + async side effects).
 
-import { createStoreArtifactDownloader } from "./studioArtifactDownload";
 import { createStudioGraphActions } from "./studioGraphActions";
+import { createStudioAdminActions } from "./studioAdminActions";
 import { runStoreSimulation } from "./studioSimulation";
 import { studioNullclineRanges } from "../studioNullclineRanges";
 import { readStudioModelLink, readStudioStartupHashState } from "../studioStartupRuntime";
@@ -20,22 +20,12 @@ import {
   fetchPresets,
   fetchPreset,
   fetchStudioAuthSession,
-  createStudioAuditQuarantineArchive,
-  fetchStudioIdentityServiceAccounts,
-  fetchStudioAuditQuarantineArchiveRetention,
-  fetchStudioAuditExport,
-  fetchStudioAuditStatus,
   fetchStudioCapabilities,
   fetchStudioJobArtifact,
   fetchStudioJobs,
-  fetchStudioJobStatus,
   fetchStudioOperatorStatus,
-  fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser,
   logoutStudioBrowserUser,
-  purgeStudioAuditQuarantineArchiveRetention,
-  restoreStudioAuditQuarantineArchive,
-  rotateStudioIdentityBrowserUserPassword,
   fetchPrecision,
   fetchCodegen,
   fetchReplayNotebook,
@@ -70,11 +60,7 @@ import {
   listProjects as apiListProjects,
   deleteProject as apiDeleteProject,
   runPipeline as apiRunPipeline,
-  createStudioIdentityBrowserUser,
   setStudioAuthToken,
-  updateStudioIdentityBrowserUser,
-  updateStudioIdentityServiceAccount,
-  validateStudioAuditQuarantineArchive,
 } from "../api/client";
 import {
   clearStoredStudioAuthToken,
@@ -87,17 +73,6 @@ import {
   storeStudioAuthToken,
   syncStoredStudioAuthToken,
 } from "../studioAuthSession";
-import {
-  auditArchiveCreatedState,
-  auditArchivePurgedState,
-  auditArchiveRestoredState,
-  auditArchiveRetentionLoadedState,
-  auditArchiveValidationLoadedState,
-  auditExportLoadedState,
-  auditFailureState,
-  auditLoadingState,
-  auditStatusLoadedState,
-} from "../auditShell";
 import {
   studioSavedSessionRemovedState,
   studioSavedSessionRestoreState,
@@ -210,14 +185,6 @@ import {
 import {
 } from "../evidenceBundles";
 import {
-  adminBusyState,
-  adminFailureState,
-  identityAccountsLoadedState,
-  identityAccountsMutatedState,
-  jobStatusLoadedState,
-  operatorStatusLoadedState,
-} from "../adminStoreState";
-import {
   capabilityFailureState,
   capabilityLoadedState,
   capabilityLoadingState,
@@ -282,7 +249,6 @@ import { studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
 import type { StudioEquationIrActions } from "./studioEquationIrActions";
 import { runStoreSynthesis } from "./studioSynthesis";
-import { runStoreBundle } from "./studioBundle";
 import { studioStageOutcomeState, studioStageSet } from "./studioStageFailure";
 
 
@@ -559,186 +525,7 @@ export function createStudioStoreActions(
       });
     }
   },
-  loadAuditStatus: async () => {
-    set(auditLoadingState());
-    try {
-      const auditStatus = await fetchStudioAuditStatus();
-      set(auditStatusLoadedState(auditStatus));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit status check failed"));
-    }
-  },
-  loadAuditExport: async () => {
-    set(auditLoadingState());
-    try {
-      const auditExport = await fetchStudioAuditExport(100);
-      set(auditExportLoadedState(auditExport));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit export failed"));
-    }
-  },
-  createAuditQuarantineArchive: async (limit) => {
-    set(auditLoadingState());
-    try {
-      const auditArchive = await createStudioAuditQuarantineArchive(limit);
-      const [operatorStatus, jobList, auditExport] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-        fetchStudioAuditExport(100),
-      ]);
-      set(auditArchiveCreatedState(auditArchive, auditExport, operatorStatus, jobList));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit archive creation failed"));
-    }
-  },
-  loadAuditQuarantineArchiveRetention: async (retainLatest) => {
-    set(auditLoadingState());
-    try {
-      const auditArchiveRetention = await fetchStudioAuditQuarantineArchiveRetention(retainLatest);
-      set(auditArchiveRetentionLoadedState(auditArchiveRetention));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit archive retention check failed"));
-    }
-  },
-  validateAuditQuarantineArchive: async (archive, manifest) => {
-    set(auditLoadingState());
-    try {
-      const auditArchiveValidation = await validateStudioAuditQuarantineArchive(archive, manifest);
-      set(auditArchiveValidationLoadedState(auditArchiveValidation));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit archive validation failed"));
-    }
-  },
-  restoreAuditQuarantineArchive: async (archive, manifest) => {
-    set(auditLoadingState());
-    try {
-      const auditArchiveRestore = await restoreStudioAuditQuarantineArchive(archive, manifest);
-      const [operatorStatus, jobList] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-      ]);
-      set(auditArchiveRestoredState(auditArchiveRestore, operatorStatus, jobList));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit archive restore failed"));
-    }
-  },
-  purgeAuditQuarantineArchiveRetention: async (retainLatest) => {
-    set(auditLoadingState());
-    try {
-      const auditArchivePurge = await purgeStudioAuditQuarantineArchiveRetention(retainLatest);
-      const [operatorStatus, jobList, auditArchiveRetention] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-        fetchStudioAuditQuarantineArchiveRetention(retainLatest),
-      ]);
-      set(auditArchivePurgedState(
-        auditArchivePurge,
-        auditArchiveRetention,
-        operatorStatus,
-        jobList,
-      ));
-    } catch (error: unknown) {
-      set(auditFailureState(error, "Audit archive retention purge failed"));
-    }
-  },
-  createEvidenceBundle: (request) => runStoreBundle("admin", request, get, set),
-  createEvidenceBundleForSurface: (surface, request) => runStoreBundle(surface, request, get, set),
-  downloadEvidenceBundleArtifact: async (relativePath) => {
-    await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
-  },
-  downloadEvidenceBundleArtifactForSurface: createStoreArtifactDownloader(get, set),
-  loadJobStatus: async () => {
-    set(adminBusyState());
-    try {
-      const [jobStatus, jobList] = await Promise.all([
-        fetchStudioJobStatus(),
-        fetchStudioJobs(),
-      ]);
-      set(jobStatusLoadedState(jobStatus, jobList));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Job status check failed"));
-    }
-  },
-  loadIdentityServiceAccounts: async () => {
-    set(adminBusyState());
-    try {
-      const [accountsResponse, usersResponse] = await Promise.all([
-        fetchStudioIdentityServiceAccounts(),
-        fetchStudioIdentityBrowserUsers(),
-      ]);
-      set(identityAccountsLoadedState(accountsResponse, usersResponse));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Identity account check failed"));
-    }
-  },
-  createIdentityBrowserUser: async (create) => {
-    set(adminBusyState());
-    try {
-      await createStudioIdentityBrowserUser(create);
-      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
-        fetchStudioIdentityServiceAccounts(),
-        fetchStudioIdentityBrowserUsers(),
-        fetchStudioAuditExport(100),
-      ]);
-      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Browser user creation failed"));
-    }
-  },
-  updateIdentityServiceAccount: async (principalId, update) => {
-    set(adminBusyState());
-    try {
-      await updateStudioIdentityServiceAccount(principalId, update);
-      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
-        fetchStudioIdentityServiceAccounts(),
-        fetchStudioIdentityBrowserUsers(),
-        fetchStudioAuditExport(100),
-      ]);
-      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Identity account update failed"));
-    }
-  },
-  updateIdentityBrowserUser: async (username, update) => {
-    set(adminBusyState());
-    try {
-      await updateStudioIdentityBrowserUser(username, update);
-      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
-        fetchStudioIdentityServiceAccounts(),
-        fetchStudioIdentityBrowserUsers(),
-        fetchStudioAuditExport(100),
-      ]);
-      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Browser user update failed"));
-    }
-  },
-  rotateIdentityBrowserUserPassword: async (username, password) => {
-    set(adminBusyState());
-    try {
-      await rotateStudioIdentityBrowserUserPassword(username, { password });
-      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
-        fetchStudioIdentityServiceAccounts(),
-        fetchStudioIdentityBrowserUsers(),
-        fetchStudioAuditExport(100),
-      ]);
-      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Browser user secret rotation failed"));
-    }
-  },
-  loadOperatorStatus: async () => {
-    set(adminBusyState());
-    try {
-      const [operatorStatus, jobList] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-      ]);
-      set(operatorStatusLoadedState(operatorStatus, jobList));
-    } catch (error: unknown) {
-      set(adminFailureState(error, "Operator status check failed"));
-    }
-  },
+  ...createStudioAdminActions(set, get),
   loadModels: async () => {
     const version = ++modelsLoadVersion;
     let selectionVersion: number | null = null;
