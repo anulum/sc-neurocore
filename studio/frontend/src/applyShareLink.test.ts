@@ -48,12 +48,12 @@ describe("a share link is wired", () => {
     // opening one gave the default Studio with no sign the link carried
     // anything. A link handed out and never read is worse than no link.
     expect(callers("readStudioStartupHashState", "studioStartupRuntime.ts")).toContain(
-      "stores/studioStoreActions.ts",
+      "stores/studioSessionAndShareActions.ts",
     );
   });
 
   it("is applied from the application, not only defined in the store", () => {
-    expect(callers("applyShareLink", "stores/studioStoreActions.ts")).toContain("App.tsx");
+    expect(callers("applyShareLink", "stores/studioSessionAndShareActions.ts")).toContain("App.tsx");
   });
 
   it("waits for the catalogue before deciding a model is unknown", () => {

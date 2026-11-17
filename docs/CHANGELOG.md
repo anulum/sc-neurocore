@@ -104,6 +104,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   studioAuthActions.ts. Sign-out receives the training module's release
   call as a parameter instead of reading it from the store factory. New
   tests cover the module fully.
+- SNN Studio's store moves its server project actions (saving against a
+  revision, keeping a refused edit, loading, listing, deleting and
+  restoring) unchanged to studioProjectActions.ts, and its saved session
+  and share link actions unchanged to studioSessionAndShareActions.ts.
+  Both receive the store's restored-experiment step as a parameter. New
+  tests cover both modules fully, and further tests cover the workspace
+  setters that stay.
 
 ## [4.2.0] - 2026-11-17
 

@@ -701,6 +701,14 @@
       "statements": 100,
       "branches": 100
     },
+    "src/stores/studioProjectActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
+    "src/stores/studioSessionAndShareActions.ts": {
+      "statements": 100,
+      "branches": 100
+    },
     "src/stores/studioSimulation.ts": {
       "statements": 100,
       "branches": 100
@@ -710,8 +718,8 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 60.59,
-      "branches": 60
+      "statements": 65.89,
+      "branches": 60.65
     },
     "src/stores/studioSynthesis.ts": {
       "statements": 95.45,
@@ -810,7 +818,7 @@
       "branches": 95.83
     },
     "src/studioInputState.ts": {
-      "statements": 90.9,
+      "statements": 100,
       "branches": 100
     },
     "src/studioJson.ts": {

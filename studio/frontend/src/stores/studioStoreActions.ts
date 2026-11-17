@@ -8,13 +8,13 @@
 // Studio store action implementations (mutations + async side effects).
 
 import { createStudioGraphActions } from "./studioGraphActions";
+import { createStudioSessionAndShareActions } from "./studioSessionAndShareActions";
+import { createStudioProjectActions } from "./studioProjectActions";
 import { createStudioAuthActions } from "./studioAuthActions";
 import { createStudioAdminActions } from "./studioAdminActions";
 import { createStudioTrainingActions } from "./studioTrainingActions";
 import { runStoreSimulation } from "./studioSimulation";
 import { studioNullclineRanges } from "../studioNullclineRanges";
-import { readStudioModelLink, readStudioStartupHashState } from "../studioStartupRuntime";
-import { studioModelLinkDecision, studioShareLinkDecision } from "../shareLinkApplication";
 import {
   fetchTemplates,
   fetchModels,
@@ -39,32 +39,10 @@ import {
   runSynthesisTerminal as apiRunSynthesisTerminal,
   runMultiTargetSynthesis,
   fetchSynthEstimate,
-  branchRefusedEdit as apiBranchRefusedEdit,
-  saveProject as apiSaveProject,
-  loadProject as apiLoadProject,
-  listDeletedProjects as apiListDeletedProjects,
-  restoreProject as apiRestoreProject,
-  listProjects as apiListProjects,
-  deleteProject as apiDeleteProject,
   runPipeline as apiRunPipeline,
 } from "../api/client";
 import {
-  studioSavedSessionRemovedState,
-  studioSavedSessionRestoreState,
-  captureAndStoreStudioSession,
-  writeStoredStudioSessions,
-} from "../studioSavedSessions";
-import {
-  studioProjectSaveState,
-  studioProjectDeletedListedState,
-  studioProjectExpectedRevision,
   studioProjectFailureState,
-  studioProjectListLoadedState,
-  studioProjectRestoreState,
-  studioProjectRevisionFromLoadResponse,
-  studioProjectSaveFailureState,
-  studioProjectSavedState,
-  studioProjectStateFromLoadResponse,
 } from "../studioProjectState";
 import {
   studioGraphFailureState,
@@ -72,12 +50,6 @@ import {
   studioPipelineCompletedState,
   studioPipelineStartState,
 } from "../studioGraphRequests";
-import {
-  copyStudioShareUrlInRuntime,
-  scheduleStudioShareStatusClear,
-  studioShareStatusClearedState,
-  studioShareStatusState,
-} from "../studioShareRuntime";
 import {
   studioTraceImportRequest,
 } from "../studioTraceImport";
@@ -624,80 +596,7 @@ export function createStudioStoreActions(
     } catch { /* tools check is non-critical */ }
   },
 
-  saveProjectToServer: async (name) => {
-    const expected = studioProjectExpectedRevision(get().projectRevision, name);
-    try {
-      const state = studioProjectSaveState(get());
-      const projectSaveResult = await apiSaveProject(name, state, expected);
-      set(studioProjectSavedState(projectSaveResult));
-      await get().listServerProjects();
-    } catch (e) { set(studioProjectSaveFailureState(e, name, expected)); }
-  },
-
-  keepRefusedEdit: async () => {
-    // Only reachable after a save conflict, which is the only thing that sets
-    // `refusedEdit`. The state sent is the one still held here — the edit that
-    // was refused — not a reload of what won.
-    const pending = get().refusedEdit;
-    if (!pending) return;
-    try {
-      const branch = await apiBranchRefusedEdit(
-        pending.name,
-        studioProjectSaveState(get()),
-        pending.baseRevision,
-      );
-      set({
-        error: `Kept as "${branch.branched}". Reload ${pending.name} to see the other edit.`,
-        refusedEdit: null,
-      });
-      await get().listServerProjects();
-    } catch (e) { set(studioProjectFailureState(e, "Keeping the refused edit failed")); }
-  },
-
-  loadProjectFromServer: async (name, revision = null) => {
-    try {
-      const data = await apiLoadProject(name, revision);
-      const projectState = studioProjectStateFromLoadResponse(data, get().trainingConfig);
-      set({
-        ...studioProjectRestoreState(projectState),
-        ...compilerConfigurationInvalidatedState(),
-        projectRevision: studioProjectRevisionFromLoadResponse(data, name),
-      });
-      runRestoredExperiment();
-    } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
-  },
-
-  listServerProjects: async () => {
-    try {
-      const serverProjects = await apiListProjects();
-      set(studioProjectListLoadedState(serverProjects));
-    } catch { /* non-critical */ }
-  },
-
-  deleteServerProject: async (name) => {
-    try {
-      await apiDeleteProject(name);
-      await get().listServerProjects();
-      // A delete is recoverable, so the trash is refreshed with the list:
-      // the workspace has to be visible somewhere the moment it leaves here.
-      await get().listDeletedServerProjects();
-    } catch (e) { set(studioProjectFailureState(e, "Project delete failed")); }
-  },
-
-  listDeletedServerProjects: async () => {
-    try {
-      const { deleted } = await apiListDeletedProjects();
-      set(studioProjectDeletedListedState(deleted));
-    } catch (e) { set(studioProjectFailureState(e, "Deleted project list failed")); }
-  },
-
-  restoreDeletedServerProject: async (token) => {
-    try {
-      await apiRestoreProject(token);
-      await get().listServerProjects();
-      await get().listDeletedServerProjects();
-    } catch (e) { set(studioProjectFailureState(e, "Project restore failed")); }
-  },
+  ...createStudioProjectActions(set, get, runRestoredExperiment),
 
   runPipelineAction: async () => {
     const s = get();
@@ -724,87 +623,6 @@ export function createStudioStoreActions(
     void get().runSimulation();
   },
 
-  saveSession: (name) => {
-    const s = get();
-    const saved = captureAndStoreStudioSession(s, name, s.savedSessions);
-    set(saved);
-    return saved.sessionWriteResult;
-  },
-
-  loadSession: (name) => {
-    const session = get().savedSessions.find((ss) => ss.name === name);
-    if (!session) return;
-    try {
-      const restored = studioSavedSessionRestoreState(session.state);
-      set({
-        ...restored,
-        ...compilerConfigurationInvalidatedState(),
-      });
-      runRestoredExperiment();
-    } catch (error) {
-      set(studioProjectFailureState(error, "Failed to restore the saved session"));
-    }
-  },
-
-  deleteSession: (name) => {
-    const nextState = studioSavedSessionRemovedState(get().savedSessions, name);
-    const result = writeStoredStudioSessions(nextState.savedSessions);
-    set({ ...nextState, sessionWriteResult: result });
-    return result;
-  },
-
-  applyShareLink: async () => {
-    // The Share button has always produced a link. Nothing ever read one back:
-    // `readStudioStartupHashState` had no caller outside its own test, so a
-    // colleague opening the link got the default Studio and no indication that
-    // the link had carried anything. A link handed out that does nothing is
-    // worse than no link, because the button promises otherwise.
-    //
-    // The judgement lives in `studioShareLinkDecision`; this only carries it out.
-    const knownModels = get().models.map((model) => model.name);
-    // A model link opens one model and leaves the run settings alone.
-    const modelLink = studioModelLinkDecision(readStudioModelLink(), knownModels);
-    if (modelLink.kind === "unknown-model") {
-      set({ linkNotice: modelLink.message });
-      return;
-    }
-    if (modelLink.kind === "select") {
-      await get().selectModel(modelLink.modelName);
-      return;
-    }
-    const decision = studioShareLinkDecision(readStudioStartupHashState(), knownModels);
-    if (decision.kind === "none") return;
-    if (decision.kind === "unknown-model") {
-      set({ linkNotice: decision.message });
-      return;
-    }
-    set({
-      current: decision.current,
-      duration: decision.duration,
-      protocol: decision.protocol,
-    });
-    await get().selectModel(decision.modelName);
-  },
-
-  shareURL: () => {
-    const s = get();
-    void copyStudioShareUrlInRuntime({
-      sourceMode: s.sourceMode,
-      selectedModelName: s.selectedModelName,
-      equations: s.equations,
-      threshold: s.threshold,
-      reset: s.reset,
-      modelParams: s.modelParams,
-      odeParams: s.odeParams,
-      odeInit: s.odeInit,
-      dt: s.dt,
-      duration: s.duration,
-      current: s.current,
-      protocol: s.protocol,
-    }).then((result) => {
-      set(studioShareStatusState(result));
-      scheduleStudioShareStatusClear(() => { set(studioShareStatusClearedState()); });
-    });
-  },
+  ...createStudioSessionAndShareActions(set, get, runRestoredExperiment),
   };
 }
