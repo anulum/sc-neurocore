@@ -182,10 +182,43 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            3,
+            3
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.01
+          },
+          "kind": "interval",
+          "name": "a current of 0.01 fires 3 times in 100 steps",
+          "observable": "spikes",
+          "observed": 3,
+          "steps": 100
+        },
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.0
+          },
+          "kind": "interval",
+          "name": "a current of 1.0 fires once in 100 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 100
+        }
+      ],
+      "cases_sha256": "fe866c9373f2bf06eee1fa4eedec314db1a38c3aa23636d436802051f030deb5",
       "model": "ChialvoMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2581,9 +2614,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 19,
+    "held": 20,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 166
+    "no_case": 165
   }
 }

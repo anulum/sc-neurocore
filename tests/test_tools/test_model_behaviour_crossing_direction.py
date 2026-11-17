@@ -35,6 +35,7 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 #: compares. A model moves here or to RESET_OR_LEVEL_MODELS only by a deliberate
 #: change in the unit that gives it cases.
 CROSSING_MODELS: dict[str, tuple[str, str]] = {
+    "ChialvoMapNeuron": ("x", "x_threshold"),
     "CourageNekorkinMapNeuron": ("x", "x_threshold"),
     "ErmentroutKopellMapNeuron": ("theta", "theta_threshold"),
     "FitzHughNagumoNeuron": ("v", "v_threshold"),

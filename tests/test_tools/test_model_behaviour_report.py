@@ -51,12 +51,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 166
+MODELS_WITHOUT_A_CASE = 165
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
 #: bound widened in the descriptor, with both reports written again, would still pass.
 STATED_LIMITS: dict[str, list[object]] = {
+    "ChialvoMapNeuron": [[3, 3], [1, 1]],
     "CourageNekorkinMapNeuron": [[0, 0], [0, 0], [1, 1], [1, 1], [3, 3], [0.5, 0.625]],
     "DendriticNMDANeuron": [
         [0, 0],
@@ -1114,6 +1115,26 @@ def test_the_adaptive_threshold_map_holds_its_window_and_direction_counts(
     assert [case["observed"] for case in cases] == [3, 4]
     assert [case["inputs"] for case in cases] == [{"current": 0.4}, {"current": 0.4}]
     assert [case["steps"] for case in cases] == [32, 38]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_chialvo_map_states_two_windows_its_q1616_test_runs(report: dict[str, object]) -> None:
+    """Two of the 100-step windows its Q16.16 test runs for the hand model and the RTL.
+
+    The map's co-simulation test requires the RTL's event count to equal the hand
+    model's over 100 steps at five currents. At 0.01 the map fires 3 times, in a window
+    that holds as many downward crossings of the threshold as upward ones. At 1.0 x
+    crosses the threshold once and stays above it, so a count of downward crossings
+    gives 0 where the map gives 1.
+    """
+    row = _models(report)["ChialvoMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [3, 1]
+    assert [case["inputs"] for case in cases] == [{"current": 0.01}, {"current": 1.0}]
+    assert [case["steps"] for case in cases] == [100, 100]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

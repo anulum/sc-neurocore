@@ -141,3 +141,29 @@ synth_report = "hdl/reports/yosys_chialvo_map_q1616_2026-08-30.json"
 target_device = "generic RTL (Yosys coarse synthesis)"
 target_tier = "H2"
 terminal_reason = "Q16.16 co-simulation, coarse synthesis, and bounded reset/event formal safety are complete; timing, PPA, board, device, physical silicon, and universal formal equivalence remain open."
+
+[[behaviour]]
+name = "a current of 0.01 fires 3 times in 100 steps"
+kind = "interval"
+steps = 100
+observable = "spikes"
+bounds = [
+    3,
+    3,
+]
+
+[behaviour.inputs]
+current = 0.01
+
+[[behaviour]]
+name = "a current of 1.0 fires once in 100 steps"
+kind = "interval"
+steps = 100
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 1.0

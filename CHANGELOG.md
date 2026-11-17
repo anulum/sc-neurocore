@@ -14,6 +14,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Chialvo map neuron states two behaviour cases, two of the 100-step
+  windows its Q16.16 test runs for the hand model and the RTL, which must
+  give the same event counts: a current of 0.01 fires 3 times, and a current
+  of 1.0 fires once, crossing the threshold and staying above it, so a count
+  of downward crossings would give 0. Each of the 8 sign variants of its two
+  equations breaks the first case. Twenty of the 185 catalogue models now
+  state cases.
+
 - The benchmark evidence gate checks the source digests a record holds once
   per variant, `variants.<i>.source_hashes`, which it could not address
   before: 72 digests in the autonomous-learning, Bioware and NIR graph
