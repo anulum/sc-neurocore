@@ -90,6 +90,34 @@ describe("switching the source", () => {
   });
 });
 
+describe("resetting to the defaults", () => {
+  it("restores a catalogue model's defaults, voids what was built and simulates", () => {
+    const detail = { name: "LIF", dt: 0.25, params: [], state_vars: [] } as unknown as StudioState["modelDetail"];
+    const { store } = workspaceStore({
+      sourceMode: "model", modelDetail: detail, current: 3, duration: 900, seed: 7, dt: 0.01, modelParams: { tau_m: 9 },
+    });
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation });
+    store.getState().resetDefaults();
+    expectWritten(store.getState(), { current: 10, duration: 100, seed: null, dt: 0.25, modelParams: {} });
+    expect(store.getState()).toMatchObject({ irText: "", svSource: "", cosimResult: null });
+    expect(runSimulation).toHaveBeenCalledOnce();
+  });
+
+  it.each<[string, Partial<StudioState>]>([
+    ["an ODE", { sourceMode: "ode" }],
+    ["a catalogue model whose details have not arrived", { sourceMode: "model", modelDetail: null }],
+  ])("only simulates again for %s, keeping its inputs and what was built", (_, source) => {
+    const { store } = workspaceStore({ ...source, current: 3, duration: 900 });
+    const runSimulation = vi.fn(() => Promise.resolve());
+    store.setState({ runSimulation });
+    store.getState().resetDefaults();
+    expectWritten(store.getState(), { current: 3, duration: 900 });
+    expectBuiltKept(store.getState());
+    expect(runSimulation).toHaveBeenCalledOnce();
+  });
+});
+
 describe("choosing an equation template", () => {
   const TEMPLATE: NeuronTemplate = {
     name: "Leaky", description: "A leaky integrator.", equations: ["dv/dt = (-v + I) / tau"],

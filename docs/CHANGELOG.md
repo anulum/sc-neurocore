@@ -117,6 +117,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   unchanged to studioHardwareActions.ts. New tests cover the module
   fully, including each refusal to route a catalogue model whose RTL
   lacks current bit-exact co-simulation parity.
+- The simulation and analysis runs of SNN Studio's store (the run and
+  its automatic repeat after an edit, the f-I curve, bifurcation,
+  sensitivity, precision, heatmap, characterisation, several models side
+  by side, the network, an imported trace, comparison, nullclines,
+  frequency response and the spike-triggered average) move unchanged to
+  studioRunActions.ts, covered fully by new tests.
 
 ## [4.2.0] - 2026-11-17
 
