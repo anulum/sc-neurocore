@@ -409,6 +409,8 @@ export function createStudioStoreActions(
   get: () => StudioState,
 ): Omit<StudioStoreActions, keyof StudioEquationIrActions> {
   let trainingStream: StudioTrainingStreamEventSource | null = null;
+  // The adds of populations still waiting for the server, run one after another.
+  let populationAdds: Promise<void> = Promise.resolve();
   let trainingSelectionVersion = 0;
   let trainingListVersion = 0;
   let modelSelectionVersion = 0;
@@ -1225,15 +1227,24 @@ export function createStudioStoreActions(
     } catch { /* non-critical */ }
   },
 
-  addPopulation: async (neuronType) => {
-    const s = get();
-    try {
-      const pop = await apiCreatePop(studioDefaultPopulationRequest(neuronType, s.graphPopulations.length));
-      set((prev) => ({
-        ...studioPopulationAddedState(prev.graphPopulations, pop),
-        graphHistory: studioGraphEditRecordedFrom(prev),
-      }));
-    } catch (e) { set(studioGraphFailureState(e, "Population creation failed")); }
+  addPopulation: (neuronType) => {
+    // The label and position come from the population count, so an add reads
+    // that count only after every earlier add has been answered and applied:
+    // two adds made before the server answers would otherwise share both.
+    const add = async () => {
+      try {
+        const s = get();
+        const pop = await apiCreatePop(studioDefaultPopulationRequest(neuronType, s.graphPopulations.length));
+        set((prev) => ({
+          ...studioPopulationAddedState(prev.graphPopulations, pop),
+          graphHistory: studioGraphEditRecordedFrom(prev),
+        }));
+      } catch (e) { set(studioGraphFailureState(e, "Population creation failed")); }
+    };
+    // `add` settles without rejecting, since everything it does before the
+    // failure report is inside the `try`, so the chain never stops.
+    populationAdds = populationAdds.then(add);
+    return populationAdds;
   },
 
   removePopulation: (id) => {

@@ -698,7 +698,7 @@
       "branches": 100
     },
     "src/stores/studioStoreActions.ts": {
-      "statements": 44.03,
+      "statements": 45.11,
       "branches": 51.26
     },
     "src/stores/studioSynthesis.ts": {

@@ -61,6 +61,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- SNN Studio: two populations added before the server answered the first
+  could get the same label and position, because each add read the number
+  of populations when it was made (two "+ Exc" could both give "Exc 0").
+  Adds now run one after another, each reading the count once the earlier
+  ones are applied, and an add the server refuses spends no label.
+
 - A surrogate's parameter must be finite and above 0. The Python classes
   SurrogateLif and DifferentiableDenseLayer, native and wrapped, raise
   ValueError for a steepness k of 0, a negative k, NaN or infinity, which
