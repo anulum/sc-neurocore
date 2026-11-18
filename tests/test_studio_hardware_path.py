@@ -407,13 +407,27 @@ class TestRefusals:
     def test_a_current_outside_the_format_is_refused_by_the_cosimulation(
         self, tmp_path: Path
     ) -> None:
-        """A current whose input word would wrap is refused after the RTL is written."""
+        """A current whose input word would wrap is refused after the RTL is written.
+
+        The boundary of the refused run still states what the written RTL is, under what the
+        run establishes and nowhere else.
+        """
         refusal = _refusal("LapicqueNeuron", tmp_path / "out", q_format="Q8.8", current=1000.0)
         assert (refusal.stage, refusal.code) == ("cosimulation", "cosim-refused")
         assert "outside Q8.8" in refusal.message
         manifest = _manifest_of(refusal)
         assert "rtl/sc_lapicque_neuron.v" in manifest["artifacts"]
         assert "cosim/report.json" not in manifest["artifacts"]
+        configuration = manifest["stages"][1]
+        stated = (
+            f"rtl/sc_lapicque_neuron.v (SHA-256 {configuration['rtl_sha256']}) is the compiler's RTL "
+            "for LapicqueNeuron at Q8.8"
+        )
+        boundary = manifest["boundary"]
+        assert sum(item.startswith(stated) for item in boundary["establishes"]) == 1
+        assert not any(
+            "rtl/sc_lapicque_neuron.v" in item for item in boundary["does_not_establish"]
+        )
 
     def test_without_simulators_the_gate_refuses(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

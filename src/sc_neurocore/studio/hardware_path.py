@@ -365,10 +365,145 @@ def _run_stages(
     readiness_seal: Path,
     cosimulate: Callable[..., ModelCosimExecution],
 ) -> None:
-    model = recorder.model
+    """Run the five stages of one hardware path in order, each recording itself.
+
+    Every stage writes its artefacts, records its stage entry and adds what it establishes,
+    and what it does not, to the boundary; a refusal in one stage stops the run before the
+    next. The capabilities stage fixes the integrator, number format and place-and-route
+    choice the later stages use.
+
+    Parameters
+    ----------
+    recorder : _Recorder
+        The run's recorder, which holds the model name and writes every artefact.
+    boundary : dict of str to list of str
+        What the run establishes and does not establish, filled in stage order.
+    q_format, integrator : str or None
+        The caller's number format and integrator, or None for the model's defaults.
+    params : dict of str to float
+        Parameter overrides for the compiled schema.
+    dt : float or None
+        The time step, or None for the schema's own.
+    current : float
+        The co-simulation's input current.
+    n_steps : int
+        The co-simulation's cycle count.
+    target : str
+        The synthesis target.
+    module_name : str or None
+        The RTL module name, or None for the default.
+    formal_inventory : Path
+        The catalogue formal job inventory.
+    readiness_seal : Path
+        The Studio readiness seal.
+    cosimulate : callable
+        Runs the co-simulation of one configuration.
+
+    Raises
+    ------
+    HardwarePathRefusal
+        A stage refuses; the refusal names the stage, its reason code and the detail.
+    """
     tool_status = check_tools()
     recorder.tools["eda"] = {name: entry.get("version") for name, entry in tool_status.items()}
+    choice = _capabilities_stage(
+        recorder,
+        tool_status=tool_status,
+        q_format=q_format,
+        integrator=integrator,
+        target=target,
+        formal_inventory=formal_inventory,
+    )
+    configuration, verilog, traceability = _configuration_stage(
+        recorder, boundary, choice, params=params, dt=dt, module_name=module_name
+    )
+    report = _cosimulation_stage(
+        recorder, boundary, configuration, cosimulate=cosimulate, current=current, n_steps=n_steps
+    )
+    _guarantee_stage(
+        recorder,
+        boundary,
+        configuration,
+        verilog,
+        report,
+        formal_inventory=formal_inventory,
+        readiness_seal=readiness_seal,
+    )
 
+    # 5. Synthesis.
+    if choice.pnr_runs:
+        _terminal_stage(recorder, boundary, verilog, target, traceability, report)
+    else:
+        _synthesis_only_stage(
+            recorder, boundary, verilog, target, tool_status, choice.pnr_reason, report
+        )
+    boundary["does_not_establish"].append(
+        "measured hardware behaviour, timing, power or resources: no device was "
+        "programmed or measured"
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _StageChoice:
+    """What the capabilities stage fixes for the stages after it.
+
+    Attributes
+    ----------
+    detail : dict or None
+        The model's catalogue detail, read once and handed to the configuration stage.
+    integrator : str
+        The integrator the run compiles with.
+    q_format : str
+        The number format the run compiles with.
+    pnr_runs : bool
+        Whether place and route runs for the target.
+    pnr_reason : str or None
+        Why place and route does not run, when it does not.
+    """
+
+    detail: dict[str, Any] | None
+    integrator: str
+    q_format: str
+    pnr_runs: bool
+    pnr_reason: str | None
+
+
+def _capabilities_stage(
+    recorder: _Recorder,
+    *,
+    tool_status: Mapping[str, Mapping[str, object]],
+    q_format: str | None,
+    integrator: str | None,
+    target: str,
+    formal_inventory: Path,
+) -> _StageChoice:
+    """Gate the run on the model's capabilities and fix its configuration choices.
+
+    Parameters
+    ----------
+    recorder : _Recorder
+        The run's recorder.
+    tool_status : mapping
+        The installed EDA tools, as ``check_tools`` reports them.
+    q_format, integrator : str or None
+        The caller's choices, or None for the model's defaults.
+    target : str
+        The synthesis target.
+    formal_inventory : Path
+        The catalogue formal job inventory.
+
+    Returns
+    -------
+    _StageChoice
+        The detail and the choices the later stages use.
+
+    Raises
+    ------
+    HardwarePathRefusal
+        The model is unknown, a required operation is disabled, the target is unknown, or
+        the chosen integrator and number format are not a supported combination.
+    """
+    model = recorder.model
     # 1. Capabilities.
     capabilities = model_capabilities(
         model, tool_status=tool_status, formal_inventory=formal_inventory
@@ -406,12 +541,52 @@ def _run_stages(
         },
         place_and_route={"runs": pnr_runs, "reason": pnr_reason},
     )
+    return _StageChoice(detail, chosen_integrator, chosen_format, pnr_runs, pnr_reason)
 
+
+def _configuration_stage(
+    recorder: _Recorder,
+    boundary: dict[str, list[str]],
+    choice: _StageChoice,
+    *,
+    params: dict[str, float],
+    dt: float | None,
+    module_name: str | None,
+) -> tuple[ResolvedModelCompileConfiguration, str, Mapping[str, object]]:
+    """Resolve the compile configuration, emit its RTL and record both.
+
+    Parameters
+    ----------
+    recorder : _Recorder
+        The run's recorder.
+    boundary : dict of str to list of str
+        What the run establishes and does not establish.
+    choice : _StageChoice
+        The capabilities stage's detail and choices.
+    params : dict of str to float
+        Parameter overrides for the compiled schema.
+    dt : float or None
+        The time step, or None for the schema's own.
+    module_name : str or None
+        The RTL module name, or None for the default.
+
+    Returns
+    -------
+    tuple
+        The resolved configuration, its Verilog and its public traceability record.
+
+    Raises
+    ------
+    HardwarePathRefusal
+        The configuration is refused.
+    """
+    model = recorder.model
+    detail = choice.detail
     # 2. Configuration and RTL.
     payload: dict[str, object] = {
         "model_name": model,
-        "q_format": chosen_format,
-        "integrator": chosen_integrator,
+        "q_format": choice.q_format,
+        "integrator": choice.integrator,
         "params": params,
         "dt": dt,
         "module_name": module_name,
@@ -443,7 +618,46 @@ def _run_stages(
         f"{configuration.q_format.q_label} with {configuration.integrator}, dt "
         f"{configuration.dt!r} and parameter overrides {configuration.params}"
     )
+    return configuration, verilog, traceability
 
+
+def _cosimulation_stage(
+    recorder: _Recorder,
+    boundary: dict[str, list[str]],
+    configuration: ResolvedModelCompileConfiguration,
+    *,
+    cosimulate: Callable[..., ModelCosimExecution],
+    current: float,
+    n_steps: int,
+) -> Mapping[str, Any]:
+    """Co-simulate the RTL against the bit-true kernel and pass on only a bit-exact report.
+
+    Parameters
+    ----------
+    recorder : _Recorder
+        The run's recorder.
+    boundary : dict of str to list of str
+        What the run establishes and does not establish.
+    configuration : ResolvedModelCompileConfiguration
+        The configuration whose RTL is co-simulated.
+    cosimulate : callable
+        Runs the co-simulation.
+    current : float
+        The input current.
+    n_steps : int
+        The cycle count.
+
+    Returns
+    -------
+    Mapping
+        The bit-exact co-simulation report.
+
+    Raises
+    ------
+    HardwarePathRefusal
+        The co-simulation is refused, fails or is not bit-exact.
+    """
+    model = recorder.model
     # 3. Co-simulation.
     try:
         execution = cosimulate(configuration, current=current, n_steps=n_steps)
@@ -478,7 +692,38 @@ def _run_stages(
     boundary["does_not_establish"].extend(
         f"co-simulation does not cover {item}" for item in report["boundary"]["not_covered"]
     )
+    return report
 
+
+def _guarantee_stage(
+    recorder: _Recorder,
+    boundary: dict[str, list[str]],
+    configuration: ResolvedModelCompileConfiguration,
+    verilog: str,
+    report: Mapping[str, Any],
+    *,
+    formal_inventory: Path,
+    readiness_seal: Path,
+) -> None:
+    """Classify what the RTL is guaranteed by, write the summary and record its formal reach.
+
+    Parameters
+    ----------
+    recorder : _Recorder
+        The run's recorder.
+    boundary : dict of str to list of str
+        What the run establishes and does not establish.
+    configuration : ResolvedModelCompileConfiguration
+        The compiled configuration.
+    verilog : str
+        Its RTL.
+    report : Mapping
+        The bit-exact co-simulation report.
+    formal_inventory : Path
+        The catalogue formal job inventory.
+    readiness_seal : Path
+        The Studio readiness seal.
+    """
     # 4. Guarantee summary.
     summary = model_guarantee_summary(
         configuration,
@@ -512,16 +757,6 @@ def _run_stages(
         boundary["does_not_establish"].append(
             f"any formal property of this RTL ({formal['class']}: {formal['reason']})"
         )
-
-    # 5. Synthesis.
-    if pnr_runs:
-        _terminal_stage(recorder, boundary, verilog, target, traceability, report)
-    else:
-        _synthesis_only_stage(recorder, boundary, verilog, target, tool_status, pnr_reason, report)
-    boundary["does_not_establish"].append(
-        "measured hardware behaviour, timing, power or resources: no device was "
-        "programmed or measured"
-    )
 
 
 def gate_refusal(operations: Mapping[str, Mapping[str, Any]]) -> tuple[str, str] | None:
