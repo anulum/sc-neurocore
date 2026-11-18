@@ -246,6 +246,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `engine/.cargo/config.toml` no longer says that its `x86-64-v2` target is
+  for portable wheels. Cargo reads it only for builds started in `engine/`
+  (benchmarks and fuzzing). Every wheel build starts in `bridge/`, where no
+  configuration sets a target, so the published wheels have always been
+  compiled for baseline x86-64, and they stay so.
+
 - SNN Studio's store builds its graph-editing actions (populations,
   projections, their undo history, validation, simulation, and the NIR and
   notebook files) in a module of their own, studioGraphActions.ts, instead

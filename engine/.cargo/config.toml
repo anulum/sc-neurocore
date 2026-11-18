@@ -6,7 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Source/config provenance header
 
-# x86-64-v2 for portable wheels; override locally with RUSTFLAGS="-C target-cpu=native"
+# Builds started in engine/ or below (benchmarks, fuzzing) compile for x86-64-v2.
+# Cargo reads this file only for those builds. The wheel builds start in bridge/, whose
+# configuration and the root one set no rustflags, so the published wheels are compiled
+# for baseline x86-64. Override locally with RUSTFLAGS="-C target-cpu=native".
 [target.'cfg(target_arch = "x86_64")']
 rustflags = ["-C", "target-cpu=x86-64-v2"]
 
