@@ -91,6 +91,7 @@ GATES = [
             "warnings",
         ],
     ),
+    ("cargo-fmt-crates", ["python", "tools/crate_format_check.py"]),
     ("capability-manifest", ["python", "tools/capability_manifest.py", "--check"]),
     (
         "ruff-check",
@@ -201,6 +202,12 @@ GATE_GUARDS: dict[str, tuple[str, ...]] = {
     ),
     "cargo-rustdoc-symbols-fmt": _RUSTDOC_SYMBOLS_INPUTS,
     "cargo-rustdoc-symbols-clippy": _RUSTDOC_SYMBOLS_INPUTS,
+    "cargo-fmt-crates": (
+        "crates/*",
+        "rustfmt.toml",
+        ".rustfmt.toml",
+        "tools/crate_format_check.py",
+    ),
     "capability-manifest": (ANY_FILE,),
     "ruff-check": _RUFF_INPUTS,
     "ruff-format": _RUFF_INPUTS,

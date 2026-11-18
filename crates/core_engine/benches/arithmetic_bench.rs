@@ -7,8 +7,8 @@
 // SC-NeuroCore — Core Engine Benchmarks
 // Authored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)
 
+use core_engine::bitstream::{cordiv, pack, scc, Bitstream, Lfsr16};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use core_engine::bitstream::{pack, scc, cordiv, Bitstream, Lfsr16};
 
 fn bench_sc_and(c: &mut Criterion) {
     let mut group = c.benchmark_group("sc_and");
@@ -77,12 +77,16 @@ fn bench_cordiv(c: &mut Criterion) {
 fn bench_lfsr_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("lfsr_encode");
     for length in [256, 1024, 4096] {
-        group.bench_with_input(BenchmarkId::from_parameter(length), &length, |bench, &len| {
-            bench.iter(|| {
-                let mut lfsr = Lfsr16::new(0xACE1);
-                black_box(lfsr.encode(32768, len))
-            });
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(length),
+            &length,
+            |bench, &len| {
+                bench.iter(|| {
+                    let mut lfsr = Lfsr16::new(0xACE1);
+                    black_box(lfsr.encode(32768, len))
+                });
+            },
+        );
     }
     group.finish();
 }

@@ -350,7 +350,10 @@ mod tests {
     fn scc_identical_streams() {
         let a = pack(&[1, 0, 1, 1, 0, 0, 1, 0]);
         let corr = scc(&a, &a);
-        assert!((corr - 1.0).abs() < 1e-6, "SCC of identical streams should be 1.0, got {corr}");
+        assert!(
+            (corr - 1.0).abs() < 1e-6,
+            "SCC of identical streams should be 1.0, got {corr}"
+        );
     }
 
     #[test]
@@ -384,7 +387,10 @@ mod tests {
                 break;
             }
         }
-        assert!(seen_initial, "LFSR should return to initial state within 65535 steps");
+        assert!(
+            seen_initial,
+            "LFSR should return to initial state within 65535 steps"
+        );
     }
 
     #[test]

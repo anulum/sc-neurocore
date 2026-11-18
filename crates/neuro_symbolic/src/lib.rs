@@ -638,8 +638,12 @@ mod tests {
 
         // Manual verification: for 3 inputs, majority = at least 2
         for i in 0..HYPERVECTOR_WORDS {
-            let expected = (a.data[i] & b.data[i]) | (b.data[i] & c.data[i]) | (a.data[i] & c.data[i]);
-            assert_eq!(bundled.data[i], expected, "word {i} mismatch in 3-way bundle");
+            let expected =
+                (a.data[i] & b.data[i]) | (b.data[i] & c.data[i]) | (a.data[i] & c.data[i]);
+            assert_eq!(
+                bundled.data[i], expected,
+                "word {i} mismatch in 3-way bundle"
+            );
         }
     }
 
@@ -647,10 +651,7 @@ mod tests {
     fn threshold_bundle_single_vector() {
         let a = Hypervector::random(42);
         let bundled = Hypervector::threshold_bundle(&[&a]);
-        assert_eq!(
-            a, bundled,
-            "bundling a single vector should return a clone"
-        );
+        assert_eq!(a, bundled, "bundling a single vector should return a clone");
     }
 
     #[test]
@@ -685,7 +686,10 @@ mod tests {
 
         let (label, dist) = mem.query(&cat).unwrap();
         assert_eq!(label, "cat");
-        assert!(dist < 0.01, "querying stored vector should return distance ~0");
+        assert!(
+            dist < 0.01,
+            "querying stored vector should return distance ~0"
+        );
     }
 
     #[test]
@@ -790,7 +794,10 @@ mod tests {
         let mut enc = SymbolEncoder::new(42);
         let single = enc.encode("X").clone();
         let seq = enc.encode_sequence(&["X"]);
-        assert_eq!(single, seq, "single-symbol sequence should equal the symbol itself");
+        assert_eq!(
+            single, seq,
+            "single-symbol sequence should equal the symbol itself"
+        );
     }
 
     // ── FFI Tests ────────────────────────────────────────────────────

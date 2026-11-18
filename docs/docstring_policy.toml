@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2045
+expected_file_count = 2047
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8230,3 +8230,11 @@ rationale = "The Gitleaks lane runs the repository's .gitleaks.toml when present
 [[file]]
 path = "tests/test_tools/test_run_gitleaks_scanners.py"
 rationale = "The lane's command, configuration digest and artefacts, and the allowlists' narrowness: reviewed values allowed, planted keys of another shape, file or rule not."
+
+[[file]]
+path = "tools/crate_format_check.py"
+rationale = "Every crate under crates/ is checked with cargo fmt --check by one command that the preflight and the CI Rust job share; no crate passes unchecked."
+
+[[file]]
+path = "tests/test_tools/test_crate_format_check.py"
+rationale = "Every crate is found and checked once, one unformatted crate fails and is named, an empty crates/ refuses, and preflight and CI run the same gate."

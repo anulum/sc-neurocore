@@ -287,6 +287,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   rotated password it sends is built at run time, so the secret scan has
   no literal in it to report as a credential.
 
+- Every Rust crate under `crates/` now has a formatting gate:
+  `tools/crate_format_check.py` runs `cargo fmt --check` on each crate, in
+  the CI Rust job and in the preflight for a change under `crates/`. The
+  engine and the documentation symbol producer had gates of their own; the
+  seven crates had none, and two had drifted. `core_engine` (two asserts and
+  its arithmetic benchmark) and `neuro_symbolic` are formatted, with no change
+  of behaviour.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub
