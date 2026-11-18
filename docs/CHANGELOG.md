@@ -84,6 +84,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The internal `core_engine` crate's `cordiv` and its C function
+  `sc_cordiv_packed` follow the package's CORDIV contract. They copied the
+  numerator only when the denominator bit was 1, so on a numerator bit of 1
+  over a denominator bit of 0 they held the previous output where
+  `sc_divide`, the engine's `cordiv` and `hdl/sc_cordiv.v` output 1. The
+  crate's test claimed convergence for decorrelated streams and checked
+  only that the output lay between 0.1 and the denominator's density. Three
+  tests now pin the eight-row table, the quotient from one LFSR read once
+  every 16 steps, and the numerator returned bit for bit by one LFSR read
+  every clock. No Python code calls the C function.
+
 - The CORDIV divider's documentation states its operating condition and
   its source. `sc_divide`, `hdl/sc_cordiv.v`, the engine's `cordiv`, the
   hardware contract page and the utilities page said the output converges

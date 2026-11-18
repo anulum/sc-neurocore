@@ -244,16 +244,16 @@ impl Lfsr16 {
     }
 }
 
-/// CORDIV stochastic division.
+/// CORDIV stochastic division (Chen and Hayes, IEEE ISVLSI 2016), in the
+/// package's contract form (`docs/hardware/sc_cordiv.md`, `sc_divide`,
+/// `hdl/sc_cordiv.v` and the engine's `cordiv`). Per bit:
+/// - X=1          → output 1
+/// - X=0 and Y=1  → output 0
+/// - X=0 and Y=0  → previous output (0 before the first bit)
 ///
-/// Implements the correlation-based SC division circuit:
-/// Out = X / Y, where X and Y are bitstreams representing probabilities.
-///
-/// Uses a J-K flip-flop feedback mechanism:
-/// - If Y=1: output = X (pass-through)
-/// - If Y=0: output = previous output (hold)
-///
-/// Converges to P(X)/P(Y) when P(Y) > 0.
+/// Converges to P(X)/P(Y) when P(X) <= P(Y) and both streams are compared
+/// against one shared random sequence, so that every 1 of X falls on a 1 of Y.
+/// Independent streams converge to P(X) / (P(X) + P(Y) - P(X) P(Y)) instead.
 pub fn cordiv(x: &Bitstream, y: &Bitstream) -> Bitstream {
     assert_eq!(x.length, y.length, "bitstream length mismatch");
     let mut result = Bitstream::zeros(x.length);
@@ -263,7 +263,13 @@ pub fn cordiv(x: &Bitstream, y: &Bitstream) -> Bitstream {
         let x_bit = ((x.data[i / 64] >> (i % 64)) & 1) as u8;
         let y_bit = ((y.data[i / 64] >> (i % 64)) & 1) as u8;
 
-        let out_bit = if y_bit == 1 { x_bit } else { prev_out };
+        let out_bit = if x_bit == 1 {
+            1
+        } else if y_bit == 1 {
+            0
+        } else {
+            prev_out
+        };
         prev_out = out_bit;
 
         if out_bit == 1 {
@@ -394,31 +400,59 @@ mod tests {
     }
 
     #[test]
+    fn cordiv_follows_the_contract_table() {
+        // Every (previous output, X, Y) combination once, the package's CORDIV
+        // contract (`sc_divide`, `hdl/sc_cordiv.v`, the engine's `cordiv`).
+        // Bit 2 (X=1, Y=0 after an output of 0) is where a divider that copies
+        // X only when Y=1 differs: it would hold 0.
+        let x = pack(&[0, 0, 1, 0, 1, 1, 0, 1]);
+        let y = pack(&[0, 1, 0, 0, 1, 0, 1, 1]);
+        let expected = pack(&[0, 0, 1, 1, 1, 1, 0, 1]);
+        let out = cordiv(&x, &y);
+        assert_eq!(out.length, expected.length);
+        assert_eq!(out.data, expected.data);
+    }
+
+    #[test]
     fn cordiv_convergence() {
-        // CORDIV convergence: P(out) → P(X)/P(Y) when streams are decorrelated.
-        // With LFSR-generated streams, correlation in the feedback loop limits
-        // precision. We verify directional correctness: the output probability
-        // should be between the two input probabilities and closer to the
-        // expected ratio than to either input alone.
+        // CORDIV needs correlated inputs from one shared sequence whose
+        // successive values are independent, so that every 1 of X falls on a
+        // 1 of Y and P(out) converges to P(X)/P(Y). One LFSR read once every
+        // 16 steps gives such a sequence.
         let len = 32768;
-        let mut lfsr_x = Lfsr16::new(0x1234);
-        let mut lfsr_y = Lfsr16::new(0x9ABC);
-        let x = lfsr_x.encode((0.3 * 65535.0) as u16, len);
-        let y = lfsr_y.encode((0.6 * 65535.0) as u16, len);
+        let tx = (0.3 * 65535.0) as u16;
+        let ty = (0.6 * 65535.0) as u16;
+        let mut lfsr = Lfsr16::new(0x1234);
+        let mut xs = Vec::with_capacity(len);
+        let mut ys = Vec::with_capacity(len);
+        for _ in 0..len {
+            for _ in 0..16 {
+                lfsr.step();
+            }
+            xs.push(u8::from(lfsr.reg < tx));
+            ys.push(u8::from(lfsr.reg < ty));
+        }
+        let (x, y) = (pack(&xs), pack(&ys));
+        let (px, py) = (x.probability(), y.probability());
+        let p = cordiv(&x, &y).probability();
+        assert!(
+            (p - px / py).abs() < 0.02,
+            "shared sequence: CORDIV gave {p}, quotient {}",
+            px / py
+        );
+    }
 
-        let _px = x.probability();
-        let py = y.probability();
-        let result = cordiv(&x, &y);
-        let p = result.probability();
-
-        // Output should be in the valid range [0, 1]
-        assert!(p >= 0.0 && p <= 1.0, "CORDIV output out of range: {p}");
-
-        // Output should be less than py (the divisor probability)
-        assert!(p < py + 0.05, "CORDIV output {p} should be ≤ P(Y)={py}");
-
-        // Sanity: output should not be zero for non-zero inputs
-        assert!(p > 0.1, "CORDIV output unexpectedly low: {p}");
+    #[test]
+    fn cordiv_on_one_lfsr_read_every_clock_returns_the_numerator() {
+        // Each LFSR state is the previous one shifted by one bit, so successive
+        // values are not independent. With 2 P(X) <= P(Y) the output equals X
+        // bit for bit instead of the quotient (docs/hardware/sc_cordiv.md).
+        let len = 32768;
+        let x = Lfsr16::new(0x1234).encode((0.3 * 65535.0) as u16, len);
+        let y = Lfsr16::new(0x1234).encode((0.6 * 65535.0) as u16, len);
+        let out = cordiv(&x, &y);
+        assert_eq!(out.data, x.data);
+        assert!((x.probability() / y.probability() - out.probability()).abs() > 0.15);
     }
 
     #[test]
