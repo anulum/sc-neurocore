@@ -114,7 +114,7 @@ def test_real_multiple_assertions_each_need_a_reached_enable(tmp_path: Path) -> 
     assert result.returncode == 0, result.stdout + result.stderr
     data = json.loads(report.read_text())
     task = data["tasks"]["prove"]
-    assert len(task["assertions"]) == 3
+    assert len(task["assertions"]) == 5
     assert set(task["first_reached_steps"]) == set(task["assertions"])
 
 

@@ -8,9 +8,12 @@
 
 // SC-NeuroCore — Formal properties for sc_halton16_source
 //
-// Prove:
-// P1. Counter increments by 1 each enabled cycle
-// P2. Output is bit-reversed counter (Van der Corput)
+// Prove (k-induction):
+// P1. The counter (read through the FORMAL-only port formal_counter) is the
+//     number of enabled clocks since reset.
+// P2. The output is the bit reverse of that count before the last enabled
+//     clock (Van der Corput: 0, 1, 2, ... reversed), one register stage
+//     behind, and it holds while enable is low.
 // P3. Valid only asserted when enabled
 // P4. Reset zeroes all outputs
 
@@ -25,6 +28,7 @@ module halton16_formal #(
 
     wire [DATA_WIDTH-1:0] quasi_random;
     wire valid;
+    wire [DATA_WIDTH-1:0] counter_rtl;
     reg past_valid;
     initial past_valid = 0;
 
@@ -33,7 +37,8 @@ module halton16_formal #(
         .rst_n(rst_n),
         .enable(enable),
         .quasi_random(quasi_random),
-        .valid(valid)
+        .valid(valid),
+        .formal_counter(counter_rtl)
     );
 
     // Track internal counter via a shadow register
@@ -61,6 +66,16 @@ module halton16_formal #(
             prev_expected <= 0;
         else if (enable)
             prev_expected <= expected_reversed;
+    end
+
+    // P1: the RTL counter (FORMAL-only port) is the shadow count of enabled
+    // clocks since reset. P2: the output is the bit-reversed shadow count of
+    // the previous enabled clock.
+    always @(posedge clk) begin
+        if (past_valid) begin
+            assert(counter_rtl == shadow_counter);
+            if (rst_n) assert(quasi_random == prev_expected);
+        end
     end
 
     // P3: Valid only when enabled

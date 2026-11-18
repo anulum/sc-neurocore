@@ -25,10 +25,17 @@ module sc_halton16_source #(
     input  wire                    enable,
     output reg  [DATA_WIDTH-1:0]   quasi_random,
     output reg                     valid
+`ifdef FORMAL
+    // Exact counter for the formal harness; absent from production ports.
+    , output wire [DATA_WIDTH-1:0] formal_counter
+`endif
 );
 
     // Running counter
     reg [DATA_WIDTH-1:0] counter;
+`ifdef FORMAL
+    assign formal_counter = counter;
+`endif
 
     // Bit-reversal of counter = Van der Corput base-2 radical inverse
     // Scaled to [0, 2^DATA_WIDTH) integer representation

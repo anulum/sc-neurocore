@@ -84,6 +84,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Halton source's formal job `hdl/formal/halton16.sby` asserts the two
+  properties its harness listed and did not check: the counter steps by
+  one on every enabled clock, and the output is the bit reverse of the
+  count before that clock, one register stage behind, held while enable is
+  low. A FORMAL-only port `formal_counter` gives the harness the counter. A
+  counter that skips a value fails the proof. The formal inventory is 91
+  jobs and 510 statements (340 assert, 123 assume, 47 cover).
+
 - The signal decorrelator `hdl/sc_decorrelator.v` rotates each stream by
   its shift amount modulo the word width. The 4-bit shift amount reaches
   15, so for words narrower than 16 bits, such as the 8-bit words of its
