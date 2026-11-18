@@ -59,10 +59,64 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            6,
+            6
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "a current of 0.0 fires 6 times in 12 steps",
+          "observable": "spikes",
+          "observed": 6,
+          "steps": 12
+        },
+        {
+          "bounds": [
+            4,
+            4
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": -0.03
+          },
+          "kind": "interval",
+          "name": "a current of -0.03 fires 4 times in 12 steps",
+          "observable": "spikes",
+          "observed": 4,
+          "steps": 12
+        },
+        {
+          "bounds": [
+            2,
+            2
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "with k 0.0, alpha 0.01 and bias 0.2, a current of 0.0 fires on both of 2 steps",
+          "observable": "spikes",
+          "observed": 2,
+          "parameters": {
+            "alpha": 0.01,
+            "bias": 0.2,
+            "k": 0.0
+          },
+          "steps": 2
+        }
+      ],
+      "cases_sha256": "7bdae7599abd8e7b00a77b5bcaeb66090bb49d97512d9a7c0e3961dbaa2b4269",
       "model": "AiharaMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2697,9 +2751,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 23,
+    "held": 24,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 162
+    "no_case": 161
   }
 }

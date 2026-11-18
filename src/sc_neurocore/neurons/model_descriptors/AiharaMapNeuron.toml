@@ -126,3 +126,47 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_aihara_map.py::test_q824_shadows_source_events_and_state_for_twelve_steps"
 target_tier = "H1"
 terminal_reason = "Q8.24 preserves twelve source events and shadows y within 0.01; chaotic amplification forbids a false long-horizon trajectory-equivalence claim."
+
+[[behaviour]]
+name = "a current of 0.0 fires 6 times in 12 steps"
+kind = "interval"
+steps = 12
+observable = "spikes"
+bounds = [
+    6,
+    6,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of -0.03 fires 4 times in 12 steps"
+kind = "interval"
+steps = 12
+observable = "spikes"
+bounds = [
+    4,
+    4,
+]
+
+[behaviour.inputs]
+current = -0.03
+
+[[behaviour]]
+name = "with k 0.0, alpha 0.01 and bias 0.2, a current of 0.0 fires on both of 2 steps"
+kind = "interval"
+steps = 2
+observable = "spikes"
+bounds = [
+    2,
+    2,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[behaviour.parameters]
+alpha = 0.01
+bias = 0.2
+k = 0.0

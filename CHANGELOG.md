@@ -56,6 +56,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Aihara chaotic neuron map states three behaviour cases. Over 12
+  steps, the window its Q8.24 co-simulation test runs for the hand model,
+  the schema and the RTL, a current of 0.0 fires on every second step, 6
+  times, and -0.03, one of the drive values of its reference trace, 4
+  times. With the parameters of its own level test (k 0.0, alpha 0.01,
+  bias 0.2) it fires on both of 2 steps without crossing the threshold,
+  which a count of crossings would miss: its event is a level. The window
+  at 0.0 breaks two of the four sign variants of its equation; the input
+  term is zero there, and the window at -0.03 breaks it and the memory
+  term. Twenty-four of the 185 catalogue models now state cases.
+
 - The stochastic-computing divider `hdl/sc_cordiv.v` and the MUX scaled
   adder `hdl/sc_mux_add.v` have their first tests. An Icarus co-simulation
   checks each core bit for bit against the package's own model,

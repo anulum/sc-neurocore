@@ -51,13 +51,14 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 162
+MODELS_WITHOUT_A_CASE = 161
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
 #: bound widened in the descriptor, with both reports written again, would still pass.
 STATED_LIMITS: dict[str, list[object]] = {
     "AdaptiveThresholdIFNeuron": [[1, 1], [3, 3]],
+    "AiharaMapNeuron": [[6, 6], [4, 4], [2, 2]],
     "ChialvoMapNeuron": [[3, 3], [1, 1]],
     "CourageNekorkinMapNeuron": [[0, 0], [0, 0], [1, 1], [1, 1], [3, 3], [0.5, 0.625]],
     "DendriticNMDANeuron": [
@@ -1201,6 +1202,40 @@ def test_the_adaptive_threshold_if_states_its_reference_window_and_a_longer_one(
     assert [case["observed"] for case in cases] == [1, 3]
     assert [case["inputs"] for case in cases] == [{"current": 20.0}, {"current": 20.0}]
     assert [case["steps"] for case in cases] == [160, 1000]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_aihara_map_states_its_q824_window_twice_and_its_level_event(
+    report: dict[str, object],
+) -> None:
+    """The 12-step window its Q8.24 test runs, at 0.0 and at -0.03, and its level test.
+
+    The map's co-simulation test requires the hand model, the schema and the RTL to give
+    the same events over 12 steps at 0.0. With the defaults the map then alternates and
+    fires on every second step, 6 times. At -0.03, one of the drive values of its
+    reference trace, the alternation breaks and the map fires 4 times in the same 12
+    steps. In both windows each event follows a step without one, so a count of upward
+    crossings of x = 0.5 would give the same numbers. The third case takes the
+    parameters of the model's own level test: x stays above 0.5 from the start, and the
+    map fires on both steps, where a crossing count gives 0.
+    """
+    row = _models(report)["AiharaMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [6, 4, 2]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": -0.03},
+        {"current": 0.0},
+    ]
+    assert [case["steps"] for case in cases] == [12, 12, 2]
+    assert [case.get("parameters") for case in cases] == [
+        None,
+        None,
+        {"alpha": 0.01, "bias": 0.2, "k": 0.0},
+    ]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 
