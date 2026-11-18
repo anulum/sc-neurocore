@@ -735,10 +735,48 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            943,
+            943
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps",
+          "observable": "spikes",
+          "observed": 943,
+          "parameters": {
+            "delta_u": 1.0,
+            "rho_0": 0.25,
+            "v_threshold": -70.0
+          },
+          "steps": 4096
+        },
+        {
+          "bounds": [
+            49,
+            49
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 40.0
+          },
+          "kind": "interval",
+          "name": "a current of 40.0 fires 49 times in 1024 steps",
+          "observable": "spikes",
+          "observed": 49,
+          "steps": 1024
+        }
+      ],
+      "cases_sha256": "6f954305d577844103a5a9190d7a95e2f7d1433d9d6df7a29a39bbd165c8b6fc",
       "model": "EscapeRateNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [
@@ -2800,9 +2838,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 25,
+    "held": 26,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 160
+    "no_case": 159
   }
 }

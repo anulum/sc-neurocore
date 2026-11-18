@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 25
+MODELS_WITH_CASES = 26
 
 
 def _accumulator() -> dict[str, object]:
@@ -395,6 +395,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "CourageNekorkinMapNeuron",
         "DendriticNMDANeuron",
         "ErmentroutKopellMapNeuron",
+        "EscapeRateNeuron",
         "ExpIFNeuron",
         "FitzHughNagumoNeuron",
         "FitzHughRinzelNeuron",
@@ -421,7 +422,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 24,
+        "discriminated": 25,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -1238,6 +1239,41 @@ def test_the_nagumo_sato_map_needs_a_drive_for_its_input_and_memory_terms(
     }
 
 
+def test_the_escape_rate_neuron_needs_a_drive_for_its_leak_and_input_terms(
+    report: dict[str, object],
+) -> None:
+    """Five signs of its voltage equation; the corpus row decides the two inside the leak.
+
+    In the corpus row v stays at v_rest with no current, so the leak, the input term
+    and the whole right-hand side are zero and their signs change nothing; a flipped v
+    or v_rest inside the leak moves v away and gives 0 or 4096 events. The window at
+    40.0 breaks the other three.
+    """
+    row = _rows(report)["EscapeRateNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [943, 49]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 5
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    by_case: dict[object, list[object]] = {}
+    for variant in variants:
+        by_case.setdefault(variant["case"], []).append((variant["equation"], variant["term"]))
+    assert by_case == {
+        "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps": [
+            ("v", "+ v"),
+            ("v", "- v_rest"),
+        ],
+        "a current of 40.0 fires 49 times in 1024 steps": [
+            ("v", "+ -(v - v_rest)"),
+            ("v", "+ resistance * I"),
+            ("v", "the whole right-hand side"),
+        ],
+    }
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -1249,10 +1285,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+24$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+25$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 269, of them violated 269, not discriminated 0" in summary
+    assert "variants: 274, of them violated 274, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

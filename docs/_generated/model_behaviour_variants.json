@@ -574,6 +574,69 @@
       ]
     },
     {
+      "model": "EscapeRateNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps",
+          "observed": 943
+        },
+        {
+          "held": true,
+          "name": "a current of 40.0 fires 49 times in 1024 steps",
+          "observed": 49
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 40.0 fires 49 times in 1024 steps",
+          "equation": "v",
+          "expression": "(--(v - v_rest) + resistance * I) / tau_m",
+          "observed": 141,
+          "outcome": "violated",
+          "term": "+ -(v - v_rest)",
+          "within": "-(v - v_rest) + resistance * I"
+        },
+        {
+          "case": "a current of 40.0 fires 49 times in 1024 steps",
+          "equation": "v",
+          "expression": "(-(v - v_rest) - resistance * I) / tau_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ resistance * I",
+          "within": "-(v - v_rest) + resistance * I"
+        },
+        {
+          "case": "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps",
+          "equation": "v",
+          "expression": "(-(-v - v_rest) + resistance * I) / tau_m",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ v",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps",
+          "equation": "v",
+          "expression": "(-(v + v_rest) + resistance * I) / tau_m",
+          "observed": 4096,
+          "outcome": "violated",
+          "term": "- v_rest",
+          "within": "v - v_rest"
+        },
+        {
+          "case": "a current of 40.0 fires 49 times in 1024 steps",
+          "equation": "v",
+          "expression": "-((-(v - v_rest) + resistance * I) / tau_m)",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "the whole right-hand side",
+          "within": "(-(v - v_rest) + resistance * I) / tau_m"
+        }
+      ]
+    },
+    {
       "model": "ExpIFNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -3091,8 +3154,8 @@
       ]
     }
   ],
-  "models_with_cases": 25,
-  "models_without_cases": 160,
+  "models_with_cases": 26,
+  "models_without_cases": 159,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -3101,7 +3164,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 24,
+    "discriminated": 25,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -3110,7 +3173,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 269,
-    "violated": 269
+    "total": 274,
+    "violated": 274
   }
 }

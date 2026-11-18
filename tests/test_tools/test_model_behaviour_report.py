@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 160
+MODELS_WITHOUT_A_CASE = 159
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -72,6 +72,7 @@ STATED_LIMITS: dict[str, list[object]] = {
         [266, 266],
     ],
     "ErmentroutKopellMapNeuron": [[0, 0], [45, 45], [64, 64], [5, 5]],
+    "EscapeRateNeuron": [[943, 943], [49, 49]],
     "ExpIFNeuron": [[2, 2], [9, 9]],
     "FitzHughNagumoNeuron": [[0, 1], [26, 26], [28, 28], [28, 28], [1, 1]],
     "FitzHughRinzelNeuron": [[7, 7], [8, 8], [8, 8], [83, 83], [1, 1]],
@@ -1265,6 +1266,36 @@ def test_the_nagumo_sato_map_states_its_first_steps_a_drive_and_its_level_event(
         {"current": 1.0},
     ]
     assert [case["steps"] for case in cases] == [3, 12, 12]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_escape_rate_neuron_states_its_seed_corpus_row_and_a_driven_window(
+    report: dict[str, object],
+) -> None:
+    """A row of its reference test's seed corpus, restated, and a window at 40.0.
+
+    The reference test's seed corpus runs the class with v, v_rest, v_reset and
+    v_threshold all at -50, rho_0 0.25 and delta_u 1 at a current of 0: the hazard is
+    rho_0 at every step and the stream depends on the seed alone. At the default seed
+    it is 943 events in 4096 steps, which the test derives again from an LFSR written
+    out in the test. A case cannot set v, which starts at the default -70, so this one
+    sets v_threshold to -70: with the default v_rest and v_reset of -70, v - v_threshold
+    is 0 again and the stream is the corpus row's. With the defaults at 40.0, the
+    current its mechanism tests drive, the neuron fires 49 times in the 1024 steps of
+    its default-seed reproducibility test.
+    """
+    row = _models(report)["EscapeRateNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [943, 49]
+    assert [case["inputs"] for case in cases] == [{"current": 0.0}, {"current": 40.0}]
+    assert [case["steps"] for case in cases] == [4096, 1024]
+    assert [case.get("parameters") for case in cases] == [
+        {"delta_u": 1.0, "rho_0": 0.25, "v_threshold": -70.0},
+        None,
+    ]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

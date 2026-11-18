@@ -59,6 +59,7 @@ RESET_OR_LEVEL_MODELS = frozenset(
         "AdaptiveThresholdIFNeuron",
         "AiharaMapNeuron",
         "DendriticNMDANeuron",
+        "EscapeRateNeuron",
         "ExpIFNeuron",
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",

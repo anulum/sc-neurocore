@@ -175,3 +175,34 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_escape_rate.py::test_seeded_full_period_event_stream_and_distribution_match_python"
 target_tier = "H1"
 terminal_reason = "The stochastic point-neuron recurrence has compile-clean registered and folded Q24.24 RTL, seeded full-period event co-simulation, and bounded catalogue formal safety; higher rungs require synthesis, timing, equivalence, and hardware programmes."
+
+[[behaviour]]
+name = "with v_threshold -70.0, rho_0 0.25 and delta_u 1.0, a current of 0.0 fires 943 times in 4096 steps"
+kind = "interval"
+steps = 4096
+observable = "spikes"
+bounds = [
+    943,
+    943,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[behaviour.parameters]
+delta_u = 1.0
+rho_0 = 0.25
+v_threshold = -70.0
+
+[[behaviour]]
+name = "a current of 40.0 fires 49 times in 1024 steps"
+kind = "interval"
+steps = 1024
+observable = "spikes"
+bounds = [
+    49,
+    49,
+]
+
+[behaviour.inputs]
+current = 40.0

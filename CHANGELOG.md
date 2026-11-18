@@ -56,6 +56,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The escape-rate neuron states two behaviour cases. Its reference test's
+  seed corpus runs it with the hazard held at rho_0 0.25 and no current,
+  where the stream depends on the seed alone; the row of the default seed
+  fires 943 times in 4096 steps, and an LFSR written out in the test gives
+  the same. A case cannot set the voltage, so the row is stated with
+  v_threshold at -70, the default resting and reset voltage, which holds
+  the hazard at rho_0 again. With the defaults at a current of 40.0 it
+  fires 49 times in 1024 steps. The corpus row breaks the two sign
+  variants inside the leak, and the driven window the other three.
+  Twenty-six of the 185 catalogue models now state cases.
+
 - The ISI spike raster codec can encode and decode varint and Huffman packets
   through the Rust engine. `SpikeCodec` selects the installed native engine
   by default and can use either backend explicitly. Both backends preserve
