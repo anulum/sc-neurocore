@@ -14,6 +14,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The Mojo lock audit waits up to 180 seconds between bytes for the
+  conda-forge channel index, which the service builds for each request;
+  vendor source files keep 30 seconds. Uncached, the index once took 74
+  seconds to its first byte, so all three 30-second attempts timed out and
+  the audit stopped, as it did in half of the CI shards on 18 November.
+
 - The Mojo lock audit accepts four more CPython advisories against conda-forge
   Python 3.15.2 for two weeks at a time, under the rules of the two already
   accepted: CVE-2026-124249 (`http.cookiejar`), CVE-2026-115559 (`imaplib`

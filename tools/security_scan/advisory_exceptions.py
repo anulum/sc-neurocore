@@ -41,6 +41,11 @@ CONDA_FORGE_PYTHON_INDEX = "https://api.anaconda.org/package/conda-forge/python"
 _SOURCE_LIMIT = 131072
 _INDEX_LIMIT = 32 * 1024 * 1024
 UNRELEASED_FIX_REVIEW_WINDOW = timedelta(days=14)
+# Seconds one request may wait between bytes. A vendor source file answers in well under a
+# second; the channel index is generated per request and took 74 s to its first byte on
+# 2026-11-18 (6 s once cached), so it gets its own, longer wait.
+SOURCE_TIMEOUT_SECONDS = 30.0
+CHANNEL_INDEX_TIMEOUT_SECONDS = 180.0
 # Hosted runners met transient HTTP errors and timeouts on these reads; three requests in
 # about ten seconds outlast a short service interruption without hiding a lasting one.
 RETRY_DELAYS = (2.0, 8.0)
@@ -132,8 +137,11 @@ def read_url(url: str, limit: int, *, delays: tuple[float, ...] = RETRY_DELAYS) 
 
 def _read_once(url: str, limit: int) -> bytes:
     """Make one request; a body cut short of its declared length is an error, not data."""
+    timeout = (
+        CHANNEL_INDEX_TIMEOUT_SECONDS if url == CONDA_FORGE_PYTHON_INDEX else SOURCE_TIMEOUT_SECONDS
+    )
     # Every address is an HTTPS constant or passed the record's source pattern.
-    with urllib.request.urlopen(url, timeout=30) as response:  # nosec B310
+    with urllib.request.urlopen(url, timeout=timeout) as response:  # nosec B310
         payload = bytes(response.read(limit))
         if len(payload) < limit and response.length:
             raise http.client.IncompleteRead(payload, response.length)

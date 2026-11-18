@@ -191,6 +191,9 @@ source file is refused:
   14 days ahead.
 
 One audit reads the channel index once for all of its unreleased-fix records.
+A vendor-source read may wait up to 30 seconds between bytes. The channel index,
+which the service builds for each request, may wait up to 180 seconds: uncached,
+it once took 74 seconds to its first byte.
 Vendor-source and channel reads are made up to three times, 2 and 8 seconds
 apart, after a timeout, a dropped connection, a body shorter than its declared
 length or HTTP status 408, 425, 429, 500, 502, 503 or 504. Any other status

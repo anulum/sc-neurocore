@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import http.client
 import http.server
+import io
 import json
 from pathlib import Path
 import re
@@ -41,8 +42,10 @@ import pytest
 
 from tests.test_tools.test_pixi_audit_cli import LOCK, ROOT
 from tools.security_scan.advisory_exceptions import (
+    CHANNEL_INDEX_TIMEOUT_SECONDS,
     CONDA_FORGE_PYTHON_INDEX,
     EXCEPTION_FILE,
+    SOURCE_TIMEOUT_SECONDS,
     conda_lock_decision,
     load_exceptions,
     newer_vendor_releases,
@@ -695,6 +698,47 @@ def test_read_url_keeps_the_size_limit() -> None:
         assert read_url(url, 9, delays=()) == b"x" * 9
         assert read_url(url, 9, delays=()) == b"x" * 8
         assert server.requests == 2
+
+
+class _HeldResponse(io.BytesIO):
+    """A response body whose length the server did not declare, usable as a context manager."""
+
+    length = None
+
+    def __enter__(self) -> _HeldResponse:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
+def test_the_channel_index_waits_longer_than_a_vendor_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The per-request generated channel index gets its own wait; vendor sources keep the short one.
+
+    On 2026-11-18 the index took 74 s to its first byte while uncached, more than the 30 s every
+    read had, so three attempts timed out and the audit stopped.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Replaces the network opener with one that records each address and wait.
+    """
+    seen: list[tuple[str, float]] = []
+
+    def urlopen(url: str, timeout: float) -> _HeldResponse:
+        seen.append((url, timeout))
+        return _HeldResponse(b"{}")
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    assert read_url(CONDA_FORGE_PYTHON_INDEX, 8, delays=()) == b"{}"
+    assert read_url(UNRELEASED_SOURCE, 8, delays=()) == b"{}"
+    assert seen == [
+        (CONDA_FORGE_PYTHON_INDEX, CHANNEL_INDEX_TIMEOUT_SECONDS),
+        (UNRELEASED_SOURCE, SOURCE_TIMEOUT_SECONDS),
+    ]
+    assert CHANNEL_INDEX_TIMEOUT_SECONDS >= 2 * 74 and SOURCE_TIMEOUT_SECONDS == 30
 
 
 def test_every_unreleased_fix_shares_one_channel_snapshot(tmp_path: Path) -> None:
