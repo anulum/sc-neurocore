@@ -12,7 +12,9 @@ Before the job ran it, only the local preflight linted the frontend, so a lint
 regression pushed without the hook reached main unseen. These cases fail when
 the job loses the step, runs it after the tests or lets it fail quietly, when
 the script stops refusing warnings, and when the preflight and the job stop
-running the same script.
+running the same script. The job also type-checks the audited project the lint
+reads, which no step checked before; those cases fail when that step goes or
+the project loses the Vite types its stylesheet imports need.
 """
 
 from __future__ import annotations
@@ -67,3 +69,19 @@ def test_the_local_preflight_and_the_job_run_the_same_lint() -> None:
     steps = _frontend_steps()
     preflight_lint = " ".join(tools.preflight.FRONTEND_CHECKS[0])
     assert steps[_step_index(steps, "Frontend lint")]["run"] == preflight_lint
+
+
+def test_the_frontend_job_type_checks_the_audited_project_before_the_tests() -> None:
+    """The audited project the lint reads is type-checked on its own, after the lint and before Vitest."""
+    steps = _frontend_steps()
+    audited = _step_index(steps, "Audited TypeScript project")
+    assert _step_index(steps, "Frontend lint") < audited < _step_index(steps, "Vitest")
+    assert steps[audited]["working-directory"] == "studio/frontend"
+    assert steps[audited]["run"] == "npx tsc -p tsconfig.audited.json --noEmit"
+    assert "if" not in steps[audited] and "continue-on-error" not in steps[audited]
+
+
+def test_the_audited_project_carries_the_vite_types_its_imports_need() -> None:
+    """Files outside ``src`` reach stylesheet imports, whose declarations come with the Vite types."""
+    audited = json.loads((FRONTEND / "tsconfig.audited.json").read_text(encoding="utf-8"))
+    assert "src/vite-env.d.ts" in audited["include"]

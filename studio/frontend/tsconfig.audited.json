@@ -1,8 +1,9 @@
 {
-  "// note": "Type-aware linting needs a project that contains every file the lint scope reaches. `src` is covered by tsconfig.json; everything outside it is listed here. The lint scope is now every .ts/.tsx in the package, so a new file outside `src` belongs in this list.",
+  "// note": "Type-aware linting needs a project that contains every file the lint scope reaches. `src` is covered by tsconfig.json; everything outside it is listed here. The lint scope is now every .ts/.tsx in the package, so a new file outside `src` belongs in this list. `src/vite-env.d.ts` is listed as well: its Vite types declare the stylesheet imports that files here reach through `src`, and without them `noUncheckedSideEffectImports` refuses those imports.",
   "extends": "./tsconfig.json",
   "compilerOptions": { "resolveJsonModule": true },
   "include": [
+    "src/vite-env.d.ts",
     "e2e/admin-operator-audit-archive.spec.ts",
     "e2e/admin-operator-capabilities.spec.ts",
     "e2e/admin-operator-evidence-bundle.spec.ts",

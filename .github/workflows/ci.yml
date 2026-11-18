@@ -231,6 +231,13 @@ jobs:
         working-directory: studio/frontend
         run: npm run lint
 
+      # The audited project is the typed program the lint reads for every file
+      # outside src. No step type-checked it on its own, so a stylesheet import
+      # without declarations stayed in it unseen; any type error now fails here.
+      - name: Audited TypeScript project
+        working-directory: studio/frontend
+        run: npx tsc -p tsconfig.audited.json --noEmit
+
       - name: Vitest
         working-directory: studio/frontend
         run: npm test

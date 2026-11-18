@@ -246,6 +246,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   catalogue-to-silicon live suite, so this test, and the one after it that
   never ran once it failed, can no longer go stale unseen.
 
+- SNN Studio's audited TypeScript project, the typed program its linter
+  reads for every file outside `src`, did not type-check: the graph jobs
+  panel it reaches imports a stylesheet, and without Vite's types, which
+  only the build's project included, TypeScript refused that import. The
+  audited project now includes them, and the continuous-integration
+  frontend job type-checks it on its own, which no step did before.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub
