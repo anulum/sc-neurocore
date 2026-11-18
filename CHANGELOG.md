@@ -219,6 +219,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   studioExportActions.ts, covered fully by new tests. Repeated blank lines
   the earlier moves left in the store's factory file are removed.
 
+- SNN Studio's live browser test of constructor types moved AdEx's initial
+  membrane voltage by ten slider steps, but a floating-point slider has
+  had no numeric step since October ("any"), so the move came to NaN, the
+  slider stayed put and the test waited four minutes for a run that was
+  never sent. It now moves the value a tenth of the way toward the
+  slider's farther bound and checks that the move is finite and real. The
+  continuous-integration browser step now runs the whole
+  catalogue-to-silicon live suite, so this test, and the one after it that
+  never ran once it failed, can no longer go stale unseen.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub

@@ -358,14 +358,22 @@ test("integer and writable initial-state controls preserve constructor types", a
   await selectCatalogueModel(page, "AdExNeuron");
   const writable = page.getByTestId("slider-v₀");
   await expect(writable).toBeVisible();
+  // A floating-point initial state takes any real value, so its slider has no step to count in.
+  // The test moves it a tenth of the way toward its farther bound.
+  await expect(writable).toHaveAttribute("step", "any");
   const defaultState = Number(await writable.inputValue());
-  const step = Number(await writable.getAttribute("step"));
+  const low = Number(await writable.getAttribute("min"));
+  const high = Number(await writable.getAttribute("max"));
+  const farther = high - defaultState >= defaultState - low ? high : low;
+  const moved = defaultState + (farther - defaultState) / 10;
+  expect(Number.isFinite(moved)).toBe(true);
+  expect(moved).not.toBe(defaultState);
   const initialState = page.waitForResponse((r) => {
     if (new URL(r.url()).pathname !== "/api/models/simulate") return false;
     const body = r.request().postDataJSON() as { model_name: string; params: Record<string, number> };
     return body.model_name === "AdExNeuron" && body.params.v !== defaultState;
   });
-  await writable.fill(String(defaultState + 10 * step));
+  await writable.fill(String(moved));
   const response = await initialState;
   expect(response.ok(), await response.text()).toBe(true);
   const result = await response.json() as SimulateResponse;

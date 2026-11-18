@@ -1063,7 +1063,7 @@ jobs:
           export SC_NEUROCORE_STUDIO_PROJECT_ROOT="$namespace/projects"
           npx playwright install --with-deps chromium
           npx playwright test --config playwright.live.config.ts equation-ir-live.spec.ts \
-            hardware-catalogue-live.spec.ts \
+            hardware-catalogue-live.spec.ts catalogue-to-silicon-live.spec.ts \
             candidate-authoring-live.spec.ts candidate-jobs-live.spec.ts \
             --output="$namespace/playwright"
 
