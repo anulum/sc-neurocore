@@ -221,6 +221,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The network pipeline run of SNN Studio's store moves unchanged to the
   graph module, studioGraphActions.ts, beside the other network actions,
   and new tests cover it.
+- The experiment workspace of SNN Studio's store (the inputs, the
+  template, model and preset catalogues and the choices among them, and
+  the return to a model's defaults), with the counters that outdate late
+  replies, moves unchanged to studioWorkspaceActions.ts. The store's
+  factory now only composes its action modules, apart from loading the
+  host's capabilities and recording how each stage ended. An empty import
+  it had kept since July is removed. New tests cover what nothing tested
+  before: loading the template catalogue, a library failure that is not
+  an Error, and a preset of each kind, so the new module is covered fully.
 
 - SNN Studio's live browser test of constructor types moved AdEx's initial
   membrane voltage by ten slider steps, but a floating-point slider has
