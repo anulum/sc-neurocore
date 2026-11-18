@@ -84,6 +84,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The function synthesis guide excludes the legacy ABC `&cec -y` executable
+  that reports false equivalence for complemented outputs. Every use of this
+  solver path requires first, middle and last output phase-flip controls
+  before a positive result receives proof credit.
+
 - The notebook guide's test table names the test files that exist. It
   named 14 files that were split into one file per tested class, and its
   counts and its total of 340 described that older layout. Each row now

@@ -161,6 +161,21 @@ by position with ABC's `cec -n`. The original reference and mapped exports
 first require identical named bit order, so the positional all-output miter
 retains that original function domain.
 
+The legacy ABC executable with SHA-256
+`001a99fb8648794076dd238e42f3bd8c5112a4b8bd89660883325a7e0d006043`
+can report false equivalence for phase-complemented outputs with `&cec -y`.
+That command on this build is not an admissible proof engine.
+
+Every use of `&cec -y`, on any build, requires three phase-flip negative
+controls with the same executable and solver configuration: complement the
+first, middle and last compared output bits in separate candidate copies,
+preserving every original input, output and their order. All three controls
+must produce explicit non-equivalence before a positive result receives proof
+credit. A timeout, an undecided result or a zero exit status alone cannot pass
+this requirement. Retain the commands, binary hash, complete original and
+mutated graphs, and native logs. These controls do not qualify the defective
+legacy build.
+
 Each DSP arithmetic contract compares all 192 operand bits and 26 independently
 variable auxiliary controls against all 144 arithmetic and cascade output bits.
 The admitted combinational profiles require zero registers and known zero
