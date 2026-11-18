@@ -1565,6 +1565,65 @@
       ]
     },
     {
+      "model": "NagumoSatoMapNeuron",
+      "state": "discriminated",
+      "unchanged": [
+        {
+          "held": true,
+          "name": "a current of 0.0 fires once in 3 steps",
+          "observed": 1
+        },
+        {
+          "held": true,
+          "name": "a current of 0.05 fires 4 times in 12 steps",
+          "observed": 4
+        },
+        {
+          "held": true,
+          "name": "a current of 1.0 fires on each of 12 steps",
+          "observed": 12
+        }
+      ],
+      "variants": [
+        {
+          "case": "a current of 0.05 fires 4 times in 12 steps",
+          "equation": "y",
+          "expression": "-(k * y) - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I",
+          "observed": 6,
+          "outcome": "violated",
+          "term": "+ k * y",
+          "within": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+        },
+        {
+          "case": "a current of 0.0 fires once in 3 steps",
+          "equation": "y",
+          "expression": "k * y + alpha * (1.0 if y >= 0.0 else 0.0) + bias + I",
+          "observed": 3,
+          "outcome": "violated",
+          "term": "- alpha * (1.0 if y >= 0.0 else 0.0)",
+          "within": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+        },
+        {
+          "case": "a current of 0.0 fires once in 3 steps",
+          "equation": "y",
+          "expression": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) - bias + I",
+          "observed": 0,
+          "outcome": "violated",
+          "term": "+ bias",
+          "within": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+        },
+        {
+          "case": "a current of 0.05 fires 4 times in 12 steps",
+          "equation": "y",
+          "expression": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias - I",
+          "observed": 3,
+          "outcome": "violated",
+          "term": "+ I",
+          "within": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+        }
+      ]
+    },
+    {
       "model": "PernarowskiNeuron",
       "state": "discriminated",
       "unchanged": [
@@ -3032,8 +3091,8 @@
       ]
     }
   ],
-  "models_with_cases": 24,
-  "models_without_cases": 161,
+  "models_with_cases": 25,
+  "models_without_cases": 160,
   "notes": [
     "a variant is a model's bound schema with the sign of one term of one equation changed, run through the Universal DSL with the current of each case as the one input",
     "a variant that breaks a case shows that the case depends on that sign; it does not show that the sign is right",
@@ -3042,7 +3101,7 @@
   "schema_version": "sc-neurocore.model-behaviour-variants.v1",
   "totals": {
     "cases_not_drivable": 0,
-    "discriminated": 23,
+    "discriminated": 24,
     "no_schema": 1,
     "no_variant": 0,
     "not_discriminated": 0,
@@ -3051,7 +3110,7 @@
   },
   "variants": {
     "not_discriminated": 0,
-    "total": 265,
-    "violated": 265
+    "total": 269,
+    "violated": 269
   }
 }

@@ -63,6 +63,7 @@ RESET_OR_LEVEL_MODELS = frozenset(
         "IbarzTanakaMapNeuron",
         "IntegerQIFNeuron",
         "MihalasNieburNeuron",
+        "NagumoSatoMapNeuron",
         "RulkovMapNeuron",
         "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",

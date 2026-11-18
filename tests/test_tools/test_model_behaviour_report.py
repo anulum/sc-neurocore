@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 161
+MODELS_WITHOUT_A_CASE = 160
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -79,6 +79,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "IbarzTanakaMapNeuron": [[0, 0], [3, 3], [7, 7], [18, 18]],
     "IntegerQIFNeuron": [[26, 26]],
     "MihalasNieburNeuron": [[8, 8], [14, 14]],
+    "NagumoSatoMapNeuron": [[1, 1], [4, 4], [12, 12]],
     "PernarowskiNeuron": [[17, 17], [17, 17], [17, 17], [17, 17], [54, 54], [1, 1]],
     "RulkovMapNeuron": [[0, 0], [7, 7], [10, 10], [0, 0], [34, 34], [130, 130]],
     "SCAdaptiveThresholdMapNeuron": [[3, 3], [4, 4]],
@@ -1236,6 +1237,34 @@ def test_the_aihara_map_states_its_q824_window_twice_and_its_level_event(
         None,
         {"alpha": 0.01, "bias": 0.2, "k": 0.0},
     ]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_nagumo_sato_map_states_its_first_steps_a_drive_and_its_level_event(
+    report: dict[str, object],
+) -> None:
+    """The three steps its model test writes out, a 12-step drive at 0.05, and a level.
+
+    The model test gives y after each of the first three steps at 0.0 as numbers written
+    in the test, -0.74, -0.244 and 0.0536, with one event, at the third. At 0.05, a drive
+    value of its reference trace and of its Q16.16 co-simulation, the map fires every
+    third step, 4 times in 12. In both windows each event follows a step without one, so
+    a count of upward crossings of y = 0 would give the same numbers. At 1.0 y stays at
+    or above 0.26 from the default start of 0.1, and the map fires on every step, where a
+    crossing count gives 0.
+    """
+    row = _models(report)["NagumoSatoMapNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [1, 4, 12]
+    assert [case["inputs"] for case in cases] == [
+        {"current": 0.0},
+        {"current": 0.05},
+        {"current": 1.0},
+    ]
+    assert [case["steps"] for case in cases] == [3, 12, 12]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

@@ -56,6 +56,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Nagumo-Sato neuron map states three behaviour cases. At a current
+  of 0.0 it fires once in 3 steps, the steps its model test writes out
+  with the value of y after each. At 0.05, a drive value of its reference
+  trace and of its Q16.16 co-simulation, it fires 4 times in 12 steps. At
+  1.0 it fires on each of 12 steps without crossing the threshold, which
+  a count of crossings would miss: its event is a level. The window at
+  0.0 breaks two of the four sign variants of its equation; the input term
+  is zero there, and the window at 0.05 breaks it and the memory term.
+  Twenty-five of the 185 catalogue models now state cases.
+
 - The Aihara chaotic neuron map states three behaviour cases. Over 12
   steps, the window its Q8.24 co-simulation test runs for the hand model,
   the schema and the RTL, a current of 0.0 fires on every second step, 6

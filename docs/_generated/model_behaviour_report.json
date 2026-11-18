@@ -1468,10 +1468,59 @@
       "state": "no_case"
     },
     {
-      "cases": [],
-      "cases_sha256": null,
+      "cases": [
+        {
+          "bounds": [
+            1,
+            1
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.0
+          },
+          "kind": "interval",
+          "name": "a current of 0.0 fires once in 3 steps",
+          "observable": "spikes",
+          "observed": 1,
+          "steps": 3
+        },
+        {
+          "bounds": [
+            4,
+            4
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 0.05
+          },
+          "kind": "interval",
+          "name": "a current of 0.05 fires 4 times in 12 steps",
+          "observable": "spikes",
+          "observed": 4,
+          "steps": 12
+        },
+        {
+          "bounds": [
+            12,
+            12
+          ],
+          "exercised": true,
+          "held": true,
+          "inputs": {
+            "current": 1.0
+          },
+          "kind": "interval",
+          "name": "a current of 1.0 fires on each of 12 steps",
+          "observable": "spikes",
+          "observed": 12,
+          "steps": 12
+        }
+      ],
+      "cases_sha256": "27c94c7502e02f70cd68498673bb2d332267de78f3dde199f76732eb4b5b2cf5",
       "model": "NagumoSatoMapNeuron",
-      "state": "no_case"
+      "state": "held"
     },
     {
       "cases": [],
@@ -2751,9 +2800,9 @@
   "schema_version": "sc-neurocore.model-behaviour-report.v1",
   "totals": {
     "failed": 0,
-    "held": 24,
+    "held": 25,
     "held_vacuously": 0,
     "invalid": 0,
-    "no_case": 161
+    "no_case": 160
   }
 }

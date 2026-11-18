@@ -119,3 +119,42 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_nagumo_sato_map.py"
 target_tier = "H1"
 terminal_reason = "One-state piecewise-linear Q16.16 datapath preserves source event semantics."
+
+[[behaviour]]
+name = "a current of 0.0 fires once in 3 steps"
+kind = "interval"
+steps = 3
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 0.0
+
+[[behaviour]]
+name = "a current of 0.05 fires 4 times in 12 steps"
+kind = "interval"
+steps = 12
+observable = "spikes"
+bounds = [
+    4,
+    4,
+]
+
+[behaviour.inputs]
+current = 0.05
+
+[[behaviour]]
+name = "a current of 1.0 fires on each of 12 steps"
+kind = "interval"
+steps = 12
+observable = "spikes"
+bounds = [
+    12,
+    12,
+]
+
+[behaviour.inputs]
+current = 1.0
