@@ -10,20 +10,24 @@
 
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 import tomllib
+import urllib.request
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
 
+from tools import engine_semver_check
 from tools.engine_semver_check import (
     ENGINE_MANIFEST,
     UNCHECKED_FEATURE_NOTE,
     check_command,
     crate_identity,
+    fetch_sparse_index,
     main,
     published_versions,
     sparse_index_path,
@@ -80,6 +84,72 @@ def test_yanked_versions_are_not_baselines_and_a_misread_index_refuses() -> None
     }
     with pytest.raises(ValueError, match="line 2"):
         published_versions(_index(("4.2.0", False)) + "\n[1, 2]")
+
+
+def _never_open(request: Any, timeout: float) -> io.BytesIO:
+    raise AssertionError(f"opened {request.full_url!r} although the check should have refused it")
+
+
+def test_the_index_fetch_reads_the_crates_io_file_over_https(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The fetch opens exactly the crate's sparse-index file on index.crates.io, with its agent."""
+    opened: list[tuple[str, str | None, float]] = []
+
+    def fake_open(request: urllib.request.Request, timeout: float) -> io.BytesIO:
+        opened.append((request.full_url, request.get_header("User-agent"), timeout))
+        return io.BytesIO(_index(("4.2.0", False)).encode("utf-8"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_open)
+    assert fetch_sparse_index(NAME) == _index(("4.2.0", False))
+    assert opened == [
+        (
+            f"https://index.crates.io/{sparse_index_path(NAME)}",
+            "sc-neurocore-engine-semver-check",
+            60.0,
+        )
+    ]
+
+
+@pytest.mark.parametrize("name", ["../engine", "a/b", "", "-x", "x y", "été", "a?b=1"])
+def test_the_index_fetch_refuses_what_is_not_a_crate_name(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A name outside Cargo's alphabet cannot steer the request to another path; nothing opens."""
+    monkeypatch.setattr(urllib.request, "urlopen", _never_open)
+    with pytest.raises(ValueError, match="not a crate name"):
+        fetch_sparse_index(name)
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        "file:///etc",
+        "http://index.crates.io",
+        "ftp://index.crates.io",
+        "https://example.org",
+        "https://index.crates.io.example.org",
+    ],
+)
+def test_the_index_fetch_opens_only_https_on_the_crates_io_index_host(
+    index: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Any other scheme or host is refused before anything opens (bandit B310)."""
+    monkeypatch.setattr(engine_semver_check, "SPARSE_INDEX", index)
+    monkeypatch.setattr(urllib.request, "urlopen", _never_open)
+    with pytest.raises(ValueError, match="only https://index.crates.io is read"):
+        fetch_sparse_index(NAME)
+
+
+def test_a_refused_index_address_stops_the_gate_before_any_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The gate's own fetch, refused, ends the run with 1 and never starts the comparison."""
+    monkeypatch.setattr(engine_semver_check, "SPARSE_INDEX", "file:///etc")
+    monkeypatch.setattr(urllib.request, "urlopen", _never_open)
+    calls, run = _recording_run(0)
+    assert main(["--repo", str(ROOT)], run=run) == 1
+    assert calls == []
 
 
 def test_between_releases_the_published_version_is_the_baseline_and_breaks_are_refused(

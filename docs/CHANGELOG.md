@@ -14,6 +14,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The engine API compatibility gate reads the crates.io sparse index only
+  over HTTPS from index.crates.io, and only for a name in Cargo's crate-name
+  alphabet. Both are checked before the request opens, so no other scheme,
+  host or path can be read; the security scan's bandit check had flagged
+  the open (B310).
+
 - The Mojo lock audit waits up to 180 seconds between bytes for the
   conda-forge channel index, which the service builds for each request;
   vendor source files keep 30 seconds. Uncached, the index once took 74

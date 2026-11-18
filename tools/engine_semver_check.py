@@ -32,9 +32,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import tomllib
+import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -49,6 +51,7 @@ UNCHECKED_FEATURE_NOTE = (
     "Z3 C++ build this check leaves out."
 )
 SPARSE_INDEX = "https://index.crates.io"
+CRATE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 INDEX_TIMEOUT_SECONDS = 60.0
 CHECK_TIMEOUT_SECONDS = 3600
 LINT_FAILURE_EXIT_CODE = 100
@@ -114,12 +117,25 @@ def fetch_sparse_index(name: str) -> str:
     -------
     str
         The file's text: one JSON object per published version.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is not a crate name, or the index URL is not HTTPS on the crates.io index
+        host. Either check runs before anything is opened, so no other scheme (``file:`` or a
+        custom one) and no other path can be read.
     """
+    if not CRATE_NAME.fullmatch(name):
+        raise ValueError(f"{name!r} is not a crate name.")
+    url = f"{SPARSE_INDEX}/{sparse_index_path(name)}"
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or parts.netloc != "index.crates.io":
+        raise ValueError(f"Refusing to open {url!r}: only https://index.crates.io is read.")
     request = urllib.request.Request(
-        f"{SPARSE_INDEX}/{sparse_index_path(name)}",
-        headers={"User-Agent": "sc-neurocore-engine-semver-check"},
+        url, headers={"User-Agent": "sc-neurocore-engine-semver-check"}
     )
-    with urllib.request.urlopen(request, timeout=INDEX_TIMEOUT_SECONDS) as response:
+    # Bandit B310 is answered by the two checks above: only https://index.crates.io is opened.
+    with urllib.request.urlopen(request, timeout=INDEX_TIMEOUT_SECONDS) as response:  # nosec B310
         body: bytes = response.read()
     return body.decode("utf-8")
 
