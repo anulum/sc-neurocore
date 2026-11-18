@@ -83,6 +83,9 @@ shellcheck = "0.9.0-1"
 # The iCE40 UP5K resource estimate is calibrated on this place-and-route.
 nextpnr-ice40 = "0.6-3build5"
 nextpnr-ice40-chipdb = "0.6-3build5"
+# The live catalogue-to-silicon browser journeys route on the ECP5 target.
+nextpnr-ecp5 = "0.6-3build5"
+nextpnr-ecp5-chipdb = "0.6-3build5"
 
 [choco]
 # The Windows leg's Icarus Verilog: Chocolatey publishes 11.0 only (read
@@ -147,3 +150,8 @@ line = "version: 0.9.0"
 name = "nextpnr-ice40"
 command = ["nextpnr-ice40", "--version"]
 line = "\"nextpnr-ice40\" -- Next Generation Place and Route (Version 0.6-3build5)"
+
+[[host_tool]]
+name = "nextpnr-ecp5"
+command = ["nextpnr-ecp5", "--version"]
+line = "\"nextpnr-ecp5\" -- Next Generation Place and Route (Version 0.6-3build5)"

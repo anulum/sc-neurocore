@@ -114,6 +114,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- CI installs the ECP5 router, nextpnr-ecp5 0.6-3build5 with its chip
+  database, on the leg that runs the live browser journeys. The
+  catalogue-to-silicon journeys route the linear and the polynomial IF
+  neuron on the Studio's ECP5 target, and that leg had only the iCE40
+  router, so the first of them stopped at place and route ("nextpnr-ecp5
+  not found") once the live suite reached it. The toolchain manifest pins
+  both packages and gives the router's line to the host check. A new
+  contract test requires the router of every target a live journey routes
+  to be installed, at the manifest's version, before the journeys run.
+
 - The function synthesis guide excludes the legacy ABC `&cec -y` executable
   that reports false equivalence for complemented outputs. Every use of this
   solver path requires first, middle and last output phase-flip controls

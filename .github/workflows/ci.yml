@@ -640,6 +640,16 @@ jobs:
           nextpnr-ice40 --version
           python -m pip install --require-hashes -r requirements/sby.txt
 
+      - name: Install the ECP5 router for the live browser journeys
+        if: matrix.primary
+        run: |
+          set -euo pipefail
+          # The live catalogue-to-silicon journeys route on the Studio's ECP5
+          # target (LFE5U-25F, CABGA381), whose router is nextpnr-ecp5. Only
+          # this leg runs them; test_ci_live_browser_routers_contract.py holds it.
+          sudo apt-get install -y -qq nextpnr-ecp5=0.6-3build5 nextpnr-ecp5-chipdb=0.6-3build5
+          nextpnr-ecp5 --version
+
       - name: Retrieve this run's shared HDL toolchain
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
