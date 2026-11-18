@@ -174,7 +174,7 @@ SpikeInterface SortingExtractor
 
 ## Further Reading
 
-- [Tutorial 23: Spike Train Analysis](23_spike_train_analysis.md) — 125 analysis functions
+- [Tutorial 23: Spike Train Analysis](23_spike_train_analysis.md) — 127 analysis functions
 - [Tutorial 31: Network Simulation Engine](31_network_simulation_engine.md) — Population/Projection/Network
 - [API: Interfaces](../api/interfaces.md) — SpikeInterface adapter API
 - [SpikeInterface docs](https://spikeinterface.readthedocs.io/) — upstream documentation

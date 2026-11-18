@@ -85,7 +85,7 @@ Brunel (2000). Compare firing rates against your Brian2 implementation.
 
 ### Spike train analysis
 
-125 analysis functions, zero external dependencies:
+127 analysis functions, zero external dependencies:
 
 ```python
 from sc_neurocore.analysis import (

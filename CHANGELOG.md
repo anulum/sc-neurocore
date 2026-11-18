@@ -125,6 +125,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The public pages state one count of the spike train analysis toolkit's
+  functions, 127, the number of functions `sc_neurocore.analysis` exports.
+  They said 124, 125 or 132. `docs/api/analysis.md` no longer says it covers
+  every metric of Elephant, PySpike, SpikeInterface and NeuroTools: no test
+  compares the toolkit with them, and the page now says so. A test binds
+  each page that states the count to the exports and refuses an unlisted
+  one. The v3.12 milestone list and the v3.13 report keep the counts of
+  their time.
+
 - CI installs the ECP5 router, nextpnr-ecp5 0.6-3build5 with its chip
   database, on the leg that runs the live browser journeys. The
   catalogue-to-silicon journeys route the linear and the polynomial IF

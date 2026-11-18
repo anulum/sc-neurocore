@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2051
+expected_file_count = 2052
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8254,3 +8254,7 @@ rationale = "Bind the router and chip database of every FPGA target a live brows
 [[file]]
 path = "tests/test_debug/test_hil_client_input_contract.py"
 rationale = "Trigger thresholds that are negative or not finite and negative refills are refused; 0 still disables a test and refills stop at the capacity."
+
+[[file]]
+path = "tests/test_docs_analysis_function_count.py"
+rationale = "Every current page that states the analysis toolkit's function count states the number of functions the package exports, an unlisted page that states it fails, and the analysis page claims no completeness against other libraries."
