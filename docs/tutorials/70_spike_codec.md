@@ -61,6 +61,8 @@ print(f"{result.compression_ratio:.1f}x compression")
 Inter-spike interval encoding. Entropy defaults to `auto`, which selects
 canonical Huffman above 3% event density and LEB128 varints otherwise.
 Explicit `entropy="varint"` and `entropy="huffman"` are also available.
+The default `backend="auto"` uses the Rust engine when installed and otherwise
+uses Python. Both implementations read each other's packets.
 
 ```python
 from sc_neurocore.spike_codec import SpikeCodec
@@ -73,7 +75,12 @@ print(result.summary())
 # Lossy mode: quantize timing
 codec_lossy = SpikeCodec(mode="lossy", timing_precision=5)
 data_lossy, result_lossy = codec_lossy.compress(spikes)
+bins = codec_lossy.decompress(data_lossy, spikes.shape[0] // 5, spikes.shape[1])
 ```
+
+Each output bin covers five original samples. The encoder merges events in
+the same bin and drops the incomplete final block. Keep the timing precision
+with the packet so consumers can recover the original time scale.
 
 Compare the complete packet size on your own sparse raster before choosing
 an entropy mode; compression ratios depend on the recording and framing.

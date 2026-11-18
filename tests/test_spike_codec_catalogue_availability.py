@@ -79,6 +79,15 @@ packet, result = encoder.compress(samples)
 decoded = WaveformCodec.decompress(packet, backend="python")
 assert result.lossless_waveform and decoded.lossless_waveform
 np.testing.assert_array_equal(decoded.waveform, samples)
+
+samples = np.random.default_rng(13).integers(-30, 31, (800, 1), dtype=np.int16)
+samples[402, 0] = -2500
+encoder = WaveformCodec(mode="spike", backend="python")
+packet, result = encoder.compress(samples)
+decoded = WaveformCodec.decompress(packet, backend="python")
+assert result.n_spikes_detected > 0
+assert decoded.spike_raster.shape == samples.shape
+assert int(decoded.spike_raster.sum()) == result.n_spikes_detected
 '''
     result = subprocess.run(
         [sys.executable, "-I", "-B", "-c", program, policy],

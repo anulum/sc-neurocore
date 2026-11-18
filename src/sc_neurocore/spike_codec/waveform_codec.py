@@ -226,7 +226,7 @@ class WaveformCodec:
         self.mode = mode
         self.backend = backend
         self._native = _native_kernels(backend)
-        self.spike_codec = SpikeCodec(entropy="auto")
+        self.spike_codec = SpikeCodec(backend="python" if self._native is None else "auto")
 
     @staticmethod
     def _require_positive_float(name: str, value: float) -> float:
@@ -835,7 +835,9 @@ class WaveformCodec:
         snippet_section = reader.section()
         background_section = reader.section()
         reader.finish()
-        raster = SpikeCodec(entropy="auto").decompress(spike_section, T, N)
+        raster = SpikeCodec(backend="python" if native is None else "auto").decompress(
+            spike_section, T, N
+        )
         if int(raster.sum()) != n_snippets:
             raise ValueError("snippet count does not match the decoded spike raster")
         if mode == "spike":

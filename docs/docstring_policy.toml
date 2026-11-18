@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2053
+expected_file_count = 2059
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8262,3 +8262,27 @@ rationale = "Every current page that states the analysis toolkit's function coun
 [[file]]
 path = "tests/test_tools/test_ci_live_browser_specs_contract.py"
 rationale = "Bind every live Studio browser spec to a hosted workflow run through its configuration and the step's file list, and the event suite to its fresh root and the repository root on PYTHONPATH."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/entropy.py"
+rationale = "Document canonical Huffman bodies and independent decoding."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/isi_packet.py"
+rationale = "Document the reference raster packet interface and bounded framing."
+
+[[file]]
+path = "tests/test_spike_codec_isi_backend.py"
+rationale = "Describe public packet interoperability and geometry regressions."
+
+[[file]]
+path = "tests/test_spike_codec_huffman_encoder.py"
+rationale = "Check the public canonical Huffman body, field widths and consumption."
+
+[[file]]
+path = "benchmarks/bench_isi_codec.py"
+rationale = "Document the public raster codec comparison and retained report."
+
+[[file]]
+path = "benchmarks/isi_codec_timing.py"
+rationale = "Document fresh interpreter and resident packet timing measurements."

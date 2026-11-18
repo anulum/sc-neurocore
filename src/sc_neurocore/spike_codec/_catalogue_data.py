@@ -14,6 +14,7 @@ from .catalogue_types import CodecDescriptor, CodecVariant, CodecWireFormat
 
 _PREFIX = "sc_neurocore.spike_codec."
 _ENGINE = "sc_neurocore_engine.sc_neurocore_engine"
+_ISI_SYMBOLS = ("isi_encode_raster", "isi_decode_raster")
 _WAVEFORM_SYMBOLS = (
     "waveform_codec_noise_thresholds",
     "waveform_codec_extract_background",
@@ -73,23 +74,32 @@ _ISI = CodecDescriptor(
     encoder_required_parameters=(),
     decoder_required_parameters=(),
     decode_required_parameters=("T", "N"),
-    configuration_parameters=("mode", "timing_precision", "entropy"),
+    configuration_parameters=("mode", "timing_precision", "entropy", "backend"),
     variant_parameter="mode",
-    backend_parameter=False,
+    backend_parameter=True,
     stateful=False,
     variants=(
-        CodecVariant("lossless", "lossless", "none", None, (), (), ("isi_varint", "isi_huffman")),
+        CodecVariant(
+            "lossless",
+            "lossless",
+            "packet_coder",
+            _ENGINE,
+            _ISI_SYMBOLS,
+            (),
+            ("isi_varint", "isi_huffman"),
+        ),
         CodecVariant(
             "lossy",
             "lossy",
-            "none",
-            None,
-            (),
+            "packet_coder",
+            _ENGINE,
+            _ISI_SYMBOLS,
             (),
             ("isi_varint", "isi_huffman"),
             (
                 "timing_precision>1 collapses each complete block into one bin; trailing partial block is dropped.",
-                "Decoded timestamps remain bin indices; the caller supplies output T and N.",
+                "Output T can be the original length or the complete-bin count.",
+                "Decoded timestamps remain bin indices in both layouts.",
             ),
         ),
     ),
@@ -97,7 +107,8 @@ _ISI = CodecDescriptor(
     input_dtype="binary bool or int8",
     notes=(
         "entropy defaults to auto: Huffman above 3% event density, otherwise varint.",
-        "No checksum or general malformed-input safety guarantee is implied.",
+        "Decoding validates dimensions, timestamps, section lengths and complete packet consumption.",
+        "Varint and Huffman packets have no checksum.",
     ),
 )
 _PREDICTIVE = CodecDescriptor(

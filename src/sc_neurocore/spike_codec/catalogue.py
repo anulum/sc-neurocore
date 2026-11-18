@@ -53,7 +53,13 @@ def describe_codec(name: str) -> CodecDescriptor:
     raise ValueError(f"Unknown codec {name!r}. Available: {available}")
 
 
-def _check_module(module_name: str, symbols: tuple[str, ...], diagnostics: list[str]) -> str:
+def _check_module(
+    module_name: str,
+    symbols: tuple[str, ...],
+    diagnostics: list[str],
+    *,
+    strict_isi_import: bool = False,
+) -> str:
     """Check actual imports and callable exports, retaining loader diagnostics.
 
     Parameters
@@ -64,6 +70,8 @@ def _check_module(module_name: str, symbols: tuple[str, ...], diagnostics: list[
         Required callable names, including lazily resolved module attributes.
     diagnostics : list of str
         Destination for actual import errors and missing callable names.
+    strict_isi_import : bool
+        Treat import refusal of a present ISI extension as a broken load.
 
     Returns
     -------
@@ -75,6 +83,11 @@ def _check_module(module_name: str, symbols: tuple[str, ...], diagnostics: list[
         missing = tuple(symbol for symbol in symbols if not callable(getattr(module, symbol, None)))
     except ImportError as exc:
         diagnostics.append(f"{module_name}: {type(exc).__name__}: {exc}")
+        if strict_isi_import:
+            from .codec import _installed_native_extension
+
+            if _installed_native_extension():
+                return "broken"
         return "missing"
     except (OSError, RuntimeError) as exc:
         diagnostics.append(f"{module_name}: {type(exc).__name__}: {exc}")
@@ -103,7 +116,8 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         Predictive kernels are cached by their owning module; installing an engine
         later does not update existing instances. Start a fresh process in that case.
         Native loader OSError or RuntimeError excludes ``auto`` from advertised
-        choices; ImportError permits the classes' documented Python fallback.
+        choices. An ImportError loading a present ISI extension does as well.
+        An absent engine permits the classes' documented Python fallback.
 
     Raises
     ------
@@ -124,7 +138,12 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
 
     native_status = "missing"
     if selected.native_module is not None:
-        native_status = _check_module(selected.native_module, selected.native_symbols, diagnostics)
+        native_status = _check_module(
+            selected.native_module,
+            selected.native_symbols,
+            diagnostics,
+            strict_isi_import=descriptor.name == "isi",
+        )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:
         choices = ("python",)

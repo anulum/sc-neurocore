@@ -43809,7 +43809,8 @@ CodecAvailability
     Predictive kernels are cached by their owning module; installing an engine
     later does not update existing instances. Start a fresh process in that case.
     Native loader OSError or RuntimeError excludes ``auto`` from advertised
-    choices; ImportError permits the classes' documented Python fallback.
+    choices. An ImportError loading a present ISI extension does as well.
+    An absent engine permits the classes' documented Python fallback.
 
 Raises
 ------
@@ -43951,40 +43952,34 @@ Result of spike train compression.
   - Return a human-readable one-line summary of the codec statistics.
 
 ### Class `SpikeCodec`
-ISI spike train codec with configurable entropy backend.
-
-Compression strategy:
-1. Extract per-neuron spike times from binary raster
-2. Compute inter-spike intervals (ISIs) per neuron
-3. Encode ISIs with chosen backend:
-   'varint': LEB128 variable-length integers (fast, simple)
-   'huffman': Canonical Huffman coding of inter-spike intervals
-
-Each neuron is encoded independently. No inter-channel modeling.
-For inter-channel compression, use DeltaSpikeCodec.
+Compress binary raster columns as inter-spike intervals.
 
 Parameters
 ----------
 mode : str
-    'lossless' (exact reconstruction) or 'lossy' (preserve rates only).
+    'lossless' preserves the input. 'lossy' allows timing quantization.
 timing_precision : int
-    For lossy mode: quantize spike times to this resolution.
+    Number of input samples in a complete quantized bin for lossy mode.
+    A final partial bin is dropped.
 entropy : str
-    'auto' (default), 'varint' or 'huffman'. Auto selects Huffman above
-    3% event density and varint otherwise.
+    'varint', 'huffman', or 'auto'. Auto uses Huffman above 3% encoded
+    event density, measured against the original input shape.
+backend : str
+    'python', 'rust', or 'auto'. Auto uses the Rust codec when available.
+    Native codec errors propagate to the caller.
 
 Notes
 -----
-Varint packets require T < 2**24 to keep their first byte distinct
-from the Huffman marker. Explicit Huffman coding supports longer rasters
-within its existing field and resource limits. Auto refuses a longer
-raster when its density selects varint.
+Varint requires fewer than 2**24 rows to avoid the Huffman discriminator.
+Quantized packets retain the original dimensions and store bin indices.
 
-- **__init__**(mode, timing_precision, entropy)
+- **__init__**(mode, timing_precision, entropy, \*, backend)
+- **backend**()
+  - Return the selected implementation, 'python' or 'rust'.
 - **compress**(spikes)
-  - Compress a spike raster.
+  - Compress a binary bool or int8 raster of shape (time, channels).
 - **decompress**(data, T, N)
-  - Decompress to spike raster.
+  - Decode a complete packet to an int8 raster at the requested dimensions.
 
 ---
 
@@ -44024,15 +44019,25 @@ timing_precision : int
 ## Module `spike_codec.entropy`
 
 ### Class `HuffmanEncoder`
-Encode integer streams using adaptive Huffman coding.
-
-Builds code table from the input data, stores table in header,
-then encodes symbols as variable-length bit sequences.
+Code signed 32-bit symbols with canonical codes and MSB-first bits.
 
 - **encode**(values)
-  - Encode integer list to compressed bytes.
+  - Encode symbols as a length table, bit count and packed bits.
 - **decode**(data, n_symbols)
-  - Decode compressed bytes to integer list.
+  - Decode one body and return its symbols and bytes consumed.
+
+---
+
+## Module `spike_codec.isi_packet`
+
+### Function `encode_varint(value)`
+Encode one nonnegative integer as unsigned LEB128.
+
+### Function `encode_packet(events, rows, channels, entropy)`
+Encode ordered event times in the selected ISI wire format.
+
+### Function `decode_packet(data, rows, channels, precision)`
+Validate a complete ISI packet and reconstruct its binary output raster.
 
 ---
 

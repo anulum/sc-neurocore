@@ -372,7 +372,8 @@ recovered = codec.decompress(data, T, N)
 
 ### Competitive Benchmarks (measured, all lossless)
 
-ISI codec with auto entropy selection beats zlib-9 at every firing rate:
+In this historical 2,000 × 64 raster comparison, ISI with automatic
+entropy selection wrote smaller packets than zlib-9 at each tested rate.
 
 | Firing Rate | ISI (auto) | zlib-9 | lzma | Advantage |
 |-------------|-----------|--------|------|-----------|
@@ -404,15 +405,18 @@ compression of the raw electrode samples (see the measured results above).
 
 ## ISI Codec (Baseline)
 
-Inter-spike interval encoding with LEB128 variable-length integers. Per-neuron
-spike times → differences → varint bytes. Exploits sparsity: cortical neurons
-fire at 0.5-5 Hz, so >99.9% of time bins are zeros.
+Inter-spike interval encoding uses LEB128 variable-length integers or
+canonical Huffman coding. The encoder defaults to Python when the Rust
+extension is absent. Use the same API for either backend and inspect
+`codec.backend` to see which implementation ran.
 
 ```python
 from sc_neurocore.spike_codec import SpikeCodec
 
-codec = SpikeCodec(mode="lossless")  # or "lossy" with timing_precision
+codec = SpikeCodec(mode="lossless")
 data, result = codec.compress(spikes)
+reconstructed = codec.decompress(data, *spikes.shape)
+print(codec.backend)
 print(result.summary())
 ```
 
@@ -426,9 +430,10 @@ Encode XOR residuals with four predictor choices:
 - **`world_model`**: an optional Python predictor excluded from the base wheel;
   probe this variant before use.
 
-Real Rust kernels accelerate EMA/LFSR prediction and recovery. The packet
-container and the other predictors remain Python; no backend keyword or
-standalone native predictive container is provided by this interface.
+Rust kernels accelerate EMA and LFSR prediction and recovery. The Python
+predictive container delegates ISI residual packets to `SpikeCodec`, which
+selects the available backend. The context and world-model predictors run
+in Python.
 
 ```
 Encoder:                          Decoder:

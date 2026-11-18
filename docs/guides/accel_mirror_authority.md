@@ -32,8 +32,9 @@ Everything else is one of:
 ## Codec implementations and retained sources
 
 The Python packet APIs live in `sc_neurocore.spike_codec`. The production Rust
-engine provides waveform channel coders, stateful waveform-stream and spike-event
-coding, and EMA/LFSR predictive kernels. These components do not establish that
+engine provides complete ISI varint and Huffman packets, waveform channel coders,
+stateful waveform-stream and spike-event coding, and EMA/LFSR predictive kernels.
+These components do not establish that
 every Python packet container has a complete Rust implementation. Use the
 [codec catalogue](../api/spike_codec.md) for component availability and the
 [wire-format reference](../reference/spike_codec_wire_formats.md) for packet

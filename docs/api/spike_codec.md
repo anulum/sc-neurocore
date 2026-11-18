@@ -44,12 +44,13 @@ an available codec backend.
 
 Host import policies can make an entry point unavailable. A native loader's
 `OSError` or `RuntimeError` appears in diagnostics and excludes `auto` from
-the waveform/stream backend choices; an absent engine permits documented
+the ISI, waveform and stream backend choices. ISI also reports a refusal to
+import a present native extension as a loader error. An absent engine permits
 Python fallback. The probe reports an unavailable Python class separately.
 
 | Name | Input / decoded output | Choices | Persistent state | Backend selector |
 |---|---|---|---|---|
-| isi | Binary raster / raster | mode: lossless, lossy; entropy: auto, varint, huffman | None | None |
+| isi | Binary raster / raster | mode: lossless, lossy; entropy: auto, varint, huffman | None | auto, python, rust when available |
 | predictive | Binary raster / raster | ema, lfsr, context, world_model | Reset per batch | None; EMA/LFSR may use Rust kernels |
 | delta | Binary raster / raster | lossless, lossy | None | None |
 | streaming | Binary raster / raster | Independent frames | None | None |
@@ -102,13 +103,18 @@ measured performance ranking or latency guarantee; see its API priority rules.
 
 ## ISI Codec (Baseline)
 
-Inter-spike interval encoding with LEB128 variable-length integers.
+Inter-spike interval encoding with LEB128 or canonical Huffman coding.
+Python and Rust produce the same packets for the same raster and settings.
+Use the instance's `backend` property to inspect the selected implementation.
 Entropy defaults to auto: Huffman above 3% spike density and varint
 otherwise. Ratios depend on input and framing; measure your data.
 Encoding refuses varint rasters with 16,777,216 or more time steps, including
 when auto selects varint. Explicit Huffman supports longer rasters. Re-encode
-affected 4.0.0 varint data from its original source because legacy packets
-can be mistaken for Huffman.
+4.0.0 varint data with 16,777,216 through 33,554,431 time steps from its
+original source. That range collides with the Huffman marker. Both readers
+accept unambiguous legacy varint packets with at least 33,554,432 time steps.
+See the [Python and Rust timings](../benchmarks/BENCHMARKS.md#isi-codec-python-and-rust-timing)
+for the synthetic and recorded workloads.
 
 ::: sc_neurocore.spike_codec.codec
     options:
@@ -121,10 +127,10 @@ can be mistaken for Huffman.
 
 EMA, LFSR, context and optional world-model predictors encode XOR residuals.
 Predictor state resets per batch. Lossless reconstruction requires
-base_mode="lossless". Rust EMA/LFSR functions accelerate predictor loops;
-the container and ISI entropy path remain Python. This class has no backend
-keyword. The world-model module is excluded from the base wheel; probe it
-per variant.
+`base_mode="lossless"`. Rust EMA/LFSR functions accelerate the predictor
+loops. The Python predictive container delegates its residual packet to
+`SpikeCodec`, which selects the available backend. The world-model module is
+excluded from the base wheel; probe it per variant.
 
 ::: sc_neurocore.spike_codec.predictive_codec
     options:
@@ -139,7 +145,8 @@ Inter-channel XOR residuals. Groups channels spatially, picks reference
 per group, encodes others as delta. Reference indices are group-local uint8
 values. Construction and compression require group_size in 1–256, including
 after configuration mutation. Wider groups written by 4.0.0 could wrap the
-index; re-encode affected data from its original source.
+index; re-encode affected data from its original source. The Python delta
+container delegates its residual packet to `SpikeCodec`.
 
 ::: sc_neurocore.spike_codec.delta_codec
     options:

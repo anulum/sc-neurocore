@@ -6,11 +6,15 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Spike and waveform codec modules
 
-//! Spike and waveform codecs: predictive XOR coding, the WaveformCodec kernels, the
+//! Spike and waveform codecs: ISI and predictive XOR coding, the WaveformCodec kernels, the
 //! streaming lossless coder and the spike-event layer.
 //!
 //! The source files keep their places in `src/` and `src/bindings/`; this
 //! module groups them so the crate root does not grow.
+
+pub mod isi;
+#[path = "../bindings/isi.rs"]
+mod isi_binding;
 
 #[path = "../predictive_coding.rs"]
 pub mod predictive_coding;
@@ -34,8 +38,9 @@ pub mod waveform_stream_gpu;
 
 use pyo3::prelude::*;
 
-/// Register the predictive-coding, WaveformCodec, streaming-coder and spike-event bindings on the extension module.
+/// Register the raster, waveform and spike-event bindings on the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    isi_binding::register(module)?;
     predictive_coding_binding::register(module)?;
     waveform_codec_binding::register(module)?;
     waveform_stream_binding::register(module)?;

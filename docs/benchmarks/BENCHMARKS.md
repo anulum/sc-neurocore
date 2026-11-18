@@ -758,6 +758,71 @@ python benchmarks/snntorch_vs_sc_microbench.py --runs 5 --scales 100 500 1000
 
 ---
 
+## ISI codec Python and Rust timing
+
+Each comparison measures both installed backends processing the same rasters
+and producing identical packets. The selected measurements span 2026-11-17
+to 2026-11-18 UTC. The source and wheel hashes, paired samples and hardware
+settings are in `benchmarks/results/isi_codec_backends.json`.
+
+The Linux comparisons use an HP ProLiant ML350p Gen8 with 2 ×
+Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz and 252 GiB of usable RAM. Both
+backends use logical CPU 11 with one thread. Across these
+runs, other work on that physical core and its SMT sibling reached up to
+16.9% of one CPU. The JSON records the core, socket, NUMA node, CPU
+governor and sampled frequency.
+
+The SHD Huffman precision-one comparison uses the MSI GS73 Stealth 8RE with an
+Intel Core i7-8750H and 32 GiB of visible RAM,
+running Windows 11. Both backends use logical CPU 8 with one thread.
+Windows processor counters and Job Object accounting measured 3.7%
+other CPU activity across that physical core. Fresh-process peak RSS is marked
+unavailable for the Windows run. [Windows processor counters](https://learn.microsoft.com/en-us/windows/win32/api/pdh/nf-pdh-pdhgetformattedcountervalue),
+[Windows process-tree accounting](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_accounting_information).
+
+Each warm timing is the median of seven sums of resident per-recording calls.
+The speedup is the median of paired Python/Rust round-trip ratios measured on
+the hardware shown in that row. The JSON contains the paired quartiles and
+five independent fresh-interpreter samples per backend for a representative
+recording.
+
+| Input | Entropy | Timing precision | Hardware | Python encode / decode / round trip (ms) | Rust encode / decode / round trip (ms) | Paired round-trip speedup |
+|---|---|---:|---|---:|---:|---:|
+| SHD | auto | 1 | ML350p Linux | 22823.312 / 27963.048 / 50931.144 | 1803.931 / 343.611 / 1887.252 | 26.97× |
+| SHD | auto | 5 | ML350p Linux | 18766.340 / 26997.188 / 45996.890 | 1775.010 / 239.457 / 1840.799 | 24.98× |
+| SHD | huffman | 1 | MSI Windows | 13279.832 / 32257.644 / 45714.840 | 2273.646 / 2432.822 / 4625.937 | 9.91× |
+| SHD | huffman | 5 | ML350p Linux | 17950.939 / 38134.605 / 56000.385 | 3367.278 / 2535.551 / 5735.852 | 9.77× |
+| SHD | varint | 1 | ML350p Linux | 23012.420 / 28041.032 / 51192.530 | 1793.316 / 322.483 / 1923.004 | 26.69× |
+| SHD | varint | 5 | ML350p Linux | 17472.380 / 25161.119 / 42807.687 | 1687.173 / 234.645 / 1746.791 | 24.51× |
+| Synthetic | auto | 1 | ML350p Linux | 15.269 / 42.383 / 57.602 | 3.420 / 3.636 / 6.960 | 8.23× |
+| Synthetic | auto | 5 | ML350p Linux | 9.066 / 17.375 / 26.675 | 2.443 / 1.144 / 3.510 | 7.59× |
+| Synthetic | huffman | 1 | ML350p Linux | 17.102 / 53.715 / 70.613 | 4.028 / 5.131 / 8.986 | 7.83× |
+| Synthetic | huffman | 5 | ML350p Linux | 9.744 / 25.345 / 34.943 | 2.930 / 2.216 / 5.020 | 6.98× |
+| Synthetic | varint | 1 | ML350p Linux | 15.891 / 23.623 / 39.472 | 1.327 / 0.332 / 1.527 | 25.99× |
+| Synthetic | varint | 5 | ML350p Linux | 10.020 / 15.251 / 25.326 | 1.333 / 0.164 / 1.422 | 17.82× |
+
+Synthetic inputs cover sparse, dense and bursting rasters. The recorded
+cohort uses all 2,264 Spiking Heidelberg Digits test recordings from Cramer,
+Stradmann, Schemmel and Zenke under CC BY 4.0. The harness bins events at one
+millisecond across 700 channels and coalesces events in the same channel and
+bin. At precision five, 3,761 raster events
+fall in incomplete blocks and 693,674
+merge with another event in the same channel and bin, leaving
+17,934,027 reconstructed events out of
+18,631,462. Direct grouping of the HDF5 events
+independently checks the decoded hashes. Automatic selection produces the same
+packet as the selected explicit encoder. [Dataset](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/).
+
+To reproduce, install both wheels and run the harness once per entropy and
+precision. Use one physical core for both backends. Supply the uncompressed
+test split with `--shd shd_test.h5` for the recorded cohort.
+
+```sh
+python benchmarks/bench_isi_codec.py --entropy auto --precision 1 --output isi-auto.json
+```
+
+---
+
 ## 16. Spike Codec Library (2026-03-25)
 
 Compression ratios for the spike codec library. All codecs lossless.

@@ -23,16 +23,16 @@ contracts and cannot be substituted merely because both contain events.
 
 | Interface | Encode / decode | Required external decode arguments | Rust component scope |
 |---|---|---|---|
-| ISI | SpikeCodec.compress / decompress | T, N | None |
-| Predictive | PredictiveSpikeCodec.compress / decompress | T, N | EMA/LFSR predict-XOR/recovery kernels |
-| Delta | DeltaSpikeCodec.compress / decompress | T, N | None |
+| ISI | SpikeCodec.compress / decompress | T, N | Complete varint and Huffman raster packet encoder and decoder |
+| Predictive | PredictiveSpikeCodec.compress / decompress | T, N | EMA/LFSR predictor kernels and embedded ISI residual packet |
+| Delta | DeltaSpikeCodec.compress / decompress | T, N | Embedded ISI residual packet |
 | Raster frames | StreamingSpikeCodec.compress / decompress | None for whole container | None |
 | AER | AERSpikeCodec.compress / decompress | None by default | None |
 | Waveform | WaveformCodec.compress / classmethod decompress | None; decoder backend selected separately | Signal kernels, channel coder or stream packet coder; Python WFC2 container |
 | Lossless stream | LosslessStreamEncoder.encode / LosslessStreamDecoder.decode | Matching channels, ADC bits, groups, samples per packet and preceding state | Complete packet encoder/decoder |
 | Event stream | SpikeEventEncoder.encode / SpikeEventDecoder.decode | Matching channels, bin samples, timing, power bins, groups, samples per packet and preceding state | Complete event/power packet pipeline |
 
-Only waveform and the two raw stream APIs expose backend=auto/python/rust.
+ISI, waveform and the two raw stream APIs expose backend=auto/python/rust.
 Predictive caches all four EMA/LFSR native imports together; there is no
 backend keyword. Context and optional world_model use Python. world_model's
 module is excluded from the base wheel. Optional zstandard and PyWavelets
@@ -68,8 +68,9 @@ Varint has **no magic or entropy flag**:
 | Each subsequent inter-spike interval | Unsigned LEB128 |
 
 LEB128 stores seven low bits per byte and sets bit7 when another byte follows.
-The public decoder still requires T and N, despite their presence in the
-header; it uses the supplied dimensions.
+The decoder requires the shortest uint32 LEB128 representation. It checks
+the supplied dimensions against the packet and rejects truncated or trailing
+data, out-of-range timestamps and zero intervals.
 
 Huffman begins byte01, T:uint32, N:uint32, then count-section length:uint32,
 N LEB128 event counts, first-time-section length:uint32, first event times
@@ -80,24 +81,30 @@ intervals in channel order. A Huffman body is:
 - Each entry: symbol:int32 signed big-endian and code length:uint8.
 - Bit count:uint32 and ceil(bit_count/8) bytes, most-significant bit first.
 
-Codes are canonical, ordered by length then symbol. Auto entropy selects
-Huffman above 3% spike density; otherwise varint. This policy is per packet,
-not a CPU/GPU selector.
+Codes are canonical, ordered by length then symbol. When building the
+Huffman tree, first symbol occurrence breaks ties among leaves of equal
+frequency, followed by internal nodes in creation order. The decoder
+checks table entries, the exact number of intervals and zero padding.
+Auto entropy selects Huffman above 3% spike density in the original raster
+geometry, using the count after timing quantization when enabled.
 
 Compatibility limit: the current reader treats leading01 as Huffman. A raw
 varint T whose high byte is01 therefore collides with that discriminator
 (T from 2**24 through 2**25-1). Current encoding refuses every varint raster
 with T >= 2**24 after entropy selection, including auto-selected varint.
-Explicit Huffman remains available for longer rasters. Unsafe varint packets
-written by 4.0.0 cannot reliably be distinguished from Huffman; re-encode
-affected data from its original source. There is no checksum or general
-corruption-detection guarantee.
+Explicit Huffman remains available for longer rasters. Both readers accept
+unambiguous legacy varint packets with T >= 2**25. Legacy varint packets
+in the collision range require re-encoding from the original source.
+There is no checksum or general corruption-detection guarantee.
 
-Lossy mode with timing_precision>1 ORs each complete block into one bin,
-drops a final incomplete block and encodes those bin indices. The packet's
-T remains the original input length, and public decode writes bin indices
-into the caller's requested shape. It does not expand times back to original
-sample positions. This is not a uniform waveform timing-error guarantee.
+Lossy mode with timing_precision greater than one ORs each complete block
+into one bin and drops the final incomplete block. The packet retains the
+original input length and stores bin indices. For resolution `p`, retained
+events are assigned to bin `floor(t/p)`. The original sample is at most
+`p - 1` samples after the bin's start, and events in the same bin merge.
+With matching timing precision the decoder accepts the original row count
+or the number of complete bins. In both layouts the output indexes bins
+directly. Preserve the timing precision separately when storing packets.
 
 ## Predictive XOR containers
 

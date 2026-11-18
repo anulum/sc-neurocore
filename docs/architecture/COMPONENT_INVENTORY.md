@@ -138,7 +138,7 @@ that are planned but not yet implemented in this repository.
 *   **`cli/`**
     *   `sc-neurocore` command-line interface
 *   **`spike_codec/`** — Spike Codec Library (6 codecs, unified API)
-    *   `codec.py`: `SpikeCodec` — ISI + LEB128 varint baseline (50-200x).
+    *   `codec.py`: `SpikeCodec` — ISI with LEB128 or canonical Huffman coding in Python and Rust.
     *   `predictive_codec.py`: `PredictiveSpikeCodec` — EMA predictor + XOR error coding for BCI implants.
     *   `delta_codec.py`: `DeltaSpikeCodec` — inter-channel XOR residuals for correlated probe arrays.
     *   `streaming_codec.py`: `StreamingSpikeCodec` — fixed-latency, independently decodable frames.

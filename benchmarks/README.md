@@ -75,6 +75,31 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+Run the ISI comparison with the normal Python and Rust wheels installed.
+The harness validates matching packets and cross-decoding before and after
+timing. Each report separates encode, decode and round trip timing and
+retains every measured sample. Fresh interpreter timings use the first
+recording as a representative input and include separate import and process
+costs. Warm throughput uses the sum of resident codec call durations over
+the whole cohort. Compare runs on the same physical core and record
+competing work on that core and its SMT sibling.
+The [recorded comparisons](results/isi_codec_backends.json) report
+Python and Rust timings with the hardware specified for every case.
+
+```sh
+python benchmarks/bench_isi_codec.py --entropy auto --output isi-synthetic.json
+python benchmarks/bench_isi_codec.py --shd shd_test.h5 --entropy huffman \
+  --precision 5 --output isi-shd-huffman-quantized.json
+```
+
+The recorded-input run requires `h5py` and the uncompressed
+[Spiking Heidelberg Digits test split](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/).
+Cramer, Stradmann, Schemmel and Zenke provide the dataset under CC BY 4.0.
+The harness uses all 700 channels and bins each recording to millisecond
+indices through its last event. Events that occupy the same channel and bin
+coalesce in the binary raster. Quantized runs apply the requested precision
+to that raster and retain their separate timing and packet sizes.
+
 | Script | Description |
 |--------|-------------|
 | `bench_nir_graph.py` | Interleaved monolithic-parent/modular-candidate comparison for NIR import, hardware-graph lowering, FPGA compilation, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, governor, frequency, host load, and polyglot applicability |

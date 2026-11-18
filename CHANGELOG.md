@@ -56,6 +56,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The ISI spike raster codec can encode and decode varint and Huffman packets
+  through the Rust engine. `SpikeCodec` selects the installed native engine
+  by default and can use either backend explicitly. Both backends preserve
+  the existing format and validate framing and timestamps during decoding.
+  Both readers accept unambiguous legacy varint packets with at least
+  33,554,432 time steps. Legacy varint packets with 16,777,216 through
+  33,554,431 time steps collide with the Huffman marker and require
+  re-encoding from the original source.
+  For a quantized packet, callers can request the number of complete bins
+  with the matching timing precision.
+
 - The Nagumo-Sato neuron map states three behaviour cases. At a current
   of 0.0 it fires once in 3 steps, the steps its model test writes out
   with the value of y after each. At 0.05, a drive value of its reference
