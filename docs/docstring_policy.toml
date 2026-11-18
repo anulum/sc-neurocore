@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2049
+expected_file_count = 2051
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8238,6 +8238,14 @@ rationale = "Every crate under crates/ is checked with cargo fmt --check by one 
 [[file]]
 path = "tests/test_tools/test_crate_format_check.py"
 rationale = "Every crate is found and checked once, one unformatted crate fails and is named, an empty crates/ refuses, and preflight and CI run the same gate."
+
+[[file]]
+path = "tools/engine_semver_check.py"
+rationale = "The engine crate's public API is compared with its crates.io release by cargo-semver-checks: the published version is the baseline between releases, and a check that cannot run fails."
+
+[[file]]
+path = "tests/test_tools/test_engine_semver_check.py"
+rationale = "The baseline rule on both sides of a release bump, Cargo's sparse-index layout, yanked and misread index lines, every exit verdict, and the CI job's pinned install."
 
 [[file]]
 path = "tests/test_tools/test_ci_live_browser_routers_contract.py"

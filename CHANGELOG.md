@@ -324,6 +324,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   its arithmetic benchmark) and `neuro_symbolic` are formatted, with no change
   of behaviour.
 
+- The engine crate's public API is compared with its release on crates.io in
+  a new CI job, `engine-semver`. `tools/engine_semver_check.py` runs
+  `cargo semver-checks` 0.51.0 and fails on an incompatible change outside a
+  major release:
+  - **Between releases:** the published version named in
+    `engine/Cargo.toml` is the baseline, and the change is classed as minor.
+  - **At the release bump:** the highest published version below the new one
+    is the baseline, and the version numbers set the release type.
+  - **Never a pass:** a check that cannot run fails.
+
+  The 4.2.0 release gate compared only public functions and type shapes, and
+  missed traits, impls, attributes and re-exports. The `gpu` feature is
+  compared. The `supervisor` module behind the default `z3` feature is not,
+  because the bundled Z3 build would dominate the job, and each run says so.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub
