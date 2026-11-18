@@ -84,6 +84,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The notebook guide's test table names the test files that exist. It
+  named 14 files that were split into one file per tested class, and its
+  counts and its total of 340 described that older layout. Each row now
+  gives the number of files split from its original, and the counts are
+  what pytest collects from them: 435 tests in all.
+
 - The Halton source's formal job `hdl/formal/halton16.sby` asserts the two
   properties its harness listed and did not check: the counter steps by
   one on every enabled clock, and the output is the bit reverse of the

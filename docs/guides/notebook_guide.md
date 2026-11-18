@@ -157,22 +157,25 @@ Use `quickstart_colab.ipynb` — installs sc-neurocore automatically.
 
 ## Test Coverage
 
-Every notebook topic has a corresponding test suite in `tests/`:
+Every notebook topic has a corresponding test suite in `tests/`. A large test
+file was later split into one file per tested class; each split file names
+its origin in its header ("from former test_….py"). The counts are the
+tests pytest collects from those files.
 
 | Notebook topic | Test file | Tests |
 |---------------|-----------|------:|
-| Topology (09) | `test_topology_generators.py` | 26 |
-| SC arithmetic (14) | `test_sc_convergence.py` | 13 |
-| Fault tolerance (15) | `test_fault_injection.py` | 14 |
-| Neuron atlas (16) | `test_neuron_families.py` | 57 |
-| Learning rules (12) | `test_learning_advanced.py` | 11 |
-| Quantisation (13) | `test_quantisation_pipeline.py` | 12 |
-| Spike ALU (21) | `test_spike_alu.py` | 27 |
-| IR types (22) | `test_ir_type_checker.py` | existing |
-| Topology obs (23) | `test_topological_observables.py` | 17 |
-| Identity (24) | `test_identity_lazarus.py` | 20 |
-| Cortical col (25) | `test_cortical_column_dynamics.py` | 13 |
-| Domain bridge (28) | `test_tensor_stream.py`, `test_quantum_hybrid.py` | 24 |
+| Topology (09) | 6 files split from `test_topology_generators.py` | 33 |
+| SC arithmetic (14) | 6 files split from `test_sc_convergence.py` | 23 |
+| Fault tolerance (15) | 8 files split from `test_fault_injection.py` | 37 |
+| Neuron atlas (16) | 2 files split from `test_neuron_families.py` | 57 |
+| Learning rules (12) | 6 files split from `test_learning_advanced.py` | 14 |
+| Quantisation (13) | 5 files split from `test_quantisation_pipeline.py` | 19 |
+| Spike ALU (21) | 4 files split from `test_spike_alu.py` | 48 |
+| IR types (22) | 2 files split from `test_ir_type_checker.py` | 14 |
+| Topology obs (23) | 4 files split from `test_topological_observables.py` | 21 |
+| Identity (24) | 5 files split from `test_identity_lazarus.py` | 22 |
+| Cortical col (25) | 5 files split from `test_cortical_column_dynamics.py` | 13 |
+| Domain bridge (28) | 7 files split from `test_tensor_stream.py`, and `test_quantum_hybrid.py` | 32 |
 | Golden path evidence (29) | `test_notebooks/test_golden_path_notebook.py` | 2 |
 | SHD Vertex deployable evidence (30) | `test_notebooks/test_shd_vertex_notebook.py` | 2 |
 | BRF evidence (31) | `test_notebooks/test_brf_notebook.py` | 2 |
@@ -192,8 +195,8 @@ Every notebook topic has a corresponding test suite in `tests/`:
 | Honest energy proxy (46) | `test_notebooks/test_energy_proxy_honest_notebook.py` | 2 |
 | Closed-loop in silico (47) | `test_notebooks/test_closed_loop_in_silico_notebook.py` | 2 |
 | Fail-closed gallery (48) | `test_notebooks/test_fail_closed_gallery_notebook.py` | 2 |
-| SCPN (—) | `test_scpn_integrated.py` | 17 |
-| CORDIV (14) | `test_cordiv_division.py` | 10 |
-| Monitors (—) | `test_network_monitors_stimulus.py` | 19 |
+| SCPN (—) | 6 files split from `test_scpn_integrated.py` | 28 |
+| CORDIV (14) | 2 files split from `test_cordiv_division.py` | 15 |
+| Monitors (—) | 6 files split from `test_network_monitors_stimulus.py` | 21 |
 
-**Total new tests: 340 passing on Python 3.12.**
+**These files hold 435 tests (pytest collection, 17 Nov 2026).**
