@@ -86,7 +86,7 @@ Huffman tree, first symbol occurrence breaks ties among leaves of equal
 frequency, followed by internal nodes in creation order. The decoder
 checks table entries, the exact number of intervals and zero padding.
 Auto entropy selects Huffman above 3% spike density in the original raster
-geometry, using the count after timing quantization when enabled.
+geometry, using the count after timing quantisation when enabled.
 
 Compatibility limit: the current reader treats leading01 as Huffman. A raw
 varint T whose high byte is01 therefore collides with that discriminator

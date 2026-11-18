@@ -89,7 +89,7 @@ Python and Rust timings with the hardware specified for every case.
 ```sh
 python benchmarks/bench_isi_codec.py --entropy auto --output isi-synthetic.json
 python benchmarks/bench_isi_codec.py --shd shd_test.h5 --entropy huffman \
-  --precision 5 --output isi-shd-huffman-quantized.json
+  --precision 5 --output isi-shd-huffman-quantised.json
 ```
 
 The recorded-input run requires `h5py` and the uncompressed
@@ -97,7 +97,7 @@ The recorded-input run requires `h5py` and the uncompressed
 Cramer, Stradmann, Schemmel and Zenke provide the dataset under CC BY 4.0.
 The harness uses all 700 channels and bins each recording to millisecond
 indices through its last event. Events that occupy the same channel and bin
-coalesce in the binary raster. Quantized runs apply the requested precision
+coalesce in the binary raster. Quantised runs apply the requested precision
 to that raster and retain their separate timing and packet sizes.
 
 | Script | Description |

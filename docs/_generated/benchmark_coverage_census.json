@@ -1,8 +1,8 @@
 {
   "all_record_currency_totals": {
-    "current": 30,
+    "current": 29,
     "outdated": 114,
-    "reviewed": 1,
+    "reviewed": 2,
     "unbound": 174
   },
   "all_records": 319,
@@ -2632,8 +2632,12 @@
       "name": "formal/sc_chialvo_map_z3memory64/review.json"
     },
     {
-      "currency": "current",
-      "name": "isi_codec_backends.json"
+      "currency": "reviewed",
+      "name": "isi_codec_backends.json",
+      "reviewed": [
+        "engine/src/codecs/isi.rs",
+        "src/sc_neurocore/spike_codec/codec.py"
+      ]
     },
     {
       "changed": [

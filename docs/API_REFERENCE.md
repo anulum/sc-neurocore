@@ -43957,9 +43957,9 @@ Compress binary raster columns as inter-spike intervals.
 Parameters
 ----------
 mode : str
-    'lossless' preserves the input. 'lossy' allows timing quantization.
+    'lossless' preserves the input. 'lossy' allows timing quantisation.
 timing_precision : int
-    Number of input samples in a complete quantized bin for lossy mode.
+    Number of input samples in a complete quantised bin for lossy mode.
     A final partial bin is dropped.
 entropy : str
     'varint', 'huffman', or 'auto'. Auto uses Huffman above 3% encoded
@@ -43971,7 +43971,7 @@ backend : str
 Notes
 -----
 Varint requires fewer than 2**24 rows to avoid the Huffman discriminator.
-Quantized packets retain the original dimensions and store bin indices.
+Quantised packets retain the original dimensions and store bin indices.
 
 - **__init__**(mode, timing_precision, entropy, \*, backend)
 - **backend**()

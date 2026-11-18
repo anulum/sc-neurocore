@@ -64,7 +64,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   33,554,432 time steps. Legacy varint packets with 16,777,216 through
   33,554,431 time steps collide with the Huffman marker and require
   re-encoding from the original source.
-  For a quantized packet, callers can request the number of complete bins
+  For a quantised packet, callers can request the number of complete bins
   with the matching timing precision.
 
 - The Nagumo-Sato neuron map states three behaviour cases. At a current

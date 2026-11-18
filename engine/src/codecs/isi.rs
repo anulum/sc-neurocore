@@ -212,7 +212,7 @@ fn decode_huffman(
 /// Decode to a flat, row-major binary raster.
 ///
 /// The column count must match the header. The output may use the original
-/// row count or, for quantized data, the complete-bin count. Events are
+/// row count or, for quantised data, the complete-bin count. Events are
 /// stored at bin indices in both layouts.
 ///
 /// # Errors
