@@ -2936,6 +2936,7 @@
     {
       "changed": [
         "Cargo.lock",
+        "Cargo.toml",
         "engine/Cargo.toml",
         "engine/src/ir/bindings.rs",
         "engine/src/ir/emit_sv.rs",

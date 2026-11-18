@@ -8,7 +8,7 @@
 
 """A refused surrogate LIF configuration raises ``ValueError``; it does not end the interpreter.
 
-The engine's release build aborts on a panic, and the surrogate LIF's constructor panicked on
+The engine's release build aborted on a panic until it was set to unwind, and the surrogate LIF's constructor panicked on
 what the fixed-point LIF refuses, so ``SurrogateLif(data_width=17)`` ended the process with no
 exception. Each case runs in a child interpreter, so a regression shows as a dead child rather
 than a dead test run, through the native class and through the public wrapper.

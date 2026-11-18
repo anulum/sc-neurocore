@@ -8,7 +8,7 @@
 
 //! Python binding for stochastic differentiable dense-layer training.
 
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyMemoryError, PyValueError};
 use pyo3::prelude::*;
 
 use super::surrogate_binding::parse_surrogate;
@@ -66,8 +66,17 @@ impl PyDifferentiableDenseLayer {
         })
     }
 
-    fn get_weights(&self) -> Vec<Vec<f64>> {
-        self.inner.layer.get_weights()
+    fn get_weights(&self) -> PyResult<Vec<Vec<f64>>> {
+        // The fallible copy: the panicking one would end the interpreter on an allocation failure.
+        self.inner
+            .layer
+            .try_get_weights()
+            .map_err(|error| match error {
+                crate::layer::DenseLayerError::Invalid(message) => PyValueError::new_err(message),
+                crate::layer::DenseLayerError::Allocation => {
+                    PyMemoryError::new_err("dense storage cannot be allocated")
+                }
+            })
     }
 
     #[pyo3(signature = (input_values, seed=44257))]

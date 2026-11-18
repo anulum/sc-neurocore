@@ -146,6 +146,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A panic in the engine no longer ends the Python process. The release
+  profile the wheels are built with sets `panic = "unwind"`, where it had
+  `"abort"`, so a panic reaches Python as `PanicException`. The two
+  documented panics Python could reach are refused first:
+  `RustHybridLinearAttentionNeuron(dim=0)` raises `ValueError` before its
+  step divides by zero, and `DifferentiableDenseLayer.get_weights` copies
+  through the fallible path and raises `MemoryError` on an allocation
+  failure. Integer overflow still wraps in release builds; the engine page
+  states both as its contract.
+
 - CI runs the three Studio training browser specs no hosted workflow had
   run. The live browser step of the test job now lists the training
   preregistration and training conversion specs, which its configuration

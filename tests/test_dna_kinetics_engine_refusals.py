@@ -8,7 +8,7 @@
 
 """The engine's DNA kinetic simulation raises ``ValueError`` for what it cannot simulate; it does not end the interpreter.
 
-The engine's release build aborts on a panic, and ``py_dna_simulate_kinetics`` panicked on a gate without its input
+The engine's release build aborted on a panic until it was set to unwind, and ``py_dna_simulate_kinetics`` panicked on a gate without its input
 names, so the process ended with no exception. It also mapped an unknown gate type to ``AND``, cut unequal lists to
 the shortest, kept the last of two concentrations given for one name, ran ``NAND`` and ``XOR`` on the leak alone, and
 asked for an endless allocation for a step of 0. Each refusal runs in a child interpreter, so a regression shows as a

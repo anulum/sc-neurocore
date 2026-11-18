@@ -66,6 +66,27 @@ These GPU tests require real hardware; a default wheel does not provide this
 optional binding. The shader's Philox inputs remain distinct from the CPU
 encoder's random streams, so exact same-seed CPU outputs are not its oracle.
 
+## Panics and integer overflow in release builds
+
+The wheels are built with the workspace release profile (`Cargo.toml`,
+`[profile.release]`), which sets `panic = "unwind"` and no `overflow-checks`.
+Two consequences follow, and they are the engine's contract:
+
+- **A panic does not end the Python process.** A panic that reaches a binding
+  is raised in Python as PyO3's `PanicException`. Before this release the
+  profile set `panic = "abort"`, and a panic ended the interpreter. The Python
+  bindings refuse the documented inputs that panic before calling the Rust code,
+  so these raise `ValueError` or `MemoryError`. Examples are
+  `RustHybridLinearAttentionNeuron(dim=0)` and an allocation failure in
+  `DifferentiableDenseLayer.get_weights`. `PanicException` derives from
+  `BaseException`, so `except Exception` does not catch it.
+- **Integer overflow wraps.** Release builds compute integer arithmetic modulo
+  the type's width, where a debug build panics. The integer hardware models
+  accumulate in `i32`, for example TrueNorth's `v += weighted_input - leak`, so
+  an input large enough to leave the range wraps silently. The Rust panics
+  documented under `# Panics` stay as they are for Rust callers. Examples are a
+  time constant of 0 in the Loihi steps, which the Python bindings cannot set.
+
 ## Building from Source
 
 ```bash

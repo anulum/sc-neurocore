@@ -13,15 +13,16 @@ from __future__ import annotations
 from tests.network_execution_paths_support import *  # noqa: F403
 
 
-def test_workspace_release_profile_uses_abort_panic() -> None:
-    """The workspace release profile aborts on panic; the engine crate declares none."""
+def test_workspace_release_profile_unwinds_on_panic() -> None:
+    """The workspace release profile unwinds on a panic, so Python gets an exception; the engine declares none."""
     project_root = Path(__file__).resolve().parents[1]
     manifest = _load_toml(project_root / "Cargo.toml")
     profile = manifest.get("profile")
     assert isinstance(profile, dict)
     release = profile.get("release")
     assert isinstance(release, dict)
-    assert release["panic"] == "abort"
+    assert release["panic"] == "unwind"
+    assert "overflow-checks" not in release
 
     engine_manifest = _load_toml(project_root / "engine" / "Cargo.toml")
     assert "profile" not in engine_manifest

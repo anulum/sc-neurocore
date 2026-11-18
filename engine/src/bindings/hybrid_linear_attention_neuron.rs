@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Hybrid linear-attention neuron PyO3 binding
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -24,10 +25,14 @@ pub struct PyHybridLinearAttentionNeuron {
 impl PyHybridLinearAttentionNeuron {
     #[new]
     #[pyo3(signature = (dim=16))]
-    fn new(dim: usize) -> Self {
-        Self {
-            inner: neurons::HybridLinearAttentionNeuron::new(dim),
+    fn new(dim: usize) -> PyResult<Self> {
+        // The step selects a key-value slot modulo `dim`; a state of no slots would divide by zero.
+        if dim == 0 {
+            return Err(PyValueError::new_err("dim must be at least 1"));
         }
+        Ok(Self {
+            inner: neurons::HybridLinearAttentionNeuron::new(dim),
+        })
     }
     fn step(&mut self, current: f64) -> i32 {
         self.inner.step(current)
