@@ -289,6 +289,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- Every JSON fixture under `tests/fixtures/` carries its ownership in a
+  `.license` sidecar with the licence and both copyright records. Four
+  recorded Grype advisory matches and the NIR corpus manifest had none, and
+  five sidecars gave one copyright record instead of two. A policy test
+  now holds every fixture JSON to the sidecar.
+
 - `engine/.cargo/config.toml` no longer says that its `x86-64-v2` target is
   for portable wheels. Cargo reads it only for builds started in `engine/`
   (benchmarks and fuzzing). Every wheel build starts in `bridge/`, where no
