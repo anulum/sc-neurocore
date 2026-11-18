@@ -253,6 +253,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   audited project now includes them, and the continuous-integration
   frontend job type-checks it on its own, which no step did before.
 
+- A test of SNN Studio's store no longer spells out a password: the
+  rotated password it sends is built at run time, so the secret scan has
+  no literal in it to report as a credential.
+
 ## [4.2.0] - 2026-11-17
 
 The curated summary of this release is `docs/development/RELEASE_NOTES_v4.2.0.md`, which is also the GitHub
