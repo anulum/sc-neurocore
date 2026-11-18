@@ -28,6 +28,7 @@ import {
   exportNIR as apiExportNIR,
   fetchNetworkNotebook,
   importNIR as apiImportNIR,
+  runPipeline as apiRunPipeline,
 } from "../api/client";
 import {
   studioDefaultPopulationRequest,
@@ -39,6 +40,8 @@ import {
   studioGraphSimulationCompletedState,
   studioGraphSimulationStartState,
   studioGraphWithoutPopulation,
+  studioPipelineCompletedState,
+  studioPipelineStartState,
   studioPopulationAddedState,
   studioPopulationUpdatedState,
   studioProjectionAddedState,
@@ -104,15 +107,19 @@ function studioGraphRestoredState(step: StudioGraphHistoryStep): {
   };
 }
 
-/** The graph-editing actions: the network's populations and projections, their history, and its files. */
+/**
+ * The graph-editing actions: the network's populations and projections, their history, its files, and
+ * its run through the hardware pipeline.
+ */
 export type StudioGraphActions = Pick<StudioStoreActions,
-  "loadGraphModels" | "addPopulation" | "removePopulation" | "updatePopulation" | "undoGraphEdit" | "redoGraphEdit" | "addProjection" | "removeProjection" | "updateProjection" | "selectProjection" | "selectPopulations" | "duplicateSelection" | "selectPopulation" | "loadPopulationModelContract" | "validateGraphAction" | "simulateGraphAction" | "exportGraphNIR" | "exportGraphNotebook" | "importGraphNIR">;
+  "loadGraphModels" | "addPopulation" | "removePopulation" | "updatePopulation" | "undoGraphEdit" | "redoGraphEdit" | "addProjection" | "removeProjection" | "updateProjection" | "selectProjection" | "selectPopulations" | "duplicateSelection" | "selectPopulation" | "loadPopulationModelContract" | "validateGraphAction" | "simulateGraphAction" | "exportGraphNIR" | "exportGraphNotebook" | "importGraphNIR" | "runPipelineAction">;
 
 /**
  * Bind the graph-editing actions to the Studio store.
  *
  * The network graph is edited, undone and redone here, validated and simulated
- * through the server, and written to and read from NIR and notebook files. The
+ * through the server, run through the hardware pipeline for the chosen synthesis
+ * target, and written to and read from NIR and notebook files. The
  * history of edits lives in the store; the only state kept in this closure is
  * the chain that runs population adds one after another.
  *
@@ -407,6 +414,19 @@ export function createStudioGraphActions(
       const imported = await apiImportNIR(await networkNirImportRequest(file));
       set({ ...studioGraphImportedState(imported.graph), graphNotice: networkNirImportNotice(imported) });
     } catch (e) { set(studioGraphFailureState(e, "Graph NIR import failed")); }
+  },
+
+  runPipelineAction: async () => {
+    const s = get();
+    if (s.isSimulating || s.graphPopulations.length === 0) return;
+    set(studioPipelineStartState());
+    try {
+      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
+      const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
+      set(studioPipelineCompletedState(pipelineResult));
+    } catch (e) {
+      set({ ...studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true }), pipelineRunning: false });
+    }
   },
   };
 }

@@ -23,17 +23,10 @@ import {
   fetchPresets,
   fetchPreset,
   fetchStudioCapabilities,
-  runPipeline as apiRunPipeline,
 } from "../api/client";
 import {
   studioProjectFailureState,
 } from "../studioProjectState";
-import {
-  studioGraphFailureState,
-  studioGraphRequest,
-  studioPipelineCompletedState,
-  studioPipelineStartState,
-} from "../studioGraphRequests";
 
 import {
 } from "../evidenceBundles";
@@ -299,19 +292,6 @@ export function createStudioStoreActions(
   ...createStudioExportActions(set, get),
 
   ...createStudioProjectActions(set, get, runRestoredExperiment),
-
-  runPipelineAction: async () => {
-    const s = get();
-    if (s.isSimulating || s.graphPopulations.length === 0) return;
-    set(studioPipelineStartState());
-    try {
-      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
-      const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
-      set(studioPipelineCompletedState(pipelineResult));
-    } catch (e) {
-      set({ ...studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true }), pipelineRunning: false });
-    }
-  },
 
   ...createStudioGraphActions(set, get),
 

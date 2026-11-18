@@ -218,6 +218,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   and the trace as JSON, CSV or SVG) move unchanged to
   studioExportActions.ts, covered fully by new tests. Repeated blank lines
   the earlier moves left in the store's factory file are removed.
+- The network pipeline run of SNN Studio's store moves unchanged to the
+  graph module, studioGraphActions.ts, beside the other network actions,
+  and new tests cover it.
 
 - SNN Studio's live browser test of constructor types moved AdEx's initial
   membrane voltage by ten slider steps, but a floating-point slider has

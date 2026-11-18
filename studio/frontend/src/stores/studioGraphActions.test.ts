@@ -17,12 +17,16 @@ import {
   fetchNetworkNotebook,
   graphModelContract,
   importNIR,
+  runPipeline,
   simulateGraph,
   validateGraph,
 } from "../api/client";
-import type { GraphSimResult, NIRExportResult, NIRImportResult, PopulationModelContract } from "../api/types";
+import type {
+  GraphSimResult, NIRExportResult, NIRImportResult, PipelineResult, PopulationModelContract,
+} from "../api/types";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import { networkNirExportPlan, networkNirImportRequest } from "../networkNirExport";
+import { studioGraphRequest } from "../studioGraphRequests";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
 import { createStudioEquationIrActions } from "./studioEquationIrActions";
@@ -38,6 +42,7 @@ vi.mock("../api/client", async () => {
     fetchNetworkNotebook: vi.fn(),
     graphModelContract: vi.fn(),
     importNIR: vi.fn(),
+    runPipeline: vi.fn(),
     simulateGraph: vi.fn(),
     validateGraph: vi.fn(),
   };
@@ -267,5 +272,53 @@ describe("files", () => {
     vi.mocked(networkNirImportRequest).mockRejectedValue(new Error("not an NIR file"));
     await store.getState().importGraphNIR(new File(["x"], "bad.nir"));
     expect(store.getState().error).toBe("not an NIR file");
+  });
+});
+
+describe("running the network through the hardware pipeline", () => {
+  /** A store holding a two-population network with the run settings and a synthesis target of its own. */
+  function networkStore() {
+    const store = studioStore();
+    store.setState({
+      graphPopulations: [population("p1"), population("p2", "inhibitory")], graphProjections: [],
+      duration: 300, dt: 0.05, seed: 11, synthTarget: "ecp5",
+    });
+    return store;
+  }
+
+  it("starts nothing while another run is busy, or for an empty network", async () => {
+    const busy = networkStore();
+    busy.setState({ isSimulating: true });
+    await busy.getState().runPipelineAction();
+    const empty = studioStore();
+    await empty.getState().runPipelineAction();
+    expect(runPipeline).not.toHaveBeenCalled();
+    expect(empty.getState().pipelineRunning).toBe(false);
+  });
+
+  it("sends the network with the run settings to the chosen target, and shows the result", async () => {
+    const store = networkStore();
+    const result = { stages: [] } as unknown as PipelineResult;
+    let answer!: (value: PipelineResult) => void;
+    vi.mocked(runPipeline).mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+    const running = store.getState().runPipelineAction();
+    expect(store.getState()).toMatchObject({ pipelineRunning: true, isSimulating: true, busyWith: "Network pipeline" });
+    answer(result);
+    await running;
+    const s = store.getState();
+    expect(runPipeline).toHaveBeenCalledWith(
+      studioGraphRequest(s.graphPopulations, s.graphProjections, 300, 0.05, 11), "ecp5",
+    );
+    expect(s).toMatchObject({ pipelineResult: result, pipelineRunning: false, isSimulating: false });
+  });
+
+  it("reports a refused run by its reason, or as a failed pipeline run, and frees the run", async () => {
+    const store = networkStore();
+    vi.mocked(runPipeline).mockRejectedValueOnce(new Error("synthesis tools missing"));
+    await store.getState().runPipelineAction();
+    expect(store.getState()).toMatchObject({ error: "synthesis tools missing", pipelineRunning: false, isSimulating: false });
+    vi.mocked(runPipeline).mockRejectedValueOnce(new Error(""));
+    await store.getState().runPipelineAction();
+    expect(store.getState().error).toBe("Pipeline run failed");
   });
 });
