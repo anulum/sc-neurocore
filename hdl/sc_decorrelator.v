@@ -7,16 +7,21 @@
 // SC-NeuroCore — Barrel-shifter signal decorrelator for stochastic bitstreams
 //
 // Addresses SSC (Stochastic Sequence Correlation) by circular-shifting
-// N parallel stochastic bitstreams by distinct, configurable offsets.
+// N parallel stochastic bitstreams by configurable offsets.
 // Shares one source across neuron groups with deterministic phase offsets.
 // Rotations preserve each word's population count; they do not guarantee
 // statistical independence or zero correlation between output streams.
 //
 // Architecture:
-//   - N input streams fed through N barrel shifters with unique rotation
-//   - Shift amounts derived from a counter XOR'd with a per-stream
-//     constant, producing deterministic phase offsets
-//   - Zero latency: combinational shuffling, registered output
+//   - N copies of the source word fed through N barrel shifters
+//   - Rotation of stream i: (i XOR phase_counter[3:0] XOR seed nibble i)
+//     modulo STREAM_WIDTH, a left rotation. Streams get distinct rotations
+//     only when the values i XOR (seed nibble i) differ modulo STREAM_WIDTH;
+//     the default seed gives eight distinct ones for STREAM_WIDTH = 16.
+//   - One register stage: each output word is the rotation of the source
+//     word of the previous clock.
+// hdl/formal/decorrelator.sby proves the rotation, the population count and,
+// for the default parameters, distinct streams for a one-hot source word.
 //
 // Usage:
 //   Instantiate between the stochastic source and the neuron array.
@@ -31,10 +36,25 @@ module sc_decorrelator #(
     input  wire                                  rst_n,
     input  wire [STREAM_WIDTH-1:0]               source_bits,  // shared source
     output reg  [NUM_STREAMS*STREAM_WIDTH-1:0]   decorrelated  // N decorrelated outputs
+`ifdef FORMAL
+    // Exact phase counter for the formal harness; absent from production ports.
+    , output wire [15:0] formal_phase_counter
+`endif
 );
+
+    // Width of the right-shift amount STREAM_WIDTH - rotation. For a power-of-two
+    // width it wraps to 0 when rotation is 0 (x >> 0 | x << 0 = x), as the
+    // 16-bit design always did; other widths keep the full range 1 .. STREAM_WIDTH
+    // (x >> STREAM_WIDTH = 0).
+    localparam integer POW2 = ((STREAM_WIDTH & (STREAM_WIDTH - 1)) == 0) ? 1 : 0;
+    localparam integer BACK_BITS = (POW2 == 0) ? $clog2(STREAM_WIDTH + 1)
+                                 : (STREAM_WIDTH > 1 ? $clog2(STREAM_WIDTH) : 1);
 
     // Running counter for dynamic shift variation
     reg [15:0] phase_counter;
+`ifdef FORMAL
+    assign formal_phase_counter = phase_counter;
+`endif
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
@@ -52,11 +72,27 @@ module sc_decorrelator #(
             localparam [3:0] SEED_NIBBLE = SHIFT_SEED[(4*((i % 8))+3) -: 4];
             wire [3:0] shift_amount = (i[3:0] ^ phase_counter[3:0] ^ SEED_NIBBLE);
 
-            // Barrel-shift the shared source by shift_amount bits (circular rotate)
-            wire [3:0] right_shift = STREAM_WIDTH[3:0] - shift_amount;
+            // Rotate left by shift_amount modulo the word width. A shift of
+            // STREAM_WIDTH or more would push every bit out of a narrower
+            // word, so the amount is reduced first; a rotation by 0 keeps
+            // the word (the right shift by STREAM_WIDTH gives 0).
+            wire [3:0] rotation;
+            if (STREAM_WIDTH >= 16) begin : g_rot_full
+                assign rotation = shift_amount;
+            end else if (POW2 == 1) begin : g_rot_mask
+                localparam integer MASK = STREAM_WIDTH - 1;
+                assign rotation = shift_amount & MASK[3:0];
+            end else begin : g_rot_mod
+                wire [31:0] reduced = {28'd0, shift_amount} % STREAM_WIDTH;
+                assign rotation = reduced[3:0];
+            end
+            // The right shift is narrowed to the bits that STREAM_WIDTH needs,
+            // so the shifter is no wider than the word.
+            wire [31:0] back_full = STREAM_WIDTH - {28'd0, rotation};
+            wire [BACK_BITS-1:0] back = back_full[BACK_BITS-1:0];
             wire [STREAM_WIDTH-1:0] shifted =
-                (source_bits << shift_amount) |
-                (source_bits >> right_shift);
+                (source_bits << rotation) |
+                (source_bits >> back);
 
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n)

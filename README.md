@@ -576,8 +576,8 @@ hdl/
   formal/ (91 proof jobs)     -- catalogue model checks + legacy SC cores
 ```
 
-Formal verification inventory: **91 SymbiYosys proof jobs and 496 formal
-statements (328 assert, 122 assume, 46 cover)** in `hdl/formal/` and the inline
+Formal verification inventory: **91 SymbiYosys proof jobs and 508 formal
+statements (338 assert, 123 assume, 47 cover)** in `hdl/formal/` and the inline
 top-wrapper properties (19 non-catalogue jobs + **72 catalogue jobs** under
 `hdl/formal/catalogue/`). This counts unique job configurations and statements,
 including the inline `FORMAL` block in `hdl/sc_neurocore_top.v`; it is not a

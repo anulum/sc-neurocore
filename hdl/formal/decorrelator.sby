@@ -1,23 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Decorrelator proof (properties in decorrelator_formal.v)
+
 [tasks]
-prove_counter   prove
-prove_shift     prove
-cover_basic     cover
+prove
+cover
 
 [options]
-prove_counter: mode prove
-prove_counter: depth 20
-prove_shift: mode prove
-prove_shift: depth 10
-cover_basic: mode cover
-cover_basic: depth 30
+prove: mode prove
+prove: depth 4
+cover: mode cover
+cover: depth 24
 
 [engines]
-smtbmc z3
+smtbmc yices
 
 [script]
 read -formal sc_decorrelator.v
-hierarchy -top sc_decorrelator
-prep -top sc_decorrelator
+read -formal decorrelator_formal.v
+prep -top decorrelator_formal
 
 [files]
 ../sc_decorrelator.v
+decorrelator_formal.v

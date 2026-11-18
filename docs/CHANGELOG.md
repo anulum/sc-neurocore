@@ -84,6 +84,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The signal decorrelator `hdl/sc_decorrelator.v` rotates each stream by
+  its shift amount modulo the word width. The 4-bit shift amount reaches
+  15, so for words narrower than 16 bits, such as the 8-bit words of its
+  testbench and of the Verilog generator's
+  `emit_decorrelator(stream_width=8)`, a shift of the width or more pushed
+  every bit out and the stream became zero instead of a rotation. Words of
+  16 bits behave as before. Its formal job `hdl/formal/decorrelator.sby`
+  held no assertion, and formal-all on v4.1.0 refused it ("Prepared proof
+  has zero assertions"). It now proves by induction, for the default
+  instance, the 8-bit one and a 12-bit one, that each output word is the
+  previous source word rotated by (stream index XOR phase XOR seed nibble)
+  modulo the width (so it keeps the source word's population count), that
+  reset clears it, and that the eight default streams give distinct words
+  for a one-hot source word; a cover reaches a shift of 8 or more on the
+  8-bit instance. A FORMAL-only port `formal_phase_counter` gives the
+  harness the phase counter. The module comment no longer calls the
+  registered output zero-latency. The formal inventory is 91 jobs and 508
+  statements (338 assert, 123 assume, 47 cover).
+
 - The internal `core_engine` crate's `cordiv` and its C function
   `sc_cordiv_packed` follow the package's CORDIV contract. They copied the
   numerator only when the denominator bit was 1, so on a numerator bit of 1
