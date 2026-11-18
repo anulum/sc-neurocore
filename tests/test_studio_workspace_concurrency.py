@@ -31,15 +31,19 @@ import subprocess
 import sys
 import textwrap
 import threading
+import time
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from starlette.testclient import TestClient
 
+from sc_neurocore.studio import workspace_store as workspace_store_module
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.workspace_lock import (
+    DEFAULT_LOCK_TIMEOUT,
     LOCK_DIR,
     WorkspaceLockTimeout,
     lock_path,
@@ -618,23 +622,56 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClie
 class TestOverHttp:
     """The browser is the editor, so the guarantee has to reach it."""
 
-    def test_two_clients_saving_one_new_workspace_get_one_success(self, client: TestClient) -> None:
-        """Return one successful creation and one conflict to concurrent HTTP clients."""
+    def test_two_clients_saving_one_new_workspace_get_one_success(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Return one successful creation and one conflict to concurrent HTTP clients.
 
-        def save(editor: str) -> tuple[int, Any]:
+        Bob's save is sent only once Alice's holds the workspace, and both wait with the
+        product's own lock timeout rather than the fixture's 0.3 s. Bob therefore finds the
+        workspace either still held, and waits for it, or already saved; either way he is told
+        of Alice's revision, however long the host takes over her save. With 0.3 s, a loaded
+        host kept Bob waiting longer, and his conflict became a 503.
+
+        Parameters
+        ----------
+        client : TestClient
+            A real Studio client whose workspaces stay in this test's directory.
+        monkeypatch : pytest.MonkeyPatch
+            Restores the product's lock timeout and puts the signalling clock in place.
+        """
+        monkeypatch.setattr("sc_neurocore.studio.project._LOCK_TIMEOUT", DEFAULT_LOCK_TIMEOUT)
+        alice_holds = threading.Event()
+        bob_sent = threading.Event()
+
+        def clock() -> float:
+            # A save reads the store's clock only while it holds the workspace, after the
+            # conflict check, so only Alice's save reaches it.
+            alice_holds.set()
+            bob_sent.wait(timeout=RENDEZVOUS)
+            return time.time()
+
+        monkeypatch.setattr(workspace_store_module, "time", SimpleNamespace(time=clock))
+
+        def save(editor: str, after: threading.Event | None = None) -> tuple[int, Any]:
+            if after is not None:
+                if not after.wait(timeout=30):
+                    raise TimeoutError("Alice's save never held the workspace")
+                bob_sent.set()
             response = client.post(
                 "/api/project/save",
                 json={"name": "shared", "state": {**STATE, "editor": editor}},
             )
             return response.status_code, response.json()
 
-        outcomes = _run([lambda: save("alice"), lambda: save("bob")])
-        statuses = sorted(status for status, _ in outcomes)
+        outcomes = _run([lambda: save("alice"), lambda: save("bob", after=alice_holds)])
 
-        assert statuses == [200, 409]
+        assert all(isinstance(outcome, tuple) for outcome in outcomes), outcomes
+        assert [status for status, _ in outcomes] == [200, 409]
+        assert outcomes[1][1]["detail"]["actual_revision"] == 1
         loaded = client.get("/api/project/load/shared")
         assert loaded.status_code == 200
-        assert loaded.json()["state"]["editor"] in ("alice", "bob")
+        assert loaded.json()["state"]["editor"] == "alice"
 
     def test_a_busy_workspace_answers_503_without_a_path(
         self, client: TestClient, tmp_path: Path

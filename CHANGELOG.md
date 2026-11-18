@@ -163,6 +163,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Studio HTTP case of two clients saving one new workspace no longer
+  depends on how fast the host is. It started both saves at once with a
+  0.3-second lock timeout, so on a loaded host the second save waited
+  longer than that for the first and got 503 instead of 409. The second
+  save is now sent once the first holds the workspace, both wait with the
+  product's own lock timeout, and the case expects the first save to
+  succeed, the second to be told of revision 1, and the first's state to
+  be kept.
+
 - A panic in the engine no longer ends the Python process. The release
   profile the wheels are built with sets `panic = "unwind"`, where it had
   `"abort"`, so a panic reaches Python as `PanicException`. The two
