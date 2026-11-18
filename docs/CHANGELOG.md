@@ -216,6 +216,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   update_weights keeps its 4.1.0 signature and panics with those words,
   and the Python binding's messages are unchanged.
 
+- The hardware-in-the-loop debugger refuses inputs it used to misread
+  silently, in its Python client and its Go daemon alike. A trigger
+  threshold that is negative or not finite, which disabled its test as
+  0 does, is refused (at construction in Python, by Validate in Go); 0
+  stays the one value that disables a test. A negative refill, which
+  could leave the token bucket below zero, is refused and changes
+  nothing; Refill in Go now returns an error.
+
 ### Repository hygiene
 
 - SNN Studio's store builds its graph-editing actions (populations,

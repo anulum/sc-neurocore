@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -513,6 +514,22 @@ func (tc *TriggerCondition) Evaluate(evt SpikeEvent) bool {
 	return false
 }
 
+// Validate refuses a threshold that would silently disable its test: each must be
+// finite and not negative, and 0 is the one value that disables a test.
+func (tc *TriggerCondition) Validate() error {
+	thresholds := []struct {
+		name  string
+		value float64
+	}{{"min_correlation", tc.MinCorrelation}, {"max_precision", tc.MaxPrecision}}
+	for _, threshold := range thresholds {
+		if math.IsNaN(threshold.value) || math.IsInf(threshold.value, 0) || threshold.value < 0 {
+			return fmt.Errorf("%s must be finite and not negative (0 disables the test), got %v",
+				threshold.name, threshold.value)
+		}
+	}
+	return nil
+}
+
 // TriggerLog records fired triggers for post-mortem.
 type TriggerLog struct {
 	Entries []SpikeEvent
@@ -560,14 +577,19 @@ func (rl *RateLimiter) Allow() bool {
 	return false
 }
 
-// Refill adds tokens back up to capacity.
-func (rl *RateLimiter) Refill(n int64) {
+// Refill adds tokens back up to capacity. A negative count is refused: a refill
+// never takes tokens away.
+func (rl *RateLimiter) Refill(n int64) error {
+	if n < 0 {
+		return fmt.Errorf("refill takes a count that is not negative, got %d", n)
+	}
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	rl.tokens += n
 	if rl.tokens > rl.capacity {
 		rl.tokens = rl.capacity
 	}
+	return nil
 }
 
 // Available returns current token count.

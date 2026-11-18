@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2048
+expected_file_count = 2049
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8242,3 +8242,7 @@ rationale = "Every crate is found and checked once, one unformatted crate fails 
 [[file]]
 path = "tests/test_tools/test_ci_live_browser_routers_contract.py"
 rationale = "Bind the router and chip database of every FPGA target a live browser journey routes to an install step that runs before the journeys on the same leg, at the toolchain manifest's version."
+
+[[file]]
+path = "tests/test_debug/test_hil_client_input_contract.py"
+rationale = "Trigger thresholds that are negative or not finite and negative refills are refused; 0 still disables a test and refills stop at the capacity."

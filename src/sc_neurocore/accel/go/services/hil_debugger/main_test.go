@@ -10,6 +10,7 @@ package main
 
 import (
 	"encoding/json"
+	"math"
 	"sync"
 	"testing"
 )
@@ -484,9 +485,47 @@ func TestRateLimiterRefill(t *testing.T) {
 	rl := NewRateLimiter(2)
 	rl.Allow()
 	rl.Allow()
-	rl.Refill(5)
+	if err := rl.Refill(5); err != nil {
+		t.Fatalf("refill: %v", err)
+	}
 	if rl.Available() != 2 {
 		t.Errorf("expected 2 (capped), got %d", rl.Available())
+	}
+}
+
+// TestRateLimiterRefillRefusesNegative checks that a negative refill is refused and
+// changes nothing, and that a refill of zero adds nothing.
+func TestRateLimiterRefillRefusesNegative(t *testing.T) {
+	rl := NewRateLimiter(3)
+	rl.Allow()
+	if err := rl.Refill(-5); err == nil {
+		t.Error("a negative refill should be refused")
+	}
+	if rl.Available() != 2 {
+		t.Errorf("a refused refill should change nothing, got %d", rl.Available())
+	}
+	if err := rl.Refill(0); err != nil || rl.Available() != 2 {
+		t.Errorf("a refill of zero should change nothing, got %d (%v)", rl.Available(), err)
+	}
+}
+
+// TestTriggerValidateRefusesThresholdsThatWouldDisableSilently checks that Validate
+// refuses negative and non-finite thresholds and accepts zero and positive ones.
+func TestTriggerValidateRefusesThresholdsThatWouldDisableSilently(t *testing.T) {
+	refused := []TriggerCondition{
+		{MinCorrelation: -0.5}, {MaxPrecision: -1e-12}, {MinCorrelation: math.NaN()},
+		{MaxPrecision: math.Inf(1)}, {MinCorrelation: math.Inf(-1)},
+	}
+	for _, tc := range refused {
+		if err := tc.Validate(); err == nil {
+			t.Errorf("expected %+v to be refused", tc)
+		}
+	}
+	accepted := []TriggerCondition{{}, {MinCorrelation: 0.5}, {MaxPrecision: 0.25, Armed: true}}
+	for _, tc := range accepted {
+		if err := tc.Validate(); err != nil {
+			t.Errorf("expected %+v to be accepted, got %v", tc, err)
+		}
 	}
 }
 

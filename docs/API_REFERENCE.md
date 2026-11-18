@@ -19985,9 +19985,11 @@ Conditional breakpoint for debugger.
 Attributes
 ----------
 min_correlation : float
-    A correlation at or above it fires the trigger; 0 disables this test.
+    A correlation at or above it fires the trigger; 0 disables this test. It must be
+    finite and not negative: a negative value is refused, not taken as a disabled test.
 max_precision : float
-    A precision at or below it fires the trigger; 0 disables this test.
+    A precision at or below it fires the trigger; 0 disables this test. It must be
+    finite and not negative, as ``min_correlation``.
 layer_id : str
     Layer the trigger watches; empty watches every layer.
 armed : bool
@@ -19997,6 +19999,8 @@ Notes
 -----
 With both thresholds at their default 0 the trigger never fires.
 
+- **__post_init__**()
+  - Refuse a threshold that would silently disable its test.
 - **evaluate**(evt)
   - Return whether an event fires the trigger.
 

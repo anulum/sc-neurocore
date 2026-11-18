@@ -22,6 +22,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import math
 import threading
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -324,9 +325,11 @@ class TriggerCondition:
     Attributes
     ----------
     min_correlation : float
-        A correlation at or above it fires the trigger; 0 disables this test.
+        A correlation at or above it fires the trigger; 0 disables this test. It must be
+        finite and not negative: a negative value is refused, not taken as a disabled test.
     max_precision : float
-        A precision at or below it fires the trigger; 0 disables this test.
+        A precision at or below it fires the trigger; 0 disables this test. It must be
+        finite and not negative, as ``min_correlation``.
     layer_id : str
         Layer the trigger watches; empty watches every layer.
     armed : bool
@@ -341,6 +344,23 @@ class TriggerCondition:
     max_precision: float = 0.0
     layer_id: str = ""
     armed: bool = True
+
+    def __post_init__(self) -> None:
+        """Refuse a threshold that would silently disable its test.
+
+        Raises
+        ------
+        ValueError
+            If a threshold is negative or not finite; 0 is the one value that disables a test.
+        """
+        for name, value in (
+            ("min_correlation", self.min_correlation),
+            ("max_precision", self.max_precision),
+        ):
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(
+                    f"{name} must be finite and not negative (0 disables the test), got {value!r}"
+                )
 
     def evaluate(self, evt: SpikeEvent) -> bool:
         """Return whether an event fires the trigger."""
@@ -404,7 +424,15 @@ class RateLimiter:
             return False
 
     def refill(self, n: int) -> None:
-        """Add ``n`` tokens, up to the capacity."""
+        """Add ``n`` tokens, up to the capacity.
+
+        Raises
+        ------
+        ValueError
+            If ``n`` is negative: a refill never takes tokens away.
+        """
+        if n < 0:
+            raise ValueError(f"refill takes a count that is not negative, got {n}")
         with self._lock:
             self._tokens = min(self._tokens + n, self._capacity)
 
