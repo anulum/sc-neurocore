@@ -1,0 +1,144 @@
+{
+  "artifact": {
+    "id": "ff89bc3f2dec6bc7",
+    "metadataType": "conda-metadata-entry",
+    "name": "python",
+    "purl": "",
+    "type": "conda",
+    "version": "3.15.2",
+    "metadata": {
+      "build": "h6e52b48_100_cp315",
+      "build_number": 100,
+      "channel": "https://conda.anaconda.org/conda-forge/",
+      "fn": "python-3.15.2-h6e52b48_100_cp315.conda",
+      "md5": "38c3edc23439db3ca383be02ae2b702e",
+      "name": "python",
+      "sha256": "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25",
+      "size": 29327137,
+      "subdir": "linux-64",
+      "version": "3.15.2"
+    }
+  },
+  "match": {
+    "vulnerability": {
+      "id": "CVE-2026-124249",
+      "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2026-124249",
+      "namespace": "nvd:cpe",
+      "severity": "Medium",
+      "urls": [
+        "https://github.com/python/cpython/commit/4e9d037f1cfc8e29efcb1f67bc668e06ff2b6643",
+        "https://github.com/python/cpython/commit/8eb3d2c1c41ca7ce628554413981c1eb763a1494",
+        "https://github.com/python/cpython/commit/ac1d49f4fbb33941475c5aa3cb663ab39d64cb73",
+        "https://github.com/python/cpython/issues/161569",
+        "https://github.com/python/cpython/pull/161570",
+        "https://mail.python.org/archives/list/security-announce@python.org/thread/Y6IKNZ2VZUS2L6CLQICSFUEMCLT7OLTY/",
+        "http://www.openwall.com/lists/oss-security/2026/11/09/24"
+      ],
+      "description": "http.cookiejar.CookieJar deleted a stored cookie when a response carried an\nalready expired Set-Cookie header for it, using the Domain and Path\nattributes from the header without consulting the cookie policy. A server\ncould therefore delete cookies belonging to other domains from a shared\ncookie jar, such as the one used by urllib's HTTPCookieProcessor. The fix\nconsults the cookie policy before an expired cookie may delete an existing\none, as required by RFC 6265 section 5.3.",
+      "cvss": [
+        {
+          "source": "cna@python.org",
+          "type": "Secondary",
+          "version": "4.0",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+          "metrics": {
+            "baseScore": 6.3
+          },
+          "vendorMetadata": {}
+        }
+      ],
+      "epss": [
+        {
+          "cve": "CVE-2026-124249",
+          "epss": 0.00272,
+          "percentile": 0.19768,
+          "date": "2026-11-17"
+        }
+      ],
+      "cwes": [
+        {
+          "cve": "CVE-2026-124249",
+          "cwe": "CWE-346",
+          "source": "cna@python.org",
+          "type": "Secondary"
+        }
+      ],
+      "fix": {
+        "versions": [
+          "3.16.0a2"
+        ],
+        "state": "fixed",
+        "available": [
+          {
+            "version": "3.16.0a2",
+            "date": "2026-11-17",
+            "kind": "first-observed"
+          }
+        ]
+      },
+      "advisories": [],
+      "risk": 0.15368
+    },
+    "relatedVulnerabilities": [],
+    "matchDetails": [
+      {
+        "type": "cpe-match",
+        "matcher": "stock-matcher",
+        "searchedBy": {
+          "namespace": "nvd:cpe",
+          "cpes": [
+            "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+          ],
+          "package": {
+            "name": "python",
+            "version": "3.15.2"
+          }
+        },
+        "found": {
+          "vulnerabilityID": "CVE-2026-124249",
+          "versionConstraint": "< 3.16.0a2 (unknown)",
+          "cpes": [
+            "cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"
+          ]
+        },
+        "fix": {
+          "suggestedVersion": "3.16.0a2"
+        }
+      }
+    ],
+    "artifact": {
+      "id": "ff89bc3f2dec6bc7",
+      "name": "python",
+      "version": "3.15.2",
+      "type": "conda",
+      "locations": [
+        {
+          "path": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json",
+          "accessPath": "/conda-meta/python-3.15.2-h6e52b48_100_cp315.json"
+        }
+      ],
+      "language": "",
+      "licenses": [
+        "Python-2.0"
+      ],
+      "cpes": [
+        "cpe:2.3:a:python:python:3.15.2:*:*:*:*:*:*:*"
+      ],
+      "purl": "",
+      "upstreams": []
+    }
+  },
+  "provenance": {
+    "artifact": "dependency-audit-pixi",
+    "artifact_sha256": "48e4f4b7bceb932329d1f266aac80dee9c3e30b3349fc5e202e34bc7b147bbe5",
+    "artifact_trimmed_to": "id, name, version, type, purl, metadataType and the package identity fields of metadata; the installed file list is omitted",
+    "description": "Verbatim Grype match and matched Syft artifact from the hosted pixi lock audit of commit ac6af39dca4b524cc051234371252d3595755e01 (Mojo environment with conda-forge python 3.15.2), kept so the unreleased-vendor-fix exception path is exercised on real scanner output for CVE-2026-124249.",
+    "grype_report": "lock-1/grype/stdout.json",
+    "grype_report_sha256": "60db0a94785963ad821182ba0f4832ba7b7cd5395e74e6ea766d912a8988b111",
+    "grype_version": "0.121.2",
+    "syft_report": "lock-1/syft/stdout.json",
+    "syft_report_sha256": "be399bcec16bdd0293870b4320e7439c06cfe144ca8bf536364a59bb3ff5b76f",
+    "syft_version": "1.57.0",
+    "workflow_run": "https://github.com/anulum/sc-neurocore/actions/runs/44252207119/attempts/2"
+  }
+}

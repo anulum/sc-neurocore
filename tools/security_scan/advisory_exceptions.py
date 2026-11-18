@@ -36,7 +36,9 @@ from tools.security_scan.locked_dependency_inventory import inventory_locks
 
 EXCEPTION_FILE = Path("tools/security_scan/advisory_exceptions.toml")
 CONDA_FORGE_PYTHON_INDEX = "https://api.anaconda.org/package/conda-forge/python"
-_SOURCE_LIMIT = 65536
+# A proof is one CPython source file; the largest bound here, Lib/http/cookiejar.py of the
+# 3.15.2 release, is 78,303 bytes, and Lib/imaplib.py 72,863.
+_SOURCE_LIMIT = 131072
 _INDEX_LIMIT = 32 * 1024 * 1024
 UNRELEASED_FIX_REVIEW_WINDOW = timedelta(days=14)
 # Hosted runners met transient HTTP errors and timeouts on these reads; three requests in
@@ -54,6 +56,19 @@ _SOURCES = {
     # The fix is in the C socket module; the Python front end proves the unmodified release.
     ("vendor_fix_unreleased", "CVE-2026-116566"): (
         r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/socket\.py"
+    ),
+    ("vendor_fix_unreleased", "CVE-2026-124249"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/http/cookiejar\.py"
+    ),
+    ("vendor_fix_unreleased", "CVE-2026-115559"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/imaplib\.py"
+    ),
+    # The fix changes the gzip, tarfile and zipfile command lines; gzip.py is one of its files.
+    ("vendor_fix_unreleased", "CVE-2026-115791"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/gzip\.py"
+    ),
+    ("vendor_fix_unreleased", "CVE-2026-19552"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/ssl\.py"
     ),
 }
 _REASONS = frozenset(reason for reason, _advisory in _SOURCES)

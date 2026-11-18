@@ -45,3 +45,85 @@ proof_sha256 = "463dc951122dff8a378862e32461d020a457ef4d80697b3396adca80c87f9e79
 source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/socket.py"
 review_by = "2026-12-01"
 rationale = "The vendor fix is unreleased for Python 3.15. The Mojo environment only runs the repository's Mojo kernels and resolves no host name or port taken from untrusted input; the installed socket.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."
+
+# CVE-2026-124249 (Medium): http.cookiejar let an expired Set-Cookie header delete a stored
+# cookie of another domain without consulting the cookie policy (gh-161569). The 3.15 branch has
+# carried the fix since 2026-11-07 (python/cpython#161579); no 3.15 release carries it and
+# conda-forge publishes nothing newer than python 3.15.2. The record lapses on its review date,
+# once Grype stops reporting the finding, or as soon as the channel lists a newer final release.
+
+[[exception]]
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "python"
+version = "3.15.2"
+advisory = "CVE-2026-124249"
+artifact_sha256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+reason = "vendor_fix_unreleased"
+fixed_version = "3.16.0a2"
+proof_path = "lib/python3.15/http/cookiejar.py"
+proof_sha256 = "fd45df08b50b098cee0e6a67d326caa815fd48452dcc8478585196981387dbc0"
+source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/http/cookiejar.py"
+review_by = "2026-12-01"
+rationale = "The vendor fix is unreleased for Python 3.15. The Mojo environment keeps no cookie jar and makes no HTTP requests; the installed http/cookiejar.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."
+
+# CVE-2026-115559 (Medium): IMAP4.starttls() kept plaintext bytes read ahead of the handshake and
+# returned them as responses on the protected channel (gh-160369). The 3.15 backport
+# (python/cpython#161761) is still open; no 3.15 release carries the fix and conda-forge
+# publishes nothing newer than python 3.15.2. The record lapses on its review date, once Grype
+# stops reporting the finding, or as soon as the channel lists a newer final release.
+
+[[exception]]
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "python"
+version = "3.15.2"
+advisory = "CVE-2026-115559"
+artifact_sha256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+reason = "vendor_fix_unreleased"
+fixed_version = "3.16.0"
+proof_path = "lib/python3.15/imaplib.py"
+proof_sha256 = "ebb09bab21dbabf7414aca19d8334aea67fa1c21b1cefa83149ad3ae14957570"
+source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/imaplib.py"
+review_by = "2026-12-01"
+rationale = "The vendor fix is unreleased for Python 3.15. The Mojo environment opens no IMAP connection; the installed imaplib.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."
+
+# CVE-2026-115791 (Medium): the gzip, tarfile and zipfile command lines left the working directory
+# on sys.path, so an extracted archive could shadow a standard module that a later error then
+# imports (gh-161705). The fix changes all three command lines; Lib/gzip.py, one of its files,
+# proves the unmodified release. The 3.15 branch has carried the fix since 2026-11-10
+# (python/cpython#161717); no 3.15 release carries it and conda-forge publishes nothing newer than
+# python 3.15.2. The record lapses on its review date, once Grype stops reporting the finding, or
+# as soon as the channel lists a newer final release.
+
+[[exception]]
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "python"
+version = "3.15.2"
+advisory = "CVE-2026-115791"
+artifact_sha256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+reason = "vendor_fix_unreleased"
+fixed_version = "3.16.0"
+proof_path = "lib/python3.15/gzip.py"
+proof_sha256 = "4651f4a02316d1be8633bf3a64d57400816859a135afb59d23033660241a9fc9"
+source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/gzip.py"
+review_by = "2026-12-01"
+rationale = "The vendor fix is unreleased for Python 3.15. Nothing in the Mojo environment runs the gzip, tarfile or zipfile command lines on an archive; the installed gzip.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."
+
+# CVE-2026-19552 (Negligible): ssl.get_server_certificate() with ca_certs did not check the
+# certificate's host name (gh-161503). The 3.15 backport (python/cpython#161574) is still open;
+# no 3.15 release carries the fix and conda-forge publishes nothing newer than python 3.15.2. The
+# record lapses on its review date, once Grype stops reporting the finding, or as soon as the
+# channel lists a newer final release.
+
+[[exception]]
+lock = "src/sc_neurocore/accel/mojo/pixi.lock"
+package = "python"
+version = "3.15.2"
+advisory = "CVE-2026-19552"
+artifact_sha256 = "dd6fdef748df5636029673a834ca3632ce44c86d71e4986d70bcdb2ae5607a25"
+reason = "vendor_fix_unreleased"
+fixed_version = "3.16.0a2"
+proof_path = "lib/python3.15/ssl.py"
+proof_sha256 = "1cdaab9afcc26ea540d12444916421357a1fc55da4ad784cb0cd01352bb09db8"
+source = "https://raw.githubusercontent.com/python/cpython/5e58eaad7c58df58dfa8ea549c87996e01dd1077/Lib/ssl.py"
+review_by = "2026-12-01"
+rationale = "The vendor fix is unreleased for Python 3.15. The Mojo environment fetches no server certificate; the installed ssl.py must equal the immutable CPython 3.15.2 release file and conda-forge must list no newer final release."

@@ -11,8 +11,9 @@
 The fixed-code path is exercised on the last reviewed CVE-2025-15367 record and the verbatim Grype match
 and Syft identity of the hosted audit that accepted it, with the fixed vendor source read from its
 immutable CPython commit. The unreleased-fix path is exercised on each committed record
-(CVE-2026-103995 and CVE-2026-116566), the hosted match that blocked it, its immutable CPython 3.15.2
-release file and a recorded conda-forge version list. Repetition of vendor reads is exercised
+(CVE-2026-103995, CVE-2026-115559, CVE-2026-115791, CVE-2026-116566, CVE-2026-124249 and
+CVE-2026-19552), the hosted match that blocked it, its immutable CPython 3.15.2 release file and a
+recorded conda-forge version list. Repetition of vendor reads is exercised
 against a real loopback HTTP server that returns temporary failures, lasting refusals and
 truncated bodies.
 """
@@ -61,6 +62,8 @@ UNFIXED_SOURCE = (
 )
 UNFIXED_SHA256 = "015df92cb7e47cde50adaefec620c23f85cc0624bdf5da4000f0c1733dc03f21"
 ARTIFACT_SHA256 = "66b6ac5dd5c64ce34a9c610cacdcc25fe43d7daf29611b6c48036a3c51771374"
+# One byte beyond the tool's proof limit, so a source the tool would refuse is read whole here.
+SOURCE_READ_LIMIT = 131073
 
 
 def reviewed_record(review_by: str, proof_sha256: str = PROOF_SHA256) -> str:
@@ -116,7 +119,7 @@ def recorded_finding() -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def vendor_source(url: str, digest: str) -> bytes:
-    """Read ``poplib.py`` from an immutable CPython commit and check its digest.
+    """Read one CPython source file from an immutable commit and check its digest.
 
     Parameters
     ----------
@@ -131,7 +134,7 @@ def vendor_source(url: str, digest: str) -> bytes:
         The verified file.
     """
     with urllib.request.urlopen(url, timeout=30) as response:  # nosec B310
-        payload = response.read(65537)
+        payload = response.read(SOURCE_READ_LIMIT)
     assert hashlib.sha256(payload).hexdigest() == digest
     return bytes(payload)
 
@@ -331,6 +334,26 @@ UNRELEASED = {
         ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_116566.json",
         RELEASE_COMMIT + "/Lib/socket.py",
         "463dc951122dff8a378862e32461d020a457ef4d80697b3396adca80c87f9e79",
+    ),
+    "CVE-2026-124249": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_124249.json",
+        RELEASE_COMMIT + "/Lib/http/cookiejar.py",
+        "fd45df08b50b098cee0e6a67d326caa815fd48452dcc8478585196981387dbc0",
+    ),
+    "CVE-2026-115559": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_115559.json",
+        RELEASE_COMMIT + "/Lib/imaplib.py",
+        "ebb09bab21dbabf7414aca19d8334aea67fa1c21b1cefa83149ad3ae14957570",
+    ),
+    "CVE-2026-115791": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_115791.json",
+        RELEASE_COMMIT + "/Lib/gzip.py",
+        "4651f4a02316d1be8633bf3a64d57400816859a135afb59d23033660241a9fc9",
+    ),
+    "CVE-2026-19552": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_19552.json",
+        RELEASE_COMMIT + "/Lib/ssl.py",
+        "1cdaab9afcc26ea540d12444916421357a1fc55da4ad784cb0cd01352bb09db8",
     ),
 }
 UNRELEASED_RECORDED, UNRELEASED_SOURCE, UNRELEASED_PROOF_SHA256 = UNRELEASED["CVE-2026-103995"]
@@ -674,11 +697,14 @@ def test_read_url_keeps_the_size_limit() -> None:
         assert server.requests == 2
 
 
-def test_both_unreleased_fixes_share_one_channel_snapshot(tmp_path: Path) -> None:
-    """Two holding unreleased-fix records read the channel index once, not once each."""
-    checkout, prefix, _ = unreleased_checkout(tmp_path, due_date(), "CVE-2026-103995")
+def test_every_unreleased_fix_shares_one_channel_snapshot(tmp_path: Path) -> None:
+    """All holding unreleased-fix records read the channel index once, not once each."""
+    first, *others = sorted(UNRELEASED)
+    checkout, prefix, _ = unreleased_checkout(tmp_path, due_date(), first)
     table = checkout / EXCEPTION_FILE
-    table.write_text(table.read_text() + unreleased_record(due_date(), "CVE-2026-116566"))
+    table.write_text(
+        table.read_text() + "".join(unreleased_record(due_date(), other) for other in others)
+    )
     records = load_exceptions(table.read_bytes())
     assert [record["advisory"] for record in records] == sorted(UNRELEASED)
     matches, inventories = [], {}
@@ -697,11 +723,11 @@ def test_both_unreleased_fixes_share_one_channel_snapshot(tmp_path: Path) -> Non
         return channel_index() if url == CONDA_FORGE_PYTHON_INDEX else read_url(url, limit)
 
     decision = conda_lock_decision(checkout, LOCK, matches, inventories, prefix, read)
-    assert decision["passed"] is True and len(decision["accepted"]) == 2
+    assert decision["passed"] is True and len(decision["accepted"]) == len(UNRELEASED)
     assert served == [
-        UNRELEASED["CVE-2026-103995"][1],
+        UNRELEASED[first][1],
         CONDA_FORGE_PYTHON_INDEX,
-        UNRELEASED["CVE-2026-116566"][1],
+        *(UNRELEASED[other][1] for other in others),
     ]
 
 
@@ -722,6 +748,18 @@ def test_both_unreleased_fixes_share_one_channel_snapshot(tmp_path: Path) -> Non
         ("CVE-2026-116566", 'advisory = "CVE-2026-116566"', 'advisory = "CVE-2026-1"', "source"),
         ("CVE-2026-116566", "/Lib/socket.py", "/Lib/http/client.py", "vendor source"),
         ("CVE-2026-116566", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-124249", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-124249", "/Lib/http/cookiejar.py", "/Lib/http/client.py", "vendor source"),
+        ("CVE-2026-124249", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-115559", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-115559", "/Lib/imaplib.py", "/Lib/poplib.py", "vendor source"),
+        ("CVE-2026-115559", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-115791", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-115791", "/Lib/gzip.py", "/Lib/ssl.py", "vendor source"),
+        ("CVE-2026-115791", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-19552", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-19552", "/Lib/ssl.py", "/Lib/gzip.py", "vendor source"),
+        ("CVE-2026-19552", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
     ],
 )
 def test_unreleased_fix_scope_cannot_be_broadened(

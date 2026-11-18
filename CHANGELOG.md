@@ -14,6 +14,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The Mojo lock audit accepts four more CPython advisories against conda-forge
+  Python 3.15.2 for two weeks at a time, under the rules of the two already
+  accepted: CVE-2026-124249 (`http.cookiejar`), CVE-2026-115559 (`imaplib`
+  STARTTLS), CVE-2026-115791 (the `gzip`, `tarfile` and `zipfile` command
+  lines) and CVE-2026-19552 (`ssl.get_server_certificate`). Grype's database
+  listed them on 18 November and every audit of the lock failed. CPython has
+  fixed each for 3.16, but no 3.15 release carries a fix, and conda-forge
+  lists nothing newer than 3.15.2. Each record binds the installed package
+  digest and one CPython 3.15.2 release file, byte for byte, and lapses on its
+  review date, once Grype stops reporting it, or as soon as the channel lists a
+  newer final release. A proof file may now be up to 128 KiB, since
+  `http/cookiejar.py` and `imaplib.py` exceed the former 64 KiB.
+
 - The security packet's Gitleaks lane runs with `.gitleaks.toml`. It keeps
   every default rule and allowlists only the 33 reviewed false positives of
   the generic API key rule at the 4.2.0 release: SHA-256 content digests

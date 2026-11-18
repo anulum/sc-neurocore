@@ -197,9 +197,11 @@ length or HTTP status 408, 425, 429, 500, 502, 503 or 504. Any other status
 fails at once, and the last failure stops the audit; a partial body is never
 compared or parsed.
 
-The current records cover two advisories for conda-forge Python 3.15.2 in the
-Mojo lock. CPython fixed both on its main branch, which will become 3.16. No
-3.15 release carries either fix, and conda-forge lists nothing newer than 3.15.2.
+The current records cover six advisories for conda-forge Python 3.15.2 in the
+Mojo lock. CPython fixed each on its main branch, which will become 3.16; some
+fixes are merged into the 3.15 branch as well. No 3.15 release carries any of
+them, and conda-forge lists nothing newer than 3.15.2. A proof file may be at
+most 128 KiB; the largest, `http/cookiejar.py`, is 78,303 bytes.
 
 - CVE-2026-103995 (Low, CVSS 4.0 base score 2.0): `http.client` accepted signed,
   underscored, padded and `0x`-prefixed Content-Length and chunk-size values
@@ -212,6 +214,26 @@ Mojo lock. CPython fixed both on its main branch, which will become 3.16. No
   end, equals the CPython 3.15.2 release file; together with the locked package
   digest, this proves the unmodified release. The Mojo environment takes no host
   or port from untrusted input.
+- CVE-2026-124249 (Medium, CVSS 4.0 base score 6.3): an expired `Set-Cookie`
+  header could make `http.cookiejar` delete a stored cookie of another domain
+  without consulting the cookie policy (gh-161569). The installed
+  `http/cookiejar.py` equals the CPython 3.15.2 release file, and the Mojo
+  environment keeps no cookie jar and makes no HTTP requests.
+- CVE-2026-115559 (Medium, CVSS 4.0 base score 6.3): `IMAP4.starttls()` kept
+  plaintext bytes read ahead of the handshake and returned them as responses
+  on the protected channel (gh-160369). The installed `imaplib.py` equals the
+  CPython 3.15.2 release file, and the Mojo environment opens no IMAP
+  connection.
+- CVE-2026-115791 (Medium, CVSS 4.0 base score 5.3): the `gzip`, `tarfile` and
+  `zipfile` command lines left the working directory on `sys.path`, so an
+  extracted file could shadow a standard module (gh-161705). The fix changes
+  all three command lines; the installed `gzip.py`, one of its files, equals
+  the CPython 3.15.2 release file. Nothing in the Mojo environment runs these
+  command lines on an archive.
+- CVE-2026-19552 (Negligible, CVSS 4.0 base score 0): `ssl.get_server_certificate()`
+  did not check the host name when `ca_certs` was given (gh-161503). The
+  installed `ssl.py` equals the CPython 3.15.2 release file, and the Mojo
+  environment fetches no server certificate.
 
 Each record lapses on its review date, when Grype stops reporting the finding,
 or as soon as conda-forge lists a newer final release.
