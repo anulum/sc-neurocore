@@ -556,7 +556,7 @@ hdl/
   sc_bitstream_encoder.v      -- LFSR-based stochastic encoder (SEED_INIT param)
   sc_bitstream_synapse.v      -- AND-gate SC multiplier
   sc_mux_add.v                -- 2-input MUX (scaled addition)
-  sc_cordiv.v                 -- CORDIV stochastic divider (Li et al. 2014)
+  sc_cordiv.v                 -- CORDIV stochastic divider (Chen and Hayes 2016)
   sc_dotproduct_to_current.v  -- Popcount -> fixed-point current
   sc_lif_neuron.v             -- Q8.8 leaky integrate-and-fire
   sc_firing_rate_bank.v       -- Spike rate estimator

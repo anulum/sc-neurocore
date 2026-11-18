@@ -6,9 +6,15 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — CORDIV: stochastic computing divider
 //
-// Li, Qian, Riedel & Bazargan, IEEE Trans. Signal Process. 62(9), 2014.
+// Chen and Hayes, "Design of division circuits for stochastic computing",
+// IEEE ISVLSI 2016, doi:10.1109/ISVLSI.2016.48.
 //
-// P(z=1) converges to P(x=1) / P(y=1) when P(x) <= P(y).
+// P(z=1) converges to P(x=1) / P(y=1) when P(x) <= P(y) and x and y are
+// compared against one shared random sequence whose successive values are
+// independent, so that every 1 of x falls on a 1 of y. A 16-bit LFSR read
+// every clock is not such a sequence: with it z misses the quotient, and
+// equals x whenever 2 P(x) <= P(y). Independent streams give
+// P(x) / (P(x) + P(y) - P(x) P(y)). See docs/hardware/sc_cordiv.md.
 //
 // Truth table:
 //   x=1         → z = 1

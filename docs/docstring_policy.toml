@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2041
+expected_file_count = 2043
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8214,3 +8214,11 @@ rationale = "Synthetic and maintained locks prove that production installations,
 [[file]]
 path = "tests/test_hdl_sc_cordiv_mux_add_cosim.py"
 rationale = "An Icarus co-simulation binds sc_cordiv and sc_mux_add bit for bit to sc_divide and edge.bitstream.sc_mux on random, correlated and reset stimulus."
+
+[[file]]
+path = "tests/cordiv_division_support.py"
+rationale = "The shared imports of the CORDIV sc_divide and adaptive_length suites carry a module docstring that names the CORDIV source."
+
+[[file]]
+path = "tests/test_cordiv_division_sc_divide.py"
+rationale = "sc_divide gives the quotient on correlated streams and P(x) / (P(x) + P(y) - P(x) P(y)) on independent ones, and converges to that limit."

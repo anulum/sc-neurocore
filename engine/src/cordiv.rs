@@ -4,11 +4,17 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — CORDIV stochastic division (Li et al. 2014)
+// SC-NeuroCore — CORDIV stochastic division (Chen and Hayes, ISVLSI 2016)
 
 //! CORDIV: stochastic computing divider.
 //!
-//! Sequential circuit: P(z=1) ≈ P(x=1) / P(y=1) when P(x) <= P(y).
+//! Sequential circuit: P(z=1) ≈ P(x=1) / P(y=1) when P(x) <= P(y) and both
+//! streams are compared against one shared random sequence whose successive
+//! values are independent, so that every 1 of x falls on a 1 of y. A 16-bit
+//! LFSR read every clock is not such a sequence: with it z misses the
+//! quotient, and equals x whenever 2 P(x) <= P(y). For
+//! independent streams the circuit converges to
+//! P(x) / (P(x) + P(y) - P(x) P(y)) instead.
 //!
 //! Truth table per bit:
 //!   x=1         → z = 1

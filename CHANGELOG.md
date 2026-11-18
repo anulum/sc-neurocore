@@ -84,6 +84,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The CORDIV divider's documentation states its operating condition and
+  its source. `sc_divide`, `hdl/sc_cordiv.v`, the engine's `cordiv`, the
+  hardware contract page and the utilities page said the output converges
+  to P(x) / P(y) whenever P(x) <= P(y), and the pages added that correlated
+  streams bias it. The reverse holds: the quotient needs both streams
+  compared against one shared random sequence, and independent streams
+  converge to P(x) / (P(x) + P(y) - P(x) P(y)), about 0.417 instead of 0.5
+  for 0.3 and 0.6. The contract page's example now draws both streams from
+  one sequence. The citation, given as Li, Qian, Riedel and Bazargan in
+  IEEE Trans. Signal Process. 62(9), 2014, a record we could not find, is
+  now Chen and Hayes, IEEE ISVLSI 2016 (doi:10.1109/ISVLSI.2016.48), the
+  CORDIV paper. The quotient also needs a sequence whose successive values
+  are independent: with both streams compared against one 16-bit LFSR read
+  every clock, as `hdl/sc_bitstream_encoder.v` is, the output misses the
+  quotient and equals the numerator bit for bit whenever 2 P(x) <= P(y)
+  (0.303 instead of 0.502 for 0.3 and 0.6); the contract page says so.
+  Two tests pin both regimes. The convergence test, which measured
+  independent streams against the quotient, now measures them against
+  their limit and requires an error below 0.02 at 4,096 bits (0.008
+  measured; against the quotient it stays near 0.08). The pages cite the
+  test files that exist since the CORDIV tests were split. The circuits
+  are unchanged.
+
 - SNN Studio: two populations added before the server answered the first
   could get the same label and position, because each add read the number
   of populations when it was made (two "+ Exc" could both give "Exc 0").

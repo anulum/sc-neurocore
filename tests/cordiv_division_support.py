@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_cordiv_division.py
 
+"""Shared imports for the sc_divide (CORDIV, Chen and Hayes 2016) and adaptive_length tests."""
+
 from __future__ import annotations
 
-"""Tests for sc_divide (Li et al. 2014) and Hoeffding adaptive_length."""
 import numpy as np
 from sc_neurocore.utils.bitstreams import (
     generate_bernoulli_bitstream,

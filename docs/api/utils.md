@@ -42,7 +42,7 @@ For chaotic-rng test coverage and implementation details:
 
 ::: sc_neurocore.utils.bitstreams.bipolar_to_value
 
-### SC Division (CORDIV, Li et al. 2014)
+### SC Division (CORDIV, Chen and Hayes 2016)
 
 ::: sc_neurocore.utils.bitstreams.sc_divide
 
@@ -58,11 +58,14 @@ For chaotic-rng test coverage and implementation details:
 See the hardware state-machine contract for the implementation-backed version:
 [`docs/hardware/sc_cordiv.md`](../hardware/sc_cordiv.md).
 
-CORDIV estimates `P(numerator=1) / P(denominator=1)` when the numerator
-probability is not larger than the denominator probability. It is a sequential
-stochastic circuit, so correlated streams and short streams can bias the
-estimate; use this function as a bitstream contract, not as a floating-point
-division replacement.
+CORDIV estimates `P(numerator=1) / P(denominator=1)` only for correlated
+inputs: both streams compared against one shared random sequence whose
+successive values are independent, with the numerator probability not larger
+than the denominator probability. A 16-bit LFSR read every clock does not
+qualify (see the hardware contract page). For
+independent streams it converges to `P(x) / (P(x) + P(y) - P(x) P(y))`
+instead, and short streams add sampling error. Use this function as a
+bitstream contract, not as a floating-point division replacement.
 
 ### Adaptive Bitstream Length
 
@@ -89,7 +92,9 @@ The method controls the precision/speed tradeoff:
 
 Validation:
 - `tests/test_adaptive_length.py`
-- `tests/test_cordiv_division.py` (empirical check of division with generated stream lengths)
+- `tests/test_cordiv_division_sc_divide.py` and
+  `tests/test_cordiv_division_adaptive_length.py` (empirical check of division
+  with generated stream lengths)
 
 ## LDS Decorrelation (Sobol/Halton)
 

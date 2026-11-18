@@ -263,23 +263,33 @@ def sc_divide(
     numerator: np.ndarray[Any, Any],
     denominator: np.ndarray[Any, Any],
 ) -> np.ndarray[Any, Any]:
-    """Stochastic computing division via CORDIV circuit.
+    """Stochastic computing division via the CORDIV circuit.
 
-    Li, Qian, Riedel & Bazargan, IEEE Trans. Signal Process. 62(9), 2014.
+    T.-H. Chen and J. P. Hayes, "Design of division circuits for stochastic
+    computing", IEEE ISVLSI 2016, doi:10.1109/ISVLSI.2016.48.
 
     Sequential circuit: at each bit position t,
       - x[t]=1         → z[t] = 1
       - x[t]=0, y[t]=1 → z[t] = 0
       - x[t]=0, y[t]=0 → z[t] = z[t-1] (hold)
 
-    Converges to P(z=1) ≈ P(x=1) / P(y=1) when P(x) ≤ P(y).
+    The quotient needs correlated inputs. When both streams are compared
+    against one shared random sequence with P(x) ≤ P(y), every 1 of x falls on
+    a 1 of y, and z holds the value of x at the last bit where y was 1. If
+    the sequence's successive values are independent, P(z=1) converges to
+    P(x=1 | y=1) = P(x=1) / P(y=1); a 16-bit LFSR read every clock is not
+    such a sequence, and with it z misses the quotient (z equals x whenever
+    2·P(x) ≤ P(y)). For independent streams the circuit converges to
+    P(x) / (P(x) + P(y) − P(x)·P(y)), which is not the quotient: 0.3 and 0.6
+    give about 0.417 instead of 0.5.
 
     Parameters
     ----------
     numerator : np.ndarray
         Bitstream (uint8, {0,1}) of length L.
     denominator : np.ndarray
-        Bitstream (uint8, {0,1}) of length L. Must have higher or equal density.
+        Bitstream (uint8, {0,1}) of length L, generated from the same random
+        sequence as the numerator, with higher or equal density.
 
     Returns
     -------
