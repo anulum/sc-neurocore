@@ -14,6 +14,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The security packet's Gitleaks lane runs with `.gitleaks.toml`. It keeps
+  every default rule and allowlists only the 33 reviewed false positives of
+  the generic API key rule at the 4.2.0 release: SHA-256 content digests
+  keyed by source paths whose names contain "lapicque" (the rule reads the
+  "api" in it as a key name), a doc comment, an engine binding name and a
+  formal module name. Each allowlist names the rule, the files and the exact
+  shape of the value, so a key of another shape in those files, a
+  digest-shaped key in any other file and every other rule are still
+  reported; a check with planted keys shows each still found. The lane's
+  summary records the configuration's SHA-256.
+
 - The dependency lock audit accepts a named npm advisory on a development-only
   package for at most two weeks per review, while the npm registry lists no
   release outside the advisory's vulnerable range. Every installation of the

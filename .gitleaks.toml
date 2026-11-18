@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Gitleaks configuration: the default rules and reviewed false positives
+#
+# Gitleaks reads this file through tools/security_scan/run_gitleaks_scanners.py. Every
+# default rule stays active. Each allowlist below covers one reviewed false positive of
+# the default generic-api-key rule: it names that rule, the files the value occurs in,
+# and the exact shape of the value. A finding of any other rule, in any other file, or
+# with a value of any other shape is still reported.
+
+title = "SC-NeuroCore gitleaks configuration"
+
+[extend]
+useDefault = true
+
+# Content digests keyed by source paths whose names contain "lapicque". The rule reads
+# the "api" inside "lapicque" as a key name, and the digest beside it as the key.
+[[allowlists]]
+description = "SHA-256 content digests keyed by Lapicque source paths"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''^benchmarks/results/bench_lapicque\.json$''',
+  '''^benchmarks/results/local_python_2026-06-17_lapicque_exact_flow\.json$''',
+  '''^tests/fixtures/engine_abi_default\.json$''',
+]
+regexTarget = "secret"
+regexes = ['''^[0-9a-f]{64}$''']
+
+# A doc comment line, "Key properties: irregular/accommodating".
+[[allowlists]]
+description = "Doc comment of the VIP interneuron"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^engine/src/neurons/interneurons/vip_neuron\.rs$''']
+regexTarget = "secret"
+regexes = ['''^irregular/accommodating$''']
+
+# The name of an engine binding, passed as source_token to the parity check.
+[[allowlists]]
+description = "Engine binding name in the Rust/Python parity test"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^tests/test_rust_python_neuron_parity\.py$''']
+regexTarget = "secret"
+regexes = ['''^py_izhikevich2007_simulate$''']
+
+# A model-to-module map entry: "LapicqueNeuron": "sc_lapicque_1907".
+[[allowlists]]
+description = "Formal module name of the Lapicque neuron"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^tools/emit_catalogue_formal\.py$''']
+regexTarget = "secret"
+regexes = ['''^sc_lapicque_1907$''']

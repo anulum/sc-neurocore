@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2043
+expected_file_count = 2045
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8222,3 +8222,11 @@ rationale = "The shared imports of the CORDIV sc_divide and adaptive_length suit
 [[file]]
 path = "tests/test_cordiv_division_sc_divide.py"
 rationale = "sc_divide gives the quotient on correlated streams and P(x) / (P(x) + P(y) - P(x) P(y)) on independent ones, and converges to that limit."
+
+[[file]]
+path = "tools/security_scan/run_gitleaks_scanners.py"
+rationale = "The Gitleaks lane runs the repository's .gitleaks.toml when present, records its SHA-256, and stays non-blocking while it counts findings."
+
+[[file]]
+path = "tests/test_tools/test_run_gitleaks_scanners.py"
+rationale = "The lane's command, configuration digest and artefacts, and the allowlists' narrowness: reviewed values allowed, planted keys of another shape, file or rule not."

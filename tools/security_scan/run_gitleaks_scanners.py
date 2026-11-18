@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 from collections.abc import Callable, Sequence
@@ -19,6 +20,8 @@ from pathlib import Path
 from typing import Any
 
 GITLEAKS_SCANNER_SCHEMA_VERSION = "sc-neurocore.gitleaks-scanner.v1"
+#: The repository's Gitleaks configuration: the default rules plus reviewed false positives.
+GITLEAKS_CONFIG_NAME = ".gitleaks.toml"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -99,10 +102,18 @@ def run_gitleaks_scanner(
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
 ) -> dict[str, Any]:
-    """Run Gitleaks against the repository and write JSON plus summary artefacts."""
+    """Run Gitleaks against the repository and write JSON plus summary artefacts.
+
+    When the repository holds ``.gitleaks.toml``, it is passed with ``--config``
+    and its SHA-256 is recorded, so the evidence names the allowlist it ran with.
+    """
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
     report_path = security_dir / "gitleaks.json"
+    config_path = repo_root / GITLEAKS_CONFIG_NAME
+    config_sha256 = (
+        hashlib.sha256(config_path.read_bytes()).hexdigest() if config_path.is_file() else None
+    )
     command = [
         "gitleaks",
         "detect",
@@ -115,6 +126,8 @@ def run_gitleaks_scanner(
         "--no-banner",
         "--redact",
     ]
+    if config_sha256 is not None:
+        command += ["--config", str(config_path)]
     result = _run(command, repo_root=repo_root, run_command=run_command, timeout=300)
     if result.returncode == 0 and not report_path.exists():
         _write_json(report_path, [])
@@ -125,6 +138,8 @@ def run_gitleaks_scanner(
         "passed": result.returncode in {0, 1} and not validation_errors,
         "allowed_to_fail": True,
         "command": command,
+        "config": str(config_path) if config_sha256 is not None else None,
+        "config_sha256": config_sha256,
         "artifact": str(report_path),
         "returncode": result.returncode,
         "stdout_tail": _tail_lines(result.stdout),

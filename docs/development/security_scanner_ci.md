@@ -170,7 +170,10 @@ It is therefore a mixed execution/planning envelope:
   `.semgrep.yml`, failing closed on findings because the lane uses `--error`,
 - Gitleaks is executed in the main packet lane and by the tag release sweep,
   writing `security/gitleaks.json` and `security/gitleaks_summary.json` while
-  remaining non-blocking according to the manifest triage policy,
+  remaining non-blocking according to the manifest triage policy. It runs with
+  `.gitleaks.toml`, which keeps every default rule and allowlists only reviewed
+  false positives, each by rule, file and exact value shape; the summary
+  records the configuration's SHA-256,
 - Trivy FS is executed in the main packet lane and by the tag release sweep,
   writing `security/trivy_fs.json` and `security/trivy_fs_summary.json` while
   failing closed on fixed high and critical vulnerabilities,
