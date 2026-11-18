@@ -1108,7 +1108,30 @@ jobs:
           npx playwright test --config playwright.live.config.ts equation-ir-live.spec.ts \
             hardware-catalogue-live.spec.ts catalogue-to-silicon-live.spec.ts \
             candidate-authoring-live.spec.ts candidate-jobs-live.spec.ts \
+            training-preregistration-live.spec.ts training-conversion-live.spec.ts \
             --output="$namespace/playwright"
+
+      - name: Event training browser acceptance
+        if: matrix.primary
+        working-directory: studio/frontend
+        shell: bash
+        env:
+          SC_NEUROCORE_STUDIO_EVENT_API_PORT: "24022"
+          SC_NEUROCORE_STUDIO_EVENT_UI_PORT: "24023"
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          # The event suite previews the bundle built above. Its server imports
+          # tests.event_dataset_support from the repository root and needs a
+          # fresh absolute root (CONTRIBUTING.md, Studio live browser suites).
+          namespace="$RUNNER_TEMP/studio-event-browser"
+          mkdir -p "$namespace"/{tmp,config,data,state,cache}
+          export TMPDIR="$namespace/tmp"
+          export XDG_CONFIG_HOME="$namespace/config" XDG_DATA_HOME="$namespace/data"
+          export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
+          export SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT="$namespace/root"
+          export PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}"
+          npx playwright test --config playwright.event.config.ts
 
       - name: Preserve equation compiler browser diagnostics
         if: always() && matrix.primary
@@ -1117,6 +1140,7 @@ jobs:
           name: studio-equation-browser-diagnostics
           path: |
             ${{ runner.temp }}/studio-equation-browser
+            ${{ runner.temp }}/studio-event-browser
             ${{ runner.temp }}/studio-equation-coverage
             ${{ runner.temp }}/studio-candidate-coverage
           include-hidden-files: true

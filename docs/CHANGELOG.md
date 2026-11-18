@@ -135,6 +135,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- CI runs the three Studio training browser specs no hosted workflow had
+  run. The live browser step of the test job now lists the training
+  preregistration and training conversion specs, which its configuration
+  already selected but its file list left out, and a new step runs the
+  event training suite with the two settings it needs: a fresh absolute
+  SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT and the repository root on
+  PYTHONPATH, since its server imports a test helper. CONTRIBUTING.md and
+  the spec's header document them. A new contract test reads every
+  workflow's Playwright invocations and fails when a live spec runs in
+  none of them against a backend, or when the mocked default run selects
+  one.
+
 - The public pages state one count of the spike train analysis toolkit's
   functions, 127, the number of functions `sc_neurocore.analysis` exports.
   They said 124, 125 or 132. `docs/api/analysis.md` no longer says it covers

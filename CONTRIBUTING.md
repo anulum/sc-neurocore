@@ -241,6 +241,37 @@ programming hardware. These checks attest the software catalogue, not a vendor
 SDK or physical device. Shared-host local checks remain module-specific and
 serial; the commands above describe the hosted gate.
 
+### Studio live browser suites
+
+The mocked default Playwright run (`playwright.config.ts`) ignores every
+`e2e/*-live.spec.ts`; each live spec needs a real backend and runs under its
+own configuration, which starts the servers it needs:
+
+| Configuration | Live specs | Hosted run |
+|---|---|---|
+| `playwright.live.config.ts` | candidate authoring and jobs, hardware catalogue, catalogue to silicon, equation IR, training preregistration, training conversion | test job, primary leg, "Native equation compiler browser workflow" |
+| `playwright.event.config.ts` | event training | test job, primary leg, "Event training browser acceptance" |
+| `playwright.graph.config.ts` | network canvas and notebook, guided flow, workbench accessibility, trace custody, fit, review, notebook export, candidate authoring | frontend job |
+| `playwright.export.config.ts` | experiment export | frontend job |
+| `playwright.timing.config.ts` | render timing | frontend job |
+
+The event suite needs two settings that nothing else sets. It previews the
+built bundle, so run `npm run build` first:
+
+```bash
+cd studio/frontend
+npm run build
+export SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT="$(mktemp -d)"   # fresh and absolute
+export PYTHONPATH="$(git rev-parse --show-toplevel)"        # the server imports tests.event_dataset_support
+npx playwright test --config playwright.event.config.ts
+```
+
+`tests/test_tools/test_ci_live_browser_specs_contract.py` reads every workflow's
+Playwright invocations with the configurations they name and the file lists
+they pass. It fails when a live spec runs under no configuration that starts
+its backend, when the mocked default run selects one, and when the event suite
+runs without those two settings.
+
 ### Candidate dimensional admission coverage
 
 Candidate dimensional admission has a separate branch-coverage gate over its

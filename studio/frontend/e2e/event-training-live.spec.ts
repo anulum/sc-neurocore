@@ -6,6 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — live event training input and workspace acceptance
 
+// Run with `npx playwright test --config playwright.event.config.ts` after `npm run build`:
+// the configuration previews the built bundle. Set SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT to a
+// fresh absolute directory, where the server writes its recordings, projects and jobs, and put
+// the repository root on PYTHONPATH: e2e/event_training_server.py imports
+// tests.event_dataset_support. CI's test job runs it this way on its primary leg.
+
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
