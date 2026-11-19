@@ -3,7 +3,7 @@
 **Module:** `engine/src/neurons/sensory/inner_hair_cell.rs` (Rust) / `sc_neurocore_engine.InnerHairCell` (PyO3)
 **References:**
 - Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *JASA* 119(1), 406–417.
-- Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell. *JASA* 119(1), 416–432.
+- Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell. *J Assoc Res Otolaryngol* 7(3), 218–235.
 - Hudspeth, A. J. (2014). Integrating the active process of hair cells with cochlear function. *Nat Rev Neurosci* 15, 600–614.
 **Family:** Sensory — cochlear auditory receptor (graded, non-spiking)
 **State variables:** `v` (receptor potential), `ca` (intracellular Ca²⁺), `q` (free vesicle pool), `c` (cleft transmitter), `w` (reprocessing store)
@@ -534,7 +534,7 @@ At zero displacement ($p_{open} = 0.5$ due to resting tension on tip links), the
 ## References
 
 1. Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *J. Acoust. Soc. Am.* 119(1), 406–417. doi:10.1121/1.2139628
-2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Acoust. Soc. Am.* 119(1), 416–432. doi:10.1121/1.2133496
+2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Assoc. Res. Otolaryngol.* 7(3), 218–235. doi:10.1007/s10162-006-0037-8
 3. Hudspeth, A. J. (2014). Integrating the active process of hair cells with cochlear function. *Nat. Rev. Neurosci.* 15, 600–614. doi:10.1038/nrn3786
 4. Koschak, A. et al. (2001). Alpha 1D (CaV1.3) subunits can form L-type Ca²⁺ channels activating at negative voltages. *J. Biol. Chem.* 276, 22100–22106.
 5. Platzer, J. et al. (2000). Congenital deafness and sinoatrial node dysfunction in mice lacking class D L-type Ca²⁺ channels. *Cell* 102, 89–97.
@@ -551,7 +551,7 @@ At zero displacement ($p_{open} = 0.5$ due to resting tension on tip links), the
 *Generated from `engine/src/neurons/sensory/inner_hair_cell.rs` (Rust source of truth). All equations verified against Meddis 2006 and Lopez-Poveda 2006. All parameter defaults match code. Analytical results computed independently and cross-checked against source.*
 
 1. Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *J. Acoust. Soc. Am.* 119(1), 406–417. doi:10.1121/1.2139628
-2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Acoust. Soc. Am.* 119(1), 416–432. doi:10.1121/1.2133496
+2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Assoc. Res. Otolaryngol.* 7(3), 218–235. doi:10.1007/s10162-006-0037-8
 3. Hudspeth, A. J. (2014). Integrating the active process of hair cells with cochlear function. *Nat. Rev. Neurosci.* 15, 600–614. doi:10.1038/nrn3786
 4. Koschak, A. et al. (2001). Alpha 1D (CaV1.3) subunits can form L-type Ca²⁺ channels activating at negative voltages. *J. Biol. Chem.* 276, 22100–22106.
 5. Platzer, J. et al. (2000). Congenital deafness and sinoatrial node dysfunction in mice lacking class D L-type Ca²⁺ channels. *Cell* 102, 89–97.

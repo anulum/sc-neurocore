@@ -1,7 +1,7 @@
 # SmoothMuscleCell
 
 **Module:** `engine/src/neurons/misc/smooth_muscle.rs`
-**Reference:** Hirst & Edwards, *J Physiol* 531:567–584, 2001; Imtiaz et al., *Biophys J* 83:1877–1890, 2002
+**Reference:** Hirst & Edwards, *J Physiol* 535:165–180, 2001; Imtiaz et al., *Biophys J* 83:1877–1890, 2002
 **Family:** Visceral/vascular smooth muscle with Ca²⁺ oscillations
 **State variables:** `v`, `d` (CaL activation), `f` (CaL inactivation), `ca` (cytosolic Ca²⁺), `ca_store` (ER/SR Ca²⁺)
 

@@ -1,7 +1,7 @@
 # GapJunctionNeuron
 
 **Module:** `engine/src/neurons/misc/gap_junction.rs`
-**Reference:** Connors & Long, *Annu Rev Neurosci* 27:393–418, 2004; Vervaeke et al., *Neuron* 65:801–813, 2010
+**Reference:** Connors & Long, *Annu Rev Neurosci* 27:393–418, 2004; Vervaeke et al., *Neuron* 67:435–451, 2010
 **Family:** LIF with electrical synapse coupling and Cx36 rectification
 **State variables:** `v` (membrane potential)
 

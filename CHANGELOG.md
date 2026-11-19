@@ -210,6 +210,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Eleven citations on the model pages and in two engine sources are corrected
+  to their works' records. Each record is in Crossref and was read a second
+  time by DOI in PubMed or Semantic Scholar:
+  - Vervaeke et al. 2010 is *Neuron* 67:435–451;
+  - Hirst & Edwards 2001 is *J Physiol* 535:165–180;
+  - Lopez-Poveda & Eustaquio-Martín 2006 is in *J Assoc Res Otolaryngol*
+    7(3):218–235, cited three times on the inner hair cell page, with its DOI;
+  - Korenbrot 2012 is in *Prog Retin Eye Res* 31(5):442–466;
+  - Pillow et al. in *J Neurosci* 25:11003 is from 2005;
+  - Eshraghian et al. in *Proc IEEE* 111:1016 is from 2023;
+  - Tsodyks et al. 2000 is *J Neurosci* 20(1), RC50.
+
+  The other entries of those pages' reference lists were checked the same
+  way. Entries that no registry holds, or whose record does not identify
+  the work, are kept as written and listed for review; nothing is removed.
+  A test holds the corrections and the one form kept for review in the
+  engine source.
+
 - The ADC-to-spike sensor quantiser RTL (`hdl/sensors/adc_to_spike_quantiser.v`)
   now preserves signed fixed-point bounds and arithmetic rounding shifts across
   nominal and down-scaled input widths instead of saturating every decimated

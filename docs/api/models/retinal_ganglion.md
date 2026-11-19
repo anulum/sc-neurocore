@@ -2,7 +2,7 @@
 
 **Module:** `engine/src/neurons/sensory/retinal_ganglion_cell.rs`
 **Rust struct:** `RetinalGanglionCell`
-**Reference:** Pillow et al., Nature 437:1258, 2005; Pillow et al., J Neurosci 28:11003, 2008
+**Reference:** Pillow et al., Nature 437:1258, 2005; Pillow et al., J Neurosci 25:11003, 2005
 **Family:** Generalised Linear Model (GLM) — stimulus filter + history filter + exponential nonlinearity
 **State variables:** `stim_buffer` (ring buffer, 20 taps), `hist_buffer` (ring buffer, 30 taps), `stim_idx`, `hist_idx`
 

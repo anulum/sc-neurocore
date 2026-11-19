@@ -28,7 +28,7 @@
 /// dV/dt = (-ICaL - IBK - IL + I_ext) / C_m
 /// dCa/dt = -alpha*ICaL - SERCA(Ca) + IP3_release(Ca, IP3) - Ca/tau_ca
 ///
-/// Hirst & Edwards, J Physiol 531:567, 2001.
+/// Hirst & Edwards, J Physiol 535:165, 2001.
 /// Imtiaz et al., Biophys J 83:1877, 2002.
 #[derive(Clone, Debug)]
 pub struct SmoothMuscleCell {

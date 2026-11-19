@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5716
+    "test_files": 5717
   },
   "documentation": {
     "public_pages": [
@@ -7447,6 +7447,7 @@
       "tests/test_reference_phantom_coauthor.py",
       "tests/test_reference_poisson.py",
       "tests/test_reference_quadratic_if.py",
+      "tests/test_reference_registry_corrections.py",
       "tests/test_reference_resonate_fire.py",
       "tests/test_reference_rulkov_map.py",
       "tests/test_reference_sc_adaptive_threshold_map.py",

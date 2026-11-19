@@ -2,7 +2,7 @@
 
 **Module:** `engine/src/neurons/trivial/klif.rs`
 **Rust struct:** `KLIFNeuron`
-**Reference:** Eshraghian et al., Proc IEEE 111:1016, 2021 (snnTorch framework)
+**Reference:** Eshraghian et al., Proc IEEE 111:1016, 2023 (snnTorch framework)
 **Family:** Integrate-and-fire (learnable, hardware-optimised)
 **State variables:** `v` (membrane potential)
 

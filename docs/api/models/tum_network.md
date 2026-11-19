@@ -531,7 +531,7 @@ depending on temporal structure:
 
 1. Tsodyks, M., Uziel, A. & Markram, H. (2000). Synchrony generation
    in recurrent networks with frequency-dependent synapses. *J Neurosci*,
-   20(RC50), 1–5.
+   20(1), RC50.
 
 2. Tsodyks, M. V. & Markram, H. (1997). The neural code between
    neocortical pyramidal neurons depends on neurotransmitter release

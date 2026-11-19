@@ -533,7 +533,7 @@ println!("V: {:.1}, cGMP: {:.3}, Ca: {:.3}", rod.v, rod.cgmp, rod.ca);
    cyclase by calcium ions. *Nature* 334:64–66.
 
 8. Korenbrot JI (2012). Speed, sensitivity, and stability of the light response in rod
-   and cone photoreceptors. *Adv Exp Med Biol* 723:191–197.
+   and cone photoreceptors: facts and models. *Prog Retin Eye Res* 31(5):442–466.
 
 9. Baylor DA, Lamb TD, Yau K-W (1979). Responses of retinal rods to single photons.
    *J Physiol* 288:613–634.

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2092
+expected_file_count = 2093
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8418,3 +8418,7 @@ rationale = "Classify every Mojo source by stated rules and map it to the backen
 [[file]]
 path = "tests/test_mojo_lane_inventory.py"
 rationale = "Hold the Mojo lane inventory to its rules, to the repository and to the package's declared mirrors."
+
+[[file]]
+path = "tests/test_reference_registry_corrections.py"
+rationale = "Every registry-proven citation correction stands in its files, its wrong form returns nowhere in the docs or engine sources, and the one form kept for review stays where it was."

@@ -38,7 +38,7 @@
 /// C dV/dt = -g_L(V - E_L) + g_eff * (V_neighbor - V) + I_tonic
 ///
 /// Connors & Long, Annu Rev Neurosci 27:393, 2004.
-/// Vervaeke et al., Neuron 65:801, 2010 (Cx36 voltage gating).
+/// Vervaeke et al., Neuron 67:435, 2010 (Cx36 voltage gating).
 #[derive(Clone, Debug)]
 pub struct GapJunctionNeuron {
     /// Membrane potential (mV).
