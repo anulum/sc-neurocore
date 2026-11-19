@@ -52,3 +52,13 @@ pub const DENSE_WIDTH: (u32, u32) = (12, 24);
 pub const LIF_WIDTH: (u32, u32) = (12, 32);
 /// Calibrated synapse stream length, inclusive; only powers of two are calibrated.
 pub const SYNAPSE_LENGTH: (usize, usize) = (64, 4096);
+/// Word add logic-cell bound: offset and coefficient of width.
+pub const WORD_ADD_LOGIC_CELLS: [f64; 2] = [3.06122449, 1.05867347];
+/// Word add timing bound in ns: offset and coefficient of width.
+pub const WORD_ADD_PATH: [f64; 2] = [8.224966962, 0.398852245];
+/// Word sub logic-cell bound: offset and coefficient of width.
+pub const WORD_SUB_LOGIC_CELLS: [f64; 2] = [2.000000001, 2.0];
+/// Word sub timing bound in ns: offset and coefficient of width.
+pub const WORD_SUB_PATH: [f64; 2] = [11.838749388, 0.440721885];
+/// Calibrated integer word width, inclusive.
+pub const WORD_WIDTH: (u32, u32) = (8, 32);

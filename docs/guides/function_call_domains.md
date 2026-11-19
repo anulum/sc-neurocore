@@ -119,7 +119,8 @@ They measure Python analysis cost, not generated hardware throughput. No native
 implementation of this metadata analysis is asserted; generated C, Rust and RTL
 remain separate numerical validation targets.
 
-The complete equation-IR benchmark was rerun after the inverse-trigonometric lowering changed.
+The complete equation-IR benchmark was rerun with the calibrated iCE40 add and subtract report.
+The paired run used the Cargo dev profile with default features on a shared host.
 `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
 measured transactions after two warmups for each of twelve models. It includes
 source replay and both native emitters, pins all compiler source files and the
@@ -128,5 +129,5 @@ call. The twelve output checksums matched on the same ML350 runtime before and a
 
 Both historical equation-IR result filenames contain that same twelve-case capture,
 not separate measurements. The capture records the distribution versions the
-interpreter reported (sc-neurocore and its engine both 4.1.0) and the SHA-256 of
+interpreter reported (sc-neurocore 4.1.0 and engine 4.2.0) and the SHA-256 of
 the native binary it loaded.

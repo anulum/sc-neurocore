@@ -27,6 +27,7 @@ from sc_neurocore_engine.ir import (  # noqa: E402
     Ice40ResourceReport,
     ScGraph,
     ScGraphBuilder,
+    parse_ir,
 )
 from sc_neurocore.studio.synthesis_profiles import synthesis_target_profiles  # noqa: E402
 
@@ -157,13 +158,84 @@ def test_report_keys_are_declared_and_an_unavailable_estimate_carries_no_number(
     assert set(outside) == declared - ESTIMATE_KEYS
     builder = ScGraphBuilder("word")
     a = builder.input("a", "i16")
-    builder.output("doubled", builder.word_binary("add", a, a, "i16"))
+    builder.output("product", builder.word_binary("mul", a, a, "i16"))
     _, word = builder.build().emit_sv_with_report("ice40:UP5K", 12)
     assert (
         word["static_estimate_reason"]
         == "word-level operations have no static estimate on this target"
     )
     assert not ESTIMATE_KEYS & set(word)
+
+
+def test_integer_word_report_covers_ports_aliases_and_constant_operands() -> None:
+    """Raw addition and subtraction get bounds for the measured graph forms."""
+    for operation, ty, form in (
+        ("add", "i8", "ports"),
+        ("add", "u19", "alias"),
+        ("sub", "i32", "left"),
+        ("sub", "u12", "right"),
+    ):
+        builder = ScGraphBuilder("word_arithmetic")
+        value = builder.input("a", ty)
+        if form == "ports":
+            other = builder.input("b", ty)
+        elif form == "alias":
+            other = value
+        else:
+            other = builder.constant_i64(0, ty)
+        left, right = (other, value) if form == "left" else (value, other)
+        builder.output("r", builder.word_binary(operation, left, right, ty))
+        _, estimate = builder.build().emit_sv_with_report("ice40:UP5K", 12)
+        assert estimate["static_estimate"] is True
+        assert estimate["logic_cells_estimated"] > 0
+        assert estimate["critical_path_estimate_ns"] > 0
+
+
+@pytest.mark.parametrize(("ty", "literal"), [("u11", "13"), ("i12", "u64(13)")])
+def test_word_report_is_identical_for_builder_and_textual_integer_literals(
+    ty: str, literal: str
+) -> None:
+    """Textual and builder word constants report the same resources and emit identical RTL."""
+    builder = ScGraphBuilder("textual_word")
+    a = builder.input("a", ty)
+    constant = builder.constant_i64(13, ty)
+    builder.output("result", builder.word_binary("add", a, constant, ty))
+    textual = parse_ir(
+        f"""sc.graph @textual_word {{
+  %0 = sc.input "a" : {ty}
+  %1 = sc.constant {literal} : {ty}
+  %2 = sc.word add %0, %1 : {ty}
+  sc.output "result" %2
+}}
+"""
+    )
+    emitted = builder.build().emit_sv_with_report("ice40:UP5K", 12)
+    assert emitted[1]["static_estimate"] is True
+    assert textual.emit_sv_with_report("ice40:UP5K", 12) == emitted
+
+
+def test_word_report_excludes_a_wider_word_or_an_unmeasured_graph_shape() -> None:
+    """Multiple operations or outputs and two immediate operands stay uncalibrated."""
+    wide = ScGraphBuilder("wide_add")
+    value = wide.input("a", "i33")
+    wide.output("r", wide.word_binary("add", value, value, "i33"))
+    chain = ScGraphBuilder("chain_add")
+    value = chain.input("a", "i16")
+    result = chain.word_binary("add", value, value, "i16")
+    chain.output("r", chain.word_binary("add", result, value, "i16"))
+    duplicate = ScGraphBuilder("duplicate_output")
+    value = duplicate.input("a", "i16")
+    result = duplicate.word_binary("sub", value, value, "i16")
+    duplicate.output("first", result)
+    duplicate.output("second", result)
+    folded = ScGraphBuilder("constant_operands")
+    a = folded.constant_i64(1, "i16")
+    b = folded.constant_i64(2, "i16")
+    folded.output("r", folded.word_binary("add", a, b, "i16"))
+    for builder in (wide, chain, duplicate, folded):
+        _, estimate = builder.build().emit_sv_with_report("ice40:UP5K", 12)
+        assert estimate["static_estimate"] is False
+        assert not ESTIMATE_KEYS & set(estimate)
 
 
 def _dense_with_ports(port_weights: bool, port_leak_gain: bool) -> ScGraph:

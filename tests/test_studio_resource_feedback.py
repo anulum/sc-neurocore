@@ -322,11 +322,26 @@ def test_a_real_run_above_a_lowered_estimate_is_an_estimate_violation() -> None:
 
 
 @real_flow
+def test_word_subtraction_with_left_immediate_passes_the_estimate_check() -> None:
+    """The placed circuit for zero minus a word stays within the calibrated bound."""
+    builder = ScGraphBuilder("word_negation")
+    a = builder.input("a", "i8")
+    zero = builder.constant_i64(0, "i8")
+    builder.output("result", builder.word_binary("sub", zero, a, "i8"))
+    result = feedback.run_resource_feedback(
+        builder.build(), clock_mhz=12, timeout_seconds=TOOL_TIMEOUT_S
+    )
+    assert result["verdict"] == "pass"
+    assert _verdicts(result)["estimate"] == "pass"
+    assert 0 < result["core_logic_cells"] <= result["estimate"]["logic_cells_estimated"]
+
+
+@real_flow
 def test_a_word_graph_is_judged_by_its_routed_result_alone() -> None:
     """No static estimate: no estimate check, and the report says why."""
-    builder = ScGraphBuilder("word_add")
+    builder = ScGraphBuilder("word_mul")
     a = builder.input("a", "i16")
-    builder.output("doubled", builder.word_binary("add", a, a, "i16"))
+    builder.output("product", builder.word_binary("mul", a, a, "i16"))
     result = feedback.run_resource_feedback(
         builder.build(), clock_mhz=12, timeout_seconds=TOOL_TIMEOUT_S
     )

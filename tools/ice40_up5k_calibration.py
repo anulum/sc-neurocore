@@ -417,8 +417,126 @@ def dense_path_selection(
     return table
 
 
+def word_models(cases: list[dict[str, Any]]) -> dict[str, dict[str, list[float]]]:
+    """Fit per-operator width bounds from the designated cases and seeds.
+
+    Parameters
+    ----------
+    cases : list of dict
+        Validated word-arithmetic design records with role, operator, width
+        and routed observations. Only fit-role cases and training seeds contribute.
+
+    Returns
+    -------
+    dict
+        Logic-cell and path-delay coefficients by operator, ordered as offset
+        and coefficient of word width.
+
+    Raises
+    ------
+    ValueError
+        If a fit-role case lacks training seeds or an operator lacks a training width.
+    """
+    result: dict[str, dict[str, list[float]]] = {}
+    for operator in ("add", "sub"):
+        training: dict[int, list[list[float]]] = {}
+        seed_spread = 1.0
+        for case in cases:
+            if case["operator"] != operator or case["role"] != "fit":
+                continue
+            samples = [
+                [cells, 1000.0 / mhz] for seed, cells, mhz, _ in case["routes"] if seed in (1, 2, 3)
+            ]
+            if not samples:
+                raise ValueError(
+                    f"missing fitted seeds for word {operator} at width {case['data_width']}"
+                )
+            training.setdefault(case["data_width"], []).extend(samples)
+            paths = [sample[1] for sample in samples]
+            seed_spread = max(seed_spread, max(paths) / min(paths))
+        widths = sorted(training)
+        if widths != [8, 16, 24, 32]:
+            raise ValueError(f"missing fitted widths for word {operator}: {widths}")
+        features = np.array([[1.0, width] for width in widths])
+        coefficients: dict[str, list[float]] = {}
+        for axis, name in enumerate(("logic_cells", "path_ns")):
+            measured = np.array([max(row[axis] for row in training[width]) for width in widths])
+            fit, _ = nnls(features, measured)
+            factor = float(np.max(measured / (features @ fit)))
+            if name == "path_ns":
+                factor *= seed_spread
+            coefficients[name] = [math.ceil(value * factor * 1e9) / 1e9 for value in fit]
+        result[operator] = coefficients
+    return result
+
+
+def _word_observation_failures(cases: list[dict[str, Any]]) -> list[str]:
+    """Reject malformed route observations before they can affect the fit."""
+    failures = []
+    for case in cases:
+        label = f"word {case['operator']}/{case['data_width']}/{case['role']}/{case['form']}"
+        seen = set()
+        for seed, cells, mhz, _ in case["routes"]:
+            if seed in seen or cells < 0 or not math.isfinite(mhz) or mhz <= 0:
+                failures.append(f"{label}: invalid observation for seed {seed}")
+                continue
+            seen.add(seed)
+        if not seen:
+            failures.append(f"{label}: missing routed observations")
+    return failures
+
+
+def word_failures(
+    models: dict[str, dict[str, list[float]]], cases: list[dict[str, Any]]
+) -> list[str]:
+    """Identify valid word routes that exceed their fitted estimates.
+
+    Parameters
+    ----------
+    models : dict
+        Width-model coefficients by operator and metric.
+    cases : list of dict
+        Validated word-arithmetic design records and their routed observations.
+
+    Returns
+    -------
+    list of str
+        One diagnostic per sampled route whose resource usage or path delay
+        exceeds the estimate.
+    """
+    failures = []
+    for case in cases:
+        operator, width = case["operator"], case["data_width"]
+        label = f"word {operator}/{width}/{case['role']}/{case['form']}"
+        model = models[operator]
+        area_offset, area_slope = model["logic_cells"]
+        path_offset, path_slope = model["path_ns"]
+        area = math.ceil(area_offset + width * area_slope)
+        path = path_offset + width * path_slope
+        for seed, cells, mhz, _ in case["routes"]:
+            delay = 1000.0 / mhz
+            if cells > area or delay > path:
+                failures.append(
+                    f"{label}: seed {seed}: {cells}/{area} cells, {delay:.3f}/{path:.3f} ns"
+                )
+    return failures
+
+
 def render(model: dict[str, Any], measured: dict[str, Any]) -> str:
-    """Render the generated Rust constants."""
+    """Render the generated Rust constants.
+
+    Parameters
+    ----------
+    model : dict
+        Fitted estimates for the supported block families.
+    measured : dict
+        Measurement metadata and coefficients used by the other supported blocks.
+
+    Returns
+    -------
+    str
+        The complete Rust calibration module with a trailing newline.
+    """
     dense, lif, synapse = (model["families"][f] for f in ("dense", "lif", "synapse"))
 
     def array(name: str, values: list[float]) -> list[str]:
@@ -483,6 +601,16 @@ def render(model: dict[str, Any], measured: dict[str, Any]) -> str:
         f"pub const SYNAPSE_LENGTH: (usize, usize) = {DOMAIN['synapse']['stream_length']};",
         "",
     ]
+    lines.pop()
+    for operation, coefficients in model["word"].items():
+        prefix = f"WORD_{operation.upper()}"
+        lines.append(f"/// Word {operation} logic-cell bound: offset and coefficient of width.")
+        lines.extend(array(f"{prefix}_LOGIC_CELLS", coefficients["logic_cells"]))
+        lines.append(f"/// Word {operation} timing bound in ns: offset and coefficient of width.")
+        lines.extend(array(f"{prefix}_PATH", coefficients["path_ns"]))
+    lines.append("/// Calibrated integer word width, inclusive.")
+    lines.append("pub const WORD_WIDTH: (u32, u32) = (8, 32);")
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -547,6 +675,19 @@ def main(argv: list[str] | None = None) -> int:
     model = fit_model(measured["designs"])
     failures, margins = coverage(model, measured["designs"])
     failures += probe_failures(model, measured["weight_probes"]["rows"])
+    word_cases = measured["word_calibration"]["cases"]
+    invalid = _word_observation_failures(word_cases)
+    if invalid:
+        failures.extend(invalid)
+    else:
+        try:
+            model["word"] = word_models(word_cases)
+        except ValueError as error:
+            failures.append(str(error))
+        else:
+            failures.extend(word_failures(model["word"], word_cases))
+    word_routes = sum(len(case["routes"]) for case in word_cases)
+    print(f"word arithmetic: checked {len(word_cases)} cases and {word_routes} routes")
     for (family, role), margin in sorted(margins.items()):
         print(
             f"{family} {role}: smallest margin logic cells {margin['logic_cells']:.4f}, "

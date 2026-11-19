@@ -49,6 +49,82 @@ def test_held_out_designs_never_shape_the_model(record: dict[str, Any]) -> None:
     assert calibration.fit_model(without) == calibration.fit_model(record["designs"])
 
 
+def test_word_fit_excludes_held_cases_and_held_placement_seeds(record: dict[str, Any]) -> None:
+    """Unseen widths, constants and placement seeds are excluded from fitting."""
+    cases = record["word_calibration"]["cases"]
+    training = [
+        {**case, "routes": [route for route in case["routes"] if route[0] in (1, 2, 3)]}
+        for case in cases
+        if case["role"] == "fit"
+    ]
+    assert calibration.word_models(training) == calibration.word_models(cases)
+
+
+def test_word_validation_detects_area_and_path_misses(record: dict[str, Any]) -> None:
+    """A held-out case above either calibrated bound fails the comparison."""
+    cases = record["word_calibration"]["cases"]
+    model = calibration.word_models(cases)
+    held = next(
+        case for case in cases if case["operator"] == "sub" and case["role"] == "fresh_width"
+    )
+    assert calibration.word_failures(model, [held]) == []
+    first_seed, _, _, receipt = held["routes"][0]
+    miss = {**held, "routes": [[first_seed, 1000, 1.0, receipt]]}
+    failures = calibration.word_failures(model, [miss])
+    assert len(failures) == 1
+    assert "1000/" in failures[0] and "1000.000/" in failures[0]
+
+
+@pytest.mark.parametrize(
+    ("damage", "message"),
+    [
+        ("missing_width", "missing fitted widths for word add"),
+        ("missing_seeds", "missing fitted seeds for word add at width 8"),
+        ("missing_routes", "missing routed observations"),
+        ("duplicate_route", "invalid observation for seed"),
+        ("zero_clock", "invalid observation for seed"),
+    ],
+)
+def test_generator_refuses_incomplete_or_corrupt_word_campaigns(
+    record: dict[str, Any],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    damage: str,
+    message: str,
+) -> None:
+    """Real calibration data must validate before writing the generated Rust model."""
+    damaged = copy.deepcopy(record)
+    corpus = damaged["word_calibration"]["cases"]
+    fit = [
+        row
+        for row in corpus
+        if row["operator"] == "add" and row["role"] == "fit" and row["data_width"] == 8
+    ]
+    assert fit
+    if damage == "missing_width":
+        damaged["word_calibration"]["cases"] = [row for row in corpus if row not in fit]
+    elif damage == "missing_seeds":
+        fit[0]["routes"] = [route for route in fit[0]["routes"] if route[0] == 11]
+    elif damage == "missing_routes":
+        fit[0]["routes"] = []
+    elif damage == "duplicate_route":
+        fit[0]["routes"].append(fit[0]["routes"][0])
+    else:
+        fit[0]["routes"][0][2] = 0.0
+    measurements = tmp_path / "designs.json"
+    measurements.write_text(json.dumps(damaged), encoding="utf-8")
+    generated = tmp_path / "ice40_calibration.rs"
+    original = calibration.GENERATED.read_bytes()
+    generated.write_bytes(original)
+    monkeypatch.setattr(calibration, "MEASUREMENTS", measurements)
+    monkeypatch.setattr(calibration, "GENERATED", generated)
+    monkeypatch.setattr(calibration, "REPO_ROOT", tmp_path)
+    assert calibration.main(["--write"]) == 1
+    assert message in capsys.readouterr().out
+    assert generated.read_bytes() == original
+
+
 def test_a_routed_design_above_its_bound_is_refused(record: dict[str, Any]) -> None:
     """One cell above the logic bound, or a path above its bound, is a failure line."""
     model = calibration.fit_model(record["designs"])

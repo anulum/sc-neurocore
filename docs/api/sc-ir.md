@@ -202,6 +202,7 @@ domain:
 | `dense_forward` | 2-12 inputs, 2-8 neurons, data width 12-24 |
 | `lif_step` | data width 12-32 |
 | two encoders, `bitwise_and`, `decode` | stream length a power of two, 64-4096 |
+| integer word `add`, `sub` | signed or unsigned width 8–32 |
 
 The block must also be in the form the calibration measured, because
 synthesis follows constants and ports:
@@ -211,6 +212,7 @@ synthesis follows constants and ports:
 | dense | inputs an input port of `vec<rate,n>`; weights a constant rate vector; leak 16 and gain 256 as constants of `fixed<width,8>`; stream length 7, seeds 4660 and 4661, `y_min` 0 and `y_max` 300 |
 | LIF | all four operands input ports of `fixed<width,8>`; fraction 8, rest 0, reset 0, threshold 256, refractory period 7 |
 | synapse stream | both probabilities input ports of `rate`; seeds `0xACE1` and `0xBEEF` |
+| integer word arithmetic | One wrapping operation whose result drives a single output. Operands are equal-width input ports, one input used twice, or one input and one in-range integer literal. |
 
 A weight vector or leak/gain on a port builds a runtime multiplier, and other
 constants change the logic, so any other form has no estimate
@@ -219,15 +221,15 @@ constants change the logic, so any other form has no estimate
 With an estimate, the report carries `logic_cells_estimated`,
 `critical_path_estimate_ns`, `fits_logic_cells` and `meets_timing_estimate`.
 Otherwise it carries none of these numbers, only `static_estimate_reason`.
-Word-level operations, compositions of blocks and anything outside a domain
-or form have no static estimate. The comparison covers calibrated structural
-blocks only.
+Compositions, other word operations and graphs outside these domains use the
+routed resource and timing checks.
 
-**What the estimate bounds.** It bounds the routed core of the block, out of
-context, as Yosys 0.70 and nextpnr-ice40 0.6-3build5 build it. The bound comes
-from `benchmarks/results/ice40_up5k_calibration/designs.json`, and
-`tools/ice40_up5k_calibration.py --check` refits it and prints every figure
-cited here. In detail:
+**Calibration measurements.** The static estimate describes the empirical
+envelope of the sampled out-of-context routes. The calibration uses Yosys 0.70
+and nextpnr-ice40 0.6-3build5. Its measurements are recorded in
+`benchmarks/results/ice40_up5k_calibration/designs.json`. Run
+`tools/ice40_up5k_calibration.py --check` to refit the models and report their
+coverage of the recorded designs.
 
 - **Measurement:** each design is synthesised, wrapped in a five-pin
   shift-register harness, and placed and routed with seeds 1, 2 and 3.
@@ -262,9 +264,17 @@ cited here. In detail:
   domain: they measured up to 1.7x larger and 5x slower.
 - **Timing:** it is nextpnr's static timing analysis of the core in its harness,
   not a measurement on hardware.
-- **Fit verdict:** `fits_logic_cells` compares the core bound with the device's
-  logic cells. It does not account for I/O or for placement at very high
-  utilisation.
+- **Integer word arithmetic:** separate width models for wrapping addition and
+  subtraction use the largest fitted resource counts and worst routed paths.
+  Fitting uses widths 8, 16, 24 and 32 and placement seeds 1, 2 and 3.
+  Held-out runs vary literals, widths and seeds across signed and unsigned
+  words and both operand orders. Addition used its full estimated cell
+  count in some held-out designs. Use the routed checks for each placement
+  and literal to detect any use above the sampled envelope.
+- **Fit verdict:** `fits_logic_cells` compares the estimated core cell count
+  with the device capacity. `meets_timing_estimate` compares the estimated
+  path with the requested clock period. The routed checks evaluate logic utilisation,
+  timing and direct package pin capacity for the actual design.
 
 Judge a graph against real Yosys and nextpnr runs with
 `sc_neurocore.studio.resource_feedback.run_resource_feedback` or the

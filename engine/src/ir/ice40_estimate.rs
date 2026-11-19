@@ -8,15 +8,17 @@
 
 //! Calibrated static estimate for the iCE40 UltraPlus UP5K.
 //!
-//! The estimate is an upper bound measured with Yosys and nextpnr-ice40 (see
+//! The estimate describes the sampled envelope from Yosys and nextpnr-ice40 (see
 //! [`crate::ir::ice40_calibration::TOOLCHAIN`]). It exists only for a graph
 //! that is exactly one calibrated structural block — a dense layer, a LIF
-//! neuron or a synapse stream — inside that block's measured domain. Any other
+//! neuron, synapse stream or wrapping integer adder or subtractor — inside that
+//! block's measured domain. Any other
 //! graph gets no number, only the reason, and synthesis with place and route
 //! decides.
 
 use crate::ir::graph::{DenseParams, LifParams, ScConst, ScGraph, ScOp, ScType, ValueId};
 use crate::ir::ice40_calibration as cal;
+use crate::ir::word::{WordBinaryOp, WordOp};
 
 /// iCE40 UP5K logic cells (Lattice FPGA-DS-02008).
 pub const LOGIC_CELL_BUDGET: u32 = 5_280;
@@ -32,13 +34,13 @@ pub const TARGET_NAME: &str = "ice40:UP5K";
 /// The static estimate of one graph, or why there is none.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Ice40Estimate {
-    /// Upper bounds for a calibrated block inside its domain.
+    /// Estimates from sampled implementations of a calibrated block inside its domain.
     Calibrated {
-        /// Which calibrated family the graph is: `dense`, `lif` or `synapse`.
+        /// Which calibrated family the graph belongs to.
         block: &'static str,
-        /// Logic-cell upper bound of the block.
+        /// Estimated core logic cells based on the calibration measurements.
         logic_cells: u32,
-        /// Critical-path upper bound in nanoseconds.
+        /// Estimated critical path in nanoseconds based on the calibration measurements.
         critical_path_ns: f64,
     },
     /// No static estimate; the reason names what the calibration does not cover.
@@ -63,7 +65,7 @@ impl Ice40Report {
         1_000.0 / f64::from(self.clock_mhz)
     }
 
-    /// Whether the logic-cell bound fits the device; `None` without an estimate.
+    /// Compare the estimated core cell count with device capacity if calibrated.
     pub fn fits_logic_cells(&self) -> Option<bool> {
         match &self.estimate {
             Ice40Estimate::Calibrated { logic_cells, .. } => {
@@ -73,7 +75,7 @@ impl Ice40Report {
         }
     }
 
-    /// Whether the critical-path bound fits the clock period; `None` without an estimate.
+    /// Compare the estimated critical path with the clock period if calibrated.
     pub fn meets_timing(&self) -> Option<bool> {
         match &self.estimate {
             Ice40Estimate::Calibrated {
@@ -187,12 +189,69 @@ fn lif_in_calibrated_form(graph: &ScGraph, operands: [ValueId; 4], p: &LifParams
         ) == CALIBRATED_LIF
 }
 
+fn word_operand(graph: &ScGraph, id: ValueId, ty: &ScType) -> Option<bool> {
+    match defining(graph, id)? {
+        ScOp::Input { ty: input_ty, .. } if input_ty == ty => Some(true),
+        ScOp::Constant {
+            value: value @ (ScConst::I64(_) | ScConst::U64(_)),
+            ty: constant_ty,
+            ..
+        } if constant_ty == ty => super::constant_words::constant_words(value, ty)
+            .ok()
+            .map(|_| false),
+        _ => None,
+    }
+}
+
+fn word_estimate(graph: &ScGraph) -> Option<Ice40Estimate> {
+    let [operands @ .., ScOp::Word {
+        id,
+        op: WordOp::Binary { kind, lhs, rhs, ty },
+    }, ScOp::Output { source, .. }] = graph.ops.as_slice()
+    else {
+        return None;
+    };
+    let width = match ty {
+        ScType::SInt { width } | ScType::UInt { width } => *width,
+        _ => return None,
+    };
+    let (block, area, delay) = match kind {
+        WordBinaryOp::Add => ("word_add", cal::WORD_ADD_LOGIC_CELLS, cal::WORD_ADD_PATH),
+        WordBinaryOp::Sub => ("word_sub", cal::WORD_SUB_LOGIC_CELLS, cal::WORD_SUB_PATH),
+        _ => return None,
+    };
+    if id != source
+        || !within(width, cal::WORD_WIDTH)
+        || operands.len() != if lhs == rhs { 1 } else { 2 }
+        || operands
+            .iter()
+            .any(|op| ![*lhs, *rhs].contains(&op.result_id()))
+    {
+        return None;
+    }
+    let left_is_input = word_operand(graph, *lhs, ty)?;
+    let right_is_input = word_operand(graph, *rhs, ty)?;
+    if !left_is_input && !right_is_input {
+        return None;
+    }
+    // The width fit describes sampled routes. Resource feedback checks the actual design.
+    let features = [1.0, f64::from(width)];
+    Some(Ice40Estimate::Calibrated {
+        block,
+        logic_cells: cells(dot(features, area)),
+        critical_path_ns: dot(features, delay),
+    })
+}
+
 /// Return the calibrated estimate of a graph, or why it has none.
 ///
 /// A block has a number only in the form the calibration measured: its
 /// operands' sources and types and its parameter values. Synthesis follows
 /// constants, so any other form gets [`OUTSIDE_CALIBRATED_FORM`].
 pub fn estimate(graph: &ScGraph) -> Ice40Estimate {
+    if let Some(estimate) = word_estimate(graph) {
+        return estimate;
+    }
     let mut blocks = Vec::new();
     let mut calibrated_form = true;
     let (mut encodes, mut and_ops, mut decodes) = (Vec::new(), 0_usize, 0_usize);
