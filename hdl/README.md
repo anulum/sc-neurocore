@@ -105,3 +105,39 @@ on the core.
 
 **Legacy model:** `sc_shd_top.v` and its Vmin/Q8.8 cells implement the earlier
 binary-input model and are superseded by this core.
+
+## Event-driven SHD core (`hdl/shd_event/`)
+
+`hdl/shd_event/sc_shd_event_p.v` implements the event-driven integer SHD core
+with `P` shared LIF lanes (`sc_lanes.v`), a 32-bucket axonal-delay time wheel
+per hidden layer, and an idle group-word weight/delay load port (`load_we`,
+`load_sel` 0..4, `load_addr`, `load_grp`, `load_data`). Imported from the
+group's earlier design study as Golden Reference #0, it computes the exact same
+20 signed accumulators as `tools/shd_int_reference.py`.
+
+**Target leaf seam (filelist-only selection, zero target preprocessor branches):**
+- `hdl/shd_event/generic.f` — behavioural 1P macro model (`tech/generic/sc_sram_macro.v`),
+  tiled memory wrapper (`tech/generic/sc_mem.v`), and pass-through clock-gate leaf
+  (`tech/generic/cells_clkgate.v`).
+- `hdl/shd_event/ihp_sg13g2.f` — IHP SG13G2 1P macro selector and blackbox stubs
+  (`tech/ihp_sg13g2/sc_sram_macro.v`, `tech/ihp_sg13g2/macro_stubs.v`), `sg13g2_lgcp_1`
+  latch clock-gate leaf (`tech/ihp_sg13g2/cells_clkgate.v`), and shared
+  `tech/generic/sc_mem.v`.
+- `hdl/shd_event/xilinx_7series.f` — Xilinx 7-Series block-RAM-inferring memory leaf
+  (`tech/xilinx_7series/sc_mem.v`) and shared `tech/generic/cells_clkgate.v`.
+
+**Verification and synthesis evidence (simulation and synthesis only; no board or silicon run yet):**
+- `tools/cosim_shd_event_core.py` and `pytest tests/test_shd_event_core.py` cosimulate
+  `tb_sc_shd_event_p.v` over `generic.f` and `xilinx_7series.f` in Icarus Verilog and
+  Verilator against `tools/shd_int_reference.py`.
+- `hdl/reports/sc_shd_event_p_xc7z020_synth_xilinx.txt` records the Yosys 0.70
+  `synth_xilinx` synthesis statistics for `xilinx_7series.f` (both hierarchical
+  per-`sc_mem` block-RAM inference and flattened XC7Z020 top-level utilisation).
+- **Measured clock-gate contract (`OPENROAD_CLKGATE` pass-through vs `sg13g2_lgcp_1` latch):**
+  all 20 class accumulators and all 15 datapath, SRAM, wheel-push/pop, and overflow
+  counters match bit-for-bit across both clock-gate leaves. Because `cg_root` gates `cclk`
+  during `S_IDLE` and idle `S_WAIT` cycles (`in_input && !frame_valid`), under the real
+  latch leaf `done` stays high across `S_IDLE` (versus a single-cycle pulse under the
+  pass-through leaf) and the simulation-only `cycles` counter counts active `cclk` edges
+  (`cycles_pass_through - 1` when `start` deasserts one cycle before the first `frame_valid`).
+  Host wrappers must therefore edge-detect `done`.

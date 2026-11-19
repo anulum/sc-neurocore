@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5712
+    "test_files": 5713
   },
   "documentation": {
     "public_pages": [
@@ -7763,6 +7763,7 @@
       "tests/test_serve_server_spike_server_http.py",
       "tests/test_serve_server_spike_server_step.py",
       "tests/test_shared_type_templates.py",
+      "tests/test_shd_event_core.py",
       "tests/test_shd_int_core_cosim.py",
       "tests/test_shd_int_network.py",
       "tests/test_shd_int_reference.py",

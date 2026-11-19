@@ -62,6 +62,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The event-driven integer SHD core `hdl/shd_event/sc_shd_event_p.v` and its
+  shared `P`-lane LIF datapath `sc_lanes.v` run the integer axonal-delay
+  speech network through per-layer 32-bucket time wheels and an idle
+  group-word weight and delay load port, matching `tools/shd_int_reference.py`
+  bit for bit on every accumulator. Target leaves are chosen solely by
+  filelist (`generic.f`, `ihp_sg13g2.f` and `xilinx_7series.f`) with no
+  target preprocessor conditionals, `tools/cosim_shd_event_core.py` runs
+  `tb_sc_shd_event_p.v` in Icarus Verilog and Verilator, and
+  `hdl/reports/sc_shd_event_p_xc7z020_synth_xilinx.txt` records the Yosys
+  0.70 `synth_xilinx` block-RAM inference and flattened resource statistics
+  for XC7Z020.
+
 - The SC non-resetting adaptive integrate-and-fire neuron states two
   behaviour cases. At a constant 20.0, the main drive of its 256-step
   reference receipt, it fires once in those 256 steps, at step 139; its

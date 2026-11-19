@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2082
+expected_file_count = 2084
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8378,3 +8378,11 @@ rationale = "Document the ADC-to-spike quantiser reference timing, multi-task Sy
 [[file]]
 path = "tests/test_adc_to_spike_quantiser.py"
 rationale = "Verify ADC-to-spike reference semantics, Icarus Verilog bit-true parity across signed and scaled regimes, Verilator lint, and SymbiYosys formal proof."
+
+[[file]]
+path = "tools/cosim_shd_event_core.py"
+rationale = "Write the five hex tables and stimulus stream for sc_shd_event_p, run the generic or Xilinx 7-Series filelist, and compare every RTL accumulator against the integer reference."
+
+[[file]]
+path = "tests/test_shd_event_core.py"
+rationale = "Verify the hdl/shd_event inventory, unique digests, zero target preprocessor branches, kept synth_xilinx block-RAM report, and bit-exact cosimulation across targets and simulators."

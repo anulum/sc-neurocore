@@ -1,0 +1,267 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Yosys synth_xilinx (xc7 / xc7z020) report for sc_shd_event_p
+#
+# Filelist: hdl/shd_event/xilinx_7series.f
+# Parameters: P=8 FRAC_BITS=0 THETA1=72 THETA2=51 V1_WIDTH=22 V2_WIDTH=17 CAP1=62 CAP2=39 WSHAPE=6 QSHAPE=12
+# Pass 1: synth_xilinx -noiopad -noclkbuf -family xc7 -top sc_shd_event_p; stat (per-module sc_mem BRAM proof)
+# Pass 2: synth_xilinx -flatten -family xc7 -top sc_shd_event_p; stat (flattened xc7z020 resource summary)
+
+# === PASS 1: HIERARCHICAL PER-MODULE STATISTICS ===
+=== $paramod$37f6a651f5c5ead2458abc71e13e4f7b46ddda7f\sc_mem ===
+
+        +----------Local Count, excluding submodules.
+        |
+       45 wires
+      495 wire bits
+       16 public wires
+      154 public wire bits
+        7 ports
+       39 port bits
+       74 cells
+       27   FDRE
+       31   LUT2
+        2   LUT3
+       12   LUT6
+        2   RAMB18E1
+
+=== $paramod$409b4de7cf6c2f9b7b02b36c3370727fd60e2520\sc_mem ===
+
+        +----------Local Count, excluding submodules.
+        |
+      373 wires
+     2992 wire bits
+       34 public wires
+     1274 public wire bits
+        7 ports
+      143 port bits
+     1140 cells
+      523   FDRE
+       17   LUT2
+      120   LUT3
+       77   LUT4
+      243   LUT5
+      152   LUT6
+        8   RAMB36E1
+
+=== $paramod$79e900f38d6cc664b434538319b42a1c388635a9\sc_mem ===
+
+        +----------Local Count, excluding submodules.
+        |
+       40 wires
+      455 wire bits
+       16 public wires
+      144 public wire bits
+        7 ports
+       29 port bits
+       49 cells
+       17   FDRE
+       21   LUT2
+        2   LUT3
+        7   LUT6
+        2   RAMB18E1
+
+=== $paramod$9bb4904d19e3df42c34c64eaf0fa594e85cb095c\sc_lanes ===
+
+        +----------Local Count, excluding submodules.
+        |
+     7229 wires
+    25578 wire bits
+      810 public wires
+     8542 public wire bits
+       17 ports
+      130 port bits
+    15411 cells
+      267   CARRY4
+     7968   FDRE
+       17   INV
+     1103   LUT2
+      198   LUT3
+     2923   LUT4
+     2048   LUT5
+      887   LUT6
+      264 submodules
+      264   $paramod\sc_cg\GATING=s32'00000000000000000000000000000001
+
+=== $paramod$c340dac7854d897525ddb963b3a4df10726a28a6\sc_mem ===
+
+        +----------Local Count, excluding submodules.
+        |
+       93 wires
+      908 wire bits
+       16 public wires
+      496 public wire bits
+        7 ports
+      141 port bits
+      334 cells
+      131   FDRE
+      135   LUT2
+        2   LUT3
+       64   LUT6
+        2   RAMB36E1
+
+=== $paramod$d9d86b8feed9e1842aede474c09a09d2c85eb9e7\sc_mem ===
+
+        +----------Local Count, excluding submodules.
+        |
+      348 wires
+     2943 wire bits
+       37 public wires
+     1405 public wire bits
+        7 ports
+      144 port bits
+     1339 cells
+      589   FDRE
+       19   LUT2
+       87   LUT3
+      169   LUT4
+      338   LUT5
+      128   LUT6
+        9   RAMB36E1
+
+=== $paramod\sc_cg\GATING=s32'00000000000000000000000000000001 ===
+
+        +----------Local Count, excluding submodules.
+        |
+        3 wires
+        3 wire bits
+        3 public wires
+        3 public wire bits
+        3 ports
+        3 port bits
+        1 submodules
+        1   OPENROAD_CLKGATE
+
+=== OPENROAD_CLKGATE ===
+
+        +----------Local Count, excluding submodules.
+        |
+        3 wires
+        3 wire bits
+        3 public wires
+        3 public wire bits
+        3 ports
+        3 port bits
+
+=== sc_shd_event_p ===
+
+        +----------Local Count, excluding submodules.
+        |
+     6840 wires
+    16725 wire bits
+      169 public wires
+     3286 public wire bits
+       17 ports
+     1308 port bits
+     8571 cells
+      211   CARRY4
+        6   DSP48E1
+     2193   FDCE
+        1   FDPE
+     1657   FDRE
+       16   INV
+     1226   LUT2
+      158   LUT3
+      495   LUT4
+     2009   LUT5
+      590   LUT6
+        5   RAM32M
+        4   RAM64M
+       27 submodules
+        1   $paramod$37f6a651f5c5ead2458abc71e13e4f7b46ddda7f\sc_mem
+        1   $paramod$409b4de7cf6c2f9b7b02b36c3370727fd60e2520\sc_mem
+        1   $paramod$79e900f38d6cc664b434538319b42a1c388635a9\sc_mem
+        1   $paramod$9bb4904d19e3df42c34c64eaf0fa594e85cb095c\sc_lanes
+        1   $paramod$c340dac7854d897525ddb963b3a4df10726a28a6\sc_mem
+        1   $paramod$d9d86b8feed9e1842aede474c09a09d2c85eb9e7\sc_mem
+       21   $paramod\sc_cg\GATING=s32'00000000000000000000000000000001
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        |
+    26918 sc_shd_event_p
+       74 $paramod$37f6a651f5c5ead2458abc71e13e4f7b46ddda7f\sc_mem
+     1140 $paramod$409b4de7cf6c2f9b7b02b36c3370727fd60e2520\sc_mem
+       49 $paramod$79e900f38d6cc664b434538319b42a1c388635a9\sc_mem
+    15411 $paramod$9bb4904d19e3df42c34c64eaf0fa594e85cb095c\sc_lanes
+      334 $paramod$c340dac7854d897525ddb963b3a4df10726a28a6\sc_mem
+     1339 $paramod$d9d86b8feed9e1842aede474c09a09d2c85eb9e7\sc_mem
+
+        +----------Count including submodules.
+        |
+    16678 wires
+    51806 wire bits
+     2808 public wires
+    17011 public wire bits
+     1779 ports
+     3644 port bits
+        - memories
+        - memory bits
+        - processes
+    26918 cells
+      478   CARRY4
+        6   DSP48E1
+     2193   FDCE
+        1   FDPE
+    10912   FDRE
+       33   INV
+     2552   LUT2
+      569   LUT3
+     3664   LUT4
+     4638   LUT5
+     1840   LUT6
+        5   RAM32M
+        4   RAM64M
+        4   RAMB18E1
+       19   RAMB36E1
+       27 submodules
+        1   $paramod$37f6a651f5c5ead2458abc71e13e4f7b46ddda7f\sc_mem
+        1   $paramod$409b4de7cf6c2f9b7b02b36c3370727fd60e2520\sc_mem
+        1   $paramod$79e900f38d6cc664b434538319b42a1c388635a9\sc_mem
+        1   $paramod$9bb4904d19e3df42c34c64eaf0fa594e85cb095c\sc_lanes
+        1   $paramod$c340dac7854d897525ddb963b3a4df10726a28a6\sc_mem
+        1   $paramod$d9d86b8feed9e1842aede474c09a09d2c85eb9e7\sc_mem
+       21   $paramod\sc_cg\GATING=s32'00000000000000000000000000000001
+
+# === PASS 2: FLATTENED TOP-LEVEL STATISTICS (-flatten) ===
+=== sc_shd_event_p ===
+
+        +----------Local Count, excluding submodules.
+        |
+    15187 wires
+    48329 wire bits
+      735 public wires
+    13608 public wire bits
+       17 ports
+     1308 port bits
+    28092 cells
+      576   $scopeinfo
+        1   BUFG
+      477   CARRY4
+        6   DSP48E1
+     2193   FDCE
+        1   FDPE
+    10912   FDRE
+      663   IBUF
+       31   INV
+     2888   LUT2
+      833   LUT3
+     2459   LUT4
+     4071   LUT5
+     2303   LUT6
+        1   MUXF7
+      645   OBUF
+        5   RAM32M
+        4   RAM64M
+        4   RAMB18E1
+       19   RAMB36E1
+
+Warnings: 9 unique messages, 26 total
+End of script. Logfile hash: b50f5754a9, time: 367.49s, user: 224.99s, system: 6.72s, MEM: 747.00 MB peak
+Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)
+Time spent: 35% 10x abc9_exe (128 sec), 8% 24x techmap (30 sec), ...
