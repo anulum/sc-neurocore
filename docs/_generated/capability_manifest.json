@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5725
+    "test_files": 5726
   },
   "documentation": {
     "public_pages": [
@@ -5654,6 +5654,7 @@
       "tests/test_homeostatic_lif.py",
       "tests/test_homeostatic_lif_reset.py",
       "tests/test_host_driver_bounds.py",
+      "tests/test_host_identity.py",
       "tests/test_host_isa.py",
       "tests/test_hub_bundle.py",
       "tests/test_hypervisor/hypervisor_support.py",

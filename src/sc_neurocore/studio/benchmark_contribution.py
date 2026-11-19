@@ -34,6 +34,7 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore import _host_identity
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.scpn.dcls_tent_kernel import dcls_max_forward_batch_q88
 from sc_neurocore.studio.benchmark_databank import (
@@ -72,17 +73,8 @@ class BenchmarkSubmissionRefused(AuthoredRefusal):
 
 def safe_environment() -> dict[str, Any]:
     """Collect only the privacy-safe, aggregatable host facts."""
-    cpu = "unknown"
-    cpuinfo = Path("/proc/cpuinfo")
-    if cpuinfo.is_file():
-        for line in cpuinfo.read_text(encoding="utf-8", errors="ignore").splitlines():
-            if line.startswith("model name"):
-                cpu = line.split(":", 1)[1].strip()
-                break
-    if cpu == "unknown":
-        cpu = platform.processor() or "unknown"
     return {
-        "cpu": cpu,  # model string only — never the hostname
+        "cpu": _host_identity.cpu_model(),  # model string only — never the hostname
         "os": f"{platform.system()} {platform.release()}",
         "python": platform.python_version(),
         "numpy": np.__version__,

@@ -28,10 +28,9 @@ from collections.abc import Mapping
 import functools
 from importlib import resources
 import json
-from pathlib import Path
-import platform
 from typing import NamedTuple
 
+from .. import _host_identity
 from .backend_order import FASTEST_FIRST_BACKENDS
 from .host_isa import LEVELS, at_least, host_level
 
@@ -67,17 +66,11 @@ def current_cpu() -> str:
     """Return the host CPU model string, matching the benchmark harness convention.
 
     Mirrors ``benchmarks/bench_*.py::_cpu_model`` so a live host matches a stored
-    ``meta.cpu`` exactly: the ``/proc/cpuinfo`` ``model name`` line, else
-    :func:`platform.processor`, else ``"unknown"``.
+    ``meta.cpu`` exactly, by the one rule of :func:`sc_neurocore._host_identity.cpu_model`:
+    the ``/proc/cpuinfo`` ``model name`` line, else :func:`platform.processor`, else
+    ``"unknown"``.
     """
-    try:
-        info = Path("/proc/cpuinfo").read_text(encoding="utf-8")
-    except OSError:
-        info = ""
-    for line in info.splitlines():
-        if line.startswith("model name"):
-            return line.split(":", 1)[1].strip()
-    return platform.processor() or "unknown"
+    return _host_identity.cpu_model()
 
 
 def _read_table() -> str:

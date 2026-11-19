@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2212
+expected_file_count = 2214
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8898,3 +8898,11 @@ rationale = "Route LFSR-16, Sobol-16, and Halton-16 stochastic source descriptor
 [[file]]
 path = "tests/test_hdl_gen/test_async_emitter.py"
 rationale = "Verify clocked-AER bus-width forwarding, Verilator -Wall linting, and Icarus/vvp event-handshake simulation against sc_dense_layer_core."
+
+[[file]]
+path = "src/sc_neurocore/_host_identity.py"
+rationale = "The one host CPU model rule that dispatch, the dense IF comparison and Studio compare with recorded benchmark hosts, standard library only."
+
+[[file]]
+path = "tests/test_host_identity.py"
+rationale = "Hold dispatch, the dense IF comparison and Studio to one host CPU model rule, its fallbacks, and a conversion import free of the acceleration package."

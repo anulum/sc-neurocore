@@ -1,5 +1,26 @@
 # SC-NeuroCore API Reference
 
+## Module `_host_identity`
+
+### Function `cpu_model(cpuinfo)`
+Return the host CPU model string, matching the benchmark harness convention.
+
+Parameters
+----------
+cpuinfo : Path
+    The CPU description to read; the running host's ``/proc/cpuinfo`` unless a test
+    names another file.
+
+Returns
+-------
+str
+    The value of the first ``model name`` line that has one; else
+    :func:`platform.processor`; else ``"unknown"``. A file that is absent or unreadable
+    counts as having no ``model name`` line, and bytes that are not UTF-8 are replaced, so
+    a bad byte elsewhere keeps the model line and this never raises.
+
+---
+
 ## Module `_native.array_guards`
 
 ### Function `require_c_contiguous(arr, name, dtype)`
@@ -626,8 +647,9 @@ order : tuple of str
 Return the host CPU model string, matching the benchmark harness convention.
 
 Mirrors ``benchmarks/bench_*.py::_cpu_model`` so a live host matches a stored
-``meta.cpu`` exactly: the ``/proc/cpuinfo`` ``model name`` line, else
-:func:`platform.processor`, else ``"unknown"``.
+``meta.cpu`` exactly, by the one rule of :func:`sc_neurocore._host_identity.cpu_model`:
+the ``/proc/cpuinfo`` ``model name`` line, else :func:`platform.processor`, else
+``"unknown"``.
 
 ### Function `measured_orders()`
 Return the admitted measurements of the packaged table.

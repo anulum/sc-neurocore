@@ -14,6 +14,7 @@ import os
 import platform
 from pathlib import Path
 
+from .. import _host_identity
 from .if_benchmark_identity import configured_artifacts, source_digests
 from .if_benchmark_record import NATIVE_BACKENDS, validated_timing_order
 
@@ -49,12 +50,7 @@ def measured_order() -> tuple[str, ...]:
         meta = record["meta"]
         if not isinstance(meta["cpu"], str) or not meta["cpu"]:
             raise ValueError("comparison host CPU must be named")
-        cpu = next(
-            line.split(":", 1)[1].strip()
-            for line in Path("/proc/cpuinfo").read_text().splitlines()
-            if line.startswith("model name")
-        )
-        if meta["cpu"] != cpu:
+        if meta["cpu"] != _host_identity.cpu_model():
             return STATIC_ORDER
         if (
             meta["python"] != platform.python_version()

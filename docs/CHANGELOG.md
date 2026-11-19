@@ -251,6 +251,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Backend dispatch, the dense IF comparison and Studio's benchmark
+  contribution read the host CPU model by one rule
+  (`sc_neurocore._host_identity.cpu_model`): the `model name` line of
+  `/proc/cpuinfo`, else `platform.processor`, else `"unknown"`. The dense IF
+  comparison raised `StopIteration` on a host without a `model name` line
+  (some Arm and non-Linux hosts) instead of keeping the static order, and the
+  three copies of the reading differed in how they decoded the file. The rule
+  imports only the standard library, so the conversion module still loads no
+  acceleration package or native runtime.
+
 - The hypervisor places tenants by their whole QoS and meters bandwidth in
   real units. A region fits a tenant only with enough neurons and synapses
   (`HWRegion.fits`), for allocation and migration alike; a migration to a
