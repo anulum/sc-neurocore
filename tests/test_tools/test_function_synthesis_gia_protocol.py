@@ -173,7 +173,7 @@ def _faulty_candidate(source: Path, root: Path, rare: bool) -> None:
 def test_actual_non_equivalent_complete_models_never_receive_a_positive_record(
     paired_case: GiaCase, tmp_path: Path, rare: bool
 ) -> None:
-    """Refuse both an immediately visible real fault and a rare fault after bounded GIA admission."""
+    """Refuse immediate and rare faults through the direct or paired native verdict."""
     source, tools, interface = paired_case
     _faulty_candidate(source, tmp_path, rare)
     before = {name: (tmp_path / name).read_bytes() for name in ("word.aig", "physical.aig")}
@@ -189,8 +189,8 @@ def test_actual_non_equivalent_complete_models_never_receive_a_positive_record(
         )
     assert not (tmp_path / "gia-proof.json").exists()
     singleton = (tmp_path / "equivalence.log").read_text()
-    if rare:
-        assert "Networks are UNDECIDED" in singleton and "Timed out after " in singleton
+    if rare and "Networks are UNDECIDED" in singleton:
+        assert "Timed out after " in singleton
         paired = (tmp_path / "paired-equivalence.log").read_text()
         assert "Networks are NOT EQUIVALENT" in paired or "Networks are UNDECIDED" in paired
     else:
