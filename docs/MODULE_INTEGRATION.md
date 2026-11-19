@@ -76,7 +76,7 @@ conformity.
 #### uvm_gen — UVM Testbench Generator
 - **Compatibility facade:** `src/sc_neurocore/uvm_gen/uvm_gen.py`
 - **Sources:** `src/sc_neurocore/uvm_gen/{_rtl,_config,_benchmark,_component_emitters,_harness_emitters,_generator}.py`
-- **Tests:** `tests/test_uvm_gen/` — **82 focused tests**
+- **Tests:** `tests/test_uvm_gen/` — **90 focused tests**
 - **Key Classes:**
   - `UVMGenerator` — Full UVM testbench emission
   - `RTLModule` — RTL module abstraction
@@ -317,7 +317,7 @@ conformity.
 | safety_cert | `tests/test_safety_cert/` | 456 |
 | asic_flow | `tests/test_asic_flow/` | 100 |
 | fault_injection | `tests/test_fault_injection/` | 22 |
-| uvm_gen | `tests/test_uvm_gen/` | 72 |
+| uvm_gen | `tests/test_uvm_gen/` | 90 |
 | hypervisor | `tests/test_hypervisor/` | 78 |
 | twinsync | `tests/test_twinsync/` | 72 |
 | spintronic | `tests/test_spintronic/` | 66 |

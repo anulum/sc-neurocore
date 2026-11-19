@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2174
+expected_file_count = 2176
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8746,3 +8746,11 @@ rationale = "Hold the selector to reading only the packaged order table, and to 
 [[file]]
 path = "tests/test_backend_selection_order.py"
 rationale = "Hold the dispatch order to the measured order by host model and level, with the floor last."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_architecture.py"
+rationale = "Lock UVM generator module ownership, acyclic dependency graph, public signatures, and deterministic bundle digests."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_rtl_module_parsing.py"
+rationale = "Verify Verilog and SystemVerilog header parsing across parameterised widths, AMBA clocks, unpacked arrays, and fail-closed refusals."

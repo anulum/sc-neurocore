@@ -19,6 +19,8 @@ import pickle
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 import sc_neurocore.uvm_gen as uvm_gen
 from sc_neurocore.uvm_gen import uvm_gen as historical_facade
 
@@ -40,7 +42,7 @@ _MODULE_LINE_CEILINGS = {
     "_config": 150,
     "_generator": 175,
     "_harness_emitters": 350,
-    "_rtl": 250,
+    "_rtl": 700,
     "uvm_gen": 100,
 }
 _EXPECTED_DEPENDENCIES = {
@@ -153,12 +155,12 @@ endmodule
 """,
 }
 _EXPECTED_PAYLOAD_DIGESTS = {
-    "dense:configured": "86020a6939f567e7f89a1f2cf04229143bc56e85397196a0ccbb422176c1fa35",
-    "dense:default": "0e1a12956504f5fd7c129bdba8b2225f7535b76c7a4ecdacc6594e74f00d4015",
-    "empty_data:configured": "9cf1298252ea72417810c3c5d34b9cbc6701a396b84be1e227cf4077ecaeffeb",
-    "empty_data:default": "e445cb6c81342ddd58617b5ba81c83c1da58ac4f064989a68d48857a19e53b74",
-    "lif:configured": "99e0d3c81c6b3a013e4ccf52c1c41e7b0af972448f05177c9ba68a08e6416e30",
-    "lif:default": "51fb22e0774419df7dc764d57d0046649cfa558f520f7c674243aee622a306cd",
+    "dense:configured": "81dd54881ffb8415d45aabf9f959c790afb09ee65384db6b5273ab88fcfa4d94",
+    "dense:default": "2f53ba795be23d719088c0deccd9d88476ad5e77c522b2773b95a9fb3d565dd7",
+    "empty_data:configured": "2afe248e1e394e68c185cfaea29f83c44d37346790a786d82fec362737306480",
+    "empty_data:default": "5734ec9525684a3a2d645b359f329807e9c46f54b66cbd469a68af284e134c6f",
+    "lif:configured": "5eae9c3cfa6725f82739d515af57d6aedf5553890d759aed42b1c60501e029b1",
+    "lif:default": "79d103b54a6190b3c1cbb570309508f0741df8c3f03d69226d32330946d4580b",
 }
 
 
@@ -288,7 +290,7 @@ def test_uvm_facades_preserve_exports_signatures_and_pickle_identity() -> None:
 
 
 def test_uvm_generated_payloads_remain_parent_byte_exact() -> None:
-    """Representative generated bundles retain their pre-split SHA-256 values."""
+    """Representative generated bundles match their pinned deterministic SHA-256 digests."""
     actual: dict[str, str] = {}
     for source_name, source in _SOURCE_CASES.items():
         actual[f"{source_name}:default"] = _payload_digest(uvm_gen.UVMGenerator(), source)
@@ -328,14 +330,13 @@ def test_optional_benchmark_artifacts_are_omitted_when_empty() -> None:
 
 
 def test_parser_retains_unsupported_header_fallbacks() -> None:
-    """Unsupported entries remain ignored and a header without ports stays empty."""
+    """A header without ports stays empty while unrecognised port items fail closed."""
     bare = uvm_gen.RTLModule.from_verilog_source("module bare; endmodule")
-    mixed = uvm_gen.RTLModule.from_verilog_source(
-        "module mixed(input logic valid, unsupported declaration); endmodule"
-    )
-
     assert bare.ports == []
-    assert [port.name for port in mixed.ports] == ["valid"]
+    with pytest.raises(ValueError, match="Unsupported port declaration"):
+        uvm_gen.RTLModule.from_verilog_source(
+            "module mixed(input logic valid, unsupported declaration); endmodule"
+        )
 
 
 def test_scalar_and_zero_width_metadata_retain_width_specific_fallbacks() -> None:

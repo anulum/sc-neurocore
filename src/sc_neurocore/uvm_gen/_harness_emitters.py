@@ -17,6 +17,11 @@ from sc_neurocore.uvm_gen._config import FormalLink, SIM_TARGETS, SPDX_HEADER
 from sc_neurocore.uvm_gen._rtl import RTLModule
 
 
+def _max_bound_sv(width: int) -> str:
+    upper = (1 << width) - 1
+    return str(upper) if width <= 32 else f"{width}'h{upper:x}"
+
+
 def _emit_top(rtl: RTLModule) -> str:
     module_name = rtl.name
     clock = rtl.clock_port
@@ -29,7 +34,8 @@ def _emit_top(rtl: RTLModule) -> str:
         if not port.is_clock and not port.is_reset:
             signed = " signed" if port.is_signed else ""
             width = f" [{port.width - 1}:0]" if port.width > 1 else ""
-            interface_signals.append(f"    logic{signed}{width} {port.name};")
+            arr = f" [0:{port.array_size - 1}]" if port.is_array else ""
+            interface_signals.append(f"    logic{signed}{width} {port.name}{arr};")
     interface_block = "\n".join(interface_signals) if interface_signals else "    logic [7:0] data;"
 
     dut_connections = []
@@ -150,6 +156,8 @@ def _emit_bind(rtl: RTLModule) -> str:
 
     assertions = []
     for port in rtl.output_ports:
+        if port.is_array:
+            continue
         if port.width == 1:
             assertions.append(
                 f"    // Reset assertion for {port.name}\n"
@@ -164,21 +172,35 @@ def _emit_bind(rtl: RTLModule) -> str:
             assertions.append(
                 f"    // Bounded output for {port.name}\n"
                 f"    a_{port.name}_bounded: assert property(\n"
-                f"        @(posedge {clock_name}) {reset_name} |-> ({port.name} <= {(1 << port.width) - 1}));\n"
+                f"        @(posedge {clock_name}) {reset_name} |-> ({port.name} <= {_max_bound_sv(port.width)}));\n"
                 f"    c_{port.name}_nonzero: cover property(\n"
                 f"        @(posedge {clock_name}) {reset_name} |-> ({port.name} != 0));"
             )
 
     assertion_block = "\n\n".join(assertions) if assertions else "    // No assertions generated"
+    bind_port_decls = [
+        f"    input logic {clock_name}",
+        f"    input logic {reset_name}",
+    ]
+    for port in rtl.output_ports:
+        width = f" [{port.width - 1}:0]" if port.width > 1 else ""
+        arr = f" [0:{port.array_size - 1}]" if port.is_array else ""
+        bind_port_decls.append(f"    input logic{width} {port.name}{arr}")
+    bind_conns = [
+        f"    .{clock_name}({clock_name})",
+        f"    .{reset_name}({reset_name})",
+        *(f"    .{port.name}({port.name})" for port in rtl.output_ports),
+    ]
+
+    port_decl_block = ",\n".join(bind_port_decls)
+    conn_block = ",\n".join(bind_conns)
 
     return textwrap.dedent(f"""\
 {SPDX_HEADER}
 // SC-NeuroCore UVM — Assertion Bind Module for {module_name}
 
 module {module_name}_assertions (
-    input logic {clock_name},
-    input logic {reset_name},
-{chr(10).join(f"    input logic [{port.width - 1}:0] {port.name}," if port.width > 1 else f"    input logic {port.name}," for port in rtl.output_ports).rstrip(",")}
+{port_decl_block}
 );
 
 {assertion_block}
@@ -186,9 +208,7 @@ module {module_name}_assertions (
 endmodule
 
 bind {module_name} {module_name}_assertions {module_name}_assert_inst (
-    .{clock_name}({clock_name}),
-    .{reset_name}({reset_name}),
-{chr(10).join(f"    .{port.name}({port.name})," for port in rtl.output_ports).rstrip(",")}
+{conn_block}
 );
 """)
 
@@ -246,22 +266,26 @@ def _emit_regression_list(rtl: RTLModule) -> str:
 
 def _generate_formal_links(rtl: RTLModule) -> List[FormalLink]:
     links = []
+    clock = rtl.clock_port
     reset = rtl.reset_port
+    clock_name = clock.name if clock else "clk"
     reset_name = reset.name if reset else "rst_n"
 
     for port in rtl.output_ports:
-        if port.width == 1:
+        if port.width == 1 and not port.is_array:
             links.append(
                 FormalLink(
                     property_name=f"{port.name}_reset_check",
                     sby_module=f"{rtl.name}_formal",
                     assertion_sv=(
                         f"property p_{port.name}_rst;\n"
-                        f"    @(posedge clk) !{reset_name} |-> {port.name} == 0;\n"
+                        f"    @(posedge {clock_name}) !{reset_name} |-> {port.name} == 0;\n"
                         f"endproperty\n"
                         f"assert property(p_{port.name}_rst);"
                     ),
-                    cover_sv=(f"cover property(@(posedge clk) {reset_name} |-> {port.name} == 1);"),
+                    cover_sv=(
+                        f"cover property(@(posedge {clock_name}) {reset_name} |-> {port.name} == 1);"
+                    ),
                 )
             )
 

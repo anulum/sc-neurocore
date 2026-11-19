@@ -21,24 +21,31 @@ from sc_neurocore.uvm_gen._config import (
 from sc_neurocore.uvm_gen._rtl import RTLModule
 
 
+def _max_mid_sv(width: int) -> str:
+    upper = (1 << width) - 2
+    return str(upper) if width <= 32 else f"{width}'h{upper:x}"
+
+
 def _emit_transaction(rtl: RTLModule, stimulus: StimulusConfig) -> str:
     module_name = rtl.name
     fields = []
     for port in rtl.input_ports:
         signed = " signed" if port.is_signed else ""
         width = f" [{port.width - 1}:0]" if port.width > 1 else ""
-        fields.append(f"    rand logic{signed}{width} {port.name};")
+        arr = f" [0:{port.array_size - 1}]" if port.is_array else ""
+        fields.append(f"    rand logic{signed}{width} {port.name}{arr};")
     for port in rtl.output_ports:
         signed = " signed" if port.is_signed else ""
         width = f" [{port.width - 1}:0]" if port.width > 1 else ""
-        fields.append(f"    logic{signed}{width} {port.name};")
+        arr = f" [0:{port.array_size - 1}]" if port.is_array else ""
+        fields.append(f"    logic{signed}{width} {port.name}{arr};")
 
     field_block = "\n".join(fields) if fields else "    rand logic [7:0] data;"
 
     constraints = []
     lower, upper = stimulus.bitstream_density_range
     for port in rtl.input_ports:
-        if port.width > 1:
+        if port.width > 1 and not port.is_array:
             constraints.append(
                 f"    constraint c_{port.name}_density {{\n"
                 f"        $countones({port.name}) inside "
@@ -46,6 +53,18 @@ def _emit_transaction(rtl: RTLModule, stimulus: StimulusConfig) -> str:
                 f"    }}"
             )
     constraint_block = "\n".join(constraints)
+    scalar_inputs = [port for port in rtl.input_ports if not port.is_array]
+    fmt_spec = " ".join(f"{port.name}=%0h" for port in scalar_inputs)
+    fmt_args = ", ".join(port.name for port in scalar_inputs)
+    convert_expr = (
+        f'$sformatf("{module_name}_txn: {fmt_spec}",\n            {fmt_args})'
+        if scalar_inputs
+        else (
+            f'"{module_name}_txn"'
+            if rtl.input_ports
+            else f'$sformatf("{module_name}_txn: ",\n            data)'
+        )
+    )
 
     return textwrap.dedent(f"""\
 {SPDX_HEADER}
@@ -63,8 +82,7 @@ class {module_name}_transaction extends uvm_sequence_item;
     endfunction
 
     function string convert2string();
-        return $sformatf("{module_name}_txn: {" ".join(f"{port.name}=%0h" for port in rtl.input_ports)}",
-            {", ".join(port.name for port in rtl.input_ports) or "data"});
+        return {convert_expr};
     endfunction
 endclass
 """)
@@ -77,7 +95,10 @@ def _emit_sequence(rtl: RTLModule, stimulus: StimulusConfig) -> str:
     if stimulus.enable_corner_cases:
         corner_assigns = []
         for port in rtl.input_ports:
-            if port.width > 1:
+            if port.is_array:
+                corner_assigns.append(f"                txn.{port.name} = '{{default: '0}};")
+                corner_assigns.append(f"                txn.{port.name} = '{{default: '1}};")
+            elif port.width > 1:
                 corner_assigns.append(f"                txn.{port.name} = '0;")
                 corner_assigns.append(f"                txn.{port.name} = '1;")
         if corner_assigns:
@@ -156,6 +177,7 @@ endclass
 
 def _emit_driver(rtl: RTLModule) -> str:
     module_name = rtl.name
+    clock_name = rtl.clock_port.name if rtl.clock_port else "clk"
     drive_lines = []
     for port in rtl.input_ports:
         drive_lines.append(f"            vif.{port.name} <= txn.{port.name};")
@@ -184,7 +206,7 @@ class {module_name}_driver extends uvm_driver #({module_name}_transaction);
         {module_name}_transaction txn;
         forever begin
             seq_item_port.get_next_item(txn);
-            @(posedge vif.clk);
+            @(posedge vif.{clock_name});
 {drive_block}
             seq_item_port.item_done();
         end
@@ -195,6 +217,7 @@ endclass
 
 def _emit_monitor(rtl: RTLModule) -> str:
     module_name = rtl.name
+    clock_name = rtl.clock_port.name if rtl.clock_port else "clk"
     sample_in = []
     for port in rtl.input_ports:
         sample_in.append(f"            txn.{port.name} = vif.{port.name};")
@@ -228,7 +251,7 @@ class {module_name}_monitor extends uvm_monitor;
     task run_phase(uvm_phase phase);
         {module_name}_transaction txn;
         forever begin
-            @(posedge vif.clk);
+            @(posedge vif.{clock_name});
             txn = {module_name}_transaction::type_id::create("mon_txn");
 {in_block}
 {out_block}
@@ -244,7 +267,7 @@ def _emit_scoreboard(rtl: RTLModule, scoreboard: ScoreboardConfig) -> str:
     checks = []
     if scoreboard.check_popcount:
         for port in rtl.output_ports:
-            if port.width > 1:
+            if port.width > 1 and not port.is_array:
                 checks.append(
                     f"        // Popcount check for {port.name}\n"
                     f"        int pc_{port.name} = $countones(txn.{port.name});\n"
@@ -252,7 +275,9 @@ def _emit_scoreboard(rtl: RTLModule, scoreboard: ScoreboardConfig) -> str:
                 )
     if scoreboard.check_spike_timing:
         for port in rtl.output_ports:
-            if port.name.startswith("spike") or port.name.endswith("spike") or port.width == 1:
+            if not port.is_array and (
+                port.name.startswith("spike") or port.name.endswith("spike") or port.width == 1
+            ):
                 checks.append(
                     f"        if (txn.{port.name})\n"
                     f"            spike_count++;\n"
@@ -263,7 +288,7 @@ def _emit_scoreboard(rtl: RTLModule, scoreboard: ScoreboardConfig) -> str:
     if scoreboard.check_golden_comparison:
         golden_lines = []
         for port in rtl.output_ports:
-            if port.width > 1:
+            if port.width > 1 and not port.is_array:
                 if port.name not in scoreboard.golden_expressions:
                     raise ValueError(
                         "Missing golden reference expression for output "
@@ -287,7 +312,7 @@ def _emit_scoreboard(rtl: RTLModule, scoreboard: ScoreboardConfig) -> str:
     golden_vars = []
     if scoreboard.check_golden_comparison:
         for port in rtl.output_ports:
-            if port.width > 1:
+            if port.width > 1 and not port.is_array:
                 width = port.width
                 expression = scoreboard.golden_expressions[port.name]
                 golden_funcs.append(
@@ -349,7 +374,7 @@ def _emit_coverage(rtl: RTLModule, coverage: CoverageSpec) -> str:
     coverpoints = []
 
     for port in rtl.input_ports:
-        if port.width > 1:
+        if port.width > 1 and not port.is_array:
             bins = coverage.bitstream_density_bins
             coverpoints.append(
                 f"        {port.name}_density: coverpoint $countones(txn.{port.name}) {{\n"
@@ -358,6 +383,8 @@ def _emit_coverage(rtl: RTLModule, coverage: CoverageSpec) -> str:
             )
 
     for port in rtl.output_ports:
+        if port.is_array:
+            continue
         if port.width == 1:
             coverpoints.append(
                 f"        {port.name}_toggle: coverpoint txn.{port.name} {{\n"
@@ -374,7 +401,7 @@ def _emit_coverage(rtl: RTLModule, coverage: CoverageSpec) -> str:
             )
 
     scc_coverpoints = []
-    input_wide = [port for port in rtl.input_ports if port.width > 1]
+    input_wide = [port for port in rtl.input_ports if port.width > 1 and not port.is_array]
     if len(input_wide) >= 2 and coverage.scc_bins > 0:
         first, second = input_wide[0], input_wide[1]
         minimum_width = min(first.width, second.width)
@@ -390,12 +417,12 @@ def _emit_coverage(rtl: RTLModule, coverage: CoverageSpec) -> str:
     toggle_coverpoints = []
     if coverage.toggle_coverage:
         for port in rtl.input_ports:
-            if port.width > 1:
+            if port.width > 1 and not port.is_array:
                 toggle_coverpoints.append(
                     f"        {port.name}_activity: coverpoint txn.{port.name} {{\n"
                     f"            bins zero = {{'0}};\n"
                     f"            bins full = {{'1}};\n"
-                    f"            bins mid[4] = {{[1:{(1 << port.width) - 2}]}};\n"
+                    f"            bins mid[4] = {{[1:{_max_mid_sv(port.width)}]}};\n"
                     f"        }}"
                 )
     coverpoints.extend(toggle_coverpoints)

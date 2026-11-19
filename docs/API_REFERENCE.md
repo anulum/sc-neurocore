@@ -63048,8 +63048,8 @@ RTL module parameter.
 ### Class `RTLModule`
 Parsed RTL module specification.
 
-- **from_verilog_source**(source)
-  - Parse a Verilog/SystemVerilog module header.
+- **from_verilog_source**(source, \*, defines)
+  - Parse a Verilog/SystemVerilog module header and parameter widths.
 - **input_ports**()
   - Input ports excluding generated clock and reset controls.
 - **output_ports**()

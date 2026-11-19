@@ -239,6 +239,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `RTLModule.from_verilog_source` and `UVMGenerator` now parse parameterised
+  packed and unpacked Verilog/SystemVerilog port declarations, conditional
+  compilation directives (`ifdef`, `ifndef`, `elsif`, `else`, `endif` against an
+  optional `defines` set, empty by default), ANSI port initialisers, and
+  non-ANSI module headers without silently dropping ports or turning `wire`/`reg`
+  keywords into port names. Grouped header `parameter` and body `localparam`
+  integer constant expressions (`$clog2`, IEEE 1800 left-associative `**` below
+  unary operators, exact integer `/` and `%` truncation, bitwise, shift,
+  comparison, `signed`/`unsigned` qualifiers with or without whitespace before
+  `[`, and ternary operators bounded within `2**64`) are evaluated fail-closed,
+  preserving parameter evaluation errors when referenced, refusing unrecognised
+  or interface port items, constant function calls, and unsupported compiler
+  directives (`define`, `include`, and macro uses) inside the parsed parameter
+  and port declarations with `ValueError`, propagating AMBA clock/reset names
+  (`*_aclk`, `*_aresetn`, `pclk`, `hclk`, `ap_clk`) across driver, monitor,
+  assertion-bind, and formal-link templates, and emitting valid unpacked array
+  declarations and >32-bit sized hexadecimal bounds.
+
 - `SDCGenerator.generate` in `src/sc_neurocore/asic_flow/decks.py` excludes the
   primary clock port from `set_input_delay` and `set_driving_cell` via
   `[delete_from_list [all_inputs] [get_ports <clock_name>]]`. Verified open-PDK
