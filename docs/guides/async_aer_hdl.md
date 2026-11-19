@@ -61,10 +61,8 @@ can still be compared against the existing synchronous output.
 Current verification is limited to:
 
 - structural assertions in Python tests
-- HDL syntax smoke compile under `iverilog`
-- behavioural HDL simulation under `iverilog`/`vvp` that verifies stable
-  spike vectors are emitted once, changed vectors produce new AER events,
-  and a cleared vector permits a later repeat event
+- Verilator `--lint-only -Wall` clean elaboration against the `sc_dense_layer_core` interface
+- behavioural HDL simulation under `iverilog`/`vvp` against `hdl/sc_dense_layer_core.v` and its bitstream/LIF leaf modules verifying that zero inputs remain quiescent, active multi-layer networks assert `aer_req` with valid `aer_addr`, stable spike vectors are emitted once, changed vectors produce new AER events, and a cleared vector permits a later repeat event
 
 It is not yet:
 

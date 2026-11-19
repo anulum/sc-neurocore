@@ -4,7 +4,9 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for verilog_generator
+// SC-NeuroCore — Rust safety mirror for verilog_generator
+
+//! Validated top-level Verilog and clocked-AER emitter mirror for `sc_dense_layer_core`.
 
 #![allow(non_snake_case)]
 
@@ -22,14 +24,19 @@ const RESERVED_IDENTIFIERS: [&str; 11] = [
     "xor",
 ];
 
+/// Configuration for one `sc_dense_layer_core` stage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DenseLayerParams {
+    /// Number of postsynaptic LIF neurons (`N_NEURONS`).
     pub n_neurons: usize,
+    /// Optional explicit incoming bitstream width (`N_INPUTS`).
     pub input_width: Option<usize>,
+    /// Optional explicit outgoing spike bus width (must equal `n_neurons`).
     pub output_width: Option<usize>,
 }
 
 impl DenseLayerParams {
+    /// Construct dense-layer parameters with default inferred bus widths.
     pub fn new(n_neurons: usize) -> Self {
         Self {
             n_neurons,
@@ -39,42 +46,69 @@ impl DenseLayerParams {
     }
 }
 
+/// Supported standalone 16-bit stochastic bitstream source generators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StochasticSourceKind {
+    /// Maximal-length 16-bit linear-feedback shift register.
     Lfsr16,
+    /// 16-bit Gray-code Sobol quasi-random generator.
     Sobol16,
+    /// 16-bit bit-reversed base-2 Halton quasi-random generator.
     Halton16,
 }
 
+/// Declared layer entry inside [`VerilogGenerator`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LayerDefinition {
+    /// Clocked stochastic dense layer backed by `sc_dense_layer_core`.
     Dense {
+        /// Sanitised Verilog instance prefix.
         name: String,
+        /// Validated neuron and bus-width parameters.
         params: DenseLayerParams,
     },
+    /// Standalone stochastic bitstream source module.
     StochasticSource {
+        /// Sanitised Verilog module identifier.
         name: String,
+        /// Generator algorithm family.
         kind: StochasticSourceKind,
+        /// Initial 16-bit generator seed.
         seed: u16,
     },
+    /// Placeholder entry retained so unsupported layer types fail closed at emission.
     Unsupported {
+        /// Raw layer-type label.
         layer_type: String,
+        /// Sanitised layer identifier.
         name: String,
     },
 }
 
+/// Top-level Verilog emitter mirroring `sc_neurocore.hdl_gen.VerilogGenerator`.
 #[derive(Debug, Clone)]
 pub struct VerilogGenerator {
+    /// Sanitised top-level Verilog module identifier.
     pub module_name: String,
+    /// Default input/output bitstream width when no layers override it.
     pub bus_width: usize,
+    /// Ordered layer definitions.
     pub layers: Vec<LayerDefinition>,
 }
 
+impl Default for VerilogGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VerilogGenerator {
+    /// Construct a generator with module name `"sc_network_top"` and 8-bit bus width.
     pub fn new() -> Self {
         Self::try_new("sc_network_top", 8).expect("default Verilog generator parameters are valid")
     }
 
+    /// Construct a generator after validating `module_name` and `bus_width`.
     pub fn try_new(module_name: &str, bus_width: usize) -> Result<Self, String> {
         Ok(Self {
             module_name: sanitize_ident(module_name, "module name")?,
@@ -83,6 +117,7 @@ impl VerilogGenerator {
         })
     }
 
+    /// Validate and append a `Dense` layer specification.
     pub fn add_dense_layer(&mut self, name: &str, params: DenseLayerParams) -> Result<(), String> {
         self.add_layer(LayerDefinition::Dense {
             name: sanitize_ident(name, "layer name")?,
@@ -90,6 +125,7 @@ impl VerilogGenerator {
         })
     }
 
+    /// Validate and append a standalone stochastic source specification.
     pub fn add_stochastic_source(
         &mut self,
         name: &str,
@@ -103,6 +139,7 @@ impl VerilogGenerator {
         })
     }
 
+    /// Validate identifiers and append an arbitrary [`LayerDefinition`].
     pub fn add_layer(&mut self, layer: LayerDefinition) -> Result<(), String> {
         match &layer {
             LayerDefinition::Dense { name, params } => {
@@ -120,6 +157,7 @@ impl VerilogGenerator {
         Ok(())
     }
 
+    /// Emit complete Verilog source for `"sync"` or `"async_aer"` mode.
     pub fn generate(&self, mode: &str) -> Result<String, String> {
         if mode == "async_aer" {
             return self.generate_async_aer();
@@ -146,7 +184,7 @@ impl VerilogGenerator {
         ));
         code.push_str(");\n\n");
 
-        code.push_str("    // Internal signals\n");
+        code.push_str("    // Internal Signals\n");
         for (i, width) in widths
             .iter()
             .enumerate()
@@ -158,37 +196,42 @@ impl VerilogGenerator {
                 i + 1
             ));
         }
+        if !widths.is_empty() {
+            code.push_str("    genvar sc_in_idx;\n");
+        }
         code.push('\n');
 
         let mut dense_idx = 0usize;
         for (layer_idx, layer) in self.layers.iter().enumerate() {
             if let LayerDefinition::Dense { name, params } = layer {
-                code.push_str(&format!("    // Layer {layer_idx}: {name}\n"));
-                code.push_str("    sc_dense_layer_core #(\n");
-                code.push_str(&format!("        .NUM_NEURONS({})\n", params.n_neurons));
-                code.push_str(&format!("    ) {name}_inst (\n"));
-                code.push_str("        .clk(clk),\n");
-                code.push_str("        .rst_n(rst_n),\n");
-                if dense_idx == 0 {
-                    code.push_str("        .input_bus(input_bus),\n");
+                let in_bus = if dense_idx == 0 {
+                    "input_bus".to_string()
                 } else {
-                    code.push_str(&format!(
-                        "        .input_bus(layer_{}_to_{}),\n",
-                        dense_idx - 1,
-                        dense_idx
-                    ));
-                }
-                if dense_idx == widths.len() - 1 {
-                    code.push_str("        .output_bus(output_bus)\n");
+                    format!("layer_{}_to_{dense_idx}", dense_idx - 1)
+                };
+                let out_bus = if dense_idx == widths.len() - 1 {
+                    "output_bus".to_string()
                 } else {
-                    code.push_str(&format!(
-                        "        .output_bus(layer_{dense_idx}_to_{})\n",
-                        dense_idx + 1
-                    ));
-                }
-                code.push_str("    );\n\n");
+                    format!("layer_{dense_idx}_to_{}", dense_idx + 1)
+                };
+                code.push_str(&render_dense_layer_instance(
+                    &format!("Layer {layer_idx}: {name}"),
+                    name,
+                    params.n_neurons,
+                    widths[dense_idx].0,
+                    &in_bus,
+                    &out_bus,
+                ));
+                code.push('\n');
                 dense_idx += 1;
             }
+        }
+
+        if widths.is_empty() {
+            code.push_str(&format!("    assign output_bus = {output_width}'b0;\n"));
+            code.push_str(
+                "    wire _unused_empty_ports = &{1'b0, clk, rst_n, input_bus, 1'b0};\n\n",
+            );
         }
 
         code.push_str("endmodule\n");
@@ -229,6 +272,7 @@ impl VerilogGenerator {
         code.push_str(");\n\n");
 
         code.push_str("    // Research boundary: sync compute path with AER output wrapper.\n");
+        code.push_str("    // This is not a full asynchronous micropipeline implementation.\n");
         code.push_str(&format!("    wire [{}:0] spike_vector;\n", spike_width - 1));
         for (i, width) in widths
             .iter()
@@ -240,6 +284,9 @@ impl VerilogGenerator {
                 width.1 - 1,
                 i + 1
             ));
+        }
+        if !widths.is_empty() {
+            code.push_str("    genvar sc_in_idx;\n");
         }
         code.push('\n');
 
@@ -258,20 +305,21 @@ impl VerilogGenerator {
             } else {
                 format!("layer_{dense_idx}_to_{}", dense_idx + 1)
             };
-            code.push_str(&format!("    // Sync layer {layer_idx}: {name}\n"));
-            code.push_str("    sc_dense_layer_core #(\n");
-            code.push_str(&format!("        .NUM_NEURONS({})\n", params.n_neurons));
-            code.push_str(&format!("    ) {name}_inst (\n"));
-            code.push_str("        .clk(clk),\n");
-            code.push_str("        .rst_n(rst_n),\n");
-            code.push_str(&format!("        .input_bus({input_bus}),\n"));
-            code.push_str(&format!("        .output_bus({output_bus})\n"));
-            code.push_str("    );\n\n");
+            code.push_str(&render_dense_layer_instance(
+                &format!("Sync layer {layer_idx}: {name}"),
+                name,
+                params.n_neurons,
+                widths[dense_idx].0,
+                &input_bus,
+                &output_bus,
+            ));
+            code.push('\n');
             dense_idx += 1;
         }
 
         if widths.is_empty() {
-            code.push_str(&format!("    assign spike_vector = {spike_width}'b0;\n\n"));
+            code.push_str(&format!("    assign spike_vector = {spike_width}'b0;\n"));
+            code.push_str("    wire _unused_empty_inputs = &{1'b0, input_bus, 1'b0};\n\n");
         }
 
         code.push_str("    assign output_bus = spike_vector;\n");
@@ -301,19 +349,38 @@ impl VerilogGenerator {
         code.push_str("    endfunction\n\n");
 
         code.push_str(&format!(
-            "    wire [{}:0] encoded_addr = first_hot_index(spike_vector);\n\n",
+            "    wire [{}:0] encoded_addr = first_hot_index(spike_vector);\n",
             addr_width - 1
         ));
+        code.push_str(&format!("    reg [{}:0] event_vector;\n", spike_width - 1));
+        code.push_str(&format!(
+            "    reg [{}:0] acknowledged_vector;\n",
+            spike_width - 1
+        ));
+        code.push_str(
+            "    wire new_spike_vector = spike_valid && (spike_vector != acknowledged_vector);\n\n",
+        );
         code.push_str("    always @(posedge clk or negedge rst_n) begin\n");
         code.push_str("        if (!rst_n) begin\n");
         code.push_str("            aer_req <= 1'b0;\n");
         code.push_str(&format!("            aer_addr <= {addr_width}'d0;\n"));
+        code.push_str(&format!("            event_vector <= {spike_width}'d0;\n"));
+        code.push_str(&format!(
+            "            acknowledged_vector <= {spike_width}'d0;\n"
+        ));
         code.push_str("        end else begin\n");
-        code.push_str("            if (!aer_req && spike_valid) begin\n");
+        code.push_str("            if (!spike_valid) begin\n");
+        code.push_str(&format!(
+            "                acknowledged_vector <= {spike_width}'d0;\n"
+        ));
+        code.push_str("            end\n");
+        code.push_str("            if (!aer_req && new_spike_vector) begin\n");
         code.push_str("                aer_req <= 1'b1;\n");
         code.push_str("                aer_addr <= encoded_addr;\n");
+        code.push_str("                event_vector <= spike_vector;\n");
         code.push_str("            end else if (aer_req && aer_ack) begin\n");
         code.push_str("                aer_req <= 1'b0;\n");
+        code.push_str("                acknowledged_vector <= event_vector;\n");
         code.push_str("            end\n");
         code.push_str("        end\n");
         code.push_str("    end\n\n");
@@ -321,19 +388,23 @@ impl VerilogGenerator {
         Ok(code)
     }
 
+    /// Persist synchronous generated Verilog to `path`.
     pub fn save_to_file(&self, path: &str) -> Result<(), String> {
         std::fs::write(path, self.generate("sync")?)
             .map_err(|err| format!("failed to write Verilog to {path}: {err}"))
     }
 
+    /// Emit a standalone LFSR-16 stochastic source module.
     pub fn emit_lfsr16_source(&self, module_name: &str, seed: u16) -> Result<String, String> {
         emit_lfsr16_source(module_name, seed)
     }
 
+    /// Emit a standalone Sobol-16 stochastic source module.
     pub fn emit_sobol16_source(&self, module_name: &str, seed: u16) -> Result<String, String> {
         emit_sobol16_source(module_name, seed)
     }
 
+    /// Emit a standalone Halton-16 stochastic source module.
     pub fn emit_halton16_source(&self, module_name: &str) -> Result<String, String> {
         emit_halton16_source(module_name)
     }
@@ -380,11 +451,16 @@ impl VerilogGenerator {
         let mut widths = Vec::new();
         let mut previous_width: Option<usize> = None;
         let mut previous_name: Option<&str> = None;
+        let mut seen_dense = Vec::<&str>::new();
 
         for layer in &self.layers {
             let LayerDefinition::Dense { name, params } = layer else {
                 continue;
             };
+            if seen_dense.contains(&name.as_str()) {
+                return Err(format!("duplicate layer name {name:?}"));
+            }
+            seen_dense.push(name);
             let input_width = params
                 .input_width
                 .unwrap_or(previous_width.unwrap_or(self.bus_width));
@@ -428,6 +504,60 @@ impl VerilogGenerator {
     }
 }
 
+fn render_dense_layer_instance(
+    comment_label: &str,
+    layer_name: &str,
+    n_neurons: usize,
+    input_width: usize,
+    input_bus: &str,
+    output_bus: &str,
+) -> String {
+    let dw = 16usize;
+    let lines = [
+        format!("    // {comment_label}"),
+        format!("    wire [{}:0] {layer_name}_x_input_fp;", input_width * dw - 1),
+        format!("    wire [{}:0] {layer_name}_i_t;", dw - 1),
+        format!("    wire {layer_name}_step_valid;"),
+        format!("    wire {layer_name}_run_done;"),
+        format!("    wire {layer_name}_running;"),
+        "    generate".to_string(),
+        format!(
+            "        for (sc_in_idx = 0; sc_in_idx < {input_width}; sc_in_idx = sc_in_idx + 1) begin : {layer_name}_pack_x"
+        ),
+        format!(
+            "            assign {layer_name}_x_input_fp[sc_in_idx*{dw} +: {dw}] = {{{dw}{{{input_bus}[sc_in_idx]}}}};"
+        ),
+        "        end".to_string(),
+        "    endgenerate".to_string(),
+        "    sc_dense_layer_core #(".to_string(),
+        format!("        .N_INPUTS({input_width}),"),
+        format!("        .N_NEURONS({n_neurons}),"),
+        format!("        .DATA_WIDTH({dw})"),
+        format!("    ) {layer_name}_inst ("),
+        "        .clk(clk),".to_string(),
+        "        .rst_n(rst_n),".to_string(),
+        "        .start_pulse(1'b1),".to_string(),
+        "        .stream_len(32'd256),".to_string(),
+        format!("        .x_input_fp({layer_name}_x_input_fp),"),
+        format!("        .weight_fp({{{input_width}{{16'hFFFF}}}}),"),
+        "        .y_min_fp(16'h0000),".to_string(),
+        "        .y_max_fp(16'h0200),".to_string(),
+        "        .cfg_leak(16'h0010),".to_string(),
+        "        .cfg_gain(16'h0100),".to_string(),
+        format!("        .I_t({layer_name}_i_t),"),
+        format!("        .spikes({output_bus}),"),
+        format!("        .step_valid({layer_name}_step_valid),"),
+        format!("        .run_done({layer_name}_run_done),"),
+        format!("        .running({layer_name}_running)"),
+        "    );".to_string(),
+        format!(
+            "    wire _unused_{layer_name}_status = &{{1'b0, {layer_name}_i_t, {layer_name}_step_valid, {layer_name}_run_done, {layer_name}_running, 1'b0}};"
+        ),
+        String::new(),
+    ];
+    lines.join("\n")
+}
+
 fn validate_dense_params(params: DenseLayerParams, name: &str) -> Result<DenseLayerParams, String> {
     require_positive_width(params.n_neurons, &format!("Dense layer '{name}' n_neurons"))?;
     if let Some(width) = params.input_width {
@@ -435,6 +565,12 @@ fn validate_dense_params(params: DenseLayerParams, name: &str) -> Result<DenseLa
     }
     if let Some(width) = params.output_width {
         require_positive_width(width, &format!("Dense layer '{name}' output_width"))?;
+        if width != params.n_neurons {
+            return Err(format!(
+                "Dense layer '{name}' output_width ({width}) must equal n_neurons ({})",
+                params.n_neurons
+            ));
+        }
     }
     Ok(params)
 }
@@ -480,28 +616,33 @@ fn emit_lfsr16_source(module_name: &str, seed: u16) -> Result<String, String> {
     let module_name = sanitize_ident(module_name, "module name")?;
     let seed = if seed == 0 { 0xACE1 } else { seed };
     let first_sample = lfsr16_advance(seed);
-    Ok(format!(
-        "module {module_name} (\n\
-             input wire clk,\n\
-             input wire rst_n,\n\
-             input wire [15:0] threshold,\n\
-             output wire bit_out,\n\
-             output reg [15:0] state\n\
-         );\n\n\
-             localparam [15:0] SEED = 16'h{seed:04X};\n\
-             localparam [15:0] FIRST_SAMPLE = 16'h{first_sample:04X};\n\
-             wire feedback;\n\n\
-             assign bit_out = (state < threshold);\n\
-             assign feedback = state[0] ^ state[2] ^ state[3] ^ state[5];\n\n\
-             always @(posedge clk or negedge rst_n) begin\n\
-                 if (!rst_n) begin\n\
-                     state <= FIRST_SAMPLE;\n\
-                 end else begin\n\
-                     state <= {{feedback, state[15:1]}};\n\
-                 end\n\
-             end\n\
-         endmodule"
-    ))
+    let lines = [
+        format!("module {module_name} ("),
+        "    input wire clk,".to_string(),
+        "    input wire rst_n,".to_string(),
+        "    input wire [15:0] threshold,".to_string(),
+        "    output wire bit_out,".to_string(),
+        "    output reg [15:0] state".to_string(),
+        ");".to_string(),
+        String::new(),
+        format!("    localparam [15:0] SEED = 16'h{seed:04X};"),
+        format!("    localparam [15:0] FIRST_SAMPLE = 16'h{first_sample:04X};"),
+        "    wire feedback;".to_string(),
+        String::new(),
+        "    // Compare the current generated sample before the next advance.".to_string(),
+        "    assign bit_out = (state < threshold);".to_string(),
+        "    assign feedback = state[0] ^ state[2] ^ state[3] ^ state[5];".to_string(),
+        String::new(),
+        "    always @(posedge clk or negedge rst_n) begin".to_string(),
+        "        if (!rst_n) begin".to_string(),
+        "            state <= FIRST_SAMPLE;".to_string(),
+        "        end else begin".to_string(),
+        "            state <= {feedback, state[15:1]};".to_string(),
+        "        end".to_string(),
+        "    end".to_string(),
+        "endmodule".to_string(),
+    ];
+    Ok(lines.join("\n"))
 }
 
 fn lfsr16_advance(state: u16) -> u16 {
@@ -530,84 +671,94 @@ fn emit_sobol16_source(module_name: &str, seed: u16) -> Result<String, String> {
         ("16'b?100000000000000", "16'h0002"),
         ("16'b1000000000000000", "16'h0001"),
     ];
-    let mut code = format!(
-        "module {module_name} (\n\
-             input wire clk,\n\
-             input wire rst_n,\n\
-             input wire [15:0] threshold,\n\
-             output wire bit_out,\n\
-             output reg [15:0] value,\n\
-             output reg [15:0] index\n\
-         );\n\n\
-             localparam [15:0] SEED = 16'h{seed:04X};\n\
-             localparam [15:0] FIRST_SAMPLE = 16'h{first_sample:04X};\n\n\
-             reg [15:0] direction;\n\
-             assign bit_out = (value < threshold);\n\n\
-             always @(*) begin\n\
-                 casez (index)\n"
-    );
+    let mut lines = vec![
+        format!("module {module_name} ("),
+        "    input wire clk,".to_string(),
+        "    input wire rst_n,".to_string(),
+        "    input wire [15:0] threshold,".to_string(),
+        "    output wire bit_out,".to_string(),
+        "    output reg [15:0] value,".to_string(),
+        "    output reg [15:0] index".to_string(),
+        ");".to_string(),
+        String::new(),
+        format!("    localparam [15:0] SEED = 16'h{seed:04X};"),
+        format!("    localparam [15:0] FIRST_SAMPLE = 16'h{first_sample:04X};"),
+        String::new(),
+        "    reg [15:0] direction;".to_string(),
+        String::new(),
+        "    // Compare the current generated sample before the next advance.".to_string(),
+        "    assign bit_out = (value < threshold);".to_string(),
+        String::new(),
+        "    always @(*) begin".to_string(),
+        "        casez (index)".to_string(),
+    ];
     for (pattern, direction) in direction_cases {
-        code.push_str(&format!(
-            "            {pattern}: direction = {direction};\n"
-        ));
+        lines.push(format!("            {pattern}: direction = {direction};"));
     }
-    code.push_str(
-        "            default: direction = 16'h8000;\n\
-                 endcase\n\
-             end\n\n\
-             always @(posedge clk or negedge rst_n) begin\n\
-                 if (!rst_n) begin\n\
-                     value <= FIRST_SAMPLE;\n\
-                     index <= 16'd1;\n\
-                 end else begin\n\
-                     value <= value ^ direction;\n\
-                     index <= index + 16'd1;\n\
-                 end\n\
-             end\n\
-         endmodule",
-    );
-    Ok(code)
+    lines.extend([
+        "            default: direction = 16'h8000;".to_string(),
+        "        endcase".to_string(),
+        "    end".to_string(),
+        String::new(),
+        "    always @(posedge clk or negedge rst_n) begin".to_string(),
+        "        if (!rst_n) begin".to_string(),
+        "            value <= FIRST_SAMPLE;".to_string(),
+        "            index <= 16'd1;".to_string(),
+        "        end else begin".to_string(),
+        "            value <= value ^ direction;".to_string(),
+        "            index <= index + 16'd1;".to_string(),
+        "        end".to_string(),
+        "    end".to_string(),
+        "endmodule".to_string(),
+    ]);
+    Ok(lines.join("\n"))
 }
 
 fn emit_halton16_source(module_name: &str) -> Result<String, String> {
     let module_name = sanitize_ident(module_name, "module name")?;
-    let mut code = format!(
-        "module {module_name} (\n\
-             input wire clk,\n\
-             input wire rst_n,\n\
-             input wire enable,\n\
-             output reg [15:0] quasi_random,\n\
-             output reg valid\n\
-         );\n\n\
-             reg [15:0] counter;\n\
-             wire [15:0] reversed;\n\n"
-    );
+    let mut lines = vec![
+        format!("module {module_name} ("),
+        "    input wire clk,".to_string(),
+        "    input wire rst_n,".to_string(),
+        "    input wire enable,".to_string(),
+        "    output reg [15:0] quasi_random,".to_string(),
+        "    output reg valid".to_string(),
+        ");".to_string(),
+        String::new(),
+        "    reg [15:0] counter;".to_string(),
+        String::new(),
+        "    // Bit-reversal = Van der Corput base-2 radical inverse".to_string(),
+        "    // Pure routing — zero LUT cost".to_string(),
+        "    wire [15:0] reversed;".to_string(),
+        String::new(),
+    ];
     for idx in 0..16 {
-        code.push_str(&format!(
-            "    assign reversed[{idx}] = counter[{}];\n",
+        lines.push(format!(
+            "    assign reversed[{idx}] = counter[{}];",
             15 - idx
         ));
     }
-    code.push_str(
-        "\n\
-             always @(posedge clk or negedge rst_n) begin\n\
-                 if (!rst_n) begin\n\
-                     counter      <= 16'd0;\n\
-                     quasi_random <= 16'd0;\n\
-                     valid        <= 1'b0;\n\
-                 end else if (enable) begin\n\
-                     quasi_random <= reversed;\n\
-                     valid        <= 1'b1;\n\
-                     counter      <= counter + 16'd1;\n\
-                 end else begin\n\
-                     valid <= 1'b0;\n\
-                 end\n\
-             end\n\
-         endmodule",
-    );
-    Ok(code)
+    lines.extend([
+        String::new(),
+        "    always @(posedge clk or negedge rst_n) begin".to_string(),
+        "        if (!rst_n) begin".to_string(),
+        "            counter      <= 16'd0;".to_string(),
+        "            quasi_random <= 16'd0;".to_string(),
+        "            valid        <= 1'b0;".to_string(),
+        "        end else if (enable) begin".to_string(),
+        "            quasi_random <= reversed;".to_string(),
+        "            valid        <= 1'b1;".to_string(),
+        "            counter      <= counter + 16'd1;".to_string(),
+        "        end else begin".to_string(),
+        "            valid <= 1'b0;".to_string(),
+        "        end".to_string(),
+        "    end".to_string(),
+        "endmodule".to_string(),
+    ]);
+    Ok(lines.join("\n"))
 }
 
+/// Return `true` when `state` holds valid identifiers, bus widths, and layer parameters.
 pub fn validate_verilog_generator(state: &VerilogGenerator) -> bool {
     !state.module_name.is_empty()
         && state.bus_width > 0
@@ -655,7 +806,9 @@ mod tests {
         assert!(verilog.contains("module wide_top"));
         assert!(verilog.contains("input wire [15:0] input_bus"));
         assert!(verilog.contains("output wire [11:0] output_bus"));
-        assert!(verilog.contains(".NUM_NEURONS(12)"));
+        assert!(verilog.contains(".N_INPUTS(16)"));
+        assert!(verilog.contains(".N_NEURONS(12)"));
+        assert!(verilog.contains(".spikes(output_bus)"));
     }
 
     #[test]
@@ -698,6 +851,16 @@ mod tests {
         assert!(generator
             .add_dense_layer("dense0", DenseLayerParams::new(0))
             .is_err());
+        assert!(generator
+            .add_dense_layer(
+                "dense_mismatch",
+                DenseLayerParams {
+                    n_neurons: 4,
+                    input_width: None,
+                    output_width: Some(2),
+                },
+            )
+            .is_err());
     }
 
     #[test]
@@ -731,7 +894,7 @@ mod tests {
         assert!(verilog.contains("input wire aer_ack"));
         assert!(verilog.contains("output reg aer_req"));
         assert!(verilog.contains("output reg [1:0] aer_addr"));
-        assert!(verilog.contains(".output_bus(spike_vector)"));
+        assert!(verilog.contains(".spikes(spike_vector)"));
     }
 
     #[test]

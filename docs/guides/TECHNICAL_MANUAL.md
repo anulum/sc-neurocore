@@ -334,7 +334,7 @@ Hardware integration in sc-neurocore is centered on two paths:
 The Python simulation is the reference. Hardware targets should be validated against it using bit-true or statistically equivalent tests.
 
 ### 5.2 Verilog generation
-`VerilogGenerator` builds a simple top-level module for networks composed of dense layers. The generator is intentionally limited and is intended as a scaffold for more complex HDL integration. It outputs a module with a fixed 8-bit input and output bus and internal wires linking layers.
+`VerilogGenerator` builds a top-level module for networks composed of dense layers (`sc_dense_layer_core` parameterised by `N_INPUTS`, `N_NEURONS`, and `DATA_WIDTH`) and optional standalone 16-bit stochastic source modules (`LFSR`, `Sobol`, `Halton`). Top-level `input_bus`, inter-layer spike wires, and `output_bus` derive their widths from `bus_width` and each layer's `n_neurons` (or explicit `input_width` / `output_width` overrides), failing closed on width mismatches or invalid parameters.
 
 If you need more advanced HDL features (e.g., per-layer width, parameterized bit widths, or custom modules), extend the generator rather than editing the emitted Verilog manually.
 

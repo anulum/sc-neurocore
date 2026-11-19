@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2205
+expected_file_count = 2212
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8870,3 +8870,31 @@ rationale = "Check the bandwidth meter's samples, its zero rate without an inter
 [[file]]
 path = "tests/test_hypervisor/test_qos_monitor_free_tests.py"
 rationale = "Check the bandwidth meter's empty and zero-span rates, its window base, and the QoS classes' single owner."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/verilog_generator.py"
+rationale = "Emit top-level synchronous and clocked-AER Verilog modules and standalone stochastic sources with explicit type annotations and zero suppression pragmas."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/aer_emitter.py"
+rationale = "Validate Dense layer parameters and bind sc_dense_layer_core instances for synchronous and clocked-AER top-level emitters."
+
+[[file]]
+path = "tests/hdl_gen/test_verilog_generator_topology.py"
+rationale = "Verify Verilator -Wall elaboration, Icarus/vvp simulation against hdl/sc_dense_layer_core.v, and byte-exact Rust safety mirror parity."
+
+[[file]]
+path = "tests/hdl_gen/test_verilog_generator_validation.py"
+rationale = "Refuse invalid identifiers, unsupported layer types, width mismatches, and out-of-range dense-layer parameters across sync and AER emission."
+
+[[file]]
+path = "tests/hdl_gen/test_verilog_generator_io_perf.py"
+rationale = "Exercise file output, OS write-failure propagation, emitter helpers, and bounded throughput scaling without coverage suppressions."
+
+[[file]]
+path = "tests/hdl_gen/test_verilog_generator_stochastic_sources.py"
+rationale = "Route LFSR-16, Sobol-16, and Halton-16 stochastic source descriptors from layers and IR payloads."
+
+[[file]]
+path = "tests/test_hdl_gen/test_async_emitter.py"
+rationale = "Verify clocked-AER bus-width forwarding, Verilator -Wall linting, and Icarus/vvp event-handshake simulation against sc_dense_layer_core."

@@ -25641,15 +25641,81 @@ str
 ## Module `hdl_gen.aer_emitter`
 
 ### Class `AEREmitter`
-Emit a research-stage AER wrapper around the existing sync HDL path.
+Emit a research-stage AER wrapper around the clocked HDL dense path.
 
-This is intentionally conservative: the compute pipeline remains clocked
-and the output is wrapped in a 4-phase AER-style request/acknowledge
-interface. It is not a QDI async network replacement.
+The compute pipeline uses ``sc_dense_layer_core`` and wraps its final spike
+vector in a 4-phase AER-style request/acknowledge interface. It is not a
+quasi-delay-insensitive asynchronous network replacement.
 
 - **__init__**(module_name, bus_width)
+  - Initialise an AER wrapper emitter.
 - **add_layer**(layer_type, name, params)
+  - Append one ``Dense`` layer specification to the AER wrapper.
 - **generate**()
+  - Emit complete Verilog source for the clocked AER wrapper.
+
+### Function `require_positive_int(value, name)`
+Validate and convert a positive integer parameter.
+
+Parameters
+----------
+value : object
+    Candidate integer value (booleans are rejected).
+name : str
+    Field label included in any validation error.
+
+Returns
+-------
+int
+    Validated positive integer.
+
+### Function `validate_dense_layer_params(layer_name, params)`
+Validate ``Dense`` layer configuration for ``sc_dense_layer_core`` binding.
+
+Parameters
+----------
+layer_name : str
+    Sanitised Verilog layer identifier.
+params : object
+    Layer parameter dictionary.
+
+### Function `compute_dense_layer_widths(layers, bus_width)`
+Compute ``(input_width, output_width)`` per ``Dense`` layer and reject mismatches.
+
+Parameters
+----------
+layers : list&#91;dict&#91;str, Any&#93;&#93;
+    Registered network layer entries.
+bus_width : int
+    Default top-level input bus width.
+
+Returns
+-------
+list&#91;tuple&#91;int, int&#93;&#93;
+    Ordered ``(input_width, output_width)`` pairs for ``Dense`` layers.
+
+### Function `render_dense_layer_instance(*, comment_label, layer_name, params, input_bus, output_bus, input_width)`
+Render one ``sc_dense_layer_core`` instance bound to bitstream buses.
+
+Parameters
+----------
+comment_label : str
+    Header comment line identifying the layer.
+layer_name : str
+    Sanitised layer identifier.
+params : Mapping&#91;str, object&#93;
+    Validated ``Dense`` layer parameters.
+input_bus : str
+    Incoming 1-bit-per-channel Verilog signal name.
+output_bus : str
+    Outgoing ``N_NEURONS``-bit spike Verilog signal name.
+input_width : int
+    Bit width of ``input_bus`` (mapped to ``N_INPUTS``).
+
+Returns
+-------
+str
+    Indented Verilog instantiation block.
 
 ---
 
@@ -25907,14 +25973,14 @@ str
 ## Module `hdl_gen.verilog_generator`
 
 ### Class `VerilogGenerator`
-Generates Top-Level Verilog for a defined SC Network.
+Generate top-level Verilog for a declared stochastic-computing network.
 
 - **__init__**(module_name, bus_width)
-  - Initialise with a top-level module name.
+  - Initialise the top-level Verilog generator.
 - **add_layer**(layer_type, name, params)
-  - Add a layer definition to the network.
+  - Append a network layer specification.
 - **generate**(mode)
-  - Emits Verilog code.
+  - Emit complete Verilog source in synchronous or clocked-AER mode.
 - **emit_lfsr16_source**(module_name, seed)
   - Emit a standalone LFSR-16 stochastic source module.
 - **emit_sobol16_source**(module_name, seed)
@@ -25922,7 +25988,7 @@ Generates Top-Level Verilog for a defined SC Network.
 - **emit_sources_from_ir**(ir)
   - Emit standalone stochastic source modules declared in an IR payload.
 - **emit_async_aer**(module_name)
-  - Emit the research-stage async AER wrapper.
+  - Emit the clocked AER wrapper around the declared ``Dense`` layers.
 - **emit_kuramoto_phase**(module_name, \*, n_oscillators, omegas, initial_phases, coupling, dt, data_width, fraction, lut_size)
   - Emit the bounded research Kuramoto phase core.
 - **emit_halton16_source**(module_name)
@@ -25930,23 +25996,27 @@ Generates Top-Level Verilog for a defined SC Network.
 - **emit_quasirandom_source**(method, module_name, seed)
   - Emit a quasi-random source via the unified factory.
 - **emit_decorrelator**(\*, num_streams, stream_width, shift_seed)
-  - Return the path to the sc_decorrelator HDL module.
+  - Return an instantiation template for ``sc_decorrelator``.
 - **emit_edt_controller**(\*, data_width, margin, stable_cycles)
-  - Return an instantiation template for the EDT controller.
+  - Return an instantiation template for ``sc_edt_controller``.
 - **emit_tmr_wrapper**(module_name, inputs, outputs)
-  - Generate a TMR wrapper for the given module.
+  - Generate a triple-modular-redundancy wrapper for ``module_name``.
 - **save_to_file**(path)
-  - Write generated Verilog to a file.
+  - Write synchronous generated Verilog to ``path``.
 
 ### Function `emit_sources_from_ir(ir)`
-Emit LFSR-16 and Sobol-16 source modules from a lightweight IR payload.
+Emit LFSR-16, Sobol-16, and Halton-16 source modules from an IR payload.
 
-The helper accepts the mapping shapes already used by documentation,
-tests, and compiler-service payloads: ``{"nodes": &#91;...&#93;}``,
-``{"nodes": {"node_id": {...}}}``, or a direct iterable of node mappings.
-Non-source nodes are ignored. Source nodes must identify their generator
-through ``source_type``, ``decorrelator``, ``generator``, ``strategy``, or
-the node ``type``/``node_type`` itself.
+Parameters
+----------
+ir : Any
+    Mapping ``{"nodes": ...}``, object exposing ``nodes``, or sequence of
+    node mappings/objects. Non-source nodes are ignored.
+
+Returns
+-------
+str
+    Double-newline-joined Verilog source modules.
 
 ---
 

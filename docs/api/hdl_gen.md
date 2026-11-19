@@ -331,8 +331,17 @@ rtl = gen.generate()
 gen.save_to_file("build/my_sc_net_top.sv")
 ```
 
-Emits a module with `clk`, `rst_n`, `input_bus[7:0]`, `output_bus[7:0]`
-and three `sc_dense_layer_core` instances chained via 8-bit wires.
+Emits a module with `clk`, `rst_n`, `input_bus[7:0]`, `output_bus[9:0]`
+and three `sc_dense_layer_core` instances (`N_INPUTS`/`N_NEURONS`/`DATA_WIDTH`)
+chained via width-matched spike buses (`layer_0_to_1[31:0]`,
+`layer_1_to_2[31:0]`) and 1-bit-to-fixed-point `x_input_fp` expanders.
+
+`sc_dense_layer_core` holds one weight per input (`weights`, or one
+`weight_fp` for every input) and computes one dot product, so all
+`N_NEURONS` neurons of a layer receive the same current, leak and gain:
+the layer's output bits always carry the same value, and a layer behaves
+as one neuron fanned out to `n_neurons` wires. Distinct neurons need
+per-neuron weights, which this core does not have.
 
 ### 5.2 Synthesise with the safety monitor
 

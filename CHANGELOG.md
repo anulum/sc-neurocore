@@ -393,6 +393,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   differences when timesteps match and refuses distinct timesteps within one
   neuron type.
 
+- `VerilogGenerator`, `AEREmitter` (`sc_neurocore.hdl_gen`), and the Rust
+  safety mirror (`src/sc_neurocore/accel/rust/safety/verilog_generator.rs`)
+  now bind `Dense` layers to the `sc_dense_layer_core` module contract
+  (`N_INPUTS`, `N_NEURONS`, `DATA_WIDTH`, `start_pulse`, `stream_len`,
+  bit-expanded `x_input_fp`, `weight_fp`, `y_min_fp`, `y_max_fp`, `cfg_leak`,
+  `cfg_gain`, `I_t`, `spikes`, `step_valid`, `run_done`, and `running`)
+  instead of non-existent `NUM_NEURONS`, `input_bus`, and `output_bus` ports,
+  forward `bus_width` from `VerilogGenerator.emit_async_aer` into
+  `AEREmitter`, drive `output_bus` to zero when no `Dense` layers are
+  declared, reject duplicate layer identifiers or `output_width != n_neurons`
+  mismatches fail-closed, and remove all type-checker and coverage suppression
+  pragmas from `verilog_generator.py` and its test suite. The core holds one
+  weight per input and one dot product, so all `n_neurons` outputs of a
+  `Dense` layer carry the same value; the API page and `add_layer` say so.
+
 - `FaultResilienceSuite` declares its evaluation function as a callable from
   the list of weight matrices to an accuracy, so strict type checkers check
   callers, and the module no longer silences the checker on its constructor.
