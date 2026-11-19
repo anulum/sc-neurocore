@@ -25222,11 +25222,17 @@ Check and optionally fix hardware constraint violations.
 ### Class `DeploymentPackage`
 Self-contained deployment artifact for neuromorphic hardware.
 
-Attributes:
-    device: Target device specification.
-    placements: Neuron-to-core mapping.
-    config_blob: Binary configuration data for the target.
-    metadata: Additional deployment metadata.
+Attributes
+----------
+device : DeviceSpec
+    Target device specification.
+placements : list of NeuronPlacement
+    Neuron-to-core mapping.
+config_blob : bytes
+    Binary configuration data for the target.
+metadata : dict
+    Additional deployment metadata. ``weight_scale`` turns the blob's integer weight codes back into weights:
+    weight = code / weight_scale.
 
 
 ### Class `Deployer`

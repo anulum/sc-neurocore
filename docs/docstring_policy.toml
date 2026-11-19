@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2224
+expected_file_count = 2226
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8946,3 +8946,11 @@ rationale = "Hold the interval checker to well-formed intervals and to verdicts 
 [[file]]
 path = "tests/test_temporal_properties_domains.py"
 rationale = "Hold the temporal property checks to verdicts the bounded trace supports and to ids, times and windows inside it."
+
+[[file]]
+path = "src/sc_neurocore/hardware/deployment.py"
+rationale = "Document the deployment blob's weight codes, their recorded scale, and the package checks."
+
+[[file]]
+path = "tests/test_hardware_deployer_weight_codes.py"
+rationale = "Hold the deployment blob's weight codes at every precision, the recorded scale and the placement checks."

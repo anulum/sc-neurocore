@@ -251,6 +251,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The hardware deployment package no longer codes every weight of a 1-bit
+  device as zero: one bit now stores the sign, +1 or -1, and the package
+  metadata records `weight_scale`, the factor that turns any code back into
+  a weight (code / weight_scale), which was never stored before. A weight
+  precision below one bit or above the blob's 16-bit weight field,
+  non-finite weights, and placement ids that are negative or too wide for
+  their unsigned 32-bit or 16-bit fields are refused with an error instead
+  of an overflow or a conversion failure. An empty placement list packages
+  with no core used, and validation refuses negative neuron, core and local
+  ids.
+
 - The temporal property checks no longer verify what a trace cannot show. A
   window longer than the trace gave a pass even for a neuron firing at every
   step; it now gives `unknown`, or a violation when the whole trace already
