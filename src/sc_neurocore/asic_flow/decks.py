@@ -195,7 +195,7 @@ create_clock [get_ports {design.clock_name}] \\
 set_clock_uncertainty {period * 0.1:.3f} [get_clocks {design.clock_name}]
 
 # Input/output delays (25% of period)
-set_input_delay {period * 0.25:.3f} -clock {design.clock_name} [all_inputs]
+set_input_delay {period * 0.25:.3f} -clock {design.clock_name} [delete_from_list [all_inputs] [get_ports {design.clock_name}]]
 set_output_delay {period * 0.25:.3f} -clock {design.clock_name} [all_outputs]
 
 # Reset is constant during operation
@@ -209,7 +209,7 @@ set_max_transition {period * 0.15:.3f} [current_design]
 set_max_fanout {design.sc_optimisation.max_fanout} [current_design]
 
 # Driving cell
-set_driving_cell -lib_cell {pdk.cell_prefix}buf_2 [all_inputs]
+set_driving_cell -lib_cell {pdk.cell_prefix}buf_2 [delete_from_list [all_inputs] [get_ports {design.clock_name}]]
 
 # Load
 set_load 0.05 [all_outputs]

@@ -17,6 +17,8 @@ import pickle
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 from sc_neurocore.asic_flow import asic_flow as historical
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,6 +50,11 @@ SYMBOL_OWNERS = {
         "generate_asic_flow_bundle",
     },
     "hierarchy": {"BlockConfig", "HierarchicalFlow"},
+    "liberty_corners": {
+        "CornerType",
+        "DEFAULT_CORNERS",
+        "PVTCorner",
+    },
     "pdk": {
         "OpenSourcePDKResolver",
         "PDKConfig",
@@ -60,12 +67,9 @@ SYMBOL_OWNERS = {
     },
     "readiness": {"TapeOutChecklist"},
     "signoff": {
-        "CornerType",
-        "DEFAULT_CORNERS",
         "DRCViolation",
         "MultiCornerAnalysis",
         "OCVConfig",
-        "PVTCorner",
         "SignoffCheckResult",
         "SignoffGenerator",
         "SignoffSummary",
@@ -99,8 +103,8 @@ def _module_dependencies(module_name: str) -> set[str]:
         prefix = "sc_neurocore.asic_flow."
         if node.module.startswith(prefix):
             dependency = node.module.removeprefix(prefix).split(".", maxsplit=1)[0]
-            if dependency in SYMBOL_OWNERS:
-                dependencies.add(dependency)
+            assert dependency in SYMBOL_OWNERS
+            dependencies.add(dependency)
     return dependencies
 
 
@@ -158,6 +162,8 @@ def test_responsibility_import_graph_is_acyclic() -> None:
     graph = {module_name: _module_dependencies(module_name) for module_name in SYMBOL_OWNERS}
 
     _assert_acyclic(graph)
+    with pytest.raises(AssertionError, match=r"ASIC-flow import cycle: a -> b -> a"):
+        _assert_acyclic({"a": {"b"}, "b": {"a"}})
 
 
 def test_historical_identity_and_pickle_paths_are_stable() -> None:
@@ -224,7 +230,11 @@ def test_benchmark_evidence_is_bound_to_live_sources() -> None:
     assert candidate["source_file_count"] == len(list(SOURCE_DIR.glob("*.py")))
     assert payload["benchmark_sha256"] == hashlib.sha256(benchmark_path.read_bytes()).hexdigest()
     assert payload["probe_sha256"] == hashlib.sha256(probe_path.read_bytes()).hexdigest()
-    assert comparison["generated_output_byte_identical"] is True
-    assert comparison["generated_sha256"] == (
+    assert payload["evidence_class"] == "local_source_behaviour_change_diagnostics"
+    assert comparison["generated_output_byte_identical"] is False
+    assert comparison["baseline_generated_sha256"] == (
         "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653"
+    )
+    assert comparison["generated_sha256"] == (
+        "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25"
     )

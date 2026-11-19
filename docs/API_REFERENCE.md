@@ -4372,6 +4372,20 @@ Multi-block ASIC flow with per-block synthesis + top integration.
 
 ---
 
+## Module `asic_flow.liberty_corners`
+
+### Class `CornerType`
+Process-corner combinations used by multi-corner timing analysis.
+
+
+### Class `PVTCorner`
+Process-Voltage-Temperature corner definition.
+
+- **label**()
+  - Return a stable corner-temperature-voltage label.
+
+---
+
 ## Module `asic_flow.pdk`
 
 ### Class `PDKType`
@@ -4460,18 +4474,8 @@ Generates signoff scripts and evaluates results.
 - **evaluate_area**(cell_count, used_area_um2, die_area_um2)
   - Compare placed-cell area with the 85 percent utilisation limit.
 
-### Class `CornerType`
-Process-corner combinations used by multi-corner timing analysis.
-
-
-### Class `PVTCorner`
-Process-Voltage-Temperature corner definition.
-
-- **label**()
-  - Return a stable corner-temperature-voltage label.
-
 ### Class `MultiCornerAnalysis`
-Generates multi-corner STA scripts for all PVT corners.
+Generates multi-corner STA scripts for verified PVT corners.
 
 - **generate**(pdk, design, corners)
   - Render one OpenSTA analysis section per selected PVT corner.

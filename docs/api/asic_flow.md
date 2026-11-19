@@ -12,6 +12,7 @@ implementation ownership is split by responsibility:
 
 | Module | Responsibility |
 | --- | --- |
+| `liberty_corners` | verified Sky130 and GF180MCU Liberty corner tables and PVT descriptors |
 | `pdk` | PDK presets, path resolution, installation checks, and validation |
 | `design` | physical-design and stochastic-synthesis parameters |
 | `decks` | Yosys, OpenROAD, SDC, and GDSII scripts |
@@ -80,15 +81,20 @@ for removed code.
 
 ## Verification and benchmark evidence
 
-The focused suite contains 100 tests and covers all 580 statements and 66
-branches across the 11 package files. It locks the historical facade, exclusive
+The focused suite contains 109 tests and covers all 622 statements and 86
+branches across the 12 package files. It locks the historical facade, exclusive
 symbol ownership, the real import DAG, pickle paths, package API, responsibility
-size limits, removed false mirrors, and live benchmark hashes.
+size limits, removed false mirrors, clock-port SDC exclusion, verified per-PDK
+Sky130 and GF180MCU Liberty corner tables, fail-closed corner refusals, and live
+benchmark hashes.
 
-`benchmarks/bench_asic_flow.py` compares the pre-refactor source archive with
-the modular candidate over 30 interleaved cold processes. Both variants emit
-the same 10,465-byte canonical payload at SHA-256
-`ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653`.
+`benchmarks/bench_asic_flow.py` compares the pre-fix baseline with the updated
+modular package over 30 interleaved cold processes (`--allow-output-change`,
+`evidence_class: local_source_behaviour_change_diagnostics`). The candidate
+emits a deterministic 10,535-byte canonical payload at SHA-256
+`7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25` against the
+10,465-byte pre-fix baseline
+(`ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653`).
 The committed capture used CPU affinity without exclusive isolation while the
 workstation was under load, so its timing medians are local regression context,
 not publishable throughput evidence.

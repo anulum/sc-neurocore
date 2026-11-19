@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2095
+expected_file_count = 2101
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8430,3 +8430,27 @@ rationale = "Bind the inference server to authored refusals, fixed fault answers
 [[file]]
 path = "src/sc_neurocore/serve/server.py"
 rationale = "Serve one network step per request with authored refusals, fixed fault answers, a bounded body and a locked reset."
+[[file]]
+path = "src/sc_neurocore/asic_flow/liberty_corners.py"
+rationale = "Public verified open-PDK Liberty suffix tables and PVT corner definitions."
+
+
+[[file]]
+path = "benchmarks/bench_asic_flow.py"
+rationale = "Compare parent and candidate ASIC deck generation with explicit output-change diagnostics."
+
+[[file]]
+path = "tests/test_asic_flow/test_decks_sdc_generator.py"
+rationale = "Verify primary clock exclusion from SDC input delay and driving-cell constraints."
+
+[[file]]
+path = "tests/test_asic_flow/test_liberty_corners.py"
+rationale = "Verify upstream Sky130 and GF180MCU Liberty tables and signoff re-exports."
+
+[[file]]
+path = "tests/test_asic_flow/test_pdk_pdk_config.py"
+rationale = "Verify maintained PDK preset geometry, voltages, and nominal Liberty tokens."
+
+[[file]]
+path = "tests/test_asic_flow/test_signoff_multi_corner_analysis.py"
+rationale = "Verify per-PDK corner tables, real Liberty filenames, and fail-closed refusals."

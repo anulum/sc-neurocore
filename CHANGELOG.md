@@ -218,6 +218,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `SDCGenerator.generate` in `src/sc_neurocore/asic_flow/decks.py` excludes the
+  primary clock port from `set_input_delay` and `set_driving_cell` via
+  `[delete_from_list [all_inputs] [get_ports <clock_name>]]`. Verified open-PDK
+  Liberty suffix tables and PVT corner definitions live in
+  `src/sc_neurocore/asic_flow/liberty_corners.py`, matching real Sky130
+  (`skywater-pdk-libs-sky130_fd_sc_hd/timing` @ `5a42fd01a0ee`, collated by
+  `open_pdks` @ `0c1f82326278`) and GF180MCU (`gf180mcu_fd_sc_mcu7t5v0/liberty`
+  @ `43beb45e4d32`, `openroad/orfs` @ `86dfae2d567b`) Liberty filenames.
+  `MultiCornerAnalysis` in `signoff.py` checks explicit corner suffixes and
+  GF180MCU nominal tokens against those tables without silent fallback, records
+  `TSMC28` honestly as its `0.81 V`, `125 °C` slow library without a nominal
+  suffix, and refuses default corner calls or unsuffixed Liberty paths
+  (`TSMC28`, `INTEL16`, `CUSTOM`) with `ValueError`.
+
 - Eleven citations on the model pages and in two engine sources are corrected
   to their works' records. Each record is in Crossref and was read a second
   time by DOI in PubMed or Semantic Scholar:

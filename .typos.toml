@@ -41,6 +41,7 @@ Shal = "Shal"     # Kv4.x (Shal/Shaker) K+ channel gene family
 VOR = "VOR"       # Vestibulo-Ocular Reflex
 # Code identifiers
 systemc = "systemc"  # SystemC (hardware description language)
+Synopsys = "Synopsys"  # Synopsys Design Constraints (SDC) format
 lik = "lik"       # abbreviation for "likelihood" (log_lik, lik_out, etc.)
 aci = "aci"       # variable name: AdaptiveCheckpointInterval instance
 bve = "bve"       # einsum index label

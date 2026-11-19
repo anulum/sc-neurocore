@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5718
+    "test_files": 5719
   },
   "documentation": {
     "public_pages": [
@@ -4108,6 +4108,7 @@
       "tests/test_asic_flow/test_estimation.py",
       "tests/test_asic_flow/test_flow.py",
       "tests/test_asic_flow/test_hierarchy.py",
+      "tests/test_asic_flow/test_liberty_corners.py",
       "tests/test_asic_flow/test_pdk_open_source_pdk_resolver.py",
       "tests/test_asic_flow/test_pdk_pdk_config.py",
       "tests/test_asic_flow/test_pdk_pdk_validation.py",

@@ -62,6 +62,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--cpu", type=int, default=None)
     parser.add_argument("--no-affinity", action="store_true")
+    parser.add_argument(
+        "--allow-output-change",
+        action="store_true",
+        help="Record intentional deck-byte changes instead of refusing baseline drift.",
+    )
     return parser
 
 
@@ -248,15 +253,24 @@ def _median(summary: dict[str, object], metric: str) -> float:
     return float(median)
 
 
-def _comparison(baseline: dict[str, object], candidate: dict[str, object]) -> dict[str, object]:
-    """Compute candidate timing deltas and assert byte-identical outputs."""
-    if baseline["generated_sha256"] != candidate["generated_sha256"]:
+def _comparison(
+    baseline: dict[str, object],
+    candidate: dict[str, object],
+    *,
+    allow_output_change: bool = False,
+) -> dict[str, object]:
+    """Compute candidate timing deltas and record output-digest agreement."""
+    byte_identical = baseline["generated_sha256"] == candidate["generated_sha256"]
+    if not byte_identical and not allow_output_change:
         raise RuntimeError("candidate ASIC decks differ from the baseline")
     comparison: dict[str, object] = {
-        "generated_output_byte_identical": True,
-        "generated_sha256": baseline["generated_sha256"],
-        "generated_bytes": baseline["generated_bytes"],
+        "generated_output_byte_identical": byte_identical,
+        "generated_sha256": candidate["generated_sha256"],
+        "generated_bytes": candidate["generated_bytes"],
     }
+    if not byte_identical:
+        comparison["baseline_generated_sha256"] = baseline["generated_sha256"]
+        comparison["baseline_generated_bytes"] = baseline["generated_bytes"]
     for metric in _METRICS:
         baseline_median = _median(baseline, metric)
         candidate_median = _median(candidate, metric)
@@ -295,13 +309,32 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     results = {variant.label: _statistics(samples[variant.label]) for variant in variants}
     variant_metadata = [_source_metadata(variant) for variant in variants]
     candidate_metadata = variant_metadata[1]
+    comparison = _comparison(
+        results[variants[0].label],
+        results[variants[1].label],
+        allow_output_change=bool(args.allow_output_change),
+    )
+    byte_identical = bool(comparison["generated_output_byte_identical"])
+    evidence_class = (
+        "local_source_refactor_regression"
+        if byte_identical
+        else "local_source_behaviour_change_diagnostics"
+    )
+    operation = (
+        "cold import, deterministic deck generation, and manifest-bearing bundle write"
+        if byte_identical
+        else (
+            "cold import, deterministic deck generation, and manifest-bearing bundle write "
+            "across intentional SDC clock-port exclusion and per-PDK corner Liberty updates"
+        )
+    )
     return {
         "schema_version": _SCHEMA_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "evidence_class": "local_source_refactor_regression",
+        "evidence_class": evidence_class,
         "hardware_measurement_claimed": False,
         "external_eda_executed": False,
-        "operation": "cold import, deterministic deck generation, and manifest-bearing bundle write",
+        "operation": operation,
         "configuration": {
             "iterations": args.iterations,
             "warmups": args.warmups,
@@ -335,7 +368,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "source_hashes": candidate_metadata["source_hashes"],
         "variants": variant_metadata,
         "results": results,
-        "comparison": _comparison(results[variants[0].label], results[variants[1].label]),
+        "comparison": comparison,
         "polyglot_applicability": {
             "python": "measured_parent_candidate",
             "rust": "removed_nonfunctional_generated_mirror",

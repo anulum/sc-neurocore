@@ -1,42 +1,44 @@
 {
-  "benchmark_sha256": "28e22cf902dda29adb60d362774e1f04f531fc0454f556d5dfd7a79e4d954243",
+  "benchmark_sha256": "fd9c96365fc0156440dd2fabae0cc17f19972f7c6bb77a586e1e0399ee6ffb8f",
   "commands": {
     "child": "[taskset --cpu-list <cpu>] <python> benchmarks/_asic_flow_probe.py",
     "harness": "python benchmarks/bench_asic_flow.py --baseline-root <parent-root> --baseline-ref <parent-sha> --candidate-root <candidate-root> --output benchmarks/results/bench_asic_flow.json"
   },
   "comparison": {
+    "baseline_generated_bytes": 10465,
+    "baseline_generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
     "bundle_write_ns": {
-      "baseline_median": 2870332.5,
-      "candidate_delta_percent": 5.25991326788795,
-      "candidate_median": 3021309.5,
-      "candidate_minus_baseline": 150977.0
+      "baseline_median": 984550.0,
+      "candidate_delta_percent": 4.729622670255451,
+      "candidate_median": 1031115.5,
+      "candidate_minus_baseline": 46565.5
     },
     "deck_generation_ns": {
-      "baseline_median": 438771.0,
-      "candidate_delta_percent": -2.432476166382924,
-      "candidate_median": 428098.0,
-      "candidate_minus_baseline": -10673.0
+      "baseline_median": 239143.5,
+      "candidate_delta_percent": 14.716268683865552,
+      "candidate_median": 274336.5,
+      "candidate_minus_baseline": 35193.0
     },
-    "generated_bytes": 10465,
-    "generated_output_byte_identical": true,
-    "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
+    "generated_bytes": 10535,
+    "generated_output_byte_identical": false,
+    "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
     "import_ns": {
-      "baseline_median": 66637254.0,
-      "candidate_delta_percent": -29.825706803584673,
-      "candidate_median": 46762222.0,
-      "candidate_minus_baseline": -19875032.0
+      "baseline_median": 43403345.5,
+      "candidate_delta_percent": -12.227777464757871,
+      "candidate_median": 38096081.0,
+      "candidate_minus_baseline": -5307264.5
     },
     "max_rss_kib": {
-      "baseline_median": 21808.0,
-      "candidate_delta_percent": -10.097212032281732,
-      "candidate_median": 19606.0,
-      "candidate_minus_baseline": -2202.0
+      "baseline_median": 32164.0,
+      "candidate_delta_percent": 0.0,
+      "candidate_median": 32164.0,
+      "candidate_minus_baseline": 0.0
     },
     "subprocess_wall_ns": {
-      "baseline_median": 356769717.5,
-      "candidate_delta_percent": -1.6179178660251647,
-      "candidate_median": 350997476.5,
-      "candidate_minus_baseline": -5772241.0
+      "baseline_median": 420646537.5,
+      "candidate_delta_percent": -9.14816670754125,
+      "candidate_median": 382165091.0,
+      "candidate_minus_baseline": -38481446.5
     }
   },
   "configuration": {
@@ -52,16 +54,17 @@
     "interleaving": "variant order reverses on alternating rounds",
     "iterations": 30,
     "machine": "x86_64",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
     "python_executable": "python",
-    "python_version": "3.12.3",
+    "python_version": "3.12.16",
     "warmups": 2
   },
-  "evidence_class": "local_source_refactor_regression",
+  "evidence_class": "local_source_behaviour_change_diagnostics",
   "external_eda_executed": false,
-  "generated_at_utc": "2026-07-22T15:18:59.655238+00:00",
+  "generated_at_utc": "2026-11-19T05:07:11.600822+00:00",
   "hardware_measurement_claimed": false,
   "measurement_context": {
+    "architecture": "x86_64",
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
     "cpu_affinity": [
       0,
@@ -78,29 +81,35 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3700.037,
-      "min_observed_mhz": 3699.962,
+      "max_observed_mhz": 3900.065,
+      "min_observed_mhz": 3899.922,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
       "powersave"
     ],
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      20.43701171875,
-      17.19873046875,
-      16.947265625
+      13.44091796875,
+      13.11962890625,
+      13.64990234375
     ],
     "load_average_before": [
-      16.8671875,
-      16.30615234375,
-      16.658203125
+      13.56298828125,
+      13.12646484375,
+      13.66455078125
     ],
+    "logical_cpu_count": 12,
+    "numpy_version": "2.5.4",
+    "operating_system": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
     "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "python_version": "3.12.16",
+    "ram_bytes": 33422053376,
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
   },
-  "operation": "cold import, deterministic deck generation, and manifest-bearing bundle write",
+  "operation": "cold import, deterministic deck generation, and manifest-bearing bundle write across intentional SDC clock-port exclusion and per-PDK corner Liberty updates",
   "polyglot_applicability": {
     "go": "removed_empty_generated_mirror",
     "julia": "removed_non_parsing_generated_mirror",
@@ -113,714 +122,702 @@
   "results": {
     "candidate": {
       "bundle_write_ns": {
-        "max": 9776127,
-        "mean": 3372583.1666666665,
-        "median": 3021309.5,
-        "min": 1644406
+        "max": 23942842,
+        "mean": 3816977.1333333333,
+        "median": 1031115.5,
+        "min": 613289
       },
       "deck_generation_ns": {
-        "max": 1027298,
-        "mean": 474523.86666666664,
-        "median": 428098.0,
-        "min": 339354
+        "max": 597805,
+        "mean": 287169.8,
+        "median": 274336.5,
+        "min": 185154
       },
-      "generated_bytes": 10465,
-      "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
+      "generated_bytes": 10535,
+      "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
       "import_ns": {
-        "max": 88283826,
-        "mean": 50072138.333333336,
-        "median": 46762222.0,
-        "min": 27836292
+        "max": 247771306,
+        "mean": 72241503.86666666,
+        "median": 38096081.0,
+        "min": 17720804
       },
       "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
       "max_rss_kib": {
-        "max": 19664,
-        "mean": 19608.133333333335,
-        "median": 19606.0,
-        "min": 19552
+        "max": 32164,
+        "mean": 32112.8,
+        "median": 32164.0,
+        "min": 32036
       },
       "sample_count": 30,
       "samples": [
         {
-          "bundle_write_ns": 2064215,
-          "deck_generation_ns": 621408,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 66170984,
+          "bundle_write_ns": 1651622,
+          "deck_generation_ns": 235457,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 23084183,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19632,
-          "subprocess_wall_ns": 342819616
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 175155431
         },
         {
-          "bundle_write_ns": 1996049,
-          "deck_generation_ns": 406531,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 46722822,
+          "bundle_write_ns": 1037893,
+          "deck_generation_ns": 317437,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 149134866,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19576,
-          "subprocess_wall_ns": 354506290
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 761035273
         },
         {
-          "bundle_write_ns": 3220801,
-          "deck_generation_ns": 407750,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 27836292,
+          "bundle_write_ns": 1134795,
+          "deck_generation_ns": 228159,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 52471823,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19604,
-          "subprocess_wall_ns": 240479553
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 593139126
         },
         {
-          "bundle_write_ns": 2566287,
-          "deck_generation_ns": 339354,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 38747869,
+          "bundle_write_ns": 644361,
+          "deck_generation_ns": 202415,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 17720804,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19628,
-          "subprocess_wall_ns": 287814209
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 240098413
         },
         {
-          "bundle_write_ns": 3825982,
-          "deck_generation_ns": 790281,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 51554353,
+          "bundle_write_ns": 953622,
+          "deck_generation_ns": 260844,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 198557464,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19552,
-          "subprocess_wall_ns": 325573291
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 418212279
         },
         {
-          "bundle_write_ns": 2920243,
-          "deck_generation_ns": 493782,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 28047309,
+          "bundle_write_ns": 1024338,
+          "deck_generation_ns": 290283,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 73422973,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19576,
-          "subprocess_wall_ns": 239623506
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 396288938
         },
         {
-          "bundle_write_ns": 3518121,
-          "deck_generation_ns": 348646,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 46253534,
+          "bundle_write_ns": 1384805,
+          "deck_generation_ns": 247146,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 180778099,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19608,
-          "subprocess_wall_ns": 360804517
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 561572141
         },
         {
-          "bundle_write_ns": 7251851,
-          "deck_generation_ns": 350816,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 58500364,
+          "bundle_write_ns": 901000,
+          "deck_generation_ns": 325264,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 98439172,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19572,
-          "subprocess_wall_ns": 368804097
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 461281254
         },
         {
-          "bundle_write_ns": 3968545,
-          "deck_generation_ns": 1027298,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 88283826,
+          "bundle_write_ns": 675716,
+          "deck_generation_ns": 218230,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 19752374,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19600,
-          "subprocess_wall_ns": 727289970
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 87422023
         },
         {
-          "bundle_write_ns": 6201320,
-          "deck_generation_ns": 584772,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 65963936,
+          "bundle_write_ns": 8955490,
+          "deck_generation_ns": 311042,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 247771306,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19592,
-          "subprocess_wall_ns": 447141534
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 550462941
         },
         {
-          "bundle_write_ns": 2427507,
-          "deck_generation_ns": 386584,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 53315328,
+          "bundle_write_ns": 1551933,
+          "deck_generation_ns": 355896,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 24477943,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19600,
-          "subprocess_wall_ns": 368571031
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 111093631
         },
         {
-          "bundle_write_ns": 3579991,
-          "deck_generation_ns": 482319,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 62399924,
+          "bundle_write_ns": 2409703,
+          "deck_generation_ns": 597805,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 85234543,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19624,
-          "subprocess_wall_ns": 329818629
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 236171408
         },
         {
-          "bundle_write_ns": 1981824,
-          "deck_generation_ns": 499955,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 41029867,
+          "bundle_write_ns": 1059297,
+          "deck_generation_ns": 247529,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 61405386,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19600,
-          "subprocess_wall_ns": 409062865
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 344285252
         },
         {
-          "bundle_write_ns": 2881545,
-          "deck_generation_ns": 383575,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 59682416,
+          "bundle_write_ns": 23589649,
+          "deck_generation_ns": 388105,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 48264627,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19592,
-          "subprocess_wall_ns": 314021352
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 825855641
         },
         {
-          "bundle_write_ns": 1855297,
-          "deck_generation_ns": 422692,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 70434212,
+          "bundle_write_ns": 733642,
+          "deck_generation_ns": 195577,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 19253680,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19608,
-          "subprocess_wall_ns": 622827629
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 69611680
         },
         {
-          "bundle_write_ns": 3842683,
-          "deck_generation_ns": 350673,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 44461483,
+          "bundle_write_ns": 801246,
+          "deck_generation_ns": 297012,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 22000465,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19600,
-          "subprocess_wall_ns": 454690902
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 83011531
         },
         {
-          "bundle_write_ns": 3960216,
-          "deck_generation_ns": 448092,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 35677641,
+          "bundle_write_ns": 1995986,
+          "deck_generation_ns": 378518,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 26747893,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19612,
-          "subprocess_wall_ns": 363007385
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 410661519
         },
         {
-          "bundle_write_ns": 2972380,
-          "deck_generation_ns": 475631,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 44180567,
+          "bundle_write_ns": 613289,
+          "deck_generation_ns": 274100,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 21607011,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19564,
-          "subprocess_wall_ns": 319001221
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 381657968
         },
         {
-          "bundle_write_ns": 3641939,
-          "deck_generation_ns": 544318,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 50085477,
+          "bundle_write_ns": 824840,
+          "deck_generation_ns": 195538,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 22019435,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19644,
-          "subprocess_wall_ns": 279405515
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 82853754
         },
         {
-          "bundle_write_ns": 1644406,
-          "deck_generation_ns": 433504,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 39398835,
+          "bundle_write_ns": 941948,
+          "deck_generation_ns": 291303,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 21399477,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19624,
-          "subprocess_wall_ns": 303065473
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 82953661
         },
         {
-          "bundle_write_ns": 3479329,
-          "deck_generation_ns": 383890,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 41161370,
+          "bundle_write_ns": 1157810,
+          "deck_generation_ns": 328583,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 20030185,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19608,
-          "subprocess_wall_ns": 248046600
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 109257395
         },
         {
-          "bundle_write_ns": 1815839,
-          "deck_generation_ns": 407834,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 38869842,
+          "bundle_write_ns": 900926,
+          "deck_generation_ns": 185154,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 18456421,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19660,
-          "subprocess_wall_ns": 325644005
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 67651061
         },
         {
-          "bundle_write_ns": 3616777,
-          "deck_generation_ns": 509061,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 53987267,
+          "bundle_write_ns": 775808,
+          "deck_generation_ns": 208847,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 20570697,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19644,
-          "subprocess_wall_ns": 489894260
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 89330402
         },
         {
-          "bundle_write_ns": 9776127,
-          "deck_generation_ns": 412034,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 46801622,
+          "bundle_write_ns": 16235179,
+          "deck_generation_ns": 345145,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 134285491,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19660,
-          "subprocess_wall_ns": 356953182
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 556651013
         },
         {
-          "bundle_write_ns": 2831480,
-          "deck_generation_ns": 396793,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 64766901,
+          "bundle_write_ns": 1006562,
+          "deck_generation_ns": 303050,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 100789101,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19564,
-          "subprocess_wall_ns": 358663953
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 382672214
         },
         {
-          "bundle_write_ns": 3070239,
-          "deck_generation_ns": 528156,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 54790153,
+          "bundle_write_ns": 23942842,
+          "deck_generation_ns": 237237,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 223457381,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19604,
-          "subprocess_wall_ns": 353822125
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 639386254
         },
         {
-          "bundle_write_ns": 2533794,
-          "deck_generation_ns": 377898,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 34006106,
+          "bundle_write_ns": 14654762,
+          "deck_generation_ns": 362436,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 27927535,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19572,
-          "subprocess_wall_ns": 310973609
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 412425609
         },
         {
-          "bundle_write_ns": 1964035,
-          "deck_generation_ns": 419300,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 41730585,
+          "bundle_write_ns": 976939,
+          "deck_generation_ns": 273925,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 100054281,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19664,
-          "subprocess_wall_ns": 348172828
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 601042024
         },
         {
-          "bundle_write_ns": 1742823,
-          "deck_generation_ns": 444837,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 66669229,
+          "bundle_write_ns": 1117144,
+          "deck_generation_ns": 238484,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 21727825,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19608,
-          "subprocess_wall_ns": 339942270
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 215665838
         },
         {
-          "bundle_write_ns": 4025850,
-          "deck_generation_ns": 557932,
-          "generated_bytes": 10465,
-          "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 40634036,
+          "bundle_write_ns": 856167,
+          "deck_generation_ns": 274573,
+          "generated_bytes": 10535,
+          "generated_sha256": "7d604bbb4f2b37e4748b6df1336efdfc40ccc6d791936576c9de08b60b318d25",
+          "import_ns": 86402675,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 19652,
-          "subprocess_wall_ns": 366251115
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 691257818
         }
       ],
       "subprocess_wall_ns": {
-        "max": 727289970,
-        "mean": 365223084.4,
-        "median": 350997476.5,
-        "min": 239623506
+        "max": 825855641,
+        "mean": 354605449.73333335,
+        "median": 382165091.0,
+        "min": 67651061
       }
     },
     "parent": {
       "bundle_write_ns": {
-        "max": 5791576,
-        "mean": 2909551.7333333334,
-        "median": 2870332.5,
-        "min": 1407857
+        "max": 23421875,
+        "mean": 6268965.433333334,
+        "median": 984550.0,
+        "min": 694286
       },
       "deck_generation_ns": {
-        "max": 760272,
-        "mean": 468851.5333333333,
-        "median": 438771.0,
-        "min": 321996
+        "max": 522611,
+        "mean": 274099.4666666667,
+        "median": 239143.5,
+        "min": 177559
       },
       "generated_bytes": 10465,
       "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
       "import_ns": {
-        "max": 125364197,
-        "mean": 70749419.36666666,
-        "median": 66637254.0,
-        "min": 31496553
+        "max": 295830676,
+        "mean": 81113005.36666666,
+        "median": 43403345.5,
+        "min": 10474253
       },
       "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
       "max_rss_kib": {
-        "max": 21840,
-        "mean": 21800.0,
-        "median": 21808.0,
-        "min": 21696
+        "max": 32164,
+        "mean": 32117.066666666666,
+        "median": 32164.0,
+        "min": 32036
       },
       "sample_count": 30,
       "samples": [
         {
-          "bundle_write_ns": 1750407,
-          "deck_generation_ns": 395324,
+          "bundle_write_ns": 819564,
+          "deck_generation_ns": 215805,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 51097811,
+          "import_ns": 15358718,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21772,
-          "subprocess_wall_ns": 330215333
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 72910740
         },
         {
-          "bundle_write_ns": 2139139,
-          "deck_generation_ns": 444759,
+          "bundle_write_ns": 23295071,
+          "deck_generation_ns": 427264,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 31496553,
+          "import_ns": 125165021,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21832,
-          "subprocess_wall_ns": 255522959
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 591162644
         },
         {
-          "bundle_write_ns": 2290027,
-          "deck_generation_ns": 432579,
+          "bundle_write_ns": 917931,
+          "deck_generation_ns": 237621,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 66138234,
+          "import_ns": 123734584,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21828,
-          "subprocess_wall_ns": 265859607
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 604618234
         },
         {
-          "bundle_write_ns": 3612624,
-          "deck_generation_ns": 540840,
+          "bundle_write_ns": 796764,
+          "deck_generation_ns": 187009,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 61747790,
+          "import_ns": 15569153,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21764,
-          "subprocess_wall_ns": 349778915
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 89906214
         },
         {
-          "bundle_write_ns": 2766550,
-          "deck_generation_ns": 387854,
+          "bundle_write_ns": 720678,
+          "deck_generation_ns": 192738,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 65302819,
+          "import_ns": 10779527,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21696,
-          "subprocess_wall_ns": 370501380
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 66499764
         },
         {
-          "bundle_write_ns": 3216149,
-          "deck_generation_ns": 435674,
+          "bundle_write_ns": 1488331,
+          "deck_generation_ns": 275024,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 60204548,
+          "import_ns": 152231437,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21808,
-          "subprocess_wall_ns": 359451245
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 640537592
         },
         {
-          "bundle_write_ns": 2189295,
-          "deck_generation_ns": 436950,
+          "bundle_write_ns": 23220150,
+          "deck_generation_ns": 228524,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 51975858,
+          "import_ns": 146862341,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21776,
-          "subprocess_wall_ns": 374791386
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 489704116
         },
         {
-          "bundle_write_ns": 3230847,
-          "deck_generation_ns": 482560,
+          "bundle_write_ns": 1355145,
+          "deck_generation_ns": 219044,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 97435290,
+          "import_ns": 17083370,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21820,
-          "subprocess_wall_ns": 410148590
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 89740186
         },
         {
-          "bundle_write_ns": 1568094,
-          "deck_generation_ns": 321996,
+          "bundle_write_ns": 881872,
+          "deck_generation_ns": 239377,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 73619006,
+          "import_ns": 13962626,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21836,
-          "subprocess_wall_ns": 400537971
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 80029450
         },
         {
-          "bundle_write_ns": 1610202,
-          "deck_generation_ns": 510130,
+          "bundle_write_ns": 17249621,
+          "deck_generation_ns": 254663,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 82353204,
+          "import_ns": 83924822,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21808,
-          "subprocess_wall_ns": 445901763
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 610688093
         },
         {
-          "bundle_write_ns": 4978144,
-          "deck_generation_ns": 760272,
+          "bundle_write_ns": 855383,
+          "deck_generation_ns": 204354,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 67192656,
+          "import_ns": 10727350,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21776,
-          "subprocess_wall_ns": 405653839
+          "max_rss_kib": 32036,
+          "subprocess_wall_ns": 397197478
         },
         {
-          "bundle_write_ns": 2972982,
-          "deck_generation_ns": 451128,
+          "bundle_write_ns": 23417680,
+          "deck_generation_ns": 267076,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 81860985,
+          "import_ns": 69723321,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21840,
-          "subprocess_wall_ns": 324057461
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 444095597
         },
         {
-          "bundle_write_ns": 5791576,
-          "deck_generation_ns": 733049,
+          "bundle_write_ns": 19676659,
+          "deck_generation_ns": 409812,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 97755712,
+          "import_ns": 94831761,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21820,
-          "subprocess_wall_ns": 569412040
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 559547490
         },
         {
-          "bundle_write_ns": 1407857,
-          "deck_generation_ns": 346152,
+          "bundle_write_ns": 23421875,
+          "deck_generation_ns": 329816,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 109155811,
+          "import_ns": 152612832,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21776,
-          "subprocess_wall_ns": 327355003
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 705429761
         },
         {
-          "bundle_write_ns": 4545673,
-          "deck_generation_ns": 541591,
+          "bundle_write_ns": 709168,
+          "deck_generation_ns": 192758,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 125364197,
+          "import_ns": 12826167,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21836,
-          "subprocess_wall_ns": 735267184
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 214173344
         },
         {
-          "bundle_write_ns": 2292987,
-          "deck_generation_ns": 409726,
+          "bundle_write_ns": 1455927,
+          "deck_generation_ns": 386231,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 44648409,
+          "import_ns": 104976959,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21836,
-          "subprocess_wall_ns": 291093280
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 609510449
         },
         {
-          "bundle_write_ns": 2719604,
-          "deck_generation_ns": 422831,
+          "bundle_write_ns": 1476605,
+          "deck_generation_ns": 303635,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 50722954,
+          "import_ns": 183582293,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21764,
-          "subprocess_wall_ns": 271292712
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 709032571
         },
         {
-          "bundle_write_ns": 3224962,
-          "deck_generation_ns": 407915,
+          "bundle_write_ns": 726165,
+          "deck_generation_ns": 187919,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 64625803,
+          "import_ns": 11472788,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21820,
-          "subprocess_wall_ns": 301271987
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 63369938
         },
         {
-          "bundle_write_ns": 1864860,
-          "deck_generation_ns": 405470,
+          "bundle_write_ns": 1500529,
+          "deck_generation_ns": 360585,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 58772608,
+          "import_ns": 15347398,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21828,
-          "subprocess_wall_ns": 241544619
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 82721526
         },
         {
-          "bundle_write_ns": 3036120,
-          "deck_generation_ns": 357882,
+          "bundle_write_ns": 968296,
+          "deck_generation_ns": 199278,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 50713432,
+          "import_ns": 11215326,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21808,
-          "subprocess_wall_ns": 306156268
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 109886087
         },
         {
-          "bundle_write_ns": 3098787,
-          "deck_generation_ns": 448478,
+          "bundle_write_ns": 740483,
+          "deck_generation_ns": 194595,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 62066717,
+          "import_ns": 10601923,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21808,
-          "subprocess_wall_ns": 256801740
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 66399854
         },
         {
-          "bundle_write_ns": 3788665,
-          "deck_generation_ns": 696451,
+          "bundle_write_ns": 748576,
+          "deck_generation_ns": 204593,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 92267005,
+          "import_ns": 10474253,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21760,
-          "subprocess_wall_ns": 420779963
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 60520394
         },
         {
-          "bundle_write_ns": 2803955,
-          "deck_generation_ns": 401934,
+          "bundle_write_ns": 694286,
+          "deck_generation_ns": 177559,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 56702914,
+          "import_ns": 10725663,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21836,
-          "subprocess_wall_ns": 296402519
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 63947037
         },
         {
-          "bundle_write_ns": 2653570,
-          "deck_generation_ns": 440592,
+          "bundle_write_ns": 10218864,
+          "deck_generation_ns": 459107,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 73326726,
+          "import_ns": 295830676,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21760,
-          "subprocess_wall_ns": 403259214
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 933233626
         },
         {
-          "bundle_write_ns": 4149063,
-          "deck_generation_ns": 375471,
+          "bundle_write_ns": 822780,
+          "deck_generation_ns": 205984,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 84244584,
+          "import_ns": 11177348,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21840,
-          "subprocess_wall_ns": 328970230
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 76384455
         },
         {
-          "bundle_write_ns": 3517786,
-          "deck_generation_ns": 470904,
+          "bundle_write_ns": 22634038,
+          "deck_generation_ns": 371527,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 72352609,
+          "import_ns": 174715219,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21828,
-          "subprocess_wall_ns": 406811675
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 535723863
         },
         {
-          "bundle_write_ns": 2936710,
-          "deck_generation_ns": 509530,
+          "bundle_write_ns": 4646034,
+          "deck_generation_ns": 522611,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 67136274,
+          "import_ns": 201451265,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21812,
-          "subprocess_wall_ns": 429672967
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 626663592
         },
         {
-          "bundle_write_ns": 1572506,
-          "deck_generation_ns": 628125,
+          "bundle_write_ns": 772583,
+          "deck_generation_ns": 238910,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 85482645,
+          "import_ns": 154855123,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21740,
-          "subprocess_wall_ns": 359690187
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 617017184
         },
         {
-          "bundle_write_ns": 1782909,
-          "deck_generation_ns": 425533,
+          "bundle_write_ns": 837101,
+          "deck_generation_ns": 250068,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 62346995,
+          "import_ns": 13220889,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21764,
-          "subprocess_wall_ns": 354088190
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 75613031
         },
         {
-          "bundle_write_ns": 3774502,
-          "deck_generation_ns": 443846,
+          "bundle_write_ns": 1000804,
+          "deck_generation_ns": 279497,
           "generated_bytes": 10465,
           "generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
-          "import_ns": 74372432,
+          "import_ns": 178350008,
           "manifest_schema": "sc-neurocore.asic_flow_manifest.v1",
-          "max_rss_kib": 21808,
-          "subprocess_wall_ns": 387568645
+          "max_rss_kib": 32164,
+          "subprocess_wall_ns": 592057476
         }
       ],
       "subprocess_wall_ns": {
-        "max": 735267184,
-        "mean": 365995295.73333335,
-        "median": 356769717.5,
-        "min": 241544619
+        "max": 933233626,
+        "mean": 362610726.2,
+        "median": 420646537.5,
+        "min": 60520394
       }
     }
   },
   "schema_version": "sc-neurocore.asic-flow-modularisation-benchmark.v1",
-  "source_file_count": 11,
+  "source_file_count": 12,
   "source_hashes": {
     "src/sc_neurocore/asic_flow/__init__.py": "722f1bc113398352201b2a93d798f1b9f672f0bff029d74ff2ff4f31eabb027c",
     "src/sc_neurocore/asic_flow/asic_flow.py": "01c77985d394afd12855c4a6374ca6ff12718d43602ad5096a67000ab59ead4d",
     "src/sc_neurocore/asic_flow/constraints.py": "1a63f00ab29aed5227813882abcf75bf9750a4059538b72847b15537913132b9",
-    "src/sc_neurocore/asic_flow/decks.py": "464830fc74666a938ad2051edfed772925d18bd89580f0b43cc7881c73ac97c7",
+    "src/sc_neurocore/asic_flow/decks.py": "8d69bb4a1b0f96b7b8b9ac52e321a994974665402a7d422e9baf59555802e33b",
     "src/sc_neurocore/asic_flow/design.py": "d5217977aeb15fe5247888ea1d8cabdc020c4b30927dcd4b841f4bd8c2f3678e",
     "src/sc_neurocore/asic_flow/estimation.py": "d5f23b02e11a80aafbdfcad290370f413a75fcf93f3b74803adf98562fb3f020",
     "src/sc_neurocore/asic_flow/flow.py": "0bb2282f6960458721fa373f7436bfacb63582fd04ab71aad01148b050c2d561",
     "src/sc_neurocore/asic_flow/hierarchy.py": "2cd969cdaff2e32827859e9e39e50e464b09579949a99b9c894b5ece1e62c8a4",
-    "src/sc_neurocore/asic_flow/pdk.py": "56ad0a2892c5376c9fa386e1a327f6bfaea681a70dc35c9588babd9007bd22d1",
+    "src/sc_neurocore/asic_flow/liberty_corners.py": "f517bb76a6fc89bc55aaeb41f53e66c7817c705217d1f252e7191fc70d319ec4",
+    "src/sc_neurocore/asic_flow/pdk.py": "28dbe14b8e78653067c63b28f2f29ed6aa3241e7cea2944cfa6881ddd45a8103",
     "src/sc_neurocore/asic_flow/readiness.py": "203b039551364fc04c75d9c20f71aa0c4eab9eaf98817d15287049066efa1d78",
-    "src/sc_neurocore/asic_flow/signoff.py": "71c4fddaa90ce561294bd690ca61e594b169c8dd37c6551098e53001d4bf178d"
+    "src/sc_neurocore/asic_flow/signoff.py": "89b7e11220a2f9f05bf120da9c82f94db2704552f46f1ad8621b6084f7dd0303"
   },
-  "source_sha256": "802bcb529c04758d8492d6330a02d27c80ad1d4699f4a5b278bca4458b7a0870",
+  "source_sha256": "a5cdc77ffaf0b2e866de126ddc7b9188f88cfd279bd6dffce0ca2decf76f9cd7",
   "variants": [
     {
-      "git_head": null,
+      "git_head": "9455d7cee41ef5dfc8ca041669fb077c5717ef4c",
       "label": "parent",
-      "local_path_recorded": false,
-      "source_file_count": 2,
-      "source_hashes": {
-        "src/sc_neurocore/asic_flow/__init__.py": "722f1bc113398352201b2a93d798f1b9f672f0bff029d74ff2ff4f31eabb027c",
-        "src/sc_neurocore/asic_flow/asic_flow.py": "80cd60688ff86305f873a4ee8e93678f24c6023eca624e7b4335ccbdaeeffa08"
-      },
-      "source_ref": "05b3ecdda7d173678d392303a91eac1ff274186d",
-      "source_sha256": "818975ec2da111c51f21e32454eee32e2f4dbc9a82140fce4d9ac19abc92974a",
-      "surface_dirty": null
-    },
-    {
-      "git_head": "ae6e077a798d103b0f8916ced4299c4c8fb8cc33",
-      "label": "candidate",
       "local_path_recorded": false,
       "source_file_count": 11,
       "source_hashes": {
@@ -836,9 +833,32 @@
         "src/sc_neurocore/asic_flow/readiness.py": "203b039551364fc04c75d9c20f71aa0c4eab9eaf98817d15287049066efa1d78",
         "src/sc_neurocore/asic_flow/signoff.py": "71c4fddaa90ce561294bd690ca61e594b169c8dd37c6551098e53001d4bf178d"
       },
-      "source_ref": "ae6e077a7",
+      "source_ref": "9455d7cee41ef5dfc8ca041669fb077c5717ef4c",
       "source_sha256": "802bcb529c04758d8492d6330a02d27c80ad1d4699f4a5b278bca4458b7a0870",
       "surface_dirty": false
+    },
+    {
+      "git_head": "9455d7cee41ef5dfc8ca041669fb077c5717ef4c",
+      "label": "candidate",
+      "local_path_recorded": false,
+      "source_file_count": 12,
+      "source_hashes": {
+        "src/sc_neurocore/asic_flow/__init__.py": "722f1bc113398352201b2a93d798f1b9f672f0bff029d74ff2ff4f31eabb027c",
+        "src/sc_neurocore/asic_flow/asic_flow.py": "01c77985d394afd12855c4a6374ca6ff12718d43602ad5096a67000ab59ead4d",
+        "src/sc_neurocore/asic_flow/constraints.py": "1a63f00ab29aed5227813882abcf75bf9750a4059538b72847b15537913132b9",
+        "src/sc_neurocore/asic_flow/decks.py": "8d69bb4a1b0f96b7b8b9ac52e321a994974665402a7d422e9baf59555802e33b",
+        "src/sc_neurocore/asic_flow/design.py": "d5217977aeb15fe5247888ea1d8cabdc020c4b30927dcd4b841f4bd8c2f3678e",
+        "src/sc_neurocore/asic_flow/estimation.py": "d5f23b02e11a80aafbdfcad290370f413a75fcf93f3b74803adf98562fb3f020",
+        "src/sc_neurocore/asic_flow/flow.py": "0bb2282f6960458721fa373f7436bfacb63582fd04ab71aad01148b050c2d561",
+        "src/sc_neurocore/asic_flow/hierarchy.py": "2cd969cdaff2e32827859e9e39e50e464b09579949a99b9c894b5ece1e62c8a4",
+        "src/sc_neurocore/asic_flow/liberty_corners.py": "f517bb76a6fc89bc55aaeb41f53e66c7817c705217d1f252e7191fc70d319ec4",
+        "src/sc_neurocore/asic_flow/pdk.py": "28dbe14b8e78653067c63b28f2f29ed6aa3241e7cea2944cfa6881ddd45a8103",
+        "src/sc_neurocore/asic_flow/readiness.py": "203b039551364fc04c75d9c20f71aa0c4eab9eaf98817d15287049066efa1d78",
+        "src/sc_neurocore/asic_flow/signoff.py": "89b7e11220a2f9f05bf120da9c82f94db2704552f46f1ad8621b6084f7dd0303"
+      },
+      "source_ref": "working-tree",
+      "source_sha256": "a5cdc77ffaf0b2e866de126ddc7b9188f88cfd279bd6dffce0ca2decf76f9cd7",
+      "surface_dirty": true
     }
   ]
 }

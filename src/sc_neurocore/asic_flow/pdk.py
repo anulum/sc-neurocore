@@ -16,6 +16,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from sc_neurocore.asic_flow.liberty_corners import (
+    GF180MCU_3V3_NOMINAL_LIBERTY_SUFFIX,
+    GF180MCU_SUFFIXES_BY_NOMINAL as GF180MCU_SUFFIXES_BY_NOMINAL,
+    SKY130_LIBERTY_SUFFIXES as SKY130_LIBERTY_SUFFIXES,
+    SKY130_NOMINAL_LIBERTY_SUFFIX,
+)
+
 
 class PDKType(Enum):
     """Process-design-kit families supported by the deck templates."""
@@ -40,6 +47,7 @@ class PDKConfig:
     voltage_v: float = 1.8
     temperature_c: float = 25.0
     corner: str = "tt"
+    nominal_liberty_suffix: str = ""
     metal_layers: int = 5
     min_feature_nm: int = 130
 
@@ -50,7 +58,7 @@ class PDKConfig:
         Parameters
         ----------
         pdk:
-            Process family whose nominal files, voltage, and geometry are
+            Process family whose files, operating point, and geometry are
             required.
 
         Returns
@@ -66,6 +74,7 @@ class PDKConfig:
                 cell_prefix="sky130_fd_sc_hd__",
                 clock_period_ns=10.0,
                 voltage_v=1.8,
+                nominal_liberty_suffix=SKY130_NOMINAL_LIBERTY_SUFFIX,
                 metal_layers=5,
                 min_feature_nm=130,
             ),
@@ -76,6 +85,7 @@ class PDKConfig:
                 cell_prefix="gf180mcu_fd_sc_mcu7t5v0__",
                 clock_period_ns=15.0,
                 voltage_v=3.3,
+                nominal_liberty_suffix=GF180MCU_3V3_NOMINAL_LIBERTY_SUFFIX,
                 metal_layers=6,
                 min_feature_nm=180,
             ),
@@ -85,7 +95,10 @@ class PDKConfig:
                 tech_lef="$PDK_ROOT/tsmc28/lef/HiPe_M10.tlef",
                 cell_prefix="TSMC_",
                 clock_period_ns=2.0,
-                voltage_v=0.9,
+                voltage_v=0.81,
+                temperature_c=125.0,
+                corner="ss",
+                nominal_liberty_suffix="",
                 metal_layers=10,
                 min_feature_nm=28,
             ),
@@ -96,6 +109,7 @@ class PDKConfig:
                 cell_prefix="INTEL16_",
                 clock_period_ns=1.5,
                 voltage_v=0.8,
+                nominal_liberty_suffix="",
                 metal_layers=12,
                 min_feature_nm=16,
             ),
@@ -106,6 +120,7 @@ class PDKConfig:
                 cell_prefix="",
                 clock_period_ns=10.0,
                 voltage_v=1.8,
+                nominal_liberty_suffix="",
                 metal_layers=5,
                 min_feature_nm=130,
             ),
@@ -130,6 +145,7 @@ class PDKConfig:
             voltage_v=self.voltage_v,
             temperature_c=self.temperature_c,
             corner=self.corner,
+            nominal_liberty_suffix=self.nominal_liberty_suffix,
             metal_layers=self.metal_layers,
             min_feature_nm=self.min_feature_nm,
         )

@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
+import re
 import textwrap
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from sc_neurocore.asic_flow.design import DesignParams
-from sc_neurocore.asic_flow.pdk import PDKConfig
+from sc_neurocore.asic_flow.liberty_corners import (
+    DEFAULT_CORNERS as DEFAULT_CORNERS,
+    GF180MCU_SUFFIXES_BY_NOMINAL,
+    SKY130_LIBERTY_SUFFIXES,
+    _PDK_DEFAULT_CORNERS,
+    CornerType as CornerType,
+    PVTCorner as PVTCorner,
+)
+from sc_neurocore.asic_flow.pdk import PDKConfig, PDKType
+
+_INFERRED_NOMINAL_TOKEN_RE = re.compile(r"(_(?:tt|typ)_[A-Za-z0-9_]+)(?=\.lib$)")
 
 
 @dataclass
@@ -109,44 +119,46 @@ netgen -batch lvs \\
         return SignoffCheckResult("Area", passed, details, util)
 
 
-class CornerType(Enum):
-    """Process-corner combinations used by multi-corner timing analysis."""
-
-    TT = "tt"  # typical
-    FF = "ff"  # fast-fast
-    SS = "ss"  # slow-slow
-    SF = "sf"  # slow-fast
-    FS = "fs"
-
-
-@dataclass
-class PVTCorner:
-    """Process-Voltage-Temperature corner definition."""
-
-    corner: CornerType
-    temperature_c: float
-    voltage_v: float
-    liberty_suffix: str = ""
-    is_signoff: bool = True
-
-    @property
-    def label(self) -> str:
-        """Return a stable corner-temperature-voltage label."""
-        return f"{self.corner.value}_{self.temperature_c:.0f}C_{self.voltage_v:.2f}V"
-
-
-DEFAULT_CORNERS = [
-    PVTCorner(CornerType.TT, 25.0, 1.80, "_tt_025C_1v80"),
-    PVTCorner(CornerType.SS, 125.0, 1.62, "_ss_125C_1v62"),
-    PVTCorner(CornerType.FF, -40.0, 1.98, "_ff_n40C_1v98"),
-    PVTCorner(CornerType.SF, 100.0, 1.62, "_sf_100C_1v62"),
-    PVTCorner(CornerType.FS, -40.0, 1.98, "_fs_n40C_1v98"),
-]
-
-
 @dataclass
 class MultiCornerAnalysis:
-    """Generates multi-corner STA scripts for all PVT corners."""
+    """Generates multi-corner STA scripts for verified PVT corners."""
+
+    @staticmethod
+    def _corner_liberty_path(pdk: PDKConfig, liberty_suffix: str) -> str:
+        """Resolve one corner's Liberty path from ``pdk`` and ``liberty_suffix``."""
+        if not liberty_suffix:
+            return pdk.liberty_file
+        allowed: Optional[frozenset[str]] = None
+        if pdk.pdk_type == PDKType.SKY130:
+            allowed = SKY130_LIBERTY_SUFFIXES
+        elif pdk.pdk_type == PDKType.GF180MCU:
+            allowed = GF180MCU_SUFFIXES_BY_NOMINAL.get(pdk.nominal_liberty_suffix)
+            if allowed is None:
+                raise ValueError(
+                    f"unknown gf180mcu nominal_liberty_suffix "
+                    f"{pdk.nominal_liberty_suffix!r}; expected one of "
+                    f"{sorted(GF180MCU_SUFFIXES_BY_NOMINAL)}"
+                )
+        if allowed is not None and liberty_suffix not in allowed:
+            raise ValueError(
+                f"corner suffix {liberty_suffix!r} is not in the verified "
+                f"{pdk.pdk_type.value} Liberty table"
+            )
+        if not pdk.liberty_file:
+            raise ValueError("cannot substitute corner suffix on an empty liberty_file")
+        parent, sep, filename = pdk.liberty_file.rpartition("/")
+        token = pdk.nominal_liberty_suffix
+        if not token:
+            match = _INFERRED_NOMINAL_TOKEN_RE.search(filename)
+            if match is not None:
+                token = match.group(1)
+        token_pos = filename.rfind(token) if token else -1
+        if token_pos < 0:
+            raise ValueError(
+                f"nominal_liberty_suffix {token!r} not found in liberty_file {filename!r}"
+            )
+        replaced = filename[:token_pos] + liberty_suffix + filename[token_pos + len(token) :]
+        return f"{parent}{sep}{replaced}"
 
     @staticmethod
     def generate(
@@ -154,14 +166,16 @@ class MultiCornerAnalysis:
     ) -> str:
         """Render one OpenSTA analysis section per selected PVT corner."""
         if corners is None:
-            corners = DEFAULT_CORNERS
+            table = _PDK_DEFAULT_CORNERS.get(pdk.pdk_type.value)
+            if table is None:
+                raise ValueError(
+                    f"no verified PVT corner table for PDK {pdk.pdk_type.value!r}; "
+                    "pass explicit corners"
+                )
+            corners = table
         lines = [f"# Multi-Corner STA for {design.top_module}"]
         for c in corners:
-            lib = (
-                pdk.liberty_file.replace("_tt_025C_1v80", c.liberty_suffix)
-                if c.liberty_suffix
-                else pdk.liberty_file
-            )
+            lib = MultiCornerAnalysis._corner_liberty_path(pdk, c.liberty_suffix)
             lines.append(f"\n# Corner: {c.label}")
             lines.append(f"read_liberty {lib}")
             lines.append(f"read_verilog {design.top_module}_final.v")
@@ -178,8 +192,7 @@ class MultiCornerAnalysis:
         """Return the corner with the smallest worst negative slack."""
         if not per_corner_wns:
             return ("none", 0.0)
-        worst = min(per_corner_wns.items(), key=lambda kv: kv[1])
-        return worst
+        return min(per_corner_wns.items(), key=lambda kv: kv[1])
 
 
 @dataclass
