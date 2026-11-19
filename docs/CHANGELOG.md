@@ -239,6 +239,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `ChipletGenerator.generate` now wires functional multi-die AER routing and
+  AXI-Stream interposer transport instead of leaving `sc_aer_router` fanout
+  tables unconnected, dropping packets across `delay_pipe` backpressure stalls,
+  or corrupting binary AER headers with unmatched link LFSR XOR. Die wrappers
+  bind `(dst_die, dst_neuron, weight_q88)` fanout tables, shortest-path
+  next-hop routing, and lossless fixed-priority arbitration across local and
+  incoming links; bridges stall cleanly on `m_tready` deassertion with optional
+  `decorrelate_links=True` matched TX/RX LFSR link scrambling across the CDC
+  FIFO and latency pipe; standalone `sc_chiplet_rtable_<d>` modules size arrays
+  by `die.n_neurons`, widen `target_neuron` to `PKG_AER_W` for heterogeneous
+  dies, and emit valid negative signed fixed-point literals; `sc_chiplet_top`
+  exposes per-die AER ingress/egress ports; XDC link delays carry
+  `-datapath_only`; and invalid topologies or routes fail closed with
+  `ValueError`.
+
 - `RTLModule.from_verilog_source` and `UVMGenerator` now parse parameterised
   packed and unpacked Verilog/SystemVerilog port declarations, conditional
   compilation directives (`ifdef`, `ifndef`, `elsif`, `else`, `endif` against an

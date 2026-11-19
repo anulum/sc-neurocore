@@ -7411,7 +7411,7 @@ Contain generated source and constraint artefacts for one topology.
 ### Class `ChipletGenerator`
 Generate connected multi-die routing RTL from a chiplet topology.
 
-- **generate**(topology, routing)
+- **generate**(topology, routing, \*, decorrelate_links)
   - Generate package RTL and timing constraints.
 
 ---

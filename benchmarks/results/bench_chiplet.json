@@ -1,12 +1,12 @@
 {
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-  "python": "3.12.3",
-  "numpy": "2.2.6",
+  "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+  "python": "3.12.16",
+  "numpy": "2.5.4",
   "n_repeats": 30,
   "load_average": [
-    19.3701171875,
-    29.2607421875,
-    31.2294921875
+    13.24365234375,
+    9.81005859375,
+    11.94140625
   ],
   "cpu_affinity": [
     10
@@ -31,7 +31,7 @@
     "partition.py": "bb61ef29d62dbb3ff9f8716725a658f2ce80702da7c1a5b69c21922217e707b7",
     "power.py": "af6c76a291469d11deb6f4fac1519f37b716e2663dbb2782f0a337d0895852db",
     "routing.py": "8ee96895df7c1459f62675991c0aae718ccfebbeae83d4adaf514d27d8cb604d",
-    "rtl.py": "004034ad5ee4e090c0ae14d397d3bc33c2543c7cc388a5298a4abe37d27aea1a",
+    "rtl.py": "cb093edc86a64556376670e1ba6de47366c47c58f1152a447f2dc446f203a225",
     "thermal.py": "5f73a15f71c60bf725f2e44deaa608ea4caf179e3367a80c757a170e2e811802",
     "topology.py": "63b15a71fae87a7d359d4da17b503cd8687c33553ff0a9849cf56c5f547689c5"
   },
@@ -39,110 +39,110 @@
     {
       "suite": "chiplet_gen",
       "op": "make_torus(2, 2)",
-      "median_ms": 0.0335020013153553,
-      "min_ms": 0.03148801624774933
+      "median_ms": 0.014116056263446808,
+      "min_ms": 0.012895907275378704
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(4, 4)",
-      "median_ms": 0.15013199299573898,
-      "min_ms": 0.12605800293385983
+      "median_ms": 0.052653951570391655,
+      "min_ms": 0.04890898708254099
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(8, 8)",
-      "median_ms": 0.5898610106669366,
-      "min_ms": 0.5292269634082913
+      "median_ms": 0.2155909314751625,
+      "min_ms": 0.1965709961950779
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=16)",
-      "median_ms": 0.008367002010345459,
-      "min_ms": 0.008098024409264326
+      "median_ms": 0.0034170225262641907,
+      "min_ms": 0.0032619573175907135
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=64)",
-      "median_ms": 0.03300403477624059,
-      "min_ms": 0.030816008802503347
+      "median_ms": 0.01271301880478859,
+      "min_ms": 0.012245960533618927
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=256)",
-      "median_ms": 0.1348719815723598,
-      "min_ms": 0.12410496128723025
+      "median_ms": 0.05038001108914614,
+      "min_ms": 0.04755298141390085
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=4)",
-      "median_ms": 0.003101013135164976,
-      "min_ms": 0.0021919840946793556
+      "median_ms": 0.0012189848348498344,
+      "min_ms": 0.0010740477591753006
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=16)",
-      "median_ms": 0.01057301415130496,
-      "min_ms": 0.009700946975499392
+      "median_ms": 0.0044630141928792,
+      "min_ms": 0.00425300095230341
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=64)",
-      "median_ms": 0.042374012991786,
-      "min_ms": 0.04021800123155117
+      "median_ms": 0.017115031369030476,
+      "min_ms": 0.016671023331582546
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=4)",
-      "median_ms": 0.06521400064229965,
-      "min_ms": 0.05827599670737982
+      "median_ms": 0.029789982363581657,
+      "min_ms": 0.02721103373914957
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=16)",
-      "median_ms": 0.18535996787250042,
-      "min_ms": 0.15526299830526114
+      "median_ms": 0.10822794865816832,
+      "min_ms": 0.06887107156217098
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=64)",
-      "median_ms": 0.5035640206187963,
-      "min_ms": 0.46444800682365894
+      "median_ms": 0.2708840183913708,
+      "min_ms": 0.20896911155432463
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=2)",
-      "median_ms": 0.4365009954199195,
-      "min_ms": 0.3850639914162457
+      "median_ms": 0.29966305010020733,
+      "min_ms": 0.26253098621964455
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=8)",
-      "median_ms": 2.200374030508101,
-      "min_ms": 1.808377041015774
+      "median_ms": 2.2027690429240465,
+      "min_ms": 1.720633008517325
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=32)",
-      "median_ms": 8.165739011019468,
-      "min_ms": 3.5605450393632054
+      "median_ms": 35.70697410032153,
+      "min_ms": 27.061113039962947
     },
     {
       "suite": "partitioner",
       "op": "partition (V=50, P=2)",
-      "median_ms": 1.1981650022789836,
-      "min_ms": 0.980356999207288
+      "median_ms": 1.2201990466564894,
+      "min_ms": 0.8785210084170103
     },
     {
       "suite": "partitioner",
       "op": "partition (V=100, P=4)",
-      "median_ms": 3.2264170004054904,
-      "min_ms": 2.030984964221716
+      "median_ms": 2.5617260253056884,
+      "min_ms": 1.7537010135129094
     },
     {
       "suite": "partitioner",
       "op": "partition (V=200, P=4)",
-      "median_ms": 8.795935951638967,
-      "min_ms": 4.175567999482155
+      "median_ms": 4.258100059814751,
+      "min_ms": 3.454372985288501
     }
   ],
   "backends": {

@@ -90,7 +90,7 @@ conformity.
 #### chiplet — Multi-Die Chiplet Generator
 - **Sources:** `src/sc_neurocore/chiplet/{topology,routing,thermal,rtl,link_protocols,power,partition}.py`
 - **Compatibility facade:** `src/sc_neurocore/chiplet/chiplet_gen.py`
-- **Tests:** `tests/test_chiplet/test_chiplet_*.py` — **172 focused tests**
+- **Tests:** `tests/test_chiplet/test_chiplet_*.py` — **134 focused tests**
 - **Key Classes:**
   - `ChipletGenerator` — Die-level generation with UCIe/BoW links
   - `ChipletTopology` — Die-to-die topology and interposer-link model
@@ -321,7 +321,7 @@ conformity.
 | hypervisor | `tests/test_hypervisor/` | 78 |
 | twinsync | `tests/test_twinsync/` | 72 |
 | spintronic | `tests/test_spintronic/` | 66 |
-| chiplet | `tests/test_chiplet/` | 172 |
+| chiplet | `tests/test_chiplet/` | 245 |
 | memristor | `tests/test_memristor/` | 70 |
 | analog_bridge | `tests/test_analog_bridge/` | 27 |
 | bioware | `tests/test_bioware/` | 200 |

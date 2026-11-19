@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2176
+expected_file_count = 2177
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8754,3 +8754,7 @@ rationale = "Lock UVM generator module ownership, acyclic dependency graph, publ
 [[file]]
 path = "tests/test_uvm_gen/test_uvm_gen_rtl_module_parsing.py"
 rationale = "Verify Verilog and SystemVerilog header parsing across parameterised widths, AMBA clocks, unpacked arrays, and fail-closed refusals."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_rtl.py"
+rationale = "Verify multi-die AER chiplet RTL generation, Icarus Verilog ring/star/backpressure co-simulations, and fail-closed topology/route validation."
