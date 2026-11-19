@@ -609,7 +609,7 @@ native `isi_encode_raster` and `isi_decode_raster` bindings. Its provenance
 identifies the source commit, wheel, capture tool and loaded modules. The
 matching wheel job compares its installed capture with this reference. Other
 matrix profiles retain their own captures; this reference does not certify
-their inherited Python protocol members, optional exports or model behavior.
+their inherited Python protocol members, optional exports or model behaviour.
 
 ## Model compatibility and migration
 
