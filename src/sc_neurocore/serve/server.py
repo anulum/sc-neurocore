@@ -25,11 +25,59 @@ Usage:
 from __future__ import annotations
 
 import json
+import math
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Any
 
 import numpy as np
+
+from sc_neurocore.refusals import AuthoredRefusal
+
+DEFAULT_MAX_BODY_BYTES = 1 << 20
+"""The largest ``/step`` request body the server reads, in bytes, unless a server is given another limit."""
+
+STEP_FAILED = "The network step failed."
+"""The fixed answer to any fault inside a step that is not a deliberate refusal."""
+
+
+class ServeRefusal(AuthoredRefusal):
+    """A deliberate refusal of the inference server, with text written for the caller."""
+
+
+def _inputs_from(data: object) -> dict[str, list[float]]:
+    """Return the ``inputs`` of a decoded ``/step`` body, or refuse a malformed one.
+
+    Parameters
+    ----------
+    data : object
+        The decoded JSON body.
+
+    Returns
+    -------
+    dict of str to list of float
+        Each node name with its finite numeric values.
+
+    Raises
+    ------
+    ServeRefusal
+        If the body is not an object, ``inputs`` is not an object of node names, or a value is not a
+        list of finite numbers.
+    """
+    if not isinstance(data, dict):
+        raise ServeRefusal("The request body must be a JSON object.")
+    inputs = data.get("inputs", {})
+    if not isinstance(inputs, dict):
+        raise ServeRefusal("Field 'inputs' must map node names to arrays of numbers.")
+    checked: dict[str, list[float]] = {}
+    for name, values in inputs.items():
+        if not isinstance(values, list) or not all(
+            isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+            for value in values
+        ):
+            raise ServeRefusal(f"Input {name!r} must be an array of finite numbers.")
+        checked[name] = [float(value) for value in values]
+    return checked
 
 
 class SpikeServer:
@@ -38,20 +86,58 @@ class SpikeServer:
     Parameters
     ----------
     network : SCNetwork or Network
-        The SNN to run.
+        The SNN to run: an object with ``step``, or a population network without projections.
     host : str
-        Bind address (default '0.0.0.0').
+        Bind address (default '127.0.0.1').
     port : int
         Listen port (default 8001).
+    max_body_bytes : int
+        The largest ``/step`` request body read; a longer one is refused with 413 unread.
+
+    Raises
+    ------
+    ServeRefusal
+        If the network has projections but no ``step``: stepping only its populations would ignore
+        every projection, so the server refuses it instead of answering wrongly.
     """
 
-    def __init__(self, network: Any, host: str = "127.0.0.1", port: int = 8001) -> None:
+    def __init__(
+        self,
+        network: Any,
+        host: str = "127.0.0.1",
+        port: int = 8001,
+        *,
+        max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
+    ) -> None:
+        if (
+            not hasattr(network, "step")
+            and hasattr(network, "populations")
+            and getattr(network, "projections", None)
+        ):
+            raise ServeRefusal(
+                "A network with projections needs a step method; stepping its populations alone "
+                "would ignore every projection."
+            )
+        if (
+            isinstance(max_body_bytes, bool)
+            or not isinstance(max_body_bytes, int)
+            or max_body_bytes < 1
+        ):
+            raise ServeRefusal("max_body_bytes must be a positive integer.")
         self.network = network
         self.host = host
         self.port = port
+        self.max_body_bytes = max_body_bytes
         self._timestep = 0
         self._lock = threading.Lock()
         self._server: HTTPServer | None = None
+
+    def reset(self) -> None:
+        """Reset the network and the timestep, under the same lock as :meth:`step`."""
+        with self._lock:
+            self._timestep = 0
+            if hasattr(self.network, "reset"):
+                self.network.reset()
 
     def step(self, inputs: dict[str, list[float]]) -> dict[str, Any]:
         """Run one network timestep and return output spikes.
@@ -84,8 +170,6 @@ class SpikeServer:
                 results = {}
                 for pop in self.network.populations:
                     currents = inp.get(pop.label, np.zeros(pop.n))
-                    if isinstance(currents, list):  # pragma: no cover
-                        currents = np.array(currents)
                     spikes = pop.step_all(currents[: pop.n])
                     results[pop.label] = spikes.tolist()
                 self._timestep += 1
@@ -105,21 +189,50 @@ class SpikeServer:
         server_ref = self
 
         class Handler(BaseHTTPRequestHandler):
+            def _body(self) -> bytes | None:
+                """Read the request body within the server's limit, or answer 411/400/413 and return None."""
+                declared = self.headers.get("Content-Length")
+                if declared is None:
+                    self._respond(411, {"error": "Content-Length is required."})
+                    return None
+                if not declared.isdigit():
+                    self._respond(400, {"error": "Content-Length must be a non-negative integer."})
+                    return None
+                length = int(declared)
+                if length > server_ref.max_body_bytes:
+                    self.close_connection = True
+                    self._respond(
+                        413,
+                        {"error": f"The request body exceeds {server_ref.max_body_bytes} bytes."},
+                    )
+                    return None
+                return self.rfile.read(length)
+
             def do_POST(self) -> None:
                 if self.path == "/step":
-                    length = int(self.headers.get("Content-Length", 0))
-                    body = self.rfile.read(length)
+                    body = self._body()
+                    if body is None:
+                        return
                     try:
-                        data = json.loads(body)
-                        inputs = data.get("inputs", {})
+                        inputs = _inputs_from(json.loads(body))
+                    except ServeRefusal as refusal:
+                        self._respond(400, {"error": str(refusal)})
+                        return
+                    except (UnicodeDecodeError, json.JSONDecodeError):
+                        self._respond(400, {"error": "The request body is not valid JSON."})
+                        return
+                    try:
                         result = server_ref.step(inputs)
-                        self._respond(200, result)
-                    except Exception as e:
-                        self._respond(400, {"error": str(e)})
+                    except ServeRefusal as refusal:
+                        self._respond(400, {"error": str(refusal)})
+                        return
+                    # Every other fault gets the fixed answer; its text stays inside the server.
+                    except Exception:
+                        self._respond(500, {"error": STEP_FAILED})
+                        return
+                    self._respond(200, result)
                 elif self.path == "/reset":
-                    server_ref._timestep = 0
-                    if hasattr(server_ref.network, "reset"):
-                        server_ref.network.reset()
+                    server_ref.reset()
                     self._respond(200, {"status": "reset", "timestep": 0})
                 elif self.path == "/info":
                     self._respond(
@@ -157,7 +270,7 @@ class SpikeServer:
 
         self._server = HTTPServer((self.host, self.port), Handler)
 
-        if blocking:  # pragma: no cover
+        if blocking:
             print(f"SC-NeuroCore inference server on {self.host}:{self.port}")
             print("Endpoints: POST /step, POST /reset, GET /info, GET /health")
             self._server.serve_forever()

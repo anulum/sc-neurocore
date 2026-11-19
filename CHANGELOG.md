@@ -14,6 +14,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The streaming inference server (`sc-neurocore serve`) no longer answers
+  with exception text. A fault inside a step returns 500 with a fixed
+  sentence; malformed JSON or inputs return 400 with an authored one. The
+  request body is bounded (1 MiB by default; 413 unread above it) and must
+  declare its length. `/reset` takes the same lock as `/step`, and a
+  population network with projections but no `step` is refused instead
+  of being run with its projections ignored.
+
 - The engine API compatibility gate reads the crates.io sparse index only
   over HTTPS from index.crates.io, and only for a name in Cargo's crate-name
   alphabet. Both are checked before the request opens, so no other scheme,

@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5717
+    "test_files": 5718
   },
   "documentation": {
     "public_pages": [
@@ -7765,6 +7765,7 @@
       "tests/test_sensors_dvs_dvs_loader.py",
       "tests/test_sensors_dvs_events_to_frames.py",
       "tests/test_sensors_dvs_events_to_spike_trains.py",
+      "tests/test_serve_server_refusals.py",
       "tests/test_serve_server_spike_server_http.py",
       "tests/test_serve_server_spike_server_step.py",
       "tests/test_shared_type_templates.py",

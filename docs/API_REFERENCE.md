@@ -43316,19 +43316,33 @@ ndarray of shape (n_frames, 2, height, width)
 
 ## Module `serve.server`
 
+### Class `ServeRefusal`
+A deliberate refusal of the inference server, with text written for the caller.
+
+
 ### Class `SpikeServer`
 Streaming SNN inference server.
 
 Parameters
 ----------
 network : SCNetwork or Network
-    The SNN to run.
+    The SNN to run: an object with ``step``, or a population network without projections.
 host : str
-    Bind address (default '0.0.0.0').
+    Bind address (default '127.0.0.1').
 port : int
     Listen port (default 8001).
+max_body_bytes : int
+    The largest ``/step`` request body read; a longer one is refused with 413 unread.
 
-- **__init__**(network, host, port)
+Raises
+------
+ServeRefusal
+    If the network has projections but no ``step``: stepping only its populations would ignore
+    every projection, so the server refuses it instead of answering wrongly.
+
+- **__init__**(network, host, port, \*, max_body_bytes)
+- **reset**()
+  - Reset the network and the timestep, under the same lock as :meth:`step`.
 - **step**(inputs)
   - Run one network timestep and return output spikes.
 - **start**(blocking)
