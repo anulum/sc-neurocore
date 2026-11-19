@@ -169,7 +169,16 @@ sticky-latch contracts for formal or simulation audit runs.
 `generate_live_parameter_bank(...)`. The implementation is deliberately
 one-way and responsibility-bounded:
 
-- `_bus_wrappers.py` renders the legacy AXI4-Lite and Wishbone neuron wrappers;
+- `_bus_wrappers.py` renders the AXI4-Lite and Wishbone B4 neuron wrappers
+  (connecting `.spike_out` to `irq_spike` and `reg_spike_count`, decoding
+  `addr[ADDR_WIDTH-1:2]` so every supported 8/16/32/64-bit bus width matches
+  `generate_register_map(...)`'s 4-byte register stride while ignoring
+  unaligned low address bits `addr[1:0]` within each 4-byte slot, slicing each
+  parameter register to its declared bit width, latching independent AXI4-Lite
+  `AW`/`W` handshakes with byte-lane `S_AXI_WSTRB` writes and `BREADY`/`RREADY`
+  backpressure stability while the Wishbone B4 wrapper omits `wb_sel_i` and
+  commits whole-word writes, and rejecting invalid identifiers, collisions, or
+  out-of-range widths fail-closed);
 - `_live_parameter_bank.py` renders the validated AXI4-Lite live-control core;
 - `_pcie_live_parameter_bank.py` adapts that core to the decoded PCIe MMIO
   register window; and
@@ -179,9 +188,8 @@ one-way and responsibility-bounded:
 The PCIe adapter depends on the AXI core; neither renderer imports the facade,
 so there is no reverse dependency or protocol-specific reimplementation. The
 architecture contract also pins representative AXI4-Lite, Wishbone, AXI
-live-control, and PCIe live-control output digests to the pre-decomposition
-bytes. This is an emitter-organisation change, not a neuron-dynamics or
-polyglot-kernel change.
+live-control, and PCIe live-control output digests for deterministic regression
+detection.
 
 Live-control parameter banks are generated from `MMIOUpdateSpec` with
 `generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses

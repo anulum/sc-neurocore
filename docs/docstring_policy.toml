@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2188
+expected_file_count = 2193
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8802,3 +8802,23 @@ rationale = "Exercise stochastic correlation over the logical packed prefix."
 [[file]]
 path = "tests/test_bridges_aer_router_aer_router_benchmark.py"
 rationale = "Measure completed simulated dispatch and acknowledgement cycles within the pending limit."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/_bus_wrappers.py"
+rationale = "Render AXI4-Lite and Wishbone B4 neuron bus wrappers with validated parameter widths, spike-interrupt wiring, and independent AXI write handshakes."
+
+[[file]]
+path = "tests/test_bus_interface_architecture.py"
+rationale = "Guard bus-interface module size bounds, acyclic imports, public signatures, and deterministic RTL payload digests."
+
+[[file]]
+path = "tests/test_bus_interface_wrappers_axi4_lite.py"
+rationale = "Verify AXI4-Lite neuron bus-wrapper emission, Verilator lint, decoupled AW/W writes, WSTRB byte masking, backpressure, and spike counting."
+
+[[file]]
+path = "tests/test_bus_interface_wrappers_wishbone.py"
+rationale = "Verify Wishbone B4 neuron bus-wrapper emission, Verilator lint, per-parameter bit widths, and spike-interrupt co-simulation."
+
+[[file]]
+path = "tests/test_bus_interface_wrappers_register_map.py"
+rationale = "Verify bus-wrapper register-map offsets and fail-closed validation of identifiers, widths, and address ranges."

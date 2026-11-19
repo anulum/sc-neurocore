@@ -25525,7 +25525,7 @@ data_width : int
 addr_width : int
     AXI address width.
 bus_data_width : int
-    AXI register data width.
+    AXI register data width (8, 16, 32, or 64).
 
 Returns
 -------
@@ -25546,7 +25546,7 @@ data_width : int
 addr_width : int
     Wishbone address width.
 bus_data_width : int
-    Wishbone register data width.
+    Wishbone register data width (8, 16, 32, or 64).
 
 Returns
 -------

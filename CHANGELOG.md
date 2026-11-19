@@ -239,6 +239,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `generate_bus_wrapper` (`sc_neurocore.hdl_gen.bus_interface` /
+  `_bus_wrappers`) now connects `u_neuron.spike_out` in both AXI4-Lite and
+  Wishbone B4 wrappers so `irq_spike` and `reg_spike_count` track neuron
+  spikes instead of floating undriven, preserves `addr[ADDR_WIDTH-1:2]`
+  4-byte word decoding matching `generate_register_map` across 8/16/32/64-bit
+  buses (ignoring unaligned low address bits `addr[1:0]` within each 4-byte
+  slot), slices each parameter register to its declared width in `params`,
+  latches decoupled `AW`-first and `W`-first AXI4-Lite writes with
+  `S_AXI_WSTRB` byte-lane enables and `BREADY`/`RREADY` stall protection
+  instead of requiring simultaneous `AWREADY && WREADY`, and rejects invalid
+  identifiers, register collisions, or out-of-range bus/data widths with
+  `ValueError`.
+
 - The stochastic doctor (`compute_scc`, `estimate_precision`,
   `compute_histogram`, `audit_layer`) now accepts only bitstreams of zeros and
   ones and checks them before choosing the Rust core or the Python fallback.

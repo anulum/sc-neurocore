@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Bus-interface responsibility and compatibility contracts
 
-"""Guard the bus-interface module graph and parent-equivalent public outputs."""
+"""Guard the bus-interface module graph and deterministic RTL payload digests."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ _EXPECTED_LOCAL_IMPORTS = {
         "_live_parameter_bank",
         "_pcie_live_parameter_bank",
     },
-    "_bus_wrappers.py": set(),
+    "_bus_wrappers.py": {"_ident"},
     "_live_parameter_bank.py": set(),
     "_pcie_live_parameter_bank.py": {"_live_parameter_bank"},
 }
@@ -59,9 +59,9 @@ _EXPECTED_SIGNATURES = {
     ),
 }
 _EXPECTED_PAYLOAD_HASHES = {
-    "axi_wrapper": "2becc845fd5e3322f5c1937bc9add4a7a6aff0db6eec9f79c5ad1ec6bb302c1b",
-    "wishbone_wrapper": "88c28e8df50bf0be33914df4166fbd74306a60c9ca85f9fb52b464b3935f3e8b",
-    "empty_axi_wrapper": "8890e3da14007508436f5d5765c3206d9f5f726b5e7fac39c0fbe9963d3e2dac",
+    "axi_wrapper": "17c9fc3daf27e4ae3fb92000ad91cb67d7e346a11e63d30d5938e8b9a9b399cf",
+    "wishbone_wrapper": "1bb7e614f709cc34d46b93489aa84515cb69952a54d73ab991cc33fb5befe6fb",
+    "empty_axi_wrapper": "3e1bc189024d9c7131b204fdf3c1b6463451ec63b526f0291d95575cef7c7496",
     "axi_live_parameter_bank": "a5f2f90cf10d9f8a66e619af6adc832407b912ef1305ed6eb360a7476a3d8e8b",
     "pcie_live_parameter_bank": "a924e88382310f50401ab436091d43ec3b53e72da1a4f87e661a1caa8e6e793d",
 }
@@ -168,7 +168,7 @@ def test_public_functions_keep_historical_identity_and_signatures() -> None:
 
 
 def test_representative_outputs_match_parent_byte_for_byte() -> None:
-    """Representative generated sources retain their exact parent digests."""
+    """Representative generated sources retain their exact deterministic digests."""
     params = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
     axi_spec, pcie_spec = _live_specs()
     payloads = {
