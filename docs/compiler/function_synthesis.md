@@ -112,8 +112,8 @@ formats. Using Yosys 0.70+post and its associated ABC, all 270 supported cases
 produced source-bound Xilinx 7-series measurements and passed equivalence for the
 entire mapped interface. The other 102 cases are explicitly unsupported by their
 selected lowering. The cache-only report revalidates the successful measurements
-and preserves their acquisition times. Hardware figures describe mapped resources. FPGA timing and energy require
-physical measurements.
+and preserves their acquisition times. These figures describe mapped resources.
+The routed timing experiment below tests a separate constraint on one device.
 
 Tool inspection runs Yosys and identifies its native process executable through
 Linux procfs, including when the requested command is a launcher script. All
@@ -516,3 +516,121 @@ it is not a lookup-table accuracy claim. Compare area together with these assess
 neither device timing, power, throughput nor a numerical speedup. See
 [Function unit numerical error](../validation/function_units_v2_accuracy.md)
 for the numerical assessment contract.
+
+## Timing after placement and routing
+
+Vivado 2025.2 (build 6299465) implemented the Q8.8 sine and square-root
+units for the Zynq-7000 `xc7z020clg484-1` using the compiler at commit
+`f50004f5dd1c80008d8adca3944114a23b7a09b9`. The out-of-context harness adds a
+launch register and a capture register around each combinational unit and
+constrains their shared clock to 10 ns (100 MHz). The timing scope is the
+internal register-to-register paths. Setup and hold each meet the target
+when their worst slack is non-negative.
+
+| Function | Lowering | Slice LUTs | Slice registers | DSPs | Block RAM tiles | Setup slack (ns) | Hold slack (ns) | Timing at 100 MHz |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Sine | `lut-v1` | 9 | 16 | 0 | 0.5 | 3.285 | 0.316 | Met |
+| Sine | `v2` | 656 | 32 | 8 | 0 | -27.939 | 1.799 | Missed |
+| Square root | `lut-v1` | 16 | 26 | 0 | 0 | 6.511 | 0.228 | Met |
+| Square root | `v2` | 1693 | 32 | 0 | 0 | -100.332 | 2.199 | Missed |
+
+The routed functional netlist can be simulated against the corresponding
+original RTL across all 65,536 input codes. Compare the result after it has
+passed through both register stages. Reported utilisation counts include the
+wrapper.
+The I/O delay constraints below are example budgets for this standalone harness.
+Timing and energy on a particular board require a board-level design and
+instrumented measurements.
+
+To reproduce a row, use an empty directory and run the following Python with
+SC-NeuroCore installed. Change the function and lowering to select another row.
+
+```python
+from pathlib import Path
+
+from sc_neurocore.compiler import emit_function_unit_verilog
+
+rtl = emit_function_unit_verilog(
+    "sqrt", data_width=16, fraction=8, function_lowering="v2"
+)
+Path("function.v").write_bytes(rtl.encode("utf-8"))
+```
+
+Save the register wrapper as `boundary.v`.
+
+```verilog
+module function_timing (
+    input wire clk,
+    input wire signed [15:0] argument,
+    output reg signed [15:0] result
+);
+    (* DONT_TOUCH = "TRUE" *) reg signed [15:0] input_word;
+    wire signed [15:0] output_word;
+
+    function_unit dut (.argument0(input_word), .result(output_word));
+
+    always @(posedge clk) begin
+        input_word <= argument;
+        result <= output_word;
+    end
+endmodule
+```
+
+Save the clock and I/O constraints as `timing.xdc`. The clock source is a
+global clock buffer site on this part.
+
+```tcl
+create_clock -name function_clock -period 10 [get_ports clk]
+set_property HD.CLK_SRC BUFGCTRL_X0Y16 [get_ports clk]
+set_input_delay -clock function_clock -max 2 [get_ports {argument[*]}]
+set_input_delay -clock function_clock -min 0 [get_ports {argument[*]}]
+set_output_delay -clock function_clock -max 2 [get_ports {result[*]}]
+set_output_delay -clock function_clock -min 0 [get_ports {result[*]}]
+```
+
+Save these Vivado batch commands as `route.tcl`.
+
+```tcl
+if {[llength $argv] != 3} { error "usage: part, period in ns, and thread count" }
+lassign $argv part period threads
+set_param general.maxThreads $threads
+if {[llength [get_parts -quiet $part]] != 1} { error "part is not installed: $part" }
+read_verilog function.v
+read_verilog boundary.v
+read_xdc timing.xdc
+synth_design -top function_timing -part $part -mode out_of_context
+if {[llength [get_sites -quiet BUFGCTRL_X0Y16]] != 1} { error "Invalid global clock buffer site" }
+if {[get_property HD.CLK_SRC [get_ports clk]] ne "BUFGCTRL_X0Y16"} {
+    error "Missing out-of-context global clock source"
+}
+opt_design
+place_design
+route_design
+report_route_status -file route.rpt
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -file timing.rpt
+report_utilization -file utilisation.rpt
+check_timing -verbose -file constraints.rpt
+set registers [all_registers]
+set result [open internal-timing.tsv w]
+puts $result "analysis\tslack_ns\tstart\tend\tdatapath_delay_ns"
+foreach delay {max min} {
+    set timing [get_timing_paths -from $registers -to $registers -delay_type $delay -max_paths 1 -nworst 1]
+    if {[llength $timing] != 1} { error "No register-to-register timing path for $delay" }
+    puts $result [join [list $delay [get_property SLACK $timing] [get_property STARTPOINT_PIN $timing] [get_property ENDPOINT_PIN $timing] [get_property DATAPATH_DELAY $timing]] "\t"]
+}
+close $result
+write_verilog -force -mode funcsim routed_function.v
+```
+
+Run the implementation in the same directory. The period is set in `timing.xdc`.
+
+```bash
+vivado -mode batch -source route.tcl -tclargs xc7z020clg484-1 10 6
+```
+
+Check that all routable nets are fully routed in `route.rpt` and review
+`constraints.rpt` for missing clocks or unconstrained internal endpoints.
+`internal-timing.tsv` reports the worst setup (`max`) and hold (`min`) slack
+between two registers. `timing.rpt` also covers the example I/O constraints.
+See AMD's [timing summary guidance](https://docs.amd.com/r/2025.2-English/ug906-vivado-design-analysis/Report-Timing-Summary)
+for what changes between synthesis and routed timing.
