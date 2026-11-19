@@ -419,7 +419,7 @@ def _log10_result_fits(p: Program, data_width: int, fraction: int) -> bool:
 
 
 def _log10_mantissa(p: Program, code: str) -> tuple[str, str]:
-    """Normalize the positive input into its leading exponent and fractional log2 term."""
+    """Normalise the positive input into its leading exponent and fractional log2 term."""
     bits = fu.SEGMENT_BITS["log2"]
     shift = fu.B - bits
     span = 1 << shift
@@ -431,10 +431,10 @@ def _log10_mantissa(p: Program, code: str) -> tuple[str, str]:
         or a + (b * last * span + c * last * last) // (span * span) >= 1 << fu.P
         for a, b, c in p.tables["log2"]
     ):
-        raise ValueError("The log2 mantissa must stay in the normalized fraction interval")
+        raise ValueError("The log2 mantissa must stay in the normalised fraction interval")
     lead = p.sub(_bit_length(p, code), p.const(1))
     # A positive signed input has at most 31 bits. The leading one is at bit B
-    # after normalization, and removing it leaves exactly the table position.
+    # after normalisation, and removing it leaves exactly the table position.
     position = p.mask(p.shl_var(code, p.sub(p.const(fu.B), lead)), fu.B)
     index = p.shr(position, shift)
     rest = p.mask(position, shift)

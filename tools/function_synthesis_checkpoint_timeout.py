@@ -68,7 +68,7 @@ def _native_history(local: Path) -> tuple[Path, ...]:
 
 
 def _initial_files(paths: tuple[Path, ...]) -> tuple[Path, ...]:
-    """Verify original command artifacts and the one recognized native scratch hierarchy."""
+    """Verify original command artifacts and the one recognised native scratch hierarchy."""
     files: list[Path] = []
     for path in paths:
         if path.name == ".local":

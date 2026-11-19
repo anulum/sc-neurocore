@@ -497,9 +497,7 @@
      "status": "located"
     },
     {
-     "changed_subjects": [
-      "compiler:src/sc_neurocore/compiler"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -512,8 +510,8 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261116T130405Z__adaptive_threshold_if.json",
-     "status": "stale"
+     "receipt": "AdaptiveThresholdIFNeuron__cosim__20261119T054412Z__adaptive_threshold_if.json",
+     "status": "bound"
     },
     {
      "changed_subjects": [],
@@ -573,8 +571,8 @@
    "profile": "adaptive_threshold_if",
    "science_label": "S3",
    "science_tier": 3,
-   "silicon_label": "none",
-   "silicon_tier": null
+   "silicon_label": "H1",
+   "silicon_tier": 1
   },
   "AdaptiveThresholdMoENeuron": {
    "facets": [
@@ -3648,9 +3646,7 @@
      "status": "located"
     },
     {
-     "changed_subjects": [
-      "compiler:src/sc_neurocore/compiler"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -3663,8 +3659,8 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "BrunelWangNeuron__cosim__20261116T130419Z__brunel_wang.json",
-     "status": "stale"
+     "receipt": "BrunelWangNeuron__cosim__20261119T054436Z__brunel_wang.json",
+     "status": "bound"
     },
     {
      "changed_subjects": [],
@@ -3724,8 +3720,8 @@
    "profile": "brunel_wang",
    "science_label": "S3",
    "science_tier": 3,
-   "silicon_label": "none",
-   "silicon_tier": null
+   "silicon_label": "H1",
+   "silicon_tier": 1
   },
   "ButeraRespiratoryNeuron": {
    "facets": [
@@ -14312,9 +14308,7 @@
      "status": "located"
     },
     {
-     "changed_subjects": [
-      "compiler:src/sc_neurocore/compiler"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -14327,8 +14321,8 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "LapicqueNeuron__cosim__20261116T130440Z__lapicque.json",
-     "status": "stale"
+     "receipt": "LapicqueNeuron__cosim__20261119T054503Z__lapicque.json",
+     "status": "bound"
     },
     {
      "changed_subjects": [],
@@ -14396,8 +14390,8 @@
    "profile": "lapicque",
    "science_label": "S5",
    "science_tier": 5,
-   "silicon_label": "none",
-   "silicon_tier": null
+   "silicon_label": "H1",
+   "silicon_tier": 1
   },
   "LarterBreakspearNeuron": {
    "facets": [
@@ -21522,9 +21516,7 @@
      "status": "located"
     },
     {
-     "changed_subjects": [
-      "compiler:src/sc_neurocore/compiler"
-     ],
+     "changed_subjects": [],
      "declared": true,
      "evidence": [
       {
@@ -21537,8 +21529,8 @@
      ],
      "facet": "cosim",
      "problems": [],
-     "receipt": "ResonateAndFireNeuron__cosim__20261116T130429Z__resonate_fire.json",
-     "status": "stale"
+     "receipt": "ResonateAndFireNeuron__cosim__20261119T054528Z__resonate_fire.json",
+     "status": "bound"
     },
     {
      "changed_subjects": [],
@@ -21598,8 +21590,8 @@
    "profile": "resonate_fire",
    "science_label": "S3",
    "science_tier": 3,
-   "silicon_label": "none",
-   "silicon_tier": null
+   "silicon_label": "H1",
+   "silicon_tier": 1
   },
   "RulkovMapNeuron": {
    "facets": [

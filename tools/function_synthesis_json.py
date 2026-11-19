@@ -104,7 +104,7 @@ def decode_netlist_json(data: bytes) -> object:
     Parameters
     ----------
     data : bytes
-        Complete native or normalized netlist bytes within the parser budget.
+        Complete native or normalised netlist bytes within the parser budget.
 
     Returns
     -------

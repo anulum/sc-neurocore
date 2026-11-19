@@ -422,7 +422,8 @@
       "none": 114
     },
     "verified_silicon_tiers": {
-      "none": 185
+      "H1": 3,
+      "none": 182
     },
     "facet_statuses": {
       "dynamics_faithful": {
@@ -465,9 +466,9 @@
         "not-declared": 114
       },
       "cosim": {
+        "bound": 3,
         "located": 65,
-        "not-declared": 117,
-        "stale": 3
+        "not-declared": 117
       },
       "synthesis": {
         "located": 34,
@@ -884,8 +885,8 @@
       "verified": {
         "science_tier": 3,
         "science_label": "S3",
-        "silicon_tier": null,
-        "silicon_label": "none"
+        "silicon_tier": 1,
+        "silicon_label": "H1"
       },
       "evidence": {
         "validation.evidence": [
@@ -992,12 +993,10 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
+          "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261116T130405Z__adaptive_threshold_if.json",
-          "changed_subjects": [
-            "compiler:src/sc_neurocore/compiler"
-          ],
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261119T054412Z__adaptive_threshold_if.json",
+          "changed_subjects": [],
           "problems": []
         },
         {
@@ -4142,8 +4141,8 @@
       "verified": {
         "science_tier": 3,
         "science_label": "S3",
-        "silicon_tier": null,
-        "silicon_label": "none"
+        "silicon_tier": 1,
+        "silicon_label": "H1"
       },
       "evidence": {
         "validation.evidence": [
@@ -4264,12 +4263,10 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
+          "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "BrunelWangNeuron__cosim__20261116T130419Z__brunel_wang.json",
-          "changed_subjects": [
-            "compiler:src/sc_neurocore/compiler"
-          ],
+          "receipt": "BrunelWangNeuron__cosim__20261119T054436Z__brunel_wang.json",
+          "changed_subjects": [],
           "problems": []
         },
         {
@@ -22518,8 +22515,8 @@
       "verified": {
         "science_tier": 3,
         "science_label": "S3",
-        "silicon_tier": null,
-        "silicon_label": "none"
+        "silicon_tier": 1,
+        "silicon_label": "H1"
       },
       "evidence": {
         "validation.evidence": [
@@ -22626,12 +22623,10 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
+          "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "ResonateAndFireNeuron__cosim__20261116T130429Z__resonate_fire.json",
-          "changed_subjects": [
-            "compiler:src/sc_neurocore/compiler"
-          ],
+          "receipt": "ResonateAndFireNeuron__cosim__20261119T054528Z__resonate_fire.json",
+          "changed_subjects": [],
           "problems": []
         },
         {

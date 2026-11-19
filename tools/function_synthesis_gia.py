@@ -293,9 +293,9 @@ def prove_gia_equivalence(
     comparison. Both complete round trips require explicit equality. The final
     GIA checker receives one scalar OR of all differences. If that checker
     explicitly exhausts its native deadline without deciding, a second CEC
-    command compares the complete normalized output vectors. Both strategies
+    command compares the complete normalised output vectors. Both strategies
     retain every input and output. If the paired GIA checker also gives a
-    recognized bounded undecided result, Ivy must prove the complete scalar
+    recognised bounded undecided result, Ivy must prove the complete scalar
     difference miter UNSAT within sixty seconds. An elapsed Ivy command can
     select exact groups of original output comparisons under the same budget.
     Negative or malformed verdicts cannot select another strategy.

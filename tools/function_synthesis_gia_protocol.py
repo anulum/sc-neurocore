@@ -89,7 +89,7 @@ def _commands(
 
 
 def _paired_script(timeout: float, tools: SynthesisToolchain) -> str:
-    """Compare both complete normalized output vectors under the original native ceiling."""
+    """Compare both complete normalised output vectors under the original native ceiling."""
     if dict(tools.versions)["yosys"].startswith("Yosys 0.33 "):
         return (
             "&read reference-plain.aig; "

@@ -1057,33 +1057,32 @@ per case plus source/output hashes, affinity, governor, and load context.
 
 | Workload | Median compile time | Output lines |
 | --- | ---: | ---: |
-| Euler registered | 0.447941 ms | 50 |
-| Euler folded with parameter port | 0.472888 ms | 38 |
-| RK4 registered | 1.357615 ms | 92 |
-| Four-substep RK4 registered | 2.560791 ms | 136 |
-| Escape-rate registered | 4.533367 ms | 902 |
-| Square-root map registered | 0.424655 ms | 65 |
-| Negative half-LSB nearest map registered | 0.332131 ms | 45 |
-| Quadrant-aware angle map registered | 3.235221 ms | 1875 |
-| Softplus exponential Euler registered | 15.937234 ms | 11374 |
-| Ties-to-even round map registered | 0.406480 ms | 64 |
-| Heaviside map registered | 0.537549 ms | 62 |
-| Euclidean norm map registered | 0.812281 ms | 210 |
-| Reciprocal square-root map registered | 1.123950 ms | 305 |
-| Constant power map registered | 4.707940 ms | 1692 |
-| Dynamic power map registered | 4.755853 ms | 1698 |
-| Partial initial state with powers, registered | 9.676507 ms | 3356 |
-| Partial initial state with powers, folded | 9.599674 ms | 3342 |
-| Held-state RK4 registered | 1.871826 ms | 100 |
+| Euler registered | 0.468747 ms | 50 |
+| Euler folded with parameter port | 0.471186 ms | 38 |
+| RK4 registered | 1.410198 ms | 92 |
+| Four-substep RK4 registered | 2.565848 ms | 136 |
+| Escape-rate registered | 4.554075 ms | 902 |
+| Square-root map registered | 0.432712 ms | 65 |
+| Negative half-LSB nearest map registered | 0.342277 ms | 45 |
+| Quadrant-aware angle map registered | 3.297307 ms | 1875 |
+| Softplus exponential Euler registered | 16.232818 ms | 11290 |
+| Ties-to-even round map registered | 0.415990 ms | 64 |
+| Heaviside map registered | 0.551812 ms | 62 |
+| Euclidean norm map registered | 0.825315 ms | 210 |
+| Reciprocal square-root map registered | 1.357280 ms | 410 |
+| Constant power map registered | 4.666481 ms | 1692 |
+| Dynamic power map registered | 4.734947 ms | 1698 |
+| Partial initial state with powers, registered | 9.696458 ms | 3356 |
+| Partial initial state with powers, folded | 9.759166 ms | 3342 |
+| Held-state RK4 registered | 1.964681 ms | 100 |
 
 The run used Intel Xeon E5-2640 processors with 24 logical CPUs, 251.85 GiB RAM
-and Python 3.12.16. The affinity mask allowed all 24 logical CPUs. Native
-synthesis and compiler tests ran concurrently. The artifact records
+and Python 3.12.16. The affinity mask allowed all 24 logical CPUs. Native builds and compiler verification ran concurrently. The artifact records
 the hardware, governor, frequency and host load before and after the run.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 6977.413528 ms; the held-state RK4 median is 78.877972 ms. The constant-power and dynamic-power medians are 1601.279061 ms and 1554.068642 ms. The receipt pins the native binary and source hashes. The paired run used the Cargo dev profile with default features on a shared host. The twelve output checksums matched on the same ML350 runtime before and after the change. Both equation-IR result filenames contain this same twelve-case capture.
+The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 7568.583098 ms; the held-state RK4 median is 81.938121 ms. The constant-power and dynamic-power medians are 1641.008089 ms and 1668.264789 ms. The receipt pins the native binary and source hashes. The paired run used the Cargo dev profile with default features on a shared host. The twelve output checksums matched on the same ML350 runtime before and after the change. Both equation-IR result filenames contain this same twelve-case capture.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather

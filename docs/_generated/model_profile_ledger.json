@@ -554,7 +554,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "none"
+        "silicon_label": "H1"
       },
       "declared": {
         "science_label": "S5",
@@ -672,8 +672,8 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261116T130405Z__adaptive_threshold_if.json",
+          "status": "bound",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20261119T054412Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2150,7 +2150,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "none"
+        "silicon_label": "H1"
       },
       "declared": {
         "science_label": "S5",
@@ -2312,8 +2312,8 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
-          "receipt": "BrunelWangNeuron__cosim__20261116T130419Z__brunel_wang.json",
+          "status": "bound",
+          "receipt": "BrunelWangNeuron__cosim__20261119T054436Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -9255,7 +9255,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S5",
-        "silicon_label": "none"
+        "silicon_label": "H1"
       },
       "declared": {
         "science_label": "S5",
@@ -9463,8 +9463,8 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
-          "receipt": "LapicqueNeuron__cosim__20261116T130440Z__lapicque.json",
+          "status": "bound",
+          "receipt": "LapicqueNeuron__cosim__20261119T054503Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -13955,7 +13955,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "none"
+        "silicon_label": "H1"
       },
       "declared": {
         "science_label": "S5",
@@ -14073,8 +14073,8 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "stale",
-          "receipt": "ResonateAndFireNeuron__cosim__20261116T130429Z__resonate_fire.json",
+          "status": "bound",
+          "receipt": "ResonateAndFireNeuron__cosim__20261119T054528Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",

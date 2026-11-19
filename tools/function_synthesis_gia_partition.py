@@ -181,7 +181,7 @@ def check_partitioned_outputs(
     Parameters
     ----------
     reference, candidate : pathlib.Path
-        Original complete normalized AIGER models with an independently checked named order.
+        Original complete normalised AIGER models with an independently checked named order.
     input_order, output_order : tuple of str
         The unchanged ordered primary interface of both native models.
     tools : SynthesisToolchain

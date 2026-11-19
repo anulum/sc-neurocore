@@ -203,7 +203,7 @@ division between two variable operands replay the corresponding XC7 mapping
 phases before gate export. A constant dividend can still require this route
 when its divisor varies. The staged export gives the checker more similar divider
 structures while preserving the complete cut interface. Physical lowering uses
-a separate command to expand library primitives before generic optimization.
+a separate command to expand library primitives before generic optimisation.
 When the mapped LUTs can expand to at least 65,536 decision nodes, the physical
 proof graph folds constants and removes unused logic. At 524,288 estimated
 decision nodes, constant folding and width reduction run as separate native
@@ -236,7 +236,7 @@ state and unaccounted logic reaching any original output. Globally unobserved
 arithmetic receives an explicit disposition and remains in the actual resource
 counts.
 
-If a complete root has a nonzero normalized difference, acquisition retains
+If a complete root has a nonzero normalised difference, acquisition retains
 `group-refusal.json` with the full residue and a separating Boolean assignment
 when the expression contains only Boolean atoms. That assignment concerns the
 independent local frontier; it does not claim reachability from primary inputs.
@@ -280,17 +280,17 @@ certificate mismatches.
 
 The residual checker first constructs the OR of every original output
 difference. If its GIA solver explicitly times out with an undecided verdict,
-a second CEC command compares the two complete normalized output vectors.
+a second CEC command compares the two complete normalised output vectors.
 An undecided result with a recorded empty reduction and zero remaining nodes
 also selects that complete comparison, even when the native log omits the
 timeout line. The paired comparison can prove equality with its explicit
 equivalent verdict.
 Both models must retain identical named input and output order, and each
-normalization must independently prove its round trip. The second strategy
+normalisation must independently prove its round trip. The second strategy
 requires an explicit equivalent verdict and records
 `complete-paired-output-cec-after-undecided-gia` as the actual proof engine.
 The original undecided transcript and both complete commands remain retained.
-If paired GIA also reports a recognized bounded undecided result, ABC's
+If paired GIA also reports a recognised bounded undecided result, ABC's
 Ivy solver checks the existing scalar difference miter. This last check
 requires an explicit UNSAT verdict within sixty seconds and retains the
 command and transcript in a version 4 record. Negative, erroneous or
@@ -340,7 +340,7 @@ legacy build.
 The Python `prove_gia_equivalence(..., singleton_seconds=...)` entry point can
 request a smaller internal singleton allowance. Its default is unchanged;
 an explicit value must be an integer from one to the native ceiling. The
-normalization and paired commands keep their original budgets. A nondefault
+normalisation and paired commands keep their original budgets. A nondefault
 choice is bound to the singleton command and retained in the record.
 The compositional residual producer uses a one-second singleton probe. An
 undecided probe still requires the complete paired comparison, with its original
@@ -364,7 +364,7 @@ the remaining time from the same proof allowance. Readback verifies the
 original timeout, commands and artifacts. The physical route expands the
 inspected primitive library and
 simplifies word multiplexers before gate expansion, preserving native
-don't-care behavior. It writes BLIF with native aliases. Both graphs must
+don't-care behaviour. It writes BLIF with native aliases. Both graphs must
 pass an independent Yosys read and structural check before ABC writes their
 named AIGs. The export and its reader trace every original output back to its
 drivers. Outputs that depend on an undriven or undefined name are refused
@@ -375,7 +375,7 @@ tools finish using the original files. Readback validates both their decoded
 bytes and the stored representation. Reference and physical exports run
 independently under one whole-export allowance. The original RTL, mapped
 physical artifact and public ports remain unchanged.
-Native normalization is checked before forming the OR of every output
+Native normalisation is checked before forming the OR of every output
 difference. ABC constructs global BDDs with fixed variable ordering and a
 bounded live-node budget. A measurement requires the actual complete difference
 to reduce to constant zero. A nonzero result or incomplete native protocol
@@ -390,7 +390,7 @@ aggregate cache restoration limit still applies to the complete cache payload.
 Readback revalidates the original source, physical clone, export scripts,
 checkpoint integrity, native commands, complete interfaces and final native
 constant. It preserves the original acquisition time.
-Each native normalization round trip explicitly compares inputs and outputs
+Each native normalisation round trip explicitly compares inputs and outputs
 by position with ABC's `cec -n`. The original reference and mapped exports
 first require identical named bit order, so the positional all-output miter
 retains that original function domain.
@@ -416,7 +416,7 @@ values include the added outputs. The retained derivation binds the complete
 original source, physical graph and derived clone. Cache readback recomputes it
 from the original graphs before admitting the proof.
 
-Source normalization first compares exact expressions for every original result
+Source normalisation first compares exact expressions for every original result
 bit. A multiplexer bit depends on its selector and its two connected data bits;
 unused bus lanes and the bit's position do not change that scalar function.
 Port geometry, the declared bus width and supported parameters are validated
@@ -473,7 +473,7 @@ rationale, every native command and original acquisition time, source and
 toolchain identities, and the complete artifact hashes. Every BDD keeps the
 same one-million-live-node and ninety-second limits; the whole partition has
 at most 3,300 seconds and 256 nodes. The whole-function API subtracts the time
-already spent exporting, normalizing and attempting the global proof before
+already spent exporting, normalising and attempting the global proof before
 starting the partition. Both proof APIs accept a smaller `cohort_seconds`
 allowance; every native command must fit its remaining
 allowance. Successful records are written only after reconstructing the proof

@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-11-19T03:20:50.538587+00:00",
+  "generated_at": "2026-11-19T05:46:40.927669+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -54,21 +54,21 @@
       23
     ],
     "load_average_before": [
-      31.951171875,
-      35.193359375,
-      39.326171875
+      60.6484375,
+      50.06591796875,
+      48.07861328125
     ],
     "load_average_after": [
-      31.2822265625,
-      34.837890625,
-      39.12060546875
+      62.63525390625,
+      51.392578125,
+      48.5712890625
     ],
     "cpu_governor": [
       "schedutil"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 2792.997,
-      "max_observed_mhz": 2793.066,
+      "min_observed_mhz": 2793.005,
+      "max_observed_mhz": 2793.088,
       "sampled_cpu_count": 24.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -80,7 +80,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "75b1180cb5cdf1bf03cf9d32ddc1b7140a8b3a6b",
+  "source_head_at_capture": "75a47305bc435950e43da165a201c666bfb122ff",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -122,7 +122,7 @@
     "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
     "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
     "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
-    "src/sc_neurocore/compiler/function_unit_programs.py": "d7311c4310bd87cc1fd87cb15480d755ec6051f18f47eea7db7a9b27ebd7f5b9",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "384a12dec497b8694b73d203c3cff3a21a8b7b375f3205bb8ea60111752c234b",
     "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
     "src/sc_neurocore/compiler/guarantee_summary.py": "f0717a85b39945b2019cf8031756428b4b6f3b4f73cf793d0ccd13e3ef764092",
     "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
@@ -235,17 +235,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 9117969,
+      "first_call_ns": 9159245,
       "cached_ns_per_call": [
-        431080.43,
-        425327.54,
-        414592.01,
-        431436.8,
-        434827.34,
-        421540.34,
-        421050.96
+        464622.45,
+        464545.89,
+        571727.54,
+        435555.81,
+        430759.05,
+        422804.79,
+        533546.28
       ],
-      "cached_median_ns_per_call": 425327.54,
+      "cached_median_ns_per_call": 464545.89,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -346,17 +346,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 447889558,
+      "first_call_ns": 444198735,
       "cached_ns_per_call": [
-        653712.97,
-        650808.81,
-        625115.3,
-        606290.06,
-        610502.43,
-        610545.48,
-        608879.19
+        602377.02,
+        708276.04,
+        640254.5,
+        633765.89,
+        755567.75,
+        619049.87,
+        681996.7
       ],
-      "cached_median_ns_per_call": 610545.48,
+      "cached_median_ns_per_call": 640254.5,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -429,17 +429,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 3257493381,
+      "first_call_ns": 4018993150,
       "cached_ns_per_call": [
-        803654.01,
-        757625.03,
-        764889.12,
-        810846.33,
-        776276.44,
-        808118.77,
-        797113.06
+        871400.76,
+        1512651.27,
+        1835102.82,
+        807801.52,
+        971458.48,
+        866557.17,
+        1028765.19
       ],
-      "cached_median_ns_per_call": 797113.06,
+      "cached_median_ns_per_call": 971458.48,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -566,17 +566,17 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 28515141,
+      "first_call_ns": 40474261,
       "cached_ns_per_call": [
-        1097975.15,
-        1086820.76,
-        1081967.82,
-        1094537.69,
-        1093217.02,
-        1108163.88,
-        1116887.34
+        1255796.9,
+        1204634.9,
+        1057237.31,
+        1252117.37,
+        1293288.75,
+        1043198.61,
+        1187511.95
       ],
-      "cached_median_ns_per_call": 1094537.69,
+      "cached_median_ns_per_call": 1204634.9,
       "contract_sha256": "4f14282fbb2e1aca132316c0ee881b29599e2bfaf2fc3ca701a0cbbd03ae9637",
       "contracts": [
         {

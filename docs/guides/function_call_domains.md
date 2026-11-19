@@ -107,10 +107,10 @@ the table gives the median of seven samples.
 
 | Model | First collector call (ms) | Cached median per call (µs) |
 | --- | ---: | ---: |
-| Paired exponentials | 9.57 | 456.08 |
-| Clipped hypot | 430.84 | 607.93 |
-| Literal and dynamic powers | 3222.78 | 775.29 |
-| Exponential Euler with events | 25.92 | 1057.30 |
+| Paired exponentials | 9.16 | 464.55 |
+| Clipped hypot | 444.20 | 640.25 |
+| Literal and dynamic powers | 4018.99 | 971.46 |
+| Exponential Euler with events | 40.47 | 1204.63 |
 
 These are local measurements on a shared host, with CPU, memory, affinity,
 versions and load recorded in the result. Source hashes are checked before and
@@ -119,7 +119,7 @@ They measure Python analysis cost, not generated hardware throughput. No native
 implementation of this metadata analysis is asserted; generated C, Rust and RTL
 remain separate numerical validation targets.
 
-The complete equation-IR benchmark was rerun with the calibrated iCE40 add and subtract report.
+The paired equation-IR capture binds the current compiler source and native extension.
 The paired run used the Cargo dev profile with default features on a shared host.
 `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` contains eleven
 measured transactions after two warmups for each of twelve models. It includes
