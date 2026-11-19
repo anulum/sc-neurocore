@@ -62,6 +62,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `tools/mojo_lane_inventory.py` classifies every Mojo source of the
+  acceleration package by stated rules: comment-only, a machine-translated
+  stub (Python text in string literals and `return 0`), an implementation
+  that still uses `fn`, which Mojo 1.0.0 and later refuse, or an
+  implementation with `def`. It records which sources the backend builder
+  builds, which Python modules name each library, and the package's own
+  authoritative and mirror declarations. The generated
+  `docs/_generated/mojo_lane_inventory.json` is checked for drift by its test,
+  and every translated stub must lie under a declared mirror glob. It also
+  classes every neuron model by how it chooses a backend for `auto`: through
+  the backend selector, by an order fixed in code, with one backend only, by
+  loading a backend directly, or with no accelerated backend. Only tracked
+  files are read.
+
 - The compiler can emit clocked circular CORDIC units for sine, cosine,
   arctangent and two-argument arctangent. Each unit has fixed latency,
   ready/valid handshakes and a signed fixed-point error bound. The Python

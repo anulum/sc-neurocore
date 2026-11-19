@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2090
+expected_file_count = 2092
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8410,3 +8410,11 @@ rationale = "Write the five hex tables and stimulus stream for sc_shd_event_p, r
 [[file]]
 path = "tests/test_shd_event_core.py"
 rationale = "Verify the hdl/shd_event inventory, unique digests, zero target preprocessor branches, kept synth_xilinx block-RAM report, and bit-exact cosimulation across targets and simulators."
+
+[[file]]
+path = "tools/mojo_lane_inventory.py"
+rationale = "Classify every Mojo source by stated rules and map it to the backend builder and the Python loaders, generated and checked for drift."
+
+[[file]]
+path = "tests/test_mojo_lane_inventory.py"
+rationale = "Hold the Mojo lane inventory to its rules, to the repository and to the package's declared mirrors."
