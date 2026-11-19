@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2177
+expected_file_count = 2179
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8758,3 +8758,11 @@ rationale = "Verify Verilog and SystemVerilog header parsing across parameterise
 [[file]]
 path = "tests/test_chiplet/test_chiplet_rtl.py"
 rationale = "Verify multi-die AER chiplet RTL generation, Icarus Verilog ring/star/backpressure co-simulations, and fail-closed topology/route validation."
+
+[[file]]
+path = "src/sc_neurocore/event_driven/simulator.py"
+rationale = "Event-driven leaky integrate-and-fire simulator: exact per-neuron decay from the last update, refractory discard, queued late events, the clock-driven estimate and the refused inputs, each documented as the code behaves."
+
+[[file]]
+path = "tests/test_event_driven_membrane_decay.py"
+rationale = "Hold the event-driven simulator to the closed-form leaky membrane, the refractory and late-event rules, the clock-driven estimate and its input refusals."

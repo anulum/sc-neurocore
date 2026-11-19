@@ -22169,36 +22169,56 @@ One spike event in the priority queue.
 Statistics from an event-driven simulation run.
 
 - **summary**()
+  - Return a one-line summary of spikes, events, queue peak and estimated speedup.
 
 ### Class `EventDrivenSimulator`
-Event-driven asynchronous SNN simulator.
+Event-driven leaky integrate-and-fire network.
+
+A neuron is updated only when an event reaches it. Between its updates the
+membrane relaxes exactly, ``v <- v_rest + (v - v_rest) * exp(-dt / tau_mem)``,
+with ``dt`` measured from that neuron's previous update, whether or not it
+has spiked; the event's weight is then added. A neuron that reaches
+``threshold`` spikes, is set to ``v_reset`` and discards inputs that arrive
+less than ``refractory`` ms after the spike (they still count as processed
+events); its membrane keeps relaxing from the spike time.
 
 Parameters
 ----------
 n_neurons : int
-    Total neurons.
+    Total neurons; a positive integer.
 connectivity : list of (source, target, weight, delay)
-    Synaptic connections.
+    Synaptic connections. Source and target are neuron ids, the weight is
+    finite and the delay (ms) is finite and zero or more.
 threshold : float
-    Spike threshold for LIF neurons.
+    Spike threshold; finite.
 tau_mem : float
-    Membrane time constant (ms).
+    Membrane time constant (ms); finite and positive.
 v_rest : float
-    Resting potential.
+    Resting potential; finite.
 v_reset : float
-    Reset potential after spike.
+    Reset potential after a spike; finite.
 refractory : float
-    Refractory period (ms).
+    Refractory period (ms); finite and zero or more. With a zero period, a
+    cycle made only of zero-delay connections is refused: it could fire
+    again at the same instant without end.
+
+Raises
+------
+ValueError
+    If any parameter or connection is outside the ranges above, or the
+    period is zero and the zero-delay connections form a cycle.
 
 - **__init__**(n_neurons, connectivity, threshold, tau_mem, v_rest, v_reset, refractory)
+- **membrane_potential**()
+  - Return a copy of each neuron's membrane potential as of its last update.
 - **inject_spikes**(events)
-  - Inject external spike events.
+  - Inject external spikes and schedule their synaptic events.
 - **inject_current**(events)
-  - Inject current pulses.
+  - Inject current pulses that are added to the target's membrane.
 - **run**(duration)
-  - Run event-driven simulation.
+  - Process every event due at or before ``duration``.
 - **reset**()
-  - Reset all state.
+  - Return every neuron to rest, clear the queue and the spike log, and restart time.
 
 ---
 

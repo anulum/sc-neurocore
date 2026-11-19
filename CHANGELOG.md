@@ -239,6 +239,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `EventDrivenSimulator` now leaks every neuron exactly from its own last
+  update, `v_rest + (v - v_rest) * exp(-dt / tau_mem)`, instead of never
+  leaking a neuron that had not yet spiked and decaying later inputs from the
+  last spike time again and again. An event due after a run's `duration`
+  stays queued for the next run instead of being dropped, and the
+  clock-driven estimate counts a started millisecond (a 0.5 ms run no longer
+  reports zero operations). Non-positive sizes and time constants, negative
+  delays, non-finite values, unknown neuron ids, and inputs earlier than the
+  last processed event are refused with `ValueError`, and so is, with a zero
+  refractory period, a cycle of zero-delay connections, which used to keep
+  `run` firing at one instant without end. A new `membrane_potential`
+  property returns a copy of each neuron's potential as of its last update.
+
 - `ChipletGenerator.generate` now wires functional multi-die AER routing and
   AXI-Stream interposer transport instead of leaving `sc_aer_router` fanout
   tables unconnected, dropping packets across `delay_pipe` backpressure stalls,

@@ -51,21 +51,27 @@ sim.inject_spikes([(0.0, i) for i in range(100)])  # first 100 neurons fire at t
 spikes, stats = sim.run(duration=1000.0)
 
 print(stats.summary())
-# Typical output:
-# EventDriven: 5234 spikes, 52340 events processed
-# Neurons updated: 8721 / 10000 (87.2%)
-# Events skipped (subthreshold): 47106
-# Effective speedup vs clock-driven: ~190x
+# EventDriven: 0 spikes, 1004 events, queue_peak=1004, est. speedup=9960.2x
 ```
+
+With these weights (0.01–0.1 against a threshold of 1.0) each neuron reached
+by the first wave receives about one input, which leaks away before another
+arrives, so activity stops after the 1004 events of that wave. The estimate
+compares those events with one clock-driven update per neuron per millisecond.
+Larger weights or denser convergence keep the network active.
 
 ## How It Works
 
 1. **Priority queue (min-heap):** All pending events sorted by delivery
    time. Pop the earliest event each iteration.
 
-2. **Analytical decay:** Between events, membrane voltage decays
-   exponentially: `v(t) = v(t0) * exp(-(t - t0) / tau_m)`. No need
-   to step through intermediate timesteps.
+2. **Analytical decay:** Between events, membrane voltage relaxes
+   exponentially toward rest:
+   `v(t) = v_rest + (v(t0) - v_rest) * exp(-(t - t0) / tau_m)`, where
+   `t0` is that neuron's previous update, whether or not it has spiked.
+   No need to step through intermediate timesteps. Inputs arriving within
+   `refractory` ms of a spike are discarded, and events due after
+   `duration` wait for the next `run`.
 
 3. **Spike propagation:** When a neuron fires, new events are pushed
    for all postsynaptic targets at `t_fire + delay`.
@@ -77,9 +83,12 @@ print(stats.summary())
 Algorithm:
   while event_queue not empty and t < duration:
       (t, target, weight) = event_queue.pop_min()
-      v[target] = v[target] * exp(-(t - last_update[target]) / tau_m) + weight
+      if t - last_spike[target] < refractory:
+          continue
+      v[target] = v_rest + (v[target] - v_rest) * exp(-(t - last_update[target]) / tau_m) + weight
       last_update[target] = t
-      if v[target] > threshold:
+      if v[target] >= threshold:
+          last_spike[target] = t
           v[target] = v_reset
           for (post, w, d) in synapses[target]:
               event_queue.push((t + d, post, w))
