@@ -173,7 +173,10 @@ def _unit_log(p: Program, code: str, data_width: int, fraction: int) -> str:
 def _unit_sqrt(p: Program, code: str, data_width: int, fraction: int) -> str:
     positive = p.lt(p.const(0), code)
     radicand = p.shl(p.select(positive, code, p.const(0)), fraction + 2)
-    root = p.shr(p.add(_isqrt(p, radicand), p.const(1)), 1)
+    # The highest possible bit of the shifted positive code is data_width + fraction.
+    top_pair = (data_width + fraction) & ~1
+    floor = build_bounded_isqrt(p, radicand, top_pair)
+    root = p.shr(p.add(floor, p.const(1)), 1)
     return p.select(positive, _saturate(p, root, data_width), p.const(0))
 
 

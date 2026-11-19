@@ -107,8 +107,8 @@ Table bits describe the
 emitted tables; they do not imply that the target inferred that capacity as
 block RAM. A single measurement is a diagnostic and cannot complete the matrix.
 
-The complete comparison contains 372 cases across both lowerings and all six
-formats. Using Yosys 0.70+post and its associated ABC, all 270 supported cases
+The comparison at commit `f50004f5dd1c80008d8adca3944114a23b7a09b9`
+contains 372 cases across both lowerings and all six formats. Using Yosys 0.70+post and its associated ABC, all 270 supported cases
 produced source-bound Xilinx 7-series measurements and passed equivalence for the
 entire mapped interface. The other 102 cases are explicitly unsupported by their
 selected lowering. The cache-only report revalidates the successful measurements
@@ -634,3 +634,26 @@ Check that all routable nets are fully routed in `route.rpt` and review
 between two registers. `timing.rpt` also covers the example I/O constraints.
 See AMD's [timing summary guidance](https://docs.amd.com/r/2025.2-English/ug906-vivado-design-analysis/Report-Timing-Summary)
 for what changes between synthesis and routed timing.
+
+### Bounded square-root lowering
+
+For a positive input code, the highest possible set bit of the radicand after
+scaling is the word width plus the fractional width. The `v2` square root
+starts at the pair containing that bit and uses the exact bounded integer square
+root. Q8.8 therefore starts at bit 24 and needs 13 pairs. The final rounding,
+saturation and combinational interface are preserved.
+
+The bounded Q8.8 square-root implementation was rerouted with the same part,
+tool build, wrapper and 10 ns clock constraint as the historical row above.
+The historical run used six Vivado threads. Pass eight as the last Tcl argument
+to reproduce the bounded run.
+
+| Q8.8 square root `v2` | Slice LUTs | Data path (ns) | Setup slack (ns) | Hold slack (ns) |
+| --- | ---: | ---: | ---: | ---: |
+| Original | 1,693 | 110.230 | -100.332 | 2.199 |
+| Bounded | 205 | 24.402 | -14.681 | 0.336 |
+
+The bounded path meets hold and still misses the 100 MHz setup target. The
+same change was mapped and checked for equivalence with Yosys 0.70+post in
+all six reported fixed-point formats. The other 264 supported standalone
+cases emit exactly the same Verilog as the historical comparison.
