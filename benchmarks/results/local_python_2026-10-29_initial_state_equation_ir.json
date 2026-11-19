@@ -2,7 +2,7 @@
   "cases": {
     "bench_euler": {
       "clocks_per_timestep": 1,
-      "median_ms": 3.91388,
+      "median_ms": 3.903217,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -68,22 +68,22 @@
       "output_sha256": "3e7c8d2ffbddb05afaf9bac7039746a0c87ce2e40937452b19ea9e2d1626687f",
       "pipeline_registers": 0,
       "samples_ns": [
-        5102670,
-        3922653,
-        3722236,
-        3763577,
-        3962108,
-        4456681,
-        3539872,
-        3913880,
-        3613413,
-        3778303,
-        4064766
+        3954052,
+        4002583,
+        3670969,
+        4092637,
+        3903217,
+        3690746,
+        3894606,
+        3818759,
+        4177545,
+        3837697,
+        3981781
       ]
     },
     "bench_heaviside": {
       "clocks_per_timestep": 1,
-      "median_ms": 4.125542,
+      "median_ms": 4.282806,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -152,22 +152,22 @@
       "output_sha256": "3155602379dc252c1f8133fd2ec60306cc3c03c2fade5f5b8ef856016bce292b",
       "pipeline_registers": 0,
       "samples_ns": [
-        3938103,
-        7584203,
-        4231891,
-        3963076,
-        4242865,
-        4196277,
-        3746230,
-        4125542,
-        3803759,
-        4061944,
-        4639472
+        4101589,
+        4282806,
+        3682877,
+        4343261,
+        4007553,
+        3847026,
+        4583525,
+        4351945,
+        4142285,
+        4362521,
+        4500867
       ]
     },
     "bench_held_state_rk4": {
       "clocks_per_timestep": 1,
-      "median_ms": 16.405534,
+      "median_ms": 15.87127,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -241,22 +241,22 @@
       "output_sha256": "51963fd09648b55e260166cf8d3c41668a1c5060c9585850f5f12d12b3069136",
       "pipeline_registers": 0,
       "samples_ns": [
-        15163846,
-        18740307,
-        15764613,
-        16998807,
-        16405534,
-        17090729,
-        14806089,
-        14373456,
-        17230104,
-        15380994,
-        28684295
+        15871270,
+        15657234,
+        15469241,
+        15184466,
+        15966335,
+        15002243,
+        15858782,
+        16722946,
+        34890300,
+        16017655,
+        22291174
       ]
     },
     "bench_hypot": {
       "clocks_per_timestep": 1,
-      "median_ms": 15.403117,
+      "median_ms": 15.282736,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -317,22 +317,22 @@
       "output_sha256": "da5cee99b40ae9545af8c6df5cf0894bb7670825dd9080b5b57fc47e6892e0f2",
       "pipeline_registers": 0,
       "samples_ns": [
-        16808565,
-        15526972,
-        15403117,
-        14857288,
-        15265719,
-        15450679,
-        15245481,
-        17741154,
-        14869199,
-        15267037,
-        15667925
+        15301282,
+        15871724,
+        14204103,
+        15476527,
+        15256209,
+        15292513,
+        15072228,
+        15282736,
+        18222208,
+        15233456,
+        15092499
       ]
     },
     "bench_initial_state_map": {
       "clocks_per_timestep": 1,
-      "median_ms": 807.761652,
+      "median_ms": 808.699466,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -397,22 +397,22 @@
       "output_sha256": "f1f29522fcc5a1baa651f44a5c9ec5aa411342066f273d24144f8289ba430e58",
       "pipeline_registers": 0,
       "samples_ns": [
-        783641165,
-        810957946,
-        804518483,
-        806515153,
-        807761652,
-        797317037,
-        810026972,
-        880423547,
-        800175385,
-        822473898,
-        858605048
+        798789640,
+        800310631,
+        772039238,
+        802011085,
+        808699466,
+        880754574,
+        805929954,
+        841892068,
+        1152829491,
+        817149070,
+        822441375
       ]
     },
     "bench_macro": {
       "clocks_per_timestep": 3,
-      "median_ms": 7.137546,
+      "median_ms": 7.128966,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -481,22 +481,22 @@
       "output_sha256": "9ed71eccc810c2975c167ed4e75015f905b55cff944b93bd7e3eedc34698d1a4",
       "pipeline_registers": 0,
       "samples_ns": [
-        7483335,
-        7321373,
-        7252932,
-        6727379,
-        7137546,
-        7154686,
-        6265024,
-        7177093,
-        6417264,
-        6397144,
-        6995046
+        7210381,
+        7128966,
+        6481112,
+        7267127,
+        6872947,
+        6846041,
+        7060671,
+        7141866,
+        7220183,
+        6786190,
+        13247532
       ]
     },
     "bench_power_dynamic": {
       "clocks_per_timestep": 1,
-      "median_ms": 205.397177,
+      "median_ms": 202.636742,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -557,22 +557,22 @@
       "output_sha256": "cb2ba84712cafa7b2e4501b4a35bbb677aa62bb1c7366ac83692930cb90328d0",
       "pipeline_registers": 0,
       "samples_ns": [
-        266591005,
-        209637142,
-        204779243,
-        199289086,
-        206422483,
-        205397177,
-        201764023,
-        192951502,
-        199625462,
-        211411486,
-        206963712
+        198819212,
+        201248798,
+        205268330,
+        207314878,
+        200389664,
+        201261371,
+        251303776,
+        216320482,
+        213826272,
+        202636742,
+        199347494
       ]
     },
     "bench_power_literal": {
       "clocks_per_timestep": 1,
-      "median_ms": 197.683029,
+      "median_ms": 198.758522,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -633,22 +633,22 @@
       "output_sha256": "dfd24e637641b1af0fcfd33548b7f0fb4cff4156ed427f08c4fd123567053fad",
       "pipeline_registers": 0,
       "samples_ns": [
-        194240351,
-        218585576,
-        200883740,
-        197266833,
-        197683029,
-        198764410,
-        195403472,
-        195502575,
-        193069617,
-        197797476,
-        215154365
+        193782651,
+        194599873,
+        221823414,
+        195810877,
+        196502140,
+        209673436,
+        323210050,
+        197144319,
+        284778599,
+        208801260,
+        198758522
       ]
     },
     "bench_random": {
       "clocks_per_timestep": 1,
-      "median_ms": 17.582208,
+      "median_ms": 17.737196,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -719,22 +719,22 @@
       "output_sha256": "89d8cd010a4030c7dc776abf1f0795b1a8a4d3211f5a028e340c396b024c548f",
       "pipeline_registers": 0,
       "samples_ns": [
-        19075389,
-        17582208,
-        17485931,
-        17606459,
-        18550002,
-        22051604,
-        15325576,
-        17111428,
-        16747056,
-        16722903,
-        20105331
+        18148250,
+        17878573,
+        16040560,
+        17695604,
+        17354605,
+        17315908,
+        17737196,
+        18036421,
+        18195982,
+        18026185,
+        17613283
       ]
     },
     "bench_rk4": {
       "clocks_per_timestep": 5,
-      "median_ms": 23.251286,
+      "median_ms": 22.949753,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -822,22 +822,22 @@
       "output_sha256": "62d20072f11f4790bb3cb391472be1aae656efc836f50149050f94cbeb969a82",
       "pipeline_registers": 4,
       "samples_ns": [
-        29163479,
-        26364287,
-        23292228,
-        22083378,
-        24845868,
-        23595230,
-        20848314,
-        22277660,
-        21946472,
-        21729367,
-        23251286
+        23068230,
+        23131258,
+        21192872,
+        23229813,
+        22595858,
+        22867183,
+        23128471,
+        22949753,
+        22588059,
+        22809975,
+        23067180
       ]
     },
     "bench_round": {
       "clocks_per_timestep": 1,
-      "median_ms": 3.847575,
+      "median_ms": 3.988261,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -898,22 +898,22 @@
       "output_sha256": "6f384c8a3e7af90c32d537b7da1cff0558b672eb3a6379c0d24e9dbc82bf1863",
       "pipeline_registers": 0,
       "samples_ns": [
-        6626832,
-        4073433,
-        3932254,
-        3518324,
-        3890532,
-        3872150,
-        3656735,
-        3713486,
-        3666741,
-        3847575,
-        3786996
+        4194264,
+        3811299,
+        3934709,
+        4085008,
+        3715181,
+        3988261,
+        3964178,
+        4084092,
+        3795328,
+        4022315,
+        4035782
       ]
     },
     "bench_rsqrt": {
       "clocks_per_timestep": 1,
-      "median_ms": 31.085412,
+      "median_ms": 31.537171,
       "model_source": {
         "model": {
           "base_state_units": {},
@@ -974,30 +974,30 @@
       "output_sha256": "906a6ab5612777ab6c3f0970c62d8113ac1ed6cfdd7fbf639ee2885189fdda29",
       "pipeline_registers": 0,
       "samples_ns": [
-        30732538,
-        32357860,
-        31441577,
-        30796774,
-        31466289,
-        29038294,
-        31085412,
-        31020852,
-        30694356,
-        34081805,
-        32337476
+        30826228,
+        33129774,
+        29811125,
+        29001817,
+        31537557,
+        31537171,
+        31307401,
+        33745266,
+        37224650,
+        31567121,
+        31513719
       ]
     }
   },
   "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json",
   "cross_language_comparison": false,
-  "generated_at": "2026-11-19T02:51:28.733102+00:00",
+  "generated_at": "2026-11-19T03:21:12.982799+00:00",
   "hardware_measurement_claimed": false,
   "implementation_scope": "Python model frontend with maintained Rust graph backend",
   "isolation": "shared loaded host; no exclusive core reservation",
   "load_average_after": [
-    42.5654296875,
-    44.244140625,
-    47.03515625
+    31.52734375,
+    34.5712890625,
+    38.9150390625
   ],
   "measurement_context": {
     "architecture": "x86_64",
@@ -1029,8 +1029,8 @@
       23
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 2793.059,
-      "min_observed_mhz": 2793.005,
+      "max_observed_mhz": 2793.081,
+      "min_observed_mhz": 2792.995,
       "sampled_cpu_count": 24.0
     },
     "cpu_governor": [
@@ -1040,14 +1040,14 @@
     "cpu_model": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      42.5654296875,
-      44.244140625,
-      47.03515625
+      31.52734375,
+      34.5712890625,
+      38.9150390625
     ],
     "load_average_before": [
-      42.83740234375,
-      44.37841796875,
-      47.12353515625
+      30.77880859375,
+      34.67431640625,
+      39.04443359375
     ],
     "logical_cpu_count": 24,
     "numpy_version": "2.5.4",
@@ -1061,7 +1061,7 @@
   "performance_promotion_claimed": false,
   "samples_per_case": 11,
   "schema_version": 1,
-  "source_base_sha": "7d6e90c420e7e8661743cc8f53a1334b36d04296",
+  "source_base_sha": "75b1180cb5cdf1bf03cf9d32ddc1b7140a8b3a6b",
   "source_sha256": {
     "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -1165,7 +1165,7 @@
     "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
     "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
     "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
-    "src/sc_neurocore/compiler/function_unit_programs.py": "b0050324a50936b6ddad68fafdb0fae6d1dbc4f27d7f79743f2bd8984ef93de0",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "d7311c4310bd87cc1fd87cb15480d755ec6051f18f47eea7db7a9b27ebd7f5b9",
     "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
     "src/sc_neurocore/compiler/guarantee_summary.py": "f0717a85b39945b2019cf8031756428b4b6f3b4f73cf793d0ccd13e3ef764092",
     "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
@@ -1267,7 +1267,7 @@
     "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
     "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
     "src/sc_neurocore/compiler/lut_accuracy.py": "50bca6057ce3ec2d3fff68d3c3dcfb02f460f1129c6fefd2757745f7a3a9b057",
-    "src/sc_neurocore/compiler/magnitude_function_programs.py": "792c6bad5ef36f921847521991bd4c394fb7a415080f69bf9907cd9dc5fe27a4",
+    "src/sc_neurocore/compiler/magnitude_function_programs.py": "1131628925ee11c7f357dd897a315955f6215acdf6405f8a82ec82f6c8d8aa80",
     "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
     "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
     "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",

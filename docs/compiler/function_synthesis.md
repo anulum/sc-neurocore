@@ -657,3 +657,24 @@ The bounded path meets hold and still misses the 100 MHz setup target. The
 same change was mapped and checked for equivalence with Yosys 0.70+post in
 all six reported fixed-point formats. The other 264 supported standalone
 cases emit exactly the same Verilog as the historical comparison.
+
+#### Reuse the trial subtraction
+
+Each square-root digit uses the sign of its bounded trial subtraction to
+decide whether to keep the digit and reuses the difference as the next
+remainder. The last digit needs only the decision. Scaling, rounding and
+the combinational interface are unchanged.
+
+The Q8.8 comparison used Vivado 2025.2 build 6299465, the same
+`xc7z020clg484-1` part, eight tool threads, the same clocked wrapper
+and the same 10 ns constraint.
+
+| Q8.8 square root `v2` | Slice LUTs | Slice registers | Data path (ns) | Setup slack (ns) | Hold slack (ns) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Bounded comparison | 205 | 29 | 24.402 | -14.681 | 0.336 |
+| Shared trial subtraction | 144 | 29 | 21.499 | -11.494 | 0.643 |
+
+Both implementations meet hold but miss setup at 100 MHz. The routed
+functional netlist agrees with the independent integer reference for all
+65,536 input codes. The path and resource figures come from the routed
+design reports. Board-level timing and power require separate measurements.

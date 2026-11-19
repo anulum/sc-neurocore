@@ -46,7 +46,9 @@ def build_fractional_ratio(p: Program, low: str, high: str, width: int, fraction
     return p.select(equal, p.const(1 << fraction), quotient)
 
 
-def build_bounded_isqrt(p: Program, radicand: str, top_pair: int) -> str:
+def build_bounded_isqrt(
+    p: Program, radicand: str, top_pair: int, *, use_borrow: bool = False
+) -> str:
     """Append the exact integer square root of a bounded nonnegative radicand.
 
     Parameters
@@ -57,6 +59,8 @@ def build_bounded_isqrt(p: Program, radicand: str, top_pair: int) -> str:
         Identifier for a nonnegative integer with no bits above the first pair.
     top_pair : int
         Even position of the low bit of that first pair.
+    use_borrow : bool, optional
+        Use the trial subtraction sign for both comparison and restoration.
 
     Returns
     -------
@@ -66,7 +70,9 @@ def build_bounded_isqrt(p: Program, radicand: str, top_pair: int) -> str:
         The remainder is at most twice the root, so each mask is exact.
 
     """
-    return _append_bounded_isqrt(p, radicand, top_pair, retain_remainder=False)[0]
+    return _append_bounded_isqrt(
+        p, radicand, top_pair, retain_remainder=False, use_borrow=use_borrow
+    )[0]
 
 
 def build_bounded_isqrt_with_remainder(

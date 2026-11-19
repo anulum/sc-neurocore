@@ -13930,7 +13930,7 @@ str
     Identifier for the truncated quotient. The remainder stays strictly
     below the divisor after each subtraction. Equality produces exactly one.
 
-### Function `build_bounded_isqrt(p, radicand, top_pair)`
+### Function `build_bounded_isqrt(p, radicand, top_pair, *, use_borrow)`
 Append the exact integer square root of a bounded nonnegative radicand.
 
 Parameters
@@ -13941,6 +13941,8 @@ radicand : str
     Identifier for a nonnegative integer with no bits above the first pair.
 top_pair : int
     Even position of the low bit of that first pair.
+use_borrow : bool, optional
+    Use the trial subtraction sign for both comparison and restoration.
 
 Returns
 -------
