@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
@@ -18,38 +19,120 @@ from sc_neurocore.hypervisor.tenant import Tenant
 
 @dataclass
 class BandwidthMeter:
-    """Per-tenant throughput metering (spikes/cycles per window)."""
+    """Per-tenant spike throughput over a window of cycles.
+
+    A sample is the spikes counted in the interval that ends at its cycle. The
+    meter knows spikes and cycles only; Mbps need the caller's bits per spike
+    and clock.
+    """
 
     window_cycles: int = 100_000
     _counters: Dict[str, List[int]] = field(default_factory=dict)
     _timestamps: Dict[str, List[int]] = field(default_factory=dict)
 
     def record(self, tenant_id: str, spike_count: int, cycle: int) -> None:
+        """Record the spikes a tenant produced in the interval that ends at ``cycle``.
+
+        A tenant's cycles must increase: the window and the span of
+        :meth:`throughput` are measured along them.
+
+        Raises
+        ------
+        ValueError
+            If ``cycle`` is not later than the tenant's last recorded cycle; the
+            history is left unchanged.
+        """
         if tenant_id not in self._counters:
             self._counters[tenant_id] = []
             self._timestamps[tenant_id] = []
+        stamps = self._timestamps[tenant_id]
+        if stamps and cycle <= stamps[-1]:
+            raise ValueError(
+                f"cycle {cycle} is not later than tenant {tenant_id!r}'s last cycle {stamps[-1]}"
+            )
         self._counters[tenant_id].append(spike_count)
-        self._timestamps[tenant_id].append(cycle)
+        stamps.append(cycle)
 
     def throughput(self, tenant_id: str) -> float:
-        """Spikes per cycle (averaged over window)."""
-        if tenant_id not in self._counters or not self._counters[tenant_id]:
-            return 0.0
-        entries = self._counters[tenant_id]
-        total_spikes = sum(entries[-100:])
-        if len(entries) < 2:
-            return float(total_spikes)
-        ts = self._timestamps[tenant_id]
-        span = max(1, ts[-1] - ts[max(0, len(ts) - 100)])
-        return total_spikes / span
+        """Return spikes per cycle over the window.
 
-    def exceeds_quota(self, tenant_id: str, max_mbps: float) -> bool:
-        return self.throughput(tenant_id) > max_mbps
+        The base is the latest sample at or before ``last − window_cycles``,
+        or the first sample. The rate is the spikes of the samples after the
+        base divided by the cycles from the base to the last sample. With fewer
+        than two samples, or no cycles between the base and the last sample,
+        no interval is known and the rate is 0.0.
+        """
+        entries = self._counters.get(tenant_id, [])
+        if len(entries) < 2:
+            return 0.0
+        ts = self._timestamps[tenant_id]
+        cutoff = ts[-1] - self.window_cycles
+        base = max((i for i, cycle in enumerate(ts) if cycle <= cutoff), default=0)
+        span = ts[-1] - ts[base]
+        if span <= 0:
+            return 0.0
+        return sum(entries[base + 1 :]) / span
+
+    def throughput_mbps(self, tenant_id: str, *, bits_per_spike: int, clock_hz: float) -> float:
+        """Return the window's throughput in Mbps.
+
+        Parameters
+        ----------
+        tenant_id : str
+            Metered tenant.
+        bits_per_spike : int
+            Bits one spike event occupies on the link; a positive integer.
+        clock_hz : float
+            Clock of the cycles the samples were recorded in; finite and positive, not a bool.
+
+        Returns
+        -------
+        float
+            Spikes per cycle × ``bits_per_spike`` × ``clock_hz`` / 1e6.
+
+        Raises
+        ------
+        ValueError
+            If ``bits_per_spike`` is not a positive integer, or ``clock_hz`` is a
+            bool or not finite and positive.
+        """
+        if isinstance(bits_per_spike, bool) or not isinstance(bits_per_spike, int):
+            raise ValueError(f"bits_per_spike must be a positive integer, got {bits_per_spike!r}")
+        if bits_per_spike < 1:
+            raise ValueError(f"bits_per_spike must be a positive integer, got {bits_per_spike!r}")
+        if isinstance(clock_hz, bool) or not (math.isfinite(clock_hz) and clock_hz > 0.0):
+            raise ValueError(f"clock_hz must be finite and positive, got {clock_hz!r}")
+        return self.throughput(tenant_id) * bits_per_spike * clock_hz / 1e6
+
+    def exceeds_quota(
+        self, tenant_id: str, max_mbps: float, *, bits_per_spike: int, clock_hz: float
+    ) -> bool:
+        """Return whether the window's throughput is above a quota in Mbps.
+
+        Parameters
+        ----------
+        tenant_id : str
+            Metered tenant.
+        max_mbps : float
+            Quota; finite and zero or more, not a bool.
+        bits_per_spike, clock_hz
+            As for :meth:`throughput_mbps`.
+
+        Raises
+        ------
+        ValueError
+            If ``max_mbps`` is a bool, not finite or negative, or a unit is
+            refused by :meth:`throughput_mbps`.
+        """
+        if isinstance(max_mbps, bool) or not (math.isfinite(max_mbps) and max_mbps >= 0.0):
+            raise ValueError(f"max_mbps must be finite and zero or more, got {max_mbps!r}")
+        measured = self.throughput_mbps(tenant_id, bits_per_spike=bits_per_spike, clock_hz=clock_hz)
+        return measured > max_mbps
 
 
 @dataclass
 class SLAViolation:
-    """One SLA violation."""
+    """One recorded SLA violation: tenant, metric, measured value, limit and cycle."""
 
     tenant_id: str
     metric: str  # "latency", "bandwidth", "compute_share"
@@ -67,6 +150,7 @@ class SLAMonitor:
     def check_latency(
         self, tenant: Tenant, measured_us: float, cycle: int
     ) -> Optional[SLAViolation]:
+        """Record and return a violation when a latency exceeds the tenant's QoS limit."""
         if measured_us > tenant.qos.max_latency_us:
             v = SLAViolation(
                 tenant.tenant_id, "latency", measured_us, tenant.qos.max_latency_us, cycle
@@ -78,6 +162,10 @@ class SLAMonitor:
     def check_bandwidth(
         self, tenant: Tenant, measured_mbps: float, cycle: int
     ) -> Optional[SLAViolation]:
+        """Record and return a violation when a bandwidth in Mbps exceeds the tenant's QoS limit.
+
+        :meth:`BandwidthMeter.throughput_mbps` gives the measured Mbps.
+        """
         if measured_mbps > tenant.qos.max_bandwidth_mbps:
             v = SLAViolation(
                 tenant.tenant_id, "bandwidth", measured_mbps, tenant.qos.max_bandwidth_mbps, cycle
@@ -88,7 +176,9 @@ class SLAMonitor:
 
     @property
     def total_violations(self) -> int:
+        """Return the number of violations recorded."""
         return len(self.violations)
 
     def violations_for(self, tenant_id: str) -> List[SLAViolation]:
+        """Return the violations recorded for one tenant."""
         return [v for v in self.violations if v.tenant_id == tenant_id]

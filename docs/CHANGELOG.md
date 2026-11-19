@@ -251,6 +251,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The hypervisor places tenants by their whole QoS and meters bandwidth in
+  real units. A region fits a tenant only with enough neurons and synapses
+  (`HWRegion.fits`), for allocation and migration alike; a migration to a
+  region too small, or to the region the tenant holds, is refused before
+  anything moves. `BandwidthMeter.throughput` counts the spikes after the
+  window's first sample over the cycles they span (two samples of 10 spikes
+  ten cycles apart give 1.0, not 2.0), reads `window_cycles`, and gives 0.0
+  for one sample or no span instead of the raw count. Mbps come from the new
+  `throughput_mbps`, and `exceeds_quota`, with the bits per spike and the
+  clock as required keywords, both checked; neither those nor the limit
+  accepts a bool. `record` refuses a cycle that is not later than the
+  tenant's last, since the window runs along increasing cycles. Several
+  realtime tenants share one half of a priority plan, so a third one no
+  longer gets nothing. The Go and Rust stubs and the unwired Julia and Mojo
+  copies are not updated.
+
 - `generate_bus_wrapper` (`sc_neurocore.hdl_gen.bus_interface` /
   `_bus_wrappers`) now connects `u_neuron.spike_out` in both AXI4-Lite and
   Wishbone B4 wrappers so `irq_spike` and `reg_spike_count` track neuron

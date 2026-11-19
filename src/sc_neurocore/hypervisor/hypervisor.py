@@ -167,7 +167,7 @@ class Hypervisor:
         for rid, region in self.regions.items():
             if not region.is_free:
                 continue
-            if region.num_neurons < tenant.qos.max_neurons:
+            if not region.fits(tenant.qos):
                 continue
             # Allocate
             region.state = RegionState.ALLOCATED

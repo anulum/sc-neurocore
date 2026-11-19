@@ -86,13 +86,22 @@ class MigrationEngine:
         start = time.time_ns()
 
         # Reject before mutating source, tenant checkpoint, or firewall.
-        if not target.is_free:
+        refusal = (
+            "same_region"
+            if target is source
+            else "target_not_free"
+            if not target.is_free
+            else "target_too_small"
+            if not target.fits(tenant.qos)
+            else ""
+        )
+        if refusal:
             result = MigrationResult(
                 False,
                 tenant.tenant_id,
                 source.region_id,
                 target.region_id,
-                reason="target_not_free",
+                reason=refusal,
             )
             self.history.append(result)
             return result

@@ -26249,15 +26249,23 @@ Handles preemption with state checkpoint/restore.
 ## Module `hypervisor.qos_monitor`
 
 ### Class `BandwidthMeter`
-Per-tenant throughput metering (spikes/cycles per window).
+Per-tenant spike throughput over a window of cycles.
+
+A sample is the spikes counted in the interval that ends at its cycle. The
+meter knows spikes and cycles only; Mbps need the caller's bits per spike
+and clock.
 
 - **record**(tenant_id, spike_count, cycle)
+  - Record the spikes a tenant produced in the interval that ends at ``cycle``.
 - **throughput**(tenant_id)
-  - Spikes per cycle (averaged over window).
-- **exceeds_quota**(tenant_id, max_mbps)
+  - Return spikes per cycle over the window.
+- **throughput_mbps**(tenant_id, \*, bits_per_spike, clock_hz)
+  - Return the window's throughput in Mbps.
+- **exceeds_quota**(tenant_id, max_mbps, \*, bits_per_spike, clock_hz)
+  - Return whether the window's throughput is above a quota in Mbps.
 
 ### Class `SLAViolation`
-One SLA violation.
+One recorded SLA violation: tenant, metric, measured value, limit and cycle.
 
 
 ### Class `SLAMonitor`
@@ -26265,22 +26273,33 @@ Monitors per-tenant QoS compliance and detects violations.
 
 - **__init__**()
 - **check_latency**(tenant, measured_us, cycle)
+  - Record and return a violation when a latency exceeds the tenant's QoS limit.
 - **check_bandwidth**(tenant, measured_mbps, cycle)
+  - Record and return a violation when a bandwidth in Mbps exceeds the tenant's QoS limit.
 - **total_violations**()
+  - Return the number of violations recorded.
 - **violations_for**(tenant_id)
+  - Return the violations recorded for one tenant.
 
 ---
 
 ## Module `hypervisor.region`
 
 ### Class `RegionState`
+Lifecycle state of a hardware region.
+
 
 ### Class `HWRegion`
 One isolated hardware region on the fabric.
 
 - **axi_end_addr**()
+  - Return the first address after the region's AXI range.
 - **is_free**()
+  - Return whether the region is free to allocate.
 - **contains_addr**(addr)
+  - Return whether an address lies in the region's AXI range.
+- **fits**(qos)
+  - Return whether the region has the neurons and the synapses a QoS policy asks for.
 
 ### Class `RegionHealth`
 Health score with degradation model.
@@ -26288,7 +26307,9 @@ Health score with degradation model.
 - **health_score**()
   - 0.0 = dead, 1.0 = perfect.
 - **is_degraded**()
+  - Return whether the health score is below 0.8.
 - **record_error**()
+  - Count one more error against the region's health.
 
 ### Function `select_region_multi_die(regions, min_neurons, preferred_die)`
 Select best free region, preferring a specific die.
@@ -26298,11 +26319,14 @@ Select best free region, preferring a specific die.
 ## Module `hypervisor.scheduler`
 
 ### Class `SchedulingPolicy`
+How the scheduler divides the cycles among active tenants.
+
 
 ### Class `ScheduleSlot`
 One time slot in the schedule.
 
 - **end_cycle**()
+  - Return the first cycle after the slot.
 
 ### Class `Scheduler`
 Multi-tenant temporal scheduler with preemption.

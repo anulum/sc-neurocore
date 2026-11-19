@@ -28,4 +28,21 @@ from sc_neurocore.hypervisor.hypervisor import (
   an address and, against the region model, overlapping or empty regions and
   any rule that does not lie in a region its tenant holds.
 
+## Capacity, metering and priority
+
+- A region fits a tenant when it has at least the neurons and the synapses of
+  the tenant's QoS (`HWRegion.fits`); allocation and migration both use it.
+  `migrate` refuses a busy target, a target too small and the tenant's own
+  region, before anything moves.
+- `BandwidthMeter.throughput` is spikes per cycle over `window_cycles`: the
+  spikes of the samples after the window's base, over the cycles from the base
+  to the last sample; 0.0 with one sample or no span. `throughput_mbps` and
+  `exceeds_quota` take `bits_per_spike` and `clock_hz` from the caller; the
+  units and the limit refuse a bool.
+- `BandwidthMeter.record` refuses a cycle that is not later than the
+  tenant's last, with `ValueError` and no change to the history: the window
+  and the span run along increasing cycles.
+- Under the priority policy, the realtime tenants share one half of the cycles
+  equally; the others keep an equal share each, in priority order.
+
 ::: sc_neurocore.hypervisor.hypervisor

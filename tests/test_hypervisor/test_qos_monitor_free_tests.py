@@ -18,6 +18,7 @@ from qos_monitor_support import *  # noqa: F403
 
 
 def test_defensive_empty_history_has_zero_throughput() -> None:
+    """An empty history gives no throughput."""
     meter = BandwidthMeter()
     meter._counters["tenant"] = []
     meter._timestamps["tenant"] = []
@@ -25,29 +26,33 @@ def test_defensive_empty_history_has_zero_throughput() -> None:
     assert meter.throughput("tenant") == 0.0
 
 
-def test_zero_cycle_span_is_clamped() -> None:
-    meter = BandwidthMeter()
+def test_zero_cycle_span_gives_zero() -> None:
+    """A window of no cycles makes the last sample its own base, so the rate is 0.0 rather than a clamped count."""
+    meter = BandwidthMeter(window_cycles=0)
     meter.record("tenant", 2, 100)
-    meter.record("tenant", 3, 100)
+    meter.record("tenant", 3, 200)
 
-    assert meter.throughput("tenant") == 5.0
+    assert meter.throughput("tenant") == 0.0
 
 
-def test_throughput_uses_last_one_hundred_samples() -> None:
+def test_throughput_counts_the_samples_after_the_base() -> None:
+    """One spike per cycle over 100 cycles is a rate of 1.0, the first sample being the base."""
     meter = BandwidthMeter()
     for cycle in range(101):
         meter.record("tenant", 1, cycle)
 
-    assert meter.throughput("tenant") == pytest.approx(100 / 99)
+    assert meter.throughput("tenant") == pytest.approx(1.0)
 
 
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
+    """The facade re-exports the owner's classes."""
     assert compatibility_surface.BandwidthMeter is qos_owner.BandwidthMeter
     assert compatibility_surface.SLAViolation is qos_owner.SLAViolation
     assert compatibility_surface.SLAMonitor is qos_owner.SLAMonitor
 
 
 def test_qos_monitor_definitions_have_one_owner() -> None:
+    """The QoS classes are defined in the owner module only."""
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(qos_owner.__file__).read_text(encoding="utf-8"))
 

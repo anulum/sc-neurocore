@@ -12,10 +12,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from sc_neurocore.hypervisor.tenant import QoSPolicy
 
 
 class RegionState(Enum):
+    """Lifecycle state of a hardware region."""
+
     FREE = "free"
     ALLOCATED = "allocated"
     MIGRATING = "migrating"
@@ -38,14 +43,21 @@ class HWRegion:
 
     @property
     def axi_end_addr(self) -> int:
+        """Return the first address after the region's AXI range."""
         return self.axi_base_addr + self.axi_size
 
     @property
     def is_free(self) -> bool:
+        """Return whether the region is free to allocate."""
         return self.state == RegionState.FREE
 
     def contains_addr(self, addr: int) -> bool:
+        """Return whether an address lies in the region's AXI range."""
         return self.axi_base_addr <= addr < self.axi_end_addr
+
+    def fits(self, qos: QoSPolicy) -> bool:
+        """Return whether the region has the neurons and the synapses a QoS policy asks for."""
+        return self.num_neurons >= qos.max_neurons and self.num_synapses >= qos.max_synapses
 
 
 def select_region_multi_die(
@@ -87,7 +99,9 @@ class RegionHealth:
 
     @property
     def is_degraded(self) -> bool:
+        """Return whether the health score is below 0.8."""
         return self.health_score < 0.8
 
     def record_error(self) -> None:
+        """Count one more error against the region's health."""
         self.error_count += 1

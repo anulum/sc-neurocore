@@ -18,6 +18,8 @@ from sc_neurocore.hypervisor.tenant import Tenant, TenantPriority
 
 
 class SchedulingPolicy(Enum):
+    """How the scheduler divides the cycles among active tenants."""
+
     PRIORITY = "priority"
     ROUND_ROBIN = "round_robin"
     FAIR_SHARE = "fair_share"
@@ -35,6 +37,7 @@ class ScheduleSlot:
 
     @property
     def end_cycle(self) -> int:
+        """Return the first cycle after the slot."""
         return self.start_cycle + self.duration_cycles
 
 
@@ -83,12 +86,13 @@ class Scheduler:
 
     def _priority(self, tenants: List[Tenant], total: int) -> List[ScheduleSlot]:
         sorted_t = sorted(tenants, key=lambda t: t.priority.value)
+        n_realtime = sum(1 for t in tenants if t.priority == TenantPriority.REALTIME)
         slots = []
         cycle = 0
         for t in sorted_t:
             share = max(1, total // len(tenants))
             if t.priority == TenantPriority.REALTIME:
-                share = total // 2  # Realtime gets 50%
+                share = max(1, total // 2 // n_realtime)  # Realtime tenants share 50%
             dur = min(share, total - cycle)
             if dur > 0:
                 slots.append(ScheduleSlot(t.tenant_id, t.region_id or 0, cycle, dur))
