@@ -248,6 +248,7 @@ class RulkovMapNeuron:
     mu: float = 0.001
 
     def __post_init__(self) -> None:
+        """Store the state and the parameters as floats and refuse non-finite values."""
         self.x = float(self.x)
         self.y = float(self.y)
         self.alpha = float(self.alpha)

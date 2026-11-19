@@ -146,6 +146,7 @@ class SCScaledResetAdaptiveIFNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Refuse an invalid runtime configuration at construction."""
         self._raise_if_invalid_runtime()
 
     def _runtime_args(self) -> tuple[float, ...]:

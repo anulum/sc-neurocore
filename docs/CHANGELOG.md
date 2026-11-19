@@ -437,6 +437,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- Every module that loads a Mojo shared library is now held to the public
+  docstring policy (66 more files, 2141 in all). Ten neuron-model modules
+  and one Mojo package gain module docstrings, and 51 constructors, steps,
+  resets, accessors and Mojo batch functions gain docstrings. No code
+  changes. Two benchmark records whose bound sources changed only in
+  docstrings are kept with a recorded review.
+
 - Every JSON fixture under `tests/fixtures/` carries its ownership in a
   `.license` sidecar with the licence and both copyright records. Four
   recorded Grype advisory matches and the NIR corpus manifest had none, and

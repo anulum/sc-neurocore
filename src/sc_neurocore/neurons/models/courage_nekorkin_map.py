@@ -223,6 +223,7 @@ class CourageNekorkinMapNeuron:
     x_threshold: float = 0.3
 
     def __post_init__(self) -> None:
+        """Validate the parameters and the initial state ``(x, y)`` at construction."""
         self._parameters().validate(self.x, self.y)
 
     def _parameters(self) -> _CourbageParameters:

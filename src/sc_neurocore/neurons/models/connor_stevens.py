@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Connor-Walter-McKown 1977 A-current parameterization
 
+"""Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterization.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -112,6 +117,7 @@ class ConnorStevensNeuron:
     v_threshold: float = 0.0
 
     def __post_init__(self) -> None:
+        """Refuse a non-finite voltage or a gating variable outside its range, and store each as a float."""
         self.v = self._finite_float("v", self.v)
         self.m = self._gate_float("m", self.m, upper=1.0)
         self.h = self._gate_float("h", self.h, upper=1.0)
@@ -456,5 +462,6 @@ class ConnorStevensNeuron:
         return output[:n_steps].copy(), result, state
 
     def reset(self) -> None:
+        """Restore the default state: v = -68.0 and (m, h, n, a, b) = (0.01, 0.99, 0.1, 0.5, 0.1)."""
         self.v = -68.0
         self.m, self.h, self.n, self.a, self.b = 0.01, 0.99, 0.1, 0.5, 0.1

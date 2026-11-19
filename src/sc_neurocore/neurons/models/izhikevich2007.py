@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Izhikevich 2007 biophysical spiking neuron
 
+"""Izhikevich 2007 biophysical quadratic integrate-and-fire neuron.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -157,6 +162,7 @@ class Izhikevich2007Neuron(BaseNeuron):
     u: float = field(init=False, default=0.0)
 
     def __post_init__(self) -> None:
+        """Refuse an unsupported integrator and non-finite or non-positive parameters at construction."""
         if self.integrator not in {"euler", "rk4"}:
             raise ValueError(f"Unsupported integrator for Izhikevich2007Neuron: {self.integrator}")
         for name in ("k", "vr", "vt", "vpeak", "a", "b", "c", "d"):
@@ -203,6 +209,10 @@ class Izhikevich2007Neuron(BaseNeuron):
         return dv, du
 
     def step(self, input_current: float) -> int:
+        """Advance one step, apply the threshold reset and return the event (1 or 0).
+
+        A non-finite candidate state is rolled back and raises.
+        """
         self._validate_runtime()
         input_current = self._require_finite("input_current", input_current)
         before = (self.v, self.u)
@@ -437,6 +447,7 @@ class Izhikevich2007Neuron(BaseNeuron):
         return 0
 
     def reset_state(self) -> None:
+        """Restore ``v`` to ``v0`` (``vr`` when unset) and ``u`` to ``b (v - vr)``; a non-finite result raises."""
         self._validate_config()
         v0 = self.vr if self.v0 is None else self.v0
         v_next = float(v0)
@@ -447,4 +458,5 @@ class Izhikevich2007Neuron(BaseNeuron):
         self.u = u_next
 
     def get_state(self) -> dict[str, Any]:
+        """Return the state as a mapping with keys ``v`` and ``u``."""
         return {"v": float(self.v), "u": float(self.u)}

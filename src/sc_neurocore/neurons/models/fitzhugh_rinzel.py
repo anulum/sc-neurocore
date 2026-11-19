@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — FitzHugh 1976 / Rinzel 1987 — FHN + slow variable
 
+"""FitzHugh-Rinzel three-state qualitative bursting neuron (FitzHugh 1976, Rinzel 1987).
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -152,6 +157,7 @@ class FitzHughRinzelNeuron:
     v_threshold: float = 1.0
 
     def __post_init__(self) -> None:
+        """Validate the numeric contract of the parameters and the initial state."""
         self._validate_numeric_contract()
 
     @staticmethod
@@ -231,7 +237,6 @@ class FitzHughRinzelNeuron:
 
     def step(self, current: float) -> int:
         """Advance the model by one RK4 step."""
-
         self._validate_numeric_contract()
         current = self._finite_float("current", current)
         v_prev = self.v
@@ -471,4 +476,5 @@ class FitzHughRinzelNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf, yf
 
     def reset(self) -> None:
+        """Restore the default state (v, w, y) = (-1.0, -0.5, 0.0)."""
         self.v, self.w, self.y = -1.0, -0.5, 0.0

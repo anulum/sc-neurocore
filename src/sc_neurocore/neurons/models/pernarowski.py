@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Pernarowski 1994 pancreatic beta-cell burster
 
+"""Pernarowski 1994 pancreatic beta-cell burster.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -158,6 +163,7 @@ class PernarowskiNeuron:
     v_threshold: float = 0.5
 
     def __post_init__(self) -> None:
+        """Refuse non-real or non-finite fields at construction."""
         validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
@@ -246,6 +252,7 @@ class PernarowskiNeuron:
         return candidate
 
     def step(self, current: float = 0.0) -> int:
+        """Advance one RK4 step; return 1 on an upward crossing of ``v_threshold``, else 0."""
         current = self._validate_runtime_contract(current)
         v_prev = self.v
         v_new, w_new, z_new = self._rk4_candidate(current)
@@ -478,4 +485,5 @@ class PernarowskiNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf, zf
 
     def reset(self) -> None:
+        """Restore the default state (v, w, z) = (-1.0, 0.0, 0.0)."""
         self.v, self.w, self.z = -1.0, 0.0, 0.0

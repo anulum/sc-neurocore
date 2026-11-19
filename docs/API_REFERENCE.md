@@ -32919,6 +32919,7 @@ x_threshold : float
     Maintained upward-crossing observation level; not a source parameter.
 
 - **__post_init__**()
+  - Validate the map parameters and the initial state at construction.
 - **step**(current)
   - Advance one simultaneous map iteration.
 - **simulate**(n_steps, current, backend)
@@ -33080,11 +33081,13 @@ public ``step`` advances the 1 ms macro-step with candidate-first RK4
 sub-steps and commits only finite, physically bounded candidates.
 
 - **__post_init__**()
+  - Refuse a non-finite voltage or a gating variable outside its range, and store each as a float.
 - **step**(current)
   - Advance one macro-step and return an upward-threshold spike flag.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` macro-steps, returning ``(v_trace, spikes)``.
 - **reset**()
+  - Restore the default state: v = -68.0 and (m, h, n, a, b) = (0.01, 0.99, 0.1, 0.5, 0.1).
 
 ---
 
@@ -33094,6 +33097,7 @@ sub-steps and commits only finite, physically bounded candidates.
 Courbage-Nekorkin-Vdovin map with the source Figure-4 profile.
 
 - **__post_init__**()
+  - Validate the parameters and the initial state ``(x, y)`` at construction.
 - **step**(current)
   - Advance one map iteration; rejected candidates leave state unchanged.
 - **simulate**(n_steps, current, backend)
@@ -33385,10 +33389,13 @@ variable θ advances on a circle; spike occurs when θ crosses π.
 Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233–253.
 
 - **__post_init__**()
+  - Refuse non-finite phase, step, gain or threshold values and a non-positive step.
 - **step**(current)
+  - Advance the phase one step; return 1 on an upward crossing of ``theta_threshold``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the phase to zero.
 
 ---
 
@@ -33518,6 +33525,7 @@ Fourcaud-Trocmé, N., Hansel, D., van Vreeswijk, C. & Brunel, N.
 doi:10.1523/JNEUROSCI.23-37-11628.2003.
 
 - **__post_init__**()
+  - Refuse an unsupported profile and non-finite voltages or parameters at construction.
 - **fourcaud_trocme_2003**(\*, dt)
   - Return the fitted source protocol's deterministic zero-noise profile.
 - **sc_rk4_compatibility**()
@@ -33548,10 +33556,13 @@ historical explicit-Euler path remains available only through the explicit
 ``baseline_euler`` integrator option for compatibility experiments.
 
 - **__post_init__**()
+  - Refuse an unsupported integrator, then validate the configuration.
 - **step**(current)
+  - Advance one step with the configured integrator; return 1 on an upward crossing of ``v_threshold``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state v = -1.0, w = -0.5.
 
 ---
 
@@ -33568,11 +33579,13 @@ Runtime integration uses RK4 over the published three-state ODE with
 current held constant for one step.
 
 - **__post_init__**()
+  - Validate the numeric contract of the parameters and the initial state.
 - **step**(current)
   - Advance the model by one RK4 step.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state (v, w, y) = (-1.0, -0.5, 0.0).
 
 ---
 
@@ -33688,6 +33701,7 @@ constant over each exact-flow interval and uses the same current units as
 ``i_asc1`` and ``i_asc2``.
 
 - **__post_init__**()
+  - Validate the initial state and the parameters at construction.
 - **theta**()
   - Return the instantaneous composite spike threshold.
 - **step**(current)
@@ -33928,10 +33942,13 @@ dz/dt = r(s(x - x_rest) - z)
 Reference: Hindmarsh, J.L. & Rose, R.M. (1984). Proc. R. Soc. Lond. B 221:87–102.
 
 - **__post_init__**()
+  - Refuse an unsupported integrator and any non-finite parameter or state value.
 - **step**(current)
+  - Advance one step (RK4 or Euler); return 1 on an upward crossing of ``x_threshold``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state (x, y, z) = (-1.6, -10.0, 2.0).
 
 ---
 
@@ -33960,11 +33977,13 @@ Integrator options:
   Hodgkin-Huxley ODEs
 
 - **__post_init__**()
+  - Refuse an unsupported integrator, then validate the runtime state.
 - **step**(current)
   - Advance one macro step and commit only a finite physical candidate.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
+  - Restore the default state: v = -65.0 and (m, h, n) = (0.05, 0.6, 0.32).
 
 ---
 
@@ -34024,6 +34043,7 @@ sigma : float
     Slow-nullcline offset from Eq. 2.
 
 - **__post_init__**()
+  - Validate the parameters and refuse a non-finite initial state.
 - **step**(current)
   - Advance Eqs. 2-3 once and return the reset-branch event.
 - **simulate**(n_steps, current, backend)
@@ -34147,11 +34167,15 @@ If ``v >= vpeak`` after integration, the neuron emits one spike and applies
 importer: pF, nS, mV, ms, and pA.
 
 - **__post_init__**()
+  - Refuse an unsupported integrator and non-finite or non-positive parameters at construction.
 - **step**(input_current)
+  - Advance one step, apply the threshold reset and return the event (1 or 0).
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
 - **reset_state**()
+  - Restore ``v`` to ``v0`` (``vr`` when unset) and ``u`` to ``b (v - vr)``; a non-finite result raises.
 - **get_state**()
+  - Return the state as a mapping with keys ``v`` and ``u``.
 
 ---
 
@@ -34646,6 +34670,7 @@ input_gain : float
     Maintained gain for the external perturbation on active returns.
 
 - **__post_init__**()
+  - Validate the state and the parameters at construction and store the validated values.
 - **step**(current)
   - Advance one first-return iteration without partial state mutation.
 - **simulate**(n_steps, current, backend)
@@ -34671,6 +34696,7 @@ Mihalaş, Ş. and Niebur, E. (2009), Neural Computation 21(3), 704–718,
 doi:10.1162/neco.2008.12-07-680, equations (2.1)–(2.2), Table 1.
 
 - **__post_init__**()
+  - Refuse an invalid runtime configuration at construction.
 - **step**(current)
   - Advance one sampled RK4 interval and return one on a source event.
 - **simulate**(n_steps, current, backend)
@@ -34958,10 +34984,13 @@ semantics without an artificial reset during normal evolution.
 Reference: Pernarowski, M. (1994). SIAM J. Appl. Math. 54:814–832.
 
 - **__post_init__**()
+  - Refuse non-real or non-finite fields at construction.
 - **step**(current)
+  - Advance one RK4 step; return 1 on an upward crossing of ``v_threshold``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state (v, w, z) = (-1.0, 0.0, 0.0).
 
 ---
 
@@ -35387,6 +35416,7 @@ default state and ``sigma=-1.6`` form SC-NeuroCore's quiescent operating
 profile; they are not represented as a source figure's unique defaults.
 
 - **__post_init__**()
+  - Store the state and the parameters as floats and refuse non-finite values.
 - **step**(current)
   - Advance one source-map iteration and report the reset-branch event.
 - **simulate**(n_steps, current, backend)
@@ -35456,9 +35486,11 @@ This is a project-defined recurrence without whole-model publication
 attribution.
 
 - **step**(current)
+  - Advance the clipped logistic map one step; return 1 when ``x`` is at or above ``x_threshold``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state x = 0.1, y = 0.0.
 
 ---
 
@@ -35468,6 +35500,7 @@ attribution.
 Retained clipped rational-recovery project recurrence.
 
 - **__post_init__**()
+  - Validate the parameters and the initial state ``(x, y)`` at construction.
 - **step**(current)
   - Advance once; rejected candidates leave both states unchanged.
 - **simulate**(n_steps, current, backend)
@@ -35527,10 +35560,13 @@ is applied only after the finite candidate reaches the adaptive threshold.
 This count-neutral project recurrence has no whole-model paper attribution.
 
 - **__post_init__**()
+  - Refuse an invalid runtime configuration at construction.
 - **step**(current)
+  - Advance one RK4 step; on reaching ``theta``, reset ``v``, raise ``theta`` and both after-spike currents, and return 1, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore ``v`` to ``v_rest``, ``theta`` to ``theta_inf`` and both after-spike currents to zero.
 
 ---
 
@@ -35653,6 +35689,7 @@ continuous Wilson (1999) equations, which are implemented by
 :class:`~sc_neurocore.neurons.models.wilson_hr.WilsonHRNeuron`.
 
 - **__post_init__**()
+  - Refuse non-real or non-finite fields at construction.
 - **step**(current)
   - Advance one project-RK4 step and apply the historical hard reset.
 - **simulate**(n_steps, current, backend)
@@ -35668,6 +35705,7 @@ continuous Wilson (1999) equations, which are implemented by
 Historical four-state project recurrence with a scaled voltage reset.
 
 - **__post_init__**()
+  - Refuse an invalid runtime configuration at construction.
 - **step**(current)
   - Advance the retained recurrence and return its level event.
 - **simulate**(n_steps, current, backend)
@@ -35787,10 +35825,13 @@ analytically tractable Nagumo equation.
 This project recurrence is not attributed to McKean's Heaviside system.
 
 - **__post_init__**()
+  - Refuse non-real or non-finite fields at construction.
 - **step**(current)
+  - Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state v = 0.0, w = 0.0.
 
 ---
 
@@ -35814,6 +35855,7 @@ class uses the source ``C = 21 pF`` equation.
 Retained configurable upward-crossing observation convention.
 
 - **__post_init__**()
+  - Validate the Rulkov-map fields, then refuse a non-finite crossing threshold.
 - **step**(current)
   - Advance once and report the historical rising threshold crossing.
 - **simulate**(n_steps, current, backend)
@@ -36208,10 +36250,13 @@ state.
 Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
 - **__post_init__**()
+  - Refuse non-real or non-finite fields at construction.
 - **step**(current)
+  - Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state v = -1.5, w = -0.5.
 
 ---
 
@@ -36483,10 +36528,13 @@ upward crossings of ``v_peak``; the source flow is continuous and never
 resets either state variable.
 
 - **__post_init__**()
+  - Refuse non-real or non-finite fields at construction.
 - **step**(current)
+  - Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+  - Restore the default state v = -0.7, r = 0.085.
 
 ---
 

@@ -196,6 +196,7 @@ class SCClippedRationalRecoveryMapNeuron:
     clip_bound: float = 1_000_000.0
 
     def __post_init__(self) -> None:
+        """Validate the parameters and the initial state ``(x, y)`` at construction."""
         self._parameters().validate(self.x, self.y)
 
     def _parameters(self) -> _SCParameters:

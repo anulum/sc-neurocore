@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Terman & Wang 1995 relaxation oscillator for LEGION
 
+"""Terman and Wang 1995 relaxation oscillator for LEGION networks.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -150,6 +155,7 @@ class TermanWangOscillator:
     v_peak: float = 1.5
 
     def __post_init__(self) -> None:
+        """Refuse non-real or non-finite fields at construction."""
         validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
@@ -226,6 +232,7 @@ class TermanWangOscillator:
         return candidate
 
     def step(self, current: float) -> int:
+        """Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0."""
         current = self._validate_runtime_contract(current)
         v_prev = self.v
         self.v, self.w = self._rk4_candidate(current)
@@ -440,5 +447,6 @@ class TermanWangOscillator:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf
 
     def reset(self) -> None:
+        """Restore the default state v = -1.5, w = -0.5."""
         self.v = -1.5
         self.w = -0.5

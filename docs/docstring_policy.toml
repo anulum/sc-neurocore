@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2101
+expected_file_count = 2167
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8454,3 +8454,267 @@ rationale = "Verify maintained PDK preset geometry, voltages, and nominal Libert
 [[file]]
 path = "tests/test_asic_flow/test_signoff_multi_corner_analysis.py"
 rationale = "Verify per-PDK corner tables, real Liberty filenames, and fail-closed refusals."
+
+[[file]]
+path = "src/sc_neurocore/accel/coba_lif.py"
+rationale = "Load and execute the native Brette et al. COBA LIF backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/dpi_neuron.py"
+rationale = "Load and execute the native current-mode DPI neuron backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/escape_rate.py"
+rationale = "Load full-contract seeded Rust, Julia, Go, and Mojo EscapeRate backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/event_recordings.py"
+rationale = "Decode published camera records through native libraries or the NumPy floor."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/adaptive_threshold_if/__init__.py"
+rationale = "Typed ctypes facade for the Mojo adaptive-threshold shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/adc_to_spike/__init__.py"
+rationale = "Python entry point for the Mojo-compiled ADC-to-spike window encoder."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/aihara_map/__init__.py"
+rationale = "Typed ctypes facade for the Mojo Aihara shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/alpha/__init__.py"
+rationale = "Typed ctypes facade for the Mojo alpha-synapse shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/amari_field/__init__.py"
+rationale = "Load and validate the executable Mojo Amari neural-field implementation."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/benda_herz/__init__.py"
+rationale = "Load the executable Mojo Benda-Herz ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/brunel_wang/__init__.py"
+rationale = "Load the executable Mojo C ABI without surrogate substitution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/compte_wm/__init__.py"
+rationale = "Load and execute the complete Mojo Compte C ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/dcls_tent/__init__.py"
+rationale = "Python entry point for the Mojo-compiled DCLS-max tent kernel."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/energy_lif/__init__.py"
+rationale = "Load the executable Mojo EnergyLIF ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/__init__.py"
+rationale = "Typed ctypes facade for the Mojo MPR shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/jansen_rit/__init__.py"
+rationale = "Typed ctypes facade for the Mojo Jansen–Rit shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/mat/__init__.py"
+rationale = "Load the executable Mojo MAT* ABI without surrogate substitution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/mckean/__init__.py"
+rationale = "Load the executable Mojo McKean ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/mixed_dense/__init__.py"
+rationale = "Python entry point for the Mojo-compiled mixed-precision dense kernel."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/nagumo_sato_map/__init__.py"
+rationale = "Typed ctypes facade for the Mojo Nagumo–Sato shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/non_resetting_lif/__init__.py"
+rationale = "Load the executable Mojo MAT(1) ABI without fallback substitution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/resonate_and_fire/__init__.py"
+rationale = "Typed ctypes facade for the Mojo resonate-and-fire shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/rk4_neurons/__init__.py"
+rationale = "Python entry point for the Mojo-compiled RK4 neuron simulators."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_adaptive_threshold_map/__init__.py"
+rationale = "Typed ctypes facade for the Mojo SC adaptive-map shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_chaotic_map/__init__.py"
+rationale = "Typed ctypes facade for the Mojo SC two-state chaotic-map shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py"
+rationale = "Execute ``SC-COMPTE-WM-NETWORK`` through its complete native Mojo step."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_non_resetting_adaptive_lif/__init__.py"
+rationale = "Load the executable Mojo retained-project ABI without fallback substitution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_normalized_energy_lif/__init__.py"
+rationale = "Load the executable Mojo SC normalized EnergyLIF ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_resetting_mat/__init__.py"
+rationale = "Load the executable Mojo project-model ABI without surrogate substitution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_sigma_delta_accumulator/__init__.py"
+rationale = "Load the executable Mojo retained bipolar accumulator ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sc_stochastic_rate_adaptation/__init__.py"
+rationale = "Load the executable Mojo SC stochastic rate-adaptation ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/sigma_delta/__init__.py"
+rationale = "Load the executable Mojo sampled APSDM ABI."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/wilson_cowan/__init__.py"
+rationale = "Python entry point for the Mojo-compiled Wilson-Cowan N-step simulator."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/wong_wang/__init__.py"
+rationale = "Typed ctypes facade for the Mojo Wong-Wang shared library."
+
+[[file]]
+path = "src/sc_neurocore/accel/perfect_integrator.py"
+rationale = "Load and execute profile-explicit native perfect-integrator backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/quadratic_if.py"
+rationale = "Load and execute the native Quadratic IF acceleration backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/sigmoid_rate.py"
+rationale = "Load full-contract Rust, Julia, Go, and Mojo sigmoid-rate batches."
+
+[[file]]
+path = "src/sc_neurocore/accel/theta.py"
+rationale = "Load and execute the native Theta exact-flow acceleration backends."
+
+[[file]]
+path = "src/sc_neurocore/accel/threshold_linear_rate.py"
+rationale = "Load full-contract Rust, Julia, Go, and Mojo threshold-linear batches."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/sorting_quality.py"
+rationale = "Spike sorting quality metrics."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/hierarchical_backend_runtime.py"
+rationale = "Typed discovery and loading for maintained KL-refinement backends."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/chialvo_map.py"
+rationale = "Source-faithful Chialvo two-dimensional discrete map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/connor_stevens.py"
+rationale = "Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterization."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/courage_nekorkin_map.py"
+rationale = "Source-faithful Courbage-Nekorkin-Vdovin spiking-bursting map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py"
+rationale = "Ermentrout-Kopell (1986) canonical Type I (theta neuron) map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/expif.py"
+rationale = "Profile-explicit exponential integrate-and-fire dynamics and dispatch."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/fitzhugh_nagumo.py"
+rationale = "FitzHugh-Nagumo 1961 two-state excitable-system neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/fitzhugh_rinzel.py"
+rationale = "FitzHugh-Rinzel three-state qualitative bursting neuron (FitzHugh 1976, Rinzel 1987)."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/glif.py"
+rationale = "Teeter et al. (2018) five-state GLIF5 point neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/hindmarsh_rose.py"
+rationale = "Hindmarsh-Rose 1984 three-state chaotic bursting neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/hodgkin_huxley.py"
+rationale = "Hodgkin-Huxley 1952 four-equation ion-channel neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py"
+rationale = "Source-derived Ibarz analysis profile of the Shilnikov-Rulkov map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/izhikevich2007.py"
+rationale = "Izhikevich 2007 biophysical quadratic integrate-and-fire neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/medvedev_map.py"
+rationale = "Source-derived Medvedev slow-calcium first-return map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/mihalas_niebur.py"
+rationale = "Mihalaş-Niebur (2009) generalized linear integrate-and-fire neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/pernarowski.py"
+rationale = "Pernarowski 1994 pancreatic beta-cell burster."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/rulkov_map.py"
+rationale = "Rulkov (2002) two-dimensional fast/slow map neuron."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py"
+rationale = "Count-neutral retained two-state clipped-logistic bursting recurrence."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map.py"
+rationale = "Retained project-defined clipped rational-recovery map."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_four_state_glif.py"
+rationale = "Historical four-state RK4 recurrence retained under an explicit SC identity."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py"
+rationale = "Explicit identity for the historical SC resetting Wilson-HR recurrence."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_scaled_reset_adaptive_if.py"
+rationale = "Count-neutral project recurrence formerly published as Mihalas-Niebur."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
+rationale = "Retained SC triangular piecewise-linear FitzHugh-Nagumo oscillator."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py"
+rationale = "Retained SC-NeuroCore upward-crossing Rulkov-map recurrence."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/terman_wang.py"
+rationale = "Terman and Wang 1995 relaxation oscillator for LEGION networks."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/wilson_hr.py"
+rationale = "Wilson 1999 continuous polynomial cortical-neuron model."

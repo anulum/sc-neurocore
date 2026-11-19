@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo-backed SC two-state chaotic map
 
+"""Typed ctypes facade for the Mojo SC two-state chaotic-map shared library."""
+
 from __future__ import annotations
 
 import ctypes
@@ -48,6 +50,24 @@ def simulate_sc_chaotic_map(
     x_threshold: float,
     current: npt.ArrayLike,
 ) -> SCChaoticMapResult:
+    """Run the Mojo SC two-state chaotic map over ``current``.
+
+    Returns
+    -------
+    SCChaoticMapResult
+        The ``x``, ``y`` and ``spikes`` traces, ``x_final``, ``y_final`` and ``spike_count``.
+
+    Raises
+    ------
+    ValueError
+        When ``current`` is not one-dimensional, longer than the signed 32-bit step limit or not finite, or the native call rejects its input (codes 2 and 3).
+    ImportError
+        When the shared library is not built.
+    FloatingPointError
+        When the native call rejects a map candidate (code 4).
+    RuntimeError
+        When the native call returns any other non-zero code.
+    """
     logical = np.asarray(current)
     if logical.ndim != 1:
         raise ValueError(f"current must be one-dimensional: got shape {logical.shape}")

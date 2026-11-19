@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Retained triangular piecewise-linear oscillator
 
+"""Retained SC triangular piecewise-linear FitzHugh-Nagumo oscillator.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -151,6 +156,7 @@ class SCTriangularMcKeanNeuron:
     v_peak: float = 0.8
 
     def __post_init__(self) -> None:
+        """Refuse non-real or non-finite fields at construction."""
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -234,6 +240,7 @@ class SCTriangularMcKeanNeuron:
         return candidate
 
     def step(self, current: float) -> int:
+        """Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0."""
         current = self._validate_runtime_contract(current)
         v_prev = self.v
         self.v, self.w = self._rk4_candidate(current)
@@ -410,5 +417,6 @@ class SCTriangularMcKeanNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf
 
     def reset(self) -> None:
+        """Restore the default state v = 0.0, w = 0.0."""
         self.v = 0.0
         self.w = 0.0

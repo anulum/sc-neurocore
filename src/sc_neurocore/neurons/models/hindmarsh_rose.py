@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Hindmarsh-Rose 1984 — 3D chaotic bursting model
 
+"""Hindmarsh-Rose 1984 three-state chaotic bursting neuron.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -148,6 +153,7 @@ class HindmarshRoseNeuron:
     integrator: Literal["rk4", "euler"] = "rk4"
 
     def __post_init__(self) -> None:
+        """Refuse an unsupported integrator and any non-finite parameter or state value."""
         if self.integrator not in {"rk4", "euler"}:
             raise ValueError("integrator must be 'rk4' or 'euler'")
         for name in ("x", "y", "z", "b", "r", "s", "x_rest", "dt", "x_threshold"):
@@ -217,6 +223,7 @@ class HindmarshRoseNeuron:
         )
 
     def step(self, current: float) -> int:
+        """Advance one step (RK4 or Euler); return 1 on an upward crossing of ``x_threshold``, else 0."""
         if not isinstance(current, int | float) or not math.isfinite(float(current)):
             raise ValueError("current must be finite")
         current = float(current)
@@ -461,6 +468,7 @@ class HindmarshRoseNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), xf, yf, zf
 
     def reset(self) -> None:
+        """Restore the default state (x, y, z) = (-1.6, -10.0, 2.0)."""
         self.x = -1.6
         self.y = -10.0
         self.z = 2.0

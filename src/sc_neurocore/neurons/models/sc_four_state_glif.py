@@ -185,6 +185,7 @@ class SCFourStateGLIFNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Refuse an invalid runtime configuration at construction."""
         self._raise_if_invalid_runtime()
 
     @staticmethod
@@ -262,6 +263,7 @@ class SCFourStateGLIFNeuron:
         )
 
     def step(self, current: float) -> int:
+        """Advance one RK4 step; on reaching ``theta``, reset ``v``, raise ``theta`` and both after-spike currents, and return 1, else 0."""
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._raise_if_invalid_runtime()
@@ -494,6 +496,7 @@ class SCFourStateGLIFNeuron:
         )
 
     def reset(self) -> None:
+        """Restore ``v`` to ``v_rest``, ``theta`` to ``theta_inf`` and both after-spike currents to zero."""
         self.v = self.v_rest
         self.theta = self.theta_inf
         self.i_asc1 = 0.0

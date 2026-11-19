@@ -161,6 +161,7 @@ class MihalasNieburNeuron:
     dt: float = 0.1
 
     def __post_init__(self) -> None:
+        """Refuse an invalid runtime configuration at construction."""
         self._raise_if_invalid_runtime()
 
     @staticmethod

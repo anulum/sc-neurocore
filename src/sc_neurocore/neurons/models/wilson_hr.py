@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Wilson 1999 polynomial cortical model
 
+"""Wilson 1999 continuous polynomial cortical-neuron model.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -147,6 +152,7 @@ class WilsonHRNeuron:
     dt: float = 0.05
 
     def __post_init__(self) -> None:
+        """Refuse non-real or non-finite fields at construction."""
         validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
@@ -224,6 +230,7 @@ class WilsonHRNeuron:
         return candidate
 
     def step(self, current: float) -> int:
+        """Advance one RK4 step; return 1 on an upward crossing of ``v_peak``, else 0."""
         current = self._validate_runtime_contract(current)
         v_previous = self.v
         next_v, next_r = self._rk4_candidate(current)
@@ -422,5 +429,6 @@ class WilsonHRNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, rf
 
     def reset(self) -> None:
+        """Restore the default state v = -0.7, r = 0.085."""
         self.v = -0.7
         self.r = 0.085

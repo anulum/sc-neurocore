@@ -203,6 +203,7 @@ class SCUpwardCrossingRulkovMapNeuron(RulkovMapNeuron):
     x_threshold: float = 0.0
 
     def __post_init__(self) -> None:
+        """Validate the Rulkov-map fields, then refuse a non-finite crossing threshold."""
         super().__post_init__()
         self.x_threshold = float(self.x_threshold)
         if not math.isfinite(self.x_threshold):

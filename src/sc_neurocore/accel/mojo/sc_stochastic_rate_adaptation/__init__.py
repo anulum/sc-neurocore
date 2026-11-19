@@ -37,6 +37,22 @@ def simulate_sc_stochastic_rate_adaptation(
     currents: npt.ArrayLike,
     uniforms: npt.ArrayLike,
 ) -> dict[str, object]:
+    """Run the Mojo SC stochastic rate-adaptation batch over ``currents``.
+
+    The ``uniforms`` supply one random draw per step.
+
+    Returns
+    -------
+    dict
+        ``adaptation`` and ``events`` per step, and ``a_final``.
+
+    Raises
+    ------
+    RuntimeError
+        When the shared library is unavailable.
+    FloatingPointError
+        When the native batch returns a non-zero status.
+    """
     if _fn is None:
         raise RuntimeError("Mojo SC stochastic rate-adaptation library unavailable")
     drive = np.ascontiguousarray(currents, dtype=np.float64)

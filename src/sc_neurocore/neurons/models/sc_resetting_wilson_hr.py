@@ -149,6 +149,7 @@ class SCResettingWilsonHRNeuron:
     dt: float = 0.05
 
     def __post_init__(self) -> None:
+        """Refuse non-real or non-finite fields at construction."""
         validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)

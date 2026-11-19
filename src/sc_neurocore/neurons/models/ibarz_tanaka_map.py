@@ -261,6 +261,7 @@ class IbarzTanakaMapNeuron:
     sigma: float = 0.1
 
     def __post_init__(self) -> None:
+        """Validate the parameters and refuse a non-finite initial state."""
         self._parameters()
         if not math.isfinite(self.v) or not math.isfinite(self.u):
             raise ValueError("Ibarz-Tanaka state must be finite")

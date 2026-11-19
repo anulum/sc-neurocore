@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Hodgkin-Huxley 1952 — 4-ODE ion channel model
 
+"""Hodgkin-Huxley 1952 four-equation ion-channel neuron.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -118,6 +123,7 @@ class HodgkinHuxleyNeuron:
     integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
 
     def __post_init__(self) -> None:
+        """Refuse an unsupported integrator, then validate the runtime state."""
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for HodgkinHuxleyNeuron: {self.integrator}")
         self._validate_runtime_state()
@@ -382,6 +388,7 @@ class HodgkinHuxleyNeuron:
         self.v, self.m, self.h, self.n = (float(value) for value in state)
 
     def reset(self) -> None:
+        """Restore the default state: v = -65.0 and (m, h, n) = (0.05, 0.6, 0.32)."""
         self.v = -65.0
         self.m = 0.05
         self.h = 0.6

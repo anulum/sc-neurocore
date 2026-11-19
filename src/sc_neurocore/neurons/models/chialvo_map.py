@@ -238,6 +238,7 @@ class ChialvoMapNeuron:
     x_threshold: float = 1.0
 
     def __post_init__(self) -> None:
+        """Validate the map parameters and the initial state at construction."""
         self._validate_configuration()
 
     def _validate_configuration(self) -> None:

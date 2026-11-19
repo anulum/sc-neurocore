@@ -356,6 +356,7 @@ class GLIFNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Validate the initial state and the parameters at construction."""
         self._state()
         self._parameters()
 

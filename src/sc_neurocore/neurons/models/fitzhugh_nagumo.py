@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — FitzHugh-Nagumo 1961 — 2D qualitative spike model
 
+"""FitzHugh-Nagumo 1961 two-state excitable-system neuron.
+
+The module holds its Python reference step and its native simulation paths.
+"""
+
 from __future__ import annotations
 
 import importlib as _importlib
@@ -153,6 +158,7 @@ class FitzHughNagumoNeuron:
     integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "rk4"
 
     def __post_init__(self) -> None:
+        """Refuse an unsupported integrator, then validate the configuration."""
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for FitzHughNagumoNeuron: {self.integrator}")
         self._validate_configuration()
@@ -184,6 +190,7 @@ class FitzHughNagumoNeuron:
                 raise ValueError(f"{name} must be positive")
 
     def step(self, current: float) -> int:
+        """Advance one step with the configured integrator; return 1 on an upward crossing of ``v_threshold``, else 0."""
         current = self._finite_float("current", current)
         self._validate_runtime_configuration()
         v_prev = self.v
@@ -415,5 +422,6 @@ class FitzHughNagumoNeuron:
         return float(state[0]), float(state[1])
 
     def reset(self) -> None:
+        """Restore the default state v = -1.0, w = -0.5."""
         self.v = -1.0
         self.w = -0.5

@@ -319,6 +319,7 @@ class MedvedevMapNeuron:
     input_gain: float = 0.01
 
     def __post_init__(self) -> None:
+        """Validate the state and the parameters at construction and store the validated values."""
         state, parameters = self._runtime_values(construction=True)
         self.u = state
         self.beta_0 = parameters.beta_0

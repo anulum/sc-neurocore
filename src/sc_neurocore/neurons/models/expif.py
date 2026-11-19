@@ -215,6 +215,7 @@ class ExpIFNeuron:
     profile: Literal["sc_rk4", "fourcaud_trocme_2003"] = "sc_rk4"
 
     def __post_init__(self) -> None:
+        """Refuse an unsupported profile and non-finite voltages or parameters at construction."""
         if self.profile not in {"sc_rk4", "fourcaud_trocme_2003"}:
             raise ValueError(f"unsupported ExpIF profile: {self.profile!r}")
         for field in ("v", "v_rest", "v_reset", "v_threshold", "v_rh"):

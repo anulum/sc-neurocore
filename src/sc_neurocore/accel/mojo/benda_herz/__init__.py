@@ -36,6 +36,20 @@ def simulate_benda_herz(
     dt: float,
     currents: npt.ArrayLike,
 ) -> dict[str, object]:
+    """Run the Mojo Benda-Herz batch over ``currents``.
+
+    Returns
+    -------
+    dict
+        ``adaptation``, ``phases`` and ``events`` per step, and ``a_final`` and ``phase_final``.
+
+    Raises
+    ------
+    RuntimeError
+        When the shared library is unavailable.
+    FloatingPointError
+        When the native batch returns a non-zero status.
+    """
     if _fn is None:
         raise RuntimeError("Mojo Benda-Herz shared library unavailable")
     drive = np.ascontiguousarray(currents, dtype=np.float64)

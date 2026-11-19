@@ -163,6 +163,7 @@ class ErmentroutKopellMapNeuron:
     theta_threshold: float = math.pi
 
     def __post_init__(self) -> None:
+        """Refuse non-finite phase, step, gain or threshold values and a non-positive step."""
         for name in ("theta", "dt", "gain", "theta_threshold"):
             value = float(getattr(self, name))
             if not math.isfinite(value):
@@ -189,6 +190,10 @@ class ErmentroutKopellMapNeuron:
         return value
 
     def step(self, current: float = 0.0) -> int:
+        """Advance the phase one step; return 1 on an upward crossing of ``theta_threshold``, else 0.
+
+        The phase is stored modulo 2π. A non-finite drive or candidate phase raises.
+        """
         self._validate_runtime()
         drive = float(current)
         if not math.isfinite(drive):
@@ -349,4 +354,5 @@ class ErmentroutKopellMapNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), tf
 
     def reset(self) -> None:
+        """Restore the phase to zero."""
         self.theta = 0.0

@@ -167,6 +167,7 @@ class SCClippedLogisticBurstingMapNeuron:
     x_threshold: float = 0.9
 
     def step(self, current: float) -> int:
+        """Advance the clipped logistic map one step; return 1 when ``x`` is at or above ``x_threshold``, else 0."""
         f = self.a * self.x * (1.0 - self.x)
         x_new = f - self.y + current
         y_new = self.y + self.epsilon * (self.x - self.sigma)
@@ -311,5 +312,6 @@ class SCClippedLogisticBurstingMapNeuron:
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), xf, yf
 
     def reset(self) -> None:
+        """Restore the default state x = 0.1, y = 0.0."""
         self.x = 0.1
         self.y = 0.0
