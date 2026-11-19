@@ -20,8 +20,10 @@ iterations × 5 repeats per scenario; median + min reported.
 
 **Multi-language acceleration policy** (per `feedback_multi_language_accel.md`):
 
-`SafetyMonitor.check()` runs in 350-780 ns (≤ 1 µs) on this
-hardware. Any FFI dispatch path (Rust PyO3, Julia juliacall,
+`SafetyMonitor.check()` runs in about a microsecond or less per call
+in pure Python. The recorded run (`benchmarks/results/bench_safety_monitor.json`)
+predates the probe-range check, which roughly doubled the per-call time
+on the host where both versions were timed. Any FFI dispatch path (Rust PyO3, Julia juliacall,
 Go cgo+ctypes, Mojo `mojo build --emit shared-lib` + ctypes)
 adds 1-10 µs of marshalling overhead per call — that is
 **larger than the entire compute time**.
@@ -68,6 +70,7 @@ def _time_check(fn, iterations: int) -> tuple[float, float]:
 
 
 def bench_check_no_violation() -> tuple[float, float]:
+    """Time ``check()`` with every probe at its default, which violates nothing."""
     mon = SafetyMonitor()
 
     def f() -> None:
@@ -81,6 +84,7 @@ def bench_check_no_violation() -> tuple[float, float]:
 
 
 def bench_check_overcurrent() -> tuple[float, float]:
+    """Time ``check()`` with the current one above its limit, then ``reset()``."""
     mon = SafetyMonitor()
 
     def f() -> None:
@@ -93,6 +97,7 @@ def bench_check_overcurrent() -> tuple[float, float]:
 
 
 def bench_check_all_violations() -> tuple[float, float]:
+    """Time ``check()`` with every property violated in one call, then ``reset()``."""
     mon = SafetyMonitor()
     limits = SafetyLimits()
 
@@ -105,7 +110,7 @@ def bench_check_all_violations() -> tuple[float, float]:
             popcount_k=limits.sc_denom + 1,  # P3
             sc_add_result=limits.sc_denom + 1,  # P4
             membrane=limits.lif_v_max + 1,  # P5
-            scc_numerator=999_999,  # P6
+            scc_numerator=0x7FFF,  # P6 (the signed probe maximum)
             scc_denominator=1,
         )
         mon.reset()
@@ -116,6 +121,7 @@ def bench_check_all_violations() -> tuple[float, float]:
 
 
 def main(argv: list[str]) -> int:
+    """Run the three scenarios, print them and the backend exemptions, and write JSON when asked."""
     parser = argparse.ArgumentParser(description="SafetyMonitor.check() wall-clock benchmark.")
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -158,7 +164,7 @@ def main(argv: list[str]) -> int:
             "used": False,
             "exemption": (
                 "FFI overhead (~1-5 µs via PyO3) exceeds compute time "
-                "(~0.4-0.8 µs). Accelerating this op via Rust would "
+                "(~0.5-1 µs). Accelerating this op via Rust would "
                 "make it slower, not faster."
             ),
         },
@@ -185,7 +191,7 @@ def main(argv: list[str]) -> int:
                 "Mojo 0.26.2 installed; `mojo build --emit shared-lib` "
                 "+ ctypes FFI works (proven on LGSSM Kalman, see #69) "
                 "but ctypes call overhead (~1-3 µs) still exceeds "
-                "compute time (~0.5-0.9 µs). Exemption applies on "
+                "compute time (~0.5-1 µs). Exemption applies on "
                 "the same FFI-cost grounds as Rust/Julia/Go."
             ),
         },

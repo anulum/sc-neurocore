@@ -251,6 +251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The software safety monitor no longer reports a negative current, voltage,
+  popcount, SC sum or membrane as safe. Every probe takes only values within
+  its 16-bit hardware probe range (unsigned, the SCC numerator signed); any
+  other value, NaN and infinity included, raises before the monitor changes
+  state. Integrality is not checked. Its docstrings now say that four of its
+  six properties are proved in the Lean safety bounds and two are axioms,
+  instead of calling all six formally proven.
+
 - The chip compiler no longer returns NaN weights with a successful result
   on a 1-bit target: one bit now codes a sign, each weight becoming plus or
   minus the mean magnitude. A precision below one bit, or a weight matrix

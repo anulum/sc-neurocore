@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2218
+expected_file_count = 2221
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8922,3 +8922,15 @@ rationale = "Document the chip compiler's mapping, its weight quantisation at ev
 [[file]]
 path = "tests/test_chip_compiler_weight_quantisation.py"
 rationale = "Hold the chip compiler's weights finite on every precision, with the binary rule for one bit and the refusals."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/safety_monitor.py"
+rationale = "Document the software safety monitor's probe ranges and which of its properties are proved or axiomatised."
+
+[[file]]
+path = "tests/test_safety_monitor_probe_ranges.py"
+rationale = "Hold the software safety monitor to its 16-bit probe ranges and its docstring to the Lean proof status."
+
+[[file]]
+path = "benchmarks/bench_safety_monitor.py"
+rationale = "Document the safety monitor benchmark's scenarios and the stated basis of its backend exemptions."

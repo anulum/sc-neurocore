@@ -8,14 +8,29 @@
 
 """Software-in-the-loop simulation of the hardware safety monitor.
 
-Mirrors the 6 formally proven properties from safety_bounds.lean and
-the SystemVerilog neuro_safe_monitor module, enabling pre-silicon
-validation of safety invariants.
+Mirrors the run-time checks of the SystemVerilog ``safety_monitor.sv`` for the six properties named after
+``safety_bounds.lean`` (four proved there, two stated as axioms), enabling pre-silicon validation of the safety
+invariants. Inputs are taken only within the ranges the hardware probes can carry.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+
+#: Range of the unsigned 16-bit probes of ``safety_monitor.sv``.
+UNSIGNED_PROBE_RANGE = (0, 0xFFFF)
+#: Range of the signed 16-bit SCC numerator probe.
+SIGNED_PROBE_RANGE = (-0x8000, 0x7FFF)
+
+
+def _refuse_out_of_range(**probes: int) -> None:
+    """Raise ``ValueError`` naming the first probe whose value lies outside its 16-bit range."""
+    for name, value in probes.items():
+        lo, hi = SIGNED_PROBE_RANGE if name == "scc_numerator" else UNSIGNED_PROBE_RANGE
+        if not lo <= value <= hi:
+            raise ValueError(
+                f"{name}={value} lies outside its 16-bit hardware probe range [{lo}, {hi}]"
+            )
 
 
 @dataclass
@@ -31,15 +46,23 @@ class SafetyLimits:
 
 @dataclass
 class SafetyMonitor:
-    """Software mirror of the hardware neuro_safe_monitor.
+    """Software mirror of the hardware safety monitor ``safety_monitor.sv``.
 
-    Enforces all 6 formally proven properties:
-      [P1] monitor_soundness — halt when current/voltage/coherence out of bounds
+    Checks at run time the six properties named after ``safety_bounds.lean``. Of these, four are proved there
+    (``monitor_soundness``, ``safe_transition``, ``lif_membrane_bounded``, ``scc_bounded``) and two are axioms
+    pending Mathlib's non-linear arithmetic (``sc_precision_numerator_bound``, ``sc_add_preserves_range``):
+
+      [P1] monitor_soundness — halt when current or voltage exceeds its limit or coherence is below its limit
       [P2] safe_transition — coherence must not decrease (monotone)
-      [P3] sc_precision_bound — popcount must be in [0, N]
+      [P3] sc_precision_bound — popcount ≤ N, the hypothesis of the axiomatised precision bound
       [P4] sc_add_preserves_range — SC addition result ≤ denominator
       [P5] lif_membrane_bounded — membrane ≤ v_max
       [P6] correlation_range — |SCC numerator| ≤ denominator
+
+    Every probe is a 16-bit value as in the hardware: unsigned, except the signed SCC numerator. A value outside
+    its probe's range, NaN and infinity included, raises ``ValueError`` before any state changes. Integrality
+    is not checked: the probes are annotated ``int``, and a fraction inside a range is compared as it stands. As in the RTL, a zero SCC denominator is a
+    violation only with a non-zero numerator (``scc_bounded`` itself assumes a positive denominator).
     """
 
     limits: SafetyLimits = field(default_factory=SafetyLimits)
@@ -67,7 +90,33 @@ class SafetyMonitor:
         """Check all 6 safety properties. Returns True if any violation detected.
 
         Violation flags are sticky — once set, only ``reset()`` clears them.
+
+        Raises
+        ------
+        ValueError
+            If a value lies outside its 16-bit probe range (NaN and infinity included); nothing changes then.
         """
+        lo, hi = UNSIGNED_PROBE_RANGE
+        if not (
+            lo <= current <= hi
+            and lo <= voltage <= hi
+            and lo <= coherence <= hi
+            and lo <= popcount_k <= hi
+            and lo <= sc_add_result <= hi
+            and lo <= membrane <= hi
+            and lo <= scc_denominator <= hi
+            and SIGNED_PROBE_RANGE[0] <= scc_numerator <= SIGNED_PROBE_RANGE[1]
+        ):
+            _refuse_out_of_range(
+                current=current,
+                voltage=voltage,
+                coherence=coherence,
+                popcount_k=popcount_k,
+                sc_add_result=sc_add_result,
+                membrane=membrane,
+                scc_numerator=scc_numerator,
+                scc_denominator=scc_denominator,
+            )
         violations = 0
 
         # [P1] monitor_soundness

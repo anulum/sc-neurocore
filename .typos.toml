@@ -56,6 +56,7 @@ evn = "evn"       # ECP5 EVN board identifier
 hace = "hace"     # Verilog hex literal 16'hACE1 (EscapeRate LFSR RNG seed), tokenised as "hace"
 KNW = "KNW"       # Lattice iCE40 primitive SB_RAM40_4KNW (negative-edge write clock)
 dout = "dout"     # Verilog data-out port name in synthesis test designs
+numer = "numer"   # Verilog signal fragment: abs_scc_numer and probe_scc_numer in hdl_gen/safety/safety_monitor.sv
 trian = "trian"   # deliberately misspelt label in a training-config refusal test
 # Scientific journal abbreviations
 Reson = "Reson"   # Journal abbreviation, e.g. J. Magn. Reson.

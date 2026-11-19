@@ -42754,15 +42754,23 @@ Configurable safety thresholds matching SV parameters.
 
 
 ### Class `SafetyMonitor`
-Software mirror of the hardware neuro_safe_monitor.
+Software mirror of the hardware safety monitor ``safety_monitor.sv``.
 
-Enforces all 6 formally proven properties:
-  &#91;P1&#93; monitor_soundness — halt when current/voltage/coherence out of bounds
+Checks at run time the six properties named after ``safety_bounds.lean``. Of these, four are proved there
+(``monitor_soundness``, ``safe_transition``, ``lif_membrane_bounded``, ``scc_bounded``) and two are axioms
+pending Mathlib's non-linear arithmetic (``sc_precision_numerator_bound``, ``sc_add_preserves_range``):
+
+  &#91;P1&#93; monitor_soundness — halt when current or voltage exceeds its limit or coherence is below its limit
   &#91;P2&#93; safe_transition — coherence must not decrease (monotone)
-  &#91;P3&#93; sc_precision_bound — popcount must be in &#91;0, N&#93;
+  &#91;P3&#93; sc_precision_bound — popcount ≤ N, the hypothesis of the axiomatised precision bound
   &#91;P4&#93; sc_add_preserves_range — SC addition result ≤ denominator
   &#91;P5&#93; lif_membrane_bounded — membrane ≤ v_max
   &#91;P6&#93; correlation_range — |SCC numerator| ≤ denominator
+
+Every probe is a 16-bit value as in the hardware: unsigned, except the signed SCC numerator. A value outside
+its probe's range, NaN and infinity included, raises ``ValueError`` before any state changes. Integrality
+is not checked: the probes are annotated ``int``, and a fraction inside a range is compared as it stands. As in the RTL, a zero SCC denominator is a
+violation only with a non-zero numerator (``scc_bounded`` itself assumes a positive denominator).
 
 - **reset**()
   - Reset monitor state (equivalent to rst_n pulse).
