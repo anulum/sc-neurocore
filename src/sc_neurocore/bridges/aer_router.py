@@ -17,11 +17,12 @@ Protocol: each SpikePacket is a 28-byte big-endian binary frame; ACKs are
 
 from __future__ import annotations
 
+import secrets
 import struct
 import threading
 import time
-from dataclasses import dataclass
-
+from collections import OrderedDict
+from dataclasses import dataclass, replace
 
 PACKET_FORMAT = (
     ">IIQIq"  # source_id(u32) target_id(u32) timestamp(u64) spike_len(u32) sequence(i64)
@@ -29,6 +30,9 @@ PACKET_FORMAT = (
 PACKET_SIZE = struct.calcsize(PACKET_FORMAT)  # 28 bytes
 ACK_FORMAT = ">q"
 ACK_SIZE = 8
+_MAX_PENDING = 4096
+_ACK_TIMEOUT_SECONDS = 2.0
+_MAX_DELIVERY_SEQUENCE = (1 << 63) - 1
 
 
 @dataclass
@@ -68,17 +72,30 @@ class RouteStats:
     dropped: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class _PendingDispatch:
+    """Destination and expiry captured when a simulated dispatch is accepted."""
+
+    deadline: float
+    upstream_sequence: int
+    target_id: int
+    address: str
+
+
 class AERRouter:
     """Manages route registration, spike dispatch, and ACK tracking.
 
-    This is a pure-Python simulation/client. For high-performance
-    UDP routing, use the Go server (hil_debugger/interconnect).
+    This class models routing in memory. Use ``AERRoutingDaemon`` to
+    supervise the Go UDP service.
     """
 
     def __init__(self) -> None:
         self._routes: dict[int, str] = {}
         self._stats: dict[int, RouteStats] = {}
-        self._pending: dict[int, float] = {}
+        self._pending: OrderedDict[int, _PendingDispatch] = OrderedDict()
+        self._inflight: dict[int, int] = {}
+        self._delivery_base = secrets.randbelow(_MAX_DELIVERY_SEQUENCE)
+        self._next_delivery = 0
         self._total_sent = 0
         self._total_acked = 0
         self._lock = threading.Lock()
@@ -104,30 +121,80 @@ class AERRouter:
     def dispatch_spike(self, packet: SpikePacket) -> bool:
         """Dispatch a spike packet to the registered target.
 
-        Returns True if the route exists and dispatch succeeded.
-        Does not perform actual UDP send in simulation mode.
+        Returns True when the route exists and the sequence can be tracked.
+        Use this method for immediate in-process dispatch and acknowledgement.
+        """
+        return self._track_dispatch(packet) is not None
+
+    def dispatch_for_delivery(self, packet: SpikePacket) -> SpikePacket | None:
+        """Prepare an outgoing packet with a distinct delivery sequence.
+
+        Returns None when the route or pending capacity refuses the send.
+        Echo the returned sequence with the downstream address to acknowledge it.
+        """
+        delivery = self._track_dispatch(packet)
+        if delivery is None:
+            return None
+        return replace(packet, sequence=delivery)
+
+    def _track_dispatch(self, packet: SpikePacket) -> int | None:
+        """Track an accepted dispatch and return its non-reused delivery sequence."""
+        with self._lock:
+            now = time.monotonic()
+            self._expire_pending(now)
+            target = self._routes.get(packet.target_id)
+            if target is None:
+                return None
+            stats = self._stats[packet.target_id]
+            if (
+                packet.sequence in self._inflight
+                or len(self._pending) >= _MAX_PENDING
+                or self._next_delivery == _MAX_DELIVERY_SEQUENCE
+            ):
+                stats.dropped += 1
+                return None
+            delivery = (self._delivery_base + self._next_delivery) % _MAX_DELIVERY_SEQUENCE + 1
+            self._next_delivery += 1
+            self._pending[delivery] = _PendingDispatch(
+                now + _ACK_TIMEOUT_SECONDS, packet.sequence, packet.target_id, target
+            )
+            self._inflight[packet.sequence] = delivery
+            stats.dispatched += 1
+            self._total_sent += 1
+            return delivery
+
+    def _expire_pending(self, now: float) -> None:
+        """Remove expired dispatches and account for drops while holding the lock."""
+        while self._pending:
+            delivery, dispatch = next(iter(self._pending.items()))
+            if dispatch.deadline > now:
+                break
+            del self._pending[delivery]
+            del self._inflight[dispatch.upstream_sequence]
+            self._stats[dispatch.target_id].dropped += 1
+
+    def ack_received(self, seq: int, *, address: str | None = None) -> None:
+        """Acknowledge a delivery sequence and its downstream address.
+
+        An immediate in-process acknowledgement accepts the upstream sequence
+        with the address omitted.
         """
         with self._lock:
-            target = self._routes.get(packet.target_id)
-            stats = self._stats.get(packet.target_id)
-            if target is None:
-                return False
-            self._pending[packet.sequence] = time.monotonic()
-            if stats:
-                stats.dispatched += 1
-            self._total_sent += 1
-            return True
-
-    def ack_received(self, seq: int) -> None:
-        """Process an ACK for the given sequence number."""
-        with self._lock:
-            self._pending.pop(seq, None)
+            self._expire_pending(time.monotonic())
+            delivery = seq if address is not None else self._inflight.get(seq, 0)
+            dispatch = self._pending.get(delivery)
+            if dispatch is None or (address is not None and address != dispatch.address):
+                return
+            del self._pending[delivery]
+            del self._inflight[dispatch.upstream_sequence]
+            self._stats[dispatch.target_id].acked += 1
             self._total_acked += 1
 
     @property
     def pending_count(self) -> int:
         """Return the number of dispatched packets awaiting ACKs."""
         with self._lock:
+            self._expire_pending(time.monotonic())
             return len(self._pending)
 
     @property
@@ -145,5 +212,6 @@ class AERRouter:
     def get_stats(self, neuron_id: int) -> RouteStats | None:
         """Return a defensive copy of per-route statistics when present."""
         with self._lock:
+            self._expire_pending(time.monotonic())
             s = self._stats.get(neuron_id)
             return RouteStats(s.dispatched, s.acked, s.dropped) if s else None

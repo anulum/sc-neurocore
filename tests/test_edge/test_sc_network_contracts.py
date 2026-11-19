@@ -122,3 +122,45 @@ def test_layer_rejects_nonintegral_weight_words() -> None:
     """Reject weight words that would fail later in bitwise layer execution."""
     with pytest.raises(ValueError, match="unsigned 32-bit"):
         SCLayer(n_inputs=1, n_outputs=1, weights=[[cast(int, 1.5)]])
+
+
+@pytest.mark.parametrize(
+    ("probabilities", "expected"),
+    [([1.0, 0.0], [True, False]), ([0.0, 1.0], [False, True])],
+)
+def test_run_keeps_input_identity(probabilities: list[float], expected: list[bool]) -> None:
+    """Each mask selects its own input across all 33 logical clocks."""
+    network = SCNetwork(bit_length=33)
+    network.add_layer(SCLayer(n_inputs=2, n_outputs=2, threshold=33, weights=[[1], [2]]))
+    assert network.run(probabilities) == expected
+
+
+def test_cascade_keeps_spike_position_and_logical_length() -> None:
+    """The second layer measures only the logical clocks of its selected spike."""
+    network = SCNetwork(bit_length=33)
+    network.add_layer(SCLayer(n_inputs=2, n_outputs=2, threshold=33, weights=[[1], [2]]))
+    network.add_layer(SCLayer(n_inputs=2, n_outputs=2, threshold=33, weights=[[2], [1]]))
+    assert network.run([1.0, 0.0]) == [False, True]
+    assert network.run([0.0, 1.0]) == [True, False]
+
+
+def test_network_mask_crosses_packed_input_word_boundary() -> None:
+    """A bit in the second mask word selects input 32."""
+    network = SCNetwork(bit_length=33)
+    network.add_layer(SCLayer(n_inputs=33, n_outputs=1, threshold=33, weights=[[0, 1]]))
+    assert network.run([0.0] * 32 + [1.0]) == [True]
+    assert network.run([1.0] + [0.0] * 32) == [False]
+
+
+def test_simultaneous_selected_inputs_contribute_each_logical_one() -> None:
+    """Co-occurring ones contribute separately to the output threshold."""
+    network = SCNetwork(bit_length=33)
+    network.add_layer(SCLayer(n_inputs=2, n_outputs=1, threshold=34, weights=[[3]]))
+    assert network.run([1.0, 1.0]) == [True]
+    assert network.run([1.0, 0.0]) == [False]
+
+
+def test_direct_layer_forward_accepts_one_packed_input_vector() -> None:
+    """The direct layer API still applies a mask to a single packed vector."""
+    layer = SCLayer(n_inputs=33, n_outputs=2, threshold=1, weights=[[1, 0], [0, 1]])
+    assert layer.forward([0, 1], 32) == [False, True]

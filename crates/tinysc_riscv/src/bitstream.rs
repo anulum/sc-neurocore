@@ -76,11 +76,11 @@ pub fn popcount_slice(words: &[u32]) -> u32 {
 /// SC AND over two packed word slices into `out`.
 ///
 /// # Panics
-/// Panics (in debug) if slice lengths differ.
+/// Panics if slice lengths differ.
 #[inline]
 pub fn and_packed(a: &[u32], b: &[u32], out: &mut [u32]) {
-    debug_assert_eq!(a.len(), b.len());
-    debug_assert_eq!(a.len(), out.len());
+    assert_eq!(a.len(), b.len());
+    assert_eq!(a.len(), out.len());
     let n = a.len();
     let mut i = 0;
 
@@ -99,41 +99,67 @@ pub fn and_packed(a: &[u32], b: &[u32], out: &mut [u32]) {
 }
 
 /// SC MUX over two packed word slices with a select bitstream.
+///
+/// # Panics
+/// Panics if slice lengths differ.
 #[inline]
 pub fn mux_packed(a: &[u32], b: &[u32], sel: &[u32], out: &mut [u32]) {
-    debug_assert_eq!(a.len(), b.len());
-    debug_assert_eq!(a.len(), sel.len());
-    debug_assert_eq!(a.len(), out.len());
+    assert_eq!(a.len(), b.len());
+    assert_eq!(a.len(), sel.len());
+    assert_eq!(a.len(), out.len());
     for i in 0..a.len() {
         out[i] = (a[i] & sel[i]) | (b[i] & !sel[i]);
     }
 }
 
+/// Return the complete logical words and the masked partial word.
+#[inline]
+fn logical_words(words: &[u32], bit_length: u32) -> (&[u32], u32) {
+    assert!(bit_length.div_ceil(32) as usize <= words.len());
+    let (prefix, tail) = words.split_at((bit_length / 32) as usize);
+    let remaining = bit_length % 32;
+    let partial = if remaining == 0 {
+        0
+    } else {
+        tail[0] & ((1 << remaining) - 1)
+    };
+    (prefix, partial)
+}
+
 /// Estimated probability from a packed bitstream.
 ///
 /// `bit_length` is the logical length (may be < `words.len() * 32`).
+///
+/// # Panics
+/// Panics if the logical length exceeds the packed slice capacity.
 pub fn probability(words: &[u32], bit_length: u32) -> f32 {
     if bit_length == 0 {
         return 0.0;
     }
-    popcount_slice(words) as f32 / bit_length as f32
+    let (full, partial) = logical_words(words, bit_length);
+    (popcount_slice(full) + popcount32(partial)) as f32 / bit_length as f32
 }
 
 /// SCC between two packed u32 bitstreams (Alaghi & Hayes, 2013).
+///
+/// # Panics
+/// Panics if the slices differ in length or cannot hold the logical bits.
 pub fn scc(a: &[u32], b: &[u32], bit_length: u32) -> f32 {
-    debug_assert_eq!(a.len(), b.len());
+    assert_eq!(a.len(), b.len());
     if bit_length == 0 {
         return 0.0;
     }
     let n = bit_length as f32;
-    let pa = popcount_slice(a) as f32 / n;
-    let pb = popcount_slice(b) as f32 / n;
-
-    let and_count: u32 = a
+    let (a, tail_a) = logical_words(a, bit_length);
+    let (b, tail_b) = logical_words(b, bit_length);
+    let pa = (popcount_slice(a) + popcount32(tail_a)) as f32 / n;
+    let pb = (popcount_slice(b) + popcount32(tail_b)) as f32 / n;
+    let and_count = a
         .iter()
-        .zip(b.iter())
+        .zip(b)
         .map(|(&x, &y)| popcount32(x & y))
-        .sum();
+        .sum::<u32>()
+        + popcount32(tail_a & tail_b);
     let p_and = and_count as f32 / n;
 
     let num = p_and - (pa * pb);
@@ -210,6 +236,23 @@ mod tests {
         assert!((probability(&words, 32) - 1.0).abs() < 1e-6);
         let words2 = [0u32];
         assert!((probability(&words2, 32) - 0.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_probability_masks_padding() {
+        assert_eq!(probability(&[u32::MAX], 8), 1.0);
+        assert_eq!(probability(&[0, u32::MAX, u32::MAX], 33), 1.0 / 33.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_probability_refuses_short_storage() {
+        let _ = probability(&[u32::MAX], 33);
+    }
+
+    #[test]
+    fn test_scc_ignores_padding_in_each_word_slice() {
+        assert_eq!(scc(&[0x5], &[0xFFFF_FFFA], 4), -1.0);
     }
 
     #[test]

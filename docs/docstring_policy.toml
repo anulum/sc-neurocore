@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2181
+expected_file_count = 2188
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8774,3 +8774,31 @@ rationale = "Bitstream SCC, precision, histogram, drift and layer audit with a R
 [[file]]
 path = "tests/test_stochastic_doctor/test_diagnostics_input_validation.py"
 rationale = "Hold the stochastic doctor's entry points to zero-and-one bitstreams on the Python and the native path, and its reports to JSON without NaN."
+
+[[file]]
+path = "src/sc_neurocore/edge/bitstream.py"
+rationale = "Document packed word operations, logical tail masking and explicit length refusals."
+
+[[file]]
+path = "tests/test_bridges_aer_router_aer_router_dispatch.py"
+rationale = "Exercise pending-sequence ACK counts and destination dispatch statistics."
+
+[[file]]
+path = "tests/test_edge/test_sc_network_contracts.py"
+rationale = "Verify per-input connection masks, cascade counts, and packed stream validity through the network runner."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_probability.py"
+rationale = "Check logical packed probabilities and capacity errors."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_sc_ops.py"
+rationale = "Check packed word operations and incompatible operand lengths."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_scc.py"
+rationale = "Exercise stochastic correlation over the logical packed prefix."
+
+[[file]]
+path = "tests/test_bridges_aer_router_aer_router_benchmark.py"
+rationale = "Measure completed simulated dispatch and acknowledgement cycles within the pending limit."

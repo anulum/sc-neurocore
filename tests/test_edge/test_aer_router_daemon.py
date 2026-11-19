@@ -17,13 +17,16 @@ from __future__ import annotations
 
 import logging
 import shutil
+import socket
 import subprocess
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+from sc_neurocore.bridges.aer_router import SpikePacket
 from sc_neurocore.edge import aer_router
 
 posix_only = pytest.mark.skipif(
@@ -130,8 +133,8 @@ def test_start_builds_the_router_with_go_before_running_it(
 ) -> None:
     """``start()`` builds ``main.go`` into ``aer_router`` with Go, then runs that binary."""
     (tmp_path / "main.go").write_text(
-        'package main\n\nimport "os"\n\nfunc main() {\n'
-        '\t_ = os.WriteFile("started.txt", []byte("built"), 0o644)\n\tselect {}\n}\n',
+        'package main\n\nimport ("os"; "time")\n\nfunc main() {\n'
+        '\t_ = os.WriteFile("started.txt", []byte("built"), 0o644)\n\ttime.Sleep(time.Hour)\n}\n',
         encoding="utf-8",
     )
     daemon = aer_router.AERRoutingDaemon(port=9102, router_dir=tmp_path)
@@ -172,3 +175,142 @@ def test_stop_without_a_running_router_does_nothing(caplog: pytest.LogCaptureFix
         daemon.stop()
     assert daemon._process is None
     assert _messages(caplog) == []
+
+
+@posix_only
+def test_supervisor_passes_port_to_go_process(tmp_path: Path) -> None:
+    """The launched program receives the requested port instead of its default."""
+    router = tmp_path / "aer_router"
+    router.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "$@" > args.txt\nexec sleep 30\n',
+        encoding="utf-8",
+    )
+    router.chmod(0o755)
+    daemon = aer_router.AERRoutingDaemon(port=9103, router_dir=tmp_path)
+    daemon.start(build=False)
+    try:
+        assert _read_when_written(tmp_path / "args.txt").splitlines() == ["--port", "9103"]
+    finally:
+        daemon.stop()
+
+
+@posix_only
+def test_stop_kills_and_reaps_process_that_ignores_termination(tmp_path: Path) -> None:
+    """The supervisor reaps a child that keeps running after SIGTERM."""
+    router = tmp_path / "aer_router"
+    router.write_text(
+        "#!/bin/sh\ntrap '' TERM\necho ready > ready.txt\nexec sleep 30\n",
+        encoding="utf-8",
+    )
+    router.chmod(0o755)
+    daemon = aer_router.AERRoutingDaemon(router_dir=tmp_path)
+    daemon.start(build=False)
+    process = daemon._process
+    assert process is not None
+    try:
+        assert _read_when_written(tmp_path / "ready.txt").strip() == "ready"
+        daemon.stop()
+        assert process.poll() is not None
+        assert daemon._process is None
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=2.0)
+
+
+@needs_go
+def test_configured_go_router_ignores_stale_ack_after_restart(tmp_path: Path) -> None:
+    """Keep the destination live across two Go processes on the same UDP port."""
+    shutil.copyfile(aer_router._PACKAGE_ROUTER_DIR / "main.go", tmp_path / "main.go")
+    with (
+        socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as destination,
+        socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as source,
+        socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as reservation,
+    ):
+        destination.bind(("127.0.0.1", 0))
+        destination.settimeout(3.0)
+        source.bind(("127.0.0.1", 0))
+        source.settimeout(3.0)
+        reservation.bind(("127.0.0.1", 0))
+        port = reservation.getsockname()[1]
+        reservation.close()
+
+        target = f"127.0.0.1:{destination.getsockname()[1]}"
+        router_address = ("127.0.0.1", port)
+        daemon = aer_router.AERRoutingDaemon(port=port, router_dir=tmp_path, routes={12: target})
+        packet = SpikePacket(source_id=8, target_id=12, timestamp=17, spike_len=9, sequence=-42)
+        data = packet.encode()
+        daemon.start()
+        try:
+            daemon.start(build=False)
+            source.sendto(data, router_address)
+            forwarded, address = destination.recvfrom(64)
+            assert address[1] == port
+            delivery = SpikePacket.decode(forwarded)
+            assert delivery.sequence > 0
+            assert delivery == replace(packet, sequence=delivery.sequence)
+            ack, _ = source.recvfrom(64)
+            assert ack == data[-8:]
+            stale_ack = forwarded[-8:]
+        finally:
+            daemon.stop()
+
+        daemon.start(build=False)
+        try:
+            source.sendto(data, router_address)
+            forwarded, address = destination.recvfrom(64)
+            assert address[1] == port
+            current_ack = forwarded[-8:]
+            assert current_ack != stale_ack
+            ack, _ = source.recvfrom(64)
+            assert ack == data[-8:]
+
+            # The destination sends all three frames through the same loopback socket.
+            barrier = replace(packet, sequence=-43, timestamp=18)
+            destination.sendto(stale_ack, address)
+            destination.sendto(data, address)
+            destination.sendto(barrier.encode(), address)
+            forwarded, _ = destination.recvfrom(64)
+            assert SpikePacket.decode(forwarded).timestamp == barrier.timestamp
+            ack, _ = destination.recvfrom(64)
+            assert ack == barrier.encode()[-8:]
+
+            destination.sendto(current_ack, address)
+            destination.sendto(data, address)
+            forwarded, _ = destination.recvfrom(64)
+            new_delivery = SpikePacket.decode(forwarded)
+            assert new_delivery.sequence > 0
+            assert new_delivery == replace(packet, sequence=new_delivery.sequence)
+            assert forwarded[-8:] != current_ack
+            ack, _ = destination.recvfrom(64)
+            assert ack == data[-8:]
+        finally:
+            daemon.stop()
+
+
+@posix_only
+def test_start_refuses_a_child_that_exits_during_startup(tmp_path: Path) -> None:
+    """An early child failure is reported and leaves no tracked process."""
+    router = tmp_path / "aer_router"
+    router.write_text("#!/bin/sh\nexit 7\n", encoding="utf-8")
+    router.chmod(0o755)
+    daemon = aer_router.AERRoutingDaemon(port=9103, router_dir=tmp_path)
+    with pytest.raises(RuntimeError, match=r"UDP port 9103 \(exit 7\)"):
+        daemon.start(build=False)
+    assert daemon._process is None
+
+
+@posix_only
+def test_stop_clears_an_already_exited_child(tmp_path: Path) -> None:
+    """Stopping an already-exited process clears its supervisor state."""
+    _stand_in_router(tmp_path)
+    daemon = aer_router.AERRoutingDaemon(port=9104, router_dir=tmp_path)
+    daemon.start(build=False)
+    process = daemon._process
+    assert process is not None
+    try:
+        process.terminate()
+        process.wait(timeout=2.0)
+    finally:
+        daemon.stop()
+    assert daemon._process is None

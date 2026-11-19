@@ -246,36 +246,48 @@ $p=0.5$, LFSR's 1-σ error is ≈0.0156; Sobol's is ≈0.002. Sobol costs
 more per sample (one XOR + one trailing-zero count) but lets a
 bandwidth-constrained fabric cut $L$ by 4× for the same MSE.
 
-### 2.4 Why SCLayer does OR-combine, not concatenation
+### 2.4 Packed connection masks
 
-The most common pitfall when cascading SC layers is to simply
-*concatenate* the upstream spike-stream words. This destroys the
-probability interpretation (the combined stream becomes biased by
-word order). :meth:`SCNetwork._flatten_bitstreams` instead uses the
-**SC saturating-add identity** $A \vee B$, which preserves the
-probability semantics up to a correction term $p_{A}p_{B}$ that is
-small when individual inputs have low density.
+Each output row stores a packed binary connection mask. Bit `i` selects
+input `i`. The layer counts the ones in each selected input stream over
+the logical bit length, sums those counts, and compares the total with
+the output threshold. Each input keeps its position across word and
+layer boundaries. `SCLayer.forward` handles a single packed input vector
+with the same connection mask.
 
-### 2.5 Why cascading re-encodes through LFSR
+### 2.5 Cascading spike outputs
 
-Between layers, the boolean spike vector from layer $L_{k}$ is
-re-encoded to a new bitstream by :class:`Lfsr16`. This deliberate
-*re-randomisation* prevents correlation buildup: a spike from layer
-$k$ that fires twice in a row would otherwise produce a perfectly
-correlated stream that cannot be multiplied downstream
-(`SCC(A, A) = 1` gives `A ∧ A = A`, not `p²`). Re-encoding restores
-independence at the cost of one LFSR-cycle per spike — free on any
-core with a hardware XOR tree.
+The next layer receives a full logical stream for each firing input and
+an empty logical stream for each inactive input. The implementation uses
+their exact one counts, `bit_length` and zero. Exported `SCWL` weights
+retain their packed mask layout.
 
-### 2.6 Why the AER router is Go, not Python
+### 2.6 AER routing and supervision
 
-UDP mesh routing at AER rates (~Mpkts/s peak) needs concurrency and
-zero GC pauses. Go's goroutine model handles the fan-out per channel
-without the GIL bottleneck that Python would have. The Python
-:class:`AERRoutingDaemon` is a supervisor: `go build` on demand,
-spawn, `SIGTERM` on teardown. It reports the build, start and stop through
-the `sc_neurocore.edge.aer_router` logger, and `router_dir` selects a
-router directory other than the one shipped with the package.
+The Go service accepts 28-byte big-endian spike frames on its configured
+UDP port. Each destination neuron ID maps to a UDP address. The service
+preserves each forwarded event's source, target, timestamp and spike
+length. It assigns a fresh delivery sequence in the outgoing frame and
+echoes the original sequence to the sender after a successful send.
+The destination echoes the delivery sequence. The router checks the
+destination address and accepts each delivery sequence once. Delivery
+sequences are unique for the lifetime of a running router. A new process
+uses an independently random starting offset in the positive signed 63-bit
+sequence range. This makes an accidental match after a same-port restart
+extremely unlikely, including when the destination and upstream sequence
+are reused.
+
+The router accepts up to 4096 pending sends and refuses a duplicate
+sequence while it is pending. A send awaiting an ACK expires after two
+seconds and is counted as dropped. A later dispatch, acknowledgement or
+pending-count lookup retires expired entries. The Python simulation uses
+the same rules through `AERRouter.dispatch_for_delivery` and
+`ack_received` with the returned sequence and destination address.
+
+`AERRoutingDaemon` can build the packaged service and pass its port and
+initial route map to the child. On shutdown, it sends a termination
+signal and kills the child if it exceeds the two-second grace period.
+Both shutdown paths reap the child.
 
 ---
 
@@ -342,7 +354,7 @@ that a chosen network fits before deployment.
   probability + SCC).
 - Bit-compatible LFSR-16 and Gray-code Sobol encoders.
 - Two SC neuron models (LIF, Izhikevich with 4 presets).
-- Multi-layer SCNetwork runner with per-layer cascading re-encode.
+- Multi-layer SCNetwork runner with per-input connection masks and exact spike cascades.
 - Zero-copy weight blob (`SCWL` magic, 16-byte headers, little-endian).
 - Runtime telemetry ring buffer (per-layer + per-device).
 - 7 pre-profiled RISC-V MCU targets + memory-footprint estimator.
@@ -369,8 +381,9 @@ spikes = net.run([0.5] * 32)    # bool[8]
 probabilities, malformed encoded bitstream widths, and words outside the
 unsigned 32-bit domain before layer execution. `SCLayer` applies the same
 integer and u32-domain checks to configuration, weights, and input words, so
-corrupted blobs or subclassed encoders fail at the Python boundary rather than
-falling through to bitwise operations.
+invalid packed data is rejected at the Python boundary. Probability and SCC
+use the logical bit length, including partial final words. Packed operations
+raise `ValueError` for incompatible lengths.
 
 ### 6.2 Export + reload weights
 
@@ -441,54 +454,41 @@ artefacts rather than committing AMD/Xilinx generated files to the source tree.
 
 ```python
 from sc_neurocore.edge.aer_router import AERRoutingDaemon
-router = AERRoutingDaemon(port=9000)
+router = AERRoutingDaemon(port=9000, routes={12: "127.0.0.1:9001"})
 router.start(build=True)
-# ... experiment drives UDP events to localhost:9000 ...
-router.stop()
+try:
+    # Send AER frames for destination neuron 12 to UDP port 9000.
+    ...
+finally:
+    router.stop()
 ```
 
 ---
 
 ## 7. Verified benchmarks
 
-Measured on Ubuntu 24.04 / CPython 3.12.3 / Intel i5-11600K @ 3.90 GHz,
-single-thread, 2026-04-20. Committed script:
-`benchmarks/bench_edge.py`. Raw JSON at
+Measured on 2026-11-19 on a shared Linux host with Intel Xeon E5-2640
+processors and CPython 3.12.16. The benchmark runs one Python call at a
+time and can use any of the host's 24 logical CPUs. The results are local
+timings from `benchmarks/bench_edge.py` and the measured record is
 `benchmarks/results/bench_edge.json`.
 
-| Operation                                      | Throughput    | Latency    |
-| ---------------------------------------------- | ------------- | ---------- |
-| `popcount32` (pure-Py)                         | 3.30 M ops/s  | 303.0 ns   |
-| `popcount_slice` (1024 words)                  | 3 545 ops/s   | 282.1 µs   |
-| `Lfsr16.encode` (1024-bit)                     | 3 680 ops/s   | 271.8 µs   |
-| `SobolGenerator.encode` (1024-bit)             | 916 ops/s     | 1 092.3 µs |
-| `LifNeuron.tick` (32-word input)               | 99 909 ops/s  | 10.0 µs    |
-| `IzhikevichNeuron.tick`                        | 2.21 M ops/s  | 453.2 ns   |
-| `SCNetwork.run` (32→16→8 @ 1024 bits)          | 65 runs/s     | 15.35 ms   |
-| `serialize_weights` (2-layer, 144 B blob)      | 199 047 ops/s | 5.02 µs    |
-| `deserialize_weights` (2-layer)                | 126 270 ops/s | 7.92 µs    |
-| `scc` (32 words = 1024 bits)                   | 36 076 ops/s  | 27.7 µs    |
+| Operation | Operations per second | Latency |
+| --- | ---: | ---: |
+| `popcount32` (pure Python) | 649 497 | 1.540 µs |
+| `popcount_slice` (1024 words) | 672 | 1.487 ms |
+| `Lfsr16.encode` (1024 bits) | 699 | 1.430 ms |
+| `SobolGenerator.encode` (1024 bits) | 148 | 6.762 ms |
+| `LifNeuron.tick` (32 words) | 21 100 | 47.394 µs |
+| `IzhikevichNeuron.tick` | 503 300 | 1.987 µs |
+| `SCNetwork.run` (32→16→8, 1024 bits) | 20 | 49.161 ms |
+| `serialize_weights` (2 layers) | 49 112 | 20.362 µs |
+| `deserialize_weights` (2 layers) | 33 640 | 29.726 µs |
+| `scc` (1024 bits) | 6 370 | 156.987 µs |
 
-Figures above are `time.perf_counter` deltas from
-`benchmarks/bench_edge.py`.
-
-**Interpretation.**
-
-- `popcount32` at 319 ns is slow relative to the Rust `cpop`
-  instruction (~1 ns at 1 GHz) but the Python version is only used
-  for R&D — on the MCU the Rust path is what runs.
-- `Lfsr16.encode` vs `SobolGenerator.encode` on a 1024-bit stream:
-  LFSR is ~4× faster per bitstream because the Sobol step needs
-  `(idx & -idx).bit_length()` (trailing-zero count) per sample. Sobol
-  pays that cost for better precision; the rule of thumb is to use
-  Sobol only when $L \leq 256$ and precision is critical.
-- `SCNetwork.run` at 14.34 ms for 32→16→8 is dominated by
-  per-input LFSR re-encoding; a NumPy-vectorised version is available
-  in `sc_neurocore.v3.engine` but is not bit-compatible with the MCU
-  target and so is excluded from this module.
-- `IzhikevichNeuron.tick` is 21× faster than `LifNeuron.tick` because
-  the LIF tick runs a full popcount over 32 words per step, whereas
-  Izhikevich just does integer MACs on two 32-bit state variables.
+The network benchmark uses the per-input connection masks and exact
+spike counts described above. The timings describe this workload on
+the shared host.
 
 ---
 
@@ -542,9 +542,10 @@ Figures above are `time.perf_counter` deltas from
 
 ## 10. Rust parity — what the MCU runs
 
-The Rust crate `tinysc_riscv` under `crates/tinysc_riscv/` is the
-physical MCU counterpart to every module on this page. The parity rule
-is byte-exact for the four externally visible surfaces:
+The Rust crate `tinysc_riscv` under `crates/tinysc_riscv/` supplies
+MCU implementations of the externally visible surfaces below. Packed stream
+operations use the same logical length in Python and Rust. The parity rule
+is byte-exact for the packed words, encoder and weight blob:
 
 | Surface             | Python type / function                        | Rust counterpart                              |
 | ------------------- | --------------------------------------------- | --------------------------------------------- |
@@ -586,15 +587,8 @@ table. Randomness is deterministic: `Lfsr16(0xACE1)` and
 `SobolGenerator(0)` have no hidden entropy, and `SCNetwork.run`
 initialises a fresh LFSR per call.
 
-Variance between runs on the same host is dominated by scheduler
-jitter and CPU-cache state; on the CEO workstation the inner hot
-paths (popcount32, Izhikevich tick, weights serialise) stay within
-±5 % of the numbers in §7 across repeated runs. `SCNetwork.run` can
-drift up to ±15 % because its 15 ms per-forward budget is dominated by
-Python-level allocation inside `_spikes_to_bitstreams`; pin the
-benchmark to a single core with `taskset -c 0 python
-benchmarks/bench_edge.py` for lower variance if you need to track
-regressions.
+Scheduler load and CPU frequency affect timing comparisons. Record the
+host context and use the same workloads for both runs.
 
 ---
 

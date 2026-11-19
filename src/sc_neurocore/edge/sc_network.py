@@ -6,22 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SC Network Runner (ported from tinysc_riscv/network.rs)
 
-"""Fixed-capacity feed-forward SC network runner.
-
-Mirrors the bare-metal Rust implementation, providing a stack-like
-execution model: encode inputs → layer-by-layer SC inference → decode outputs.
-"""
+"""Fixed-capacity feed-forward inference with packed binary connection masks."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 from numbers import Integral, Real
 from typing import Any, Literal
 
-from .bitstream import popcount_slice, MASK32
+from .bitstream import MASK32, _logical_words, popcount_slice
 from .lfsr import Lfsr16
-
 
 MAX_NEURONS_PER_LAYER = 64
 SCMode = Literal["unipolar"]
@@ -79,7 +74,7 @@ def _require_probability(value: object) -> float:
 
 @dataclass
 class SCLayer:
-    """Single dense SC layer: weights × inputs via AND + popcount threshold."""
+    """Single dense SC layer with packed binary connection masks."""
 
     n_inputs: int
     n_outputs: int
@@ -128,7 +123,7 @@ class SCLayer:
         return (self.n_inputs + 31) // 32
 
     def forward(self, input_words: list[int], bit_length: int) -> list[bool]:
-        """Run SC inference: AND each weight row with input, threshold popcount."""
+        """Threshold the selected inputs of one packed input bit vector."""
         bit_length = _require_positive_integer(bit_length, "bit_length")
         if len(input_words) < self.words_per_input:
             raise ValueError("input_words length must be at least words_per_input")
@@ -140,6 +135,20 @@ class SCLayer:
                 acc += popcount_slice([w & inp])
             spikes.append(acc >= self.threshold)
         return spikes
+
+    def _forward_stream_counts(self, counts: list[int]) -> list[bool]:
+        """Accumulate logical one counts on this layer's selected connections."""
+        if len(counts) != self.n_inputs:
+            raise ValueError("encoded input_words must provide one stream per layer input")
+        return [
+            sum(
+                count
+                for index, count in enumerate(counts)
+                if row[index // 32] & (1 << (index % 32))
+            )
+            >= self.threshold
+            for row in self.weights
+        ]
 
 
 @dataclass
@@ -178,55 +187,31 @@ class SCNetwork:
         lfsr = Lfsr16(self.lfsr_seed)
         return [lfsr.encode_float(p, self.bit_length) for p in validated]
 
-    def _spikes_to_bitstreams(self, spikes: list[bool], lfsr: Lfsr16) -> list[list[int]]:
-        """Re-encode spike booleans as bitstreams for the next layer."""
-        return [lfsr.encode_float(1.0 if s else 0.0, self.bit_length) for s in spikes]
-
-    def _flatten_bitstreams(self, streams: list[list[int]]) -> list[int]:
-        """Interleave per-input bitstreams into a flat word array.
-
-        For a layer expecting N inputs, the flat array has N×words_per_input
-        entries: [input0_word0, input1_word0, ..., inputN_word0, input0_word1, ...]
-        However for simplicity we concatenate: [input0_words..., input1_words..., ...].
-        The layer forward reads the first words_per_input words as the combined input.
-        To combine inputs, we OR them together (SC saturating addition).
-        """
-        if not streams:
-            return []
-        wpi = len(streams[0])
-        if wpi == 0:
-            raise ValueError("encoded bitstreams must not be empty")
-        combined = [0] * wpi
+    def _stream_counts(self, streams: list[list[int]]) -> list[int]:
+        """Count the logical ones in each encoded input independently."""
+        words_per_stream = (self.bit_length + 31) // 32
+        counts = []
         for stream in streams:
-            if len(stream) != wpi:
-                raise ValueError("encoded bitstreams must have the same word width")
-            for j, word in enumerate(stream):
-                combined[j] = (
-                    combined[j] | _require_u32_word(word, "encoded bitstream words")
-                ) & MASK32
-        return combined
+            if not stream:
+                raise ValueError("encoded bitstreams must not be empty")
+            words = [_require_u32_word(word, "encoded bitstream words") for word in stream]
+            if len(stream) != words_per_stream:
+                raise ValueError("encoded bitstreams must have the same word width for bit_length")
+            counts.append(popcount_slice(_logical_words(words, self.bit_length)))
+        return counts
 
     def run(self, input_probabilities: list[float]) -> list[bool]:
-        """Full inference: encode → cascaded layer inference → spike output.
-
-        Each layer's spike output is re-encoded as bitstreams and fed
-        to the next layer. This is the correct SC cascade semantics.
-        """
+        """Encode each input, apply connection masks, and cascade spike counts."""
         if not self.layers:
             return []
         if len(input_probabilities) != self.layers[0].n_inputs:
             raise ValueError("input_probabilities length must match first layer n_inputs")
 
-        lfsr = Lfsr16(self.lfsr_seed)
-        input_streams = self.encode_inputs(input_probabilities)
-        current_words = self._flatten_bitstreams(input_streams)
-
+        counts = self._stream_counts(self.encode_inputs(input_probabilities))
         current_spikes: list[bool] = []
         for layer in self.layers:
-            current_spikes = layer.forward(current_words, self.bit_length)
-            current_words = self._flatten_bitstreams(
-                self._spikes_to_bitstreams(current_spikes, lfsr)
-            )
+            current_spikes = layer._forward_stream_counts(counts)
+            counts = [self.bit_length if spike else 0 for spike in current_spikes]
 
         return current_spikes
 

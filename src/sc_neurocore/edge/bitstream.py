@@ -16,6 +16,8 @@ estimation.
 
 from __future__ import annotations
 
+from numbers import Integral
+
 MASK32 = 0xFFFF_FFFF
 
 
@@ -65,29 +67,48 @@ def sc_mux(a: int, b: int, sel: int) -> int:
 
 def and_packed(a: list[int], b: list[int]) -> list[int]:
     """SC AND over two packed word slices."""
-    assert len(a) == len(b)
+    if len(a) != len(b):
+        raise ValueError("packed input lengths must match")
     return [(x & y) & MASK32 for x, y in zip(a, b)]
 
 
 def mux_packed(a: list[int], b: list[int], sel: list[int]) -> list[int]:
     """SC MUX over two packed word slices with a select bitstream."""
-    assert len(a) == len(b) == len(sel)
+    if not len(a) == len(b) == len(sel):
+        raise ValueError("packed input and select lengths must match")
     return [((x & s) | (y & (~s & MASK32))) & MASK32 for x, y, s in zip(a, b, sel)]
 
 
+def _logical_words(words: list[int], bit_length: int) -> list[int]:
+    """Return the logical prefix with the final partial word masked."""
+    if (
+        isinstance(bit_length, bool)
+        or not isinstance(bit_length, Integral)
+        or not 0 <= bit_length <= 32 * len(words)
+    ):
+        raise ValueError("bit_length must be an integer within the packed buffer capacity")
+    full_words, remaining_bits = divmod(int(bit_length), 32)
+    logical = words[:full_words]
+    if remaining_bits:
+        logical.append(words[full_words] & ((1 << remaining_bits) - 1))
+    return logical
+
+
 def probability(words: list[int], bit_length: int) -> float:
-    """Estimated probability from a packed bitstream."""
-    if bit_length == 0:
-        return 0.0
-    return popcount_slice(words) / bit_length
+    """Estimate probability from the logical bits of a packed stream."""
+    logical = _logical_words(words, bit_length)
+    return popcount_slice(logical) / bit_length if bit_length else 0.0
 
 
 def scc(a: list[int], b: list[int], bit_length: int) -> float:
     """SCC between two packed u32 bitstreams (Alaghi & Hayes, 2013).
 
-    Returns a correlation coefficient in [-1, 1].
+    Returns a correlation coefficient in [-1, 1] over the logical bits.
     """
-    assert len(a) == len(b)
+    if len(a) != len(b):
+        raise ValueError("packed input lengths must match")
+    a = _logical_words(a, bit_length)
+    b = _logical_words(b, bit_length)
     if bit_length == 0:
         return 0.0
     n = float(bit_length)

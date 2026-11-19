@@ -5679,8 +5679,8 @@ Per-route delivery statistics.
 ### Class `AERRouter`
 Manages route registration, spike dispatch, and ACK tracking.
 
-This is a pure-Python simulation/client. For high-performance
-UDP routing, use the Go server (hil_debugger/interconnect).
+This class models routing in memory. Use ``AERRoutingDaemon`` to
+supervise the Go UDP service.
 
 - **__init__**()
 - **register_route**(neuron_id, addr)
@@ -5691,8 +5691,10 @@ UDP routing, use the Go server (hil_debugger/interconnect).
   - Return the number of currently registered neuron routes.
 - **dispatch_spike**(packet)
   - Dispatch a spike packet to the registered target.
-- **ack_received**(seq)
-  - Process an ACK for the given sequence number.
+- **dispatch_for_delivery**(packet)
+  - Prepare an outgoing packet with a distinct delivery sequence.
+- **ack_received**(seq, \*, address)
+  - Acknowledge a delivery sequence and its downstream address.
 - **pending_count**()
   - Return the number of dispatched packets awaiting ACKs.
 - **total_sent**()
@@ -21428,17 +21430,19 @@ Supervise the Go AER UDP mesh router that links several FPGA boards.
 Parameters
 ----------
 port : int, optional
-    UDP port the router is reported to listen on.
+    UDP listen port passed to the router process.
 router_dir : pathlib.Path, optional
     Directory holding the router's ``main.go`` and its ``aer_router``
     binary; the router shipped with the package when omitted.
+routes : Mapping&#91;int, str&#93;, optional
+    Destination neuron IDs mapped to UDP host and port addresses.
 
-- **__init__**(port, router_dir)
-  - Remember the port and router directory; nothing is built or started yet.
+- **__init__**(port, router_dir, \*, routes)
+  - Store the port, paths and initial routes for the child process.
 - **start**(build)
   - Build the router if asked, then start it in the background.
 - **stop**()
-  - Terminate the running router and wait up to two seconds for it to exit.
+  - Terminate and reap the router, killing it if it exceeds the grace period.
 
 ---
 
@@ -21472,12 +21476,12 @@ SC AND over two packed word slices.
 SC MUX over two packed word slices with a select bitstream.
 
 ### Function `probability(words, bit_length)`
-Estimated probability from a packed bitstream.
+Estimate probability from the logical bits of a packed stream.
 
 ### Function `scc(a, b, bit_length)`
 SCC between two packed u32 bitstreams (Alaghi & Hayes, 2013).
 
-Returns a correlation coefficient in &#91;-1, 1&#93;.
+Returns a correlation coefficient in &#91;-1, 1&#93; over the logical bits.
 
 ---
 
@@ -21604,14 +21608,14 @@ Write report-derived FPGA power/thermal JSON beside deployable artefacts.
 ## Module `edge.sc_network`
 
 ### Class `SCLayer`
-Single dense SC layer: weights × inputs via AND + popcount threshold.
+Single dense SC layer with packed binary connection masks.
 
 - **__post_init__**()
   - Validate and normalise layer configuration after dataclass construction.
 - **words_per_input**()
   - Return packed weight words required to cover all layer inputs.
 - **forward**(input_words, bit_length)
-  - Run SC inference: AND each weight row with input, threshold popcount.
+  - Threshold the selected inputs of one packed input bit vector.
 
 ### Class `SCNetwork`
 Multi-layer feed-forward SC network runner.
@@ -21630,7 +21634,7 @@ Usage::
 - **encode_inputs**(probabilities)
   - Encode float probabilities into per-input packed bitstreams.
 - **run**(input_probabilities)
-  - Full inference: encode → cascaded layer inference → spike output.
+  - Encode each input, apply connection masks, and cascade spike counts.
 - **export_weights**()
   - Export all layer weights in serialization-ready format.
 - **from_weights**(layers_data, bit_length, lfsr_seed)

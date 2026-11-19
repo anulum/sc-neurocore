@@ -313,6 +313,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   suffix, and refuses default corner calls or unsuffixed Liberty paths
   (`TSMC28`, `INTEL16`, `CUSTOM`) with `ValueError`.
 
+- Edge inference preserves each input's packed stream and connection mask
+  across layers. Packed probability and correlation count only logical bits
+  in Python and on the Rust edge runtime.
+- The Go AER service honours its listen port and forwards registered UDP
+  events with per-delivery acknowledgement sequences. It checks the sender
+  of each acknowledgement, gives restarted processes independent sequence
+  offsets, and expires unresolved deliveries. The Python simulation mirrors
+  these rules, and its supervisor reaps stalled children.
+
 - Eleven citations on the model pages and in two engine sources are corrected
   to their works' records. Each record is in Crossref and was read a second
   time by DOI in PubMed or Semantic Scholar:

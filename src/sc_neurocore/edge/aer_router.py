@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 import subprocess
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 _LOG = logging.getLogger(__name__)
@@ -33,16 +34,25 @@ class AERRoutingDaemon:
     Parameters
     ----------
     port : int, optional
-        UDP port the router is reported to listen on.
+        UDP listen port passed to the router process.
     router_dir : pathlib.Path, optional
         Directory holding the router's ``main.go`` and its ``aer_router``
         binary; the router shipped with the package when omitted.
+    routes : Mapping[int, str], optional
+        Destination neuron IDs mapped to UDP host and port addresses.
     """
 
-    def __init__(self, port: int = 9000, router_dir: Path | None = None) -> None:
-        """Remember the port and router directory; nothing is built or started yet."""
+    def __init__(
+        self,
+        port: int = 9000,
+        router_dir: Path | None = None,
+        *,
+        routes: Mapping[int, str] | None = None,
+    ) -> None:
+        """Store the port, paths and initial routes for the child process."""
         self._router_dir = _PACKAGE_ROUTER_DIR if router_dir is None else router_dir
         self._port = port
+        self._routes = dict(routes) if routes is not None else {}
         self._process: subprocess.Popen[bytes] | None = None
 
     def start(self, build: bool = True) -> None:
@@ -59,7 +69,11 @@ class AERRoutingDaemon:
             The Go build fails.
         OSError
             The router binary cannot be started.
+        RuntimeError
+            The child exits during startup.
         """
+        if self._process is not None and self._process.poll() is None:
+            return
         if build:
             _LOG.info("Building the Go AER router in %s", self._router_dir)
             subprocess.run(
@@ -69,18 +83,34 @@ class AERRoutingDaemon:
             )
 
         _LOG.info("Starting the AER router on UDP port %d", self._port)
+        command = ["./aer_router", "--port", str(self._port)]
+        for target, address in self._routes.items():
+            command.extend(("--route", f"{target}={address}"))
         self._process = subprocess.Popen(
-            ["./aer_router"],
+            command,
             cwd=str(self._router_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         time.sleep(0.5)
+        status = self._process.poll()
+        if status is not None:
+            self._process = None
+            raise RuntimeError(
+                f"AER router failed to start on UDP port {self._port} (exit {status})"
+            )
 
     def stop(self) -> None:
-        """Terminate the running router and wait up to two seconds for it to exit."""
-        if self._process is not None:
-            self._process.terminate()
-            self._process.wait(timeout=2.0)
-            self._process = None
-            _LOG.info("Stopped the AER router")
+        """Terminate and reap the router, killing it if it exceeds the grace period."""
+        process = self._process
+        if process is None:
+            return
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2.0)
+        self._process = None
+        _LOG.info("Stopped the AER router")
