@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 29,
-    "outdated": 115,
+    "current": 31,
+    "outdated": 113,
     "reviewed": 2,
     "unbound": 175
   },
@@ -2842,17 +2842,11 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/compiler/__init__.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/compiler/__init__.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

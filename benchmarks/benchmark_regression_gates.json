@@ -5358,7 +5358,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "67340612024c0da422e6bf3d85f6e92624f328377c29f696506567f1c23ede7b"
+        "native_sha256": "bc55da348b211b7980dd3694e0282be8974894d31f2880b48e6636b9f9602817"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5470,6 +5470,9 @@
         "src/sc_neurocore/compiler/cocotb_gen.py": "source_sha256.src/sc_neurocore/compiler/cocotb_gen.py",
         "src/sc_neurocore/compiler/compiler_impl.py": "source_sha256.src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/constraint_gen.py": "source_sha256.src/sc_neurocore/compiler/constraint_gen.py",
+        "src/sc_neurocore/compiler/cordic.py": "source_sha256.src/sc_neurocore/compiler/cordic.py",
+        "src/sc_neurocore/compiler/cordic_native.py": "source_sha256.src/sc_neurocore/compiler/cordic_native.py",
+        "src/sc_neurocore/compiler/cordic_verilog.py": "source_sha256.src/sc_neurocore/compiler/cordic_verilog.py",
         "src/sc_neurocore/compiler/deployment.py": "source_sha256.src/sc_neurocore/compiler/deployment.py",
         "src/sc_neurocore/compiler/diffusion_noise.py": "source_sha256.src/sc_neurocore/compiler/diffusion_noise.py",
         "src/sc_neurocore/compiler/discrete_function_programs.py": "source_sha256.src/sc_neurocore/compiler/discrete_function_programs.py",
@@ -5706,7 +5709,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "67340612024c0da422e6bf3d85f6e92624f328377c29f696506567f1c23ede7b"
+        "native_sha256": "bc55da348b211b7980dd3694e0282be8974894d31f2880b48e6636b9f9602817"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5826,6 +5829,9 @@
         "src/sc_neurocore/compiler/cocotb_gen.py": "source_sha256.src/sc_neurocore/compiler/cocotb_gen.py",
         "src/sc_neurocore/compiler/compiler_impl.py": "source_sha256.src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/constraint_gen.py": "source_sha256.src/sc_neurocore/compiler/constraint_gen.py",
+        "src/sc_neurocore/compiler/cordic.py": "source_sha256.src/sc_neurocore/compiler/cordic.py",
+        "src/sc_neurocore/compiler/cordic_native.py": "source_sha256.src/sc_neurocore/compiler/cordic_native.py",
+        "src/sc_neurocore/compiler/cordic_verilog.py": "source_sha256.src/sc_neurocore/compiler/cordic_verilog.py",
         "src/sc_neurocore/compiler/deployment.py": "source_sha256.src/sc_neurocore/compiler/deployment.py",
         "src/sc_neurocore/compiler/diffusion_noise.py": "source_sha256.src/sc_neurocore/compiler/diffusion_noise.py",
         "src/sc_neurocore/compiler/discrete_function_programs.py": "source_sha256.src/sc_neurocore/compiler/discrete_function_programs.py",

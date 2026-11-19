@@ -1087,7 +1087,19 @@ the hardware, governor, frequency and host load before and after the run.
 The table is local regression evidence, not a promotion-grade latency or
 throughput claim.
 
-The separate native-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json` records 11 samples after two warmups for twelve models, including partial initial state and held-state RK4 alongside the ten existing workloads. Each timed transaction compiles the model, replays its source, emits both SystemVerilog and MLIR, and checks the output checksum. The partial-state power transaction median is 7568.583098 ms; the held-state RK4 median is 81.938121 ms. The constant-power and dynamic-power medians are 1641.008089 ms and 1668.264789 ms. The receipt pins the native binary and source hashes. The paired run used the Cargo dev profile with default features on a shared host. The twelve output checksums matched on the same ML350 runtime before and after the change. Both equation-IR result filenames contain this same twelve-case capture.
+The native equation-IR receipt `benchmarks/results/local_python_2026-10-29_initial_state_equation_ir.json`
+records 11 samples after two warmups for twelve workloads. Each timed transaction
+compiles the model, replays its source, emits SystemVerilog and MLIR, and checks
+the output checksum. The partial-state power transaction with zero pipeline
+registers has a median of 7022.969693 ms. The held-state RK4 median is 78.030930 ms.
+The constant-power and dynamic-power medians are 1541.398499 ms and
+1364.439777 ms. The run used the Cargo dev profile with default features on a
+shared Intel Xeon E5-2640 host. The Python frontend was imported from the
+source-bound 4.2.0 checkout. The receipt's `versions.sc-neurocore` value of 4.1.0
+comes from the installed distribution metadata. All twelve output checksums,
+cycle counts, pipeline register counts and model payloads match the preceding
+capture. Both equation-IR result filenames contain the same source- and
+binary-bound capture.
 
 No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
 and Rust-safety mirrors were unwired, non-executable generated stubs rather
