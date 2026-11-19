@@ -20981,13 +20981,14 @@ checksum : str
     Set by :meth:`compute_checksum`.
 
 - **compute_checksum**()
-  - Hash the snapshot's identifying fields and neuron state, and store the result.
+  - Hash every stored field of the snapshot, and store the result.
 
 ### Class `CheckpointManager`
 Manages state snapshots for time-warp rollback.
 
-Preserves the identity substrate (ArcaneNeuron.v_deep) across
-rollback: deep compartment is NEVER rolled back.
+The manager stores and finds snapshots, the identity value among them. Keeping
+the identity substrate (ArcaneNeuron.v_deep) across a rollback is the engine's
+rule (:meth:`TimeWarpEngine._rollback`), not the manager's.
 
 Parameters
 ----------
@@ -21037,7 +21038,8 @@ senders must inject their valid sends again.
 
 1. Each node advances optimistically at its own rate
 2. Straggler events trigger rollback + anti-messages
-3. Global Virtual Time (GVT) advances monotonically
+3. Global Virtual Time (GVT) is the minimum of the local and queued times;
+   it can fall when a rollback restores a node to an earlier checkpoint
 4. Fossil collection prunes checkpoints below GVT
 5. Identity (v_deep) is NEVER rolled back — it is the self
 
@@ -21045,12 +21047,21 @@ Parameters
 ----------
 num_nodes : int
     Number of nodes, each with a Lamport and a vector clock.
-checkpoint_interval_ns : int
-    Despite its name, a count of events: a node saves a checkpoint each time
-    its number of processed events is a multiple of this value (values below
-    1 count as 1).
+checkpoint_interval_events : int, optional
+    A node saves a checkpoint each time its number of processed events is a
+    multiple of this value (values below 1 count as 1); 1000 when not given.
+checkpoint_interval_ns : int, optional
+    Deprecated keyword-only name of ``checkpoint_interval_events``, which it
+    always meant despite the unit in its name; it warns.
 
-- **__init__**(num_nodes, checkpoint_interval_ns)
+Raises
+------
+ValueError
+    If both names are given.
+
+- **__init__**(num_nodes, checkpoint_interval_events, \*, checkpoint_interval_ns)
+- **checkpoint_interval_ns**()
+  - Deprecated name of :attr:`checkpoint_interval_events`; it warns.
 - **inject_event**(event)
   - Queue an event in virtual-time order, numbering it when it has no id.
 - **process_next**()
@@ -21087,11 +21098,14 @@ identity_drift : float
     Absolute difference of the physical and digital identity values.
 causal_violations : int
     The engine's rollback count.
+tolerance : float
+    Threshold of :attr:`within_tolerance`; a session sets it from its
+    ``max_divergence``.
 
 - **total_divergence**()
   - Heuristic sum of the four parts, mixing their units.
 - **within_tolerance**()
-  - Whether the total divergence is below 1.0.
+  - Whether the total divergence is below :attr:`tolerance`.
 
 ### Class `TwinSession`
 Orchestrates physical ↔ digital twin synchronization.
@@ -21108,9 +21122,12 @@ mode : SyncMode
     The strategy the session reports; the engine runs optimistically in every
     mode.
 max_divergence : float
-    Stored for the caller; the session does not act on it.
+    Tolerance of the session's divergence metric: :meth:`update_divergence`
+    gives it to the metric, whose ``within_tolerance`` compares against it.
 
 - **__init__**(num_nodes, mode, max_divergence)
+- **digital_events_out**()
+  - Deprecated and always 0: nothing leaves the twin toward the physical side; it warns.
 - **start**()
   - Mark the session as running; nothing else changes.
 - **stop**()
@@ -21182,14 +21199,15 @@ lfsr_delta : int
 size_bytes : int
     Bytes of the two arrays.
 state_shape : tuple of int
-    Shape of the states the diff belongs to.
+    Shape of the states the diff belongs to; required, keyword only, so an
+    older positional call cannot shift into it.
 
 - **compute_delta**(base_state, new_state, base_id, new_id, virtual_time_ns, node_id)
   - Build the diff of two state arrays of the same shape.
 - **apply**(base_state)
   - Return a copy of ``base_state`` with the diff's elements written in.
 - **compression_ratio**()
-  - Placeholder ratio: 1.0 whenever the diff holds bytes, else 0.0.
+  - Bytes of the full state divided by bytes of the diff; 0.0 for an empty diff.
 - **num_changes**()
   - Number of changed elements in the diff.
 
@@ -21315,8 +21333,8 @@ num_nodes : int
     Nodes of the engine.
 mode : str
     The session's sync mode value.
-physical_events_in, digital_events_out : int
-    The session's event counters.
+physical_events_in : int
+    The session's physical event counter.
 gvt_ns : int
     The engine's last computed global virtual time.
 total_rollbacks : int

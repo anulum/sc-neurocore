@@ -53,6 +53,8 @@ from __future__ import annotations
 
 import hashlib
 import heapq
+import struct
+import warnings
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -306,12 +308,15 @@ class Checkpoint:
     checksum: str = ""
 
     def compute_checksum(self) -> str:
-        """Hash the snapshot's identifying fields and neuron state, and store the result.
+        """Hash every stored field of the snapshot, and store the result.
 
         The SHA-256 covers the checkpoint id (4 bytes), the virtual time (8 bytes),
-        the LFSR state (4 bytes, all little-endian) and the raw bytes of the neuron
-        state. The synapse state, identity, Lamport time and vector clock are not
-        part of it.
+        the LFSR state (4 bytes), the node id and the Lamport time (8 bytes each,
+        signed), all little-endian; the identity as a little-endian double; and the
+        neuron state, synapse state and vector clock, each prefixed by its dtype and
+        shape, or by a tag that no array produces when it is None. Two states that
+        differ only in shape, or None and an empty array, hash differently. Values
+        are comparable only within one version of this method.
 
         Returns
         -------
@@ -328,8 +333,15 @@ class Checkpoint:
         h.update(self.checkpoint_id.to_bytes(4, "little"))
         h.update(self.virtual_time_ns.to_bytes(8, "little"))
         h.update(self.lfsr_state.to_bytes(4, "little"))
-        if self.neuron_state is not None:
-            h.update(self.neuron_state.tobytes())
+        h.update(self.node_id.to_bytes(8, "little", signed=True))
+        h.update(self.lamport_time.to_bytes(8, "little", signed=True))
+        h.update(struct.pack("<d", self.identity_deep))
+        for array in (self.neuron_state, self.synapse_state, self.vector_clock):
+            if array is None:
+                h.update(b"\x00none")
+                continue
+            h.update(f"\x01{array.dtype.str}{array.shape}".encode())
+            h.update(np.ascontiguousarray(array).tobytes())
         self.checksum = h.hexdigest()[:16]
         return self.checksum
 
@@ -337,8 +349,9 @@ class Checkpoint:
 class CheckpointManager:
     """Manages state snapshots for time-warp rollback.
 
-    Preserves the identity substrate (ArcaneNeuron.v_deep) across
-    rollback: deep compartment is NEVER rolled back.
+    The manager stores and finds snapshots, the identity value among them. Keeping
+    the identity substrate (ArcaneNeuron.v_deep) across a rollback is the engine's
+    rule (:meth:`TimeWarpEngine._rollback`), not the manager's.
 
     Parameters
     ----------
@@ -507,7 +520,8 @@ class TimeWarpEngine:
 
     1. Each node advances optimistically at its own rate
     2. Straggler events trigger rollback + anti-messages
-    3. Global Virtual Time (GVT) advances monotonically
+    3. Global Virtual Time (GVT) is the minimum of the local and queued times;
+       it can fall when a rollback restores a node to an earlier checkpoint
     4. Fossil collection prunes checkpoints below GVT
     5. Identity (v_deep) is NEVER rolled back — it is the self
 
@@ -515,15 +529,41 @@ class TimeWarpEngine:
     ----------
     num_nodes : int
         Number of nodes, each with a Lamport and a vector clock.
-    checkpoint_interval_ns : int
-        Despite its name, a count of events: a node saves a checkpoint each time
-        its number of processed events is a multiple of this value (values below
-        1 count as 1).
+    checkpoint_interval_events : int, optional
+        A node saves a checkpoint each time its number of processed events is a
+        multiple of this value (values below 1 count as 1); 1000 when not given.
+    checkpoint_interval_ns : int, optional
+        Deprecated keyword-only name of ``checkpoint_interval_events``, which it
+        always meant despite the unit in its name; it warns.
+
+    Raises
+    ------
+    ValueError
+        If both names are given.
     """
 
-    def __init__(self, num_nodes: int, checkpoint_interval_ns: int = 1000):
+    def __init__(
+        self,
+        num_nodes: int,
+        checkpoint_interval_events: Optional[int] = None,
+        *,
+        checkpoint_interval_ns: Optional[int] = None,
+    ):
+        if checkpoint_interval_ns is not None:
+            if checkpoint_interval_events is not None:
+                raise ValueError(
+                    "give checkpoint_interval_events only; checkpoint_interval_ns is its deprecated name"
+                )
+            warnings.warn(
+                "checkpoint_interval_ns counts events, not nanoseconds; use checkpoint_interval_events",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            checkpoint_interval_events = checkpoint_interval_ns
         self.num_nodes = num_nodes
-        self.checkpoint_interval_ns = checkpoint_interval_ns
+        self.checkpoint_interval_events: int = (
+            1000 if checkpoint_interval_events is None else checkpoint_interval_events
+        )
         self.nodes: Dict[int, NodeState] = {}
         for i in range(num_nodes):
             ns = NodeState(node_id=i)
@@ -542,6 +582,16 @@ class TimeWarpEngine:
         self._seq_by_event: Dict[int, int] = {}
         #: The next processing sequence number when each checkpoint was saved, by checkpoint id.
         self._seq_at_checkpoint: Dict[int, int] = {}
+
+    @property
+    def checkpoint_interval_ns(self) -> int:
+        """Deprecated name of :attr:`checkpoint_interval_events`; it warns."""
+        warnings.warn(
+            "checkpoint_interval_ns counts events, not nanoseconds; use checkpoint_interval_events",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.checkpoint_interval_events
 
     def inject_event(self, event: TwinEvent) -> None:
         """Queue an event in virtual-time order, numbering it when it has no id.
@@ -565,7 +615,7 @@ class TimeWarpEngine:
         than the target's local virtual time is a straggler: the node is rolled
         back first. Applying an event sets the node's local time to the event's,
         merges its Lamport and vector timestamps and counts it; every
-        ``checkpoint_interval_ns``-th event of a node saves a checkpoint.
+        ``checkpoint_interval_events``-th event of a node saves a checkpoint.
 
         Returns
         -------
@@ -602,7 +652,7 @@ class TimeWarpEngine:
         self._next_seq += 1
 
         # Periodic checkpoint
-        if target.processed_events % max(1, self.checkpoint_interval_ns) == 0:
+        if target.processed_events % max(1, self.checkpoint_interval_events) == 0:
             cp = self.checkpoint_mgr.save(
                 target.node_id,
                 target.local_virtual_time_ns,
@@ -859,12 +909,16 @@ class DivergenceMetric:
         Absolute difference of the physical and digital identity values.
     causal_violations : int
         The engine's rollback count.
+    tolerance : float
+        Threshold of :attr:`within_tolerance`; a session sets it from its
+        ``max_divergence``.
     """
 
     spike_rate_divergence: float = 0.0
     timing_offset_ns: int = 0
     identity_drift: float = 0.0
     causal_violations: int = 0
+    tolerance: float = 1.0
 
     @property
     def total_divergence(self) -> float:
@@ -882,8 +936,8 @@ class DivergenceMetric:
 
     @property
     def within_tolerance(self) -> bool:
-        """Whether the total divergence is below 1.0."""
-        return self.total_divergence < 1.0
+        """Whether the total divergence is below :attr:`tolerance`."""
+        return self.total_divergence < self.tolerance
 
 
 class TwinSession:
@@ -901,7 +955,8 @@ class TwinSession:
         The strategy the session reports; the engine runs optimistically in every
         mode.
     max_divergence : float
-        Stored for the caller; the session does not act on it.
+        Tolerance of the session's divergence metric: :meth:`update_divergence`
+        gives it to the metric, whose ``within_tolerance`` compares against it.
     """
 
     def __init__(
@@ -916,9 +971,18 @@ class TwinSession:
         self.engine = TimeWarpEngine(num_nodes)
         self.divergence = DivergenceMetric()
         self.physical_events_in: int = 0
-        self.digital_events_out: int = 0
         self.session_time_ns: int = 0
         self.running: bool = False
+
+    @property
+    def digital_events_out(self) -> int:
+        """Deprecated and always 0: nothing leaves the twin toward the physical side; it warns."""
+        warnings.warn(
+            "TwinSession.digital_events_out was never counted and is removed; it returns 0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return 0
 
     def start(self) -> None:
         """Mark the session as running; nothing else changes."""
@@ -1010,6 +1074,7 @@ class TwinSession:
             timing_offset_ns=self.session_time_ns - self.engine.gvt_ns,
             identity_drift=abs(physical_identity - digital_identity),
             causal_violations=self.engine.total_rollbacks,
+            tolerance=self.max_divergence,
         )
         return self.divergence
 
@@ -1019,15 +1084,15 @@ class TwinSession:
         Returns
         -------
         dict
-            Running flag, mode, session time, event counters, total divergence,
-            whether it is within tolerance and :meth:`TimeWarpEngine.status`.
+            Running flag, mode, session time, the physical event counter, total
+            divergence, whether it is within tolerance and
+            :meth:`TimeWarpEngine.status`.
         """
         return {
             "running": self.running,
             "mode": self.mode.value,
             "session_time_ns": self.session_time_ns,
             "physical_events": self.physical_events_in,
-            "digital_events": self.digital_events_out,
             "divergence": self.divergence.total_divergence,
             "within_tolerance": self.divergence.within_tolerance,
             "engine": self.engine.status(),
@@ -1167,7 +1232,8 @@ class DeltaCheckpoint:
     size_bytes : int
         Bytes of the two arrays.
     state_shape : tuple of int
-        Shape of the states the diff belongs to.
+        Shape of the states the diff belongs to; required, keyword only, so an
+        older positional call cannot shift into it.
     """
 
     base_checkpoint_id: int
@@ -1178,7 +1244,7 @@ class DeltaCheckpoint:
     changed_values: np.ndarray[Any, Any]  # new values at those indices
     lfsr_delta: int = 0
     size_bytes: int = 0
-    state_shape: Tuple[int, ...] = ()
+    state_shape: Tuple[int, ...] = field(kw_only=True)
 
     @staticmethod
     def compute_delta(
@@ -1257,13 +1323,17 @@ class DeltaCheckpoint:
 
     @property
     def compression_ratio(self) -> float:
-        """Placeholder ratio: 1.0 whenever the diff holds bytes, else 0.0.
+        """Bytes of the full state divided by bytes of the diff; 0.0 for an empty diff.
 
-        A real ratio needs the full state's size, which the diff does not keep.
+        The full state is ``prod(state_shape)`` elements of ``changed_values``'
+        dtype, the state's own. Each changed element also costs its 8-byte index,
+        so a diff that changes most elements has a ratio below 1. An empty diff
+        stores nothing, and 0.0 is a sentinel for it, not a ratio.
         """
         if self.size_bytes <= 0:
             return 0.0
-        return 1.0  # actual ratio requires full state size context
+        full_bytes = int(np.prod(self.state_shape)) * int(self.changed_values.dtype.itemsize)
+        return float(full_bytes / self.size_bytes)
 
     @property
     def num_changes(self) -> int:
@@ -1630,8 +1700,8 @@ class SessionSnapshot:
         Nodes of the engine.
     mode : str
         The session's sync mode value.
-    physical_events_in, digital_events_out : int
-        The session's event counters.
+    physical_events_in : int
+        The session's physical event counter.
     gvt_ns : int
         The engine's last computed global virtual time.
     total_rollbacks : int
@@ -1646,7 +1716,6 @@ class SessionSnapshot:
     num_nodes: int
     mode: str
     physical_events_in: int
-    digital_events_out: int
     gvt_ns: int
     total_rollbacks: int
     node_lvts: Dict[int, int]
@@ -1672,7 +1741,6 @@ class SessionSnapshot:
             num_nodes=session.num_nodes,
             mode=session.mode.value,
             physical_events_in=session.physical_events_in,
-            digital_events_out=session.digital_events_out,
             gvt_ns=eng.gvt_ns,
             total_rollbacks=eng.total_rollbacks,
             node_lvts={nid: n.local_virtual_time_ns for nid, n in eng.nodes.items()},
@@ -1692,7 +1760,6 @@ class SessionSnapshot:
             "num_nodes": self.num_nodes,
             "mode": self.mode,
             "physical_events_in": self.physical_events_in,
-            "digital_events_out": self.digital_events_out,
             "gvt_ns": self.gvt_ns,
             "total_rollbacks": self.total_rollbacks,
             "node_lvts": self.node_lvts,
@@ -1738,7 +1805,7 @@ class TwinFederation:
         session : TwinSession
             The twin's session.
         priority : int
-            Stored with the twin.
+            Stored with the twin; the federation does not use it.
         """
         self.twins[twin_id] = TwinEndpoint(twin_id, session, priority)
 

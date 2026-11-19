@@ -251,6 +251,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Twin-sync names now say what the code does. `TimeWarpEngine` takes
+  `checkpoint_interval_events` (still the second positional argument);
+  `checkpoint_interval_ns`, which always counted events, is a deprecated
+  keyword and attribute that warns, and giving both is an error.
+  `Checkpoint.compute_checksum` covers every stored field, prefixing each
+  array with its dtype and shape and marking None, so checksums and audit
+  chains are comparable only within one version.
+  `DeltaCheckpoint.compression_ratio` is the full state's bytes over the
+  diff's (0.0 for an empty diff), and `state_shape` is a required
+  keyword-only field, so an older positional call fails instead of shifting
+  into it. A session's `max_divergence` is the tolerance of its divergence
+  metric (`DivergenceMetric.tolerance`, default 1.0).
+  `TwinSession.digital_events_out`, never counted because nothing leaves the
+  twin, is removed from the status and the session snapshot and kept one
+  release as a deprecated attribute that returns 0. The class texts no
+  longer say that the checkpoint manager keeps identity across a rollback
+  (the engine does) or that the global virtual time never falls. The unwired
+  Julia, Mojo, Go and Rust copies of the module are not updated.
+
 - A deployment package no longer contradicts itself: its metadata
   `n_synapses` now counts the synapses its blob codes (the explicit weights'
   non-zeros), not the adjacency's; explicit weights must have the

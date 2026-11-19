@@ -46,7 +46,7 @@ def test_every_injected_event_gets_its_own_id() -> None:
 
 def test_a_rollback_cancels_the_node_s_queued_sent_events() -> None:
     """An event the rolled-back node sent after the rollback time, still queued, is cancelled and never applied."""
-    engine = TimeWarpEngine(2, checkpoint_interval_ns=1)
+    engine = TimeWarpEngine(2, checkpoint_interval_events=1)
     engine.inject_event(TwinEvent(200, target_node=0))
     engine.process_next()
     sent = TwinEvent(300, source_node=0, target_node=1)
@@ -60,7 +60,7 @@ def test_a_rollback_cancels_the_node_s_queued_sent_events() -> None:
 
 def test_an_anti_message_annihilates_a_processed_event_and_rolls_its_target_back() -> None:
     """A processed event the rolled-back node sent is undone at its receiver; the anti-message itself is not applied."""
-    engine = TimeWarpEngine(2, checkpoint_interval_ns=1)
+    engine = TimeWarpEngine(2, checkpoint_interval_events=1)
     sent = TwinEvent(300, source_node=0, target_node=1)
     engine.inject_event(sent)
     engine.inject_event(TwinEvent(400, target_node=0))
@@ -81,7 +81,7 @@ def test_an_anti_message_annihilates_a_processed_event_and_rolls_its_target_back
 
 def test_a_rollback_runs_the_rolled_back_inputs_again_in_time_order() -> None:
     """Events the node processed after its restored time return to the queue and run again after the straggler."""
-    engine = TimeWarpEngine(1, checkpoint_interval_ns=1)
+    engine = TimeWarpEngine(1, checkpoint_interval_events=1)
     for t in (200, 300):
         engine.inject_event(TwinEvent(t, target_node=0))
     _drain(engine)
@@ -159,7 +159,7 @@ def test_an_engine_without_nodes_reports_no_starvation() -> None:
 
 def test_a_checkpoint_bookmark_survives_another_node_s_rollback() -> None:
     """Undoing one node's events must not shift what a later rollback of another node undoes (reader's probe)."""
-    engine = TimeWarpEngine(2, checkpoint_interval_ns=2)
+    engine = TimeWarpEngine(2, checkpoint_interval_events=2)
     for vt, node in [(10, 1), (20, 1), (30, 1), (40, 0), (50, 0), (60, 0), (70, 0)]:
         engine.inject_event(TwinEvent(vt, source_node=9, target_node=node))
     _drain(engine)
@@ -181,7 +181,7 @@ def test_a_checkpoint_bookmark_survives_another_node_s_rollback() -> None:
 
 def test_an_anti_message_cancels_a_positive_its_receiver_has_re_queued() -> None:
     """When the receiver's own rollback put the named event back in the queue, the anti-message cancels it there."""
-    engine = TimeWarpEngine(2, checkpoint_interval_ns=1000)
+    engine = TimeWarpEngine(2, checkpoint_interval_events=1000)
     sent = TwinEvent(100, source_node=0, target_node=1)
     engine.inject_event(sent)
     engine.process_next()
@@ -200,7 +200,7 @@ def test_an_anti_message_cancels_a_positive_its_receiver_has_re_queued() -> None
 
 def test_a_checkpoint_saved_outside_the_engine_undoes_by_virtual_time() -> None:
     """A checkpoint the engine did not bookmark falls back to undoing the node's events after its time."""
-    engine = TimeWarpEngine(1, checkpoint_interval_ns=1000)
+    engine = TimeWarpEngine(1, checkpoint_interval_events=1000)
     for vt in (100, 200, 300):
         engine.inject_event(TwinEvent(vt, target_node=0))
     _drain(engine)
