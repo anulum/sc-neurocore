@@ -1,0 +1,466 @@
+{
+  "entries": [],
+  "left_out": [
+    {
+      "reason": "shape",
+      "record": "bench_adaptive_precision_rows.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_adaptive_threshold_if.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_adc_to_spike_kernel.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_adex.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_aihara_map.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_alpha.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_amari_field.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_arcane_zenith.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_asic_flow.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_av_ron_cardiac.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_balanced_resonate_and_fire.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_benda_herz.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_bertram_phantom.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_bioware.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_brunel_wang.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_butera_respiratory.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_cazelles_map.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_chialvo_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_chiplet.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_compte_wm.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_connor_stevens_mojo.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_contrastive_ssl.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_cordic_q8_8.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_cortical_column.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_courage_nekorkin_map_simulate.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_dcls_tent_kernel.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_debug.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_dimensionality.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_edge.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_energy_lif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_equation_program.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_ermentrout_kopell_map.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_ermentrout_kopell_pop.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_evo_substrate.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_evo_substrate_multilang.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_expif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_fault_injection.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_few_shot_haam.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_fitzhugh_nagumo_simulate.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_fitzhugh_rinzel_simulate.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_formal.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_function_call_domains.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_gamma_oscillation.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_gif_population.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_glif_simulate.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_gpfa.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_hdl_gen.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_hill_tononi.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_hindmarsh_rose_simulate.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_hodgkin_huxley_mojo.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_ibarz_tanaka_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_izhikevich2007_simulate.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_jansen_rit.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_julia_solvers.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_kl_refine.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_lapicque.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_larter_breakspear.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_learning_bridge.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_mat.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_mckean.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_medvedev_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_mihalas_niebur.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_mihalas_niebur_simulate.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_mixed_dense_kernel.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_nagumo_sato_and_sc_adaptive_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_neuron_integrators.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_neuron_integrators_2026-05-09T1848.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_nir_graph.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_nir_interop.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_nmda.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_non_resetting_lif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_optics.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_perfect_integrator.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_pernarowski_simulate.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_phi.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_predictive_model.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_prescott.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_proto.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_qa_rust_vs_python.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_resonate_and_fire.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_rulkov_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_safety_monitor.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_chaotic_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_clipped_logistic_bursting_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_clipped_rational_recovery_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_behavior_ensemble.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_network.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_network_all_runtimes.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_network_go.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_network_mojo.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_compte_wm_ring16.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_sc_forward.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_four_state_glif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_non_resetting_adaptive_lif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_normalized_energy_lif.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_resetting_mat.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_resetting_wilson_hr_simulate.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_scaled_reset_adaptive_if.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_sigma_delta_accumulator.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_stochastic_rate_adaptation.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_triangular_mckean.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_unit_capacitance_respiratory.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sc_upward_crossing_rulkov_map.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sherman_rinzel_keizer.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_sigma_delta.json"
+    },
+    {
+      "reason": "unbound",
+      "record": "bench_sorting_quality.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_terman_wang_simulate.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_topology.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_transfer.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_traub_miles.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_verilog_compiler.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_wang_buzsaki.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_wilson_cowan.json"
+    },
+    {
+      "reason": "shape",
+      "record": "bench_wilson_hr_simulate.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_wong_wang.json"
+    }
+  ],
+  "schema_version": "sc-neurocore.measured-backend-orders.v1"
+}

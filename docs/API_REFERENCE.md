@@ -607,6 +607,21 @@ Return :data:`ACCELERATORS` with ``floor`` appended as the always-available tier
 
 ## Module `accel.backend_selection`
 
+### Class `MeasuredOrder`
+One admitted measurement of a kernel on one host model and level.
+
+Attributes
+----------
+kernel : str
+    The kernel identifier the benchmark record names.
+cpu_model : str
+    The measuring host's CPU model string.
+isa_level : str
+    The measuring host's psABI level, or ``"unrecorded"``.
+order : tuple of str
+    The lanes that ran, fastest first.
+
+
 ### Function `current_cpu()`
 Return the host CPU model string, matching the benchmark harness convention.
 
@@ -615,19 +630,40 @@ Mirrors ``benchmarks/bench_*.py::_cpu_model`` so a live host matches a stored
 :func:`platform.processor`, else ``"unknown"``.
 
 ### Function `measured_orders()`
-Build ``{cpu: {kernel: (backends fastest-measured-first)}}`` from the JSONs.
+Return the admitted measurements of the packaged table.
 
-Cached: the on-disk benchmarks are immutable for the life of the process.
-Malformed or non-comparison files (no ``backends`` / ``kernel`` / ``meta.cpu``)
-are skipped silently — they are simply not a usable measurement.
+Cached: the packaged table is immutable for the life of the process. An absent or unreadable table gives no
+entries, so dispatch falls back to the static order; the repository's drift test and the installed-wheel test
+keep the table present and current.
 
-### Function `select_backend_order(kernel, *, static, cpu)`
-Return the dispatch order for ``kernel``, reordered from measured benchmarks.
+Returns
+-------
+tuple of MeasuredOrder
+    The well-formed entries, in the table's order.
 
-Compiled backends measured on this host's CPU lead, fastest-first; any backend
-in ``static`` without a measurement keeps its static position after them; the
-floor (``static&#91;-1&#93;``) is always last. With no matching measurement the static
-order is returned verbatim.
+### Function `select_backend_order(kernel, *, static, cpu, isa_level)`
+Return the dispatch order for ``kernel``, reordered from current measurements of this host.
+
+Compiled backends measured on this host's CPU model lead, fastest-first; any backend in ``static`` without a
+measurement keeps its static position after them; the floor (``static&#91;-1&#93;``) is always last. Among applicable
+entries one with a recorded level is preferred to an unrecorded one, and a higher recorded level to a lower one.
+With no applicable entry the static order is returned verbatim.
+
+Parameters
+----------
+kernel : str
+    The kernel identifier, as the benchmark records name it.
+static : tuple of str
+    The static order, floor last.
+cpu : str, optional
+    The host CPU model; the running host's when omitted.
+isa_level : str, optional
+    The host's psABI level or ``"unknown"``; the running host's when omitted.
+
+Returns
+-------
+tuple of str
+    The dispatch order.
 
 ---
 
@@ -1038,6 +1074,59 @@ Args:
 Returns
 -------
     ``(n_neurons,)`` total bit counts (= SC dot products).
+
+---
+
+## Module `accel.host_isa`
+
+### Function `level_from_flags(flags)`
+Return the highest psABI level whose flags, and those of every level below it, are all present.
+
+Parameters
+----------
+flags : iterable of str
+    CPU flag names as Linux prints them in ``/proc/cpuinfo``.
+
+Returns
+-------
+str
+    One of :data:`LEVELS`, or ``"unknown"`` when the baseline flags are not all present.
+
+### Function `host_level(*, cpuinfo, machine, system)`
+Return the running host's psABI level, or ``"unknown"``.
+
+Parameters
+----------
+cpuinfo : Path
+    The file to read; the running host's ``/proc/cpuinfo`` unless a test names another.
+machine, system : str, optional
+    The machine and operating system names; :func:`platform.machine` and :func:`platform.system` when omitted.
+
+Returns
+-------
+str
+    One of :data:`LEVELS`, or ``"unknown"`` on a host that is not x86-64 Linux, whose ``cpuinfo`` cannot be read
+    or has no flags line, or whose flags lack the baseline. It never raises for those cases.
+
+### Function `at_least(host, required)`
+Say whether a host level meets a required level.
+
+Parameters
+----------
+host : str
+    The host's level, one of :data:`LEVELS` or ``"unknown"``.
+required : str
+    The level a record or a library needs; one of :data:`LEVELS`.
+
+Returns
+-------
+bool
+    ``True`` when ``host`` is ``required`` or above it. An ``"unknown"`` host meets no level.
+
+Raises
+------
+ValueError
+    When ``required`` is not one of :data:`LEVELS`, or ``host`` is neither a level nor ``"unknown"``.
 
 ---
 

@@ -70,6 +70,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `sc_neurocore.accel.host_isa` reads the host's x86-64 psABI level
+  (`x86-64-v1` to `x86-64-v4`, or `unknown`) from the CPU flags Linux prints.
+  A measured order whose record states its host's flags applies only on a
+  host at that level or above; one that does not applies on the exact CPU
+  model only.
+
+- The polyglot dispatch order no longer follows measurements whose sources
+  have changed, and it is the same in an installed package as in a source
+  checkout. The selector read every benchmark record of its shape from
+  `benchmarks/results`, found through its own file's location, so an
+  installed wheel, which has no such directory, always used the static
+  order, and a source checkout promoted lanes on measurements the coverage
+  census calls outdated. It now reads
+  `sc_neurocore/accel/measured_backend_orders.json`, which ships in the
+  package and is written by `tools/generate_backend_speed_table.py` from
+  current or reviewed records only, with every other record listed with
+  its reason. No record the selector can use is current today (16 are
+  outdated and 7 bind no source), so every kernel dispatches by its static
+  order until its record is measured again. Only runs from a source
+  checkout change order; installed packages already used the static order.
+
 - `tools/mojo_lane_inventory.py` classifies every Mojo source of the
   acceleration package by stated rules: comment-only, a machine-translated
   stub (Python text in string literals and `return 0`), an implementation

@@ -287,3 +287,45 @@ def test_wheel_build_leaves_the_project_and_its_stale_build_folder_alone(tmp_pat
     assert "stale_probe/kept.txt" in names
     assert "stale_probe/removed.txt" not in names
     assert _tree_state(project) == before
+
+
+def test_the_installed_wheel_carries_and_reads_the_measured_order_table(tmp_path: Path) -> None:
+    """From a built wheel, outside the checkout and without ``PYTHONPATH``, the selector reads the committed table."""
+    root = Path(__file__).resolve().parents[1]
+    built = _build_wheel(root, tmp_path)
+    target = tmp_path / "installed"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "--no-compile",
+            "--target",
+            str(target),
+            str(built),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=120,
+    )
+    probe = (
+        "import sys; sys.path.insert(0, sys.argv[1]); "
+        "from sc_neurocore.accel import backend_selection as selection; "
+        "assert selection.__file__.startswith(sys.argv[1]), selection.__file__; "
+        "sys.stdout.write(selection._read_table())"
+    )
+    environment = {key: value for key, value in os.environ.items() if key != "PYTHONPATH"}
+    done = subprocess.run(
+        [sys.executable, "-I", "-c", probe, str(target)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=120,
+        env=environment,
+    )
+    committed = root / "src" / "sc_neurocore" / "accel" / "measured_backend_orders.json"
+    assert done.stdout == committed.read_text(encoding="utf-8")

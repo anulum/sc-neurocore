@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5719
+    "test_files": 5721
   },
   "documentation": {
     "public_pages": [
@@ -3291,6 +3291,7 @@
     "shipped_package_data": [
       "py.typed",
       "juliapkg.json",
+      "accel/measured_backend_orders.json",
       "accel/julia/datasets/*.jl",
       "accel/julia/conversion/*.jl",
       "accel/julia/neurons/adaptive_threshold_if.jl",
@@ -4139,6 +4140,7 @@
       "tests/test_backend_selection_host.py",
       "tests/test_backend_selection_order.py",
       "tests/test_backend_selection_results.py",
+      "tests/test_backend_speed_table.py",
       "tests/test_bci/bci_studio_support.py",
       "tests/test_bci/test_bci_primitives.py",
       "tests/test_bci/test_bci_studio_bci_studio.py",
@@ -5651,6 +5653,7 @@
       "tests/test_homeostatic_lif.py",
       "tests/test_homeostatic_lif_reset.py",
       "tests/test_host_driver_bounds.py",
+      "tests/test_host_isa.py",
       "tests/test_hub_bundle.py",
       "tests/test_hypervisor/hypervisor_support.py",
       "tests/test_hypervisor/isolation_support.py",

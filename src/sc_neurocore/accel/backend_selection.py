@@ -6,36 +6,61 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Data-driven polyglot backend ordering from recorded benchmarks
 
-"""Reorder the polyglot dispatch order from measured benchmarks for the running host.
+"""Reorder the polyglot dispatch order from current measurements for the running host.
 
-The repository ships per-backend throughput benchmarks under
-``benchmarks/results/bench_*.json``, each carrying a ``kernel`` id, a ``meta.cpu``
-host model string, and a ``backends`` map of ``median_call_ms`` per language. This
-module reads those files and, for a given kernel on the running host's CPU, returns
-the compiled backends ordered fastest-measured-first, falling back to the static
-:data:`~sc_neurocore.accel.backend_order.FASTEST_FIRST_BACKENDS` when no measurement
-matches the host+kernel. The always-available floor (the static order's last entry,
-e.g. ``"python"`` or ``"numpy"``) is always preserved as the final tier so the
-dispatch loop never loses its guaranteed fallback.
+The package ships ``measured_backend_orders.json`` beside this module. ``tools/generate_backend_speed_table.py``
+writes it from the repository's benchmark records and admits a record only while the coverage census calls it
+``current`` or ``reviewed``: a measurement whose bound sources have changed since it was taken orders nothing. Each
+entry names a kernel, the measuring host's CPU model, that host's x86-64 psABI level (``"unrecorded"`` when the record
+does not state its flags) and the lanes that ran, fastest first. The file is read through the package's resources,
+so a source checkout and an installed wheel order lanes the same way.
 
-This closes the gap the SOTA register flagged: ~240 benchmark JSONs on disk while
-the dispatch order was a hardcoded tuple that never consulted them.
+For a kernel on the running host, :func:`select_backend_order` uses the entry measured on the same CPU model. An
+entry with a recorded level applies only when this host is at that level or above; an unrecorded entry applies on the
+exact model match alone. With no applicable entry the static order is returned verbatim. The always-available floor
+(the static order's last entry, such as ``"python"`` or ``"numpy"``) is always kept as the final tier, so the dispatch
+loop never loses its guaranteed fallback.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import functools
+from importlib import resources
 import json
-import platform
 from pathlib import Path
-from typing import Any
+import platform
+from typing import NamedTuple
 
 from .backend_order import FASTEST_FIRST_BACKENDS
+from .host_isa import LEVELS, at_least, host_level
 
-#: Repository root (``src/sc_neurocore/accel/`` → repo root is three parents up from src).
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-#: Directory holding the recorded per-backend benchmark JSONs.
-_RESULTS_DIR = _REPO_ROOT / "benchmarks" / "results"
+#: The packaged table, beside this module.
+TABLE_RESOURCE = "measured_backend_orders.json"
+
+#: The level of an entry whose record does not state its host's CPU flags.
+UNRECORDED = "unrecorded"
+
+
+class MeasuredOrder(NamedTuple):
+    """One admitted measurement of a kernel on one host model and level.
+
+    Attributes
+    ----------
+    kernel : str
+        The kernel identifier the benchmark record names.
+    cpu_model : str
+        The measuring host's CPU model string.
+    isa_level : str
+        The measuring host's psABI level, or ``"unrecorded"``.
+    order : tuple of str
+        The lanes that ran, fastest first.
+    """
+
+    kernel: str
+    cpu_model: str
+    isa_level: str
+    order: tuple[str, ...]
 
 
 def current_cpu() -> str:
@@ -55,49 +80,61 @@ def current_cpu() -> str:
     return platform.processor() or "unknown"
 
 
-def _backend_speed_order(backends: dict[str, Any]) -> list[str]:
-    """Return backend names that ran, sorted by ascending ``median_call_ms``."""
-    timed: list[tuple[float, str]] = []
-    for name, entry in backends.items():
-        if not isinstance(entry, dict):
-            continue
-        if not (entry.get("available") and entry.get("used")):
-            continue
-        ms = entry.get("median_call_ms")
-        if not isinstance(ms, (int, float)):
-            continue
-        timed.append((float(ms), name))
-    timed.sort(key=lambda pair: pair[0])
-    return [name for _ms, name in timed]
+def _read_table() -> str:
+    """Return the packaged table's text."""
+    return resources.files(__package__).joinpath(TABLE_RESOURCE).read_text(encoding="utf-8")
+
+
+def _entry(item: object) -> MeasuredOrder | None:
+    """Return one well-formed table entry, or ``None`` for anything else."""
+    if not isinstance(item, Mapping):
+        return None
+    kernel, cpu, level, order = (
+        item.get(key) for key in ("kernel", "cpu_model", "isa_level", "order")
+    )
+    if not (isinstance(kernel, str) and isinstance(cpu, str) and isinstance(order, list)):
+        return None
+    if level != UNRECORDED and level not in LEVELS:
+        return None
+    if not order or not all(isinstance(name, str) for name in order):
+        return None
+    return MeasuredOrder(kernel, cpu, str(level), tuple(order))
 
 
 @functools.cache
-def measured_orders() -> dict[str, dict[str, tuple[str, ...]]]:
-    """Build ``{cpu: {kernel: (backends fastest-measured-first)}}`` from the JSONs.
+def measured_orders() -> tuple[MeasuredOrder, ...]:
+    """Return the admitted measurements of the packaged table.
 
-    Cached: the on-disk benchmarks are immutable for the life of the process.
-    Malformed or non-comparison files (no ``backends`` / ``kernel`` / ``meta.cpu``)
-    are skipped silently — they are simply not a usable measurement.
+    Cached: the packaged table is immutable for the life of the process. An absent or unreadable table gives no
+    entries, so dispatch falls back to the static order; the repository's drift test and the installed-wheel test
+    keep the table present and current.
+
+    Returns
+    -------
+    tuple of MeasuredOrder
+        The well-formed entries, in the table's order.
     """
-    table: dict[str, dict[str, tuple[str, ...]]] = {}
-    if not _RESULTS_DIR.is_dir():
-        return table
-    for path in sorted(_RESULTS_DIR.glob("*.json")):
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if not isinstance(raw, dict):
-            continue
-        backends = raw.get("backends")
-        kernel = raw.get("kernel")
-        cpu = raw.get("meta", {}).get("cpu") if isinstance(raw.get("meta"), dict) else None
-        if not (isinstance(backends, dict) and isinstance(kernel, str) and isinstance(cpu, str)):
-            continue
-        order = _backend_speed_order(backends)
-        if order:
-            table.setdefault(cpu, {})[kernel] = tuple(order)
-    return table
+    try:
+        payload = json.loads(_read_table())
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return ()
+    entries = payload.get("entries") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        return ()
+    return tuple(entry for entry in (_entry(item) for item in entries) if entry is not None)
+
+
+@functools.cache
+def _running_level() -> str:
+    """Return the running host's psABI level, read once per process."""
+    return host_level()
+
+
+def _applies(entry: MeasuredOrder, kernel: str, cpu: str, level: str) -> bool:
+    """Say whether an entry describes this kernel on this host."""
+    if entry.kernel != kernel or entry.cpu_model != cpu:
+        return False
+    return entry.isa_level == UNRECORDED or at_least(level, entry.isa_level)
 
 
 def select_backend_order(
@@ -105,24 +142,53 @@ def select_backend_order(
     *,
     static: tuple[str, ...] = FASTEST_FIRST_BACKENDS,
     cpu: str | None = None,
+    isa_level: str | None = None,
 ) -> tuple[str, ...]:
-    """Return the dispatch order for ``kernel``, reordered from measured benchmarks.
+    """Return the dispatch order for ``kernel``, reordered from current measurements of this host.
 
-    Compiled backends measured on this host's CPU lead, fastest-first; any backend
-    in ``static`` without a measurement keeps its static position after them; the
-    floor (``static[-1]``) is always last. With no matching measurement the static
-    order is returned verbatim.
+    Compiled backends measured on this host's CPU model lead, fastest-first; any backend in ``static`` without a
+    measurement keeps its static position after them; the floor (``static[-1]``) is always last. Among applicable
+    entries one with a recorded level is preferred to an unrecorded one, and a higher recorded level to a lower one.
+    With no applicable entry the static order is returned verbatim.
+
+    Parameters
+    ----------
+    kernel : str
+        The kernel identifier, as the benchmark records name it.
+    static : tuple of str
+        The static order, floor last.
+    cpu : str, optional
+        The host CPU model; the running host's when omitted.
+    isa_level : str, optional
+        The host's psABI level or ``"unknown"``; the running host's when omitted.
+
+    Returns
+    -------
+    tuple of str
+        The dispatch order.
     """
     if not static:
         return static
     floor = static[-1]
     host = cpu if cpu is not None else current_cpu()
-    measured = measured_orders().get(host, {}).get(kernel)
-    if not measured:
+    level = isa_level if isa_level is not None else _running_level()
+    applicable = [entry for entry in measured_orders() if _applies(entry, kernel, host, level)]
+    if not applicable:
         return static
+    applicable.sort(
+        key=lambda entry: -1 if entry.isa_level == UNRECORDED else LEVELS.index(entry.isa_level),
+        reverse=True,
+    )
+    measured = applicable[0].order
     compiled_fast = [name for name in measured if name != floor and name in static]
     rest = [name for name in static if name != floor and name not in compiled_fast]
     return (*compiled_fast, *rest, floor)
 
 
-__all__ = ["current_cpu", "measured_orders", "select_backend_order"]
+__all__ = [
+    "MeasuredOrder",
+    "TABLE_RESOURCE",
+    "current_cpu",
+    "measured_orders",
+    "select_backend_order",
+]
