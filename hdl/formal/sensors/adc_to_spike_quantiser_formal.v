@@ -32,6 +32,15 @@ module adc_to_spike_quantiser_formal (
     wire [31:0] window_spike_budget;
     wire [31:0] pending_spikes;
 
+    wire adc_ready_down;
+    wire [3:0] aer_address_down;
+    wire aer_valid_down;
+    wire aer_polarity_down;
+    wire signed [3:0] last_window_q_down;
+    wire signed [3:0] window_average_q_down;
+    wire window_complete_down;
+    wire [31:0] pending_spikes_down;
+
     adc_to_spike_quantiser #(
         .ADC_WIDTH(4),
         .Q_INT(2),
@@ -61,6 +70,37 @@ module adc_to_spike_quantiser_formal (
         .window_average_q(window_average_q),
         .window_spike_budget(window_spike_budget),
         .pending_spikes(pending_spikes)
+    );
+
+    adc_to_spike_quantiser #(
+        .ADC_WIDTH(6),
+        .Q_INT(2),
+        .Q_FRAC(2),
+        .AER_ADDR_WIDTH(4),
+        .DECIMATION(2),
+        .SIGNED_INPUT(1),
+        .BASE_ADDRESS(4'd4),
+        .NEGATIVE_OFFSET(4'd1)
+    ) dut_downscale (
+        .clk(clk),
+        .rst_n(rst_n),
+        .adc_sample({adc_sample, 2'b00}),
+        .adc_valid(adc_valid && adc_ready_down),
+        .adc_ready(adc_ready_down),
+        .threshold_q(4'd2),
+        .aer_address(aer_address_down),
+        .aer_valid(aer_valid_down),
+        .aer_ready(aer_ready),
+        .aer_polarity(aer_polarity_down),
+        .dropped_sample(),
+        .threshold_error(),
+        .sample_count(),
+        .spike_count(),
+        .last_window_q(last_window_q_down),
+        .window_complete(window_complete_down),
+        .window_average_q(window_average_q_down),
+        .window_spike_budget(),
+        .pending_spikes(pending_spikes_down)
     );
 
     always @* begin
@@ -124,8 +164,20 @@ module adc_to_spike_quantiser_formal (
             if (aer_valid && (last_window_q >= 4'sd0)) begin
                 assert(!aer_polarity);
             end
+            if (cycle == 5'd3) begin
+                assert(last_window_q == 4'sd2);
+                assert(aer_valid && !aer_polarity && (aer_address == 4'd4));
+            end
+            if (cycle == 5'd7) begin
+                assert(last_window_q == -4'sd4);
+                assert(aer_valid && aer_polarity && (aer_address == 4'd5));
+                assert(last_window_q_down < 4'sd0);
+                assert(aer_valid_down && aer_polarity_down && (aer_address_down == 4'd5));
+            end
             cover(last_window_q == 4'sd2);
             cover(last_window_q == -4'sd4);
+            cover(aer_valid && aer_polarity);
+            cover(aer_valid_down && aer_polarity_down);
             cover(aer_valid && !aer_ready);
             cover(spike_count >= 32'd3);
         end

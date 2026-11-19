@@ -156,16 +156,19 @@
       ]
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
+      "artefact": "benchmarks/results/local_python_2026-11-19_adc_to_spike_quantiser.json",
       "description": "NEU-C.5 ADC-to-spike quantiser reference, formal, and synthesis-estimate evidence.",
       "expected_values": {
         "benchmark": "adc_to_spike_quantiser_contract",
-        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "benchmark_isolation_mode": "non-isolated-shared-host",
         "formal.exit_code": 0,
         "formal.passed": true,
         "hardware_measurement_claimed": false,
-        "host_context.cgroup_effective_cpuset": "10-11",
-        "host_context.runtime_cpuset_shield_claimed": true,
+        "host_context.affinity_cpus": [
+          10,
+          11
+        ],
+        "host_context.runtime_cpuset_shield_claimed": false,
         "language": "Python+SystemVerilog",
         "yosys.exit_code": 0
       },

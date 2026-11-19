@@ -75,7 +75,7 @@ module adc_to_spike_quantiser #(
     assign aer_address = pending_polarity ? (BASE_ADDRESS + NEGATIVE_OFFSET) : BASE_ADDRESS;
     assign pending_spikes = pending_spike_count;
     assign quantised_sample_q = quantise_adc(adc_sample);
-    assign next_window_sum_q = window_sum_q + {{(SUM_WIDTH-Q_TOTAL){quantised_sample_q[Q_TOTAL-1]}}, quantised_sample_q};
+    assign next_window_sum_q = window_sum_q + $signed({{(SUM_WIDTH-Q_TOTAL){quantised_sample_q[Q_TOTAL-1]}}, quantised_sample_q});
     assign window_complete = accepted_sample && (decim_count == DECIMATION_LAST);
     assign window_average_q = average_window(next_window_sum_q);
     assign abs_window_q = abs_q(window_average_q);
@@ -86,9 +86,9 @@ module adc_to_spike_quantiser #(
     function signed [Q_TOTAL-1:0] clamp_q;
         input signed [WIDE_WIDTH-1:0] value;
         begin
-            if (value > {{(WIDE_WIDTH-Q_TOTAL){Q_MAX[Q_TOTAL-1]}}, Q_MAX}) begin
+            if (value > $signed({{(WIDE_WIDTH-Q_TOTAL){Q_MAX[Q_TOTAL-1]}}, Q_MAX})) begin
                 clamp_q = Q_MAX;
-            end else if (value < {{(WIDE_WIDTH-Q_TOTAL){Q_MIN[Q_TOTAL-1]}}, Q_MIN}) begin
+            end else if (value < $signed({{(WIDE_WIDTH-Q_TOTAL){Q_MIN[Q_TOTAL-1]}}, Q_MIN})) begin
                 clamp_q = Q_MIN;
             end else begin
                 clamp_q = value[Q_TOTAL-1:0];
@@ -103,10 +103,10 @@ module adc_to_spike_quantiser #(
         integer shift;
         begin
             if (SIGNED_INPUT != 0) begin
-                centred = {{(WIDE_WIDTH-ADC_WIDTH){sample[ADC_WIDTH-1]}}, sample};
+                centred = $signed({{(WIDE_WIDTH-ADC_WIDTH){sample[ADC_WIDTH-1]}}, sample});
             end else begin
-                centred = {{(WIDE_WIDTH-ADC_WIDTH){1'b0}}, sample}
-                    - ({{(WIDE_WIDTH-1){1'b0}}, 1'b1} <<< (ADC_WIDTH - 1));
+                centred = $signed({{(WIDE_WIDTH-ADC_WIDTH){1'b0}}, sample})
+                    - ($signed({{(WIDE_WIDTH-1){1'b0}}, 1'b1}) <<< (ADC_WIDTH - 1));
             end
 
             if (Q_TOTAL > ADC_WIDTH) begin
@@ -114,9 +114,9 @@ module adc_to_spike_quantiser #(
             end else if (ADC_WIDTH > Q_TOTAL) begin
                 shift = ADC_WIDTH - Q_TOTAL;
                 if (centred >= $signed({WIDE_WIDTH{1'b0}})) begin
-                    rounded = (centred + ({{(WIDE_WIDTH-1){1'b0}}, 1'b1} <<< (shift - 1))) >>> shift;
+                    rounded = (centred + ($signed({{(WIDE_WIDTH-1){1'b0}}, 1'b1}) <<< (shift - 1))) >>> shift;
                 end else begin
-                    rounded = (centred - ({{(WIDE_WIDTH-1){1'b0}}, 1'b1} <<< (shift - 1))) >>> shift;
+                    rounded = (centred - ($signed({{(WIDE_WIDTH-1){1'b0}}, 1'b1}) <<< (shift - 1))) >>> shift;
                 end
             end else begin
                 rounded = centred;
@@ -128,9 +128,9 @@ module adc_to_spike_quantiser #(
     function signed [Q_TOTAL-1:0] clamp_sum_to_q;
         input signed [SUM_WIDTH-1:0] value;
         begin
-            if (value > {{(SUM_WIDTH-Q_TOTAL){Q_MAX[Q_TOTAL-1]}}, Q_MAX}) begin
+            if (value > $signed({{(SUM_WIDTH-Q_TOTAL){Q_MAX[Q_TOTAL-1]}}, Q_MAX})) begin
                 clamp_sum_to_q = Q_MAX;
-            end else if (value < {{(SUM_WIDTH-Q_TOTAL){Q_MIN[Q_TOTAL-1]}}, Q_MIN}) begin
+            end else if (value < $signed({{(SUM_WIDTH-Q_TOTAL){Q_MIN[Q_TOTAL-1]}}, Q_MIN})) begin
                 clamp_sum_to_q = Q_MIN;
             end else begin
                 clamp_sum_to_q = value[Q_TOTAL-1:0];
@@ -154,10 +154,8 @@ module adc_to_spike_quantiser #(
     function [Q_TOTAL-1:0] abs_q;
         input signed [Q_TOTAL-1:0] value;
         begin
-            if (value == Q_MIN) begin
-                abs_q = Q_MAX[Q_TOTAL-1:0];
-            end else if (value < $signed({Q_TOTAL{1'b0}})) begin
-                abs_q = -value;
+            if (value < $signed({Q_TOTAL{1'b0}})) begin
+                abs_q = {Q_TOTAL{1'b0}} - value[Q_TOTAL-1:0];
             end else begin
                 abs_q = value[Q_TOTAL-1:0];
             end

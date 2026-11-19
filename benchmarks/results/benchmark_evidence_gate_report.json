@@ -26,7 +26,7 @@
       "id": "timing-formal-framework"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
+      "artefact": "benchmarks/results/local_python_2026-11-19_adc_to_spike_quantiser.json",
       "id": "adc-to-spike-quantiser-contract"
     },
     {

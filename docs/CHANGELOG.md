@@ -179,6 +179,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The ADC-to-spike sensor quantiser RTL (`hdl/sensors/adc_to_spike_quantiser.v`)
+  now preserves signed fixed-point bounds and arithmetic rounding shifts across
+  nominal and down-scaled input widths instead of saturating every decimated
+  window to `Q_MIN` or `Q_MAX` through unsigned concatenations, and computes
+  exact `|Q_MIN|` magnitude when budgeting negative-polarity spikes.
+
 - Populations of one neuron type with different parameters or timesteps now
   compile to separate FPGA neuron modules instead of raising a parameter
   conflict error. The folded interconnect accepts cross-population parameter

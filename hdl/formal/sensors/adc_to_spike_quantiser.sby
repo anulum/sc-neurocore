@@ -1,6 +1,12 @@
+[tasks]
+bmc
+cover
+
 [options]
-mode bmc
-depth 18
+bmc: mode bmc
+bmc: depth 18
+cover: mode cover
+cover: depth 18
 
 [engines]
 smtbmc cvc5

@@ -66,13 +66,13 @@ kernel-reserved isolated-core claims.
 
 The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. The nuXmv and Kind 2 binaries were not installed locally, so the benchmark validates deterministic model emission for those surfaces and records runtime execution as unavailable.
 
-## ADC-to-spike quantiser - 2026-06-04
+## ADC-to-spike quantiser - 2026-11-19
 
-| Artefact | Cpuset | Surfaces | Key result |
+| Artefact | Affinity | Surfaces | Key result |
 | --- | --- | --- | --- |
-| `local_python_2026-06-04_adc_to_spike_quantiser.json` | `10-11` | Python, SystemVerilog | `3704.696` ns/sample; SymbiYosys/cvc5 pass in `4.579` s; Yosys `7675` cells |
+| `local_python_2026-11-19_adc_to_spike_quantiser.json` | `10-11` (`Intel Xeon E5-2640 @ 2.50 GHz`, shared load `78.67`) | Python, SystemVerilog | `14049.745` ns/sample; SymbiYosys 0.70 / cvc5 1.1.2 `bmc`+`cover` pass in `29.711` s; Yosys 0.70 `1662` cells in `9.053` s |
 
-The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. This is local contract evidence, not board-level throughput evidence.
+The run records `hardware_measurement_claimed=false`, `benchmark_isolation_mode=non-isolated-shared-host`, and `runtime_cpuset_shield_claimed=false` (the 2026-06-04 record `local_python_2026-06-04_adc_to_spike_quantiser.json` stays retained as history). This is contract, formal, and synthesis-estimate evidence, not board-level throughput evidence.
 
 ## DCLS Q8.8 RTL contract - 2026-06-04
 

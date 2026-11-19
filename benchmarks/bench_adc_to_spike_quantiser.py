@@ -6,9 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — ADC-to-spike quantiser benchmark
 
+"""Benchmark the ADC-to-spike quantiser reference, formal proof, and Yosys synthesis."""
+
 from __future__ import annotations
 
 import argparse
+from importlib import import_module
 import json
 import os
 from pathlib import Path
@@ -16,15 +19,22 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tools.adc_to_spike_reference import ADCSpikeConfig, ADCToSpikeReference
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "tools"))
-
-from adc_to_spike_reference import ADCSpikeConfig, ADCToSpikeReference
-
 HDL = REPO_ROOT / "hdl" / "sensors" / "adc_to_spike_quantiser.v"
 FORMAL = REPO_ROOT / "hdl" / "formal" / "sensors" / "adc_to_spike_quantiser.sby"
+
+
+def _reference_types() -> tuple[type[ADCSpikeConfig], type[ADCToSpikeReference]]:
+    root_str = str(REPO_ROOT)
+    if root_str not in sys.path:
+        sys.path.insert(0, root_str)
+    module = import_module("tools.adc_to_spike_reference")
+    return module.ADCSpikeConfig, module.ADCToSpikeReference
 
 
 def _read_text(path: Path) -> str | None:
@@ -35,10 +45,13 @@ def _read_text(path: Path) -> str | None:
 
 
 def _cpuset() -> str | None:
+    cgroup_cpuset = _read_text(Path("/sys/fs/cgroup/cpuset.cpus.effective"))
+    if cgroup_cpuset is not None:
+        return cgroup_cpuset
     for line in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
         if line.startswith("Cpus_allowed_list:"):
             return line.split(":", 1)[1].strip()
-    return _read_text(Path("/sys/fs/cgroup/cpuset.cpus.effective"))
+    return None
 
 
 def _governors(affinity: list[int]) -> dict[str, str]:
@@ -59,7 +72,7 @@ def _host_context() -> dict[str, Any]:
         "cgroup_effective_cpuset": cpuset,
         "load_average": list(os.getloadavg()),
         "cpu_governors_sample": _governors(affinity),
-        "runtime_cpuset_shield_claimed": cpuset == "10-11" or affinity == [10, 11],
+        "runtime_cpuset_shield_claimed": cpuset == "10-11",
     }
 
 
@@ -68,9 +81,10 @@ def _run_formal() -> dict[str, Any]:
         return {"available": False, "exit_code": 127, "elapsed_ns": 0, "passed": False}
     work = REPO_ROOT / "benchmarks" / "results" / ".tmp_adc_to_spike_sby"
     shutil.rmtree(work, ignore_errors=True)
+    work.mkdir(parents=True, exist_ok=True)
     start = time.perf_counter_ns()
     completed = subprocess.run(
-        ["sby", "-f", "-d", str(work), str(FORMAL)],
+        ["sby", "-f", "--prefix", str(work / "proof"), str(FORMAL)],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -100,6 +114,10 @@ def _run_yosys() -> dict[str, Any]:
     for line in completed.stdout.splitlines():
         if "Number of cells:" in line:
             cells = int(line.rsplit(None, 1)[-1])
+        else:
+            parts = line.strip().split()
+            if len(parts) == 2 and parts[1] == "cells" and parts[0].isdigit():
+                cells = int(parts[0])
     return {
         "available": True,
         "exit_code": completed.returncode,
@@ -109,23 +127,42 @@ def _run_yosys() -> dict[str, Any]:
 
 
 def run(samples: int, repeats: int) -> dict[str, Any]:
-    cfg = ADCSpikeConfig(decimation=8, threshold_q=256, base_address=32, negative_offset=1)
+    """Execute the Python reference timing, SymbiYosys proof, and Yosys cell census.
+
+    Parameters
+    ----------
+    samples : int
+        Number of input ADC samples per waveform pass.
+    repeats : int
+        Number of timing passes over the synthetic waveform.
+
+    Returns
+    -------
+    dict of str to Any
+        JSON-serialisable benchmark report dictionary.
+    """
+    config_cls, ref_cls = _reference_types()
+    cfg = config_cls(decimation=8, threshold_q=256, base_address=32, negative_offset=1)
     waveform = [((index * 73) % 2048) - 1024 for index in range(samples)]
     spike_total = 0
     start = time.perf_counter_ns()
     for _ in range(repeats):
-        ref = ADCToSpikeReference(cfg)
+        ref = ref_cls(cfg)
         ref.run(sample & 0xFFFF for sample in waveform)
         spike_total += ref.spike_count
     elapsed = time.perf_counter_ns() - start
     formal = _run_formal()
     yosys = _run_yosys()
+    host_context = _host_context()
+    shielded = bool(host_context["runtime_cpuset_shield_claimed"])
     return {
         "benchmark": "adc_to_spike_quantiser_contract",
         "date_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "language": "Python+SystemVerilog",
         "language_surfaces": ["Python", "SystemVerilog"],
-        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "benchmark_isolation_mode": (
+            "runtime-cpuset-shield" if shielded else "non-isolated-shared-host"
+        ),
         "hardware_measurement_claimed": False,
         "samples": samples,
         "repeats": repeats,
@@ -134,11 +171,12 @@ def run(samples: int, repeats: int) -> dict[str, Any]:
         "median_ns_per_sample": elapsed / max(samples * repeats, 1),
         "formal": formal,
         "yosys": yosys,
-        "host_context": _host_context(),
+        "host_context": host_context,
     }
 
 
 def main() -> None:
+    """Parse CLI options, run the ADC-to-spike benchmark, and write JSON output."""
     parser = argparse.ArgumentParser(
         description="Benchmark the ADC-to-spike quantiser reference and HDL evidence."
     )

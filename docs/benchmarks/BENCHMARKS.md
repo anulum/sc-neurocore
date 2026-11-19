@@ -946,19 +946,21 @@ This benchmark exercises the NEU-C.2 timing formal framework across the active p
 
 Evidence boundary: this is formal proof and model-emitter evidence, not hardware throughput evidence. `hardware_measurement_claimed=false` remains intentional.
 
-## ADC-to-spike quantiser (2026-06-04)
+## ADC-to-spike quantiser (2026-11-19)
 
-Artefact: `benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json`.
+Artefact: `benchmarks/results/local_python_2026-11-19_adc_to_spike_quantiser.json` (earlier baseline retained at `benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json`).
 
-This benchmark exercises the NEU-C.5 ADC-to-spike sensor-ingress contract across the active Python and SystemVerilog surfaces. The run used runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and `runtime_cpuset_shield_claimed=true`; load average during the run was `3.71, 3.80, 3.48`.
+This benchmark exercises the NEU-C.5 ADC-to-spike sensor-ingress contract across the active Python and SystemVerilog surfaces after the signed clamp, arithmetic rounding shift, `abs_q(Q_MIN)` magnitude, and two-instance (`ADC_WIDTH=12` and down-scaled `ADC_WIDTH=6`, `bmc` and `cover` depth 18) formal harness updates. The run executed on a dual-socket `Intel Xeon E5-2640 @ 2.50 GHz` server (24 logical CPUs) pinned via `taskset` to cores `10-11` (`nice 19`) under concurrent load (`load_average = 78.67, 73.15, 70.05`; `benchmark_isolation_mode=non-isolated-shared-host`, `runtime_cpuset_shield_claimed=false`).
 
 | Surface | Operation | Result |
 | --- | --- | --- |
-| Python | Bit-true ADC decimation and deterministic AER rate-code reference | `3704.696` ns/sample over `409600` samples |
-| SystemVerilog | SymbiYosys/cvc5 formal proof | pass, `4.579` s |
-| SystemVerilog | Yosys generic synthesis estimate | `7675` cells, `11.861` s |
+| Python | Bit-true ADC decimation and deterministic AER rate-code reference | `14049.745` ns/sample over `409600` samples (`50400` spikes) |
+| SystemVerilog | SymbiYosys 0.70 / cvc5 1.1.2 formal proof (`bmc` + `cover`, 2 instances) | pass, `29.711` s |
+| SystemVerilog | Yosys 0.70 generic synthesis estimate | `1662` cells, `9.053` s |
 
-Evidence boundary: this is local contract, formal, and synthesis-estimate evidence. `hardware_measurement_claimed=false` remains intentional until board-level isolated hardware evidence is captured.
+The cell counts of the two records are not comparable: the 2026-06-04 record's `7675` cells came from an earlier Yosys. Under the same Yosys 0.70 and `synth -top adc_to_spike_quantiser`, the RTL before the signed clamp, rounding and `abs_q(Q_MIN)` corrections synthesises to `1488` cells, so the corrections add `174` cells (11.7 %).
+
+Evidence boundary: this is non-isolated shared-host contract, formal, and synthesis-estimate evidence. `hardware_measurement_claimed=false` remains intentional until board-level isolated hardware evidence is captured.
 
 ## DCLS Q8.8 RTL contract (2026-06-04)
 

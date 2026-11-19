@@ -1,0 +1,46 @@
+{
+  "benchmark": "adc_to_spike_quantiser_contract",
+  "benchmark_isolation_mode": "non-isolated-shared-host",
+  "date_utc": "2026-11-19T04:38:26Z",
+  "formal": {
+    "available": true,
+    "elapsed_ns": 29711377639,
+    "exit_code": 0,
+    "passed": true
+  },
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 2,
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "0-23",
+    "cpu_governors_sample": {
+      "10": "schedutil",
+      "11": "schedutil"
+    },
+    "load_average": [
+      78.66748046875,
+      73.146484375,
+      70.05078125
+    ],
+    "runtime_cpuset_shield_claimed": false
+  },
+  "language": "Python+SystemVerilog",
+  "language_surfaces": [
+    "Python",
+    "SystemVerilog"
+  ],
+  "median_ns_per_sample": 14049.745083007812,
+  "repeats": 100,
+  "samples": 4096,
+  "total_samples": 409600,
+  "total_spikes": 50400,
+  "yosys": {
+    "available": true,
+    "cells": 1662,
+    "elapsed_ns": 9052651818,
+    "exit_code": 0
+  }
+}
