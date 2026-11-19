@@ -521,15 +521,15 @@ governor, and host load.
 
 | Workload | Median compile time |
 | --- | ---: |
-| Euler registered | 0.447941 ms |
-| Euler folded with parameter port | 0.472888 ms |
-| RK4 registered | 1.357615 ms |
-| Four-substep RK4 registered | 2.560791 ms |
-| Escape-rate registered | 4.533367 ms |
-| Square-root map registered | 0.424655 ms |
-| Negative half-LSB nearest map registered | 0.332131 ms |
-| Quadrant-aware angle map registered | 3.235221 ms |
-| Softplus exponential Euler registered | 15.937234 ms |
+| Euler registered | 0.468747 ms |
+| Euler folded with parameter port | 0.471186 ms |
+| RK4 registered | 1.410198 ms |
+| Four-substep RK4 registered | 2.565848 ms |
+| Escape-rate registered | 4.554075 ms |
+| Square-root map registered | 0.432712 ms |
+| Negative half-LSB nearest map registered | 0.342277 ms |
+| Quadrant-aware angle map registered | 3.297307 ms |
+| Softplus exponential Euler registered | 16.232818 ms |
 
 The run used Intel Xeon E5-2640 processors with 24 logical CPUs, 251.85 GiB RAM
 and Python 3.12.16. The affinity mask allowed all 24 logical CPUs. Native
