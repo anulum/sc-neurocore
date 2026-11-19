@@ -16,6 +16,7 @@ from typing import Literal
 import pytest
 
 from sc_neurocore.studio.platform import storage_generation_exchanges as exchanges
+from sc_neurocore.studio.platform import storage_generation_supervisor as supervisor_module
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
 from sc_neurocore.studio.platform.jobs_worker_recovery import worker_group_stopped
@@ -35,6 +36,42 @@ from tests.test_studio_storage_event_training import event_config as event_confi
 from tests.test_studio_storage_isolated_jobs import manager as manager
 from tests.test_studio_storage_isolated_jobs import request_on
 
+#: Execution limit of the timeout case, in seconds, the same as cancellation's. The limit starts
+#: when the generation supervisor begins to watch the granted worker, so it also covers the
+#: worker's start-up and imports. Those take under 4 s on hosted runners (the whole cancel case
+#: took 3.2-4.1 s in every Python lane of CI run 44278946068) but up to about a minute on a
+#: host at load 50 (ML350, 2026-11-18), where a 10-second and then a 30-second limit lapsed
+#: before the first training event. So the case does not wait for the limit: once the worker
+#: is training, it moves the supervisor's clock past it (:class:`SupervisorClock`).
+TIMEOUT_CASE_SECONDS = 120.0
+
+
+class SupervisorClock:
+    """The generation supervisor's monotonic clock, which a test may move forward.
+
+    The supervisor reads ``time.monotonic`` to start the job's execution deadline and to check
+    it. A test that puts this clock in place of the supervisor module's ``time`` can let the
+    deadline lapse at a moment it chooses, after the worker's first training event, however
+    long the worker took to start. Every other module keeps the real clock.
+    """
+
+    def __init__(self) -> None:
+        self.advanced = 0.0
+
+    def monotonic(self) -> float:
+        """Return the real monotonic time plus the advance so far, in seconds."""
+        return time.monotonic() + self.advanced
+
+    def advance(self, seconds: float) -> None:
+        """Move the clock forward.
+
+        Parameters
+        ----------
+        seconds : float
+            How far to move it, in seconds.
+        """
+        self.advanced += seconds
+
 
 def exercise_event_stop(
     manager: IsolatedJobManager,
@@ -43,7 +80,8 @@ def exercise_event_stop(
     event_config: dict[str, object],
     mode: Literal["cancel", "timeout"],
     *,
-    timeout_seconds: float = 10.0,
+    timeout_seconds: float = TIMEOUT_CASE_SECONDS,
+    clock: SupervisorClock | None = None,
 ) -> StudioJobRecord:
     """Stop a running worker and resolve a lost finish reply through real sockets.
 
@@ -61,6 +99,9 @@ def exercise_event_stop(
         Explicit cancellation or expiration of the worker's execution deadline.
     timeout_seconds :
         Execution budget for the timeout case; cancellation retains 120 seconds.
+    clock :
+        The supervisor's clock, in place, for the timeout case: once the worker is training,
+        it is moved past the budget so the deadline lapses then. Cancellation does not use it.
 
     Returns
     -------
@@ -90,7 +131,11 @@ def exercise_event_stop(
                 assert offset == len(data)
                 break
             assert time.monotonic() < deadline
-            assert manager.record(submitted.job_id).status in {"pending", "running"}
+            status = manager.record(submitted.job_id).status
+            assert status in {"pending", "running"}, (
+                f"the job was {status} before its first training event "
+                f"(mode {mode}; the timeout case's limit is {timeout_seconds:g} s)"
+            )
             time.sleep(0.05)
         assert manager.record(submitted.job_id).status == "running"
     worker = (
@@ -103,6 +148,9 @@ def exercise_event_stop(
     )
     assert worker is not None
     assert not worker_group_stopped(str(worker[0]), str(worker[1]), int(worker[2]))
+    if mode == "timeout":
+        assert clock is not None, "the timeout case needs the supervisor's clock in place"
+        clock.advance(timeout_seconds)
     with request_on("/api/training/stop"):
         if mode == "cancel":
             assert manager.cancel(submitted.job_id).status == "cancelling"
@@ -148,9 +196,25 @@ def test_actual_event_stop_retains_complete_snapshot_and_proves_group_reaped(
     authority: Authority,
     event_config: dict[str, object],
     mode: Literal["cancel", "timeout"],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Terminal stop, identical retry and lost reply retain one durable event job."""
-    exercise_event_stop(manager, ledger, authority, event_config, mode)
+    """Terminal stop, identical retry and lost reply retain one durable event job.
+
+    The timeout case lets the execution limit lapse once the worker is training, by moving the
+    supervisor's clock, so a slow start cannot expire the job before its first event.
+
+    Parameters
+    ----------
+    manager, ledger, authority, event_config :
+        The collaborators of :func:`exercise_event_stop`.
+    mode :
+        Explicit cancellation or expiration of the worker's execution deadline.
+    monkeypatch : pytest.MonkeyPatch
+        Puts the supervisor's clock in place for the case.
+    """
+    clock = SupervisorClock()
+    monkeypatch.setattr(supervisor_module, "time", clock)
+    exercise_event_stop(manager, ledger, authority, event_config, mode, clock=clock)
 
 
 def test_a_late_repeated_finish_is_awaited_before_the_finishes_are_counted(

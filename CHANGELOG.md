@@ -169,6 +169,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The timeout case of the Studio event-stop test no longer races the
+  worker's start-up. The job's execution limit starts when the supervisor
+  begins to watch the worker, so it also covers the worker's start-up and
+  imports. On a loaded host those took longer than the case's 10-second
+  limit, the job timed out before its first training event, and the case
+  failed without saying why. The case now submits with the same
+  120-second limit as cancellation and, once the worker is training,
+  moves the supervisor's clock past it, so the limit lapses while the
+  worker trains. A job that ends before its first event fails with a
+  message. The product's limit is unchanged.
+
 - The Studio HTTP case of two clients saving one new workspace no longer
   depends on how fast the host is. It started both saves at once with a
   0.3-second lock timeout, so on a loaded host the second save waited
