@@ -8,9 +8,13 @@
 
 """Verify temporal properties of spiking neural networks.
 
-Specify safety/liveness properties over spike trains and verify them
-via bounded simulation with exhaustive input enumeration or interval
-arithmetic. No SNN framework provides temporal property verification.
+Specify safety/liveness properties over spike trains and check them on a
+recorded spike raster. A check covers the trace it reads, not every input.
+
+Every check reads a bounded ``(T, N)`` raster of non-negative spike counts. It returns ``UNKNOWN`` where the
+question reaches past either end of the trace and the recorded part does not settle it, and refuses neuron ids,
+stimulus times and window sizes that lie outside the trace. The short-trace rule of the window checks relies on the
+counts being non-negative: every window holding the whole trace counts at least its spikes.
 
 Properties:
   - fires_within: neuron responds within time window
@@ -66,6 +70,29 @@ class VerificationResult:
         return line
 
 
+def _steps(spikes: np.ndarray[Any, Any], *neuron_ids: int) -> int:
+    """Return the trace length after checking the raster's shape and the neuron ids.
+
+    Raises
+    ------
+    ValueError
+        If ``spikes`` is not two-dimensional or a neuron id lies outside ``[0, N)``.
+    """
+    if spikes.ndim != 2:
+        raise ValueError(f"spikes must have shape (T, N), got shape {spikes.shape}")
+    n_neurons = spikes.shape[1]
+    for neuron in neuron_ids:
+        if not 0 <= neuron < n_neurons:
+            raise ValueError(f"neuron id {neuron} lies outside the raster's {n_neurons} neurons")
+    return int(spikes.shape[0])
+
+
+def _window(window_size: int) -> None:
+    """Refuse a window that holds no step."""
+    if window_size < 1:
+        raise ValueError(f"window_size must be at least 1 step, got {window_size}")
+
+
 def fires_within(
     spikes: np.ndarray[Any, Any],
     neuron_id: int,
@@ -81,17 +108,32 @@ def fires_within(
     stimulus_times : list of int
         Timesteps when stimulus was applied.
     max_latency : int
-        Maximum allowed response latency in timesteps.
+        Maximum allowed response latency in timesteps; a spike at ``t + max_latency`` still counts.
+
+    Returns
+    -------
+    VerificationResult
+        ``VIOLATED`` with a counterexample when a whole window ``[t, t + max_latency]`` inside the trace shows no
+        spike; otherwise ``UNKNOWN`` when a window runs past the trace end without a spike; otherwise ``VERIFIED``.
+
+    Raises
+    ------
+    ValueError
+        If the raster, the neuron id, a stimulus time (outside ``[0, T)``) or a negative latency is invalid.
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, neuron_id)
+    if max_latency < 0:
+        raise ValueError(f"max_latency must be non-negative, got {max_latency}")
     for t_stim in stimulus_times:
-        window_end = min(t_stim + max_latency, T)
-        fired = False
-        for t in range(t_stim, window_end):
-            if spikes[t, neuron_id] > 0:
-                fired = True
-                break
-        if not fired:
+        if not 0 <= t_stim < T:
+            raise ValueError(f"stimulus time {t_stim} lies outside the trace [0, {T})")
+    undecided: list[int] = []
+    for t_stim in stimulus_times:
+        deadline = t_stim + max_latency
+        fired = bool(np.any(spikes[t_stim : min(deadline + 1, T), neuron_id] > 0))
+        if not fired and deadline >= T:
+            undecided.append(t_stim)
+        elif not fired:
             return VerificationResult(
                 property_name="fires_within",
                 result=PropertyResult.VIOLATED,
@@ -104,6 +146,14 @@ def fires_within(
                 checked_steps=T,
                 message=f"Neuron {neuron_id} failed to respond at t={t_stim}",
             )
+    if undecided:
+        return VerificationResult(
+            property_name="fires_within",
+            result=PropertyResult.UNKNOWN,
+            checked_steps=T,
+            message=f"No response of neuron {neuron_id} yet to the stimuli at {undecided}; their "
+            f"deadlines fall after the trace ends at t={T - 1}",
+        )
 
     return VerificationResult(
         property_name="fires_within",
@@ -126,7 +176,7 @@ def mutual_exclusion(
     neuron_set : list of int
         Neuron IDs that should never co-fire.
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, *neuron_set)
     for t in range(T):
         active = [n for n in neuron_set if spikes[t, n] > 0]
         if len(active) > 1:
@@ -165,12 +215,24 @@ def rate_bound(
     max_rate : float
         Maximum allowed firing rate (spikes per step).
     window_size : int
-        Sliding window size in timesteps.
+        Sliding window size in timesteps, at least 1. When the trace is shorter than one window, the bound is
+        ``VIOLATED`` if the whole trace already exceeds it (every window holding the trace would too) and
+        ``UNKNOWN`` otherwise.
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, neuron_id)
+    _window(window_size)
     neuron_spikes = spikes[:, neuron_id]
+    if window_size > T:
+        rate = float(neuron_spikes.sum()) / window_size
+        if rate <= max_rate:
+            return VerificationResult(
+                property_name="rate_bound",
+                result=PropertyResult.UNKNOWN,
+                checked_steps=T,
+                message=f"Trace of {T} steps is shorter than one {window_size}-step window",
+            )
 
-    for t in range(T - window_size + 1):
+    for t in range(max(T - window_size + 1, 1)):
         window = neuron_spikes[t : t + window_size]
         rate = float(window.sum()) / window_size
         if rate > max_rate:
@@ -208,7 +270,7 @@ def refractory_guarantee(
     min_gap : int
         Minimum required gap between consecutive spikes (timesteps).
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, neuron_id)
     spike_times = np.where(spikes[:, neuron_id] > 0)[0]
 
     for i in range(len(spike_times) - 1):
@@ -250,18 +312,31 @@ def causal_order(
     spikes : ndarray of shape (T, N)
     neuron_a, neuron_b : int
     max_delay : int
+        Largest allowed lag of B behind A, non-negative.
+
+    Returns
+    -------
+    VerificationResult
+        ``VIOLATED`` when a B spike's whole window ``[t - max_delay, t)`` lies inside the trace without an A spike;
+        otherwise ``UNKNOWN`` when a B spike's window starts before ``t = 0`` and its recorded part holds no A spike
+        (the cause may precede the recording); otherwise ``VERIFIED``.
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, neuron_a, neuron_b)
+    if max_delay < 0:
+        raise ValueError(f"max_delay must be non-negative, got {max_delay}")
     b_times = np.where(spikes[:, neuron_b] > 0)[0]
     a_times = set(np.where(spikes[:, neuron_a] > 0)[0].tolist())
 
+    undecided: list[int] = []
     for t_b in b_times:
         found = False
         for dt in range(1, max_delay + 1):
             if (t_b - dt) in a_times:
                 found = True
                 break
-        if not found:
+        if not found and t_b < max_delay:
+            undecided.append(int(t_b))
+        elif not found:
             return VerificationResult(
                 property_name="causal_order",
                 result=PropertyResult.VIOLATED,
@@ -274,6 +349,14 @@ def causal_order(
                 checked_steps=T,
                 message=f"Causal order violated at t={t_b}",
             )
+    if undecided:
+        return VerificationResult(
+            property_name="causal_order",
+            result=PropertyResult.UNKNOWN,
+            checked_steps=T,
+            message=f"No cause of neuron {neuron_b}'s spikes at {undecided} in the trace; their windows "
+            "start before the trace does",
+        )
 
     return VerificationResult(
         property_name="causal_order",
@@ -297,12 +380,22 @@ def bounded_activity(
     spikes : ndarray of shape (T, N)
     neuron_set : list of int
     window_size : int
+        Window size in timesteps, at least 1; a trace shorter than one window is judged as in
+        :func:`rate_bound`.
     max_total_spikes : int
     """
-    T = spikes.shape[0]
+    T = _steps(spikes, *neuron_set)
+    _window(window_size)
     subset = spikes[:, neuron_set]
+    if window_size > T and int(subset.sum()) <= max_total_spikes:
+        return VerificationResult(
+            property_name="bounded_activity",
+            result=PropertyResult.UNKNOWN,
+            checked_steps=T,
+            message=f"Trace of {T} steps is shorter than one {window_size}-step window",
+        )
 
-    for t in range(T - window_size + 1):
+    for t in range(max(T - window_size + 1, 1)):
         total = int(subset[t : t + window_size].sum())
         if total > max_total_spikes:
             return VerificationResult(

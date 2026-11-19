@@ -63486,7 +63486,18 @@ neuron_id : int
 stimulus_times : list of int
     Timesteps when stimulus was applied.
 max_latency : int
-    Maximum allowed response latency in timesteps.
+    Maximum allowed response latency in timesteps; a spike at ``t + max_latency`` still counts.
+
+Returns
+-------
+VerificationResult
+    ``VIOLATED`` with a counterexample when a whole window ``&#91;t, t + max_latency&#93;`` inside the trace shows no
+    spike; otherwise ``UNKNOWN`` when a window runs past the trace end without a spike; otherwise ``VERIFIED``.
+
+Raises
+------
+ValueError
+    If the raster, the neuron id, a stimulus time (outside ``&#91;0, T)``) or a negative latency is invalid.
 
 ### Function `mutual_exclusion(spikes, neuron_set)`
 Verify that no two neurons in the set fire at the same timestep.
@@ -63507,7 +63518,9 @@ neuron_id : int
 max_rate : float
     Maximum allowed firing rate (spikes per step).
 window_size : int
-    Sliding window size in timesteps.
+    Sliding window size in timesteps, at least 1. When the trace is shorter than one window, the bound is
+    ``VIOLATED`` if the whole trace already exceeds it (every window holding the trace would too) and
+    ``UNKNOWN`` otherwise.
 
 ### Function `refractory_guarantee(spikes, neuron_id, min_gap)`
 Verify minimum inter-spike interval.
@@ -63530,6 +63543,14 @@ Parameters
 spikes : ndarray of shape (T, N)
 neuron_a, neuron_b : int
 max_delay : int
+    Largest allowed lag of B behind A, non-negative.
+
+Returns
+-------
+VerificationResult
+    ``VIOLATED`` when a B spike's whole window ``&#91;t - max_delay, t)`` lies inside the trace without an A spike;
+    otherwise ``UNKNOWN`` when a B spike's window starts before ``t = 0`` and its recorded part holds no A spike
+    (the cause may precede the recording); otherwise ``VERIFIED``.
 
 ### Function `bounded_activity(spikes, neuron_set, window_size, max_total_spikes)`
 Verify total spike count in neuron set stays bounded per window.
@@ -63539,6 +63560,8 @@ Parameters
 spikes : ndarray of shape (T, N)
 neuron_set : list of int
 window_size : int
+    Window size in timesteps, at least 1; a trace shorter than one window is judged as in
+    :func:`rate_bound`.
 max_total_spikes : int
 
 ---

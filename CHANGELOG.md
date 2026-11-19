@@ -251,6 +251,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The temporal property checks no longer verify what a trace cannot show. A
+  window longer than the trace gave a pass even for a neuron firing at every
+  step; it now gives `unknown`, or a violation when the whole trace already
+  exceeds the bound. A response exactly at the latency deadline now counts,
+  latency 0 accepts a spike at the stimulus step, and a deadline past the
+  trace end without a response gives `unknown`, as does a causal-order
+  window that starts before the trace with no cause recorded. Negative
+  neuron ids and stimulus times, which wrapped to the end of the trace, are
+  refused, as are ids past the raster, windows below one step and negative
+  latencies or delays. The temporal verification tutorial's examples now run
+  as printed, and its text no longer claims a check over all inputs.
+
 - The interval checker no longer says a property holds for inputs outside
   its domain: two negative "probability" intervals whose product lies in
   [0, 1], or a negative energy above a more negative cost, now show nothing:

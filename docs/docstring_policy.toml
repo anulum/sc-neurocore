@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2223
+expected_file_count = 2224
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8942,3 +8942,7 @@ rationale = "Document the interval checker's well-formed intervals and the input
 [[file]]
 path = "tests/test_formal_interval_domains.py"
 rationale = "Hold the interval checker to well-formed intervals and to verdicts only inside their input domains."
+
+[[file]]
+path = "tests/test_temporal_properties_domains.py"
+rationale = "Hold the temporal property checks to verdicts the bounded trace supports and to ids, times and windows inside it."

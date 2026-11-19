@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5730
+    "test_files": 5731
   },
   "documentation": {
     "public_pages": [
@@ -8561,6 +8561,7 @@
       "tests/test_temporal_hierarchy_multi_clock_snn.py",
       "tests/test_temporal_properties_bounded_activity.py",
       "tests/test_temporal_properties_causal_order.py",
+      "tests/test_temporal_properties_domains.py",
       "tests/test_temporal_properties_fires_within.py",
       "tests/test_temporal_properties_mutual_exclusion.py",
       "tests/test_temporal_properties_rate_bound.py",
