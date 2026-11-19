@@ -26085,6 +26085,8 @@ firewall enforcement, and live migration.
   - Release a tenant's hardware region.
 - **remove_tenant**(tenant_id)
   - Remove a tenant entirely.
+- **preempt**(victim_id, preemptor_id, cycle)
+  - Hand the victim's region to the preemptor, moving the firewall rule with it.
 - **schedule**(num_cycles)
   - Generate a schedule for active tenants.
 - **migrate**(tenant_id, target_region_id)
@@ -26110,7 +26112,9 @@ Rate-limits migration requests to prevent storms.
 - **allow**()
   - Check if a migration is allowed under the rate limit.
 - **record**()
+  - Record one migration at the current time.
 - **recent_count**()
+  - Return the number of migrations recorded inside the window.
 
 ### Function `admission_check(tenant, regions, existing_tenants)`
 Check if a new tenant can be admitted without overcommitting.
@@ -26123,6 +26127,7 @@ Check if a new tenant can be admitted without overcommitting.
 One address-range access rule.
 
 - **end_addr**()
+  - Return the first address after the rule's range.
 
 ### Class `BitstreamFirewall`
 AXI address-range isolation preventing cross-tenant access.
@@ -26132,16 +26137,64 @@ Any cross-region access is blocked and logged as a violation.
 
 - **__init__**()
 - **add_rule**(rule)
+  - Append one access rule.
 - **remove_tenant_rules**(tenant_id)
+  - Remove every rule of one tenant and return how many were removed.
 - **check_access**(tenant_id, addr, is_write)
   - Check if a tenant can access an address.
 - **violation_count**()
+  - Return the number of violations logged.
 - **clear_violations**()
+  - Forget every logged violation.
 
 ### Function `verify_isolation(firewall, regions)`
-Verify that no two tenants share address ranges.
+Verify that tenants share no addresses and that each rule lies in its tenant's region.
 
-Returns list of violation descriptions (empty = sound).
+Returns one description per violation, empty when the configuration is isolated:
+``overlap`` for rules of two tenants sharing an address, then the region checks of
+:func:`~sc_neurocore.hypervisor.isolation_regions.region_violations`.
+
+---
+
+## Module `hypervisor.isolation_regions`
+
+### Function `revoke_tenant_range(firewall, tenant_id, base_addr, end_addr)`
+Remove the tenant's rules that share any address with a range.
+
+Parameters
+----------
+firewall : BitstreamFirewall
+    Firewall whose rules are edited in place.
+tenant_id : str
+    Tenant whose rules are removed.
+base_addr, end_addr : int
+    The range, ``end_addr`` excluded.
+
+Returns
+-------
+int
+    Number of rules removed; the tenant's rules elsewhere stay.
+
+### Function `region_violations(rules, regions)`
+Describe what breaks isolation in the region model and in the rules measured against it.
+
+Parameters
+----------
+rules : sequence of FirewallRule
+    Rules to measure against the regions.
+regions : mapping of int to HWRegion
+    The region model by region id. With an empty mapping there is nothing to measure,
+    and no rule is reported.
+
+Returns
+-------
+list of str
+    In this order:
+
+    - ``region_overlap``: two regions share an address;
+    - ``empty_region``: a region has no positive ``axi_size``;
+    - ``rule_outside_own_region``: a rule does not lie wholly inside a region that its
+      tenant holds (``region.tenant_id``), so it reaches another tenant's region or none.
 
 ---
 
@@ -26186,7 +26239,7 @@ Record of a preemption event.
 Handles preemption with state checkpoint/restore.
 
 - **__init__**()
-- **preempt**(victim, preemptor, region, cycle)
+- **preempt**(victim, preemptor, region, cycle, \*, firewall)
   - Preempt victim and give region to preemptor.
 - **restore_preempted**(tenant)
   - Restore a previously preempted tenant's state.

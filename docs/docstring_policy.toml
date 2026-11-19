@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2193
+expected_file_count = 2198
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8822,3 +8822,23 @@ rationale = "Verify Wishbone B4 neuron bus-wrapper emission, Verilator lint, per
 [[file]]
 path = "tests/test_bus_interface_wrappers_register_map.py"
 rationale = "Verify bus-wrapper register-map offsets and fail-closed validation of identifiers, widths, and address ranges."
+
+[[file]]
+path = "src/sc_neurocore/hypervisor/hypervisor.py"
+rationale = "Hold the multi-tenant hypervisor's facade: one region per tenant, preemption that moves the firewall rule, scheduling, migration and accounting."
+
+[[file]]
+path = "src/sc_neurocore/hypervisor/preemption.py"
+rationale = "Capture a victim's state and hand its region, and with a firewall its access rule, to the preempting tenant."
+
+[[file]]
+path = "src/sc_neurocore/hypervisor/isolation.py"
+rationale = "Enforce per-tenant AXI address ranges and report overlapping rules of different tenants and region-model violations."
+
+[[file]]
+path = "src/sc_neurocore/hypervisor/isolation_regions.py"
+rationale = "Measure firewall rules against region ownership, report overlapping or empty regions, and remove a tenant's rules over a range."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_isolation_hardening.py"
+rationale = "Hold each tenant to one region and every firewall rule to the region its tenant holds, through allocation, preemption and the isolation check."

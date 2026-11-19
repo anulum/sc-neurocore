@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from itertools import combinations
 from typing import TYPE_CHECKING, Any, Dict, List
+
+from sc_neurocore.hypervisor.isolation_regions import region_violations
 
 if TYPE_CHECKING:
     from sc_neurocore.hypervisor.region import HWRegion
@@ -30,6 +33,7 @@ class FirewallRule:
 
     @property
     def end_addr(self) -> int:
+        """Return the first address after the rule's range."""
         return self.base_addr + self.size
 
 
@@ -46,9 +50,11 @@ class BitstreamFirewall:
         self.max_violations: int = 1000
 
     def add_rule(self, rule: FirewallRule) -> None:
+        """Append one access rule."""
         self.rules.append(rule)
 
     def remove_tenant_rules(self, tenant_id: str) -> int:
+        """Remove every rule of one tenant and return how many were removed."""
         before = len(self.rules)
         self.rules = [r for r in self.rules if r.tenant_id != tenant_id]
         return before - len(self.rules)
@@ -83,31 +89,32 @@ class BitstreamFirewall:
 
     @property
     def violation_count(self) -> int:
+        """Return the number of violations logged."""
         return len(self.violations)
 
     def clear_violations(self) -> None:
+        """Forget every logged violation."""
         self.violations.clear()
 
 
 def verify_isolation(firewall: BitstreamFirewall, regions: Dict[int, HWRegion]) -> List[str]:
-    """Verify that no two tenants share address ranges.
+    """Verify that tenants share no addresses and that each rule lies in its tenant's region.
 
-    Returns list of violation descriptions (empty = sound).
+    Returns one description per violation, empty when the configuration is isolated:
+    ``overlap`` for rules of two tenants sharing an address, then the region checks of
+    :func:`~sc_neurocore.hypervisor.isolation_regions.region_violations`.
     """
     violations: List[str] = []
     rules_by_tenant: Dict[str, List[FirewallRule]] = {}
     for rule in firewall.rules:
         rules_by_tenant.setdefault(rule.tenant_id, []).append(rule)
 
-    tenant_ids = list(rules_by_tenant.keys())
-    for i in range(len(tenant_ids)):
-        for j in range(i + 1, len(tenant_ids)):
-            t1, t2 = tenant_ids[i], tenant_ids[j]
-            for r1 in rules_by_tenant[t1]:
-                for r2 in rules_by_tenant[t2]:
-                    if r1.base_addr < r2.end_addr and r2.base_addr < r1.end_addr:
-                        violations.append(
-                            f"overlap: {t1}[{hex(r1.base_addr)}:{hex(r1.end_addr)}] "
-                            f"& {t2}[{hex(r2.base_addr)}:{hex(r2.end_addr)}]"
-                        )
-    return violations
+    for t1, t2 in combinations(rules_by_tenant, 2):
+        for r1 in rules_by_tenant[t1]:
+            for r2 in rules_by_tenant[t2]:
+                if r1.base_addr < r2.end_addr and r2.base_addr < r1.end_addr:
+                    violations.append(
+                        f"overlap: {t1}[{hex(r1.base_addr)}:{hex(r1.end_addr)}] "
+                        f"& {t2}[{hex(r2.base_addr)}:{hex(r2.end_addr)}]"
+                    )
+    return violations + region_violations(firewall.rules, regions)

@@ -14,6 +14,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The hypervisor keeps each tenant to the region it holds. A second
+  `allocate` for a tenant that already holds a region returns that region
+  instead of taking another; before, the first region stayed allocated with
+  no owner after the tenant was released. The new `Hypervisor.preempt`
+  moves the firewall rule with the region, and `PreemptionManager.preempt`
+  does the same when it is given the firewall, so a preempted tenant can no
+  longer reach the addresses it lost; a victim rule that reaches across the
+  region's edge is removed whole. `verify_isolation` now reads the
+  region model: overlapping or empty regions, and a rule that does not lie
+  in a region its tenant holds, are reported. The unwired Julia and Mojo
+  copies of `verify_isolation` are not updated.
+
 - The streaming inference server (`sc-neurocore serve`) no longer answers
   with exception text. A fault inside a step returns 500 with a fixed
   sentence; malformed JSON or inputs return 400 with an authored one. The

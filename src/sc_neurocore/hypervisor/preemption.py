@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+from sc_neurocore.hypervisor.isolation import BitstreamFirewall, FirewallRule
+from sc_neurocore.hypervisor.isolation_regions import revoke_tenant_range
 from sc_neurocore.hypervisor.region import HWRegion
 from sc_neurocore.hypervisor.tenant import Tenant, TenantState
 
@@ -40,8 +42,38 @@ class PreemptionManager:
         preemptor: Tenant,
         region: HWRegion,
         cycle: int,
+        *,
+        firewall: Optional[BitstreamFirewall] = None,
     ) -> PreemptionEvent:
-        """Preempt victim and give region to preemptor."""
+        """Preempt victim and give region to preemptor.
+
+        Parameters
+        ----------
+        victim, preemptor : Tenant
+            The tenant that loses the region and the one that receives it.
+        region : HWRegion
+            The region handed over.
+        cycle : int
+            Cycle recorded with the event.
+        firewall : BitstreamFirewall, optional
+            When given, every rule of the victim that shares any address with the region is
+            removed whole, and the preemptor gets one rule for the region, so the access rights
+            move with the region. A victim rule that reaches across the region's edge therefore
+            loses its part outside the region too; such a rule already breaks the isolation check.
+            Without the firewall, the caller must update its firewall itself.
+
+        Returns
+        -------
+        PreemptionEvent
+            The recorded event; ``state_saved`` tells whether the victim's state was captured.
+        """
+        if firewall is not None:
+            revoke_tenant_range(
+                firewall, victim.tenant_id, region.axi_base_addr, region.axi_end_addr
+            )
+            firewall.add_rule(
+                FirewallRule(preemptor.tenant_id, region.axi_base_addr, region.axi_size)
+            )
         state_saved = False
         if victim.state is not None:
             victim.state.compute_checksum()

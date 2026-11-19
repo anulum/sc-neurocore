@@ -125,6 +125,7 @@ class Hypervisor:
         self.scheduler.time_quantum_cycles = self.config.time_quantum_cycles
         self.firewall = BitstreamFirewall()
         self.migration_engine = MigrationEngine()
+        self.preemption = PreemptionManager()
         self.uptime_ns: int = 0
 
     def add_region(self, region: HWRegion) -> None:
@@ -142,10 +143,25 @@ class Hypervisor:
         return True
 
     def allocate(self, tenant_id: str) -> Optional[int]:
-        """Allocate a free region to a tenant."""
+        """Allocate a free region to a tenant.
+
+        Parameters
+        ----------
+        tenant_id : str
+            Registered tenant.
+
+        Returns
+        -------
+        int or None
+            The region id. A tenant that already holds a region keeps it: its id is returned
+            and no second region or firewall rule is taken. None for an unknown tenant or when
+            no free region fits the tenant's QoS.
+        """
         tenant = self.tenants.get(tenant_id)
         if tenant is None:
             return None
+        if tenant.region_id is not None:
+            return tenant.region_id
 
         # Find a free region that fits the QoS
         for rid, region in self.regions.items():
@@ -191,6 +207,36 @@ class Hypervisor:
         """Remove a tenant entirely."""
         self.deallocate(tenant_id)
         return self.tenants.pop(tenant_id, None) is not None
+
+    def preempt(self, victim_id: str, preemptor_id: str, cycle: int) -> Optional[PreemptionEvent]:
+        """Hand the victim's region to the preemptor, moving the firewall rule with it.
+
+        Parameters
+        ----------
+        victim_id : str
+            Tenant that holds a region and loses it; its state is saved for a later restore.
+        preemptor_id : str
+            Tenant that holds no region and receives the victim's.
+        cycle : int
+            Cycle recorded with the event.
+
+        Returns
+        -------
+        PreemptionEvent or None
+            The event. None, with nothing changed, when either tenant is unknown, the victim
+            holds no region or the preemptor already holds one.
+        """
+        victim = self.tenants.get(victim_id)
+        preemptor = self.tenants.get(preemptor_id)
+        if victim is None or preemptor is None:
+            return None
+        if victim.region_id is None or preemptor.region_id is not None:
+            return None
+        region = self.regions.get(victim.region_id)
+        if region is None:
+            return None
+        firewall = self.firewall if self.config.enable_firewall else None
+        return self.preemption.preempt(victim, preemptor, region, cycle, firewall=firewall)
 
     def schedule(self, num_cycles: int) -> List[ScheduleSlot]:
         """Generate a schedule for active tenants."""
@@ -324,10 +370,12 @@ class MigrationThrottle:
         return len(self._timestamps) < self.max_per_window
 
     def record(self) -> None:
+        """Record one migration at the current time."""
         self._timestamps.append(time.time_ns())
 
     @property
     def recent_count(self) -> int:
+        """Return the number of migrations recorded inside the window."""
         now = time.time_ns()
         cutoff = now - self.window_ns
         return sum(1 for t in self._timestamps if t > cutoff)
