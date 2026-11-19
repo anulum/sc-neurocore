@@ -251,6 +251,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The time-warp engine's anti-messages now cancel what they name: a rollback
+  cancels the queued events the node sent after the rollback time at once,
+  and sends anti-messages for the processed ones, which remove the event and
+  roll its receiver back, or cancel it if the receiver has queued it again;
+  an anti-message no longer advances a clock or counts as processed. A
+  rollback now returns the node's events processed after the restored
+  checkpoint to the queue and runs them again, and recounts its processed
+  events. Starvation is measured from the furthest-ahead node, since no node
+  can lag behind the global virtual time, which is the minimum. A state
+  delta of a two-dimensional array stores changed elements by flat index
+  instead of repeating whole rows, records the state shape, and rebuilds the
+  state with `DeltaCheckpoint.apply`. Events carry an `event_id`. The engine
+  models no node logic, so a cancelled send is not regenerated: a caller
+  that models senders injects their valid sends again.
+
 - The Go Chialvo map library computes its exponential with the C library's
   `exp`, the one the Python reference and the Rust and Julia lanes use. Go's
   own `math.Exp` differs from it by one ulp on about one argument in nine, and

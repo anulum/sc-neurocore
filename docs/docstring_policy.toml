@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2227
+expected_file_count = 2229
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8958,3 +8958,11 @@ rationale = "Hold the deployment blob's weight codes at every precision, the rec
 [[file]]
 path = "tests/test_chialvo_map_backends_backend_parity.py"
 rationale = "Hold every Chialvo map backend to the checked contract, and the Go trace to the Python trace bit for bit where the reference exp is the C library's."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_time_warp_cancellation.py"
+rationale = "Hold time-warp rollback, anti-message cancellation, starvation lag and element-wise state deltas to their names."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_causal_order.py"
+rationale = "Hold each node's processed log in virtual-time order through a rollback, and the verifier that flags it."

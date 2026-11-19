@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5732
+    "test_files": 5733
   },
   "documentation": {
     "public_pages": [
@@ -8903,6 +8903,7 @@
       "tests/test_twinsync/test_twinsync_session_snapshot.py",
       "tests/test_twinsync/test_twinsync_starvation.py",
       "tests/test_twinsync/test_twinsync_sync_barrier.py",
+      "tests/test_twinsync/test_twinsync_time_warp_cancellation.py",
       "tests/test_twinsync/test_twinsync_time_warp_engine.py",
       "tests/test_twinsync/test_twinsync_twin_federation.py",
       "tests/test_twinsync/test_twinsync_twin_session.py",
