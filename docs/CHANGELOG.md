@@ -251,6 +251,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A Mojo library is no longer loaded on a host that cannot run it. Every
+  Mojo library is built for x86-64-v3, and on a lower host (or one whose
+  level is unknown) loading or calling it could end the process with an
+  illegal instruction. All 78 Mojo loads now go through one loader that
+  reads the host's level first and refuses the lane with a typed
+  `MojoIsaRefusal` (an `OSError`) before `ctypes.CDLL` is called, so the
+  dispatch falls through to the next lane and finally the Python floor.
+  Shared Go and Mojo loaders guard only their Mojo branch.
+
 - Backend dispatch, the dense IF comparison and Studio's benchmark
   contribution read the host CPU model by one rule
   (`sc_neurocore._host_identity.cpu_model`): the `model name` line of

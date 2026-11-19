@@ -513,7 +513,15 @@ class TestARecordNoModelNamesIsStillWatched:
         for entry in others:
             assert entry["currency"] in ("current", "reviewed", "outdated")
             assert ("changed" in entry) == (entry["currency"] == "outdated")
-            assert ("reviewed" in entry) == (entry["currency"] == "reviewed")
+            # A reviewed record lists its reviews; an outdated one may list the reviews of the sources
+            # that are not among its changed ones (record_currency's documented partial case).
+            if entry["currency"] == "reviewed":
+                assert "reviewed" in entry
+            if "reviewed" in entry:
+                assert entry["currency"] in ("reviewed", "outdated")
+                reviewed = entry["reviewed"]
+                assert isinstance(reviewed, list)
+                assert set(reviewed).isdisjoint(entry.get("changed", []))
         for word in ("current", "reviewed", "outdated"):
             listed = sum(1 for entry in others if entry["currency"] == word)
             assert int(all_totals[word]) == int(cited_totals[word]) + listed

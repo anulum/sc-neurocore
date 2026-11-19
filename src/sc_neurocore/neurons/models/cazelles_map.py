@@ -162,10 +162,12 @@ def _ensure_julia_loaded() -> bool:
 
 
 def _load_c_backend(path: str, symbol: str, *, mojo: bool) -> ctypes.CDLL | None:
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     if not os.path.isfile(path):
         return None
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path) if mojo else ctypes.CDLL(path)
     except OSError:
         return None
     function = getattr(library, symbol, None)

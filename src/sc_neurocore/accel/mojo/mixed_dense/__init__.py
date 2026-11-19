@@ -27,12 +27,13 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIB_PATH = Path(__file__).resolve().parent / "libmixed_dense.so"
 _lib: ctypes.CDLL | None
 
 try:
-    _lib = ctypes.CDLL(str(_LIB_PATH))
+    _lib = load_mojo_library(str(_LIB_PATH))
     _lib.mixed_dense_forward_batch_q88_q1616_c.argtypes = [
         ctypes.c_long,
         ctypes.c_long,

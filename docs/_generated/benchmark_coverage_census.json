@@ -1,8 +1,8 @@
 {
   "all_record_currency_totals": {
-    "current": 29,
-    "outdated": 113,
-    "reviewed": 4,
+    "current": 26,
+    "outdated": 119,
+    "reviewed": 1,
     "unbound": 175
   },
   "all_records": 321,
@@ -13,9 +13,9 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 2,
-    "outdated": 82,
-    "reviewed": 2,
+    "current": 1,
+    "outdated": 85,
+    "reviewed": 0,
     "unbound": 1
   },
   "rows": [
@@ -33,7 +33,8 @@
           "changed": [
             "benchmarks/bench_adex.py",
             "engine/src/network_runner/neuron_variant.rs",
-            "engine/src/neuron/adex.rs"
+            "engine/src/neuron/adex.rs",
+            "src/sc_neurocore/neurons/models/adex.py"
           ],
           "currency": "outdated",
           "name": "bench_adex.json",
@@ -63,6 +64,7 @@
             "src/sc_neurocore/accel/go/adaptive_threshold_if/adaptive_threshold_if.go",
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.jl",
+            "src/sc_neurocore/accel/mojo/adaptive_threshold_if/__init__.py",
             "src/sc_neurocore/accel/mojo/adaptive_threshold_if/adaptive_threshold_if.mojo",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
@@ -116,6 +118,7 @@
             "pyproject.toml",
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/go/services/alpha.go",
+            "src/sc_neurocore/accel/mojo/alpha/__init__.py",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
             "tools/build_accel_backends.py"
@@ -275,6 +278,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/accel/coba_lif.py",
             "src/sc_neurocore/neurons/model_schemas/coba_lif.json",
             "src/sc_neurocore/neurons/model_schemas/coba_lif.toml"
           ],
@@ -462,6 +466,7 @@
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/hardware/dpi_neuron.rs",
             "hdl/formal/catalogue/sc_dpineuron.v",
+            "src/sc_neurocore/accel/dpi_neuron.py",
             "tests/test_model_descriptor_reproducibility.py",
             "tools/emit_catalogue_formal.py"
           ],
@@ -628,6 +633,7 @@
             "engine/src/neurons/mod.rs",
             "pyproject.toml",
             "src/sc_neurocore/accel/go/go.mod",
+            "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/__init__.py",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
             "tools/build_accel_backends.py"
@@ -650,6 +656,7 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/trivial/escape_rate.rs",
+            "src/sc_neurocore/accel/escape_rate.py",
             "src/sc_neurocore/neurons/model_schemas/escape_rate.json",
             "src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
             "src/sc_neurocore/neurons/models/escape_rate.py"
@@ -989,7 +996,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            "src/sc_neurocore/accel/iqif.py"
+          ],
+          "currency": "outdated",
           "name": "local_python_2026-07-14_iqif.json",
           "script": "bench_model_iqif.py"
         }
@@ -1004,9 +1014,12 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "reviewed",
+          "changed": [
+            "src/sc_neurocore/neurons/models/izhikevich2007.py"
+          ],
+          "currency": "outdated",
           "name": "bench_izhikevich2007_simulate.json",
-          "reviewed": [
+          "review_rejected": [
             "src/sc_neurocore/neurons/models/izhikevich2007.py"
           ],
           "script": "bench_izhikevich2007_simulate.py"
@@ -1025,7 +1038,8 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/jansen_rit.rs",
-            "engine/src/neurons/mod.rs"
+            "engine/src/neurons/mod.rs",
+            "src/sc_neurocore/accel/mojo/jansen_rit/__init__.py"
           ],
           "currency": "outdated",
           "name": "bench_jansen_rit.json",
@@ -1221,6 +1235,7 @@
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/neurons/rate/mcculloch_pitts.rs",
+            "src/sc_neurocore/accel/mcculloch_pitts.py",
             "src/sc_neurocore/accel/mojo/kernels/mcculloch_pitts.mojo",
             "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
           ],
@@ -1460,6 +1475,7 @@
           "changed": [
             "engine/src/neurons/trivial/perfect_integrator.rs",
             "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
+            "src/sc_neurocore/accel/perfect_integrator.py",
             "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml"
           ],
           "currency": "outdated",
@@ -1533,6 +1549,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/accel/poisson.py",
             "src/sc_neurocore/neurons/model_schemas/poisson.json",
             "src/sc_neurocore/neurons/model_schemas/poisson.toml",
             "src/sc_neurocore/neurons/models/poisson.py"
@@ -1588,6 +1605,7 @@
           "changed": [
             "engine/src/neurons/trivial/quadratic_if.rs",
             "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
+            "src/sc_neurocore/accel/quadratic_if.py",
             "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml"
           ],
           "currency": "outdated",
@@ -1645,6 +1663,7 @@
             "src/sc_neurocore/accel/go/go.mod",
             "src/sc_neurocore/accel/mojo/pixi.lock",
             "src/sc_neurocore/accel/mojo/pixi.toml",
+            "src/sc_neurocore/accel/mojo/resonate_and_fire/__init__.py",
             "src/sc_neurocore/accel/mojo/resonate_and_fire/resonate_and_fire.mojo",
             "tools/build_accel_backends.py"
           ],
@@ -1856,9 +1875,12 @@
       "records": [
         {
           "attribution": "class_name",
-          "currency": "reviewed",
+          "changed": [
+            "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py"
+          ],
+          "currency": "outdated",
           "name": "bench_sc_resetting_wilson_hr_simulate.json",
-          "reviewed": [
+          "review_rejected": [
             "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py"
           ]
         }
@@ -2108,7 +2130,8 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
-            "engine/src/neurons/rate/sigmoid_rate.rs"
+            "engine/src/neurons/rate/sigmoid_rate.rs",
+            "src/sc_neurocore/accel/sigmoid_rate.py"
           ],
           "currency": "outdated",
           "name": "local_python_2026-07-14_sigmoid_rate.json",
@@ -2225,6 +2248,7 @@
             "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neurons/trivial/theta.rs",
+            "src/sc_neurocore/accel/theta.py",
             "src/sc_neurocore/neurons/descriptor_generator.py",
             "tools/emit_catalogue_formal.py",
             "tools/readiness_evidence_index.py"
@@ -2246,7 +2270,8 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
-            "engine/src/neurons/rate/threshold_linear_rate.rs"
+            "engine/src/neurons/rate/threshold_linear_rate.rs",
+            "src/sc_neurocore/accel/threshold_linear_rate.py"
           ],
           "currency": "outdated",
           "name": "local_python_2026-07-14_threshold_linear_rate.json",
@@ -2360,6 +2385,7 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
+            "src/sc_neurocore/accel/mojo/wilson_cowan/__init__.py",
             "src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml"
           ],
           "currency": "outdated",
@@ -2398,7 +2424,8 @@
           "attribution": "bound_script",
           "changed": [
             "bridge/sc_neurocore_engine/__init__.py",
-            "engine/src/wong_wang.rs"
+            "engine/src/wong_wang.rs",
+            "src/sc_neurocore/accel/mojo/wong_wang/__init__.py"
           ],
           "currency": "outdated",
           "name": "bench_wong_wang.json",
@@ -2478,7 +2505,10 @@
       "name": "bench_glif_simulate.json"
     },
     {
-      "currency": "reviewed",
+      "changed": [
+        "src/sc_neurocore/chiplet/hierarchical_backend_runtime.py"
+      ],
+      "currency": "outdated",
       "name": "bench_kl_refine.json",
       "reviewed": [
         "engine/src/partition.rs"
@@ -2502,7 +2532,8 @@
     },
     {
       "changed": [
-        "bridge/sc_neurocore_engine/__init__.py"
+        "bridge/sc_neurocore_engine/__init__.py",
+        "src/sc_neurocore/world_model/_lgssm_backends.py"
       ],
       "currency": "outdated",
       "name": "bench_predictive_model.json"
@@ -2515,7 +2546,10 @@
       "name": "bench_sc_chaotic_map.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py"
+      ],
+      "currency": "outdated",
       "name": "bench_sc_compte_wm_behavior_ensemble.json"
     },
     {
@@ -2526,7 +2560,10 @@
       "name": "bench_sc_compte_wm_network.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py"
+      ],
+      "currency": "outdated",
       "name": "bench_sc_compte_wm_network_all_runtimes.json"
     },
     {

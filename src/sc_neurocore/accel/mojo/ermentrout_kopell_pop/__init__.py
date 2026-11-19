@@ -19,6 +19,7 @@ import numpy.typing as npt
 from sc_neurocore.neurons.models.ermentrout_kopell_pop import (
     ErmentroutKopellPopulationResult,
 )
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _ACCEL_ROOT = Path(__file__).resolve().parents[2]
 _LIB_PATH = _ACCEL_ROOT / "mojo" / "ermentrout_kopell_pop" / "libermentrout_kopell_pop.so"
@@ -37,7 +38,7 @@ def _configure_library(library: ctypes.CDLL) -> ctypes.CDLL:
 
 def _load_library() -> tuple[ctypes.CDLL | None, bool]:
     try:
-        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+        return _configure_library(load_mojo_library(str(_LIB_PATH))), True
     except OSError:
         return None, False
 

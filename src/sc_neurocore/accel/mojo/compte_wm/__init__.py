@@ -16,10 +16,11 @@ from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIBRARY = Path(__file__).with_name("libcompte_wm.so")
 try:
-    _loaded_library = ctypes.CDLL(str(_LIBRARY))
+    _loaded_library = load_mojo_library(str(_LIBRARY))
     _loaded_function: Any = _loaded_library.compte_wm_simulate_c
     _loaded_function.restype = ctypes.c_int
     _lib: ctypes.CDLL | None = _loaded_library

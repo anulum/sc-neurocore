@@ -12,10 +12,11 @@ import ctypes
 from pathlib import Path
 from typing import Any, cast
 import numpy as np
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIBRARY = Path(__file__).with_name("libsc_sigma_delta_accumulator.so")
 try:
-    _loaded = ctypes.CDLL(str(_LIBRARY))
+    _loaded = load_mojo_library(str(_LIBRARY))
     _loaded_function: Any = _loaded.sc_sigma_delta_accumulator_simulate_c
     _loaded_function.restype = ctypes.c_int
     _lib: ctypes.CDLL | None = _loaded

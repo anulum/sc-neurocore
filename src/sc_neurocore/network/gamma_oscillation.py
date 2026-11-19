@@ -105,6 +105,7 @@ except (ImportError, AttributeError):
 import ctypes
 import logging
 import os
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _logger = logging.getLogger(__name__)
 
@@ -173,7 +174,7 @@ try:
         )
     )
     if os.path.exists(_mojo_ping_lib):
-        _mojo_lib = ctypes.CDLL(_mojo_ping_lib)
+        _mojo_lib = load_mojo_library(_mojo_ping_lib)
         _mojo_ping_step = _mojo_lib.py_ping_step
         _HAS_MOJO_PING_STEP = True
 except Exception as _mojo_err:  # noqa: BLE001

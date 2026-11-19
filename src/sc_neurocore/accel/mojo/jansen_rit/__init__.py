@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.neurons.models.jansen_rit import JansenRitResult
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIB_PATH = Path(__file__).resolve().parent / "libjansen_rit.so"
 
@@ -34,7 +35,7 @@ def _configure_library(library: ctypes.CDLL) -> ctypes.CDLL:
 
 def _load_library() -> tuple[ctypes.CDLL | None, bool]:
     try:
-        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+        return _configure_library(load_mojo_library(str(_LIB_PATH))), True
     except OSError:
         return None, False
 

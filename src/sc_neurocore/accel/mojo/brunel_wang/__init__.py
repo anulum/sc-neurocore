@@ -15,10 +15,11 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIBRARY = Path(__file__).with_name("libbrunel_wang.so")
 try:
-    _lib = ctypes.CDLL(str(_LIBRARY))
+    _lib = load_mojo_library(str(_LIBRARY))
     function: Any = _lib.brunel_wang_simulate_c
     function.restype = ctypes.c_int
     _function: Any | None = function

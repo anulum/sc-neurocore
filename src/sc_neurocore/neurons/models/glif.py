@@ -246,10 +246,12 @@ _mojo_lib: ctypes.CDLL | None = None
 
 
 def _load_c_backend(path: str, *, mojo: bool) -> ctypes.CDLL | None:
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     if not os.path.isfile(path):
         return None
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path) if mojo else ctypes.CDLL(path)
     except OSError:
         return None
     function = getattr(library, "glif_simulate_c", None)

@@ -98,6 +98,8 @@ def _ensure_go_kl_refine_loaded() -> bool:
 
 def _ensure_mojo_kl_refine_loaded() -> bool:
     """Load and type the Mojo shared KL-refinement library on first use."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _HAS_MOJO_KL_REFINE, _mojo_kl_refine_lib
     if _mojo_kl_refine_lib is not None:
         return True
@@ -106,7 +108,7 @@ def _ensure_mojo_kl_refine_loaded() -> bool:
     if not library_path.is_file():
         return False
     try:
-        library = ctypes.CDLL(str(library_path))
+        library = load_mojo_library(str(library_path))
     except OSError:
         return False
     function = getattr(library, "kl_refine_c", None)

@@ -1578,6 +1578,53 @@ the input list is not mutated.
 
 ---
 
+## Module `accel.mojo.native_library`
+
+### Class `MojoIsaRefusal`
+A Mojo library was not loaded, because the host's instruction-set level is below the library's.
+
+Parameters
+----------
+library : str
+    The library path that was not loaded.
+host : str
+    The host's psABI level, or ``"unknown"``.
+required : str
+    The level the library is built for.
+
+- **__init__**(library, host, required)
+
+### Function `refusal_for_host()`
+Return the refusal every Mojo library meets on this host, or ``None`` when Mojo libraries may load.
+
+Returns
+-------
+MojoIsaRefusal or None
+    The reason a requested Mojo lane is unavailable on this host, for diagnostics; ``None`` on a host at or
+    above the build level.
+
+### Function `load_mojo_library(path)`
+Load the Mojo shared library at ``path`` when this host can run it.
+
+Parameters
+----------
+path : str or path-like
+    The library file.
+
+Returns
+-------
+ctypes.CDLL
+    The loaded library.
+
+Raises
+------
+MojoIsaRefusal
+    When the host's level is below the build level or unknown. :class:`ctypes.CDLL` is not called.
+OSError
+    When the host may load the library but the loader cannot, as :class:`ctypes.CDLL` raises it.
+
+---
+
 ## Module `accel.mojo.runner`
 
 ### Class `MojoKernelRunner`

@@ -14,10 +14,11 @@ from pathlib import Path
 from typing import Any
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _fn: Any | None
 try:
-    _lib = ctypes.CDLL(str(Path(__file__).with_name("libsc_stochastic_rate_adaptation.so")))
+    _lib = load_mojo_library(str(Path(__file__).with_name("libsc_stochastic_rate_adaptation.so")))
     _fn = _lib.sc_sra_simulate_c
     _fn.restype = ctypes.c_int
     _HAS_MOJO_SC_STOCHASTIC_RATE_ADAPTATION = True

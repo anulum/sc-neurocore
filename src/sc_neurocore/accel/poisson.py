@@ -18,6 +18,7 @@ from typing import Any, Protocol, cast
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 PoissonResult = tuple[npt.NDArray[np.uint8], int]
 
@@ -145,7 +146,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     _mojo_lib = _configure_c_library(library, mojo=True)

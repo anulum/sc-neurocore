@@ -17,6 +17,7 @@ import os
 from typing import Any, cast
 
 import numpy as np
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 
 def _load_engine_perfect_integrator() -> tuple[type[Any], Any]:
@@ -117,7 +118,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(library_path):
         return False
     try:
-        library = ctypes.CDLL(library_path)
+        library = load_mojo_library(library_path)
     except OSError:
         return False
     legacy = getattr(library, "perfect_integrator_simulate_c", None)

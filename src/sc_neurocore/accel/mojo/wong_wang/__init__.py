@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 WongWangMapping = dict[str, npt.NDArray[np.float64] | float]
 _LIB_PATH = Path(__file__).resolve().parent / "libwong_wang.so"
@@ -34,7 +35,7 @@ def _configure_library(library: ctypes.CDLL) -> ctypes.CDLL:
 def _load_library() -> tuple[ctypes.CDLL | None, bool]:
     """Load the platform-local Mojo shared object when present."""
     try:
-        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+        return _configure_library(load_mojo_library(str(_LIB_PATH))), True
     except OSError:
         return None, False
 

@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.neurons.models.aihara_map_neuron import AiharaMapResult
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _ACCEL_ROOT = Path(__file__).resolve().parents[2]
 _LIB_PATH = _ACCEL_ROOT / "mojo" / "aihara_map" / "libaihara_map.so"
@@ -34,7 +35,7 @@ def _configure(library: ctypes.CDLL) -> ctypes.CDLL:
 
 
 try:
-    _lib: ctypes.CDLL | None = _configure(ctypes.CDLL(str(_LIB_PATH)))
+    _lib: ctypes.CDLL | None = _configure(load_mojo_library(str(_LIB_PATH)))
 except OSError:
     _lib = None
 _HAS_MOJO_AIHARA_MAP = _lib is not None

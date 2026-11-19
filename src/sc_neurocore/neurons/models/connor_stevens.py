@@ -38,6 +38,8 @@ _ACCEL_ROOT = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "
 
 def _ensure_mojo_loaded() -> bool:
     """Load the compiled Connor-Stevens Mojo kernel when available."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib, _HAS_MOJO
     if _mojo_lib is not None:
         return True
@@ -47,7 +49,7 @@ def _ensure_mojo_loaded() -> bool:
     if not _os.path.isfile(library_path):
         return False
     try:
-        library = ctypes.CDLL(library_path)
+        library = load_mojo_library(library_path)
     except OSError:
         return False
     simulate = getattr(library, "connor_stevens_simulate_c", None)

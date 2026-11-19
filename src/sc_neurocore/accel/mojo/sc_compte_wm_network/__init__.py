@@ -38,6 +38,7 @@ from sc_neurocore.network.sc_compte_wm_network import (
     SCCompteWMStimulus,
     SCCompteWMWindowReceipt,
 )
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 FloatArray = np.ndarray[Any, Any]
 IntArray = np.ndarray[Any, Any]
@@ -47,7 +48,7 @@ SOURCE_PATH = Path(__file__).with_name("sc_compte_wm_network.mojo")
 
 _LIBRARY: ctypes.CDLL | None
 try:
-    _LIBRARY = ctypes.CDLL(str(LIBRARY_PATH))
+    _LIBRARY = load_mojo_library(str(LIBRARY_PATH))
 except OSError:
     _LIBRARY = None
 

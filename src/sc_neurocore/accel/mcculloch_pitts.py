@@ -21,6 +21,7 @@ import numpy.typing as npt
 
 from sc_neurocore.accel.backend_order import with_floor
 from sc_neurocore.accel.backend_selection import select_backend_order
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 McCullochPittsResult = tuple[npt.NDArray[np.uint8], int]
 KERNEL = "mcculloch_pitts_absolute_inhibition_batch"
@@ -133,7 +134,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     _mojo_lib = _configure_c_library(library, mojo=True)

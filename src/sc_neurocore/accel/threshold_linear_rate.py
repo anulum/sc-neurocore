@@ -21,6 +21,7 @@ import numpy.typing as npt
 
 from sc_neurocore.accel.backend_order import with_floor
 from sc_neurocore.accel.backend_selection import select_backend_order
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 ThresholdLinearRateResult = tuple[npt.NDArray[np.float64], float]
 KERNEL = "threshold_linear_rate_algebraic_batch"
@@ -139,7 +140,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     _mojo_lib = _configure_c_library(library, mojo=True)

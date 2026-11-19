@@ -14,10 +14,11 @@ from pathlib import Path
 from typing import Any
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _fn: Any | None
 try:
-    _lib = ctypes.CDLL(str(Path(__file__).with_name("libbenda_herz.so")))
+    _lib = load_mojo_library(str(Path(__file__).with_name("libbenda_herz.so")))
     _fn = _lib.benda_herz_simulate_c
     _fn.restype = ctypes.c_int
     _HAS_MOJO_BENDA_HERZ = True

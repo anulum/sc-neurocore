@@ -147,6 +147,8 @@ def _ensure_go_phi() -> bool:
 
 def _ensure_mojo_phi() -> bool:
     """Lazy-load the Mojo Phi shared library, returning ``True`` when available."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_phi_lib
     if _mojo_phi_lib is not None:
         return True
@@ -154,7 +156,7 @@ def _ensure_mojo_phi() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib = _ctypes.CDLL(so_path)
+        lib = load_mojo_library(so_path)
     except OSError:
         return False
     fn = getattr(lib, "phi_star_c", None)

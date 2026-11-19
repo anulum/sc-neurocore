@@ -146,6 +146,8 @@ def _ensure_go_sq() -> bool:
 
 def _ensure_mojo_sq() -> bool:
     """Lazy-load the Mojo sorting-quality shared library, ``True`` when available."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_sq_lib
     if _mojo_sq_lib is not None:
         return True
@@ -153,7 +155,7 @@ def _ensure_mojo_sq() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib = _ctypes.CDLL(so_path)
+        lib = load_mojo_library(so_path)
     except OSError:
         return False
     iso = getattr(lib, "isolation_distance_c", None)

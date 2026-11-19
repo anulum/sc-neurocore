@@ -24,6 +24,7 @@ from sc_neurocore.accel.julia.event_recordings import (
     decode_julia_recording,
     julia_recording_enabled,
 )
+from sc_neurocore.accel.mojo.native_library import MojoIsaRefusal, load_mojo_library
 
 _NATIVE_PATHS = {
     "rust": ("SC_NEUROCORE_DATASET_RUST_LIBRARY", "rust/safety/libnmnist.so"),
@@ -36,7 +37,7 @@ _NATIVE_PATHS = {
 def _load_native_library(path: str, backend: str) -> ctypes.CDLL:
     """Bind the N-MNIST C decoder from one operator-selected native library."""
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path) if backend == "mojo" else ctypes.CDLL(path)
         decode = library.nmnist_decode_c
     except (OSError, AttributeError) as error:
         raise RuntimeError(f"{backend} event-recording decoder is unavailable") from error
@@ -114,7 +115,13 @@ def decode_nmnist_recording(
             continue
         path = _native_library_path(selected)
         if path is not None:
-            library = _load_native_library(str(path), selected)
+            try:
+                library = _load_native_library(str(path), selected)
+            except RuntimeError as error:
+                # A host below the Mojo build level refuses that lane; "auto" then falls through.
+                if backend == "auto" and isinstance(error.__cause__, MojoIsaRefusal):
+                    continue
+                raise
             input_array = np.frombuffer(raw, dtype=np.uint8)
             output = np.empty((len(raw) // 5, 4), dtype=np.float64)
             code = library.nmnist_decode_c(

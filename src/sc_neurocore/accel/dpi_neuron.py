@@ -18,6 +18,7 @@ from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _DPIState = tuple[float, float, float]
 _DPIResult = tuple[npt.NDArray[np.float64], int, _DPIState]
@@ -127,7 +128,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     _mojo_lib = _configure_c_library(library, "dpi_neuron_simulate_c", mojo=True)

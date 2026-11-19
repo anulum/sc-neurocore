@@ -122,6 +122,8 @@ def _ensure_go_loaded() -> bool:
 
 
 def _ensure_mojo_loaded() -> bool:
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib, _HAS_MOJO
     if _mojo_lib is not None:
         return True
@@ -131,7 +133,7 @@ def _ensure_mojo_loaded() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib = ctypes.CDLL(so_path)
+        lib = load_mojo_library(so_path)
     except OSError:
         return False
     fn = getattr(lib, "ermentrout_kopell_map_simulate_c", None)

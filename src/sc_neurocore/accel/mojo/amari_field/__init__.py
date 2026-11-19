@@ -16,12 +16,13 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIBRARY = Path(__file__).with_name("libamari_field.so")
 _LIB: ctypes.CDLL | None
 _FUNCTION: Any | None
 try:
-    _LIB = ctypes.CDLL(str(_LIBRARY))
+    _LIB = load_mojo_library(str(_LIBRARY))
     _FUNCTION = _LIB.amari_field_simulate_c
     _FUNCTION.restype = ctypes.c_int
     _HAS_MOJO_AMARI_FIELD = True

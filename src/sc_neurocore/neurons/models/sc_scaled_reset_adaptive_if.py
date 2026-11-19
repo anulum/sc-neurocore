@@ -102,6 +102,8 @@ def _ensure_go_loaded() -> bool:
 
 def _ensure_mojo_loaded() -> bool:
     """Load the retained Mojo C-ABI implementation when available."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib
     if _mojo_lib is not None:
         return True
@@ -111,7 +113,7 @@ def _ensure_mojo_loaded() -> bool:
     if not _os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     function = getattr(library, "sc_scaled_reset_adaptive_if_simulate_c", None)

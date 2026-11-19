@@ -26,12 +26,13 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIB_PATH = Path(__file__).resolve().parent / "librk4_neurons.so"
 _lib: ctypes.CDLL | None
 
 try:
-    _lib = ctypes.CDLL(str(_LIB_PATH))
+    _lib = load_mojo_library(str(_LIB_PATH))
     _lib.simulate_izhikevich_rk4_c.argtypes = [
         ctypes.c_int,
         ctypes.c_double,

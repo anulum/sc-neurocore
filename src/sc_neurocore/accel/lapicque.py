@@ -20,6 +20,7 @@ from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 
 def _load_engine_lapicque() -> tuple[type[Any], Any]:
@@ -117,7 +118,7 @@ def ensure_mojo_loaded() -> bool:
     if not os.path.isfile(library_path):
         return False
     try:
-        library = ctypes.CDLL(library_path)
+        library = load_mojo_library(library_path)
     except OSError:
         return False
     simulate = getattr(library, "lapicque_simulate_c", None)

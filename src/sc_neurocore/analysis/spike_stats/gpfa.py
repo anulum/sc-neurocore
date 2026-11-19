@@ -108,6 +108,8 @@ def _ensure_mojo_gpfa() -> bool:
     parametric pointer types, so every array is passed as a raw ``int64`` address
     (``numpy.ndarray.ctypes.data``) and the lone ``tol`` scalar as a ``c_double``.
     """
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_gpfa_lib
     if _mojo_gpfa_lib is not None:
         return True
@@ -115,7 +117,7 @@ def _ensure_mojo_gpfa() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib = _ctypes.CDLL(so_path)
+        lib = load_mojo_library(so_path)
     except OSError:
         return False
     fn = getattr(lib, "gpfa_em_c", None)

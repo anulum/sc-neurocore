@@ -132,6 +132,8 @@ def _ensure_mojo_loaded() -> bool:
     as a raw int64 address (numpy ``arr.ctypes.data``) and the Mojo side
     reconstructs ``UnsafePointer[Float64, MutAnyOrigin]`` internally.
     """
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib, _HAS_MOJO_TOPOLOGY
     if _mojo_lib is not None:
         return True
@@ -144,7 +146,7 @@ def _ensure_mojo_loaded() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib = ctypes.CDLL(so_path)
+        lib = load_mojo_library(so_path)
     except OSError:
         return False
     fn = getattr(lib, "ollivier_ricci_curvature_c", None)

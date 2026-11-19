@@ -104,6 +104,8 @@ def _ensure_go_loaded() -> bool:
 
 def _ensure_mojo_loaded() -> bool:
     """Load the Mojo C-ABI library when the focused build has produced it."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib, _HAS_MOJO
     if _mojo_lib is not None:
         return True
@@ -113,7 +115,7 @@ def _ensure_mojo_loaded() -> bool:
     if not _os.path.isfile(path):
         return False
     try:
-        library = ctypes.CDLL(path)
+        library = load_mojo_library(path)
     except OSError:
         return False
     function = getattr(library, "mihalas_niebur_simulate_c", None)

@@ -30,6 +30,7 @@ from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwilson_cowan.so"
 _MAX_STEPS = (1 << 31) - 1
@@ -63,7 +64,7 @@ def _configure_library(lib: ctypes.CDLL) -> ctypes.CDLL:
 def _load_library() -> tuple[ctypes.CDLL | None, bool]:
     """Load the Mojo Wilson-Cowan shared library when it is available."""
     try:
-        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+        return _configure_library(load_mojo_library(str(_LIB_PATH))), True
     except OSError:
         return None, False
 

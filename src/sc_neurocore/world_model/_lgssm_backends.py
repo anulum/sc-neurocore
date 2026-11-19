@@ -121,6 +121,8 @@ def _ensure_rust_loaded() -> bool:
 
 def _ensure_mojo_loaded() -> bool:
     """Load the Mojo C-ABI library once and validate its exported symbol."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_lib, _HAS_MOJO_LGSSM
     if _mojo_lib is not None:
         _HAS_MOJO_LGSSM = True
@@ -130,7 +132,7 @@ def _ensure_mojo_loaded() -> bool:
     if not library_path.is_file():
         return False
     try:
-        library = ctypes.CDLL(str(library_path))
+        library = load_mojo_library(str(library_path))
     except OSError:
         return False
     function = getattr(library, "kalman_filter_c", None)

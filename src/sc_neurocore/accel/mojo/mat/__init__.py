@@ -15,11 +15,12 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
+from sc_neurocore.accel.mojo.native_library import load_mojo_library
 
 _ACCEL_ROOT = Path(__file__).resolve().parents[2]
 _LIBRARY = _ACCEL_ROOT / "mojo" / "mat" / "libmat.so"
 try:
-    _lib = ctypes.CDLL(str(_LIBRARY))
+    _lib = load_mojo_library(str(_LIBRARY))
     function: Any = _lib.mat_simulate_c
     function.restype = ctypes.c_int
     _function: Any | None = function

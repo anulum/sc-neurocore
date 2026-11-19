@@ -238,6 +238,8 @@ def _ensure_go_dim() -> bool:
 
 def _ensure_mojo_dim() -> bool:
     """Lazy-load the Mojo dimensionality shared library, ``True`` when available."""
+    from sc_neurocore.accel.mojo.native_library import load_mojo_library
+
     global _mojo_dim_lib
     if _mojo_dim_lib is not None:
         return True
@@ -245,7 +247,7 @@ def _ensure_mojo_dim() -> bool:
     if not _os.path.isfile(so_path):
         return False
     try:
-        lib: Any = _ctypes.CDLL(so_path)
+        lib: Any = load_mojo_library(so_path)
     except OSError:
         return False
     names = ("pca_from_matrix_c", "demixed_from_matrix_c", "factor_analysis_c")
