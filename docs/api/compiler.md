@@ -28,6 +28,11 @@ Generate isolated combinational function hardware with
 [Standalone fixed-point function units](../compiler/standalone_function_units.md)
 for signed ports, format limits and lowering semantics.
 
+For a clocked implementation of `sin`, `cos`, `arctan` or `atan2`, use
+[`emit_cordic_verilog()`](../compiler/standalone_function_units.md#clocked-circular-cordic).
+The same compiler facade provides the integer reference, exact latency,
+and C11 and Rust emitters for those functions.
+
 ---
 
 ## 1. Mathematical Formalism

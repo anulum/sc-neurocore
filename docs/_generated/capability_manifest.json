@@ -983,12 +983,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 33,
     "public_api_exports": 45,
-    "public_documentation_pages": 675,
+    "public_documentation_pages": 676,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5713
+    "test_files": 5715
   },
   "documentation": {
     "public_pages": [
@@ -1636,6 +1636,7 @@
       "docs/validation/coba_lif_cosim_fidelity.md",
       "docs/validation/conductance_oscillator_cosim_fidelity.md",
       "docs/validation/connor_stevens_source_fidelity.md",
+      "docs/validation/cordic_accuracy.md",
       "docs/validation/cross_framework_brian2.md",
       "docs/validation/energy_lif_source_fidelity.md",
       "docs/validation/ermentrout_kopell_pop_source_fidelity.md",
@@ -4714,6 +4715,8 @@
       "tests/test_conversion_source_dropout.py",
       "tests/test_conversion_source_graph.py",
       "tests/test_conversion_target_report.py",
+      "tests/test_cordic.py",
+      "tests/test_cordic_native.py",
       "tests/test_cordiv_division_adaptive_length.py",
       "tests/test_cordiv_division_sc_divide.py",
       "tests/test_cordiv_engine_bindings.py",

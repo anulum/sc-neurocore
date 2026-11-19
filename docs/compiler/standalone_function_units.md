@@ -117,3 +117,83 @@ checks also exhaust every signed input combination for selected two-, three-
 and four-bit words, including LUT indices wider than their argument ports.
 They establish the tested numerical behaviour; they are not a formal proof
 over every possible input word or a measurement on a physical device.
+
+## Clocked circular CORDIC
+
+Use `emit_cordic_verilog` to generate the serial `cordic_unit` for `sin`,
+`cos`, `arctan` or `atan2`. It accepts the same signed word geometries. Only
+`atan2` has a second input. The operands are `argument0 = y` and `argument1 = x`.
+
+```python
+from sc_neurocore.compiler import cordic_latency, emit_cordic_verilog, evaluate_cordic
+
+source = emit_cordic_verilog("atan2", data_width=16, fraction=8)
+latency = cordic_latency("atan2", data_width=16, fraction=8)
+expected = evaluate_cordic("atan2", 256, argument1=256, data_width=16, fraction=8)
+```
+
+The unit accepts an input on a rising edge with `in_valid` and `in_ready`
+asserted. `out_valid` first asserts after the number of additional rising edges
+reported by `cordic_latency`. The unit holds `out_valid` and the result through
+backpressure. A rising edge with `out_valid` and `out_ready` retires the result.
+The next input can be accepted on the following edge. Active-high `rst` aborts
+any pending transaction on a rising edge and clears the result. Both handshake
+outputs are deasserted while `rst` is high.
+
+The latency is independent of the input for each geometry and operation.
+Rotation spends `data_width + 44` cycles on serial wide angle reduction, three
+on phase conversion and the quadrant fold, `fraction + 11` on rotation and one
+on result capture.
+Vectoring spends `fraction + 10` cycles on shared coordinate scaling,
+`fraction + 11` on iteration and one on result capture. Exact axis results
+follow the same schedule. The origin maps to zero and the negative horizontal
+axis maps to positive pi, subject to half-up rounding and signed saturation.
+
+`evaluate_cordic` gives the bit-true Python result. `emit_cordic_c` generates a
+portable C11 evaluator that returns false for an invalid input code or null
+result pointer. `emit_cordic_rust` emits a standard-library Rust evaluator that
+returns `None` for an out-of-range code. The native evaluators implement the
+numerical result in a single call. Their signatures include a second operand
+for `atan2` only.
+
+See [the fixed-point accuracy bound](../validation/cordic_accuracy.md) for
+the constant enclosures, angle reduction and output rounding analysis.
+
+### Q8.8 synthesis and timing
+
+Yosys mapped the standalone tops with `synth_ice40 -device u -dsp`. The
+clock estimates are from nextpnr on an iCE40 UP5K SG48 with unconstrained
+pins and seed 1. The three routed units all missed the 100 MHz target.
+
+| Operation | Implementation | LUT4 | Carry | Flip-flops | DSP | Result latency (edges) | Routed clock estimate (MHz) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| sin | CORDIC | 1,130 | 403 | 264 | 0 | 83 | 26.41 |
+| cos | CORDIC | 1,130 | 403 | 264 | 0 | 83 | 25.87 |
+| arctan | CORDIC | 782 | 180 | 113 | 0 | 38 | 25.10 |
+| atan2 | CORDIC | 871 | 214 | 117 | 0 | 38 | |
+| sin | lut-v1 | 345 | 13 | 0 | 0 | 0 | |
+| cos | lut-v1 | 353 | 13 | 0 | 0 | 0 | |
+| sin | v2 | 2,016 | 404 | 0 | 18 | 0 | |
+| cos | v2 | 2,016 | 404 | 0 | 18 | 0 | |
+| arctan | v2 | 4,550 | 1,165 | 0 | 14 | 0 | |
+| atan2 | v2 | 5,364 | 1,469 | 0 | 14 | 0 | |
+
+The direct `atan2` top needs more I/O pins than the measured package
+provides, so its row reports mapping only. The combinational rows report
+mapped resources and have no clock. The `v2` angle cases require a longer
+synthesis allowance than the default 240 seconds. The `lut-v1` API supports
+sine and cosine among these four operations.
+
+With continuous readiness, the clocked unit can accept a new request
+once every result latency plus two edges. These estimates characterise
+the emitted designs before board-level validation.
+
+Replay the measurement on a POSIX host after installing the project, Yosys
+and nextpnr.
+
+```sh
+python benchmarks/bench_cordic.py --timeout 1800 --output /tmp/cordic-q8-8.json
+```
+
+The reference run is recorded in `benchmarks/results/bench_cordic_q8_8.json`.
+Pass `--artifacts` with a new directory to retain the raw tool output.

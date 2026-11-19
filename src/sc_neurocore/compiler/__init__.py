@@ -18,6 +18,9 @@ from .adaptive_precision import (
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
 )
+from .cordic import cordic_latency, evaluate_cordic
+from .cordic_native import emit_cordic_c, emit_cordic_rust
+from .cordic_verilog import emit_cordic_verilog
 from .equation_compiler import (
     EquationIR,
     Q88,
@@ -98,6 +101,11 @@ __all__ = [
     "q_weights_to_sc_probabilities",
     "quantization_error",
     "check_ir_types",
+    "cordic_latency",
+    "evaluate_cordic",
+    "emit_cordic_c",
+    "emit_cordic_rust",
+    "emit_cordic_verilog",
     "emit_function_unit_verilog",
     "function_unit_functions",
     "IRNode",

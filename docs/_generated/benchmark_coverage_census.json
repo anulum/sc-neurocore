@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 31,
-    "outdated": 112,
+    "current": 29,
+    "outdated": 115,
     "reviewed": 2,
     "unbound": 175
   },
-  "all_records": 320,
+  "all_records": 321,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -2425,6 +2425,10 @@
       "name": "bench_bioware.json"
     },
     {
+      "currency": "current",
+      "name": "bench_cordic_q8_8.json"
+    },
+    {
       "changed": [
         "benchmarks/_benchmark_context.py",
         "src/sc_neurocore/neurons/equation_builder.py",
@@ -2434,7 +2438,10 @@
       "name": "bench_equation_program.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/compiler/__init__.py"
+      ],
+      "currency": "outdated",
       "name": "bench_function_call_domains.json"
     },
     {
@@ -2835,11 +2842,17 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/compiler/__init__.py"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/compiler/__init__.py"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

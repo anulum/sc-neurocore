@@ -8743,6 +8743,139 @@ str
 
 ---
 
+## Module `compiler.cordic`
+
+### Function `cordic_latency(function, *, data_width, fraction)`
+Return the edges from accepting a request to asserting result valid.
+
+Parameters
+----------
+function : str
+    One of sin, cos, arctan or atan2.
+data_width, fraction : int, optional
+    Signed input/output word geometry.
+
+Returns
+-------
+int
+    Fixed latency in clock edges after the input handshake.
+
+Raises
+------
+TypeError
+    If the operation or geometry has the wrong type.
+ValueError
+    If the operation or geometry is unsupported.
+
+### Function `evaluate_cordic(function, argument0, *, argument1, data_width, fraction)`
+Evaluate the clocked unit's bit-true fixed-point arithmetic.
+
+Parameters
+----------
+function : str
+    One of sin, cos, arctan or atan2.
+argument0 : int
+    Signed input code, or the vertical coordinate for atan2.
+argument1 : int or None, optional
+    Signed horizontal coordinate, required only for atan2.
+data_width, fraction : int, optional
+    Signed input/output word geometry.
+
+Returns
+-------
+int
+    The result code rounded half up and saturated to the signed word.
+
+Raises
+------
+TypeError
+    If an argument or the geometry has the wrong type.
+ValueError
+    If the operation, operand count, code or geometry is unsupported.
+
+---
+
+## Module `compiler.cordic_native`
+
+### Function `emit_cordic_c(function, *, data_width, fraction)`
+Emit portable C11 source for the clocked unit's integer result.
+
+Parameters
+----------
+function : str
+    One of sin, cos, arctan or atan2.
+data_width, fraction : int, optional
+    Signed input and output geometry.
+
+Returns
+-------
+str
+    Source exporting ``bool cordic_evaluate(int32_t argument0, ..., int32_t *result)``.
+    Only atan2 takes argument1. False indicates invalid operands or a null result pointer.
+
+Raises
+------
+TypeError
+    If the operation or geometry has the wrong type.
+ValueError
+    If the operation or geometry is unsupported.
+
+### Function `emit_cordic_rust(function, *, data_width, fraction)`
+Emit standard-library Rust source for the clocked unit's integer result.
+
+Parameters
+----------
+function : str
+    One of sin, cos, arctan or atan2.
+data_width, fraction : int, optional
+    Signed input and output geometry.
+
+Returns
+-------
+str
+    Source exporting ``cordic_evaluate(argument0: i32, ...) -> Option<i32>``.
+    Only atan2 takes argument1. None indicates an invalid operand.
+
+Raises
+------
+TypeError
+    If the operation or geometry has the wrong type.
+ValueError
+    If the operation or geometry is unsupported.
+
+---
+
+## Module `compiler.cordic_verilog`
+
+### Function `emit_cordic_verilog(function, *, data_width, fraction)`
+Emit a clocked ``cordic_unit`` for one circular function.
+
+Parameters
+----------
+function : str
+    One of sin, cos, arctan or atan2. For atan2, argument0 is the vertical
+    coordinate and argument1 is the horizontal coordinate.
+data_width, fraction : int, optional
+    Signed input and output geometry, as for standalone function units.
+
+Returns
+-------
+str
+    Synthesisable Verilog. A rising edge with in_valid and in_ready
+    accepts one transaction. The synchronous active-high rst aborts
+    any current transaction. The result stays stable while out_valid
+    is asserted until a rising edge with out_ready consumes it.
+    See :func:`cordic_latency` for the exact latency in edges.
+
+Raises
+------
+TypeError
+    If the operation or geometry has the wrong type.
+ValueError
+    If the operation or geometry is unsupported.
+
+---
+
 ## Module `compiler.diffusion_noise`
 
 ### Function `xi_text(scale)`

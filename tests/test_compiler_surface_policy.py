@@ -21,6 +21,9 @@ SURFACE_DOC = REPO_ROOT / "docs" / "api" / "compiler_surface.md"
 
 PUBLIC_FACADE_MODULES = {
     "adaptive_precision",
+    "cordic",
+    "cordic_native",
+    "cordic_verilog",
     "equation_compiler",
     "function_unit_hardware",
     "ir_type_checker",

@@ -1,0 +1,196 @@
+{
+  "data_width": 16,
+  "fraction": 8,
+  "mapping": "synth_ice40 -device u -dsp",
+  "nextpnr": "\"nextpnr-ice40\" -- Next Generation Place and Route (Version 0.6-3build5)",
+  "records": [
+    {
+      "cells": {
+        "SB_CARRY": 403,
+        "SB_DFF": 11,
+        "SB_DFFE": 117,
+        "SB_DFFESR": 111,
+        "SB_DFFESS": 10,
+        "SB_DFFSR": 15,
+        "SB_LUT4": 1130
+      },
+      "flip_flops": 264,
+      "latency_edges": 83,
+      "lowering": "cordic",
+      "mapped_sha256": "6ea2473b2886a8f9dd2e66cb4af06082a5506debbac1b487df65c69fe5a91dad",
+      "operation": "sin",
+      "route": {
+        "achieved_mhz": 26.408218383789062,
+        "meets_target": false,
+        "report_sha256": "57e8f2f6224c95d33a4f29efa796c1a43611e0b17ae5f0f50f35c777e8fd23e0"
+      },
+      "rtl_sha256": "8be9e4c6a7ada008b939fa6a95966a09445e82f6bb47ad50c13863ed16bc3363",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 403,
+        "SB_DFF": 11,
+        "SB_DFFE": 117,
+        "SB_DFFESR": 111,
+        "SB_DFFESS": 10,
+        "SB_DFFSR": 15,
+        "SB_LUT4": 1130
+      },
+      "flip_flops": 264,
+      "latency_edges": 83,
+      "lowering": "cordic",
+      "mapped_sha256": "70dd61da77e2eaf67df4291f582efad072f898245021aa4dc7b383dd99e83d87",
+      "operation": "cos",
+      "route": {
+        "achieved_mhz": 25.865192413330078,
+        "meets_target": false,
+        "report_sha256": "f0ea0303d5d12a6f03679fa586946fc86685c3a5036678ae7ae5538968d69b5f"
+      },
+      "rtl_sha256": "0576a8df019645fcc678b34e1978ace723706803ccdd1afbc440c10788cc9a17",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 180,
+        "SB_DFF": 8,
+        "SB_DFFE": 24,
+        "SB_DFFESR": 65,
+        "SB_DFFESS": 1,
+        "SB_DFFSR": 15,
+        "SB_LUT4": 782
+      },
+      "flip_flops": 113,
+      "latency_edges": 38,
+      "lowering": "cordic",
+      "mapped_sha256": "0af5fd42faacc74aa5340da26bdd0b7d88ebdd059c3af05ea5f5fcfd5f6bc86c",
+      "operation": "arctan",
+      "route": {
+        "achieved_mhz": 25.101030349731445,
+        "meets_target": false,
+        "report_sha256": "bdaa7f0d68d64f3058457ad59af7a3d1fee92e43c6cff26a47c9e755b1525207"
+      },
+      "rtl_sha256": "e1933e7c1423f0f8c6e14867dcd0aaafcd9953d07261595abb11017b184ccf45",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 214,
+        "SB_DFF": 8,
+        "SB_DFFE": 49,
+        "SB_DFFESR": 45,
+        "SB_DFFSR": 15,
+        "SB_LUT4": 871
+      },
+      "flip_flops": 117,
+      "latency_edges": 38,
+      "lowering": "cordic",
+      "mapped_sha256": "bc2fbdc64d33f13f9e02eabd7ed214e8048bc3851c9b953e0af3ed8d836f078a",
+      "operation": "atan2",
+      "rtl_sha256": "92d37aeec0a8e3bf55715c75098fc755c0e24311e8a94f204be74ba6a40675f1",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 13,
+        "SB_LUT4": 345
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "lut-v1",
+      "mapped_sha256": "2de668573b886fd6b3e40327e28db0056c1679ab495e41fbf1e3d176e2e257b9",
+      "operation": "sin",
+      "rtl_sha256": "a86e6bb1e38e73d04c4d7158c2d9877e5c31143f0f7952cbeb2fe432ecb5d64e",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 13,
+        "SB_LUT4": 353
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "lut-v1",
+      "mapped_sha256": "e01fe591a8b623abb3d72fef334cd44f4920ed4d92125ec76fdb81bc5dc5eb84",
+      "operation": "cos",
+      "rtl_sha256": "15dfee91bc265b94d215bbc4c371a0c7a221cc3a9781a1633f4f47cf779a97c8",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 404,
+        "SB_LUT4": 2016,
+        "SB_MAC16": 18
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "v2",
+      "mapped_sha256": "b91bf5a39235310923547f6728339435e37cb5a1f2fd916e08e391f89efaf2a0",
+      "operation": "sin",
+      "rtl_sha256": "7fe1de7b429109e2e1b9a9ffe7816cb5cadf1e5d7d2763c79e3a8577daa849bd",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 404,
+        "SB_LUT4": 2016,
+        "SB_MAC16": 18
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "v2",
+      "mapped_sha256": "dbefaef467ba00576ba9c4d679c88ddf499fa591e83a356097436acd595505ad",
+      "operation": "cos",
+      "rtl_sha256": "48d2034a7e3bb2e1df14692bf1d12dd4eea1fc4bae1fd1e9bd08b6ca0839914f",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 1165,
+        "SB_LUT4": 4550,
+        "SB_MAC16": 14
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "v2",
+      "mapped_sha256": "268793158e73c9a92491f932e099a5ccf79b951446758d8403b09c6bf46cb127",
+      "operation": "arctan",
+      "rtl_sha256": "6f1c81c2cdf5b8820c119870e10ea77e9ebbb93b7f724e0b53e6e09fb91d5c61",
+      "status": "mapped"
+    },
+    {
+      "cells": {
+        "SB_CARRY": 1469,
+        "SB_LUT4": 5364,
+        "SB_MAC16": 14
+      },
+      "flip_flops": 0,
+      "latency_edges": 0,
+      "lowering": "v2",
+      "mapped_sha256": "10f098f1abf76cd8e1a8d213227389789fa7b938964ac4fe9ad238cf3a3f90fb",
+      "operation": "atan2",
+      "rtl_sha256": "e3ccb6f53de67c5dda0da5fce491d2ac34c03607546557e2b899be1dfbf95675",
+      "status": "mapped"
+    }
+  ],
+  "route": {
+    "device": "UP5K",
+    "mhz": 100,
+    "package": "SG48",
+    "seed": 1
+  },
+  "schema_version": "sc-neurocore.cordic-ice40-benchmark.v1",
+  "source_sha256": {
+    "benchmarks/bench_cordic.py": "f0ae592fd84ce550bcb13db53f0b1855262497558ab82b55447a57a3d0dbe894",
+    "src/sc_neurocore/compiler/cordic.py": "60369d25e31ec90b6395e3d8bdee2f486f78e870712b3e4c4366ee856da85034",
+    "src/sc_neurocore/compiler/cordic_verilog.py": "c235dabacd251109389bd99a8185e55759a99112d8b2bfc6326c081546d65a70",
+    "src/sc_neurocore/compiler/expr_lut_tables.py": "a7af4505632bb7c891a3c183c37bcf5950c0fcb7ffc38a899ca8d0ae4a1ae66f",
+    "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
+    "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "384a12dec497b8694b73d203c3cff3a21a8b7b375f3205bb8ea60111752c234b",
+    "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "519cc13b1b5dd42bd8f1fd392a23e893f5faee55d8e92557a75cbddad0724d04"
+  },
+  "tool_timeout_seconds": 1800,
+  "yosys": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)"
+}

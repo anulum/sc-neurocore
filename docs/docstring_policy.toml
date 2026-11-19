@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2084
+expected_file_count = 2090
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -6638,6 +6638,30 @@ rationale = "The public standalone function API admits canonical functions and s
 [[file]]
 path = "tests/test_function_unit_hardware.py"
 rationale = "Real Icarus simulations exercise every standalone function in both supported lowerings, independent binary inputs, exhaustive narrow words and public refusal contracts."
+
+[[file]]
+path = "src/sc_neurocore/compiler/cordic.py"
+rationale = "The circular reference defines exact integer arithmetic, valid geometries and edge latency."
+
+[[file]]
+path = "src/sc_neurocore/compiler/cordic_native.py"
+rationale = "Portable C11 and Rust source generation mirrors the signed circular reference."
+
+[[file]]
+path = "src/sc_neurocore/compiler/cordic_verilog.py"
+rationale = "The emitted synchronous RTL defines input acceptance, iteration, output retirement and reset."
+
+[[file]]
+path = "tests/test_cordic.py"
+rationale = "Independent numerical checks span supported formats and actual Icarus transactions check parity and timing."
+
+[[file]]
+path = "tests/test_cordic_native.py"
+rationale = "Compiled C and Rust callers verify numerical parity and invalid input refusal."
+
+[[file]]
+path = "benchmarks/bench_cordic.py"
+rationale = "Actual iCE40 tool invocations measure mapped cells and routed clock estimates for public standalone function emitters."
 
 [[file]]
 path = "tests/test_compiler_surface_policy.py"

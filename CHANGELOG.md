@@ -62,6 +62,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The compiler can emit clocked circular CORDIC units for sine, cosine,
+  arctangent and two-argument arctangent. Each unit has fixed latency,
+  ready/valid handshakes and a signed fixed-point error bound. The Python
+  reference and generated C11, Rust and Verilog return the same codes.
+
 - The event-driven integer SHD core `hdl/shd_event/sc_shd_event_p.v` and its
   shared `P`-lane LIF datapath `sc_lanes.v` run the integer axonal-delay
   speech network through per-layer 32-bucket time wheels and an idle

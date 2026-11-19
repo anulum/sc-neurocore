@@ -37,6 +37,9 @@ can change without a deprecation window.
 | `cocotb_gen` | internal build tool | Testbench generator reached through `deployment`. |
 | `compiler_impl` | internal build tool | Legacy implementation module behind documented compiler entry points. |
 | `constraint_gen` | direct public module | Timing constraint generator has direct tests and documentation. |
+| `cordic` | public facade | Package-level exports evaluate signed circular CORDIC and report the clocked unit's fixed latency. |
+| `cordic_native` | public facade | Package-level exports generate portable C11 and Rust evaluators for the same integer recurrence. |
+| `cordic_verilog` | public facade | Package-level export generates clocked circular function units with ready/valid flow control. |
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
 | `discrete_function_programs` | internal build tool | Builds the exact `round()` (ties to even) and `heaviside()` integer programs that the function-unit programs emit. |
 | `discrete_function_units` | internal build tool | Integer reference of `round()` and `heaviside()` on signed fixed-point words, mirrored by the programs and the RTL. |
