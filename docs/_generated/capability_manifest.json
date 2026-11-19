@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5711
+    "test_files": 5712
   },
   "documentation": {
     "public_pages": [
@@ -7479,6 +7479,7 @@
       "tests/test_resilience_fault_model.py",
       "tests/test_resilience_fault_resilience_suite.py",
       "tests/test_resilience_fault_result.py",
+      "tests/test_resilience_report_without_layer_results.py",
       "tests/test_resonate_and_fire_accel_selection.py",
       "tests/test_resonate_and_fire_backends.py",
       "tests/test_resonate_and_fire_c_facade.py",

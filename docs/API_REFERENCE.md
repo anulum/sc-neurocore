@@ -41098,6 +41098,8 @@ block_type : str
 ## Module `resilience.fault_suite`
 
 ### Class `FaultType`
+The fault each experiment applies to a copy of the weight matrices.
+
 
 ### Class `FaultModel`
 One fault injection configuration.
@@ -41115,6 +41117,7 @@ Full fault resilience report.
 - **most_vulnerable_layer**()
   - Return the layer index with highest average degradation.
 - **summary**()
+  - Return a text summary: mean and maximum degradation per fault type, and the weakest layer.
 
 ### Class `FaultResilienceSuite`
 Systematic fault injection and resilience analysis.
@@ -41129,6 +41132,7 @@ weights : list of ndarray
 
 - **__init__**(eval_fn, weights)
 - **baseline_accuracy**()
+  - Return the accuracy of the unfaulted weights, evaluated once and then cached.
 - **inject_fault**(fault)
   - Apply a fault model to weights, return faulted copies.
 - **run_single**(fault)

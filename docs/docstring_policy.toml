@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2076
+expected_file_count = 2078
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8354,3 +8354,11 @@ rationale = "Bind checkpoint products to their complete native DSP chain geometr
 [[file]]
 path = "tests/test_supervisor_pool_shutdown.py"
 rationale = "A supervisor pool started with no step limit is stopped by force_shutdown from another Python thread, which needs the loop to run without the GIL."
+
+[[file]]
+path = "src/sc_neurocore/resilience/fault_suite.py"
+rationale = "Inject declared fault models into weight copies and measure the accuracy each one costs."
+
+[[file]]
+path = "tests/test_resilience_report_without_layer_results.py"
+rationale = "Bind the resilience report to name no vulnerable layer when no experiment targets one."

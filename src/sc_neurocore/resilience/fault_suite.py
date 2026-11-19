@@ -19,6 +19,7 @@ SC-native stochastic computing fault models.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -27,6 +28,8 @@ import numpy as np
 
 
 class FaultType(Enum):
+    """The fault each experiment applies to a copy of the weight matrices."""
+
     STUCK_AT_ZERO = "stuck_at_0"
     STUCK_AT_ONE = "stuck_at_1"
     WEIGHT_BIT_FLIP = "weight_bit_flip"
@@ -75,11 +78,12 @@ class ResilienceReport:
         for r in self.results:
             if r.layer_index is not None:
                 layer_deg.setdefault(r.layer_index, []).append(r.degradation)
-        if not layer_deg:  # pragma: no cover
+        if not layer_deg:
             return None
         return max(layer_deg, key=lambda k: np.mean(layer_deg[k]))
 
     def summary(self) -> str:
+        """Return a text summary: mean and maximum degradation per fault type, and the weakest layer."""
         lines = [f"Fault Resilience Report: {len(self.results)} experiments"]
         by_type: dict[str, list[FaultResult]] = {}
         for r in self.results:
@@ -106,13 +110,18 @@ class FaultResilienceSuite:
         Baseline (unfaulted) weight matrices.
     """
 
-    def __init__(self, eval_fn, weights: list[np.ndarray[Any, Any]]):  # type: ignore[no-untyped-def]
+    def __init__(
+        self,
+        eval_fn: Callable[[list[np.ndarray[Any, Any]]], float],
+        weights: list[np.ndarray[Any, Any]],
+    ) -> None:
         self.eval_fn = eval_fn
         self.weights = [w.copy() for w in weights]
         self._baseline_accuracy: float | None = None
 
     @property
     def baseline_accuracy(self) -> float:
+        """Return the accuracy of the unfaulted weights, evaluated once and then cached."""
         if self._baseline_accuracy is None:
             self._baseline_accuracy = self.eval_fn(self.weights)
         return self._baseline_accuracy

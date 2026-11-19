@@ -179,6 +179,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `FaultResilienceSuite` declares its evaluation function as a callable from
+  the list of weight matrices to an accuracy, so strict type checkers check
+  callers, and the module no longer silences the checker on its constructor.
+
 - The safety supervisor no longer calls a negative marking safe.
   `supervisor::verify_bounds_at_depth` asserted the snapshot's marking
   into Z3, so a negative one made every query unsatisfiable. That read
