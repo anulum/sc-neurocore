@@ -53,6 +53,13 @@ class CompilationResult:
     quantized_weights: list[np.ndarray[Any, Any]] = field(default_factory=list, repr=False)
 
     def summary(self) -> str:
+        """Return a plain-text report: the status, the mapping totals, then each violation and warning.
+
+        Returns
+        -------
+        str
+            One line per item, the violations and warnings marked ``[VIOLATION]`` and ``[WARNING]``.
+        """
         status = "SUCCESS" if self.success else "FAILED"
         lines = [
             f"Compilation [{self.chip}]: {status}",
@@ -60,11 +67,32 @@ class CompilationResult:
             f"  Neurons: {self.total_neurons_mapped}",
             f"  Weight precision: {self.weight_bits}-bit",
         ]
-        for v in self.violations:  # pragma: no cover
+        for v in self.violations:
             lines.append(f"  [VIOLATION] {v}")
-        for w in self.warnings:  # pragma: no cover
+        for w in self.warnings:
             lines.append(f"  [WARNING] {w}")
         return "\n".join(lines)
+
+
+def _quantise(w: np.ndarray[Any, Any], bits: int) -> np.ndarray[Any, Any]:
+    """Return ``w`` on the signed grid of ``bits`` bits; ``w`` is finite and not empty, and ``bits`` is at least 1.
+
+    With two or more bits the grid is symmetric: ``2**(bits-1) - 1`` levels on each side of zero, a step of
+    ``max|w| / (2**(bits-1) - 1)``, and values clipped to ``max|w|``. One bit codes only a sign, so each weight
+    becomes ``+a`` or ``-a`` (zero takes ``+a``), where ``a`` is the mean magnitude: for a fixed sign pattern this
+    level minimises the squared error, the binary-weight scale of Rastegari et al., ECCV 2016 (XNOR-Net).
+
+    The compiler assumes signed weights with one level per matrix. A chip whose 1-bit synapse means connectivity
+    (``{0, +w}``) needs its own rule; ``+a`` and ``-a`` say nothing about such a chip.
+    """
+    if bits == 1:
+        level = float(np.mean(np.abs(w)))
+        signed: np.ndarray[Any, Any] = np.where(w >= 0, level, -level)
+        return signed
+    abs_max = max(float(np.abs(w).max()), 1e-8)
+    scale = abs_max / (2 ** (bits - 1) - 1)
+    gridded: np.ndarray[Any, Any] = np.clip(np.round(w / scale) * scale, -abs_max, abs_max)
+    return gridded
 
 
 def compile_for_chip(
@@ -78,8 +106,11 @@ def compile_for_chip(
     Parameters
     ----------
     layer_sizes : list of (n_inputs, n_neurons)
+        Input and neuron count of each layer.
     weights : list of ndarray, optional
-        Weight matrices per layer. If provided, will be quantized.
+        Weight matrices per layer. If provided, they are quantized to the core's weight precision: a symmetric grid
+        for two or more bits, and plus or minus the mean magnitude for one bit. A precision below one bit, or a
+        matrix that is empty or holds NaN or infinity, is a violation, and then no matrix is quantized.
     neuron_types : list of str, optional
         Neuron type per layer (e.g., 'LIF', 'Izhikevich').
     target : str or ChipSpec
@@ -88,6 +119,8 @@ def compile_for_chip(
     Returns
     -------
     CompilationResult
+        The mapping, the quantized weights, and every violation and warning; ``success`` is true only without
+        violations.
     """
     if isinstance(target, str):
         chip = BUILTIN_CHIPS.get(target)
@@ -160,21 +193,29 @@ def compile_for_chip(
     if core_id > chip.total_cores:
         violations.append(f"Needs {core_id} cores but {chip.name} has {chip.total_cores}")
 
-    # Quantize weights
+    # Quantize weights: nothing is quantised when the precision or any weight matrix cannot be.
     if weights is not None:
         bits = chip.core.weight_bits
-        n_levels = 2**bits
+        arrays = [np.asarray(w, dtype=float) for w in weights]
+        refusals = []
+        if bits < 1:
+            refusals.append(
+                f"{chip.name} weight precision is {bits} bits; a weight needs at least 1 bit"
+            )
+        for i, w in enumerate(arrays):
+            if w.size == 0:
+                refusals.append(f"Weights of layer {i} are empty")
+            elif not np.all(np.isfinite(w)):
+                refusals.append(f"Weights of layer {i} are not finite (NaN or infinity)")
+        violations.extend(refusals)
         quantized = []
-        for w in weights:
-            abs_max = max(np.abs(w).max(), 1e-8)
-            scale = abs_max / (n_levels // 2 - 1)
-            q = np.round(w / scale) * scale
-            q = np.clip(q, -abs_max, abs_max)
+        for w in arrays if not refusals else []:
+            q = _quantise(w, bits)
             quantized.append(q)
 
             # Warn about precision loss
             mse = float(np.mean((w - q) ** 2))
-            if mse > 0.01 * float(np.mean(w**2)):  # pragma: no cover
+            if mse > 0.01 * float(np.mean(w**2)):
                 warnings.append(
                     f"Weight quantization to {bits}-bit introduces "
                     f"{mse / max(float(np.mean(w**2)), 1e-12) * 100:.1f}% relative error"

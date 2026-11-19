@@ -251,6 +251,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The chip compiler no longer returns NaN weights with a successful result
+  on a 1-bit target: one bit now codes a sign, each weight becoming plus or
+  minus the mean magnitude. A precision below one bit, or a weight matrix
+  that is empty or not finite, is a violation and quantizes no layer. The
+  report's violation and warning lines and the precision-loss warning are
+  tested instead of excluded from coverage.
+
 - A Mojo library is no longer loaded on a host that cannot run it. Every
   Mojo library is built for x86-64-v3, and on a lower host (or one whose
   level is unknown) loading or calling it could end the process with an

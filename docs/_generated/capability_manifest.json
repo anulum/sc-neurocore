@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5727
+    "test_files": 5728
   },
   "documentation": {
     "public_pages": [
@@ -4526,6 +4526,7 @@
       "tests/test_chip_compiler_chip_spec.py",
       "tests/test_chip_compiler_chip_spec_loading_guards.py",
       "tests/test_chip_compiler_compile_for_chip.py",
+      "tests/test_chip_compiler_weight_quantisation.py",
       "tests/test_chiplet/chiplet_gen_edge_cases_support.py",
       "tests/test_chiplet/chiplet_routing_support.py",
       "tests/test_chiplet/chiplet_topology_support.py",

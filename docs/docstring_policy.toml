@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2216
+expected_file_count = 2218
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8914,3 +8914,11 @@ rationale = "Load a Mojo shared library only on a host whose instruction set can
 [[file]]
 path = "tests/test_mojo_native_library_isa_guard.py"
 rationale = "Bind every Mojo library load to the instruction-set guard, with no ctypes load on a refused host."
+
+[[file]]
+path = "src/sc_neurocore/chip_compiler/compiler.py"
+rationale = "Document the chip compiler's mapping, its weight quantisation at every precision, and its refusals."
+
+[[file]]
+path = "tests/test_chip_compiler_weight_quantisation.py"
+rationale = "Hold the chip compiler's weights finite on every precision, with the binary rule for one bit and the refusals."
