@@ -554,7 +554,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "H1"
+        "silicon_label": "none"
       },
       "declared": {
         "science_label": "S5",
@@ -672,7 +672,7 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "AdaptiveThresholdIFNeuron__cosim__20261116T130405Z__adaptive_threshold_if.json",
           "validators": [
             {
@@ -2150,7 +2150,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "H1"
+        "silicon_label": "none"
       },
       "declared": {
         "science_label": "S5",
@@ -2312,7 +2312,7 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "BrunelWangNeuron__cosim__20261116T130419Z__brunel_wang.json",
           "validators": [
             {
@@ -9255,7 +9255,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S5",
-        "silicon_label": "H1"
+        "silicon_label": "none"
       },
       "declared": {
         "science_label": "S5",
@@ -9463,7 +9463,7 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "LapicqueNeuron__cosim__20261116T130440Z__lapicque.json",
           "validators": [
             {
@@ -13955,7 +13955,7 @@
       "profile_problems": [],
       "verified": {
         "science_label": "S3",
-        "silicon_label": "H1"
+        "silicon_label": "none"
       },
       "declared": {
         "science_label": "S5",
@@ -14073,7 +14073,7 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "bound",
+          "status": "stale",
           "receipt": "ResonateAndFireNeuron__cosim__20261116T130429Z__resonate_fire.json",
           "validators": [
             {
