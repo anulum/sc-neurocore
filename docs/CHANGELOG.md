@@ -179,6 +179,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Populations of one neuron type with different parameters or timesteps now
+  compile to separate FPGA neuron modules instead of raising a parameter
+  conflict error. The folded interconnect accepts cross-population parameter
+  differences when timesteps match and refuses distinct timesteps within one
+  neuron type.
+
 - `FaultResilienceSuite` declares its evaluation function as a callable from
   the list of weight matrices to an accuracy, so strict type checkers check
   callers, and the module no longer silences the checker on its constructor.

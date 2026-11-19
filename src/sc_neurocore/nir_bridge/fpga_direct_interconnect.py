@@ -7,7 +7,7 @@
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
 """Explicit per-neuron FPGA interconnect emission."""
 
-from typing import Callable, Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 
@@ -23,7 +23,7 @@ from .fpga_connection_routing import (
 )
 from .fpga_neuron_rtl import (
     _neuron_param_override,
-    _type_default_qparams,
+    plan_population_modules,
     population_draws,
     population_graded,
     population_stream,
@@ -116,6 +116,8 @@ def build_direct_interconnect(
     scnir_source_module_count: int = 0,
     scnir_hierarchy: Sequence[SCNIRHierarchyInstance] = (),
     scnir_semantic_hierarchy_stream_ids: frozenset[str] = frozenset(),
+    population_module_keys: Sequence[str] | None = None,
+    module_defaults: Mapping[str, Mapping[str, int]] | None = None,
 ) -> str:
     """Generate direct-wired per-neuron top-level interconnect.
 
@@ -153,6 +155,10 @@ def build_direct_interconnect(
         Typed hierarchy boundaries instantiated by the network top.
     scnir_semantic_hierarchy_stream_ids : frozenset[str]
         Hierarchy stream identifiers that provide semantic connection weights.
+    population_module_keys : Sequence[str] | None
+        Optional pre-planned module keys aligned with ``qgraph.populations``.
+    module_defaults : Mapping[str, Mapping[str, int]] | None
+        Optional pre-resolved quantised parameter defaults keyed by module key.
 
     Returns
     -------
@@ -167,7 +173,6 @@ def build_direct_interconnect(
     """
     pops = qgraph.populations
     conns = qgraph.connections
-    type_defaults = _type_default_qparams(pops, data_width)
     safe_module = sanitize_ident(module_name, context="module name")
     pop_by_name = {pop.name: pop for pop in pops}
     pop_index = {pop.name: idx for idx, pop in enumerate(pops)}
@@ -183,6 +188,18 @@ def build_direct_interconnect(
         pop_by_name,
         pops,
     )
+    if data_width <= 0:
+        raise ValueError("literal width must be positive")
+    if population_module_keys is None or module_defaults is None:
+        pop_mod_keys, _reps, resolved_defaults = plan_population_modules(
+            pops,
+            data_width=data_width,
+            fraction=fraction,
+            already_quantised=True,
+        )
+    else:
+        pop_mod_keys = list(population_module_keys)
+        resolved_defaults = {key: dict(vals) for key, vals in module_defaults.items()}
     hierarchy_output_wires = _hierarchy_output_wires_by_stream(
         scnir_hierarchy,
         semantic_stream_ids=set(scnir_semantic_hierarchy_stream_ids),
@@ -281,8 +298,9 @@ def build_direct_interconnect(
     lines.append("")
 
     first_neuron = 0
-    for pop in pops:
-        mod = sanitize_ident(f"sc_nir_{pop.neuron_type}", context="module name")
+    for pop_idx, pop in enumerate(pops):
+        mod_key = pop_mod_keys[pop_idx]
+        mod = sanitize_ident(f"sc_nir_{mod_key}", context="module name")
         lines.append(
             f"    // Population {pop_index[pop.name]}: {pop.name} "
             f"({pop.neuron_type} x {pop.n_neurons})"
@@ -293,7 +311,12 @@ def build_direct_interconnect(
             prefix = neuron_prefix(pop, neuron_idx)
             stream = population_stream(pop, first_neuron + neuron_idx) if draws else None
             override = _neuron_param_override(
-                pop, neuron_idx, type_defaults, data_width, rng_stream=stream
+                pop,
+                neuron_idx,
+                resolved_defaults,
+                data_width,
+                rng_stream=stream,
+                module_key=mod_key,
             )
             lines.extend(
                 [

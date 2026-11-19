@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2078
+expected_file_count = 2080
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8362,3 +8362,11 @@ rationale = "Inject declared fault models into weight copies and measure the acc
 [[file]]
 path = "tests/test_resilience_report_without_layer_results.py"
 rationale = "Bind the resilience report to name no vulnerable layer when no experiment targets one."
+
+[[file]]
+path = "src/sc_neurocore/nir_bridge/fpga_aer_interconnect.py"
+rationale = "Document weighted address-event FPGA interconnect emission and per-population module instantiation."
+
+[[file]]
+path = "tests/test_fpga_neuron_rtl.py"
+rationale = "Verify per-population parameter-keyed RTL module emission, direct/folded/AER co-simulation, and fail-closed refusal contracts."

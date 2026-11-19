@@ -80,6 +80,8 @@ from .fpga_neuron_rtl import (
     _representative_param as _representative_param,
     _resolved_population_params as _resolved_population_params,
     check_shared_templates as check_shared_templates,
+    plan_population_modules as _plan_population_modules,
+    same_type_timesteps_match as _same_type_timesteps_match,
     _type_default_qparams as _type_default_qparams,
     build_neuron_module as _build_neuron_module,
 )
@@ -97,7 +99,9 @@ from .fpga_scnir_hierarchy import (
     resolve_hierarchy_weight_literals as _hierarchy_weight_literals,
 )
 from .fpga_weight_rom import build_weight_rom as _build_weight_rom
-from .neuron_graph import NeuronGraph, NeuronSpec
+
+# NeuronSpec is re-exported on fpga_compiler for downstream callers.
+from .neuron_graph import NeuronGraph, NeuronSpec as NeuronSpec
 from .quantise_params import quantise_graph
 
 logger = logging.getLogger(__name__)
@@ -265,34 +269,25 @@ def compile_network_to_fpga(
     warnings.extend(qgraph.warnings)
     hierarchy_weight_literals = _hierarchy_weight_literals(scnir_document, qgraph)
 
-    # Step 2: Generate per-type neuron modules (cached by exact parameter set)
+    # Step 2: Plan per-population neuron module keys and defaults once from qgraph
+    pop_mod_keys, module_representatives, module_defaults = _plan_population_modules(
+        qgraph.populations,
+        data_width=data_width,
+        fraction=fraction,
+        already_quantised=True,
+    )
     neuron_modules: dict[str, str] = {}
-    type_representative: dict[str, NeuronSpec] = {}
-    type_signature: dict[str, tuple[Any, ...]] = {}
-
-    for pop in graph.populations:
-        signature = _population_module_signature(pop)
-        if pop.neuron_type not in type_representative:
-            type_representative[pop.neuron_type] = pop
-            type_signature[pop.neuron_type] = signature
-        elif type_signature[pop.neuron_type] != signature:
-            check_shared_templates(graph.populations)
-            raise ValueError(
-                f"Neuron type {pop.neuron_type!r} appears with different "
-                "parameters across populations; per-population RTL modules are "
-                "required before this can be compiled faithfully"
-            )
-
-    for ntype, rep_pop in type_representative.items():
+    for module_key, rep_pop in module_representatives.items():
         verilog = _build_neuron_module(
-            ntype,
+            rep_pop.neuron_type,
             rep_pop,
             data_width=data_width,
             fraction=fraction,
             random_precision=random_precision,
+            module_key=module_key,
         )
-        neuron_modules[ntype] = verilog
-        logger.info("Generated Verilog for neuron type: %s", ntype)
+        neuron_modules[module_key] = verilog
+        logger.info("Generated Verilog for neuron module key: %s", module_key)
 
     # Step 3: Weight ROM
     weight_rom = _build_weight_rom(qgraph, data_width=data_width)
@@ -325,6 +320,14 @@ def compile_network_to_fpga(
         # external-weighted, recurrent, inter-population, delayed, thresholded, biased
         # spiking, or analogue-voltage fan-in).
         if not _can_fold(qgraph, data_width=data_width):
+            if not _same_type_timesteps_match(
+                qgraph.populations, data_width=data_width, fraction=fraction
+            ):
+                raise ValueError(
+                    "interconnect='folded' shares one PE per neuron type with a single baked "
+                    "timestep dt; populations of one neuron type with distinct dt values cannot "
+                    "be folded — use interconnect='direct' or None for per-population RTL modules"
+                )
             raise ValueError(
                 "interconnect='folded' supports populations of supported neuron types with "
                 "external-weighted, recurrent, inter-population, delayed, NIR-thresholded, "
@@ -340,6 +343,8 @@ def compile_network_to_fpga(
             data_width=data_width,
             fraction=fraction,
             random_precision=random_precision,
+            population_module_keys=pop_mod_keys,
+            module_defaults=module_defaults,
         )
         neuron_modules.update(pe_modules)
         folded_metrics = _folded_resource_metrics(qgraph, data_width=data_width)
@@ -366,6 +371,8 @@ def compile_network_to_fpga(
             scnir_source_module_count=len(scnir_source_bundle.manifest),
             scnir_hierarchy=scnir_document.hierarchy,
             scnir_semantic_hierarchy_stream_ids=frozenset(hierarchy_weight_literals),
+            population_module_keys=pop_mod_keys,
+            module_defaults=module_defaults,
         )
     else:
         selected_interconnect = "direct"
@@ -399,6 +406,8 @@ def compile_network_to_fpga(
             scnir_source_module_count=len(scnir_source_bundle.manifest),
             scnir_hierarchy=scnir_document.hierarchy,
             scnir_semantic_hierarchy_stream_ids=frozenset(hierarchy_weight_literals),
+            population_module_keys=pop_mod_keys,
+            module_defaults=module_defaults,
         )
 
     q_label = f"Q{data_width - fraction}.{fraction}"

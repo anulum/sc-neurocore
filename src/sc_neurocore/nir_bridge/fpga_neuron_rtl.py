@@ -5,15 +5,16 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
-"""Neuron parameter binding and per-type RTL emission for FPGA compilation."""
+"""Neuron parameter binding and per-population RTL emission for FPGA compilation."""
 
+import hashlib
 import json
 from dataclasses import replace
 from typing import Any, Sequence
 
 import numpy as np
 
-from ..compiler.equation_compiler import compile_to_verilog
+from ..compiler.equation_compiler import Q88, compile_to_verilog
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron, from_equations
 from .neuron_graph import NeuronSpec
@@ -62,10 +63,12 @@ def _neuron_param_override(
     type_defaults: dict[str, dict[str, int]],
     data_width: int,
     rng_stream: int | None = None,
+    *,
+    module_key: str | None = None,
 ) -> str:
     """Return a Verilog parameter-override clause for a single neuron instance.
 
-    Empty when this neuron's per-neuron quantised parameters all equal the shared
+    Empty when this neuron's per-neuron quantised parameters all equal the target
     module defaults (the homogeneous case, so the emitted RTL is unchanged).
     Otherwise emits ``#(.P_X(W'sdN), ...)`` so a heterogeneous population reuses
     the same parameterised module with each neuron's own quantised parameters. The
@@ -73,7 +76,7 @@ def _neuron_param_override(
     declares each parameter default (negative fixed-point values included).
     """
     mask = (1 << data_width) - 1
-    defaults = type_defaults.get(pop.neuron_type, {})
+    defaults = type_defaults.get(pop.neuron_type if module_key is None else module_key, {})
     fragments: list[str] = []
     for pname in sorted(pop.params):
         if pname not in defaults:
@@ -280,6 +283,238 @@ def check_shared_templates(pops: Sequence[NeuronSpec]) -> None:
             )
 
 
+def _quantised_dt_code(dt: float, method: str, q: Q88) -> int:
+    """Return the quantised timestep word (``0`` for discrete maps, validated otherwise)."""
+    if method == "map":
+        return 0
+    q.check_time_step(dt, method)
+    raw_dt = q.exact_code(dt)
+    if raw_dt <= 0:
+        min_rep = 1.0 / (1 << q.fraction)
+        raise ValueError(
+            f"dt={dt} underflows in Q{q.data_width - q.fraction}.{q.fraction}: "
+            f"smallest representable non-zero value is {min_rep}."
+        )
+    return raw_dt & ((1 << q.data_width) - 1)
+
+
+def _quantised_population_signature(
+    pop: NeuronSpec,
+    *,
+    data_width: int,
+    fraction: int,
+    already_quantised: bool = False,
+) -> tuple[NeuronSpec, int, dict[str, int], tuple[Any, ...]]:
+    """Compute real population spec, quantised timestep, quantised defaults, and cache key."""
+    q = Q88(data_width=data_width, fraction=fraction)
+    mask = (1 << data_width) - 1
+    real_pop = _dequantised_pop(pop, fraction) if already_quantised else pop
+    template = _template_for(pop.neuron_type, real_pop)
+    resolved = _resolved_population_params(pop.neuron_type, real_pop)
+    dt_code = _quantised_dt_code(pop.dt, str(template.get("method", "euler")), q)
+    qparams = {pname: q.encode(val) & mask for pname, val in resolved.items()}
+    if already_quantised:
+        for pname, pval in pop.params.items():
+            arr = np.atleast_1d(np.asarray(pval).reshape(-1))
+            qparams[pname] = int(arr[0]) & mask
+    signature = (
+        pop.neuron_type,
+        dt_code,
+        tuple((pname, qparams[pname]) for pname in sorted(qparams)),
+    )
+    return real_pop, dt_code, qparams, signature
+
+
+def plan_population_modules(
+    pops: Sequence[NeuronSpec],
+    *,
+    data_width: int,
+    fraction: int,
+    already_quantised: bool = False,
+) -> tuple[list[str], dict[str, NeuronSpec], dict[str, dict[str, int]]]:
+    """Assign deterministic RTL module keys per ``(neuron_type, quantised parameters)``.
+
+    When every population of a neuron type shares one quantised timestep and
+    default-parameter tuple, the module key stays ``neuron_type`` so existing
+    single-profile RTL names (``sc_nir_<type>``) remain unchanged. When multiple
+    populations of one neuron type carry distinct quantised parameter sets or
+    timesteps, each distinct quantised signature receives its own module key
+    encoding the differing quantised fields (or a 12-hex-character SHA-256 tag
+    when more than three fields vary across populations of that type).
+
+    Parameters
+    ----------
+    pops : Sequence[NeuronSpec]
+        Graph populations (either float ``NeuronGraph.populations`` or integer
+        ``QuantisedGraph.populations`` when ``already_quantised=True``).
+    data_width : int
+        Fixed-point word width.
+    fraction : int
+        Fixed-point fractional width.
+    already_quantised : bool
+        ``True`` when ``pops`` already hold Q-encoded integer parameter arrays.
+
+    Returns
+    -------
+    tuple[list[str], dict[str, NeuronSpec], dict[str, dict[str, int]]]
+        Per-population module keys aligned with ``pops``, an ordered mapping of
+        unique module keys to real-unit representative populations, and per-module
+        quantised parameter defaults for per-neuron override emission.
+    """
+    check_shared_templates(pops)
+    records = [
+        _quantised_population_signature(
+            pop,
+            data_width=data_width,
+            fraction=fraction,
+            already_quantised=already_quantised,
+        )
+        for pop in pops
+    ]
+    distinct_by_type: dict[str, list[tuple[Any, ...]]] = {}
+    for _real_pop, _dt_code, _qparams, sig in records:
+        bucket = distinct_by_type.setdefault(str(sig[0]), [])
+        if sig not in bucket:
+            bucket.append(sig)
+
+    hex_width = max(1, (data_width + 3) // 4)
+    sig_to_key: dict[tuple[Any, ...], str] = {}
+    used_keys: set[str] = set()
+    for ntype, sigs in distinct_by_type.items():
+        if len(sigs) == 1:
+            sanitize_ident(f"sc_nir_{ntype}", context="module name")
+            used_keys.add(ntype)
+            sig_to_key[sigs[0]] = ntype
+
+    for ntype, sigs in distinct_by_type.items():
+        if len(sigs) == 1:
+            continue
+        dt_varies = len({int(s[1]) for s in sigs}) > 1
+        param_names = [pname for pname, _ in sigs[0][2]]
+        varying_params = [
+            pname for pname in param_names if len({dict(s[2])[pname] for s in sigs}) > 1
+        ]
+        total_varying = (1 if dt_varies else 0) + len(varying_params)
+        for sig in sigs:
+            dt_code = int(sig[1])
+            qmap = dict(sig[2])
+            if 1 <= total_varying <= 3:
+                parts: list[str] = []
+                if dt_varies:
+                    parts.append(f"dt_{dt_code:0{hex_width}x}")
+                for pname in varying_params:
+                    safe_p = sanitize_ident(pname, context="parameter name").lower()
+                    parts.append(f"{safe_p}_{qmap[pname]:0{hex_width}x}")
+                candidate = f"{ntype}_{'_'.join(parts)}"
+            else:
+                payload = json.dumps(
+                    [ntype, data_width, fraction, dt_code, list(sig[2])],
+                    separators=(",", ":"),
+                ).encode("utf-8")
+                digest12 = hashlib.sha256(payload).hexdigest()[:12]
+                candidate = f"{ntype}_q{digest12}"
+            unique_key = candidate
+            suffix = 2
+            while unique_key in used_keys:
+                unique_key = f"{candidate}_{suffix}"
+                suffix += 1
+            sanitize_ident(f"sc_nir_{unique_key}", context="module name")
+            used_keys.add(unique_key)
+            sig_to_key[sig] = unique_key
+
+    pop_keys: list[str] = []
+    representatives: dict[str, NeuronSpec] = {}
+    module_defaults: dict[str, dict[str, int]] = {}
+    for real_pop, _dt_code, qparams, sig in records:
+        mkey = sig_to_key[sig]
+        pop_keys.append(mkey)
+        if mkey not in representatives:
+            representatives[mkey] = real_pop
+            module_defaults[mkey] = qparams
+    return pop_keys, representatives, module_defaults
+
+
+def cross_population_varying_params(
+    pops: Sequence[NeuronSpec],
+    *,
+    data_width: int,
+    fraction: int,
+) -> dict[str, set[str]]:
+    """Return per-type parameter names whose quantised values vary across populations.
+
+    Parameters
+    ----------
+    pops : Sequence[NeuronSpec]
+        Quantised populations of a ``QuantisedGraph``.
+    data_width : int
+        Fixed-point word width.
+    fraction : int
+        Fixed-point fractional width.
+
+    Returns
+    -------
+    dict[str, set[str]]
+        Mapping ``neuron_type -> set of parameter names`` whose quantised values
+        differ across same-type populations.
+    """
+    by_type: dict[str, list[dict[str, int]]] = {}
+    for pop in pops:
+        _real_pop, _dt_code, qparams, _sig = _quantised_population_signature(
+            pop,
+            data_width=data_width,
+            fraction=fraction,
+            already_quantised=True,
+        )
+        by_type.setdefault(pop.neuron_type, []).append(qparams)
+    varying: dict[str, set[str]] = {}
+    for ntype, qmaps in by_type.items():
+        if len(qmaps) < 2:
+            continue
+        names = {pname for pname in qmaps[0] if len({qm[pname] for qm in qmaps}) > 1}
+        if names:
+            varying[ntype] = names
+    return varying
+
+
+def same_type_timesteps_match(
+    pops: Sequence[NeuronSpec],
+    *,
+    data_width: int,
+    fraction: int,
+) -> bool:
+    """Return whether all populations of each neuron type share one quantised ``dt``.
+
+    Parameters
+    ----------
+    pops : Sequence[NeuronSpec]
+        Populations to inspect.
+    data_width : int
+        Fixed-point word width.
+    fraction : int
+        Fixed-point fractional width.
+
+    Returns
+    -------
+    bool
+        ``False`` when two populations of the same neuron type have distinct
+        quantised timesteps (or when ``dt`` cannot be represented), ``True``
+        otherwise.
+    """
+    q = Q88(data_width=data_width, fraction=fraction)
+    seen_dt: dict[str, int] = {}
+    for pop in pops:
+        real_pop = _dequantised_pop(pop, fraction)
+        template = _template_for(pop.neuron_type, real_pop)
+        try:
+            dt_code = _quantised_dt_code(pop.dt, str(template.get("method", "euler")), q)
+        except ValueError:
+            return False
+        first = seen_dt.setdefault(pop.neuron_type, dt_code)
+        if first != dt_code:
+            return False
+    return True
+
+
 def build_neuron_module(
     neuron_type: str,
     pop: NeuronSpec,
@@ -287,8 +522,9 @@ def build_neuron_module(
     data_width: int = 16,
     fraction: int = 8,
     random_precision: str = "standard",
+    module_key: str | None = None,
 ) -> str:
-    """Build a Verilog module for one canonical neuron type.
+    """Build a Verilog module for one canonical neuron type or parameter-keyed variant.
 
     Uses the existing ``equation_compiler.compile_to_verilog()`` with
     canonical ODE templates.
@@ -306,6 +542,9 @@ def build_neuron_module(
     random_precision : {"standard", "exact"}
         Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
         :mod:`sc_neurocore.compiler.exact_normal`.
+    module_key : str | None
+        Optional deterministic key from :func:`plan_population_modules`; defaults
+        to ``neuron_type`` when a single signature is emitted.
 
     Returns
     -------
@@ -319,9 +558,10 @@ def build_neuron_module(
         template contract.
     """
     neuron = _population_neuron(neuron_type, pop)
+    effective_key = neuron_type if module_key is None else module_key
     return compile_to_verilog(
         neuron,
-        module_name=f"sc_nir_{neuron_type}",
+        module_name=f"sc_nir_{effective_key}",
         data_width=data_width,
         fraction=fraction,
         random_precision=random_precision,

@@ -37708,7 +37708,7 @@ nir.NIRGraph
 
 ## Module `nir_bridge.fpga_aer_interconnect`
 
-### Function `build_aer_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids)`
+### Function `build_aer_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids, population_module_keys, module_defaults)`
 Generate weighted event-bus top-level interconnect.
 
 The emitted datapath keeps the same population instances as the direct
@@ -37739,6 +37739,10 @@ scnir_hierarchy : Sequence&#91;SCNIRHierarchyInstance&#93;
     Typed hierarchy boundaries instantiated by the network top.
 scnir_semantic_hierarchy_stream_ids : frozenset&#91;str&#93;
     Hierarchy stream identifiers that provide semantic connection weights.
+population_module_keys : Sequence&#91;str&#93; | None
+    Optional pre-planned module keys aligned with ``qgraph.populations``.
+module_defaults : Mapping&#91;str, Mapping&#91;str, int&#93;&#93; | None
+    Optional pre-resolved quantised parameter defaults keyed by module key.
 
 Returns
 -------
@@ -37946,7 +37950,7 @@ Return the wires of one trace's next value: ``sat((x * D) >>> f + spike · one)`
 ### Function `stdp_weight_lines(name, weight, pre_spike, post_spike, pre_next, post_next, rule, acc_width)`
 Return the wires of one synapse's next weight, clipped to ``&#91;w_min, w_max&#93;``.
 
-### Function `build_direct_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids)`
+### Function `build_direct_interconnect(module_name, qgraph, *, data_width, fraction, bitstream_length, scnir_stream_count, scnir_source_module_count, scnir_hierarchy, scnir_semantic_hierarchy_stream_ids, population_module_keys, module_defaults)`
 Generate direct-wired per-neuron top-level interconnect.
 
 Every neuron gets its own instance of the type-specific module.  NIR
@@ -37983,6 +37987,10 @@ scnir_hierarchy : Sequence&#91;SCNIRHierarchyInstance&#93;
     Typed hierarchy boundaries instantiated by the network top.
 scnir_semantic_hierarchy_stream_ids : frozenset&#91;str&#93;
     Hierarchy stream identifiers that provide semantic connection weights.
+population_module_keys : Sequence&#91;str&#93; | None
+    Optional pre-planned module keys aligned with ``qgraph.populations``.
+module_defaults : Mapping&#91;str, Mapping&#91;str, int&#93;&#93; | None
+    Optional pre-resolved quantised parameter defaults keyed by module key.
 
 Returns
 -------
@@ -38059,7 +38067,7 @@ Returns
 FoldedResourceMetrics
     The architectural fold summary.
 
-### Function `build_folded_interconnect(module_name, qgraph, *, data_width, fraction, random_precision)`
+### Function `build_folded_interconnect(module_name, qgraph, *, data_width, fraction, random_precision, population_module_keys, module_defaults)`
 Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
 One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
@@ -38093,6 +38101,10 @@ fraction : int
 random_precision : {"standard", "exact"}
     Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
     :mod:`sc_neurocore.compiler.exact_normal`.
+population_module_keys : Sequence&#91;str&#93; | None
+    Optional pre-planned module keys aligned with ``qgraph.populations``.
+module_defaults : Mapping&#91;str, Mapping&#91;str, int&#93;&#93; | None
+    Optional pre-resolved quantised parameter defaults keyed by module key.
 
 Returns
 -------
@@ -38136,8 +38148,75 @@ Raises
 ValueError
     If two populations share a type but not their template definition.
 
-### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction, random_precision)`
-Build a Verilog module for one canonical neuron type.
+### Function `plan_population_modules(pops, *, data_width, fraction, already_quantised)`
+Assign deterministic RTL module keys per ``(neuron_type, quantised parameters)``.
+
+When every population of a neuron type shares one quantised timestep and
+default-parameter tuple, the module key stays ``neuron_type`` so existing
+single-profile RTL names (``sc_nir_<type>``) remain unchanged. When multiple
+populations of one neuron type carry distinct quantised parameter sets or
+timesteps, each distinct quantised signature receives its own module key
+encoding the differing quantised fields (or a 12-hex-character SHA-256 tag
+when more than three fields vary across populations of that type).
+
+Parameters
+----------
+pops : Sequence&#91;NeuronSpec&#93;
+    Graph populations (either float ``NeuronGraph.populations`` or integer
+    ``QuantisedGraph.populations`` when ``already_quantised=True``).
+data_width : int
+    Fixed-point word width.
+fraction : int
+    Fixed-point fractional width.
+already_quantised : bool
+    ``True`` when ``pops`` already hold Q-encoded integer parameter arrays.
+
+Returns
+-------
+tuple&#91;list&#91;str&#93;, dict&#91;str, NeuronSpec&#93;, dict&#91;str, dict&#91;str, int&#93;&#93;&#93;
+    Per-population module keys aligned with ``pops``, an ordered mapping of
+    unique module keys to real-unit representative populations, and per-module
+    quantised parameter defaults for per-neuron override emission.
+
+### Function `cross_population_varying_params(pops, *, data_width, fraction)`
+Return per-type parameter names whose quantised values vary across populations.
+
+Parameters
+----------
+pops : Sequence&#91;NeuronSpec&#93;
+    Quantised populations of a ``QuantisedGraph``.
+data_width : int
+    Fixed-point word width.
+fraction : int
+    Fixed-point fractional width.
+
+Returns
+-------
+dict&#91;str, set&#91;str&#93;&#93;
+    Mapping ``neuron_type -> set of parameter names`` whose quantised values
+    differ across same-type populations.
+
+### Function `same_type_timesteps_match(pops, *, data_width, fraction)`
+Return whether all populations of each neuron type share one quantised ``dt``.
+
+Parameters
+----------
+pops : Sequence&#91;NeuronSpec&#93;
+    Populations to inspect.
+data_width : int
+    Fixed-point word width.
+fraction : int
+    Fixed-point fractional width.
+
+Returns
+-------
+bool
+    ``False`` when two populations of the same neuron type have distinct
+    quantised timesteps (or when ``dt`` cannot be represented), ``True``
+    otherwise.
+
+### Function `build_neuron_module(neuron_type, pop, *, data_width, fraction, random_precision, module_key)`
+Build a Verilog module for one canonical neuron type or parameter-keyed variant.
 
 Uses the existing ``equation_compiler.compile_to_verilog()`` with
 canonical ODE templates.
@@ -38155,6 +38234,9 @@ fraction : int
 random_precision : {"standard", "exact"}
     Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
     :mod:`sc_neurocore.compiler.exact_normal`.
+module_key : str | None
+    Optional deterministic key from :func:`plan_population_modules`; defaults
+    to ``neuron_type`` when a single signature is emitted.
 
 Returns
 -------

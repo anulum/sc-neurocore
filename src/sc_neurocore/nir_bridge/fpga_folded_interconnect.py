@@ -7,7 +7,7 @@
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
 """Time-multiplexed FPGA interconnect and resource estimation."""
 
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -29,8 +29,11 @@ from .fpga_neuron_rtl import (
     _param_neuron_literal,
     _population_neuron,
     check_shared_templates,
+    cross_population_varying_params,
+    plan_population_modules,
     population_graded,
     population_stream,
+    same_type_timesteps_match,
 )
 from .fpga_direct_interconnect import (
     check_plastic_connection,
@@ -339,6 +342,8 @@ def can_fold(qgraph: QuantisedGraph, *, data_width: int) -> bool:
     pop_names = set(pop_by_name)
     if any(p.neuron_type not in _NEURON_TEMPLATES and p.template is None for p in pops):
         return False
+    if not same_type_timesteps_match(pops, data_width=data_width, fraction=qgraph.q.fraction):
+        return False
     for pop in pops:
         if pop.template is not None:
             neuron = _population_neuron(pop.neuron_type, pop)
@@ -442,6 +447,8 @@ def build_folded_interconnect(
     data_width: int = 16,
     fraction: int = 8,
     random_precision: str = "standard",
+    population_module_keys: Sequence[str] | None = None,
+    module_defaults: Mapping[str, Mapping[str, int]] | None = None,
 ) -> tuple[dict[str, str], str]:
     """Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
@@ -476,6 +483,10 @@ def build_folded_interconnect(
     random_precision : {"standard", "exact"}
         Lowering of ``randn()``: the standard unit or the exact 60-bit mode of
         :mod:`sc_neurocore.compiler.exact_normal`.
+    population_module_keys : Sequence[str] | None
+        Optional pre-planned module keys aligned with ``qgraph.populations``.
+    module_defaults : Mapping[str, Mapping[str, int]] | None
+        Optional pre-resolved quantised parameter defaults keyed by module key.
 
     Returns
     -------
@@ -492,7 +503,17 @@ def build_folded_interconnect(
         raise ValueError("graph is outside the folded interconnect's supported subset")
 
     pops = list(qgraph.populations)
-    check_shared_templates(pops)  # one PE per type runs one definition
+    if population_module_keys is None or module_defaults is None:
+        pop_mod_keys, _reps, resolved_defaults = plan_population_modules(
+            pops,
+            data_width=data_width,
+            fraction=fraction,
+            already_quantised=True,
+        )
+    else:
+        check_shared_templates(pops)  # one PE per type runs one definition
+        pop_mod_keys = list(population_module_keys)
+        resolved_defaults = {key: dict(vals) for key, vals in module_defaults.items()}
     conns = list(qgraph.connections)
     pop_by_name = {p.name: p for p in pops}
     pop_names = set(pop_by_name)
@@ -592,7 +613,9 @@ def build_folded_interconnect(
     # Parameters heterogeneous in ANY population of a type become that type's PE input
     # ports, streamed per-neuron from a parameter ROM (the parameter-space analogue of the
     # state BRAM); a type whose populations are all uniform keeps every parameter baked.
-    type_het_param_sets: dict[str, set[str]] = {}
+    type_het_param_sets: dict[str, set[str]] = cross_population_varying_params(
+        pops, data_width=data_width, fraction=fraction
+    )
     for pop in pops:
         parameter_names = _heterogeneous_param_names(pop, data_width)
         if parameter_names:
@@ -602,33 +625,35 @@ def build_folded_interconnect(
         for neuron_type, parameter_names in type_het_param_sets.items()
     }
     draws_by_type: dict[str, bool] = {}
+    pop_init_packed: list[str] = []
     for pop in pops:
         ntype = pop.neuron_type
+        pop_neuron = _population_neuron(ntype, _dequantised_pop(pop, fraction))
+        init_words = [
+            f"{data_width}'h{q.encode(pop_neuron.initial_state.get(var, 0.0)) & ((1 << data_width) - 1):0{max(1, data_width // 4)}x}"
+            for var in pop_neuron.equations
+        ]
+        pop_init_packed.append("{" + ", ".join(reversed(init_words)) + "}")
         if ntype in pe_module_name:
             continue
         # Build the PE from real-valued parameters: the population carries quantised
         # integers, which Q88.encode would encode a second time (see _dequantised_pop).
-        neuron = _population_neuron(ntype, _dequantised_pop(pop, fraction))
-        type_neuron[ntype] = neuron
-        draws_by_type[ntype] = bool(neuron.uses_random_draws)
+        type_neuron[ntype] = pop_neuron
+        draws_by_type[ntype] = bool(pop_neuron.uses_random_draws)
         mod = sanitize_ident(f"sc_nir_{ntype}_pe", context="module name")
         pe_module_name[ntype] = mod
         pe_modules[f"{ntype}_pe"] = compile_to_datapath(
-            neuron,
+            pop_neuron,
             module_name=mod,
             data_width=data_width,
             fraction=fraction,
             param_ports=type_het_params.get(ntype, []),
             random_precision=random_precision,
         )
-        svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
+        svars = [sanitize_ident(v, context="state variable") for v in pop_neuron.equations]
         type_svars[ntype] = svars
         type_state_w[ntype] = len(svars) * data_width
-        init_words = [
-            f"{data_width}'h{q.encode(neuron.initial_state.get(var, 0.0)) & ((1 << data_width) - 1):0{max(1, data_width // 4)}x}"
-            for var in neuron.equations
-        ]
-        type_init_packed[ntype] = "{" + ", ".join(reversed(init_words)) + "}"
+        type_init_packed[ntype] = pop_init_packed[-1]
 
     # ----- module header + saturating accumulator (module-scope, shared) -----
     lines: list[str] = [
@@ -791,7 +816,8 @@ def build_folded_interconnect(
                     lines.append("        endcase")
                     lines.append("    end")
                 else:
-                    lit = _param_neuron_literal(pop, pname, 0, data_width)
+                    qval = resolved_defaults[pop_mod_keys[pi]][pname]
+                    lit = f"{data_width}'sd{qval}"
                     lines.append(f"    wire signed [DATA_WIDTH - 1:0] {sig} = {lit};")
             mux = _cond_mux(
                 [(f"pidx == {pidx_w}'d{pi}", f"param_{pkey}_{pi}") for pi in same_type],
@@ -942,7 +968,7 @@ def build_folded_interconnect(
     for pi, pop in enumerate(pops):
         lines.append(
             f"            for (i = 0; i < {pop.n_neurons}; i = i + 1) "
-            f"state_bram_{pi}[i] <= {type_init_packed[pop.neuron_type]};"
+            f"state_bram_{pi}[i] <= {pop_init_packed[pi]};"
         )
     lines.extend(
         [
