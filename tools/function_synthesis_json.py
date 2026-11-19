@@ -129,7 +129,7 @@ def decode_netlist_json(data: bytes) -> object:
         or not all(isinstance(item, str) for item in locations)
         or len(locations) != len(set(locations))
     ):
-        raise ValueError("The normalized netlist requires an exact native source table")
+        raise ValueError("The normalised netlist requires an exact native source table")
     pending: list[object] = [original]
     used: set[int] = set()
     while pending:
@@ -145,7 +145,7 @@ def decode_netlist_json(data: bytes) -> object:
         elif isinstance(record, list):
             pending.extend(item for item in record if isinstance(item, (dict, list)))
     if used != set(range(len(locations))):
-        raise ValueError("The normalized netlist contains unused native source locations")
+        raise ValueError("The normalised netlist contains unused native source locations")
     return original
 
 
