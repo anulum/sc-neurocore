@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2226
+expected_file_count = 2227
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8954,3 +8954,7 @@ rationale = "Document the deployment blob's weight codes, their recorded scale, 
 [[file]]
 path = "tests/test_hardware_deployer_weight_codes.py"
 rationale = "Hold the deployment blob's weight codes at every precision, the recorded scale and the placement checks."
+
+[[file]]
+path = "tests/test_chialvo_map_backends_backend_parity.py"
+rationale = "Hold every Chialvo map backend to the checked contract, and the Go trace to the Python trace bit for bit where the reference exp is the C library's."

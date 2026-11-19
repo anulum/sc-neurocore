@@ -111,7 +111,16 @@ loaded through `juliacall` from `accel/julia/neurons/chialvo_map.jl`.
 
 `exp` and optimised multiply/add evaluation differ slightly across language
 runtimes. Chialvo's recurrence can amplify those differences, so long-trace
-bit identity is not claimed.
+bit identity is not claimed in general.
+
+The Go shared library computes the exponential with the C library's `exp`,
+the one the Python reference and the Rust and Julia lanes use. Go's own
+`math.Exp` differs from it by one ulp on about one argument in nine, and over
+1,000 iterations the recurrence carried that difference to `9.8e-14`, past
+the trace envelope below. With the C `exp`, the Go trace equals the Python
+trace bit for bit wherever NumPy's `exp` is the C library's; a test checks
+that condition first and skips where it does not hold. The pure Go service
+keeps `math.Exp`.
 
 `tests/test_chialvo_map_backends_backend_parity.py` and
 `tests/chialvo_map_backends_support.py` enforce two complementary contracts:

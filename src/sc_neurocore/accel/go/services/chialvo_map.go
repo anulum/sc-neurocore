@@ -41,8 +41,13 @@ func finiteChialvoMap(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
+// ChialvoMapExp is the exponential the recurrence uses. Pure Go keeps math.Exp. The C shared library sets it to the
+// C library's exp, the one the Python reference and the Rust and Julia lanes use: math.Exp differs from it by one ulp
+// on some arguments, and the chaotic recurrence carries that difference past the cross-language trace envelope.
+var ChialvoMapExp = math.Exp
+
 func safeExpChialvoMap(value float64) float64 {
-	return math.Exp(math.Min(500.0, math.Max(-500.0, value)))
+	return ChialvoMapExp(math.Min(500.0, math.Max(-500.0, value)))
 }
 
 // ValidateChialvoMap checks that every state and parameter field is finite.

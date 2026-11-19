@@ -251,6 +251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Go Chialvo map library computes its exponential with the C library's
+  `exp`, the one the Python reference and the Rust and Julia lanes use. Go's
+  own `math.Exp` differs from it by one ulp on about one argument in nine, and
+  over 1,000 iterations the recurrence carried that difference to `9.8e-14`,
+  past the cross-language trace envelope of `5e-14`. The Go trace now equals
+  the Python trace bit for bit wherever NumPy's `exp` is the C library's. The
+  model's benchmark record is outdated until it is measured again.
+
 - The hardware deployment package no longer codes every weight of a 1-bit
   device as zero: one bit now stores the sign, +1 or -1, and the package
   metadata records `weight_scale`, the factor that turns any code back into

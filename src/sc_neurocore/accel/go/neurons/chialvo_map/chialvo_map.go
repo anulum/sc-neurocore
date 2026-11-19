@@ -10,6 +10,8 @@
 package main
 
 /*
+#cgo LDFLAGS: -lm
+#include <math.h>
 #include <stdint.h>
 */
 import "C"
@@ -19,6 +21,17 @@ import (
 
 	"github.com/anulum/sc-neurocore/accel/services"
 )
+
+// The library computes the recurrence's exponential with the C library's exp, so its trace equals the Python
+// reference wherever that reference uses the same exp.
+func init() {
+	services.ChialvoMapExp = cExp
+}
+
+// cExp returns the C library's exp of value.
+func cExp(value float64) float64 {
+	return float64(C.exp(C.double(value)))
+}
 
 // chialvo_map_simulate_c runs the source recurrence under a constant additive
 // perturbation. The caller supplies n+2 doubles: the x trace followed by final

@@ -6,7 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_chialvo_map_backends.py
 
+"""Hold every Chialvo map backend to the checked contract, and the Go trace to the Python trace bit for bit.
+
+The Rust, Julia and Go lanes each satisfy the complete Chialvo contract. The Go library computes its exponential with
+the C library's ``exp``, so its whole trace equals the Python reference wherever NumPy's ``exp`` is that same function.
+"""
+
 from __future__ import annotations
+
+import math
 
 from tests.chialvo_map_backends_support import *  # noqa: F403
 
@@ -24,6 +32,24 @@ def test_julia_backend_contract() -> None:
 def test_go_backend_contract() -> None:
     """Go must satisfy the complete checked Chialvo contract."""
     _assert_backend_contract("go", _go_available)
+
+
+def test_go_trace_is_bit_identical_where_the_reference_exp_is_the_c_library_exp() -> None:
+    """The Go library uses the C library's exp, so its whole trace equals Python's wherever Python uses that exp.
+
+    Every exponent argument of the reference orbit is checked first: NumPy's ``exp`` must equal the C library's
+    (``math.exp``). On a host where they differ the claim does not apply, and the test says so by skipping.
+    """
+    _require("go", _go_available)
+    for current in _OPERATING_CURRENTS:
+        reference = _run("python", current=current)
+        arguments = np.concatenate(([0.0], reference[1][:-1] - reference[0][:-1]))
+        if any(float(np.exp(value)) != math.exp(value) for value in arguments):
+            pytest.skip("NumPy's exp is not the C library's exp on this host")
+        observed = _run("go", current=current)
+        np.testing.assert_array_equal(observed[0], reference[0])
+        np.testing.assert_array_equal(observed[1], reference[1])
+        assert observed[2:] == reference[2:]
 
 
 def test_mojo_backend_contract() -> None:
