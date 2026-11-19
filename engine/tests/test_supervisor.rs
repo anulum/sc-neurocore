@@ -41,6 +41,18 @@ fn verifier_rejects_reachable_error_sink_overflow() {
 }
 
 #[test]
+fn verifier_refuses_a_negative_marking_instead_of_calling_it_safe() {
+    // Asserted into Z3, a negative marking made the query unsatisfiable, which read as safe.
+    for markings in [[-1, 0, 0, 0], [5, -3, 0, 0], [0, 0, 0, -1]] {
+        assert!(
+            !verify_bounds_at_depth(&snapshot(markings), 4),
+            "{markings:?}"
+        );
+    }
+    assert!(!verify_bounds_at_depth(&snapshot([-1, 0, 0, 0]), 0));
+}
+
+#[test]
 fn worker_sets_shutdown_flag_for_unsafe_snapshot() {
     let (tx, rx) = bounded(1);
     let shutdown = Arc::new(AtomicBool::new(false));

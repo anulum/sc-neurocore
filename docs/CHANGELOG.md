@@ -179,6 +179,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The safety supervisor no longer calls a negative marking safe.
+  `supervisor::verify_bounds_at_depth` asserted the snapshot's marking
+  into Z3, so a negative one made every query unsatisfiable. That read
+  as "safe". It now returns false before the solver runs.
+  `PySpikingControllerPool.start` runs its control loop without the
+  Python GIL, so `force_shutdown` from another Python thread stops it.
+  With the GIL held and no step limit, no other Python thread ran.
+
 - The timeout case of the Studio event-stop test no longer races the
   worker's start-up. The job's execution limit starts when the supervisor
   begins to watch the worker, so it also covers the worker's start-up and

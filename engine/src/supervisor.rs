@@ -152,9 +152,13 @@ fn bind_core(core_index: usize) {
 /// transitions may fire at each of `depth` steps while every marking stays non-negative.
 /// Returns true when no sequence puts more than 100 tokens in place 3 after any of those
 /// steps, which is also the answer for a `depth` of 0; a sequence that does, or an
-/// undecided solver, gives false. A snapshot holding a negative marking admits no sequence
-/// at all, so it is reported safe.
+/// undecided solver, gives false. A snapshot holding a negative marking is no valid state of
+/// the net and gives false before the solver runs: asserted into the solver it would make
+/// every query unsatisfiable, which reads as "safe".
 pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool {
+    if snapshot.active_markings.iter().any(|&marking| marking < 0) {
+        return false;
+    }
     // Since z3 0.21 the crate manages the context globally/thread-locally; AST and Solver
     // constructors no longer take an explicit `&Context`.
     let solver = Solver::new();
@@ -418,18 +422,37 @@ impl PySpikingControllerPool {
     /// * `core_snn`: Core affinity target for the real-time SNN lane.
     /// * `core_z3`: Core affinity target for the verifier lane.
     /// * `max_steps`: Hard runtime limit (0 for no hard limit).
+    ///
+    /// The loop runs without the Python GIL, so that another Python thread can call
+    /// `force_shutdown` while it runs; with the GIL held, that call waited for the loop.
     #[pyo3(signature = (core_snn=1, core_z3=2, max_steps=0))]
-    fn start(&self, core_snn: usize, core_z3: usize, max_steps: usize) -> PyResult<usize> {
-        match run_supervisor_steps_with_flag(
+    fn start(
+        &self,
+        py: Python<'_>,
+        core_snn: usize,
+        core_z3: usize,
+        max_steps: usize,
+    ) -> PyResult<usize> {
+        let (n_neurons, seed, snapshot_period, step_interval_ns) = (
             self.n_neurons,
             self.seed,
             self.snapshot_period,
             self.step_interval_ns,
-            core_snn,
-            core_z3,
-            max_steps as u64,
-            self.safe_shutdown_flag.clone(),
-        ) {
+        );
+        let flag = self.safe_shutdown_flag.clone();
+        let outcome = py.detach(move || {
+            run_supervisor_steps_with_flag(
+                n_neurons,
+                seed,
+                snapshot_period,
+                step_interval_ns,
+                core_snn,
+                core_z3,
+                max_steps as u64,
+                flag,
+            )
+        });
+        match outcome {
             Ok(executed) => Ok(executed as usize),
             Err(SupervisorExecutionError::SafetyViolation) => Err(PyRuntimeError::new_err(
                 "Hardware execution terminated: safety contract violation detected by Z3 worker.",
