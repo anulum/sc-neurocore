@@ -31,9 +31,13 @@ import pytest
 
 from tools import cosim_shd_event_core as cosim
 from tools import shd_int_reference as ref
+from tools.benchmark_evidence_gate import tracked_files
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EVENT_DIR = REPO_ROOT / "hdl" / "shd_event"
+#: The license tag every kept file carries, joined at run time so that REUSE does not read this
+#: test's own source as declaring a license expression.
+SPDX_TAG = "SPDX-License-" + "Identifier: AGPL-3.0-or-later"
 FIXTURE_NETWORK = REPO_ROOT / "hdl" / "fixtures" / "shd_int_network.json"
 SYNTH_XILINX_REPORT = REPO_ROOT / "hdl" / "reports" / "sc_shd_event_p_xc7z020_synth_xilinx.txt"
 SIM_TIMEOUT_S = 900.0
@@ -106,14 +110,19 @@ def _sparse_frames(seed: int, steps: int) -> npt.NDArray[np.int64]:
 
 def test_event_tree_inventory_headers_and_unique_digests() -> None:
     """Every expected file exists, carries the 7-line SPDX header, and has a unique digest."""
-    actual = {p.relative_to(EVENT_DIR).as_posix() for p in EVENT_DIR.rglob("*") if p.is_file()}
+    tracked = tracked_files(REPO_ROOT, "hdl/shd_event")
+    if tracked is None:  # an unpacked source distribution has no Git work tree
+        files = [p for p in EVENT_DIR.rglob("*") if p.is_file()]
+    else:  # only Git's files: ignored simulation or synthesis output is not part of the tree
+        files = [REPO_ROOT / name for name in tracked]
+    actual = {p.relative_to(EVENT_DIR).as_posix() for p in files}
     assert actual == EXPECTED_EVENT_FILES
 
     digests: dict[str, str] = {}
     for rel in sorted(actual):
         path = EVENT_DIR / rel
         head = "\n".join(path.read_text(encoding="utf-8").splitlines()[:7])
-        assert "SPDX-License-Identifier: AGPL-3.0-or-later" in head, rel
+        assert SPDX_TAG in head, rel
         assert "ORCID: 0009-0009-3560-0851" in head, rel
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest not in digests, f"{rel} duplicates {digests[digest]}"
@@ -225,7 +234,7 @@ def test_kept_synth_xilinx_report_infers_block_ram_for_every_sc_mem() -> None:
     """The kept xc7z020 synth_xilinx report infers RAMB36E1/RAMB18E1 for every sc_mem."""
     assert SYNTH_XILINX_REPORT.is_file()
     report_text = SYNTH_XILINX_REPORT.read_text(encoding="utf-8")
-    assert "SPDX-License-Identifier: AGPL-3.0-or-later" in "\n".join(report_text.splitlines()[:7])
+    assert SPDX_TAG in "\n".join(report_text.splitlines()[:7])
     sc_mem_blocks = re.findall(
         r"(===\s+\$paramod[^=]*\\sc_mem[^=]*===.*?)(?=\n===|\Z)",
         report_text,
