@@ -128,7 +128,7 @@ mutation contracts, numerical goldens and supported pickle state.
 
 The qualified default interface reference is
 `tests/fixtures/engine_abi_default.json`, for Linux x86-64, CPython 3.12 and
-NumPy 2.2.3 with default engine features. Its matching wheel job compares all
+NumPy 2.5.4 with default engine features. Its matching wheel job compares all
 interface fields; other runtime profiles retain separate measured captures.
 See [model compatibility and migration](../guides/engine_bridge_contracts.md#model-compatibility-and-migration)
 for canonical source models and their explicit retained project profiles.
