@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2221
+expected_file_count = 2223
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8934,3 +8934,11 @@ rationale = "Hold the software safety monitor to its 16-bit probe ranges and its
 [[file]]
 path = "benchmarks/bench_safety_monitor.py"
 rationale = "Document the safety monitor benchmark's scenarios and the stated basis of its backend exemptions."
+
+[[file]]
+path = "src/sc_neurocore/verification/formal_proofs.py"
+rationale = "Document the interval checker's well-formed intervals and the input domains of its two verdicts."
+
+[[file]]
+path = "tests/test_formal_interval_domains.py"
+rationale = "Hold the interval checker to well-formed intervals and to verdicts only inside their input domains."

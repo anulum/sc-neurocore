@@ -251,6 +251,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The interval checker no longer says a property holds for inputs outside
+  its domain: two negative "probability" intervals whose product lies in
+  [0, 1], or a negative energy above a more negative cost, now show nothing:
+  the check returns false and logs why. An interval must have finite ends in
+  order, so a reversed, NaN or infinite end, or an overflowing sum, is
+  refused when it is built.
+
 - The software safety monitor no longer reports a negative current, voltage,
   popcount, SC sum or membrane as safe. Every probe takes only values within
   its 16-bit hardware probe range (unsigned, the SCC numerator signed); any

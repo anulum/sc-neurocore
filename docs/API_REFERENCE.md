@@ -63340,18 +63340,32 @@ Parsed RTL module specification.
 ## Module `verification.formal_proofs`
 
 ### Class `Interval`
+A closed interval ``&#91;min_val, max_val&#93;`` with finite ends and ``min_val <= max_val``.
+
+Raises
+------
+ValueError
+    If an end is NaN or infinite (an arithmetic overflow included), or the ends are reversed.
+
+- **__post_init__**()
+  - Refuse an interval whose ends are not finite or not in order.
 - **__add__**(other)
+  - Return the interval of every sum of a point of each operand.
 - **__mul__**(other)
+  - Return the interval of every product of a point of each operand.
 - **__repr__**()
+  - Return the interval with four decimals per end.
 
 ### Class `FormalVerifier`
-Interval arithmetic checker for stochastic probability bounds and
-energy safety constraints. Not an SMT solver.
+Interval arithmetic checker for stochastic probability bounds and energy safety constraints.
+
+Not an SMT solver. Each check returns ``True`` (``HELD``) only when its inputs lie in the property's domain and
+the property holds for every point of them.
 
 - **verify_probability_bounds**(input_interval, weight_interval)
-  - Prove that Output Probability is always in &#91;0, 1&#93;.
+  - Show that an AND-gate output probability stays in ``&#91;0, 1&#93;``.
 - **verify_energy_safety**(energy, cost)
-  - Prove that operation will not consume more energy than available.
+  - Show that an operation does not consume more energy than is available.
 
 ---
 
