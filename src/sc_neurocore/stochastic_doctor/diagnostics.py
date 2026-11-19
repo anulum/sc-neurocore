@@ -5,7 +5,6 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Stochastic Doctor Diagnostics
-# Authored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)
 
 """Bitstream-level stochastic correlation analysis and diagnostics.
 
@@ -27,6 +26,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from sc_neurocore._native.array_guards import require_c_contiguous
 
@@ -104,8 +104,55 @@ class BitstreamAuditReport:
         return d
 
     def to_json(self, indent: int = 2) -> str:
-        """Serialize to JSON string."""
-        return json.dumps(self.to_dict(), indent=indent)
+        """Serialize to a JSON string per RFC 8259.
+
+        Raises
+        ------
+        ValueError
+            If a field holds NaN or an infinity, which JSON cannot represent.
+        """
+        try:
+            return json.dumps(self.to_dict(), indent=indent, allow_nan=False)
+        except ValueError as exc:
+            raise ValueError(f"report is not representable as JSON: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Input checks (shared by the Python and the native backend)
+# ---------------------------------------------------------------------------
+
+
+def _uses_native() -> bool:
+    """Return whether the native core is selected for this call."""
+    return _HAS_PYO3 and _sdc_rust is not None
+
+
+def _binary_stream(stream: ArrayLike, name: str) -> np.ndarray[Any, Any]:
+    """Return ``stream`` as a C-contiguous 1-D uint8 array of zeros and ones.
+
+    With the native core selected, the layout is checked first, as before, so a
+    non-contiguous view is refused for its layout. The values are then checked
+    as given, before any cast to bytes, so floats, negatives and values above
+    255 cannot be truncated or wrapped into 0 or 1.
+
+    Raises
+    ------
+    ValueError
+        If the layout is not C-contiguous (native core), the array is not
+        one-dimensional, holds complex or non-numeric values, or any value is not
+        exactly 0 or 1.
+    """
+    arr = require_c_contiguous(stream, name) if _uses_native() else np.asarray(stream)
+    if arr.ndim != 1:
+        raise ValueError(f"{name} must be a one-dimensional bitstream, got shape {arr.shape}")
+    real_numeric = np.issubdtype(arr.dtype, np.number) and not np.issubdtype(
+        arr.dtype, np.complexfloating
+    )
+    if not (arr.dtype == np.bool_ or real_numeric):
+        raise ValueError(f"{name} must hold only 0 and 1, got dtype {arr.dtype}")
+    if not np.all((arr == 0) | (arr == 1)):
+        raise ValueError(f"{name} must hold only 0 and 1")
+    return np.ascontiguousarray(arr, dtype=np.uint8)
 
 
 # ---------------------------------------------------------------------------
@@ -131,19 +178,39 @@ def _scc_python(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     return max(-1.0, min(1.0, numerator / denominator))
 
 
-def compute_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
+def compute_scc(a: ArrayLike, b: ArrayLike) -> float:
     """Compute SCC between two bitstreams.
 
     Uses Rust PyO3 acceleration when available, falls back to pure Python.
-    Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
+    Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path. Both backends receive
+    the same checked bytes.
+
+    Parameters
+    ----------
+    a, b : array_like
+        One-dimensional, non-empty bitstreams of equal length holding only 0
+        and 1 (booleans or any numeric dtype).
+
+    Returns
+    -------
+    float
+        The SCC in ``[-1, 1]``.
+
+    Raises
+    ------
+    ValueError
+        If either stream is not a one-dimensional stream of zeros and ones, a
+        stream is empty, or the lengths differ.
     """
+    a_bits = _binary_stream(a, "a")
+    b_bits = _binary_stream(b, "b")
+    if a_bits.shape != b_bits.shape:
+        raise ValueError(f"a and b must have the same length, got {a_bits.size} and {b_bits.size}")
+    if a_bits.size == 0:
+        raise ValueError("SCC needs non-empty bitstreams")
     if _HAS_PYO3 and _sdc_rust is not None:
-        a = require_c_contiguous(a, "a", np.uint8)
-        b = require_c_contiguous(b, "b", np.uint8)
-        return float(_sdc_rust.py_scc_bytes(a, b))
-    a = np.ascontiguousarray(a, dtype=np.uint8)
-    b = np.ascontiguousarray(b, dtype=np.uint8)
-    return _scc_python(a, b)
+        return float(_sdc_rust.py_scc_bytes(a_bits, b_bits))
+    return _scc_python(a_bits, b_bits)
 
 
 # ---------------------------------------------------------------------------
@@ -215,23 +282,35 @@ class StochasticDoctor:
         self.correlation_threshold = correlation_threshold
         self.critical_threshold = critical_threshold
 
-    def compute_correlation(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
+    def compute_correlation(self, a: ArrayLike, b: ArrayLike) -> float:
         """Compute SCC between two bitstreams."""
         return compute_scc(a, b)
 
-    def estimate_precision(self, bitstream: np.ndarray[Any, Any]) -> tuple[float, float]:
+    def estimate_precision(self, bitstream: ArrayLike) -> tuple[float, float]:
         """Estimate probability and variance bound for a bitstream.
 
         Uses Rust PyO3 acceleration when available.
 
+        Parameters
+        ----------
+        bitstream : array_like
+            One-dimensional stream of zeros and ones; an empty stream gives
+            ``(0.0, 0.0)`` on both backends.
+
         Returns
         -------
         (probability, variance_bound)
+
+        Raises
+        ------
+        ValueError
+            If the stream is not one-dimensional or holds a value other than 0
+            and 1.
         """
+        bs = _binary_stream(bitstream, "bitstream")
         if _HAS_PYO3 and _sdc_rust is not None:
-            bs = require_c_contiguous(bitstream, "bitstream", np.uint8)
-            return _sdc_rust.py_precision_bytes(bs)
-        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
+            p_native, variance_native = _sdc_rust.py_precision_bytes(bs)
+            return (float(p_native), float(variance_native))
         n = len(bs)
         if n == 0:
             return (0.0, 0.0)
@@ -239,9 +318,7 @@ class StochasticDoctor:
         variance = p * (1.0 - p) / n
         return (p, variance)
 
-    def compute_histogram(
-        self, bitstream: np.ndarray[Any, Any], word_size: int = 64
-    ) -> np.ndarray[Any, Any]:
+    def compute_histogram(self, bitstream: ArrayLike, word_size: int = 64) -> np.ndarray[Any, Any]:
         """Compute per-word popcount histogram.
 
         Splits the bitstream into chunks of ``word_size`` and counts
@@ -253,12 +330,27 @@ class StochasticDoctor:
         bitstream : ndarray
             1D array of 0/1 values.
         word_size : int
-            Number of bits per word (default 64).
+            Number of bits per word (default 64); a positive integer.
+
+        Returns
+        -------
+        ndarray
+            ``word_size + 1`` int64 counts; bin ``k`` counts the words with
+            ``k`` ones. A shorter final word is counted by its ones.
+
+        Raises
+        ------
+        ValueError
+            If ``word_size`` is not a positive integer, or the stream is not a
+            one-dimensional stream of zeros and ones.
         """
+        if isinstance(word_size, bool) or not isinstance(word_size, (int, np.integer)):
+            raise ValueError(f"word_size must be a positive integer, got {word_size!r}")
+        if word_size < 1:
+            raise ValueError(f"word_size must be a positive integer, got {word_size!r}")
+        bs = _binary_stream(bitstream, "bitstream")
         if _HAS_PYO3 and _sdc_rust is not None:
-            bs = require_c_contiguous(bitstream, "bitstream", np.uint8)
-            return np.asarray(_sdc_rust.py_histogram(bs, word_size))
-        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
+            return np.asarray(_sdc_rust.py_histogram(bs, int(word_size)))
         n = len(bs)
         hist = np.zeros(word_size + 1, dtype=np.int64)
         for start in range(0, n, word_size):
@@ -267,7 +359,7 @@ class StochasticDoctor:
             hist[pc] += 1
         return hist
 
-    def audit_layer(self, layer_id: str, bitstreams: np.ndarray[Any, Any]) -> BitstreamAuditReport:
+    def audit_layer(self, layer_id: str, bitstreams: ArrayLike) -> BitstreamAuditReport:
         """Audit a full layer of bitstreams.
 
         Parameters
@@ -275,13 +367,28 @@ class StochasticDoctor:
         layer_id : str
             Human-readable layer identifier.
         bitstreams : ndarray
-            Shape (num_neurons, stream_length), each element 0 or 1.
+            Shape (num_neurons, stream_length), each element 0 or 1, with at
+            least one neuron and one bit.
 
         Returns
         -------
         BitstreamAuditReport
+
+        Raises
+        ------
+        ValueError
+            If ``bitstreams`` is not two-dimensional, has no neuron or no bit,
+            or holds a value other than 0 and 1.
         """
-        num_neurons, stream_len = bitstreams.shape
+        # Row-major rows are contiguous, so every memory order reaches both backends alike.
+        streams = np.ascontiguousarray(bitstreams)
+        if streams.ndim != 2:
+            raise ValueError(
+                f"bitstreams must have shape (num_neurons, stream_length), got {streams.shape}"
+            )
+        num_neurons, stream_len = streams.shape
+        if num_neurons == 0 or stream_len == 0:
+            raise ValueError("bitstreams must hold at least one neuron and one bit")
         report = BitstreamAuditReport(
             layer=layer_id,
             stream_length=stream_len,
@@ -291,7 +398,7 @@ class StochasticDoctor:
         # Precision analysis
         precisions = []
         for i in range(num_neurons):
-            p, var = self.estimate_precision(bitstreams[i])
+            p, var = self.estimate_precision(streams[i])
             precisions.append(p)
 
         report.mean_precision = float(np.mean(precisions))
@@ -303,7 +410,7 @@ class StochasticDoctor:
 
         for i in range(num_neurons):
             for j in range(i + 1, num_neurons):
-                scc_val = self.compute_correlation(bitstreams[i], bitstreams[j])
+                scc_val = self.compute_correlation(streams[i], streams[j])
                 abs_scc = abs(scc_val)
 
                 if abs_scc > abs(max_corr):

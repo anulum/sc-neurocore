@@ -94,6 +94,26 @@ for scc_value in correlation_stream:
         print(f"Drift detected! EMA={dd.ema:.4f}")
 ```
 
+## Inputs
+
+Bitstreams are one-dimensional arrays (or lists) whose values are exactly 0 or 1,
+as booleans or any real numeric dtype. Every public entry point checks this before it
+chooses a backend, so the Rust core and the Python fallback receive the same
+bytes; any other value, including floats such as 0.5 and integers outside the
+byte range, raises `ValueError` instead of being truncated or wrapped. With the
+Rust core selected, a non-contiguous array is refused for its layout first.
+
+- `compute_scc` needs two non-empty streams of equal length.
+- `estimate_precision` returns `(0.0, 0.0)` for an empty stream.
+- `compute_histogram` needs a positive integer `word_size`.
+- `audit_layer` needs a `(num_neurons, stream_length)` array with at least one
+  neuron and one bit, in any memory order.
+- `BitstreamAuditReport.to_json` raises `ValueError` rather than write a NaN or
+  infinity, which JSON cannot represent.
+
+The timings above measure the Rust and Python kernels directly; the input
+checks run before them and are not included.
+
 ## Architecture
 
 ```

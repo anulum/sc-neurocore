@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2179
+expected_file_count = 2181
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8766,3 +8766,11 @@ rationale = "Event-driven leaky integrate-and-fire simulator: exact per-neuron d
 [[file]]
 path = "tests/test_event_driven_membrane_decay.py"
 rationale = "Hold the event-driven simulator to the closed-form leaky membrane, the refractory and late-event rules, the clock-driven estimate and its input refusals."
+
+[[file]]
+path = "src/sc_neurocore/stochastic_doctor/diagnostics.py"
+rationale = "Bitstream SCC, precision, histogram, drift and layer audit with a Rust core and a Python fallback, each documented with the input it accepts and the same checked bytes for both backends."
+
+[[file]]
+path = "tests/test_stochastic_doctor/test_diagnostics_input_validation.py"
+rationale = "Hold the stochastic doctor's entry points to zero-and-one bitstreams on the Python and the native path, and its reports to JSON without NaN."

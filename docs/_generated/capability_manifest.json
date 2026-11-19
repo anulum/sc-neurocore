@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5722
+    "test_files": 5723
   },
   "documentation": {
     "public_pages": [
@@ -8029,6 +8029,7 @@
       "tests/test_stochastic_doctor/diagnostics_support.py",
       "tests/test_stochastic_doctor/test_diagnostics_branches.py",
       "tests/test_stochastic_doctor/test_diagnostics_drift_detector.py",
+      "tests/test_stochastic_doctor/test_diagnostics_input_validation.py",
       "tests/test_stochastic_doctor/test_diagnostics_scc.py",
       "tests/test_stochastic_doctor/test_diagnostics_stochastic_doctor.py",
       "tests/test_stochastic_doctor_diagnostics_fallback.py",

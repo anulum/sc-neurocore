@@ -239,6 +239,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The stochastic doctor (`compute_scc`, `estimate_precision`,
+  `compute_histogram`, `audit_layer`) now accepts only bitstreams of zeros and
+  ones and checks them before choosing the Rust core or the Python fallback.
+  Other values used to be counted by value in Python and by set bits in Rust,
+  could divide by zero in the Python SCC or index past the histogram, and
+  floats or out-of-range integers were truncated or wrapped into a byte first;
+  they now raise `ValueError`. Empty or unequal SCC streams, a non-positive
+  histogram `word_size` and an audit of a layer with no neuron or no bit, which
+  produced NaN fields, are refused too, and `BitstreamAuditReport.to_json`
+  raises instead of writing NaN tokens. Complex values are refused, and a layer
+  in Fortran or transposed order is audited alike on both backends instead of
+  being refused for its layout on the Rust core only. Results for valid input
+  are unchanged on both backends.
+
 - `EventDrivenSimulator` now leaks every neuron exactly from its own last
   update, `v_rest + (v - v_rest) * exp(-dt / tau_mem)`, instead of never
   leaking a neuron that had not yet spiked and decaying later inputs from the

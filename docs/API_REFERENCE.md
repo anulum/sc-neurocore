@@ -45814,7 +45814,7 @@ JSON-serializable via ``to_json()`` for pipeline integration.
 - **to_dict**()
   - Serialize to a plain dict (JSON-compatible).
 - **to_json**(indent)
-  - Serialize to JSON string.
+  - Serialize to a JSON string per RFC 8259.
 
 ### Class `DriftDetector`
 Exponential moving average drift detector for SCC monitoring.
@@ -45861,7 +45861,25 @@ critical_threshold : float
 Compute SCC between two bitstreams.
 
 Uses Rust PyO3 acceleration when available, falls back to pure Python.
-Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
+Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path. Both backends receive
+the same checked bytes.
+
+Parameters
+----------
+a, b : array_like
+    One-dimensional, non-empty bitstreams of equal length holding only 0
+    and 1 (booleans or any numeric dtype).
+
+Returns
+-------
+float
+    The SCC in ``&#91;-1, 1&#93;``.
+
+Raises
+------
+ValueError
+    If either stream is not a one-dimensional stream of zeros and ones, a
+    stream is empty, or the lengths differ.
 
 ---
 
