@@ -83,14 +83,18 @@ class Deployer:
         Raises
         ------
         ValueError
-            If the device's weight precision is below 1 bit or above the blob's 16-bit weight field, a weight is
-            not finite, or a placement id is negative or too wide for its field (32-bit neuron id, 16-bit core
-            and local ids).
+            If explicit weights differ in shape from the adjacency, the device's weight precision is below 1 bit
+            or above the blob's 16-bit weight field, a weight is not finite, or a placement id is negative or too
+            wide for its field (32-bit neuron id, 16-bit core and local ids).
         """
+        if weights is not None and weights.shape != adjacency.shape:
+            raise ValueError(
+                f"weights of shape {weights.shape} do not match the adjacency's shape {adjacency.shape}"
+            )
         w = weights if weights is not None else adjacency
         config, weight_scale = self._build_config(w, placements, device)
         n_neurons = adjacency.shape[0]
-        n_synapses = int(np.count_nonzero(adjacency))
+        n_synapses = int(np.count_nonzero(w))
         n_cores = max((p.core_id for p in placements), default=-1) + 1
 
         metadata = {
@@ -114,6 +118,7 @@ class Deployer:
         """Validate a deployment package for consistency.
 
         Checks:
+        - When the metadata gives ``n_neurons``, every neuron 0 .. n_neurons - 1 is placed exactly once
         - All neuron IDs are unique and non-negative
         - Every core_id lies in [0, device cores)
         - Config blob is non-empty
@@ -125,6 +130,12 @@ class Deployer:
         neuron_ids = [p.neuron_id for p in package.placements]
         if len(set(neuron_ids)) != len(neuron_ids):
             return False  # duplicate neuron placement
+        n_neurons = package.metadata.get("n_neurons")
+        if n_neurons is not None:
+            if not isinstance(n_neurons, int) or isinstance(n_neurons, bool):
+                return False  # a neuron count that is not a whole number
+            if sorted(neuron_ids) != list(range(n_neurons)):
+                return False  # a neuron unplaced, or an id outside the network
 
         for p in package.placements:
             if p.neuron_id < 0:

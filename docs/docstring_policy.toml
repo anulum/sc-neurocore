@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2229
+expected_file_count = 2230
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8966,3 +8966,7 @@ rationale = "Hold time-warp rollback, anti-message cancellation, starvation lag 
 [[file]]
 path = "tests/test_twinsync/test_twinsync_causal_order.py"
 rationale = "Hold each node's processed log in virtual-time order through a rollback, and the verifier that flags it."
+
+[[file]]
+path = "tests/test_hardware_deployer.py"
+rationale = "Hold packaging, validation and summaries of hardware deployments built from a mapped network."

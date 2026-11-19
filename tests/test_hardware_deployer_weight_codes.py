@@ -24,7 +24,13 @@ from typing import Any
 import numpy as np
 import pytest
 
-from sc_neurocore.hardware import Deployer, DeviceFamily, NeuronPlacement, get_device
+from sc_neurocore.hardware import (
+    Deployer,
+    DeploymentPackage,
+    DeviceFamily,
+    NeuronPlacement,
+    get_device,
+)
 
 
 def _synapse_codes(blob: bytes, n_placements: int) -> list[tuple[int, int, int]]:
@@ -138,3 +144,70 @@ def test_packaging_takes_the_widest_ids_each_field_can_hold() -> None:
         2**16 - 1,
         2**16 - 1,
     )
+
+
+def test_the_package_counts_the_synapses_its_blob_codes() -> None:
+    """With explicit weights, metadata n_synapses equals the blob header's count of coded synapses."""
+    adjacency = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    weights = np.array([[0.0, 0.5, 0.25], [0.75, 0.0, -1.0], [0.0, 0.0, 0.0]])
+    pkg = Deployer().package(
+        adjacency, get_device(DeviceFamily.LOIHI), _placements(3), weights=weights
+    )
+    _, _, header_count = struct.unpack_from(">4sII", pkg.config_blob, 0)
+    assert header_count == int(np.count_nonzero(weights)) == 4
+    assert pkg.metadata["n_synapses"] == header_count
+
+
+@pytest.mark.parametrize(
+    "placements",
+    [
+        [NeuronPlacement(0, 0, 0), NeuronPlacement(1, 0, 1)],
+        [NeuronPlacement(0, 0, 0), NeuronPlacement(1, 0, 1), NeuronPlacement(3, 0, 2)],
+        [
+            NeuronPlacement(0, 0, 0),
+            NeuronPlacement(1, 0, 1),
+            NeuronPlacement(2, 0, 2),
+            NeuronPlacement(3, 0, 3),
+        ],
+    ],
+)
+def test_validation_requires_every_neuron_placed_exactly_once(
+    placements: list[NeuronPlacement],
+) -> None:
+    """A package must place each of its n_neurons neurons, and no neuron id outside the network."""
+    deployer = Deployer()
+    pkg = deployer.package(_weights(), get_device(DeviceFamily.LOIHI), _placements(3))
+    assert deployer.validate(pkg) is True
+    pkg.placements = placements
+    assert deployer.validate(pkg) is False
+
+
+def test_a_package_without_a_neuron_count_still_refuses_a_negative_id() -> None:
+    """A hand-built package with no n_neurons skips the coverage check but not the id-range check."""
+    device = get_device(DeviceFamily.LOIHI)
+    pkg = DeploymentPackage(
+        device=device, placements=[NeuronPlacement(0, 0, 0)], config_blob=b"SCNC"
+    )
+    assert Deployer().validate(pkg) is True
+    pkg.placements = [NeuronPlacement(-1, 0, 0)]
+    assert Deployer().validate(pkg) is False
+
+
+def test_weights_of_another_shape_than_the_adjacency_are_refused() -> None:
+    """The neuron count comes from the adjacency and the blob from the weights, so their shapes must agree."""
+    adjacency = np.zeros((3, 3))
+    weights = np.zeros((4, 4))
+    weights[3, 0] = 1.0
+    with pytest.raises(ValueError, match="do not match the adjacency"):
+        Deployer().package(
+            adjacency, get_device(DeviceFamily.LOIHI), _placements(3), weights=weights
+        )
+
+
+@pytest.mark.parametrize("count", [3.0, "3", True])
+def test_validation_returns_false_for_a_neuron_count_that_is_not_an_integer(count: object) -> None:
+    """A neuron count that is not an integer fails validation instead of raising."""
+    deployer = Deployer()
+    pkg = deployer.package(_weights(), get_device(DeviceFamily.LOIHI), _placements(3))
+    pkg.metadata["n_neurons"] = count
+    assert deployer.validate(pkg) is False

@@ -251,6 +251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- A deployment package no longer contradicts itself: its metadata
+  `n_synapses` now counts the synapses its blob codes (the explicit weights'
+  non-zeros), not the adjacency's; explicit weights must have the
+  adjacency's shape, which gives the neuron count; and validation now
+  requires every neuron of the network to be placed exactly once, refusing a
+  package with an unplaced neuron or a neuron id outside the network, or
+  with a neuron count that is not an integer.
+
 - The time-warp engine's anti-messages now cancel what they name: a rollback
   cancels the queued events the node sent after the rollback time at once,
   and sends anti-messages for the processed ones, which remove the event and
