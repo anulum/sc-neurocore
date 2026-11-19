@@ -92,7 +92,7 @@ def verify_partition(leaves: Sequence[Leaf], input_bits: int) -> None:
 
 
 def bounded_bdd_incomplete(log: Path) -> bool:
-    """Recognize only the existing native node cap or explicit deadline diagnostic.
+    """Recognize native bounded construction aborts and explicit deadline diagnostics.
 
     Parameters
     ----------
@@ -102,15 +102,13 @@ def bounded_bdd_incomplete(log: Path) -> bool:
     Returns
     -------
     bool
-        Whether the native collapse explicitly exhausted its existing limit.
+        Whether the native collapse reported an abort or deadline without a proof.
 
     """
     text = log.read_text(encoding="utf-8")
-    return (
-        "The number of live nodes reached 1000000.\n" in text
-        and "Constructing global BDDs is aborted.\n" in text
-        and "Error: Collapsing has failed.\n" in text
-    ) or "timeout: sending signal KILL to command" in text
+    aborted = "Constructing global BDDs is aborted.\nError: Collapsing has failed.\n" in text
+    timed_out = "timeout: sending signal KILL to command" in text
+    return "Shared BDD size =" not in text and (aborted or timed_out)
 
 
 def _interface(input_bits: int) -> AigerInterface:

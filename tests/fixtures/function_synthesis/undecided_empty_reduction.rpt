@@ -1,0 +1,95 @@
+======== ABC command line "&read singleton.aig; &cec -m -T 1 -v"
+Assuming the current network is a single-output miter.
+Simulating 15 words for 15 rounds. SAT solving with 1000 conflicts.
+cst =   16349  cls =      0  lit =   16349  unused =    1868  proof =     0
+cst =     471  cls =   5623  lit =    8107  unused =    4487  proof =     0
+cst =     426  cls =   5627  lit =    7979  unused =    4611  proof =     0
+cst =     398  cls =   5622  lit =    7887  unused =    4708  proof =     0
+cst =     383  cls =   5619  lit =    7815  unused =    4783  proof =     0
+cst =     377  cls =   5614  lit =    7788  unused =    4815  proof =     0
+cst =     369  cls =   5614  lit =    7755  unused =    4848  proof =     0
+cst =     369  cls =   5614  lit =    7755  unused =    4848  proof =     0
+cst =     369  cls =   5613  lit =    7745  unused =    4859  proof =     0
+cst =     368  cls =   5614  lit =    7741  unused =    4862  proof =     0
+  1 : P =    140. D =      6. F =     0. M =    8101. And =   15929. Time =     0.02 sec
+Switching into reduced mode.
+  2 : P =    153. D =      3. F =     0. M =    7750. And =   15744. Time =     0.02 sec
+Switching into normal mode.
+  3 : P =     73. D =      9. F =     0. M =       0. And =   15637. Time =     0.02 sec
+  4 : P =     19. D =      6. F =     0. M =       0. And =   15549. Time =     0.01 sec
+  5 : P =     29. D =      5. F =     0. M =       0. And =   15385. Time =     0.01 sec
+  6 : P =     56. D =      8. F =     0. M =       0. And =   15162. Time =     0.02 sec
+  7 : P =     61. D =      7. F =     0. M =       0. And =   14847. Time =     0.02 sec
+  8 : P =     74. D =      3. F =     0. M =       0. And =   14555. Time =     0.02 sec
+  9 : P =     64. D =      2. F =     0. M =       0. And =   14301. Time =     0.02 sec
+ 10 : P =     50. D =      3. F =     0. M =       0. And =   14098. Time =     0.02 sec
+ 11 : P =     31. D =      2. F =     0. M =       0. And =   13959. Time =     0.01 sec
+ 12 : P =     30. D =      4. F =     0. M =       0. And =   13811. Time =     0.01 sec
+ 13 : P =     32. D =      3. F =     0. M =       0. And =   13660. Time =     0.01 sec
+ 14 : P =     19. D =      2. F =     0. M =       0. And =   13316. Time =     0.01 sec
+ 15 : P =     12. D =      2. F =     0. M =       0. And =   13256. Time =     0.01 sec
+ 16 : P =     17. D =      2. F =     0. M =       0. And =   13191. Time =     0.01 sec
+ 17 : P =     11. D =      2. F =     0. M =       0. And =   13094. Time =     0.01 sec
+ 18 : P =      6. D =      1. F =     0. M =       0. And =   13067. Time =     0.01 sec
+ 19 : P =      7. D =      0. F =     0. M =       0. And =   12927. Time =     0.01 sec
+ 20 : P =     29. D =      0. F =     0. M =       0. And =   12808. Time =     0.01 sec
+ 21 : P =     39. D =      0. F =     0. M =       0. And =   12289. Time =     0.01 sec
+ 22 : P =     81. D =      0. F =     0. M =       0. And =   11301. Time =     0.01 sec
+ 23 : P =    130. D =      0. F =     0. M =       0. And =    9789. Time =     0.01 sec
+ 24 : P =    105. D =      0. F =     0. M =       0. And =    8121. Time =     0.02 sec
+ 25 : P =     80. D =      0. F =     0. M =       0. And =    7542. Time =     0.03 sec
+ 26 : P =     19. D =      5. F =     0. M =       0. And =    7452. Time =     0.01 sec
+ 27 : P =      8. D =      4. F =     0. M =       0. And =    7409. Time =     0.01 sec
+ 28 : P =     12. D =      6. F =     0. M =       0. And =    7334. Time =     0.02 sec
+ 29 : P =     37. D =      3. F =     0. M =       0. And =    7200. Time =     0.01 sec
+ 30 : P =     45. D =      6. F =     0. M =       0. And =    7050. Time =     0.03 sec
+ 31 : P =     26. D =      5. F =     0. M =       0. And =    6905. Time =     0.02 sec
+ 32 : P =     22. D =      3. F =     0. M =       0. And =    6814. Time =     0.01 sec
+ 33 : P =     22. D =      6. F =     0. M =       0. And =    6687. Time =     0.01 sec
+ 34 : P =     18. D =      5. F =     0. M =       0. And =    6607. Time =     0.01 sec
+ 35 : P =     12. D =      3. F =     0. M =       0. And =    6573. Time =     0.01 sec
+ 36 : P =     11. D =      6. F =     0. M =       0. And =    6538. Time =     0.01 sec
+ 37 : P =      7. D =      4. F =     0. M =       0. And =    6521. Time =     0.01 sec
+ 38 : P =      9. D =      4. F =     0. M =       0. And =    6497. Time =     0.03 sec
+ 39 : P =     12. D =     20. F =     0. M =       0. And =    6470. Time =     0.04 sec
+ 40 : P =      6. D =      5. F =     0. M =       0. And =    6455. Time =     0.01 sec
+ 41 : P =     11. D =      1. F =     0. M =       0. And =    6413. Time =     0.01 sec
+ 42 : P =     11. D =      4. F =     0. M =       0. And =    6361. Time =     0.01 sec
+ 43 : P =     13. D =      2. F =     0. M =       0. And =    6293. Time =     0.01 sec
+ 44 : P =      8. D =      2. F =     0. M =       0. And =    6222. Time =     0.01 sec
+ 45 : P =      8. D =      3. F =     0. M =       0. And =    6169. Time =     0.01 sec
+ 46 : P =      7. D =      3. F =     0. M =       0. And =    6154. Time =     0.01 sec
+ 47 : P =      3. D =      6. F =     0. M =       0. And =    6148. Time =     0.03 sec
+ 48 : P =     11. D =      3. F =     0. M =       0. And =    6126. Time =     0.02 sec
+ 49 : P =      5. D =      4. F =     0. M =       0. And =    6116. Time =     0.01 sec
+ 50 : P =      4. D =      3. F =     0. M =       0. And =    6108. Time =     0.01 sec
+ 51 : P =      5. D =      4. F =     0. M =       0. And =    6096. Time =     0.01 sec
+ 52 : P =      7. D =      5. F =     0. M =       0. And =    6079. Time =     0.02 sec
+ 53 : P =      7. D =      0. F =     0. M =       0. And =    4371. Time =     0.01 sec
+ 54 : P =      4. D =      0. F =     0. M =       0. And =    4342. Time =     0.01 sec
+ 55 : P =      4. D =      0. F =     0. M =       0. And =    4282. Time =     0.01 sec
+ 56 : P =      4. D =      0. F =     0. M =       0. And =    4249. Time =     0.01 sec
+ 57 : P =      3. D =      0. F =     0. M =       0. And =    4157. Time =     0.01 sec
+ 58 : P =      3. D =      0. F =     0. M =       0. And =    4149. Time =     0.01 sec
+ 59 : P =      3. D =      0. F =     0. M =       0. And =    4141. Time =     0.01 sec
+ 60 : P =      3. D =      0. F =     0. M =       0. And =    4095. Time =     0.01 sec
+ 61 : P =      3. D =      0. F =     0. M =       0. And =    4087. Time =     0.01 sec
+ 62 : P =      3. D =      0. F =     0. M =       0. And =    4079. Time =     0.01 sec
+ 63 : P =      3. D =      0. F =     0. M =       0. And =    4071. Time =     0.01 sec
+ 64 : P =      3. D =      0. F =     0. M =       0. And =    4063. Time =     0.01 sec
+ 65 : P =      3. D =      0. F =     0. M =       0. And =    4055. Time =     0.01 sec
+ 66 : P =      3. D =      0. F =     0. M =       0. And =    4009. Time =     0.01 sec
+ 67 : P =      3. D =      0. F =     0. M =       0. And =    4001. Time =     0.01 sec
+ 68 : P =      3. D =      0. F =     0. M =       0. And =    3993. Time =     0.01 sec
+ 69 : P =      3. D =      0. F =     0. M =       0. And =    3985. Time =     0.01 sec
+ 70 : P =      3. D =      0. F =     0. M =       0. And =    3977. Time =     0.01 sec
+ 71 : P =      3. D =      0. F =     0. M =       0. And =    3969. Time =     0.01 sec
+ 72 : P =      2. D =      0. F =     0. M =       0. And =       0. Time =     0.01 sec
+Network after reduction is empty.
+Performed 1968 SAT calls: P = 1773  D = 195  F = 0
+NBeg = 16349. NEnd = 0. (Gain = 100.00 %).  RBeg = 0. REnd = 0. (Gain =   0.00 %).
+Sim  =     0.13 sec (  0.00 %)
+Sat  =     0.54 sec (  0.00 %)
+Pat  =     0.06 sec (  0.00 %)
+Time =     1.00 sec
+Networks are UNDECIDED after the new CEC engine.  Time =     1.01 sec

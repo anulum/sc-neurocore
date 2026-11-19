@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2060
+expected_file_count = 2075
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8290,3 +8290,63 @@ rationale = "Document fresh interpreter and resident packet timing measurements.
 [[file]]
 path = "tests/test_engine_panic_contract.py"
 rationale = "The release profile unwinds and leaves overflow unchecked as the engine page states, a hybrid attention neuron of no slots is refused in a live interpreter, and dense weights are copied through the fallible path."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_checkpoint_serialization.py"
+rationale = "Verify real oversized native checkpoints, lossless compact readback and corrupt artifact refusal."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_gia_partition.py"
+rationale = "Prove every original output using native AIG groups and exercise an altered graph."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_gia_protocol.py"
+rationale = "Check installed solver command selection and independent native transcript validation."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_grouped_mapping.py"
+rationale = "Exercise native carry and DSP mapping with actual multiple output groups."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_mapping_stages.py"
+rationale = "Exercise bounded native mapping stages and exact retained tool evidence."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_proof_deadline.py"
+rationale = "Exercise genuine tool deadlines, process handling and refusal to credit incomplete proof."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_retention_metadata.py"
+rationale = "Validate original measurements and refuse artifacts with damaged cache provenance."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_word_groups.py"
+rationale = "Prove independently connected products from actual checkpoint operations."
+
+[[file]]
+path = "tests/test_tools/test_function_synthesis_word_groups_cse.py"
+rationale = "Verify shared original products without losing physical output coverage."
+
+[[file]]
+path = "tools/function_synthesis_checkpoint_timeout.py"
+rationale = "Retain and verify the original failed bounded tool attempt before staged retry."
+
+[[file]]
+path = "tools/function_synthesis_gia_partition.py"
+rationale = "Prove all original outputs through disjoint native equivalence checks."
+
+[[file]]
+path = "tools/function_synthesis_gia_protocol.py"
+rationale = "Construct native solver invocations and bind known tool transcript outcomes."
+
+[[file]]
+path = "tools/function_synthesis_mapping_stages.py"
+rationale = "Run staged native preparation and complete mapped hardware acquisition."
+
+[[file]]
+path = "tools/function_synthesis_residual_exports.py"
+rationale = "Export bounded complete primitive residual interfaces as native BLIF and AIG."
+
+[[file]]
+path = "tools/function_synthesis_word_groups.py"
+rationale = "Bind checkpoint products to their complete native DSP chain geometry."

@@ -13910,6 +13910,51 @@ ValueError
 
 ## Module `compiler.magnitude_function_programs`
 
+### Function `build_fractional_ratio(p, low, high, width, fraction)`
+Append an exact truncated fraction for two ordered nonnegative magnitudes.
+
+Parameters
+----------
+p : Program
+    Destination signed-64-bit arithmetic program.
+low, high : str
+    Integer value identifiers with zero <= low <= high and high > 0.
+width : int
+    Number of bits that represent the divisor.
+fraction : int
+    Number of fractional quotient bits to emit.
+
+Returns
+-------
+str
+    Identifier for the truncated quotient. The remainder stays strictly
+    below the divisor after each subtraction. Equality produces exactly one.
+
+### Function `build_bounded_isqrt(p, radicand, top_pair)`
+Append the exact integer square root of a bounded nonnegative radicand.
+
+Parameters
+----------
+p : Program
+    Destination evaluated by the maintained compiler targets.
+radicand : str
+    Identifier for a nonnegative integer with no bits above the first pair.
+top_pair : int
+    Even position of the low bit of that first pair.
+
+Returns
+-------
+str
+    Identifier for the floor of the square root. After each pair, the
+    consumed prefix equals the square of the root plus the remainder.
+    The remainder is at most twice the root, so each mask is exact.
+
+### Function `build_bounded_isqrt_with_remainder(p, radicand, top_pair, *, use_borrow)`
+Append the floor square root and its exact nonnegative squared remainder.
+
+The borrow form uses the sign of the same bounded difference that supplies
+the remainder when the trial root fits.
+
 ### Function `build_hypot(p, first, second, data_width, fraction)`
 Append an exactly rounded two-coordinate magnitude to an integer program.
 
@@ -16040,11 +16085,11 @@ data_width, fraction : int
 Returns
 -------
 str
-    Result identifier. A bitwise search finds the greatest unsaturated root
-    with ``code * root**2 <= 2**(3*fraction)``. An exact midpoint comparison
-    rounds it. All eagerly evaluated intermediates fit signed64 even for
-    32-bit inputs and 30 fractional bits. Nonpositive inputs return zero,
-    the documented out-of-domain sentinel, and cannot overflow a branch.
+    Result identifier. A bounded quotient followed by integer square root
+    finds the greatest unsaturated root. The quotient and remainder give
+    the exact rounding decision. All eagerly evaluated intermediates fit
+    signed64 even for 32-bit inputs and 30 fractional bits. Nonpositive
+    inputs return zero and cannot overflow a branch.
 
 ---
 

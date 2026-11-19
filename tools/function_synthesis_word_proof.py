@@ -11,13 +11,19 @@
 from __future__ import annotations
 
 import json
+import math
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from tools.function_synthesis_netlist import Bit, Netlist, parameter_integer
-from tools.function_synthesis_polynomial import ExactWordPolynomials
-from tools.function_synthesis_word_graph import WordGraph
+from tools.function_synthesis_netlist import Bit, Netlist
+from tools.function_synthesis_polynomial import ExactWordPolynomials, WordProofWork
+from tools.function_synthesis_word_graph import WordGraph, word_dependencies
+from tools.function_synthesis_word_groups import (
+    GroupedWordComposition,
+    prove_grouped_word_composition,
+)
 
 
 def _write(path: Path, value: object) -> None:
@@ -63,7 +69,7 @@ class WordComposition:
 
 
 def _original_order(module: Netlist, primary: Mapping[int, str]) -> tuple[str, ...]:
-    """Require every live original value to have an acyclic, known definition."""
+    """Order original result dependencies after complete global combinational validation."""
     drivers: dict[Bit, str] = {}
     for name, cell in module.cells.items():
         for port, direction in cell.directions.items():
@@ -77,7 +83,6 @@ def _original_order(module: Netlist, primary: Mapping[int, str]) -> tuple[str, .
                         "The original word graph constrains an input or has multiple drivers"
                     )
                 drivers[bit] = name
-    active: set[str] = set()
     done: set[str] = set()
     order: list[str] = []
 
@@ -93,21 +98,15 @@ def _original_order(module: Netlist, primary: Mapping[int, str]) -> tuple[str, .
         """Retain a complete topological order without assuming equal cut inputs."""
         if name in done:
             return
-        if name in active:
-            raise ValueError("The original word composition contains a cycle")
-        active.add(name)
         cell = module.cells[name]
-        if cell.kind == "$memrd_v2" and parameter_integer(cell.parameters, "CLK_ENABLE"):
-            raise ValueError("A stateful memory read is not a combinational function proof")
         for port, direction in cell.directions.items():
             if direction != "input":
                 continue
             if cell.kind == "$memrd_v2" and port == "CLK":
-                # CLK_ENABLE=0 was checked above; this pin has no asynchronous ROM semantics.
+                # The global scan required an asynchronous ROM; its clock pin is inactive.
                 continue
             for bit in cell.connections[port]:
                 visit_bit(bit)
-        active.remove(name)
         done.add(name)
         order.append(name)
 
@@ -122,7 +121,9 @@ def prove_word_composition(
     input_widths: Mapping[str, int],
     output_width: int,
     directory: Path | None = None,
-) -> WordComposition:
+    *,
+    deadline: float | None = None,
+) -> WordComposition | GroupedWordComposition:
     """Prove every actual multiplication and all remaining original function edges.
 
     Parameters
@@ -136,10 +137,13 @@ def prove_word_composition(
     directory : pathlib.Path or None, optional
         New private directory retaining wire correspondence and exact derivations.
         None recomputes the bounded identities without writing retained artifacts.
+    deadline : float or None, optional
+        Inherited monotonic case deadline on both individual and grouped paths.
+        Standalone work uses the same existing 3300-second shared allowance.
 
     Returns
     -------
-    WordComposition
+    WordComposition or GroupedWordComposition
         Universal local identities plus the checked acyclic whole-function graph.
 
     Raises
@@ -149,9 +153,22 @@ def prove_word_composition(
         exact product residue. No incomplete identity becomes an accepted component.
 
     """
-    algebra = ExactWordPolynomials()
+    now = time.monotonic()
+    if deadline is not None and (isinstance(deadline, bool) or not math.isfinite(deadline)):
+        raise ValueError("A word proof requires a finite inherited deadline")
+    work = WordProofWork(min(now + 3300, deadline) if deadline is not None else now + 3300)
+    work.check()
+    if any(
+        cell.kind != "$mul" and name not in mapped.cells for name, cell in original.cells.items()
+    ):
+        return prove_grouped_word_composition(
+            original, mapped, input_widths, output_width, directory, deadline=work.deadline
+        )
+    algebra = ExactWordPolynomials(observer=work.observe)
     source = WordGraph(original, algebra, input_widths, output_width, reference_multiplication=True)
     candidate = WordGraph(mapped, algebra, input_widths, output_width)
+    word_dependencies(source)
+    word_dependencies(candidate)
     bindings: dict[int, Bit] = {}
 
     def bind(left: Bit, right: Bit) -> None:
@@ -206,12 +223,21 @@ def prove_word_composition(
         checked.add(name)
     if original.memory_identity != mapped.memory_identity:
         raise ValueError("Original memory declarations changed during DSP mapping")
+    if any(
+        cell.kind not in {"$add", "$sub", "$mul", "DSP48E1"}
+        for name, cell in mapped.cells.items()
+        if name not in checked
+    ):
+        raise ValueError(
+            "A mapped function has no arithmetic disposition or checked original correspondence"
+        )
     order = _original_order(original, original.primary_inputs(input_widths, output_width))
     if directory is not None:
         directory.mkdir(parents=True, exist_ok=False)
     products = 0
     covered: set[str] = set()
     for name, cell in original.cells.items():
+        work.check()
         if cell.kind != "$mul":
             continue
         operands = {port: cell.connections[port] for port in ["A", "B"]}
@@ -220,7 +246,20 @@ def prove_word_composition(
             port: tuple(corresponding(bit) for bit in bits) for port, bits in operands.items()
         }
         actual_result = tuple(corresponding(bit) for bit in result)
-        ring = ExactWordPolynomials()
+        retained = mapped.cells.get(name)
+        retained_name = None
+        if retained is not None and retained.kind == "$mul":
+            if (
+                retained.parameters != cell.parameters
+                or retained.directions != cell.directions
+                or any(
+                    tuple(candidate.find(bit) for bit in retained.connections[port]) != bits
+                    for port, bits in (*actual_operands.items(), ("Y", actual_result))
+                )
+            ):
+                raise ValueError("A retained multiplication changed its parameters or actual ports")
+            retained_name = name
+        ring = ExactWordPolynomials(observer=work.observe)
         gold = WordGraph(
             original,
             ring,
@@ -237,6 +276,7 @@ def prove_word_composition(
             output_width,
             operands=actual_operands,
             result=actual_result,
+            retained_multiplication=retained_name,
         )
         reference_value, candidate_value = gold.read(result, False), gate.read(actual_result, False)
         difference = ring.residue(
@@ -263,7 +303,9 @@ def prove_word_composition(
     proof = WordComposition(
         products, len(checked), tuple(sorted(bindings.items())), order, tuple(sorted(covered))
     )
+    work.check()
     if directory is not None:
         _write(directory / "wire-bindings.json", proof.wire_bindings)
         _write(directory / "word-composition.json", proof.to_dict())
+    work.check()
     return proof

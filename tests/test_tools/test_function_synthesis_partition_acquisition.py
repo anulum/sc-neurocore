@@ -75,7 +75,7 @@ def test_partition_acquisition_checks_actual_io_changes_and_elapsed_time(
     directory = tmp_path / "acquisition"
     directory.mkdir()
     cohort, timeout = (
-        (5.0, 1.0) if kind in {"cohort-completion", "cohort-validation"} else (95.0, 90.0)
+        (5.0, 1.0) if kind in {"cohort-completion", "cohort-validation"} else (3300.0, 90.0)
     )
     if kind == "cohort-reservation":
         baseline = read_partitioned_bdd(original, tools, width)

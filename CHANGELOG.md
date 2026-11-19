@@ -62,6 +62,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The equation compiler can emit a standalone combinational function unit for
+  either lowering. The source-checkout synthesis command records Xilinx
+  7-series cell and DSP counts, verifies the entire mapped interface against
+  the emitted RTL, and reports unsupported function and format combinations
+  explicitly.
+
 - The escape-rate neuron states two behaviour cases. Its reference test's
   seed corpus runs it with the hazard held at rho_0 0.25 and no current,
   where the stream depends on the seed alone; the row of the default seed

@@ -521,18 +521,21 @@ governor, and host load.
 
 | Workload | Median compile time |
 | --- | ---: |
-| Euler registered | 0.147975 ms |
-| Euler folded with parameter port | 0.171089 ms |
-| RK4 registered | 0.397754 ms |
-| Four-substep RK4 registered | 0.803259 ms |
-| Escape-rate registered | 1.473069 ms |
-| Square-root map registered | 0.146427 ms |
-| Negative half-LSB nearest map registered | 0.109432 ms |
-| Quadrant-aware angle map registered | 1.485677 ms |
-| Softplus exponential Euler registered | 4.998718 ms |
+| Euler registered | 0.447941 ms |
+| Euler folded with parameter port | 0.472888 ms |
+| RK4 registered | 1.357615 ms |
+| Four-substep RK4 registered | 2.560791 ms |
+| Escape-rate registered | 4.533367 ms |
+| Square-root map registered | 0.424655 ms |
+| Negative half-LSB nearest map registered | 0.332131 ms |
+| Quadrant-aware angle map registered | 3.235221 ms |
+| Softplus exponential Euler registered | 15.937234 ms |
 
-The run used an 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz with 12 logical CPUs and 31.13 GiB RAM, running Python 3.12.16. The affinity mask allowed 12 logical CPUs; the process ran without a CPU quota or nice level on a shared workstation while other seats' test and build jobs ran (load average 12.48 13.21 13.33 over 1, 5 and 15 minutes at the start). No core was reserved. Hardware, governor, frequency and before/after host load are recorded in the artifact. These measurements are local regression evidence, not
-promotion-grade latency or throughput claims.
+The run used Intel Xeon E5-2640 processors with 24 logical CPUs, 251.85 GiB RAM
+and Python 3.12.16. The affinity mask allowed all 24 logical CPUs. Native
+synthesis and compiler tests ran concurrently. The artifact records
+the hardware, governor, frequency and host load before and after the run.
+These measurements serve as local regression evidence.
 
 ## 11. CLI and hardware profiles
 

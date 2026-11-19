@@ -16,7 +16,8 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.compiler import emit_function_unit_verilog
-from tools.function_synthesis_dsp_proof import prove_primitive_residual
+from tools.function_synthesis_aiger import digest
+from tools.function_synthesis_dsp_proof import prove_primitive_residual, read_primitive_residual
 from tools.function_synthesis_exports import MAPPING_FLOW, module_json_flow
 from tools.function_synthesis_netlist import Netlist
 from tools.function_synthesis_toolchain import SynthesisToolchain
@@ -88,6 +89,8 @@ def test_actual_complete_residual_clamps_every_native_deadline(
     assert proof.primitive_input_bits == 4266 + additional_inputs
     assert proof.free_output_values == 1464 + additional_outputs
     record = json.loads((directory / "gia-proof.json").read_text())
+    residual = json.loads((directory / "primitive-residual.json").read_text())
+    assert residual["native_equivalence_engine"] == record["engine"]
     assert len(record["input_order"]) == 1472 + additional_outputs
     assert len(record["output_order"]) == 4274 + additional_inputs
     receipts = list(directory.glob("*.command.json"))
@@ -95,6 +98,23 @@ def test_actual_complete_residual_clamps_every_native_deadline(
     for receipt in receipts:
         argv = json.loads(receipt.read_text())
         assert 0 < float(argv[argv.index("--verbose") + 1]) <= 90
+
+    read_primitive_residual(word, physical, {"argument0": 8}, 8, tools, directory)
+    command = directory / "word-map.command.json"
+    original_command = command.read_bytes()
+    argv = json.loads(original_command)
+    argv[argv.index("--verbose") + 1] = "91"
+    command.write_text(json.dumps(argv))
+    with pytest.raises(ValueError, match="exceeds its native deadline"):
+        read_primitive_residual(word, physical, {"argument0": 8}, 8, tools, directory)
+    command.write_bytes(original_command)
+
+    checkpoint = directory / "word.prepared.il.gz"
+    checkpoint.write_bytes(checkpoint.read_bytes()[:-2])
+    residual["exports"]["checkpoints"][checkpoint.name]["compressed_sha256"] = digest(checkpoint)
+    (directory / "primitive-residual.json").write_text(json.dumps(residual))
+    with pytest.raises(ValueError, match="truncated or corrupt"):
+        read_primitive_residual(word, physical, {"argument0": 8}, 8, tools, directory)
 
 
 @pytest.mark.parametrize("timeout", [True, 0.0, -1.0, float("inf"), float("nan")])

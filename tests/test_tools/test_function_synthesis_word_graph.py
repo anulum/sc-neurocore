@@ -21,9 +21,114 @@ from tools.function_synthesis_exports import module_json_flow
 from tools.function_synthesis_netlist import Bit, Netlist
 from tools.function_synthesis_polynomial import ExactWordPolynomials
 from tools.function_synthesis_toolchain import SynthesisToolchain
-from tools.function_synthesis_word_graph import WordGraph
+from tools.function_synthesis_word_graph import (
+    WordGraph,
+    word_cone,
+    word_dependencies,
+    word_topological_order,
+)
 
 GraphCase = tuple[Netlist, Netlist]
+
+
+@pytest.mark.parametrize("damage", ["empty", "oversized", "unknown"])
+def test_native_word_reads_refuse_invalid_complete_word_requests(
+    graph_case: GraphCase, damage: str
+) -> None:
+    """Reject invalid width and unknown bits at the public exact-word read boundary."""
+    module = graph_case[0]
+    graph = WordGraph(
+        module, ExactWordPolynomials(), {"argument0": 8}, 8, reference_multiplication=True
+    )
+    bits: tuple[Bit, ...] = {
+        "empty": (),
+        "oversized": module.ports["argument0"].bits * 9,
+        "unknown": ("x",),
+    }[damage]
+    with pytest.raises(ValueError, match="unsupported width or unknown bit"):
+        graph.read(bits, False)
+
+
+@pytest.mark.parametrize("root", ["unknown", "undriven"])
+def test_complete_native_cones_refuse_unbound_requested_roots(
+    graph_case: GraphCase, root: str
+) -> None:
+    """Even a globally checked native graph cannot establish an unknown or undriven new root."""
+    module = graph_case[1]
+    graph = WordGraph(module, ExactWordPolynomials(), {"argument0": 8}, 8)
+    word_dependencies(graph)
+    bit: Bit = (
+        "x"
+        if root == "unknown"
+        else 1 + max(wire for wire in graph.drivers if isinstance(wire, int))
+    )
+    with pytest.raises(ValueError, match="root has an unknown or undriven bit"):
+        word_cone(graph, (bit,), set())
+
+
+def test_native_nonarithmetic_word_cannot_supply_an_unqualified_arithmetic_identity(
+    graph_case: GraphCase,
+) -> None:
+    """Refuse an actual mux as a local exact arithmetic word without changing its native graph."""
+    module = graph_case[0]
+    cell = next(c for c in module.cells.values() if c.kind == "$mux")
+    graph = WordGraph(
+        module, ExactWordPolynomials(), {"argument0": 8}, 8, reference_multiplication=True
+    )
+    with pytest.raises(ValueError, match="unqualified word operation"):
+        graph.read(cell.connections["Y"], False)
+
+
+def test_complete_native_graph_dependency_order_includes_unobserved_cells(
+    graph_case: GraphCase,
+) -> None:
+    """Order every actual cell while keeping the global output cone explicitly distinct."""
+    module = graph_case[1]
+    graph = WordGraph(module, ExactWordPolynomials(), {"argument0": 8}, 8)
+    dependencies = word_dependencies(graph)
+    order = word_topological_order(dependencies)
+    assert set(order) == set(module.cells)
+    positions = {name: index for index, name in enumerate(order)}
+    assert all(
+        positions[parent] < positions[name]
+        for name, parents in dependencies.items()
+        for parent in parents
+    )
+    observed = word_cone(graph, module.ports["result"].bits, set())
+    assert observed and observed <= set(module.cells)
+
+
+@pytest.mark.parametrize("damage", ["state", "cycle", "unknown", "undriven"])
+def test_global_scan_refuses_actual_dependencies_even_outside_requested_roots(
+    graph_case: GraphCase,
+    tmp_path: Path,
+    damage: str,
+) -> None:
+    """A whole native word graph cannot hide invalid state or a bad driver behind local cuts."""
+    module = json.loads(json.dumps(graph_case[1].raw))
+    if damage == "state":
+        module["cells"]["unobserved_state"] = {
+            "type": "$dff",
+            "parameters": {"WIDTH": "1", "CLK_POLARITY": "1"},
+            "port_directions": {"CLK": "input", "D": "input", "Q": "output"},
+            "connections": {
+                "CLK": ["0"],
+                "D": [module["ports"]["result"]["bits"][0]],
+                "Q": [999999],
+            },
+        }
+    else:
+        cell = next(c for c in module["cells"].values() if c["type"] == "$add")
+        cell["connections"]["A"][0] = {
+            "cycle": cell["connections"]["Y"][0],
+            "unknown": "x",
+            "undriven": 999999,
+        }[damage]
+    path = tmp_path / "global-native-fault.json"
+    path.write_text(json.dumps({"modules": {"function_unit": module}}))
+    graph = WordGraph(Netlist.read(path), ExactWordPolynomials(), {"argument0": 8}, 8)
+    with pytest.raises(ValueError):
+        word_dependencies(graph)
 
 
 @pytest.mark.parametrize("mode", ["0000101", "0010101", "1010101", "0110101"])
@@ -310,3 +415,34 @@ def test_actual_arithmetic_cones_require_qualified_widths_signs_and_dependencies
     }
     with pytest.raises(ValueError, match=expected[damage]):
         graph.read(bits, False)
+
+
+def test_actual_constant_output_cannot_hide_a_removed_native_driver(
+    graph_case: GraphCase, tmp_path: Path
+) -> None:
+    """Refuse a constant cell output that leaves actual downstream wires undriven."""
+    original = graph_case[1]
+    used = {
+        bit
+        for cell in original.cells.values()
+        for port, direction in cell.directions.items()
+        if direction == "input"
+        for bit in cell.connections[port]
+        if isinstance(bit, int)
+    }
+    name, index = next(
+        (name, index)
+        for name, cell in original.cells.items()
+        if cell.kind == "$add"
+        for index, bit in enumerate(cell.connections["Y"])
+        if isinstance(bit, int) and bit in used
+    )
+    document = json.loads(json.dumps({"modules": {"function_unit": original.raw}}))
+    document["modules"]["function_unit"]["cells"][name]["connections"]["Y"][index] = "0"
+    path = tmp_path / "removed-native-driver.json"
+    path.write_text(json.dumps(document))
+    graph = WordGraph(Netlist.read(path), ExactWordPolynomials(), {"argument0": 8}, 8)
+    with pytest.raises(ValueError, match="unknown or undriven dependency"):
+        word_dependencies(graph)
+    valid = WordGraph(original, ExactWordPolynomials(), {"argument0": 8}, 8)
+    assert len(word_dependencies(valid)) == len(original.cells)

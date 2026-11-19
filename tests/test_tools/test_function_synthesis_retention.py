@@ -14,13 +14,16 @@ import gzip
 import hashlib
 import json
 import os
+import selectors
 import shutil
+import subprocess
 import sys
 from contextlib import ExitStack
 from pathlib import Path
 
 import pytest
 
+from tools import function_synthesis_retention as retention
 from tools.function_synthesis_cache import CachedFunctionSynthesis, FunctionSynthesisCache
 from tools.function_synthesis_records import SynthesisCase
 from tools.function_synthesis_retention import materialize_artifacts, retain_artifacts
@@ -58,7 +61,7 @@ def test_complete_native_proof_survives_lossless_retention(retention_case: Reten
     }
     with result.open_artifacts() as view:
         assert view != result.directory and view.is_dir()
-        assert view.parent == result.directory.parent
+        assert view.parent == cache.directory
         assert (view / "execution.txt").read_text() == result.recorded_at.isoformat() + "\n"
         assert (
             read_function_synthesis_measurement(SynthesisCase("floor", 8, 0), view, tools)
@@ -79,6 +82,79 @@ def test_complete_native_proof_survives_lossless_retention(retention_case: Reten
     again = cache.get(SynthesisCase("floor", 8, 0))
     assert again is not None and again.measurement == result.measurement
     assert again.recorded_at == result.recorded_at
+
+
+@pytest.mark.parametrize("operation", ["get", "open_artifacts"])
+def test_interrupted_restore_leaves_published_cache_untouched(
+    retention_case: RetentionCase, tmp_path: Path, operation: str
+) -> None:
+    """Kill a real cache reader during restoration and read the sole published result again."""
+    cache, entry = _copy_case(retention_case, tmp_path / "cache")
+    source = Path(__file__).resolve().parents[2]
+    script = """
+from pathlib import Path
+import signal
+import sys
+
+source = Path(sys.argv[1])
+sys.path[:0] = [str(source / "src"), str(source)]
+from tools.function_synthesis_cache import FunctionSynthesisCache
+from tools.function_synthesis_records import SynthesisCase
+from tools.function_synthesis_toolchain import SynthesisToolchain
+
+cache = FunctionSynthesisCache(
+    Path(sys.argv[2]), SynthesisToolchain.inspect(Path(sys.argv[3]))
+)
+case = SynthesisCase("floor", 8, 0)
+operation = sys.argv[4]
+result = cache.get(case) if operation == "open_artifacts" else None
+
+def wait_during_restore(event: str, args: tuple[object, ...]) -> None:
+    \"\"\"Hold the reader immediately before the first native file is copied.\"\"\"
+    if event == "shutil.copyfile":
+        view = Path(str(args[1])).parent
+        if view.name.startswith(".function-proof-view-"):
+            print(view, flush=True)
+            while True:
+                signal.pause()
+
+sys.addaudithook(wait_during_restore)
+if result is None:
+    cache.get(case)
+else:
+    with result.open_artifacts():
+        raise AssertionError("Expected to stop during restoration")
+"""
+    with subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            script,
+            str(source),
+            str(cache.directory),
+            str(tmp_path / "reader-toolchain"),
+            operation,
+        ],
+        cwd=source,
+        stdout=subprocess.PIPE,
+        text=True,
+    ) as reader:
+        assert reader.stdout is not None
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(reader.stdout, selectors.EVENT_READ)
+                assert selector.select(timeout=45), "Reader did not reach native proof restoration"
+            line = reader.stdout.readline().strip()
+            assert line, "Reader exited before native proof restoration"
+            view = Path(line)
+        finally:
+            reader.kill()
+            reader.wait(timeout=5)
+    assert view.parent == cache.directory and view.is_dir()
+    assert list(entry.parent.iterdir()) == [entry]
+    again = cache.get(SynthesisCase("floor", 8, 0))
+    assert again is not None and again.measurement == retention_case[1].measurement
+    shutil.rmtree(view)
 
 
 def test_nested_native_dsp_proof_is_admitted_after_restoration(
@@ -474,3 +550,81 @@ def test_exact_actual_native_byte_budget_retains_the_complete_proof(
             read_function_synthesis_measurement(SynthesisCase("floor", 8, 0), restored, tools)
             == result.measurement
         )
+
+
+def test_compressed_native_stream_refuses_invalid_or_unbounded_contents(
+    retention_case: RetentionCase, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Validate the decoded native bytes and reject empty, truncated and enlarged streams."""
+    _, result, _ = retention_case
+    source = tmp_path / "mapped.v"
+    with result.open_artifacts() as view:
+        shutil.copyfile(view / source.name, source)
+    original = source.read_bytes()
+    retention.compress_native_artifact(source)
+    packed = retention.compressed_native_path(source)
+    encoded = packed.read_bytes()
+    saved = retention.read_compressed_native(packed)
+    assert saved.size == len(original)
+    assert saved.sha256 == hashlib.sha256(original).hexdigest()
+    assert saved.prefix == original[:256]
+    assert saved.suffix == original[-16:]
+    assert not source.exists()
+
+    with monkeypatch.context() as bounded:
+        assert len(encoded) < len(original)
+        bounded.setattr(retention, "_MAX_BYTES", len(encoded))
+        with pytest.raises(ValueError, match="Decoded native artifact exceeds"):
+            retention.read_compressed_native(packed)
+        bounded.setattr(retention, "_MAX_BYTES", len(encoded) - 1)
+        with pytest.raises(ValueError, match="Compressed native artifact exceeds"):
+            retention.read_compressed_native(packed)
+    packed.write_bytes(encoded[:-8])
+    with pytest.raises(ValueError, match="cannot be restored"):
+        retention.read_compressed_native(packed)
+    packed.write_bytes(gzip.compress(b"", mtime=0))
+    with pytest.raises(ValueError, match="must not be empty"):
+        retention.read_compressed_native(packed)
+    linked = tmp_path / "linked.lossless.gz"
+    linked.symlink_to(packed)
+    with pytest.raises(ValueError, match="requires a regular original file"):
+        retention.read_compressed_native(linked)
+    with pytest.raises(ValueError, match="requires a regular original file"):
+        retention.compress_native_artifact(linked)
+    source.touch()
+    with pytest.raises(ValueError, match="Original native artifact exceeds"):
+        retention.compress_native_artifact(source)
+    assert source.is_file()
+
+
+@pytest.mark.parametrize("grow", [False, True])
+def test_native_compression_keeps_source_when_it_changes_during_acquisition(
+    retention_case: RetentionCase, tmp_path: Path, grow: bool
+) -> None:
+    """Reject real edits during the copy, preserve source bytes and undo incomplete packing."""
+    _, result, _ = retention_case
+    source = tmp_path / "mapped.v"
+    with result.open_artifacts() as view:
+        shutil.copyfile(view / source.name, source)
+    original = source.read_bytes()
+    edited = original + b"\n" if grow else b" " + original[1:]
+    assert edited != original
+    armed = True
+
+    def edit_during_read(event: str, arguments: tuple[object, ...]) -> None:
+        """Change the test-owned artifact when compression opens its original byte stream."""
+        nonlocal armed
+        if armed and event == "open" and arguments[:2] == (str(source), "r"):
+            armed = False
+            source.write_bytes(edited)
+
+    edit_during_read.__dict__["__cantrace__"] = True
+    sys.addaudithook(edit_during_read)
+    try:
+        with pytest.raises(ValueError, match="Native artifact changed during compression"):
+            retention.compress_native_artifact(source)
+        assert not armed
+    finally:
+        armed = False
+    assert source.read_bytes() == edited
+    assert not retention.compressed_native_path(source).exists()

@@ -84,6 +84,7 @@ def test_real_success_is_reused_without_rewriting_native_receipts(cache_case: Ca
     assert "tools/function_synthesis_cache.py" in binding["source_sha256"]
     assert "tools/function_synthesis_checkpoints.py" in binding["source_sha256"]
     assert "tools/function_synthesis_bdd.py" in binding["source_sha256"]
+    assert "tools/function_synthesis_mapping_stages.py" in binding["source_sha256"]
     provenance = cache.source_bindings
     assert provenance == binding["source_sha256"]
     provenance.clear()
@@ -260,7 +261,18 @@ def test_mixed_source_checkout_is_refused_by_a_real_import(tmp_path: Path) -> No
     assert not (tmp_path / "cache").exists()
 
 
-def test_real_source_change_during_mapping_cannot_publish_success(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "changed",
+    [
+        "src/sc_neurocore/compiler/function_unit_hardware.py",
+        "tools/function_synthesis_gia_protocol.py",
+        "tools/function_synthesis_word_groups.py",
+        "tools/function_synthesis_mapping_stages.py",
+    ],
+)
+def test_real_source_change_during_mapping_cannot_publish_success(
+    tmp_path: Path, changed: str
+) -> None:
     """Reject a real source-copy edit after native mapping begins and retain its proof."""
     root = Path(__file__).resolve().parents[2]
     checkout = tmp_path / "source-copy"
@@ -299,7 +311,7 @@ def change_source() -> None:
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         if list((root / "cache/attempts").glob("*/measurement/yosys.command.json")):
-            source = root / "src/sc_neurocore/compiler/function_unit_hardware.py"
+            source = root / sys.argv[2]
             with source.open("a") as stream:
                 stream.write("\\n# Actual concurrent source change during native mapping.\\n")
             changed.set()
@@ -325,7 +337,7 @@ print("Real source change refused after actual successful native proof")
         encoding="utf-8",
     )
     result = subprocess.run(
-        [sys.executable, str(script), str(checkout)],
+        [sys.executable, str(script), str(checkout), changed],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -334,7 +346,7 @@ print("Real source change refused after actual successful native proof")
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "source change refused after actual successful native proof" in result.stdout
-    changed_source = Path("src/sc_neurocore/compiler/function_unit_hardware.py")
+    changed_source = Path(changed)
     assert ast.dump(ast.parse((checkout / changed_source).read_text())) == ast.dump(
         ast.parse((root / changed_source).read_text())
     )

@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "generated_at": "2026-11-16T13:22:14.736012+00:00",
+  "generated_at": "2026-11-18T19:31:03.674132+00:00",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
   "language": "Python",
@@ -19,10 +19,10 @@
   },
   "measurement_context": {
     "architecture": "x86_64",
-    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "logical_cpu_count": 12,
-    "ram_bytes": 33422053376,
-    "operating_system": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+    "logical_cpu_count": 24,
+    "ram_bytes": 270423326720,
+    "operating_system": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
     "python_version": "3.12.16",
     "numpy_version": "2.5.4",
     "host_load": "workstation under concurrent load during capture",
@@ -38,26 +38,34 @@
       7,
       8,
       9,
-      10,
-      11
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
     ],
     "load_average_before": [
-      11.55517578125,
-      12.95263671875,
-      13.24169921875
+      55.7294921875,
+      48.41845703125,
+      43.45166015625
     ],
     "load_average_after": [
-      11.6708984375,
-      12.95361328125,
-      13.240234375
+      53.7294921875,
+      48.4384765625,
+      43.5654296875
     ],
     "cpu_governor": [
-      "powersave"
+      "schedutil"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 3794.444,
-      "max_observed_mhz": 3800.262,
-      "sampled_cpu_count": 12.0
+      "min_observed_mhz": 2792.963,
+      "max_observed_mhz": 2793.075,
+      "sampled_cpu_count": 24.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
@@ -68,7 +76,7 @@
     "scipy": "1.18.1",
     "sympy": "1.14.0"
   },
-  "source_head_at_capture": "e9499f9767c1ff8aa367d39cc524d7d3a90ab1b3",
+  "source_head_at_capture": "7836062c74bb642bd16ccfc43ca8cdb29beb84be",
   "source_worktree_dirty": true,
   "source_sha256": {
     "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
@@ -110,7 +118,7 @@
     "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
     "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
     "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
-    "src/sc_neurocore/compiler/function_unit_programs.py": "ccbaa67a3b56c9520d6c796fb1a6f7e7b37e90f6f4b231128e490738b0b0824f",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "78810cef580df9c3be31df2a01e593844f2af3bc1148f2e6b2d57a391e48e668",
     "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
     "src/sc_neurocore/compiler/guarantee_summary.py": "f0717a85b39945b2019cf8031756428b4b6f3b4f73cf793d0ccd13e3ef764092",
     "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
@@ -124,7 +132,7 @@
     "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
     "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
     "src/sc_neurocore/compiler/lut_accuracy.py": "50bca6057ce3ec2d3fff68d3c3dcfb02f460f1129c6fefd2757745f7a3a9b057",
-    "src/sc_neurocore/compiler/magnitude_function_programs.py": "6562e0ac0e99366312be7028f62d316a5d4d5e895bd79a269e8b1d6afe67cd59",
+    "src/sc_neurocore/compiler/magnitude_function_programs.py": "792c6bad5ef36f921847521991bd4c394fb7a415080f69bf9907cd9dc5fe27a4",
     "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
     "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
     "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",
@@ -154,7 +162,7 @@
     "src/sc_neurocore/compiler/quantizer.py": "a1c22cffdb1877bcb1ed7c8ec520e0b906ede6d09d1cb473adb3e13b9c7122c0",
     "src/sc_neurocore/compiler/random_unit_programs.py": "4fd7dc2f4c3a24e9567e7bd0df8a86e75572e8be7e0db877ed56256a11d27a30",
     "src/sc_neurocore/compiler/random_units.py": "c1f41d2ecf9d9f8c26db7d99d8d64c25972ae9f5c51eef9c21470354eb20e421",
-    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "d2329e8ecff469e457c55e7ee0c92f88c72254dffccf3523571235b059d912cc",
+    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "236c8c28e3c57935da2c312c63f27559ffcca60f2974ea628f7721b3676da34f",
     "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
     "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
     "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
@@ -223,17 +231,17 @@
   "source_unchanged_during_capture": true,
   "cases": {
     "paired_exponentials": {
-      "first_call_ns": 6613370,
+      "first_call_ns": 8738875,
       "cached_ns_per_call": [
-        185821.45,
-        188045.28,
-        173843.38,
-        179984.44,
-        185312.03,
-        192701.41,
-        183460.99
+        419228.27,
+        411435.93,
+        413377.18,
+        409074.82,
+        430607.98,
+        423845.99,
+        393686.49
       ],
-      "cached_median_ns_per_call": 185312.03,
+      "cached_median_ns_per_call": 413377.18,
       "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
       "contracts": [
         {
@@ -334,17 +342,17 @@
       "all_repeats_equal": true
     },
     "clipped_hypot": {
-      "first_call_ns": 120407643,
+      "first_call_ns": 467570361,
       "cached_ns_per_call": [
-        310756.18,
-        302844.56,
-        332768.61,
-        322809.23,
-        232019.76,
-        200011.26,
-        270781.28
+        686954.16,
+        683011.51,
+        659377.89,
+        582663.47,
+        547809.69,
+        546710.52,
+        548114.47
       ],
-      "cached_median_ns_per_call": 302844.56,
+      "cached_median_ns_per_call": 582663.47,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -417,17 +425,17 @@
       "all_repeats_equal": true
     },
     "literal_dynamic_powers": {
-      "first_call_ns": 948177461,
+      "first_call_ns": 3200172906,
       "cached_ns_per_call": [
-        256009.19,
-        241640.88,
-        221296.77,
-        223520.78,
-        234079.09,
-        237593.5,
-        216212.91
+        743780.69,
+        752306.66,
+        705496.51,
+        708861.88,
+        723753.6,
+        716707.66,
+        686871.17
       ],
-      "cached_median_ns_per_call": 234079.09,
+      "cached_median_ns_per_call": 716707.66,
       "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
       "contracts": [
         {
@@ -554,18 +562,18 @@
       "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "first_call_ns": 11019587,
+      "first_call_ns": 25340955,
       "cached_ns_per_call": [
-        328966.01,
-        305544.83,
-        362239.05,
-        325809.43,
-        326432.31,
-        348565.1,
-        345625.6
+        947171.76,
+        1004861.25,
+        1200822.71,
+        1145086.83,
+        1166359.44,
+        1153544.72,
+        1140290.84
       ],
-      "cached_median_ns_per_call": 328966.01,
-      "contract_sha256": "29f5d7c2da288f3b0ce00ddf60d6cf6320893b512491d1c5e5f48f96c851e1ec",
+      "cached_median_ns_per_call": 1145086.83,
+      "contract_sha256": "4f14282fbb2e1aca132316c0ee881b29599e2bfaf2fc3ca701a0cbbd03ae9637",
       "contracts": [
         {
           "accuracy": {
@@ -668,11 +676,11 @@
             "domain_cardinality": 256,
             "excluded_domain_codes": 0,
             "exhaustive": true,
-            "max_error": 0.030687216576370635,
+            "max_error": 0.030687216576370524,
             "max_error_at_inputs": [
               -2.0625
             ],
-            "max_error_lsb": 0.49099546522193016,
+            "max_error_lsb": 0.4909954652219284,
             "reference": "Python model function, clipped to the signed word",
             "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
             "valid_code_intervals": [

@@ -1,0 +1,25 @@
+{
+  "case": {
+    "function": "sin",
+    "data_width": 32,
+    "fraction": 16,
+    "lowering": "v2"
+  },
+  "command": "&read singleton.aig; &cec -m -T 1 -v",
+  "captured_at": "2026-11-10T10:21:12.226806+00:00",
+  "log_sha256": "5ba60cfc9db636e13e7a65dd572b4b880b3aaf8daccd7e748a97936f86e734f5",
+  "input_aiger_sha256": {
+    "word.aig": "3a42d11c0e54562eb955199664de1fc692bebcc04ebaf9419bd140ded56fcb10",
+    "physical.aig": "29e2639c9782ec35a30db0803cce9cfc22bb1dfe4f82a13ca053364c7ddc69ef",
+    "singleton.aig": "02f38b2739ffa1d00c7a162b489ebaa2a6c91d635c9817bec8cc7ceacd2330ea"
+  },
+  "native_abc_sha256": "9db8850585a0249ac480b61599fc5e71bfc802c456aa0e16c1a7aa5646a0a9bf",
+  "status": "undecided",
+  "decisive_equivalence": false,
+  "native_versions": {
+    "yosys": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/g++-13 13.3.0)",
+    "abc": "UC Berkeley, ABC 1.01 (compiled Nov  9 2026 16:51:44)",
+    "timeout": "timeout (GNU coreutils) 9.4",
+    "prlimit": "prlimit from util-linux 2.39.3"
+  }
+}

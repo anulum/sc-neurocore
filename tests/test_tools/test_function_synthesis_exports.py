@@ -63,6 +63,64 @@ def _snapshot(root: Path) -> dict[str, tuple[str, int]]:
     return snapshot
 
 
+def test_elapsed_direct_proof_keeps_the_original_mapped_pair(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Recover an actual zero-DSP mapping through the complete retained GIA proof."""
+    root = tmp_path / "measurement"
+    tools = SynthesisToolchain.inspect(tmp_path / "inspection")
+    case = SynthesisCase("heaviside", 8, 4)
+    native_run = SynthesisToolchain.run
+
+    def expire_direct_cec(
+        toolchain: SynthesisToolchain,
+        command: list[str],
+        directory: Path,
+        log: Path,
+        *,
+        timeout: float,
+    ) -> None:
+        """Use a real GNU watchdog for the direct comparison alone."""
+        seconds = 0.0001 if log == root / "equivalence.log" else timeout
+        native_run(toolchain, command, directory, log, timeout=seconds)
+
+    monkeypatch.setattr(SynthesisToolchain, "run", expire_direct_cec)
+    result = run_function_synthesis(case, root, tools)
+    assert result.resources.dsp_blocks == 0
+    assert result.proof_method == "complete-aiger-gia"
+    artifacts = dict(result.artifact_sha256)
+    assert artifacts["equivalence.log"]
+    assert artifacts["reference.aig"] == artifacts["complete-aiger-gia/reference.aig"]
+    assert artifacts["mapped.aig"] == artifacts["complete-aiger-gia/mapped.aig"]
+    initial = _snapshot(root)
+    assert read_function_synthesis_measurement(case, root, tools) == result
+    assert _snapshot(root) == initial
+
+    log = root / "equivalence.log"
+    watchdog = log.read_text()
+    log.write_text("Networks are equivalent. Time = 0.00 sec\n" + watchdog)
+    with pytest.raises(ValueError, match="watchdog conflicts"):
+        read_function_synthesis_measurement(case, root, tools)
+    log.write_text(watchdog)
+
+    recorded = root / "equivalence.command.json"
+    original_command = recorded.read_bytes()
+    command = json.loads(original_command)
+    command[-1] = command[-1].replace("mapped.aig", "substitute.aig")
+    recorded.write_text(json.dumps(command))
+    with pytest.raises(ValueError, match="mapped comparison changed"):
+        read_function_synthesis_measurement(case, root, tools)
+    recorded.write_bytes(original_command)
+
+    mapped = root / "complete-aiger-gia/mapped.aig"
+    original_graph = mapped.read_bytes()
+    mapped.write_bytes(original_graph + b"\n")
+    with pytest.raises(ValueError, match="differs from the original exported pair"):
+        read_function_synthesis_measurement(case, root, tools)
+    mapped.write_bytes(original_graph)
+    assert read_function_synthesis_measurement(case, root, tools) == result
+
+
 def test_original_physical_mapping_prefix_is_byte_exact() -> None:
     """Keep the original synthesis commands rather than silently changing measured hardware."""
     assert hashlib.sha256(SYNTHESIS_FLOW.encode()).hexdigest() == (

@@ -10,12 +10,13 @@
 
 from __future__ import annotations
 
+import heapq
 from collections.abc import Mapping
 from typing import TypeAlias
 
 from tools.function_synthesis_dsp_ports import MacroConfiguration as MacroConfiguration
 from tools.function_synthesis_dsp_ports import configured_dsp as configured_dsp
-from tools.function_synthesis_netlist import Bit, Netlist, parameter_integer
+from tools.function_synthesis_netlist import Bit, Netlist, NetlistCell, parameter_integer
 from tools.function_synthesis_polynomial import ExactWordPolynomials, Polynomial
 
 Driver: TypeAlias = tuple[str, str, int, int]
@@ -41,6 +42,8 @@ class WordGraph:
         Actual product result; an operand boundary must never cross these wires.
     reference_multiplication : bool, optional
         Whether actual original $mul cells may supply reference product words.
+    retained_multiplication : str or None, optional
+        The one native $mul whose complete port correspondence was independently checked.
 
     """
 
@@ -54,10 +57,12 @@ class WordGraph:
         operands: Mapping[str, tuple[Bit, ...]] | None = None,
         result: tuple[Bit, ...] = (),
         reference_multiplication: bool = False,
+        retained_multiplication: str | None = None,
     ) -> None:
         """Validate the complete interface, aliases, drivers and local boundaries."""
         self.module, self.algebra = module, algebra
         self.reference_multiplication = reference_multiplication
+        self.retained_multiplication = retained_multiplication
         self.parents: dict[Bit, Bit] = {}
         self.cells = module.cells
         primary = module.primary_inputs(input_widths, output_width)
@@ -224,7 +229,11 @@ class WordGraph:
             else:
                 value = self.algebra.add(product, self.read(connections["C"], True))
         elif cell.kind in {"$add", "$sub", "$mul"} and port == "Y":
-            if cell.kind == "$mul" and not self.reference_multiplication:
+            if (
+                cell.kind == "$mul"
+                and not self.reference_multiplication
+                and name != self.retained_multiplication
+            ):
                 raise ValueError("An unmapped multiplication remains in a DSP product cone")
             if any(
                 parameter_integer(parameters, pin + "_WIDTH") != len(connections[pin])
@@ -253,3 +262,211 @@ class WordGraph:
         self.stack.remove(name)
         self.memo[identity] = value
         return value
+
+
+_COMBINATIONAL = frozenset(
+    [
+        "$add",
+        "$sub",
+        "$mul",
+        "$div",
+        "$mod",
+        "$divfloor",
+        "$modfloor",
+        "$pow",
+        "$neg",
+        "$pos",
+        "$and",
+        "$or",
+        "$xor",
+        "$xnor",
+        "$not",
+        "$logic_not",
+        "$logic_and",
+        "$logic_or",
+        "$reduce_and",
+        "$reduce_or",
+        "$reduce_xor",
+        "$reduce_xnor",
+        "$reduce_bool",
+        "$lt",
+        "$le",
+        "$eq",
+        "$ne",
+        "$eqx",
+        "$nex",
+        "$ge",
+        "$gt",
+        "$shl",
+        "$shr",
+        "$sshl",
+        "$sshr",
+        "$shift",
+        "$shiftx",
+        "$mux",
+        "$pmux",
+        "$bmux",
+        "$demux",
+        "$concat",
+        "$slice",
+        "$alu",
+        "$macc",
+        "$fa",
+        "$lcu",
+        "$lut",
+        "$sop",
+        "$meminit",
+        "$meminit_v2",
+        "$memrd_v2",
+    ]
+)
+
+
+def active_word_inputs(cell: NetlistCell) -> tuple[Bit, ...]:
+    """Resolve every active input and refuse state even outside the result cone.
+
+    Parameters
+    ----------
+    cell : NetlistCell
+        Actual complete cell configuration and connected input/output vectors.
+
+    Returns
+    -------
+    tuple of int or str
+        Every configured semantic dependency, preserving actual bit order.
+
+    Raises
+    ------
+    ValueError
+        For stateful, unsupported or unqualified primitive configurations.
+    """
+    if cell.kind == "DSP48E1":
+        mode, a_input, b_input = configured_dsp(cell)
+        pins = cell.connections
+        values = pins["ACIN" if a_input == "CASCADE" else "A"][:25]
+        values += pins["BCIN" if b_input == "CASCADE" else "B"]
+        if mode == "0010101":
+            values += pins["PCIN"]
+        elif mode == "1010101":
+            values += pins["PCIN"][17:]
+        elif mode != "0000101":
+            values += pins["C"]
+        return values
+    if cell.kind not in _COMBINATIONAL or (
+        cell.kind == "$memrd_v2" and parameter_integer(cell.parameters, "CLK_ENABLE")
+    ):
+        raise ValueError("A word proof contains state or an unsupported function")
+    return tuple(
+        bit
+        for port in sorted(cell.connections)
+        if cell.directions[port] == "input" and not (cell.kind == "$memrd_v2" and port == "CLK")
+        for bit in cell.connections[port]
+    )
+
+
+def word_topological_order(dependencies: Mapping[str, set[str]]) -> tuple[str, ...]:
+    """Return a deterministic complete topological order, refusing every cycle.
+
+    Parameters
+    ----------
+    dependencies : mapping of str to set of str
+        Complete actual word functions and their checked defining functions.
+
+    Returns
+    -------
+    tuple of str
+        Every function exactly once, with each dependency preceding its user.
+
+    Raises
+    ------
+    ValueError
+        If actual function dependencies contain a cycle.
+    """
+    pending = {name: set(values) for name, values in dependencies.items()}
+    children: dict[str, set[str]] = {name: set() for name in pending}
+    for name, values in pending.items():
+        for parent in values:
+            children[parent].add(name)
+    ready = [name for name, values in pending.items() if not values]
+    heapq.heapify(ready)
+    result = []
+    while ready:
+        name = heapq.heappop(ready)
+        result.append(name)
+        for child in sorted(children[name]):
+            pending[child].remove(name)
+            if not pending[child]:
+                heapq.heappush(ready, child)
+    if len(result) != len(pending):
+        raise ValueError("A grouped word composition contains a cycle")
+    return tuple(result)
+
+
+def word_dependencies(graph: WordGraph) -> dict[str, set[str]]:
+    """Check all drivers, including globally unobserved functions and constants.
+
+    Parameters
+    ----------
+    graph : WordGraph
+        Actual complete primary interface, configured aliases and unique drivers.
+
+    Returns
+    -------
+    dict of str to set of str
+        Every function's actual immediate defining functions.
+
+    Raises
+    ------
+    ValueError
+        For state, unknown or undriven values, unsupported functions or cycles.
+    """
+    result: dict[str, set[str]] = {}
+    for name, cell in graph.cells.items():
+        parents: set[str] = set()
+        for raw in active_word_inputs(cell):
+            bit = graph.find(raw)
+            if bit in {"0", "1"} or bit in graph.leaves:
+                continue
+            if isinstance(bit, str) or bit not in graph.drivers:
+                raise ValueError("A grouped word graph has an unknown or undriven dependency")
+            parents.add(graph.drivers[bit][0])
+        result[name] = parents
+    word_topological_order(result)
+    return result
+
+
+def word_cone(graph: WordGraph, roots: tuple[Bit, ...], frontier: set[Bit]) -> set[str]:
+    """Follow actual configured dependencies without crossing the proved frontier.
+
+    Parameters
+    ----------
+    graph : WordGraph
+        Complete actual checked word graph.
+    roots : tuple of int or str
+        Every actual root bit whose defining cone must be inspected.
+    frontier : set of int or str
+        Already proved outside values at which this local traversal may stop.
+
+    Returns
+    -------
+    set of str
+        All actual functions needed before reaching the proved frontier.
+
+    Raises
+    ------
+    ValueError
+        If any required bit is unknown, undriven or uses an unsupported function.
+    """
+    pending = list(roots)
+    cells: set[str] = set()
+    while pending:
+        bit = graph.find(pending.pop())
+        if bit in {"0", "1"} or bit in graph.leaves or bit in frontier:
+            continue
+        if isinstance(bit, str) or bit not in graph.drivers:
+            raise ValueError("A complete grouped root has an unknown or undriven bit")
+        name = graph.drivers[bit][0]
+        if name not in cells:
+            cells.add(name)
+            pending.extend(active_word_inputs(graph.cells[name]))
+    return cells

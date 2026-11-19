@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import gc
+import hashlib
 import json
 import math
 from collections.abc import Mapping
@@ -18,28 +19,29 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias
 
-from tools.function_synthesis_aiger import AigerInterface
+from tools.function_synthesis_aiger import AigerInterface, digest
 from tools.function_synthesis_dsp_ports import align_dsp_ports
 from tools.function_synthesis_gia import prove_gia_equivalence
+from tools.function_synthesis_json import MAX_NETLIST_BYTES
 from tools.function_synthesis_netlist import Bit, Netlist, object_mapping, parameter_integer
 from tools.function_synthesis_polynomial import ExactWordPolynomials
+from tools.function_synthesis_residual_exports import ResidualExports, plan_residual_exports
+from tools.function_synthesis_source_proof import read_native_equivalence
 from tools.function_synthesis_toolchain import SynthesisToolchain
 from tools.function_synthesis_word_graph import WordGraph
 
 Label: TypeAlias = tuple[str, str, int]
-WORD_EXPORT_ABC = "strash; map\n"
-WORD_EXPORT_FLOW = (
-    "read_json word-cut.json\nhierarchy -check -top function_unit\n"
-    "proc\nmemory_map\nopt\nwreduce\nopt\ntechmap\nopt_clean\n"
-    "abc -g AND -script word-abc.script\nopt_clean\ncheck -assert\n"
-    "write_aiger -symbols word.aig\n"
-)
+
+
+def _encode(payload: object) -> bytes:
+    """Serialize the complete original value in the deterministic native layout."""
+    return (json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode()
 
 
 def _write(path: Path, payload: object) -> None:
-    """Retain a new exact private proof artifact without replacing prior results."""
-    with path.open("x", encoding="utf-8") as stream:
-        stream.write(json.dumps(payload, sort_keys=True, indent=2) + "\n")
+    """Retain every JSON value compactly without replacing prior proof artifacts."""
+    with path.open("xb") as stream:
+        stream.write(_encode(payload))
 
 
 def _output_groups(
@@ -189,7 +191,6 @@ class PrimitiveResidualProof:
     def to_dict(self) -> dict[str, object]:
         """Describe a complete native component proof without changing physical area."""
         return {
-            "native_equivalence_engine": "gia-complete-all-output-or",
             "physical_dsp_count": self.primitive_count,
             "universal_primitive_values": self.free_output_values,
             "compared_primitive_input_bits": self.primitive_input_bits,
@@ -207,14 +208,13 @@ def _bit_names(name: str, width: int) -> frozenset[str]:
     )
 
 
-def _prepare_residual(
+def _residual_artifacts(
     word: Netlist,
     physical: Netlist,
     input_widths: Mapping[str, int],
     output_width: int,
-    directory: Path,
-) -> tuple[PrimitiveResidualProof, AigerInterface]:
-    """Serialize complete checked graphs before starting any native export process."""
+) -> tuple[PrimitiveResidualProof, AigerInterface, dict[str, object], ResidualExports]:
+    """Derive exact source-preserving cuts and flows without writing or running tools."""
     word, alignment = align_dsp_ports(word, physical)
     WordGraph(word, ExactWordPolynomials(), input_widths, output_width)
     WordGraph(physical, ExactWordPolynomials(), input_widths, output_width)
@@ -254,9 +254,10 @@ def _prepare_residual(
     for name, port, label in comparisons:
         output_names |= _bit_names(label, len(source_primitives[name].connections[port]))
     interface = AigerInterface(input_names, output_names)
-    directory.mkdir(parents=True, exist_ok=False)
-    _write(directory / "native-port-alignment.json", alignment)
-    _write(directory / "aligned-word.json", {"modules": {"function_unit": word.clone_module()}})
+    artifacts: dict[str, object] = {
+        "native-port-alignment.json": alignment,
+        "aligned-word.json": {"modules": {"function_unit": word.clone_module()}},
+    }
     for role, module, bits in [("word", word, bits_a), ("physical", physical, bits_b)]:
         clone = module.clone_module()
         ports = object_mapping(clone["ports"])
@@ -272,26 +273,17 @@ def _prepare_residual(
             if cell.kind == "DSP48E1":
                 del cells[name]
         clone["ports"], clone["cells"] = ports, cells
-        _write(directory / (role + "-cut.json"), {"modules": {"function_unit": clone}})
-        flow = (
-            "read_verilog -lib -specify +/xilinx/cells_sim.v\n"
-            f"read_json {role}-cut.json\n"
-            "hierarchy -check -top function_unit\n"
-            "techmap -wb -D EQUIV -autoproc -map +/xilinx/cells_sim.v\n"
-            "proc\nmemory_map\nopt\nwreduce\nopt\ntechmap\nopt_clean\naigmap\nopt_clean\ncheck -assert\n"
-            f"write_aiger -symbols {role}.aig\n"
-        )
+        artifacts[role + "-cut.json"] = {"modules": {"function_unit": clone}}
         if role == "word":
             if any(
                 cell.kind != "DSP48E1" and not cell.kind.startswith("$")
                 for cell in module.cells.values()
             ):
                 raise ValueError("The word residual contains a non-generic actual cell")
-            with (directory / "word-abc.script").open("x", encoding="utf-8") as stream:
-                stream.write(WORD_EXPORT_ABC)
-            flow = WORD_EXPORT_FLOW
-        with (directory / (role + ".ys")).open("x", encoding="utf-8") as stream:
-            stream.write(flow)
+    exports = plan_residual_exports(word, physical)
+    if not exports.division_replay:
+        artifacts["word-abc.script"] = "strash; map\n"
+    artifacts.update({stem + ".ys": script for stem, script in exports.scripts.items()})
     proof = PrimitiveResidualProof(
         len(names),
         len(groups_a),
@@ -301,7 +293,103 @@ def _prepare_residual(
         word_order,
         physical_order,
     )
-    return proof, interface
+    return proof, interface, artifacts, exports
+
+
+def _prepare_residual(
+    word: Netlist,
+    physical: Netlist,
+    input_widths: Mapping[str, int],
+    output_width: int,
+    directory: Path,
+) -> tuple[PrimitiveResidualProof, AigerInterface, ResidualExports]:
+    """Retain the exact cuts derived from the complete original source graphs."""
+    proof, interface, artifacts, exports = _residual_artifacts(
+        word, physical, input_widths, output_width
+    )
+    directory.mkdir(parents=True, exist_ok=False)
+    for name, value in artifacts.items():
+        if isinstance(value, str):
+            with (directory / name).open("x", encoding="utf-8") as stream:
+                stream.write(value)
+        else:
+            _write(directory / name, value)
+    return proof, interface, exports
+
+
+def read_primitive_residual(
+    word: Netlist,
+    physical: Netlist,
+    input_widths: Mapping[str, int],
+    output_width: int,
+    tools: SynthesisToolchain,
+    directory: Path,
+) -> dict[str, object]:
+    """Reconstruct every retained cut from its original graphs before checking native proof.
+
+    Parameters
+    ----------
+    word, physical : Netlist
+        Original complete source and mapped modules, never modified by this reader.
+    input_widths : mapping of str to int
+        Every independent original argument and its complete width.
+    output_width : int
+        Complete original result width.
+    tools : SynthesisToolchain
+        Inspected existing executables and qualified technology-library identities.
+    directory : pathlib.Path
+        Completed component artifacts; no file or timestamp is written.
+
+    Returns
+    -------
+    dict of str to object
+        Recomputed primitive-domain description, native engine and export evidence.
+
+    Raises
+    ------
+    OSError, ValueError
+        For altered source cuts, aliases, controls, flows, interfaces, libraries,
+        engine labels or missing decisive native evidence.
+
+    """
+    proof, interface, artifacts, exports = _residual_artifacts(
+        word, physical, input_widths, output_width
+    )
+    if directory.is_symlink():
+        raise ValueError("A retained primitive proof must not follow a directory link")
+    for name in ("gia-proof.json", "primitive-residual.json"):
+        path = directory / name
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_NETLIST_BYTES:
+            raise ValueError("A retained primitive proof requires bounded regular artifacts")
+    for name, expected in artifacts.items():
+        data = expected.encode() if isinstance(expected, str) else _encode(expected)
+        path = directory / name
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or path.stat().st_size > max(MAX_NETLIST_BYTES, len(data))
+        ):
+            raise ValueError("A retained primitive proof requires bounded regular artifacts")
+        if path.stat().st_size != len(data) or digest(path) != hashlib.sha256(data).hexdigest():
+            raise ValueError(
+                "The retained primitive cut or export flow differs from its source graphs"
+            )
+    export_record = exports.record(directory, tools, interface)
+    read_native_equivalence(directory, "word.aig", "physical.aig", interface, tools)
+    engine = object_mapping(json.loads((directory / "gia-proof.json").read_bytes())).get("engine")
+    expected_record = {
+        **proof.to_dict(),
+        "native_equivalence_engine": engine,
+        "exports": export_record,
+    }
+    retained = object_mapping(json.loads((directory / "primitive-residual.json").read_bytes()))
+    if retained.get("native_equivalence_engine") != engine:
+        raise ValueError("The retained primitive engine differs from its qualified native proof")
+    if retained != expected_record:
+        raise ValueError(
+            "The retained primitive record differs from its qualified native proof or exports"
+        )
+    return expected_record
 
 
 def prove_primitive_residual(
@@ -351,7 +439,7 @@ def prove_primitive_residual(
     if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("A residual proof requires a finite positive native deadline")
     timeout = min(timeout, 90.0)
-    proof, interface = _prepare_residual(
+    proof, interface, exports = _prepare_residual(
         Netlist.read(word) if isinstance(word, Path) else word,
         Netlist.read(physical) if isinstance(physical, Path) else physical,
         input_widths,
@@ -359,18 +447,19 @@ def prove_primitive_residual(
         directory,
     )
     gc.collect()
-    for role in ("word", "physical"):
-        log = directory / (role + "-synthesis.log")
-        tools.run([str(tools.yosys), "-Q", "-T", role + ".ys"], directory, log, timeout=timeout)
-        if role == "physical":
-            tools.check_library_log(log)
-    prove_gia_equivalence(
+    exports.run(directory, tools, timeout, interface)
+    export_record = exports.record(directory, tools, interface)
+    engine = prove_gia_equivalence(
         directory / "word.aig",
         directory / "physical.aig",
         interface,
         tools,
         directory,
         timeout=timeout,
+        singleton_seconds=1,
     )
-    _write(directory / "primitive-residual.json", proof.to_dict())
+    _write(
+        directory / "primitive-residual.json",
+        {**proof.to_dict(), "native_equivalence_engine": engine, "exports": export_record},
+    )
     return proof

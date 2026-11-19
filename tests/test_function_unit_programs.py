@@ -26,6 +26,7 @@ from pathlib import Path
 
 import pytest
 
+from sc_neurocore.compiler import emit_function_unit_verilog
 from sc_neurocore.compiler import function_units as fu
 from sc_neurocore.compiler.function_unit_ir import Program, emit_c, emit_verilog
 from sc_neurocore.compiler.function_unit_programs import program
@@ -38,6 +39,28 @@ def test_exprel_coarse_formats_keep_the_zero_series_limit(fraction: int) -> None
     assert unit.evaluate(0) == 1 << fraction
     for code in range(-128, 128):
         assert unit.evaluate(code) == fu.evaluate("exprel", code, 8, fraction)
+
+
+def test_log10_refuses_a_mantissa_that_does_not_fit(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Reject out-of-range coefficients before the public emitter masks the mantissa."""
+    get_table = fu.table
+    valid = get_table("log2")
+    invalid = ((1 << fu.P, 0, 0), *valid[1:])
+
+    def table_with_overflow(name: str) -> tuple[tuple[int, int, int], ...]:
+        """Supply a segment that cannot fit the admitted fractional word."""
+        return invalid if name == "log2" else get_table(name)
+
+    program.cache_clear()
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(fu, "table", table_with_overflow)
+            with pytest.raises(ValueError, match="log2 mantissa must stay"):
+                emit_function_unit_verilog(
+                    "log10", data_width=16, fraction=8, function_lowering="v2"
+                )
+    finally:
+        program.cache_clear()
 
 
 class TestProgramsEqualReference:

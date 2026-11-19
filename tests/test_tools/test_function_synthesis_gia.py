@@ -24,8 +24,9 @@ from tools.function_synthesis_gia import (
     prove_gia_equivalence,
     read_gia_equivalence,
 )
+from tools.function_synthesis_gia_protocol import _needs_further_proof
 from tools.function_synthesis_records import SynthesisCase
-from tools.function_synthesis_toolchain import SynthesisToolchain
+from tools.function_synthesis_toolchain import SynthesisToolchain, SynthesisToolError
 from tools.function_synthesis_yosys import run_function_synthesis
 
 GiaCase = tuple[Path, SynthesisToolchain, AigerInterface]
@@ -73,6 +74,28 @@ def test_every_output_has_a_difference_before_scalar_aggregation(gia_case: GiaCa
     assert record["all_compared_output_bits"] == 8
     assert record["singleton_output_bits"] == 1
     assert record["input_bits"] == 8 and record["latches"] == 0
+
+
+def test_elapsed_native_checker_requires_another_complete_proof(
+    gia_case: GiaCase, tmp_path: Path
+) -> None:
+    """Recognize an actual command deadline and refuse any contradictory native verdict."""
+    root, tools, _ = gia_case
+    for name in ("reference-plain.aig", "candidate-plain.aig"):
+        shutil.copyfile(root / name, tmp_path / name)
+    log = tmp_path / "native.log"
+    with pytest.raises(SynthesisToolError) as elapsed:
+        tools.run(
+            [str(tools.abc), "-c", "cec -T 60 -n -v reference-plain.aig candidate-plain.aig"],
+            tmp_path,
+            log,
+            timeout=0.0001,
+        )
+    assert elapsed.value.timed_out and _needs_further_proof(log, tools)
+    native_log = log.read_text()
+    log.write_text("Networks are NOT EQUIVALENT.\n" + native_log)
+    with pytest.raises(ValueError, match="watchdog conflicts"):
+        _needs_further_proof(log, tools)
 
 
 @pytest.mark.parametrize(
@@ -142,9 +165,11 @@ def test_invalid_gia_budget_preserves_completed_actual_evidence(
     assert _snapshot(root) == before
 
 
-@pytest.mark.parametrize("seconds", [0.0, -1.0, float("nan"), float("inf"), 91.0])
+@pytest.mark.parametrize(
+    "seconds", [True, 90, "90", None, 0.0, -1.0, float("nan"), float("inf"), 91.0]
+)
 def test_retained_native_gia_deadline_is_validated_without_restamping(
-    gia_case: GiaCase, tmp_path: Path, seconds: float
+    gia_case: GiaCase, tmp_path: Path, seconds: object
 ) -> None:
     """Reject an invalid retained native deadline while preserving its actual proof bytes."""
     source, tools, interface = gia_case

@@ -23,7 +23,7 @@ from tools.function_synthesis_polynomial import ExactWordPolynomials
 from tools.function_synthesis_structural_proof import compare_word_structure
 from tools.function_synthesis_toolchain import SynthesisToolchain
 from tools.function_synthesis_word_graph import WordGraph, configured_dsp
-from tools.function_synthesis_word_proof import prove_word_composition
+from tools.function_synthesis_word_proof import WordComposition, prove_word_composition
 
 WordCase = tuple[Path, Netlist, Netlist]
 
@@ -69,6 +69,7 @@ def test_actual_word_products_and_all_original_function_edges(
     """Prove every complete product and all unchanged functions of the real emitted unit."""
     _, original, mapped = word_case
     proof = prove_word_composition(original, mapped, {"argument0": 8}, 8, tmp_path / "proof")
+    assert isinstance(proof, WordComposition)
     assert proof.product_count == 4 and proof.non_multiplier_count == 36
     assert proof.covered_product_cells
     assert proof.to_dict()["wire_bindings_checked"] == len(proof.wire_bindings)

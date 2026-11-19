@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -20,7 +21,7 @@ from tools.function_synthesis_dsp_ports import configured_dsp
 from tools.function_synthesis_exports import module_json_flow
 from tools.function_synthesis_netlist import Netlist
 from tools.function_synthesis_toolchain import SynthesisToolchain
-from tools.function_synthesis_word_proof import prove_word_composition
+from tools.function_synthesis_word_proof import WordComposition, prove_word_composition
 
 WordProofCase = tuple[Netlist, Netlist]
 
@@ -52,6 +53,7 @@ def test_actual_word_correspondence_proves_every_complete_product(
 ) -> None:
     """Preserve all four products and every unchanged function in the native checkpoint."""
     proof = prove_word_composition(*word_proof_case, {"argument0": 8}, 8, tmp_path / "complete")
+    assert isinstance(proof, WordComposition)
     assert proof.product_count == 4 and proof.non_multiplier_count == 36
     before = {
         p: (p.read_bytes(), p.stat().st_mtime_ns)
@@ -63,6 +65,59 @@ def test_actual_word_correspondence_proves_every_complete_product(
     )
     assert before == {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in before}
     assert len(list((tmp_path / "complete").glob("product-*.json"))) == 4
+
+
+def test_inherited_individual_deadline_preserves_the_complete_native_certificate(
+    word_proof_case: WordProofCase, tmp_path: Path
+) -> None:
+    """Keep every actual product and edge when a valid enclosing budget is supplied."""
+    expected = prove_word_composition(*word_proof_case, {"argument0": 8}, 8)
+    actual = prove_word_composition(
+        *word_proof_case,
+        {"argument0": 8},
+        8,
+        tmp_path / "complete",
+        deadline=time.monotonic() + 3300,
+    )
+    assert isinstance(actual, WordComposition)
+    assert actual.to_dict() == expected.to_dict()
+    assert len(list((tmp_path / "complete").glob("product-*.json"))) == 4
+
+
+@pytest.mark.parametrize("deadline", [-1.0, True, float("nan"), float("inf")])
+def test_individual_proof_refuses_exhausted_or_invalid_enclosing_budget(
+    word_proof_case: WordProofCase, tmp_path: Path, deadline: float
+) -> None:
+    """Refuse the real individual-product path before creating any accepted artifact."""
+    directory = tmp_path / "refused"
+    message = "shared case budget" if deadline == -1 else "finite inherited deadline"
+    with pytest.raises(ValueError, match=message):
+        prove_word_composition(*word_proof_case, {"argument0": 8}, 8, directory, deadline=deadline)
+    assert not directory.exists()
+
+
+def test_new_unobserved_function_requires_an_arithmetic_disposition(
+    word_proof_case: WordProofCase, tmp_path: Path
+) -> None:
+    """Refuse an unmatched actual native negation before individual proof publication."""
+    original, mapped = word_proof_case
+    module = json.loads(json.dumps(mapped.raw))
+    cell = json.loads(json.dumps(next(c for c in module["cells"].values() if c["type"] == "$neg")))
+    fresh = 1 + max(
+        bit
+        for c in module["cells"].values()
+        for bits in c["connections"].values()
+        for bit in bits
+        if isinstance(bit, int)
+    )
+    cell["connections"]["Y"] = list(range(fresh, fresh + len(cell["connections"]["Y"])))
+    module["cells"]["unaccounted_negation"] = cell
+    path = tmp_path / "mapped-unobserved-negation.json"
+    path.write_text(json.dumps({"modules": {"function_unit": module}}))
+    directory = tmp_path / "refused"
+    with pytest.raises(ValueError, match="no arithmetic disposition"):
+        prove_word_composition(original, Netlist.read(path), {"argument0": 8}, 8, directory)
+    assert not directory.exists()
 
 
 def test_original_checkpoint_with_duplicate_primitive_drivers_is_refused(
@@ -102,6 +157,53 @@ def test_original_checkpoint_with_duplicate_primitive_drivers_is_refused(
     with pytest.raises(ValueError, match="original word graph constrains an input or has multiple"):
         prove_word_composition(original, original, {"argument0": 8}, 8, proof)
     assert not proof.exists()
+
+
+@pytest.mark.parametrize("state", ["register", "clocked-rom"])
+def test_extra_native_dsp_feeding_state_cannot_escape_global_word_validation(
+    word_proof_case: WordProofCase, tmp_path: Path, state: str
+) -> None:
+    """Reject an unobserved actual DSP feeding state before issuing an individual product proof."""
+    original, mapped = word_proof_case
+    module = json.loads(json.dumps(mapped.raw))
+    cells = module["cells"]
+    extra = json.loads(json.dumps(next(c for c in cells.values() if c["type"] == "DSP48E1")))
+    fresh = 1 + max(
+        bit
+        for cell in cells.values()
+        for bits in cell["connections"].values()
+        for bit in bits
+        if isinstance(bit, int)
+    )
+    for port, direction in extra["port_directions"].items():
+        if direction == "output":
+            size = len(extra["connections"][port])
+            extra["connections"][port] = list(range(fresh, fresh + size))
+            fresh += size
+    cells["additional_native_product"] = extra
+    signal = extra["connections"]["P"][0]
+    if state == "register":
+        cells["additional_register"] = {
+            "type": "$dff",
+            "parameters": {"WIDTH": "1", "CLK_POLARITY": "1"},
+            "port_directions": {"CLK": "input", "D": "input", "Q": "output"},
+            "connections": {
+                "CLK": [module["ports"]["argument0"]["bits"][0]],
+                "D": [signal],
+                "Q": [fresh],
+            },
+        }
+    else:
+        memory = next(c for c in cells.values() if c["type"] == "$memrd_v2")
+        memory["parameters"]["CLK_ENABLE"] = "1"
+        memory["parameters"]["CLK_POLARITY"] = "1"
+        memory["connections"]["CLK"] = [signal]
+    path = tmp_path / "stateful-mapped.json"
+    path.write_text(json.dumps({"modules": {"function_unit": module}}))
+    directory = tmp_path / "refused"
+    with pytest.raises(ValueError, match="contains state"):
+        prove_word_composition(original, Netlist.read(path), {"argument0": 8}, 8, directory)
+    assert not (directory / "word-composition.json").exists()
 
 
 @pytest.mark.parametrize(
@@ -240,9 +342,10 @@ def test_actual_arccos_full_word_products_include_unshifted_cascade(tmp_path: Pa
     }
     assert cascades
     proof = prove_word_composition(original, mapped, {"argument0": 16}, 16, tmp_path / "proof")
-    assert proof.product_count == 5
+    assert isinstance(proof, WordComposition)
+    source_products = {name for name, cell in original.cells.items() if cell.kind == "$mul"}
+    assert len(source_products) == proof.product_count == 3
     assert cascades <= set(proof.covered_product_cells)
-    assert all(
-        json.loads(path.read_text())["difference"] == []
-        for path in (tmp_path / "proof").glob("product-*.json")
-    )
+    product_records = list((tmp_path / "proof").glob("product-*.json"))
+    assert len(product_records) == len(source_products)
+    assert all(json.loads(path.read_text())["difference"] == [] for path in product_records)

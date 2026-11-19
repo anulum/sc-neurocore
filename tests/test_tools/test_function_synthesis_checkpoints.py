@@ -20,8 +20,13 @@ from pathlib import Path
 
 import pytest
 
-from tools.function_synthesis_checkpoints import export_checkpoint_aigers, read_checkpoint_aigers
+from tools.function_synthesis_checkpoints import (
+    _streamed_checkpoint,
+    export_checkpoint_aigers,
+    read_checkpoint_aigers,
+)
 from tools.function_synthesis_records import SynthesisCase
+from tools.function_synthesis_retention import compress_native_artifact, compressed_native_path
 from tools.function_synthesis_toolchain import SynthesisToolchain
 from tools.function_synthesis_yosys import run_function_synthesis
 
@@ -75,6 +80,145 @@ def test_binary_native_checkpoint_exports_keep_both_independent_operands(
     record = json.loads((root / "checkpoints/checkpoint-exports.json").read_text())
     assert record["original_input_bits"] == 16
     assert record["original_output_bits"] == 8
+
+
+def test_compressed_checkpoint_binds_the_actual_native_rtlil(
+    native_exports: NativeExports,
+    tmp_path: Path,
+) -> None:
+    """Preserve a native RTLIL snapshot byte for byte and reject incomplete retained data."""
+    _, root, _ = native_exports
+    raw = gzip.decompress((root / "checkpoints/reference.il.gz").read_bytes())
+    checkpoint = tmp_path / "native.il"
+    checkpoint.write_bytes(raw)
+    original = _streamed_checkpoint(checkpoint)
+    compress_native_artifact(checkpoint)
+    retained = compressed_native_path(checkpoint)
+    assert not checkpoint.exists()
+    assert _streamed_checkpoint(retained) == original
+    assert gzip.decompress(retained.read_bytes()) == raw
+    retained.write_bytes(retained.read_bytes()[:-5])
+    with pytest.raises(ValueError, match="cannot be restored"):
+        _streamed_checkpoint(retained)
+
+
+def _reject_changed_timeout_plan(
+    case: SynthesisCase, root: Path, tools: SynthesisToolchain, target: Path
+) -> None:
+    """Refuse changes to the genuine timed-out stage plan and its original artifact tree."""
+    initial = target / "initial-export-timeout"
+    held = target.parent / "retained-timeout-artifact"
+    for name, message in (
+        ("reference-finish.ys", "timed-out checkpoint script changed"),
+        ("reference-finish.command.json", "exact executed plan prefix"),
+    ):
+        artifact = initial / name
+        artifact.rename(held)
+        with pytest.raises(ValueError, match=message):
+            read_checkpoint_aigers(case, root, tools, target)
+        held.rename(artifact)
+    shared_input = initial / "unit.v"
+    shared_input.hardlink_to(target / "unit.v")
+    with pytest.raises(ValueError, match="shared original inputs"):
+        read_checkpoint_aigers(case, root, tools, target)
+    shared_input.unlink()
+    unrecorded = initial / "unexpected-link"
+    unrecorded.symlink_to(initial / "reference-finish.log")
+    with pytest.raises(ValueError, match="nonregular artifact"):
+        read_checkpoint_aigers(case, root, tools, target)
+    unrecorded.unlink()
+    initial.rename(held)
+    initial.symlink_to(held, target_is_directory=True)
+    with pytest.raises(ValueError, match="requires a regular directory"):
+        read_checkpoint_aigers(case, root, tools, target)
+    initial.unlink()
+    held.rename(initial)
+
+
+def test_native_timeout_recovers_through_the_complete_staged_export(
+    native_exports: NativeExports, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Capture a real GNU timeout and prove both complete export roles through readback."""
+    case, root, tools = native_exports
+    native_run = SynthesisToolchain.run
+
+    def expire_reference_write(
+        toolchain: SynthesisToolchain,
+        command: list[str],
+        directory: Path,
+        log: Path,
+        *,
+        timeout: float,
+    ) -> None:
+        """Keep the installed executable and use a short native deadline for one stage."""
+        allowed = 0.001 if log.name == "reference-finish.log" else timeout
+        native_run(toolchain, command, directory, log, timeout=allowed)
+
+    monkeypatch.setattr(SynthesisToolchain, "run", expire_reference_write)
+    target = tmp_path / "checkpoints"
+    export_checkpoint_aigers(case, root, tools, target)
+    receipt = json.loads((target / "checkpoint-exports.json").read_text())
+    assert receipt["initial_timeout_stage"] == "reference-finish"
+    assert receipt["schema_version"] == "sc-neurocore.complete-function-checkpoints.v4"
+    assert receipt["original_input_bits"] == receipt["original_output_bits"] == 8
+    preserved = target / "initial-export-timeout/reference-finish.log"
+    assert "sending signal KILL to command" in preserved.read_text()
+    assert (
+        receipt["artifact_sha256"][preserved.relative_to(target).as_posix()]
+        == hashlib.sha256(preserved.read_bytes()).hexdigest()
+    )
+    read_checkpoint_aigers(case, root, tools, target)
+    command = preserved.with_suffix(".command.json")
+    original_command = command.read_bytes()
+    original_argv: list[str] = json.loads(original_command)
+    changed_argv = original_argv.copy()
+    changed_argv[-1] = "changed-script.ys"
+    expired_argv = original_argv.copy()
+    expired_argv[6] = "91"
+    for payload, message in (
+        (b"{}", "requires its original argument vector"),
+        (json.dumps(changed_argv).encode(), "differs from the bounded native export"),
+        (json.dumps(expired_argv).encode(), "exceeds its native deadline"),
+    ):
+        command.write_bytes(payload)
+        with pytest.raises(ValueError, match=message):
+            read_checkpoint_aigers(case, root, tools, target)
+    command.write_bytes(original_command)
+    _reject_changed_timeout_plan(case, root, tools, target)
+    history = preserved.parent / ".local/state/yosys/history"
+    if history.is_file():
+        history_bytes = history.read_bytes()
+        assert receipt["artifact_sha256"][history.relative_to(target).as_posix()] == (
+            hashlib.sha256(history_bytes).hexdigest()
+        )
+        history.write_bytes(history_bytes + b"changed native history\n")
+        with pytest.raises(ValueError, match="differs from its original bindings"):
+            read_checkpoint_aigers(case, root, tools, target)
+        history.write_bytes(history_bytes)
+        extra = history.with_name("unexpected-entry")
+        extra.write_bytes(history_bytes)
+        with pytest.raises(ValueError, match="unexpected native history entries"):
+            read_checkpoint_aigers(case, root, tools, target)
+        extra.unlink()
+        history.unlink()
+        history.symlink_to(preserved)
+        with pytest.raises(ValueError, match="nonregular native history"):
+            read_checkpoint_aigers(case, root, tools, target)
+        history.unlink()
+        with pytest.raises(ValueError, match="differs from its original bindings"):
+            read_checkpoint_aigers(case, root, tools, target)
+        history.write_bytes(history_bytes)
+        original_directory = tmp_path / "retained-native-state"
+        history.parent.rename(original_directory)
+        history.parent.symlink_to(original_directory, target_is_directory=True)
+        with pytest.raises(ValueError, match="invalid native history directory"):
+            read_checkpoint_aigers(case, root, tools, target)
+        history.parent.unlink()
+        original_directory.rename(history.parent)
+    read_checkpoint_aigers(case, root, tools, target)
+    preserved.write_text("No recorded native timeout\n")
+    with pytest.raises(ValueError, match="verified native deadline"):
+        read_checkpoint_aigers(case, root, tools, target)
 
 
 @pytest.mark.parametrize("budget", [False, 0.0, -1.0, 91.0, float("nan"), float("inf")])

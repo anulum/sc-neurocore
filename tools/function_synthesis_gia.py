@@ -6,13 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Complete native GIA equivalence with explicit output aggregation
 
-"""Compare every named model bit through a retained, full-domain singleton miter."""
+"""Compare every named model bit through retained, full-domain native proofs."""
 
 from __future__ import annotations
 
 import json
 import math
 import re
+import time
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -23,29 +25,29 @@ from tools.function_synthesis_aiger import (
     digest,
     read_aiger_port_order,
 )
+from tools.function_synthesis_gia_partition import PARTITION_DIRECTORY, check_partitioned_outputs
+from tools.function_synthesis_gia_protocol import (
+    _CONSTRUCTION,
+    _GENERATED,
+    _IVY,
+    _IVY_SCRIPT,
+    _PAIRED,
+    _PLAIN,
+    _check_commands,
+    _check_ivy_unsat,
+    _check_log,
+    _needs_further_proof,
+    _paired_script,
+    _singleton_limit,
+    _watchdog_elapsed,
+)
+from tools.function_synthesis_gia_protocol import (
+    check_gia_equivalent_verdict as check_gia_equivalent_verdict,
+)
 from tools.function_synthesis_netlist import object_mapping
-from tools.function_synthesis_toolchain import SynthesisToolchain
+from tools.function_synthesis_toolchain import SynthesisToolchain, SynthesisToolError
 
 _RECORD = "gia-proof.json"
-_CONSTRUCTION = (
-    "&read reference-plain.aig; &miter candidate-plain.aig; "
-    "&write all-differences.aig; &put; orpos; &get; &write singleton.aig"
-)
-_PLAIN = ("reference-plain.aig", "candidate-plain.aig")
-_LOGS = (
-    "cec-help",
-    "reference-io",
-    "candidate-io",
-    "reference-normalize",
-    "candidate-normalize",
-    "reference-roundtrip",
-    "candidate-roundtrip",
-    "gia-construction",
-    "equivalence",
-)
-_GENERATED = (*_PLAIN, "all-differences.aig", "singleton.aig") + tuple(
-    name + suffix for name in _LOGS for suffix in (".log", ".command.json")
-)
 
 
 def _encoded(payload: object) -> str:
@@ -59,60 +61,16 @@ def _sources() -> dict[str, str]:
         name: digest(Path(__file__).with_name(name))
         for name in (
             "function_synthesis_gia.py",
+            "function_synthesis_gia_protocol.py",
+            "function_synthesis_gia_partition.py",
             "function_synthesis_aiger.py",
+            "function_synthesis_checkpoint_timeout.py",
             "function_synthesis_netlist.py",
+            "function_synthesis_partition.py",
+            "function_synthesis_retention.py",
             "function_synthesis_toolchain.py",
         )
     }
-
-
-def _check_log(log: Path) -> None:
-    """Refuse a native construction or normalization error even with a zero process status."""
-    if re.search(
-        r"^\s*(?:ERROR|Error|Aborting|Aborted|\*\* cmd error)\b",
-        log.read_text(encoding="utf-8"),
-        re.M,
-    ):
-        raise ValueError("A complete GIA native transformation did not succeed")
-
-
-def _commands(reference: Path, candidate: Path, timeout: float) -> dict[str, tuple[str, float]]:
-    """Derive the full original-domain protocol and each unchanged native ceiling."""
-    seconds = max(1, min(60, int(timeout)))
-    scripts = {"cec-help": ("cec -h", min(timeout, 15.0))}
-    for path, label, plain in zip(
-        (reference, candidate), ("reference", "candidate"), _PLAIN, strict=True
-    ):
-        scripts[label + "-io"] = (f"read_aiger {path.name}; print_io", min(timeout, 15.0))
-        scripts[label + "-normalize"] = (f"read_aiger {path.name}; write_aiger {plain}", timeout)
-        scripts[label + "-roundtrip"] = (f"cec -T {seconds} -n -v {path.name} {plain}", timeout)
-    scripts["gia-construction"] = (_CONSTRUCTION, timeout)
-    scripts["equivalence"] = (f"&read singleton.aig; &cec -m -T {seconds} -v", timeout)
-    return scripts
-
-
-def _check_commands(
-    reference: Path, candidate: Path, directory: Path, tools: SynthesisToolchain, timeout: float
-) -> None:
-    """Bind every retained invocation to its inspected executables, script and finite deadline."""
-    for label, (script, ceiling) in _commands(reference, candidate, timeout).items():
-        expected = [
-            str(tools.limits),
-            "--core=0",
-            "--",
-            str(tools.deadline),
-            "--signal=KILL",
-            "--verbose",
-            str(ceiling),
-            str(tools.abc),
-            "-s",
-            "-c",
-            script,
-        ]
-        actual: object = json.loads((directory / (label + ".command.json")).read_bytes())
-        if actual != expected:
-            raise ValueError("A complete GIA native command differs from its original protocol")
-        _check_log(directory / (label + ".log"))
 
 
 def _paths(reference: Path, candidate: Path, directory: Path) -> None:
@@ -124,71 +82,21 @@ def _paths(reference: Path, candidate: Path, directory: Path) -> None:
         or any(
             path.parent.resolve() != directory.resolve()
             or re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*[.]aig", path.name) is None
-            or path.name in _GENERATED
+            or path.name in (*_GENERATED, *_PAIRED)
             for path in (reference, candidate)
         )
     ):
         raise ValueError("Complete GIA proofs require distinct original local AIG exports")
 
 
-def _artifacts(reference: Path, candidate: Path, directory: Path) -> dict[str, str]:
+def _artifacts(
+    reference: Path, candidate: Path, directory: Path, stages: tuple[str, ...]
+) -> dict[str, str]:
     """Require every complete input, transformation and native proof artifact to remain regular."""
-    names = (reference.name, candidate.name, *_GENERATED)
+    names = (reference.name, candidate.name, *_GENERATED, *stages)
     if any((directory / name).is_symlink() or not (directory / name).is_file() for name in names):
         raise ValueError("Complete GIA proof artifacts must be regular retained files")
     return {name: digest(directory / name) for name in names}
-
-
-def check_gia_equivalent_verdict(log: Path) -> None:
-    """Require decisive complete equality from the known native GIA protocol.
-
-    Parameters
-    ----------
-    log : pathlib.Path
-        Actual native checker output for the already validated singleton miter.
-
-    Notes
-    -----
-    This ABC version can reduce the entire miter to a constant, report its new
-    engine undecided, then prove the reduced miter with its old checker. That
-    transcript is admitted only with explicit empty-reduction and zero-node
-    final checks. The existing single-verdict CEC admission remains unchanged.
-
-    Raises
-    ------
-    OSError, ValueError
-        For errors, negative, incomplete, contradictory or unrecognized transcripts.
-
-    """
-    try:
-        check_equivalent_verdict(log)
-        return
-    except ValueError:
-        text = log.read_text(encoding="utf-8")
-    verdicts = [line for line in text.splitlines() if line.startswith("Networks are ")]
-    if (
-        len(verdicts) != 2
-        or re.fullmatch(
-            r"Networks are UNDECIDED after the new CEC engine\.[ \t]+Time =.*", verdicts[0]
-        )
-        is None
-        or re.fullmatch(r"Networks are equivalent\.[ \t]+Time =.*", verdicts[1]) is None
-        or re.search(r"^\s*(?:ERROR|Error)\b", text, re.M)
-        or not (
-            "Network after reduction is empty.\n" in text
-            or re.search(r"^NBeg = 0\. NEnd = 0\.", text, re.M)
-        )
-    ):
-        raise ValueError("Complete native GIA equivalence was not proved")
-    markers = (
-        re.escape(verdicts[0]),
-        r"Calling the old CEC engine\.",
-        r"Original miter:[ \t]+Nodes =[ \t]+0\.",
-        r"Initial SAT:[ \t]+Nodes =[ \t]+0\.[ \t]+Time =[^\n]*",
-        re.escape(verdicts[1]),
-    )
-    if re.search(r"\n".join(markers), text) is None:
-        raise ValueError("The GIA fallback did not prove the complete reduced singleton miter")
 
 
 def _completed(
@@ -198,11 +106,11 @@ def _completed(
     tools: SynthesisToolchain,
     directory: Path,
     timestamp: str,
-    native_seconds: float,
+    native_seconds: object,
+    singleton_seconds: object,
 ) -> dict[str, object]:
     """Derive complete current bindings from the actual native protocol artifacts."""
     _paths(reference, candidate, directory)
-    artifacts = _artifacts(reference, candidate, directory)
     parsed = datetime.fromisoformat(timestamp)
     if parsed.tzinfo != UTC or parsed.isoformat() != timestamp:
         raise ValueError("A complete GIA proof requires its original canonical UTC timestamp")
@@ -212,7 +120,14 @@ def _completed(
         or not 0 < native_seconds <= 90
     ):
         raise ValueError("A complete GIA proof requires its original finite native deadline")
-    _check_commands(reference, candidate, directory, tools, native_seconds)
+    paired = _needs_further_proof(directory / "equivalence.log", tools)
+    ivy = paired and _needs_further_proof(directory / "paired-equivalence.log", tools)
+    stages = (*_PAIRED, *_IVY) if ivy else _PAIRED if paired else ()
+    artifacts = _artifacts(reference, candidate, directory, stages)
+    singleton_seconds = _singleton_limit(native_seconds, singleton_seconds)
+    _check_commands(
+        reference, candidate, directory, tools, native_seconds, paired, singleton_seconds, ivy=ivy
+    )
     for path in (reference, candidate, *(directory / name for name in _PLAIN)):
         check_aiger_header(path, interface)
     a = read_aiger_port_order(directory / "reference-io.log", interface)
@@ -228,10 +143,19 @@ def _completed(
         directory / "singleton.aig",
         AigerInterface(interface.inputs, frozenset({"all_original_and_primitive_differences_or"})),
     )
-    check_gia_equivalent_verdict(directory / "equivalence.log")
-    return {
-        "schema_version": "sc-neurocore.complete-gia-equivalence.v1",
-        "engine": "gia-complete-all-output-or",
+    partition = directory / PARTITION_DIRECTORY
+    partitioned = ivy and _watchdog_elapsed(directory / "ivy-equivalence.log", tools)
+    if ivy and not partitioned:
+        _check_ivy_unsat(directory / "ivy-equivalence.log")
+    if not partitioned and (partition.exists() or partition.is_symlink()):
+        raise ValueError("Unexpected native output comparisons after a complete proof")
+    record: dict[str, object] = {
+        "schema_version": "sc-neurocore.complete-gia-equivalence.v2"
+        if paired
+        else "sc-neurocore.complete-gia-equivalence.v1",
+        "engine": "complete-paired-output-cec-after-undecided-gia"
+        if paired
+        else "gia-complete-all-output-or",
         "status": "equivalent",
         "recorded_at": timestamp,
         "native_seconds": native_seconds,
@@ -248,6 +172,25 @@ def _completed(
         "toolchain_sha256": tools.identity,
         "artifact_sha256": artifacts,
     }
+    if singleton_seconds != _singleton_limit(native_seconds, None):
+        record["schema_version"] = "sc-neurocore.complete-gia-equivalence.v3"
+        record["singleton_seconds"] = singleton_seconds
+    if ivy:
+        record["schema_version"] = "sc-neurocore.complete-gia-equivalence.v4"
+        record["engine"] = "ivy-complete-all-output-or-after-undecided-gia"
+    if partitioned:
+        record["schema_version"] = "sc-neurocore.complete-gia-equivalence.v5"
+        record["engine"] = "complete-native-output-comparisons"
+        record["output_partition"] = check_partitioned_outputs(
+            directory / _PLAIN[0],
+            directory / _PLAIN[1],
+            *a,
+            tools,
+            partition,
+            native_seconds,
+            acquire=False,
+        )
+    return record
 
 
 def read_gia_equivalence(
@@ -256,7 +199,7 @@ def read_gia_equivalence(
     interface: AigerInterface,
     tools: SynthesisToolchain,
     directory: Path,
-) -> None:
+) -> str:
     """Validate retained complete GIA evidence without executing or restamping a proof.
 
     Parameters
@@ -269,6 +212,11 @@ def read_gia_equivalence(
         Currently inspected native executables and technology libraries.
     directory : pathlib.Path
         Complete source-bound normalization, all-output miter and native proof.
+
+    Returns
+    -------
+    str
+        Selected native engine from the completely validated original record.
 
     Raises
     ------
@@ -285,13 +233,22 @@ def read_gia_equivalence(
     record = object_mapping(json.loads(text))
     timestamp = record.get("recorded_at")
     native_seconds = record.get("native_seconds")
-    if not isinstance(timestamp, str) or type(native_seconds) is not float:
+    engine = record.get("engine")
+    if not isinstance(timestamp, str) or not isinstance(engine, str):
         raise ValueError("A complete GIA proof lacks its original qualification timestamp")
     expected = _completed(
-        reference, candidate, interface, tools, directory, timestamp, native_seconds
+        reference,
+        candidate,
+        interface,
+        tools,
+        directory,
+        timestamp,
+        native_seconds,
+        record.get("singleton_seconds"),
     )
     if text != _encoded(expected):
         raise ValueError("Complete GIA evidence differs from its original qualified binding")
+    return engine
 
 
 def prove_gia_equivalence(
@@ -302,7 +259,8 @@ def prove_gia_equivalence(
     directory: Path,
     *,
     timeout: float,
-) -> None:
+    singleton_seconds: int | None = None,
+) -> str:
     """Prove complete ordered models using an explicit OR of every output difference.
 
     Parameters
@@ -318,12 +276,29 @@ def prove_gia_equivalence(
     timeout : float
         Finite positive per-command ceiling, at most ninety seconds. Native
         proof commands additionally request at most sixty internal seconds.
+    singleton_seconds : int or None, optional
+        Smaller internal allowance for the singleton checker, between one and
+        the default native ceiling. None retains that default. Normalization,
+        paired checking and the enclosing proof budget keep their original
+        ceilings. A nondefault allowance is retained in a v3 protocol record.
+
+    Returns
+    -------
+    str
+        Actual native engine after complete original-record validation.
 
     Notes
     -----
     Native by-order normalization is admitted only after exact named-order
     comparison. Both complete round trips require explicit equality. The final
-    checker receives one scalar OR of all differences, never a vector miter.
+    GIA checker receives one scalar OR of all differences. If that checker
+    explicitly exhausts its native deadline without deciding, a second CEC
+    command compares the complete normalized output vectors. Both strategies
+    retain every input and output. If the paired GIA checker also gives a
+    recognized bounded undecided result, Ivy must prove the complete scalar
+    difference miter UNSAT within sixty seconds. An elapsed Ivy command can
+    select exact groups of original output comparisons under the same budget.
+    Negative or malformed verdicts cannot select another strategy.
     Failed native attempts remain intact and receive no successful record.
 
     Raises
@@ -336,11 +311,16 @@ def prove_gia_equivalence(
     """
     if isinstance(timeout, bool) or not math.isfinite(timeout) or not 0 < timeout <= 90:
         raise ValueError("A complete GIA proof requires an admitted finite native deadline")
+    deadline = time.monotonic() + 3300
+    if tools.cohort_deadline is not None:
+        deadline = min(deadline, tools.cohort_deadline)
+    tools = replace(tools, cohort_deadline=deadline)
     timeout = float(timeout)
+    singleton_seconds = _singleton_limit(timeout, singleton_seconds)
     _paths(reference, candidate, directory)
     if any(
         (directory / name).exists() or (directory / name).is_symlink()
-        for name in (*_GENERATED, _RECORD)
+        for name in (*_GENERATED, *_PAIRED, *_IVY, _RECORD, PARTITION_DIRECTORY)
     ):
         raise ValueError("Complete GIA proofs must not overwrite earlier native artifacts")
     before = {path.name: digest(path) for path in (reference, candidate)}
@@ -357,13 +337,25 @@ def prove_gia_equivalence(
         )
         _check_log(directory / (label + ".log"))
 
+    def undecided(label: str, script: str) -> bool:
+        """Retain an elapsed native check and require another complete proof."""
+        log = directory / (label + ".log")
+        try:
+            run(label, script)
+        except SynthesisToolError as error:
+            if not error.timed_out or not _needs_further_proof(log, tools):
+                raise
+            return True
+        return _needs_further_proof(log, tools)
+
     run("cec-help", "cec -h", min(timeout, 15.0))
     if "[default = by name]" not in (directory / "cec-help.log").read_text(encoding="utf-8"):
         raise ValueError("The native normalization checker did not confirm its matching policy")
     for path, label in ((reference, "reference"), (candidate, "candidate")):
         check_aiger_header(path, interface)
         run(label + "-io", f"read_aiger {path.name}; print_io", min(timeout, 15.0))
-    if read_aiger_port_order(directory / "reference-io.log", interface) != read_aiger_port_order(
+    order = read_aiger_port_order(directory / "reference-io.log", interface)
+    if order != read_aiger_port_order(
         directory / "candidate-io.log",
         interface,
     ):
@@ -381,13 +373,39 @@ def prove_gia_equivalence(
         directory / "singleton.aig",
         AigerInterface(interface.inputs, frozenset({"all_original_and_primitive_differences_or"})),
     )
-    run("equivalence", f"&read singleton.aig; &cec -m -T {seconds} -v")
-    check_gia_equivalent_verdict(directory / "equivalence.log")
+    if undecided("equivalence", f"&read singleton.aig; &cec -m -T {singleton_seconds} -v"):
+        if undecided("paired-equivalence", _paired_script(timeout, tools)):
+            ivy_log = directory / "ivy-equivalence.log"
+            try:
+                run("ivy-equivalence", _IVY_SCRIPT, min(timeout, 60.0))
+            except SynthesisToolError as error:
+                if not error.timed_out or not _watchdog_elapsed(ivy_log, tools):
+                    raise
+                check_partitioned_outputs(
+                    directory / _PLAIN[0],
+                    directory / _PLAIN[1],
+                    *order,
+                    tools,
+                    directory / PARTITION_DIRECTORY,
+                    timeout,
+                    acquire=True,
+                )
+            else:
+                _check_ivy_unsat(ivy_log)
     if before != {path.name: digest(path) for path in (reference, candidate)} or code != _sources():
         raise ValueError("Original complete models or the GIA proof implementation changed")
     tools.verify()
     timestamp = datetime.now(UTC).isoformat()
-    record = _completed(reference, candidate, interface, tools, directory, timestamp, timeout)
-    with (directory / _RECORD).open("x", encoding="utf-8") as stream:
+    record = _completed(
+        reference, candidate, interface, tools, directory, timestamp, timeout, singleton_seconds
+    )
+    if time.monotonic() > deadline:
+        raise ValueError("The complete native comparison exhausted its shared deadline")
+    retained = directory / _RECORD
+    with retained.open("x", encoding="utf-8") as stream:
         stream.write(_encoded(record))
-    read_gia_equivalence(reference, candidate, interface, tools, directory)
+    engine = read_gia_equivalence(reference, candidate, interface, tools, directory)
+    if time.monotonic() > deadline:
+        retained.unlink()
+        raise ValueError("The complete native comparison readback exhausted its shared deadline")
+    return engine

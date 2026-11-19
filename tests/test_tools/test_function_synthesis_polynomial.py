@@ -11,10 +11,11 @@
 from __future__ import annotations
 
 import itertools
+import time
 
 import pytest
 
-from tools.function_synthesis_polynomial import ExactWordPolynomials, Polynomial
+from tools.function_synthesis_polynomial import ExactWordPolynomials, Polynomial, WordProofWork
 
 
 def _evaluate(ring: ExactWordPolynomials, polynomial: Polynomial, bits: dict[str, int]) -> int:
@@ -125,3 +126,127 @@ def test_invalid_floor_slice_and_signed_width_are_refused() -> None:
     with pytest.raises(ValueError, match="slice"):
         ring.slice(ring.constant(1), 8, 2, 8, False)
     assert ring.constant(0) == {}
+
+
+def test_materialised_work_observation_preserves_exact_signed_arithmetic() -> None:
+    """Observed nested floors and wraps retain every independent integer result."""
+    work = WordProofWork(time.monotonic() + 30)
+    ring = ExactWordPolynomials(observer=work.observe)
+    word = ring.add(*(ring.scale(ring.boolean(f"x{i}"), 1 << i) for i in range(6)))
+    signed = ring.signed_wrap(word, 6)
+    square = ring.multiply(signed, signed)
+    shifted = ring.floor(square, 2)
+    sliced = ring.slice(shifted, 12, 0, 7, False)
+    reduced = ring.residue(sliced, 8)
+    for assignment in itertools.product((0, 1), repeat=6):
+        bits = {f"x{i}": bit for i, bit in enumerate(assignment)}
+        raw = sum(bit << i for i, bit in enumerate(assignment))
+        value = raw if raw < 32 else raw - 64
+        assert _evaluate(ring, reduced, bits) % 256 == ((value * value) // 4) % 256
+    assert {
+        "boolean",
+        "add",
+        "scale",
+        "multiply",
+        "signed_wrap",
+        "floor",
+        "slice",
+        "residue",
+    } <= work.calls.keys()
+    assert (
+        max(len(word), len(signed), len(square), len(shifted), len(sliced)) <= work.peak <= 100000
+    )
+    assert sum(work.terms.values()) > len(reduced)
+    assert work.to_dict()["expression_term_limit"] == 100000
+    assert 0 <= work.check_record(work.to_dict()) <= 30
+
+
+def test_observed_and_unobserved_real_expressions_have_identical_canonical_results() -> None:
+    """Instrumentation leaves actual atoms, polynomial coefficients and exceptions unchanged."""
+    work = WordProofWork(time.monotonic() + 30)
+    results = []
+    errors = []
+    for ring in [ExactWordPolynomials(), ExactWordPolynomials(observer=work.observe)]:
+        x = ring.add(*(ring.scale(ring.boolean(f"x{i}"), 1 << i) for i in range(8)))
+        signed = ring.signed_wrap(x, 8)
+        product = ring.multiply(signed, ring.add(signed, ring.constant(-3)))
+        shifted = ring.floor(product, 3)
+        low = ring.slice(shifted, 17, 0, 7, False)
+        high_signed = ring.slice(x, 8, 2, 7, True)
+        middle_signed = ring.slice(x, 8, 1, 3, True)
+        assert ring.floor(ring.scale(x, 4), 2) == x
+        assert ring.signed_wrap(ring.constant(2), 4) == ring.constant(2)
+        carry = ring.floor(ring.add(ring.boolean("x0"), ring.boolean("x1")), 1)
+        assert ring.floor(carry, 1) == {}
+        for assignment in itertools.product((0, 1), repeat=8):
+            bits = {f"x{i}": bit for i, bit in enumerate(assignment)}
+            unsigned = sum(bit << i for i, bit in enumerate(assignment))
+            value = unsigned if unsigned < 128 else unsigned - 256
+            fragment = (unsigned >> 1) & 7
+            assert _evaluate(ring, high_signed, bits) == value // 4
+            assert _evaluate(ring, middle_signed, bits) == (
+                fragment if fragment < 4 else fragment - 8
+            )
+        results.append(
+            (
+                ring.describe(low),
+                ring.describe(ring.residue(low, 8)),
+                ring.describe(high_signed),
+                ring.describe(middle_signed),
+                dict(ring.atom_definitions),
+            )
+        )
+        try:
+            ring.slice(product, 8, 7, 8, False)
+        except ValueError as error:
+            errors.append(str(error))
+    assert results[0] == results[1]
+    assert len(errors) == 2 and errors[0] == errors[1]
+    assert work.calls["multiply"] > 0
+
+
+def test_zero_remaining_real_monotonic_budget_refuses_the_next_operation() -> None:
+    """A deadline at the real current clock gives the next operation no positive allowance."""
+    boundary = time.monotonic()
+    work = WordProofWork(boundary)
+    ring = ExactWordPolynomials(observer=work.observe)
+    with pytest.raises(ValueError, match="exhausted the shared case budget"):
+        ring.boolean("actual-boundary-bit")
+    assert work.deadline == boundary and work.calls["boolean"] == 1
+
+
+@pytest.mark.parametrize(
+    "damage", ["boolean-time", "negative-time", "nan-time", "exhausted", "count", "missing"]
+)
+def test_actual_work_records_refuse_invalid_counters_and_distinguish_exhaustion(
+    damage: str,
+) -> None:
+    """A retained real algebra ledger must match recomputed work and a bounded elapsed time."""
+    work = WordProofWork(time.monotonic() + 30)
+    ring = ExactWordPolynomials(observer=work.observe)
+    ring.multiply(ring.add(ring.boolean("a"), ring.constant(1)), ring.boolean("b"))
+    record = work.to_dict()
+    if damage == "missing":
+        del record["operation_calls"]
+    elif damage == "count":
+        record["peak_expression_terms"] = work.peak + 1
+    else:
+        record["elapsed_seconds"] = {
+            "boolean-time": True,
+            "negative-time": -1,
+            "nan-time": float("nan"),
+            "exhausted": 3301,
+        }[damage]
+    with pytest.raises(
+        ValueError, match="exhausted" if damage == "exhausted" else "invalid|differs"
+    ):
+        work.check_record(record)
+
+
+def test_actual_operation_reports_enclosing_deadline_exhaustion() -> None:
+    """CPU algebra cannot bypass an already exhausted inherited case allowance."""
+    work = WordProofWork(time.monotonic() - 1)
+    ring = ExactWordPolynomials(observer=work.observe)
+    with pytest.raises(ValueError, match="exhausted the shared case budget"):
+        ring.constant(7)
+    assert work.calls["constant"] == 1 and work.terms["constant"] == 1

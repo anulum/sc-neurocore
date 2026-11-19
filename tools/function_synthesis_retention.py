@@ -33,6 +33,7 @@ _SCHEMA = "sc-neurocore.lossless-proof-artifacts.v1"
 _MAX_BYTES = 1024**3
 _MAX_ENTRIES = 50_000
 _MAX_MANIFEST = 16 * 1024**2
+_NATIVE_GZIP_SUFFIX = ".lossless.gz"
 
 
 def _digest(path: Path) -> str:
@@ -165,6 +166,93 @@ def _restore(path: Path, record: _Artifact, destination: BinaryIO | None) -> Non
         raise ValueError("Restored proof artifact differs from its original bytes")
 
 
+@dataclass(frozen=True, slots=True)
+class NativeGzip:
+    """Identify the bytes inside a losslessly retained native intermediate."""
+
+    size: int
+    sha256: str
+    prefix: bytes
+    suffix: bytes
+
+
+def compressed_native_path(path: Path) -> Path:
+    """Name a packed native intermediate without confusing it with a tool-produced gzip."""
+    return path.with_name(path.name + _NATIVE_GZIP_SUFFIX)
+
+
+def is_compressed_native(path: Path) -> bool:
+    """Identify the compression format reserved for complete original native files."""
+    return path.name.endswith(_NATIVE_GZIP_SUFFIX)
+
+
+def read_compressed_native(path: Path) -> NativeGzip:
+    """Hash and bound the decoded native stream without restoring it to disk."""
+    if not is_compressed_native(path) or path.is_symlink() or not path.is_file():
+        raise ValueError("A compressed native artifact requires a regular original file")
+    if not 0 < path.stat().st_size <= _MAX_BYTES:
+        raise ValueError("Compressed native artifact exceeds its finite byte budget")
+    identity = hashlib.sha256()
+    size = 0
+    prefix = suffix = b""
+    try:
+        with gzip.open(path, "rb") as stream:
+            while chunk := stream.read(65536):
+                if not size:
+                    prefix = chunk[:256]
+                size += len(chunk)
+                if size > _MAX_BYTES:
+                    raise ValueError("Decoded native artifact exceeds its finite byte budget")
+                identity.update(chunk)
+                suffix = (suffix + chunk)[-16:]
+    except (OSError, EOFError, zlib.error) as error:
+        raise ValueError("Compressed native artifact cannot be restored") from error
+    if not size:
+        raise ValueError("A compressed native artifact must not be empty")
+    return NativeGzip(size, identity.hexdigest(), prefix, suffix)
+
+
+def compress_native_artifact(path: Path) -> None:
+    """Replace a regular native intermediate after verifying its full lossless round trip."""
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("A native artifact requires a regular original file")
+    before = path.stat()
+    if not 0 < before.st_size <= _MAX_BYTES:
+        raise ValueError("Original native artifact exceeds its finite byte budget")
+    target = compressed_native_path(path)
+    identity = hashlib.sha256()
+    size = 0
+    stored = target.open("xb")
+    try:
+        with (
+            stored,
+            path.open("rb") as original,
+            gzip.GzipFile(
+                filename="", fileobj=stored, mode="wb", mtime=0, compresslevel=1
+            ) as encoded,
+        ):
+            while chunk := original.read(65536):
+                size += len(chunk)
+                if size > before.st_size:
+                    raise ValueError("Native artifact changed during compression")
+                identity.update(chunk)
+                encoded.write(chunk)
+        decoded = read_compressed_native(target)
+        after = path.stat()
+        if (
+            decoded.size != before.st_size
+            or decoded.sha256 != identity.hexdigest()
+            or (before.st_dev, before.st_ino, before.st_ctime_ns)
+            != (after.st_dev, after.st_ino, after.st_ctime_ns)
+        ):
+            raise ValueError("Native artifact changed during compression")
+        target.chmod(stat.S_IMODE(before.st_mode))
+    except BaseException:
+        target.unlink()
+        raise
+    path.unlink()
+
+
 def retain_artifacts(directory: Path, *, byte_budget: int = _MAX_BYTES) -> None:
     """Store every qualified native artifact losslessly without retaining duplicate trees.
 
@@ -239,7 +327,7 @@ def retain_artifacts(directory: Path, *, byte_budget: int = _MAX_BYTES) -> None:
 
 
 @contextmanager
-def materialize_artifacts(directory: Path) -> Iterator[Path]:
+def materialize_artifacts(directory: Path, *, temporary_root: Path | None = None) -> Iterator[Path]:
     """Restore a temporary exact view for the unchanged native proof validators.
 
     Parameters
@@ -247,6 +335,9 @@ def materialize_artifacts(directory: Path) -> Iterator[Path]:
     directory : pathlib.Path
         Retained acquisition, or a legacy regular acquisition without storage
         metadata. Missing or extra stored artifacts are refused.
+    temporary_root : pathlib.Path or None
+        Existing directory for restored views. Defaults to the acquisition's
+        parent for standalone proof directories.
 
     Yields
     ------
@@ -269,7 +360,9 @@ def materialize_artifacts(directory: Path) -> Iterator[Path]:
         yield directory
         return
     records, metadata = _read_manifest(directory)
-    with TemporaryDirectory(prefix=".function-proof-view-", dir=directory.parent) as temporary:
+    with TemporaryDirectory(
+        prefix=".function-proof-view-", dir=temporary_root or directory.parent
+    ) as temporary:
         view = Path(temporary)
         for name in _METADATA:
             shutil.copy2(directory / name, view / name)

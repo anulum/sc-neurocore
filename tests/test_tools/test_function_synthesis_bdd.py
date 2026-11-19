@@ -18,8 +18,10 @@ from pathlib import Path
 
 import pytest
 
+from tools import function_synthesis_bdd
 from tools.function_synthesis_bdd import prove_complete_bdd_mapping, read_complete_bdd_mapping
 from tools.function_synthesis_records import SynthesisCase
+from tools.function_synthesis_retention import compressed_native_path, read_compressed_native
 from tools.function_synthesis_toolchain import SynthesisToolchain
 from tools.function_synthesis_yosys import (
     read_function_synthesis_measurement,
@@ -256,6 +258,39 @@ def test_public_measurement_reports_the_actual_complete_bdd_method(
     }
 
 
+def test_complete_bdd_retains_original_failed_component_bytes(
+    native_proof: NativeProof, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bind the packed original mapping from a component attempt and detect later changes."""
+    case, _, tools = native_proof
+    root = tmp_path / "mapped"
+    run_function_synthesis(case, root, tools)
+    attempt = root / "composition-proof"
+    attempt.mkdir()
+    component = attempt / "word-cut.json"
+    shutil.copyfile(root / "mapped.json", component)
+    original = component.read_bytes()
+    monkeypatch.setattr(function_synthesis_bdd, "_COMPRESSION_MIN_BYTES", 1)
+    prove_complete_bdd_mapping(case, root, tools)
+
+    packed = compressed_native_path(component)
+    assert not component.exists()
+    relative = packed.relative_to(root).as_posix()
+    proof = read_complete_bdd_mapping(case, root, tools)
+    assert dict(proof.artifact_sha256)[relative] == hashlib.sha256(packed.read_bytes()).hexdigest()
+    receipt = json.loads((root / "complete-bdd-proof/proof-record.json").read_text())
+    assert receipt["decoded_failed_artifacts"][relative] == {
+        "bytes": len(original),
+        "sha256": hashlib.sha256(original).hexdigest(),
+    }
+    packed.write_bytes(packed.read_bytes()[:-4])
+    assert original == (root / "mapped.json").read_bytes()
+    with pytest.raises(ValueError, match="cannot be restored"):
+        read_compressed_native(packed)
+    with pytest.raises(ValueError, match="cannot be restored"):
+        read_complete_bdd_mapping(case, root, tools)
+
+
 @pytest.mark.parametrize(
     "mode", ["object", "nonstring", "length", "executable", "deadline", "nonfinite"]
 )
@@ -291,6 +326,8 @@ def test_native_bdd_command_receipts_cannot_change_execution_or_budget(
         "complete-bdd-proof/proof-record.json",
         "mapped.v",
         "complete-bdd-proof/complete-bdd.log",
+        "composition-proof",
+        "composition-proof/mapped.json",
     ],
 )
 def test_complete_bdd_reader_refuses_linked_originals_and_native_evidence(
@@ -300,12 +337,17 @@ def test_complete_bdd_reader_refuses_linked_originals_and_native_evidence(
     case, root, tools = native_proof
     changed = tmp_path / "changed"
     shutil.copytree(root, changed)
+    if entry.startswith("composition-proof"):
+        component = changed / "composition-proof"
+        component.mkdir()
+        shutil.copyfile(changed / "mapped.json", component / "mapped.json")
     path = changed if entry == "root" else changed / entry
     retained = tmp_path / "retained"
     path.rename(retained)
     path.symlink_to(retained, target_is_directory=retained.is_dir())
     with pytest.raises(ValueError):
         read_complete_bdd_mapping(case, changed, tools)
+    assert path.is_symlink() and retained.exists()
 
 
 @pytest.mark.parametrize(

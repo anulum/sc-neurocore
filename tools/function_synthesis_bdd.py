@@ -14,6 +14,7 @@ import json
 import math
 import re
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -35,9 +36,16 @@ from tools.function_synthesis_partition import (
     read_partitioned_bdd,
 )
 from tools.function_synthesis_records import SynthesisCase
+from tools.function_synthesis_retention import (
+    compress_native_artifact,
+    is_compressed_native,
+    read_compressed_native,
+)
 from tools.function_synthesis_toolchain import SynthesisToolchain, SynthesisToolError
 
 _DIRECTORY = "complete-bdd-proof"
+_COMPONENT_DIRECTORY = "composition-proof"
+_COMPRESSION_MIN_BYTES = 32 * 1024**2
 _RECORD = "proof-record.json"
 _ROOT = (
     "unit.v",
@@ -89,6 +97,7 @@ def _sources() -> dict[str, str]:
             "function_synthesis_toolchain.py",
             "function_synthesis_json.py",
             "function_synthesis_exports.py",
+            "function_synthesis_retention.py",
         )
     }
 
@@ -136,18 +145,58 @@ def _command(path: Path, script: str, tools: SynthesisToolchain) -> None:
         raise ValueError("A complete BDD command exceeds its native deadline")
 
 
-def _artifacts(root: Path) -> dict[str, str]:
-    """Include every actual whole-function native artifact and original mapping byte."""
-    directory = root / _DIRECTORY
-    names = [*_ROOT, *native_netlist_artifacts(root)]
+def _proof_files(directory: Path) -> Iterator[Path]:
+    """Enumerate a regular proof tree without following linked or special entries."""
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError("Complete BDD evidence requires a regular proof directory")
     for path in directory.rglob("*"):
         if path.is_symlink() or not (path.is_dir() or path.is_file()):
             raise ValueError("Complete BDD evidence contains a linked or special artifact")
-        if path.is_file() and path != directory / _RECORD:
-            names.append(path.relative_to(root).as_posix())
+        if path.is_file():
+            yield path
+
+
+def _compress_failed_components(root: Path, deadline: float) -> None:
+    """Keep large original component artifacts after the complete proof takes over."""
+    components = root / _COMPONENT_DIRECTORY
+    if not components.exists() and not components.is_symlink():
+        return
+    for path in sorted(_proof_files(components)):
+        if (
+            path.suffix in {".il", ".blif", ".json"}
+            and path.stat().st_size >= _COMPRESSION_MIN_BYTES
+        ):
+            if time.monotonic() >= deadline:
+                raise ValueError("The complete native BDD cohort is incomplete")
+            compress_native_artifact(path)
+
+
+def _artifacts(root: Path) -> dict[str, str]:
+    """Include whole-function evidence, failed components and original mapping bytes."""
+    directory = root / _DIRECTORY
+    names = [*_ROOT, *native_netlist_artifacts(root)]
+    names.extend(
+        path.relative_to(root).as_posix()
+        for path in _proof_files(directory)
+        if path != directory / _RECORD
+    )
+    components = root / _COMPONENT_DIRECTORY
+    if components.exists() or components.is_symlink():
+        names.extend(path.relative_to(root).as_posix() for path in _proof_files(components))
     if any((root / name).is_symlink() or not (root / name).is_file() for name in names):
         raise ValueError("Complete BDD evidence requires every original regular artifact")
     return {name: digest(root / name) for name in sorted(names)}
+
+
+def _decoded_failed_artifacts(root: Path, artifacts: dict[str, str]) -> dict[str, object]:
+    """Independently bind the original bytes inside retained failed component files."""
+    decoded: dict[str, object] = {}
+    for name in artifacts:
+        path = root / name
+        if name.startswith(_COMPONENT_DIRECTORY + "/") and is_compressed_native(path):
+            artifact = read_compressed_native(path)
+            decoded[name] = {"bytes": artifact.size, "sha256": artifact.sha256}
+    return decoded
 
 
 def _global_nodes(directory: Path, scalar: AigerInterface) -> int:
@@ -223,7 +272,7 @@ def _completed(
             "order_reason": proof["order_reason"],
         }
     return {
-        "schema_version": "sc-neurocore.complete-original-bdd.v2",
+        "schema_version": "sc-neurocore.complete-original-bdd.v3",
         "case": case.key,
         "status": "equivalent",
         "method": "complete-bdd",
@@ -245,6 +294,7 @@ def _completed(
         "producer_sha256": _sources(),
         "toolchain_sha256": tools.identity,
         "artifact_sha256": artifacts,
+        "decoded_failed_artifacts": _decoded_failed_artifacts(root, artifacts),
     }
 
 
@@ -371,6 +421,7 @@ def prove_complete_bdd_mapping(
         timeout=timeout,
         cohort_seconds=cohort_seconds - (time.monotonic() - began),
     )
+    _compress_failed_components(root, began + cohort_seconds)
     before = _artifacts(root)
     seconds = max(1, min(60, int(timeout)))
     strategy: Literal["global", "shannon-partitioned"] = "global"

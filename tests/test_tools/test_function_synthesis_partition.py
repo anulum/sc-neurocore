@@ -261,18 +261,24 @@ def test_partition_native_deadlines_are_not_relaxed(
             "Constructing global BDDs is aborted.\nError: Collapsing has failed.\n",
             True,
         ),
+        ("Constructing global BDDs is aborted.\nError: Collapsing has failed.\n", True),
+        (
+            "Constructing global BDDs is aborted.\nError: Collapsing has failed.\n"
+            "Shared BDD size = 1 nodes. BDD construction time = 0.01 sec\n",
+            False,
+        ),
         ("/usr/bin/timeout: sending signal KILL to command 'yosys-abc'\n", True),
         ("Error: Collapsing has failed.\n", False),
         ("Networks are UNDECIDED\n", False),
         ("Shared BDD size = 1 nodes. BDD construction time = 0.01 sec\n", False),
     ],
 )
-def test_only_explicit_existing_bdd_limits_admit_partition_completion(
+def test_native_bdd_abort_diagnostics_allow_partition_attempts(
     tmp_path: Path,
     text: str,
     expected: bool,
 ) -> None:
-    """Distinguish the existing cap and deadline from unknown errors or an unproved verdict."""
+    """Distinguish bounded aborts from unknown errors or conflicting completion lines."""
     log = tmp_path / "native.log"
     log.write_text(text)
     assert bounded_bdd_incomplete(log) is expected

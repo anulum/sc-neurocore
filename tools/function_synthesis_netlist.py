@@ -17,11 +17,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from tools.function_synthesis_json import decode_native_json
+from tools.function_synthesis_json import MAX_NETLIST_BYTES, decode_netlist_json
 
 Bit: TypeAlias = int | str
 Direction: TypeAlias = Literal["input", "output"]
-_MAX_NETLIST_BYTES = 64 * 1024 * 1024
 _MAX_VECTOR_BITS = 1024 * 1024
 
 
@@ -200,13 +199,13 @@ class Netlist:
             For unavailable, linked, oversized, malformed or incomplete records.
 
         """
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > _MAX_NETLIST_BYTES:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_NETLIST_BYTES:
             raise ValueError("A function netlist must be a bounded regular artifact")
         with path.open("rb") as stream:
-            raw = stream.read(_MAX_NETLIST_BYTES + 1)
-        if len(raw) > _MAX_NETLIST_BYTES:
+            raw = stream.read(MAX_NETLIST_BYTES + 1)
+        if len(raw) > MAX_NETLIST_BYTES:
             raise ValueError("A function netlist must be a bounded regular artifact")
-        value = decode_native_json(raw)
+        value = decode_netlist_json(raw)
         modules = object_mapping(object_mapping(value).get("modules"))
         if "function_unit" not in modules:
             raise ValueError("A synthesis artifact must contain the actual function module")

@@ -35,6 +35,47 @@ Select `v2` or `lut-v1` explicitly when comparing their implementations.
 `function_unit_functions(lowering)` returns that lowering's canonical supported
 names. `expit` is an alias for `sigmoid`; aliases do not add report rows.
 
+The `v2` implementation of `atan2` forms the ratio of the smaller magnitude to
+the larger. Restoring division computes only the 30 fractional bits needed
+by the interpolation table. The operand order and signs determine the final
+angle, including the exact axis cases.
+
+Unary arctangent shifts its fixed-point magnitude directly on [0, 1]. For
+larger magnitudes, bounded restoring division computes its reciprocal. Both
+paths use one table interpolation and preserve the reference truncation.
+
+The inverse sine and cosine use the same fractional division after ordering
+the magnitude and its complementary square root. The integer square root
+consumes the radicand two bits at a time and bounds each intermediate
+remainder. The operations preserve the fixed-point reference's truncation,
+saturation and exact endpoints.
+
+Cube root uses shifts and sums for the original Q30 coefficient and bit masks
+for the fixed-point remainders. Where the input format and logarithm table
+guarantee a negative scale, it uses a rounded right shift. The other formats
+use the general scaling circuit.
+
+The relative exponential uses a polynomial series near zero. When the input
+bounds and output scale permit a restoring divider limited to the result width,
+the circuit emits the saturated positive tail directly. The general path uses
+one shared signed divider. Both paths preserve truncation and final rounding.
+
+Tangent rounds the sine-to-cosine ratio in magnitude before restoring its
+sign. It caps the dividend at the signed output rail times the divisor,
+so the restoring divider only computes the quotient bits the output can use.
+Inputs whose computed cosine is zero retain the original pole result.
+
+Reciprocal square root uses a bounded quotient followed by an integer square
+root. It skips quotient digits above the output range and checks saturation
+from the original input. The divider and square-root remainders locate the
+exact rounding midpoint. For wide fractions or long skipped prefixes, both
+stages reuse each trial subtraction's borrow bit to decide whether the trial
+fits.
+
+The decimal logarithm computes the leading exponent separately from the
+bounded base-two mantissa. Their contributions use the same fixed-point
+coefficient and preserve the original rounding and saturation.
+
 ## Measure one implementation
 
 Run from the source checkout with the project dependencies, Yosys and its
@@ -66,24 +107,22 @@ Table bits describe the
 emitted tables; they do not imply that the target inferred that capacity as
 block RAM. A single measurement is a diagnostic and cannot complete the matrix.
 
-The acquisition completed on 4 November 2026 covered all 270 supported cases:
-228 produced admitted measurements, 19 had rejected or incomplete proof
-evidence, and 23 reached a native deadline. Another 102 combinations are
-unsupported by their selected lowering, giving 372 dispositions across both
-lowerings and all six formats. This is the current acquisition status, with
-complete matrix acceptance still open.
-
-The individual diagnostic reports retain those failure dispositions. A
-cache-only matrix report reads successful entries and therefore reports the
-42 unsuccessful cases as missing; it does not replay failed attempts or
-convert them into measurements. These mapped resource counts are synthesis
-results, rather than measured FPGA latency or energy.
+The complete comparison contains 372 cases across both lowerings and all six
+formats. Using Yosys 0.70+post and its associated ABC, all 270 supported cases
+produced source-bound Xilinx 7-series measurements and passed equivalence for the
+entire mapped interface. The other 102 cases are explicitly unsupported by their
+selected lowering. The cache-only report revalidates the successful measurements
+and preserves their acquisition times. Hardware figures describe mapped resources. FPGA timing and energy require
+physical measurements.
 
 Tool inspection runs Yosys and identifies its native process executable through
 Linux procfs, including when the requested command is a launcher script. All
 subsequent commands and SHA-256 bindings use that actual binary and its sibling
 ABC executable. The launcher cannot hide a later change to the native binary.
-Native commands receive a minimal environment and refuse `LD_*` loader overrides.
+Native commands receive a minimal environment and refuse loader injection
+settings such as `LD_PRELOAD` and `LD_AUDIT`. The caller may have
+`LD_LIBRARY_PATH` set for its Python installation; that setting is never passed
+to a native child.
 Interrupted callers terminate and reap their owned native process group; an
 outer deadline also supervises GNU timeout itself. Executable and library hashes
 are checked before and after each native command. These checks assume a trusted
@@ -110,56 +149,178 @@ For a constrained storage allocation, `retain_artifacts(directory, byte_budget=.
 can lower the admitted total original artifact bytes. Its default and maximum
 remain 1 GiB; a larger requested limit is refused. The complete native evidence
 and lossless format are unchanged.
-Restored views are created beside their cache entry so that they remain on the
-same storage volume and inside its disk accounting. Legacy uncompressed cache
-entries without a retention manifest remain readable: they require regular,
-unlinked files and the same source and complete native proof validation. Only
-the compressed format enforces an exact whole-directory inventory; extra
-unreferenced regular files in a legacy entry confer no proof credit.
+Restored cache views are created in the cache root, outside the published
+success directory. They remain on the same storage volume and inside its disk
+accounting, and a forcibly interrupted reader leaves the published directory
+untouched. Legacy uncompressed cache entries without a retention manifest remain
+readable: they require regular, unlinked files and the same source and complete
+native proof validation. Only the compressed format enforces an exact
+whole-directory inventory. Extra unreferenced regular files in a legacy entry
+confer no proof credit.
 
 The proof method records the actual successful path: `complete-aiger` for
 a complete native comparison of the reference and mapped exports,
+`complete-aiger-gia` when the direct checker reaches its watchdog and a
+separate GIA proof establishes equality of those same original exports,
 `compositional` for DSP component proofs, `complete-bdd` for a direct
 whole-original-function native BDD proof, or `complete-bdd-shannon` for a
 complete Shannon-partitioned BDD proof.
 The compositional method binds the original RTL to its synthesis checkpoints,
 checks exact word arithmetic and each configured DSP cell's complete contract,
-then proves the complete residual graph with native equivalence. That residual
-compares every connected DSP input and every original result bit, with all
-original arguments retained and the independent primitive-cut values universally
-quantified. Every component must pass before the complete proof record can be
-created.
+then proves two adjacent complete residuals with native equivalence: the
+post-DSP graph against a retained pre-LUT checkpoint, and that same checkpoint
+against the unchanged physical mapping. Only CARRY4 primitives are expanded in
+the intermediate checkpoint; DSP instances and the physical mapping flow remain
+unchanged. Each residual compares every connected DSP input and every original
+result bit, with all original arguments retained and its independent
+primitive-cut values universally quantified. The shared intermediate module,
+rather than matching names of cut values, connects the two function proofs.
+Both components run in parallel under one shared deadline. Each must pass
+before the complete proof record can be created.
 
-When a DSP compositional attempt cannot establish complete equality, the
-`complete-bdd` method independently compares the whole original function with
-the whole mapped implementation. Every original argument bit remains independent
-and every original result bit is compared. This method has no auxiliary
-primitive-cut inputs.
+The intermediate export enumerates generated generic wire and cell names while
+preserving primary port names and DSP instance identities. It retains all cell
+attributes, parameters, connections and signed annotations. Oversized native JSON
+is first compacted by removing whitespace outside strings. If it still exceeds
+the 64 MiB parser limit, a bounded format stores each repeated native source
+location once and restores every original value before building the proof
+graph. Both formats retain the byte-for-byte native original and its SHA-256.
+The reader reproduces the location table from the original. Oversized derived
+cuts are checked against their exact reconstructed native JSON bytes without
+decoding them again.
 
-Its complete native exports use lossless compressed RTLIL checkpoints so that
-each export command retains its ninety-second ceiling. Preparation, generic
-technology mapping and AIG serialization run as separate commands for each
-of the reference and physical graphs. Both the prepared hierarchy and the
-mapped checkpoint are retained and checked for complete gzip integrity;
-the checkpoint record uses schema version 2. The six commands share the same
-whole-export allowance. Only private internal
-identifiers are renamed for serialization; the original RTL, physical mapping,
-cell functions, parameters, connections and public ports remain unchanged.
-Native normalization is checked before forming the OR of every output
-difference. ABC constructs global BDDs with fixed variable ordering and a
-bounded live-node budget. A measurement requires the actual complete difference
-to reduce to constant zero. A nonzero result or incomplete native protocol
-receives no proof credit. Exhausting a global node or time limit can start the
-complete input partition described below; that limit alone never proves equality. Original failed component
-artifacts remain retained alongside the successful direct proof.
+The read-only consumer reconstructs both exact cut graphs, including the
+primitive-output alias partitions, controls, original output edges and export
+commands, from the retained original checkpoints. It then validates both native
+proofs without rerunning tools or changing acquisition timestamps. The native
+pre-LUT mapping keeps a compressed RTLIL checkpoint before expanding carry
+cells. With a variable divisor or at least 500 coarse cells,
+it retains checkpoints at the XC7 coarse, fine and cell-mapping boundaries
+so each phase has its own
+bounded native command. Each residual cut also uses lossless RTLIL handoffs. The independent
+word and physical exports run in parallel. Word graphs with
+division between two variable operands replay the corresponding XC7 mapping
+phases before gate export. A constant dividend can still require this route
+when its divisor varies. The staged export gives the checker more similar divider
+structures while preserving the complete cut interface. Physical lowering uses
+a separate command to expand library primitives before generic optimization.
+When the mapped LUTs can expand to at least 65,536 decision nodes, the physical
+proof graph folds constants and removes unused logic. At 524,288 estimated
+decision nodes, constant folding and width reduction run as separate native
+commands. Shortening private
+names and omitting cell and wire source locations starts before folding.
+Later derived RTLIL handoffs retain the functional top. Native structural
+checking and BLIF export use the same checkpoint
+in separate bounded commands. The BLIF export preserves all named proof ports
+and omits aliases without fanout. Native validation checks that every original
+output is driven by its declared inputs and defined logic. The inspected ABC
+binary hashes the BLIF structure into a named AIG. The physical synthesis
+and resource accounting stay unchanged. Every command retains its native
+deadline and shares the original proof cohort budget. The reader reconstructs
+the scripts, checks gzip integrity and binds the cut, commands, logs, BLIF
+when present, and final AIG to the proof. Altered cuts cannot reuse a previously
+successful native verdict.
 
-Readback revalidates the original source, physical clone, export scripts,
-compressed-stream integrity, native commands, complete interfaces and final
-native constant. It preserves the original acquisition time.
-Each native normalization round trip explicitly compares inputs and outputs
-by position with ABC's `cec -n`. The original reference and mapped exports
-first require identical named bit order, so the positional all-output miter
-retains that original function domain.
+DSP mapping can retain a multiplication as ordinary logic. The word proof
+checks the retained cell's parameters, directions and every operand and result
+bit against the original before proving the complete product.
+
+When DSP mapping absorbs adjacent additions or subtractions into a product,
+the word checker proves the connected arithmetic component jointly. Every
+externally consumed root keeps its complete declared word, including high and
+sign bits, and is compared in `Z/(2^w Z)` after interpreting each intermediate
+width, signed extension, truncation and slice. Frontier values require inductive
+driver correspondence from original inputs and previously proved functions;
+shared signal names alone establish no equality. The checker rejects cycles,
+state and unaccounted logic reaching any original output. Globally unobserved
+arithmetic receives an explicit disposition and remains in the actual resource
+counts.
+
+If a complete root has a nonzero normalized difference, acquisition retains
+`group-refusal.json` with the full residue and a separating Boolean assignment
+when the expression contains only Boolean atoms. That assignment concerns the
+independent local frontier; it does not claim reachability from primary inputs.
+A remaining floor expression can prevent this algebra from establishing equality,
+so a nonzero normal form alone is recorded as an unproved identity.
+
+Joint identities use `sc-neurocore.grouped-word-equivalence.v1` inside a version 2
+word record. The complete two-stage mapping chain uses
+`sc-neurocore.function-composition.v3`. `products_proven` counts individual product proofs only;
+`products_covered_jointly` records products whose component was proved as a whole.
+When a grouped proof is needed, every disappeared multiplication receives a
+group certificate, including disconnected products which could otherwise use
+the individual path. This accounting limitation preserves the proof strength;
+it does not create additional individual-product certificates.
+Components containing an absorbed addition or subtraction retain their connected
+arithmetic. Other products start as singleton groups, keeping unchanged outside
+functions in the structural induction. Groups still merge when their actual
+mapped cones overlap.
+Every surviving function retains its checked pin correspondence. The complete
+source dependency order and each group's explicit outside frontier establish
+the structural induction. Cell accounting uses the disjoint mapped cones
+recorded before polynomial evaluation, then independently checks every actual
+output cone. Public output ports are compared with the proved anchors; a port
+can supply an anchor only when no shared name or surviving pin already supplies
+one. Named ports must still match their declared connections.
+Readers independently reconstruct the partition, complete roots, frontier,
+arithmetic parameters and global cell accounting. Semantic certificates remain
+deterministic under JSON mapping reordering; the enclosing acquisition retains
+the separate exact raw-file identities.
+
+Producer and reader work share the same enclosing 3,300-second wall deadline.
+Individual-product proofs also inherit that deadline and check it during
+materialised algebra work and before publication. Both word-proof paths require
+every additional mapped function to have an arithmetic disposition.
+The unchanged 100,000-term guard applies to every materialised expression on
+both paths. Grouped proofs retain a separate ledger recording operation counts,
+term occurrences, peak expression size and actual elapsed time. Cumulative term
+occurrences are measurement evidence, rather than a new complexity limit.
+Exhausted budgets cannot become equivalent verdicts or be relabelled as
+certificate mismatches.
+
+The residual checker first constructs the OR of every original output
+difference. If its GIA solver explicitly times out with an undecided verdict,
+a second CEC command compares the two complete normalized output vectors.
+An undecided result with a recorded empty reduction and zero remaining nodes
+also selects that complete comparison, even when the native log omits the
+timeout line. The paired comparison can prove equality with its explicit
+equivalent verdict.
+Both models must retain identical named input and output order, and each
+normalization must independently prove its round trip. The second strategy
+requires an explicit equivalent verdict and records
+`complete-paired-output-cec-after-undecided-gia` as the actual proof engine.
+The original undecided transcript and both complete commands remain retained.
+If paired GIA also reports a recognized bounded undecided result, ABC's
+Ivy solver checks the existing scalar difference miter. This last check
+requires an explicit UNSAT verdict within sixty seconds and retains the
+command and transcript in a version 4 record. Negative, erroneous or
+malformed verdicts stop the proof. All checks share the original
+3,300-second budget, and the paired command keeps its ninety-second ceiling.
+When the operating-system deadline ends a native comparison before it emits
+a verdict, its original command and timeout transcript are retained. The next
+complete comparison receives only the remaining shared budget.
+An elapsed Ivy comparison can select bounded comparisons of original output
+groups. The reader checks the unchanged binary graphs, matching structural
+identities and phases, and coverage of every original output. Identical
+ordered pairs require one comparison. Each group retains every original input
+and all gates reachable from its selected outputs, with the original literal
+phases. The reader reconstructs the same binary graph from the retained
+complete models. A group that exhausts its native deadline is split into
+disjoint output halves. A two-output subgroup is compared one output at a
+time. A single undecided output
+can be compared separately for every original argument sign combination.
+For a single argument, a sign region that exhausts its deadline can be split
+at the highest original byte boundary below the sign and then at the bit
+immediately below the sign, if distinct. Each split requires affirmative
+native equivalence for both bit values, with every unassigned input
+independent. The retained record binds every group, cofactor command and
+native verdict to the complete models under the same deadlines.
+
+The Yosys 0.33 SDK uses ABC's two-circuit `&cec` mode for the paired
+comparison. Its older `cec` implementation aborts on a retained complete
+Hypot model pair; `&cec` proves the same ordered models without that abort.
+The original singleton result, complete vectors, explicit final verdict and
+native deadlines remain mandatory. Newer SDKs retain the `cec` paired command.
 
 The legacy ABC executable with SHA-256
 `001a99fb8648794076dd238e42f3bd8c5112a4b8bd89660883325a7e0d006043`
@@ -175,6 +336,64 @@ credit. A timeout, an undecided result or a zero exit status alone cannot pass
 this requirement. Retain the commands, binary hash, complete original and
 mutated graphs, and native logs. These controls do not qualify the defective
 legacy build.
+
+The Python `prove_gia_equivalence(..., singleton_seconds=...)` entry point can
+request a smaller internal singleton allowance. Its default is unchanged;
+an explicit value must be an integer from one to the native ceiling. The
+normalization and paired commands keep their original budgets. A nondefault
+choice is bound to the singleton command and retained in the record.
+The compositional residual producer uses a one-second singleton probe. An
+undecided probe still requires the complete paired comparison, with its original
+budget and every original input and output retained.
+Primitive residual records report the engine that actually proved equality.
+
+When a DSP compositional attempt cannot establish complete equality, the
+`complete-bdd` method independently compares the whole original function with
+the whole mapped implementation. Every original argument bit remains independent
+and every original result bit is compared. This method has no auxiliary
+primitive-cut inputs.
+
+Its complete native exports keep the ninety-second ceiling per Yosys command.
+The standard route separates preparation, generic technology mapping and AIG
+serialization for the reference and physical graphs. Both RTLIL checkpoints
+in each graph retain their gzip integrity checks and use checkpoint schema
+version 2. When the mapped LUTs can expand to at least 524,288 decision nodes,
+the export retains the complete top module at each native RTLIL handoff.
+A verified timeout in a direct export can also start the staged export with
+the remaining time from the same proof allowance. Readback verifies the
+original timeout, commands and artifacts. The physical route expands the
+inspected primitive library and
+simplifies word multiplexers before gate expansion, preserving native
+don't-care behavior. It writes BLIF with native aliases. Both graphs must
+pass an independent Yosys read and structural check before ABC writes their
+named AIGs. The export and its reader trace every original output back to its
+drivers. Outputs that depend on an undriven or undefined name are refused
+before an implicit constant can change the comparison. Checkpoint schema
+version 4 binds the RTLIL snapshots, BLIF files, native commands and both
+complete AIGs. The large RTLIL snapshots are compressed after the native
+tools finish using the original files. Readback validates both their decoded
+bytes and the stored representation. Reference and physical exports run
+independently under one whole-export allowance. The original RTL, mapped
+physical artifact and public ports remain unchanged.
+Native normalization is checked before forming the OR of every output
+difference. ABC constructs global BDDs with fixed variable ordering and a
+bounded live-node budget. A measurement requires the actual complete difference
+to reduce to constant zero. A nonzero result or incomplete native protocol
+receives no proof credit. ABC can report a bounded construction abort without
+a node count if an individual BDD operation hits its limit. A verified abort or
+deadline can start the complete input partition described below. A complete BDD proof binds the
+failed component artifacts alongside the direct proof. Large RTLIL, BLIF and
+JSON files from the earlier attempt are retained losslessly. Readback checks
+their decoded content without restoring those files to disk. The 1 GiB
+aggregate cache restoration limit still applies to the complete cache payload.
+
+Readback revalidates the original source, physical clone, export scripts,
+checkpoint integrity, native commands, complete interfaces and final native
+constant. It preserves the original acquisition time.
+Each native normalization round trip explicitly compares inputs and outputs
+by position with ABC's `cec -n`. The original reference and mapped exports
+first require identical named bit order, so the positional all-output miter
+retains that original function domain.
 
 Each DSP arithmetic contract compares all 192 operand bits and 26 independently
 variable auxiliary controls against all 144 arithmetic and cascade output bits.

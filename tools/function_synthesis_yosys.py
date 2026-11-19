@@ -11,12 +11,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import re
+import shutil
 import time
 from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from sc_neurocore.compiler import emit_function_unit_verilog
 from tools.function_synthesis_aiger import (
@@ -34,6 +37,9 @@ from tools.function_synthesis_exports import (
 from tools.function_synthesis_exports import (
     SYNTHESIS_FLOW as SYNTHESIS_FLOW,
 )
+from tools.function_synthesis_checkpoint_timeout import validate_checkpoint_command
+from tools.function_synthesis_gia import prove_gia_equivalence, read_gia_equivalence
+from tools.function_synthesis_gia_protocol import _watchdog_elapsed
 from tools.function_synthesis_json import (
     MAX_NETLIST_BYTES,
     native_netlist_artifacts,
@@ -51,6 +57,12 @@ from tools.function_synthesis_records import (
     read_synthesis_resources,
 )
 from tools.function_synthesis_toolchain import SynthesisToolchain, SynthesisToolError
+
+_MAPPED_GIA = "complete-aiger-gia"
+_DIRECT_CEC = "cec -T {} -C 1000000 reference.aig mapped.aig"
+_ProofMethod: TypeAlias = Literal[
+    "complete-aiger", "complete-aiger-gia", "compositional", "complete-bdd", "complete-bdd-shannon"
+]
 
 _ARTIFACTS = (
     "unit.v",
@@ -126,13 +138,19 @@ def _check_header(case: SynthesisCase, path: Path) -> None:
         raise ValueError("AIGER geometry differs from the full function interface")
 
 
-def _check_interface(case: SynthesisCase, log: Path) -> None:
-    """Keep complete named inputs and exact outputs, admitting native name-matched input permutations."""
+def _ordered_names(case: SynthesisCase) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Enumerate every original argument and result bit in unsigned bit order."""
     inputs = tuple(
         f"argument{index // case.data_width}[{index % case.data_width}]"
         for index in range(case.input_bits)
     )
     outputs = tuple(f"result[{index}]" for index in range(case.data_width))
+    return inputs, outputs
+
+
+def _check_interface(case: SynthesisCase, log: Path) -> None:
+    """Keep complete named inputs and exact outputs, admitting native name-matched input permutations."""
+    inputs, outputs = _ordered_names(case)
     interface = AigerInterface(frozenset(inputs), frozenset(outputs))
     try:
         actual_inputs, actual_outputs = read_aiger_port_order(log, interface)
@@ -142,6 +160,53 @@ def _check_interface(case: SynthesisCase, log: Path) -> None:
         actual_inputs != inputs and "[default = by name]" not in log.read_text(encoding="utf-8")
     ):
         raise ValueError("ABC did not confirm the complete named function interface")
+
+
+def _check_direct_cec_watchdog(directory: Path, tools: SynthesisToolchain) -> None:
+    """Bind an actual elapsed result to the original direct named comparison."""
+    command: object = json.loads((directory / "equivalence.command.json").read_text())
+    if not isinstance(command, list) or len(command) != 11:
+        raise ValueError("The original mapped comparison command is missing")
+    script = command[-1]
+    if (
+        not isinstance(script, str)
+        or re.fullmatch(
+            r"cec -T (?:[1-9]|[1-5][0-9]|60) -C 1000000 reference\.aig mapped\.aig", script
+        )
+        is None
+    ):
+        raise ValueError("The original mapped comparison changed")
+    validate_checkpoint_command(
+        directory, "equivalence", tools, [str(tools.abc), "-s", "-c", script], 90.0
+    )
+    if not _watchdog_elapsed(directory / "equivalence.log", tools):
+        raise ValueError("A mapped GIA completion requires the original elapsed CEC command")
+
+
+def _mapped_gia_artifacts(
+    case: SynthesisCase, directory: Path, tools: SynthesisToolchain, *, timeout: float | None = None
+) -> tuple[str, ...]:
+    """Acquire or read GIA equality against the identical complete original AIGER pair."""
+    _check_direct_cec_watchdog(directory, tools)
+    root = directory / _MAPPED_GIA
+    names = ("reference.aig", "mapped.aig")
+    reference, candidate = (root / name for name in names)
+    inputs, outputs = _ordered_names(case)
+    interface = AigerInterface(frozenset(inputs), frozenset(outputs))
+    if timeout is not None:
+        root.mkdir()
+        for name in names:
+            shutil.copyfile(directory / name, root / name)
+        prove_gia_equivalence(reference, candidate, interface, tools, root, timeout=timeout)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("A mapped GIA completion requires its original proof directory")
+    files = tuple(root.rglob("*"))
+    if any(path.is_symlink() or not (path.is_dir() or path.is_file()) for path in files):
+        raise ValueError("A mapped GIA completion contains linked or special artifacts")
+    if any(_digest(root / name) != _digest(directory / name) for name in names):
+        raise ValueError("A mapped GIA comparison differs from the original exported pair")
+    read_gia_equivalence(reference, candidate, interface, tools, root)
+    return tuple(sorted(path.relative_to(directory).as_posix() for path in files if path.is_file()))
 
 
 def check_mapped_equivalence(
@@ -164,8 +229,9 @@ def check_mapped_equivalence(
         If that attempt is inconclusive or refused, a direct full-original-domain
         native BDD proof is required instead; failed component artifacts remain.
         Both attempts must use the same original acquisition and implementation.
-        Other mappings and legacy bare export pairs require complete original
-        reference.aig/mapped.aig exports and direct full-domain native equality.
+        Other mappings and legacy bare export pairs compare complete original
+        reference.aig/mapped.aig exports. A production mapping with an elapsed
+        direct checker may qualify through an independent GIA proof of the same pair.
     tools : SynthesisToolchain
         Inspected executables and installed library bindings.
     timeout : float, optional
@@ -217,12 +283,17 @@ def check_mapped_equivalence(
                 raise ValueError(
                     "Original acquisition or proof implementation changed during composition"
                 ) from None
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ValueError(
+                    "Mapped proof validation exhausted the shared cohort budget"
+                ) from None
             prove_complete_bdd_mapping(
                 case,
                 directory,
                 tools,
                 timeout=timeout,
-                cohort_seconds=deadline - time.monotonic(),
+                cohort_seconds=remaining,
             )
     else:
         exports = ("reference.aig", "mapped.aig")
@@ -238,17 +309,23 @@ def check_mapped_equivalence(
             )
             _check_interface(case, log)
         proof_log = directory / "equivalence.log"
-        tools.run(
-            [
-                str(tools.abc),
-                "-c",
-                f"cec -T {max(1, min(60, int(timeout)))} -C 1000000 reference.aig mapped.aig",
-            ],
-            directory,
-            proof_log,
-            timeout=timeout,
-        )
-        check_equivalent_verdict(proof_log)
+        try:
+            tools.run(
+                [str(tools.abc), "-c", _DIRECT_CEC.format(max(1, min(60, int(timeout))))],
+                directory,
+                proof_log,
+                timeout=timeout,
+            )
+        except SynthesisToolError as error:
+            if (
+                resources is None
+                or not error.timed_out
+                or (directory / "flow.ys").read_text(encoding="utf-8") != MAPPING_FLOW
+            ):
+                raise
+            _mapped_gia_artifacts(case, directory, tools, timeout=timeout)
+        else:
+            check_equivalent_verdict(proof_log)
         if before != {name: _digest(directory / name) for name in exports}:
             raise ValueError("AIGER exports changed during their equivalence check")
     _check_sources(case, directory)
@@ -285,9 +362,7 @@ class FunctionSynthesisMeasurement:
     table_bits: int
     toolchain_identity: str
     artifact_sha256: tuple[tuple[str, str], ...]
-    proof_method: Literal[
-        "complete-aiger", "compositional", "complete-bdd", "complete-bdd-shannon"
-    ] = "complete-aiger"
+    proof_method: _ProofMethod = "complete-aiger"
 
     def to_dict(self) -> dict[str, object]:
         """Return the measured area and its explicit complete-proof context.
@@ -354,7 +429,7 @@ def read_function_synthesis_measurement(
     _check_sources(case, directory)
     tools.check_library_log(directory / "yosys.log")
     resources = _mapped_resources(case, directory)
-    proof_method: Literal["complete-aiger", "compositional", "complete-bdd", "complete-bdd-shannon"]
+    proof_method: _ProofMethod
     if (directory / "complete-bdd-proof/proof-record.json").exists():
         complete = read_complete_bdd_mapping(case, directory, tools)
         artifacts = complete.artifact_sha256
@@ -368,15 +443,23 @@ def read_function_synthesis_measurement(
             _check_header(case, directory / f"{name}.aig")
             _check_interface(case, directory / f"{name}-io.log")
         extra: tuple[str, ...] = ()
-        if (directory / "flow.ys").read_text(encoding="utf-8") == MAPPING_FLOW:
+        current_flow = (directory / "flow.ys").read_text(encoding="utf-8") == MAPPING_FLOW
+        if current_flow:
             validate_complete_aiger_exports(case, directory, tools)
             extra = EXPORT_ARTIFACTS
-        check_equivalent_verdict(directory / "equivalence.log")
+        gia = directory / _MAPPED_GIA
+        if gia.exists() or gia.is_symlink():
+            if not current_flow:
+                raise ValueError("A mapped GIA completion requires the bound physical mapping flow")
+            extra += _mapped_gia_artifacts(case, directory, tools)
+            proof_method = "complete-aiger-gia"
+        else:
+            check_equivalent_verdict(directory / "equivalence.log")
+            proof_method = "complete-aiger"
         artifacts = tuple(
             (name, _digest(directory / name))
             for name in (*_ARTIFACTS, *extra, *native_netlist_artifacts(directory))
         )
-        proof_method = "complete-aiger"
     return FunctionSynthesisMeasurement(
         case,
         resources,

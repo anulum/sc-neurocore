@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
+import math
+import time
 from collections import Counter
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
 Monomial = tuple[int, ...]
@@ -22,11 +26,27 @@ AtomKey: TypeAlias = tuple[Literal["bit"], str] | tuple[Literal["floor"], int, P
 class ExactWordPolynomials:
     """Normalize universal integer identities; refuse unsupported complexity."""
 
-    def __init__(self, maximum_terms: int = 100_000) -> None:
-        """Retain a finite algebra budget and exact canonical atom definitions."""
+    def __init__(
+        self,
+        maximum_terms: int = 100_000,
+        *,
+        observer: Callable[[str, int], None] | None = None,
+    ) -> None:
+        """Retain the expression-size guard and optional materialised-work observer.
+
+        Parameters
+        ----------
+        maximum_terms : int, optional
+            Maximum terms in one expression, between one and 100000.
+        observer : callable or None, optional
+            Receive each completed operation's name and result cardinality.
+            It may refuse an exhausted enclosing deadline; it never receives
+            mutable expressions or changes their mathematical interpretation.
+        """
         if isinstance(maximum_terms, bool) or not 1 <= maximum_terms <= 100_000:
             raise ValueError("The exact word term budget must lie between one and 100000")
         self.maximum_terms = maximum_terms
+        self.observer = observer
         self.atom_keys: dict[AtomKey, int] = {}
         self.atom_definitions: dict[int, AtomKey] = {}
         self.atom_bounds: dict[int, tuple[int, int]] = {}
@@ -34,7 +54,10 @@ class ExactWordPolynomials:
 
     def constant(self, value: int) -> Polynomial:
         """Represent an exact integer constant, including canonical zero."""
-        return {(): value} if value else {}
+        observed_result: Polynomial = {(): value} if value else {}
+        if self.observer is not None:
+            self.observer("constant", len(observed_result))
+        return observed_result
 
     def _atom(self, key: AtomKey, bounds: tuple[int, int]) -> Polynomial:
         """Intern one complete Boolean or floor expression with proved interval bounds."""
@@ -52,7 +75,10 @@ class ExactWordPolynomials:
         """Represent one universally independent bit constrained only to zero or one."""
         result = self._atom(("bit", name), (0, 1))
         self.boolean_atoms.add(next(iter(result))[0])
-        return result
+        observed_result = result
+        if self.observer is not None:
+            self.observer("boolean", len(observed_result))
+        return observed_result
 
     def key(self, polynomial: Polynomial) -> PolynomialKey:
         """Return an exact ordered polynomial identity without digest-only equality."""
@@ -67,13 +93,19 @@ class ExactWordPolynomials:
         output = {term: coefficient for term, coefficient in result.items() if coefficient}
         if len(output) > self.maximum_terms:
             raise ValueError("Exact polynomial term limit exceeded")
-        return output
+        observed_result = output
+        if self.observer is not None:
+            self.observer("add", len(observed_result))
+        return observed_result
 
     def scale(self, polynomial: Polynomial, coefficient: int) -> Polynomial:
         """Multiply every coefficient by an exact signed integer."""
-        return {
+        observed_result = {
             term: value * coefficient for term, value in polynomial.items() if value * coefficient
         }
+        if self.observer is not None:
+            self.observer("scale", len(observed_result))
+        return observed_result
 
     def multiply(self, left: Polynomial, right: Polynomial) -> Polynomial:
         """Expand exact integer products with Boolean idempotence only for real bits."""
@@ -89,7 +121,10 @@ class ExactWordPolynomials:
                 result[term] += x * y
                 if len(result) > self.maximum_terms:
                     raise ValueError("Exact polynomial multiplication limit exceeded")
-        return {term: coefficient for term, coefficient in result.items() if coefficient}
+        observed_result = {term: coefficient for term, coefficient in result.items() if coefficient}
+        if self.observer is not None:
+            self.observer("multiply", len(observed_result))
+        return observed_result
 
     def bounds(self, polynomial: Polynomial) -> tuple[int, int]:
         """Bound every actual integer atom by conservative interval arithmetic."""
@@ -110,7 +145,10 @@ class ExactWordPolynomials:
         if shift < 0:
             raise ValueError("A floor shift must be nonnegative")
         if shift == 0:
-            return dict(polynomial)
+            observed_result = dict(polynomial)
+            if self.observer is not None:
+                self.observer("floor", len(observed_result))
+            return observed_result
         if len(polynomial) == 1:
             term, coefficient = next(iter(polynomial.items()))
             if len(term) == 1 and coefficient == 1:
@@ -118,7 +156,10 @@ class ExactWordPolynomials:
                 if definition[0] == "floor":
                     nested_shift = int(definition[1])
                     nested = dict(definition[2])
-                    return self.floor(nested, shift + nested_shift)
+                    observed_result = self.floor(nested, shift + nested_shift)
+                    if self.observer is not None:
+                        self.observer("floor", len(observed_result))
+                    return observed_result
         divisor = 1 << shift
         quotient: Polynomial = {}
         remainder: Polynomial = {}
@@ -129,13 +170,22 @@ class ExactWordPolynomials:
             if r:
                 remainder[term] = r
         if not remainder:
-            return quotient
+            observed_result = quotient
+            if self.observer is not None:
+                self.observer("floor", len(observed_result))
+            return observed_result
         low, high = self.bounds(remainder)
         a, b = low // divisor, high // divisor
         if a == b:
-            return self.add(quotient, self.constant(a))
+            observed_result = self.add(quotient, self.constant(a))
+            if self.observer is not None:
+                self.observer("floor", len(observed_result))
+            return observed_result
         atom = self._atom(("floor", shift, self.key(remainder)), (a, b))
-        return self.add(quotient, atom)
+        observed_result = self.add(quotient, atom)
+        if self.observer is not None:
+            self.observer("floor", len(observed_result))
+        return observed_result
 
     def signed_wrap(self, polynomial: Polynomial, width: int) -> Polynomial:
         """Interpret an exact integer modulo the declared signed word width."""
@@ -144,9 +194,15 @@ class ExactWordPolynomials:
         low, high = self.bounds(polynomial)
         half = 1 << (width - 1)
         if -half <= low and high < half:
-            return dict(polynomial)
+            observed_result = dict(polynomial)
+            if self.observer is not None:
+                self.observer("signed_wrap", len(observed_result))
+            return observed_result
         carry = self.floor(self.add(polynomial, self.constant(half)), width)
-        return self.add(polynomial, self.scale(carry, -(1 << width)))
+        observed_result = self.add(polynomial, self.scale(carry, -(1 << width)))
+        if self.observer is not None:
+            self.observer("signed_wrap", len(observed_result))
+        return observed_result
 
     def slice(
         self, polynomial: Polynomial, width: int, low: int, high: int, signed: bool
@@ -155,22 +211,34 @@ class ExactWordPolynomials:
         if not 0 <= low <= high < width:
             raise ValueError("Invalid exact word slice")
         if signed and high == width - 1:
-            return self.floor(self.signed_wrap(polynomial, width), low)
+            observed_result = self.floor(self.signed_wrap(polynomial, width), low)
+            if self.observer is not None:
+                self.observer("slice", len(observed_result))
+            return observed_result
         shifted = self.floor(polynomial, low)
         count = high - low + 1
         if signed:
-            return self.signed_wrap(shifted, count)
+            observed_result = self.signed_wrap(shifted, count)
+            if self.observer is not None:
+                self.observer("slice", len(observed_result))
+            return observed_result
         carry = self.floor(polynomial, high + 1)
-        return self.add(shifted, self.scale(carry, -(1 << count)))
+        observed_result = self.add(shifted, self.scale(carry, -(1 << count)))
+        if self.observer is not None:
+            self.observer("slice", len(observed_result))
+        return observed_result
 
     def residue(self, polynomial: Polynomial, width: int) -> Polynomial:
         """Reduce coefficients modulo a complete unsigned result word."""
         modulus = 1 << width
-        return {
+        observed_result = {
             term: coefficient % modulus
             for term, coefficient in polynomial.items()
             if coefficient % modulus
         }
+        if self.observer is not None:
+            self.observer("residue", len(observed_result))
+        return observed_result
 
     def boolean_witness(self, difference: Polynomial) -> dict[str, int] | None:
         """Return a separating bit assignment only when every atom is an actual bit."""
@@ -191,3 +259,93 @@ class ExactWordPolynomials:
             {"coefficient": coefficient, "factors": [self.atom_definitions[atom] for atom in term]}
             for term, coefficient in sorted(polynomial.items())
         ]
+
+
+@dataclass(slots=True)
+class WordProofWork:
+    """Measure materialised algebra work under one inherited wall deadline.
+
+    Parameters
+    ----------
+    deadline : float
+        Absolute monotonic enclosing case deadline, never extended by a reader.
+    """
+
+    deadline: float
+    began: float = field(default_factory=time.monotonic, init=False)
+    calls: Counter[str] = field(default_factory=Counter, init=False)
+    terms: Counter[str] = field(default_factory=Counter, init=False)
+    peak: int = field(default=0, init=False)
+
+    def check(self) -> None:
+        """Refuse CPU-only work after the same enclosing case allowance expires."""
+        if time.monotonic() > self.deadline:
+            raise ValueError("Grouped word proof exhausted the shared case budget")
+
+    def observe(self, operation: str, terms: int) -> None:
+        """Count each materialised result; cumulative occurrences are evidence only.
+
+        Parameters
+        ----------
+        operation : str
+            Exact arithmetic operation which completed.
+        terms : int
+            Actual cardinality of its materialised expression.
+
+        Raises
+        ------
+        ValueError
+            If this computation exhausted its inherited wall-clock allowance.
+        """
+        self.calls[operation] += 1
+        self.terms[operation] += terms
+        self.peak = max(self.peak, terms)
+        self.check()
+
+    def to_dict(self) -> dict[str, object]:
+        """Report actual work separately from the deterministic arithmetic certificate."""
+        return {
+            "operation_calls": dict(sorted(self.calls.items())),
+            "operation_term_occurrences": dict(sorted(self.terms.items())),
+            "peak_expression_terms": self.peak,
+            "expression_term_limit": 100_000,
+            "elapsed_seconds": time.monotonic() - self.began,
+        }
+
+    def check_record(self, retained: Mapping[str, object]) -> float:
+        """Validate retained work against this actual computation without restamping it.
+
+        Parameters
+        ----------
+        retained : mapping of str to object
+            Original producer or reader operation counts and measured elapsed time.
+
+        Returns
+        -------
+        float
+            Original bounded elapsed time, for the enclosing shared-budget check.
+
+        Raises
+        ------
+        ValueError
+            For invalid or changed counts, or explicit retained/current exhaustion.
+        """
+        self.check()
+        elapsed = retained.get("elapsed_seconds")
+        if (
+            isinstance(elapsed, bool)
+            or not isinstance(elapsed, (float, int))
+            or not math.isfinite(elapsed)
+            or elapsed < 0
+        ):
+            raise ValueError("Retained grouped arithmetic work has invalid elapsed time")
+        if elapsed > 3300:
+            raise ValueError("Retained grouped arithmetic work exhausted the shared case budget")
+        actual = self.to_dict()
+        if retained.keys() != actual.keys() or any(
+            retained[name] != value for name, value in actual.items() if name != "elapsed_seconds"
+        ):
+            raise ValueError(
+                "Retained grouped arithmetic work differs from actual bounded computation"
+            )
+        return float(elapsed)

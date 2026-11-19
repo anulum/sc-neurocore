@@ -66,17 +66,23 @@ _SOURCE_FILES = (
     "tools/function_synthesis_polynomial.py",
     "tools/function_synthesis_word_graph.py",
     "tools/function_synthesis_word_proof.py",
+    "tools/function_synthesis_word_groups.py",
     "tools/function_synthesis_structural_proof.py",
     "tools/function_synthesis_aiger.py",
     "tools/function_synthesis_dsp_proof.py",
+    "tools/function_synthesis_residual_exports.py",
+    "tools/function_synthesis_mapping_stages.py",
     "tools/function_synthesis_dsp_ports.py",
     "tools/function_synthesis_dsp_contracts.py",
     "tools/function_synthesis_proof.py",
     "tools/function_synthesis_exports.py",
     "tools/function_synthesis_checkpoints.py",
+    "tools/function_synthesis_checkpoint_timeout.py",
     "tools/function_synthesis_bdd.py",
     "tools/function_synthesis_partition.py",
     "tools/function_synthesis_gia.py",
+    "tools/function_synthesis_gia_partition.py",
+    "tools/function_synthesis_gia_protocol.py",
     "tools/function_synthesis_json.py",
     "tools/function_synthesis_source_proof.py",
 )
@@ -119,6 +125,7 @@ class CachedFunctionSynthesis:
         Actual mapped counts with complete successful historical proof.
     directory : pathlib.Path
         Exact retained source, command, netlist, statistics and proof artifacts.
+        Published entries reside in the successful directory under the cache root.
     identity : str
         Content digest of the source, RTL, flow and toolchain binding.
     reused : bool
@@ -146,7 +153,9 @@ class CachedFunctionSynthesis:
             The temporary view is removed when the context exits.
 
         """
-        with materialize_artifacts(self.directory) as directory:
+        with materialize_artifacts(
+            self.directory, temporary_root=self.directory.parent.parent
+        ) as directory:
             yield directory
 
 
@@ -240,7 +249,7 @@ class FunctionSynthesisCache:
             raise ValueError("Successful cache records must not be symbolic links")
         if (directory / "binding.json").read_text(encoding="utf-8") != _encoded(binding):
             raise ValueError("Successful cache binding differs from current sources or tools")
-        with materialize_artifacts(directory) as native:
+        with materialize_artifacts(directory, temporary_root=self.directory) as native:
             measurement = read_function_synthesis_measurement(case, native, self.tools)
         timestamp = (directory / "execution.txt").read_text(encoding="utf-8")
         recorded_at = datetime.fromisoformat(timestamp.rstrip("\n"))

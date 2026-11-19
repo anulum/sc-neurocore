@@ -25,7 +25,7 @@ from functools import cache
 from . import function_units as fu
 from .function_unit_ir import Program
 from .discrete_function_programs import build_heaviside, build_round
-from .magnitude_function_programs import build_hypot
+from .magnitude_function_programs import build_bounded_isqrt, build_fractional_ratio, build_hypot
 from .reciprocal_root_programs import build_rsqrt
 
 Builder = Callable[[Program, str, int, int], str]
@@ -247,6 +247,37 @@ def _unit_sinh(p: Program, code: str, data_width: int, fraction: int) -> str:
     return _saturate(p, _shift_round(p, difference, -3), data_width)
 
 
+def _bounded_positive_quotient(
+    p: Program, numerator: str, divisor: str, width: int, divisor_bits: int
+) -> str:
+    """Restore the prescribed quotient bits and bound each intermediate remainder."""
+    quotient = p.const(0)
+    remainder = numerator
+    for position in range(width - 1, -1, -1):
+        trial = p.shl(divisor, position)
+        take = p.le(trial, remainder)
+        if position:
+            reduced = p.select(take, p.sub(remainder, trial), remainder)
+            remainder = p.mask(reduced, divisor_bits + position)
+        quotient = p.add(p.shl(quotient, 1), take)
+    return quotient
+
+
+def _scale_exprel_ratio(p: Program, difference: str, code: str, data_width: int, scale: int) -> str:
+    """Cancel the spare division bits when the final output scale is nonpositive."""
+    zero = p.const(0)
+    magnitude = _abs(p, difference)
+    divisor = p.select(p.eq(code, zero), p.const(1), _abs(p, code))
+    # A nonzero final right shift contributes half a divisor before the quotient.
+    rounds = p.lt(magnitude, p.const(1 << (60 - scale)))
+    bias = p.select(rounds, p.shr(divisor, 1), zero)
+    dividend = p.add(p.shl(magnitude, scale), bias)
+    rail_product = p.sub(p.shl(divisor, data_width - 1), divisor)
+    return _bounded_positive_quotient(
+        p, _min(p, dividend, rail_product), divisor, data_width - 1, data_width
+    )
+
+
 def _unit_exprel(p: Program, code: str, data_width: int, fraction: int) -> str:
     one_code = 1 << fraction
     near = p.mul(p.lt(p.const(-(one_code >> 3)), code), p.lt(code, p.const(one_code >> 3)))
@@ -264,36 +295,83 @@ def _unit_exprel(p: Program, code: str, data_width: int, fraction: int) -> str:
     near_value = _saturate(p, _shift_round(p, series, fraction - fu.P), data_width)
 
     whole, mantissa = _exp_parts(p, code, fraction)
-    large = p.lt(p.const(30), whole)
-    large_quotient = p.div(p.shl(mantissa, 31), code)
-    large_value = _scale_to_code(
-        p, large_quotient, p.add(whole, p.const(2 * fraction - fu.P - 31)), data_width
+    # The large branch has a numerator of at least 2**61, with positive code
+    # below 2**(data_width - 1) and a scale of at least 2*fraction - P.
+    large_saturates = (
+        62 - data_width + 2 * fraction - fu.P >= data_width - 1
+        and fu._LOG2E_HIGH >= 1 << fu.P
+        and fu._LOG2E_LOW >= 0
+        and all(a >= 1 << fu.P and b >= 0 and c >= 0 for a, b, c in p.tables["exp2"])
     )
-    numerator = p.sub(
+    # In the middle range, whole <= 30 gives code < 2**(fraction + 5).
+    # For whole >= 1 the difference is at least 2**(whole + P - 1).
+    # The quotient and scale then give a result of at least 2**(whole + fraction - 6).
+    first_saturated = max(1, data_width + 5 - fraction, fraction + 6 - fu.P)
+    limit = min(30, first_saturated - 1)
+    scale_bits = 2 * fraction - fu.P
+    # The clamped difference is below 2**(P + 1 + limit). This ensures
+    # that its spare bits cover the scale of the output before rounding.
+    if large_saturates and 0 <= scale_bits <= 61 - (fu.P + 1 + limit):
+        large = p.lt(p.const(limit), whole)
+        difference = p.sub(
+            _shift_round_var(p, mantissa, _min(p, whole, p.const(limit))), p.const(1 << fu.P)
+        )
+        rail = p.const((1 << (data_width - 1)) - 1)
+        middle_value = _scale_exprel_ratio(p, difference, code, data_width, scale_bits)
+        return p.select(near, near_value, p.select(large, rail, middle_value))
+
+    large = p.lt(p.const(30), whole)
+    large_numerator = p.shl(mantissa, 31)
+    large_scale = p.add(whole, p.const(2 * fraction - fu.P - 31))
+    difference = p.sub(
         _shift_round_var(p, mantissa, _min(p, whole, p.const(30))), p.const(1 << fu.P)
     )
-    spare = _max(p, p.const(0), p.sub(p.const(61), _bit_length(p, _abs(p, numerator))))
-    quotient = p.div(p.shl_var(numerator, spare), code)
-    middle_value = _scale_to_code(
-        p, quotient, p.sub(p.const(2 * fraction - fu.P), spare), data_width
-    )
-    return p.select(near, near_value, p.select(large, large_value, middle_value))
+    spare = _max(p, p.const(0), p.sub(p.const(61), _bit_length(p, _abs(p, difference))))
+    middle_numerator = p.shl_var(difference, spare)
+    middle_scale = p.sub(p.const(2 * fraction - fu.P), spare)
+    numerator = p.select(large, large_numerator, middle_numerator)
+    scale = p.select(large, large_scale, middle_scale)
+    quotient = p.div(numerator, code)
+    return p.select(near, near_value, _scale_to_code(p, quotient, scale, data_width))
+
+
+def _scale_cube_root(p: Program, mantissa: str, whole: str, data_width: int, fraction: int) -> str:
+    """Use only a rounded right shift when the original code range guarantees it."""
+    log_ceiling = max(base + abs(slope) + abs(bend) for base, slope, bend in p.tables["log2"])
+    max_high = data_width - 1 - fraction + (log_ceiling >> fu.P)
+    # The low fixed-point word is strictly smaller than one before multiplication.
+    max_third = (max_high + 1) * fu._THIRD - 1
+    if fraction + (max_third >> fu.P) < fu.P:
+        bits = _min(p, p.sub(p.const(fu.P - fraction), whole), p.const(62))
+        half = p.shl_var(p.const(1), p.sub(bits, p.const(1)))
+        return _saturate(p, p.shr_var(p.add(mantissa, half), bits), data_width)
+    return _scale_to_code(p, mantissa, p.add(whole, p.const(fraction - fu.P)), data_width)
+
+
+def _multiply_third_coefficient(p: Program, value: str) -> str:
+    """Multiply by the fixed coefficient (4**15 - 1) // 3 with five sums."""
+    pair = p.add(value, p.shl(value, 2))
+    triple = p.add(pair, p.shl(value, 4))
+    six = p.add(triple, p.shl(triple, 6))
+    twelve = p.add(six, p.shl(six, 12))
+    return p.add(twelve, p.shl(triple, 24))
 
 
 def _unit_cbrt(p: Program, code: str, data_width: int, fraction: int) -> str:
+    """Build the signed cube root with an exact split fixed-point exponent."""
     negative = p.lt(code, p.const(0))
     magnitude = _abs(p, code)
     nonzero = p.lt(p.const(0), magnitude)
     log2x = _log2_internal(p, p.select(nonzero, magnitude, p.const(1)), fraction)
     high = p.shr(log2x, fu.P)
     third = p.add(
-        p.mul(high, p.const(fu._THIRD)),
-        p.shr(p.mul(p.sub(log2x, p.shl(high, fu.P)), p.const(fu._THIRD)), fu.P),
+        _multiply_third_coefficient(p, high),
+        p.shr(_multiply_third_coefficient(p, p.mask(log2x, fu.P)), fu.P),
     )
     whole = p.shr(third, fu.P)
-    rest = p.sub(third, p.shl(whole, fu.P))
+    rest = p.mask(third, fu.P)
     mantissa = _interpolate(p, "exp2", p.shr(rest, fu.P - fu.B), fu.B)
-    value = _scale_to_code(p, mantissa, p.add(whole, p.const(fraction - fu.P)), data_width)
+    value = _scale_cube_root(p, mantissa, whole, data_width, fraction)
     signed = p.select(negative, p.neg(value), value)
     return p.select(nonzero, signed, p.const(0))
 
@@ -312,15 +390,72 @@ def _unit_log2(p: Program, code: str, data_width: int, fraction: int) -> str:
     return p.select(positive, value, p.const(-(1 << (data_width - 1))))
 
 
-def _unit_log10(p: Program, code: str, data_width: int, fraction: int) -> str:
-    positive = p.lt(p.const(0), code)
-    log2x = _log2_internal(p, p.select(positive, code, p.const(1)), fraction)
-    whole = p.shr(log2x, fu.P)
-    rest = p.sub(log2x, p.shl(whole, fu.P))
-    value = p.add(
-        p.mul(whole, p.const(fu._LOG10_2)), p.shr(p.mul(rest, p.const(fu._LOG10_2)), fu.P)
+def _multiply_log10_coefficient(p: Program, value: str) -> str:
+    """Form the exact positive Q30 log10-of-two coefficient with balanced shift sums."""
+    coefficient = fu._LOG10_2
+    terms = [
+        p.shl(value, bit) for bit in range(coefficient.bit_length()) if (coefficient >> bit) & 1
+    ]
+    while len(terms) > 1:
+        pairs = [p.add(left, right) for left, right in zip(terms[::2], terms[1::2], strict=False)]
+        terms = pairs + terms[len(pairs) * 2 :]
+    return terms[0]
+
+
+def _log10_result_fits(p: Program, data_width: int, fraction: int) -> bool:
+    """Bound rounding from the exact polynomial coefficients over each table segment."""
+    coefficients = p.tables["log2"]
+    low = -(fraction << fu.P) + min(a - abs(b) - abs(c) for a, b, c in coefficients)
+    high = ((data_width - 2 - fraction) << fu.P) + max(
+        a + abs(b) + abs(c) for a, b, c in coefficients
     )
-    rounded = _saturate(p, _shift_round(p, value, fraction - fu.P), data_width)
+    lower = fu.shift_round((low * fu._LOG10_2) >> fu.P, fraction - fu.P)
+    upper = fu.shift_round((high * fu._LOG10_2) >> fu.P, fraction - fu.P)
+    rail = 1 << (data_width - 1)
+    return -rail <= lower and upper < rail
+
+
+def _log10_mantissa(p: Program, code: str) -> tuple[str, str]:
+    """Normalize the positive input into its leading exponent and fractional log2 term."""
+    bits = fu.SEGMENT_BITS["log2"]
+    shift = fu.B - bits
+    span = 1 << shift
+    last = span - 1
+    if any(
+        a < 0
+        or c > 0
+        or b + 2 * c < 0
+        or a + (b * last * span + c * last * last) // (span * span) >= 1 << fu.P
+        for a, b, c in p.tables["log2"]
+    ):
+        raise ValueError("The log2 mantissa must stay in the normalized fraction interval")
+    lead = p.sub(_bit_length(p, code), p.const(1))
+    # A positive signed input has at most 31 bits. The leading one is at bit B
+    # after normalization, and removing it leaves exactly the table position.
+    position = p.mask(p.shl_var(code, p.sub(p.const(fu.B), lead)), fu.B)
+    index = p.shr(position, shift)
+    rest = p.mask(position, shift)
+    a, b, c = (p.lookup("log2", index, column) for column in range(3))
+    inner = p.add(b, p.shr(p.mul(c, rest), shift))
+    mantissa = p.add(a, p.shr(p.mul(inner, rest), shift))
+    return lead, p.mask(mantissa, fu.P)
+
+
+def _unit_log10(p: Program, code: str, data_width: int, fraction: int) -> str:
+    """Build the decimal logarithm from independent integer and fractional contributions."""
+    positive = p.lt(p.const(0), code)
+    lead, rest = _log10_mantissa(p, p.select(positive, code, p.const(1)))
+    whole = p.sub(lead, p.const(fraction))
+    fractional = p.shr(p.mul(rest, p.const(fu._LOG10_2)), fu.P)
+    value = p.add(_multiply_log10_coefficient(p, whole), fractional)
+    shift = fu.P - fraction
+    if shift > 0:
+        carry = p.le(p.const(1 << (shift - 1)), p.mask(value, shift))
+        rounded = p.add(p.shr(value, shift), carry)
+    else:
+        rounded = _shift_round(p, value, -shift)
+    if not _log10_result_fits(p, data_width, fraction):
+        rounded = _saturate(p, rounded, data_width)
     return p.select(positive, rounded, p.const(-(1 << (data_width - 1))))
 
 
@@ -343,35 +478,51 @@ def _unit_softplus(p: Program, code: str, data_width: int, fraction: int) -> str
 
 
 def _unit_tan(p: Program, code: str, data_width: int, fraction: int) -> str:
+    """Build the rounded signed ratio with saturation and explicit pole handling."""
     turn = _turns(p, code, fraction)
     sine = _turn_sine(p, turn)
     cosine = _turn_sine(p, p.mask(p.add(turn, p.const(1 << (fu.B - 2))), fu.B))
-    doubled = p.div(p.shl(sine, fraction + 1), cosine)
-    away = p.select(p.le(p.const(0), doubled), p.const(1), p.const(-1))
-    value = _saturate(p, p.div(p.add(doubled, away), p.const(2)), data_width)
-    pole = p.select(
-        p.lt(sine, p.const(0)),
-        p.const(-(1 << (data_width - 1))),
-        p.const((1 << (data_width - 1)) - 1),
-    )
-    return p.select(p.eq(cosine, p.const(0)), pole, value)
-
-
-def _atan_internal(p: Program, numerator: str, denominator: str) -> str:
-    below = p.le(numerator, denominator)
-    direct = _interpolate(p, "atan", p.div(p.shl(numerator, fu.P), denominator), fu.P)
-    inverse = _interpolate(p, "atan", p.div(p.shl(denominator, fu.P), numerator), fu.P)
-    return p.select(below, direct, p.sub(p.const(fu._HALF_PI), inverse))
+    zero = p.const(0)
+    sine_negative = p.lt(sine, zero)
+    negative = p.xor(sine_negative, p.lt(cosine, zero))
+    at_pole = p.eq(cosine, zero)
+    divisor = p.select(at_pole, p.const(1), _abs(p, cosine))
+    scaled = p.add(p.shl(_abs(p, sine), fraction), p.shr(divisor, 1))
+    negative_cap = p.shl(divisor, data_width - 1)
+    positive_cap = p.sub(negative_cap, divisor)
+    dividend = _min(p, scaled, p.select(negative, negative_cap, positive_cap))
+    magnitude = _bounded_positive_quotient(p, dividend, divisor, data_width, fu.P + 2)
+    value = p.select(negative, p.neg(magnitude), magnitude)
+    rail = 1 << (data_width - 1)
+    pole = p.select(sine_negative, p.const(-rail), p.const(rail - 1))
+    return p.select(at_pole, pole, value)
 
 
 def _unit_arctan(p: Program, code: str, data_width: int, fraction: int) -> str:
-    value = _atan_internal(p, _abs(p, code), p.const(1 << fraction))
+    """Use the exact direct ratio or one bounded reciprocal before interpolation."""
+    magnitude = p.mask(_abs(p, code), data_width)
+    one = p.const(1 << fraction)
+    direct = p.le(magnitude, one)
+    direct_ratio = p.shl(magnitude, fu.P - fraction)
+    divisor = p.select(direct, one, magnitude)
+    inverse_ratio = build_fractional_ratio(p, one, divisor, data_width, fu.P)
+    ratio = p.select(direct, direct_ratio, inverse_ratio)
+    angle = _interpolate(p, "atan", ratio, fu.P)
+    value = p.select(direct, angle, p.sub(p.const(fu._HALF_PI), angle))
     signed = p.select(p.lt(code, p.const(0)), p.neg(value), value)
     return _saturate(p, _shift_round(p, signed, fraction - fu.P), data_width)
 
 
 def _unit_atan2(p: Program, y: str, x: str, data_width: int, fraction: int) -> str:
-    value = _atan_internal(p, _abs(p, y), _max(p, _abs(p, x), p.const(1)))
+    """Build a two-argument angle from one bounded ratio and one interpolation."""
+    numerator = p.mask(_abs(p, y), data_width)
+    denominator = p.mask(_max(p, _abs(p, x), p.const(1)), data_width)
+    direct = p.le(numerator, denominator)
+    low = p.select(direct, numerator, denominator)
+    high = p.select(direct, denominator, numerator)
+    ratio = build_fractional_ratio(p, low, high, data_width, fu.P)
+    angle = _interpolate(p, "atan", ratio, fu.P)
+    value = p.select(direct, angle, p.sub(p.const(fu._HALF_PI), angle))
     axis = p.select(p.eq(y, p.const(0)), p.const(0), p.const(fu._HALF_PI))
     value = p.select(p.eq(x, p.const(0)), axis, value)
     value = p.select(p.lt(x, p.const(0)), p.sub(p.const(2 * fu._HALF_PI), value), value)
@@ -380,10 +531,19 @@ def _unit_atan2(p: Program, y: str, x: str, data_width: int, fraction: int) -> s
 
 
 def _arcsin_internal(p: Program, code: str, fraction: int) -> str:
+    """Build the signed angle using the bounded root and one truncated ratio."""
     magnitude = _min(p, _abs(p, code), p.const(1 << fraction))
     x = p.shl(magnitude, fu.P - fraction)
-    root = _isqrt(p, p.sub(p.const(1 << (2 * fu.P)), p.mul(x, x)))
-    value = p.select(p.eq(root, p.const(0)), p.const(fu._HALF_PI), _atan_internal(p, x, root))
+    radicand = p.sub(p.const(1 << (2 * fu.P)), p.mul(x, x))
+    root = build_bounded_isqrt(p, radicand, 2 * fu.P)
+    # Both magnitudes fit P + 1 bits. At least one is positive, including the axis.
+    direct = p.le(x, root)
+    low = p.select(direct, x, root)
+    high = p.select(direct, root, x)
+    ratio = build_fractional_ratio(p, low, high, fu.P + 1, fu.P)
+    angle = _interpolate(p, "atan", ratio, fu.P)
+    value = p.select(direct, angle, p.sub(p.const(fu._HALF_PI), angle))
+    value = p.select(p.eq(root, p.const(0)), p.const(fu._HALF_PI), value)
     return p.select(p.lt(code, p.const(0)), p.neg(value), value)
 
 

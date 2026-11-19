@@ -22,8 +22,10 @@ from pathlib import Path
 
 import pytest
 
+from tools.function_synthesis_aiger import AigerInterface
 from tools.function_synthesis_cache import FunctionSynthesisCache
 from tools.function_synthesis_dsp_proof import prove_primitive_residual
+from tools.function_synthesis_gia import read_gia_equivalence
 from tools.function_synthesis_netlist import Netlist
 from tools.function_synthesis_proof import (
     prove_compositional_mapping,
@@ -104,6 +106,23 @@ def test_retained_composition_never_restamps_native_evidence(proof_case: ProofCa
     proof = read_compositional_mapping_proof(case, root, tools)
     assert dict(proof.artifact_sha256) == dict(measurement.artifact_sha256)
     assert read_function_synthesis_measurement(case, root, tools) == measurement
+    assert _snapshot(root) == before
+
+
+def test_changed_primitive_engine_cannot_relabel_the_actual_solver(
+    proof_case: ProofCase, tmp_path: Path
+) -> None:
+    """Refuse an engine label inconsistent with the completely validated native GIA record."""
+    case, original, tools, _ = proof_case
+    root = tmp_path / "changed-engine"
+    shutil.copytree(original, root)
+    path = root / "composition-proof/primitive-proof/primitive-residual.json"
+    record = json.loads(path.read_text())
+    record["native_equivalence_engine"] = "unqualified-equivalence"
+    path.write_text(json.dumps(record, sort_keys=True, indent=2) + "\n")
+    before = _snapshot(root)
+    with pytest.raises(ValueError, match="primitive engine differs"):
+        read_compositional_mapping_proof(case, root, tools)
     assert _snapshot(root) == before
 
 
@@ -309,7 +328,7 @@ def test_non_generic_retained_word_cell_is_refused(proof_case: ProofCase, tmp_pa
     cell["type"] = "INV"
     path.write_text(json.dumps(document))
     before = _snapshot(root)
-    with pytest.raises(ValueError, match="generic word export flow or actual cell domain"):
+    with pytest.raises(ValueError, match="cut or export flow differs from its source graphs"):
         read_compositional_mapping_proof(case, root, tools)
     assert _snapshot(root) == before
 
@@ -339,7 +358,7 @@ def test_non_generic_original_word_cell_is_refused_before_native_export(
             proof,
             timeout=90,
         )
-    assert not (proof / "word-synthesis.command.json").exists()
+    assert not (proof / "word-prepare.command.json").exists()
 
 
 @pytest.mark.parametrize(
@@ -477,7 +496,7 @@ def test_acquisition_change_during_native_composition_cannot_be_accepted(
         if (
             event == "subprocess.Popen"
             and args[2] in (primitive, str(primitive), str(primitive).encode())
-            and (primitive / "physical-synthesis.command.json").is_file()
+            and (primitive / "physical-primitives.command.json").is_file()
             and not changed.is_set()
         ):
             with (root / "mapped.v").open("ab") as stream:
@@ -489,7 +508,14 @@ def test_acquisition_change_during_native_composition_cannot_be_accepted(
     with pytest.raises(ValueError, match="acquisition or proof implementation changed"):
         check_mapped_equivalence(case, root, tools)
     assert changed.is_set()
-    assert "Networks are equivalent" in (primitive / "equivalence.log").read_text()
+    record = json.loads((primitive / "gia-proof.json").read_text())
+    interface = AigerInterface(frozenset(record["input_order"]), frozenset(record["output_order"]))
+    assert (
+        read_gia_equivalence(
+            primitive / "word.aig", primitive / "physical.aig", interface, tools, primitive
+        )
+        == record["engine"]
+    )
     assert not (root / "composition-proof/proof-record.json").exists()
     assert not (root / "complete-bdd-proof").exists()
 
@@ -537,7 +563,12 @@ def test_non_regular_component_record_is_refused(
         path.mkdir()
     before = _snapshot(root)
     retained = target.read_bytes()
-    with pytest.raises(ValueError, match="regular retained artifacts"):
+    expected = (
+        "bounded regular artifacts"
+        if name.startswith("primitive-proof/")
+        else "regular retained artifacts"
+    )
+    with pytest.raises(ValueError, match=expected):
         read_compositional_mapping_proof(case, root, tools)
     assert _snapshot(root) == before and target.read_bytes() == retained
 

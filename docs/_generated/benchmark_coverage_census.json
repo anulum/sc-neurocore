@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 29,
-    "outdated": 114,
+    "current": 31,
+    "outdated": 112,
     "reviewed": 2,
     "unbound": 174
   },
@@ -2815,10 +2815,13 @@
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
         "src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/function_unit_programs.py",
         "src/sc_neurocore/compiler/function_units.py",
         "src/sc_neurocore/compiler/hardware_numeric_contract.py",
         "src/sc_neurocore/compiler/lut_accuracy.py",
+        "src/sc_neurocore/compiler/magnitude_function_programs.py",
         "src/sc_neurocore/compiler/native_equation/transactions.py",
+        "src/sc_neurocore/compiler/reciprocal_root_programs.py",
         "src/sc_neurocore/compiler/testbench_gen.py",
         "src/sc_neurocore/compiler/verilog_expr_emitter.py",
         "src/sc_neurocore/neurons/equation_builder.py",
@@ -2831,19 +2834,11 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

@@ -12,33 +12,26 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Mapping
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from sc_neurocore.compiler import emit_function_unit_verilog
-from tools.function_synthesis_aiger import (
-    AigerInterface,
-    digest,
-)
+from tools.function_synthesis_aiger import digest
 from tools.function_synthesis_dsp_contracts import prove_dsp_contract, read_dsp_contract
-from tools.function_synthesis_dsp_ports import read_dsp_port_alignment
-from tools.function_synthesis_dsp_proof import (
-    WORD_EXPORT_ABC,
-    WORD_EXPORT_FLOW,
-    prove_primitive_residual,
-)
 from tools.function_synthesis_exports import MAPPING_FLOW, SYNTHESIS_FLOW, module_json_flow
 from tools.function_synthesis_json import native_netlist_artifacts
+from tools.function_synthesis_mapping_stages import prove_mapping_stages, read_mapping_stages
 from tools.function_synthesis_netlist import Netlist, object_mapping
 from tools.function_synthesis_records import SynthesisCase
+from tools.function_synthesis_residual_exports import export_pre_lut, verify_pre_lut_exports
 from tools.function_synthesis_source_proof import (
     prove_source_normalization,
-    read_native_equivalence,
     read_source_normalization,
 )
 from tools.function_synthesis_toolchain import SynthesisToolchain
 from tools.function_synthesis_word_graph import configured_dsp
+from tools.function_synthesis_word_groups import GroupedWordComposition
 from tools.function_synthesis_word_proof import prove_word_composition
 
 _PROOF_DIRECTORY = "composition-proof"
@@ -58,9 +51,14 @@ _CODE_FILES = tuple(
         "polynomial",
         "word_graph",
         "word_proof",
+        "word_groups",
         "structural_proof",
         "aiger",
         "dsp_proof",
+        "residual_exports",
+        "checkpoints",
+        "checkpoint_timeout",
+        "mapping_stages",
         "dsp_ports",
         "dsp_contracts",
         "proof",
@@ -69,6 +67,8 @@ _CODE_FILES = tuple(
         "yosys",
         "exports",
         "gia",
+        "gia_partition",
+        "gia_protocol",
         "json",
         "source_proof",
     )
@@ -120,15 +120,6 @@ def _widths(case: SynthesisCase) -> dict[str, int]:
     }
 
 
-def _names(ports: Mapping[str, int]) -> frozenset[str]:
-    """Name every actual scalar or vector bit in the expected complete interface."""
-    return frozenset(
-        name if width == 1 else f"{name}[{index}]"
-        for name, width in ports.items()
-        for index in range(width)
-    )
-
-
 def _root_bindings(case: SynthesisCase, directory: Path) -> dict[str, str]:
     """Bind the original physical acquisition and exact canonical emitted function."""
     if directory.is_symlink() or any((directory / name).is_symlink() for name in _ROOT_INPUTS):
@@ -162,49 +153,13 @@ def _artifacts(directory: Path) -> dict[str, str]:
     return result
 
 
-def _primitive_interface(
-    case: SynthesisCase, post: Netlist, physical: Netlist, details: dict[str, object]
-) -> AigerInterface:
-    """Require all original bits, independent primitive values and every connected DSP input."""
-    names = sorted(name for name, cell in physical.cells.items() if cell.kind == "DSP48E1")
-    free = details.get("universal_primitive_values")
-    primary = physical.primary_inputs(_widths(case), case.data_width)
-    expected_free = len(
-        {
-            bit
-            for name in names
-            for port, direction in physical.cells[name].directions.items()
-            if direction == "output"
-            for bit in physical.cells[name].connections[port]
-            if isinstance(bit, int) and bit not in primary
-        }
-    )
-    if isinstance(free, bool) or not isinstance(free, int) or free != expected_free:
-        raise ValueError("The primitive proof has invalid universally independent output geometry")
-    inputs = _names(_widths(case)) | frozenset(f"dsp_value_{index:04d}" for index in range(free))
-    outputs = _names({"result": case.data_width})
-    count = 0
-    for index, name in enumerate(names):
-        cell = post.cells[name]
-        configured_dsp(cell)
-        for port, direction in cell.directions.items():
-            if direction == "input":
-                outputs |= _names({f"dsp_input_{index:02d}_{port}": len(cell.connections[port])})
-                count += len(cell.connections[port])
-    if (
-        details.get("physical_dsp_count") != len(names)
-        or details.get("original_input_bits") != case.input_bits
-        or details.get("original_output_bits") != case.data_width
-        or details.get("compared_primitive_input_bits") != count
-    ):
-        raise ValueError(
-            "The retained primitive comparison omitted original or connected primitive bits"
-        )
-    return AigerInterface(inputs, outputs)
-
-
 def _completed_record(
-    case: SynthesisCase, root: Path, tools: SynthesisToolchain
+    case: SynthesisCase,
+    root: Path,
+    tools: SynthesisToolchain,
+    *,
+    word_work: list[dict[str, object]],
+    initial: bool = False,
 ) -> dict[str, object]:
     """Read completed actual component evidence and derive its complete current binding."""
     directory = root / _PROOF_DIRECTORY
@@ -214,25 +169,46 @@ def _completed_record(
     pre = Netlist.read(directory / "pre-dsp.json")
     post = Netlist.read(directory / "post-dsp.json")
     physical = Netlist.read(root / "mapped.json")
-    for module in [original, reference, pre, post, physical]:
+    intermediate = Netlist.read(directory / "pre-lut.json")
+    for module in [original, reference, pre, post, intermediate, physical]:
         module.primary_inputs(widths, case.data_width)
     for name, expected in _FLOWS.items():
         if (directory / name).read_text(encoding="utf-8") != expected:
             raise ValueError("A retained original checkpoint preparation flow changed")
     if (directory / "unit.v").read_bytes() != (root / "unit.v").read_bytes():
         raise ValueError("A checkpoint preparation used a different original RTL source")
-    for stem in ["pre-dsp", "post-dsp"]:
+    for stem in ("pre-dsp", "post-dsp"):
         tools.check_library_log(directory / (stem + "-preparation.log"))
+    verify_pre_lut_exports(post, directory, tools)
     source_method = read_source_normalization(case, directory, tools)
     word = _object(directory / "word-proof/word-composition.json")
     products = [(name, cell) for name, cell in pre.cells.items() if cell.kind == "$mul"]
-    if word.get("products_proven") != len(products) or word.get(
-        "unchanged_functions_checked"
-    ) != len(pre.cells) - len(products):
+    grouped = word.get("schema_version") == "sc-neurocore.word-composition.v2"
+    if not grouped and (
+        word.get("products_proven") != len(products)
+        or word.get("unchanged_functions_checked") != len(pre.cells) - len(products)
+    ):
         raise ValueError("A retained word proof omitted actual original function nodes")
-    if word != prove_word_composition(pre, post, widths, case.data_width).to_dict():
+    actual_word = prove_word_composition(
+        pre, post, widths, case.data_width, deadline=tools.cohort_deadline
+    )
+    if word != actual_word.to_dict():
         raise ValueError("The retained word proof differs from the actual complete word graphs")
-    for index, (name, cell) in enumerate(products):
+    if isinstance(actual_word, GroupedWordComposition):
+        observed = actual_word.work.to_dict()
+        producer_work = _object(directory / "word-proof/group-work.json")
+        producer_elapsed = actual_word.work.check_record(producer_work)
+        reader_work = observed
+        if not initial:
+            retained_work = _object(directory / "word-readback-work.json")
+            if retained_work.get("producer") != producer_work:
+                raise ValueError("Retained grouped producer work differs from its original record")
+            reader_work = object_mapping(retained_work.get("reader"))
+        reader_elapsed = actual_word.work.check_record(reader_work)
+        if producer_elapsed + reader_elapsed > 3300:
+            raise ValueError("Retained grouped arithmetic work exhausted the shared case budget")
+        word_work.append(observed)
+    for index, (name, cell) in enumerate([] if grouped else products):
         product = _object(directory / f"word-proof/product-{index:03d}.json")
         if (
             product.get("original_cell") != name
@@ -249,23 +225,11 @@ def _completed_record(
         ).to_dict()
         for index, configuration in enumerate(configurations)
     ]
-    primitive_directory = directory / "primitive-proof"
-    primitive = _object(primitive_directory / "primitive-residual.json")
-    aligned = read_dsp_port_alignment(post, physical, primitive_directory)
-    interface = _primitive_interface(case, aligned, physical, primitive)
-    read_native_equivalence(primitive_directory, "word.aig", "physical.aig", interface, tools)
-    if (
-        (primitive_directory / "word.ys").read_text(encoding="utf-8") != WORD_EXPORT_FLOW
-        or (primitive_directory / "word-abc.script").read_text(encoding="utf-8") != WORD_EXPORT_ABC
-        or any(
-            not cell.kind.startswith("$")
-            for cell in Netlist.read(primitive_directory / "word-cut.json").cells.values()
-        )
-    ):
-        raise ValueError("The retained generic word export flow or actual cell domain changed")
-    tools.check_library_log(primitive_directory / "physical-synthesis.log")
+    mappings = read_mapping_stages(
+        post, intermediate, physical, widths, case.data_width, tools, directory
+    )
     return {
-        "schema_version": "sc-neurocore.function-composition.v1",
+        "schema_version": "sc-neurocore.function-composition.v3",
         "case": case.key,
         "status": "equivalent",
         "method": "compositional",
@@ -274,7 +238,7 @@ def _completed_record(
         "latches": 0,
         "source_method": source_method,
         "word": word,
-        "primitives": primitive,
+        **mappings,
         "contracts": contracts,
         "root_artifact_sha256": _root_bindings(case, root),
         "producer_sha256": _source_bindings(),
@@ -292,10 +256,53 @@ class CompositionalMappingProof:
     artifact_sha256 : tuple of (str, str)
         Complete used original, checkpoint, native command and proof-file identities,
         relative to the original measurement directory.
+    word_work : tuple of dict, optional
+        Actual current grouped reader work, kept separate from artifact identity.
 
     """
 
     artifact_sha256: tuple[tuple[str, str], ...]
+    word_work: tuple[dict[str, object], ...] = field(default=(), compare=False)
+
+
+def _seal_compositional_proof(
+    case: SynthesisCase,
+    directory: Path,
+    tools: SynthesisToolchain,
+    expected: dict[str, object],
+    work: list[dict[str, object]],
+    deadline: float,
+) -> CompositionalMappingProof:
+    """Check sealed bytes against an already reconstructed independent proof."""
+    proof_directory = directory / _PROOF_DIRECTORY
+    record = proof_directory / "proof-record.json"
+    if proof_directory.is_symlink() or record.is_symlink():
+        raise ValueError(
+            "A compositional proof must not follow a retained directory or record link"
+        )
+    if record.read_text(encoding="utf-8") != _encoded(expected):
+        raise ValueError(
+            "Compositional proof artifacts differ from their qualified source-bound record"
+        )
+    root_bindings = _root_bindings(case, directory)
+    proof_bindings = _artifacts(proof_directory)
+    if (
+        root_bindings != expected["root_artifact_sha256"]
+        or proof_bindings != expected["artifact_sha256"]
+        or _source_bindings() != expected["producer_sha256"]
+    ):
+        raise ValueError(
+            "Compositional proof artifacts differ from their qualified source-bound record"
+        )
+    artifacts = list(root_bindings.items())
+    artifacts.extend(
+        (f"{_PROOF_DIRECTORY}/{name}", value) for name, value in proof_bindings.items()
+    )
+    artifacts.append((f"{_PROOF_DIRECTORY}/proof-record.json", digest(record)))
+    tools.verify()
+    if time.monotonic() > deadline:
+        raise ValueError("Compositional proof reader exhausted the shared case budget")
+    return CompositionalMappingProof(tuple(artifacts), tuple(work))
 
 
 def read_compositional_mapping_proof(
@@ -326,6 +333,10 @@ def read_compositional_mapping_proof(
         or any component without its actual positive qualified result.
 
     """
+    deadline = time.monotonic() + 3300
+    if tools.cohort_deadline is not None:
+        deadline = min(deadline, tools.cohort_deadline)
+    tools = replace(tools, cohort_deadline=deadline)
     tools.verify()
     proof_directory = directory / _PROOF_DIRECTORY
     record = proof_directory / "proof-record.json"
@@ -333,18 +344,9 @@ def read_compositional_mapping_proof(
         raise ValueError(
             "A compositional proof must not follow a retained directory or record link"
         )
-    expected = _completed_record(case, directory, tools)
-    if record.read_text(encoding="utf-8") != _encoded(expected):
-        raise ValueError(
-            "Compositional proof artifacts differ from their qualified source-bound record"
-        )
-    root_bindings = _root_bindings(case, directory)
-    artifacts = list(root_bindings.items())
-    artifacts.extend(
-        (f"{_PROOF_DIRECTORY}/{name}", value) for name, value in _artifacts(proof_directory).items()
-    )
-    artifacts.append((f"{_PROOF_DIRECTORY}/proof-record.json", digest(record)))
-    return CompositionalMappingProof(tuple(artifacts))
+    work: list[dict[str, object]] = []
+    expected = _completed_record(case, directory, tools, word_work=work)
+    return _seal_compositional_proof(case, directory, tools, expected, work, deadline)
 
 
 def prove_compositional_mapping(
@@ -383,14 +385,19 @@ def prove_compositional_mapping(
     if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("A compositional proof requires a finite positive native deadline")
     seconds = min(timeout, 90.0)
+    deadline = time.monotonic() + 3300
+    if tools.cohort_deadline is not None:
+        deadline = min(deadline, tools.cohort_deadline)
+    tools = replace(tools, cohort_deadline=deadline)
     before, code = _root_bindings(case, directory), _source_bindings()
     proof_directory = directory / _PROOF_DIRECTORY
     proof_directory.mkdir(parents=True, exist_ok=False)
     (proof_directory / "unit.v").write_bytes((directory / "unit.v").read_bytes())
     for name, flow in _FLOWS.items():
         _write(proof_directory / name, flow)
-        log = proof_directory / (name.removesuffix(".ys") + "-preparation.log")
-        tools.run([str(tools.yosys), "-Q", "-T", name], proof_directory, log, timeout=seconds)
+        stem = name.removesuffix(".ys")
+        log = proof_directory / (stem + "-preparation.log")
+        tools.run([str(tools.yosys), "-Q", "-T", "-s", name], proof_directory, log, timeout=seconds)
         if name != "original-words.ys":
             tools.check_library_log(log)
     widths = _widths(case)
@@ -399,7 +406,15 @@ def prove_compositional_mapping(
         Netlist.read(proof_directory / "pre-dsp.json"),
         Netlist.read(proof_directory / "post-dsp.json"),
     )
-    prove_word_composition(pre, post, widths, case.data_width, proof_directory / "word-proof")
+    export_pre_lut(post, proof_directory, tools, seconds)
+    prove_word_composition(
+        pre,
+        post,
+        widths,
+        case.data_width,
+        proof_directory / "word-proof",
+        deadline=tools.cohort_deadline,
+    )
     configurations = sorted(
         {configured_dsp(cell) for cell in post.cells.values() if cell.kind == "DSP48E1"}
     )
@@ -410,19 +425,31 @@ def prove_compositional_mapping(
             proof_directory / f"contracts/contract-{index:02d}",
             timeout=seconds,
         )
-    prove_primitive_residual(
+    prove_mapping_stages(
         proof_directory / "post-dsp.json",
+        proof_directory / "pre-lut.json",
         directory / "mapped.json",
         widths,
         case.data_width,
         tools,
-        proof_directory / "primitive-proof",
+        proof_directory,
         timeout=seconds,
     )
     if before != _root_bindings(case, directory) or code != _source_bindings():
         raise ValueError("Original acquisition or proof implementation changed during composition")
     tools.verify()
-    _write(
-        proof_directory / "proof-record.json", _encoded(_completed_record(case, directory, tools))
-    )
-    return read_compositional_mapping_proof(case, directory, tools)
+    reader_work: list[dict[str, object]] = []
+    payload = _completed_record(case, directory, tools, word_work=reader_work, initial=True)
+    if reader_work:
+        _write(
+            proof_directory / "word-readback-work.json",
+            _encoded(
+                {
+                    "producer": _object(proof_directory / "word-proof/group-work.json"),
+                    "reader": reader_work[0],
+                }
+            ),
+        )
+        payload["artifact_sha256"] = _artifacts(proof_directory)
+    _write(proof_directory / "proof-record.json", _encoded(payload))
+    return _seal_compositional_proof(case, directory, tools, payload, reader_work, deadline)
