@@ -155,3 +155,29 @@ cosim_validated = true
 cosim_evidence = "tests/test_cosim_sc_non_resetting_adaptive_lif.py::test_sc_project_q3232_matches_integer_oracle_and_events"
 target_tier = "H1"
 terminal_reason = "Signed Q32.32 preserves the bounded integer oracle and event vector, synthesizes in Yosys, matches its optimized netlist over the enrolled sequence, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."
+
+[[behaviour]]
+name = "a current of 20.0 fires once in 256 steps"
+kind = "interval"
+steps = 256
+observable = "spikes"
+bounds = [
+    1,
+    1,
+]
+
+[behaviour.inputs]
+current = 20.0
+
+[[behaviour]]
+name = "a current of 1000.0 fires 11 times in 12 steps"
+kind = "interval"
+steps = 12
+observable = "spikes"
+bounds = [
+    11,
+    11,
+]
+
+[behaviour.inputs]
+current = 1000.0

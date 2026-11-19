@@ -51,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state no behaviour case. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITHOUT_A_CASE = 159
+MODELS_WITHOUT_A_CASE = 158
 
 #: Every case's stated limit, in the descriptor's order: an interval's bounds or a
 #: contrast's least margin. The observed counts alone do not hold a case's claim: a
@@ -87,6 +87,7 @@ STATED_LIMITS: dict[str, list[object]] = {
     "SCClippedLogisticBurstingMapNeuron": [[2, 2], [1, 1], [1, 1], [7, 7]],
     "SCFourStateGLIFNeuron": [[0, 0], [0, 0], [23, 23], [54, 54], [86, 86], [95, 95]],
     "SCInclusivePerfectIntegratorNeuron": [[500, 500], [500, 500]],
+    "SCNonResettingAdaptiveLIFNeuron": [[1, 1], [11, 11]],
     "SCResettingWilsonHRNeuron": [[0, 0], [1, 1], [4, 4]],
     "SCSymmetricQuadraticIFNeuron": [
         [0, 0],
@@ -1296,6 +1297,29 @@ def test_the_escape_rate_neuron_states_its_seed_corpus_row_and_a_driven_window(
         {"delta_u": 1.0, "rho_0": 0.25, "v_threshold": -70.0},
         None,
     ]
+    assert all(case["held"] for case in cases)
+    assert all(case["exercised"] for case in cases)
+
+
+def test_the_sc_non_resetting_adaptive_lif_states_a_receipt_window_and_its_level_event(
+    report: dict[str, object],
+) -> None:
+    """The reference receipt's 256 steps at its main drive, and a level at a high drive.
+
+    The model's reference receipt runs 256 steps, most of them at 20.0. At a constant
+    20.0 the voltage rises from -65 towards -45 and meets the threshold, which stays at
+    its rest value of -50 until then, once, at step 139. Nothing resets the voltage; the
+    event raises the threshold by 5. At 1000.0 the voltage climbs faster than the
+    threshold rises by 5 per event, and the model fires on every step from the second
+    of 12 on, 11 times, where a count of upward crossings gives 1.
+    """
+    row = _models(report)["SCNonResettingAdaptiveLIFNeuron"]
+    assert row["state"] == "held"
+    cases = row["cases"]
+    assert isinstance(cases, list)
+    assert [case["observed"] for case in cases] == [1, 11]
+    assert [case["inputs"] for case in cases] == [{"current": 20.0}, {"current": 1000.0}]
+    assert [case["steps"] for case in cases] == [256, 12]
     assert all(case["held"] for case in cases)
     assert all(case["exercised"] for case in cases)
 

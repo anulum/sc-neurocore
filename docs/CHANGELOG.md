@@ -62,6 +62,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The SC non-resetting adaptive integrate-and-fire neuron states two
+  behaviour cases. At a constant 20.0, the main drive of its 256-step
+  reference receipt, it fires once in those 256 steps, at step 139; its
+  voltage is never reset and the event raises the threshold by 5. At
+  1000.0 the voltage outruns the rising threshold and the neuron fires on
+  every step from the second of 12 on, 11 times, which a count of
+  crossings would miss: its event is a level. The window at 20.0 breaks
+  all 32 sign variants of its three equations. Twenty-seven of the 185
+  catalogue models now state cases.
+
 - The equation compiler can emit a standalone combinational function unit for
   either lowering. The source-checkout synthesis command records Xilinx
   7-series cell and DSP counts, verifies the entire mapped interface against

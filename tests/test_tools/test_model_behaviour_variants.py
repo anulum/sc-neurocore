@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Models of the catalogue that state behaviour cases. It moves only by a
 #: deliberate change here, in the unit that adds or removes cases.
-MODELS_WITH_CASES = 26
+MODELS_WITH_CASES = 27
 
 
 def _accumulator() -> dict[str, object]:
@@ -410,6 +410,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
         "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",
         "SCInclusivePerfectIntegratorNeuron",
+        "SCNonResettingAdaptiveLIFNeuron",
         "SCResettingWilsonHRNeuron",
         "SCSymmetricQuadraticIFNeuron",
         "SCUpwardCrossingRulkovMapNeuron",
@@ -422,7 +423,7 @@ def test_the_report_lists_the_models_that_state_cases(report: dict[str, object])
     assert isinstance(totals, dict)
     assert set(totals) == set(MODEL_STATES)
     assert totals == {
-        "discriminated": 25,
+        "discriminated": 26,
         "not_discriminated": 0,
         "schema_differs": 0,
         "no_schema": 1,
@@ -1274,6 +1275,34 @@ def test_the_escape_rate_neuron_needs_a_drive_for_its_leak_and_input_terms(
     }
 
 
+def test_the_sc_non_resetting_adaptive_lif_window_at_20_decides_all_32_signs(
+    report: dict[str, object],
+) -> None:
+    """Thirty-two signs in its three equations; the 256 steps at 20.0 break every one.
+
+    The voltage equation has 6 sign variants, the threshold 15 and the spike flag 11;
+    the threshold and the flag repeat the voltage's next value inside their comparison.
+    Each flipped sign moves the one event of the window or adds many. A variant stops at
+    the first case it breaks, so the level case, which comes second, breaks none.
+    """
+    row = _rows(report)["SCNonResettingAdaptiveLIFNeuron"]
+    assert row["state"] == "discriminated"
+    unchanged = row["unchanged"]
+    assert isinstance(unchanged, list)
+    assert [entry["observed"] for entry in unchanged] == [1, 11]
+    variants = row["variants"]
+    assert isinstance(variants, list)
+    assert len(variants) == 32
+    assert all(variant["outcome"] == "violated" for variant in variants)
+    assert {variant["case"] for variant in variants} == {
+        "a current of 20.0 fires once in 256 steps"
+    }
+    per_equation: dict[object, int] = {}
+    for variant in variants:
+        per_equation[variant["equation"]] = per_equation.get(variant["equation"], 0) + 1
+    assert per_equation == {"v": 6, "theta": 15, "spike_flag": 11}
+
+
 def test_a_model_without_a_bound_schema_is_said_to_have_none(report: dict[str, object]) -> None:
     """The dendritic NMDA model states cases and has no schema to vary."""
     row = _rows(report)["DendriticNMDANeuron"]
@@ -1285,10 +1314,10 @@ def test_the_summary_counts_the_states(report: dict[str, object]) -> None:
     """An operator sees how many models have their terms decided by their cases."""
     summary = render_summary(report)
     assert f"models that state cases: {MODELS_WITH_CASES} of 185" in summary
-    assert re.search(r"^  discriminated\s+25$", summary, flags=re.M)
+    assert re.search(r"^  discriminated\s+26$", summary, flags=re.M)
     assert re.search(r"^  no_schema\s+1$", summary, flags=re.M)
     assert re.search(r"^  not_discriminated\s+0$", summary, flags=re.M)
-    assert "variants: 274, of them violated 274, not discriminated 0" in summary
+    assert "variants: 306, of them violated 306, not discriminated 0" in summary
     for note in REPORT_NOTES:
         assert note in summary
 

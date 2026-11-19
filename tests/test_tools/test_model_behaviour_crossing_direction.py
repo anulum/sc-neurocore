@@ -69,6 +69,7 @@ RESET_OR_LEVEL_MODELS = frozenset(
         "SCClippedLogisticBurstingMapNeuron",
         "SCFourStateGLIFNeuron",
         "SCInclusivePerfectIntegratorNeuron",
+        "SCNonResettingAdaptiveLIFNeuron",
         "SCResettingWilsonHRNeuron",
         "SCSymmetricQuadraticIFNeuron",
         "SigmaDeltaNeuron",
