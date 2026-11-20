@@ -307,6 +307,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Mojo lane inventory classes 50 more sources as machine-translated
+  stubs: 39 implementation sources with `fn` remain, not 89. Its stub rule
+  read a single-quoted string as ending at the first quote, so a line
+  string holding an escaped quote (`'… \'{name}\' …'`) was not a stub line,
+  and it did not count a string assignment parenthesised across lines
+  (`var name = (` … `)`); all 50 are `kernels/` mirrors the builder does
+  not build. A parenthesised value holding anything but strings is still
+  code. The inventory's neuron-model reader also counts the guarded
+  `load_mojo_library` as opening a library, beside `ctypes.CDLL`, so
+  `connor_stevens` and `hodgkin_huxley` record that they do.
+
 - The backend builder builds the two self-contained Mojo fidelity libraries again
   (`benda_herz`, `sc_stochastic_rate_adaptation`). Their loaders now call the guarded
   `load_mojo_library` instead of `ctypes.CDLL`, and the builder recognised only the latter, so

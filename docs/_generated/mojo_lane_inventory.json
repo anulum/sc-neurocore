@@ -3,12 +3,12 @@
   "counts": {
     "sources": 535,
     "comment_only": 4,
-    "translated_stub": 313,
-    "implementation_fn": 89,
+    "translated_stub": 363,
+    "implementation_fn": 39,
     "implementation_def": 129,
     "built_by_builder": 50,
     "implementation_fn_built_by_builder": 0,
-    "translated_stub_declared_mirror": 313,
+    "translated_stub_declared_mirror": 363,
     "library_literals": 110,
     "library_literals_attributed_to_mojo": 50,
     "models": 177,
@@ -341,7 +341,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/app.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -488,7 +488,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/bitstreams.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -644,7 +644,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/codegen.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -658,7 +658,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/compiler.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -758,7 +758,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/decoder.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -842,7 +842,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/demo_sc_dense_layer.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -856,28 +856,28 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/demo_sleep_optimization.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/demo_swarm_control.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/demo_tcbo_consciousness.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/demonstration_convergence.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -891,7 +891,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/deploy.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -933,7 +933,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/director.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -991,7 +991,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/dvs.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1096,7 +1096,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/engine.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1133,7 +1133,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/estimator.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1212,7 +1212,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/export.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1524,7 +1524,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/ir_type_checker.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1792,7 +1792,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/lds_decorrelation.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1920,7 +1920,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/mdl_parser.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1941,7 +1941,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/memristor_mapper.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1969,14 +1969,14 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/mlir_emitter.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/model_bridge.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -1990,7 +1990,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/model_zoo.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2039,7 +2039,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/multimodal.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2053,7 +2053,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/network_graph.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2130,7 +2130,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/node_map.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2200,7 +2200,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/orchestrator.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2272,7 +2272,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/photonic_noc.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2314,7 +2314,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/platform_profiler.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2344,7 +2344,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/population.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2379,7 +2379,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/prescott.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2393,7 +2393,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/pretrained.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2407,14 +2407,14 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/progress.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/projection.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2486,7 +2486,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/quantizer.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2563,7 +2563,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/regulator.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2591,7 +2591,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/resource_optimizer.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2605,7 +2605,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/safety.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2675,7 +2675,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/sc_neurocore_driver.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2724,7 +2724,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/sc_scope.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2787,7 +2787,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/sensor_fusion.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -2922,7 +2922,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/spatial_generative_demo.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3139,7 +3139,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/svg_export.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3160,7 +3160,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/synthesis.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3223,7 +3223,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/text_dashboard.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3276,7 +3276,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/tracer.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3332,7 +3332,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/tvm_lowering.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3367,7 +3367,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/uvm_gen.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -3388,14 +3388,14 @@
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/verify_hardware_link.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
     },
     {
       "path": "src/sc_neurocore/accel/mojo/kernels/verilog_generator.mojo",
-      "class": "implementation_fn",
+      "class": "translated_stub",
       "declared": "mirror",
       "built_by_builder": false,
       "loaders": []
@@ -5142,7 +5142,7 @@
         "backend_packages": [
           "sc_neurocore.accel.mojo"
         ],
-        "opens_library": false,
+        "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
         "auto_branch": true,
@@ -5815,7 +5815,7 @@
         "backend_packages": [
           "sc_neurocore.accel.mojo"
         ],
-        "opens_library": false,
+        "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
         "auto_branch": true,

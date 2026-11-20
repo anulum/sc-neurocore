@@ -19,9 +19,11 @@ Classes of a Mojo source (comment lines and triple-quoted blocks are not code):
     The file has no code line.
 ``translated_stub``
     The file declares at least one single-line function, and every code line that is not a header (a decorator, a
-    ``def`` or ``fn`` line, an import) is a string assignment (``var name = '…'``), ``return 0`` or ``pass``. Such a
-    file holds the text of a Python original and returns zero; it implements nothing. A file with a multi-line
-    signature is never classed as a stub, so real code is never called a stub.
+    ``def`` or ``fn`` line, an import) is a string assignment (``var name = '…'``), ``return 0`` or ``pass``. A
+    string may hold escaped quotes, and an assignment whose value is a parenthesised run of string lines
+    (``var name = (`` … ``)``) counts as one string assignment. Such a file holds the text of a Python original and
+    returns zero; it implements nothing. A file with a multi-line signature is never classed as a stub, and a
+    parenthesised value that holds anything but strings is code, so real code is never called a stub.
 ``implementation_fn``
     Any other file that declares a function with ``fn``, which Mojo 1.0.0 and later refuse ("'fn' has been removed").
 ``implementation_def``
@@ -164,7 +166,11 @@ class Inventory(TypedDict):
 _HEADER = re.compile(r"^\s*(@[\w.]+|fn\s|def\s|from\s|import\s)")
 _FUNCTION = re.compile(r"^\s*(fn|def)\s+\w+\s*(\[[^\]]*\])?\s*\(.*\)\s*(->\s*[^:]+)?:\s*(#.*)?$")
 _FN = re.compile(r"^\s*fn\s+\w+")
-_STUB_LINE = re.compile(r"""^\s*(var\s+\w+\s*=\s*('[^']*'|"[^"]*")|return\s+0|pass)\s*(#.*)?$""")
+_STRING = r"""('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")"""
+_STUB_LINE = re.compile(rf"^\s*(var\s+\w+\s*=\s*{_STRING}|return\s+0|pass)\s*(#.*)?$")
+_OPEN_ASSIGNMENT = re.compile(r"^\s*var\s+\w+\s*=\s*\(\s*(#.*)?$")
+_STRING_LINE = re.compile(rf"^\s*{_STRING}\s*(#.*)?$")
+_CLOSE = re.compile(r"^\s*\)\s*(#.*)?$")
 _LIBRARY = re.compile(r"^lib[\w.-]+\.so$")
 
 
@@ -232,6 +238,37 @@ def code_lines(text: str) -> list[str]:
     return lines
 
 
+def _joined(lines: list[str]) -> list[str]:
+    """Return code lines with each parenthesised run of string lines folded into one string assignment.
+
+    Parameters
+    ----------
+    lines : list of str
+        Code lines, as :func:`code_lines` returns them.
+
+    Returns
+    -------
+    list of str
+        The same lines, except that ``var name = (``, one or more string lines and ``)`` become one line
+        ``var name = ''``. A run that holds anything but strings, or never closes, is left as it is.
+    """
+    joined: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if _OPEN_ASSIGNMENT.match(line):
+            end = index + 1
+            while end < len(lines) and _STRING_LINE.match(lines[end]):
+                end += 1
+            if end > index + 1 and end < len(lines) and _CLOSE.match(lines[end]):
+                joined.append(line.split("=", 1)[0] + "= ''")
+                index = end + 1
+                continue
+        joined.append(line)
+        index += 1
+    return joined
+
+
 def classify(text: str) -> str:
     """Return the class of one Mojo source by the module's stated rules.
 
@@ -249,7 +286,7 @@ def classify(text: str) -> str:
     if not lines:
         return "comment_only"
     functions = [line for line in lines if _FUNCTION.match(line)]
-    body = [line for line in lines if not _HEADER.match(line)]
+    body = [line for line in _joined(lines) if not _HEADER.match(line)]
     if functions and all(_STUB_LINE.match(line) for line in body):
         return "translated_stub"
     if any(_FN.match(line) for line in lines):
@@ -438,7 +475,8 @@ def module_features(path: Path, root: Path, accelerators: tuple[str, ...]) -> Fe
     Returns
     -------
     Features
-        Selector calls, named backends, use of the static order, backend packages imported, shared libraries opened,
+        Selector calls, named backends, use of the static order, backend packages imported, shared libraries opened
+        (a ``CDLL`` call or the guarded ``load_mojo_library``),
         the Rust engine imported, and the ``accel`` dispatch modules imported (their names only).
     """
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -450,8 +488,10 @@ def module_features(path: Path, root: Path, accelerators: tuple[str, ...]) -> Fe
     packages: set[str] = set()
     dispatch: set[str] = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            opens = opens or node.func.attr == "CDLL"
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            opens = opens or node.func.id == "load_mojo_library"
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            opens = opens or node.func.attr in ("CDLL", "load_mojo_library")
             engine = engine or (
                 node.func.attr == "import_module"
                 and bool(node.args)

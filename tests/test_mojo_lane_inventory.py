@@ -64,6 +64,33 @@ MULTI_LINE_SIGNATURE = """fn quantise(
     return 0
 """
 
+ESCAPED_QUOTE_STUB = """fn create_app() -> Int:
+    var _create_app_line = 'raise HTTPException(404, f"Template \\'{name}\\' not found")'
+    return 0
+"""
+
+PARENTHESISED_STUB = """fn step(current: Int) -> Int:
+    var _step_line = "validate finite current and Prescott runtime parameters"
+    var _step_line = (
+        "reject non-finite RK4 stage or candidate values before commit"
+    )
+    return 0  # return 1 when candidate v crosses v_threshold upward
+"""
+
+PARENTHESISED_CODE = """fn step(current: Int) -> Int:
+    var _step_line = "validate finite current"
+    var _step_line = (
+        current + 1
+    )
+    return 0
+"""
+
+UNCLOSED_PARENTHESIS = """fn step(current: Int) -> Int:
+    var _step_line = (
+        "an assignment whose parenthesis never closes"
+    return 0
+"""
+
 DOCSTRING_ONLY = '''"""A module docstring
 that spans lines."""
 # and a comment
@@ -79,8 +106,23 @@ that spans lines."""
         (MULTI_LINE_SIGNATURE, "implementation_fn"),
         (DOCSTRING_ONLY, "comment_only"),
         ("", "comment_only"),
+        (ESCAPED_QUOTE_STUB, "translated_stub"),
+        (PARENTHESISED_STUB, "translated_stub"),
+        (PARENTHESISED_CODE, "implementation_fn"),
+        (UNCLOSED_PARENTHESIS, "implementation_fn"),
     ],
-    ids=["stub", "fn", "def", "multi-line-signature-is-never-a-stub", "docstring-only", "empty"],
+    ids=[
+        "stub",
+        "fn",
+        "def",
+        "multi-line-signature-is-never-a-stub",
+        "docstring-only",
+        "empty",
+        "a-line-string-with-an-escaped-quote-is-a-stub-line",
+        "a-parenthesised-string-assignment-is-one-stub-line",
+        "a-parenthesised-code-assignment-is-never-a-stub",
+        "an-unclosed-parenthesis-is-never-a-stub",
+    ],
 )
 def test_each_rule_classifies_its_example(text: str, expected: str) -> None:
     """Each class of the module's rules is reached by its own example, and only by it."""
@@ -335,6 +377,12 @@ MODEL_SOURCES = {
     "neurons/models/m_direct_library.py": 'import ctypes\n\nLIB = ctypes.CDLL("libmodel.so")\n',
     "neurons/models/m_direct_package.py": "from sc_neurocore.accel.mojo.loader import load\n",
     "neurons/models/m_plain.py": "def step(v):\n    return v + 1\n",
+    "neurons/models/m_guarded_library.py": (
+        'from vendor import load_mojo_library\n\nLIB = load_mojo_library("libmodel.so")\n'
+    ),
+    "neurons/models/m_qualified_guarded_library.py": (
+        'import vendor\n\nLIB = vendor.load_mojo_library("libmodel.so")\n'
+    ),
 }
 
 
@@ -368,6 +416,8 @@ def write_models(root: Path) -> None:
         ("m_direct_library", "direct_backend"),
         ("m_direct_package", "direct_backend"),
         ("m_plain", "no_accelerated_backend"),
+        ("m_guarded_library", "direct_backend"),
+        ("m_qualified_guarded_library", "direct_backend"),
     ],
 )
 def test_each_model_rule_classifies_its_example(tmp_path: Path, module: str, expected: str) -> None:
@@ -379,6 +429,14 @@ def test_each_model_rule_classifies_its_example(tmp_path: Path, module: str, exp
         Path(name).stem for name in MODEL_SOURCES if name.startswith("neurons/")
     }
     assert by_name[module]["class"] == expected
+
+
+def test_the_guarded_mojo_loader_opens_a_library_in_the_committed_record() -> None:
+    """Models that load through ``load_mojo_library`` open a library, as models that call ``ctypes.CDLL`` do."""
+    record = json.loads((REPO_ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))
+    features = {Path(model["path"]).stem: model["features"] for model in record["models"]}
+    assert features["connor_stevens"]["opens_library"] is True
+    assert features["hodgkin_huxley"]["opens_library"] is True
 
 
 def test_a_dispatch_module_is_read_one_hop_and_named(tmp_path: Path) -> None:
