@@ -9,7 +9,7 @@
 """Compile an SNN to a target neuromorphic chip.
 
 Partitions the network into cores, checks constraints (neurons/core,
-fan-out, weight precision, supported neuron types), quantizes weights,
+fan-out, weight precision, supported neuron types), quantises weights,
 and produces a deployment map. Reports constraint violations with
 specific fix suggestions.
 
@@ -193,7 +193,7 @@ def compile_for_chip(
     if core_id > chip.total_cores:
         violations.append(f"Needs {core_id} cores but {chip.name} has {chip.total_cores}")
 
-    # Quantize weights: nothing is quantised when the precision or any weight matrix cannot be.
+    # Quantise weights: nothing is quantised when the precision or any weight matrix cannot be.
     if weights is not None:
         bits = chip.core.weight_bits
         arrays = [np.asarray(w, dtype=float) for w in weights]
@@ -217,7 +217,7 @@ def compile_for_chip(
             mse = float(np.mean((w - q) ** 2))
             if mse > 0.01 * float(np.mean(w**2)):
                 warnings.append(
-                    f"Weight quantization to {bits}-bit introduces "
+                    f"Weight quantisation to {bits}-bit introduces "
                     f"{mse / max(float(np.mean(w**2)), 1e-12) * 100:.1f}% relative error"
                 )
         result.quantized_weights = quantized

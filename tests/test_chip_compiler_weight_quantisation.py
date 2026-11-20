@@ -101,7 +101,7 @@ def test_precision_loss_is_warned_and_the_summary_lists_warnings_and_violations(
     coarse = compile_for_chip([(16, 8)], weights=[w], target=_chip(2))
     assert coarse.success
     assert any("relative error" in warning for warning in coarse.warnings)
-    assert "[WARNING] Weight quantization to 2-bit" in coarse.summary()
+    assert "[WARNING] Weight quantisation to 2-bit" in coarse.summary()
 
     failed = compile_for_chip([(2, 2)], weights=[np.ones((2, 2))], target=_chip(0))
     report = failed.summary()

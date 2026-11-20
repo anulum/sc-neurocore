@@ -251,6 +251,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The chip compiler's precision-loss warning reads "Weight quantisation to
+  N-bit introduces …" (it said "quantization"), and its module docstring and
+  comment use the same British spelling.
+
 - Every JSON file added since the 2026-10-01 ownership contract now carries
   its `.license` sidecar, and a test holds every tracked JSON to it. Four
   had none: the behaviour report and the equation-variants report in
