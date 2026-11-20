@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SPDX header policy tests
 
-"""Policy tests for tracked Python and Rust source headers and for fixture JSON ownership sidecars."""
+"""Policy tests for tracked Python and Rust source headers and for JSON ownership sidecars."""
 
 from __future__ import annotations
 
@@ -33,6 +33,18 @@ SIDECAR_COPYRIGHT_RECORDS = (
     "SPDX-FileCopyrightText: 2020-2026 Miroslav Šotek <protoscience@anulum.li> (code)",
 )
 """The two copyright records the JSON ownership contract requires in each sidecar."""
+
+LEGACY_JSON_LIST = "tools/json_ownership_legacy_paths.txt"
+"""The tracked JSON files that predate the 2026-10-01 ownership contract and have no sidecar yet."""
+
+VENDORED_PREFIXES = ("bridge/vendor/",)
+"""Third-party trees whose JSON keeps its upstream licence through ``REUSE.toml``."""
+
+CONTRACT_DATE = "2026-10-01T00:00:00Z"
+"""The date of the JSON ownership contract; a JSON file added on or after it needs a sidecar."""
+
+LEGACY_CEILING = 616
+"""The legacy list's length when it was written; lower it as entries leave, never raise it."""
 
 
 def _repo_root() -> Path:
@@ -89,10 +101,15 @@ def test_tracked_fixture_json_files_carry_their_ownership_sidecar() -> None:
     """
     root = _repo_root()
     fixtures = _tracked(root, FIXTURE_JSON_PATHSPEC)
-    sidecars = _tracked(root, f"{FIXTURE_JSON_PATHSPEC}.license")
     assert fixtures, "no tracked fixture JSON found"
+    assert _sidecar_problems(root, fixtures) == []
+
+
+def _sidecar_problems(root: Path, paths: set[str]) -> list[str]:
+    """Return each JSON path without a tracked sidecar carrying the licence and both records."""
+    sidecars = _tracked(root, "*.license")
     problems: list[str] = []
-    for path in sorted(fixtures):
+    for path in sorted(paths):
         sidecar = f"{path}.license"
         if sidecar not in sidecars:
             problems.append(f"{path}: no tracked sidecar")
@@ -103,5 +120,75 @@ def test_tracked_fixture_json_files_carry_their_ownership_sidecar() -> None:
             for required in (SIDECAR_LICENCE, *SIDECAR_COPYRIGHT_RECORDS)
             if required not in text
         )
+    return problems
 
-    assert problems == []
+
+def _legacy_json(root: Path) -> set[str]:
+    """Return the paths the legacy list names, without its comment header."""
+    lines = (root / LEGACY_JSON_LIST).read_text(encoding="utf-8").splitlines()
+    return {line for line in lines if line and not line.startswith("#")}
+
+
+def test_every_tracked_json_outside_the_legacy_list_carries_its_ownership_sidecar() -> None:
+    """A JSON file added since the 2026-10-01 contract has its sidecar; vendored trees are exempt.
+
+    Only the files that predate the contract may lack one, and only while the legacy list names
+    them.
+    """
+    root = _repo_root()
+    tracked = _tracked(root, "*.json") | _tracked(root, "*.JSON")
+    legacy = _legacy_json(root)
+    owned = {path for path in tracked if not path.startswith(VENDORED_PREFIXES)} - legacy
+    assert owned, "no tracked JSON outside the legacy list"
+    assert _sidecar_problems(root, owned) == []
+
+
+def _json_added_since_the_contract(root: Path) -> set[str]:
+    """Return every JSON path a commit added on or after the contract date, by the full history."""
+    shallow = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert shallow.stdout.strip() == "false", "the legacy check reads the whole history; fetch it"
+    completed = subprocess.run(
+        [
+            "git",
+            "log",
+            "--diff-filter=A",
+            f"--since={CONTRACT_DATE}",
+            "--name-only",
+            "--format=",
+            "--",
+            "*.json",
+            "*.JSON",
+        ],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return {line for line in completed.stdout.splitlines() if line}
+
+
+def test_no_json_added_since_the_contract_is_on_the_legacy_list() -> None:
+    """The list names only pre-contract files, and it is no longer than when it was written."""
+    root = _repo_root()
+    legacy = _legacy_json(root)
+    assert sorted(legacy & _json_added_since_the_contract(root)) == []
+    assert len(legacy) <= LEGACY_CEILING
+
+
+def test_the_legacy_json_list_only_shrinks() -> None:
+    """Every listed file is still tracked and still lacks a sidecar, so the list cannot hide a new one."""
+    root = _repo_root()
+    tracked = _tracked(root, "*.json") | _tracked(root, "*.JSON")
+    sidecars = _tracked(root, "*.license")
+    legacy = _legacy_json(root)
+    assert legacy, "the legacy list is empty; delete it and its tests"
+    untracked = sorted(path for path in legacy if path not in tracked)
+    covered = sorted(path for path in legacy if f"{path}.license" in sidecars)
+    assert untracked == [], f"remove from {LEGACY_JSON_LIST}: no longer tracked"
+    assert covered == [], f"remove from {LEGACY_JSON_LIST}: they now carry a sidecar"

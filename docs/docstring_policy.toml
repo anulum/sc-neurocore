@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2237
+expected_file_count = 2239
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8998,3 +8998,11 @@ rationale = "Hold the chiplet top and XDC to one clock per die, and deliver pack
 [[file]]
 path = "src/sc_neurocore/chiplet/_sv.py"
 rationale = "Shared SPDX header, identifier validation and signed-literal formatting for the chiplet RTL emitters."
+
+[[file]]
+path = "tools/json_sidecar.py"
+rationale = "Write and check the ownership sidecar every JSON file added since the 2026-10-01 contract carries."
+
+[[file]]
+path = "tests/test_tools/test_json_sidecar.py"
+rationale = "Hold the generated JSON sidecars to the ownership contract and to the committed fixture sidecars."

@@ -97,6 +97,7 @@ from sc_neurocore.studio.candidate_catalogue import (
     CatalogueCandidateUnavailable,
     candidate_from_catalogue,
 )
+from tools.json_sidecar import sidecar_problems, write_sidecar
 from tools.model_behaviour_report import MAX_CASE_STEPS, as_written, case_holds
 
 #: Schema of the emitted report.
@@ -104,6 +105,9 @@ REPORT_SCHEMA = "sc-neurocore.model-behaviour-variants.v1"
 
 #: Where the report is committed.
 DEFAULT_OUTPUT = "docs/_generated/model_behaviour_variants.json"
+
+#: What the report's ownership sidecar says the JSON file holds.
+SIDECAR_SUBJECT = "the generated report of the catalogue's equation variants"
 
 #: The states a model that states cases can be in, in the order the summary prints them.
 MODEL_STATES = (
@@ -517,10 +521,12 @@ def main(
     if args.write:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(encode(report), encoding="utf-8")
+        write_sidecar(args.output, SIDECAR_SUBJECT)
         print(f"Wrote {args.output}")
     if args.check:
         committed = args.output.read_text(encoding="utf-8") if args.output.is_file() else None
         problems = check_problems(report, committed)
+        problems += sidecar_problems(args.output, SIDECAR_SUBJECT)
         if problems:
             for problem in problems:
                 print(f"{args.output}: {problem}")

@@ -87,6 +87,7 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT))
 
 from sc_neurocore.neurons import models as _models
 from sc_neurocore.neurons.model_catalogue import load_descriptor
@@ -95,9 +96,13 @@ from sc_neurocore.neurons.model_descriptor import (
     BehaviourCase,
 )
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from tools.json_sidecar import sidecar_problems, write_sidecar
 
 #: Schema of the emitted report.
 REPORT_SCHEMA = "sc-neurocore.model-behaviour-report.v1"
+
+#: What the report's ownership sidecar says the JSON file holds.
+SIDECAR_SUBJECT = "the generated report of the catalogue's behaviour cases"
 
 #: Where the report is committed.
 DEFAULT_OUTPUT = "docs/_generated/model_behaviour_report.json"
@@ -461,10 +466,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.write:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered, encoding="utf-8")
+        write_sidecar(args.output, SIDECAR_SUBJECT)
         print(f"Wrote {args.output}")
     if args.check:
         committed = args.output.read_text(encoding="utf-8") if args.output.is_file() else None
         problems = check_problems(report, committed)
+        problems += sidecar_problems(args.output, SIDECAR_SUBJECT)
         if problems:
             for problem in problems:
                 print(f"{args.output}: {problem}")

@@ -251,6 +251,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Every JSON file added since the 2026-10-01 ownership contract now carries
+  its `.license` sidecar, and a test holds every tracked JSON to it. Four
+  had none: the behaviour report and the equation-variants report in
+  `docs/_generated`, `.github/python_reference_inventory.json` and
+  `hdl/fixtures/shd_int_network.json`. The two report generators now write
+  the sidecar with the JSON and fail `--check` when it is missing or
+  differs, through the new `tools/json_sidecar.py`. The policy test, which
+  read only `tests/fixtures`, now reads every tracked JSON. The 616 files
+  that predate the contract are named in
+  `tools/json_ownership_legacy_paths.txt`, a list that may only shrink, and
+  vendored upstream files keep their REUSE annotation.
+
 - The generated chiplet package now runs each die on its own clock.
   `sc_chiplet_top` had one `clk` driving every die and both sides of every
   bridge, while `chiplet_constraints.xdc` created one clock per die, at that
