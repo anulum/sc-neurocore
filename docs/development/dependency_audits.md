@@ -200,7 +200,7 @@ length or HTTP status 408, 425, 429, 500, 502, 503 or 504. Any other status
 fails at once, and the last failure stops the audit; a partial body is never
 compared or parsed.
 
-The current records cover six advisories for conda-forge Python 3.15.2 in the
+The current records cover seven advisories for conda-forge Python 3.15.2 in the
 Mojo lock. CPython fixed each on its main branch, which will become 3.16; some
 fixes are merged into the 3.15 branch as well. No 3.15 release carries any of
 them, and conda-forge lists nothing newer than 3.15.2. A proof file may be at
@@ -237,6 +237,12 @@ most 128 KiB; the largest, `http/cookiejar.py`, is 78,303 bytes.
   did not check the host name when `ca_certs` was given (gh-161503). The
   installed `ssl.py` equals the CPython 3.15.2 release file, and the Mojo
   environment fetches no server certificate.
+- CVE-2026-16052 (Low, CVSS 4.0 base score 2.3): `http.cookies.Morsel` accepted
+  separator semicolons in attribute values and wrote them verbatim, so a
+  caller-controlled value could relax a cookie's `Domain` or `SameSite`
+  restriction (gh-161707). The 3.15 backport is still open. The installed
+  `http/cookies.py` equals the CPython 3.15.2 release file, and the Mojo
+  environment sets or parses no HTTP cookie.
 
 Each record lapses on its review date, when Grype stops reporting the finding,
 or as soon as conda-forge lists a newer final release.

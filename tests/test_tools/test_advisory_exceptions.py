@@ -11,9 +11,9 @@
 The fixed-code path is exercised on the last reviewed CVE-2025-15367 record and the verbatim Grype match
 and Syft identity of the hosted audit that accepted it, with the fixed vendor source read from its
 immutable CPython commit. The unreleased-fix path is exercised on each committed record
-(CVE-2026-103995, CVE-2026-115559, CVE-2026-115791, CVE-2026-116566, CVE-2026-124249 and
-CVE-2026-19552), the hosted match that blocked it, its immutable CPython 3.15.2 release file and a
-recorded conda-forge version list. Repetition of vendor reads is exercised
+(CVE-2026-103995, CVE-2026-115559, CVE-2026-115791, CVE-2026-116566, CVE-2026-124249,
+CVE-2026-16052 and CVE-2026-19552), the hosted match that blocked it, its immutable CPython 3.15.2
+release file and a recorded conda-forge version list. Repetition of vendor reads is exercised
 against a real loopback HTTP server that returns temporary failures, lasting refusals and
 truncated bodies.
 """
@@ -357,6 +357,11 @@ UNRELEASED = {
         ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_19552.json",
         RELEASE_COMMIT + "/Lib/ssl.py",
         "1cdaab9afcc26ea540d12444916421357a1fc55da4ad784cb0cd01352bb09db8",
+    ),
+    "CVE-2026-16052": (
+        ROOT / "tests/fixtures/grype_conda_python_3_15_2_cve_2026_16052.json",
+        RELEASE_COMMIT + "/Lib/http/cookies.py",
+        "e4eab3206b471fd94b04cfbdd99057c0a55a49cc6acb5e3b8cf5370a36cbb3e8",
     ),
 }
 UNRELEASED_RECORDED, UNRELEASED_SOURCE, UNRELEASED_PROOF_SHA256 = UNRELEASED["CVE-2026-103995"]
@@ -804,6 +809,9 @@ def test_every_unreleased_fix_shares_one_channel_snapshot(tmp_path: Path) -> Non
         ("CVE-2026-19552", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
         ("CVE-2026-19552", "/Lib/ssl.py", "/Lib/gzip.py", "vendor source"),
         ("CVE-2026-19552", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
+        ("CVE-2026-16052", 'version = "3.15.2"', 'version = "3.16.0"', "already contains"),
+        ("CVE-2026-16052", "/Lib/http/cookies.py", "/Lib/http/cookiejar.py", "vendor source"),
+        ("CVE-2026-16052", '"vendor_fix_unreleased"', '"fixed_code_present"', "vendor source"),
     ],
 )
 def test_unreleased_fix_scope_cannot_be_broadened(

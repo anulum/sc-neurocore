@@ -14,6 +14,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The dependency lock audit records CVE-2026-16052 (http.cookies) for the
+  Mojo build environment's locked Python 3.15.2 as a reviewed exception
+  until a 3.15 release carries the fix. The environment sets or parses no
+  HTTP cookie, the installed `http/cookies.py` must equal the CPython 3.15.2
+  release file, and the exception lapses on 2026-12-01 or with a newer
+  release.
+
 - The hypervisor keeps each tenant to the region it holds. A second
   `allocate` for a tenant that already holds a region returns that region
   instead of taking another; before, the first region stayed allocated with

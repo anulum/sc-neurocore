@@ -75,6 +75,9 @@ _SOURCES = {
     ("vendor_fix_unreleased", "CVE-2026-19552"): (
         r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/ssl\.py"
     ),
+    ("vendor_fix_unreleased", "CVE-2026-16052"): (
+        r"https://raw\.githubusercontent\.com/python/cpython/[0-9a-f]{40}/Lib/http/cookies\.py"
+    ),
 }
 _REASONS = frozenset(reason for reason, _advisory in _SOURCES)
 ReadUrl = Callable[[str, int], bytes]
