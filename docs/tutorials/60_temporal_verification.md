@@ -167,4 +167,11 @@ the *hardware implementation*.
 
 - Clarke et al. (2018). "Handbook of Model Checking." Springer.
 - Huang et al. (2022). "Formal Verification of Neural Networks: A
-  Survey." IEEE Access 10:125603-125618.
+  Survey." IEEE Access 10:125603-125618. Neither Crossref nor OpenAlex
+  holds a record of this entry; it is kept as written while it is under
+  review. The next entry is a verified survey of the field.
+- Huang, X., Kroening, D., Ruan, W., Sharp, J., Sun, Y., Thamo, E., Wu, M.,
+  & Yi, X. (2020). "A survey of safety and trustworthiness of deep neural
+  networks: Verification, testing, adversarial attack and defence, and
+  interpretability." Computer Science Review 37:100270.
+  doi:10.1016/j.cosrev.2020.100270

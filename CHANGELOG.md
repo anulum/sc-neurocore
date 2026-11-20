@@ -251,6 +251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Tutorial 60 cites "Huang et al. (2022). Formal Verification of Neural
+  Networks: A Survey. IEEE Access 10:125603-125618", which neither Crossref
+  nor OpenAlex holds, by title or in the journal's 2022 volume. The entry is
+  kept as written and marked in place as under review, with nothing unfound
+  removed. A verified survey of the field follows it: Huang et al. (2020),
+  Computer Science Review 37:100270, read in Crossref, OpenAlex and Semantic
+  Scholar. The registry-corrections test pins both.
+
 - On a 64-bit bus, the AXI4-Lite and Wishbone B4 neuron wrappers now place
   their registers 8 bytes apart, and `generate_register_map` takes the same
   `bus_data_width` and publishes those addresses. At the former 4-byte

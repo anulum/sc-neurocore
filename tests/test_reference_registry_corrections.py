@@ -6,13 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — registry-proven citation corrections on the model pages
 
-"""Hold the citation corrections that two registries prove, and the one form kept for review.
+"""Hold the citation corrections that two registries prove, and the forms kept for review.
 
 Each corrected entry is its work's record in Crossref, read a second time by DOI in PubMed or Semantic Scholar.
 The record identifies the work through the first author with the title opening, or with the journal and the
 year, volume or first page; the remaining fields then come from it. A wrong form must not return in the
-documentation or the engine sources. One form stays where it is, because its own description points to another
-work than its journal and page do; it is pinned here so that it cannot change unnoticed.
+documentation or the engine sources. Forms that no registry settles stay where they are and are pinned here, so
+that they cannot change unnoticed: one whose own description points to another work than its journal and page
+do, and one that neither Crossref nor OpenAlex holds.
 """
 
 from __future__ import annotations
@@ -75,6 +76,9 @@ CORRECTIONS = [
 #: (Nature 454:995), while the journal and page name Pillow et al. 2005 (J Neurosci 25:11003).
 KEPT_FOR_REVIEW = {
     "engine/src/neurons/sensory/retinal_ganglion_cell.rs": "Pillow et al., J Neurosci 28:11003, 2008 (coupled GLM).",
+    # Kept as written and marked in place: neither Crossref nor OpenAlex holds this IEEE Access entry (searched
+    # 2026-11-19 by title and by the journal's 2022 volume).
+    "docs/tutorials/60_temporal_verification.md": "IEEE Access 10:125603-125618. Neither Crossref nor OpenAlex",
 }
 
 
@@ -122,7 +126,7 @@ def test_each_correction_stands_and_its_wrong_form_is_gone(
 
 
 def test_the_form_kept_for_review_is_where_it_was() -> None:
-    """The one ambiguous form is kept as written until a review decides which work it means."""
+    """Each form kept for review stays as written until a review decides which work it means."""
     for name, form in KEPT_FOR_REVIEW.items():
         assert (ROOT / name).read_text(encoding="utf-8").count(form) == 1, name
 
@@ -135,3 +139,12 @@ def test_the_scan_reads_tracked_sources_only() -> None:
     tracked = tracked_files(ROOT, ".")
     if tracked is not None:
         assert names <= set(tracked)
+
+
+def test_tutorial_60_follows_its_unfound_survey_with_a_verified_one() -> None:
+    """The unfound 2022 entry is marked in place, and the 2020 survey follows with its DOI."""
+    text = (ROOT / "docs/tutorials/60_temporal_verification.md").read_text(encoding="utf-8")
+    unfound = text.index("IEEE Access 10:125603-125618. Neither Crossref nor OpenAlex")
+    verified = text.index("Computer Science Review 37:100270.")
+    assert unfound < verified
+    assert "doi:10.1016/j.cosrev.2020.100270" in text[verified:]
