@@ -148,6 +148,17 @@ group's earlier design study as Golden Reference #0, it computes the exact same
   reserved-offset, target-range, and stepping invariants, and `tools/cosim_shd_event_axi.py` /
   `tests/test_shd_event_axi.py` cosimulate count, binary, and negative AXI4-Lite flows against
   `tools/shd_int_reference.py`.
+- `hdl/pynq/sc_shd_driver.py` adds integrity-checked `load_network` over
+  `hdl/fixtures/shd_int_network.json` (`zlib.crc32` over the 64-bit little-endian group-word
+  stream, verified against `LOAD_COUNT`, `LOAD_CRC32`, and `LOAD_STATUS.sealed`; detects
+  accidental corruption without claiming authentication and validates per-selector
+  `LOAD_TARGET` bounds before bus writes; `lanes` must equal the synthesised bitstream's `P`
+  parameter — `8` on the default build — since a smaller value triggers `refused_range` while
+  a larger value sends fewer words in the wrong layout and cannot be detected from the bus)
+  plus bounded-poll event-mode inference (`run_event`, `classify_event`, and
+  `classify(..., mode="event")`) routing boolean rasters to `SPIKE_IN_0..4` and `0..15`
+  integer rasters to `FRAME_COUNT_0..17` with zero tail padding and zero writes to reserved
+  `0x08..0x10` (`tests/test_shd_driver.py`).
 
 ### Event SHD AXI4-Lite Register Map (`hdl/shd_event/sc_shd_event_axi.v`)
 

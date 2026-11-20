@@ -231,6 +231,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   ready/valid handshakes and a signed fixed-point error bound. The Python
   reference and generated C11, Rust and Verilog return the same codes.
 
+- `hdl/pynq/sc_shd_driver.py` adds integrity-checked weight and delay loading
+  (`load_network` over `hdl/fixtures/shd_int_network.json`, matching
+  `zlib.crc32`, validating per-selector `LOAD_TARGET` bounds before bus writes,
+  and checking `LOAD_STATUS.sealed` / `refused_range` without claiming
+  authentication) and bounded-poll event-mode inference (`run_event`,
+  `classify_event`, and `classify(..., mode="event")`) for `sc_shd_event_axi`,
+  leaving reserved `0x08..0x10` untouched, refusing unsealed starts and counts
+  outside `0..15` before bus writes, routing boolean rasters to `SPIKE_IN_0..4`
+  and integer rasters to `FRAME_COUNT_0..17` without tail padding, and aborting
+  with the hardware status word on `error`, `overflow`, `commit_refused`, or
+  `!busy && !done` (`tests/test_shd_driver.py`).
+
 - `hdl/shd_event/sc_shd_event_axi.v` adds the 9-bit AXI4-Lite slave wrapper and
   integrity-checked group-word loader (`0x90..0xAC`, reflected IEEE CRC-32 in
   little-endian byte order matching `zlib.crc32`, with `SLVERR` refusal of

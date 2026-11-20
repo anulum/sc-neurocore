@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2289
+expected_file_count = 2290
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9204,3 +9204,7 @@ rationale = "Class the Python original of every accelerated-lane stub as a compu
 [[file]]
 path = "tests/test_accel_stub_triage.py"
 rationale = "Hold the stub triage to its markers, thresholds, classes, recorded readings and committed record."
+
+[[file]]
+path = "tests/test_shd_driver.py"
+rationale = "Verify sc_shd_driver register parity against sc_shd_event_axi, zlib.crc32 integrity-checked network loading, event stepping refusals, and live RTL MMIO trace replay."
