@@ -21,6 +21,7 @@ import pytest
 
 from tools.julia_lane_inventory import (
     CLASSES,
+    TRANSCRIPTION_RULES,
     DEFAULT_OUTPUT,
     Inventory,
     JuliaUnavailable,
@@ -32,6 +33,7 @@ from tools.julia_lane_inventory import (
     parse_with_julia,
     references,
     render,
+    transcription,
 )
 from tools.mojo_lane_inventory import tracked
 
@@ -351,3 +353,97 @@ def test_every_authoritative_or_loaded_file_parses() -> None:
     assert broken == []
     assert record["counts"]["authoritative_entrypoint"] > 0
     assert record["counts"]["loaded_by_python"] > 0
+
+
+MODULES = {
+    "src/sc_neurocore/chip_compiler/compiler.py",
+    "src/sc_neurocore/neurons/__init__.py",
+    "src/sc_neurocore/adapters/holonomic/_jax_compat.py",
+    "src/sc_neurocore/a/b_c/d.py",
+    "src/sc_neurocore/a_b/c/d.py",
+}
+SOURCE = {
+    "src/sc_neurocore/chip_compiler/compiler.py": {
+        "bits = chip.core.weight_bits",
+        "quantized = []",
+    },
+}
+
+
+def _header(module: str) -> str:
+    """Return a transcript header naming ``module``."""
+    return f"# SC-NeuroCore — Julia acceleration for {module}\n"
+
+
+def _read(module: str) -> set[str]:
+    """Return a module's stripped lines from the fixture."""
+    return SOURCE.get(module, set())
+
+
+@pytest.mark.parametrize(
+    ("text", "module", "rule", "candidates"),
+    [
+        (
+            _header("chip_compiler/compiler"),
+            "src/sc_neurocore/chip_compiler/compiler.py",
+            "header",
+            [],
+        ),
+        (_header("neurons"), "src/sc_neurocore/neurons/__init__.py", "header", []),
+        (
+            _header("adapters_holonomic/_jax_compat"),
+            "src/sc_neurocore/adapters/holonomic/_jax_compat.py",
+            "header_underscore_dir",
+            [],
+        ),
+        (
+            _header("a_b_c/d"),
+            None,
+            "ambiguous",
+            ["src/sc_neurocore/a/b_c/d.py", "src/sc_neurocore/a_b/c/d.py"],
+        ),
+        (_header("missing/module"), None, "none", []),
+        ("x = push!(, xs)\n", None, "none", []),
+    ],
+    ids=["header", "header-package", "underscore-dir", "ambiguous", "missing-module", "no-header"],
+)
+def test_each_transcription_rule_names_its_module(
+    text: str, module: str | None, rule: str, candidates: list[str]
+) -> None:
+    """Each rule names the module it should, and an ambiguous name lists its candidates without choosing."""
+    found = transcription(text, MODULES, _read)
+    assert (found["transcribed_module"], found["transcription_rule"]) == (module, rule)
+    assert found["transcription_candidates"] == candidates
+    assert rule in TRANSCRIPTION_RULES
+
+
+def test_the_line_share_counts_non_comment_lines_found_in_the_module() -> None:
+    """Of the transcript's non-empty, non-comment lines, those found stripped in the module are counted."""
+    text = (
+        _header("chip_compiler/compiler")
+        + "    bits = chip.core.weight_bits\n\n"
+        + "    quantized = []\n"
+        + "    weights = push!(, q)\n"
+        + "# a comment that is not counted\n"
+    )
+    found = transcription(text, MODULES, _read)
+    assert found["verbatim_line_share"] == "2/3"
+
+
+def test_every_transcript_of_the_repository_names_its_module() -> None:
+    """In the committed record, every file Julia refuses has a rule, and every file it parses has none."""
+    record: Inventory = json.loads((REPO_ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))
+    counts = record["counts"]
+    for source in record["sources"]:
+        if source["parses"]:
+            assert source["transcription_rule"] == "not_a_transcript"
+        else:
+            assert source["transcription_rule"] in TRANSCRIPTION_RULES
+            if source["transcription_rule"] in ("header", "header_underscore_dir"):
+                assert source["transcribed_module"] is not None
+                assert source["verbatim_line_share"] is not None
+    assert (
+        sum(counts[f"transcription_rule_{rule}"] for rule in TRANSCRIPTION_RULES)
+        == counts["does_not_parse"]
+    )
+    assert counts["transcription_rule_not_a_transcript"] == counts["parses"]

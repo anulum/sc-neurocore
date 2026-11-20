@@ -28,6 +28,24 @@ visible.
 Each file also records whether Julia parses it: ``Meta.parseall`` reads the text, every ``:error`` and
 ``:incomplete`` node of the result counts as a refusal, and nothing is evaluated. The record names the Julia version.
 
+Every file that Julia does not parse is a transcript, and the record names the Python module it copies, so it is
+the worklist for replacing transcripts with real code. The module is found by rule, never guessed:
+
+``header``
+    The header says ``Julia acceleration for <module>``, and ``src/sc_neurocore/<module>.py`` (or the package
+    ``<module>/__init__.py``) is tracked.
+``header_underscore_dir``
+    The header's first segment joins two directories with ``_`` (``adapters_holonomic`` for ``adapters/holonomic``),
+    and exactly one way of reading one ``_`` as ``/`` names a tracked module.
+``ambiguous``
+    Several such modules exist; all are listed as candidates and none is chosen.
+``none``
+    The header names no module, or no tracked module matches.
+
+The modules searched are the tracked ``.py`` files of ``src/sc_neurocore`` outside ``accel/julia``. Each transcript
+records ``verbatim_line_share`` as ``"n/d"``: of its ``d`` non-empty, non-comment lines, ``n`` appear, stripped, as a
+stripped line of the chosen module. A file Julia parses records the rule ``not_a_transcript``.
+
 Loader paths are found by reading each Python module's AST.
 
 - **What is followed.** Every string constant ending in ``.jl`` is followed outward through the expressions that
@@ -74,6 +92,7 @@ import fnmatch
 import hashlib
 import json
 import posixpath
+import re
 import shutil
 import subprocess
 import sys
@@ -93,6 +112,10 @@ DECLARATIONS = "src/sc_neurocore/accel/julia/__init__.py"
 LOADER_DIRECTORIES = ("src/sc_neurocore", "benchmarks", "tools")
 CLASSES = ("authoritative_entrypoint", "loaded_by_python", "declared_mirror", "undeclared")
 STATUSES = ("resolved", "named", "missing", "unresolved")
+#: The rules that name the Python module a transcript copies, in the order they are tried.
+TRANSCRIPTION_RULES = ("header", "header_underscore_dir", "ambiguous", "none")
+_JULIA_HEADER = re.compile(r"Julia acceleration for (\S+)")
+_HEADER_LINES = 40
 PARSE_METHOD = "Meta.parseall; every :error and :incomplete node is a refusal; nothing is evaluated"
 _DECLARATION_NAMES = ("AUTHORITATIVE_JULIA_ENTRYPOINTS", "NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS")
 _MAX_DEPTH = 24
@@ -134,8 +157,30 @@ Source = TypedDict(
         "mirror": bool,
         "class": str,
         "loaders": list[str],
+        "transcribed_module": str | None,
+        "transcription_rule": str,
+        "verbatim_line_share": str | None,
+        "transcription_candidates": list[str],
     },
 )
+
+
+class Transcription(TypedDict):
+    """The Python module a transcript copies, the rule that names it and the evidence."""
+
+    transcribed_module: str | None
+    transcription_rule: str
+    verbatim_line_share: str | None
+    transcription_candidates: list[str]
+
+
+#: The record of a file that Julia parses.
+NOT_A_TRANSCRIPT: Transcription = {
+    "transcribed_module": None,
+    "transcription_rule": "not_a_transcript",
+    "verbatim_line_share": None,
+    "transcription_candidates": [],
+}
 
 
 class Reference(TypedDict):
@@ -743,6 +788,103 @@ def _glob_matches(path: str, pattern: str) -> bool:
     )
 
 
+def package_modules(root: Path) -> set[str]:
+    """Return the tracked Python modules of the package outside ``accel/julia``.
+
+    Parameters
+    ----------
+    root : Path
+        The repository root.
+
+    Returns
+    -------
+    set of str
+        Repository-relative paths.
+    """
+    return {
+        path.relative_to(root).as_posix()
+        for path in tracked(root, PACKAGE, ".py")
+        if not path.relative_to(root).as_posix().startswith(JULIA_ROOT + "/")
+    }
+
+
+def _module_paths(name: str, modules: set[str]) -> list[str]:
+    """Return the tracked module paths a dotted-by-slash module name can mean."""
+    return sorted(
+        candidate
+        for candidate in (f"{PACKAGE}/{name}.py", f"{PACKAGE}/{name}/__init__.py")
+        if candidate in modules
+    )
+
+
+def transcription(text: str, modules: set[str], read: Callable[[str], set[str]]) -> Transcription:
+    """Return the Python module a transcript copies, by the stated rules.
+
+    Parameters
+    ----------
+    text : str
+        The whole transcript.
+    modules : set of str
+        :func:`package_modules` of the repository.
+    read : callable
+        Returns the stripped lines of a repository-relative module.
+
+    Returns
+    -------
+    Transcription
+        The module (or ``None``), the rule, the verbatim line share ``"n/d"`` for a chosen module, and the
+        candidates of an ambiguous name.
+    """
+    lines = [line.strip() for line in text.splitlines()]
+    body = [line for line in lines if line and not line.startswith("#")]
+
+    def chosen(module: str, rule: str) -> Transcription:
+        """Return the record of a transcript whose module a rule names."""
+        held = read(module)
+        return {
+            "transcribed_module": module,
+            "transcription_rule": rule,
+            "verbatim_line_share": f"{sum(1 for line in body if line in held)}/{len(body)}",
+            "transcription_candidates": [],
+        }
+
+    nothing: Transcription = {
+        "transcribed_module": None,
+        "transcription_rule": "none",
+        "verbatim_line_share": None,
+        "transcription_candidates": [],
+    }
+    match = _JULIA_HEADER.search("\n".join(text.splitlines()[:_HEADER_LINES]))
+    if match is None:
+        return nothing
+    name = match.group(1)
+    direct = _module_paths(name, modules)
+    if len(direct) == 1:
+        return chosen(direct[0], "header")
+    head, _, rest = name.partition("/")
+    candidates = sorted(
+        {
+            path
+            for index, character in enumerate(head)
+            if character == "_"
+            for path in _module_paths(
+                head[:index] + "/" + head[index + 1 :] + (f"/{rest}" if rest else ""), modules
+            )
+        }
+        | set(direct)
+    )
+    if len(candidates) == 1:
+        return chosen(candidates[0], "header_underscore_dir")
+    if candidates:
+        return {
+            "transcribed_module": None,
+            "transcription_rule": "ambiguous",
+            "verbatim_line_share": None,
+            "transcription_candidates": candidates,
+        }
+    return nothing
+
+
 def classify(authoritative: bool, loaded: bool, mirror: bool) -> str:
     """Return the class a file's three flags give, by the stated precedence.
 
@@ -798,9 +940,24 @@ def build(root: Path, verdicts: Mapping[str, bool], julia_version: str) -> Inven
     for reference in found:
         if reference["status"] == "resolved" and reference["target"] is not None:
             loaders.setdefault(reference["target"], set()).add(reference["python"])
+    modules = package_modules(root)
+    stripped: dict[str, set[str]] = {}
+
+    def read(module: str) -> set[str]:
+        """Return a package module's stripped lines, read once."""
+        if module not in stripped:
+            text = (root / module).read_text(encoding="utf-8")
+            stripped[module] = {line.strip() for line in text.splitlines()}
+        return stripped[module]
+
     sources: list[Source] = []
     for path, relative in zip(paths, relatives, strict=True):
         inside = path.relative_to(julia).as_posix() if path.is_relative_to(julia) else None
+        copied = (
+            NOT_A_TRANSCRIPT
+            if verdicts[relative]
+            else transcription(path.read_text(encoding="utf-8"), modules, read)
+        )
         flags = (
             inside is not None and inside in authoritative,
             relative in loaders,
@@ -816,6 +973,10 @@ def build(root: Path, verdicts: Mapping[str, bool], julia_version: str) -> Inven
                 "mirror": flags[2],
                 "class": classify(*flags),
                 "loaders": sorted(loaders.get(relative, set())),
+                "transcribed_module": copied["transcribed_module"],
+                "transcription_rule": copied["transcription_rule"],
+                "verbatim_line_share": copied["verbatim_line_share"],
+                "transcription_candidates": list(copied["transcription_candidates"]),
             }
         )
     counts: dict[str, int] = {
@@ -830,6 +991,10 @@ def build(root: Path, verdicts: Mapping[str, bool], julia_version: str) -> Inven
     counts["loaded_under_a_mirror_glob"] = sum(
         1 for source in sources if source["loaded"] and source["mirror"]
     )
+    for rule in (*TRANSCRIPTION_RULES, "not_a_transcript"):
+        counts[f"transcription_rule_{rule}"] = sum(
+            1 for source in sources if source["transcription_rule"] == rule
+        )
     counts["references"] = len(found)
     for status in STATUSES:
         counts[f"references_{status}"] = sum(

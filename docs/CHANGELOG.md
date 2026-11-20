@@ -82,6 +82,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Julia lane inventory names, for each of the 340 files Julia cannot parse, the Python module it
+  copies and how that module was found: 284 by the module their header names and 56 by reading the
+  header's joined directory (`adapters_holonomic` for `adapters/holonomic`); none is ambiguous or
+  unfound. Each records the share of its lines found verbatim in that module. The record is the
+  worklist for replacing transcripts of compute kernels with real code.
+
 - The Mojo lane inventory names, for each machine-translated stub, the
   Python module it copies, so the record is the worklist for replacing
   stubs with real code: `transcribed_module`, the `transcription_rule`
