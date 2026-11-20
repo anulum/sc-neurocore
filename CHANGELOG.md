@@ -82,6 +82,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `tools/accel_stub_triage.py` and `docs/_generated/accel_stub_triage.json` class the
+  Python original of every Mojo and Julia stub as a compute kernel or as application
+  code, by a stated rule read from the original's syntax tree: numeric work and no
+  application import is compute, an application import and no numeric work is
+  application, and anything else stays unclear until a seat's recorded reading decides
+  it. The record gives the deletion list for the owner (each application stub with its
+  loaders, the tests and benchmarks naming it, and its declaration) and the order in
+  which compute kernels are replaced by real code, ported from today's Python module.
+  Of 406 originals, 319 are compute, 4 application and 83 unclear.
+
 - The Julia lane inventory names, for each of the 340 files Julia cannot parse, the Python module it
   copies and how that module was found: 284 by the module their header names and 56 by reading the
   header's joined directory (`adapters_holonomic` for `adapters/holonomic`); none is ambiguous or

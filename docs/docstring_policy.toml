@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2287
+expected_file_count = 2289
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9197,3 +9197,10 @@ rationale = "Read every shipped module's syntax tree and hold each import of a w
 [[file]]
 path = "src/sc_neurocore/bridges/photonic_codesign.py"
 rationale = "Photonic co-design bridge; it needs sc_neurocore.optics as a whole, so an installed wheel refuses its import with the source-checkout reason."
+[[file]]
+path = "tools/accel_stub_triage.py"
+rationale = "Class the Python original of every accelerated-lane stub as a compute kernel or application code by a stated rule, generated and checked for drift."
+
+[[file]]
+path = "tests/test_accel_stub_triage.py"
+rationale = "Hold the stub triage to its markers, thresholds, classes, recorded readings and committed record."
