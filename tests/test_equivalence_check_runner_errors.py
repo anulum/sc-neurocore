@@ -19,14 +19,16 @@ class TestRunnerErrors:
     def test_timeout_raises_runtime_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """Preserve the public proof error when the underlying task times out."""
+        import shutil
         import subprocess
 
-        monkeypatch.setattr(_sby_runner.shutil, "which", lambda name: "/usr/bin/x")
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/x")
 
         def _raise_timeout(*args: object, **kwargs: object) -> None:
             raise subprocess.TimeoutExpired(cmd="sby", timeout=1.0)
 
-        monkeypatch.setattr(_sby_runner.subprocess, "run", _raise_timeout)
+        monkeypatch.setattr(_sby_runner, "_run_sby_process", _raise_timeout)
         with pytest.raises(RuntimeError, match="timed out"):
             prove_equivalence(
                 _TINY_DUT,

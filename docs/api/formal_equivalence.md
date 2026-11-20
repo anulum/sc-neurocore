@@ -62,6 +62,34 @@ checker honours) holds the active-low reset asserted for `reset_cycles` clocks,
 and the equivalence assertions are gated on the post-reset window so the two
 modules are compared only once both have been driven into their reset state.
 
+### Bounded user IR equivalence
+
+`sc-neurocore compile-ir --equivalence-depth DEPTH GRAPH.ir` checks the actual
+emitted top level and its packaged RTL dependencies against a reference built
+from canonical IR. Both sides see identical free input sequences. The proof
+asserts every output, including the zero-extended spike word at a LIF graph
+port. Library classifications still apply to individual operations and the
+optional `graph_equivalence` result applies to the whole output interface.
+The graph checker flattens the miter and uses ABC's bounded model checker.
+The solver deadline defaults to 300 seconds to bound how long a caller waits
+when the graph or checked horizon makes the proof expensive.
+
+The verifier admits encoder, LIF and DCLS instances only at the parameter sets
+marked `FORMAL` in the library summary. Structural input, output and constant
+operations are included in the independent reference. It uses the Python LFSR
+transition, signed fixed-point LIF arithmetic and the Python Q8.8 DCLS
+contraction with independent tap history. Non-positive DCLS sigma yields zero
+weighted output as specified by the emitted hardware.
+
+The requested depth includes two leading reset clocks. The check rejects a
+depth that cannot observe the longest declared path, including registered
+steps, chained operations and delayed taps. `PASS` covers the compared
+post-reset outputs within that bound. `FAIL` reports the assertion falsified
+by a solver counterexample.
+`UNAVAILABLE` and `INCONCLUSIVE` carry a diagnostic and count as failures at
+the command line. The report binds the DUT, including primitive dependencies,
+and the independent reference by SHA-256.
+
 ### Bounded vs unbounded
 
 BMC establishes equivalence up to `depth` cycles from reset. Unbounded proof by

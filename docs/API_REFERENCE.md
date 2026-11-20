@@ -8093,8 +8093,7 @@ args : argparse.Namespace
 Returns
 -------
 int
-    Zero when the top level and both summaries were written; one when the file
-    cannot be read, does not parse or fails IR verification.
+    Zero when compilation and any requested proof pass; one otherwise.
 
 ---
 
@@ -8812,6 +8811,46 @@ timeout : float
   - Receive and convert to binary spike vector.
 - **close**()
   - Close the receiving socket.
+
+---
+
+## Module `compiler._ir_equivalence_models`
+
+### Function `encoder(name, source, width, fraction, seed)`
+Render the Python LFSR transition and signed probability comparison.
+
+### Function `lif_step(name, current, leak, gain, noise, parameters)`
+Render the Python fixed-point neuron state transition and spike output.
+
+### Function `dcls_history(name, spike, offsets)`
+Encode the delayed events as a shift history, independent of the device ring buffer.
+
+### Function `dcls_constant(name, taps, weights, centre, sigma)`
+Render the Python contraction output for each symbolic tap-activity pattern.
+
+### Function `dcls_symbolic(name, taps, weights, centre, sigma)`
+Lift the Q8.8 Python tent contraction to signed symbolic input words.
+
+---
+
+## Module `compiler._ir_equivalence_reference`
+
+### Class `Layout`
+The scalar element representation and packed arity from an IR type.
+
+- **bits**()
+  - Return the width of the packed signal.
+
+### Class `Value`
+One independent signal and the longest observable delay feeding it.
+
+
+### Class `Reference`
+A reference module and the checked graph boundary it independently declares.
+
+
+### Function `build_reference(name, text)`
+Build the reference and its symbolic interface from native canonical IR.
 
 ---
 
@@ -9797,7 +9836,7 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports, *, dut_top, ref_top, dut_params, ref_params, depth, engine, mode, reset_cycles, clock, reset_n, timeout_s, workdir)`
+### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports, *, dut_top, ref_top, dut_params, ref_params, depth, engine, mode, reset_cycles, clock, reset_n, timeout_s, workdir, flatten, abc_bmc)`
 Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
 
 Parameters
@@ -9825,6 +9864,11 @@ timeout_s : float
 workdir : str or Path, optional
     Directory for the generated sources and ``sby`` run tree. A temporary
     directory is created and left in place if omitted (caller cleans up).
+flatten : bool, default False
+    Flatten the design before proof so shared logic across instances can be
+    simplified together.
+abc_bmc : bool, default False
+    Use the Yosys ABC bounded checker for a BMC proof.
 
 Returns
 -------
@@ -9836,6 +9880,8 @@ Raises
 RuntimeError
     If the formal tools are absent, the ``sby`` run errors out (a tool or
     setup failure, distinct from a ``FAIL`` disproof), or times out.
+ValueError
+    If ABC bounded checking is requested with the unbounded proof mode.
 
 ---
 
@@ -11659,7 +11705,7 @@ Returns
 str
     Header, one line per operation and the class counts.
 
-### Function `write_guarantee_summary(graph, sv_path)`
+### Function `write_guarantee_summary(graph, sv_path, *, verilog, equivalence)`
 Write the summary of a graph next to its emitted top level.
 
 Parameters
@@ -11668,6 +11714,10 @@ graph : IrGraph
     The graph whose emitted SystemVerilog is at ``sv_path``.
 sv_path : Path
     Path of the emitted ``.sv`` file.
+verilog : str or None
+    Exact already-emitted top level, if available.
+equivalence : mapping or None
+    Result of an explicitly requested graph-level equivalence check.
 
 Returns
 -------
@@ -14287,6 +14337,44 @@ spatial_density : str
 
 ### Function `map_wetware_mea(populations, connectivity)`
 Map neuron populations to wetware Multi-Electrode Array (MEA) sites.
+
+---
+
+## Module `compiler.ir_equivalence`
+
+### Class `GraphEquivalence`
+A graph proof outcome bound to the exact reference and DUT sources.
+
+- **proven**()
+  - Return whether the asserted graph outputs passed the full requested bound.
+- **to_json**()
+  - Return the proof record stored in the guarantee summary.
+
+### Function `check_graph_equivalence(name, ir, verilog, *, depth, timeout_s)`
+Check all visible outputs of a verified canonical IR graph with SymbiYosys.
+
+Parameters
+----------
+name : str
+    The verified graph's module name.
+ir : str
+    Canonical IR text from the native graph printer.
+verilog : str
+    The exact SystemVerilog to check and emit as the graph top.
+depth : int
+    Number of frames the bounded model checker examines, including reset.
+timeout_s : float
+    Limit for external proof execution, in seconds. Defaults to 300.
+
+Returns
+-------
+GraphEquivalence
+    A proof, counterexample, unavailable tool, or inconclusive result.
+
+Raises
+------
+ValueError
+    If the graph or bounds cannot establish an observable comparison.
 
 ---
 

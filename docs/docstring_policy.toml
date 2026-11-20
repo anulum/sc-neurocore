@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2290
+expected_file_count = 2299
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9208,3 +9208,39 @@ rationale = "Hold the stub triage to its markers, thresholds, classes, recorded 
 [[file]]
 path = "tests/test_shd_driver.py"
 rationale = "Verify sc_shd_driver register parity against sc_shd_event_axi, zlib.crc32 integrity-checked network loading, event stepping refusals, and live RTL MMIO trace replay."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_ir_equivalence_models.py"
+rationale = "Describe the three bit-exact symbolic model transitions."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_ir_equivalence_reference.py"
+rationale = "Document independent reference emission and observable graph interfaces."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_sby_runner.py"
+rationale = "Document solver invocation, deadlines and verdict parsing."
+
+[[file]]
+path = "src/sc_neurocore/compiler/equivalence_check.py"
+rationale = "Document the inherited proof runner and optional flattened preparation."
+
+[[file]]
+path = "src/sc_neurocore/compiler/equivalence_miter.py"
+rationale = "Document module interfaces and shared bounded miter generation."
+
+[[file]]
+path = "src/sc_neurocore/compiler/ir_equivalence.py"
+rationale = "Document the admitted bounded proof, provenance, and verdict contract."
+
+[[file]]
+path = "tests/test_equivalence_check_runner_errors.py"
+rationale = "Document preserved runner timeout behavior."
+
+[[file]]
+path = "tests/test_ir_equivalence.py"
+rationale = "Document public bounded IR proofs and solver counterexample controls."
+
+[[file]]
+path = "tests/test_sby_runner_run_sby_task.py"
+rationale = "Record timeout termination and interpretation checks."

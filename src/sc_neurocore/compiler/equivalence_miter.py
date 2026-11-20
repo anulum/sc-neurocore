@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import ast
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 __all__ = ["MiterPort", "parse_module_interface", "build_equivalence_miter"]
 
@@ -306,21 +306,32 @@ def build_equivalence_miter(
         header_ports.append(f"input wire{signed}{span} {p.name}")
     header = ",\n    ".join(header_ports)
 
-    # Output comparison wires, one pair per output.
+    def fresh_name(base: str) -> str:
+        """Reserve a local name without shadowing an actual graph port."""
+        while base in names:
+            base = "_" + base
+        names.add(base)
+        return base
+
+    reset_count = fresh_name("rst_cnt")
+    reset_length = fresh_name("RESET_CYCLES")
+    output_wires = [(p, fresh_name(p.name + "_dut"), fresh_name(p.name + "_ref")) for p in outputs]
     out_wires = "\n".join(
-        f"    {p.declaration('_dut')};\n    {p.declaration('_ref')};" for p in outputs
+        f"    {replace(p, name=dut).declaration()};\n    {replace(p, name=ref).declaration()};"
+        for p, dut, ref in output_wires
     )
 
-    def _connections(out_suffix: str) -> list[str]:
+    def _connections(reference: bool) -> list[str]:
+        """Share input wires and connect each observed output to its own comparison wire."""
         conns = [f".{clock}({clock})", f".{reset_n}({reset_n})"]
         conns += [f".{p.name}({p.name})" for p in free_inputs]
-        conns += [f".{p.name}({p.name}{out_suffix})" for p in outputs]
+        conns += [f".{p.name}({ref if reference else dut})" for p, dut, ref in output_wires]
         return conns
 
-    dut_inst = _instance(dut_top, "dut", dut_params, _connections("_dut"))
-    ref_inst = _instance(ref_top, "ref_model", ref_params, _connections("_ref"))
+    dut_inst = _instance(dut_top, fresh_name("dut"), dut_params, _connections(False))
+    ref_inst = _instance(ref_top, fresh_name("ref_model"), ref_params, _connections(True))
 
-    asserts = "\n".join(f"            assert({p.name}_dut == {p.name}_ref);" for p in outputs)
+    asserts = "\n".join(f"            assert({dut} == {ref});" for _, dut, ref in output_wires)
 
     return (
         "// SPDX-License-Identifier: AGPL-3.0-or-later\n"
@@ -328,10 +339,11 @@ def build_equivalence_miter(
         "`timescale 1ns / 1ps\n"
         "\n"
         f"module {miter_name}(\n    {header}\n);\n"
-        f"    localparam integer RESET_CYCLES = {reset_cycles};\n"
-        "    reg [7:0] rst_cnt = 0;\n"
-        f"    always @(posedge {clock}) if (rst_cnt < 8'hFF) rst_cnt <= rst_cnt + 8'd1;\n"
-        f"    wire {reset_n} = (rst_cnt >= RESET_CYCLES);\n"
+        f"    localparam integer {reset_length} = {reset_cycles};\n"
+        f"    reg [7:0] {reset_count} = 0;\n"
+        f"    always @(posedge {clock}) if ({reset_count} < 8'hFF) "
+        f"{reset_count} <= {reset_count} + 8'd1;\n"
+        f"    wire {reset_n} = ({reset_count} >= {reset_length});\n"
         "\n"
         f"{out_wires}\n"
         "\n"

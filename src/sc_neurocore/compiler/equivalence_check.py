@@ -97,9 +97,13 @@ def _generate_sby(
     depth: int,
     mode: str,
     engine: str,
+    flatten: bool = False,
+    abc_bmc: bool = False,
 ) -> str:
     """Render a ``.sby`` script that reads the sources and checks the miter."""
     reads = "\n".join(f"read -formal {name}" for name in source_files)
+    prepare = f"prep -top {miter_top}" + (" -flatten" if flatten else "")
+    solver = "abc bmc3" if abc_bmc else f"smtbmc {engine}"
     return (
         "[tasks]\n"
         f"{mode}\n"
@@ -109,11 +113,11 @@ def _generate_sby(
         f"{mode}: depth {depth}\n"
         "\n"
         "[engines]\n"
-        f"smtbmc {engine}\n"
+        f"{solver}\n"
         "\n"
         "[script]\n"
         f"{reads}\n"
-        f"prep -top {miter_top}\n"
+        f"{prepare}\n"
         "\n"
         "[files]\n" + "\n".join(source_files) + "\n"
     )
@@ -184,6 +188,8 @@ def prove_equivalence(
     reset_n: str = "rst_n",
     timeout_s: float = 300.0,
     workdir: str | Path | None = None,
+    flatten: bool = False,
+    abc_bmc: bool = False,
 ) -> EquivalenceResult:
     """Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
 
@@ -212,6 +218,11 @@ def prove_equivalence(
     workdir : str or Path, optional
         Directory for the generated sources and ``sby`` run tree. A temporary
         directory is created and left in place if omitted (caller cleans up).
+    flatten : bool, default False
+        Flatten the design before proof so shared logic across instances can be
+        simplified together.
+    abc_bmc : bool, default False
+        Use the Yosys ABC bounded checker for a BMC proof.
 
     Returns
     -------
@@ -223,10 +234,16 @@ def prove_equivalence(
     RuntimeError
         If the formal tools are absent, the ``sby`` run errors out (a tool or
         setup failure, distinct from a ``FAIL`` disproof), or times out.
+    ValueError
+        If ABC bounded checking is requested with the unbounded proof mode.
     """
-    if not formal_tools_available(engine):
+    if abc_bmc and mode != "bmc":
+        raise ValueError("ABC bounded checking requires BMC mode")
+    executable = "yosys-abc" if abc_bmc else engine
+    if not formal_tools_available(executable):
+        solver_kind = "solver" if abc_bmc else "SMT solver"
         raise RuntimeError(
-            f"SymbiYosys ('sby'), Yosys ('yosys') and the '{engine}' SMT solver must be on PATH"
+            f"SymbiYosys ('sby'), Yosys ('yosys') and the '{executable}' {solver_kind} must be on PATH"
         )
 
     miter_top = "equiv_miter"
@@ -257,9 +274,11 @@ def prove_equivalence(
             depth=depth,
             mode=mode,
             engine=engine,
+            flatten=flatten,
+            abc_bmc=abc_bmc,
         ),
         encoding="utf-8",
     )
 
     run = run_sby_task(work, sby_name, timeout_s=timeout_s)
-    return _result_from_run(run, mode=mode, depth=depth, engine=engine)
+    return _result_from_run(run, mode=mode, depth=depth, engine="abc bmc3" if abc_bmc else engine)

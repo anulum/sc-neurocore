@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 24,
-    "outdated": 131,
+    "current": 27,
+    "outdated": 128,
     "reviewed": 0,
     "unbound": 175
   },
@@ -2502,10 +2502,7 @@
       "name": "bench_equation_program.json"
     },
     {
-      "changed": [
-        "src/sc_neurocore/compiler/__init__.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "bench_function_call_domains.json"
     },
     {
@@ -2863,11 +2860,14 @@
         "engine/src/ir/verify.rs",
         "engine/src/ir/word_contract.rs",
         "src/sc_neurocore/compiler/__init__.py",
+        "src/sc_neurocore/compiler/_sby_runner.py",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
         "src/sc_neurocore/compiler/c_expr_emitter.py",
         "src/sc_neurocore/compiler/c_fixed_emitter.py",
         "src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/equivalence_check.py",
+        "src/sc_neurocore/compiler/equivalence_miter.py",
         "src/sc_neurocore/compiler/expr_lut_tables.py",
         "src/sc_neurocore/compiler/function_unit_ir.py",
         "src/sc_neurocore/compiler/function_unit_programs.py",
@@ -2936,9 +2936,12 @@
         "engine/src/ir/verify.rs",
         "engine/src/ir/word_contract.rs",
         "src/sc_neurocore/compiler/__init__.py",
+        "src/sc_neurocore/compiler/_sby_runner.py",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py",
         "src/sc_neurocore/compiler/compiler_impl.py",
         "src/sc_neurocore/compiler/equation_lowering.py",
+        "src/sc_neurocore/compiler/equivalence_check.py",
+        "src/sc_neurocore/compiler/equivalence_miter.py",
         "src/sc_neurocore/compiler/function_unit_programs.py",
         "src/sc_neurocore/compiler/function_units.py",
         "src/sc_neurocore/compiler/hardware_numeric_contract.py",
@@ -2958,19 +2961,11 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "changed": [
-        "Cargo.lock",
-        "engine/Cargo.toml"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {

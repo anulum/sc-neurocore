@@ -156,6 +156,24 @@ estimate with its stream length and seed; no error bound is established for LFSR
 streams yet) or `NONE` (inline logic or wiring). The same summary is available from
 Python through `sc_neurocore.compiler.guarantee_summary.summarize_graph`.
 
+To prove the graph outputs through a bounded sequence of input frames, add
+`--equivalence-depth` and put SymbiYosys, Yosys and `yosys-abc` on `PATH`.
+
+```bash
+sc-neurocore compile-ir encoder_demo.ir --output build/encoder_demo --equivalence-depth 10
+```
+
+The check accepts inputs, outputs and constants joined by encoders, LIF steps or
+DCLS layers at their exact formal library parameters. The frame depth includes
+two reset clocks. It must allow the longest input-to-output delay to become
+observable. The solver has 300 seconds by default. Use `--equivalence-timeout`
+to change that limit for a particular graph.
+The two summaries carry the graph verdict, checked bound and reset convention.
+The JSON also records the exact DUT and reference hashes. A failed or
+inconclusive proof, or a missing tool, writes its verdict and exits with status
+one. Invalid graphs and depths are rejected before writing output. See
+[bounded user IR equivalence](formal_equivalence.md#bounded-user-ir-equivalence).
+
 Write and check the evidence packet of one dense layer design:
 
 ```bash

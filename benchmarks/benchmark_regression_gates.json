@@ -5203,6 +5203,9 @@
         "benchmarks/bench_function_call_domains.py": "source_sha256.benchmarks/bench_function_call_domains.py",
         "src/sc_neurocore/compiler/__init__.py": "source_sha256.src/sc_neurocore/compiler/__init__.py",
         "src/sc_neurocore/compiler/_sby_runner.py": "source_sha256.src/sc_neurocore/compiler/_sby_runner.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_models.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_models.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_reference.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_reference.py",
+        "src/sc_neurocore/compiler/ir_equivalence.py": "source_sha256.src/sc_neurocore/compiler/ir_equivalence.py",
         "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "source_sha256.src/sc_neurocore/compiler/_verilog_folded_datapath.py",
         "src/sc_neurocore/compiler/_verilog_integrators.py": "source_sha256.src/sc_neurocore/compiler/_verilog_integrators.py",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py": "source_sha256.src/sc_neurocore/compiler/_verilog_neuron_core.py",
@@ -5359,7 +5362,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "bc55da348b211b7980dd3694e0282be8974894d31f2880b48e6636b9f9602817"
+        "native_sha256": "5e345e9408afc518d25d52458a2f46691976ba9e2d06c704abe3402b0c5a3b6a"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5455,6 +5458,9 @@
         "engine/src/ir/word_contract.rs": "source_sha256.engine/src/ir/word_contract.rs",
         "src/sc_neurocore/compiler/__init__.py": "source_sha256.src/sc_neurocore/compiler/__init__.py",
         "src/sc_neurocore/compiler/_sby_runner.py": "source_sha256.src/sc_neurocore/compiler/_sby_runner.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_models.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_models.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_reference.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_reference.py",
+        "src/sc_neurocore/compiler/ir_equivalence.py": "source_sha256.src/sc_neurocore/compiler/ir_equivalence.py",
         "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "source_sha256.src/sc_neurocore/compiler/_verilog_folded_datapath.py",
         "src/sc_neurocore/compiler/_verilog_integrators.py": "source_sha256.src/sc_neurocore/compiler/_verilog_integrators.py",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py": "source_sha256.src/sc_neurocore/compiler/_verilog_neuron_core.py",
@@ -5710,7 +5716,7 @@
         "cross_language_comparison": false,
         "performance_promotion_claimed": false,
         "hardware_measurement_claimed": false,
-        "native_sha256": "bc55da348b211b7980dd3694e0282be8974894d31f2880b48e6636b9f9602817"
+        "native_sha256": "5e345e9408afc518d25d52458a2f46691976ba9e2d06c704abe3402b0c5a3b6a"
       },
       "required_numbers": [
         "cases.bench_euler.median_ms",
@@ -5814,6 +5820,9 @@
         "engine/src/ir/word_contract.rs": "source_sha256.engine/src/ir/word_contract.rs",
         "src/sc_neurocore/compiler/__init__.py": "source_sha256.src/sc_neurocore/compiler/__init__.py",
         "src/sc_neurocore/compiler/_sby_runner.py": "source_sha256.src/sc_neurocore/compiler/_sby_runner.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_models.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_models.py",
+        "src/sc_neurocore/compiler/_ir_equivalence_reference.py": "source_sha256.src/sc_neurocore/compiler/_ir_equivalence_reference.py",
+        "src/sc_neurocore/compiler/ir_equivalence.py": "source_sha256.src/sc_neurocore/compiler/ir_equivalence.py",
         "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "source_sha256.src/sc_neurocore/compiler/_verilog_folded_datapath.py",
         "src/sc_neurocore/compiler/_verilog_integrators.py": "source_sha256.src/sc_neurocore/compiler/_verilog_integrators.py",
         "src/sc_neurocore/compiler/_verilog_neuron_core.py": "source_sha256.src/sc_neurocore/compiler/_verilog_neuron_core.py",

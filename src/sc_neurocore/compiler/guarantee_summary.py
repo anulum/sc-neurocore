@@ -466,7 +466,7 @@ def summarize_ir_text(name: str, text: str, verilog: str) -> dict[str, Any]:
     streams: dict[str, int] = {}
     for line in text.splitlines():
         match = _LINE.match(line)
-        if match is None or match.group("op") == "graph":
+        if match is None or match.group("op") in {"graph", "source"}:
             continue
         operation, rest, value = match.group("op"), match.group("rest"), match.group("id")
         rule = OPERATION_RULES.get(operation)
@@ -586,10 +586,24 @@ def render_guarantee_text(summary: Mapping[str, Any]) -> str:
         lines.append(f"{label} {entry['operation']}: {phrases}")
     counts = ", ".join(f"{name} {count}" for name, count in summary["classes"].items())
     lines.append(f"Classes: {counts}")
+    if "graph_equivalence" in summary:
+        proof = summary["graph_equivalence"]
+        lines.append(
+            f"Bounded graph equivalence {proof['verdict']} at depth {proof['depth']} "
+            f"with {proof['reset_cycles']} leading reset clocks."
+        )
+        if proof["reason"]:
+            lines.append(proof["reason"])
     return "\n".join(lines) + "\n"
 
 
-def write_guarantee_summary(graph: IrGraph, sv_path: Path) -> tuple[Path, Path]:
+def write_guarantee_summary(
+    graph: IrGraph,
+    sv_path: Path,
+    *,
+    verilog: str | None = None,
+    equivalence: Mapping[str, object] | None = None,
+) -> tuple[Path, Path]:
     """Write the summary of a graph next to its emitted top level.
 
     Parameters
@@ -598,13 +612,22 @@ def write_guarantee_summary(graph: IrGraph, sv_path: Path) -> tuple[Path, Path]:
         The graph whose emitted SystemVerilog is at ``sv_path``.
     sv_path : Path
         Path of the emitted ``.sv`` file.
+    verilog : str or None
+        Exact already-emitted top level, if available.
+    equivalence : mapping or None
+        Result of an explicitly requested graph-level equivalence check.
 
     Returns
     -------
     tuple of Path
         The JSON and text files, ``<stem>.guarantees.json`` and ``<stem>.guarantees.txt``.
     """
-    summary = summarize_graph(graph)
+    if verilog is None:
+        summary = summarize_graph(graph)
+    else:
+        summary = summarize_ir_text(graph.name, graph.to_text(), verilog)
+    if equivalence is not None:
+        summary["graph_equivalence"] = dict(equivalence)
     json_path = sv_path.with_name(f"{sv_path.stem}.guarantees.json")
     text_path = sv_path.with_name(f"{sv_path.stem}.guarantees.txt")
     json_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

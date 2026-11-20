@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5756
+    "test_files": 5757
   },
   "documentation": {
     "public_pages": [
@@ -5853,6 +5853,7 @@
       "tests/test_iqif_schema_dsl.py",
       "tests/test_ir_constants_rtl.py",
       "tests/test_ir_dense_rtl.py",
+      "tests/test_ir_equivalence.py",
       "tests/test_ir_identifiers.py",
       "tests/test_ir_neuron_text.py",
       "tests/test_ir_python.py",

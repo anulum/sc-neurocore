@@ -172,13 +172,7 @@ def run_sby_task(workdir: Path, sby_name: str, *, timeout_s: float) -> SbyRun:
         If the ``sby`` process exceeds ``timeout_s``.
     """
     try:
-        proc = subprocess.run(
-            ["sby", "-f", sby_name],
-            cwd=workdir,
-            capture_output=True,
-            text=True,
-            timeout=timeout_s,
-        )
+        proc = _run_sby_process(workdir, sby_name, timeout_s)
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(f"sby task '{sby_name}' timed out after {timeout_s}s") from exc
 
@@ -199,6 +193,28 @@ def run_sby_task(workdir: Path, sby_name: str, *, timeout_s: float) -> SbyRun:
         summary=summary,
         stdout=stdout,
     )
+
+
+def _run_sby_process(
+    workdir: Path, sby_name: str, timeout_s: float
+) -> subprocess.CompletedProcess[str]:
+    """Run SymbiYosys and let it terminate its solver groups on timeout."""
+    command = ["sby", "-f", sby_name]
+    with subprocess.Popen(
+        command, cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    ) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            # SymbiYosys gives its solvers separate process groups and terminates
+            # them in its SIGTERM handler. Killing the parent first bypasses it.
+            process.terminate()
+            try:
+                process.communicate(timeout=3.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            raise
+        return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
 
 def is_inconclusive(run: SbyRun) -> bool:
