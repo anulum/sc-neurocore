@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2240
+expected_file_count = 2242
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9010,3 +9010,10 @@ rationale = "Hold the generated JSON sidecars to the ownership contract and to t
 [[file]]
 path = "tests/test_tools/test_build_accel_backends_discover_and_paths.py"
 rationale = "Verify that accelerator discovery recognises guarded native loaders and pairs their library paths with the right sources."
+[[file]]
+path = "tools/julia_lane_inventory.py"
+rationale = "Classify every tracked Julia source by its declarations, its exact Python loader paths and whether Julia parses it, generated and checked for drift."
+
+[[file]]
+path = "tests/test_julia_lane_inventory.py"
+rationale = "Hold the Julia lane inventory to its rules, to the repository, and to the rule that every declared or loaded Julia file parses."

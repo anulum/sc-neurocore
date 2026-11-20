@@ -82,6 +82,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `tools/julia_lane_inventory.py` and `docs/_generated/julia_lane_inventory.json` classify every
+  tracked Julia source: whether the package declares it authoritative or a mirror, which Python
+  modules build its exact path, and whether Julia's parser accepts it (nothing is evaluated). Of
+  638 files, 298 parse and 340 are not Julia; every declared or loaded file parses, and a test keeps
+  it so. Without Julia, `--check` carries each unchanged file's verdict by sha256.
+
 - `sc_neurocore.accel.host_isa` reads the host's x86-64 psABI level
   (`x86-64-v1` to `x86-64-v4`, or `unknown`) from the CPU flags Linux prints.
   A measured order whose record states its host's flags applies only on a

@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5737
+    "test_files": 5738
   },
   "documentation": {
     "public_pages": [
@@ -5884,6 +5884,7 @@
       "tests/test_jax_backend_lif_step.py",
       "tests/test_jax_backend_vector_ops.py",
       "tests/test_jax_layer.py",
+      "tests/test_julia_lane_inventory.py",
       "tests/test_julia_requirement_gate.py",
       "tests/test_julia_rk4_neuron_parity.py",
       "tests/test_kilinc_bhatt_map_backends.py",
