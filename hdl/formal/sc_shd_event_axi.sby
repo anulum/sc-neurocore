@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Event SHD AXI4-Lite wrapper and integrity-checked loader proof
+
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+prove: depth 6
+cover: mode cover
+cover: depth 24
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal -DSYNTHESIS -I . sc_cg.v sc_lanes.v cells_clkgate.v sc_mem.v sc_sram_macro.v sc_shd_event_p.v sc_shd_event_axi.v
+chparam -set CAP1 2 -set CAP2 2 sc_shd_event_axi
+hierarchy -top sc_shd_event_axi
+blackbox *sc_mem*
+blackbox *sc_lanes*
+flatten
+expose sc_shd_event_axi/sealed sc_shd_event_axi/crc_mismatch sc_shd_event_axi/refused_busy sc_shd_event_axi/refused_range sc_shd_event_axi/commit_refused sc_shd_event_axi/start_r sc_shd_event_axi/frame_valid_r sc_shd_event_axi/load_we_r sc_shd_event_axi/load_commit_sel sc_shd_event_axi/load_commit_grp sc_shd_event_axi/load_commit_addr sc_shd_event_axi/core_t_orig sc_shd_event_axi/load_count sc_shd_event_axi/load_crc32 sc_shd_event_axi/expected_crc32 sc_shd_event_axi/crc_state sc_shd_event_axi/frame_buf sc_shd_event_axi/core_busy sc_shd_event_axi/core_error sc_shd_event_axi/core_frame_ready sc_shd_event_axi/axi_awaddr sc_shd_event_axi/wr_en sc_shd_event_axi/wr_aligned sc_shd_event_axi/is_ctrl_w sc_shd_event_axi/start_req sc_shd_event_axi/start_admissible sc_shd_event_axi/loader_busy_err sc_shd_event_axi/loader_range_err sc_shd_event_axi/commit_err sc_shd_event_axi/u_core.state
+read_verilog -formal sc_shd_event_axi_formal.v
+prep -top sc_shd_event_axi_formal -flatten
+cutpoint -blackbox
+check -assert
+
+[files]
+sc_shd_event_axi_formal.v
+../shd_event/sc_shd_event_axi.v
+../shd_event/sc_shd_event_p.v
+../shd_event/sc_shapes.vh
+../shd_event/sc_cg.v
+../shd_event/sc_lanes.v
+../shd_event/tech/generic/cells_clkgate.v
+../shd_event/tech/generic/sc_mem.v
+../shd_event/tech/generic/sc_sram_macro.v

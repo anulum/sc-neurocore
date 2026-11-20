@@ -49,7 +49,9 @@ EXPECTED_EVENT_FILES = frozenset(
         "sc_cg.v",
         "sc_lanes.v",
         "sc_shapes.vh",
+        "sc_shd_event_axi.v",
         "sc_shd_event_p.v",
+        "tb_sc_shd_event_axi.v",
         "tb_sc_shd_event_p.v",
         "tech/generic/cells_clkgate.v",
         "tech/generic/sc_mem.v",
@@ -139,7 +141,7 @@ def test_zero_target_preprocessor_conditionals_and_zero_branch_testbench() -> No
             match = directive_re.match(line)
             if match is not None:
                 directives.append((match.group(1), match.group(2).strip()))
-        if rel == "tb_sc_shd_event_p.v":
+        if rel in {"tb_sc_shd_event_p.v", "tb_sc_shd_event_axi.v"}:
             assert directives == []
             continue
         for kind, rest in directives:

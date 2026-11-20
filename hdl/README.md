@@ -141,3 +141,32 @@ group's earlier design study as Golden Reference #0, it computes the exact same
   pass-through leaf) and the simulation-only `cycles` counter counts active `cclk` edges
   (`cycles_pass_through - 1` when `start` deasserts one cycle before the first `frame_valid`).
   Host wrappers must therefore edge-detect `done`.
+- `hdl/shd_event/sc_shd_event_axi.v` wraps `sc_shd_event_p` in a 9-bit AXI4-Lite slave
+  (`0x000..0x0FC`) keeping every `0x00..0x8C` offset compatible with `hdl/pynq/sc_shd_driver.py`
+  except `0x08..0x10`. Core `rst_n` is driven by `S_AXI_ARESETN` alone, `done_sticky`
+  edge-detects `done`, `hdl/formal/sc_shd_event_axi.sby` proves and covers the loader,
+  reserved-offset, target-range, and stepping invariants, and `tools/cosim_shd_event_axi.py` /
+  `tests/test_shd_event_axi.py` cosimulate count, binary, and negative AXI4-Lite flows against
+  `tools/shd_int_reference.py`.
+
+### Event SHD AXI4-Lite Register Map (`hdl/shd_event/sc_shd_event_axi.v`)
+
+| Offset | Access | Name | Description |
+| --- | :---: | --- | --- |
+| `0x00` | R/W | `CTRL` | W: `[0]=start` (requires idle, `sealed`, `1 <= T_ORIG <= 1024`); R: `[1]=busy`, `[2]=done` (sticky), `[3]=frame_ready`, `[4]=error`, `[5]=overflow`, `[6]=commit_refused` (sticky) |
+| `0x04` | R/W | `T_ORIG` | `[15:0]` input step count (reset `250`, valid `1..1024`) |
+| `0x08..0x10` | — | `RESERVED` | Reserved on the event bitstream (the event core's layer scaling is fixed at synthesis by its parameters); read `0`; writes refused with `SLVERR` |
+| `0x14..0x24` | W | `SPIKE_IN_0..4` | Write-only (read `0`); 140 binary spike bits expanded to `{3'b000, b}` nibbles |
+| `0x28` | W | `SPIKE_COMMIT` | Write-only (read `0`); commit 560-bit `frame_buf` when `frame_ready=1` and clear `frame_buf` upon capture |
+| `0x2C..0x3C` | — | `RESERVED` | Read `0`; writes refused with `SLVERR` |
+| `0x40..0x8C` | R | `OUT_V_0..19` | Twenty signed 32-bit class accumulators |
+| `0x90` | R/W | `LOAD_CTRL` | W: `[0]=clear`, `[1]=auto_increment`, `[2]=seal`; R: `[1]=auto_increment` |
+| `0x94` | R/W | `LOAD_TARGET` | `[2:0]=load_sel` (`0..4`), `[9:3]=load_grp`, `[17:10]=load_addr` |
+| `0x98` | R/W | `LOAD_WDATA_LO` | Low 32 bits of 64-bit group word |
+| `0x9C` | R/W | `LOAD_WDATA_HI` | High 32 bits; write commits 64-bit word when idle and `LOAD_TARGET` is in range, else refused with `SLVERR` |
+| `0xA0` | R | `LOAD_COUNT` | Committed 64-bit group words since `LOAD_CTRL.clear` |
+| `0xA4` | R | `LOAD_CRC32` | Reflected IEEE CRC-32 (`0xEDB88320`, little-endian bytes) over committed words (integrity check only, not authentication) |
+| `0xA8` | R/W | `EXPECTED_CRC32` | Expected 32-bit CRC written before `LOAD_CTRL.seal` |
+| `0xAC` | R | `LOAD_STATUS` | `[0]=sealed`, `[1]=crc_mismatch`, `[2]=refused_busy`, `[3]=refused_range` (sticky until `LOAD_CTRL.clear`) |
+| `0xB0..0xB4` | — | `RESERVED` | Read `0`; writes refused with `SLVERR` |
+| `0xB8..0xFC` | W | `FRAME_COUNT_0..17` | Write-only (read `0`); 140 4-bit channel counts (`FRAME_COUNT_17[31:16] == 0` enforced via `SLVERR`) |

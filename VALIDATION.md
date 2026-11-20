@@ -15,7 +15,7 @@
 | Python unit/integration | — | `pytest tests/` over every tracked test module; the README's generated capability table gives the current test-file count |
 | Rust engine | CI-listed | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
-| HDL formal verification | 91 proof jobs | SymbiYosys `.sby` jobs under `hdl/formal/` (catalogue model checks and legacy SC cores; the README's count is test-bound) |
+| HDL formal verification | 92 proof jobs | SymbiYosys `.sby` jobs under `hdl/formal/` (catalogue model checks and legacy SC cores; the README's count is test-bound) |
 
 CI runs tests on Python 3.11–3.14 (Ubuntu) and the Rust engine tests on Ubuntu, Windows and macOS.
 

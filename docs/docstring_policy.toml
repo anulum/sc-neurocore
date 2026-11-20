@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2279
+expected_file_count = 2281
 
 [[file]]
 path = "src/sc_neurocore/cli/commands/codec.py"
@@ -9165,3 +9165,11 @@ rationale = "Measure the public packet codecs and UDP translation separately."
 [[file]]
 path = "tests/test_ci_playwright_browser_cache.py"
 rationale = "Check that CI steps install Playwright browsers into their namespaced caches before running the browser tests."
+
+[[file]]
+path = "tools/cosim_shd_event_axi.py"
+rationale = "Pack 64-bit group words, compute IEEE CRC-32, and cosimulate sc_shd_event_axi over AXI4-Lite against the integer reference."
+
+[[file]]
+path = "tests/test_shd_event_axi.py"
+rationale = "Verify sc_shd_event_axi T_MAX and register parity, formal proof configuration, bit-exact count and binary AXI cosimulation, and negative SLVERR refusals."

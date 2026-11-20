@@ -183,6 +183,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   ready/valid handshakes and a signed fixed-point error bound. The Python
   reference and generated C11, Rust and Verilog return the same codes.
 
+- `hdl/shd_event/sc_shd_event_axi.v` adds the 9-bit AXI4-Lite slave wrapper and
+  integrity-checked group-word loader (`0x90..0xAC`, reflected IEEE CRC-32 in
+  little-endian byte order matching `zlib.crc32`, with `SLVERR` refusal of
+  out-of-range `LOAD_TARGET` commits) plus the write-only 140-nibble input
+  count window (`FRAME_COUNT_0..17` at `0xB8..0xFC`) alongside `sc_shd_event_p`,
+  keeping `0x00..0x8C` offsets compatible with `hdl/pynq/sc_shd_driver.py`
+  except `0x08..0x10` (reserved on the event bitstream, read `0`, writes
+  refused with `SLVERR`) and driving core `rst_n` from `S_AXI_ARESETN` alone.
+  `hdl/formal/sc_shd_event_axi.sby` proves and covers the seal, target-range,
+  reserved-offset, start-admission, `T_MAX` (`1..1024`), and
+  `frame_valid`/`frame_ready` invariants, and `tools/cosim_shd_event_axi.py`
+  with `tests/test_shd_event_axi.py` verifies bit-exact count and binary
+  co-simulation plus negative `SLVERR` refusals across Icarus Verilog and
+  Verilator.
+
 - The event-driven integer SHD core `hdl/shd_event/sc_shd_event_p.v` and its
   shared `P`-lane LIF datapath `sc_lanes.v` run the integer axonal-delay
   speech network through per-layer 32-bucket time wheels and an idle
