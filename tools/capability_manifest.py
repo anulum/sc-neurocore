@@ -49,17 +49,20 @@ DEFAULT_CONFIG = Path("tools/capability_manifest.toml")
 DEFAULT_README = Path("README.md")
 DEFAULT_MARKER_START = "<!-- capability-snapshot:start -->"
 DEFAULT_MARKER_END = "<!-- capability-snapshot:end -->"
-DOC_COUNT_BINDING = re.compile(r"<!-- count:([a-z_]+) -->(.*?)<!-- /count -->")
+DOC_COUNT_BINDING = re.compile(r"<!-- count:([a-z0-9_]+) -->(.*?)<!-- /count -->")
 
-# Engine infrastructure classes are public PyO3 bindings, but they are not
-# neuron/model wrappers and must not inflate the public model inventory when a
-# refactor relocates them into ``engine/src/bindings``.
+# Engine infrastructure and codec bindings do not belong in the model inventory.
 _RUST_PYO3_NON_MODEL_CLASSES = frozenset(
     {
         "BitstreamAverager",
         "Lfsr16",
         "NetworkRunner",
         "SCPNMetrics",
+        "SpikeEventDecoder",
+        "SpikeEventEncoder",
+        "WaveformLosslessDecoder",
+        "WaveformLosslessEncoder",
+        "WaveformLosslessGpuEncoder",
     }
 )
 

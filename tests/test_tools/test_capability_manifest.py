@@ -80,6 +80,21 @@ def test_rust_wrapper_scan_includes_modular_binding_siblings(tmp_path: Path) -> 
     assert tool._rust_pyo3_wrapper_names(facade) == ["FacadeModel", "ModularModel"]
 
 
+def test_manifest_excludes_codec_bindings_from_model_wrappers() -> None:
+    """Keep the production waveform and spike-event codecs out of the model inventory."""
+    manifest = _load_tool().build_capability_manifest(_repo_root())
+
+    model_wrappers = set(manifest["models"]["rust_pyo3_wrappers"])
+    codec_bindings = {
+        "SpikeEventDecoder",
+        "SpikeEventEncoder",
+        "WaveformLosslessDecoder",
+        "WaveformLosslessEncoder",
+        "WaveformLosslessGpuEncoder",
+    }
+    assert not model_wrappers & codec_bindings
+
+
 def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) -> None:
     """Keep engine infrastructure classes out of the model count."""
     tool = _load_tool()
@@ -562,11 +577,20 @@ def _with_bound_page(repo: Path, count: str = "studio_catalogue_models") -> Path
     return page
 
 
-def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check() -> None:
+@pytest.mark.parametrize(
+    ("count", "expected", "label"),
+    [
+        ("studio_catalogue_models", 2, "Studio catalogue models"),
+        ("rust_pyo3_model_wrappers", 0, "Rust PyO3 model wrappers"),
+    ],
+)
+def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check(
+    count: str, expected: int, label: str
+) -> None:
     """Refuse stale bound counts and regenerate them from the actual catalogue."""
     tool = _load_tool()
     with _tempdir() as repo:
-        page = _with_bound_page(repo)
+        page = _with_bound_page(repo, count=count)
         config = tool.load_config(repo)
 
         tool.refresh_outputs(repo, config=config, update_readme=False)
@@ -576,10 +600,10 @@ def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check() -> None:
 
         tool.refresh_outputs(repo, config=config)
         assert page.read_text(encoding="utf-8") == (
-            "The catalogue holds <!-- count:studio_catalogue_models -->2<!-- /count --> models.\n"
+            f"The catalogue holds <!-- count:{count} -->{expected}<!-- /count --> models.\n"
         )
         tool.assert_outputs_current(repo, config=config)
-        assert "| Studio catalogue models | 2 |" in (repo / "README.md").read_text(encoding="utf-8")
+        assert f"| {label} | {expected} |" in (repo / "README.md").read_text(encoding="utf-8")
 
 
 def test_a_binding_to_a_count_the_manifest_lacks_is_refused() -> None:

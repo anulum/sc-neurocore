@@ -85,7 +85,7 @@ no measured accuracy figures for it.
 | Category | SC-NeuroCore |
 |----------|---|
 | Python models | **183 lazy-loaded classes / 176 source modules** |
-| Rust/compiled models | **212 Rust PyO3 wrappers / 180-model NetworkRunner** |
+| Rust/compiled models | **208 Rust PyO3 wrappers / 180-model NetworkRunner** |
 | Neuromorphic-hardware neuron models | Loihi (CUBA, Loihi 2), TrueNorth, SpiNNaker (LIF, SpiNNaker 2), Akida, BrainScaleS AdEx, DYNAP-SE DPI |
 | Formal verification | **92 SymbiYosys proof jobs and 589 formal statements (402 assert, 133 assume, 54 cover)** |
 | Train-to-FPGA export | **Yes** |

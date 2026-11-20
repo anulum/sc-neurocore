@@ -18,7 +18,7 @@ of [CHANGELOG.md](https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md)
   function set adds `rsqrt`, `hypot`, `round`, `heaviside` and general real powers. The default `lut-v1` lowering
   is unchanged.
 - **Model catalogue.** <!-- count:python_model_classes -->183<!-- /count --> lazy-loaded Python model classes and
-  <!-- count:rust_pyo3_model_wrappers -->212<!-- /count --> Rust PyO3 model wrappers. Agreement across the Python,
+  <!-- count:rust_pyo3_model_wrappers -->208<!-- /count --> Rust PyO3 model wrappers. Agreement across the Python,
   Rust, Julia, Go and Mojo implementations is tracked per model; the README states how many models meet the strict
   five-runtime bar. That is agreement between implementations, not with the source paper, RTL or a device.
 - **Readiness evidence.** Per-model facet receipts (co-simulation, formal, hardware) are bound to the exact sources

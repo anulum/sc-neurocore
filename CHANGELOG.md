@@ -327,6 +327,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Correct the Rust PyO3 model inventory to 208 wrappers by excluding five
+  codec bindings for lossless waveform and spike-event streams.
+
 - The Mojo lane inventory classes 50 more sources as machine-translated
   stubs: 39 implementation sources with `fn` remain, not 89. Its stub rule
   read a single-quoted string as ending at the first quote, so a line

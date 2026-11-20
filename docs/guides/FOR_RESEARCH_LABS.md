@@ -190,7 +190,7 @@ path; validate the exact model, quantisation and target separately.
 ## Rust Engine (Optional, Recommended)
 
 The Rust SIMD engine provides committed SIMD benchmark artefacts, AVX-512,
-AVX2, or NEON auto-dispatch, 212 Rust PyO3 model wrappers, and a 180-model
+AVX2, or NEON auto-dispatch, 208 Rust PyO3 model wrappers, and a 180-model
 NetworkRunner dispatch list.
 
 ```bash
