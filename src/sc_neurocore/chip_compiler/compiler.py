@@ -108,9 +108,9 @@ def compile_for_chip(
     layer_sizes : list of (n_inputs, n_neurons)
         Input and neuron count of each layer.
     weights : list of ndarray, optional
-        Weight matrices per layer. If provided, they are quantized to the core's weight precision: a symmetric grid
+        Weight matrices per layer. If provided, they are quantised to the core's weight precision: a symmetric grid
         for two or more bits, and plus or minus the mean magnitude for one bit. A precision below one bit, or a
-        matrix that is empty or holds NaN or infinity, is a violation, and then no matrix is quantized.
+        matrix that is empty or holds NaN or infinity, is a violation, and then no matrix is quantised.
     neuron_types : list of str, optional
         Neuron type per layer (e.g., 'LIF', 'Izhikevich').
     target : str or ChipSpec
@@ -119,7 +119,7 @@ def compile_for_chip(
     Returns
     -------
     CompilationResult
-        The mapping, the quantized weights, and every violation and warning; ``success`` is true only without
+        The mapping, the quantised weights, and every violation and warning; ``success`` is true only without
         violations.
     """
     if isinstance(target, str):
