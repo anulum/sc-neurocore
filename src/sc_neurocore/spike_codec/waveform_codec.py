@@ -228,6 +228,18 @@ class WaveformCodec:
         self._container = native_container(self._native, backend)
         self.spike_codec = SpikeCodec(backend="python" if self._native is None else "auto")
 
+    @property
+    def effective_backend(self) -> str:
+        """Return the selected implementation, including the older engine's signal kernels."""
+        return "rust" if self._container is not None or self._native is not None else "python"
+
+    @property
+    def native_scope(self) -> str:
+        """Return "container", "signal_kernels" or "none" for the selected implementation."""
+        if self._container is not None:
+            return "container"
+        return "signal_kernels" if self._native is not None else "none"
+
     @staticmethod
     def _require_positive_float(name: str, value: float) -> float:
         """Return a finite positive float or raise a field-specific error."""

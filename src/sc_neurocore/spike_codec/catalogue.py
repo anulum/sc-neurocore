@@ -117,8 +117,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         later does not update existing instances. Start a fresh process in that case.
         Native loader OSError or RuntimeError excludes ``auto`` from advertised
         choices. An ImportError loading a present extension does as well
-        for ISI, predictive, delta, framed rasters, address events and lossless
-        waveform streaming. The optional GPU waveform entry is an encoder-only
+        for every family. The optional GPU waveform entry is an encoder-only
         selector and is advertised separately from the CPU backend choices.
         An absent engine permits the classes' documented Python fallback.
 
@@ -145,8 +144,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_module,
             selected.native_symbols,
             diagnostics,
-            strict_native_import=descriptor.name
-            in ("isi", "predictive", "delta", "streaming", "aer", "waveform", "lossless_stream"),
+            strict_native_import=True,
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:

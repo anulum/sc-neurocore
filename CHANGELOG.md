@@ -82,6 +82,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Qualify the installed spike-codec catalogue with the base wheel alone and
+  with the compiled Rust engine. The wheel test job verifies all 18 variants,
+  records module provenance, and compares Python and Rust packets and decoded
+  output. Waveform and predictive instances expose their selected native scope
+  and prediction stage, respectively.
+
 - Export the event and band-power codec from `sc_neurocore.spike_codec`.
   The Python and Rust encoder and decoder can reset for an independent stream.
   Paired measurements cover both timing modes and preserve legacy event packets.

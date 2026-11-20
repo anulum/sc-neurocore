@@ -75,6 +75,33 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+### Installed codec catalogue
+
+Install a base wheel and its matching engine wheel with the dependencies in
+`requirements/wheels-test.txt` in a clean environment. Run from a directory
+outside the checkout. With no recording, both raster and waveform inputs
+come from the same deterministic model simulation. With the original PCM16
+challenge recording, the waveform families consume those recorded samples
+and the raster families retain the simulated acquisition.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THREADS=4 \
+  taskset -c 2,3,4,5 /path/to/venv/bin/python -I -B \
+  /path/to/checkout/tools/installed_codec_acceptance.py \
+  --checkout /path/to/checkout --profile native \
+  --base-wheel /path/to/sc_neurocore-4.2.0-py3-none-any.whl \
+  --engine-wheel /path/to/matching-engine.whl \
+  --recording /path/to/0052503c-2849-4f41-ab51-db382103690c.wav \
+  --processor 'CPU model' --repetitions 7 --output installed-codecs.json
+```
+
+For wheel acceptance alone, omit `--repetitions` and `--processor`. In a
+separate environment with the base wheel alone, use `--profile python` and
+omit `--engine-wheel`. An older installed wheel can be supplied with
+`--profile legacy`. Paired timings include construction, encoding, decoding
+and the workload's validation after a qualifying warmup. They alternate
+which backend runs first and retain each nanosecond measurement.
+
 ### Recorded spike-event and band-power streams
 
 Install the matching Python and optimized engine wheels in a fresh environment.

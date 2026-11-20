@@ -763,7 +763,8 @@ python benchmarks/snntorch_vs_sc_microbench.py --runs 5 --scales 100 500 1000
 Each comparison measures both installed backends processing the same rasters
 and producing identical packets. These measurements ran on 2026-11-20 UTC.
 The source and wheel hashes, paired samples and hardware profile are in
-`benchmarks/results/isi_codec_backends.json`.
+`benchmarks/results/isi_codec_backends.json`. The [latest installed-wheel comparison](#installed-codec-catalogue)
+adds the current catalogue round trips on Linux.
 
 The MSI GS73 Stealth 8RE has an Intel Core i7-8750H and 32 GiB of visible RAM.
 It ran Windows 11. Both backends used logical CPU 8 with SMT
@@ -819,7 +820,10 @@ python benchmarks/bench_isi_codec.py --entropy auto --precision 1 --output isi-a
 
 ## Predictive codec Python and Rust timing
 
-Measured on 2026-11-20 UTC on an MSI GS73 Stealth 8RE
+The [latest installed-wheel comparison](#installed-codec-catalogue)
+adds current catalogue round trips for all four predictors.
+
+The following comparison was measured on 2026-11-20 UTC on an MSI GS73 Stealth 8RE
 with an Intel Core i7-8750H and 32 GiB of visible RAM, running Windows 11.
 Both backends used logical CPU 6 with SMT sibling 7
 and one thread per numerical runtime. The record includes wheel digests
@@ -1014,26 +1018,26 @@ threads. Python used zlib 1.3.2. The Rust build bundled zlib 1.4 and zstd 1.5.7.
 
 | Profile | Recording | Mode | Python (ms) | Rust (ms) | Packet bytes | Reconstruction RMSE (ADC units) |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| zlib | Mono challenge | spike | 17.39 | 0.87 | 45 | — |
-| zlib | Mono challenge | waveform | 14.99 | 1.00 | 63 | 2,107.79 |
-| zlib | Mono challenge | full | 81.58 | 1.75 | 3,613 | 333.18 |
-| zlib | Mono challenge | lossless | 2,120.46 | 9.17 | 53,481 | 0.00 |
-| zlib | Mono challenge | lossless_rice | 263.26 | 17.45 | 56,453 | 0.00 |
-| zlib | 64-channel EEG | spike | 187.06 | 7.42 | 347 | — |
-| zlib | 64-channel EEG | waveform | 180.12 | 10.27 | 3,805 | 54.18 |
-| zlib | 64-channel EEG | full | 275.39 | 53.48 | 16,630 | 36.01 |
-| zlib | 64-channel EEG | lossless | 14,942.45 | 54.26 | 476,169 | 0.00 |
-| zlib | 64-channel EEG | lossless_rice | 425.53 | 96.16 | 489,725 | 0.00 |
-| zstd + db4 | Mono challenge | spike | 13.52 | 0.68 | 45 | — |
-| zstd + db4 | Mono challenge | waveform | 16.47 | 0.76 | 63 | 2,107.79 |
-| zstd + db4 | Mono challenge | full | 70.00 | 2.00 | 3,264 | 333.18 |
-| zstd + db4 | Mono challenge | lossless | 1,802.34 | 8.76 | 53,481 | 0.00 |
-| zstd + db4 | Mono challenge | lossless_rice | 93.60 | 13.67 | 56,453 | 0.00 |
-| zstd + db4 | 64-channel EEG | spike | 120.43 | 7.96 | 347 | — |
-| zstd + db4 | 64-channel EEG | waveform | 117.64 | 6.75 | 3,711 | 54.18 |
-| zstd + db4 | 64-channel EEG | full | 162.72 | 24.94 | 14,812 | 36.34 |
-| zstd + db4 | 64-channel EEG | lossless | 10,996.58 | 47.26 | 476,169 | 0.00 |
-| zstd + db4 | 64-channel EEG | lossless_rice | 355.92 | 86.00 | 489,725 | 0.00 |
+| zlib | Mono challenge | spike | 13.26 | 0.77 | 45 | — |
+| zlib | Mono challenge | waveform | 16.06 | 0.94 | 63 | 2,107.79 |
+| zlib | Mono challenge | full | 68.14 | 1.61 | 3,613 | 333.18 |
+| zlib | Mono challenge | lossless | 1,714.34 | 7.30 | 53,481 | 0.00 |
+| zlib | Mono challenge | lossless_rice | 94.06 | 13.44 | 56,453 | 0.00 |
+| zlib | 64-channel EEG | spike | 119.11 | 6.05 | 347 | — |
+| zlib | 64-channel EEG | waveform | 130.62 | 6.66 | 3,805 | 54.18 |
+| zlib | 64-channel EEG | full | 149.98 | 39.32 | 16,630 | 36.01 |
+| zlib | 64-channel EEG | lossless | 14,952.00 | 67.71 | 476,169 | 0.00 |
+| zlib | 64-channel EEG | lossless_rice | 506.78 | 115.15 | 489,725 | 0.00 |
+| zstd + db4 | Mono challenge | spike | 14.96 | 0.78 | 45 | — |
+| zstd + db4 | Mono challenge | waveform | 14.70 | 0.82 | 63 | 2,107.79 |
+| zstd + db4 | Mono challenge | full | 83.99 | 2.50 | 3,264 | 333.18 |
+| zstd + db4 | Mono challenge | lossless | 2,056.01 | 9.89 | 53,481 | 0.00 |
+| zstd + db4 | Mono challenge | lossless_rice | 228.54 | 15.01 | 56,453 | 0.00 |
+| zstd + db4 | 64-channel EEG | spike | 131.47 | 5.55 | 347 | — |
+| zstd + db4 | 64-channel EEG | waveform | 137.55 | 7.86 | 3,711 | 54.18 |
+| zstd + db4 | 64-channel EEG | full | 184.97 | 23.71 | 14,812 | 36.34 |
+| zstd + db4 | 64-channel EEG | lossless | 14,072.39 | 66.06 | 476,169 | 0.00 |
+| zstd + db4 | 64-channel EEG | lossless_rice | 417.63 | 99.84 | 489,725 | 0.00 |
 
 Lossless modes must restore every sample exactly. For all three lossy
 modes the detected raster must match the reference threshold and refractory
@@ -1373,6 +1377,36 @@ The folded HDL core implements deterministic Q8.8-weight/Q16.16-MAC dense
 execution and is covered by Icarus simulation; it must be selected deliberately
 by deployment code and does not silently replace the existing stochastic dense
 path.
+
+## Installed codec catalogue
+
+The comparison uses matching release wheels on Linux x86-64 with an Intel
+Core i5-11600K, 32 GiB RAM, CPython 3.12.16, NumPy 2.5.4 and four Rayon
+threads on CPUs 2–5. Each median covers seven alternating pairs after
+warmup, including endpoint setup, encoding, decoding and output checks.
+Python uses the mandatory dependencies. The Rust column measures the
+compiled engine through the same public Python entry points.
+
+The raster codecs consume a deterministic 1,027-row, three-channel LIF
+simulation. Waveform and event codecs consume the entire 98,689-sample
+mono PCM16 challenge acquisition at 19,531 Hz. All 28 workloads produced
+identical packet bytes and decoded outputs across the two backends.
+
+| Workload | Python median (ms) | Rust median (ms) | Encoded bytes |
+| --- | ---: | ---: | ---: |
+| ISI lossless, automatic entropy | 0.441 | 0.118 | 121 |
+| Grouped delta lossless | 0.815 | 0.167 | 257 |
+| World-model predictive lossless | 52.213 | 33.542 | 136 |
+| Independent spike raster frames | 0.900 | 0.213 | 542 |
+| Address events | 0.348 | 0.053 | 563 |
+| WFC2 full waveform and spikes | 96.297 | 2.085 | 3,613 |
+| Lossless waveform stream | 2973.551 | 32.412 | 152,141 |
+| Spike events and band power, sample timing | 207.283 | 2.346 | 2,686 |
+
+The [raw installed-wheel evidence](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/installed_codec_backends.json)
+contains all 28 workloads, every timing and each packet digest. Separate
+installed acceptance runs also covered Linux and MSI Windows with the
+base-only and matching native wheels.
 
 ## Recorded spike-event streams
 

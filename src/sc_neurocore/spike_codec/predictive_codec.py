@@ -204,6 +204,27 @@ class PredictiveSpikeCodec:
             backend=backend,
         )
 
+    @property
+    def predictor_backend(self) -> str:
+        """Return the backend for the configured encoder's prediction stage."""
+        if self._backend == "python":
+            return "python"
+        if self.predictor == "world_model":
+            from . import _world_model as spike_predictor
+
+            available = spike_predictor.py_update_spike_world_model is not None
+        elif self.predictor == "context":
+            available = py_predict_xor_context is not None
+        else:
+            available = self.predictor in ("ema", "lfsr") and _HAS_RUST
+        return "rust" if self._use_native(available, self.predictor) else "python"
+
+    @property
+    def backend(self) -> str:
+        """Return the selected encoding route, or "mixed" for distinct stage backends."""
+        prediction = self.predictor_backend
+        return prediction if prediction == self.base_codec.backend else "mixed"
+
     def _use_native(self, available: bool, predictor: str) -> bool:
         """Select the requested backend for the packet's actual predictor."""
         if self._backend == "python":

@@ -60,8 +60,13 @@ assert waveform.python_available
 assert not waveform.rust_components_available
 assert not predictive.rust_components_available
 assert waveform.diagnostics and predictive.diagnostics
+catalogue = [probe_codec(item.name) for item in list_codec_descriptors()]
 if installed:
     assert attempts
+    for result in catalogue:
+        assert not result.rust_components_available
+        assert "auto" not in result.backend_choices
+        assert any("native loading denied" in diagnostic for diagnostic in result.diagnostics)
     try:
         WaveformCodec(backend="auto")
     except (ImportError, PermissionError, RuntimeError) as error:
@@ -80,6 +85,7 @@ if installed:
         assert any(error_name in line for line in predictive.diagnostics)
 else:
     assert not attempts
+    assert all(result.backend_choices == ("auto", "python") for result in catalogue)
     assert waveform.backend_choices == ("auto", "python")
     assert predictive.python_available
 

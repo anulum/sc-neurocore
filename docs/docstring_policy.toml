@@ -14,7 +14,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2267
+expected_file_count = 2269
+
+[[file]]
+path = "tools/installed_codec_acceptance.py"
+rationale = "Verify installed wheel identities and exercise exact packet compatibility through all public codecs."
+
+[[file]]
+path = "tools/installed_codec_cases.py"
+rationale = "Exercise public raster, waveform and stream workflows using deterministic acquisition and optional recorded PCM."
 
 [[file]]
 path = "tools/capability_manifest.py"

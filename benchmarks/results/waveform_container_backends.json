@@ -8,7 +8,7 @@
     "engine/src/codecs/isi.rs": "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8",
     "engine/src/bindings/waveform_container.rs": "6012a72bef066fe0fb06f13ab5849308e097c13b77d0a41bcdb00dc088a489e5",
     "src/sc_neurocore/spike_codec/_waveform_container.py": "54353809ed68a98826994fc70edb9527f18cd3f1c6017dc767d16e905e6ad83a",
-    "src/sc_neurocore/spike_codec/waveform_codec.py": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
+    "src/sc_neurocore/spike_codec/waveform_codec.py": "5adf74429f3555f01edf5583537a293a88b379e72a9912d426279deadead1c8b",
     "benchmarks/bench_waveform_container.py": "826edba6967e7c2317058708683250b78aa44ffc60a6d4ea3afb15daaa5ea863",
     "benchmarks/bench_waveform_stream_fixture.py": "ea1a61da0f5b34a9d3b086754f8024b102563c50f9deaf40d9de6ec69045b601",
     "engine/src/codecs/waveform_container/background.rs": "6d606ce17f5a4467b04ccae6ac67441e96d24f979d0a875bf642578ad9265e49",
@@ -32,7 +32,7 @@
   "eeg_dataset": "https://physionet.org/content/eegmmidb/1.0.0/",
   "profiles": [
     {
-      "recorded_at_utc": "2026-11-20T10:59:52.389778+00:00",
+      "recorded_at_utc": "2026-11-20T12:46:38.121093+00:00",
       "host": {
         "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
         "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
@@ -50,9 +50,9 @@
           "5": "5,11"
         },
         "host_load_averages": [
-          6.4873046875,
-          6.08984375,
-          6.7021484375
+          11.1669921875,
+          8.7060546875,
+          6.67919921875
         ],
         "thread_environment": {
           "OPENBLAS_NUM_THREADS": "1",
@@ -69,8 +69,8 @@
         "PyWavelets": null
       },
       "installed_sha256": {
-        "sc_neurocore.spike_codec.waveform_codec": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
-        "sc_neurocore_engine.sc_neurocore_engine": "989267708d1c6b09ad7f29307b0d0aa39ebd791304c99f7b31dfa35cdc66c3b2"
+        "sc_neurocore.spike_codec.waveform_codec": "5adf74429f3555f01edf5583537a293a88b379e72a9912d426279deadead1c8b",
+        "sc_neurocore_engine.sc_neurocore_engine": "2bd0e14f96d5853cc2078e0acb51d7515f0ad21d1b5dbfc59ae92b517861b039"
       },
       "repetitions": 3,
       "recordings": [
@@ -93,48 +93,48 @@
                 "event_recall": 1.0
               },
               "total_median_ns": {
-                "python": 17390029,
-                "rust": 871979
+                "python": 13260332,
+                "rust": 769169
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 36250,
-                    "encode_ns": 58141866,
-                    "decode_ns": 152707,
-                    "total_ns": 58330823
+                    "setup_ns": 27785,
+                    "encode_ns": 50679160,
+                    "decode_ns": 84474,
+                    "total_ns": 50791419
                   },
                   {
-                    "setup_ns": 13892,
-                    "encode_ns": 17268363,
-                    "decode_ns": 107774,
-                    "total_ns": 17390029
+                    "setup_ns": 4760,
+                    "encode_ns": 13177490,
+                    "decode_ns": 78082,
+                    "total_ns": 13260332
                   },
                   {
-                    "setup_ns": 8344,
-                    "encode_ns": 16760359,
-                    "decode_ns": 124541,
-                    "total_ns": 16893244
+                    "setup_ns": 5992,
+                    "encode_ns": 12819883,
+                    "decode_ns": 76375,
+                    "total_ns": 12902250
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 53773,
-                    "encode_ns": 1106007,
-                    "decode_ns": 130420,
-                    "total_ns": 1290200
+                    "setup_ns": 27789,
+                    "encode_ns": 782973,
+                    "decode_ns": 72732,
+                    "total_ns": 883494
                   },
                   {
-                    "setup_ns": 26942,
-                    "encode_ns": 711679,
-                    "decode_ns": 82221,
-                    "total_ns": 820842
+                    "setup_ns": 15513,
+                    "encode_ns": 619776,
+                    "decode_ns": 60123,
+                    "total_ns": 695412
                   },
                   {
-                    "setup_ns": 36880,
-                    "encode_ns": 732460,
-                    "decode_ns": 102639,
-                    "total_ns": 871979
+                    "setup_ns": 19924,
+                    "encode_ns": 667372,
+                    "decode_ns": 81873,
+                    "total_ns": 769169
                   }
                 ]
               }
@@ -154,48 +154,48 @@
                 "snr_db": 0.0
               },
               "total_median_ns": {
-                "python": 14990048,
-                "rust": 996849
+                "python": 16063901,
+                "rust": 944738
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 11621,
-                    "encode_ns": 14748234,
-                    "decode_ns": 230193,
-                    "total_ns": 14990048
+                    "setup_ns": 10811,
+                    "encode_ns": 14046418,
+                    "decode_ns": 195093,
+                    "total_ns": 14252322
                   },
                   {
-                    "setup_ns": 8229,
-                    "encode_ns": 14536433,
-                    "decode_ns": 158032,
-                    "total_ns": 14702694
+                    "setup_ns": 9102,
+                    "encode_ns": 19442150,
+                    "decode_ns": 205938,
+                    "total_ns": 19657190
                   },
                   {
-                    "setup_ns": 7648,
-                    "encode_ns": 14998000,
-                    "decode_ns": 176706,
-                    "total_ns": 15182354
+                    "setup_ns": 9322,
+                    "encode_ns": 15858263,
+                    "decode_ns": 196316,
+                    "total_ns": 16063901
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 27558,
-                    "encode_ns": 834695,
-                    "decode_ns": 134596,
-                    "total_ns": 996849
+                    "setup_ns": 32307,
+                    "encode_ns": 785641,
+                    "decode_ns": 126790,
+                    "total_ns": 944738
                   },
                   {
-                    "setup_ns": 18085,
-                    "encode_ns": 784848,
-                    "decode_ns": 129584,
-                    "total_ns": 932517
+                    "setup_ns": 15279,
+                    "encode_ns": 739938,
+                    "decode_ns": 122080,
+                    "total_ns": 877297
                   },
                   {
-                    "setup_ns": 27326,
-                    "encode_ns": 869740,
-                    "decode_ns": 173291,
-                    "total_ns": 1070357
+                    "setup_ns": 23413,
+                    "encode_ns": 810875,
+                    "decode_ns": 143638,
+                    "total_ns": 977926
                   }
                 ]
               }
@@ -215,48 +215,48 @@
                 "snr_db": 16.023066037163932
               },
               "total_median_ns": {
-                "python": 81577654,
-                "rust": 1749405
+                "python": 68139559,
+                "rust": 1610683
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 22327,
-                    "encode_ns": 67416307,
-                    "decode_ns": 14139020,
-                    "total_ns": 81577654
+                    "setup_ns": 18665,
+                    "encode_ns": 71330945,
+                    "decode_ns": 11343914,
+                    "total_ns": 82693524
                   },
                   {
-                    "setup_ns": 19117,
-                    "encode_ns": 85179475,
-                    "decode_ns": 21967513,
-                    "total_ns": 107166105
+                    "setup_ns": 8386,
+                    "encode_ns": 55910828,
+                    "decode_ns": 12220345,
+                    "total_ns": 68139559
                   },
                   {
-                    "setup_ns": 27935,
-                    "encode_ns": 62286155,
-                    "decode_ns": 12261837,
-                    "total_ns": 74575927
+                    "setup_ns": 12436,
+                    "encode_ns": 56657241,
+                    "decode_ns": 10684808,
+                    "total_ns": 67354485
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 26503,
-                    "encode_ns": 1203362,
-                    "decode_ns": 489045,
-                    "total_ns": 1718910
+                    "setup_ns": 24289,
+                    "encode_ns": 1186855,
+                    "decode_ns": 403018,
+                    "total_ns": 1614162
                   },
                   {
-                    "setup_ns": 20467,
-                    "encode_ns": 1240814,
-                    "decode_ns": 488124,
-                    "total_ns": 1749405
+                    "setup_ns": 15853,
+                    "encode_ns": 1177648,
+                    "decode_ns": 417182,
+                    "total_ns": 1610683
                   },
                   {
-                    "setup_ns": 33401,
-                    "encode_ns": 1306478,
-                    "decode_ns": 457046,
-                    "total_ns": 1796925
+                    "setup_ns": 23631,
+                    "encode_ns": 1146956,
+                    "decode_ns": 438281,
+                    "total_ns": 1608868
                   }
                 ]
               }
@@ -276,48 +276,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 2120462418,
-                "rust": 9173472
+                "python": 1714335656,
+                "rust": 7295175
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 24555,
-                    "encode_ns": 1036598867,
-                    "decode_ns": 1037482648,
-                    "total_ns": 2074106070
+                    "setup_ns": 10942,
+                    "encode_ns": 899352633,
+                    "decode_ns": 837682341,
+                    "total_ns": 1737045916
                   },
                   {
-                    "setup_ns": 19959,
-                    "encode_ns": 1040903002,
-                    "decode_ns": 1079539457,
-                    "total_ns": 2120462418
+                    "setup_ns": 14038,
+                    "encode_ns": 900136342,
+                    "decode_ns": 814185276,
+                    "total_ns": 1714335656
                   },
                   {
-                    "setup_ns": 18084,
-                    "encode_ns": 1211935161,
-                    "decode_ns": 1116851698,
-                    "total_ns": 2328804943
+                    "setup_ns": 12967,
+                    "encode_ns": 827956770,
+                    "decode_ns": 826707123,
+                    "total_ns": 1654676860
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 44475,
-                    "encode_ns": 4903056,
-                    "decode_ns": 4225941,
-                    "total_ns": 9173472
+                    "setup_ns": 27077,
+                    "encode_ns": 3952572,
+                    "decode_ns": 3315526,
+                    "total_ns": 7295175
                   },
                   {
-                    "setup_ns": 50713,
-                    "encode_ns": 4801454,
-                    "decode_ns": 3819634,
-                    "total_ns": 8671801
+                    "setup_ns": 23575,
+                    "encode_ns": 3753760,
+                    "decode_ns": 3643069,
+                    "total_ns": 7420404
                   },
                   {
-                    "setup_ns": 33749,
-                    "encode_ns": 5088566,
-                    "decode_ns": 4394444,
-                    "total_ns": 9516759
+                    "setup_ns": 25729,
+                    "encode_ns": 3781858,
+                    "decode_ns": 3317843,
+                    "total_ns": 7125430
                   }
                 ]
               }
@@ -337,48 +337,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 263263771,
-                "rust": 17448609
+                "python": 94062022,
+                "rust": 13435386
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 19973,
-                    "encode_ns": 392633733,
-                    "decode_ns": 14026236,
-                    "total_ns": 406679942
+                    "setup_ns": 10915,
+                    "encode_ns": 101376632,
+                    "decode_ns": 6204772,
+                    "total_ns": 107592319
                   },
                   {
-                    "setup_ns": 26993,
-                    "encode_ns": 252562780,
-                    "decode_ns": 10673998,
-                    "total_ns": 263263771
+                    "setup_ns": 20844,
+                    "encode_ns": 75849940,
+                    "decode_ns": 6488633,
+                    "total_ns": 82359417
                   },
                   {
-                    "setup_ns": 13723,
-                    "encode_ns": 144745729,
-                    "decode_ns": 10253552,
-                    "total_ns": 155013004
+                    "setup_ns": 12315,
+                    "encode_ns": 81708106,
+                    "decode_ns": 12341601,
+                    "total_ns": 94062022
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 45474,
-                    "encode_ns": 14549444,
-                    "decode_ns": 2853691,
-                    "total_ns": 17448609
+                    "setup_ns": 28760,
+                    "encode_ns": 11449287,
+                    "decode_ns": 1957339,
+                    "total_ns": 13435386
                   },
                   {
-                    "setup_ns": 47074,
-                    "encode_ns": 16462865,
-                    "decode_ns": 3154331,
-                    "total_ns": 19664270
+                    "setup_ns": 23870,
+                    "encode_ns": 11122759,
+                    "decode_ns": 1956045,
+                    "total_ns": 13102674
                   },
                   {
-                    "setup_ns": 40594,
-                    "encode_ns": 14690615,
-                    "decode_ns": 2597249,
-                    "total_ns": 17328458
+                    "setup_ns": 212791,
+                    "encode_ns": 17923482,
+                    "decode_ns": 3128395,
+                    "total_ns": 21264668
                   }
                 ]
               }
@@ -404,48 +404,48 @@
                 "event_recall": 1.0
               },
               "total_median_ns": {
-                "python": 187059788,
-                "rust": 7423368
+                "python": 119111403,
+                "rust": 6052938
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 18161,
-                    "encode_ns": 185028220,
-                    "decode_ns": 1093142,
-                    "total_ns": 186139523
+                    "setup_ns": 16310,
+                    "encode_ns": 118592445,
+                    "decode_ns": 502648,
+                    "total_ns": 119111403
                   },
                   {
-                    "setup_ns": 25497,
-                    "encode_ns": 186470313,
-                    "decode_ns": 563978,
-                    "total_ns": 187059788
+                    "setup_ns": 9545,
+                    "encode_ns": 134003183,
+                    "decode_ns": 476540,
+                    "total_ns": 134489268
                   },
                   {
-                    "setup_ns": 12821,
-                    "encode_ns": 214190519,
-                    "decode_ns": 657225,
-                    "total_ns": 214860565
+                    "setup_ns": 7171,
+                    "encode_ns": 98562807,
+                    "decode_ns": 451344,
+                    "total_ns": 99021322
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 36466,
-                    "encode_ns": 8609555,
-                    "decode_ns": 304547,
-                    "total_ns": 8950568
+                    "setup_ns": 25002,
+                    "encode_ns": 5638163,
+                    "decode_ns": 389773,
+                    "total_ns": 6052938
                   },
                   {
-                    "setup_ns": 19215,
-                    "encode_ns": 5970308,
-                    "decode_ns": 320350,
-                    "total_ns": 6309873
+                    "setup_ns": 32184,
+                    "encode_ns": 6081313,
+                    "decode_ns": 280491,
+                    "total_ns": 6393988
                   },
                   {
-                    "setup_ns": 32424,
-                    "encode_ns": 6934374,
-                    "decode_ns": 456570,
-                    "total_ns": 7423368
+                    "setup_ns": 21018,
+                    "encode_ns": 5178535,
+                    "decode_ns": 264679,
+                    "total_ns": 5464232
                   }
                 ]
               }
@@ -465,48 +465,48 @@
                 "snr_db": 0.697830738745654
               },
               "total_median_ns": {
-                "python": 180123747,
-                "rust": 10270918
+                "python": 130622474,
+                "rust": 6658907
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 12681,
-                    "encode_ns": 168410130,
-                    "decode_ns": 3254515,
-                    "total_ns": 171677326
+                    "setup_ns": 10992,
+                    "encode_ns": 134109415,
+                    "decode_ns": 3527006,
+                    "total_ns": 137647413
                   },
                   {
-                    "setup_ns": 30631,
-                    "encode_ns": 176892862,
-                    "decode_ns": 3200254,
-                    "total_ns": 180123747
+                    "setup_ns": 10232,
+                    "encode_ns": 96149944,
+                    "decode_ns": 2416247,
+                    "total_ns": 98576423
                   },
                   {
-                    "setup_ns": 15673,
-                    "encode_ns": 198854935,
-                    "decode_ns": 3340648,
-                    "total_ns": 202211256
+                    "setup_ns": 7287,
+                    "encode_ns": 127683200,
+                    "decode_ns": 2931987,
+                    "total_ns": 130622474
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 52414,
-                    "encode_ns": 8937533,
-                    "decode_ns": 1890357,
-                    "total_ns": 10880304
+                    "setup_ns": 27657,
+                    "encode_ns": 5687647,
+                    "decode_ns": 943603,
+                    "total_ns": 6658907
                   },
                   {
-                    "setup_ns": 41631,
-                    "encode_ns": 8511372,
-                    "decode_ns": 1717915,
-                    "total_ns": 10270918
+                    "setup_ns": 22366,
+                    "encode_ns": 5500539,
+                    "decode_ns": 907008,
+                    "total_ns": 6429913
                   },
                   {
-                    "setup_ns": 28986,
-                    "encode_ns": 6329085,
-                    "decode_ns": 1313047,
-                    "total_ns": 7671118
+                    "setup_ns": 23338,
+                    "encode_ns": 5791298,
+                    "decode_ns": 1003079,
+                    "total_ns": 6817715
                   }
                 ]
               }
@@ -526,48 +526,48 @@
                 "snr_db": 4.247225163080556
               },
               "total_median_ns": {
-                "python": 275385114,
-                "rust": 53478699
+                "python": 149980226,
+                "rust": 39320104
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 18521,
-                    "encode_ns": 217832585,
-                    "decode_ns": 7876024,
-                    "total_ns": 225727130
+                    "setup_ns": 13164,
+                    "encode_ns": 145512128,
+                    "decode_ns": 4454934,
+                    "total_ns": 149980226
                   },
                   {
-                    "setup_ns": 23635,
-                    "encode_ns": 293406156,
-                    "decode_ns": 7260953,
-                    "total_ns": 300690744
+                    "setup_ns": 11212,
+                    "encode_ns": 133252498,
+                    "decode_ns": 3991503,
+                    "total_ns": 137255213
                   },
                   {
-                    "setup_ns": 22581,
-                    "encode_ns": 266276427,
-                    "decode_ns": 9086106,
-                    "total_ns": 275385114
+                    "setup_ns": 10254,
+                    "encode_ns": 169346515,
+                    "decode_ns": 4196219,
+                    "total_ns": 173552988
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 46995,
-                    "encode_ns": 51414740,
-                    "decode_ns": 2140389,
-                    "total_ns": 53602124
+                    "setup_ns": 37129,
+                    "encode_ns": 45407877,
+                    "decode_ns": 1370121,
+                    "total_ns": 46815127
                   },
                   {
-                    "setup_ns": 52712,
-                    "encode_ns": 51206364,
-                    "decode_ns": 2212847,
-                    "total_ns": 53471923
+                    "setup_ns": 25207,
+                    "encode_ns": 38012665,
+                    "decode_ns": 1282232,
+                    "total_ns": 39320104
                   },
                   {
-                    "setup_ns": 56112,
-                    "encode_ns": 50541154,
-                    "decode_ns": 2881433,
-                    "total_ns": 53478699
+                    "setup_ns": 24262,
+                    "encode_ns": 36694603,
+                    "decode_ns": 1290442,
+                    "total_ns": 38009307
                   }
                 ]
               }
@@ -587,48 +587,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 14942451937,
-                "rust": 54259521
+                "python": 14952001470,
+                "rust": 67712116
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 19900,
-                    "encode_ns": 8755464577,
-                    "decode_ns": 7594700386,
-                    "total_ns": 16350184863
+                    "setup_ns": 13737,
+                    "encode_ns": 7320492472,
+                    "decode_ns": 6786033815,
+                    "total_ns": 14106540024
                   },
                   {
-                    "setup_ns": 24126,
-                    "encode_ns": 7641894033,
-                    "decode_ns": 7300533778,
-                    "total_ns": 14942451937
+                    "setup_ns": 15184,
+                    "encode_ns": 7086501877,
+                    "decode_ns": 7865484409,
+                    "total_ns": 14952001470
                   },
                   {
-                    "setup_ns": 18606,
-                    "encode_ns": 7147719222,
-                    "decode_ns": 5845517930,
-                    "total_ns": 12993255758
+                    "setup_ns": 29869,
+                    "encode_ns": 8010418141,
+                    "decode_ns": 7333098977,
+                    "total_ns": 15343546987
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 60255,
-                    "encode_ns": 34617583,
-                    "decode_ns": 23870750,
-                    "total_ns": 58548588
+                    "setup_ns": 41914,
+                    "encode_ns": 40208274,
+                    "decode_ns": 30574663,
+                    "total_ns": 70824851
                   },
                   {
-                    "setup_ns": 28871,
-                    "encode_ns": 29760393,
-                    "decode_ns": 24470257,
-                    "total_ns": 54259521
+                    "setup_ns": 45484,
+                    "encode_ns": 39675164,
+                    "decode_ns": 22644178,
+                    "total_ns": 62364826
                   },
                   {
-                    "setup_ns": 29625,
-                    "encode_ns": 28624578,
-                    "decode_ns": 21804563,
-                    "total_ns": 50458766
+                    "setup_ns": 41389,
+                    "encode_ns": 38142523,
+                    "decode_ns": 29528204,
+                    "total_ns": 67712116
                   }
                 ]
               }
@@ -648,48 +648,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 425530737,
-                "rust": 96161357
+                "python": 506777567,
+                "rust": 115150721
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 12654,
-                    "encode_ns": 389230520,
-                    "decode_ns": 36287563,
-                    "total_ns": 425530737
+                    "setup_ns": 17213,
+                    "encode_ns": 465813989,
+                    "decode_ns": 40946365,
+                    "total_ns": 506777567
                   },
                   {
-                    "setup_ns": 17921,
-                    "encode_ns": 422534480,
-                    "decode_ns": 37271480,
-                    "total_ns": 459823881
+                    "setup_ns": 15842,
+                    "encode_ns": 414655665,
+                    "decode_ns": 38344107,
+                    "total_ns": 453015614
                   },
                   {
-                    "setup_ns": 20788,
-                    "encode_ns": 369501198,
-                    "decode_ns": 36507125,
-                    "total_ns": 406029111
+                    "setup_ns": 16128,
+                    "encode_ns": 479789501,
+                    "decode_ns": 40148658,
+                    "total_ns": 519954287
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 27981,
-                    "encode_ns": 80140827,
-                    "decode_ns": 14400883,
-                    "total_ns": 94569691
+                    "setup_ns": 28232,
+                    "encode_ns": 98321313,
+                    "decode_ns": 19704901,
+                    "total_ns": 118054446
                   },
                   {
-                    "setup_ns": 46676,
-                    "encode_ns": 81641952,
-                    "decode_ns": 14472729,
-                    "total_ns": 96161357
+                    "setup_ns": 49052,
+                    "encode_ns": 97814478,
+                    "decode_ns": 17287191,
+                    "total_ns": 115150721
                   },
                   {
-                    "setup_ns": 39989,
-                    "encode_ns": 82583772,
-                    "decode_ns": 15319260,
-                    "total_ns": 97943021
+                    "setup_ns": 32310,
+                    "encode_ns": 84390380,
+                    "decode_ns": 17853151,
+                    "total_ns": 102275841
                   }
                 ]
               }
@@ -697,13 +697,13 @@
           ]
         }
       ],
-      "raw_receipt_sha256": "a88a15b6210516be8170053789e47f8f6ebff71e11651e765de5c1fee27cdfb9",
-      "native_wheel_sha256": "f421fd1332ceaf542d241b83672678bd7461292352575923d3723e620363e31d",
-      "python_wheel_sha256": "82f92974e52a323ca5baeeb787570653dcb94c9ba7735a0dc669fa6d05bac9e5",
+      "raw_receipt_sha256": "e13fec0543e91c114934ba65242b91a5e6075caec079ad819b197fe8a92304ee",
+      "native_wheel_sha256": "d4f06e960e497c9a6777b992aaa1a231598c9bf89a898c8cc692b568abe2d83c",
+      "python_wheel_sha256": "4ba20cec0a96ffc990996bd354ccbe42237f662cff8521848c458620a1fe67d0",
       "scheme": "zlib"
     },
     {
-      "recorded_at_utc": "2026-11-20T11:00:41.577436+00:00",
+      "recorded_at_utc": "2026-11-20T12:47:40.727841+00:00",
       "host": {
         "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
         "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
@@ -721,9 +721,9 @@
           "5": "5,11"
         },
         "host_load_averages": [
-          6.23974609375,
-          6.00146484375,
-          6.63427734375
+          7.80224609375,
+          8.3125,
+          6.68603515625
         ],
         "thread_environment": {
           "OPENBLAS_NUM_THREADS": "1",
@@ -740,8 +740,8 @@
         "PyWavelets": "1.10.0"
       },
       "installed_sha256": {
-        "sc_neurocore.spike_codec.waveform_codec": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
-        "sc_neurocore_engine.sc_neurocore_engine": "989267708d1c6b09ad7f29307b0d0aa39ebd791304c99f7b31dfa35cdc66c3b2"
+        "sc_neurocore.spike_codec.waveform_codec": "5adf74429f3555f01edf5583537a293a88b379e72a9912d426279deadead1c8b",
+        "sc_neurocore_engine.sc_neurocore_engine": "2bd0e14f96d5853cc2078e0acb51d7515f0ad21d1b5dbfc59ae92b517861b039"
       },
       "repetitions": 3,
       "recordings": [
@@ -764,48 +764,48 @@
                 "event_recall": 1.0
               },
               "total_median_ns": {
-                "python": 13518570,
-                "rust": 681626
+                "python": 14962887,
+                "rust": 783985
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 18881,
-                    "encode_ns": 46001138,
-                    "decode_ns": 96909,
-                    "total_ns": 46116928
+                    "setup_ns": 30441,
+                    "encode_ns": 76393030,
+                    "decode_ns": 90030,
+                    "total_ns": 76513501
                   },
                   {
-                    "setup_ns": 10500,
-                    "encode_ns": 13422533,
-                    "decode_ns": 85537,
-                    "total_ns": 13518570
+                    "setup_ns": 7328,
+                    "encode_ns": 13781242,
+                    "decode_ns": 81763,
+                    "total_ns": 13870333
                   },
                   {
-                    "setup_ns": 6315,
-                    "encode_ns": 12451892,
-                    "decode_ns": 73947,
-                    "total_ns": 12532154
+                    "setup_ns": 6903,
+                    "encode_ns": 14883817,
+                    "decode_ns": 72167,
+                    "total_ns": 14962887
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 27007,
-                    "encode_ns": 766738,
-                    "decode_ns": 73228,
-                    "total_ns": 866973
+                    "setup_ns": 27696,
+                    "encode_ns": 5729377,
+                    "decode_ns": 397856,
+                    "total_ns": 6154929
                   },
                   {
-                    "setup_ns": 12745,
-                    "encode_ns": 583617,
-                    "decode_ns": 77608,
-                    "total_ns": 673970
+                    "setup_ns": 21785,
+                    "encode_ns": 698249,
+                    "decode_ns": 63951,
+                    "total_ns": 783985
                   },
                   {
-                    "setup_ns": 18137,
-                    "encode_ns": 607434,
-                    "decode_ns": 56055,
-                    "total_ns": 681626
+                    "setup_ns": 19542,
+                    "encode_ns": 679952,
+                    "decode_ns": 63840,
+                    "total_ns": 763334
                   }
                 ]
               }
@@ -825,48 +825,48 @@
                 "snr_db": 0.0
               },
               "total_median_ns": {
-                "python": 16474018,
-                "rust": 761788
+                "python": 14697894,
+                "rust": 818531
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 6667,
-                    "encode_ns": 18195620,
-                    "decode_ns": 162019,
-                    "total_ns": 18364306
+                    "setup_ns": 7448,
+                    "encode_ns": 18500236,
+                    "decode_ns": 167748,
+                    "total_ns": 18675432
                   },
                   {
-                    "setup_ns": 4548,
-                    "encode_ns": 12768634,
-                    "decode_ns": 153844,
-                    "total_ns": 12927026
+                    "setup_ns": 7294,
+                    "encode_ns": 14547694,
+                    "decode_ns": 142869,
+                    "total_ns": 14697857
                   },
                   {
-                    "setup_ns": 6155,
-                    "encode_ns": 16323357,
-                    "decode_ns": 144506,
-                    "total_ns": 16474018
+                    "setup_ns": 6810,
+                    "encode_ns": 14545079,
+                    "decode_ns": 146005,
+                    "total_ns": 14697894
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 14539,
-                    "encode_ns": 635990,
-                    "decode_ns": 115215,
-                    "total_ns": 765744
+                    "setup_ns": 18224,
+                    "encode_ns": 673376,
+                    "decode_ns": 125775,
+                    "total_ns": 817375
                   },
                   {
-                    "setup_ns": 10798,
-                    "encode_ns": 608751,
-                    "decode_ns": 103943,
-                    "total_ns": 723492
+                    "setup_ns": 11355,
+                    "encode_ns": 758935,
+                    "decode_ns": 122897,
+                    "total_ns": 893187
                   },
                   {
-                    "setup_ns": 18357,
-                    "encode_ns": 630891,
-                    "decode_ns": 112540,
-                    "total_ns": 761788
+                    "setup_ns": 20337,
+                    "encode_ns": 671625,
+                    "decode_ns": 126569,
+                    "total_ns": 818531
                   }
                 ]
               }
@@ -886,48 +886,48 @@
                 "snr_db": 16.023066122116344
               },
               "total_median_ns": {
-                "python": 69995808,
-                "rust": 1998030
+                "python": 83985112,
+                "rust": 2495914
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 9423,
-                    "encode_ns": 102526097,
-                    "decode_ns": 12326150,
-                    "total_ns": 114861670
+                    "setup_ns": 9488,
+                    "encode_ns": 122822362,
+                    "decode_ns": 12764272,
+                    "total_ns": 135596122
                   },
                   {
-                    "setup_ns": 7423,
-                    "encode_ns": 52678126,
-                    "decode_ns": 12103712,
-                    "total_ns": 64789261
+                    "setup_ns": 10030,
+                    "encode_ns": 55515576,
+                    "decode_ns": 12166798,
+                    "total_ns": 67692404
                   },
                   {
-                    "setup_ns": 11410,
-                    "encode_ns": 59091351,
-                    "decode_ns": 10893047,
-                    "total_ns": 69995808
+                    "setup_ns": 9186,
+                    "encode_ns": 72601878,
+                    "decode_ns": 11374048,
+                    "total_ns": 83985112
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 24678,
-                    "encode_ns": 1628186,
-                    "decode_ns": 380422,
-                    "total_ns": 2033286
+                    "setup_ns": 23097,
+                    "encode_ns": 4446621,
+                    "decode_ns": 767206,
+                    "total_ns": 5236924
                   },
                   {
-                    "setup_ns": 15898,
-                    "encode_ns": 1546787,
-                    "decode_ns": 372601,
-                    "total_ns": 1935286
+                    "setup_ns": 20361,
+                    "encode_ns": 2045989,
+                    "decode_ns": 429564,
+                    "total_ns": 2495914
                   },
                   {
-                    "setup_ns": 23242,
-                    "encode_ns": 1575909,
-                    "decode_ns": 398879,
-                    "total_ns": 1998030
+                    "setup_ns": 21774,
+                    "encode_ns": 1704357,
+                    "decode_ns": 407519,
+                    "total_ns": 2133650
                   }
                 ]
               }
@@ -947,48 +947,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 1802340532,
-                "rust": 8755711
+                "python": 2056009838,
+                "rust": 9889269
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 24071,
-                    "encode_ns": 928595355,
-                    "decode_ns": 876657260,
-                    "total_ns": 1805276686
+                    "setup_ns": 12050,
+                    "encode_ns": 1056213786,
+                    "decode_ns": 999784002,
+                    "total_ns": 2056009838
                   },
                   {
-                    "setup_ns": 12272,
-                    "encode_ns": 930918737,
-                    "decode_ns": 871409523,
-                    "total_ns": 1802340532
+                    "setup_ns": 14641,
+                    "encode_ns": 1190786870,
+                    "decode_ns": 925521261,
+                    "total_ns": 2116322772
                   },
                   {
-                    "setup_ns": 13881,
-                    "encode_ns": 902291295,
-                    "decode_ns": 881094282,
-                    "total_ns": 1783399458
+                    "setup_ns": 14074,
+                    "encode_ns": 1023307638,
+                    "decode_ns": 994762123,
+                    "total_ns": 2018083835
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 33045,
-                    "encode_ns": 5337060,
-                    "decode_ns": 4015562,
-                    "total_ns": 9385667
+                    "setup_ns": 46663,
+                    "encode_ns": 10779992,
+                    "decode_ns": 4469650,
+                    "total_ns": 15296305
                   },
                   {
-                    "setup_ns": 25677,
-                    "encode_ns": 4703676,
-                    "decode_ns": 4026358,
-                    "total_ns": 8755711
+                    "setup_ns": 30290,
+                    "encode_ns": 5159891,
+                    "decode_ns": 4699088,
+                    "total_ns": 9889269
                   },
                   {
-                    "setup_ns": 27842,
-                    "encode_ns": 4311519,
-                    "decode_ns": 3777429,
-                    "total_ns": 8116790
+                    "setup_ns": 27914,
+                    "encode_ns": 4421584,
+                    "decode_ns": 4324529,
+                    "total_ns": 8774027
                   }
                 ]
               }
@@ -1008,48 +1008,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 93599100,
-                "rust": 13673718
+                "python": 228540184,
+                "rust": 15005551
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 14767,
-                    "encode_ns": 86498184,
-                    "decode_ns": 6602824,
-                    "total_ns": 93115775
+                    "setup_ns": 10343,
+                    "encode_ns": 901249677,
+                    "decode_ns": 7282206,
+                    "total_ns": 908542226
                   },
                   {
-                    "setup_ns": 17347,
-                    "encode_ns": 85818434,
-                    "decode_ns": 7763319,
-                    "total_ns": 93599100
+                    "setup_ns": 11808,
+                    "encode_ns": 203741730,
+                    "decode_ns": 7763444,
+                    "total_ns": 211516982
                   },
                   {
-                    "setup_ns": 12289,
-                    "encode_ns": 86876794,
-                    "decode_ns": 7075432,
-                    "total_ns": 93964515
+                    "setup_ns": 11713,
+                    "encode_ns": 220984545,
+                    "decode_ns": 7543926,
+                    "total_ns": 228540184
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 24689,
-                    "encode_ns": 11661697,
-                    "decode_ns": 1987332,
-                    "total_ns": 13673718
+                    "setup_ns": 26794,
+                    "encode_ns": 17602529,
+                    "decode_ns": 2081155,
+                    "total_ns": 19710478
                   },
                   {
-                    "setup_ns": 22019,
-                    "encode_ns": 11555221,
-                    "decode_ns": 1948386,
-                    "total_ns": 13525626
+                    "setup_ns": 23542,
+                    "encode_ns": 12918304,
+                    "decode_ns": 2063705,
+                    "total_ns": 15005551
                   },
                   {
-                    "setup_ns": 26896,
-                    "encode_ns": 12949371,
-                    "decode_ns": 2241559,
-                    "total_ns": 15217826
+                    "setup_ns": 40332,
+                    "encode_ns": 12507167,
+                    "decode_ns": 2268087,
+                    "total_ns": 14815586
                   }
                 ]
               }
@@ -1075,48 +1075,48 @@
                 "event_recall": 1.0
               },
               "total_median_ns": {
-                "python": 120434182,
-                "rust": 7963051
+                "python": 131473711,
+                "rust": 5552462
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 19466,
-                    "encode_ns": 157587059,
-                    "decode_ns": 744559,
-                    "total_ns": 158351084
+                    "setup_ns": 10050,
+                    "encode_ns": 111902541,
+                    "decode_ns": 449465,
+                    "total_ns": 112362056
                   },
                   {
-                    "setup_ns": 16216,
-                    "encode_ns": 119976884,
-                    "decode_ns": 441082,
-                    "total_ns": 120434182
+                    "setup_ns": 8768,
+                    "encode_ns": 166636740,
+                    "decode_ns": 533764,
+                    "total_ns": 167179272
                   },
                   {
-                    "setup_ns": 7722,
-                    "encode_ns": 109870504,
-                    "decode_ns": 446373,
-                    "total_ns": 110324599
+                    "setup_ns": 7375,
+                    "encode_ns": 130676905,
+                    "decode_ns": 789431,
+                    "total_ns": 131473711
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 33053,
-                    "encode_ns": 7528076,
-                    "decode_ns": 401922,
-                    "total_ns": 7963051
+                    "setup_ns": 20079,
+                    "encode_ns": 5256837,
+                    "decode_ns": 275546,
+                    "total_ns": 5552462
                   },
                   {
-                    "setup_ns": 29880,
-                    "encode_ns": 7578245,
-                    "decode_ns": 409976,
-                    "total_ns": 8018101
+                    "setup_ns": 14874,
+                    "encode_ns": 5207429,
+                    "decode_ns": 277954,
+                    "total_ns": 5500257
                   },
                   {
-                    "setup_ns": 22164,
-                    "encode_ns": 5764887,
-                    "decode_ns": 283339,
-                    "total_ns": 6070390
+                    "setup_ns": 34833,
+                    "encode_ns": 5738818,
+                    "decode_ns": 290339,
+                    "total_ns": 6063990
                   }
                 ]
               }
@@ -1136,48 +1136,48 @@
                 "snr_db": 0.697830738745654
               },
               "total_median_ns": {
-                "python": 117644898,
-                "rust": 6752914
+                "python": 137548428,
+                "rust": 7859528
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 12326,
-                    "encode_ns": 124793736,
-                    "decode_ns": 2526497,
-                    "total_ns": 127332559
+                    "setup_ns": 11507,
+                    "encode_ns": 134973117,
+                    "decode_ns": 2563804,
+                    "total_ns": 137548428
                   },
                   {
-                    "setup_ns": 11151,
-                    "encode_ns": 111721309,
-                    "decode_ns": 2335508,
-                    "total_ns": 114067968
+                    "setup_ns": 10811,
+                    "encode_ns": 185739677,
+                    "decode_ns": 3256322,
+                    "total_ns": 189006810
                   },
                   {
-                    "setup_ns": 8099,
-                    "encode_ns": 114927677,
-                    "decode_ns": 2709122,
-                    "total_ns": 117644898
+                    "setup_ns": 10720,
+                    "encode_ns": 119741457,
+                    "decode_ns": 3021528,
+                    "total_ns": 122773705
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 27192,
-                    "encode_ns": 5778657,
-                    "decode_ns": 947065,
-                    "total_ns": 6752914
+                    "setup_ns": 22598,
+                    "encode_ns": 6994556,
+                    "decode_ns": 970604,
+                    "total_ns": 7987758
                   },
                   {
-                    "setup_ns": 22138,
-                    "encode_ns": 5758804,
-                    "decode_ns": 919293,
-                    "total_ns": 6700235
+                    "setup_ns": 20996,
+                    "encode_ns": 6624797,
+                    "decode_ns": 942548,
+                    "total_ns": 7588341
                   },
                   {
-                    "setup_ns": 24450,
-                    "encode_ns": 5985772,
-                    "decode_ns": 1108040,
-                    "total_ns": 7118262
+                    "setup_ns": 22335,
+                    "encode_ns": 6801008,
+                    "decode_ns": 1036185,
+                    "total_ns": 7859528
                   }
                 ]
               }
@@ -1197,48 +1197,48 @@
                 "snr_db": 4.1679267690752955
               },
               "total_median_ns": {
-                "python": 162721151,
-                "rust": 24938139
+                "python": 184974696,
+                "rust": 23711703
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 12267,
-                    "encode_ns": 157739725,
-                    "decode_ns": 4969159,
-                    "total_ns": 162721151
+                    "setup_ns": 11336,
+                    "encode_ns": 135158601,
+                    "decode_ns": 4402951,
+                    "total_ns": 139572888
                   },
                   {
-                    "setup_ns": 12801,
-                    "encode_ns": 138750529,
-                    "decode_ns": 4511381,
-                    "total_ns": 143274711
+                    "setup_ns": 12958,
+                    "encode_ns": 196687034,
+                    "decode_ns": 5377435,
+                    "total_ns": 202077427
                   },
                   {
-                    "setup_ns": 11836,
-                    "encode_ns": 164502088,
-                    "decode_ns": 4471695,
-                    "total_ns": 168985619
+                    "setup_ns": 13536,
+                    "encode_ns": 180463266,
+                    "decode_ns": 4497894,
+                    "total_ns": 184974696
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 25150,
-                    "encode_ns": 22511437,
-                    "decode_ns": 1831818,
-                    "total_ns": 24368405
+                    "setup_ns": 22314,
+                    "encode_ns": 21981856,
+                    "decode_ns": 1188287,
+                    "total_ns": 23192457
                   },
                   {
-                    "setup_ns": 42567,
-                    "encode_ns": 27082338,
-                    "decode_ns": 1285473,
-                    "total_ns": 28410378
+                    "setup_ns": 22734,
+                    "encode_ns": 22171927,
+                    "decode_ns": 1517042,
+                    "total_ns": 23711703
                   },
                   {
-                    "setup_ns": 25274,
-                    "encode_ns": 23444089,
-                    "decode_ns": 1468776,
-                    "total_ns": 24938139
+                    "setup_ns": 22712,
+                    "encode_ns": 24924173,
+                    "decode_ns": 1308153,
+                    "total_ns": 26255038
                   }
                 ]
               }
@@ -1258,48 +1258,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 10996577160,
-                "rust": 47258893
+                "python": 14072385417,
+                "rust": 66058790
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 12129,
-                    "encode_ns": 6037229604,
-                    "decode_ns": 5592303578,
-                    "total_ns": 11629545311
+                    "setup_ns": 11477,
+                    "encode_ns": 7946346082,
+                    "decode_ns": 7705857943,
+                    "total_ns": 15652215502
                   },
                   {
-                    "setup_ns": 17358,
-                    "encode_ns": 5579219626,
-                    "decode_ns": 5275696060,
-                    "total_ns": 10854933044
+                    "setup_ns": 24660,
+                    "encode_ns": 7379091630,
+                    "decode_ns": 6693269127,
+                    "total_ns": 14072385417
                   },
                   {
-                    "setup_ns": 16222,
-                    "encode_ns": 5544033628,
-                    "decode_ns": 5452527310,
-                    "total_ns": 10996577160
+                    "setup_ns": 16034,
+                    "encode_ns": 6751838920,
+                    "decode_ns": 6553774660,
+                    "total_ns": 13305629614
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 30166,
-                    "encode_ns": 25910686,
-                    "decode_ns": 21153735,
-                    "total_ns": 47094587
+                    "setup_ns": 57139,
+                    "encode_ns": 39176169,
+                    "decode_ns": 26825482,
+                    "total_ns": 66058790
                   },
                   {
-                    "setup_ns": 28515,
-                    "encode_ns": 26520337,
-                    "decode_ns": 20710041,
-                    "total_ns": 47258893
+                    "setup_ns": 32221,
+                    "encode_ns": 35330398,
+                    "decode_ns": 34700443,
+                    "total_ns": 70063062
                   },
                   {
-                    "setup_ns": 30459,
-                    "encode_ns": 29236832,
-                    "decode_ns": 22084759,
-                    "total_ns": 51352050
+                    "setup_ns": 31742,
+                    "encode_ns": 30820948,
+                    "decode_ns": 25496864,
+                    "total_ns": 56349554
                   }
                 ]
               }
@@ -1319,48 +1319,48 @@
                 "snr_db": null
               },
               "total_median_ns": {
-                "python": 355917237,
-                "rust": 85997710
+                "python": 417625108,
+                "rust": 99841504
               },
               "runs": {
                 "python": [
                   {
-                    "setup_ns": 13199,
-                    "encode_ns": 399927476,
-                    "decode_ns": 31520020,
-                    "total_ns": 431460695
+                    "setup_ns": 18655,
+                    "encode_ns": 415316050,
+                    "decode_ns": 33807700,
+                    "total_ns": 449142405
                   },
                   {
-                    "setup_ns": 21676,
-                    "encode_ns": 298929486,
-                    "decode_ns": 36696726,
-                    "total_ns": 335647888
+                    "setup_ns": 15219,
+                    "encode_ns": 346143835,
+                    "decode_ns": 44075938,
+                    "total_ns": 390234992
                   },
                   {
-                    "setup_ns": 19687,
-                    "encode_ns": 324500184,
-                    "decode_ns": 31397366,
-                    "total_ns": 355917237
+                    "setup_ns": 27621,
+                    "encode_ns": 384182499,
+                    "decode_ns": 33414988,
+                    "total_ns": 417625108
                   }
                 ],
                 "rust": [
                   {
-                    "setup_ns": 28111,
-                    "encode_ns": 71888702,
-                    "decode_ns": 13407979,
-                    "total_ns": 85324792
+                    "setup_ns": 30390,
+                    "encode_ns": 82099703,
+                    "decode_ns": 17711411,
+                    "total_ns": 99841504
                   },
                   {
-                    "setup_ns": 37940,
-                    "encode_ns": 72702903,
-                    "decode_ns": 13256867,
-                    "total_ns": 85997710
+                    "setup_ns": 40361,
+                    "encode_ns": 75370669,
+                    "decode_ns": 14194154,
+                    "total_ns": 89605184
                   },
                   {
-                    "setup_ns": 26030,
-                    "encode_ns": 72571419,
-                    "decode_ns": 13597879,
-                    "total_ns": 86195328
+                    "setup_ns": 28189,
+                    "encode_ns": 84605881,
+                    "decode_ns": 18911565,
+                    "total_ns": 103545635
                   }
                 ]
               }
@@ -1368,9 +1368,9 @@
           ]
         }
       ],
-      "raw_receipt_sha256": "7ab40733f87007caae0bd2f5c63bc262009ef704ff375c62d51bf69f6b4ca984",
-      "native_wheel_sha256": "f421fd1332ceaf542d241b83672678bd7461292352575923d3723e620363e31d",
-      "python_wheel_sha256": "82f92974e52a323ca5baeeb787570653dcb94c9ba7735a0dc669fa6d05bac9e5",
+      "raw_receipt_sha256": "4be1652487bb1308eac8c524597f51a14060eb1a89f6b75f73467b8c80e0719b",
+      "native_wheel_sha256": "d4f06e960e497c9a6777b992aaa1a231598c9bf89a898c8cc692b568abe2d83c",
+      "python_wheel_sha256": "4ba20cec0a96ffc990996bd354ccbe42237f662cff8521848c458620a1fe67d0",
       "scheme": "zstd + db4"
     }
   ]

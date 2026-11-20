@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 26,
+    "current": 27,
     "outdated": 127,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 328,
+  "all_records": 329,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -2725,6 +2725,10 @@
       "name": "formal/sc_chialvo_map_z3memory64/review.json"
     },
     {
+      "currency": "current",
+      "name": "installed_codec_backends.json"
+    },
+    {
       "changed": [
         "Cargo.lock",
         "engine/Cargo.toml",
@@ -3065,7 +3069,8 @@
       "changed": [
         "Cargo.lock",
         "bridge/sc_neurocore_engine/__init__.py",
-        "engine/Cargo.toml"
+        "engine/Cargo.toml",
+        "src/sc_neurocore/spike_codec/predictive_codec.py"
       ],
       "currency": "outdated",
       "name": "predictive_codec_backends.json"

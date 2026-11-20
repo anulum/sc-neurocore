@@ -8,9 +8,9 @@
 
 # Spike Codec Library
 
-Six existing codec families cover binary spike rasters and numeric electrode
-waveforms. Two additional APIs handle stateful lossless waveforms and detected
-events/band power. These interfaces have different decoder contracts.
+The catalogue covers eight families and 18 variants for binary spike rasters,
+numeric electrode waveforms, stateful lossless streams and detected events
+with band power. Each family defines its own decoder contract.
 
 [Wire formats and compatibility](../reference/spike_codec_wire_formats.md)
 documents bytes, state and external metadata. The catalogue describes existing
@@ -42,19 +42,20 @@ an engine: the predictive module caches native imports. Unknown names or
 variants raise `ValueError`. Generated language source files do not establish
 an available codec backend.
 
-Host import policies can make an entry point unavailable. A native loader's
-`OSError` or `RuntimeError` appears in diagnostics and excludes `auto` from
-the ISI, waveform and stream backend choices. ISI also reports a refusal to
-import a present native extension as a loader error. An absent engine permits
-Python fallback. The probe reports an unavailable Python class separately.
+Host import policies can make an entry point unavailable. An `OSError`,
+`RuntimeError` or import refusal from a present engine appears in diagnostics
+and excludes `auto` from the advertised choices for every family. An absent
+engine permits Python fallback. The probe reports an unavailable Python class
+separately. The [installed codec comparison](../benchmarks/BENCHMARKS.md#installed-codec-catalogue)
+checks actual wheel imports and packet compatibility.
 
 | Name | Input / decoded output | Choices | Persistent state | Backend selector |
 |---|---|---|---|---|
 | isi | Binary raster / raster | mode: lossless, lossy; entropy: auto, varint, huffman | None | auto, python, rust when available |
 | predictive | Binary raster / raster | ema, lfsr, context, world_model | Reset per batch | auto, python, rust when available |
-| delta | Binary raster / raster | lossless, lossy | None | None |
-| streaming | Binary raster / raster | Independent frames | None | None |
-| aer | Binary raster / raster | Adaptive event/silence coding | None | None |
+| delta | Binary raster / raster | lossless, lossy | None | auto, python, rust when available |
+| streaming | Binary raster / raster | Independent frames | None | auto, python, rust when available |
+| aer | Binary raster / raster | Adaptive event/silence coding | None | auto, python, rust when available |
 | waveform | Numeric waveform / WaveformDecodeResult | full, waveform, spike, lossless, lossless_rice | Reset per recording | auto, python, rust when available |
 | lossless_stream | Integer waveform / exact int16 waveform | Lossless | Yes | auto, python, rust when available, optional GPU encoder |
 | spike_events | Integer waveform / events and power | timing: bin, sample | Yes | auto, python, rust when available |
@@ -136,6 +137,9 @@ the selected predictor's native components and Rust ISI. The base wheel
 contains the world-model codec predictor using its standard NumPy dependency.
 The Rust path still uses NumPy for probability evaluation and uses Rust
 for the weight update. The experimental world-model package is separate.
+`predictor_backend` reports the selected encoding stage. `base_codec.backend`
+reports the residual ISI coder. `backend` reports the common selection or
+`mixed` when those two stages differ.
 World-model packets require a matching numerical profile for recovery. See the
 [wire-format conditions](../reference/spike_codec_wire_formats.md#predictive-xor-containers).
 See the [predictive codec benchmarks](../benchmarks/BENCHMARKS.md#predictive-codec-python-and-rust-timing)
@@ -299,6 +303,9 @@ modes. `WaveformCodec(backend="rust")` writes complete WFC2 packets and
 `WaveformCodec.decompress(packet, backend="rust")` reads them. Select
 `backend="python"` for the reference. The decoder checks the total number
 of values against `max_samples` before allocating its output.
+`WaveformCodec.backend` retains the requested setting. Inspect
+`effective_backend` and `native_scope` to distinguish a full container, an
+older engine providing signal kernels, and a Python-only instance.
 [Wire formats](../reference/spike_codec_wire_formats.md#wfc2-waveform-container-and-legacy-wfcx)
 describe WFC2 and the legacy spike-only WFCX reader.
 

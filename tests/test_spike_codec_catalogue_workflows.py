@@ -44,6 +44,11 @@ def test_raster_public_factory_roundtrips_described_variants(name: str) -> None:
             {descriptor.variant_parameter: variant.name} if descriptor.variant_parameter else {}
         )
         encoder = get_codec(name, **kwargs)
+
+        if name == "predictive":
+            assert encoder.backend in ("python", "rust", "mixed")
+            if availability.rust_components_available:
+                assert encoder.backend == encoder.predictor_backend == "rust"
         packet, result = encoder.compress(raster)
         decoder = _entrypoint(descriptor.decoder_entrypoint)()
         np.testing.assert_array_equal(decoder.decompress(packet, *raster.shape), raster)
@@ -93,6 +98,13 @@ def test_waveform_modes_cross_decode_and_match_wfc2_header(mode: str, mode_byte:
     samples[400:405, 0] = [-2000, -6000, -3000, 1000, 500]
     packets = []
     availability = probe_codec("waveform", mode)
+    automatic = cls(mode=mode)
+    if availability.rust_components_available:
+        assert automatic.effective_backend == "rust" and automatic.native_scope == "container"
+    else:
+        assert automatic.native_scope in ("none", "signal_kernels")
+    reference = cls(mode=mode, backend="python")
+    assert reference.effective_backend == "python" and reference.native_scope == "none"
     backends = [choice for choice in availability.backend_choices if choice != "auto"]
     assert "python" in backends
     for backend in backends:
