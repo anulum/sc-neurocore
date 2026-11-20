@@ -24,7 +24,7 @@ focused, acyclic modules:
 | `topology` | Dies, interposer links, mesh/ring/star/torus construction, and 3D stacking |
 | `routing` | AER routes, link-disjoint paths, timing, congestion, decorrelation seeds, and energy |
 | `thermal` | Steady-state and implicit-Euler transient package thermal solving |
-| `rtl` | Die wrappers, CDC bridges, routing tables, package top, and XDC emission |
+| `rtl` | Input validation and generation of the package artefacts, through `_rtl_die` (die wrappers), `_rtl_links` (clock-crossing bridges and routing tables) and `_rtl_top` (package top and XDC) |
 | `link_protocols` | Clock-domain configuration, CRC-32, and credit flow control |
 | `power` | Voltage-island ownership and sequenced power-gating RTL |
 | `partition` | Neuron-to-die assignments translated into routing tables |
@@ -142,14 +142,30 @@ properties fail before solving.
 - one asynchronous FIFO, stall-aware latency pipeline, and optional transparent
   per-link LFSR scrambler/descrambler (`decorrelate_links=True`, scrambling
   `s_tdata` before the CDC FIFO and descrambling after the latency pipeline from
-  `DECOR_SEED`) per directed link;
+  `DECOR_SEED`) per directed link. The bridge writes on its source die's clock
+  and reads on its destination die's clock. Its latency pipeline counts the
+  link latency in cycles of the destination clock, and its FIFO holds four
+  times the link jitter in cycles of the faster of the two clocks; with both
+  dies at 200 MHz these equal the link's `latency_cycles` and
+  `fifo_depth_log2`;
 - optional single-cycle primary-route lookup modules (`sc_chiplet_rtable_<d>`)
   sized by `die.n_neurons`, with `target_neuron` widened to the package AER
   width (`PKG_AER_W`) for heterogeneous dies and valid signed fixed-point
   literals;
-- a package top (`sc_chiplet_top`) exposing per-die AER ingress/egress ports
-  and connecting every die and bridge AXI-Stream port;
-- XDC clocks and `-datapath_only` inter-clock link-delay constraints;
+- a package top (`sc_chiplet_top`) with one clock input per die,
+  `clk_die_<d>`, driving that die and the matching side of each of its
+  bridges. One active-low `rst_n` reaches each die's clock domain through
+  that die's own two-stage synchronizer (`sc_sync_2ff`), asserted at once
+  and released on two edges of the die's clock, so a caller drives the
+  package two edges of each die clock after `rst_n` rises. The top exposes
+  per-die AER ingress/egress ports and connects every die and bridge
+  AXI-Stream port;
+- an XDC that creates one clock per die, `clk_die_<d>` with the die's
+  `clock_mhz` period, on that top port, declares `rst_n` a false path, and
+  bounds each link's crossing (the FIFO's Gray pointers and data) with
+  `set_max_delay -datapath_only` at the shorter of its two clock periods.
+  The interposer latency itself is modelled by the bridge's `LATENCY_CYC`.
+  Every clock the XDC names exists in the RTL;
 - fail-closed validation rejecting duplicate dies or directed links, narrow
   link payloads, out-of-range neuron IDs or signed weights, and unreachable
   routed destination dies.

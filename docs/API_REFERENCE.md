@@ -7119,6 +7119,166 @@ CompilationResult
 
 ---
 
+## Module `chiplet._rtl_die`
+
+### Function `emit_die_wrapper(die, topology, table, next_hop_map, die_id_w, pkg_aer_w, pkg_data_w)`
+Return ``sc_chiplet_die_<d>``: one die's router, tables, next-hop map and arbiter.
+
+Parameters
+----------
+die
+    The die to wrap.
+topology
+    Validated die and link graph.
+table
+    The die's routing table, or ``None`` for an empty one.
+next_hop_map
+    Destination die to next-hop die, for every reachable destination.
+die_id_w, pkg_aer_w, pkg_data_w
+    Package die-id, AER-id and data widths.
+
+Returns
+-------
+str
+    SystemVerilog source of the die wrapper.
+
+---
+
+## Module `chiplet._rtl_links`
+
+### Function `bridge_timing(link, src, dst)`
+Return a bridge's latency in destination-clock cycles and its FIFO depth exponent.
+
+Parameters
+----------
+link
+    The interposer link the bridge implements.
+src, dst
+    The link's source and destination dies, whose clocks the bridge crosses.
+
+Returns
+-------
+tuple&#91;int, int&#93;
+    ``(latency_cycles, fifo_depth_log2)``: the link latency in cycles of ``dst``'s clock,
+    and the smallest exponent, at least 3, whose depth holds four times the link jitter in
+    cycles of the faster clock.
+
+### Function `emit_bridge(link, src, dst, decorrelation_seed, decorrelate_links)`
+Return the clock-crossing bridge of one link.
+
+Parameters
+----------
+link
+    The interposer link.
+src, dst
+    The link's source and destination dies.
+decorrelation_seed
+    Shared 16-bit LFSR seed of the link's payload scrambler.
+decorrelate_links
+    Scramble the payload in flight when ``True``.
+
+Returns
+-------
+str
+    SystemVerilog source of ``sc_chiplet_bridge_<src>_to_<dst>``.
+
+### Function `emit_routing_table(table, die, die_id_w, pkg_aer_w)`
+Return one die's first-route lookup table.
+
+Parameters
+----------
+table
+    The die's routing table; the first entry per source neuron is kept.
+die
+    The die the table belongs to.
+die_id_w, pkg_aer_w
+    Package die-id and AER-id widths.
+
+Returns
+-------
+str
+    SystemVerilog source of ``sc_chiplet_rtable_<die>``.
+
+---
+
+## Module `chiplet._rtl_top`
+
+### Function `die_reset(die_id)`
+Return the active-low reset of one die's clock domain, released in that domain.
+
+Parameters
+----------
+die_id
+    Die identifier.
+
+Returns
+-------
+str
+    ``rst_n_die_<die_id>``, the output of the die's reset synchronizer.
+
+### Function `die_clock(die_id)`
+Return the top-level clock port, and XDC clock name, of one die.
+
+Parameters
+----------
+die_id
+    Die identifier.
+
+Returns
+-------
+str
+    ``clk_die_<die_id>``.
+
+### Function `emit_top(topology)`
+Return ``sc_chiplet_top``: dies on their own clocks, joined by clock-crossing bridges.
+
+Parameters
+----------
+topology
+    Validated die and link graph.
+
+Returns
+-------
+str
+    SystemVerilog source of the package top.
+
+### Function `emit_constraints(topology)`
+Return the XDC: one clock per die, the reset's false path, and one bound per link.
+
+A link's crossing (the FIFO's Gray pointers and data) is bounded by the shorter of its two
+clock periods; the interposer latency itself is modelled by the bridge's ``LATENCY_CYC``.
+
+Parameters
+----------
+topology
+    Validated die and link graph.
+
+Returns
+-------
+str
+    Xilinx design constraints text.
+
+---
+
+## Module `chiplet._sv`
+
+### Function `sv_signed(value, width)`
+Return a sized signed SystemVerilog literal, with the sign outside the size.
+
+Parameters
+----------
+value
+    Integer to encode.
+width
+    Literal width in bits.
+
+Returns
+-------
+str
+    ``-W'sdN`` for a negative value, else ``W'sdN``.
+
+---
+
 ## Module `chiplet.hierarchical_backends`
 
 ### Class `RefinementOwner`

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2232
+expected_file_count = 2237
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8978,3 +8978,23 @@ rationale = "Hold the twin-sync interval, checksum, compression ratio, tolerance
 [[file]]
 path = "tests/test_hypervisor/test_qos_monitor_bandwidth_window_history.py"
 rationale = "Hold the bandwidth meter's history to one window and its base without changing any rate."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/_rtl_die.py"
+rationale = "Emit one die's wrapper: AER router, fan-out tables, next-hop map and link arbiter on the die's own clock."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/_rtl_links.py"
+rationale = "Emit each link's clock-crossing bridge, timed in its dies' clocks, and each die's routing table."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/_rtl_top.py"
+rationale = "Emit the package top with one clock port per die and the XDC that creates exactly those clocks."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_rtl_clocks.py"
+rationale = "Hold the chiplet top and XDC to one clock per die, and deliver packets across three clock domains in co-simulation."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/_sv.py"
+rationale = "Shared SPDX header, identifier validation and signed-literal formatting for the chiplet RTL emitters."

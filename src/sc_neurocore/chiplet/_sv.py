@@ -47,3 +47,21 @@ def _require_sv_identifier(value: str, field_name: str) -> str:
     if not _SV_IDENTIFIER_RE.fullmatch(value):
         raise ValueError(f"{field_name} must be a valid SystemVerilog identifier")
     return value
+
+
+def sv_signed(value: int, width: int) -> str:
+    """Return a sized signed SystemVerilog literal, with the sign outside the size.
+
+    Parameters
+    ----------
+    value
+        Integer to encode.
+    width
+        Literal width in bits.
+
+    Returns
+    -------
+    str
+        ``-W'sdN`` for a negative value, else ``W'sdN``.
+    """
+    return f"-{width}'sd{-value}" if value < 0 else f"{width}'sd{value}"

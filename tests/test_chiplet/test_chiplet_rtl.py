@@ -203,7 +203,7 @@ module tb_ring3;
     wire signed [15:0] die_0_out_weight, die_1_out_weight, die_2_out_weight;
 
     sc_chiplet_top dut (
-        .clk(clk), .rst_n(rst_n),
+        .clk_die_0(clk), .clk_die_1(clk), .clk_die_2(clk), .rst_n(rst_n),
         .die_0_spike_valid(die_0_spike_valid), .die_0_spike_ready(die_0_spike_ready),
         .die_0_spike_id(die_0_spike_id), .die_0_out_valid(die_0_out_valid),
         .die_0_out_ready(die_0_out_ready), .die_0_out_id(die_0_out_id),
@@ -239,7 +239,7 @@ module tb_ring3;
 
     initial begin
         #10 rst_n = 1;
-        @(posedge clk);
+        repeat (3) @(posedge clk); // per-die reset synchronizers
         die_0_spike_valid <= 1;
         die_0_spike_id <= 10'd5;
         @(posedge clk);
@@ -293,7 +293,7 @@ module tb_star_bp;
     wire signed [15:0] o0_w, o1_w, o2_w;
 
     sc_chiplet_top dut (
-        .clk(clk), .rst_n(rst_n),
+        .clk_die_0(clk), .clk_die_1(clk), .clk_die_2(clk), .rst_n(rst_n),
         .die_0_spike_valid(s0_v), .die_0_spike_ready(s0_r), .die_0_spike_id(s0_id),
         .die_0_out_valid(o0_v), .die_0_out_ready(o0_r), .die_0_out_id(o0_id), .die_0_out_weight(o0_w),
         .die_1_spike_valid(s1_v), .die_1_spike_ready(s1_r), .die_1_spike_id(s1_id),
@@ -311,7 +311,7 @@ module tb_star_bp;
 
     initial begin
         #10 rst_n = 1;
-        @(posedge clk);
+        repeat (3) @(posedge clk); // per-die reset synchronizers
         s1_v <= 1; s1_id <= 10'd2;
         s2_v <= 1; s2_id <= 10'd4;
         @(posedge clk);
@@ -413,7 +413,7 @@ module tb_hetero;
     wire [3:0] o0_id; wire [9:0] o1_id;
     wire signed [11:0] o0_w; wire signed [15:0] o1_w;
     sc_chiplet_top top (
-        .clk(clk), .rst_n(rst_n),
+        .clk_die_0(clk), .clk_die_1(clk), .rst_n(rst_n),
         .die_0_spike_valid(s0_v), .die_0_spike_ready(s0_r), .die_0_spike_id(4'd3),
         .die_0_out_valid(o0_v), .die_0_out_ready(1'b1), .die_0_out_id(o0_id), .die_0_out_weight(o0_w),
         .die_1_spike_valid(s1_v), .die_1_spike_ready(s1_r), .die_1_spike_id(10'd100),
@@ -428,7 +428,8 @@ module tb_hetero;
     end
     initial begin
         #8 rst_n = 1;
-        @(posedge clk); s0_v <= 1; s1_v <= 1;
+        repeat (3) @(posedge clk); // per-die reset synchronizers
+        s0_v <= 1; s1_v <= 1;
         @(posedge clk); s0_v <= 0; s1_v <= 0;
         if (!route_valid || target_die !== 4'd1 || target_neuron !== 10'd100 || weight !== -12'sd200)
             $fatal(1, "rtable0 truncated target_neuron=%0d", target_neuron);

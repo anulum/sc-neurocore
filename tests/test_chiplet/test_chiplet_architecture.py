@@ -52,6 +52,10 @@ def test_responsibility_modules_partition_the_legacy_surface() -> None:
         assert len(module_path.read_text(encoding="utf-8").splitlines()) <= 500
     assert set(owners) == set(chiplet_gen.__all__)
     assert len((PACKAGE_ROOT / "_sv.py").read_text(encoding="utf-8").splitlines()) <= 100
+    for emitter in ("_rtl_die", "_rtl_links", "_rtl_top"):
+        source = (PACKAGE_ROOT / f"{emitter}.py").read_text(encoding="utf-8").splitlines()
+        assert len(source) <= 300, emitter
+        assert all(len(line) <= 100 for line in source), emitter
     assert all(
         len(path.read_text(encoding="utf-8").splitlines()) <= 500
         for path in Path(__file__).parent.glob("test_chiplet_*.py")
@@ -65,7 +69,10 @@ def test_focused_import_graph_is_acyclic() -> None:
         "topology": set(),
         "routing": {"topology"},
         "thermal": {"topology"},
-        "rtl": {"_sv", "routing", "topology"},
+        "rtl": {"_rtl_die", "_rtl_links", "_rtl_top", "routing", "topology"},
+        "_rtl_die": {"_sv", "routing", "topology"},
+        "_rtl_links": {"_sv", "routing", "topology"},
+        "_rtl_top": {"_sv", "topology"},
         "link_protocols": {"_sv", "topology"},
         "power": {"_sv"},
         "partition": {"routing"},

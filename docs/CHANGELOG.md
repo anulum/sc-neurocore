@@ -251,6 +251,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The generated chiplet package now runs each die on its own clock.
+  `sc_chiplet_top` had one `clk` driving every die and both sides of every
+  bridge, while `chiplet_constraints.xdc` created one clock per die, at that
+  die's period, on the die instance's `clk` pin: dies with different
+  `clock_mhz` could not both be right on one net, the bridge registers sat
+  under no created clock, and the link constraints joined clock domains the
+  RTL did not have. The top now has one input per die, `clk_die_<d>`, which
+  drives that die and the matching side of each of its bridges. The XDC
+  creates each die's clock on that port and bounds each link between its two
+  dies' clocks at the shorter of the two periods; the link latency is the
+  bridge's own pipeline. The one `rst_n` reaches each die's domain through
+  that die's two-stage synchronizer, and the XDC declares it a false path.
+  A bridge counts the link latency in cycles of its destination die's clock
+  and sizes its FIFO for the jitter in cycles of the faster clock; at
+  200 MHz on both sides nothing changes. Tests check that
+  the XDC names only clocks that exist and co-simulate a ring of dies at 200,
+  125 and 80 MHz. `rtl.py` keeps validation and generation and moves its
+  emitters into `_rtl_die`, `_rtl_links` and `_rtl_top`, written and
+  emitting at most 100 columns.
+
 - `BandwidthMeter` no longer keeps every sample. A tenant's cycles
   increase, so no later window reads a sample before the current window's
   base; `record` drops those, and the base lookup is a bisection instead of

@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5735
+    "test_files": 5736
   },
   "documentation": {
     "public_pages": [
@@ -4556,6 +4556,7 @@
       "tests/test_chiplet/test_chiplet_routing_path_selection.py",
       "tests/test_chiplet/test_chiplet_routing_timing.py",
       "tests/test_chiplet/test_chiplet_rtl.py",
+      "tests/test_chiplet/test_chiplet_rtl_clocks.py",
       "tests/test_chiplet/test_chiplet_thermal.py",
       "tests/test_chiplet/test_chiplet_topology_chiplet_die.py",
       "tests/test_chiplet/test_chiplet_topology_interposer_link.py",
