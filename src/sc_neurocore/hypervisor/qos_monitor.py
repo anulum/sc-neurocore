@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import bisect
 import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -34,7 +35,11 @@ class BandwidthMeter:
         """Record the spikes a tenant produced in the interval that ends at ``cycle``.
 
         A tenant's cycles must increase: the window and the span of
-        :meth:`throughput` are measured along them.
+        :meth:`throughput` are measured along them. Because they increase, each
+        later window's base is this one's or a later sample, so the samples
+        before this window's base can never be read again; they are dropped
+        here, and a tenant's history stays within one window and its base.
+        ``window_cycles`` is therefore set before recording, not enlarged later.
 
         Raises
         ------
@@ -50,8 +55,17 @@ class BandwidthMeter:
             raise ValueError(
                 f"cycle {cycle} is not later than tenant {tenant_id!r}'s last cycle {stamps[-1]}"
             )
-        self._counters[tenant_id].append(spike_count)
+        counts = self._counters[tenant_id]
+        counts.append(spike_count)
         stamps.append(cycle)
+        base = self._base(stamps)
+        if base:
+            del counts[:base]
+            del stamps[:base]
+
+    def _base(self, stamps: List[int]) -> int:
+        """Return the index of the latest sample at or before ``last − window_cycles``, else 0."""
+        return max(bisect.bisect_right(stamps, stamps[-1] - self.window_cycles) - 1, 0)
 
     def throughput(self, tenant_id: str) -> float:
         """Return spikes per cycle over the window.
@@ -66,8 +80,7 @@ class BandwidthMeter:
         if len(entries) < 2:
             return 0.0
         ts = self._timestamps[tenant_id]
-        cutoff = ts[-1] - self.window_cycles
-        base = max((i for i, cycle in enumerate(ts) if cycle <= cutoff), default=0)
+        base = self._base(ts)
         span = ts[-1] - ts[base]
         if span <= 0:
             return 0.0

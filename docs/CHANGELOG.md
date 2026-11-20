@@ -251,6 +251,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `BandwidthMeter` no longer keeps every sample. A tenant's cycles
+  increase, so no later window reads a sample before the current window's
+  base; `record` drops those, and the base lookup is a bisection instead of
+  a scan of the whole history. The history stays within one window and its
+  base, and every rate equals the whole history's: compared after each of
+  400 random samples over 20 seeds and five windows. Fifty thousand samples
+  keep at most one window of them. On the former meter that long-run bound
+  fails while every rate test passes.
+
 - Tutorial 60 cites "Huang et al. (2022). Formal Verification of Neural
   Networks: A Survey. IEEE Access 10:125603-125618", which neither Crossref
   nor OpenAlex holds, by title or in the journal's 2022 volume. The entry is

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2231
+expected_file_count = 2232
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -8974,3 +8974,7 @@ rationale = "Hold packaging, validation and summaries of hardware deployments bu
 [[file]]
 path = "tests/test_twinsync/test_twinsync_names_kept_true.py"
 rationale = "Hold the twin-sync interval, checksum, compression ratio, tolerance and removed counter to what they now do."
+
+[[file]]
+path = "tests/test_hypervisor/test_qos_monitor_bandwidth_window_history.py"
+rationale = "Hold the bandwidth meter's history to one window and its base without changing any rate."

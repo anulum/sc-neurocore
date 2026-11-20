@@ -41,7 +41,11 @@ from sc_neurocore.hypervisor.hypervisor import (
   units and the limit refuse a bool.
 - `BandwidthMeter.record` refuses a cycle that is not later than the
   tenant's last, with `ValueError` and no change to the history: the window
-  and the span run along increasing cycles.
+  and the span run along increasing cycles. Because they increase, no later
+  window reads a sample before the current window's base, so `record` drops
+  those samples. A tenant's history stays within one window and its base, and
+  every rate equals the whole history's. Set `window_cycles` before
+  recording; enlarging it later cannot recover dropped samples.
 - Under the priority policy, the realtime tenants share one half of the cycles
   equally; the others keep an equal share each, in priority order.
 
