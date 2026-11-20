@@ -25618,6 +25618,22 @@ FileNotFoundError
 
 ## Module `hdl_gen._bus_wrappers`
 
+### Function `register_stride(bus_data_width)`
+Return the byte distance between consecutive wrapper registers.
+
+On a 64-bit bus each register owns a whole bus word, so a master carries its data from byte
+lane 0; at a 4-byte stride the register at 0x04 would sit on lanes &#91;63:32&#93;.
+
+Parameters
+----------
+bus_data_width : int
+    Bus data width in bits: 8, 16, 32 or 64; any other value raises ``ValueError``.
+
+Returns
+-------
+int
+    4 for 8-, 16- and 32-bit buses, 8 for a 64-bit bus.
+
 ### Function `render_axi_lite_wrapper(inner_module, params, data_width, addr_width, bus_data_width)`
 Render an AXI4-Lite slave wrapper around a neuron module.
 
@@ -25853,8 +25869,11 @@ Returns
 str
     Complete SystemVerilog source for the bus wrapper module.
 
-### Function `generate_register_map(params, *, base_address)`
-Return the register map for a neuron's parameters.
+### Function `generate_register_map(params, *, base_address, bus_data_width)`
+Return the register map of the wrapper generated for the same bus width.
+
+Registers follow one another at the wrapper's register stride: 4 bytes on 8-, 16- and
+32-bit buses and 8 bytes on a 64-bit bus, where each register owns a whole bus word.
 
 Parameters
 ----------
@@ -25862,11 +25881,18 @@ params : dict&#91;str, int&#93;
     Parameter names and their bit widths.
 base_address : int
     Starting byte address.
+bus_data_width : int
+    The ``bus_data_width`` the wrapper was generated with: 8, 16, 32 or 64.
 
 Returns
 -------
 dict&#91;str, int&#93;
     Mapping from register name to byte address.
+
+Raises
+------
+ValueError
+    If ``bus_data_width`` is not a supported bus width.
 
 ### Function `generate_live_parameter_bank(spec, *, module_name, addr_width, bus_data_width, block_ram_threshold_bits)`
 Generate a live-parameter bank from an MMIO update spec.

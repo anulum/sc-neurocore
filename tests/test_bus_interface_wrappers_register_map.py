@@ -42,6 +42,28 @@ class TestRegisterMap:
         assert rmap["CTRL"] == 0x1000
         assert rmap["I_T"] == 0x1004
 
+    @pytest.mark.parametrize(("bdw", "stride"), [(8, 4), (16, 4), (32, 4), (64, 8)])
+    def test_a_register_owns_a_whole_word_on_a_64_bit_bus(self, bdw: int, stride: int) -> None:
+        """Registers sit 8 bytes apart on a 64-bit bus, so none starts on lanes [63:32]."""
+        rmap = generate_register_map(LIF_PARAMS, base_address=0x40, bus_data_width=bdw)
+        names = ["CTRL", "I_T", "SPIKE_COUNT", *LIF_PARAMS]
+        assert rmap == {name: 0x40 + index * stride for index, name in enumerate(names)}
+        assert all(address % (max(bdw, 32) // 8) == 0 for address in rmap.values())
+
+    @pytest.mark.parametrize("bdw", [24, 128, 0])
+    def test_the_register_map_refuses_a_bus_width_no_wrapper_supports(self, bdw: int) -> None:
+        """The map takes only the widths a wrapper can be generated for."""
+        with pytest.raises(ValueError, match="bus_data_width"):
+            generate_register_map(LIF_PARAMS, bus_data_width=bdw)
+
+    def test_a_64_bit_wrapper_needs_room_for_its_8_byte_stride(self) -> None:
+        """The address width must cover every register at the stride the bus width sets."""
+        with pytest.raises(ValueError, match="cannot address 48 register bytes"):
+            generate_bus_wrapper("sc_lif", LIF_PARAMS, addr_width=5, bus_data_width=64)
+        assert "module sc_lif_axi_lite" in generate_bus_wrapper(
+            "sc_lif", LIF_PARAMS, addr_width=6, bus_data_width=64
+        )
+
     def test_invalid_bus(self) -> None:
         """Reject unsupported bus protocol names."""
         with pytest.raises(ValueError, match="Unsupported bus"):
@@ -76,7 +98,7 @@ class TestRegisterMap:
         with pytest.raises(ValueError, match="addr_width"):
             generate_bus_wrapper("sc_lif", LIF_PARAMS, addr_width=False)
         assert "module sc_lif_axi_lite" in generate_bus_wrapper(
-            "sc_lif", LIF_PARAMS, addr_width=5, bus_data_width=64
+            "sc_lif", LIF_PARAMS, addr_width=5, bus_data_width=32
         )
 
     @pytest.mark.parametrize("bus", ["axi_lite", "wishbone"])
@@ -93,8 +115,15 @@ class TestRegisterMap:
         assert shutil.which("iverilog") is not None
         tmp_path.mkdir(parents=True, exist_ok=True)
         params = {"P_FULL": bdw, "P_BIT": 1}
-        rmap = generate_register_map(params)
-        assert rmap == {"CTRL": 0, "I_T": 4, "SPIKE_COUNT": 8, "P_FULL": 12, "P_BIT": 16}
+        rmap = generate_register_map(params, bus_data_width=bdw)
+        stride = 8 if bdw == 64 else 4
+        assert rmap == {
+            "CTRL": 0,
+            "I_T": stride,
+            "SPIKE_COUNT": 2 * stride,
+            "P_FULL": 3 * stride,
+            "P_BIT": 4 * stride,
+        }
 
         it_port = "input wire I_t," if ndw == 1 else f"input wire [{ndw - 1}:0] I_t,"
         full_val = (1 << (bdw - 1)) | 5

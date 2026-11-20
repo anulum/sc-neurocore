@@ -251,6 +251,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- On a 64-bit bus, the AXI4-Lite and Wishbone B4 neuron wrappers now place
+  their registers 8 bytes apart, and `generate_register_map` takes the same
+  `bus_data_width` and publishes those addresses. At the former 4-byte
+  stride the register at `0x04` (`I_T`, and every register at an address
+  4 modulo 8) sits on byte lanes `[63:32]`, where a master that follows the
+  bus's lane rules writes it with `WSTRB 0xF0`. The wrapper stored the value
+  in the register's upper half while the neuron reads the lower half, and a
+  read-back returned it, so a driver saw success and the neuron never got
+  its input. Now each register owns a whole bus word and its data travels
+  from lane 0. Buses of 8, 16 and 32 bits keep the 4-byte stride and
+  byte-identical wrappers. A simulated master that places data by lane
+  drives the neuron on 32- and 64-bit buses, and on the former wrapper it
+  fails on 64 bits.
+
 - Twin-sync names now say what the code does. `TimeWarpEngine` takes
   `checkpoint_interval_events` (still the second positional argument);
   `checkpoint_interval_ns`, which always counted events, is a deprecated

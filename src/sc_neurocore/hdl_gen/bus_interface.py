@@ -21,6 +21,7 @@ from typing import Literal
 from sc_neurocore.compiler.live_control import MMIOUpdateSpec
 
 from ._bus_wrappers import (
+    register_stride as _register_stride,
     render_axi_lite_wrapper as _render_axi_lite_wrapper,
     render_wishbone_wrapper as _render_wishbone_wrapper,
 )
@@ -99,8 +100,12 @@ def generate_register_map(
     params: dict[str, int],
     *,
     base_address: int = 0,
+    bus_data_width: int = 32,
 ) -> dict[str, int]:
-    """Return the register map for a neuron's parameters.
+    """Return the register map of the wrapper generated for the same bus width.
+
+    Registers follow one another at the wrapper's register stride: 4 bytes on 8-, 16- and
+    32-bit buses and 8 bytes on a 64-bit bus, where each register owns a whole bus word.
 
     Parameters
     ----------
@@ -108,24 +113,22 @@ def generate_register_map(
         Parameter names and their bit widths.
     base_address : int
         Starting byte address.
+    bus_data_width : int
+        The ``bus_data_width`` the wrapper was generated with: 8, 16, 32 or 64.
 
     Returns
     -------
     dict[str, int]
         Mapping from register name to byte address.
+
+    Raises
+    ------
+    ValueError
+        If ``bus_data_width`` is not a supported bus width.
     """
-    reg_map: dict[str, int] = {}
-    offset = base_address
-    reg_map["CTRL"] = offset
-    offset += 4
-    reg_map["I_T"] = offset
-    offset += 4
-    reg_map["SPIKE_COUNT"] = offset
-    offset += 4
-    for name in params:
-        reg_map[name] = offset
-        offset += 4
-    return reg_map
+    stride = _register_stride(bus_data_width)
+    names = ["CTRL", "I_T", "SPIKE_COUNT", *params]
+    return {name: base_address + index * stride for index, name in enumerate(names)}
 
 
 def generate_live_parameter_bank(

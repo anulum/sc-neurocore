@@ -24,17 +24,38 @@ def _require_int(value: object, name: str) -> int:
     return int(value)
 
 
+def register_stride(bus_data_width: int) -> int:
+    """Return the byte distance between consecutive wrapper registers.
+
+    On a 64-bit bus each register owns a whole bus word, so a master carries its data from byte
+    lane 0; at a 4-byte stride the register at 0x04 would sit on lanes [63:32].
+
+    Parameters
+    ----------
+    bus_data_width : int
+        Bus data width in bits: 8, 16, 32 or 64; any other value raises ``ValueError``.
+
+    Returns
+    -------
+    int
+        4 for 8-, 16- and 32-bit buses, 8 for a 64-bit bus.
+    """
+    bdw = _require_int(bus_data_width, "bus_data_width")
+    if bdw not in _SUPPORTED_BUS_WIDTHS:
+        raise ValueError("bus_data_width must be one of 8, 16, 32, or 64")
+    return max(4, bdw // 8)
+
+
 def _validate_wrapper_args(
     inner_module: str,
     params: dict[str, int],
     data_width: int,
     addr_width: int,
     bus_data_width: int,
-) -> tuple[str, list[tuple[str, int]], int, int, int, int]:
+) -> tuple[str, list[tuple[str, int]], int, int, int, int, int]:
     safe_inner = sanitize_ident(inner_module, context="inner_module")
-    bdw = _require_int(bus_data_width, "bus_data_width")
-    if bdw not in _SUPPORTED_BUS_WIDTHS:
-        raise ValueError("bus_data_width must be one of 8, 16, 32, or 64")
+    stride = register_stride(bus_data_width)
+    bdw = int(bus_data_width)
     ndw = _require_int(data_width, "data_width")
     if not 1 <= ndw <= bdw:
         raise ValueError(f"data_width must be between 1 and bus_data_width ({bdw})")
@@ -55,12 +76,13 @@ def _validate_wrapper_args(
             )
         validated_params.append((pname, pwidth))
     adw = _require_int(addr_width, "addr_width")
-    min_bytes = (3 + len(validated_params)) * 4
+    min_bytes = (3 + len(validated_params)) * stride
     if adw < 1 or (1 << adw) < min_bytes:
         raise ValueError(
             f"addr_width={adw} cannot address {min_bytes} register bytes; increase addr_width"
         )
-    return safe_inner, validated_params, ndw, adw, bdw, adw - 2
+    shift = stride.bit_length() - 1
+    return safe_inner, validated_params, ndw, adw, bdw, adw - shift, shift
 
 
 def _slice_reg(reg_name: str, width: int, bus_data_width: int) -> str:
@@ -98,11 +120,12 @@ def render_axi_lite_wrapper(
     str
         Complete SystemVerilog wrapper source.
     """
-    safe_inner, param_items, ndw, adw, bdw, wadw = _validate_wrapper_args(
+    safe_inner, param_items, ndw, adw, bdw, wadw, shift = _validate_wrapper_args(
         inner_module, params, data_width, addr_width, bus_data_width
     )
+    stride = 1 << shift
     param_regs = [
-        f"    reg [DATA_WIDTH-1:0] reg_{p.lower()}; // 0x{(3 + idx) * 4:02X}: {p} ({pw}-bit)"
+        f"    reg [DATA_WIDTH-1:0] reg_{p.lower()}; // 0x{(3 + idx) * stride:02X}: {p} ({pw}-bit)"
         for idx, (p, pw) in enumerate(param_items)
     ]
     param_ports = [
@@ -195,10 +218,11 @@ def render_axi_lite_wrapper(
         "        end",
         "    endfunction",
         "",
-        "    wire _unused_addr_lsbs = &{1'b0, S_AXI_AWADDR[1:0], S_AXI_ARADDR[1:0], 1'b0};",
+        f"    wire _unused_addr_lsbs = &{{1'b0, S_AXI_AWADDR[{shift - 1}:0], "
+        f"S_AXI_ARADDR[{shift - 1}:0], 1'b0}};",
         "",
         "    reg                    aw_captured;",
-        "    reg [ADDR_WIDTH-3:0]   aw_word_reg;",
+        f"    reg [ADDR_WIDTH-{shift + 1}:0]   aw_word_reg;",
         "    reg                    w_captured;",
         "    reg [DATA_WIDTH-1:0]   w_data_reg;",
         "    reg [DATA_WIDTH/8-1:0] w_strb_reg;",
@@ -208,8 +232,8 @@ def render_axi_lite_wrapper(
         "    wire aw_can_accept = !S_AXI_AWREADY && !aw_captured && !S_AXI_BVALID;",
         "    wire w_can_accept  = !S_AXI_WREADY  && !w_captured  && !S_AXI_BVALID;",
         "    wire wr_commit = (aw_hs && w_hs) || (aw_hs && w_captured) || (w_hs && aw_captured);",
-        "    wire [ADDR_WIDTH-3:0]   aw_word_in  = S_AXI_AWADDR[ADDR_WIDTH-1:2];",
-        "    wire [ADDR_WIDTH-3:0]   eff_aw_word = aw_hs ? aw_word_in : aw_word_reg;",
+        f"    wire [ADDR_WIDTH-{shift + 1}:0]   aw_word_in  = S_AXI_AWADDR[ADDR_WIDTH-1:{shift}];",
+        f"    wire [ADDR_WIDTH-{shift + 1}:0]   eff_aw_word = aw_hs ? aw_word_in : aw_word_reg;",
         "    wire [DATA_WIDTH-1:0]   eff_w_data  = w_hs  ? S_AXI_WDATA  : w_data_reg;",
         "    wire [DATA_WIDTH/8-1:0] eff_w_strb  = w_hs  ? S_AXI_WSTRB  : w_strb_reg;",
         "",
@@ -220,7 +244,7 @@ def render_axi_lite_wrapper(
         "            S_AXI_BVALID  <= 1'b0;",
         "            S_AXI_BRESP   <= 2'b00;",
         "            aw_captured   <= 1'b0;",
-        "            aw_word_reg   <= {(ADDR_WIDTH-2){1'b0}};",
+        f"            aw_word_reg   <= {{(ADDR_WIDTH-{shift}){{1'b0}}}};",
         "            w_captured    <= 1'b0;",
         "            w_data_reg    <= {DATA_WIDTH{1'b0}};",
         "            w_strb_reg    <= {(DATA_WIDTH/8){1'b0}};",
@@ -232,7 +256,7 @@ def render_axi_lite_wrapper(
         "            S_AXI_WREADY  <= S_AXI_WVALID  && w_can_accept;",
         "            if (aw_hs && !wr_commit) begin",
         "                aw_captured <= 1'b1;",
-        "                aw_word_reg <= S_AXI_AWADDR[ADDR_WIDTH-1:2];",
+        f"                aw_word_reg <= S_AXI_AWADDR[ADDR_WIDTH-1:{shift}];",
         "            end",
         "            if (w_hs && !wr_commit) begin",
         "                w_captured <= 1'b1;",
@@ -271,7 +295,7 @@ def render_axi_lite_wrapper(
         "            if (ar_hs) begin",
         "                S_AXI_RVALID <= 1'b1;",
         "                S_AXI_RRESP  <= 2'b00;",
-        "                case (S_AXI_ARADDR[ADDR_WIDTH-1:2])",
+        f"                case (S_AXI_ARADDR[ADDR_WIDTH-1:{shift}])",
         f"                    {wadw}'d0: S_AXI_RDATA <= reg_ctrl;",
         f"                    {wadw}'d1: S_AXI_RDATA <= reg_i_t;",
         f"                    {wadw}'d2: S_AXI_RDATA <= reg_spike_count;",
@@ -317,7 +341,7 @@ def render_wishbone_wrapper(
     str
         Complete SystemVerilog wrapper source.
     """
-    safe_inner, param_items, ndw, adw, bdw, wadw = _validate_wrapper_args(
+    safe_inner, param_items, ndw, adw, bdw, wadw, shift = _validate_wrapper_args(
         inner_module, params, data_width, addr_width, bus_data_width
     )
     param_regs = [f"    reg [DATA_WIDTH-1:0] reg_{p.lower()};" for p, _ in param_items]
@@ -385,7 +409,7 @@ def render_wishbone_wrapper(
         "            reg_spike_count <= reg_spike_count + {{(DATA_WIDTH-1){1'b0}}, 1'b1};",
         "    end",
         "",
-        "    wire _unused_addr_lsbs = &{1'b0, wb_adr_i[1:0], 1'b0};",
+        f"    wire _unused_addr_lsbs = &{{1'b0, wb_adr_i[{shift - 1}:0], 1'b0}};",
         "    wire wb_access = wb_stb_i && wb_cyc_i;",
         "",
         "    always @(posedge wb_clk_i) begin",
@@ -400,14 +424,14 @@ def render_wishbone_wrapper(
         "            if (wb_access && !wb_ack_o) begin",
         "                wb_ack_o <= 1'b1;",
         "                if (wb_we_i) begin",
-        "                    case (wb_adr_i[ADDR_WIDTH-1:2])",
+        f"                    case (wb_adr_i[ADDR_WIDTH-1:{shift}])",
         f"                        {wadw}'d0: reg_ctrl <= wb_dat_i;",
         f"                        {wadw}'d1: reg_i_t <= wb_dat_i;",
         *param_writes,
         "                        default: ;",
         "                    endcase",
         "                end else begin",
-        "                    case (wb_adr_i[ADDR_WIDTH-1:2])",
+        f"                    case (wb_adr_i[ADDR_WIDTH-1:{shift}])",
         f"                        {wadw}'d0: wb_dat_o <= reg_ctrl;",
         f"                        {wadw}'d1: wb_dat_o <= reg_i_t;",
         f"                        {wadw}'d2: wb_dat_o <= reg_spike_count;",

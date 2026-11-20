@@ -169,16 +169,21 @@ sticky-latch contracts for formal or simulation audit runs.
 `generate_live_parameter_bank(...)`. The implementation is deliberately
 one-way and responsibility-bounded:
 
-- `_bus_wrappers.py` renders the AXI4-Lite and Wishbone B4 neuron wrappers
-  (connecting `.spike_out` to `irq_spike` and `reg_spike_count`, decoding
-  `addr[ADDR_WIDTH-1:2]` so every supported 8/16/32/64-bit bus width matches
-  `generate_register_map(...)`'s 4-byte register stride while ignoring
-  unaligned low address bits `addr[1:0]` within each 4-byte slot, slicing each
-  parameter register to its declared bit width, latching independent AXI4-Lite
+- `_bus_wrappers.py` renders the AXI4-Lite and Wishbone B4 neuron wrappers.
+  They connect `.spike_out` to `irq_spike` and `reg_spike_count`, slice each
+  parameter register to its declared bit width, latch independent AXI4-Lite
   `AW`/`W` handshakes with byte-lane `S_AXI_WSTRB` writes and `BREADY`/`RREADY`
-  backpressure stability while the Wishbone B4 wrapper omits `wb_sel_i` and
-  commits whole-word writes, and rejecting invalid identifiers, collisions, or
-  out-of-range widths fail-closed);
+  backpressure stability (the Wishbone B4 wrapper omits `wb_sel_i` and
+  commits whole-word writes), and reject invalid identifiers, collisions or
+  out-of-range widths fail-closed. Registers sit
+  `register_stride(bus_data_width)` bytes apart: 4 on 8-, 16- and 32-bit
+  buses, decoding `addr[ADDR_WIDTH-1:2]`, and 8 on a 64-bit bus, decoding
+  `addr[ADDR_WIDTH-1:3]`. So every register owns a whole bus word and a
+  master carries its data from byte lane 0; at a 4-byte stride on a 64-bit
+  bus the register at `0x04` would sit on lanes `[63:32]`, which the wrapper
+  never reads. The low address bits within a slot are ignored, and
+  `generate_register_map(..., bus_data_width=...)` publishes the same
+  addresses;
 - `_live_parameter_bank.py` renders the validated AXI4-Lite live-control core;
 - `_pcie_live_parameter_bank.py` adapts that core to the decoded PCIe MMIO
   register window; and

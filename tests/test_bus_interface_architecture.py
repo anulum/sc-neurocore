@@ -50,7 +50,8 @@ _EXPECTED_SIGNATURES = {
         "base_address: 'int' = 0) -> 'str'"
     ),
     "generate_register_map": (
-        "(params: 'dict[str, int]', *, base_address: 'int' = 0) -> 'dict[str, int]'"
+        "(params: 'dict[str, int]', *, base_address: 'int' = 0, "
+        "bus_data_width: 'int' = 32) -> 'dict[str, int]'"
     ),
     "generate_live_parameter_bank": (
         "(spec: 'MMIOUpdateSpec', *, module_name: 'str' = "

@@ -45,7 +45,10 @@ wb = generate_bus_wrapper(
 
 ### Register Map
 
-All wrappers share the same register layout:
+All wrappers share the same register layout. The offsets below are for 8-,
+16- and 32-bit buses. On a 64-bit bus each register owns a whole 8-byte bus
+word, so the offsets double (`0x00`, `0x08`, `0x10`, ...). Pass the same
+`bus_data_width` to `generate_register_map` as to the wrapper.
 
 | Offset | Register | Access | Description |
 |:------:|----------|:------:|-------------|
@@ -64,6 +67,13 @@ rmap = generate_register_map(
     base_address=0x4000_0000,
 )
 # → {'CTRL': 0x40000000, 'I_T': 0x40000004, 'SPIKE_COUNT': 0x40000008, ...}
+
+rmap64 = generate_register_map(
+    {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16},
+    base_address=0x4000_0000,
+    bus_data_width=64,
+)
+# → {'CTRL': 0x40000000, 'I_T': 0x40000008, 'SPIKE_COUNT': 0x40000010, ...}
 ```
 
 ### Features

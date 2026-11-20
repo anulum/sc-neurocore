@@ -14,7 +14,13 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from tests.bus_interface_wrappers_support import LIF_PARAMS, generate_bus_wrapper
+import pytest
+
+from tests.bus_interface_wrappers_support import (
+    LIF_PARAMS,
+    generate_bus_wrapper,
+    generate_register_map,
+)
 
 
 _MIXED_NEURON_SV = """\
@@ -341,3 +347,132 @@ endmodule
         )
         assert run.returncode == 0, f"{run.stdout}\n{run.stderr}"
         assert "AXI_WRAPPER_PASS" in run.stdout
+
+
+_LANE_PROBE_SV = """\
+`timescale 1ns/1ps
+module sc_lane_probe (
+    input  wire        clk,
+    input  wire        rst,
+    input  wire        en,
+    input  wire [15:0] I_t,
+    input  wire [7:0]  P_GAIN,
+    output reg         spike_out
+);
+    always @(posedge clk) begin
+        if (rst) spike_out <= 1'b0;
+        else spike_out <= en && I_t == 16'h0120 && P_GAIN == 8'h5A;
+    end
+endmodule
+"""
+
+
+@pytest.mark.parametrize("bdw", [32, 64])
+def test_a_lane_placing_master_reaches_the_neuron(tmp_path: Path, bdw: int) -> None:
+    """An AXI master that puts data on the byte lanes its address selects drives the neuron.
+
+    A 32-bit register write on a 64-bit bus travels on lanes ``addr % 8`` upward with the
+    matching ``WSTRB``. At the published addresses every register starts on lane 0, so the
+    neuron receives ``I_t`` and the parameter, spikes, and each value reads back from the
+    lanes its address selects.
+    """
+    assert shutil.which("iverilog") is not None
+    nbytes = bdw // 8
+    rmap = generate_register_map({"P_GAIN": 8}, bus_data_width=bdw)
+    wrapper_sv = generate_bus_wrapper(
+        "sc_lane_probe",
+        {"P_GAIN": 8},
+        bus="axi_lite",
+        data_width=16,
+        addr_width=8,
+        bus_data_width=bdw,
+    )
+    neuron_path = tmp_path / "sc_lane_probe.sv"
+    dut_path = tmp_path / "sc_lane_probe_axi_lite.sv"
+    neuron_path.write_text(_LANE_PROBE_SV, encoding="utf-8")
+    dut_path.write_text(wrapper_sv, encoding="utf-8")
+    tb = f"""\
+`timescale 1ns/1ps
+module tb_lanes;
+    reg clk = 0;
+    always #2 clk = ~clk;
+    reg rstn = 0;
+    reg [7:0] awaddr = 0, araddr = 0;
+    reg awvalid = 0, wvalid = 0, bready = 1, arvalid = 0, rready = 1;
+    reg [{bdw - 1}:0] wdata = 0;
+    reg [{nbytes - 1}:0] wstrb = 0;
+    wire awready, wready, bvalid, arready, rvalid, irq_spike;
+    wire [1:0] bresp, rresp;
+    wire [{bdw - 1}:0] rdata;
+    sc_lane_probe_axi_lite dut (
+        .S_AXI_ACLK(clk), .S_AXI_ARESETN(rstn),
+        .S_AXI_AWADDR(awaddr), .S_AXI_AWVALID(awvalid), .S_AXI_AWREADY(awready),
+        .S_AXI_WDATA(wdata), .S_AXI_WSTRB(wstrb), .S_AXI_WVALID(wvalid), .S_AXI_WREADY(wready),
+        .S_AXI_BRESP(bresp), .S_AXI_BVALID(bvalid), .S_AXI_BREADY(bready),
+        .S_AXI_ARADDR(araddr), .S_AXI_ARVALID(arvalid), .S_AXI_ARREADY(arready),
+        .S_AXI_RDATA(rdata), .S_AXI_RRESP(rresp), .S_AXI_RVALID(rvalid), .S_AXI_RREADY(rready),
+        .irq_spike(irq_spike)
+    );
+    // A 32-bit access: data and strobes start at the lane the address selects.
+    task automatic write32(input [7:0] a, input [31:0] v);
+        integer lane;
+        begin
+            lane = a % {nbytes};
+            @(posedge clk);
+            awaddr <= a; awvalid <= 1;
+            wdata <= {{{{({bdw}-32){{1'b0}}}}, v}} << (8 * lane);
+            wstrb <= {{{{({nbytes}-4){{1'b0}}}}, 4'hF}} << lane;
+            wvalid <= 1;
+            while (!(awvalid && awready)) @(posedge clk);
+            awvalid <= 0; wvalid <= 0;
+            while (!bvalid) @(posedge clk);
+            @(posedge clk);
+        end
+    endtask
+    task automatic read32(input [7:0] a, output [31:0] v);
+        integer lane;
+        begin
+            lane = a % {nbytes};
+            @(posedge clk); araddr <= a; arvalid <= 1;
+            while (!(arvalid && arready)) @(posedge clk);
+            arvalid <= 0;
+            while (!rvalid) @(posedge clk);
+            v = rdata >> (8 * lane);
+            @(posedge clk);
+        end
+    endtask
+    reg [31:0] rd;
+    integer spikes = 0;
+    always @(posedge clk) if (rstn && irq_spike === 1'b1) spikes <= spikes + 1;
+    initial begin
+        #10 rstn = 1;
+        write32(8'd{rmap["I_T"]}, 32'h0000_0120);
+        write32(8'd{rmap["P_GAIN"]}, 32'h0000_005A);
+        read32(8'd{rmap["I_T"]}, rd);
+        if (rd !== 32'h0000_0120) $fatal(1, "I_T read back %h from its lanes", rd);
+        read32(8'd{rmap["P_GAIN"]}, rd);
+        if (rd !== 32'h0000_005A) $fatal(1, "P_GAIN read back %h from its lanes", rd);
+        write32(8'd{rmap["CTRL"]}, 32'h0000_0001);
+        repeat (4) @(posedge clk);
+        if (spikes < 2) $fatal(1, "the neuron never saw I_t and P_GAIN: %0d spikes", spikes);
+        $display("LANE_PASS");
+        $finish;
+    end
+endmodule
+"""
+    tb_path = tmp_path / "tb_lanes.sv"
+    vvp_path = tmp_path / "sim_lanes.vvp"
+    tb_path.write_text(tb, encoding="utf-8")
+    comp = subprocess.run(
+        ["iverilog", "-g2012", "-o", str(vvp_path), str(neuron_path), str(dut_path), str(tb_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    assert comp.returncode == 0, comp.stderr
+    run = subprocess.run(
+        ["vvp", "-n", str(vvp_path)], capture_output=True, text=True, check=False, timeout=30
+    )
+    assert run.returncode == 0, f"{run.stdout}\n{run.stderr}"
+    assert "LANE_PASS" in run.stdout
