@@ -382,7 +382,7 @@ never accepted as command-line arguments.
 
 `sc-neurocore codec` discovers and operates the installed codec catalogue.
 The [recording codec guide](../guides/spike_codec_cli.md) gives commands for
-NumPy arrays, PCM16 recordings and event CSV files.
+NumPy arrays, PCM16 recordings, event CSV files and legacy BCI RLE recordings.
 
 Record which event-dataset files a study used, check a directory against that
 record, and divide a published split so that no speaker or recording is on

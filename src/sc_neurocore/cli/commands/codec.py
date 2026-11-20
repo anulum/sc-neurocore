@@ -21,49 +21,37 @@ from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
 from time import perf_counter_ns
-from typing import TYPE_CHECKING
 
 from sc_neurocore.spike_codec import describe_codec, list_codec_descriptors, probe_codec
 
-from ..codec.file import (
-    MAX_FRAME_VALUES,
-    CodecFileHeader,
-    atomic_codec_output,
-    iter_codec_packets,
-    read_codec_header,
-    write_codec_file,
+from ..codec.file import read_codec_header
+from ..codec.recording import (
+    RecordingOptions,
+    decode_recording,
+    encode_recording,
+    open_recording_source,
+    recording_header,
 )
-
-if TYPE_CHECKING:
-    from ..codec.samples import SampleInput
 
 _BACKENDS = ("auto", "python", "rust")
 
 
-def _layout(args: argparse.Namespace, samples: SampleInput) -> CodecFileHeader:
-    descriptor = describe_codec(args.codec)
-    variant = descriptor.variant(args.variant).name
-    if args.input.suffix.lower() == ".csv" and descriptor.input_kind != "binary_raster":
-        raise ValueError("event CSV can only be encoded by a raster codec")
-    frame_rows = (
-        min(4096, MAX_FRAME_VALUES // max(samples.channels, 1))
-        if args.frame_rows is None
-        else args.frame_rows
-    )
+def _source_options(args: argparse.Namespace) -> RecordingOptions:
     options: dict[str, str | int] = {}
     for item in args.option:
         name, equals, value = item.partition("=")
         if not equals or not name or not value or name in options:
             raise ValueError("options must be unique NAME=VALUE pairs")
         options[name] = value if name == "entropy" else int(value)
-    return CodecFileHeader(
-        descriptor.name,
-        variant,
-        samples.rows,
-        samples.channels,
-        frame_rows,
-        samples.sample_rate_hz,
-        options,
+    return RecordingOptions(
+        codec=args.codec,
+        variant=args.variant,
+        frame_rows=args.frame_rows,
+        sample_rate_hz=args.sample_rate,
+        rows=args.rows,
+        channels=args.channels,
+        codec_options=options,
+        legacy_rle=args.legacy_rle,
     )
 
 
@@ -85,74 +73,41 @@ def _inspect(args: argparse.Namespace) -> dict[str, object]:
 
 
 def _encode(args: argparse.Namespace) -> dict[str, object]:
-    from ..codec.routes import make_file_encoder
-    from ..codec.samples import open_sample_input
-
-    with open_sample_input(
-        args.input, args.sample_rate, event_rows=args.rows, event_channels=args.channels
-    ) as samples:
-        header = _layout(args, samples)
-        encoder = make_file_encoder(header, args.backend)
-        windows = samples.windows(header.frame_sizes())
-        packets = (encoder.encode(window) for window in windows)
-        with (
-            atomic_codec_output(args.output, args.input, args.force) as pending,
-            pending.open("xb") as stream,
-        ):
-            digest = write_codec_file(stream, header, packets)
-            size = stream.tell()
+    result = encode_recording(
+        args.input, args.output, _source_options(args), backend=args.backend, overwrite=args.force
+    )
     return {
-        "file": asdict(header),
-        "backend": encoder.backend,
-        "native_scope": encoder.native_scope,
-        "bytes": size,
-        "content_sha256": digest,
+        "file": asdict(result.header),
+        "backend": result.backend,
+        "native_scope": result.native_scope,
+        "bytes": result.size_bytes,
+        "content_sha256": result.content_sha256,
     }
 
 
 def _read(args: argparse.Namespace) -> dict[str, object]:
-    from ..codec.routes import decoded_fields, make_file_decoder
-    from ..codec.samples import write_decoded_samples
-
-    with args.input.open("rb") as source:
-        header, prefix = read_codec_header(source)
-        decoder = make_file_decoder(header, args.backend)
-        windows = (
-            decoder.decode(packet, rows)
-            for rows, packet in iter_codec_packets(source, header, prefix)
+    output: Path | None = args.output
+    if output is None:
+        result = decode_recording(args.input, backend=args.backend)
+    else:
+        result = decode_recording(
+            args.input, output, backend=args.backend, field_name=args.field, overwrite=args.force
         )
-        fields = decoded_fields(header)
-        output: Path | None = args.output
-        if output is None:
-            for _ in windows:
-                pass
-        else:
-            if args.field != "all":
-                fields = tuple(field for field in fields if field.name == args.field)
-                if not fields:
-                    raise ValueError(f"decoded file has no {args.field!r} field")
-            suffix = output.suffix.lower()
-            if suffix not in (".npy", ".npz") or (suffix == ".npy" and len(fields) != 1):
-                raise ValueError("use .npz for multiple fields or select one field for .npy output")
-            with atomic_codec_output(output, args.input, args.force) as pending:
-                write_decoded_samples(pending, fields, windows, archive=suffix == ".npz")
     return {
-        "file": asdict(header),
-        "backend": decoder.backend,
-        "native_scope": decoder.native_scope,
-        "fields": [asdict(field) for field in fields],
+        "file": asdict(result.header),
+        "backend": result.backend,
+        "native_scope": result.native_scope,
+        "fields": [asdict(field) for field in result.fields],
         "verified": True,
     }
 
 
 def _measure(args: argparse.Namespace, backend: str) -> dict[str, object]:
     from ..codec.routes import make_file_decoder, make_file_encoder
-    from ..codec.samples import open_sample_input
 
-    with open_sample_input(
-        args.input, args.sample_rate, event_rows=args.rows, event_channels=args.channels
-    ) as samples:
-        header = _layout(args, samples)
+    options = _source_options(args)
+    with open_recording_source(args.input, options) as samples:
+        header = recording_header(args.input, samples, options)
         encoder = make_file_encoder(header, backend)
         decoder = make_file_decoder(header, "auto" if backend == "gpu" else backend)
         payload_hash, output_hash = hashlib.sha256(), hashlib.sha256()
@@ -229,13 +184,16 @@ def _report(
 
 
 def _add_source(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("input", type=Path, help="numeric .npy, PCM16 .wav or event .csv input")
+    parser.add_argument(
+        "input", type=Path, help="numeric .npy, PCM16 .wav, event .csv or legacy RLE"
+    )
     parser.add_argument("--codec", required=True, help="catalogue codec name")
     parser.add_argument("--variant", help="catalogue variant (defaults to the codec's default)")
     parser.add_argument("--frame-rows", type=int, help="maximum source rows per packet")
     parser.add_argument("--sample-rate", type=int, help="sample rate in Hz for an NPY recording")
-    parser.add_argument("--rows", type=int, help="total sample rows for event CSV input")
-    parser.add_argument("--channels", type=int, help="total channels for event CSV input")
+    parser.add_argument("--rows", type=int, help="total sample rows for event CSV or legacy RLE")
+    parser.add_argument("--channels", type=int, help="total channels for event CSV or legacy RLE")
+    parser.add_argument("--legacy-rle", action="store_true", help="import legacy BCI spike bytes")
     parser.add_argument(
         "--option",
         action="append",

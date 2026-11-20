@@ -94,6 +94,9 @@ The JSON captures both sides of the comparison, the separate encode and
 decode times and the packet and output digests. Use the same command for
 each variant shown by `sc-neurocore codec discover`. The committed
 comparison identifies the measured host and exact installed wheels.
+To compare a legacy BCI recording, add `--legacy-rle --rows ROWS --channels
+CHANNELS` with its original dimensions. The legacy decoder runs outside
+the timed codec calls.
 
 ### Installed codec catalogue
 

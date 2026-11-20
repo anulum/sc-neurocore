@@ -71,4 +71,9 @@ Operational boundaries:
 
 ## Studio
 
+Recordings saved from the legacy `SpikeCodec.encode` can be
+[migrated with the codec console](../guides/spike_codec_cli.md#encode-verify-and-decode).
+Supply the original time-by-channel geometry because the legacy format
+stores a flattened spike count.
+
 ::: sc_neurocore.bci_studio.bci_studio

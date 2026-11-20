@@ -82,6 +82,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Import legacy BCI spike recordings through the codec console. Supply the
+  original time and channel geometry and convert validated RLE runs to
+  framed raster packets for verification and NumPy export.
+
 - Add installed recording commands under `sc-neurocore codec` to discover
   and inspect codecs, encode NPY, PCM16 WAV or event CSV, verify packet files,
   and decode to NumPy arrays. The benchmark command compares installed

@@ -1395,13 +1395,13 @@ identical packet bytes and decoded outputs across the two backends.
 | Workload | Python median (ms) | Rust median (ms) | Encoded bytes |
 | --- | ---: | ---: | ---: |
 | ISI lossless, automatic entropy | 0.183 | 0.052 | 121 |
-| Grouped delta lossless | 0.359 | 0.080 | 257 |
+| Grouped delta lossless | 0.229 / 0.300 | 0.055 / 0.030 | 277 |
 | World-model predictive lossless | 34.967 | 28.008 | 136 |
 | Independent spike raster frames | 0.746 | 0.169 | 542 |
-| Address events | 0.271 | 0.039 | 563 |
+| Address events | 0.160 / 0.219 | 0.032 / 0.009 | 563 |
 | WFC2 full waveform and spikes | 65.638 | 1.407 | 3,613 |
-| Lossless waveform stream | 2625.132 | 29.325 | 152,141 |
-| Spike events and band power, sample timing | 165.501 | 1.881 | 2,686 |
+| Lossless waveform stream | 1,596.549 / 1,494.487 | 11.240 / 8.404 | 129,666 |
+| Spike events and band power, sample timing | 163.018 / 3.896 | 1.265 / 0.190 | 495 |
 
 The [raw installed-wheel evidence](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/installed_codec_backends.json)
 contains all 28 workloads, every timing and each packet digest. Separate
@@ -1425,14 +1425,18 @@ outside the timed sections.
 
 | Recording codec | Python encode / decode (ms) | Rust encode / decode (ms) | Payload bytes |
 | --- | ---: | ---: | ---: |
-| Address events | 0.122 / 0.202 | 0.019 / 0.005 | 563 |
-| Grouped delta lossless | 0.182 / 0.235 | 0.044 / 0.026 | 277 |
-| ISI lossless | 0.086 / 0.107 | 0.027 / 0.010 | 121 |
-| Lossless waveform stream | 1,293.818 / 1,215.585 | 10.601 / 7.791 | 129,666 |
-| World-model predictive | 17.672 / 16.542 | 13.810 / 13.202 | 136 |
-| Spike events and band power, sample timing | 142.951 / 3.029 | 1.090 / 0.144 | 495 |
-| SSCF framed raster | 0.361 / 1.241 | 0.029 / 0.008 | 678 |
-| WFC2 full | 55.452 / 12.568 | 3.143 / 0.703 | 6,957 |
+| Address events | 0.160 / 0.219 | 0.032 / 0.009 | 563 |
+| Grouped delta lossless | 0.229 / 0.300 | 0.055 / 0.030 | 277 |
+| ISI lossless | 0.108 / 0.109 | 0.037 / 0.013 | 121 |
+| Lossless waveform stream | 1,596.549 / 1,494.487 | 11.240 / 8.404 | 129,666 |
+| World-model predictive | 26.336 / 24.613 | 20.266 / 22.316 | 136 |
+| Spike events and band power, sample timing | 163.018 / 3.896 | 1.265 / 0.190 | 495 |
+| SSCF framed raster | 0.405 / 1.593 | 0.046 / 0.010 | 678 |
+| WFC2 full | 67.308 / 14.739 | 4.189 / 0.793 | 6,957 |
+
+The same run also measured ten raster variants from the equivalent legacy BCI
+RLE bytes. Every variant produced the same packet and decoded hashes as its
+NPY input. The RLE run reader is outside the timed codec calls.
 
 [Raw command-line benchmark results](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/codec_cli_backends.json)
 retain all runs and identify the exact wheels, host, inputs and source hashes.

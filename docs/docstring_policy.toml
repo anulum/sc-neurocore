@@ -14,7 +14,23 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2281
+expected_file_count = 2285
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/recording.py"
+rationale = "Document shared recording operations, atomic export, and progress callbacks."
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/legacy_rle.py"
+rationale = "Document explicit shape and bounded migration of legacy BCI spike bytes."
+
+[[file]]
+path = "tests/test_cli_codec_legacy_rle.py"
+rationale = "Exercise legacy telemetry migration and data validation through the console."
+
+[[file]]
+path = "tests/test_codec_recording.py"
+rationale = "Verify shared recording operations and cancellation against actual files."
 
 [[file]]
 path = "src/sc_neurocore/cli/commands/codec.py"

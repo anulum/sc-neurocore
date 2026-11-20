@@ -7830,6 +7830,121 @@ Stage a complete sibling file and publish atomically after successful work.
 
 ---
 
+## Module `cli.codec.legacy_rle`
+
+### Function `open_legacy_raster(path, rows, channels, sample_rate_hz)`
+Open binary BCI telemetry with explicitly supplied time-by-channel geometry.
+
+Parameters
+----------
+path
+    File written by the legacy one-dimensional BCI spike codec.
+rows, channels
+    Positive time rows and channel count. The old format stores only
+    their product. A single channel mask has one time row.
+sample_rate_hz
+    Optional acquisition rate in Hz supplied by the caller.
+
+Yields
+------
+SampleInput
+    Binary raster reader with forward-only bounded windows.
+
+Raises
+------
+ValueError
+    If the geometry, encoded length, runs or end of input disagree.
+    Empty legacy buffers cannot be imported as a non-empty recording.
+
+---
+
+## Module `cli.codec.recording`
+
+### Class `RecordingOptions`
+Select a codec and describe acquisition geometry.
+
+Attributes
+----------
+codec, variant
+    Catalogue name and optional named variant.
+frame_rows
+    Maximum number of source rows per packet. The default is bounded by
+    the source channel count.
+sample_rate_hz
+    Acquisition rate in Hz. A WAV header supplies its own rate.
+rows, channels
+    Total declared geometry for sorted event CSV or legacy BCI RLE.
+codec_options
+    Settings to store in the packet file and validate against the codec.
+legacy_rle
+    Interpret the source as explicitly selected legacy BCI raster data.
+
+
+### Class `EncodedRecording`
+Describe a published recording, including its framed byte count and digest.
+
+
+### Class `DecodedRecording`
+Describe verified fields returned by the decoder or written to an export.
+
+
+### Function `recording_header(path, samples, options)`
+Combine the source shape and codec options into bounded recording metadata.
+
+### Function `open_recording_source(path, options)`
+Open the declared recording format with its own geometry rules.
+
+### Function `encode_recording(source, destination, options, *, backend, overwrite, progress)`
+Encode bounded source windows and publish the complete packet file.
+
+Parameters
+----------
+source, destination
+    Input acquisition and distinct output file on the local filesystem.
+options
+    Codec, variant and source geometry.
+backend
+    Runtime backend selector supported by the selected codec and direction.
+overwrite
+    Permit atomic replacement of an existing destination after success.
+progress
+    Optional callback with processed and total input rows, called after
+    each window is encoded. Raising abandons the pending destination.
+
+Returns
+-------
+EncodedRecording
+    Metadata and content digest of the published file.
+
+### Function `decode_recording(source, destination, *, backend, field_name, overwrite, progress, preview)`
+Verify every packet and optionally export decoded fields atomically.
+
+Parameters
+----------
+source, destination
+    Framed packet file and optional NPY or NPZ output. Omit the output
+    to verify the file without writing an export.
+backend
+    Runtime backend selector for decoding.
+field_name
+    Exported field or "all" for every available field.
+overwrite
+    Permit atomic replacement of an existing destination after success.
+progress
+    Optional callback with processed and total input rows.
+preview
+    Optional callback with the input row offset and read-only views of
+    the decoded fields. Collect only the preview needed. The file is
+    unverified until this function returns. Raising in either callback
+    abandons the export.
+
+Returns
+-------
+DecodedRecording
+    Verified recording metadata and the selected fields.
+
+---
+
 ## Module `cli.codec.routes`
 
 ### Class `FileEncoder`

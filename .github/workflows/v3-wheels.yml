@@ -259,8 +259,16 @@ jobs:
           )
           assert len(json.loads(discovery.stdout)["codecs"]) == 8
           sys.path.insert(0, str(root))
-          tests = sorted((root / "tests").glob("test_cli_codec*.py"))
-          assert len(tests) == 4
+          tests = [
+              root / "tests" / name for name in (
+                  "test_cli_codec.py",
+                  "test_cli_codec_file.py",
+                  "test_cli_codec_legacy_rle.py",
+                  "test_cli_codec_routes.py",
+                  "test_cli_codec_samples.py",
+                  "test_codec_recording.py",
+              )
+          ]
           raise SystemExit(pytest.main([
               "-q", "-p", "no:cacheprovider", "-o", "pythonpath=",
               "--confcutdir", str(root / "tests"), *(str(path) for path in tests)

@@ -53,6 +53,22 @@ sc-neurocore codec encode events.csv events.sc-codec --codec aer --rows 10000 --
 sc-neurocore codec decode events.sc-codec raster.npy --field raster
 ```
 
+Legacy BCI `SpikeCodec.encode` bytes can be migrated by selecting
+`--legacy-rle` and supplying the time-by-channel shape. The old format stores
+only the flattened length. Use one row for a single BCI channel mask.
+The importer checks that every run matches the supplied shape and writes
+a framed recording without changing the source.
+
+```bash
+sc-neurocore codec encode telemetry.bin recording.sc-codec --codec isi --legacy-rle --rows 1 --channels 1024
+sc-neurocore codec decode recording.sc-codec restored.npy --field raster
+```
+
+Python applications can use `sc_neurocore.cli.codec.recording` to encode
+and verify the same files. The recording functions support per-window
+progress and read-only preview callbacks. A preview becomes verified
+when the complete decode operation succeeds.
+
 Waveform codecs also accept uncompressed signed 16-bit PCM WAV. Use
 `--sample-rate` for NPY input to the spike-event codec. WAV supplies its
 own sample rate. Encode a continuous lossless recording or extract events
