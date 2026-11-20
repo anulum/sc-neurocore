@@ -20,8 +20,8 @@ Markers, read from the original's syntax tree (nothing is imported or executed):
     It imports a web, interface, command-line, network, process, storage or plotting library (:data:`APP_IMPORTS`),
     or imports ``argparse`` and has an ``if __name__ == "__main__"`` block.
 ``numeric``
-    Inside a function it calls an attribute of ``numpy``, ``scipy``, ``torch``, ``jax`` or ``numba`` through its
-    imported name; or it calls into ``math``, ``cmath``, ``random`` or ``statistics`` and has at least
+    Inside a function it calls into ``numpy``, ``scipy``, ``torch``, ``jax`` or ``numba``, through the imported
+    module (``np.exp(x)``) or a name imported from it (``from numpy import exp``; ``exp(x)``); or it calls into ``math``, ``cmath``, ``random`` or ``statistics`` and has at least
     :data:`PURE_OPERATORS` multiplicative operators (``* / ** @``) inside functions; or it has at least
     :data:`OPERATORS` of them.
 
@@ -54,6 +54,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -117,7 +118,423 @@ class Resolution(TypedDict):
 
 
 #: Readings of modules the rule leaves unclear, by repository path.
-READINGS: dict[str, Reading] = {}
+READINGS: dict[str, Reading] = {
+    "src/sc_neurocore/adapters/base.py": {
+        "class": "application",
+        "reason": "an abstract adapter interface with no computation of its own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l10_fire.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l11_noos.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l12_gaian.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l14_trans.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l15_cons.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l16_meta.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l1_quantum.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l3_gen.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l5_org.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/adapters/holonomic/l8_cosm.py": {
+        "class": "compute",
+        "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/analysis/spike_stats/basic.py": {
+        "class": "application",
+        "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/analysis/spike_stats/spectral.py": {
+        "class": "application",
+        "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/audio/user_profile.py": {
+        "class": "application",
+        "reason": "user preference and chronotype records",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/benchmarks/tasks.py": {
+        "class": "application",
+        "reason": "benchmark task definitions",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/bridges/aer_router.py": {
+        "class": "application",
+        "reason": "a UDP spike router with threads and packet framing (network I/O)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/chip_compiler/chip_spec.py": {
+        "class": "application",
+        "reason": "chip specification records loaded from JSON",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/comm/aer_udp.py": {
+        "class": "application",
+        "reason": "an AER-over-UDP sender and receiver; numpy only frames packets",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/compiler/ir_type_checker.py": {
+        "class": "application",
+        "reason": "a type checker over the IR graph",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/compiler/quantizer.py": {
+        "class": "application",
+        "reason": "a dispatcher to the quantization modules, which are classed on their own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/control/adaptive_loop.py": {
+        "class": "application",
+        "reason": "a closed-loop controller orchestrating drift detection and reconfiguration",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/core/mdl_parser.py": {
+        "class": "application",
+        "reason": "YAML serialisation of orchestrator state",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/dashboard/text_dashboard.py": {
+        "class": "application",
+        "reason": "a terminal dashboard",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/debug/sc_doctor.py": {
+        "class": "application",
+        "reason": "a runtime adaptation wrapper that delegates to the package",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/drivers/physical_twin.py": {
+        "class": "application",
+        "reason": "a socket bridge to a physical twin",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/drivers/verify_hardware_link.py": {
+        "class": "application",
+        "reason": "a hardware-link diagnostic command",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/bitstream.py": {
+        "class": "compute",
+        "reason": "packed 32-bit bitstream arithmetic (popcount, SC and/or/xor/mux) in bitwise operators the rule does not count",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/deploy.py": {
+        "class": "application",
+        "reason": "a generator of cargo and linker configuration files",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/lfsr.py": {
+        "class": "compute",
+        "reason": "an LFSR-16 encoder, bit-compatible with the engine, in bitwise operators",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/neuron.py": {
+        "class": "compute",
+        "reason": "LIF and Izhikevich neuron updates in the SC domain",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/power_estimator.py": {
+        "class": "application",
+        "reason": "configuration-time scalar estimates from board tables, not a runtime kernel",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/sc_network.py": {
+        "class": "compute",
+        "reason": "feed-forward inference over packed binary connection masks",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/telemetry.py": {
+        "class": "application",
+        "reason": "telemetry counters and a ring buffer",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/edge/weights.py": {
+        "class": "application",
+        "reason": "weight serialisation with struct",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/energy/fpga_models.py": {
+        "class": "application",
+        "reason": "FPGA resource and power model records",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/energy_accounting/unified_reporter.py": {
+        "class": "application",
+        "reason": "a report combining other energy estimates",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/evo_substrate/evo_substrate.py": {
+        "class": "application",
+        "reason": "an API re-export over focused modules, which are classed on their own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/experiments/demo_pattern_pca.py": {
+        "class": "application",
+        "reason": "a plotting demonstration",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/experiments/demo_sc_dense_layer.py": {
+        "class": "application",
+        "reason": "a demonstration script",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/experiments/demo_sc_pipeline.py": {
+        "class": "application",
+        "reason": "a demonstration script",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/experiments/demonstration_convergence.py": {
+        "class": "application",
+        "reason": "a demonstration script with logging",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/experiments/learning_demo.py": {
+        "class": "application",
+        "reason": "a plotting demonstration",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/export/compiler_export.py": {
+        "class": "application",
+        "reason": "an SSA compiler front end for the IR graph (code generation)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/export/onnx_export.py": {
+        "class": "application",
+        "reason": "an ONNX exporter (serialisation)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/export/pipeline.py": {
+        "class": "application",
+        "reason": "an export pipeline orchestrating the exporters",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/export/tvm_lowering.py": {
+        "class": "application",
+        "reason": "a lowering of the IR to TVM Relay (code generation)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/hdl_gen/spice_generator.py": {
+        "class": "application",
+        "reason": "a SPICE netlist generator (code generation)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/hdl_gen/verilog_generator.py": {
+        "class": "application",
+        "reason": "a Verilog generator (code generation)",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/hypervisor/hypervisor.py": {
+        "class": "application",
+        "reason": "multi-tenant admission and scheduling logic",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/learning/callbacks.py": {
+        "class": "application",
+        "reason": "training logging callbacks",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/nas/search_space.py": {
+        "class": "application",
+        "reason": "an architecture search-space definition and sampler",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/neurons/base.py": {
+        "class": "application",
+        "reason": "an abstract neuron interface with no computation of its own",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/neurons/dendritic.py": {
+        "class": "compute",
+        "reason": "a stochastic neuron update comparing XOR-combined dendritic inputs",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/neurons/fixed_point_lif.py": {
+        "class": "compute",
+        "reason": "bit-true fixed-point LIF neuron, LFSR and bitstream models of the Verilog core",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/neurons/models/spinnaker2.py": {
+        "class": "compute",
+        "reason": "a fixed-point LIF update (multiply and shift) of the SpiNNaker2 neuron",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/robotics/cpg.py": {
+        "class": "compute",
+        "reason": "a central pattern generator built from coupled neuron updates",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/safety_cert/safety_monitor.py": {
+        "class": "application",
+        "reason": "range checks of a safety monitor",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/security/ethics.py": {
+        "class": "application",
+        "reason": "an action governor with logging",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/security/zkp.py": {
+        "class": "application",
+        "reason": "a hash-based verifier",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/serve/server.py": {
+        "class": "application",
+        "reason": "an HTTP inference server",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/sleep/protocol_library.py": {
+        "class": "application",
+        "reason": "protocol definitions",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/spike_codec/entropy.py": {
+        "class": "compute",
+        "reason": "canonical Huffman encoding and decoding of integer streams",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/spike_codec/registry.py": {
+        "class": "application",
+        "reason": "a codec registry and recommender",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/codegen.py": {
+        "class": "application",
+        "reason": "Studio code generation",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/compiler.py": {
+        "class": "application",
+        "reason": "Studio adapters to the Verilog compiler and co-simulation",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/model_scan.py": {
+        "class": "application",
+        "reason": "a Studio scan workflow writing evidence",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/models.py": {
+        "class": "application",
+        "reason": "Studio catalogue helpers",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/network_graph.py": {
+        "class": "application",
+        "reason": "Studio canvas graph operations",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/presets.py": {
+        "class": "application",
+        "reason": "Studio preset definitions",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/project.py": {
+        "class": "application",
+        "reason": "Studio project storage and pipeline",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/synthesis.py": {
+        "class": "application",
+        "reason": "Studio runs of FPGA toolchains as bounded processes",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/templates.py": {
+        "class": "application",
+        "reason": "Studio equation templates",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/studio/training.py": {
+        "class": "application",
+        "reason": "the Studio training service boundary",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/synapses/r_stdp.py": {
+        "class": "compute",
+        "reason": "a reward-modulated STDP weight update",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/utils/adapter_discovery.py": {
+        "class": "application",
+        "reason": "adapter discovery from entry points",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/utils/adaptive.py": {
+        "class": "application",
+        "reason": "an early-exit control loop around a step function supplied by the caller",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/utils/deprecation.py": {
+        "class": "application",
+        "reason": "deprecation decorators",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/utils/logging.py": {
+        "class": "application",
+        "reason": "logging configuration",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/utils/registry.py": {
+        "class": "application",
+        "reason": "a component registry",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/uvm_gen/uvm_gen.py": {
+        "class": "application",
+        "reason": "an API re-export over the UVM generator modules",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/verification/safety.py": {
+        "class": "application",
+        "reason": "static safety screening of generated code",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/viz/plots.py": {
+        "class": "application",
+        "reason": "plotting",
+        "reader": "aadb",
+    },
+    "src/sc_neurocore/viz/web_viz.py": {
+        "class": "application",
+        "reason": "a web visualiser",
+        "reader": "aadb",
+    },
+}
 
 _TWIN = (
     "The two copies hold the same code apart from the order of their imports, and the package's adapter discovery "
@@ -263,7 +680,7 @@ def markers(text: str) -> Markers:
     pure = False
     operators = 0
     for node in inside.values():
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if isinstance(node, ast.Call) and isinstance(node.func, (ast.Attribute, ast.Name)):
             base: ast.expr = node.func
             while isinstance(base, ast.Attribute):
                 base = base.value
@@ -335,19 +752,35 @@ def classify(found: Markers) -> str:
     return "unclear"
 
 
-def _mentions(root: Path) -> dict[str, str]:
-    """Return the text of every tracked Python file under ``tests`` and ``benchmarks``, by path."""
+_PATH_TOKEN = re.compile(r"[\w./-]+\.(?:mojo|jl)\b")
+
+
+def _path_tokens(texts: dict[str, str]) -> dict[str, set[str]]:
+    """Return, for each file, the ``.mojo`` and ``.jl`` path tokens its text holds, read in one pass."""
+    return {name: set(_PATH_TOKEN.findall(text)) for name, text in texts.items()}
+
+
+def _mentions(root: Path) -> dict[str, set[str]]:
+    """Return the stub path tokens of every tracked Python file under ``tests`` and ``benchmarks``, by path."""
     texts: dict[str, str] = {}
     for directory in ("tests", "benchmarks"):
         for path in tracked(root, directory, ".py"):
             texts[path.relative_to(root).as_posix()] = path.read_text(encoding="utf-8")
-    return texts
+    return _path_tokens(texts)
 
 
-def _named_by(stub: str, lane_root: str, texts: dict[str, str]) -> list[str]:
-    """Return the tracked test and benchmark files that name a stub by its path below its lane root."""
+def _named_by(stub: str, lane_root: str, tokens: dict[str, set[str]]) -> list[str]:
+    """Return the tracked test and benchmark files that name a stub by its path below its lane root.
+
+    A file names the stub when one of its path tokens is that path or ends with ``/`` and that path, so
+    ``lif.jl`` is not found inside ``adaptive_lif.jl``.
+    """
     short = stub.removeprefix(lane_root + "/")
-    return sorted(name for name, text in texts.items() if short in text)
+    return sorted(
+        name
+        for name, held in tokens.items()
+        if any(token == short or token.endswith("/" + short) for token in held)
+    )
 
 
 def lane_stubs(
@@ -454,7 +887,8 @@ def build(root: Path) -> Inventory:
     Returns
     -------
     Inventory
-        The counts, every original, the deletion list, the compute order and the unmapped Julia files.
+        The counts, every original, the deletion list, the compute order, and the stubs of either lane that no
+        rule maps to a module.
 
     Raises
     ------
@@ -541,7 +975,10 @@ def build(root: Path) -> Inventory:
         counts[f"stubs_{lane}"] = sum(
             1 for original in originals for stub in original["stubs"] if stub["lane"] == lane
         )
-    counts["unmapped_julia_parseable_unloaded"] = len(unmapped)
+    counts["unmapped_mojo"] = sum(
+        1 for path in unmapped if path.startswith("src/sc_neurocore/accel/mojo/")
+    )
+    counts["unmapped_julia"] = len(unmapped) - counts["unmapped_mojo"]
     return {
         "generator": "tools/accel_stub_triage.py",
         "counts": counts,

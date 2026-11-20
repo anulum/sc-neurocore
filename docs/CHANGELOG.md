@@ -82,6 +82,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The accelerated-lane stub triage records a seat's reading of each of the
+  83 originals its rule left unclear, with the reason: 20 are compute (the
+  holonomic adapters' JAX numerics behind the package's shim, bit-level SC
+  kernels, neuron and synapse updates, Huffman coding) and 63 application
+  (interfaces, re-exports, exporters and generators, Studio, servers,
+  demonstrations, utilities). Of 406 originals, 339 are compute and 67
+  application, whose 120 stubs form the deletion list for the owner. A call
+  of a name imported from a numeric library now counts as numeric work, a
+  stub is found in a test or benchmark only at a path boundary, and the
+  unmapped count is split by lane.
+
 - `tools/accel_stub_triage.py` and `docs/_generated/accel_stub_triage.json` class the
   Python original of every Mojo and Julia stub as a compute kernel or as application
   code, by a stated rule read from the original's syntax tree: numeric work and no

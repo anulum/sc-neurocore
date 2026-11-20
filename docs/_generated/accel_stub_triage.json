@@ -2,18 +2,19 @@
   "generator": "tools/accel_stub_triage.py",
   "counts": {
     "originals": 406,
-    "compute": 318,
-    "compute_stubs": 571,
-    "application": 4,
-    "application_stubs": 8,
-    "unclear": 84,
-    "unclear_stubs": 151,
-    "decided_by_reading": 0,
+    "compute": 338,
+    "compute_stubs": 608,
+    "application": 67,
+    "application_stubs": 120,
+    "unclear": 1,
+    "unclear_stubs": 2,
+    "decided_by_reading": 83,
     "ambiguous_stubs_resolved": 2,
     "stubs_mojo": 363,
     "stubs_julia": 340,
     "stubs_julia_parseable_unloaded": 27,
-    "unmapped_julia_parseable_unloaded": 133
+    "unmapped_mojo": 0,
+    "unmapped_julia": 133
   },
   "variant_a_only": {
     "compute": 277,
@@ -66,9 +67,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/base.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an abstract adapter interface with no computation of its own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -205,9 +206,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l10_fire.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -238,9 +239,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l11_noos.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -271,9 +272,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l12_gaian.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -304,9 +305,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l14_trans.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -337,9 +338,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l15_cons.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -370,9 +371,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l16_meta.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -403,9 +404,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l1_quantum.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -472,9 +473,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l3_gen.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -540,9 +541,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l5_org.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -609,9 +610,9 @@
     },
     {
       "module": "src/sc_neurocore/adapters/holonomic/l8_cosm.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -844,9 +845,9 @@
     },
     {
       "module": "src/sc_neurocore/analysis/spike_stats/basic.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -947,6 +948,7 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "scipy calls",
           "multiplicative operators"
         ],
         "operators": 15,
@@ -983,6 +985,7 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "scipy calls",
           "multiplicative operators"
         ],
         "operators": 34,
@@ -1046,6 +1049,7 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "scipy calls",
           "multiplicative operators"
         ],
         "operators": 66,
@@ -1073,6 +1077,7 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "scipy calls",
           "multiplicative operators"
         ],
         "operators": 26,
@@ -1323,6 +1328,7 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "scipy calls",
           "multiplicative operators"
         ],
         "operators": 22,
@@ -1379,9 +1385,9 @@
     },
     {
       "module": "src/sc_neurocore/analysis/spike_stats/spectral.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -1726,9 +1732,9 @@
     },
     {
       "module": "src/sc_neurocore/audio/user_profile.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "user preference and chronotype records (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -1997,9 +2003,9 @@
     },
     {
       "module": "src/sc_neurocore/benchmarks/tasks.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "benchmark task definitions (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2136,9 +2142,9 @@
     },
     {
       "module": "src/sc_neurocore/bridges/aer_router.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a UDP spike router with threads and packet framing (network I/O) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2241,9 +2247,9 @@
     },
     {
       "module": "src/sc_neurocore/chip_compiler/chip_spec.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "chip specification records loaded from JSON (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2310,9 +2316,9 @@
     },
     {
       "module": "src/sc_neurocore/comm/aer_udp.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an AER-over-UDP sender and receiver; numpy only frames packets (read by aadb)",
       "markers": {
         "app": [
           "socket"
@@ -2347,9 +2353,9 @@
     },
     {
       "module": "src/sc_neurocore/compiler/ir_type_checker.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a type checker over the IR graph (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2450,9 +2456,9 @@
     },
     {
       "module": "src/sc_neurocore/compiler/quantizer.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a dispatcher to the quantization modules, which are classed on their own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2616,9 +2622,9 @@
     },
     {
       "module": "src/sc_neurocore/control/adaptive_loop.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a closed-loop controller orchestrating drift detection and reconfiguration (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2756,9 +2762,9 @@
     },
     {
       "module": "src/sc_neurocore/core/mdl_parser.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "YAML serialisation of orchestrator state (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -2895,9 +2901,9 @@
     },
     {
       "module": "src/sc_neurocore/dashboard/text_dashboard.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a terminal dashboard (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3059,9 +3065,9 @@
     },
     {
       "module": "src/sc_neurocore/debug/sc_doctor.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a runtime adaptation wrapper that delegates to the package (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3305,9 +3311,9 @@
     },
     {
       "module": "src/sc_neurocore/drivers/physical_twin.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a socket bridge to a physical twin (read by aadb)",
       "markers": {
         "app": [
           "socket"
@@ -3377,9 +3383,9 @@
     },
     {
       "module": "src/sc_neurocore/drivers/verify_hardware_link.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a hardware-link diagnostic command (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3410,9 +3416,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/bitstream.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "packed 32-bit bitstream arithmetic (popcount, SC and/or/xor/mux) in bitwise operators the rule does not count (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3443,9 +3449,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/deploy.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a generator of cargo and linker configuration files (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3476,9 +3482,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/lfsr.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "an LFSR-16 encoder, bit-compatible with the engine, in bitwise operators (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3509,9 +3515,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/neuron.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "LIF and Izhikevich neuron updates in the SC domain (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3542,9 +3548,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/power_estimator.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "configuration-time scalar estimates from board tables, not a runtime kernel (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3575,9 +3581,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/sc_network.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "feed-forward inference over packed binary connection masks (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3643,9 +3649,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/telemetry.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "telemetry counters and a ring buffer (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3676,9 +3682,9 @@
     },
     {
       "module": "src/sc_neurocore/edge/weights.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "weight serialisation with struct (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3815,9 +3821,9 @@
     },
     {
       "module": "src/sc_neurocore/energy/fpga_models.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "FPGA resource and power model records (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -3928,9 +3934,9 @@
     },
     {
       "module": "src/sc_neurocore/energy_accounting/unified_reporter.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a report combining other energy estimates (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -4023,9 +4029,9 @@
     },
     {
       "module": "src/sc_neurocore/evo_substrate/evo_substrate.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an API re-export over focused modules, which are classed on their own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -4341,9 +4347,9 @@
     },
     {
       "module": "src/sc_neurocore/experiments/demo_pattern_pca.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a plotting demonstration (read by aadb)",
       "markers": {
         "app": [
           "matplotlib"
@@ -4413,9 +4419,9 @@
     },
     {
       "module": "src/sc_neurocore/experiments/demo_sc_dense_layer.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a demonstration script (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -4446,9 +4452,9 @@
     },
     {
       "module": "src/sc_neurocore/experiments/demo_sc_pipeline.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a demonstration script (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -4586,9 +4592,9 @@
     },
     {
       "module": "src/sc_neurocore/experiments/demonstration_convergence.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a demonstration script with logging (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -4724,9 +4730,9 @@
     },
     {
       "module": "src/sc_neurocore/experiments/learning_demo.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a plotting demonstration (read by aadb)",
       "markers": {
         "app": [
           "matplotlib"
@@ -5034,9 +5040,9 @@
     },
     {
       "module": "src/sc_neurocore/export/compiler_export.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an SSA compiler front end for the IR graph (code generation) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5067,9 +5073,9 @@
     },
     {
       "module": "src/sc_neurocore/export/onnx_export.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an ONNX exporter (serialisation) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5135,9 +5141,9 @@
     },
     {
       "module": "src/sc_neurocore/export/pipeline.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an export pipeline orchestrating the exporters (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5159,9 +5165,9 @@
     },
     {
       "module": "src/sc_neurocore/export/tvm_lowering.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a lowering of the IR to TVM Relay (code generation) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5493,9 +5499,9 @@
     },
     {
       "module": "src/sc_neurocore/hdl_gen/spice_generator.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a SPICE netlist generator (code generation) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5526,9 +5532,9 @@
     },
     {
       "module": "src/sc_neurocore/hdl_gen/verilog_generator.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a Verilog generator (code generation) (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -5594,9 +5600,9 @@
     },
     {
       "module": "src/sc_neurocore/hypervisor/hypervisor.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "multi-tenant admission and scheduling logic (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -6429,9 +6435,9 @@
     },
     {
       "module": "src/sc_neurocore/learning/callbacks.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "training logging callbacks (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -6991,9 +6997,9 @@
     },
     {
       "module": "src/sc_neurocore/nas/search_space.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an architecture search-space definition and sampler (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -7333,9 +7339,9 @@
     },
     {
       "module": "src/sc_neurocore/neurons/base.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an abstract neuron interface with no computation of its own (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -7357,9 +7363,9 @@
     },
     {
       "module": "src/sc_neurocore/neurons/dendritic.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "a stochastic neuron update comparing XOR-combined dendritic inputs (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -7381,9 +7387,9 @@
     },
     {
       "module": "src/sc_neurocore/neurons/fixed_point_lif.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "bit-true fixed-point LIF neuron, LFSR and bitstream models of the Verilog core (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -8140,9 +8146,9 @@
     },
     {
       "module": "src/sc_neurocore/neurons/models/spinnaker2.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "a fixed-point LIF update (multiply and shift) of the SpiNNaker2 neuron (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -9354,9 +9360,9 @@
     },
     {
       "module": "src/sc_neurocore/robotics/cpg.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "a central pattern generator built from coupled neuron updates (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -9422,9 +9428,9 @@
     },
     {
       "module": "src/sc_neurocore/safety_cert/safety_monitor.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "range checks of a safety monitor (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -10072,9 +10078,9 @@
     },
     {
       "module": "src/sc_neurocore/security/ethics.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an action governor with logging (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -10175,9 +10181,9 @@
     },
     {
       "module": "src/sc_neurocore/security/zkp.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a hash-based verifier (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -10243,9 +10249,9 @@
     },
     {
       "module": "src/sc_neurocore/serve/server.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an HTTP inference server (read by aadb)",
       "markers": {
         "app": [
           "http"
@@ -10316,9 +10322,9 @@
     },
     {
       "module": "src/sc_neurocore/sleep/protocol_library.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "protocol definitions (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -10772,9 +10778,9 @@
     },
     {
       "module": "src/sc_neurocore/spike_codec/entropy.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "canonical Huffman encoding and decoding of integer streams (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -10811,7 +10817,8 @@
       "markers": {
         "app": [],
         "numeric": [
-          "numpy calls"
+          "numpy calls",
+          "pure numeric calls with multiplicative operators"
         ],
         "operators": 6,
         "basis": "a"
@@ -10840,9 +10847,9 @@
     },
     {
       "module": "src/sc_neurocore/spike_codec/registry.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a codec registry and recommender (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11378,9 +11385,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/codegen.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio code generation (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11411,9 +11418,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/compiler.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio adapters to the Verilog compiler and co-simulation (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11435,9 +11442,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/model_scan.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a Studio scan workflow writing evidence (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11468,9 +11475,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/models.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio catalogue helpers (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11528,9 +11535,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/network_graph.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio canvas graph operations (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11561,9 +11568,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/presets.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio preset definitions (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11612,9 +11619,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/project.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio project storage and pipeline (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11707,18 +11714,19 @@
     },
     {
       "module": "src/sc_neurocore/studio/synthesis.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio runs of FPGA toolchains as bounded processes (read by aadb)",
       "markers": {
         "app": [
           "subprocess"
         ],
         "numeric": [
+          "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
         "operators": 15,
-        "basis": "c"
+        "basis": "b"
       },
       "stubs": [
         {
@@ -11744,9 +11752,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/templates.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "Studio equation templates (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -11768,9 +11776,9 @@
     },
     {
       "module": "src/sc_neurocore/studio/training.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "the Studio training service boundary (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -12176,9 +12184,9 @@
     },
     {
       "module": "src/sc_neurocore/synapses/r_stdp.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "compute",
+      "decided_by": "reading",
+      "reason": "a reward-modulated STDP weight update (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -12757,9 +12765,9 @@
     },
     {
       "module": "src/sc_neurocore/utils/adapter_discovery.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "adapter discovery from entry points (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -12781,9 +12789,9 @@
     },
     {
       "module": "src/sc_neurocore/utils/adaptive.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an early-exit control loop around a step function supplied by the caller (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -12922,9 +12930,9 @@
     },
     {
       "module": "src/sc_neurocore/utils/deprecation.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "deprecation decorators (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13052,9 +13060,9 @@
     },
     {
       "module": "src/sc_neurocore/utils/logging.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "logging configuration (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13190,9 +13198,9 @@
     },
     {
       "module": "src/sc_neurocore/utils/registry.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a component registry (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13249,9 +13257,9 @@
     },
     {
       "module": "src/sc_neurocore/uvm_gen/uvm_gen.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "an API re-export over the UVM generator modules (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13317,9 +13325,9 @@
     },
     {
       "module": "src/sc_neurocore/verification/safety.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "static safety screening of generated code (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13420,9 +13428,9 @@
     },
     {
       "module": "src/sc_neurocore/viz/plots.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "plotting (read by aadb)",
       "markers": {
         "app": [
           "matplotlib"
@@ -13457,9 +13465,9 @@
     },
     {
       "module": "src/sc_neurocore/viz/web_viz.py",
-      "class": "unclear",
-      "decided_by": "rule",
-      "reason": null,
+      "class": "application",
+      "decided_by": "reading",
+      "reason": "a web visualiser (read by aadb)",
       "markers": {
         "app": [],
         "numeric": [],
@@ -13559,6 +13567,118 @@
   ],
   "deletion_list": [
     {
+      "module": "src/sc_neurocore/adapters/base.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/base.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/adapters/base.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/adapters/base.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/analysis/spike_stats/basic.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/basic.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/analysis/spike_stats/spectral.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/spectral.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/audio/user_profile.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/audio/user_profile.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/benchmarks/tasks.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/benchmarks/tasks.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/bridges/aer_router.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/aer_router.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/bridges/aer_router.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/bridges/aer_router.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/chip_compiler/chip_spec.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/chip_spec.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/chip_compiler/chip_spec.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/chip_compiler/chip_spec.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/comm/aer_udp.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/aer_udp.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/comm/aer_udp.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/comm/aer_udp.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/compiler/ir_type_checker.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/ir_type_checker.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/compiler/ir_type_checker.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/compiler/ir_type_checker.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
       "module": "src/sc_neurocore/compiler/mlir_emitter.py",
       "lane": "mojo",
       "path": "src/sc_neurocore/accel/mojo/kernels/mlir_emitter.mojo",
@@ -13591,6 +13711,426 @@
       "declared": null
     },
     {
+      "module": "src/sc_neurocore/compiler/quantizer.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/quantizer.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/compiler/quantizer.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/compiler/quantizer.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/control/adaptive_loop.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/adaptive_loop.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/control/adaptive_loop.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/control/adaptive_loop.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/core/mdl_parser.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/mdl_parser.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/core/mdl_parser.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/core/mdl_parser.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/dashboard/text_dashboard.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/text_dashboard.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/dashboard/text_dashboard.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/dashboard/text_dashboard.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/debug/sc_doctor.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/sc_doctor.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/debug/sc_doctor.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/debug/sc_doctor.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/drivers/physical_twin.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/physical_twin.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/drivers/physical_twin.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/drivers/physical_twin.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/drivers/verify_hardware_link.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/verify_hardware_link.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/drivers/verify_hardware_link.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/drivers/verify_hardware_link.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/edge/deploy.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/deploy.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/deploy.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/edge/deploy.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/power_estimator.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/power_estimator.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/power_estimator.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/edge/power_estimator.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/telemetry.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/telemetry.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/telemetry.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/edge/telemetry.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/weights.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/weights.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/edge/weights.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/edge/weights.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/energy/fpga_models.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/energy/fpga_models.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/energy_accounting/unified_reporter.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/energy_accounting/unified_reporter.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/energy_accounting/unified_reporter.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/energy/unified_reporter.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/evo_substrate/evo_substrate.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/evo_substrate.mojo",
+      "loaders": [],
+      "named_by": [
+        "tests/test_evo_substrate/test_architecture.py"
+      ],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/evo_substrate/evo_substrate.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/evo_substrate/evo_substrate.jl",
+      "loaders": [],
+      "named_by": [
+        "tests/test_evo_substrate/test_architecture.py"
+      ],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_pattern_pca.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/demo_pattern_pca.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_pattern_pca.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/experiments/demo_pattern_pca.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_sc_dense_layer.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/demo_sc_dense_layer.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_sc_dense_layer.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/experiments/demo_sc_dense_layer.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_sc_pipeline.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/demo_sc_pipeline.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demo_sc_pipeline.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/experiments/demo_sc_pipeline.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demonstration_convergence.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/demonstration_convergence.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/experiments/demonstration_convergence.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/experiments/demonstration_convergence.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/experiments/learning_demo.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/learning_demo.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/experiments/learning_demo.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/experiments/learning_demo.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/export/compiler_export.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/compiler_export.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/export/compiler_export.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/export/compiler_export.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/export/onnx_export.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/onnx_export.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/export/onnx_export.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/export/onnx_export.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/export/pipeline.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/export/pipeline.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/export/tvm_lowering.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/tvm_lowering.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/export/tvm_lowering.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/export/tvm_lowering.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/hdl_gen/spice_generator.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/spice_generator.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/hdl_gen/spice_generator.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/hdl_gen/spice_generator.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/hdl_gen/verilog_generator.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/verilog_generator.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/hdl_gen/verilog_generator.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/hdl_gen/verilog_generator.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/hypervisor/hypervisor.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/hypervisor.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/hypervisor/hypervisor.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/hypervisor/hypervisor.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/learning/callbacks.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/callbacks.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/learning/callbacks.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/learning/callbacks.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
       "module": "src/sc_neurocore/nas/equiv.py",
       "lane": "mojo",
       "path": "src/sc_neurocore/accel/mojo/kernels/equiv.mojo",
@@ -13605,6 +14145,122 @@
       "loaders": [],
       "named_by": [],
       "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/nas/search_space.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/search_space.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/nas/search_space.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/nas/search_space.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/neurons/base.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/neurons/base.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/safety_cert/safety_monitor.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/safety_monitor.mojo",
+      "loaders": [],
+      "named_by": [
+        "tests/test_safety_cert/test_architecture.py"
+      ],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/safety_cert/safety_monitor.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/safety_cert/safety_monitor.jl",
+      "loaders": [],
+      "named_by": [
+        "tests/test_safety_cert/test_architecture.py"
+      ],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/security/ethics.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/ethics.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/security/ethics.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/security/ethics.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/security/zkp.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/zkp.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/security/zkp.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/security/zkp.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/serve/server.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/server.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/serve/server.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/serve/server.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/sleep/protocol_library.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/protocol_library.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/sleep/protocol_library.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/sleep/protocol_library.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/spike_codec/registry.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/spike_codec/registry.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
     },
     {
       "module": "src/sc_neurocore/studio/app.py",
@@ -13624,6 +14280,262 @@
       "loaders": [],
       "named_by": [],
       "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/codegen.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/codegen.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/codegen.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/codegen.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/compiler.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/compiler.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/model_scan.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/model_scan.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/model_scan.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/model_scan.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/models.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/models.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/models.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/models.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/network_graph.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/network_graph.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/network_graph.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/network_graph.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/presets.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/presets.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/project.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/project.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/synthesis.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/synthesis.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/synthesis.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/synthesis.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/templates.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/templates.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/studio/training.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/studio/training.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/utils/adapter_discovery.py",
+      "lane": "julia_parseable_unloaded",
+      "path": "src/sc_neurocore/accel/julia/utils/adapter_discovery.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/utils/adaptive.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/adaptive.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/utils/adaptive.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/utils/adaptive.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/utils/deprecation.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/deprecation.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/utils/deprecation.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/utils/deprecation.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/utils/logging.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/logging.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/utils/logging.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/utils/logging.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/utils/registry.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/registry.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/utils/registry.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/utils/registry.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/uvm_gen/uvm_gen.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/uvm_gen.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/uvm_gen/uvm_gen.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/uvm_gen/uvm_gen.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/verification/safety.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/safety.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/verification/safety.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/verification/safety.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/viz/plots.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/plots.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/viz/plots.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/viz/plots.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
+    },
+    {
+      "module": "src/sc_neurocore/viz/web_viz.py",
+      "lane": "mojo",
+      "path": "src/sc_neurocore/accel/mojo/kernels/web_viz.mojo",
+      "loaders": [],
+      "named_by": [],
+      "declared": "mirror"
+    },
+    {
+      "module": "src/sc_neurocore/viz/web_viz.py",
+      "lane": "julia",
+      "path": "src/sc_neurocore/accel/julia/viz/web_viz.jl",
+      "loaders": [],
+      "named_by": [],
+      "declared": null
     }
   ],
   "compute_order": [
@@ -13939,11 +14851,31 @@
     "src/sc_neurocore/synapses/dopamine_stdp.py",
     "src/sc_neurocore/synapses/short_term_plasticity.py",
     "src/sc_neurocore/energy_accounting/accountant.py",
+    "src/sc_neurocore/adapters/holonomic/l10_fire.py",
+    "src/sc_neurocore/adapters/holonomic/l11_noos.py",
+    "src/sc_neurocore/adapters/holonomic/l12_gaian.py",
+    "src/sc_neurocore/adapters/holonomic/l14_trans.py",
+    "src/sc_neurocore/adapters/holonomic/l15_cons.py",
+    "src/sc_neurocore/adapters/holonomic/l16_meta.py",
+    "src/sc_neurocore/adapters/holonomic/l1_quantum.py",
+    "src/sc_neurocore/adapters/holonomic/l3_gen.py",
     "src/sc_neurocore/adapters/holonomic/l4_cell.py",
+    "src/sc_neurocore/adapters/holonomic/l5_org.py",
+    "src/sc_neurocore/adapters/holonomic/l8_cosm.py",
+    "src/sc_neurocore/edge/bitstream.py",
+    "src/sc_neurocore/edge/lfsr.py",
+    "src/sc_neurocore/edge/neuron.py",
+    "src/sc_neurocore/edge/sc_network.py",
     "src/sc_neurocore/experiments/demo_tcbo_consciousness.py",
     "src/sc_neurocore/profiler/platform_profiler.py",
     "src/sc_neurocore/profiling/energy.py",
+    "src/sc_neurocore/robotics/cpg.py",
+    "src/sc_neurocore/spike_codec/entropy.py",
     "src/sc_neurocore/studio/svg_export.py",
+    "src/sc_neurocore/synapses/r_stdp.py",
+    "src/sc_neurocore/neurons/dendritic.py",
+    "src/sc_neurocore/neurons/fixed_point_lif.py",
+    "src/sc_neurocore/neurons/models/spinnaker2.py",
     "src/sc_neurocore/neurons/models/tsodyks_markram.py"
   ],
   "unmapped": [

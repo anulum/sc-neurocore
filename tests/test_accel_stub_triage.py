@@ -242,7 +242,11 @@ def test_the_basis_names_the_first_numeric_marker_and_the_variant_is_recorded() 
         sum(variant[name] for name in ("compute", "application", "unclear"))
         == record["counts"]["originals"]
     )
-    full = {o["module"] for o in record["originals"] if o["class"] == "application"}
+    full = {
+        o["module"]
+        for o in record["originals"]
+        if o["class"] == "application" and o["decided_by"] == "rule"
+    }
     assert full <= set(variant["application_modules"])
     ranks = [
         (not by["used"], "abc".index(by["markers"]["basis"] or "c"))
@@ -252,3 +256,41 @@ def test_the_basis_names_the_first_numeric_marker_and_the_variant_is_recorded() 
         )
     ]
     assert ranks == sorted(ranks)
+
+
+def test_a_name_imported_from_a_numeric_library_marks_numeric_work() -> None:
+    """``from numpy import exp`` then ``exp(x)`` is a numpy call, basis a."""
+    found = markers("from numpy import exp\n\ndef f(x):\n    return exp(x)\n")
+    assert (found["basis"], classify(found)) == ("a", "compute")
+
+
+def test_a_stub_is_named_only_at_a_path_boundary() -> None:
+    """``lif.jl`` is not found inside ``adaptive_lif.jl``, but is found after a separator or a quote."""
+    texts = {
+        "tests/a.py": "PATH = 'neurons/adaptive_lif.jl'\n",
+        "tests/b.py": "PATH = 'neurons/lif.jl'\n",
+        "tests/c.py": "PATH = 'lif.jl'\n",
+    }
+    root = "src/sc_neurocore/accel/julia"
+    tokens = accel_stub_triage._path_tokens(texts)
+    assert accel_stub_triage._named_by(f"{root}/neurons/lif.jl", root, tokens) == ["tests/b.py"]
+    assert accel_stub_triage._named_by(f"{root}/lif.jl", root, tokens) == [
+        "tests/b.py",
+        "tests/c.py",
+    ]
+
+
+def test_an_unclear_original_stays_out_of_the_deletion_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without its reading, a module the rule leaves unclear is unclear, and none of its stubs is deleted."""
+    module = next(
+        name
+        for name, reading in accel_stub_triage.READINGS.items()
+        if reading["class"] == "application"
+    )
+    monkeypatch.delitem(accel_stub_triage.READINGS, module)
+    triage = build(REPO_ROOT)
+    original = next(o for o in triage["originals"] if o["module"] == module)
+    assert (original["class"], original["decided_by"]) == ("unclear", "rule")
+    assert module not in {entry["module"] for entry in triage["deletion_list"]}
