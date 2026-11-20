@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 28,
-    "outdated": 127,
+    "current": 26,
+    "outdated": 129,
     "reviewed": 0,
     "unbound": 175
   },
@@ -2608,6 +2608,8 @@
     },
     {
       "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml",
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
@@ -2731,6 +2733,8 @@
     },
     {
       "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml",
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
@@ -2955,11 +2959,19 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {
@@ -3100,7 +3112,9 @@
     },
     {
       "changed": [
+        "Cargo.lock",
         "benchmarks/bench_spike_event_stream.py",
+        "engine/Cargo.toml",
         "src/sc_neurocore/spike_codec/waveform_stream.py"
       ],
       "currency": "outdated",
@@ -3108,6 +3122,8 @@
     },
     {
       "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml",
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",

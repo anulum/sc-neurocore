@@ -977,6 +977,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The engine takes z3 0.23 (from 0.22); z3-sys and its bundled solver stay
+  at 0.14.2. The fuzz workspace's lock follows the engine to z3 0.23 and
+  gains the zstd, flate2 and libz-sys packages the engine has needed since
+  its waveform containers, at the engine lock's versions.
+
 - `reuse lint` passes again (REUSE 3.3): two assertions in
   `tests/test_shd_event_core.py` held the license tag text in a string,
   which REUSE parsed as two invalid license expressions. The tag is now
