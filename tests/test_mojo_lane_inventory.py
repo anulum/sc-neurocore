@@ -27,6 +27,9 @@ from tools.mojo_lane_inventory import (
     main,
     models,
     render,
+    transcription,
+    line_strings,
+    TRANSCRIPTION_RULES,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -471,3 +474,126 @@ def test_without_the_backend_order_no_name_is_an_accelerator(tmp_path: Path) -> 
         record for record in models(tmp_path) if record["path"].endswith("m_fixed_chain.py")
     )
     assert chain["class"] == "no_accelerated_backend"
+
+
+MODULES = {
+    "studio_app": ["src/sc_neurocore/studio/studio_app.py"],
+    "spikes": ["src/sc_neurocore/a/spikes.py", "src/sc_neurocore/b/spikes.py"],
+    "twins": ["src/sc_neurocore/a/twins.py", "src/sc_neurocore/b/twins.py"],
+    "plain": ["src/sc_neurocore/plain.py"],
+}
+LINES = {
+    "src/sc_neurocore/studio/studio_app.py": {"return app", "app = make()"},
+    "src/sc_neurocore/a/spikes.py": {"x = 1"},
+    "src/sc_neurocore/b/spikes.py": {"x = 1", "return x"},
+    "src/sc_neurocore/a/twins.py": {"y = 2"},
+    "src/sc_neurocore/b/twins.py": {"y = 2"},
+    "src/sc_neurocore/plain.py": set(),
+}
+
+
+def _stub(header: str, *lines: str) -> str:
+    """Return a stub with a header comment and one line string per Python line."""
+    body = "\n".join(f"    var _f_line = {line!r}" for line in lines)
+    return f"# {header}\n\nfn f() -> Int:\n{body}\n    return 0\n"
+
+
+@pytest.mark.parametrize(
+    ("name", "text", "expected"),
+    [
+        (
+            "kernels/studio_app.mojo",
+            _stub("Source of truth:\n# - `src/sc_neurocore/studio/studio_app.py`", "return app"),
+            ("src/sc_neurocore/studio/studio_app.py", "header_source_of_truth", "1/1", []),
+        ),
+        (
+            "kernels/x.mojo",
+            _stub("SC-NeuroCore — Mojo SIMD acceleration for plain", "y"),
+            ("src/sc_neurocore/plain.py", "header_stem", "0/1", []),
+        ),
+        (
+            "kernels/plain.mojo",
+            _stub("no stem here", "z"),
+            ("src/sc_neurocore/plain.py", "file_stem", "0/1", []),
+        ),
+        (
+            "kernels/x.mojo",
+            _stub("SC-NeuroCore — Mojo SIMD acceleration for spikes", "x = 1", "return x"),
+            ("src/sc_neurocore/b/spikes.py", "stem_by_lines", "2/2", []),
+        ),
+        (
+            "kernels/x.mojo",
+            _stub("SC-NeuroCore — Mojo SIMD acceleration for twins", "y = 2"),
+            (
+                None,
+                "ambiguous",
+                None,
+                ["src/sc_neurocore/a/twins.py", "src/sc_neurocore/b/twins.py"],
+            ),
+        ),
+        (
+            "kernels/x.mojo",
+            _stub("SC-NeuroCore — Mojo SIMD acceleration for nothing_like_it", "q"),
+            (None, "none", None, []),
+        ),
+    ],
+    ids=["source-of-truth", "header-stem", "file-stem", "stem-by-lines", "ambiguous", "none"],
+)
+def test_each_transcription_rule_names_its_module(
+    name: str, text: str, expected: tuple[str | None, str, str | None, list[str]]
+) -> None:
+    """Each rule is reached by its own stub, and a tie is listed, never chosen."""
+    found = transcription(Path(name), text, MODULES, LINES.__getitem__)
+    assert (
+        found["transcribed_module"],
+        found["transcription_rule"],
+        found["verbatim_line_share"],
+        found["transcription_candidates"],
+    ) == expected
+
+
+def test_line_strings_decode_escaped_quotes() -> None:
+    """A line string holding an escaped quote decodes to the Python line it copies."""
+    assert line_strings(ESCAPED_QUOTE_STUB) == [
+        "raise HTTPException(404, f\"Template '{name}' not found\")"
+    ]
+
+
+def test_the_committed_record_names_the_module_of_every_stub() -> None:
+    """Every stub has a rule, every other source has none, and the rule counts add up."""
+    record = json.loads((REPO_ROOT / DEFAULT_OUTPUT).read_text(encoding="utf-8"))
+    rules = {source["transcription_rule"] for source in record["sources"]}
+    assert rules <= {*TRANSCRIPTION_RULES, "not_a_transcript"}
+    for source in record["sources"]:
+        stub = source["class"] == "translated_stub"
+        assert (source["transcription_rule"] != "not_a_transcript") is stub
+    counts = record["counts"]
+    assert (
+        sum(counts[f"transcription_rule_{rule}"] for rule in TRANSCRIPTION_RULES)
+        == counts["translated_stub"]
+    )
+    app = next(s for s in record["sources"] if s["path"].endswith("kernels/app.mojo"))
+    assert (app["transcribed_module"], app["transcription_rule"]) == (
+        "src/sc_neurocore/studio/app.py",
+        "header_source_of_truth",
+    )
+
+
+def test_a_line_string_python_cannot_decode_is_kept_as_written() -> None:
+    """An escape Python refuses is kept verbatim, without its quotes, rather than dropped."""
+    assert line_strings(
+        "fn f() -> Int:\n    var _f_line = '\\N{no such name}'\n    return 0\n"
+    ) == ["\\N{no such name}"]
+
+
+def test_a_source_of_truth_that_names_no_package_module_falls_back_to_the_stem() -> None:
+    """A header naming an untracked module is not trusted; the header's stem decides."""
+    text = _stub(
+        "Source of truth:\n# - `src/sc_neurocore/gone.py`\n# SC-NeuroCore — Mojo SIMD acceleration for plain",
+        "y",
+    )
+    found = transcription(Path("kernels/x.mojo"), text, MODULES, LINES.__getitem__)
+    assert (found["transcribed_module"], found["transcription_rule"]) == (
+        "src/sc_neurocore/plain.py",
+        "header_stem",
+    )

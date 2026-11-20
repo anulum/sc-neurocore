@@ -29,6 +29,27 @@ Classes of a Mojo source (comment lines and triple-quoted blocks are not code):
 ``implementation_def``
     Any other file.
 
+Every translated stub also names the Python module it copies, so the record is the worklist for replacing stubs
+with real code. The module is found by rule, never guessed:
+
+``header_source_of_truth``
+    The header names its source of truth as a tracked package module.
+``header_stem``
+    The header says ``Mojo SIMD acceleration for <stem>``, and exactly one tracked package module has that stem.
+``file_stem``
+    The header names no stem, and exactly one tracked package module has the file's stem.
+``stem_by_lines``
+    Several package modules have the stem; the one holding the most of the stub's line strings verbatim is chosen.
+``ambiguous``
+    Several modules hold the same, highest number of its lines; all of them are listed and none is chosen.
+``none``
+    No package module has the stem.
+
+The package modules are the tracked ``.py`` files of ``src/sc_neurocore`` outside ``accel/mojo``. Each stub records
+``verbatim_line_share`` as ``"n/d"``: of its ``d`` line strings, ``n`` appear, stripped, as a stripped line of the
+chosen module (the originals have moved on since they were copied). Sources that are not stubs record the rule
+``not_a_transcript``.
+
 The builder's view comes from ``tools/build_accel_backends.py`` itself (its target discovery and its per-loader
 output paths); this module does not repeat that logic. Independently, every ``lib<name>.so`` string literal in a
 package module is listed, and marked when the builder attributes that module's library to a Mojo build. The package's
@@ -54,7 +75,8 @@ of precedence:
     ``auto``, for one).
 ``direct_backend``
     None of the above, but the model imports an accelerated backend's own package (``sc_neurocore.accel.<backend>``)
-    or opens a shared library itself (``ctypes.CDLL``), without any selector call.
+    or opens a shared library itself (``ctypes.CDLL`` or the guarded ``load_mojo_library``), without any selector
+    call.
 ``no_accelerated_backend``
     None of the above, and the module does not import the Rust engine either. A module that only imports the Rust
     engine (``sc_neurocore_engine``) is ``single_backend``.
@@ -82,7 +104,7 @@ import fnmatch
 import json
 import re
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TypedDict
 
@@ -119,7 +141,21 @@ Source = TypedDict(
         "declared": str | None,
         "built_by_builder": bool,
         "loaders": list[str],
+        "transcribed_module": str | None,
+        "transcription_rule": str,
+        "verbatim_line_share": str | None,
+        "transcription_candidates": list[str],
     },
+)
+
+#: The rules that name the Python module a translated stub copies, in the order they are tried.
+TRANSCRIPTION_RULES = (
+    "header_source_of_truth",
+    "header_stem",
+    "file_stem",
+    "stem_by_lines",
+    "ambiguous",
+    "none",
 )
 
 
@@ -171,6 +207,10 @@ _STUB_LINE = re.compile(rf"^\s*(var\s+\w+\s*=\s*{_STRING}|return\s+0|pass)\s*(#.
 _OPEN_ASSIGNMENT = re.compile(r"^\s*var\s+\w+\s*=\s*\(\s*(#.*)?$")
 _STRING_LINE = re.compile(rf"^\s*{_STRING}\s*(#.*)?$")
 _CLOSE = re.compile(r"^\s*\)\s*(#.*)?$")
+_LINE_STRING = re.compile(rf"^\s*var\s+_\w+_line\s*=\s*{_STRING}\s*(#.*)?$")
+_SOURCE_OF_TRUTH = re.compile(r"`(src/sc_neurocore/[^`\s]+\.py)`")
+_HEADER_STEM = re.compile(r"Mojo SIMD acceleration for (\S+)")
+_HEADER_LINES = 40
 _LIBRARY = re.compile(r"^lib[\w.-]+\.so$")
 
 
@@ -292,6 +332,142 @@ def classify(text: str) -> str:
     if any(_FN.match(line) for line in lines):
         return "implementation_fn"
     return "implementation_def"
+
+
+class Transcription(TypedDict):
+    """The Python module a translated stub copies, the rule that names it and the evidence."""
+
+    transcribed_module: str | None
+    transcription_rule: str
+    verbatim_line_share: str | None
+    transcription_candidates: list[str]
+
+
+#: The record of a source that is not a translated stub.
+NOT_A_TRANSCRIPT: Transcription = {
+    "transcribed_module": None,
+    "transcription_rule": "not_a_transcript",
+    "verbatim_line_share": None,
+    "transcription_candidates": [],
+}
+
+
+def package_modules(root: Path) -> dict[str, list[str]]:
+    """Return the tracked Python modules of the package outside ``accel/mojo``, grouped by file stem.
+
+    Parameters
+    ----------
+    root : Path
+        The repository root.
+
+    Returns
+    -------
+    dict
+        Each stem mapped to the sorted repository-relative paths of the modules with that stem.
+    """
+    grouped: dict[str, list[str]] = {}
+    for path in tracked(root, "src/sc_neurocore", ".py"):
+        relative = path.relative_to(root).as_posix()
+        if relative.startswith(MOJO_ROOT + "/"):
+            continue
+        grouped.setdefault(path.stem, []).append(relative)
+    return {stem: sorted(paths) for stem, paths in grouped.items()}
+
+
+def line_strings(text: str) -> list[str]:
+    """Return the Python text of each ``var _<name>_line = '…'`` line string of a stub, stripped.
+
+    Parameters
+    ----------
+    text : str
+        The whole Mojo source.
+
+    Returns
+    -------
+    list of str
+        The decoded strings, in order. A literal Python cannot decode is kept as written, quotes removed.
+    """
+    found: list[str] = []
+    for line in text.splitlines():
+        match = _LINE_STRING.match(line)
+        if match is None:
+            continue
+        literal = match.group(1)
+        try:
+            value = ast.literal_eval(literal)
+        except (SyntaxError, ValueError):
+            value = literal[1:-1]
+        found.append(str(value).strip())
+    return found
+
+
+def transcription(
+    path: Path, text: str, modules: dict[str, list[str]], read: Callable[[str], set[str]]
+) -> Transcription:
+    """Return the Python module a translated stub copies, by the module's stated rules.
+
+    Parameters
+    ----------
+    path : Path
+        The stub's path; its stem is used when the header names none.
+    text : str
+        The whole stub.
+    modules : dict
+        :func:`package_modules` of the repository.
+    read : callable
+        Returns the stripped lines of a repository-relative module.
+
+    Returns
+    -------
+    Transcription
+        The module (or ``None``), the rule, the verbatim line share ``"n/d"`` for a chosen module, and the
+        tied candidates of an ambiguous stem.
+    """
+    strings = line_strings(text)
+
+    def matched(module: str) -> int:
+        """Return how many of the stub's line strings the module holds as a stripped line."""
+        lines = read(module)
+        return sum(1 for string in strings if string in lines)
+
+    def chosen(module: str, rule: str) -> Transcription:
+        """Return the record of a stub whose module a rule names."""
+        return {
+            "transcribed_module": module,
+            "transcription_rule": rule,
+            "verbatim_line_share": f"{matched(module)}/{len(strings)}",
+            "transcription_candidates": [],
+        }
+
+    header = "\n".join(text.splitlines()[:_HEADER_LINES])
+    known = {module for paths in modules.values() for module in paths}
+    if "Source of truth" in header:
+        named = [module for module in _SOURCE_OF_TRUTH.findall(header) if module in known]
+        if named:
+            return chosen(named[0], "header_source_of_truth")
+    stem_match = _HEADER_STEM.search(header)
+    rule, stem = ("header_stem", stem_match.group(1)) if stem_match else ("file_stem", path.stem)
+    candidates = modules.get(stem, [])
+    if len(candidates) == 1:
+        return chosen(candidates[0], rule)
+    if not candidates:
+        return {
+            "transcribed_module": None,
+            "transcription_rule": "none",
+            "verbatim_line_share": None,
+            "transcription_candidates": [],
+        }
+    scores = {module: matched(module) for module in candidates}
+    best = max(scores.values())
+    leaders = sorted(module for module, score in scores.items() if score == best)
+    if len(leaders) == 1:
+        return chosen(leaders[0], "stem_by_lines")
+    return {
+        "transcribed_module": None,
+        "transcription_rule": "ambiguous",
+        "verbatim_line_share": None,
+        "transcription_candidates": leaders,
+    }
 
 
 def string_tuples(path: Path) -> dict[str, tuple[str, ...]]:
@@ -650,6 +826,16 @@ def build(root: Path) -> Inventory:
             attributed.setdefault(source, []).append(module)
         literals.append({"python": module, "library": library, "builder_mojo_source": source})
     authoritative, mirrors = declarations(root)
+    modules = package_modules(root)
+    stripped: dict[str, set[str]] = {}
+
+    def read(module: str) -> set[str]:
+        """Return a package module's stripped lines, read once."""
+        if module not in stripped:
+            text = (root / module).read_text(encoding="utf-8")
+            stripped[module] = {line.strip() for line in text.splitlines()}
+        return stripped[module]
+
     sources: list[Source] = []
     for path in mojo_sources:
         relative = path.relative_to(mojo).as_posix()
@@ -661,13 +847,24 @@ def build(root: Path) -> Inventory:
             else None
         )
         full = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8")
+        kind = classify(text)
+        copied = (
+            transcription(path, text, modules, read)
+            if kind == "translated_stub"
+            else NOT_A_TRANSCRIPT
+        )
         sources.append(
             {
                 "path": full,
-                "class": classify(path.read_text(encoding="utf-8")),
+                "class": kind,
                 "declared": declared,
                 "built_by_builder": path in targets.values(),
                 "loaders": sorted(set(attributed.get(full, []))),
+                "transcribed_module": copied["transcribed_module"],
+                "transcription_rule": copied["transcription_rule"],
+                "verbatim_line_share": copied["verbatim_line_share"],
+                "transcription_candidates": list(copied["transcription_candidates"]),
             }
         )
     counts: dict[str, int] = {"sources": len(sources)}
@@ -684,6 +881,10 @@ def build(root: Path) -> Inventory:
         for source in sources
         if source["class"] == "translated_stub" and source["declared"] == "mirror"
     )
+    for rule in TRANSCRIPTION_RULES:
+        counts[f"transcription_rule_{rule}"] = sum(
+            1 for source in sources if source["transcription_rule"] == rule
+        )
     counts["library_literals"] = len(literals)
     counts["library_literals_attributed_to_mojo"] = sum(
         1 for item in literals if item["builder_mojo_source"]

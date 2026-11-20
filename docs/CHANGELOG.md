@@ -82,6 +82,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Mojo lane inventory names, for each machine-translated stub, the
+  Python module it copies, so the record is the worklist for replacing
+  stubs with real code: `transcribed_module`, the `transcription_rule`
+  that names it (a source of truth in the header, the header's stem, the
+  file's stem, or the module holding most of the stub's lines when
+  several share the stem), and `verbatim_line_share`, the stub's line
+  strings found verbatim in that module as `n/d`. A tie between modules is
+  listed as `ambiguous` with its candidates and never chosen. Of the 363
+  stubs, 361 name one module and 2 are ambiguous.
+
 - Import legacy BCI spike recordings through the codec console. Supply the
   original time and channel geometry and convert validated RLE runs to
   framed raster packets for verification and NumPy export.
