@@ -236,7 +236,7 @@ def test_blocked_predictor_module_is_unavailable_and_its_import_state_is_restore
 
 
 def test_packaged_world_model_codec_does_not_need_experimental_namespace() -> None:
-    """Run the actual codec in a process that denies the experimental package."""
+    """Run the same codec installation in a process that denies the experimental package."""
     from sc_neurocore.spike_codec import PredictiveSpikeCodec
 
     tested_module = import_module(PredictiveSpikeCodec.__module__)
@@ -244,6 +244,10 @@ def test_packaged_world_model_codec_does_not_need_experimental_namespace() -> No
     script = """
 import sys
 from pathlib import Path
+
+# The parent may have selected the source tree through pytest's Python path.
+expected_module = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(expected_module.parents[2]))
 
 def deny_research_import(event, arguments):
     if event == "import" and str(arguments[0]).startswith("sc_neurocore.world_model"):
@@ -254,7 +258,7 @@ import numpy as np
 from sc_neurocore.spike_codec import PredictiveSpikeCodec, probe_codec
 from sc_neurocore.spike_codec import predictive_codec
 
-assert Path(predictive_codec.__file__).resolve() == Path(sys.argv[1]).resolve()
+assert Path(predictive_codec.__file__).resolve() == expected_module
 assert "sc_neurocore.world_model" not in sys.modules
 availability = probe_codec("predictive", "world_model")
 assert availability.python_available and "python" in availability.backend_choices
@@ -267,7 +271,7 @@ assert stats.lossless
 assert "sc_neurocore.world_model" not in sys.modules
 """
     completed = subprocess.run(
-        [sys.executable, "-B", "-c", script, tested_module.__file__],
+        [sys.executable, "-I", "-B", "-c", script, tested_module.__file__],
         capture_output=True,
         text=True,
         timeout=30,
