@@ -6711,6 +6711,7 @@ Thin client for local LLM chat endpoints.
 Configuration for a reproducible stochastic photonic design pass.
 
 - **__post_init__**()
+  - Refuse a non-positive bitstream length, a density alpha outside (0, 1) and negative FDTD steps.
 
 ### Class `BitstreamEvidence`
 One encoded SC channel and its statistical evidence.

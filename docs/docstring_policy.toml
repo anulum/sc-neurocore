@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2285
+expected_file_count = 2287
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9189,3 +9189,11 @@ rationale = "Pack 64-bit group words, compute IEEE CRC-32, and cosimulate sc_shd
 [[file]]
 path = "tests/test_shd_event_axi.py"
 rationale = "Verify sc_shd_event_axi T_MAX and register parity, formal proof configuration, bit-exact count and binary AXI cosimulation, and negative SLVERR refusals."
+
+[[file]]
+path = "tests/test_wheel_excluded_imports_are_guarded.py"
+rationale = "Read every shipped module's syntax tree and hold each import of a wheel-excluded package behind the source-checkout refusal: before it in its function, or in a try clause that refuses and re-raises."
+
+[[file]]
+path = "src/sc_neurocore/bridges/photonic_codesign.py"
+rationale = "Photonic co-design bridge; it needs sc_neurocore.optics as a whole, so an installed wheel refuses its import with the source-checkout reason."

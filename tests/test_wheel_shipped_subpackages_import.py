@@ -14,7 +14,10 @@ to import from an installed wheel; ``sc_neurocore.identity`` and
 ``sc_neurocore.experimental`` did. A subprocess blocks every excluded package,
 as an installed wheel lacks them, and imports every shipped top-level
 subpackage. Only failures caused by a blocked package count here; a missing
-optional third-party dependency is a different, declared boundary.
+optional third-party dependency is a different, declared boundary. In the same
+process every guarded feature that needs a blocked package is called, and its
+refusal must name the feature, the package and the reason;
+``test_wheel_excluded_imports_are_guarded.py`` holds the rule for every site.
 
 The identity monitors measure spike trains through the shipped
 ``sc_neurocore.spike_train_statistics``, so they run in the same blocked
@@ -120,9 +123,16 @@ for name in ("diagnose", "report", "correct"):
         director_methods[name] = None
     except ModuleNotFoundError as exc:
         director_methods[name] = str(exc)
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.spike_codec.predictive_codec import PredictiveSpikeCodec
+from sc_neurocore.utils.bitstreams import BitstreamEncoder
+
 for name, call in (
     ("extract_state", substrate.extract_state),
     ("priming", StateDecoder(substrate).generate_priming_context),
+    ("photonic_codesign", lambda: importlib.import_module("sc_neurocore.bridges.photonic_codesign")),
+    ("monitor", lambda: SpikeMonitor.cross_correlation(object.__new__(SpikeMonitor), 0, 1)),
+    ("chaotic", lambda: BitstreamEncoder(mode="chaotic", seed=3)),
 ):
     try:
         call()
@@ -130,7 +140,14 @@ for name, call in (
     except ModuleNotFoundError as exc:
         refusals[name] = str(exc)
 
+codec = PredictiveSpikeCodec(predictor="world_model", backend="python")
+codec_spikes = (np.random.default_rng(42).random((64, 9)) < 0.2).astype(np.int8)
+codec_packet, _ = codec.compress(codec_spikes)
+codec_decoder = PredictiveSpikeCodec(backend="python")
+codec_recovered = codec_decoder.decompress(codec_packet, *codec_spikes.shape)
+
 print(json.dumps({
+    "world_model_round_trip": bool(np.array_equal(codec_recovered, codec_spikes)),
     "blocked": blocked,
     "shipped": shipped,
     "failures": failures,
@@ -209,6 +226,35 @@ def test_identity_features_that_need_pca_or_connectivity_still_refuse(
         message = refusals[key]
         assert isinstance(message, str) and feature in message
         assert "only in a source checkout" in message
+
+
+@pytest.mark.parametrize(
+    ("key", "feature", "package"),
+    [
+        ("photonic_codesign", "sc_neurocore.bridges.photonic_codesign", "sc_neurocore.optics"),
+        ("monitor", "SpikeMonitor.cross_correlation", "sc_neurocore.analysis.spike_stats"),
+        ("chaotic", "BitstreamEncoder(mode='chaotic')", "sc_neurocore.chaos.rng"),
+    ],
+)
+def test_guarded_features_refuse_in_a_wheel_with_the_feature_and_package_named(
+    probe: dict[str, object], key: str, feature: str, package: str
+) -> None:
+    """Each guarded feature refuses with the source-checkout reason, not a bare import error."""
+    refusals = probe["refusals"]
+    assert isinstance(refusals, dict)
+    message = refusals[key]
+    assert isinstance(message, str), key
+    assert message.startswith(f"{feature} needs {package},"), message
+    assert "only in a source checkout" in message
+
+
+def test_predictive_world_model_round_trips_without_source_packages(
+    probe: dict[str, object],
+) -> None:
+    """The shipped predictor reconstructs binary spikes with research imports blocked."""
+    blocked = probe["blocked"]
+    assert isinstance(blocked, list) and "sc_neurocore.world_model" in blocked
+    assert probe["world_model_round_trip"] is True
 
 
 def _same(measured: object, expected: float) -> bool:

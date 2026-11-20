@@ -742,6 +742,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   succeed, the second to be told of revision 1, and the first's state to
   be kept.
 
+- Three imports of packages the wheel leaves out now refuse with the
+  source-checkout reason instead of a bare `ModuleNotFoundError` in an
+  installed wheel: `sc_neurocore.bridges.photonic_codesign`, which needs
+  `sc_neurocore.optics` as a whole; `SpikeMonitor.cross_correlation`
+  (`analysis.spike_stats`); and `BitstreamEncoder(mode="chaotic")`
+  (`chaos.rng`). A new test reads every shipped module's syntax tree and
+  fails on any import of an excluded package that the refusal does not
+  precede, and requires each known excluded import by its module and
+  target. The blocked-package subprocess calls the three features and
+  round-trips the world-model predictor, which the wheel now ships.
+
 - A panic in the engine no longer ends the Python process. The release
   profile the wheels are built with sets `panic = "unwind"`, where it had
   `"abort"`, so a panic reaches Python as `PanicException`. The two

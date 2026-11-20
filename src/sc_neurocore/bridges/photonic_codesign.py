@@ -25,13 +25,22 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+from sc_neurocore._source_checkout import require_source_checkout_package
 from sc_neurocore.edge.bitstream import popcount_slice, probability, scc
 from sc_neurocore.edge.lfsr import Lfsr16
-from sc_neurocore.optics.photonic_emitter import (
-    CompilationResult,
-    PhotonicCompiler,
-    PhotonicTarget,
-)
+
+# sc_neurocore.optics ships only in a source checkout, and this whole module needs it: an
+# installed wheel refuses the import with the reason; any other missing module is raised as
+# it is.
+try:
+    from sc_neurocore.optics.photonic_emitter import (
+        CompilationResult,
+        PhotonicCompiler,
+        PhotonicTarget,
+    )
+except ModuleNotFoundError:
+    require_source_checkout_package("sc_neurocore.optics", "sc_neurocore.bridges.photonic_codesign")
+    raise
 
 from .photonic_noc import (
     CrosstalkAnalyzer,
@@ -55,6 +64,7 @@ class PhotonicCoDesignConfig:
     target: PhotonicTarget = field(default_factory=PhotonicTarget.silicon_photonics)
 
     def __post_init__(self) -> None:
+        """Refuse a non-positive bitstream length, a density alpha outside (0, 1) and negative FDTD steps."""
         if self.bitstream_length <= 0:
             raise ValueError("bitstream_length must be positive.")
         if not 0.0 < self.density_alpha < 1.0:

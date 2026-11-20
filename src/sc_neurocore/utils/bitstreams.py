@@ -15,6 +15,7 @@ from typing import Any, Optional, SupportsInt
 
 import numpy as np
 
+from sc_neurocore._source_checkout import require_source_checkout_package
 from sc_neurocore.exceptions import SCEncodingError
 
 from .rng import RNG
@@ -341,6 +342,10 @@ class BitstreamEncoder:
         if self.mode in ("bernoulli", "bipolar"):
             self._rng = RNG(self.seed)
         elif self.mode == "chaotic":
+            # sc_neurocore.chaos ships only in a source checkout.
+            require_source_checkout_package(
+                "sc_neurocore.chaos.rng", "BitstreamEncoder(mode='chaotic')"
+            )
             from sc_neurocore.chaos.rng import ChaoticRNG
 
             x0 = (self.seed % 997) / 1000.0 + 0.001 if self.seed is not None else 0.5

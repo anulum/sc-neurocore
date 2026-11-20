@@ -14,6 +14,8 @@ from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
+from sc_neurocore._source_checkout import require_source_checkout_package
+
 if TYPE_CHECKING:
     from .population import Population
 
@@ -87,6 +89,10 @@ class SpikeMonitor:
         self, i: int, j: int, max_lag: int = 50
     ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Cross-correlogram between neurons i and j."""
+        # sc_neurocore.analysis ships only in a source checkout.
+        require_source_checkout_package(
+            "sc_neurocore.analysis.spike_stats", "SpikeMonitor.cross_correlation"
+        )
         from sc_neurocore.analysis.spike_stats import cross_correlation as _cc
 
         trains = self.spike_trains
