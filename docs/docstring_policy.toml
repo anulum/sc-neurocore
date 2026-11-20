@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2239
+expected_file_count = 2240
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9006,3 +9006,7 @@ rationale = "Write and check the ownership sidecar every JSON file added since t
 [[file]]
 path = "tests/test_tools/test_json_sidecar.py"
 rationale = "Hold the generated JSON sidecars to the ownership contract and to the committed fixture sidecars."
+
+[[file]]
+path = "tests/test_tools/test_build_accel_backends_discover_and_paths.py"
+rationale = "Verify that accelerator discovery recognises guarded native loaders and pairs their library paths with the right sources."

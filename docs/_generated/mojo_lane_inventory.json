@@ -4491,7 +4491,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -4894,7 +4896,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5020,7 +5024,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": false,
         "dispatch_modules": [],
@@ -5061,7 +5067,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -5131,8 +5139,10 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
-        "opens_library": true,
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
+        "opens_library": false,
         "rust_engine": true,
         "dispatch_modules": [],
         "auto_branch": true,
@@ -5155,7 +5165,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5283,7 +5295,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -5363,7 +5377,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5415,7 +5431,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -5444,7 +5462,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5471,7 +5491,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5495,7 +5517,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5621,7 +5645,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5762,7 +5788,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5784,8 +5812,10 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
-        "opens_library": true,
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
+        "opens_library": false,
         "rust_engine": true,
         "dispatch_modules": [],
         "auto_branch": true,
@@ -5859,7 +5889,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -5934,7 +5966,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -5958,7 +5992,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6044,7 +6080,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -6262,7 +6300,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -6303,7 +6343,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6325,7 +6367,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6500,7 +6544,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -6529,7 +6575,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6623,7 +6671,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -6722,7 +6772,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -6828,7 +6880,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6902,7 +6956,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6926,7 +6982,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -6984,7 +7042,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7093,7 +7153,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7117,7 +7179,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7209,7 +7273,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7250,7 +7316,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7359,7 +7427,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -7570,7 +7640,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],
@@ -7596,7 +7668,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -7627,7 +7701,9 @@
           "rust"
         ],
         "static_order": true,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [
@@ -7830,7 +7906,9 @@
           "rust"
         ],
         "static_order": false,
-        "backend_packages": [],
+        "backend_packages": [
+          "sc_neurocore.accel.mojo"
+        ],
         "opens_library": true,
         "rust_engine": true,
         "dispatch_modules": [],

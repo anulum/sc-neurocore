@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (discover_and_paths) from former test_build_accel_backends.py
 
+"""Cover native accelerator discovery, loader paths and source pairing rules."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,6 +18,7 @@ from tests.test_tools.build_accel_backends_support import MOD, _make_tree, _repo
 
 
 def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None:
+    """Pair Go libraries with sources named by convention, recipes and pathlib loaders."""
     accel, _ = _make_tree(tmp_path)
     targets = MOD.discover_targets("go", accel_root=accel)
     by_name = {t.name: t for t in targets}
@@ -42,6 +45,7 @@ def test_discover_mojo_uses_convention_recipe_and_pathlib(tmp_path: Path) -> Non
 
 
 def test_loader_output_paths_ignores_unrooted_joins(tmp_path: Path) -> None:
+    """Find loader outputs under a known root and ignore unrooted joins."""
     accel, models = _make_tree(tmp_path)
     outs = MOD._loader_output_paths("go", sorted(models.glob("*.py")), accel)
     names = {p.name for p in outs}
@@ -50,12 +54,14 @@ def test_loader_output_paths_ignores_unrooted_joins(tmp_path: Path) -> None:
 
 
 def test_loader_output_paths_skips_unparsable(tmp_path: Path) -> None:
+    """Skip an unparsable module while collecting accelerator loader outputs."""
     bad = tmp_path / "broken.py"
     bad.write_text("def f(:\n")  # SyntaxError
     assert MOD._loader_output_paths("go", [bad], tmp_path) == set()
 
 
 def test_self_contained_cdll_name_matches_only_direct_loader() -> None:
+    """Recognise native loader calls with a library beside the defining module."""
     import ast
 
     def expr(src: str) -> ast.AST:
@@ -63,6 +69,20 @@ def test_self_contained_cdll_name_matches_only_direct_loader() -> None:
 
     direct = 'ctypes.CDLL(str(Path(__file__).with_name("libmodel.so")))'
     assert MOD._self_contained_cdll_name(expr(direct)) == "libmodel.so"
+    guarded = 'load_mojo_library(str(Path(__file__).with_name("libmodel.so")))'
+    assert MOD._self_contained_cdll_name(expr(guarded)) == "libmodel.so"
+    qualified = 'native_library.load_mojo_library(str(Path(__file__).with_name("libmodel.so")))'
+    assert MOD._self_contained_cdll_name(expr(qualified)) == "libmodel.so"
+    assert (
+        MOD._self_contained_cdll_name(expr('open(str(Path(__file__).with_name("libmodel.so")))'))
+        is None
+    )
+    assert (
+        MOD._self_contained_cdll_name(
+            expr('other.CDLL(str(Path(__file__).with_name("libmodel.so")))')
+        )
+        is None
+    )
     assert MOD._self_contained_cdll_name(expr('Path(__file__).with_name("libmodel.so")')) is None
     assert (
         MOD._self_contained_cdll_name(
@@ -83,6 +103,7 @@ def test_self_contained_cdll_name_matches_only_direct_loader() -> None:
     (("go", "benda_herz.go"), ("mojo", "benda_herz_abi.mojo")),
 )
 def test_model57_self_contained_backend_is_discovered(language: str, source_name: str) -> None:
+    """Discover the self-contained Benda-Herz and stochastic-adaptation backends."""
     by_name = {target.name: target for target in MOD.discover_targets(language)}
     assert by_name["benda_herz"].source.name == source_name
     assert by_name["benda_herz"].output.name == "libbenda_herz.so"
@@ -90,6 +111,7 @@ def test_model57_self_contained_backend_is_discovered(language: str, source_name
 
 
 def test_model57_backends_are_required_by_ci() -> None:
+    """Require the Benda-Herz and stochastic-adaptation backends in CI builds."""
     workflow = (_repo_root() / ".github" / "workflows" / "ci.yml").read_text()
     required_line = next(
         line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")
@@ -99,6 +121,7 @@ def test_model57_backends_are_required_by_ci() -> None:
 
 
 def test_iter_files_prunes_vendored_dirs(tmp_path: Path) -> None:
+    """Find Python files while pruning vendored accelerator environments."""
     (tmp_path / "keep").mkdir()
     (tmp_path / "keep" / "a.py").write_text("x = 1\n")
     (tmp_path / ".pixi" / "deep").mkdir(parents=True)
@@ -108,6 +131,7 @@ def test_iter_files_prunes_vendored_dirs(tmp_path: Path) -> None:
 
 
 def test_loader_lib_parts_matches_and_rejects() -> None:
+    """Resolve literal library paths anchored at an accelerator or package root."""
     import ast
 
     def expr(src: str) -> ast.AST:
@@ -136,11 +160,13 @@ def test_loader_lib_parts_matches_and_rejects() -> None:
 
 
 def test_conventional_source_name() -> None:
+    """Derive a source filename from either form of the library basename."""
     assert MOD._conventional_source_name("libcoba_lif.so", ".go") == "coba_lif.go"
     assert MOD._conventional_source_name("plain.so", ".mojo") == "plain.mojo"
 
 
 def test_target_name_hides_matching_abi_suffix() -> None:
+    """Use the logical model name for a library built from an ABI wrapper."""
     assert MOD._target_name(Path("model_abi.mojo"), Path("libmodel.so"), ".mojo") == "model"
     assert MOD._target_name(Path("hindmarsh_rose.mojo"), Path("libhr.so"), ".mojo") == (
         "hindmarsh_rose"
@@ -148,6 +174,7 @@ def test_target_name_hides_matching_abi_suffix() -> None:
 
 
 def test_hint_pairs_and_read_text(tmp_path: Path) -> None:
+    """Extract a Go build recipe while ignoring unavailable input files."""
     good = tmp_path / "a.py"
     good.write_text("go build -buildmode=c-shared -o libhr.so hindmarsh_rose.go\n")
     missing = tmp_path / "does_not_exist.py"

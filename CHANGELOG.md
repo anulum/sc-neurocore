@@ -251,6 +251,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The backend builder builds the two self-contained Mojo fidelity libraries again
+  (`benda_herz`, `sc_stochastic_rate_adaptation`). Their loaders now call the guarded
+  `load_mojo_library` instead of `ctypes.CDLL`, and the builder recognised only the latter, so
+  it stopped producing libraries that CI requires. It now recognises both, and the Mojo lane
+  inventory is regenerated (50 built libraries, as before).
+
 - The chip compiler's precision-loss warning reads "Weight quantisation to
   N-bit introduces …" (it said "quantization"), and its module docstring and
   comment use the same British spelling.

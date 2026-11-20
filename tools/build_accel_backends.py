@@ -143,25 +143,35 @@ def _loader_lib_parts(node: ast.AST) -> tuple[str, list[str]] | None:
     return None
 
 
+def _is_library_loader(function: ast.expr) -> bool:
+    """Return whether a call target opens a shared library: ``ctypes.CDLL`` or the guarded Mojo loader."""
+    if isinstance(function, ast.Attribute):
+        return (
+            function.attr == "CDLL"
+            and isinstance(function.value, ast.Name)
+            and function.value.id == "ctypes"
+        ) or function.attr == "load_mojo_library"
+    return isinstance(function, ast.Name) and function.id == "load_mojo_library"
+
+
 def _self_contained_cdll_name(node: ast.AST) -> str | None:
-    """Return the library name from a direct package-local ``ctypes.CDLL`` call.
+    """Return the library name from a direct package-local loader call.
 
     Self-contained fidelity backends keep their loader and shared object in the
     same package and use this deliberately narrow idiom::
 
         ctypes.CDLL(str(Path(__file__).with_name("libmodel.so")))
 
+    A Mojo library is loaded through the package's one guarded loader, which
+    refuses a host below the build's instruction-set level before it calls
+    ``ctypes.CDLL``; the same idiom through it is matched too::
+
+        load_mojo_library(str(Path(__file__).with_name("libmodel.so")))
+
     Matching the complete call (rather than every arbitrary ``with_name`` in a
     module) keeps discovery tied to an actual runtime loader.
     """
-    if not (
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "CDLL"
-        and isinstance(node.func.value, ast.Name)
-        and node.func.value.id == "ctypes"
-        and len(node.args) == 1
-    ):
+    if not (isinstance(node, ast.Call) and len(node.args) == 1 and _is_library_loader(node.func)):
         return None
     path_expr = node.args[0]
     if (
