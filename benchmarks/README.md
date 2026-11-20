@@ -75,6 +75,23 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+Install the Python and Rust wheels to measure complete SSCF packets and
+bounded pull streams. Use one logical CPU for both paths. Record the CPU
+and activity on its SMT sibling. The sample rate labels acquisition
+duration, and the benchmark measures the processing time separately.
+
+```sh
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THREADS=1
+taskset -c 0 python benchmarks/bench_raster_stream.py compare \
+  --window-size 8 --window-size 20 --window-size 64 --sample-rate-hz 20000 \
+  --output framed-raster-synthetic.json
+```
+
+For the recorded input, install `h5py` and use `--sample-rate-hz 1000
+--shd shd_test.h5 --recording 0`. The report retains frame and stream
+digests, first-call RSS and separate encode, decode and round-trip times.
+[Measured results and hardware](../docs/benchmarks/BENCHMARKS.md#framed-spike-rasters-in-python-and-rust).
+
 Install both wheels to compare Python and Rust DSCX and ISI on the same
 binary rasters. The benchmark verifies packet parity within each format
 and cross-decodes before and after timing. Warm results use resident input

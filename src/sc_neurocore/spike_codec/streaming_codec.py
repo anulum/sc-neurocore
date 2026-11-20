@@ -6,37 +6,92 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Streaming spike codec: fixed-latency, causal
 
-"""Streaming spike compression with bounded latency per window.
-
-Architecture:
-    1. Divide spike raster into fixed-size time windows (e.g. 20 samples = 1ms at 20kHz)
-    2. Each window compressed independently as a frame
-    3. Frames are self-contained: no dependency on past frames
-    4. Bounded worst-case latency: window_size / sample_rate
-    5. Frame format: frame_header + per-channel spike bitmask
-
-Within each window, channels are packed as bitmasks (one bit per timestep).
-For window_size=20, each channel needs 20 bits = 3 bytes. Silent channels
-are run-length encoded (skip count). Active channels store raw bitmask.
-
-Target: real-time BCI decoding where latency matters more than compression
-ratio. Also suitable for online spike sorting and closed-loop experiments.
-"""
+"""Compress binary raster windows as independently decodable frames."""
 
 from __future__ import annotations
 
-import struct
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass
+from importlib import import_module
+from operator import index
+from typing import Any, Protocol, cast
 
-from typing import Any
 import numpy as np
 
-from .codec import CompressionResult
+from .codec import CompressionResult, _dimension, _ENGINE, _installed_native_extension
+from .raster_frame import (
+    _MAGIC,
+    _Raster,
+    _decode_container,
+    _decode_frame,
+    _encode_container,
+    _encode_frame,
+    _frame_shape,
+)
+
+_NATIVE_SYMBOLS = (
+    "raster_stream_encode_frame",
+    "raster_stream_decode_frame",
+    "raster_stream_encode_raster",
+    "raster_stream_decode_raster",
+)
+
+
+class _NativeRasterStream(Protocol):
+    def raster_stream_encode_frame(self, samples: _Raster) -> bytes: ...
+    def raster_stream_decode_frame(self, packet: bytes) -> _Raster: ...
+    def raster_stream_encode_raster(
+        self, samples: _Raster, window_size: int
+    ) -> tuple[bytes, int, int, int]: ...
+    def raster_stream_decode_raster(self, packet: bytes, rows: int, channels: int) -> _Raster: ...
+
+
+def _native(backend: str) -> _NativeRasterStream | None:
+    if backend not in ("auto", "python", "rust"):
+        raise ValueError("backend must be auto, python or rust")
+    if backend == "python":
+        return None
+    try:
+        module = import_module(_ENGINE)
+    except ImportError:
+        if _installed_native_extension():
+            raise
+        module = None
+    if module is not None and all(
+        callable(getattr(module, name, None)) for name in _NATIVE_SYMBOLS
+    ):
+        return cast(_NativeRasterStream, module)
+    if backend == "rust":
+        raise ValueError("backend 'rust' needs sc_neurocore_engine with the raster stream codec")
+    return None
+
+
+def _window(value: int) -> int:
+    size = index(value)
+    if not 1 <= size <= 0xFFFF:
+        raise ValueError("raster window size must be in 1..65535")
+    return size
+
+
+def _raster(value: np.ndarray[Any, Any], row_limit: int = 0xFFFFFFFF) -> np.ndarray[Any, Any]:
+    raster = np.asarray(value)
+    if raster.ndim != 2:
+        raise ValueError("raster must have shape (time, channels)")
+    rows, channels = raster.shape
+    if rows > row_limit or channels > 0xFFFF:
+        raise ValueError("raster dimensions exceed the packet field widths")
+    return raster
+
+
+def _binary(raster: np.ndarray[Any, Any]) -> _Raster:
+    if raster.dtype != np.bool_ and not np.all((raster == 0) | (raster == 1)):
+        raise ValueError("raster must contain only zeros and ones")
+    return np.ascontiguousarray(raster, dtype=np.int8)
 
 
 @dataclass
 class StreamingCompressionResult(CompressionResult):
-    """Compression result with streaming codec metrics."""
+    """Compression result with statistics over the independent frames."""
 
     window_size: int = 0
     n_frames: int = 0
@@ -45,207 +100,218 @@ class StreamingCompressionResult(CompressionResult):
     codec_type: str = "streaming"
 
 
-def _pack_window(window: np.ndarray[Any, Any]) -> bytes:
-    """Pack a (W, N) spike window into compact frame bytes.
-
-    Format per frame:
-        n_channels: uint16
-        window_size: uint16
-        For each channel:
-            If silent (no spikes): store nothing, mark in skip bitmap
-            If active: store raw bitmask (ceil(W/8) bytes)
-
-        skip_bitmap: ceil(N/8) bytes — 1 = silent, 0 = active
-        active_bitmasks: concatenated, ceil(W/8) bytes each
-    """
-    W, N = window.shape
-    bitmask_bytes = (W + 7) // 8
-
-    skip_bits = bytearray((N + 7) // 8)
-    active_data = bytearray()
-    active_count = 0
-
-    for ch in range(N):
-        col = window[:, ch]
-        if not np.any(col):
-            # Mark as silent
-            skip_bits[ch // 8] |= 1 << (ch % 8)
-        else:
-            active_count += 1
-            # Pack spike times as bitmask
-            packed = 0
-            for t in range(W):
-                if col[t]:
-                    packed |= 1 << t
-            active_data.extend(packed.to_bytes(bitmask_bytes, "little"))
-
-    header = struct.pack("!HH", N, W)
-    return header + bytes(skip_bits) + bytes(active_data)
-
-
-def _unpack_window(frame: bytes, offset: int) -> tuple[np.ndarray[Any, Any], int]:
-    """Unpack one frame. Returns (window, new_offset)."""
-    N, W = struct.unpack("!HH", frame[offset : offset + 4])
-    offset += 4
-
-    skip_bytes = (N + 7) // 8
-    bitmask_bytes = (W + 7) // 8
-
-    skip_bits = frame[offset : offset + skip_bytes]
-    offset += skip_bytes
-
-    window = np.zeros((W, N), dtype=np.int8)
-
-    for ch in range(N):
-        is_silent = (skip_bits[ch // 8] >> (ch % 8)) & 1
-        if is_silent:
-            continue
-        packed = int.from_bytes(frame[offset : offset + bitmask_bytes], "little")
-        offset += bitmask_bytes
-        for t in range(W):
-            if (packed >> t) & 1:
-                window[t, ch] = 1
-
-    return window, offset
-
-
 class StreamingSpikeCodec:
-    """Streaming spike codec: fixed-latency, independently decodable frames.
-
-    Each time window is compressed as a self-contained frame. No inter-frame
-    dependencies. Worst-case latency = window_size samples.
+    """Encode binary rasters with fixed-size, independently decodable frames.
 
     Parameters
     ----------
     window_size : int
-        Samples per frame. 20 = 1ms at 20kHz (typical BCI).
-        Smaller = lower latency but less compression.
+        Time samples per complete frame, in 1 through 65535.
+        At 20 kHz a 20-sample window spans one millisecond of acquisition.
+    backend : str
+        'python', 'rust', or 'auto'. Auto uses the native codec when all
+        four packet operations are installed and otherwise uses Python.
+
+    Notes
+    -----
+    Whole-raster SSCF packets pad the last window and store the original
+    length. The pull API emits an unpadded standalone final frame.
     """
 
-    HEADER_MAGIC = b"SSCF"  # Streaming Spike Codec Frames
+    HEADER_MAGIC = _MAGIC
 
-    def __init__(self, window_size: int = 20):
-        self.window_size = window_size
+    def __init__(self, window_size: int = 20, *, backend: str = "auto") -> None:
+        self.window_size = _window(window_size)
+        self._engine = _native(backend)
+
+    @property
+    def backend(self) -> str:
+        """Return the selected complete implementation, 'python' or 'rust'."""
+        return "rust" if self._engine is not None else "python"
 
     def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, StreamingCompressionResult]:
-        """Compress spike raster into independently decodable frames.
+        """Encode a binary time-by-channel raster as a complete SSCF packet.
 
         Parameters
         ----------
-        spikes : ndarray of shape (T, N), binary
+        spikes : ndarray
+            A two-dimensional raster containing zeros and ones.
 
         Returns
         -------
-        (compressed_bytes, StreamingCompressionResult)
+        tuple of bytes and StreamingCompressionResult
+            The encoded container and statistics over its original samples.
+
+        Raises
+        ------
+        ValueError
+            If the samples, dimensions or window size cannot be encoded.
         """
-        spikes = np.asarray(spikes, dtype=np.int8)
-        T, N = spikes.shape
-        original_bits = T * N
-
-        n_frames = (T + self.window_size - 1) // self.window_size
-        frames = []
-        active_counts = []
-        max_frame_size = 0
-
-        for i in range(n_frames):
-            start = i * self.window_size
-            end = min(start + self.window_size, T)
-            window = spikes[start:end]
-
-            # Pad last window if needed
-            if window.shape[0] < self.window_size:
-                pad = np.zeros((self.window_size - window.shape[0], N), dtype=np.int8)
-                window = np.vstack([window, pad])
-
-            frame = _pack_window(window)
-            frames.append(frame)
-
-            active = int(np.any(window, axis=0).sum())
-            active_counts.append(active)
-            if len(frame) > max_frame_size:
-                max_frame_size = len(frame)
-
-        # Global header: magic(4) + window_size(2) + T(4) + N(2) + n_frames(4)
-        header = self.HEADER_MAGIC + struct.pack("!HIHI", self.window_size, T, N, n_frames)
-        encoded = header + b"".join(frames)
-
-        compressed_bits = len(encoded) * 8
-        ratio = original_bits / max(compressed_bits, 1)
-
-        return encoded, StreamingCompressionResult(
-            original_bits=original_bits,
-            compressed_bits=compressed_bits,
-            compression_ratio=ratio,
-            n_spikes=int(np.sum(spikes)),
-            n_neurons=N,
-            n_timesteps=T,
+        window = _window(self.window_size)
+        samples = _binary(_raster(spikes))
+        rows, channels = samples.shape
+        if self._engine is None:
+            packet, spikes_count, active, max_size = _encode_container(samples, window)
+        else:
+            packet, spikes_count, active, max_size = self._engine.raster_stream_encode_raster(
+                samples, window
+            )
+        frames = (rows + window - 1) // window
+        bits = len(packet) * 8
+        return packet, StreamingCompressionResult(
+            original_bits=rows * channels,
+            compressed_bits=bits,
+            compression_ratio=rows * channels / bits,
+            n_spikes=spikes_count,
+            n_neurons=channels,
+            n_timesteps=rows,
             lossless=True,
-            window_size=self.window_size,
-            n_frames=n_frames,
-            mean_active_channels=float(np.mean(active_counts)) if active_counts else 0.0,
-            max_frame_bytes=max_frame_size,
-            codec_type="streaming",
+            window_size=window,
+            n_frames=frames,
+            mean_active_channels=active / frames if frames else 0.0,
+            max_frame_bytes=max_size,
         )
 
-    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> np.ndarray[Any, Any]:
-        """Decompress streaming frames to spike raster.
-
-        T and N are read from the header if not provided (or if 0).
+    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> _Raster:
+        """Decode a complete SSCF packet or a prefix of its recorded rows.
 
         Parameters
         ----------
         data : bytes
-        T, N : int (optional, read from header)
+            One SSCF packet including all frames.
+        T : int
+            Number of leading rows to return. Zero selects all recorded rows.
+        N : int
+            Expected channel count. Zero selects the recorded count.
 
         Returns
         -------
-        ndarray of shape (T, N), int8
+        ndarray
+            The decoded time-by-channel int8 raster.
+
+        Raises
+        ------
+        ValueError
+            If dimensions are inconsistent, framing is incomplete, or data
+            following the last frame or padding bits are nonempty.
         """
-        magic = data[:4]
-        if magic != self.HEADER_MAGIC:
-            raise ValueError(f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r}")
-
-        window_size, T_stored, N_stored, n_frames = struct.unpack("!HIHI", data[4:16])
-        if T == 0:
-            T = T_stored
-        if N == 0:
-            N = N_stored
-
-        offset = 16
-        windows = []
-        for _ in range(n_frames):
-            window, offset = _unpack_window(data, offset)
-            windows.append(window)
-
-        if not windows:  # pragma: no cover — T=0 edge case
-            return np.zeros((T, N), dtype=np.int8)
-
-        full = np.vstack(windows)
-        return full[:T]
+        rows, channels = _dimension(T), _dimension(N)
+        if self._engine is None:
+            return _decode_container(data, rows, channels)
+        return self._engine.raster_stream_decode_raster(data, rows, channels)
 
     def compress_frame(self, window: np.ndarray[Any, Any]) -> bytes:
-        """Compress a single time window (for real-time streaming).
+        """Encode one standalone binary frame with its actual dimensions.
 
         Parameters
         ----------
-        window : ndarray of shape (W, N), binary
+        window : ndarray
+            A time-by-channel raster with at most 65535 rows and channels.
 
         Returns
         -------
-        bytes — single frame, independently decodable
+        bytes
+            One frame without a container header or final-window padding.
         """
-        return _pack_window(np.asarray(window, dtype=np.int8))
+        return self._pack_frame(_binary(_raster(window, 0xFFFF)))
 
-    def decompress_frame(self, frame: bytes) -> np.ndarray[Any, Any]:
-        """Decompress a single frame.
+    def _pack_frame(self, samples: _Raster) -> bytes:
+        if self._engine is None:
+            return _encode_frame(samples, samples.shape[0])[0]
+        return self._engine.raster_stream_encode_frame(samples)
+
+    def decompress_frame(self, frame: bytes) -> _Raster:
+        """Decode one complete standalone frame.
 
         Parameters
         ----------
         frame : bytes
+            An independent frame with its own channel count and row count.
 
         Returns
         -------
-        ndarray of shape (W, N), int8
+        ndarray
+            An int8 raster at the frame's recorded dimensions.
+
+        Raises
+        ------
+        ValueError
+            If the frame is truncated or has trailing bytes or nonzero padding.
         """
-        window, _ = _unpack_window(frame, 0)
-        return window
+        if self._engine is None:
+            return _decode_frame(frame)
+        return self._engine.raster_stream_decode_frame(frame)
+
+    def iter_compress(self, chunks: Iterable[np.ndarray[Any, Any]]) -> Generator[bytes, None, None]:
+        """Emit independent frames as the consumer requests them.
+
+        Parameters
+        ----------
+        chunks : iterable of ndarray
+            Binary time-by-channel chunks with a constant channel count.
+
+        Yields
+        ------
+        bytes
+            A complete standalone frame. The last frame has its actual size.
+
+        Notes
+        -----
+        A single window of samples is buffered in addition to the chunk supplied
+        by the caller. Closing the generator discards its unfinished window and
+        stops pulling input. A new iterator starts a new stream.
+        """
+        size = _window(self.window_size)
+        filled = 0
+        buffer = None
+        for chunk in chunks:
+            raster = _raster(chunk)
+            rows, channels = raster.shape
+            if buffer is None:
+                buffer = np.empty((size, channels), dtype=np.int8)
+            if channels != buffer.shape[1]:
+                raise ValueError("raster stream channel count changed")
+            start = 0
+            while start < rows:
+                take = min(size - filled, rows - start)
+                buffer[filled : filled + take] = _binary(raster[start : start + take])
+                filled += take
+                start += take
+                if filled == size:
+                    yield self._pack_frame(buffer)
+                    filled = 0
+        if buffer is not None and filled:
+            yield self._pack_frame(buffer[:filled])
+
+    def iter_decompress(self, frames: Iterable[bytes]) -> Generator[_Raster, None, None]:
+        """Decode one independent frame per downstream request.
+
+        Parameters
+        ----------
+        frames : iterable of bytes
+            Complete frames with a constant channel count and at most
+            the configured window size. Only the last frame may be short.
+
+        Yields
+        ------
+        ndarray
+            One decoded frame. No padding is added to the last frame.
+
+        Notes
+        -----
+        Closing the iterator stops reading input. On a malformed frame the
+        iterator raises and closes. Previously yielded frames remain usable.
+        Create a new iterator at the next known frame boundary to recover.
+        """
+        size = _window(self.window_size)
+        channels: int | None = None
+        short = False
+        for packet in frames:
+            if short:
+                raise ValueError("raster frame followed a short final frame")
+            rows, count = _frame_shape(memoryview(packet))
+            if rows > size or (channels is not None and count != channels):
+                raise ValueError("raster stream frame dimensions changed")
+            channels = count
+            short = rows < size
+            yield self.decompress_frame(packet)

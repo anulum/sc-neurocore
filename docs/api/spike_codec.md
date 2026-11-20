@@ -172,9 +172,17 @@ engine exports it. Both backends read and write the same DSCX format.
 
 ## Streaming Codec (Real-Time)
 
-Independently decodable frames. window_size is a sample count (default 20),
-not measured processing or transport latency. The whole-raster container
-pads its last frame and trims to the original decoded length.
+The Python and Rust backends encode the same independently decodable frames.
+Use `backend="auto"` to select the installed Rust codec with Python fallback,
+or select a backend explicitly. The default window spans 20 samples.
+
+Use `compress` and `decompress` for an SSCF container. The last frame is
+padded, and the decoder returns the original row count or a requested row
+prefix. Use `iter_compress` and `iter_decompress` for a pull stream of
+standalone frames with an unpadded final frame. The consumer controls
+backpressure by advancing the iterator. Close it to cancel, then create a
+new iterator at a known frame boundary to restart.
+[Measured first-frame latency and sustained throughput](../benchmarks/BENCHMARKS.md#framed-spike-rasters-in-python-and-rust).
 
 ::: sc_neurocore.spike_codec.streaming_codec
     options:

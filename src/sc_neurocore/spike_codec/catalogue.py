@@ -58,7 +58,7 @@ def _check_module(
     symbols: tuple[str, ...],
     diagnostics: list[str],
     *,
-    strict_isi_import: bool = False,
+    strict_native_import: bool = False,
 ) -> str:
     """Check actual imports and callable exports, retaining loader diagnostics.
 
@@ -70,8 +70,8 @@ def _check_module(
         Required callable names, including lazily resolved module attributes.
     diagnostics : list of str
         Destination for actual import errors and missing callable names.
-    strict_isi_import : bool
-        Treat import refusal of a present ISI extension as a broken load.
+    strict_native_import : bool
+        Treat import refusal of a present native extension as a broken load.
 
     Returns
     -------
@@ -83,7 +83,7 @@ def _check_module(
         missing = tuple(symbol for symbol in symbols if not callable(getattr(module, symbol, None)))
     except ImportError as exc:
         diagnostics.append(f"{module_name}: {type(exc).__name__}: {exc}")
-        if strict_isi_import:
+        if strict_native_import:
             from .codec import _installed_native_extension
 
             if _installed_native_extension():
@@ -116,7 +116,8 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         Predictive kernels are cached by their owning module; installing an engine
         later does not update existing instances. Start a fresh process in that case.
         Native loader OSError or RuntimeError excludes ``auto`` from advertised
-        choices. An ImportError loading a present ISI extension does as well.
+        choices. An ImportError loading a present extension does as well
+        for ISI, predictive, delta and framed raster packets.
         An absent engine permits the classes' documented Python fallback.
 
     Raises
@@ -142,7 +143,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_module,
             selected.native_symbols,
             diagnostics,
-            strict_isi_import=descriptor.name in ("isi", "predictive", "delta"),
+            strict_native_import=descriptor.name in ("isi", "predictive", "delta", "streaming"),
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:

@@ -82,6 +82,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `StreamingSpikeCodec` supports Python and Rust SSCF containers and
+  standalone frames. Pull iterators conserve the short final frame and
+  provide cancellation at the consumer boundary. Decoders check geometry,
+  mask lengths and padding before reconstructing samples.
+
 - The inter-channel delta codec supports complete Python and Rust DSCX paths.
   Both preserve valid legacy packets and check the group layout and local
   references before decoding the embedded ISI body.

@@ -522,6 +522,13 @@ frame = codec.compress_frame(window)  # single window
 recovered = codec.decompress_frame(frame)
 ```
 
+The codec can select Rust automatically when it is installed. For
+continuous acquisition, use `iter_compress` with a chunk source and advance
+it when the transport is ready for another frame. The final frame contains
+the remaining rows without padding. The receiver can use `iter_decompress`
+with complete frames from the transport. A closed iterator releases the
+buffer and stops pulling input.
+
 ## AER Codec (Neuromorphic)
 
 Address-Event Representation: compact (timestamp_delta, neuron_id) event stream.

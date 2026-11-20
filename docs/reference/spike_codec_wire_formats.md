@@ -182,11 +182,17 @@ bytes (channel0 in bit0), then ceil(W/8) bytes for each active channel, in
 channel order. Each active mask is **little-endian**, sample0 in bit0.
 A silent bit of1 omits that channel's mask.
 
-Whole-raster encoding pads the last frame to window_size; decoding trims to
-original T. compress_frame/decompress_frame exchange a standalone frame
-without SSCF. Frames are independently decodable and have no persistent
-entropy state or checksum. window_size counts samples and does not promise
-a measured end-to-end latency.
+Whole-raster encoding pads the last frame to the declared window size.
+The decoder checks the declared frame count against the stored row count,
+the dimensions of each frame, the mask lengths and the zero padding.
+It refuses trailing bytes and reconstructs the original rows or a requested
+row prefix. A supplied channel count must match the container.
+
+`compress_frame` and `decompress_frame` exchange a standalone frame
+without SSCF. The pull iterator emits these same frames and puts the actual
+row count in the last frame. Frames have no persistent entropy state or
+checksum. Restarting after invalid bytes requires a known boundary
+from the application or transport. Window size counts samples.
 
 ## AER event/silence containers
 

@@ -44750,7 +44750,8 @@ CodecAvailability
     Predictive kernels are cached by their owning module; installing an engine
     later does not update existing instances. Start a fresh process in that case.
     Native loader OSError or RuntimeError excludes ``auto`` from advertised
-    choices. An ImportError loading a present ISI extension does as well.
+    choices. An ImportError loading a present extension does as well
+    for ISI, predictive, delta and framed raster packets.
     An absent engine permits the classes' documented Python fallback.
 
 Raises
@@ -45193,30 +45194,41 @@ Return ``threshold_sigma / 0.6745`` in Q12, the factor applied to the median ``|
 ## Module `spike_codec.streaming_codec`
 
 ### Class `StreamingCompressionResult`
-Compression result with streaming codec metrics.
+Compression result with statistics over the independent frames.
 
 
 ### Class `StreamingSpikeCodec`
-Streaming spike codec: fixed-latency, independently decodable frames.
-
-Each time window is compressed as a self-contained frame. No inter-frame
-dependencies. Worst-case latency = window_size samples.
+Encode binary rasters with fixed-size, independently decodable frames.
 
 Parameters
 ----------
 window_size : int
-    Samples per frame. 20 = 1ms at 20kHz (typical BCI).
-    Smaller = lower latency but less compression.
+    Time samples per complete frame, in 1 through 65535.
+    At 20 kHz a 20-sample window spans one millisecond of acquisition.
+backend : str
+    'python', 'rust', or 'auto'. Auto uses the native codec when all
+    four packet operations are installed and otherwise uses Python.
 
-- **__init__**(window_size)
+Notes
+-----
+Whole-raster SSCF packets pad the last window and store the original
+length. The pull API emits an unpadded standalone final frame.
+
+- **__init__**(window_size, \*, backend)
+- **backend**()
+  - Return the selected complete implementation, 'python' or 'rust'.
 - **compress**(spikes)
-  - Compress spike raster into independently decodable frames.
+  - Encode a binary time-by-channel raster as a complete SSCF packet.
 - **decompress**(data, T, N)
-  - Decompress streaming frames to spike raster.
+  - Decode a complete SSCF packet or a prefix of its recorded rows.
 - **compress_frame**(window)
-  - Compress a single time window (for real-time streaming).
+  - Encode one standalone binary frame with its actual dimensions.
 - **decompress_frame**(frame)
-  - Decompress a single frame.
+  - Decode one complete standalone frame.
+- **iter_compress**(chunks)
+  - Emit independent frames as the consumer requests them.
+- **iter_decompress**(frames)
+  - Decode one independent frame per downstream request.
 
 ---
 

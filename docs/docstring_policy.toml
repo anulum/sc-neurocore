@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2251
+expected_file_count = 2255
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9053,3 +9053,19 @@ rationale = "Document workload comparisons and query the four predictive backend
 [[file]]
 path = "examples/demo_waveform_codec.py"
 rationale = "Document the synthetic waveform generator and the compression demo entry point."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/raster_frame.py"
+rationale = "Maintain frame and SSCF wire validation for binary spike rasters."
+
+[[file]]
+path = "tests/test_raster_stream_packet_parity.py"
+rationale = "Verify exact framing and rejection of incomplete packets through both public backends."
+
+[[file]]
+path = "tests/test_raster_stream_iterators.py"
+rationale = "Exercise bounded raster processing, cancellation and recovery through the pull API."
+
+[[file]]
+path = "benchmarks/bench_raster_stream.py"
+rationale = "Measure the public raster container, standalone frames and bounded pull on both backends."

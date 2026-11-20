@@ -944,6 +944,57 @@ packets and cross-decodes them before and after timing.
 [Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/delta_codec_backends.json).
 [Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
 
+## Framed spike rasters in Python and Rust
+
+Measured on 2026-11-20 UTC on an HPE ProLiant ML350p Gen8 with two Intel Xeon
+E5-2640 processors, 251.9 GiB of visible memory and Linux
+6.8.0-149-generic. Each paired run placed both implementations on
+one logical CPU. The synthetic runs and eight-sample SHD case used
+CPU 5 with SMT sibling 17. The remaining SHD cases used CPU 0 with
+sibling 12 on the same socket. The CPU governor was
+`schedutil`. CPython 3.12.3, NumPy 2.5.5, and a Rust 1.98.1 release
+wheel ran with one numerical thread. Measured outside CPU use
+reached 2.3% of one logical CPU on the chosen physical core.
+
+The four deterministic synthetic rasters use a declared acquisition rate
+of 20 kHz, giving window budgets of 0.4, 1.0 and 3.2 ms. Spiking
+Heidelberg Digits test recording 0 is rasterised to 731 × 700 at one
+millisecond per input row. Its corresponding windows span 8, 20 and
+64 ms. The processing timings measure codec computation and exclude
+acquisition and transport. [SHD dataset and license](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/).
+
+Each timing is a median from nine alternating warm calls after two
+warmups. Each cell with two values lists Python then Rust. SSCF includes
+the container header and padded final frame. The pull stream uses the same
+independent frame grammar and preserves the last frame's actual row count.
+It advances a 37-row chunk source and consumes frames as they become
+available. Pull throughput counts all time-by-channel values per second.
+
+| Input | Samples per frame | SSCF (B) | Standalone stream (B) | SSCF round trip (ms) | First frame round trip (µs) | Pull round trip (million values/s) |
+|---|---:|---:|---:|---:|---:|---:|
+| Sparse short | 8 | 38 | 22 | 0.505 / 0.036 | 109.24 / 27.02 | 0.54 / 1.89 |
+| Sparse long | 8 | 16365 | 16349 | 114.963 / 2.070 | 163.71 / 43.68 | 4.08 / 13.55 |
+| Dense | 8 | 9303 | 9287 | 15.343 / 0.687 | 139.95 / 45.01 | 3.87 / 12.16 |
+| Correlated bursts | 8 | 4008 | 3992 | 14.379 / 0.332 | 132.35 / 38.17 | 4.12 / 13.39 |
+| Sparse short | 20 | 32 | 14 | 0.435 / 0.033 | 140.64 / 27.01 | 0.84 / 3.28 |
+| Sparse long | 20 | 16552 | 16528 | 66.680 / 1.352 | 150.41 / 41.32 | 8.52 / 28.78 |
+| Dense | 20 | 10576 | 10462 | 10.075 / 0.619 | 167.50 / 52.24 | 7.07 / 21.63 |
+| Correlated bursts | 20 | 6862 | 6846 | 8.710 / 0.248 | 145.35 / 37.16 | 8.22 / 27.76 |
+| Sparse short | 64 | 37 | 13 | 0.237 / 0.030 | 104.26 / 24.74 | 2.09 / 6.29 |
+| Sparse long | 64 | 28056 | 28040 | 14.756 / 1.191 | 128.04 / 50.01 | 25.28 / 49.74 |
+| Dense | 64 | 8400 | 8384 | 2.045 / 0.470 | 127.50 / 61.16 | 24.14 / 40.07 |
+| Correlated bursts | 64 | 8040 | 8024 | 2.024 / 0.215 | 126.49 / 44.53 | 24.10 / 47.89 |
+| SHD test recording 0 | 8 | 18540 | 18524 | 12.179 / 1.819 | 127.55 / 54.47 | 39.71 / 99.32 |
+| SHD test recording 0 | 20 | 22287 | 22262 | 8.174 / 1.407 | 167.28 / 70.40 | 69.82 / 160.27 |
+| SHD test recording 0 | 64 | 23968 | 23880 | 3.114 / 1.394 | 220.86 / 154.55 | 155.67 / 205.22 |
+
+The artifact includes separate encode and decode times, dispersion,
+five fresh-interpreter runs per backend, peak process RSS, packet hashes
+and exact runtime digests. The harness verifies byte-identical packets
+and decoded samples before and after timing.
+[Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/raster_stream_backends.json).
+[Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
+
 ---
 
 ## 16. Spike Codec Library (2026-03-25)

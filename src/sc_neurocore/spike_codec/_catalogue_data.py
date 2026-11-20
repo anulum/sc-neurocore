@@ -16,6 +16,12 @@ _PREFIX = "sc_neurocore.spike_codec."
 _ENGINE = "sc_neurocore_engine.sc_neurocore_engine"
 _ISI_SYMBOLS = ("isi_encode_raster", "isi_decode_raster")
 _DELTA_SYMBOLS = ("delta_encode_raster", "delta_decode_raster")
+_RASTER_STREAM_SYMBOLS = (
+    "raster_stream_encode_frame",
+    "raster_stream_decode_frame",
+    "raster_stream_encode_raster",
+    "raster_stream_decode_raster",
+)
 _WAVEFORM_SYMBOLS = (
     "waveform_codec_noise_thresholds",
     "waveform_codec_extract_background",
@@ -294,12 +300,20 @@ _STREAMING = CodecDescriptor(
     encoder_required_parameters=(),
     decoder_required_parameters=(),
     decode_required_parameters=(),
-    configuration_parameters=("window_size",),
+    configuration_parameters=("window_size", "backend"),
     variant_parameter=None,
-    backend_parameter=False,
+    backend_parameter=True,
     stateful=False,
     variants=(
-        CodecVariant("lossless", "lossless", "none", None, (), (), ("raster_sscf", "raster_frame")),
+        CodecVariant(
+            "lossless",
+            "lossless",
+            "packet_coder",
+            _ENGINE,
+            _RASTER_STREAM_SYMBOLS,
+            (),
+            ("raster_sscf", "raster_frame"),
+        ),
     ),
     wire_formats=(
         CodecWireFormat(

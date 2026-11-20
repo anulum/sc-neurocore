@@ -182,7 +182,20 @@ frame_bytes = codec.compress_frame(window)   # single (20, N) window
 recovered_window = codec.decompress_frame(frame_bytes)
 ```
 
-Use the frame API when independent raster windows match the consumer contract.
+Use the pull API when a source can supply chunks on demand. The encoder
+buffers a single window across chunks. The last frame preserves the exact
+remaining rows.
+
+```python
+chunks = (spikes[start:start + 13] for start in range(0, len(spikes), 13))
+frames = codec.iter_compress(chunks)
+for raster_window in codec.iter_decompress(frames):
+    print(raster_window.shape[0])
+```
+
+Close an iterator to cancel it. Start a new iterator to reset the buffered
+state, and resume decoding at a known frame boundary after an error.
+Both backends produce the same SSCF and standalone frame bytes.
 
 ## Codec 5: AER (Neuromorphic Routing)
 

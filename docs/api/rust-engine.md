@@ -135,6 +135,16 @@ validates group geometry before decoding the ISI body. The public
 [delta codec API](spike_codec.md#delta-codec-neural-probes) handles
 backend selection and builds the compression report.
 
+## Framed spike rasters
+
+The compiled module exports `raster_stream_encode_frame`,
+`raster_stream_decode_frame`, `raster_stream_encode_raster` and
+`raster_stream_decode_raster`. The frame API uses contiguous binary int8
+rasters. The whole-raster API emits SSCF and reports total spikes, active
+channels summed over frames, and the largest frame size. The decoder
+validates lengths, dimensions and padding before allocating the raster.
+[Public streaming codec](spike_codec.md#streaming-codec-real-time).
+
 ## Installed-wheel interface evidence
 
 The [engine bridge contracts](../guides/engine_bridge_contracts.md#capturing-the-installed-interface)
@@ -147,7 +157,7 @@ mutation contracts, numerical goldens and supported pickle state.
 
 The qualified default interface reference is
 `tests/fixtures/engine_abi_default.json`, for Linux x86-64, CPython 3.12 and
-NumPy 2.5.4 with default engine features. Its matching wheel job compares all
+NumPy 2.5.5 with default engine features. Its matching wheel job compares all
 interface fields; other runtime profiles retain separate measured captures.
 See [model compatibility and migration](../guides/engine_bridge_contracts.md#model-compatibility-and-migration)
 for canonical source models and their explicit retained project profiles.

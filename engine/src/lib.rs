@@ -38,6 +38,7 @@ pub mod brunel;
 #[path = "bindings/coba_lif.rs"]
 mod coba_lif_binding;
 pub mod codecs;
+pub mod raster_stream;
 pub use codecs::predictive_coding;
 pub mod connectome;
 pub mod conv;
@@ -178,7 +179,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ei_network_binding::register(m)?;
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     cordiv_binding::register(m)?;
-    codecs::register(m)?;
+    codecs::register(m).and_then(|()| raster_stream::bindings::register(m))?;
     phi_binding::register(m)?;
     cortical_column_binding::register(m)?;
     rall_dendrite_binding::register(m)?;
