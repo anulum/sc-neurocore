@@ -108,6 +108,7 @@
   "packaged_data": [
     "py.typed",
     "juliapkg.json",
+    "accel/measured_backend_orders.json",
     "accel/julia/datasets/*.jl",
     "accel/julia/conversion/*.jl",
     "accel/julia/neurons/adaptive_threshold_if.jl",
