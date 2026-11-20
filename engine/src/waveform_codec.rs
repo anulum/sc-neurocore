@@ -13,8 +13,9 @@
 //! the same order (no fused multiply-add), rounding is half to even, dot
 //! products are correctly rounded sums of exact float64 products (CPython's
 //! `math.fsum` algorithm), and the lossless coder makes the same integer
-//! choices with the same tie-breaking. The byte compressors (zstd or zlib) and
-//! the optional wavelet step stay in Python.
+//! choices with the same tie-breaking. The complete packet API in
+//! [waveform_container](super::waveform_container) assembles these kernels with
+//! its byte compressors and optional wavelet transform.
 
 /// Largest predictor order of the lossless coder.
 pub const LOSSLESS_MAX_ORDER: usize = 3;
@@ -355,21 +356,21 @@ fn push_varint(out: &mut Vec<u8>, mut value: u64) {
     out.push(value as u8);
 }
 
-fn read_varint(data: &[u8], mut pos: usize) -> (u64, usize) {
+/// Parse one bounded LEB128 value from a Rice channel header.
+fn read_varint(data: &[u8], mut pos: usize) -> Result<(u64, usize), String> {
     let mut value = 0_u64;
-    let mut shift = 0_u32;
-    while pos < data.len() {
-        let byte = data[pos];
+    for shift in (0..64).step_by(7) {
+        let byte = *data.get(pos).ok_or("truncated lossless varint")?;
         pos += 1;
-        if shift < 64 {
-            value |= u64::from(byte & 0x7F) << shift;
+        if shift == 63 && byte > 1 {
+            return Err("lossless varint exceeds uint64".into());
         }
-        if byte & 0x80 == 0 {
-            break;
+        value |= u64::from(byte & 0x7f) << shift;
+        if byte < 0x80 {
+            return Ok((value, pos));
         }
-        shift += 7;
     }
-    (value, pos)
+    Err("lossless varint exceeds uint64".into())
 }
 
 fn diff(values: &[i64]) -> Vec<i64> {
@@ -476,8 +477,15 @@ pub fn rice_decode(data: &[u8], n: usize) -> Result<Vec<u64>, String> {
     let unary_at = ks_at + n_blocks;
     let rem_at = unary_at + unary_bytes;
     let esc_at = rem_at + rem_bytes;
-    if esc_at + 4 * n_esc != data.len() {
+    if n_esc
+        .checked_mul(4)
+        .and_then(|size| esc_at.checked_add(size))
+        != Some(data.len())
+    {
         return Err("lossless Rice section has the wrong length".into());
+    }
+    if n_unary < n || n_esc > n {
+        return Err("lossless Rice section has the wrong number of values".into());
     }
     let ks = &data[ks_at..unary_at];
     if ks.iter().any(|&k| u32::from(k) > LOSSLESS_MAX_RICE_K) {
@@ -494,7 +502,7 @@ pub fn rice_decode(data: &[u8], n: usize) -> Result<Vec<u64>, String> {
             run += 1;
         }
     }
-    if quotients.len() != n {
+    if quotients.len() != n || run != 0 || quotients.iter().any(|&q| q > LOSSLESS_ESCAPE) {
         return Err("lossless Rice section has the wrong number of values".into());
     }
     let widths: Vec<u32> = quotients
@@ -609,20 +617,29 @@ pub fn lossless_decode_channel(section: &[u8], t: usize) -> Result<Vec<i64>, Str
         1 => {
             let n_table = be_u32(section, 1)? as usize;
             pos = 5;
-            if n_table < 1 || n_table > section.len() - pos {
+            if !(1..=65536).contains(&n_table) || n_table > section.len() - pos {
                 return Err("lossless value table length is impossible for its section".into());
             }
             let mut value = 0_i64;
             for _ in 0..n_table {
-                let (code, next) = read_varint(section, pos);
+                let (code, next) = read_varint(section, pos)?;
                 pos = next;
-                value += unzigzag(code);
+                value = value
+                    .checked_add(unzigzag(code))
+                    .filter(|v| (-32768..=32767).contains(v))
+                    .ok_or("lossless value table sample outside the int16 range")?;
+                if table.last().is_some_and(|&previous| previous >= value) {
+                    return Err("lossless value table must be strictly increasing".into());
+                }
                 table.push(value);
             }
         }
         0 => {
             offset = i64::from(be_u32(section, 1)? as i32);
             step = i64::from(be_u32(section, 5)?);
+            if step == 0 {
+                return Err("lossless level mapping step must be positive".into());
+            }
             pos = 9;
         }
         _ => return Err("invalid lossless level mapping".into()),
@@ -637,7 +654,7 @@ pub fn lossless_decode_channel(section: &[u8], t: usize) -> Result<Vec<i64>, Str
     }
     let mut firsts = Vec::with_capacity(order);
     for _ in 0..order {
-        let (code, next) = read_varint(section, pos);
+        let (code, next) = read_varint(section, pos)?;
         pos = next;
         firsts.push(unzigzag(code));
     }
@@ -650,7 +667,9 @@ pub fn lossless_decode_channel(section: &[u8], t: usize) -> Result<Vec<i64>, Str
         next.push(first);
         let mut acc = first;
         for value in current {
-            acc += value;
+            acc = acc
+                .checked_add(value)
+                .ok_or("lossless predictor overflow")?;
             next.push(acc);
         }
         current = next;
@@ -664,7 +683,15 @@ pub fn lossless_decode_channel(section: &[u8], t: usize) -> Result<Vec<i64>, Str
         }
         current.iter().map(|&level| table[level as usize]).collect()
     } else {
-        current.iter().map(|&level| level * step + offset).collect()
+        current
+            .iter()
+            .map(|&level| {
+                level
+                    .checked_mul(step)
+                    .and_then(|product| product.checked_add(offset))
+                    .ok_or_else(|| "lossless level mapping overflow".to_string())
+            })
+            .collect::<Result<_, _>>()?
     };
     if samples.iter().any(|&v| !(-32768..=32767).contains(&v)) {
         return Err("lossless samples outside the int16 range".into());

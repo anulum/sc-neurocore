@@ -82,6 +82,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The Rust waveform codec reads and writes complete WFC2 packets in all
+  five modes. The installed Python API selects the whole-container backend.
+  Both implementations validate the declared geometry and compressed sections
+  and can read legacy WFCX spike packets.
+
+
 - The lossless waveform stream exposes a GPU encoder in wheels built with
   the engine's \`gpu\` feature. The encoder reports the physical adapter and
   graphics API, writes one group per channel and uses a CPU decoder.

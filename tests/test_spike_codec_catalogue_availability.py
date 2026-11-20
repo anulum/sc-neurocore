@@ -62,8 +62,14 @@ assert not predictive.rust_components_available
 assert waveform.diagnostics and predictive.diagnostics
 if installed:
     assert attempts
+    try:
+        WaveformCodec(backend="auto")
+    except (ImportError, PermissionError, RuntimeError) as error:
+        assert "native loading denied" in str(error)
+    else:
+        raise AssertionError("auto must report a real native loader failure")
     if policy == "extension":
-        assert waveform.backend_choices == ("auto", "python")
+        assert waveform.backend_choices == ("python",)
         assert predictive.python_available
         assert any("ImportError" in line for line in waveform.diagnostics)
     else:

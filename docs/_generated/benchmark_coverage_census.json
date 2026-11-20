@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 31,
-    "outdated": 120,
+    "current": 25,
+    "outdated": 127,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 326,
+  "all_records": 327,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -2458,7 +2458,11 @@
   },
   "uncited_bound_records": [
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "address_event_backends.json"
     },
     {
@@ -2612,7 +2616,12 @@
       "name": "bench_verilog_compiler.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml",
+        "engine/src/codecs/mod.rs"
+      ],
+      "currency": "outdated",
       "name": "delta_codec_backends.json"
     },
     {
@@ -2717,8 +2726,11 @@
     },
     {
       "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml",
         "engine/src/codecs/mod.rs",
-        "src/sc_neurocore/spike_codec/catalogue.py"
+        "src/sc_neurocore/spike_codec/catalogue.py",
+        "src/sc_neurocore/spike_codec/waveform_codec.py"
       ],
       "currency": "outdated",
       "name": "isi_codec_backends.json"
@@ -2918,11 +2930,19 @@
       "name": "local_python_2026-10-28_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"
     },
     {
@@ -3042,15 +3062,31 @@
       "name": "mnist_conv_accuracy_reproducibility.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "predictive_codec_backends.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "raster_stream_backends.json"
     },
     {
       "currency": "current",
+      "name": "waveform_container_backends.json"
+    },
+    {
+      "changed": [
+        "Cargo.lock",
+        "engine/Cargo.toml"
+      ],
+      "currency": "outdated",
       "name": "waveform_stream_backends.json"
     }
   ],

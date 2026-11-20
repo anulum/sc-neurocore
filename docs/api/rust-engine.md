@@ -24,6 +24,31 @@ with SIMD-accelerated bitstream operations, IR compilation, and HDC support.
 
 **[Criterion Benchmarks →](rust-benchmarks.md)** — all measured latencies for engine, neurons, and analysis.
 
+## Whole waveform containers
+
+`codecs::waveform_container` encodes and decodes complete WFC2 packets
+independently of Python. Pass a `WaveformConfig` and contiguous row-major
+samples to `encode_lossy` for `spike`, `waveform` or `full`, or to
+`encode_lossless` for `lossless` or `lossless_rice`. Call `decode` with a
+limit on the total number of sample values. Its result reports the mode,
+shape and reconstructed raster and waveform.
+
+The default Cargo features include `waveform-zstd`. The default writer uses
+zlib and the Rust configuration can select Zstandard. Select
+`denoise_background` for symmetric db4 denoising in `full` mode.
+
+The standalone example reads interleaved signed little-endian int16 input.
+
+```bash
+cargo run --release --example waveform_container -- encode lossless 9760 64 eeg.pcm eeg.wfc2
+cargo run --release --example waveform_container -- decode eeg.wfc2 restored.pcm
+```
+
+The decoder prints mode, time rows, channels and sample type. For `spike`
+it writes one byte per raster cell. `waveform` and `full` write little-endian
+float32 samples, and both lossless modes write little-endian int16 samples.
+Python reads the same packets through `WaveformCodec.decompress`.
+
 ## Lossless waveform streaming
 
 Use `codecs::waveform_stream::{StreamEncoder, StreamDecoder}` on row-major

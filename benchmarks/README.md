@@ -75,6 +75,26 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+The whole waveform harness encodes and decodes WFC2 in all five modes with
+the installed Python and Rust implementations. Use the original challenge
+file `0052503c-2849-4f41-ab51-db382103690c.wav` and the pinned 64-channel
+EEG recording.
+
+```sh
+curl -fLO https://physionet.org/files/eegmmidb/1.0.0/S001/S001R01.edf
+export RAYON_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+taskset -c 2,3,4,5 python benchmarks/bench_waveform_container.py \
+  --wav 0052503c-2849-4f41-ab51-db382103690c.wav --edf S001R01.edf \
+  --repetitions 3 --output wfc2-comparison.json
+```
+
+Run once with the two default wheels and once with the optional
+`zstandard` and PyWavelets packages installed. The harness records the
+dependency profile, verifies both cross-decodes and measures reconstruction
+error alongside wall-clock time.
+[Paired hardware results](../docs/benchmarks/BENCHMARKS.md#whole-waveform-containers).
+
+
 The lossless waveform harness compares clean stream setup and sequential
 encode-plus-decode on the published PhysioNet EEG recording. Install the
 Python wheel and an engine wheel built with Cargo's `gpu` feature. Use

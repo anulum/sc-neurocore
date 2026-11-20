@@ -32,6 +32,9 @@ mod spike_events_binding;
 pub mod waveform_codec;
 #[path = "../bindings/waveform_codec.rs"]
 mod waveform_codec_binding;
+pub mod waveform_container;
+#[path = "../bindings/waveform_container.rs"]
+mod waveform_container_binding;
 #[path = "../waveform_stream.rs"]
 pub mod waveform_stream;
 #[path = "../bindings/waveform_stream.rs"]
@@ -48,6 +51,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     delta_binding::register(module)?;
     predictive_coding_binding::register(module)?;
     waveform_codec_binding::register(module)?;
+    waveform_container_binding::register(module)?;
     waveform_stream_binding::register(module)?;
     spike_events_binding::register(module)
 }

@@ -44717,6 +44717,28 @@ Processes voxel grids using SC attention.
 
 ---
 
+## Module `spike_codec._waveform_container`
+
+### Class `NativeWaveformOptions`
+Validated options passed as attributes to the complete native encoder.
+
+
+### Class `NativeWaveformCodec`
+Whole-container functions exposed by the installed Rust extension.
+
+- **waveform_container_encode**(samples, options)
+  - Encode and return the packet, event counts and section lengths.
+- **waveform_container_decode**(packet, max_samples)
+  - Return the mode, detected raster and reconstructed samples.
+
+### Function `native_container(engine, backend)`
+Resolve native operations, requiring the complete API in explicit Rust mode.
+
+### Function `has_optional_module(name)`
+Check an optional dependency and propagate errors from a present installation.
+
+---
+
 ## Module `spike_codec._world_model`
 
 ### Class `SpikePredictor`
@@ -44973,8 +44995,7 @@ name, variant : str
 python_available : bool
     Public Python entry points and optional variant modules are importable.
 rust_components_available : bool
-    Required native callables are importable now. This does not certify a
-    complete Rust container or change existing instances' cached backend choices.
+    Required native callables are importable now. See native_scope for the operations the probe covers. Existing codec instances retain their cached backend choices.
 native_scope : str
     Scope of the native callables, as declared by the variant.
 backend_choices : tuple of str
@@ -45395,9 +45416,9 @@ adc_bits : int or None
     ADC width for ``"lossless"`` (1..16); ``None`` detects the smallest width whose
     level mapping is one-to-one on the input.
 backend : str
-    ``"auto"`` (default: Rust kernels when installed, else NumPy),
-    ``"rust"`` (refuses when the engine lacks the kernels) or
-    ``"python"``. Streams are byte-identical across backends.
+    ``"auto"`` prefers the installed whole-container Rust engine.
+    ``"rust"`` requires the complete engine and ``"python"`` selects the
+    reference. Both preserve the packet layout and reconstruction.
 
     The ratios above were measured on synthetic data (2026-04-07). On the
     public Neuralink compression-challenge recordings the lossy ratios are

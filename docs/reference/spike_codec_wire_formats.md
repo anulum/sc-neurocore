@@ -28,7 +28,7 @@ contracts and cannot be substituted merely because both contain events.
 | Delta | DeltaSpikeCodec.compress / decompress | T, N | Embedded ISI residual packet |
 | Raster frames | StreamingSpikeCodec.compress / decompress | None for whole container | None |
 | AER | AERSpikeCodec.compress / decompress | None by default | None |
-| Waveform | WaveformCodec.compress / classmethod decompress | None; decoder backend selected separately | Signal kernels, channel coder or stream packet coder; Python WFC2 container |
+| Waveform | WaveformCodec.compress / classmethod decompress | None; decoder backend selected separately | Complete WFC2 container and legacy WFCX spike reader |
 | Lossless stream | LosslessStreamEncoder.encode / LosslessStreamDecoder.decode | Matching channels, ADC bits, groups, samples per packet and preceding state | Complete packet encoder/decoder |
 | Event stream | SpikeEventEncoder.encode / SpikeEventDecoder.decode | Matching channels, bin samples, timing, power bins, groups, samples per packet and preceding state | Complete event/power packet pipeline |
 
@@ -260,8 +260,10 @@ Modes0..2 contain three sections, each prefixed by its uint32 byte length:
    as big-endian float32 and compressed row-major int8 delta codes. Background
    is downsampled by 16 in full mode and reconstructed to the original shape.
 
-Unused sections are empty. Snippet/background compressed payloads use zstd
-when available, otherwise zlib; readers identify zstd by its frame magic.
+Unused sections are empty. Snippet and background compressed payloads use
+zstd or zlib. Readers identify zstd by its frame magic. Each decoded
+section must match the size implied by its shape and contain one complete
+compressed frame.
 The mode determines the decoded result: spike returns the detected raster
 and no waveform; waveform adds lossy snippets on zeros; full adds lossy
 background reconstruction. Exact detected spike preservation is distinct
@@ -275,8 +277,9 @@ selects an affine mapping (kind0:uint8, offset:int32, step:uint32) or sorted
 value-table mapping (kind1:uint8, count:uint32, zigzag LEB128 table deltas).
 It then stores predictor order:uint8, zigzag LEB128 initial finite differences
 and block Rice residual data. The implementation in waveform_codec.py defines
-adaptive Rice parameters, escaped residuals and level reconstruction; the
-whole container remains Python even when Rust encodes channel sections.
+adaptive Rice parameters, escaped residuals and level reconstruction. Both
+the Python reference and the Rust engine read and write the whole WFC2
+container, including section framing, checksum and mode-specific payloads.
 
 WFCX is legacy **read-only, spike mode only**. It has no CRC and lacks
 per-snippet scales/background first-row information required for reliable

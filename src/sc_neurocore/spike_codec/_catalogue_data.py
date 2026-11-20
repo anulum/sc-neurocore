@@ -23,16 +23,7 @@ _RASTER_STREAM_SYMBOLS = (
     "raster_stream_encode_raster",
     "raster_stream_decode_raster",
 )
-_WAVEFORM_SYMBOLS = (
-    "waveform_codec_noise_thresholds",
-    "waveform_codec_extract_background",
-    "waveform_codec_detect_spikes",
-    "waveform_codec_template_match",
-    "waveform_codec_quantize_background",
-    "waveform_codec_reconstruct_background",
-    "waveform_codec_lossless_encode_channel",
-    "waveform_codec_lossless_decode_channel",
-)
+_WAVEFORM_SYMBOLS = ("waveform_container_encode", "waveform_container_decode")
 _PREDICTIVE_SYMBOLS = (
     "py_predict_xor_ema",
     "py_recover_xor_ema",
@@ -454,17 +445,17 @@ _WAVEFORM = CodecDescriptor(
         CodecVariant(
             "full",
             "lossy",
-            "signal_kernels",
+            "container",
             _ENGINE,
             _WAVEFORM_SYMBOLS,
             (),
             ("wfc2",),
-            ("Detected spikes, quantised snippets and downsampled background; Python container.",),
+            ("Detected spikes, quantised snippets and downsampled background.",),
         ),
         CodecVariant(
             "waveform",
             "lossy",
-            "signal_kernels",
+            "container",
             _ENGINE,
             _WAVEFORM_SYMBOLS,
             (),
@@ -474,7 +465,7 @@ _WAVEFORM = CodecDescriptor(
         CodecVariant(
             "spike",
             "lossy",
-            "signal_kernels",
+            "container",
             _ENGINE,
             _WAVEFORM_SYMBOLS,
             (),
@@ -484,22 +475,22 @@ _WAVEFORM = CodecDescriptor(
         CodecVariant(
             "lossless",
             "lossless",
-            "packet_coder",
-            _ENGINE,
-            _WAVEFORM_SYMBOLS + _STREAM_SYMBOLS,
-            (),
-            ("wfc2",),
-            ("Fresh lossless stream per recording inside a Python WFC2 container.",),
-        ),
-        CodecVariant(
-            "lossless_rice",
-            "lossless",
-            "channel_coder",
+            "container",
             _ENGINE,
             _WAVEFORM_SYMBOLS,
             (),
             ("wfc2",),
-            ("Per-channel Rice coding inside a Python WFC2 container.",),
+            ("Fresh lossless stream per recording inside WFC2.",),
+        ),
+        CodecVariant(
+            "lossless_rice",
+            "lossless",
+            "container",
+            _ENGINE,
+            _WAVEFORM_SYMBOLS,
+            (),
+            ("wfc2",),
+            ("Per-channel Rice coding inside WFC2.",),
         ),
     ),
     wire_formats=(_WFC2, _WFCX),
@@ -508,8 +499,8 @@ _WAVEFORM = CodecDescriptor(
     notes=(
         "decompress is a classmethod; select its backend separately from the encoder instance.",
         "Default max_samples is 2**28 total values; explicit overrides change the allocation limit.",
-        "Optional zstandard payloads need zstandard to decode; the encoder uses zlib when absent.",
-        "No standalone native whole-WFC2 implementation is declared.",
+        "Zstd payload decoding requires the optional Python package or the Rust waveform-zstd feature.",
+        "The Rust backend reads and writes the complete container.",
     ),
 )
 _LOSSLESS_STREAM = CodecDescriptor(

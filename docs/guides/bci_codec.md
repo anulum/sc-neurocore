@@ -180,17 +180,21 @@ cargo test --locked --features gpu --test waveform_stream_gpu -- --test-threads=
 See the [waveform streaming comparison](../benchmarks/BENCHMARKS.md#lossless-waveform-streaming-backends)
 for the complete path measured on a 64-electrode recording.
 
-### Rust kernels
+### Complete Python and Rust containers
 
-Noise thresholds, spike detection, template matching, background extraction
-and quantisation, and the lossless coder run in Rust (`sc_neurocore_engine`)
-when the installed engine provides them; `backend="auto"` (default) selects
-them, `backend="python"` forces the NumPy reference and `backend="rust"`
-refuses to run without them. Both backends write byte-identical streams: the
-float32 operations are the same IEEE operations, rounding is half to even, and
-dot products are correctly rounded sums (`math.fsum` in Python, the same
-algorithm in Rust). The zstd/zlib byte compressors and the optional wavelet
-denoising stay in Python.
+Use `WaveformCodec(backend="rust")` and
+`WaveformCodec.decompress(packet, backend="rust")` to use the installed
+whole-container implementation. Both backends support all five WFC2 modes
+and read the legacy WFCX spike raster. Rust applies the same threshold
+calculation, template correlation, float32 rounding and reconstruction.
+
+Through Python, an installed `zstandard` package selects Zstandard when
+the Rust wheel also supports it. Otherwise encoding uses zlib. Installing
+PyWavelets enables db4 background denoising for `full` mode, including when
+Rust encodes the packet. The decoder detects zstd from the frame magic.
+
+See the [Rust API and standalone example](../api/rust-engine.md#whole-waveform-containers)
+and [paired container measurements](../benchmarks/BENCHMARKS.md#whole-waveform-containers).
 
 ### Measured on the Neuralink compression-challenge data
 

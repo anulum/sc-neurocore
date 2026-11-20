@@ -146,7 +146,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_symbols,
             diagnostics,
             strict_native_import=descriptor.name
-            in ("isi", "predictive", "delta", "streaming", "aer", "lossless_stream"),
+            in ("isi", "predictive", "delta", "streaming", "aer", "waveform", "lossless_stream"),
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:

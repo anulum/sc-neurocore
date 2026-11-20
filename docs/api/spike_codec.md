@@ -283,6 +283,16 @@ identical packets. Validation and bit rates are in the
         - lowpass_coefficients
         - threshold_factor
 
+## Complete waveform containers
+
+The catalogue reports native scope `container` for all five waveform
+modes. `WaveformCodec(backend="rust")` writes complete WFC2 packets and
+`WaveformCodec.decompress(packet, backend="rust")` reads them. Select
+`backend="python"` for the reference. The decoder checks the total number
+of values against `max_samples` before allocating its output.
+[Wire formats](../reference/spike_codec_wire_formats.md#wfc2-waveform-container-and-legacy-wfcx)
+describe WFC2 and the legacy spike-only WFCX reader.
+
 ## Stateful lossless example
 
 ```python

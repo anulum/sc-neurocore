@@ -15,16 +15,13 @@ Full pipeline from raw 10-bit ADC samples to compressed bytes:
     4. Background signal → downsampling + closed-loop delta quantisation
 
 The ``spike``, ``waveform`` and ``full`` modes are lossy with respect to the
-raw signal: they keep spike timing exactly and approximate the rest. The
-``lossless`` mode reconstructs every input sample exactly: per channel it
-maps the samples onto their ADC lattice (offset and step), applies the best
-fixed polynomial predictor of order 0-3 and codes the residuals with
-block-adaptive Rice codes. ``WaveformCodec.decompress`` decodes every mode.
+raw signal. They retain detected spike positions and selectively reconstruct
+snippets and continuous background. Both lossless modes preserve every int16
+sample. ``lossless`` uses the streaming range coder, and ``lossless_rice``
+uses per-channel level maps and a fixed predictor with adaptive Rice codes.
 
-Operates on (T, N) int16 arrays (10-bit ADC values in int16 container).
-The heavy kernels (detection, template matching, background quantisation,
-lossless coding) run in Rust when ``sc_neurocore_engine`` provides them and
-otherwise in NumPy; both backends write byte-identical streams.
+Both the Python reference and the Rust engine encode and decode complete
+waveform containers. The Rust API also runs independently of Python.
 Wire format ``WFC2`` ends with a CRC-32 of everything before it, so a
 corrupted stream is refused instead of decoded. The earlier ``WFCX`` streams
 carry no checksum and lack per-snippet scales and the background's first row,
@@ -35,6 +32,7 @@ from __future__ import annotations
 
 import importlib
 import math
+import operator
 import struct
 import zlib
 from dataclasses import dataclass
@@ -44,6 +42,7 @@ from typing import Any
 
 import numpy as np
 
+from ._waveform_container import NativeWaveformOptions, has_optional_module, native_container
 from .codec import SpikeCodec
 from .waveform_stream import LosslessStreamDecoder, LosslessStreamEncoder, detect_adc_bits
 
@@ -170,9 +169,9 @@ class WaveformCodec:
         ADC width for ``"lossless"`` (1..16); ``None`` detects the smallest width whose
         level mapping is one-to-one on the input.
     backend : str
-        ``"auto"`` (default: Rust kernels when installed, else NumPy),
-        ``"rust"`` (refuses when the engine lacks the kernels) or
-        ``"python"``. Streams are byte-identical across backends.
+        ``"auto"`` prefers the installed whole-container Rust engine.
+        ``"rust"`` requires the complete engine and ``"python"`` selects the
+        reference. Both preserve the packet layout and reconstruction.
 
         The ratios above were measured on synthetic data (2026-04-07). On the
         public Neuralink compression-challenge recordings the lossy ratios are
@@ -226,6 +225,7 @@ class WaveformCodec:
         self.mode = mode
         self.backend = backend
         self._native = _native_kernels(backend)
+        self._container = native_container(self._native, backend)
         self.spike_codec = SpikeCodec(backend="python" if self._native is None else "auto")
 
     @staticmethod
@@ -291,6 +291,8 @@ class WaveformCodec:
             If the array is not a finite non-empty matrix, or, in ``lossless``
             mode, if a sample is not an integer in the int16 range.
         """
+        if self._container is not None:
+            return self._compress_native(waveform)
         if self.mode == "lossless":
             return self._compress_lossless_stream(waveform)
         if self.mode == "lossless_rice":
@@ -305,9 +307,12 @@ class WaveformCodec:
 
         # Step 2: Threshold-crossing spike detection
         spike_raster, spike_times_per_ch = self._detect_spikes(waveform, thresholds)
+        n_spikes = int(spike_raster.sum())
+        if n_spikes > WAVEFORM_CODEC_MAX_HEADER_COUNT:
+            raise ValueError("spike snippet count exceeds WaveformCodec header capacity")
 
         # Step 3: Extract spike snippets
-        snippets, snippet_indices = self._extract_snippets(waveform, spike_times_per_ch, N)
+        snippets, _ = self._extract_snippets(waveform, spike_times_per_ch, N)
 
         # Step 4: Template matching on snippets
         templates, template_ids, scales, residuals = self._template_match(snippets)
@@ -332,9 +337,7 @@ class WaveformCodec:
             bg_data = b""
 
         # Pack everything
-        if len(snippet_indices) > WAVEFORM_CODEC_MAX_HEADER_COUNT:
-            raise ValueError("spike snippet count exceeds WaveformCodec header capacity")
-        header = self._header(T, N, len(templates), len(snippet_indices), len(spike_data))
+        header = self._header(T, N, len(templates), n_spikes, len(spike_data))
         # Length-prefixed sections
         parts = [
             header,
@@ -347,8 +350,6 @@ class WaveformCodec:
         ]
         encoded = _seal(b"".join(parts))
 
-        n_spikes = int(spike_raster.sum())
-
         return encoded, WaveformCompressionResult(
             original_bytes=original_bytes,
             compressed_bytes=len(encoded),
@@ -360,6 +361,52 @@ class WaveformCodec:
             spike_bytes=len(spike_data),
             snippet_bytes=len(snippet_data),
             background_bytes=len(bg_data),
+            lossless_spikes=True,
+        )
+
+    def _compress_native(
+        self, waveform: np.ndarray[Any, Any]
+    ) -> tuple[bytes, WaveformCompressionResult]:
+        """Send a validated matrix and the reference preprocessing choices to Rust."""
+        assert self._container is not None
+        lossless = self.mode in ("lossless", "lossless_rice")
+        if lossless:
+            samples = self._lossless_samples(waveform).astype(np.int16)
+        else:
+            samples = self._validate_waveform(np.asarray(waveform, dtype=np.float32))
+        options = NativeWaveformOptions(
+            mode=self.mode,
+            threshold_sigma=self.threshold_sigma,
+            snippet_samples=self.snippet_samples,
+            max_templates=self.max_templates,
+            template_threshold=self.template_threshold,
+            quantize_bits=self.quantize_bits,
+            adc_bits=self.adc_bits,
+            zstandard=(
+                self.mode in ("full", "waveform")
+                and self._container.WAVEFORM_CONTAINER_ZSTD
+                and has_optional_module("zstandard")
+            ),
+            denoise_background=self.mode == "full" and has_optional_module("pywt"),
+        )
+        packet, spikes, templates, spike_bytes, snippet_bytes, background_bytes = (
+            self._container.waveform_container_encode(np.ascontiguousarray(samples), options)
+        )
+        rows, channels = samples.shape
+        if lossless:
+            return packet, self._lossless_result(rows, channels, len(packet))
+        size = rows * channels * 2
+        return packet, WaveformCompressionResult(
+            original_bytes=size,
+            compressed_bytes=len(packet),
+            compression_ratio=size / len(packet),
+            n_channels=channels,
+            n_samples=rows,
+            n_spikes_detected=spikes,
+            n_templates=templates,
+            spike_bytes=spike_bytes,
+            snippet_bytes=snippet_bytes,
+            background_bytes=background_bytes,
             lossless_spikes=True,
         )
 
@@ -772,7 +819,20 @@ class WaveformCodec:
             ``max_samples``: wrong magic, checksum, mode, dimensions, section
             lengths or section contents.
         """
+        try:
+            max_samples = operator.index(max_samples)
+        except TypeError as error:
+            raise ValueError("max_samples must be an integer") from error
+        if max_samples < 0:
+            raise ValueError("max_samples must be nonnegative")
         native = _native_kernels(backend)
+        container = native_container(native, backend)
+        if container is not None:
+            limit = min(max_samples, np.iinfo(np.uintp).max)
+            mode, raster, waveform = container.waveform_container_decode(bytes(data), limit)
+            return WaveformDecodeResult(
+                mode, raster, waveform, mode in ("lossless", "lossless_rice")
+            )
         try:
             return cls._decompress(bytes(data), max_samples, native, backend)
         except (IndexError, OverflowError, struct.error) as exc:
@@ -796,9 +856,16 @@ class WaveformCodec:
             if zlib.crc32(body) != crc:
                 raise ValueError("WaveformCodec checksum mismatch: the stream is corrupted")
             data = body
-        T, N, n_templates, n_snippets, snippet_samples, quantize_bits, _, mode_byte = struct.unpack(
-            _HEADER_FORMAT, data[4:header_size]
-        )
+        (
+            T,
+            N,
+            n_templates,
+            n_snippets,
+            snippet_samples,
+            quantize_bits,
+            spike_length_bits,
+            mode_byte,
+        ) = struct.unpack(_HEADER_FORMAT, data[4:header_size])
         mode = WAVEFORM_CODEC_MODES_BY_BYTE.get(mode_byte)
         if mode is None:
             raise ValueError(f"unknown WaveformCodec mode byte {mode_byte}")
@@ -808,6 +875,17 @@ class WaveformCodec:
                 f"max_samples={max_samples} in total"
             )
         reader = _SectionReader(data, header_size)
+        if magic == cls.HEADER_MAGIC:
+            cls._require_int_range("snippet_samples", snippet_samples, minimum=1, maximum=255)
+            cls._require_int_range("quantize_bits", quantize_bits, minimum=1, maximum=8)
+            if n_templates > n_snippets:
+                raise ValueError("invalid WaveformCodec template count")
+            if n_snippets > T * N:
+                raise ValueError("invalid WaveformCodec snippet count")
+            if mode in ("lossless", "lossless_rice") and (
+                n_templates or n_snippets or spike_length_bits
+            ):
+                raise ValueError("lossless WaveformCodec metadata must have zero spike counts")
         if mode in ("lossless", "lossless_rice") and magic != cls.HEADER_MAGIC:
             raise ValueError("lossless streams exist only in the WFC2 format")
         if mode == "lossless":
@@ -841,6 +919,8 @@ class WaveformCodec:
         if int(raster.sum()) != n_snippets:
             raise ValueError("snippet count does not match the decoded spike raster")
         if mode == "spike":
+            if magic == cls.HEADER_MAGIC and (snippet_section or background_section):
+                raise ValueError("spike mode requires empty snippet and background sections")
             return WaveformDecodeResult(mode, raster, None, False)
         if magic != cls.HEADER_MAGIC:
             raise ValueError(
@@ -850,6 +930,8 @@ class WaveformCodec:
         if mode == "full":
             waveform = _decode_background(background_section, T, N, quantize_bits, native)
         else:
+            if background_section:
+                raise ValueError("waveform mode must have an empty background section")
             waveform = np.zeros((T, N), dtype=np.float32)
         snippets = _decode_snippets(snippet_section, n_templates, n_snippets, snippet_samples)
         half = snippet_samples // 2
@@ -880,7 +962,9 @@ def _native_kernels(backend: str) -> ModuleType | None:
         engine: ModuleType | None = importlib.import_module(
             "sc_neurocore_engine.sc_neurocore_engine"
         )
-    except ImportError:
+    except ModuleNotFoundError as error:
+        if error.name not in ("sc_neurocore_engine", "sc_neurocore_engine.sc_neurocore_engine"):
+            raise
         engine = None
     if engine is not None and all(hasattr(engine, name) for name in _NATIVE_KERNELS):
         return engine
@@ -924,18 +1008,51 @@ class _SectionReader:
             raise ValueError("trailing bytes after the WaveformCodec stream")
 
 
-def _inflate(blob: bytes) -> bytes:
-    """Decompress a zstd frame or a zlib stream, recognised by its magic."""
+def _inflate(blob: bytes, expected: int | None = None) -> bytes:
+    """Decompress one zstd or zlib frame within a section's declared byte budget."""
     try:
         if blob[:4] == _ZSTD_MAGIC:
             import zstandard as zstd
 
-            return bytes(zstd.ZstdDecompressor().decompress(blob))
-        return zlib.decompress(blob)
+            declared = zstd.frame_content_size(blob)
+            if expected is not None and declared >= 0 and declared != expected:
+                raise ValueError("zstd frame size differs from the section size")
+            bound = 0 if expected is None else expected
+            restored = bytes(
+                zstd.ZstdDecompressor().decompress(
+                    blob, max_output_size=bound, allow_extra_data=False
+                )
+            )
+        else:
+            reader = zlib.decompressobj()
+            bound = 0 if expected is None else expected + 1
+            restored = reader.decompress(blob, bound)
+            if not reader.eof or reader.unused_data:
+                raise ValueError("incomplete or trailing zlib bytes")
+        if expected is not None and len(restored) != expected:
+            raise ValueError("wrong uncompressed section size")
+        return restored
     except ImportError as exc:
         raise ValueError("a zstd-compressed section needs the zstandard package") from exc
     except Exception as exc:  # zlib.error and zstandard.ZstdError share no base class
         raise ValueError(f"compressed WaveformCodec section is corrupted: {exc}") from exc
+
+
+def _read_waveform_varint(data: bytes, pos: int, width: int) -> tuple[int, int]:
+    """Read a complete LEB128 value within its field width."""
+    value = 0
+    for shift in range(0, width, 7):
+        if pos == len(data):
+            raise ValueError("truncated WaveformCodec varint")
+        byte = data[pos]
+        pos += 1
+        payload = byte & 0x7F
+        if payload >= 1 << min(width - shift, 7):
+            break
+        value |= payload << shift
+        if byte < 0x80:
+            return value, pos
+    raise ValueError(f"WaveformCodec varint exceeds uint{width}")
 
 
 def _decode_snippets(
@@ -949,6 +1066,8 @@ def _decode_snippets(
     pos += 4
     if count != n_templates:
         raise ValueError("template count disagrees with the header")
+    if not math.isfinite(tmpl_max) or tmpl_max < 0:
+        raise ValueError("invalid WaveformCodec template scale")
     size = count * snippet_samples
     templates = np.frombuffer(section[pos : pos + size], dtype=np.int8).astype(np.float32).reshape(
         count, snippet_samples
@@ -960,35 +1079,59 @@ def _decode_snippets(
         raise ValueError("snippet count disagrees with the header")
     ids = []
     for _ in range(n_ids):
-        value, pos = SpikeCodec._decode_varint(section, pos)
+        value, pos = _read_waveform_varint(section, pos, 16)
+        if value >= count:
+            raise ValueError("WaveformCodec template ID out of range")
         ids.append(value)
     scales = np.frombuffer(section[pos : pos + 4 * n_ids], dtype=">f4").astype(np.float32)
     pos += 4 * n_ids
     res_max, n_flat = struct.unpack("!fI", section[pos : pos + 8])
     pos += 8
+    samples = n_ids * snippet_samples
+    packed_size = (samples + 1) // 2
+    if n_flat != 2 * packed_size or not math.isfinite(res_max) or res_max < 0:
+        raise ValueError("invalid WaveformCodec residual sample count or scale")
     if n_flat:
-        packed = np.frombuffer(_inflate(section[pos:]), dtype=np.uint8)
+        packed = np.frombuffer(_inflate(section[pos:], packed_size), dtype=np.uint8)
+        if samples % 2 and packed[-1] & 0x0F != 8:
+            raise ValueError("WaveformCodec residual padding is nonzero")
         nibbles = np.empty(packed.size * 2, dtype=np.int16)
         nibbles[0::2] = packed >> 4
         nibbles[1::2] = packed & 0x0F
         residuals = (nibbles[:n_flat] - 8).astype(np.float32) * np.float32(res_max / 7.0)
         residuals = residuals[: n_ids * snippet_samples].reshape(n_ids, snippet_samples)
     else:
+        if pos != len(section):
+            raise ValueError("trailing bytes after the WaveformCodec stream")
         residuals = np.zeros((n_ids, snippet_samples), dtype=np.float32)
-    return [scales[i] * templates[ids[i]] + residuals[i] for i in range(n_ids)]
+    restored = [scales[i] * templates[ids[i]] + residuals[i] for i in range(n_ids)]
+    if not np.all(np.isfinite(scales)) or any(not np.all(np.isfinite(row)) for row in restored):
+        raise ValueError("non-finite WaveformCodec reconstructed snippet")
+    return restored
 
 
 def _decode_background(
     section: bytes, T: int, N: int, quantize_bits: int, native: ModuleType | None
 ) -> np.ndarray[Any, Any]:
     """Rebuild the full-rate background from its closed-loop quantised deltas (lossy)."""
-    waveform = np.zeros((T, N), dtype=np.float32)
     if len(section) < 12:
         raise ValueError("full-mode stream lacks its background section")
     rows, cols, dmax = struct.unpack("!IIf", section[:12])
+    ds = WAVEFORM_CODEC_BACKGROUND_DOWNSAMPLE
+    if rows != (T if ds > T else T // ds) or cols != N:
+        raise ValueError("WaveformCodec background dimensions disagree with the header")
     first = np.frombuffer(section[12 : 12 + 4 * cols], dtype=">f4").astype(np.float32)
-    quantized = np.frombuffer(_inflate(section[12 + 4 * cols :]), dtype=np.int8).reshape(rows, cols)
+    if len(first) != cols or not np.all(np.isfinite(first)):
+        raise ValueError("invalid WaveformCodec background first row")
     step = _background_step(dmax, quantize_bits)
+    if not np.isfinite(step) or step <= 0:
+        raise ValueError("invalid WaveformCodec background delta scale")
+    quantized = np.frombuffer(
+        _inflate(section[12 + 4 * cols :], rows * cols), dtype=np.int8
+    ).reshape(rows, cols)
+    half = 1 << (quantize_bits - 1)
+    if np.any(quantized[0]) or np.any(quantized < -half) or np.any(quantized >= half):
+        raise ValueError("invalid WaveformCodec background code")
     recon: np.ndarray[Any, Any]
     if native is not None:
         recon = np.asarray(
@@ -1004,10 +1147,12 @@ def _decode_background(
             recon[t] = recon[t - 1] + quantized[t].astype(np.float32) * step
     if cols > 1:
         recon = np.cumsum(recon, axis=1, dtype=np.float32)
-    ds = WAVEFORM_CODEC_BACKGROUND_DOWNSAMPLE
+    if not np.all(np.isfinite(recon)):
+        raise ValueError("non-finite WaveformCodec reconstructed background")
     if rows == T:
         return recon
     full = np.repeat(recon, ds, axis=0)
+    waveform = np.empty((T, N), dtype=np.float32)
     waveform[: full.shape[0]] = full
     waveform[full.shape[0] :] = recon[-1]
     return waveform
@@ -1069,20 +1214,28 @@ def _encode_levels(levels: np.ndarray[Any, Any]) -> bytes:
 
 
 def _decode_lossless_channel(section: bytes, T: int) -> np.ndarray[Any, Any]:
-    """Decode one channel written by ``_encode_lossless_channel``."""
+    """Decode a Rice channel and validate its level mapping and predictor."""
     kind = section[0]
     if kind == 1:
         (n_table,) = struct.unpack("!I", section[1:5])
         pos = 5
-        if not 1 <= n_table <= len(section) - pos:
+        if not 1 <= n_table <= min(65536, len(section) - pos):
             raise ValueError("lossless value table length is impossible for its section")
-        steps = []
+        entries: list[int] = []
+        value = 0
         for _ in range(n_table):
-            value, pos = SpikeCodec._decode_varint(section, pos)
-            steps.append(value)
-        table = np.cumsum(_unzigzag(np.asarray(steps, dtype=np.int64)))
+            code, pos = _read_waveform_varint(section, pos, 64)
+            value += (code >> 1) ^ -(code & 1)
+            if not -32768 <= value <= 32767:
+                raise ValueError("lossless value table sample outside the int16 range")
+            if entries and entries[-1] >= value:
+                raise ValueError("lossless value table must be strictly increasing")
+            entries.append(value)
+        table = np.asarray(entries, dtype=np.int64)
     elif kind == 0:
         offset, step = struct.unpack("!iI", section[1:9])
+        if step == 0:
+            raise ValueError("lossless level mapping step must be positive")
         pos = 9
     else:
         raise ValueError("invalid lossless level mapping")
@@ -1092,20 +1245,25 @@ def _decode_lossless_channel(section: bytes, T: int) -> np.ndarray[Any, Any]:
         raise ValueError("invalid lossless predictor order")
     firsts = []
     for _ in range(order):
-        value, pos = SpikeCodec._decode_varint(section, pos)
-        firsts.append(value)
+        code, pos = _read_waveform_varint(section, pos, 64)
+        firsts.append((code >> 1) ^ -(code & 1))
     current = _unzigzag(_rice_decode(section[pos:], T - order))
-    for first in reversed(_unzigzag(np.asarray(firsts, dtype=np.int64)).tolist()):
+    for degree, first in reversed(list(enumerate(firsts))):
+        # A difference of order k over int16-derived levels is bounded by
+        # 65535 * 2**k. With uint32 rows this also keeps cumsum inside int64.
+        bound = 65535 << degree
+        if abs(first) > bound or np.abs(current).max() > 2 * bound:
+            raise ValueError("lossless predictor exceeds its int16 level range")
         current = np.concatenate(([first], first + np.cumsum(current)))
     if kind == 1:
-        if current.min() < 0 or current.max() >= len(table):
+        if current.min() < 0 or current.max() >= n_table:
             raise ValueError("lossless level outside the value table")
-        samples = np.asarray(table[current], dtype=np.int64)
-    else:
-        samples = np.asarray(current * step + offset, dtype=np.int64)
-    if samples.min() < -32768 or samples.max() > 32767:
+        return np.asarray(table[current], dtype=np.int64)
+    min_level = -((32768 + offset) // step)
+    max_level = (32767 - offset) // step
+    if current.min() < min_level or current.max() > max_level:
         raise ValueError("lossless samples outside the int16 range")
-    return samples
+    return np.asarray(current * step + offset, dtype=np.int64)
 
 
 def _rice_encode(u: np.ndarray[Any, Any]) -> bytes:
@@ -1164,9 +1322,11 @@ def _rice_decode(data: bytes, n: int) -> np.ndarray[Any, Any]:
     if ks.size and int(ks.max()) > WAVEFORM_CODEC_LOSSLESS_MAX_RICE_K:
         raise ValueError("lossless Rice parameter out of range")
     zeros = np.flatnonzero(unary == 0)
-    if len(zeros) != n:
+    if len(zeros) != n or (n and zeros[-1] + 1 != n_unary) or n_esc > n:
         raise ValueError("lossless Rice section has the wrong number of values")
     q = np.diff(np.concatenate(([-1], zeros))) - 1
+    if np.any(q > escape):
+        raise ValueError("lossless Rice quotient out of range")
     k = np.repeat(ks, block)[:n]
     is_plain = q < escape
     width = np.where(is_plain, k, 0)

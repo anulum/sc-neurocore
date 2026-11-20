@@ -996,6 +996,56 @@ and decoded samples before and after timing.
 [Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
 
 
+## Whole waveform containers
+
+These WFC2 comparisons use all 98,689 rows of one original Neuralink
+challenge recording and all 9,760 rows of the 64-channel PhysioNet
+`S001R01.edf` recording. Both installed backends produced identical
+packets for each case and decoded each other's packets. The plain
+environment used zlib. The optional environment used zstd and applied
+symmetric db4 only to the full-mode background.
+[PhysioNet recording and licence](https://physionet.org/content/eegmmidb/1.0.0/).
+
+Each timing is the median of three paired runs with alternating backend
+order. It includes encoder construction and the complete encode and decode.
+The Linux machine used a Core i5-11600K with 32 GiB RAM, logical CPUs 2–5,
+CPython 3.12.16, NumPy 2.5.4 and a release build of Rust 1.98.1 with four Rayon
+threads. Python used zlib 1.3.2. The Rust build bundled zlib 1.4 and zstd 1.5.7.
+
+| Profile | Recording | Mode | Python (ms) | Rust (ms) | Packet bytes | Reconstruction RMSE (ADC units) |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| zlib | Mono challenge | spike | 17.39 | 0.87 | 45 | — |
+| zlib | Mono challenge | waveform | 14.99 | 1.00 | 63 | 2,107.79 |
+| zlib | Mono challenge | full | 81.58 | 1.75 | 3,613 | 333.18 |
+| zlib | Mono challenge | lossless | 2,120.46 | 9.17 | 53,481 | 0.00 |
+| zlib | Mono challenge | lossless_rice | 263.26 | 17.45 | 56,453 | 0.00 |
+| zlib | 64-channel EEG | spike | 187.06 | 7.42 | 347 | — |
+| zlib | 64-channel EEG | waveform | 180.12 | 10.27 | 3,805 | 54.18 |
+| zlib | 64-channel EEG | full | 275.39 | 53.48 | 16,630 | 36.01 |
+| zlib | 64-channel EEG | lossless | 14,942.45 | 54.26 | 476,169 | 0.00 |
+| zlib | 64-channel EEG | lossless_rice | 425.53 | 96.16 | 489,725 | 0.00 |
+| zstd + db4 | Mono challenge | spike | 13.52 | 0.68 | 45 | — |
+| zstd + db4 | Mono challenge | waveform | 16.47 | 0.76 | 63 | 2,107.79 |
+| zstd + db4 | Mono challenge | full | 70.00 | 2.00 | 3,264 | 333.18 |
+| zstd + db4 | Mono challenge | lossless | 1,802.34 | 8.76 | 53,481 | 0.00 |
+| zstd + db4 | Mono challenge | lossless_rice | 93.60 | 13.67 | 56,453 | 0.00 |
+| zstd + db4 | 64-channel EEG | spike | 120.43 | 7.96 | 347 | — |
+| zstd + db4 | 64-channel EEG | waveform | 117.64 | 6.75 | 3,711 | 54.18 |
+| zstd + db4 | 64-channel EEG | full | 162.72 | 24.94 | 14,812 | 36.34 |
+| zstd + db4 | 64-channel EEG | lossless | 10,996.58 | 47.26 | 476,169 | 0.00 |
+| zstd + db4 | 64-channel EEG | lossless_rice | 355.92 | 86.00 | 489,725 | 0.00 |
+
+Lossless modes must restore every sample exactly. For all three lossy
+modes the detected raster must match the reference threshold and refractory
+detector exactly. This condition concerns the codec's event definition.
+The waveform and full modes report deviation from the acquired signal in
+ADC units. Reconstruction must also match across the two implementations.
+
+[Machine-readable results](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/waveform_container_backends.json)
+include the inputs, packet and wheel digests, raw timing samples and full
+quality metrics. [Reproduction instructions](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/README.md#scripts)
+cover both dependency profiles.
+
 ## Lossless waveform streaming backends
 
 Each run encodes and decodes all 9,760 time rows of the original digital EEG

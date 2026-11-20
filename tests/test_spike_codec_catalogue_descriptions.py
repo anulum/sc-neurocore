@@ -153,8 +153,9 @@ def test_native_scope_is_component_specific_and_never_counts_generated_mirrors()
                 assert variant.native_module.startswith("sc_neurocore_engine")
                 assert variant.native_symbols
     waveform = describe_codec("waveform")
-    assert waveform.variant("lossless").native_scope == "packet_coder"
-    assert waveform.variant("lossless_rice").native_scope == "channel_coder"
+    for variant in waveform.variants:
+        assert variant.native_scope == "container"
+        assert variant.native_symbols == ("waveform_container_encode", "waveform_container_decode")
     predictive = describe_codec("predictive")
     assert predictive.backend_parameter
     for variant in predictive.variants:

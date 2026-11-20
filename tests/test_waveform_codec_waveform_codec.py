@@ -188,34 +188,10 @@ class TestWaveformCodec:
         assert len(snippets) > 0
         assert len(background) > 12
 
-    def test_compress_rejects_spike_count_header_overflow(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Dense spike detections cannot silently overflow the two-byte header."""
-        codec = WaveformCodec(mode="spike")
-        spike_raster = np.zeros((4, 1), dtype=np.int8)
-        times_per_channel: list[list[int]] = [[]]
-
-        def fake_detect_spikes(
-            waveform: np.ndarray[Any, Any], thresholds: np.ndarray[Any, Any]
-        ) -> tuple[np.ndarray[Any, Any], list[list[int]]]:
-            return spike_raster, times_per_channel
-
-        def fake_extract_snippets(
-            waveform: np.ndarray[Any, Any],
-            times_per_ch: list[list[int]],
-            n_channels: int,
-        ) -> tuple[list[np.ndarray[Any, Any]], list[tuple[int, int]]]:
-            return [], [(0, 0)] * 65536
-
-        def fake_template_match(
-            snippets: list[np.ndarray[Any, Any]],
-        ) -> tuple[list[np.ndarray[Any, Any]], list[int], list[float], list[np.ndarray[Any, Any]]]:
-            return [], [], [], []
-
-        monkeypatch.setattr(codec, "_detect_spikes", fake_detect_spikes)
-        monkeypatch.setattr(codec, "_extract_snippets", fake_extract_snippets)
-        monkeypatch.setattr(codec, "_template_match", fake_template_match)
-
+    @pytest.mark.parametrize("backend", ("python", "rust"))
+    def test_compress_rejects_spike_count_header_overflow(self, backend: str) -> None:
+        """Detect 65,536 physical threshold crossings and report the uint16 limit."""
+        codec = WaveformCodec(mode="spike", snippet_samples=1, backend=backend)
+        waveform = np.tile(np.array([0, -10000, 0], dtype=np.float32), 65536).reshape(-1, 1)
         with pytest.raises(ValueError, match="header capacity"):
-            codec.compress(np.zeros((4, 1), dtype=np.float32))
+            codec.compress(waveform)

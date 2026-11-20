@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
 NativeCodecScope: TypeAlias = Literal[
-    "none", "predictor_kernels", "signal_kernels", "channel_coder", "packet_coder"
+    "none", "predictor_kernels", "signal_kernels", "channel_coder", "packet_coder", "container"
 ]
 CodecFidelity: TypeAlias = Literal["lossless", "lossy", "configurable"]
 
@@ -210,8 +210,7 @@ class CodecAvailability:
     python_available : bool
         Public Python entry points and optional variant modules are importable.
     rust_components_available : bool
-        Required native callables are importable now. This does not certify a
-        complete Rust container or change existing instances' cached backend choices.
+        Required native callables are importable now. See native_scope for the operations the probe covers. Existing codec instances retain their cached backend choices.
     native_scope : str
         Scope of the native callables, as declared by the variant.
     backend_choices : tuple of str

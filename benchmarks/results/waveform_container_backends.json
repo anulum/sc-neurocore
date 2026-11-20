@@ -1,0 +1,1377 @@
+{
+  "schema": 1,
+  "source_hashes": {
+    "Cargo.lock": "3b39bb1fc7094818c8b888d5ecd41995175973e7baf65006edafab86ba722ac1",
+    "engine/Cargo.toml": "ce9de85225c2d0024fee419d72e6098c7515588ba9d0e495c61226f350b0f05e",
+    "engine/src/waveform_codec.rs": "5f2e9da2fc4c17c2bf7ba45fadc50742c3ef831fbd46c1ce4ccb1bac4f9257d0",
+    "engine/src/waveform_stream.rs": "51180d3ad77eec13f879a63454ca309afa30e9336522034fff011f4d342c84f0",
+    "engine/src/codecs/isi.rs": "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8",
+    "engine/src/bindings/waveform_container.rs": "6012a72bef066fe0fb06f13ab5849308e097c13b77d0a41bcdb00dc088a489e5",
+    "src/sc_neurocore/spike_codec/_waveform_container.py": "54353809ed68a98826994fc70edb9527f18cd3f1c6017dc767d16e905e6ad83a",
+    "src/sc_neurocore/spike_codec/waveform_codec.py": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
+    "benchmarks/bench_waveform_container.py": "826edba6967e7c2317058708683250b78aa44ffc60a6d4ea3afb15daaa5ea863",
+    "benchmarks/bench_waveform_stream_fixture.py": "ea1a61da0f5b34a9d3b086754f8024b102563c50f9deaf40d9de6ec69045b601",
+    "engine/src/codecs/waveform_container/background.rs": "6d606ce17f5a4467b04ccae6ac67441e96d24f979d0a875bf642578ad9265e49",
+    "engine/src/codecs/waveform_container/compression.rs": "e2edc5c6577330ef94472a5e668a1e4719d6442e859c56dacfdfff5aa196fec1",
+    "engine/src/codecs/waveform_container/mod.rs": "d52fd215a551f322929af19ff95f715dc9442d1a6b79d03615f43a940367c5ae",
+    "engine/src/codecs/waveform_container/snippets.rs": "c61524657a8e7dbb72c7f4b8d93f22acafca2214b06d7c3614831deb1cc9b821",
+    "engine/src/codecs/waveform_container/wavelet.rs": "315c82803df22ea5c48694b15277367f0156d656774100c3e3003721febe2dae",
+    "engine/src/codecs/waveform_container/wire.rs": "359b061ce5043693d7528f22cb1c885e6228af949ab9467b92c9eca1f433dbe5"
+  },
+  "protocol": "Three alternating pairs per mode, timing setup, whole encode and whole decode.",
+  "native_profile": {
+    "rust": "1.98.1",
+    "build": "release",
+    "features": [
+      "z3",
+      "waveform-zstd"
+    ],
+    "bundled_zlib": "1.4",
+    "bundled_zstd": "1.5.7"
+  },
+  "eeg_dataset": "https://physionet.org/content/eegmmidb/1.0.0/",
+  "profiles": [
+    {
+      "recorded_at_utc": "2026-11-20T10:59:52.389778+00:00",
+      "host": {
+        "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+        "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+        "logical_cpus": 12,
+        "affinity": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "thread_siblings": {
+          "2": "2,8",
+          "3": "3,9",
+          "4": "4,10",
+          "5": "5,11"
+        },
+        "host_load_averages": [
+          6.4873046875,
+          6.08984375,
+          6.7021484375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+        "numpy": "2.5.4"
+      },
+      "rayon_num_threads": "4",
+      "python_zlib_runtime": "1.3.2",
+      "optional_distributions": {
+        "zstandard": null,
+        "PyWavelets": null
+      },
+      "installed_sha256": {
+        "sc_neurocore.spike_codec.waveform_codec": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
+        "sc_neurocore_engine.sc_neurocore_engine": "989267708d1c6b09ad7f29307b0d0aa39ebd791304c99f7b31dfa35cdc66c3b2"
+      },
+      "repetitions": 3,
+      "recordings": [
+        {
+          "recording": "challenge recording",
+          "filename": "0052503c-2849-4f41-ab51-db382103690c.wav",
+          "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+          "input_bytes": 197378,
+          "sample_rate_hz": 19531,
+          "results": [
+            {
+              "mode": "spike",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 45,
+              "packet_sha256": "93a0e31caf0cb3b159fa2360ff7a3d13676c067fda7cdd96e5ee5690ff573228",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0
+              },
+              "total_median_ns": {
+                "python": 17390029,
+                "rust": 871979
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 36250,
+                    "encode_ns": 58141866,
+                    "decode_ns": 152707,
+                    "total_ns": 58330823
+                  },
+                  {
+                    "setup_ns": 13892,
+                    "encode_ns": 17268363,
+                    "decode_ns": 107774,
+                    "total_ns": 17390029
+                  },
+                  {
+                    "setup_ns": 8344,
+                    "encode_ns": 16760359,
+                    "decode_ns": 124541,
+                    "total_ns": 16893244
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 53773,
+                    "encode_ns": 1106007,
+                    "decode_ns": 130420,
+                    "total_ns": 1290200
+                  },
+                  {
+                    "setup_ns": 26942,
+                    "encode_ns": 711679,
+                    "decode_ns": 82221,
+                    "total_ns": 820842
+                  },
+                  {
+                    "setup_ns": 36880,
+                    "encode_ns": 732460,
+                    "decode_ns": 102639,
+                    "total_ns": 871979
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "waveform",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 63,
+              "packet_sha256": "9b992eac5f39c300c9c61b8ae10e629ff1cfec201a16e45f9b3fe8cb7e44eda3",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 2107.7851990966515,
+                "max_abs_error_adc_units": 9704.0,
+                "snr_db": 0.0
+              },
+              "total_median_ns": {
+                "python": 14990048,
+                "rust": 996849
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 11621,
+                    "encode_ns": 14748234,
+                    "decode_ns": 230193,
+                    "total_ns": 14990048
+                  },
+                  {
+                    "setup_ns": 8229,
+                    "encode_ns": 14536433,
+                    "decode_ns": 158032,
+                    "total_ns": 14702694
+                  },
+                  {
+                    "setup_ns": 7648,
+                    "encode_ns": 14998000,
+                    "decode_ns": 176706,
+                    "total_ns": 15182354
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 27558,
+                    "encode_ns": 834695,
+                    "decode_ns": 134596,
+                    "total_ns": 996849
+                  },
+                  {
+                    "setup_ns": 18085,
+                    "encode_ns": 784848,
+                    "decode_ns": 129584,
+                    "total_ns": 932517
+                  },
+                  {
+                    "setup_ns": 27326,
+                    "encode_ns": 869740,
+                    "decode_ns": 173291,
+                    "total_ns": 1070357
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "full",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 3613,
+              "packet_sha256": "f6bc3f252cf5946bfcf269fb5e02172918667da9048fb474abdcd8ffe78df70d",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 333.175492759569,
+                "max_abs_error_adc_units": 4275.850341796875,
+                "snr_db": 16.023066037163932
+              },
+              "total_median_ns": {
+                "python": 81577654,
+                "rust": 1749405
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 22327,
+                    "encode_ns": 67416307,
+                    "decode_ns": 14139020,
+                    "total_ns": 81577654
+                  },
+                  {
+                    "setup_ns": 19117,
+                    "encode_ns": 85179475,
+                    "decode_ns": 21967513,
+                    "total_ns": 107166105
+                  },
+                  {
+                    "setup_ns": 27935,
+                    "encode_ns": 62286155,
+                    "decode_ns": 12261837,
+                    "total_ns": 74575927
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 26503,
+                    "encode_ns": 1203362,
+                    "decode_ns": 489045,
+                    "total_ns": 1718910
+                  },
+                  {
+                    "setup_ns": 20467,
+                    "encode_ns": 1240814,
+                    "decode_ns": 488124,
+                    "total_ns": 1749405
+                  },
+                  {
+                    "setup_ns": 33401,
+                    "encode_ns": 1306478,
+                    "decode_ns": 457046,
+                    "total_ns": 1796925
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 53481,
+              "packet_sha256": "99a32e1e1de237052bda5accf6a1d94fadb3ef6624a1348ad8d3dc3e4747ce52",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 2120462418,
+                "rust": 9173472
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 24555,
+                    "encode_ns": 1036598867,
+                    "decode_ns": 1037482648,
+                    "total_ns": 2074106070
+                  },
+                  {
+                    "setup_ns": 19959,
+                    "encode_ns": 1040903002,
+                    "decode_ns": 1079539457,
+                    "total_ns": 2120462418
+                  },
+                  {
+                    "setup_ns": 18084,
+                    "encode_ns": 1211935161,
+                    "decode_ns": 1116851698,
+                    "total_ns": 2328804943
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 44475,
+                    "encode_ns": 4903056,
+                    "decode_ns": 4225941,
+                    "total_ns": 9173472
+                  },
+                  {
+                    "setup_ns": 50713,
+                    "encode_ns": 4801454,
+                    "decode_ns": 3819634,
+                    "total_ns": 8671801
+                  },
+                  {
+                    "setup_ns": 33749,
+                    "encode_ns": 5088566,
+                    "decode_ns": 4394444,
+                    "total_ns": 9516759
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless_rice",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 56453,
+              "packet_sha256": "53d946c51bfe344006315f7633f3d4eae1ecfe8ff88b4d55bf55af9627d1b359",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 263263771,
+                "rust": 17448609
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 19973,
+                    "encode_ns": 392633733,
+                    "decode_ns": 14026236,
+                    "total_ns": 406679942
+                  },
+                  {
+                    "setup_ns": 26993,
+                    "encode_ns": 252562780,
+                    "decode_ns": 10673998,
+                    "total_ns": 263263771
+                  },
+                  {
+                    "setup_ns": 13723,
+                    "encode_ns": 144745729,
+                    "decode_ns": 10253552,
+                    "total_ns": 155013004
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 45474,
+                    "encode_ns": 14549444,
+                    "decode_ns": 2853691,
+                    "total_ns": 17448609
+                  },
+                  {
+                    "setup_ns": 47074,
+                    "encode_ns": 16462865,
+                    "decode_ns": 3154331,
+                    "total_ns": 19664270
+                  },
+                  {
+                    "setup_ns": 40594,
+                    "encode_ns": 14690615,
+                    "decode_ns": 2597249,
+                    "total_ns": 17328458
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "recording": "simultaneous EEG",
+          "filename": "S001R01.edf",
+          "input_sha256": "4743b736131a7e147c150e8b37711029b6cda5e356c4b3e8261a03cdcaaf8b0c",
+          "input_bytes": 1249280,
+          "sample_rate_hz": 160,
+          "results": [
+            {
+              "mode": "spike",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 347,
+              "packet_sha256": "dd30d9bc9751f602166baad6acc86c13a077828512a2e8d9f2f59d9beb4a7832",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0
+              },
+              "total_median_ns": {
+                "python": 187059788,
+                "rust": 7423368
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 18161,
+                    "encode_ns": 185028220,
+                    "decode_ns": 1093142,
+                    "total_ns": 186139523
+                  },
+                  {
+                    "setup_ns": 25497,
+                    "encode_ns": 186470313,
+                    "decode_ns": 563978,
+                    "total_ns": 187059788
+                  },
+                  {
+                    "setup_ns": 12821,
+                    "encode_ns": 214190519,
+                    "decode_ns": 657225,
+                    "total_ns": 214860565
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 36466,
+                    "encode_ns": 8609555,
+                    "decode_ns": 304547,
+                    "total_ns": 8950568
+                  },
+                  {
+                    "setup_ns": 19215,
+                    "encode_ns": 5970308,
+                    "decode_ns": 320350,
+                    "total_ns": 6309873
+                  },
+                  {
+                    "setup_ns": 32424,
+                    "encode_ns": 6934374,
+                    "decode_ns": 456570,
+                    "total_ns": 7423368
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "waveform",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 3805,
+              "packet_sha256": "8e55c205aae0e4d337b643ec67001a24c190654e1843e83401d9b713050eca1d",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 54.18049722969724,
+                "max_abs_error_adc_units": 597.0,
+                "snr_db": 0.697830738745654
+              },
+              "total_median_ns": {
+                "python": 180123747,
+                "rust": 10270918
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 12681,
+                    "encode_ns": 168410130,
+                    "decode_ns": 3254515,
+                    "total_ns": 171677326
+                  },
+                  {
+                    "setup_ns": 30631,
+                    "encode_ns": 176892862,
+                    "decode_ns": 3200254,
+                    "total_ns": 180123747
+                  },
+                  {
+                    "setup_ns": 15673,
+                    "encode_ns": 198854935,
+                    "decode_ns": 3340648,
+                    "total_ns": 202211256
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 52414,
+                    "encode_ns": 8937533,
+                    "decode_ns": 1890357,
+                    "total_ns": 10880304
+                  },
+                  {
+                    "setup_ns": 41631,
+                    "encode_ns": 8511372,
+                    "decode_ns": 1717915,
+                    "total_ns": 10270918
+                  },
+                  {
+                    "setup_ns": 28986,
+                    "encode_ns": 6329085,
+                    "decode_ns": 1313047,
+                    "total_ns": 7671118
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "full",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 16630,
+              "packet_sha256": "717a67bc74ea875fd22efc7f4582752877c2387fb0184956f63f3c39392b42fd",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 36.00586635368333,
+                "max_abs_error_adc_units": 372.11090087890625,
+                "snr_db": 4.247225163080556
+              },
+              "total_median_ns": {
+                "python": 275385114,
+                "rust": 53478699
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 18521,
+                    "encode_ns": 217832585,
+                    "decode_ns": 7876024,
+                    "total_ns": 225727130
+                  },
+                  {
+                    "setup_ns": 23635,
+                    "encode_ns": 293406156,
+                    "decode_ns": 7260953,
+                    "total_ns": 300690744
+                  },
+                  {
+                    "setup_ns": 22581,
+                    "encode_ns": 266276427,
+                    "decode_ns": 9086106,
+                    "total_ns": 275385114
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 46995,
+                    "encode_ns": 51414740,
+                    "decode_ns": 2140389,
+                    "total_ns": 53602124
+                  },
+                  {
+                    "setup_ns": 52712,
+                    "encode_ns": 51206364,
+                    "decode_ns": 2212847,
+                    "total_ns": 53471923
+                  },
+                  {
+                    "setup_ns": 56112,
+                    "encode_ns": 50541154,
+                    "decode_ns": 2881433,
+                    "total_ns": 53478699
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 476169,
+              "packet_sha256": "5f95576d471ad36de1e5f8f23d433226727e98fee82a59169592403d4d05a4e9",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 14942451937,
+                "rust": 54259521
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 19900,
+                    "encode_ns": 8755464577,
+                    "decode_ns": 7594700386,
+                    "total_ns": 16350184863
+                  },
+                  {
+                    "setup_ns": 24126,
+                    "encode_ns": 7641894033,
+                    "decode_ns": 7300533778,
+                    "total_ns": 14942451937
+                  },
+                  {
+                    "setup_ns": 18606,
+                    "encode_ns": 7147719222,
+                    "decode_ns": 5845517930,
+                    "total_ns": 12993255758
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 60255,
+                    "encode_ns": 34617583,
+                    "decode_ns": 23870750,
+                    "total_ns": 58548588
+                  },
+                  {
+                    "setup_ns": 28871,
+                    "encode_ns": 29760393,
+                    "decode_ns": 24470257,
+                    "total_ns": 54259521
+                  },
+                  {
+                    "setup_ns": 29625,
+                    "encode_ns": 28624578,
+                    "decode_ns": 21804563,
+                    "total_ns": 50458766
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless_rice",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 489725,
+              "packet_sha256": "9cf650da223b0cd5846d78387874f068fa0fd333c50842f841b00285586d3391",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 425530737,
+                "rust": 96161357
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 12654,
+                    "encode_ns": 389230520,
+                    "decode_ns": 36287563,
+                    "total_ns": 425530737
+                  },
+                  {
+                    "setup_ns": 17921,
+                    "encode_ns": 422534480,
+                    "decode_ns": 37271480,
+                    "total_ns": 459823881
+                  },
+                  {
+                    "setup_ns": 20788,
+                    "encode_ns": 369501198,
+                    "decode_ns": 36507125,
+                    "total_ns": 406029111
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 27981,
+                    "encode_ns": 80140827,
+                    "decode_ns": 14400883,
+                    "total_ns": 94569691
+                  },
+                  {
+                    "setup_ns": 46676,
+                    "encode_ns": 81641952,
+                    "decode_ns": 14472729,
+                    "total_ns": 96161357
+                  },
+                  {
+                    "setup_ns": 39989,
+                    "encode_ns": 82583772,
+                    "decode_ns": 15319260,
+                    "total_ns": 97943021
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "raw_receipt_sha256": "a88a15b6210516be8170053789e47f8f6ebff71e11651e765de5c1fee27cdfb9",
+      "native_wheel_sha256": "f421fd1332ceaf542d241b83672678bd7461292352575923d3723e620363e31d",
+      "python_wheel_sha256": "82f92974e52a323ca5baeeb787570653dcb94c9ba7735a0dc669fa6d05bac9e5",
+      "scheme": "zlib"
+    },
+    {
+      "recorded_at_utc": "2026-11-20T11:00:41.577436+00:00",
+      "host": {
+        "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+        "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+        "logical_cpus": 12,
+        "affinity": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "thread_siblings": {
+          "2": "2,8",
+          "3": "3,9",
+          "4": "4,10",
+          "5": "5,11"
+        },
+        "host_load_averages": [
+          6.23974609375,
+          6.00146484375,
+          6.63427734375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+        "numpy": "2.5.4"
+      },
+      "rayon_num_threads": "4",
+      "python_zlib_runtime": "1.3.2",
+      "optional_distributions": {
+        "zstandard": "0.25.0",
+        "PyWavelets": "1.10.0"
+      },
+      "installed_sha256": {
+        "sc_neurocore.spike_codec.waveform_codec": "8cbd52df48b3dffa101401dd875f59e7939a052b36d821f6200c80c1c4154e66",
+        "sc_neurocore_engine.sc_neurocore_engine": "989267708d1c6b09ad7f29307b0d0aa39ebd791304c99f7b31dfa35cdc66c3b2"
+      },
+      "repetitions": 3,
+      "recordings": [
+        {
+          "recording": "challenge recording",
+          "filename": "0052503c-2849-4f41-ab51-db382103690c.wav",
+          "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+          "input_bytes": 197378,
+          "sample_rate_hz": 19531,
+          "results": [
+            {
+              "mode": "spike",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 45,
+              "packet_sha256": "93a0e31caf0cb3b159fa2360ff7a3d13676c067fda7cdd96e5ee5690ff573228",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0
+              },
+              "total_median_ns": {
+                "python": 13518570,
+                "rust": 681626
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 18881,
+                    "encode_ns": 46001138,
+                    "decode_ns": 96909,
+                    "total_ns": 46116928
+                  },
+                  {
+                    "setup_ns": 10500,
+                    "encode_ns": 13422533,
+                    "decode_ns": 85537,
+                    "total_ns": 13518570
+                  },
+                  {
+                    "setup_ns": 6315,
+                    "encode_ns": 12451892,
+                    "decode_ns": 73947,
+                    "total_ns": 12532154
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 27007,
+                    "encode_ns": 766738,
+                    "decode_ns": 73228,
+                    "total_ns": 866973
+                  },
+                  {
+                    "setup_ns": 12745,
+                    "encode_ns": 583617,
+                    "decode_ns": 77608,
+                    "total_ns": 673970
+                  },
+                  {
+                    "setup_ns": 18137,
+                    "encode_ns": 607434,
+                    "decode_ns": 56055,
+                    "total_ns": 681626
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "waveform",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 63,
+              "packet_sha256": "9b992eac5f39c300c9c61b8ae10e629ff1cfec201a16e45f9b3fe8cb7e44eda3",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 2107.7851990966515,
+                "max_abs_error_adc_units": 9704.0,
+                "snr_db": 0.0
+              },
+              "total_median_ns": {
+                "python": 16474018,
+                "rust": 761788
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 6667,
+                    "encode_ns": 18195620,
+                    "decode_ns": 162019,
+                    "total_ns": 18364306
+                  },
+                  {
+                    "setup_ns": 4548,
+                    "encode_ns": 12768634,
+                    "decode_ns": 153844,
+                    "total_ns": 12927026
+                  },
+                  {
+                    "setup_ns": 6155,
+                    "encode_ns": 16323357,
+                    "decode_ns": 144506,
+                    "total_ns": 16474018
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 14539,
+                    "encode_ns": 635990,
+                    "decode_ns": 115215,
+                    "total_ns": 765744
+                  },
+                  {
+                    "setup_ns": 10798,
+                    "encode_ns": 608751,
+                    "decode_ns": 103943,
+                    "total_ns": 723492
+                  },
+                  {
+                    "setup_ns": 18357,
+                    "encode_ns": 630891,
+                    "decode_ns": 112540,
+                    "total_ns": 761788
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "full",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 3264,
+              "packet_sha256": "08d27f7b694633d9f9dffdee6e62c759fc8034ea75fd99f008f1cb387e5dfe39",
+              "quality": {
+                "detected_events": 0,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 333.17548950094357,
+                "max_abs_error_adc_units": 4275.8505859375,
+                "snr_db": 16.023066122116344
+              },
+              "total_median_ns": {
+                "python": 69995808,
+                "rust": 1998030
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 9423,
+                    "encode_ns": 102526097,
+                    "decode_ns": 12326150,
+                    "total_ns": 114861670
+                  },
+                  {
+                    "setup_ns": 7423,
+                    "encode_ns": 52678126,
+                    "decode_ns": 12103712,
+                    "total_ns": 64789261
+                  },
+                  {
+                    "setup_ns": 11410,
+                    "encode_ns": 59091351,
+                    "decode_ns": 10893047,
+                    "total_ns": 69995808
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 24678,
+                    "encode_ns": 1628186,
+                    "decode_ns": 380422,
+                    "total_ns": 2033286
+                  },
+                  {
+                    "setup_ns": 15898,
+                    "encode_ns": 1546787,
+                    "decode_ns": 372601,
+                    "total_ns": 1935286
+                  },
+                  {
+                    "setup_ns": 23242,
+                    "encode_ns": 1575909,
+                    "decode_ns": 398879,
+                    "total_ns": 1998030
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 53481,
+              "packet_sha256": "99a32e1e1de237052bda5accf6a1d94fadb3ef6624a1348ad8d3dc3e4747ce52",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 1802340532,
+                "rust": 8755711
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 24071,
+                    "encode_ns": 928595355,
+                    "decode_ns": 876657260,
+                    "total_ns": 1805276686
+                  },
+                  {
+                    "setup_ns": 12272,
+                    "encode_ns": 930918737,
+                    "decode_ns": 871409523,
+                    "total_ns": 1802340532
+                  },
+                  {
+                    "setup_ns": 13881,
+                    "encode_ns": 902291295,
+                    "decode_ns": 881094282,
+                    "total_ns": 1783399458
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 33045,
+                    "encode_ns": 5337060,
+                    "decode_ns": 4015562,
+                    "total_ns": 9385667
+                  },
+                  {
+                    "setup_ns": 25677,
+                    "encode_ns": 4703676,
+                    "decode_ns": 4026358,
+                    "total_ns": 8755711
+                  },
+                  {
+                    "setup_ns": 27842,
+                    "encode_ns": 4311519,
+                    "decode_ns": 3777429,
+                    "total_ns": 8116790
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless_rice",
+              "rows": 98689,
+              "channels": 1,
+              "packet_bytes": 56453,
+              "packet_sha256": "53d946c51bfe344006315f7633f3d4eae1ecfe8ff88b4d55bf55af9627d1b359",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 93599100,
+                "rust": 13673718
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 14767,
+                    "encode_ns": 86498184,
+                    "decode_ns": 6602824,
+                    "total_ns": 93115775
+                  },
+                  {
+                    "setup_ns": 17347,
+                    "encode_ns": 85818434,
+                    "decode_ns": 7763319,
+                    "total_ns": 93599100
+                  },
+                  {
+                    "setup_ns": 12289,
+                    "encode_ns": 86876794,
+                    "decode_ns": 7075432,
+                    "total_ns": 93964515
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 24689,
+                    "encode_ns": 11661697,
+                    "decode_ns": 1987332,
+                    "total_ns": 13673718
+                  },
+                  {
+                    "setup_ns": 22019,
+                    "encode_ns": 11555221,
+                    "decode_ns": 1948386,
+                    "total_ns": 13525626
+                  },
+                  {
+                    "setup_ns": 26896,
+                    "encode_ns": 12949371,
+                    "decode_ns": 2241559,
+                    "total_ns": 15217826
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "recording": "simultaneous EEG",
+          "filename": "S001R01.edf",
+          "input_sha256": "4743b736131a7e147c150e8b37711029b6cda5e356c4b3e8261a03cdcaaf8b0c",
+          "input_bytes": 1249280,
+          "sample_rate_hz": 160,
+          "results": [
+            {
+              "mode": "spike",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 347,
+              "packet_sha256": "dd30d9bc9751f602166baad6acc86c13a077828512a2e8d9f2f59d9beb4a7832",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0
+              },
+              "total_median_ns": {
+                "python": 120434182,
+                "rust": 7963051
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 19466,
+                    "encode_ns": 157587059,
+                    "decode_ns": 744559,
+                    "total_ns": 158351084
+                  },
+                  {
+                    "setup_ns": 16216,
+                    "encode_ns": 119976884,
+                    "decode_ns": 441082,
+                    "total_ns": 120434182
+                  },
+                  {
+                    "setup_ns": 7722,
+                    "encode_ns": 109870504,
+                    "decode_ns": 446373,
+                    "total_ns": 110324599
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 33053,
+                    "encode_ns": 7528076,
+                    "decode_ns": 401922,
+                    "total_ns": 7963051
+                  },
+                  {
+                    "setup_ns": 29880,
+                    "encode_ns": 7578245,
+                    "decode_ns": 409976,
+                    "total_ns": 8018101
+                  },
+                  {
+                    "setup_ns": 22164,
+                    "encode_ns": 5764887,
+                    "decode_ns": 283339,
+                    "total_ns": 6070390
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "waveform",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 3711,
+              "packet_sha256": "8ab3243f062fa64c60e8fef174c7325cc1a23827baba937d19ca9e2fe04f2144",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 54.18049722969724,
+                "max_abs_error_adc_units": 597.0,
+                "snr_db": 0.697830738745654
+              },
+              "total_median_ns": {
+                "python": 117644898,
+                "rust": 6752914
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 12326,
+                    "encode_ns": 124793736,
+                    "decode_ns": 2526497,
+                    "total_ns": 127332559
+                  },
+                  {
+                    "setup_ns": 11151,
+                    "encode_ns": 111721309,
+                    "decode_ns": 2335508,
+                    "total_ns": 114067968
+                  },
+                  {
+                    "setup_ns": 8099,
+                    "encode_ns": 114927677,
+                    "decode_ns": 2709122,
+                    "total_ns": 117644898
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 27192,
+                    "encode_ns": 5778657,
+                    "decode_ns": 947065,
+                    "total_ns": 6752914
+                  },
+                  {
+                    "setup_ns": 22138,
+                    "encode_ns": 5758804,
+                    "decode_ns": 919293,
+                    "total_ns": 6700235
+                  },
+                  {
+                    "setup_ns": 24450,
+                    "encode_ns": 5985772,
+                    "decode_ns": 1108040,
+                    "total_ns": 7118262
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "full",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 14812,
+              "packet_sha256": "b1debb98c812c89c80f885461e6cc76471b36e5b9a298ccd17829f29337cbfda",
+              "quality": {
+                "detected_events": 167,
+                "event_precision": 1.0,
+                "event_recall": 1.0,
+                "rmse_adc_units": 36.33608935335077,
+                "max_abs_error_adc_units": 360.76153564453125,
+                "snr_db": 4.1679267690752955
+              },
+              "total_median_ns": {
+                "python": 162721151,
+                "rust": 24938139
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 12267,
+                    "encode_ns": 157739725,
+                    "decode_ns": 4969159,
+                    "total_ns": 162721151
+                  },
+                  {
+                    "setup_ns": 12801,
+                    "encode_ns": 138750529,
+                    "decode_ns": 4511381,
+                    "total_ns": 143274711
+                  },
+                  {
+                    "setup_ns": 11836,
+                    "encode_ns": 164502088,
+                    "decode_ns": 4471695,
+                    "total_ns": 168985619
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 25150,
+                    "encode_ns": 22511437,
+                    "decode_ns": 1831818,
+                    "total_ns": 24368405
+                  },
+                  {
+                    "setup_ns": 42567,
+                    "encode_ns": 27082338,
+                    "decode_ns": 1285473,
+                    "total_ns": 28410378
+                  },
+                  {
+                    "setup_ns": 25274,
+                    "encode_ns": 23444089,
+                    "decode_ns": 1468776,
+                    "total_ns": 24938139
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 476169,
+              "packet_sha256": "5f95576d471ad36de1e5f8f23d433226727e98fee82a59169592403d4d05a4e9",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 10996577160,
+                "rust": 47258893
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 12129,
+                    "encode_ns": 6037229604,
+                    "decode_ns": 5592303578,
+                    "total_ns": 11629545311
+                  },
+                  {
+                    "setup_ns": 17358,
+                    "encode_ns": 5579219626,
+                    "decode_ns": 5275696060,
+                    "total_ns": 10854933044
+                  },
+                  {
+                    "setup_ns": 16222,
+                    "encode_ns": 5544033628,
+                    "decode_ns": 5452527310,
+                    "total_ns": 10996577160
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 30166,
+                    "encode_ns": 25910686,
+                    "decode_ns": 21153735,
+                    "total_ns": 47094587
+                  },
+                  {
+                    "setup_ns": 28515,
+                    "encode_ns": 26520337,
+                    "decode_ns": 20710041,
+                    "total_ns": 47258893
+                  },
+                  {
+                    "setup_ns": 30459,
+                    "encode_ns": 29236832,
+                    "decode_ns": 22084759,
+                    "total_ns": 51352050
+                  }
+                ]
+              }
+            },
+            {
+              "mode": "lossless_rice",
+              "rows": 9760,
+              "channels": 64,
+              "packet_bytes": 489725,
+              "packet_sha256": "9cf650da223b0cd5846d78387874f068fa0fd333c50842f841b00285586d3391",
+              "quality": {
+                "detected_events": null,
+                "event_precision": null,
+                "event_recall": null,
+                "rmse_adc_units": 0.0,
+                "max_abs_error_adc_units": 0.0,
+                "snr_db": null
+              },
+              "total_median_ns": {
+                "python": 355917237,
+                "rust": 85997710
+              },
+              "runs": {
+                "python": [
+                  {
+                    "setup_ns": 13199,
+                    "encode_ns": 399927476,
+                    "decode_ns": 31520020,
+                    "total_ns": 431460695
+                  },
+                  {
+                    "setup_ns": 21676,
+                    "encode_ns": 298929486,
+                    "decode_ns": 36696726,
+                    "total_ns": 335647888
+                  },
+                  {
+                    "setup_ns": 19687,
+                    "encode_ns": 324500184,
+                    "decode_ns": 31397366,
+                    "total_ns": 355917237
+                  }
+                ],
+                "rust": [
+                  {
+                    "setup_ns": 28111,
+                    "encode_ns": 71888702,
+                    "decode_ns": 13407979,
+                    "total_ns": 85324792
+                  },
+                  {
+                    "setup_ns": 37940,
+                    "encode_ns": 72702903,
+                    "decode_ns": 13256867,
+                    "total_ns": 85997710
+                  },
+                  {
+                    "setup_ns": 26030,
+                    "encode_ns": 72571419,
+                    "decode_ns": 13597879,
+                    "total_ns": 86195328
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "raw_receipt_sha256": "7ab40733f87007caae0bd2f5c63bc262009ef704ff375c62d51bf69f6b4ca984",
+      "native_wheel_sha256": "f421fd1332ceaf542d241b83672678bd7461292352575923d3723e620363e31d",
+      "python_wheel_sha256": "82f92974e52a323ca5baeeb787570653dcb94c9ba7735a0dc669fa6d05bac9e5",
+      "scheme": "zstd + db4"
+    }
+  ]
+}
