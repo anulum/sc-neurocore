@@ -39,6 +39,38 @@ from tools.security_scan.python_dependency_profiles import (
 REPO = Path(__file__).resolve().parents[2]
 
 
+_WORKSPACE_PREFIXES = ("$GITHUB_WORKSPACE/", "${GITHUB_WORKSPACE}/")
+
+
+def _workflow_profile(argument: str) -> str:
+    """Return a ``-r`` argument as a repository-relative path.
+
+    A step that runs outside the checkout names the profile under
+    ``$GITHUB_WORKSPACE``, the checkout root. Any other shell expansion would
+    hide which file is installed, so it is refused.
+    """
+    for prefix in _WORKSPACE_PREFIXES:
+        if argument.startswith(prefix):
+            argument = argument[len(prefix) :]
+            break
+    if "$" in argument:
+        raise ValueError(f"unresolved shell expansion in a hashlocked profile: {argument}")
+    return argument
+
+
+def test_workflow_profile_resolves_the_checkout_root_and_refuses_other_expansions() -> None:
+    """Both spellings of the checkout root resolve; any other variable is refused."""
+    assert _workflow_profile("requirements/wheels-test.txt") == "requirements/wheels-test.txt"
+    assert _workflow_profile("$GITHUB_WORKSPACE/requirements/wheels-test.txt") == (
+        "requirements/wheels-test.txt"
+    )
+    assert _workflow_profile("${GITHUB_WORKSPACE}/requirements/wheels-test.txt") == (
+        "requirements/wheels-test.txt"
+    )
+    with pytest.raises(ValueError, match="unresolved shell expansion"):
+        _workflow_profile("$RUNNER_TEMP/requirements/wheels-test.txt")
+
+
 def _wheel_consumer_matrix() -> list[tuple[str, str]]:
     """Read the actual hosted consumer matrix and its excluded combinations."""
     workflow = yaml.safe_load((REPO / ".github/workflows/v3-wheels.yml").read_text())
@@ -73,7 +105,7 @@ def test_hosted_wheel_profile_supplies_compatible_runtime_and_build_dependencies
         arguments = shlex.split(command)
         assert "--require-hashes" in arguments
         profiles.extend(
-            arguments[index + 1]
+            _workflow_profile(arguments[index + 1])
             for index, argument in enumerate(arguments[:-1])
             if argument == "-r"
         )
