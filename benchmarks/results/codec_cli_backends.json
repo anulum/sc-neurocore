@@ -1,0 +1,3655 @@
+{
+  "schema": 1,
+  "recorded_at_utc": "2026-11-20T13:33:59.520739+00:00",
+  "host": {
+    "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+    "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+    "numpy": "2.5.4",
+    "logical_cpus": 12,
+    "affinity": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "host_load_averages": [
+      3.29248046875,
+      4.5068359375,
+      6.46923828125
+    ],
+    "thread_environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "RAYON_NUM_THREADS": "4"
+    }
+  },
+  "base_wheel": {
+    "name": "sc_neurocore-4.2.0-py3-none-any.whl",
+    "sha256": "23cbeb0b980348d9da7a3b2a744b38b4cd06a9be8b56d8a897f0a9b28237b975"
+  },
+  "engine_wheel": {
+    "name": "sc_neurocore_engine-4.2.0-cp312-cp312-linux_x86_64.whl",
+    "sha256": "d4f06e960e497c9a6777b992aaa1a231598c9bf89a898c8cc692b568abe2d83c"
+  },
+  "installed_sha256": {
+    "python_cli": "4b6a211c525ee75025e9d50c203c88c91ddb3b9a35eb8eb19971992e549969d8",
+    "native_extension": "2bd0e14f96d5853cc2078e0acb51d7515f0ad21d1b5dbfc59ae92b517861b039"
+  },
+  "source_hashes": {
+    "Cargo.lock": "3b39bb1fc7094818c8b888d5ecd41995175973e7baf65006edafab86ba722ac1",
+    "Cargo.toml": "7d28e2c778189f4e90d13c7665199e08f630dbff00f79f3dad9fe7b4f3266827",
+    "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
+    "bridge/sc_neurocore_engine/__init__.py": "6e8cf4262dbb03c44a8826d3c6bad118efab5a1fc134a31ea45ec129051e5a88",
+    "engine/Cargo.toml": "ce9de85225c2d0024fee419d72e6098c7515588ba9d0e495c61226f350b0f05e",
+    "engine/src/address_events.rs": "1b9f27e8c643d3bf911bf40a67460c9f7421ab4433ed56121b3572240eb7fc95",
+    "engine/src/address_events/bindings.rs": "cf3be9589de974893d0d4768396324fce153518c8b3360d796381e5f34712e3f",
+    "engine/src/analysis/waveform.rs": "67c740e38cca69a2f22ee69133905f0e38107ad90ca904136a54266e0d829fc0",
+    "engine/src/bindings/delta.rs": "7f91a953728c110b3d2d3d800c8611d41fafb2a30c318be8682f2506dda54eab",
+    "engine/src/bindings/isi.rs": "4fe2705cdf8e8e04d75bee0b1a68bfd1e6a853ae56dad225013357d07b0632ab",
+    "engine/src/bindings/predictive_coding.rs": "8c58fd7b9c71f372463b2d9838de7b4e70684d5d950b4e632e3d581a06b85ae9",
+    "engine/src/bindings/spike_events.rs": "20556ff17db03d54da1827b3bddf4c9db64ac9dc1986c4e1c8bf246e6e72d394",
+    "engine/src/bindings/waveform_codec.rs": "aa62a89518191090db0217905e7f74921c208d319ba740fd407844e4742c4118",
+    "engine/src/bindings/waveform_container.rs": "6012a72bef066fe0fb06f13ab5849308e097c13b77d0a41bcdb00dc088a489e5",
+    "engine/src/bindings/waveform_stream.rs": "c09b1e61903fc36e807d17c92ba0106dcfe21190bb123f5d9ef7e8ed330c919f",
+    "engine/src/codecs/delta.rs": "2b5b59d6fdc7850d516fed61764da5322a1c6a3cbb91663cffa9d4876987a48b",
+    "engine/src/codecs/isi.rs": "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8",
+    "engine/src/codecs/isi/framing.rs": "de9e8fd70ae92685f2a2686ee1fdd45a4ccf53a2a6b9b8a0f4ee8e95b0a72e4f",
+    "engine/src/codecs/isi/huffman.rs": "3c5d3e4efe70dd1da7196e1f1cd36969e23851aab0f8bc6625a48bf52e1819f4",
+    "engine/src/codecs/mod.rs": "5598ca16105888646b4d87bec727053fccc14f51ed536da0ce91226e3d3723bc",
+    "engine/src/codecs/waveform_container/background.rs": "6d606ce17f5a4467b04ccae6ac67441e96d24f979d0a875bf642578ad9265e49",
+    "engine/src/codecs/waveform_container/compression.rs": "e2edc5c6577330ef94472a5e668a1e4719d6442e859c56dacfdfff5aa196fec1",
+    "engine/src/codecs/waveform_container/mod.rs": "d52fd215a551f322929af19ff95f715dc9442d1a6b79d03615f43a940367c5ae",
+    "engine/src/codecs/waveform_container/snippets.rs": "c61524657a8e7dbb72c7f4b8d93f22acafca2214b06d7c3614831deb1cc9b821",
+    "engine/src/codecs/waveform_container/wavelet.rs": "315c82803df22ea5c48694b15277367f0156d656774100c3e3003721febe2dae",
+    "engine/src/codecs/waveform_container/wire.rs": "359b061ce5043693d7528f22cb1c885e6228af949ab9467b92c9eca1f433dbe5",
+    "engine/src/predictive_coding.rs": "a7ea4dd3184dd239098e0a002812c55b54fc8bd85e9c511390e76ce30baa84d9",
+    "engine/src/predictive_coding/context.rs": "2e9b5d60790b5a3e1291e6c0fd80452aa502d0eca6101319ae8755b58a4abca1",
+    "engine/src/predictive_coding/world_model.rs": "2b3d2a255fc521c33978bb6d7aeb830c0eb9f6faca57a026624db20c71a05cc4",
+    "engine/src/raster_stream.rs": "5ba893340bcafa8c6e8a493dc6a3f1cc0257b3d0eb0ad309ab04900b3d6c6b02",
+    "engine/src/raster_stream/bindings.rs": "d44b0b017b46930f73b5f42c84d606b36a76197895e9afa252b1b1565ddeb1f9",
+    "engine/src/raster_stream/frame.rs": "1f8a502b8c7eeec821d82fb4f9664d871bdcfd76b3041a2d382b8d393e91d842",
+    "engine/src/spike_events.rs": "cc2987dd6d84c1277f68c5dadf5abb56c01285cd943d44073204ee524d7a2891",
+    "engine/src/waveform_codec.rs": "5f2e9da2fc4c17c2bf7ba45fadc50742c3ef831fbd46c1ce4ccb1bac4f9257d0",
+    "engine/src/waveform_stream.rs": "51180d3ad77eec13f879a63454ca309afa30e9336522034fff011f4d342c84f0",
+    "engine/src/waveform_stream_gpu.rs": "49f1bc2f0a83ec5f48215d051dc64f8b5a6b26bc16a81f21b8bf198dbbe7444d",
+    "pyproject.toml": "d552ab7e8ddd47fc8f2cdbbf7d2073b7e1ee528ce119778ef27c767d0655100b",
+    "src/sc_neurocore/cli/codec/__init__.py": "7bcdda31f2349b56df5c4e50795aa62eea8378a199fcb0e1fb6ef1b404c601e8",
+    "src/sc_neurocore/cli/codec/file.py": "42b64c8b908114decb04c4beeaef9695985cd1bd27e94a705bff60f17ccd8c43",
+    "src/sc_neurocore/cli/codec/routes.py": "2aefee4b99f456742692891b9832dcfefbaec1e3c3a2ec519f6124ba2a765b80",
+    "src/sc_neurocore/cli/codec/samples.py": "d11ac669a3a58cf7cc1f86957350b7775fa44876ef477abbeb56b7f73240f64c",
+    "src/sc_neurocore/cli/commands/codec.py": "4b6a211c525ee75025e9d50c203c88c91ddb3b9a35eb8eb19971992e549969d8",
+    "src/sc_neurocore/cli/parser.py": "a6ded75d050b076d599453418d634895ac65d48a35f629bb1263665e80d4e285",
+    "src/sc_neurocore/spike_codec/__init__.py": "89f2003dbad556a0eec73a6dab0181b7408d42add72c94f643a9d01fda3f1adb",
+    "src/sc_neurocore/spike_codec/_catalogue_data.py": "d44b8512dbf756779315598aae96f90a894c48ff45356d605538daea662ec9a7",
+    "src/sc_neurocore/spike_codec/_predictive_kernels.py": "00a4197bbe14a64588cf9deb05dbb25ca77b0c05e0ab02914e471139e10863e8",
+    "src/sc_neurocore/spike_codec/_waveform_container.py": "54353809ed68a98826994fc70edb9527f18cd3f1c6017dc767d16e905e6ad83a",
+    "src/sc_neurocore/spike_codec/_world_model.py": "2230d0d66eebad77cfd41ae17de80e7e21fce3f0a933e78de98c8fc022ff4f75",
+    "src/sc_neurocore/spike_codec/aer_codec.py": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+    "src/sc_neurocore/spike_codec/aer_packet.py": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a",
+    "src/sc_neurocore/spike_codec/catalogue.py": "d36d73cd20a9a82e6b017656b20a2b161099148983ba7bd1c2e99d62dc0f27c8",
+    "src/sc_neurocore/spike_codec/catalogue_types.py": "4b1c48f4b524a1519bb4f8da6a8241afa85ff7ff25e70e18136f91193d9a65c1",
+    "src/sc_neurocore/spike_codec/codec.py": "07526cbfb36389419e88cf4000b78d07902f2645c46b03e96fe4bed4f5246f83",
+    "src/sc_neurocore/spike_codec/delta_codec.py": "98b3248d2cb787856d659f98658e834d7463a8b9e73712655223891ea8c37b5e",
+    "src/sc_neurocore/spike_codec/entropy.py": "712cf8db45915237a616c905b17a17bbe6c584af3b9fb435594ed9f036bae8ba",
+    "src/sc_neurocore/spike_codec/isi_packet.py": "ec19122dbb327288279f0d99d70bc5b3db0c5d38f03760dac217853346e73b6a",
+    "src/sc_neurocore/spike_codec/predictive_codec.py": "a53568851c9b7b36c94429661f2d3ab0dd3f85f680f6f206ebbce76b33242d95",
+    "src/sc_neurocore/spike_codec/raster_frame.py": "3dfdfc69692eea6c7859909266df7a8e3d8a4b718fa991c85b7419ee1b3905f0",
+    "src/sc_neurocore/spike_codec/registry.py": "84aab7e28bc8eed2496ede664a05c218f9a0695231419ea14305a17854472a8c",
+    "src/sc_neurocore/spike_codec/spike_events.py": "8dcf83f38e3a9fe08246ec81ddaccc0221ccc463cf9c3286824e5268b47cbc98",
+    "src/sc_neurocore/spike_codec/streaming_codec.py": "63a90368f3d5af907f2074df98f6b9512b9d4d6c86cefc0e36708f1b0bb1048d",
+    "src/sc_neurocore/spike_codec/waveform_codec.py": "5adf74429f3555f01edf5583537a293a88b379e72a9912d426279deadead1c8b",
+    "src/sc_neurocore/spike_codec/waveform_stream.py": "00acf569dc29b937d66dd94d5aa60716adc7a00449ff750fdcc34190cf574b0b",
+    "tools/installed_codec_acceptance.py": "1b86f9c2bb26161833e0d9e3a8d964ecbf62ea2d9ba2c47b11257e098147450a",
+    "tools/installed_codec_cases.py": "7d960ba25ea76a74841b29ec0b9230d93395aae832c9e94db396a03b68db4588"
+  },
+  "repetitions": 5,
+  "variants": [
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 201806,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 167263,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 22526,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 136032,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 5187,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 19210,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "python",
+          "decode_ns": 288584,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 151940,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "python",
+          "decode_ns": 244138,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 121776,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 5312,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 18753,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4686,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 16571,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "python",
+          "decode_ns": 170824,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 95292,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "python",
+          "decode_ns": 166910,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 90856,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4588,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 17635,
+          "file": {
+            "channels": 3,
+            "codec": "aer",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e0e585336c9699cb3f5c371793d2b33289c4e7e333bbddb0191e82ce7f97d36",
+          "payload_bytes": 563
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 249882,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 317169,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 41072,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 183052,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 26009,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 43601,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 235069,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 191376,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 221590,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 172880,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 25771,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 47704,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 24948,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 40278,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 219130,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 168902,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 243980,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 182377,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 24942,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 40676,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 262253,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 382008,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 44517,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 194309,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 27331,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 46314,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 253487,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 213839,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 232115,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 184187,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 30615,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 47395,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 37889,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 40716,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 223163,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 172141,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "python",
+          "decode_ns": 231764,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 172821,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 139721,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 43180,
+          "file": {
+            "channels": 3,
+            "codec": "delta",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "aad75e6b17c9873a7a86c29374bd013bbff16c4134f57dc5f9b6942a7bd47bd1",
+          "payload_bytes": 277
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 115612,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 176388,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 25835,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 172154,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 10882,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 29337,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 94148,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 98552,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 106635,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 85279,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 10121,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 27459,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 9718,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 25195,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 88852,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 86103,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 112073,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 81877,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 10166,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 27435,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 123858,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 194900,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 26477,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 170351,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 11080,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 30207,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 99625,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 107642,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 101599,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 89812,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 11089,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 28149,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 10796,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 26639,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 90468,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 89112,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "python",
+          "decode_ns": 93329,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 92222,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "none",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 10489,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 27508,
+          "file": {
+            "channels": 3,
+            "codec": "isi",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossy"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "a47ebc22796ee7076a512c9c9e6d2b531f108450c8e7b314484777b655ab94e0",
+          "payload_bytes": 121
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 1289713729,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 1346259352,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 7790860,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 10601417,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 7138333,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 9585988,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1280718240,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 1321504281,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1215585187,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 1293818305,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 7706982,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 10464081,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 8705860,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 11633496,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1198369881,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 1287464640,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1211567251,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 1274863586,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 9255627,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 13047451,
+          "file": {
+            "channels": 1,
+            "codec": "lossless_stream",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "63e30bec801c3106046847d1062881c26726908e8e360125019034aea190cd49",
+          "payload_bytes": 129666
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 3013673,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 3742502,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "none",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 33789,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 247303,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 25049,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 72580,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3137752,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 3574280,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "none",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3022878,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 4092051,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "none",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 27365,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 99408,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 24146,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 66376,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3035959,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 3440278,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "none",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3093172,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 3592624,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "none",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 26141,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 86579,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "ema"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "f768717e628e48556a323ad77d0b9841e1ec0f7b94ad8fe86425c696477c6a6b",
+          "payload_bytes": 141
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 4761080,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 5249298,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "none",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 31553,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 249515,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 23532,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 72077,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "python",
+          "decode_ns": 4679903,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 5208727,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "none",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "python",
+          "decode_ns": 4873867,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 5203627,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "none",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 26817,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 102570,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 22837,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 68453,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "python",
+          "decode_ns": 4704016,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 5180657,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "none",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "python",
+          "decode_ns": 4661481,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 5122860,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "none",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 26367,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 103749,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lfsr"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "205896532dd25308595a20196c62d13c9abe3fbed01875b209a13a4e62a2e7ef",
+          "payload_bytes": 129
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 1829155,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 2102872,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "none",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 65020,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 275233,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 78406,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 111252,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "python",
+          "decode_ns": 2057532,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 2033116,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "none",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1751314,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 2083932,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "none",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 82549,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 144967,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 58132,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 113691,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1998631,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 2027233,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "none",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1900355,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 2016709,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "none",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 62492,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 128916,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "context"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "294dda000e5dadb0c04175714cca3aa874b526ce610104584276884af26b919e",
+          "payload_bytes": 126
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 16199353,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 17312879,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "none",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 13927497,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 13386018,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 13202424,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 14416384,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "python",
+          "decode_ns": 17252014,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 17671702,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "none",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "python",
+          "decode_ns": 17551529,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 17195554,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "none",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 12877341,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 13810205,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 13917608,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 14168301,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "python",
+          "decode_ns": 16331838,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 18994733,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "none",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "python",
+          "decode_ns": 16542204,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 17898473,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "none",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 12121912,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 13457654,
+          "file": {
+            "channels": 3,
+            "codec": "predictive",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "world_model"
+          },
+          "native_scope": "predictor_kernels",
+          "packet_sha256": "e294e2ca5babfffb0c8c6b7a5041758ce5cf9c3925c27b75ff63f7d923315e9b",
+          "payload_bytes": 136
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 3128642,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "python",
+          "encode_ns": 140814311,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 137623,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "rust",
+          "encode_ns": 1391284,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 117558,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "rust",
+          "encode_ns": 1103876,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "python",
+          "decode_ns": 2636798,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "python",
+          "encode_ns": 143233851,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "python",
+          "decode_ns": 2549011,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "python",
+          "encode_ns": 135614681,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 137104,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "rust",
+          "encode_ns": 1134179,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 113851,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "rust",
+          "encode_ns": 1093506,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3304833,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "python",
+          "encode_ns": 151175690,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "python",
+          "decode_ns": 4517452,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "python",
+          "encode_ns": 183216918,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 129172,
+          "decoded_sha256": "bde2111f06493a34cf2874e7ce4c8d8ee17d8a9bee18c3f76c5fc99d912dab56",
+          "decoder_backend": "rust",
+          "encode_ns": 1174304,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "bin"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "2b752b22e0c14683e33d23d7b5a2d99c844d51dfd59b998a12a166e594e5949d",
+          "payload_bytes": 488
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 5865560,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "python",
+          "encode_ns": 188544841,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 267874,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "rust",
+          "encode_ns": 2219363,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 147756,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "rust",
+          "encode_ns": 1190525,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3296593,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "python",
+          "encode_ns": 150541918,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "python",
+          "decode_ns": 3028970,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "python",
+          "encode_ns": 142950931,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 144462,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "rust",
+          "encode_ns": 1089837,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 135896,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "rust",
+          "encode_ns": 1077101,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "python",
+          "decode_ns": 2924403,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "python",
+          "encode_ns": 139175630,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "python",
+          "decode_ns": 2576621,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "python",
+          "encode_ns": 134788357,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "none",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 141994,
+          "decoded_sha256": "cccdfb693a8ef517b87d66a7e3793131feffd72c06687a3cfc74420e659842c1",
+          "decoder_backend": "rust",
+          "encode_ns": 1081630,
+          "file": {
+            "channels": 1,
+            "codec": "spike_events",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "sample"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "3e8a9ce98812ea5f7c915511a250f5d3b905727a7358ec1e4732e45d15bf01ee",
+          "payload_bytes": 495
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "0cca93077194e3cea8984a9e872eefdbe1727377bdc8166ed94cca5a71fa9482",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 1341013,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 453765,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 23442,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 157289,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 7787,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 31035,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1231331,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 368725,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1362843,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 360673,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 8021,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 29157,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 6844,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 27836,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1241302,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 353895,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1229496,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "python",
+          "encode_ns": 355926,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 6741,
+          "decoded_sha256": "da62d7798160967fd76ea84db2f246b034a0741497f3cf9ffa6e011388e4b507",
+          "decoder_backend": "rust",
+          "encode_ns": 28294,
+          "file": {
+            "channels": 3,
+            "codec": "streaming",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 1027,
+            "sample_rate_hz": null,
+            "variant": "lossless"
+          },
+          "native_scope": "packet_coder",
+          "packet_sha256": "be1b3cd6909dce2ddd07358ca0831f473426e4ceea22ef8a19a2f7a259b39f0f",
+          "payload_bytes": 678
+        }
+      ],
+      "recording": "lif-raster.npy"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 11960476,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "python",
+          "encode_ns": 54322871,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "none",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 878985,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "rust",
+          "encode_ns": 3983313,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "container",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 723168,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "rust",
+          "encode_ns": 3164956,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "container",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "python",
+          "decode_ns": 12892287,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "python",
+          "encode_ns": 55846327,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "none",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "python",
+          "decode_ns": 12568380,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "python",
+          "encode_ns": 55452380,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "none",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 702679,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "rust",
+          "encode_ns": 3142920,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "container",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 690443,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "rust",
+          "encode_ns": 3008993,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "container",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "python",
+          "decode_ns": 12701238,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "python",
+          "encode_ns": 55551360,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "none",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "python",
+          "decode_ns": 11773237,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "python",
+          "encode_ns": 52908192,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "none",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 688496,
+          "decoded_sha256": "ba46dff3588face8a41aed0ebbd8437723705cc3264545f028167043ee34e1a1",
+          "decoder_backend": "rust",
+          "encode_ns": 3000906,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "full"
+          },
+          "native_scope": "container",
+          "packet_sha256": "842b7f345f4aaa3c6588a046c61c9e04e612f3fe19400c8e54362b0054a18adb",
+          "payload_bytes": 6957
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 1166208,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "python",
+          "encode_ns": 14350248,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "none",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 367325,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "rust",
+          "encode_ns": 1928171,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "container",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 315700,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "rust",
+          "encode_ns": 1658564,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "container",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1072437,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "python",
+          "encode_ns": 13877738,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "none",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1144693,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "python",
+          "encode_ns": 14860941,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "none",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 328154,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "rust",
+          "encode_ns": 1677258,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "container",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 293858,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "rust",
+          "encode_ns": 1619175,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "container",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1077117,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "python",
+          "encode_ns": 14094757,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "none",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "python",
+          "decode_ns": 1075421,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "python",
+          "encode_ns": 13860888,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "none",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 316728,
+          "decoded_sha256": "bacbe665bbf52fdd4b4a2eebe56c126c41435cbf2feea97b72c9e54200cca1aa",
+          "decoder_backend": "rust",
+          "encode_ns": 1682282,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "waveform"
+          },
+          "native_scope": "container",
+          "packet_sha256": "df24876ed15804cf9770e058028c721e8c56664581c1625c3940bc631810e49a",
+          "payload_bytes": 1575
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 620412,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "python",
+          "encode_ns": 13282052,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 196656,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "rust",
+          "encode_ns": 869345,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "container",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 183532,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "rust",
+          "encode_ns": 825464,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "container",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "python",
+          "decode_ns": 482347,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "python",
+          "encode_ns": 13510004,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "python",
+          "decode_ns": 565348,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "python",
+          "encode_ns": 13529927,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 197365,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "rust",
+          "encode_ns": 945198,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "container",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 172387,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "rust",
+          "encode_ns": 711853,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "container",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "python",
+          "decode_ns": 460106,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "python",
+          "encode_ns": 13719539,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "python",
+          "decode_ns": 466491,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "python",
+          "encode_ns": 14154883,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "none",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 179078,
+          "decoded_sha256": "2d15bb85f85224b55b6b18a2b17eb160f114f9c348adcc8e7c652717c635d96e",
+          "decoder_backend": "rust",
+          "encode_ns": 724253,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "spike"
+          },
+          "native_scope": "container",
+          "packet_sha256": "2e1ba316dcfc2764b79847f4072f13b9295c9f348718ad0e9b6a67a260d928ab",
+          "payload_bytes": 1125
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 830661974,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 883403621,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4542401,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 8040843,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "container",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4166354,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 6734845,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "container",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "python",
+          "decode_ns": 747297612,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 797117754,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "python",
+          "decode_ns": 890211668,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 950895975,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4718671,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 8011135,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "container",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 4599650,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 7526056,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "container",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "python",
+          "decode_ns": 760378490,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 822295462,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "python",
+          "decode_ns": 748610680,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 813486684,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "none",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 3940079,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 6364459,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless"
+          },
+          "native_scope": "container",
+          "packet_sha256": "96afa3a8ef277706832d696a1e20b1e3accc042a28a26624f6379d371f8918eb",
+          "payload_bytes": 56829
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    },
+    {
+      "input_sha256": "7468421e734040d09fd2a47a8220b08cde16c4ea5a44ce56ca5894a551c08643",
+      "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+      "runs": [
+        {
+          "backend": "python",
+          "decode_ns": 9221071,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 71375995,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "none",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 2188378,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 11404218,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "container",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 2151858,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 11431296,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "container",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "python",
+          "decode_ns": 8822203,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 66593612,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "none",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "python",
+          "decode_ns": 8670058,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 65757089,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "none",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 2114776,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 11022234,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "container",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 2059667,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 10740446,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "container",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "python",
+          "decode_ns": 8590268,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 64979001,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "none",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "python",
+          "decode_ns": 8543445,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "python",
+          "encode_ns": 63869432,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "none",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        },
+        {
+          "backend": "rust",
+          "decode_ns": 2097697,
+          "decoded_sha256": "e8b491db54e3cca0159a6b25541ffd98449714f2e34930f549551381bbb5c73f",
+          "decoder_backend": "rust",
+          "encode_ns": 10938380,
+          "file": {
+            "channels": 1,
+            "codec": "waveform",
+            "frame_rows": 4096,
+            "options": {},
+            "rows": 98689,
+            "sample_rate_hz": 19531,
+            "variant": "lossless_rice"
+          },
+          "native_scope": "container",
+          "packet_sha256": "4682c362c4467966e0b3df95dd0617b6e886aa7ad992f9876abacf3db9942d83",
+          "payload_bytes": 64337
+        }
+      ],
+      "recording": "0052503c-2849-4f41-ab51-db382103690c.wav"
+    }
+  ]
+}

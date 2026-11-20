@@ -35,6 +35,7 @@ def test_command_modules_have_one_registration_boundary() -> None:
     command_files = sorted(COMMAND_ROOT.glob("*.py"))
     assert {path.stem for path in command_files} == {
         "__init__",
+        "codec",
         "compile",
         "compile_ir",
         "dataset",

@@ -38,7 +38,7 @@ Modes and first steps:
             map-nir
   Hardware  deploy, collect-synthesis, resource-check, scnir, formal, hub-init
   Studio    studio and studio-* operator commands
-  Data      dataset manifest, dataset verify, dataset split
+  Data      dataset manifest, dataset verify, dataset split, codec
   Train     train (a Studio training job with its preregistered verdict)
   Maintain  benchmark, preflight
 
@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Use `sc-neurocore COMMAND --help` for command-specific options.",
     )
 
+    from .commands.codec import add_codec_commands
+
     add_info_command(subparsers)
     add_compile_commands(subparsers)
     add_compile_ir_command(subparsers)
@@ -87,6 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_hub_command(subparsers)
     add_studio_commands(subparsers)
     add_dataset_command(subparsers)
+    add_codec_commands(subparsers)
     add_train_command(subparsers)
     add_maintenance_commands(subparsers)
     return parser

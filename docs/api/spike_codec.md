@@ -12,6 +12,9 @@ The catalogue covers eight families and 18 variants for binary spike rasters,
 numeric electrode waveforms, stateful lossless streams and detected events
 with band power. Each family defines its own decoder contract.
 
+The [recording codec commands](../guides/spike_codec_cli.md) use these
+interfaces for file discovery, encoding, decoding, verification and timing.
+
 [Wire formats and compatibility](../reference/spike_codec_wire_formats.md)
 documents bytes, state and external metadata. The catalogue describes existing
 implementations; import availability does not certify performance, complete

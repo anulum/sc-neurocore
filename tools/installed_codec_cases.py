@@ -71,7 +71,7 @@ class RasterCodec(Protocol):
         ...
 
     def compress(self, spikes: Raster) -> tuple[bytes, CompressionResult]:
-        """Encode one raster."""
+        """Encode a time-major binary raster and report its compression statistics."""
         ...
 
     def decompress(self, data: bytes, T: int, N: int) -> Raster:

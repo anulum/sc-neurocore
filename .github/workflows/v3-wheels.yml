@@ -234,6 +234,40 @@ jobs:
             --base-wheel "$GITHUB_WORKSPACE"/source-wheel/*.whl \
             --output "$RUNNER_TEMP/codecs-python.json"
 
+          for reader in python "$consumer"; do
+            "$reader" -I -B - "$GITHUB_WORKSPACE" <<'PY'
+          """Exercise the actual wheel launcher and installed file CLI in both environments."""
+
+          import json
+          import subprocess
+          import sys
+          import sysconfig
+          from pathlib import Path
+
+          import pytest
+          import sc_neurocore
+
+          root = Path(sys.argv[1]).resolve()
+          package = Path(sc_neurocore.__file__).resolve()
+          assert package.is_relative_to(Path(sys.prefix).resolve())
+          assert not package.is_relative_to(root)
+          launcher = Path(sysconfig.get_path("scripts")) / (
+              "sc-neurocore.exe" if sys.platform == "win32" else "sc-neurocore"
+          )
+          discovery = subprocess.run(
+              [str(launcher), "codec", "discover"], capture_output=True, text=True, check=True
+          )
+          assert len(json.loads(discovery.stdout)["codecs"]) == 8
+          sys.path.insert(0, str(root))
+          tests = sorted((root / "tests").glob("test_cli_codec*.py"))
+          assert len(tests) == 4
+          raise SystemExit(pytest.main([
+              "-q", "-p", "no:cacheprovider", "-o", "pythonpath=",
+              "--confcutdir", str(root / "tests"), *(str(path) for path in tests)
+          ]))
+          PY
+          done
+
       - name: Upload installed codec evidence
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:

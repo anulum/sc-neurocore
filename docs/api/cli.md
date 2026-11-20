@@ -33,7 +33,7 @@ Model     info, compile, compile-nir, compile-ir, evidence-packet, hardware-path
           map-nir
 Hardware  deploy, collect-synthesis, resource-check, scnir, formal, hub-init
 Studio    studio and studio-* operator commands
-Data      dataset manifest, dataset verify, dataset split
+Data      dataset manifest, dataset verify, dataset split, codec
 Maintain  benchmark, preflight
 ```
 
@@ -379,6 +379,10 @@ requires a username, at least one role, and `--password-stdin`; passwords are
 never accepted as command-line arguments.
 
 ### Data mode
+
+`sc-neurocore codec` discovers and operates the installed codec catalogue.
+The [recording codec guide](../guides/spike_codec_cli.md) gives commands for
+NumPy arrays, PCM16 recordings and event CSV files.
 
 Record which event-dataset files a study used, check a directory against that
 record, and divide a published split so that no speaker or recording is on

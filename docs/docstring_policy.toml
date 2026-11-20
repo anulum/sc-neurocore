@@ -14,7 +14,43 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2270
+expected_file_count = 2279
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/codec.py"
+rationale = "Document parser registration for the installed recording commands."
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/__init__.py"
+rationale = "Name the file, acquisition, and backend responsibility for console codecs."
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/file.py"
+rationale = "Define bounded recording framing and atomic file publication."
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/samples.py"
+rationale = "Document bounded sample windows and portable decoded array output."
+
+[[file]]
+path = "src/sc_neurocore/cli/codec/routes.py"
+rationale = "Document runtime backend routing and decoded field contracts."
+
+[[file]]
+path = "tests/test_cli_codec.py"
+rationale = "Exercise installed command discovery, all variants, cross-decoding and timings."
+
+[[file]]
+path = "tests/test_cli_codec_file.py"
+rationale = "Verify corrupt recording refusal and safe publication through the console."
+
+[[file]]
+path = "tests/test_cli_codec_samples.py"
+rationale = "Verify original sample parity and geometry for PCM16, event and NumPy input."
+
+[[file]]
+path = "tests/test_cli_codec_routes.py"
+rationale = "Verify concrete codec option and state contracts through the console."
 
 [[file]]
 path = "tools/installed_codec_acceptance.py"

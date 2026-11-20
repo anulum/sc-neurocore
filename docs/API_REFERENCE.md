@@ -7806,6 +7806,79 @@ InterposerLink
 
 ---
 
+## Module `cli.codec.file`
+
+### Class `CodecFileHeader`
+Record the packet family, independent frame geometry and decoder options.
+
+- **__post_init__**()
+  - Reject dimensions outside the file reader's allocation bounds.
+- **frame_sizes**()
+  - Yield expected source row counts, including the final partial frame.
+
+### Function `read_codec_header(stream)`
+Read the bounded metadata and retain its exact bytes for verification.
+
+### Function `iter_codec_packets(stream, header, prefix)`
+Yield bounded frames and verify the file digest and end of input.
+
+### Function `write_codec_file(stream, header, packets)`
+Write framed packets and return the digest covering metadata and payload.
+
+### Function `atomic_codec_output(path, source, overwrite)`
+Stage a complete sibling file and publish atomically after successful work.
+
+---
+
+## Module `cli.codec.routes`
+
+### Class `FileEncoder`
+Selected encoder and callable for the next source window.
+
+
+### Class `FileDecoder`
+Selected decoder and callable for the next packet and its source rows.
+
+
+### Function `check_file_options(header)`
+Reject unsupported or incompatible settings before constructing any codec.
+
+### Function `make_file_encoder(header, backend)`
+Create an encoder that retains stream state only for stateful families.
+
+### Function `make_file_decoder(header, backend)`
+Create a file decoder and match decoded window dimensions to metadata.
+
+### Function `decoded_fields(header)`
+Describe all decoded fields using file geometries and canonical output dtypes.
+
+---
+
+## Module `cli.codec.samples`
+
+### Class `SampleInput`
+Shape, sample rate and forward reader of a numeric recording.
+
+
+### Class `OutputField`
+Name and array layout of a single decoded result.
+
+
+### Function `open_sample_input(path, sample_rate_hz, *, event_rows, event_channels)`
+Open numeric NPY, PCM16 WAV or sorted event CSV data as time rows.
+
+### Function `write_decoded_samples(path, fields, windows, *, archive)`
+Write the selected fields as a single NPY array or a bounded-memory NPZ archive.
+
+---
+
+## Module `cli.commands.codec`
+
+### Function `add_codec_commands(subparsers)`
+Register the installed recording codec commands and their file options.
+
+---
+
 ## Module `cli.commands.compile`
 
 ### Function `add_compile_commands(subparsers)`

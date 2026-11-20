@@ -61,9 +61,11 @@ sc-neurocore info
 sc-neurocore --help
 ```
 
-The CLI presents Model, Hardware, Studio, and Maintain workflows at the top
-level; use `sc-neurocore COMMAND --help` for command-specific options. The
-complete command guide is in [Command-Line Interface](docs/api/cli.md).
+The CLI groups model, hardware, Studio, data, training and maintenance
+commands. Use `sc-neurocore COMMAND --help` or the
+[command reference](docs/api/cli.md) for the available options.
+Use [`sc-neurocore codec`](docs/guides/spike_codec_cli.md) to encode and verify
+recordings or compare the installed Python and Rust codecs.
 
 What runs today, with the base package and nothing else, is on one page:
 [Supported workflows](docs/guides/supported_workflows.md) gives four examples —
@@ -190,8 +192,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 213 |
 | Optional extras | 33 |
-| Python test files | 5746 |
-| Public documentation pages | 676 |
+| Python test files | 5750 |
+| Public documentation pages | 677 |
 | GitHub Actions workflows | 27 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.

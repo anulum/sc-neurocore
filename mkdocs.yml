@@ -114,6 +114,7 @@ nav:
       - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
       - Stochastic Backpropagation: guides/stochastic_backprop.md
       - Spike Codec Library: guides/bci_codec.md
+      - Recording Codec Commands: guides/spike_codec_cli.md
       - FAQ: guides/faq.md
       - Glossary: guides/glossary.md
       - API Cheatsheet: guides/cheatsheet.md

@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 27,
+    "current": 28,
     "outdated": 127,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 329,
+  "all_records": 330,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -2614,6 +2614,10 @@
     {
       "currency": "current",
       "name": "bench_verilog_compiler.json"
+    },
+    {
+      "currency": "current",
+      "name": "codec_cli_backends.json"
     },
     {
       "changed": [

@@ -1394,19 +1394,50 @@ identical packet bytes and decoded outputs across the two backends.
 
 | Workload | Python median (ms) | Rust median (ms) | Encoded bytes |
 | --- | ---: | ---: | ---: |
-| ISI lossless, automatic entropy | 0.441 | 0.118 | 121 |
-| Grouped delta lossless | 0.815 | 0.167 | 257 |
-| World-model predictive lossless | 52.213 | 33.542 | 136 |
-| Independent spike raster frames | 0.900 | 0.213 | 542 |
-| Address events | 0.348 | 0.053 | 563 |
-| WFC2 full waveform and spikes | 96.297 | 2.085 | 3,613 |
-| Lossless waveform stream | 2973.551 | 32.412 | 152,141 |
-| Spike events and band power, sample timing | 207.283 | 2.346 | 2,686 |
+| ISI lossless, automatic entropy | 0.183 | 0.052 | 121 |
+| Grouped delta lossless | 0.359 | 0.080 | 257 |
+| World-model predictive lossless | 34.967 | 28.008 | 136 |
+| Independent spike raster frames | 0.746 | 0.169 | 542 |
+| Address events | 0.271 | 0.039 | 563 |
+| WFC2 full waveform and spikes | 65.638 | 1.407 | 3,613 |
+| Lossless waveform stream | 2625.132 | 29.325 | 152,141 |
+| Spike events and band power, sample timing | 165.501 | 1.881 | 2,686 |
 
 The [raw installed-wheel evidence](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/installed_codec_backends.json)
 contains all 28 workloads, every timing and each packet digest. Separate
 installed acceptance runs also covered Linux and MSI Windows with the
 base-only and matching native wheels.
+
+## Recording codec command-line benchmarks
+
+The installed command measured all 18 variants through the same Python
+and Rust codec APIs. Raster cases used the deterministic 1,027-row,
+three-channel LIF recording. Waveform and event cases used the original
+98,689-sample PCM16 mono recording at 19,531 Hz. Packet and decoded hashes
+matched within every comparison.
+
+The Linux x86-64 host used an Intel Core i5-11600K, 32 GiB RAM and
+CPython 3.12.16 with NumPy 2.5.4. The task used CPUs 2–5 and four Rayon
+threads. Measurements are medians of five alternating pairs with up to
+4,096 input rows per frame. The timed sections are the codec calls.
+The separate CLI read, file, hash and output publication operations are
+outside the timed sections.
+
+| Recording codec | Python encode / decode (ms) | Rust encode / decode (ms) | Payload bytes |
+| --- | ---: | ---: | ---: |
+| Address events | 0.122 / 0.202 | 0.019 / 0.005 | 563 |
+| Grouped delta lossless | 0.182 / 0.235 | 0.044 / 0.026 | 277 |
+| ISI lossless | 0.086 / 0.107 | 0.027 / 0.010 | 121 |
+| Lossless waveform stream | 1,293.818 / 1,215.585 | 10.601 / 7.791 | 129,666 |
+| World-model predictive | 17.672 / 16.542 | 13.810 / 13.202 | 136 |
+| Spike events and band power, sample timing | 142.951 / 3.029 | 1.090 / 0.144 | 495 |
+| SSCF framed raster | 0.361 / 1.241 | 0.029 / 0.008 | 678 |
+| WFC2 full | 55.452 / 12.568 | 3.143 / 0.703 | 6,957 |
+
+[Raw command-line benchmark results](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/codec_cli_backends.json)
+retain all runs and identify the exact wheels, host, inputs and source hashes.
+See the [recording codec commands](../guides/spike_codec_cli.md#measure-both-backends)
+for reproduction.
 
 ## Recorded spike-event streams
 

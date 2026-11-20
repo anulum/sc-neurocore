@@ -75,6 +75,26 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+### Recording codec command line
+
+Install the base and matching engine wheels in a clean environment. Run
+the installed executable from outside the checkout. Use the original mono
+PCM16 acquisition for waveform and event cases and a raster NPY exported by
+`tools.installed_codec_cases.acquisition(None)` for raster cases. Keep the
+same input file and frame geometry for both implementations.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 RAYON_NUM_THREADS=4 \
+  taskset -c 2,3,4,5 sc-neurocore codec benchmark \
+  /path/to/recording.wav --codec waveform --variant full \
+  --frame-rows 4096 --repetitions 5 > waveform-full.json
+```
+
+The JSON captures both sides of the comparison, the separate encode and
+decode times and the packet and output digests. Use the same command for
+each variant shown by `sc-neurocore codec discover`. The committed
+comparison identifies the measured host and exact installed wheels.
+
 ### Installed codec catalogue
 
 Install a base wheel and its matching engine wheel with the dependencies in

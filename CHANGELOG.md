@@ -82,6 +82,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Add installed recording commands under `sc-neurocore codec` to discover
+  and inspect codecs, encode NPY, PCM16 WAV or event CSV, verify packet files,
+  and decode to NumPy arrays. The benchmark command compares installed
+  Python and Rust routes with packet and output parity checks.
+
 - Qualify the installed spike-codec catalogue with the base wheel alone and
   with the compiled Rust engine. The wheel test job verifies all 18 variants,
   records module provenance, and compares Python and Rust packets and decoded

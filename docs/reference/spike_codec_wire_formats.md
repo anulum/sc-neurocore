@@ -328,6 +328,28 @@ Create a new encoder and decoder for a new event stream. Raw packets offer
 structural checks. Use an outer integrity check and recovery protocol when
 the application needs corruption or loss detection.
 
+## Recording files
+
+The `sc-neurocore codec` CLI stores an ordered sequence of existing codec
+packets alongside the geometry and decoder settings required to read them.
+The file begins with the eight bytes `SC-CODEC` and version byte `0x01`,
+then an unsigned big-endian 32-bit UTF-8 JSON length. The JSON object has
+fields `codec`, `variant`, `rows`, `channels`, `frame_rows`, `sample_rate_hz`
+and `options`. The header is at most 4,096 bytes. A null sample rate denotes
+an acquisition with no recorded rate.
+
+Each packet is preceded by its unsigned big-endian 32-bit byte count.
+The expected source row counts follow `frame_rows` up to the total
+`rows`, using a shorter final frame when needed. Each packet is at most
+16 MiB. The final 32 bytes are SHA-256 over the versioned header, packet
+lengths and packet bytes. The reader rejects missing or trailing data.
+
+Individual packets retain their format described above. The stateful
+lossless waveform and spike-event decoders retain state across packets.
+Other decoders treat each packet as an independent window.
+[Recording codec commands](../guides/spike_codec_cli.md) describes the
+available dataset adapters and exported result fields.
+
 ## Compatibility and implementation languages
 
 Python is the reference interface. Rust is the native implementation language

@@ -82,6 +82,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Add installed recording commands under `sc-neurocore codec` to discover
+  and inspect codecs, encode NPY, PCM16 WAV or event CSV, verify packet files,
+  and decode to NumPy arrays. The benchmark command compares installed
+  Python and Rust routes with packet and output parity checks.
+
+- Qualify the installed spike-codec catalogue with the base wheel alone and
+  with the compiled Rust engine. The wheel test job verifies all 18 variants,
+  records module provenance, and compares Python and Rust packets and decoded
+  output. Waveform and predictive instances expose their selected native scope
+  and prediction stage, respectively.
+
+- Export the event and band-power codec from `sc_neurocore.spike_codec`.
+  The Python and Rust encoder and decoder can reset for an independent stream.
+  Paired measurements cover both timing modes and preserve legacy event packets.
+
+
+- The Rust waveform codec reads and writes complete WFC2 packets in all
+  five modes. The installed Python API selects the whole-container backend.
+  Both implementations validate the declared geometry and compressed sections
+  and can read legacy WFCX spike packets.
+
+
+- The lossless waveform stream exposes a GPU encoder in wheels built with
+  the engine's \`gpu\` feature. The encoder reports the physical adapter and
+  graphics API, writes one group per channel and uses a CPU decoder.
+  Python, Rust and GPU waveform endpoints can reset for a new stream.
+  Python and Rust reject invalid range-coder tails and ADC level values.
+
+
 - `AERSpikeCodec` supports matching AERX and AERI packets in Python and
   Rust. The UDP adapter translates sample positions to absolute ticks,
   accepts reordering within a transfer and reports missing or invalid
