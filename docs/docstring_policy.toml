@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2269
+expected_file_count = 2270
 
 [[file]]
 path = "tools/installed_codec_acceptance.py"
@@ -9125,3 +9125,7 @@ rationale = "Exercise real localhost UDP delivery, reorder and loss."
 [[file]]
 path = "benchmarks/bench_address_events.py"
 rationale = "Measure the public packet codecs and UDP translation separately."
+
+[[file]]
+path = "tests/test_ci_playwright_browser_cache.py"
+rationale = "Check that CI steps install Playwright browsers into their namespaced caches before running the browser tests."

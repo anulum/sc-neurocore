@@ -669,6 +669,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   failure. Integer overflow still wraps in release builds; the engine page
   states both as its contract.
 
+- The event training browser step installs its Chromium before it runs. It
+  gives Playwright its own cache directory, where no browser had been
+  installed, so every run failed at browser launch. A test now holds every
+  workflow step that moves the cache and runs Playwright to install its
+  browser first.
+
 - CI runs the three Studio training browser specs no hosted workflow had
   run. The live browser step of the test job now lists the training
   preregistration and training conversion specs, which its configuration

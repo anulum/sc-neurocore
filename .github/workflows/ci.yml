@@ -1131,6 +1131,9 @@ jobs:
           export XDG_STATE_HOME="$namespace/state" XDG_CACHE_HOME="$namespace/cache"
           export SC_NEUROCORE_STUDIO_EVENT_TEST_ROOT="$namespace/root"
           export PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}"
+          # Playwright keeps its browsers under XDG_CACHE_HOME, which this step
+          # namespaces, so it installs the browser into its own cache.
+          npx playwright install --with-deps chromium
           npx playwright test --config playwright.event.config.ts
 
       - name: Preserve equation compiler browser diagnostics

@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 213,
     "studio_catalogue_models": 185,
-    "test_files": 5745
+    "test_files": 5746
   },
   "documentation": {
     "public_pages": [
@@ -4596,6 +4596,7 @@
       "tests/test_chiplet/test_hierarchical_partitioner_runtime.py",
       "tests/test_chiplet/test_hierarchical_partitioner_runtime_cache_import_fallback.py",
       "tests/test_chiplet/test_hierarchical_partitioner_runtime_cache_probe_returns_true_on_second_call.py",
+      "tests/test_ci_playwright_browser_cache.py",
       "tests/test_circuit_primitives_lateral_inhibition.py",
       "tests/test_circuit_primitives_winner_take_all.py",
       "tests/test_cli_architecture.py",
