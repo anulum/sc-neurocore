@@ -35,13 +35,13 @@ _CHUNK_BYTES = 65536
 
 
 class _ParserBudgetExceeded(ValueError):
-    """Mark a valid-to-this-point serialization that has outgrown the parser budget."""
+    """Mark a valid-to-this-point serialisation that has outgrown the parser budget."""
 
 
 def _check_budget(size: int) -> None:
     """Keep both native representations under the existing JSON parser cap."""
     if size > MAX_NETLIST_BYTES:
-        raise _ParserBudgetExceeded("Normalized native JSON exceeds the unchanged parser budget")
+        raise _ParserBudgetExceeded("Normalised native JSON exceeds the unchanged parser budget")
 
 
 def _unique_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -231,7 +231,7 @@ def _json_strings(source: BinaryIO) -> Iterator[tuple[bool, bytes]]:
                 min(max(_CHUNK_BYTES, len(partial)), MAX_NETLIST_BYTES - len(partial))
             )
             if not more:
-                raise ValueError("Native JSON normalization found an unterminated string")
+                raise ValueError("Native JSON normalisation found an unterminated string")
             block, opening = partial + more, 0
             match = _JSON_STRING.match(block)
         cursor = match.end()
@@ -253,7 +253,7 @@ def _source_references(original: BinaryIO, locations: list[str]) -> Iterator[tup
                 if punctuation:
                     if after_colon and punctuation[0] in b"-0123456789":
                         raise ValueError(
-                            "Native source locations must be strings before normalization"
+                            "Native source locations must be strings before normalisation"
                         )
                     after_key = after_colon = False
             yield False, token

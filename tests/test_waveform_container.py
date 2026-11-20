@@ -161,7 +161,7 @@ def test_legacy_spike_readback_and_lossless_formats_remain_distinct(backend: str
 
 @pytest.mark.parametrize("backend", ("python", "rust"))
 def test_lossless_stream_header_refuses_contradicting_adc_codes(backend: str) -> None:
-    """A declared one-bit ADC cannot silently quantize samples that share its codes."""
+    """A declared one-bit ADC cannot silently quantise samples that share its codes."""
     values = np.asarray([[0], [1]], dtype=np.int16)
     with pytest.raises(ValueError, match="contradicts"):
         WaveformCodec(mode="lossless", adc_bits=1, backend=backend).compress(values)

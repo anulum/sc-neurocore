@@ -99,7 +99,7 @@ pub struct WaveformConfig {
     pub snippet_samples: usize,
     /// Maximum template library size, in 1..=65535.
     pub max_templates: usize,
-    /// Minimum normalized template correlation, in 0..=1.
+    /// Minimum normalised template correlation, in 0..=1.
     pub template_threshold: f64,
     /// Signed background code width, in 1..=8.
     pub quantize_bits: u8,

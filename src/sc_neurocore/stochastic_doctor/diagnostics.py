@@ -104,7 +104,7 @@ class BitstreamAuditReport:
         return d
 
     def to_json(self, indent: int = 2) -> str:
-        """Serialize to a JSON string per RFC 8259.
+        """Serialise to a JSON string per RFC 8259.
 
         Raises
         ------

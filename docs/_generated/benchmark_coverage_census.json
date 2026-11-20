@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 28,
-    "outdated": 127,
+    "current": 24,
+    "outdated": 131,
     "reviewed": 0,
     "unbound": 175
   },
@@ -2616,7 +2616,17 @@
       "name": "bench_verilog_compiler.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "engine/src/codecs/waveform_container/mod.rs",
+        "engine/src/codecs/waveform_container/snippets.rs",
+        "engine/src/codecs/waveform_container/wire.rs",
+        "src/sc_neurocore/spike_codec/_predictive_kernels.py",
+        "src/sc_neurocore/spike_codec/_world_model.py",
+        "src/sc_neurocore/spike_codec/catalogue_types.py",
+        "src/sc_neurocore/spike_codec/waveform_codec.py",
+        "src/sc_neurocore/spike_codec/waveform_stream.py"
+      ],
+      "currency": "outdated",
       "name": "codec_cli_backends.json"
     },
     {
@@ -2729,7 +2739,17 @@
       "name": "formal/sc_chialvo_map_z3memory64/review.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "engine/src/codecs/waveform_container/mod.rs",
+        "engine/src/codecs/waveform_container/snippets.rs",
+        "engine/src/codecs/waveform_container/wire.rs",
+        "src/sc_neurocore/spike_codec/_predictive_kernels.py",
+        "src/sc_neurocore/spike_codec/_world_model.py",
+        "src/sc_neurocore/spike_codec/catalogue_types.py",
+        "src/sc_neurocore/spike_codec/waveform_codec.py",
+        "src/sc_neurocore/spike_codec/waveform_stream.py"
+      ],
+      "currency": "outdated",
       "name": "installed_codec_backends.json"
     },
     {
@@ -3074,6 +3094,8 @@
         "Cargo.lock",
         "bridge/sc_neurocore_engine/__init__.py",
         "engine/Cargo.toml",
+        "src/sc_neurocore/spike_codec/_predictive_kernels.py",
+        "src/sc_neurocore/spike_codec/_world_model.py",
         "src/sc_neurocore/spike_codec/predictive_codec.py"
       ],
       "currency": "outdated",
@@ -3088,17 +3110,28 @@
       "name": "raster_stream_backends.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "benchmarks/bench_spike_event_stream.py",
+        "src/sc_neurocore/spike_codec/waveform_stream.py"
+      ],
+      "currency": "outdated",
       "name": "spike_event_stream_backends.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "engine/src/codecs/waveform_container/mod.rs",
+        "engine/src/codecs/waveform_container/snippets.rs",
+        "engine/src/codecs/waveform_container/wire.rs",
+        "src/sc_neurocore/spike_codec/waveform_codec.py"
+      ],
+      "currency": "outdated",
       "name": "waveform_container_backends.json"
     },
     {
       "changed": [
         "Cargo.lock",
-        "engine/Cargo.toml"
+        "engine/Cargo.toml",
+        "src/sc_neurocore/spike_codec/waveform_stream.py"
       ],
       "currency": "outdated",
       "name": "waveform_stream_backends.json"

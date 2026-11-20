@@ -155,7 +155,7 @@ properties fail before solving.
 - a package top (`sc_chiplet_top`) with one clock input per die,
   `clk_die_<d>`, driving that die and the matching side of each of its
   bridges. One active-low `rst_n` reaches each die's clock domain through
-  that die's own two-stage synchronizer (`sc_sync_2ff`), asserted at once
+  that die's own two-stage synchroniser (`sc_sync_2ff`), asserted at once
   and released on two edges of the die's clock, so a caller drives the
   package two edges of each die clock after `rst_n` rises. The top exposes
   per-die AER ingress/egress ports and connects every die and bridge

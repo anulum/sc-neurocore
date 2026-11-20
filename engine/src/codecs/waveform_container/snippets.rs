@@ -85,7 +85,7 @@ pub(super) fn encode(
     })
 }
 
-/// Add the quantizer scale, padded sample count and a single compressed nibble frame.
+/// Add the quantiser scale, padded sample count and a single compressed nibble frame.
 fn encode_residuals(
     section: &mut Vec<u8>,
     residuals: &[f32],

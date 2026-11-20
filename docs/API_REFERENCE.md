@@ -7214,7 +7214,7 @@ die_id
 Returns
 -------
 str
-    ``rst_n_die_<die_id>``, the output of the die's reset synchronizer.
+    ``rst_n_die_<die_id>``, the output of the die's reset synchroniser.
 
 ### Function `die_clock(die_id)`
 Return the top-level clock port, and XDC clock name, of one die.
@@ -21546,7 +21546,7 @@ tolerance : float
   - Whether the total divergence is below :attr:`tolerance`.
 
 ### Class `TwinSession`
-Orchestrates physical ↔ digital twin synchronization.
+Orchestrates physical ↔ digital twin synchronisation.
 
 Manages bidirectional data flow:
 - Physical → Digital: sensor events (MEA spikes, EEG)
@@ -44951,7 +44951,7 @@ lr : float
 threshold : float
     Probability threshold for binary prediction.
 seed : int
-    RNG seed for weight initialization.
+    RNG seed for weight initialisation.
 
 - **__post_init__**()
   - Seed the RNG and initialise the predictor weights.
@@ -45191,7 +45191,7 @@ backend_choices : tuple of str
 diagnostics : tuple of str
     Missing modules, missing symbols or actual loader errors observed by the probe.
 encoder_only_backends : tuple of str
-    Additional importable encoder selectors. Device initialization still happens
+    Additional importable encoder selectors. Device initialisation still happens
     when constructing an encoder.
 
 
@@ -45608,7 +45608,7 @@ max_templates : int
 template_threshold : float
     Correlation threshold for template matching, inclusive range 0-1.
 quantize_bits : int
-    Background signal quantization, inclusive range 1-8. Fewer bits
+    Background signal quantisation, inclusive range 1-8. Fewer bits
     increase compression.
 mode : str
     Compression mode controlling what is preserved:
@@ -46688,7 +46688,7 @@ JSON-serializable via ``to_json()`` for pipeline integration.
 - **to_dict**()
   - Serialize to a plain dict (JSON-compatible).
 - **to_json**(indent)
-  - Serialize to a JSON string per RFC 8259.
+  - Serialise to a JSON string per RFC 8259.
 
 ### Class `DriftDetector`
 Exponential moving average drift detector for SCC monitoring.

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Complete large native checkpoint serialization
+# SC-NeuroCore — Complete large native checkpoint serialisation
 
 """Qualify large real checkpoints without discarding source data or raising parser limits."""
 
@@ -131,7 +131,7 @@ def test_changed_checkpoint_serialization_is_refused_without_restamping(
     tmp_path: Path,
     damage: str,
 ) -> None:
-    """Bind retained normalization to the actual large checkpoint and its original native bytes."""
+    """Bind retained normalisation to the actual large checkpoint and its original native bytes."""
     original, post, tools = oversized_native_checkpoint
     root = tmp_path / "changed-checkpoint"
     shutil.copytree(original, root, copy_function=os.link)

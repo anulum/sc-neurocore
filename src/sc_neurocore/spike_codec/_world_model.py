@@ -59,7 +59,7 @@ class SpikePredictor:
     threshold : float
         Probability threshold for binary prediction.
     seed : int
-        RNG seed for weight initialization.
+        RNG seed for weight initialisation.
     """
 
     n_channels: int

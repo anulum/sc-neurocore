@@ -55,7 +55,7 @@ class Layout(NamedTuple):
 
 
 class Run(NamedTuple):
-    """Recorded packets, decoded windows and normalized measurements."""
+    """Recorded packets, decoded windows and normalised measurements."""
 
     packets: list[bytes]
     windows: list[SpikeEventWindow]

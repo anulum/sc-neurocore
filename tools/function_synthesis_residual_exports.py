@@ -46,7 +46,7 @@ _NATIVE_FRONTEND = re.compile(
 
 
 def _uses_variable_divisor(module: Netlist) -> bool:
-    """Recognize native division whose denominator depends on input signals."""
+    """Recognise native division whose denominator depends on input signals."""
     return any(
         cell.kind == "$div" and any(isinstance(bit, int) for bit in cell.connections["B"])
         for cell in module.cells.values()
@@ -162,13 +162,13 @@ def _check_pre_lut_library(stem: str, log: Path, tools: SynthesisToolchain, spli
 
 
 def verify_pre_lut_exports(module: Netlist, directory: Path, tools: SynthesisToolchain) -> None:
-    """Validate retained pre-LUT commands, native serialization and complete checkpoints."""
+    """Validate retained pre-LUT commands, native serialisation and complete checkpoints."""
     normalized = directory / "pre-lut-native"
     if normalized.exists() or normalized.is_symlink():
         native_netlist_artifacts(normalized)
         if digest(normalized / "mapped.json") != digest(directory / "pre-lut.json"):
             raise ValueError(
-                "The pre-LUT checkpoint differs from its lossless native serialization"
+                "The pre-LUT checkpoint differs from its lossless native serialisation"
             )
     flows, checkpoints = _pre_lut_flows(module)
     for stem, expected in flows.items():

@@ -34,7 +34,7 @@ Label: TypeAlias = tuple[str, str, int]
 
 
 def _encode(payload: object) -> bytes:
-    """Serialize the complete original value in the deterministic native layout."""
+    """Serialise the complete original value in the deterministic native layout."""
     return (json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode()
 
 

@@ -331,6 +331,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The docstrings, comments, messages and documentation of the new codec,
+  function-synthesis and chiplet work use British spelling
+  ("normalisation", "serialise", "quantiser", "synchroniser").
+  Identifiers, file names and other tools' terms keep their spelling.
+
+  that die's two-stage synchroniser, and the XDC declares it a false path.
+  that is empty or not finite, is a violation and quantises no layer. The
+
 - Correct the Rust PyO3 model inventory to 208 wrappers by excluding five
   codec bindings for lossless waveform and spike-event streams.
 

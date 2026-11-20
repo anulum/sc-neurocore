@@ -941,7 +941,7 @@ class DivergenceMetric:
 
 
 class TwinSession:
-    """Orchestrates physical ↔ digital twin synchronization.
+    """Orchestrates physical ↔ digital twin synchronisation.
 
     Manages bidirectional data flow:
     - Physical → Digital: sensor events (MEA spikes, EEG)

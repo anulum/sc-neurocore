@@ -336,7 +336,7 @@ backend="gpu", gpu_max_samples=window_rows)`. Read `encoder.device` for the
 adapter name and graphics API. Pass the same channel count, ADC width and
 group count to a CPU decoder. The catalogue reports an importable GPU
 encoder in `probe_codec("lossless_stream").encoder_only_backends`. Device
-initialization happens when the encoder is created.
+initialisation happens when the encoder is created.
 
 Raw lossless and event packets carry their group lengths and range-coded
 bodies. Supply the stream configuration, packet boundaries and row counts

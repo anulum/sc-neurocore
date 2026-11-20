@@ -154,7 +154,7 @@ class WaveformCodec:
     template_threshold : float
         Correlation threshold for template matching, inclusive range 0-1.
     quantize_bits : int
-        Background signal quantization, inclusive range 1-8. Fewer bits
+        Background signal quantisation, inclusive range 1-8. Fewer bits
         increase compression.
     mode : str
         Compression mode controlling what is preserved:

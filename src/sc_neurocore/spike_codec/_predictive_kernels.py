@@ -19,7 +19,7 @@ class _RatePredictor:
     """Per-channel EMA rate predictor (legacy, kept for reference)."""
 
     def __init__(self, n_channels: int, alpha: float = 0.005, threshold: float = 0.5) -> None:
-        """Initialize per-channel rates and threshold parameters."""
+        """Initialise per-channel rates and threshold parameters."""
         self.n_channels = n_channels
         self.alpha = alpha
         self.threshold = threshold

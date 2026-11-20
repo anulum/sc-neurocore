@@ -52,7 +52,7 @@ _GENERATED = (*_PLAIN, "all-differences.aig", "singleton.aig") + tuple(
 
 
 def _check_log(log: Path) -> None:
-    """Refuse a native construction or normalization error even with a zero process status."""
+    """Refuse a native construction or normalisation error even with a zero process status."""
     if re.search(
         r"^\s*(?:ERROR|Error|Aborting|Aborted|\*\* cmd error)\b",
         log.read_text(encoding="utf-8"),
@@ -95,7 +95,7 @@ def _paired_script(timeout: float, tools: SynthesisToolchain) -> str:
             "&read reference-plain.aig; "
             f"&cec -T {max(1, min(60, int(timeout)))} -v candidate-plain.aig"
         )
-    # -n matches by order: identical named orders and both normalization round trips are proved.
+    # -n matches by order: identical named orders and both normalisation round trips are proved.
     return f"cec -T {max(1, min(60, int(timeout)))} -n -v reference-plain.aig candidate-plain.aig"
 
 
@@ -127,7 +127,7 @@ def _watchdog_elapsed(log: Path, tools: SynthesisToolchain) -> bool:
 
 
 def _needs_further_proof(log: Path, tools: SynthesisToolchain) -> bool:
-    """Recognize a bounded GIA result that requires a separate complete proof."""
+    """Recognise a bounded GIA result that requires a separate complete proof."""
     if _watchdog_elapsed(log, tools):
         return True
     text = log.read_text(encoding="utf-8")

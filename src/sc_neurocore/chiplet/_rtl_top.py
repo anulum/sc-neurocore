@@ -12,7 +12,7 @@ Each die runs on its own clock, ``clk_die_<d>``, at its ``clock_mhz``. A bridge 
 its source die's clock and reads on its destination die's clock, so the clocks the XDC
 creates are exactly the clocks the RTL has, and every link constraint joins two of them.
 The one ``rst_n`` input reaches each clock domain through that die's own two-stage
-synchronizer (``sc_sync_2ff``): asserted at once, released on two edges of the die's clock.
+synchroniser (``sc_sync_2ff``): asserted at once, released on two edges of the die's clock.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def die_reset(die_id: int) -> str:
     Returns
     -------
     str
-        ``rst_n_die_<die_id>``, the output of the die's reset synchronizer.
+        ``rst_n_die_<die_id>``, the output of the die's reset synchroniser.
     """
     return f"rst_n_die_{die_id}"
 
@@ -188,7 +188,7 @@ def emit_constraints(topology: ChipletTopology) -> str:
         for lk in topology.links
     )
     reset = (
-        "# Reset: rst_n is released in each die's domain by its own synchronizer\n"
+        "# Reset: rst_n is released in each die's domain by its own synchroniser\n"
         "set_false_path -from [get_ports rst_n]"
     )
     return f"{hdr}\n{dies}\n\n{reset}\n\n{links}\n"

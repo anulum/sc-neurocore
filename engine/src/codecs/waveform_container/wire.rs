@@ -122,7 +122,7 @@ pub(super) fn dimensions(rows: usize, channels: usize, limit: usize) -> Result<u
         .ok_or_else(|| format!("stream declares {rows} x {channels} samples; at least one each and at most max_samples={limit} in total"))
 }
 
-/// Check quantizer ranges represented in both the options and wire header.
+/// Check quantiser ranges represented in both the options and wire header.
 pub(super) fn validate_quantization(width: usize, bits: u8) -> Result<(), String> {
     if !(1..=255).contains(&width) {
         return Err("snippet_samples must be in 1..=255".into());

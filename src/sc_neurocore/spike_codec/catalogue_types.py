@@ -219,7 +219,7 @@ class CodecAvailability:
     diagnostics : tuple of str
         Missing modules, missing symbols or actual loader errors observed by the probe.
     encoder_only_backends : tuple of str
-        Additional importable encoder selectors. Device initialization still happens
+        Additional importable encoder selectors. Device initialisation still happens
         when constructing an encoder.
     """
 

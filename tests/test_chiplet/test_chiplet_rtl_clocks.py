@@ -103,7 +103,7 @@ def test_each_die_and_each_bridge_side_takes_its_own_die_clock_and_reset() -> No
 
 
 def test_rst_n_is_released_in_each_die_domain_by_its_own_synchronizer() -> None:
-    """One two-stage synchronizer per die clock; nothing but the synchronizers reads raw rst_n."""
+    """One two-stage synchroniser per die clock; nothing but the synchronisers reads raw rst_n."""
     topology = _three_clock_ring()
     top = ChipletGenerator().generate(topology).top_sv
     for die in topology.dies:
@@ -115,7 +115,7 @@ def test_rst_n_is_released_in_each_die_domain_by_its_own_synchronizer() -> None:
         )
     code = "\n".join(line for line in top.splitlines() if not line.lstrip().startswith("//"))
     raw = re.findall(r"(?<![.\w])rst_n\b(?!_die)", code)  # not a port name, not a die reset
-    assert len(raw) == 1 + len(topology.dies)  # the port and one synchronizer per die
+    assert len(raw) == 1 + len(topology.dies)  # the port and one synchroniser per die
 
 
 def test_each_crossing_is_bounded_by_the_faster_clock_and_the_reset_is_a_false_path() -> None:

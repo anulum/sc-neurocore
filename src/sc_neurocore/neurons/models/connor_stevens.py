@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Connor-Walter-McKown 1977 A-current parameterization
 
-"""Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterization.
+"""Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterisation.
 
 The module holds its Python reference step and its native simulation paths.
 """

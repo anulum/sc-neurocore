@@ -239,7 +239,7 @@ module tb_ring3;
 
     initial begin
         #10 rst_n = 1;
-        repeat (3) @(posedge clk); // per-die reset synchronizers
+        repeat (3) @(posedge clk); // per-die reset synchronisers
         die_0_spike_valid <= 1;
         die_0_spike_id <= 10'd5;
         @(posedge clk);
@@ -311,7 +311,7 @@ module tb_star_bp;
 
     initial begin
         #10 rst_n = 1;
-        repeat (3) @(posedge clk); // per-die reset synchronizers
+        repeat (3) @(posedge clk); // per-die reset synchronisers
         s1_v <= 1; s1_id <= 10'd2;
         s2_v <= 1; s2_id <= 10'd4;
         @(posedge clk);
@@ -428,7 +428,7 @@ module tb_hetero;
     end
     initial begin
         #8 rst_n = 1;
-        repeat (3) @(posedge clk); // per-die reset synchronizers
+        repeat (3) @(posedge clk); // per-die reset synchronisers
         s0_v <= 1; s1_v <= 1;
         @(posedge clk); s0_v <= 0; s1_v <= 0;
         if (!route_valid || target_die !== 4'd1 || target_neuron !== 10'd100 || weight !== -12'sd200)

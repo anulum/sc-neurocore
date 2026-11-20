@@ -355,7 +355,7 @@ primitive-cut inputs.
 
 Its complete native exports keep the ninety-second ceiling per Yosys command.
 The standard route separates preparation, generic technology mapping and AIG
-serialization for the reference and physical graphs. Both RTLIL checkpoints
+serialisation for the reference and physical graphs. Both RTLIL checkpoints
 in each graph retain their gzip integrity checks and use checkpoint schema
 version 2. When the mapped LUTs can expand to at least 524,288 decision nodes,
 the export retains the complete top module at each native RTLIL handoff.

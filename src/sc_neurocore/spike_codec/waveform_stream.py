@@ -152,7 +152,7 @@ def _sample_count(samples: SupportsIndex) -> int:
 def _validate(
     channels: SupportsIndex, adc_bits: SupportsIndex, groups: SupportsIndex
 ) -> tuple[int, int, int]:
-    """Normalize integer-valued configuration before allocating encoder or decoder state."""
+    """Normalise integer-valued configuration before allocating encoder or decoder state."""
     try:
         channels = operator.index(channels)
         adc_bits = operator.index(adc_bits)
@@ -613,7 +613,7 @@ def _integer_samples(array: np.ndarray[Any, Any], operation: str) -> np.ndarray[
 
 
 def _window(window: np.ndarray[Any, Any], channels: int) -> np.ndarray[Any, Any]:
-    """Check the frame-major layout and normalize to lossless int16 input."""
+    """Check the frame-major layout and normalise to lossless int16 input."""
     array = np.asarray(window)
     if array.ndim != 2 or array.shape[1] != channels:
         raise ValueError(f"window must be (samples, {channels})")

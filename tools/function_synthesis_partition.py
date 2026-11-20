@@ -92,7 +92,7 @@ def verify_partition(leaves: Sequence[Leaf], input_bits: int) -> None:
 
 
 def bounded_bdd_incomplete(log: Path) -> bool:
-    """Recognize native bounded construction aborts and explicit deadline diagnostics.
+    """Recognise native bounded construction aborts and explicit deadline diagnostics.
 
     Parameters
     ----------

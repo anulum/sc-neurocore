@@ -211,7 +211,7 @@ def read_gia_equivalence(
     tools : SynthesisToolchain
         Currently inspected native executables and technology libraries.
     directory : pathlib.Path
-        Complete source-bound normalization, all-output miter and native proof.
+        Complete source-bound normalisation, all-output miter and native proof.
 
     Returns
     -------
@@ -278,7 +278,7 @@ def prove_gia_equivalence(
         proof commands additionally request at most sixty internal seconds.
     singleton_seconds : int or None, optional
         Smaller internal allowance for the singleton checker, between one and
-        the default native ceiling. None retains that default. Normalization,
+        the default native ceiling. None retains that default. Normalisation,
         paired checking and the enclosing proof budget keep their original
         ceilings. A nondefault allowance is retained in a v3 protocol record.
 
@@ -289,7 +289,7 @@ def prove_gia_equivalence(
 
     Notes
     -----
-    Native by-order normalization is admitted only after exact named-order
+    Native by-order normalisation is admitted only after exact named-order
     comparison. Both complete round trips require explicit equality. The final
     GIA checker receives one scalar OR of all differences. If that checker
     explicitly exhausts its native deadline without deciding, a second CEC

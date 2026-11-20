@@ -8649,7 +8649,7 @@ rationale = "Load the executable Mojo retained-project ABI without fallback subs
 
 [[file]]
 path = "src/sc_neurocore/accel/mojo/sc_normalized_energy_lif/__init__.py"
-rationale = "Load the executable Mojo SC normalized EnergyLIF ABI."
+rationale = "Load the executable Mojo SC normalised EnergyLIF ABI."
 
 [[file]]
 path = "src/sc_neurocore/accel/mojo/sc_resetting_mat/__init__.py"
@@ -8709,7 +8709,7 @@ rationale = "Source-faithful Chialvo two-dimensional discrete map."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/connor_stevens.py"
-rationale = "Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterization."
+rationale = "Connor-Stevens-family A-current neuron with the Connor-Walter-McKown 1977 parameterisation."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/courage_nekorkin_map.py"
@@ -8757,7 +8757,7 @@ rationale = "Source-derived Medvedev slow-calcium first-return map."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/mihalas_niebur.py"
-rationale = "Mihalaş-Niebur (2009) generalized linear integrate-and-fire neuron."
+rationale = "Mihalaş-Niebur (2009) generalised linear integrate-and-fire neuron."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/pernarowski.py"

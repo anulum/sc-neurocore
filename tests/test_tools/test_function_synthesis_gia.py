@@ -79,7 +79,7 @@ def test_every_output_has_a_difference_before_scalar_aggregation(gia_case: GiaCa
 def test_elapsed_native_checker_requires_another_complete_proof(
     gia_case: GiaCase, tmp_path: Path
 ) -> None:
-    """Recognize an actual command deadline and refuse any contradictory native verdict."""
+    """Recognise an actual command deadline and refuse any contradictory native verdict."""
     root, tools, _ = gia_case
     for name in ("reference-plain.aig", "candidate-plain.aig"):
         shutil.copyfile(root / name, tmp_path / name)

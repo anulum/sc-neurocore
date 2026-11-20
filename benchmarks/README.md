@@ -127,7 +127,7 @@ which backend runs first and retain each nanosecond measurement.
 
 ### Recorded spike-event and band-power streams
 
-Install the matching Python and optimized engine wheels in a fresh environment.
+Install the matching Python and optimised engine wheels in a fresh environment.
 Use the original PCM16 challenge recording and
 [S001R01.edf](https://physionet.org/files/eegmmidb/1.0.0/S001/S001R01.edf).
 
