@@ -45,7 +45,11 @@ def enforce(event: str, arguments: tuple[object, ...]) -> None:
     raise ImportError(message)
 
 sys.addaudithook(enforce)
-from sc_neurocore.spike_codec import WaveformCodec, list_codec_descriptors, probe_codec
+from sc_neurocore.spike_codec import (
+    WaveformCodec,
+    list_codec_descriptors,
+    probe_codec,
+)
 
 assert len(list_codec_descriptors()) == 8
 assert not attempts
@@ -72,6 +76,16 @@ else:
     assert not attempts
     assert waveform.backend_choices == ("auto", "python")
     assert predictive.python_available
+
+if predictive.python_available:
+    from sc_neurocore.spike_codec import PredictiveSpikeCodec
+
+    spikes = np.array([[1, 0], [0, 1], [1, 1], [0, 0]], dtype=np.int8)
+    for predictor in ("ema", "lfsr", "context", "world_model"):
+        encoder = PredictiveSpikeCodec(predictor=predictor, backend="python")
+        packet, result = encoder.compress(spikes)
+        assert result.lossless
+        np.testing.assert_array_equal(encoder.decompress(packet, *spikes.shape), spikes)
 
 samples = (np.arange(32, dtype=np.int16).reshape(-1, 1) * 7) - 90
 encoder = WaveformCodec(mode="lossless", backend="python")
@@ -196,7 +210,7 @@ def test_unavailable_explicit_rust_is_refused_by_real_public_constructors() -> N
             cls(**kwargs)
 
 
-def test_blocked_optional_module_is_unavailable_and_its_import_state_is_restored(
+def test_blocked_predictor_module_is_unavailable_and_its_import_state_is_restored(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Report a genuine import-system refusal and restore the optional module afterwards."""
@@ -219,3 +233,44 @@ def test_blocked_optional_module_is_unavailable_and_its_import_state_is_restored
         assert "None in sys.modules" in diagnostic
     assert sys.modules.get(module_name) is original
     assert probe_codec("predictive", "world_model").python_available == baseline.python_available
+
+
+def test_packaged_world_model_codec_does_not_need_experimental_namespace() -> None:
+    """Run the actual codec in a process that denies the experimental package."""
+    from sc_neurocore.spike_codec import PredictiveSpikeCodec
+
+    tested_module = import_module(PredictiveSpikeCodec.__module__)
+    assert tested_module.__file__ is not None
+    script = """
+import sys
+from pathlib import Path
+
+def deny_research_import(event, arguments):
+    if event == "import" and str(arguments[0]).startswith("sc_neurocore.world_model"):
+        raise ImportError("research namespace is not available")
+
+sys.addaudithook(deny_research_import)
+import numpy as np
+from sc_neurocore.spike_codec import PredictiveSpikeCodec, probe_codec
+from sc_neurocore.spike_codec import predictive_codec
+
+assert Path(predictive_codec.__file__).resolve() == Path(sys.argv[1]).resolve()
+assert "sc_neurocore.world_model" not in sys.modules
+availability = probe_codec("predictive", "world_model")
+assert availability.python_available and "python" in availability.backend_choices
+samples = np.array([[1, 0], [0, 1], [1, 1]], dtype=np.int8)
+encoder = PredictiveSpikeCodec(predictor="world_model", threshold=0.2, backend="python")
+packet, stats = encoder.compress(samples)
+decoder = PredictiveSpikeCodec(backend="python")
+np.testing.assert_array_equal(decoder.decompress(packet, *samples.shape), samples)
+assert stats.lossless
+assert "sc_neurocore.world_model" not in sys.modules
+"""
+    completed = subprocess.run(
+        [sys.executable, "-B", "-c", script, tested_module.__file__],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr

@@ -28,6 +28,7 @@ import argparse
 import time
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def generate_realistic_waveform(
@@ -35,9 +36,9 @@ def generate_realistic_waveform(
     duration_s: float,
     fs: float = 20000.0,
     noise_uv: float = 50.0,
-    firing_rate_range: tuple = (0.5, 5.0),
+    firing_rate_range: tuple[float, float] = (0.5, 5.0),
     seed: int = 42,
-) -> np.ndarray:
+) -> tuple[NDArray[np.float32], int]:
     """Generate realistic multi-channel electrode recording.
 
     Includes:
@@ -94,7 +95,8 @@ def generate_realistic_waveform(
     return waveform, total_spikes
 
 
-def main():
+def main() -> None:
+    """Run the waveform compression demo on a synthetic recording."""
     parser = argparse.ArgumentParser(description="SC-NeuroCore WaveformCodec Demo")
     parser.add_argument("--channels", type=int, default=128, help="Number of channels")
     parser.add_argument("--duration", type=float, default=1.0, help="Duration in seconds")
@@ -198,7 +200,6 @@ def main():
     print("  Spike timing: lossless (ISI + Huffman entropy)")
     print("  Waveform shapes: template library + quantized residuals")
     print("  Background: delta + quantize + zlib")
-    print("  Hardware: bit-true LFSR predictor maps to Verilog RTL")
     print(f"{'=' * 70}")
 
 

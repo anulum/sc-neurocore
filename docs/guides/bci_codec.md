@@ -365,7 +365,7 @@ recovered = codec.decompress(data, T, N)
 |-------|----------|----------|---------------------|
 | `isi` (auto entropy) | General purpose | ISI + varint/Huffman | 401x at 0.1%, 8.8x at 30% |
 | `predictive` (context) | Structured data | Markov context + XOR | 25.5x on bursty (3x over ISI) |
-| `predictive` (lfsr) | Hardware BCI | Q8.8 LFSR, bit-true Verilog | Same ratio, ASIC-deployable |
+| `predictive` (lfsr) | Binary spike rasters | Q8.8 rate tracking, 16-bit LFSR | Python and Rust packet parity |
 | `delta` | Neural probes | Inter-channel XOR residuals | 8.2x on correlated (70% over ISI) |
 | `streaming` | Independent raster windows | Bitmask frames | Measure complete frame size and latency |
 | `aer` (adaptive) | Address-event rasters | Event list, auto-invert >50% | Device and transport adapters require qualification |
@@ -426,14 +426,18 @@ Encode XOR residuals with four predictor choices:
 
 - **`ema`** (default): float EMA rate tracking + threshold comparison. Simple, fast.
 - **`lfsr`**: Q8.8 fixed-point rate and an LFSR comparator.
-- **`context`**: a Python context predictor controlled by `context_bits`.
-- **`world_model`**: an optional Python predictor excluded from the base wheel;
-  probe this variant before use.
+- **`context`**: a per-channel context predictor controlled by `context_bits`.
+- **`world_model`**: a NumPy autoregressive predictor included in the base wheel.
+  Its [packets](../reference/spike_codec_wire_formats.md#predictive-xor-containers)
+  require matching NumPy, BLAS and math-library builds, numerical thread
+  settings and CPU floating-point behaviour on both endpoints. Use EMA,
+  LFSR or context when the encoder and decoder profiles differ.
 
-Rust kernels accelerate EMA and LFSR prediction and recovery. The Python
-predictive container delegates ISI residual packets to `SpikeCodec`, which
-selects the available backend. The context and world-model predictors run
-in Python.
+Select `backend="python"` for the reference predictors and residual codec.
+With a matching engine, `backend="rust"` uses native EMA, LFSR and context
+kernels and native ISI. The world-model path shares NumPy probability
+evaluation and can use a native weight update. In quantised mode the
+predictor sees the compact raster after merging complete timing bins.
 
 ```
 Encoder:                          Decoder:
@@ -442,7 +446,7 @@ Encoder:                          Decoder:
       └── update(actual)                 update(recovered) ──┘
 ```
 
-Encoder and decoder run identical predictors. Deterministic, no state sync.
+Encoder and decoder start from the same packet parameters and update from the same recovered samples.
 
 ```python
 from sc_neurocore.spike_codec import PredictiveSpikeCodec
@@ -452,7 +456,7 @@ codec = PredictiveSpikeCodec(alpha=0.005, threshold=0.5)
 data, result = codec.compress(spikes)
 print(f"{result.compression_ratio:.1f}x, accuracy: {result.prediction_accuracy:.1%}")
 
-# SC-native LFSR mode (bit-true with Verilog RTL)
+# Fixed-point LFSR predictor
 codec_hw = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
 data_hw, result_hw = codec_hw.compress(spikes)
 print(f"LFSR: {result_hw.compression_ratio:.1f}x")

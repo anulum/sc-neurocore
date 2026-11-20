@@ -82,6 +82,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `PredictiveSpikeCodec` supports explicit Python and Rust backends for all
+  four predictors. The Rust engine now encodes and recovers context
+  residuals and updates world-model weights. World-model probability
+  evaluation still uses NumPy. The base wheel includes the predictor, so
+  the experimental world-model package is optional.
+
+- Predictive lossy packets merge complete timing bins before prediction.
+  The decoder recovers the compact or original-sized bin raster from
+  the timing information in the packet. New world-model packets retain
+  nondefault thresholds. Existing default-threshold lossless packets
+  preserve their bytes and decode contract.
+
 - `tools/julia_lane_inventory.py` and `docs/_generated/julia_lane_inventory.json` classify every
   tracked Julia source: whether the package declares it authoritative or a mirror, which Python
   modules build its exact path, and whether Julia's parser accepts it (nothing is evaluated). Of

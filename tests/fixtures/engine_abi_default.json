@@ -276,7 +276,10 @@
       "py_predict_xor_ema",
       "py_predict_xor_lfsr",
       "py_recover_xor_ema",
-      "py_recover_xor_lfsr"
+      "py_recover_xor_lfsr",
+      "py_predict_xor_context",
+      "py_recover_xor_context",
+      "py_update_spike_world_model"
     ],
     "modules": {
       "sc_neurocore_engine": {
@@ -44686,6 +44689,23 @@
           "signature": "(rate_hz, dt_ms, rng_state, n_steps, rate_override=Ellipsis)",
           "signature_error": null
         },
+        "py_predict_xor_context": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_predict_xor_context",
+          "__qualname__": "py_predict_xor_context",
+          "__text_signature__": "(spikes, n_channels, history_bits)",
+          "aliases": [
+            "sc_neurocore_engine.py_predict_xor_context",
+            "sc_neurocore_engine.sc_neurocore_engine.py_predict_xor_context"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(spikes, n_channels, history_bits)",
+          "signature_error": null
+        },
         "py_predict_xor_ema": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "py_predict_xor_ema",
@@ -44820,6 +44840,23 @@
           },
           "kind": "builtin_function_or_method",
           "signature": "(h_indices, h_values, j_i, j_j, j_values, n_qubits, offset=0.0, n_sweeps=1000, num_reads=10, beta_start=0.1, beta_end=10.0, seed=42)",
+          "signature_error": null
+        },
+        "py_recover_xor_context": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_recover_xor_context",
+          "__qualname__": "py_recover_xor_context",
+          "__text_signature__": "(errors, n_channels, history_bits)",
+          "aliases": [
+            "sc_neurocore_engine.py_recover_xor_context",
+            "sc_neurocore_engine.sc_neurocore_engine.py_recover_xor_context"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(errors, n_channels, history_bits)",
           "signature_error": null
         },
         "py_recover_xor_ema": {
@@ -45160,6 +45197,23 @@
           },
           "kind": "builtin_function_or_method",
           "signature": "(r, theta, gain, n_steps, current)",
+          "signature_error": null
+        },
+        "py_update_spike_world_model": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_update_spike_world_model",
+          "__qualname__": "py_update_spike_world_model",
+          "__text_signature__": "(weights, bias, features, probabilities, samples, learning_rate)",
+          "aliases": [
+            "sc_neurocore_engine.py_update_spike_world_model",
+            "sc_neurocore_engine.sc_neurocore_engine.py_update_spike_world_model"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(weights, bias, features, probabilities, samples, learning_rate)",
           "signature_error": null
         },
         "py_wilson_cowan_simulate": {
@@ -107284,6 +107338,23 @@
           "signature": "(binary_train, dt=0.001)",
           "signature_error": null
         },
+        "py_predict_xor_context": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_predict_xor_context",
+          "__qualname__": "py_predict_xor_context",
+          "__text_signature__": "(spikes, n_channels, history_bits)",
+          "aliases": [
+            "sc_neurocore_engine.py_predict_xor_context",
+            "sc_neurocore_engine.sc_neurocore_engine.py_predict_xor_context"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(spikes, n_channels, history_bits)",
+          "signature_error": null
+        },
         "py_predict_xor_ema": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "py_predict_xor_ema",
@@ -107466,6 +107537,23 @@
           },
           "kind": "builtin_function_or_method",
           "signature": "(h_indices, h_values, j_i, j_j, j_values, n_qubits, offset=0.0, n_sweeps=1000, num_reads=10, beta_start=0.1, beta_end=10.0, seed=42)",
+          "signature_error": null
+        },
+        "py_recover_xor_context": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_recover_xor_context",
+          "__qualname__": "py_recover_xor_context",
+          "__text_signature__": "(errors, n_channels, history_bits)",
+          "aliases": [
+            "sc_neurocore_engine.py_recover_xor_context",
+            "sc_neurocore_engine.sc_neurocore_engine.py_recover_xor_context"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(errors, n_channels, history_bits)",
           "signature_error": null
         },
         "py_recover_xor_ema": {
@@ -108544,6 +108632,23 @@
           "signature": "(trains, bin_size=5, alpha=0.05)",
           "signature_error": null
         },
+        "py_update_spike_world_model": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "py_update_spike_world_model",
+          "__qualname__": "py_update_spike_world_model",
+          "__text_signature__": "(weights, bias, features, probabilities, samples, learning_rate)",
+          "aliases": [
+            "sc_neurocore_engine.py_update_spike_world_model",
+            "sc_neurocore_engine.sc_neurocore_engine.py_update_spike_world_model"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(weights, bias, features, probabilities, samples, learning_rate)",
+          "signature_error": null
+        },
         "py_van_rossum_distance": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "py_van_rossum_distance",
@@ -108989,28 +109094,22 @@
     }
   },
   "provenance": {
-    "capture_artifact": {
-      "archive_sha256": "3142ebcd4e5efa0659d2aaa39cb755884e845aff66df4cd4203a4882aeead2fa",
-      "id": 14476859300,
-      "inventory_sha256": "27328e5134c26755e9f4ceda635b3aa9b293d5028c1908f5e999513eaadb7447",
-      "job_id": 135178781018,
-      "run_id": 44403152944
-    },
+    "capture_sha256": "8ff1f2aaa7f4a56e5751e6ddd94e22c2c98ac21f27a0615fba1107b661ce31c2",
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
       "sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/__init__.py",
-        "sha256": "2cc87991c550d623ac99f241b43a63b494640dc9ad0e7deba4779a56af74f72f"
+        "sha256": "c4f879e5a8f8246e4d081a88c2d37aa09167a8e56060d39b9e99d94329b7541b"
       },
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "49b603d3cc2c552d90699b661c0377fc60552933ee7fb777b21e89497a59c73f"
+        "sha256": "8fe645d2f5b69f88094354e5695975df158ce9e83e4820b1a1497e4f984dac93"
       }
     },
     "python": "3.12.16",
-    "qualification_scope": "Installed default release wheel on Ubuntu 24.04 Linux x86-64. The complete interface matches an independent installation of the same wheel under CPython 3.12.16 and NumPy 2.5.4. The only additions since the prior reference are the two native ISI raster bindings.",
+    "qualification_scope": "Default release wheel built on Linux x86-64. The complete installed interface agrees under CPython 3.12.3 and NumPy 2.5.5 and independently under CPython 3.12.16 and NumPy 2.5.4. The changes since the prior reference are the three predictive-codec bindings.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
@@ -109022,7 +109121,7 @@
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "7358362c74bde9c066814189cce46c2578a73f63",
+    "source_base_sha": "4e77c33c93de64a8f8721cdb0e55170d32a1bdbf",
     "source_files_sha256": {
       ".github/workflows/v3-wheels.yml": "e7cfc65da9225eeaa9e21279faba5beb6326b7b8905f6059423f612f054c5a10",
       "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
@@ -109030,7 +109129,7 @@
       "bridge/.cargo/config.toml": "41a0cf98caba4b36d392af91ff1968990d09e8c5c361149e1110e60d3cd45585",
       "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
       "bridge/rayon_source_patch.toml": "bd56a5ab23d168303e594e1dabd00ca811857d71050b74854134ff515452583a",
-      "bridge/sc_neurocore_engine/__init__.py": "2cc87991c550d623ac99f241b43a63b494640dc9ad0e7deba4779a56af74f72f",
+      "bridge/sc_neurocore_engine/__init__.py": "c4f879e5a8f8246e4d081a88c2d37aa09167a8e56060d39b9e99d94329b7541b",
       "bridge/sc_neurocore_engine/_binding_types.pyi": "5e322f459ce70ee0fa3a0ebc22b7ce027bb0834ee6686ddfaed271de7116c757",
       "bridge/sc_neurocore_engine/_ir_native.py": "bb9b81650a3ee29da3ea72f449b444817a855b76f04cd805a7435f04e299dc84",
       "bridge/sc_neurocore_engine/attention.py": "650f62b8063d90623a847d13a9e68bfaf3d0a8a59c43f71ed058cc201397d694",
@@ -109248,7 +109347,7 @@
       "engine/src/bindings/population/wendling.rs": "0cd6ecf58a15dae9a84ca9e0c75ac3feb3eaafa5ee18ea0ee259c14f7ae96f5a",
       "engine/src/bindings/population/wilson_cowan_unit.rs": "11612f87cb26775a37ba41f20920e5afce055ac3444095962ab10f3a1b841c80",
       "engine/src/bindings/population/wong_wang_unit.rs": "730fea7ab92cfe9c28521ed6e3372ef7842c3b25b6543b25ce9a94004a8fc372",
-      "engine/src/bindings/predictive_coding.rs": "cab80477fc20dc8fdc497109df9c9b0a911daa4185a3fe2c22c1c74ac67a0f41",
+      "engine/src/bindings/predictive_coding.rs": "8c58fd7b9c71f372463b2d9838de7b4e70684d5d950b4e632e3d581a06b85ae9",
       "engine/src/bindings/predictive_coding_neuron.rs": "3422d3e12999f44a5b7bf163d276111c3a0da1522959e1d3f581f1ae200bc1e2",
       "engine/src/bindings/quantum_inspired_lif_neuron.rs": "f5d3956c5d37884cf005af3a271038cc58c6fcd3f5bae06094f05f5abb421e77",
       "engine/src/bindings/rall_dendrite.rs": "571628d2f61f0d4d2ac13532993c940bd9d1979577624b9eedf605adff0b5f42",
@@ -109402,6 +109501,7 @@
       "engine/src/ir/emit_sv/state.rs": "60de4570352a77f6f27113aee41afc36eda624eeaed1dfe693f48fd459281f29",
       "engine/src/ir/emit_sv/word.rs": "7dc94886961b9d2363f835897570f246f8a84af4746d3a018b7ccdd27cadd72a",
       "engine/src/ir/graph.rs": "84856c15cab924b847bd3cedfa7b3994b360fdb090794c50bafe1020a49a874b",
+      "engine/src/ir/ice40_calibration.rs": "53049a077df70009a8f2cb5fffa8df70836c6a08d2a4db9c114414adf5c3e3a9",
       "engine/src/ir/identifiers.rs": "e548abf49f918e6c0e98ae59a95f82007fe10cff146b2c025c20c54d1eea7d39",
       "engine/src/ir/mod.rs": "e75cbc97e5dd0237e84137d76ac5ecea7bdb48408ce6dbfa16d3a6a6c39a8cf4",
       "engine/src/ir/parser.rs": "8cc8ad8ea38532bba6f3bf2330fc9d78c565843f621aac957f319a56732cd1c7",
@@ -109668,7 +109768,9 @@
       "engine/src/photonic.rs": "d7b9d16f85fb0c5f10529f0c0964a02ebf35ab7d43128d74d6d27ee7e814fd86",
       "engine/src/photonic/bindings.rs": "ec131fa73606b40ca7727517461c806cccb733509978e1fd71622eec97812019",
       "engine/src/ping.rs": "1c75b3f32c99afb36aa25b0b17d9d2f193cb424a4bae00383a18fd50901e737f",
-      "engine/src/predictive_coding.rs": "a195ef21a243908b6b61fbb21f80dfaa0cbc0a7d61f82ba683358cef5fef8f4e",
+      "engine/src/predictive_coding.rs": "a7ea4dd3184dd239098e0a002812c55b54fc8bd85e9c511390e76ce30baa84d9",
+      "engine/src/predictive_coding/context.rs": "f32bcddebfaf5de22b13b242ec000e7dc0f0db94872c267b3174d863d5bcbd3f",
+      "engine/src/predictive_coding/world_model.rs": "2b3d2a255fc521c33978bb6d7aeb830c0eb9f6faca57a026624db20c71a05cc4",
       "engine/src/pyo3_neurons.rs": "06fbca29426885e3ad30fe9c4aeabda62a56579299cb7e01ecd99cc57cc100e4",
       "engine/src/quantum.rs": "79ae49b1c7605bd92ecb57014a6e8f72015dd0320db407131fc772a5cb502300",
       "engine/src/quantum/bindings.rs": "e43789abe6616c7bdb69eeac944a898629e8568db189ebc933faa2290c140f01",
@@ -109690,7 +109792,7 @@
       "engine/src/simd/sve.rs": "519052f48cc89f686bea841a0c1d718ad79b69fe8546f63ffa50bb9efac47ab7",
       "engine/src/sobol.rs": "8c103466daf5734cd80199edd5c0e02dcd647965ebd31f5b3216bb38d025db25",
       "engine/src/spike_events.rs": "fb18bd8e1382ffa1155c62f8b7f0771e9f7696573ae7a82f8872e5ca477970f3",
-      "engine/src/supervisor.rs": "cbd32091906bb9e7bad354562ce2ab474d072f783ce39615c6fe543046fae253",
+      "engine/src/supervisor.rs": "f9be3fa0a304b48db985bb00ecd4c73d29ce026d3b0e3044a740c0c56d18f172",
       "engine/src/synapses/mod.rs": "6693c7619ebdf18af85bb13c9b8a65e86a93e88c446316c4538aab988cfcfa61",
       "engine/src/topology.rs": "177592142138f29565125e38c798c7007a342a759e1c1d2ec406a94aaa1e3815",
       "engine/src/waveform_codec.rs": "e78074f8675bc80810be07cce79dab1f3f63eaf587cbbb00d4d49c12475a2a60",
@@ -109703,14 +109805,9 @@
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "0ddd248dfa161dfefb74649408847eb9e6891dfbaf8e1d39f3cdfb8fb08c9f4f",
-    "source_tree_sha": "9a0a34294f925cdfa8a1403cc80481a515287a92",
-    "wheel_artifact": {
-      "archive_sha256": "117d7345a1fc0f5267eb3012eb3db6ce1ce2b03935afaa769472c54413e7db46",
-      "id": 14476255172
-    },
+    "source_manifest_sha256": "9fecbcafa34160611dd04d6466962f8ca6b2467f1922c46bf07d2df8963e7410",
     "wheel_filename": "sc_neurocore_engine-4.2.0-cp312-cp312-manylinux_2_39_x86_64.whl",
-    "wheel_sha256": "3edde6b24df9e7f5f4a98606119e1b2dd3a767589f0e4d7cb0b756bf0095164b"
+    "wheel_sha256": "1538566bb189bf75704e9ed51684146c895adab0b86f3abe4fca4488d933aa08"
   },
   "schema": 1
 }

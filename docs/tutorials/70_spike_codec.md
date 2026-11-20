@@ -87,9 +87,22 @@ an entropy mode; compression ratios depend on the recording and framing.
 
 ## Codec 2: Predictive (BCI Implants)
 
-Maintains per-channel firing rate predictor (EMA). XOR actual vs predicted →
-compress only prediction errors (surprises). Structured correlations (bursts,
-oscillations, drift) produce sparser error matrices than raw data.
+The default EMA predictor estimates each channel's firing rate. The codec
+XORs predictions with actual spikes and compresses the residual. Bursts or
+other recurring patterns can make the residual sparser than the input.
+
+The catalogue also exposes fixed-point `lfsr`, binary `context` and
+autoregressive `world_model` predictors. All four work in the base wheel.
+[World-model packets](../reference/spike_codec_wire_formats.md#predictive-xor-containers)
+require matching NumPy, BLAS and math-library builds, numerical thread
+settings and CPU floating-point behaviour on both endpoints. Use EMA,
+LFSR or context when the encoder and decoder profiles differ.
+
+Select `backend="python"` for reference execution, or `backend="rust"` with
+a matching engine wheel. The Rust world model uses NumPy for probability
+evaluation and a native weight update. See the
+[paired benchmarks](../benchmarks/BENCHMARKS.md#predictive-codec-python-and-rust-timing)
+for the measured workloads and hardware.
 
 ```python
 from sc_neurocore.spike_codec import PredictiveSpikeCodec
@@ -97,6 +110,7 @@ from sc_neurocore.spike_codec import PredictiveSpikeCodec
 codec = PredictiveSpikeCodec(
     alpha=0.005,      # EMA smoothing (0.001-0.01 for 20kHz)
     threshold=0.5,    # predict spike if rate > threshold
+    backend="auto",
 )
 data, result = codec.compress(spikes)
 print(f"{result.compression_ratio:.1f}x, "
@@ -119,7 +133,8 @@ Decoder: bytes → ISI decode → XOR → recover → spikes
                       └── update(recovered)
 ```
 
-Best for: BCI implants where temporal structure exists (bursts, oscillations).
+Compare the complete packet size and latency on your recordings before
+choosing a predictor.
 
 ## Codec 3: Delta (Neural Probes)
 

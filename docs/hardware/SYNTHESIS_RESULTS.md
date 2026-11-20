@@ -20,7 +20,7 @@ Yosys 0.63; the current AER encoder observation uses Yosys 0.33 as detailed belo
 
 | Module | Cells | Wire Bits | Function |
 |--------|------:|----------:|----------|
-| `sc_bitstream_encoder.v` | 115 | 181 | LFSR-16 + comparator (bit-true with Python PredictiveSpikeCodec LFSR mode) |
+| `sc_bitstream_encoder.v` | 115 | 181 | 16-bit LFSR and comparator |
 | `sc_cordiv.v` | 2 | 6 | CORDIV stochastic division (1 AND + 1 MUX per bit) |
 | `sc_dotproduct_to_current.v` | 448 | 515 | AND accumulation + popcount for dense layer |
 | `sc_aer_encoder.v` | 1,953 | 2,132 | Corrected pending-bit priority encoder; Yosys 0.33, 2026-10-07 |

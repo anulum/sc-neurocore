@@ -20,18 +20,6 @@ source_sha256 = "989b8115d161baccb057ff59d53d5bef97e77d76adb5e0e55ce2d36f6973633
 reason = "Only Rust doc comments changed since the record: their Rustdoc links and array notation were repaired. The code tokens equal those of the measured bytes, so the KL refinement timings and partitions cannot move."
 
 [[review]]
-record = "isi_codec_backends.json"
-path = "src/sc_neurocore/spike_codec/codec.py"
-source_sha256 = "07526cbfb36389419e88cf4000b78d07902f2645c46b03e96fe4bed4f5246f83"
-reason = "Only docstrings changed since the record: three words take the British spelling (quantised, quantisation). The syntax tree without docstrings equals that of the measured bytes, so the codec timings and packet sizes cannot move."
-
-[[review]]
-record = "isi_codec_backends.json"
-path = "engine/src/codecs/isi.rs"
-source_sha256 = "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8"
-reason = "Only a Rust doc comment changed since the record: one word takes the British spelling (quantised). The code tokens equal those of the measured bytes, so the codec timings and packet sizes cannot move."
-
-[[review]]
 record = "bench_izhikevich2007_simulate.json"
 path = "src/sc_neurocore/neurons/models/izhikevich2007.py"
 source_sha256 = "39b68f8c97366b80ef403a1e4b8237017c6f07323dfd727737368ee546663860"

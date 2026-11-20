@@ -1144,6 +1144,25 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_predict_xor_context as py_predict_xor_context,
+        py_recover_xor_context as py_recover_xor_context,
+    )
+
+    __all__ += ["py_predict_xor_context", "py_recover_xor_context"]
+except ImportError:
+    pass
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_update_spike_world_model as py_update_spike_world_model,
+    )
+
+    __all__ += ["py_update_spike_world_model"]
+except ImportError:
+    pass
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         GpuDenseLayer as GpuDenseLayer,
         GpuLifBatch as GpuLifBatch,
         GpuKuramoto as GpuKuramoto,

@@ -155,8 +155,13 @@ def test_native_scope_is_component_specific_and_never_counts_generated_mirrors()
     waveform = describe_codec("waveform")
     assert waveform.variant("lossless").native_scope == "packet_coder"
     assert waveform.variant("lossless_rice").native_scope == "channel_coder"
-    assert describe_codec("predictive").variant("ema").native_scope == "predictor_kernels"
-    assert describe_codec("predictive").variant("context").native_scope == "none"
-    assert not describe_codec("predictive").backend_parameter
+    predictive = describe_codec("predictive")
+    assert predictive.backend_parameter
+    for variant in predictive.variants:
+        assert variant.native_scope == "predictor_kernels"
+        assert {"isi_encode_raster", "isi_decode_raster"} <= set(variant.native_symbols)
+
+    world_model = predictive.variant("world_model")
+    assert any("matching NumPy, BLAS" in note for note in world_model.notes)
     legacy = next(wire for wire in waveform.wire_formats if wire.name == "wfcx")
     assert legacy.readable and not legacy.writable

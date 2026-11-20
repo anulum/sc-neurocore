@@ -11,6 +11,14 @@
 //! Error = XOR(predicted, actual), magnitude = popcount(error) / L.
 //! No multiplications needed — maps to XOR gates + popcount tree on FPGA.
 
+#[path = "predictive_coding/context.rs"]
+mod context;
+pub(crate) use context::{predict_and_xor_context, xor_and_recover_context};
+
+#[path = "predictive_coding/world_model.rs"]
+mod world_model;
+pub(crate) use world_model::update_world_model;
+
 use crate::bitstream;
 
 /// Compute prediction error between two packed bitstreams via XOR + popcount.
@@ -128,7 +136,7 @@ pub fn xor_and_recover_ema(
     spikes
 }
 
-/// LFSR predict-and-XOR loop: bit-true with sc_bitstream_encoder.v.
+/// Predict and XOR using fixed-point rates and the encoder primitive’s 16-bit recurrence.
 /// Returns (error_matrix flattened row-major, correct_prediction_count).
 pub fn predict_and_xor_lfsr(
     spikes: &[i8],

@@ -604,9 +604,18 @@ baseline only after its source, wheel and runtime profile have been qualified.
 `tests/fixtures/engine_abi_default.json` retains the complete measured metadata
 for the Linux x86-64, CPython 3.12, NumPy 2.5.4 release wheel with default engine
 features. The reference retains the signed Q8 Dense default endpoint `y_max=256`.
-The only interface changes from the preceding capture are the additions of the
-native `isi_encode_raster` and `isi_decode_raster` bindings. Its provenance
-identifies the source commit, wheel, capture tool and loaded modules. The
+The reference adds `py_predict_xor_context`, `py_recover_xor_context` and
+`py_update_spike_world_model` to the preceding interface. Its provenance
+identifies the source base, exact source hashes, wheel, capture tool and
+loaded modules. The same wheel was captured independently with CPython
+3.12.3 and 3.12.16.
+
+The context functions require contiguous row-major int8 input with complete
+binary rows and a history length from 0 through 63. The world-model update
+accepts contiguous float64 arrays and mutates the weights and bias only after
+validating the dimensions. Public predictive packets use these functions
+through `PredictiveSpikeCodec` and retain the
+[wire-format contracts](../reference/spike_codec_wire_formats.md#predictive-xor-containers). The
 matching wheel job compares its installed capture with this reference. Other
 matrix profiles retain their own captures; this reference does not certify
 their inherited Python protocol members, optional exports or model behaviour.

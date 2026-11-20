@@ -24,7 +24,7 @@ contracts and cannot be substituted merely because both contain events.
 | Interface | Encode / decode | Required external decode arguments | Rust component scope |
 |---|---|---|---|
 | ISI | SpikeCodec.compress / decompress | T, N | Complete varint and Huffman raster packet encoder and decoder |
-| Predictive | PredictiveSpikeCodec.compress / decompress | T, N | EMA/LFSR predictor kernels and embedded ISI residual packet |
+| Predictive | PredictiveSpikeCodec.compress / decompress | T, N | EMA, LFSR and context kernels, world-model weight update, and embedded ISI residual packet |
 | Delta | DeltaSpikeCodec.compress / decompress | T, N | Embedded ISI residual packet |
 | Raster frames | StreamingSpikeCodec.compress / decompress | None for whole container | None |
 | AER | AERSpikeCodec.compress / decompress | None by default | None |
@@ -32,11 +32,12 @@ contracts and cannot be substituted merely because both contain events.
 | Lossless stream | LosslessStreamEncoder.encode / LosslessStreamDecoder.decode | Matching channels, ADC bits, groups, samples per packet and preceding state | Complete packet encoder/decoder |
 | Event stream | SpikeEventEncoder.encode / SpikeEventDecoder.decode | Matching channels, bin samples, timing, power bins, groups, samples per packet and preceding state | Complete event/power packet pipeline |
 
-ISI, waveform and the two raw stream APIs expose backend=auto/python/rust.
-Predictive caches all four EMA/LFSR native imports together; there is no
-backend keyword. Context and optional world_model use Python. world_model's
-module is excluded from the base wheel. Optional zstandard and PyWavelets
-can affect lossy waveform encoding; preserve their versions for reproduction.
+ISI, predictive, waveform and the two raw stream APIs expose
+`backend="auto"`, `"python"` and `"rust"`. Explicit predictive Rust requires
+the selected predictor's native component and Rust ISI. The base wheel
+includes the NumPy world-model codec predictor. It uses the same probability
+evaluation on both backends. Optional zstandard and PyWavelets can affect
+lossy waveform encoding. Preserve their versions for reproduction.
 A zstandard-encoded payload requires zstandard to decode; zlib fallback
 payloads do not.
 
@@ -115,14 +116,32 @@ Each header precedes an ordinary ISI residual packet:
 | ema | PSCX | alpha:float64, threshold:float64 |
 | lfsr | PSCL | alpha_q8:uint16, seed:uint16 |
 | context | PSCC | history length:uint8 |
-| world_model | PSCW | history length:uint8, alpha:float64, seed:uint16 |
+| world_model, default threshold 0.5 | PSCW | history length:uint8, alpha:float64, seed:uint16 |
+| world_model, explicit threshold | PSCT | history length:uint8, alpha:float64, seed:uint16, threshold:float64 |
 
-IEEE floating-point fields are big-endian. Decoder configuration is read from
-the predictor header; public T and N are still required. Predictors restart
-for every batch compress/decompress call. Seed/history and predictor arithmetic
-must match across implementations. Lossless residual coding reconstructs the
-input raster. Lossy residual quantisation may also change subsequent predictor
-feedback; it does not establish a bounded original timestamp displacement.
+IEEE floating-point fields are big-endian. The decoder reads the predictor
+parameters and resets the predictor for each packet. Required public arguments
+are the time rows T and channel count N.
+
+A quantised packet begins with **PSCQ**, original T:uint32 and effective
+precision:uint64. One complete predictor packet follows, containing an
+ordinary lossless ISI residual of the compact grid. The encoder ORs each
+complete block of input rows and drops the final partial block before
+predicting. The decoder can return the compact grid or the original row count
+with zeros after the complete bins. Timestamps are bin indices. The effective
+precision is bounded by original T plus one.
+
+PSCW packets use threshold 0.5. Older encoders omitted any nondefault world
+model threshold. Re-encode affected recordings from the original data.
+Use PSCW, PSCT and quantised packets containing either for same-profile
+processing. Their XOR recovery requires bitwise-equivalent NumPy probability
+evaluation at every step. Retain matching NumPy, BLAS and math-library builds,
+numerical thread settings and CPU floating-point behaviour. A change near the
+prediction threshold can change the recovered raster while the packet framing
+remains valid.
+
+Older lossy packets without PSCQ still use the legacy reader with their
+original external precision and feedback behaviour.
 
 ## Inter-channel delta
 

@@ -761,45 +761,39 @@ python benchmarks/snntorch_vs_sc_microbench.py --runs 5 --scales 100 500 1000
 ## ISI codec Python and Rust timing
 
 Each comparison measures both installed backends processing the same rasters
-and producing identical packets. The selected measurements span 2026-11-17
-to 2026-11-18 UTC. The source and wheel hashes, paired samples and hardware
-settings are in `benchmarks/results/isi_codec_backends.json`.
+and producing identical packets. These measurements ran on 2026-11-20 UTC.
+The source and wheel hashes, paired samples and hardware profile are in
+`benchmarks/results/isi_codec_backends.json`.
 
-The Linux comparisons use an HP ProLiant ML350p Gen8 with 2 ×
-Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz and 252 GiB of usable RAM. Both
-backends use logical CPU 11 with one thread. Across these
-runs, other work on that physical core and its SMT sibling reached up to
-16.9% of one CPU. The JSON records the core, socket, NUMA node, CPU
-governor and sampled frequency.
+The MSI GS73 Stealth 8RE has an Intel Core i7-8750H and 32 GiB of visible RAM.
+It ran Windows 11. Both backends used logical CPU 8 with SMT
+sibling 9 and one thread per numerical runtime. Windows processor
+counters and Job Object accounting recorded other CPU activity for every case.
+The maximum estimate was 18.9% of one logical CPU.
+Fresh-process peak RSS is unavailable on this profile.
 
-The SHD Huffman precision-one comparison uses the MSI GS73 Stealth 8RE with an
-Intel Core i7-8750H and 32 GiB of visible RAM,
-running Windows 11. Both backends use logical CPU 8 with one thread.
-Windows processor counters and Job Object accounting measured 3.7%
-other CPU activity across that physical core. Fresh-process peak RSS is marked
-unavailable for the Windows run. [Windows processor counters](https://learn.microsoft.com/en-us/windows/win32/api/pdh/nf-pdh-pdhgetformattedcountervalue),
-[Windows process-tree accounting](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_accounting_information).
-
-Each warm timing is the median of seven sums of resident per-recording calls.
-The speedup is the median of paired Python/Rust round-trip ratios measured on
-the hardware shown in that row. The JSON contains the paired quartiles and
-five independent fresh-interpreter samples per backend for a representative
-recording.
+Each warm timing is the median of sums of resident per-recording calls.
+SHD and the standard synthetic runs use seven repetitions. The JSON lists
+any synthetic cases repeated with 63 warm repetitions to reduce the effect
+of process startup on the load estimate. Use `--repetitions 63` for those
+rows. The speedup is the median of paired Python/Rust round-trip ratios.
+The JSON contains paired quartiles and five independent fresh-interpreter
+samples per backend for a representative recording.
 
 | Input | Entropy | Timing precision | Hardware | Python encode / decode / round trip (ms) | Rust encode / decode / round trip (ms) | Paired round-trip speedup |
 |---|---|---:|---|---:|---:|---:|
-| SHD | auto | 1 | ML350p Linux | 22823.312 / 27963.048 / 50931.144 | 1803.931 / 343.611 / 1887.252 | 26.97× |
-| SHD | auto | 5 | ML350p Linux | 18766.340 / 26997.188 / 45996.890 | 1775.010 / 239.457 / 1840.799 | 24.98× |
-| SHD | huffman | 1 | MSI Windows | 13279.832 / 32257.644 / 45714.840 | 2273.646 / 2432.822 / 4625.937 | 9.91× |
-| SHD | huffman | 5 | ML350p Linux | 17950.939 / 38134.605 / 56000.385 | 3367.278 / 2535.551 / 5735.852 | 9.77× |
-| SHD | varint | 1 | ML350p Linux | 23012.420 / 28041.032 / 51192.530 | 1793.316 / 322.483 / 1923.004 | 26.69× |
-| SHD | varint | 5 | ML350p Linux | 17472.380 / 25161.119 / 42807.687 | 1687.173 / 234.645 / 1746.791 | 24.51× |
-| Synthetic | auto | 1 | ML350p Linux | 15.269 / 42.383 / 57.602 | 3.420 / 3.636 / 6.960 | 8.23× |
-| Synthetic | auto | 5 | ML350p Linux | 9.066 / 17.375 / 26.675 | 2.443 / 1.144 / 3.510 | 7.59× |
-| Synthetic | huffman | 1 | ML350p Linux | 17.102 / 53.715 / 70.613 | 4.028 / 5.131 / 8.986 | 7.83× |
-| Synthetic | huffman | 5 | ML350p Linux | 9.744 / 25.345 / 34.943 | 2.930 / 2.216 / 5.020 | 6.98× |
-| Synthetic | varint | 1 | ML350p Linux | 15.891 / 23.623 / 39.472 | 1.327 / 0.332 / 1.527 | 25.99× |
-| Synthetic | varint | 5 | ML350p Linux | 10.020 / 15.251 / 25.326 | 1.333 / 0.164 / 1.422 | 17.82× |
+| SHD | auto | 1 | MSI Windows | 12336.323 / 15957.029 / 28292.968 | 1132.577 / 141.243 / 1256.182 | 22.47× |
+| SHD | auto | 5 | MSI Windows | 10403.909 / 14981.633 / 25415.590 | 1126.561 / 119.229 / 1227.359 | 20.72× |
+| SHD | huffman | 1 | MSI Windows | 13407.856 / 32025.600 / 45407.805 | 2210.082 / 2454.172 / 4609.466 | 9.84× |
+| SHD | huffman | 5 | MSI Windows | 9787.069 / 21453.639 / 31218.481 | 1983.691 / 1446.511 / 3430.168 | 9.11× |
+| SHD | varint | 1 | MSI Windows | 11962.783 / 15718.503 / 27645.068 | 1086.804 / 134.562 / 1207.790 | 22.90× |
+| SHD | varint | 5 | MSI Windows | 9970.879 / 14527.476 / 24521.733 | 1083.396 / 101.828 / 1177.143 | 20.79× |
+| Synthetic | auto | 1 | MSI Windows | 10.639 / 29.437 / 40.029 | 2.183 / 2.227 / 4.267 | 9.40× |
+| Synthetic | auto | 5 | MSI Windows | 6.211 / 11.898 / 17.999 | 1.499 / 0.733 / 2.137 | 8.45× |
+| Synthetic | huffman | 1 | MSI Windows | 11.726 / 36.058 / 47.347 | 2.386 / 3.096 / 5.403 | 8.74× |
+| Synthetic | huffman | 5 | MSI Windows | 6.716 / 17.140 / 23.700 | 1.784 / 1.337 / 3.040 | 7.77× |
+| Synthetic | varint | 1 | MSI Windows | 10.732 / 17.034 / 27.970 | 0.892 / 0.210 / 1.075 | 26.84× |
+| Synthetic | varint | 5 | MSI Windows | 6.747 / 11.072 / 17.823 | 0.887 / 0.092 / 0.945 | 18.86× |
 
 Synthetic inputs cover sparse, dense and bursting rasters. The recorded
 cohort uses all 2,264 Spiking Heidelberg Digits test recordings from Cramer,
@@ -820,6 +814,56 @@ test split with `--shd shd_test.h5` for the recorded cohort.
 ```sh
 python benchmarks/bench_isi_codec.py --entropy auto --precision 1 --output isi-auto.json
 ```
+
+---
+
+## Predictive codec Python and Rust timing
+
+Measured on 2026-11-20 UTC on an MSI GS73 Stealth 8RE
+with an Intel Core i7-8750H and 32 GiB of visible RAM, running Windows 11.
+Both backends used logical CPU 6 with SMT sibling 7
+and one thread per numerical runtime. The record includes wheel digests
+and measured contention from Windows processor counters and Job Objects.
+Other work on the measured physical core reached an estimated
+19.8% of one logical CPU.
+
+The synthetic cohort contains four deterministic sparse, dense and bursting
+rasters. The SHD input is test recording 0, rasterised to 731 × 700 at
+one millisecond per row. Precision 1 retains the original raster. Precision
+2 groups pairs of rows before prediction and drops the partial tail.
+
+Each timing is the median of the paired resident round-trip samples,
+summing the four recordings per synthetic trial. A round trip includes
+prediction, the complete ISI residual packet and reconstruction. The
+paired ratio is the median of per-trial Python time divided by Rust time.
+The world-model path uses NumPy for probabilities and native weight updates
+and ISI in the Rust path. Timings apply to these inputs and settings.
+
+| Predictor | Input | Precision | Python round trip (ms) | Rust round trip (ms) | Paired Python / Rust |
+|---|---|---:|---:|---:|---:|
+| ema | Synthetic | 1 | 144.423 | 7.571 | 19.07× |
+| ema | SHD recording 0 | 1 | 27.791 | 3.440 | 8.25× |
+| ema | Synthetic | 2 | 82.837 | 6.420 | 12.93× |
+| ema | SHD recording 0 | 2 | 28.650 | 4.255 | 6.81× |
+| lfsr | Synthetic | 1 | 2027.261 | 9.274 | 217.27× |
+| lfsr | SHD recording 0 | 1 | 1512.339 | 4.474 | 338.01× |
+| lfsr | Synthetic | 2 | 1031.753 | 7.136 | 144.58× |
+| lfsr | SHD recording 0 | 2 | 778.883 | 4.931 | 162.02× |
+| context | Synthetic | 1 | 1285.642 | 34.573 | 37.07× |
+| context | SHD recording 0 | 1 | 1006.651 | 29.885 | 33.64× |
+| context | Synthetic | 2 | 657.091 | 21.902 | 29.72× |
+| context | SHD recording 0 | 2 | 520.377 | 19.238 | 27.43× |
+| world_model | Synthetic | 1 | 1703.965 | 834.005 | 2.05× |
+| world_model | SHD recording 0 | 1 | 29061.224 | 5789.719 | 5.03× |
+| world_model | Synthetic | 2 | 861.652 | 418.909 | 2.07× |
+| world_model | SHD recording 0 | 2 | 14400.654 | 2998.122 | 4.86× |
+
+The raw artifact retains encode, decode, round trip and fresh-interpreter
+samples, along with packet sizes and the source and reconstruction digests.
+Both paths produced identical packets and decoded each other's output.
+Install both wheels and run `benchmarks/bench_predictive_codec.py compare`
+with the selected predictor and precision to reproduce a row. For SHD, add
+`--shd shd_test.h5 --recording 0`. [Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/predictive_codec_backends.json).
 
 ---
 
@@ -869,7 +913,7 @@ reobserved with Yosys 0.33 on 2026-10-07:
 
 | Verilog Module | Cells | Function |
 |---------------|------:|----------|
-| `sc_bitstream_encoder.v` | 115 | LFSR predictor (bit-true with Python/Rust) |
+| `sc_bitstream_encoder.v` | 115 | Stochastic bitstream encoder with an LFSR |
 | `sc_cordiv.v` | 2 | Stochastic division |
 | `sc_dotproduct_to_current.v` | 448 | AND accumulation + popcount |
 | `sc_aer_encoder.v` | 1,953 | Corrected AER pending-bit priority encoder (Yosys 0.33) |

@@ -48,6 +48,7 @@ bve = "bve"       # einsum index label
 ment = "ment"     # suffix fragment in the content-indexer stemmer
 ful = "ful"       # suffix fragment in the content-indexer stemmer
 # Hardware / reliability acronyms
+aer = "aer"       # Address-Event Representation (neuromorphic event encoding)
 DED = "DED"       # Double-Error-Detection (SEC-DED ECC)
 ane = "ane"       # Apple Neural Engine profile identifier
 VALU = "VALU"     # AMD vector ALU block naming

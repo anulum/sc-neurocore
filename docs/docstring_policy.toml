@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2242
+expected_file_count = 2249
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9017,3 +9017,31 @@ rationale = "Classify every tracked Julia source by its declarations, its exact 
 [[file]]
 path = "tests/test_julia_lane_inventory.py"
 rationale = "Hold the Julia lane inventory to its rules, to the repository, and to the rule that every declared or loaded Julia file parses."
+
+[[file]]
+path = "benchmarks/bench_predictive_codec.py"
+rationale = "Measure complete predictive packets through the installed Python and Rust codec paths."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/_predictive_kernels.py"
+rationale = "Document the reference EMA, fixed-point LFSR and context transforms."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/_world_model.py"
+rationale = "Document the packaged online predictor and its exact residual and update contracts."
+
+[[file]]
+path = "tests/test_predictive_coding_engine_bindings.py"
+rationale = "Exercise installed predictor bindings, whole-packet parity and atomic shape rejection."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_wire_compatibility.py"
+rationale = "Test legacy golden packets, quantised reconstruction and predictor boundary validation."
+
+[[file]]
+path = "examples/codec_benchmark_suite.py"
+rationale = "Document workload comparisons and query the four predictive backends through the catalogue."
+
+[[file]]
+path = "examples/demo_waveform_codec.py"
+rationale = "Document the synthetic waveform generator and the compression demo entry point."

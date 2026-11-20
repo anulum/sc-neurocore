@@ -217,7 +217,6 @@ def main() -> None:
         "schema_version": 2,
         "started_utc": started,
         "finished_utc": datetime.now(UTC).isoformat(),
-        "host": platform.node(),
         "platform": platform.platform(),
         "processor": platform.processor(),
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,

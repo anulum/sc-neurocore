@@ -6,23 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Predictive spike codec: only transmit surprises
 
-"""Predictive spike compression: XOR-based prediction error coding.
+"""Encode binary spike rasters with deterministic XOR predictors and ISI residuals.
 
-Architecture:
-    1. Maintain per-channel firing rate predictor (exponential moving average)
-    2. At each timestep, predict spike pattern from learned rates
-    3. XOR actual vs predicted → prediction error (surprise) bits
-    4. ISI-compress only the error bits (sparser than raw spikes)
-    5. Decoder runs identical predictor → lossless reconstruction
-
-The predictor is deterministic given the same seed, so encoder and decoder
-stay synchronized without transmitting predictor state.
-
-Neuralink context: 1024+ channels at 20 kHz produce ~200 Mbps raw.
-Typical cortical neurons fire at 0.5-5 Hz → >99.9% of bits are zeros.
-ISI coding alone gives 50-200x. Predictive coding removes the remaining
-structured correlations (bursts, oscillations, drift) for additional 2-5x
-on top of ISI baseline.
+Each packet selects its predictor parameters. Encoding and decoding start from
+the same model state and update it from observed or recovered samples. Lossless
+packets reproduce the original raster. Quantised packets run the predictor on
+complete timing bins and expose those bins on decode.
 """
 
 from __future__ import annotations
@@ -30,15 +19,33 @@ from __future__ import annotations
 from typing import Any
 
 from dataclasses import dataclass
+from math import isfinite
+from operator import index
+from struct import Struct
 
 import numpy as np
 
-from .codec import SpikeCodec, CompressionResult
+from ._predictive_kernels import (
+    _LFSR_MASK as _LFSR_MASK,
+    _RatePredictor as _RatePredictor,
+    _lfsr16_step as _lfsr16_step,
+    _predict_and_xor as _predict_and_xor,
+    _predict_and_xor_context as _predict_and_xor_context,
+    _predict_and_xor_lfsr as _predict_and_xor_lfsr,
+    _xor_and_recover as _xor_and_recover,
+    _xor_and_recover_context as _xor_and_recover_context,
+    _xor_and_recover_lfsr as _xor_and_recover_lfsr,
+)
+from .codec import CompressionResult, SpikeCodec, _dimension
 
-# ``sc_neurocore.world_model`` is not part of the base distribution, so the world-model
-# predictor imports it only when it is used; every other predictor works without it.
+_EMA = Struct("!dd")
+_LFSR = Struct("!HH")
+_CONTEXT = Struct("!B")
+_WORLD_MODEL = Struct("!BdH")
+_WORLD_MODEL_THRESHOLD = Struct("!BdHd")
+_QUANTISED_GRID = Struct("!IQ")
 
-# Rust backend (optional, ~100x faster for LFSR predictor)
+# Optional native predictor components.
 _HAS_RUST = False
 _rust_predict_ema: Any = None
 _rust_predict_lfsr: Any = None
@@ -62,6 +69,47 @@ except (ImportError, AttributeError):  # pragma: no cover
     _HAS_RUST = False
 
 
+try:
+    from sc_neurocore_engine import py_predict_xor_context, py_recover_xor_context
+except ImportError:
+    py_predict_xor_context = None
+    py_recover_xor_context = None
+
+
+def _binary_raster(spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Validate samples before narrowing their representation to int8."""
+    raster = np.asarray(spikes)
+    if raster.ndim != 2 or raster.dtype.kind not in "biuf":
+        raise ValueError("Predictive codec needs a two-dimensional binary raster")
+    _dimension(raster.shape[0])
+    _dimension(raster.shape[1])
+    if not np.logical_or(raster == 0, raster == 1).all():
+        raise ValueError("Predictive raster samples must be 0 or 1")
+    return raster.astype(np.int8, copy=False)
+
+
+def _uint(value: int, minimum: int, maximum: int, name: str) -> int:
+    """Validate one exact wire integer before doing any predictor work."""
+    value = index(value)
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return value
+
+
+def _finite_model_parameters(alpha: float, threshold: float) -> None:
+    """Refuse non-finite floating-point predictor state."""
+    if not (isfinite(alpha) and isfinite(threshold)):
+        raise ValueError("Predictor alpha and threshold must be finite")
+
+
+def _read_predictor_header(data: bytes, layout: Struct) -> tuple[tuple[Any, ...], bytes]:
+    """Return complete fields and the exact remaining residual packet."""
+    end = 4 + layout.size
+    if len(data) < end:
+        raise ValueError("Truncated predictive header")
+    return layout.unpack_from(data, 4), data[end:]
+
+
 @dataclass
 class PredictiveCompressionResult(CompressionResult):
     """Compression result with predictive coding metrics."""
@@ -71,263 +119,13 @@ class PredictiveCompressionResult(CompressionResult):
     predictor_type: str = "ema"
 
 
-class _RatePredictor:
-    """Per-channel EMA rate predictor (legacy, kept for reference)."""
-
-    def __init__(self, n_channels: int, alpha: float = 0.005, threshold: float = 0.5) -> None:
-        """Initialize per-channel rates and threshold parameters."""
-        self.n_channels = n_channels
-        self.alpha = alpha
-        self.threshold = threshold
-        self.rates = np.zeros(n_channels, dtype=np.float64)
-
-    def predict(self) -> np.ndarray[Any, Any]:
-        """Predict active channels from the current EMA rate estimates."""
-        return (self.rates > self.threshold).astype(np.int8)
-
-    def update(self, actual: np.ndarray[Any, Any]) -> None:
-        """Update EMA rates from one observed spike vector."""
-        self.rates += self.alpha * (actual.astype(np.float64) - self.rates)
-
-    def reset(self) -> None:
-        """Reset all channel rates to zero."""
-        self.rates[:] = 0.0
-
-
-def _predict_and_xor_context(
-    spikes: np.ndarray[Any, Any], N: int, context_bits: int = 8
-) -> tuple[np.ndarray[Any, Any], int]:
-    """Context-model predict-XOR loop. Returns (errors, correct_count).
-
-    Per-channel Markov predictor: hash last K spike states as context key,
-    predict based on accumulated statistics for that context.
-    Captures temporal patterns (bursts, oscillations, refractory periods)
-    that EMA misses.
-    """
-    T = spikes.shape[0]
-    errors = np.empty_like(spikes)
-    correct = 0
-    mask = (1 << context_bits) - 1
-
-    # Per-channel: context register + prediction table
-    contexts = np.zeros(N, dtype=np.int64)
-    # Tables: context_key → [n_spikes_after, n_total]
-    tables: list[dict[int, list[int]]] = [{} for _ in range(N)]
-
-    for t in range(T):
-        row = spikes[t]
-        for ch in range(N):
-            ctx = int(contexts[ch])
-            table = tables[ch]
-
-            # Predict from context statistics
-            if ctx in table:
-                n_spike, n_total = table[ctx]
-                predicted = 1 if n_spike * 2 > n_total else 0
-            else:
-                predicted = 0
-
-            actual = int(row[ch])
-            err = actual ^ predicted
-            errors[t, ch] = err
-            if err == 0:
-                correct += 1
-
-            # Update context table
-            if ctx not in table:
-                table[ctx] = [0, 0]
-            table[ctx][1] += 1
-            if actual:
-                table[ctx][0] += 1
-
-            # Shift context register
-            contexts[ch] = ((contexts[ch] << 1) | actual) & mask
-
-    return errors, correct
-
-
-def _xor_and_recover_context(
-    errors: np.ndarray[Any, Any], N: int, context_bits: int = 8
-) -> np.ndarray[Any, Any]:
-    """Context-model XOR-recover loop for decoder."""
-    T = errors.shape[0]
-    spikes = np.empty((T, N), dtype=np.int8)
-    mask = (1 << context_bits) - 1
-    contexts = np.zeros(N, dtype=np.int64)
-    tables: list[dict[int, list[int]]] = [{} for _ in range(N)]
-
-    for t in range(T):
-        for ch in range(N):
-            ctx = int(contexts[ch])
-            table = tables[ch]
-
-            if ctx in table:
-                n_spike, n_total = table[ctx]
-                predicted = 1 if n_spike * 2 > n_total else 0
-            else:
-                predicted = 0
-
-            actual = int(errors[t, ch]) ^ predicted
-            spikes[t, ch] = actual
-
-            if ctx not in table:
-                table[ctx] = [0, 0]
-            table[ctx][1] += 1
-            if actual:
-                table[ctx][0] += 1
-
-            contexts[ch] = ((contexts[ch] << 1) | actual) & mask
-
-    return spikes
-
-
-def _predict_and_xor(
-    spikes: np.ndarray[Any, Any], N: int, alpha: float, threshold: float
-) -> tuple[np.ndarray[Any, Any], int]:
-    """EMA predict-XOR loop. Returns (errors, correct_count)."""
-    T = spikes.shape[0]
-    rates = np.zeros(N, dtype=np.float64)
-    errors = np.empty_like(spikes)
-    correct = 0
-    alpha_f = float(alpha)
-    one_minus_alpha = 1.0 - alpha_f
-    for t in range(T):
-        row = spikes[t]
-        predicted = (rates > threshold).view(np.int8)
-        errors[t] = row ^ predicted
-        correct += N - int(np.count_nonzero(errors[t]))
-        rates *= one_minus_alpha
-        rates += alpha_f * row
-    return errors, correct
-
-
-def _xor_and_recover(
-    errors: np.ndarray[Any, Any], N: int, alpha: float, threshold: float
-) -> np.ndarray[Any, Any]:
-    """EMA XOR-recover loop for decoder."""
-    T = errors.shape[0]
-    rates = np.zeros(N, dtype=np.float64)
-    spikes = np.empty((T, N), dtype=np.int8)
-    alpha_f = float(alpha)
-    one_minus_alpha = 1.0 - alpha_f
-    for t in range(T):
-        predicted = (rates > threshold).view(np.int8)
-        row = errors[t] ^ predicted
-        spikes[t] = row
-        rates *= one_minus_alpha
-        rates += alpha_f * row
-    return spikes
-
-
-# --- SC-native LFSR predictor (bit-true with sc_bitstream_encoder.v) ---
-
-# LFSR-16 polynomial: x^16 + x^14 + x^13 + x^11 + 1
-# Taps (0-indexed from MSB): 15, 13, 12, 10
-_LFSR_MASK = 0xFFFF
-
-
-def _lfsr16_step(reg: int) -> int:
-    """One step of 16-bit Galois LFSR. Matches sc_bitstream_encoder.v."""
-    feedback = ((reg >> 15) ^ (reg >> 13) ^ (reg >> 12) ^ (reg >> 10)) & 1
-    return ((reg << 1) & _LFSR_MASK) | feedback
-
-
-def _predict_and_xor_lfsr(
-    spikes: np.ndarray[Any, Any],
-    N: int,
-    alpha_q8: int,
-    seed: int,
-) -> tuple[np.ndarray[Any, Any], int]:
-    """LFSR-based predict-XOR loop. Bit-true with Verilog.
-
-    Uses Q8.8 fixed-point rate tracking + LFSR comparator for prediction.
-    Same polynomial and step semantics as sc_bitstream_encoder.v.
-
-    Parameters
-    ----------
-    spikes : (T, N) int8
-    N : int
-    alpha_q8 : int
-        Q8.8 smoothing factor. 1 = 1/256 ≈ 0.004.
-    seed : int
-        LFSR seed (non-zero, 16-bit).
-    """
-    T = spikes.shape[0]
-    # Per-channel Q8.8 rate estimates (0-255 maps to 0.0-~1.0)
-    rates_q8 = np.zeros(N, dtype=np.int32)
-    errors = np.empty_like(spikes)
-    correct = 0
-
-    # Per-channel LFSR state (different seed per channel for decorrelation)
-    lfsr_regs = np.array(
-        [((seed + ch * 7919) & _LFSR_MASK) or 1 for ch in range(N)],
-        dtype=np.int32,
-    )
-
-    for t in range(T):
-        row = spikes[t]
-
-        # Predict: LFSR < rate_q8 → predict spike (same as Verilog comparator)
-        predicted = (lfsr_regs < rates_q8).astype(np.int8)
-
-        # Step all LFSRs
-        for ch in range(N):
-            lfsr_regs[ch] = _lfsr16_step(int(lfsr_regs[ch]))
-
-        # XOR
-        errors[t] = row ^ predicted
-        correct += N - int(np.count_nonzero(errors[t]))
-
-        # Q8.8 EMA update: rate += alpha * (actual - rate) >> 8
-        # Equivalent: rate = rate + alpha * (actual*256 - rate) >> 8
-        for ch in range(N):
-            target = 255 if row[ch] else 0
-            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8
-            rates_q8[ch] = max(0, min(255, rates_q8[ch]))
-
-    return errors, correct
-
-
-def _xor_and_recover_lfsr(
-    errors: np.ndarray[Any, Any],
-    N: int,
-    alpha_q8: int,
-    seed: int,
-) -> np.ndarray[Any, Any]:
-    """LFSR-based XOR-recover loop for decoder."""
-    T = errors.shape[0]
-    rates_q8 = np.zeros(N, dtype=np.int32)
-    spikes = np.empty((T, N), dtype=np.int8)
-
-    lfsr_regs = np.array(
-        [((seed + ch * 7919) & _LFSR_MASK) or 1 for ch in range(N)],
-        dtype=np.int32,
-    )
-
-    for t in range(T):
-        predicted = (lfsr_regs < rates_q8).astype(np.int8)
-
-        for ch in range(N):
-            lfsr_regs[ch] = _lfsr16_step(int(lfsr_regs[ch]))
-
-        row = errors[t] ^ predicted
-        spikes[t] = row
-
-        for ch in range(N):
-            target = 255 if row[ch] else 0
-            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8
-            rates_q8[ch] = max(0, min(255, rates_q8[ch]))
-
-    return spikes
-
-
 class PredictiveSpikeCodec:
     """Predictive spike codec: compress prediction errors, not raw spikes.
 
     Four predictor modes:
         'ema' (default): float EMA rate tracking + threshold comparison.
-        'lfsr': Q8.8 fixed-point rate + LFSR comparator. Bit-true with
-                sc_bitstream_encoder.v — maps directly to Verilog RTL.
+        'lfsr': Q8.8 rate tracking with the 16-bit generator recurrence
+                used by sc_bitstream_encoder.v.
         'context': Markov context predictor. Hashes last K spike states
                    per channel, predicts from accumulated statistics.
         'world_model': Learnable autoregressive predictor (LMS-trained).
@@ -339,33 +137,42 @@ class PredictiveSpikeCodec:
            a. predicted[t] = predictor.predict()
            b. error[t] = actual[t] XOR predicted[t]
            c. predictor.update(actual[t])
-        2. ISI-compress the error matrix (sparser than raw spikes)
+        2. ISI-compress the error matrix
         3. Pack with header (predictor params for decoder sync)
 
     Parameters
     ----------
     alpha : float
-        EMA smoothing factor (ema mode). Ignored in lfsr/context mode.
+        EMA smoothing factor or world-model learning rate.
     threshold : float
-        Spike prediction threshold (ema mode). Ignored in lfsr/context mode.
+        Spike prediction threshold in EMA and world-model modes.
     predictor : str
-        'ema', 'lfsr', or 'context'.
+        'ema', 'lfsr', 'context', or 'world_model'.
     alpha_q8 : int
         Q8.8 smoothing factor for lfsr mode. 1 = 1/256 ≈ 0.004.
     seed : int
-        LFSR seed for lfsr mode (non-zero, 16-bit).
+        Unsigned 16-bit seed for LFSR or world-model mode. LFSR requires a nonzero seed.
     context_bits : int
-        Context history length for context mode (default 8 = last 8 spikes).
+        Number of past time steps (default 8). Context accepts 0–63 and
+        the world model accepts 1–255.
     base_mode : str
         'lossless' or 'lossy' for the underlying ISI codec.
     timing_precision : int
-        For lossy mode: quantize timing resolution.
+        Number of original rows in each complete bin in lossy mode.
+        Prediction runs on the quantised grid. The final partial bin is dropped.
+    backend : {"auto", "python", "rust"}
+        Select a complete available codec path. Auto uses native components
+        when available. Rust requires the matching predictor and ISI components.
+        The world-model implementation uses NumPy for probability evaluation
+        and can use Rust for its least-mean-squares state update.
     """
 
     HEADER_MAGIC = b"PSCX"  # Predictive Spike Codec XOR (EMA)
     HEADER_MAGIC_LFSR = b"PSCL"  # Predictive Spike Codec LFSR
     HEADER_MAGIC_CTX = b"PSCC"  # Predictive Spike Codec Context
     HEADER_MAGIC_WM = b"PSCW"  # Predictive Spike Codec World Model
+    HEADER_MAGIC_WM_THRESHOLD = b"PSCT"
+    HEADER_MAGIC_QUANTISED = b"PSCQ"
 
     def __init__(
         self,
@@ -377,20 +184,35 @@ class PredictiveSpikeCodec:
         context_bits: int = 8,
         base_mode: str = "lossless",
         timing_precision: int = 1,
-    ):
+        *,
+        backend: str = "auto",
+    ) -> None:
+        """Initialise predictor settings and the underlying raster codec."""
         self.alpha = alpha
         self.threshold = threshold
         self.predictor = predictor
         self.alpha_q8 = alpha_q8
         self.seed = seed
         self.context_bits = context_bits
+        self._backend = backend
         # Context predictor benefits from Huffman backend (sparse scattered errors)
         entropy = "huffman" if predictor in ("context", "world_model") else "auto"
         self.base_codec = SpikeCodec(
             mode=base_mode,
             timing_precision=timing_precision,
             entropy=entropy,
+            backend=backend,
         )
+
+    def _use_native(self, available: bool, predictor: str) -> bool:
+        """Select the requested backend for the packet's actual predictor."""
+        if self._backend == "python":
+            return False
+        if self._backend == "rust" and not available:
+            raise ValueError(
+                f"backend 'rust' needs sc_neurocore_engine with {predictor} prediction"
+            )
+        return available
 
     def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, PredictiveCompressionResult]:
         """Compress spike raster using predictive error coding.
@@ -403,59 +225,104 @@ class PredictiveSpikeCodec:
         -------
         (compressed_bytes, PredictiveCompressionResult)
         """
-        import struct
+        spikes = _binary_raster(spikes)
+        rows, channels = spikes.shape
+        precision = self.base_codec._precision(rows)
+        residual_codec = self.base_codec
+        prefix = b""
+        raster = spikes
+        if precision > 1:
+            bins = rows // precision
+            raster = spikes[: bins * precision].reshape(bins, precision, channels)
+            raster = (raster > 0).any(axis=1).astype(np.int8)
+            residual_codec = self._lossless_residual_codec()
+            prefix = self.HEADER_MAGIC_QUANTISED + _QUANTISED_GRID.pack(rows, precision)
 
-        spikes = np.asarray(spikes, dtype=np.int8)
+        header, errors, correct_predictions = self._predict_residual(raster)
+        residual, _ = residual_codec.compress(errors)
+        encoded = prefix + header + residual
+        original_bits = rows * channels
+        compressed_bits = len(encoded) * 8
+        predicted_bits = max(raster.size, 1)
+        return encoded, PredictiveCompressionResult(
+            original_bits=original_bits,
+            compressed_bits=compressed_bits,
+            compression_ratio=original_bits / compressed_bits,
+            n_spikes=int(np.sum(spikes)),
+            n_neurons=channels,
+            n_timesteps=rows,
+            lossless=self.base_codec.mode == "lossless",
+            prediction_accuracy=correct_predictions / predicted_bits,
+            error_sparsity=1.0 - int(np.sum(errors)) / predicted_bits,
+            predictor_type=self.predictor,
+        )
+
+    def _lossless_residual_codec(self) -> SpikeCodec:
+        """Encode or decode the residual grid at its own full resolution."""
+        return SpikeCodec(entropy=self.base_codec.entropy, backend=self.base_codec.backend)
+
+    def _predict_residual(
+        self, spikes: np.ndarray[Any, Any]
+    ) -> tuple[bytes, np.ndarray[Any, Any], int]:
+        """Create the predictor header and exact residuals for the input grid."""
         T, N = spikes.shape
-        original_bits = T * N
-
         if self.predictor == "world_model":
-            from ..world_model.spike_predictor import predict_and_xor_world_model
+            _finite_model_parameters(self.alpha, self.threshold)
+            history_len = _uint(self.context_bits, 1, 255, "world-model history length")
+            seed = _uint(self.seed, 0, 65535, "world-model seed")
+            from . import _world_model as spike_predictor
 
-            errors, correct_predictions = predict_and_xor_world_model(
+            use_native = self._use_native(
+                spike_predictor.py_update_spike_world_model is not None, "world-model"
+            )
+            errors, correct_predictions = spike_predictor.predict_and_xor_world_model(
                 spikes,
                 N,
-                history_len=self.context_bits,
+                history_len=history_len,
                 lr=self.alpha,
                 threshold=self.threshold,
-                seed=self.seed,
+                seed=seed,
+                use_native=use_native,
             )
-            error_data, _ = self.base_codec.compress(errors)
-            header = self.HEADER_MAGIC_WM + struct.pack(
-                "!BdH",
-                self.context_bits,
-                self.alpha,
-                self.seed,
-            )
+            if self.threshold == 0.5:
+                header = self.HEADER_MAGIC_WM + _WORLD_MODEL.pack(history_len, self.alpha, seed)
+            else:
+                header = self.HEADER_MAGIC_WM_THRESHOLD + _WORLD_MODEL_THRESHOLD.pack(
+                    history_len, self.alpha, seed, self.threshold
+                )
         elif self.predictor == "context":
-            errors, correct_predictions = _predict_and_xor_context(
-                spikes,
-                N,
-                self.context_bits,
-            )
-            error_data, _ = self.base_codec.compress(errors)
-            header = self.HEADER_MAGIC_CTX + struct.pack("!B", self.context_bits)
+            context_bits = _uint(self.context_bits, 0, 63, "context history length")
+            if self._use_native(py_predict_xor_context is not None, "context"):
+                assert py_predict_xor_context is not None
+                flat = np.ascontiguousarray(spikes).ravel()
+                err_flat, correct_predictions = py_predict_xor_context(flat, N, context_bits)
+                errors = np.asarray(err_flat).reshape(T, N)
+            else:
+                errors, correct_predictions = _predict_and_xor_context(spikes, N, context_bits)
+            header = self.HEADER_MAGIC_CTX + _CONTEXT.pack(context_bits)
         elif self.predictor == "lfsr":
-            if _HAS_RUST:  # pragma: no cover
+            alpha_q8 = _uint(self.alpha_q8, 0, 65535, "LFSR alpha_q8")
+            seed = _uint(self.seed, 1, 65535, "LFSR seed")
+            if self._use_native(_HAS_RUST, "LFSR") and N:
                 flat = np.ascontiguousarray(spikes).ravel()
                 err_flat, correct_predictions = _rust_predict_lfsr(
                     flat,
                     N,
-                    self.alpha_q8,
-                    self.seed,
+                    alpha_q8,
+                    seed,
                 )
                 errors = np.asarray(err_flat).reshape(T, N)
             else:
                 errors, correct_predictions = _predict_and_xor_lfsr(
                     spikes,
                     N,
-                    self.alpha_q8,
-                    self.seed,
+                    alpha_q8,
+                    seed,
                 )
-            error_data, _ = self.base_codec.compress(errors)
-            header = self.HEADER_MAGIC_LFSR + struct.pack("!HH", self.alpha_q8, self.seed)
-        else:
-            if _HAS_RUST:  # pragma: no cover
+            header = self.HEADER_MAGIC_LFSR + _LFSR.pack(alpha_q8, seed)
+        elif self.predictor == "ema":
+            _finite_model_parameters(self.alpha, self.threshold)
+            if self._use_native(_HAS_RUST, "EMA") and N:
                 flat = np.ascontiguousarray(spikes).ravel()
                 err_flat, correct_predictions = _rust_predict_ema(
                     flat,
@@ -471,25 +338,11 @@ class PredictiveSpikeCodec:
                     self.alpha,
                     self.threshold,
                 )
-            error_data, _ = self.base_codec.compress(errors)
-            header = self.HEADER_MAGIC + struct.pack("!dd", self.alpha, self.threshold)
+            header = self.HEADER_MAGIC + _EMA.pack(self.alpha, self.threshold)
+        else:
+            raise ValueError(f"Invalid predictor: {self.predictor!r}")
 
-        encoded = header + error_data
-        compressed_bits = len(encoded) * 8
-        ratio = original_bits / max(compressed_bits, 1)
-
-        return encoded, PredictiveCompressionResult(
-            original_bits=original_bits,
-            compressed_bits=compressed_bits,
-            compression_ratio=ratio,
-            n_spikes=int(np.sum(spikes)),
-            n_neurons=N,
-            n_timesteps=T,
-            lossless=self.base_codec.mode == "lossless",
-            prediction_accuracy=correct_predictions / max(T * N, 1),
-            error_sparsity=1.0 - (int(np.sum(errors)) / max(T * N, 1)),
-            predictor_type=self.predictor,
-        )
+        return header, errors, correct_predictions
 
     def decompress(self, data: bytes, T: int, N: int) -> np.ndarray[Any, Any]:
         """Decompress to spike raster.
@@ -502,52 +355,100 @@ class PredictiveSpikeCodec:
         data : bytes
             Compressed data from compress().
         T, N : int
-            Original dimensions.
+            Original dimensions. For a quantised packet, T can also be the
+            number of complete bins.
 
         Returns
         -------
         ndarray of shape (T, N), int8
+            Quantised events are at bin indices. In the original-sized
+            layout the rows after the last bin contain zeros.
         """
-        import struct
+        T, N = _dimension(T), _dimension(N)
+        magic = data[:4]
+        if magic == self.HEADER_MAGIC_QUANTISED:
+            return self._decode_quantised(data, T, N)
+        codec = (
+            self._lossless_residual_codec()
+            if magic == self.HEADER_MAGIC_WM_THRESHOLD
+            else self.base_codec
+        )
+        return self._recover_residual(data, T, N, codec)
 
+    def _decode_quantised(self, data: bytes, rows: int, channels: int) -> np.ndarray[Any, Any]:
+        """Read the original shape and recover on the compact quantised grid."""
+        end = 4 + _QUANTISED_GRID.size
+        if len(data) < end:
+            raise ValueError("Truncated quantised predictive header")
+        original_rows, precision = _QUANTISED_GRID.unpack_from(data, 4)
+        if not 1 < precision <= original_rows + 1:
+            raise ValueError("Invalid predictive timing precision")
+        bins = original_rows // precision
+        if rows not in (original_rows, bins):
+            raise ValueError("Predictive packet has incompatible row count")
+        raster = self._recover_residual(data[end:], bins, channels, self._lossless_residual_codec())
+        if rows == bins:
+            return raster
+        result = np.zeros((rows, channels), dtype=np.int8)
+        result[:bins] = raster
+        return result
+
+    def _recover_residual(
+        self, data: bytes, T: int, N: int, residual_codec: SpikeCodec
+    ) -> np.ndarray[Any, Any]:
+        """Recover the raster with the complete predictor configuration from the packet."""
         magic = data[:4]
 
-        if magic == self.HEADER_MAGIC_WM:
-            history_len = data[4]
-            alpha, seed = struct.unpack("!dH", data[5:15])
-            error_data = data[15:]
-            errors = self.base_codec.decompress(error_data, T, N)
-            from ..world_model.spike_predictor import xor_and_recover_world_model
+        if magic in (self.HEADER_MAGIC_WM, self.HEADER_MAGIC_WM_THRESHOLD):
+            if magic == self.HEADER_MAGIC_WM:
+                (history_len, alpha, seed), error_data = _read_predictor_header(data, _WORLD_MODEL)
+                threshold = 0.5
+            else:
+                (history_len, alpha, seed, threshold), error_data = _read_predictor_header(
+                    data, _WORLD_MODEL_THRESHOLD
+                )
+            _uint(history_len, 1, 255, "world-model history length")
+            _finite_model_parameters(alpha, threshold)
+            errors = residual_codec.decompress(error_data, T, N)
+            from . import _world_model as spike_predictor
 
-            return xor_and_recover_world_model(
+            use_native = self._use_native(
+                spike_predictor.py_update_spike_world_model is not None, "world-model"
+            )
+            return spike_predictor.xor_and_recover_world_model(
                 errors,
                 N,
                 history_len=history_len,
                 lr=alpha,
+                threshold=threshold,
                 seed=seed,
+                use_native=use_native,
             )
 
         if magic == self.HEADER_MAGIC_CTX:
-            context_bits = data[4]
-            error_data = data[5:]
-            errors = self.base_codec.decompress(error_data, T, N)
+            (context_bits,), error_data = _read_predictor_header(data, _CONTEXT)
+            _uint(context_bits, 0, 63, "context history length")
+            errors = residual_codec.decompress(error_data, T, N)
+            if self._use_native(py_recover_xor_context is not None, "context"):
+                assert py_recover_xor_context is not None
+                flat = np.ascontiguousarray(errors).ravel()
+                return np.asarray(py_recover_xor_context(flat, N, context_bits)).reshape(T, N)
             return _xor_and_recover_context(errors, N, context_bits)
 
         if magic == self.HEADER_MAGIC_LFSR:
-            alpha_q8, seed = struct.unpack("!HH", data[4:8])
-            error_data = data[8:]
-            errors = self.base_codec.decompress(error_data, T, N)
-            if _HAS_RUST:  # pragma: no cover
+            (alpha_q8, seed), error_data = _read_predictor_header(data, _LFSR)
+            errors = residual_codec.decompress(error_data, T, N)
+            if self._use_native(_HAS_RUST, "LFSR") and N:
                 flat = np.ascontiguousarray(errors).ravel()
                 rec = np.asarray(_rust_recover_lfsr(flat, N, alpha_q8, seed))
                 return rec.reshape(T, N)
             return _xor_and_recover_lfsr(errors, N, alpha_q8, seed)
 
         if magic == self.HEADER_MAGIC:
-            alpha, threshold = struct.unpack("!dd", data[4:20])
-            error_data = data[20:]
-            errors = self.base_codec.decompress(error_data, T, N)
-            if _HAS_RUST:  # pragma: no cover
+            (alpha, threshold), error_data = _read_predictor_header(data, _EMA)
+            _finite_model_parameters(alpha, threshold)
+            errors = residual_codec.decompress(error_data, T, N)
+            if self._use_native(_HAS_RUST, "EMA") and N:
                 flat = np.ascontiguousarray(errors).ravel()
                 rec = np.asarray(_rust_recover_ema(flat, N, alpha, threshold))
                 return rec.reshape(T, N)

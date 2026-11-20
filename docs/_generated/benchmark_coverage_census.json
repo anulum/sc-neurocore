@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 26,
+    "current": 28,
     "outdated": 119,
-    "reviewed": 1,
+    "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 321,
+  "all_records": 322,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -32,6 +32,7 @@
           "attribution": "bound_script",
           "changed": [
             "benchmarks/bench_adex.py",
+            "bridge/sc_neurocore_engine/__init__.py",
             "engine/src/network_runner/neuron_variant.rs",
             "engine/src/neuron/adex.rs",
             "src/sc_neurocore/neurons/models/adex.py"
@@ -999,6 +1000,7 @@
         {
           "attribution": "bound_script",
           "changed": [
+            "bridge/sc_neurocore_engine/__init__.py",
             "src/sc_neurocore/accel/iqif.py"
           ],
           "currency": "outdated",
@@ -2706,12 +2708,8 @@
       "name": "formal/sc_chialvo_map_z3memory64/review.json"
     },
     {
-      "currency": "reviewed",
-      "name": "isi_codec_backends.json",
-      "reviewed": [
-        "engine/src/codecs/isi.rs",
-        "src/sc_neurocore/spike_codec/codec.py"
-      ]
+      "currency": "current",
+      "name": "isi_codec_backends.json"
     },
     {
       "changed": [
@@ -3030,6 +3028,10 @@
     {
       "currency": "current",
       "name": "mnist_conv_accuracy_reproducibility.json"
+    },
+    {
+      "currency": "current",
+      "name": "predictive_codec_backends.json"
     }
   ],
   "unused_source_change_reviews": []

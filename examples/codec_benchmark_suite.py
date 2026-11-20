@@ -5,13 +5,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Complete codec benchmark suite (reproducible)
+# SC-NeuroCore — Spike-raster codec comparison
 
-"""Reproduce all published spike codec benchmarks.
+"""Compare spike-raster codecs on generated and optional SpikeInterface data.
 
-Generates the exact numbers reported in docs/benchmarks/BENCHMARKS.md
-Section 16 and docs/guides/bci_codec.md. All results measured, none
-fabricated.
+The script measures the available backends on this machine. For paired
+Python and Rust predictive tests with recorded hardware and toolchain
+metadata, see ``benchmarks/bench_predictive_codec.py``.
 
 Usage:
     python examples/codec_benchmark_suite.py
@@ -21,10 +21,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from importlib import import_module
 import time
+from typing import TypedDict
 import zlib
 
 import numpy as np
+from numpy.typing import NDArray
 
 from sc_neurocore.spike_codec import (
     SpikeCodec,
@@ -32,19 +35,38 @@ from sc_neurocore.spike_codec import (
     DeltaSpikeCodec,
     StreamingSpikeCodec,
     AERSpikeCodec,
+    probe_codec,
 )
 
 
-def _bench(codec, spikes, name):
+RasterCodec = (
+    SpikeCodec | PredictiveSpikeCodec | DeltaSpikeCodec | StreamingSpikeCodec | AERSpikeCodec
+)
+
+
+class BenchmarkResult(TypedDict):
+    """Record the timings, packet size and reconstruction check for a codec."""
+
+    codec: str
+    ratio: float
+    enc_us: float
+    dec_us: float
+    bytes: int
+    throughput_mbps: float
+    lossless: bool
+
+
+def _bench(codec: RasterCodec, spikes: NDArray[np.int8], name: str) -> BenchmarkResult:
+    """Time encoding and decoding and compare the recovered raster with the input."""
     T, N = spikes.shape
     raw_bytes = T * N  # 1 byte per bin
 
     t0 = time.perf_counter()
-    data, result = codec.compress(spikes)
+    data, _ = codec.compress(spikes)
     enc_us = (time.perf_counter() - t0) * 1e6
 
     t0 = time.perf_counter()
-    if hasattr(result, "window_size") or hasattr(result, "n_events"):
+    if isinstance(codec, (StreamingSpikeCodec, AERSpikeCodec)):
         rec = codec.decompress(data)
     else:
         rec = codec.decompress(data, T, N)
@@ -65,7 +87,8 @@ def _bench(codec, spikes, name):
     }
 
 
-def _table(results, title):
+def _table(results: list[BenchmarkResult], title: str) -> None:
+    """Print the measured results for one input raster."""
     print(f"\n{'=' * 85}")
     print(f"  {title}")
     print(f"{'=' * 85}")
@@ -83,7 +106,7 @@ def _table(results, title):
         )
 
 
-def bench_density_sweep():
+def bench_density_sweep() -> None:
     """Benchmark 1: ISI (auto) vs zlib across firing rate densities."""
     print("\n## Benchmark 1: ISI (auto entropy) vs zlib-9 across densities")
     rng = np.random.RandomState(42)
@@ -119,15 +142,16 @@ def bench_density_sweep():
         )
 
 
-def bench_per_codec(spikes, title):
-    """Benchmark 2: All codecs head-to-head on the same dataset."""
-    codecs = [
+def bench_per_codec(spikes: NDArray[np.int8], title: str) -> None:
+    """Compare batch spike-raster codecs and all four predictors on the same input."""
+    codecs: list[tuple[str, RasterCodec]] = [
         ("isi-varint", SpikeCodec(entropy="varint")),
         ("isi-huffman", SpikeCodec(entropy="huffman")),
         ("isi-auto", SpikeCodec(entropy="auto")),
         ("predictive-ema", PredictiveSpikeCodec(predictor="ema", alpha=0.005)),
         ("predictive-lfsr", PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1)),
         ("predictive-ctx", PredictiveSpikeCodec(predictor="context", context_bits=8)),
+        ("predictive-world", PredictiveSpikeCodec(predictor="world_model")),
         ("delta-g4", DeltaSpikeCodec(group_size=4)),
         ("delta-g8", DeltaSpikeCodec(group_size=8)),
         ("streaming-20", StreamingSpikeCodec(window_size=20)),
@@ -139,10 +163,10 @@ def bench_per_codec(spikes, title):
     _table(results, title)
 
 
-def bench_realistic():
+def bench_realistic() -> None:
     """Benchmark 3: SpikeInterface ground-truth recordings."""
     try:
-        import spikeinterface.generation as gen
+        generation = import_module("spikeinterface.generation")
     except ImportError:
         print("\n## Benchmark 3: SKIPPED (pip install spikeinterface)")
         return
@@ -154,7 +178,7 @@ def bench_realistic():
         ("BCI-scale 50u 0.5-3Hz", 50, 2.0, (0.5, 3.0), 43),
         ("High-density 100u 1-10Hz", 100, 1.0, (1.0, 10.0), 44),
     ]:
-        _, sorting = gen.generate_ground_truth_recording(
+        _, sorting = generation.generate_ground_truth_recording(
             durations=[dur],
             sampling_frequency=30000.0,
             num_channels=min(32, nunits),
@@ -176,7 +200,8 @@ def bench_realistic():
         bench_per_codec(raster, label)
 
 
-def main():
+def main() -> None:
+    """Run the synthetic raster suite and optionally add SpikeInterface data."""
     parser = argparse.ArgumentParser(description="SC-NeuroCore codec benchmark suite")
     parser.add_argument(
         "--realistic", action="store_true", help="Include SpikeInterface benchmarks"
@@ -186,11 +211,10 @@ def main():
     print("SC-NeuroCore Spike Codec Benchmark Suite")
     print("=" * 85)
 
-    from sc_neurocore.spike_codec.predictive_codec import _HAS_RUST
-
-    print(
-        f"Rust backend: {'available (780x LFSR speedup)' if _HAS_RUST else 'not available (Python fallback)'}"
-    )
+    for predictor in ("ema", "lfsr", "context", "world_model"):
+        availability = probe_codec("predictive", predictor)
+        choices = ", ".join(availability.backend_choices) or "unavailable"
+        print(f"Predictive {predictor} backends: {choices}")
 
     # Benchmark 1: Density sweep
     bench_density_sweep()
@@ -221,7 +245,7 @@ def main():
         bench_realistic()
 
     print(f"\n{'=' * 85}")
-    print("  All benchmarks complete. Numbers are measured, not fabricated.")
+    print("  Spike-raster comparison complete.")
     print(f"{'=' * 85}")
 
 

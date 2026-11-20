@@ -8,7 +8,9 @@
 
 //! Python bindings for packed prediction error and lossless spike prediction codecs.
 
-use numpy::{PyArray1, PyReadonlyArray1};
+use numpy::{
+    PyArray1, PyReadonlyArray1, PyReadwriteArray1, PyReadwriteArray2, PyUntypedArrayMethods,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
@@ -19,6 +21,9 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(py_predict_xor_lfsr, module)?)?;
     module.add_function(wrap_pyfunction!(py_recover_xor_ema, module)?)?;
     module.add_function(wrap_pyfunction!(py_recover_xor_lfsr, module)?)?;
+    module.add_function(wrap_pyfunction!(py_predict_xor_context, module)?)?;
+    module.add_function(wrap_pyfunction!(py_recover_xor_context, module)?)?;
+    module.add_function(wrap_pyfunction!(py_update_spike_world_model, module)?)?;
     Ok(())
 }
 
@@ -106,4 +111,73 @@ fn py_recover_xor_lfsr(
         .map_err(|error| PyValueError::new_err(format!("errors must be contiguous: {error}")))?;
     let spikes = crate::predictive_coding::xor_and_recover_lfsr(errors, n_channels, alpha_q8, seed);
     Ok(PyArray1::from_vec(py, spikes).into())
+}
+
+/// Encode row-major binary samples using per-channel context statistics.
+#[pyfunction]
+fn py_predict_xor_context(
+    py: Python<'_>,
+    spikes: PyReadonlyArray1<'_, i8>,
+    n_channels: usize,
+    history_bits: u8,
+) -> PyResult<(Py<PyArray1<i8>>, usize)> {
+    let input = spikes
+        .as_slice()
+        .map_err(|error| PyValueError::new_err(format!("spikes must be contiguous: {error}")))?
+        .to_vec();
+    let (errors, correct) = py
+        .detach(move || {
+            crate::predictive_coding::predict_and_xor_context(&input, n_channels, history_bits)
+        })
+        .map_err(PyValueError::new_err)?;
+    Ok((PyArray1::from_vec(py, errors).into(), correct))
+}
+
+/// Recover row-major binary samples from per-channel context errors.
+#[pyfunction]
+fn py_recover_xor_context(
+    py: Python<'_>,
+    errors: PyReadonlyArray1<'_, i8>,
+    n_channels: usize,
+    history_bits: u8,
+) -> PyResult<Py<PyArray1<i8>>> {
+    let input = errors
+        .as_slice()
+        .map_err(|error| PyValueError::new_err(format!("errors must be contiguous: {error}")))?
+        .to_vec();
+    let spikes = py
+        .detach(move || {
+            crate::predictive_coding::xor_and_recover_context(&input, n_channels, history_bits)
+        })
+        .map_err(PyValueError::new_err)?;
+    Ok(PyArray1::from_vec(py, spikes).into())
+}
+
+/// Update the autoregressive model after one observation using its exact prediction.
+#[pyfunction]
+fn py_update_spike_world_model(
+    mut weights: PyReadwriteArray2<'_, f64>,
+    mut bias: PyReadwriteArray1<'_, f64>,
+    features: PyReadonlyArray1<'_, f64>,
+    probabilities: PyReadonlyArray1<'_, f64>,
+    samples: PyReadonlyArray1<'_, f64>,
+    learning_rate: f64,
+) -> PyResult<()> {
+    let history = features.as_slice()?;
+    let expected_shape = [bias.len(), history.len()];
+    if weights.shape() != expected_shape {
+        return Err(PyValueError::new_err(
+            "world-model update dimensions must match",
+        ));
+    }
+    // Keep the GIL while mutating storage owned by NumPy.
+    crate::predictive_coding::update_world_model(
+        weights.as_slice_mut()?,
+        bias.as_slice_mut()?,
+        history,
+        probabilities.as_slice()?,
+        samples.as_slice()?,
+        learning_rate,
+    )
+    .map_err(PyValueError::new_err)
 }

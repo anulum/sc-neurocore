@@ -116,6 +116,15 @@ graph.verify()
 sv_code = graph.emit_sv()
 ```
 
+## Predictive codec components
+
+The Python bridge publishes the native context encoder and decoder and the
+world-model weight update. The
+[predictive codec API](spike_codec.md#predictive-codec) combines them with
+the existing EMA, LFSR and ISI bindings. The world-model path evaluates
+probabilities with NumPy and uses the same numerical profile for encoding
+and decoding.
+
 ## Installed-wheel interface evidence
 
 The [engine bridge contracts](../guides/engine_bridge_contracts.md#capturing-the-installed-interface)

@@ -100,6 +100,30 @@ indices through its last event. Events that occupy the same channel and bin
 coalesce in the binary raster. Quantised runs apply the requested precision
 to that raster and retain their separate timing and packet sizes.
 
+The predictive comparison exercises complete packets through
+`PredictiveSpikeCodec` with both wheels installed. It times each predictor
+independently and checks exact packets, statistics and cross-decoding before
+and after each measured workload. Precision 1 is lossless. Larger precision
+merges complete time bins before prediction. Use the same affinity and
+single-thread numerical-library settings for both backends.
+
+```sh
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+taskset -c 0 python benchmarks/bench_predictive_codec.py compare \
+  --predictor context --precision 1 --host-profile shared \
+  --output predictive-context-synthetic.json
+taskset -c 0 python benchmarks/bench_predictive_codec.py compare \
+  --predictor world_model --precision 2 --host-profile shared \
+  --shd shd_test.h5 --recording 0 --output predictive-world-model-shd.json
+```
+
+Choose an available logical CPU and record its physical core's sibling
+activity. Each report retains the affinity, host loads, dataset and packet
+digests, source and extension digests, all timing samples and the first
+call in separate interpreter processes. The `world_model` Rust path retains
+NumPy for probability evaluation and uses Rust for the weight update and ISI
+packet. See the [paired results](../docs/benchmarks/BENCHMARKS.md#predictive-codec-python-and-rust-timing).
+
 | Script | Description |
 |--------|-------------|
 | `bench_nir_graph.py` | Interleaved monolithic-parent/modular-candidate comparison for NIR import, hardware-graph lowering, FPGA compilation, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, governor, frequency, host load, and polyglot applicability |

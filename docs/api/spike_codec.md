@@ -51,7 +51,7 @@ Python fallback. The probe reports an unavailable Python class separately.
 | Name | Input / decoded output | Choices | Persistent state | Backend selector |
 |---|---|---|---|---|
 | isi | Binary raster / raster | mode: lossless, lossy; entropy: auto, varint, huffman | None | auto, python, rust when available |
-| predictive | Binary raster / raster | ema, lfsr, context, world_model | Reset per batch | None; EMA/LFSR may use Rust kernels |
+| predictive | Binary raster / raster | ema, lfsr, context, world_model | Reset per batch | auto, python, rust when available |
 | delta | Binary raster / raster | lossless, lossy | None | None |
 | streaming | Binary raster / raster | Independent frames | None | None |
 | aer | Binary raster / raster | Adaptive event/silence coding | None | None |
@@ -123,14 +123,23 @@ for the synthetic and recorded workloads.
         - SpikeCodec
         - CompressionResult
 
-## Predictive Codec (BCI Implants)
+## Predictive Codec
 
-EMA, LFSR, context and optional world-model predictors encode XOR residuals.
+EMA, LFSR, context and world-model predictors encode XOR residuals.
 Predictor state resets per batch. Lossless reconstruction requires
-`base_mode="lossless"`. Rust EMA/LFSR functions accelerate the predictor
-loops. The Python predictive container delegates its residual packet to
-`SpikeCodec`, which selects the available backend. The world-model module is
-excluded from the base wheel; probe it per variant.
+`base_mode="lossless"`. With timing precision greater than one, lossy mode
+merges each complete bin before prediction. Both backends decode the same
+bin raster. Predictor state resets on that grid for each packet.
+
+Select `backend="python"` to use the reference path. Explicit Rust requires
+the selected predictor's native components and Rust ISI. The base wheel
+contains the world-model codec predictor using its standard NumPy dependency.
+The Rust path still uses NumPy for probability evaluation and uses Rust
+for the weight update. The experimental world-model package is separate.
+World-model packets require a matching numerical profile for recovery. See the
+[wire-format conditions](../reference/spike_codec_wire_formats.md#predictive-xor-containers).
+See the [predictive codec benchmarks](../benchmarks/BENCHMARKS.md#predictive-codec-python-and-rust-timing)
+for paired Python and Rust encode, decode and round-trip measurements.
 
 ::: sc_neurocore.spike_codec.predictive_codec
     options:

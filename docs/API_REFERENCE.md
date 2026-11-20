@@ -44627,6 +44627,54 @@ Processes voxel grids using SC attention.
 
 ---
 
+## Module `spike_codec._world_model`
+
+### Class `SpikePredictor`
+Online autoregressive spike pattern predictor.
+
+Learns to predict spike&#91;t&#93; from spike&#91;t-K:t&#93; per channel.
+Weight matrix W of shape (N, N*K) maps flattened history to
+per-channel firing probabilities. Binary prediction via threshold.
+
+Training: LMS update after each timestep.
+    W += lr * outer(error, history)
+where error = actual - predicted_prob.
+
+Parameters
+----------
+n_channels : int
+    Number of spike channels.
+history_len : int
+    Number of past timesteps to use as context (K).
+lr : float
+    LMS learning rate.
+threshold : float
+    Probability threshold for binary prediction.
+seed : int
+    RNG seed for weight initialization.
+
+- **__post_init__**()
+  - Seed the RNG and initialise the predictor weights.
+- **predict_probs**()
+  - Predict per-channel firing probabilities from history.
+- **predict**()
+  - Predict binary spike pattern.
+- **update**(actual)
+  - Update weights with observed spike pattern (LMS rule).
+- **reset**()
+  - Reset to initial state (same seed → same weights).
+
+### Function `predict_and_xor_world_model(spikes, n_channels, history_len, lr, threshold, seed, *, use_native)`
+World-model predict-XOR loop for codec compression.
+
+Use the available native weight update when use_native is true.
+Returns the residual raster and correct prediction count.
+
+### Function `xor_and_recover_world_model(errors, n_channels, history_len, lr, threshold, seed, *, use_native)`
+Recover world-model residuals with the same optional native weight update.
+
+---
+
 ## Module `spike_codec.aer_codec`
 
 ### Class `AERCompressionResult`
@@ -44945,8 +44993,8 @@ Predictive spike codec: compress prediction errors, not raw spikes.
 
 Four predictor modes:
     'ema' (default): float EMA rate tracking + threshold comparison.
-    'lfsr': Q8.8 fixed-point rate + LFSR comparator. Bit-true with
-            sc_bitstream_encoder.v — maps directly to Verilog RTL.
+    'lfsr': Q8.8 rate tracking with the 16-bit generator recurrence
+            used by sc_bitstream_encoder.v.
     'context': Markov context predictor. Hashes last K spike states
                per channel, predicts from accumulated statistics.
     'world_model': Learnable autoregressive predictor (LMS-trained).
@@ -44958,29 +45006,37 @@ Compression pipeline:
        a. predicted&#91;t&#93; = predictor.predict()
        b. error&#91;t&#93; = actual&#91;t&#93; XOR predicted&#91;t&#93;
        c. predictor.update(actual&#91;t&#93;)
-    2. ISI-compress the error matrix (sparser than raw spikes)
+    2. ISI-compress the error matrix
     3. Pack with header (predictor params for decoder sync)
 
 Parameters
 ----------
 alpha : float
-    EMA smoothing factor (ema mode). Ignored in lfsr/context mode.
+    EMA smoothing factor or world-model learning rate.
 threshold : float
-    Spike prediction threshold (ema mode). Ignored in lfsr/context mode.
+    Spike prediction threshold in EMA and world-model modes.
 predictor : str
-    'ema', 'lfsr', or 'context'.
+    'ema', 'lfsr', 'context', or 'world_model'.
 alpha_q8 : int
     Q8.8 smoothing factor for lfsr mode. 1 = 1/256 ≈ 0.004.
 seed : int
-    LFSR seed for lfsr mode (non-zero, 16-bit).
+    Unsigned 16-bit seed for LFSR or world-model mode. LFSR requires a nonzero seed.
 context_bits : int
-    Context history length for context mode (default 8 = last 8 spikes).
+    Number of past time steps (default 8). Context accepts 0–63 and
+    the world model accepts 1–255.
 base_mode : str
     'lossless' or 'lossy' for the underlying ISI codec.
 timing_precision : int
-    For lossy mode: quantize timing resolution.
+    Number of original rows in each complete bin in lossy mode.
+    Prediction runs on the quantised grid. The final partial bin is dropped.
+backend : {"auto", "python", "rust"}
+    Select a complete available codec path. Auto uses native components
+    when available. Rust requires the matching predictor and ISI components.
+    The world-model implementation uses NumPy for probability evaluation
+    and can use Rust for its least-mean-squares state update.
 
-- **__init__**(alpha, threshold, predictor, alpha_q8, seed, context_bits, base_mode, timing_precision)
+- **__init__**(alpha, threshold, predictor, alpha_q8, seed, context_bits, base_mode, timing_precision, \*, backend)
+  - Initialise predictor settings and the underlying raster codec.
 - **compress**(spikes)
   - Compress spike raster using predictive error coding.
 - **decompress**(data, T, N)
@@ -64058,52 +64114,5 @@ A planner that uses a PredictiveWorldModel to select actions.
 
 ### Function `__getattr__(name)`
 Return the live historical Rust-availability flag on private access.
-
----
-
-## Module `world_model.spike_predictor`
-
-### Class `SpikePredictor`
-Online autoregressive spike pattern predictor.
-
-Learns to predict spike&#91;t&#93; from spike&#91;t-K:t&#93; per channel.
-Weight matrix W of shape (N, N*K) maps flattened history to
-per-channel firing probabilities. Binary prediction via threshold.
-
-Training: LMS update after each timestep.
-    W += lr * outer(error, history)
-where error = actual - predicted_prob.
-
-Parameters
-----------
-n_channels : int
-    Number of spike channels.
-history_len : int
-    Number of past timesteps to use as context (K).
-lr : float
-    LMS learning rate.
-threshold : float
-    Probability threshold for binary prediction.
-seed : int
-    RNG seed for weight initialization.
-
-- **__post_init__**()
-  - Seed the RNG and initialise the predictor weights.
-- **predict_probs**()
-  - Predict per-channel firing probabilities from history.
-- **predict**()
-  - Predict binary spike pattern.
-- **update**(actual)
-  - Update weights with observed spike pattern (LMS rule).
-- **reset**()
-  - Reset to initial state (same seed → same weights).
-
-### Function `predict_and_xor_world_model(spikes, n_channels, history_len, lr, threshold, seed)`
-World-model predict-XOR loop for codec compression.
-
-Returns (errors, correct_count).
-
-### Function `xor_and_recover_world_model(errors, n_channels, history_len, lr, threshold, seed)`
-World-model XOR-recover loop for codec decompression.
 
 ---
