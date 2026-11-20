@@ -602,10 +602,14 @@ captures identify each tested installation; a stored capture is a compatibility
 baseline only after its source, wheel and runtime profile have been qualified.
 
 `tests/fixtures/engine_abi_default.json` retains the complete measured metadata
-for the Linux x86-64, CPython 3.12, NumPy 2.5.4 release wheel with default engine
-features. The reference retains the signed Q8 Dense default endpoint `y_max=256`.
-The reference adds `py_predict_xor_context`, `py_recover_xor_context` and
-`py_update_spike_world_model` to the preceding interface. Its provenance
+for the Linux x86-64, CPython 3.12, NumPy 2.5.4 release wheel with the default
+engine features `waveform-zstd` and `z3`. The reference retains the signed Q8
+Dense default endpoint `y_max=256`, and `py_predict_xor_context`,
+`py_recover_xor_context` and `py_update_spike_world_model`. It adds
+`waveform_container_encode`, `waveform_container_decode`,
+`WAVEFORM_CONTAINER_ZSTD` and `reset` on `SpikeEventEncoder`,
+`SpikeEventDecoder`, `WaveformLosslessEncoder` and `WaveformLosslessDecoder`
+to the preceding interface. Its provenance
 identifies the source base, exact source hashes, wheel, capture tool and
 loaded modules. The same wheel was captured independently with CPython
 3.12.3 and 3.12.16.

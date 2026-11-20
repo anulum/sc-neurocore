@@ -49,6 +49,16 @@ it writes one byte per raster cell. `waveform` and `full` write little-endian
 float32 samples, and both lossless modes write little-endian int16 samples.
 Python reads the same packets through `WaveformCodec.decompress`.
 
+The compiled module exports the same operations as `waveform_container_encode`
+and `waveform_container_decode`; `WAVEFORM_CONTAINER_ZSTD` reports whether the
+wheel was built with `waveform-zstd`. The encoder takes a C-contiguous int16
+matrix for the lossless modes or a float32 matrix otherwise, with the
+configuration options. It returns the packet, the spike and template counts
+and the byte sizes of the spike, snippet and background sections. The decoder
+takes the packet and the sample limit. It returns the mode, the int8 raster and
+the samples, each of the last two when the mode carries it. Both release the
+GIL while coding.
+
 ## Lossless waveform streaming
 
 Use `codecs::waveform_stream::{StreamEncoder, StreamDecoder}` on row-major
@@ -76,7 +86,8 @@ encodes one group per channel on a selected physical adapter. Read
 to a CPU `StreamDecoder` with `groups == channels`. The matching PyO3
 classes in `sc_neurocore_engine.sc_neurocore_engine` are
 `WaveformLosslessEncoder`, `WaveformLosslessDecoder` and the optional
-`WaveformLosslessGpuEncoder`. The [BCI guide](../guides/bci_codec.md#streaming-lossless-coder)
+`WaveformLosslessGpuEncoder`. Each `reset()` starts an independent stream; the
+decoder's also clears an earlier decoding error. The [BCI guide](../guides/bci_codec.md#streaming-lossless-coder)
 documents Python backend selection and device qualification.
 
 ## Fallible dense storage
@@ -221,7 +232,7 @@ mutation contracts, numerical goldens and supported pickle state.
 
 The qualified default interface reference is
 `tests/fixtures/engine_abi_default.json`, for Linux x86-64, CPython 3.12 and
-NumPy 2.5.5 with default engine features. Its matching wheel job compares all
+NumPy 2.5.4 with default engine features. Its matching wheel job compares all
 interface fields; other runtime profiles retain separate measured captures.
 See [model compatibility and migration](../guides/engine_bridge_contracts.md#model-compatibility-and-migration)
 for canonical source models and their explicit retained project profiles.

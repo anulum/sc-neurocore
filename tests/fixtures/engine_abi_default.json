@@ -96660,6 +96660,15 @@
               "kind": "method_descriptor",
               "signature": "(self, /, packet, samples)",
               "signature_error": null
+            },
+            "reset": {
+              "__module__": null,
+              "__name__": "reset",
+              "__qualname__": "SpikeEventDecoder.reset",
+              "__text_signature__": "($self)",
+              "kind": "method_descriptor",
+              "signature": "(self, /)",
+              "signature_error": null
             }
           },
           "signature": "(channels, bin_samples, sample_timing, power_bins, groups)",
@@ -96899,6 +96908,15 @@
               "__text_signature__": "($self, window)",
               "kind": "method_descriptor",
               "signature": "(self, /, window)",
+              "signature_error": null
+            },
+            "reset": {
+              "__module__": null,
+              "__name__": "reset",
+              "__qualname__": "SpikeEventEncoder.reset",
+              "__text_signature__": "($self)",
+              "kind": "method_descriptor",
+              "signature": "(self, /)",
               "signature_error": null
             }
           },
@@ -102654,6 +102672,14 @@
           "signature": "()",
           "signature_error": null
         },
+        "WAVEFORM_CONTAINER_ZSTD": {
+          "__module__": null,
+          "__name__": null,
+          "__qualname__": null,
+          "__text_signature__": null,
+          "constant": true,
+          "kind": "bool"
+        },
         "WangBuzsakiNeuron": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "WangBuzsakiNeuron",
@@ -103148,6 +103174,15 @@
               "kind": "method_descriptor",
               "signature": "(self, /, packet, samples)",
               "signature_error": null
+            },
+            "reset": {
+              "__module__": null,
+              "__name__": "reset",
+              "__qualname__": "WaveformLosslessDecoder.reset",
+              "__text_signature__": "($self)",
+              "kind": "method_descriptor",
+              "signature": "(self, /)",
+              "signature_error": null
             }
           },
           "signature": "(channels, adc_bits, groups)",
@@ -103387,6 +103422,15 @@
               "__text_signature__": "($self, window)",
               "kind": "method_descriptor",
               "signature": "(self, /, window)",
+              "signature_error": null
+            },
+            "reset": {
+              "__module__": null,
+              "__name__": "reset",
+              "__qualname__": "WaveformLosslessEncoder.reset",
+              "__text_signature__": "($self)",
+              "kind": "method_descriptor",
+              "signature": "(self, /)",
               "signature_error": null
             }
           },
@@ -109217,47 +109261,86 @@
           "kind": "builtin_function_or_method",
           "signature": "(snippets, max_templates, threshold)",
           "signature_error": null
+        },
+        "waveform_container_decode": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "waveform_container_decode",
+          "__qualname__": "waveform_container_decode",
+          "__text_signature__": "(packet, max_samples)",
+          "aliases": [
+            "sc_neurocore_engine.sc_neurocore_engine.waveform_container_decode"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(packet, max_samples)",
+          "signature_error": null
+        },
+        "waveform_container_encode": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "waveform_container_encode",
+          "__qualname__": "waveform_container_encode",
+          "__text_signature__": "(waveform, options)",
+          "aliases": [
+            "sc_neurocore_engine.sc_neurocore_engine.waveform_container_encode"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(waveform, options)",
+          "signature_error": null
         }
       }
     }
   },
   "provenance": {
-    "capture_sha256": "44bab3db13673bb065cf241466304538621407f2960830677f939d306d587c4e",
+    "capture_artifact": {
+      "archive_sha256": "d10ee6e4386ab28de7b86c9423013e53fdf865c3563a24f89b68769eb150bd2d",
+      "id": 14652165045,
+      "inventory_sha256": "2ffc3684b49ba3af4cd5b81e8629dbcbb6f85acb2e5de945f74a6218e21f5678",
+      "job_id": 136426852978,
+      "run_id": 44772237184
+    },
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
       "sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/__init__.py",
-        "sha256": "c4f879e5a8f8246e4d081a88c2d37aa09167a8e56060d39b9e99d94329b7541b"
+        "sha256": "6e8cf4262dbb03c44a8826d3c6bad118efab5a1fc134a31ea45ec129051e5a88"
       },
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
+        "sha256": "863bcd0012db0df2398252b086fbbbc3932e80bb8c1d5b049b3ff9654713fbdf"
       }
     },
-    "python": "3.12.3",
-    "qualification_scope": "Default release wheel on Linux x86-64, under CPython 3.12.3 and NumPy 2.5.5. The compiled module adds AERX and AERI raster encoding and decoding. The package facade and all previous compiled exports match the preceding reference.",
+    "python": "3.12.16",
+    "qualification_scope": "Installed default release wheel on Ubuntu 24.04 Linux x86-64. The complete interface matches an independent installation of the same wheel under CPython 3.12.3 and NumPy 2.5.4. The only additions since the prior reference are the native WFC2 container functions waveform_container_encode and waveform_container_decode, the WAVEFORM_CONTAINER_ZSTD flag, and reset on SpikeEventEncoder, SpikeEventDecoder, WaveformLosslessEncoder and WaveformLosslessDecoder.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
       "engine_features": [
+        "waveform-zstd",
         "z3"
       ],
       "implementation": "CPython",
-      "numpy": "2.5.5",
+      "numpy": "2.5.4",
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "8d7a6f55046e635611290c47d6890c7f9725a603",
+    "source_base_sha": "dea43810aba58beea6e9ed20aec97f3e247cdaf6",
     "source_files_sha256": {
-      ".github/workflows/v3-wheels.yml": "e7cfc65da9225eeaa9e21279faba5beb6326b7b8905f6059423f612f054c5a10",
-      "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
+      ".github/workflows/v3-wheels.yml": "857e18c5f93c0c8b555836dd129056f567992638260e687baf35a2c19f4ced7b",
+      "Cargo.lock": "3b39bb1fc7094818c8b888d5ecd41995175973e7baf65006edafab86ba722ac1",
       "Cargo.toml": "7d28e2c778189f4e90d13c7665199e08f630dbff00f79f3dad9fe7b4f3266827",
       "bridge/.cargo/config.toml": "41a0cf98caba4b36d392af91ff1968990d09e8c5c361149e1110e60d3cd45585",
       "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
       "bridge/rayon_source_patch.toml": "bd56a5ab23d168303e594e1dabd00ca811857d71050b74854134ff515452583a",
-      "bridge/sc_neurocore_engine/__init__.py": "c4f879e5a8f8246e4d081a88c2d37aa09167a8e56060d39b9e99d94329b7541b",
+      "bridge/sc_neurocore_engine/__init__.py": "6e8cf4262dbb03c44a8826d3c6bad118efab5a1fc134a31ea45ec129051e5a88",
       "bridge/sc_neurocore_engine/_binding_types.pyi": "5e322f459ce70ee0fa3a0ebc22b7ce027bb0834ee6686ddfaed271de7116c757",
       "bridge/sc_neurocore_engine/_ir_native.py": "bb9b81650a3ee29da3ea72f449b444817a855b76f04cd805a7435f04e299dc84",
       "bridge/sc_neurocore_engine/attention.py": "650f62b8063d90623a847d13a9e68bfaf3d0a8a59c43f71ed058cc201397d694",
@@ -109276,7 +109359,7 @@
       "bridge/sc_neurocore_engine/scpn.py": "027b9bf124562cd748a2dd245933e92206d1b79d0bb84177b611c60607083588",
       "bridge/sc_neurocore_engine/studio.py": "ca4afc68c69609826eac0e6fc41b364e86b9bc22d4ca0847e36f7f593dc6616e",
       "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
-      "engine/Cargo.toml": "6e60942c76bd4e8f02688bab0a13b62cfa9762a762eac883701bc0418cd4edb5",
+      "engine/Cargo.toml": "ce9de85225c2d0024fee419d72e6098c7515588ba9d0e495c61226f350b0f05e",
       "engine/src/adc_to_spike.rs": "1e8ccc32cf7686197739aca5140810e64e24278a95780f60d14e50a228bf6e34",
       "engine/src/address_events.rs": "1b9f27e8c643d3bf911bf40a67460c9f7421ab4433ed56121b3572240eb7fc95",
       "engine/src/address_events/bindings.rs": "cf3be9589de974893d0d4768396324fce153518c8b3360d796381e5f34712e3f",
@@ -109530,7 +109613,7 @@
       "engine/src/bindings/simple_spiking/morris_lecar.rs": "9461ac2f21f329f6b4a7657124324c71878b0c5aeb936ead019ab887108a8858",
       "engine/src/bindings/simple_spiking/sc_unit_capacitance_respiratory.rs": "011e82526b8335eb890b52da2580ac12bad96d9417bece7823a1148e60e39a1a",
       "engine/src/bindings/simple_spiking/sherman_rinzel_keizer.rs": "b8b229b391007c55636c67415907dceb011fafa62de3ec37de98ac23d1f54b96",
-      "engine/src/bindings/spike_events.rs": "80306fbc3e99144c1cb13ede481d71263ae92b0b546d99489e795890ab8a77b2",
+      "engine/src/bindings/spike_events.rs": "20556ff17db03d54da1827b3bddf4c9db64ac9dc1986c4e1c8bf246e6e72d394",
       "engine/src/bindings/stdp_synapse.rs": "257d001b7d412bc2451e5efbe84d45c02bafa93e4c3f2d1bdd26c7b6820d07f2",
       "engine/src/bindings/stochastic/benda_herz.rs": "453204f79ec3c34775da22051fb68e6c6f2a54d78c530f277ab7ad76a00997c5",
       "engine/src/bindings/stochastic/galves_locherbach.rs": "6710931ea3694732d54477e835f085ce989e0c6825997edc3e492685e3b163ba",
@@ -109572,7 +109655,8 @@
       "engine/src/bindings/trivial/sigma_delta.rs": "48f72f0ab4d7ae8a8cb3872a2822752aff8db7156ba900234c476da4a3b89d61",
       "engine/src/bindings/trivial/theta.rs": "95abe0360b9cd6440b6ef76e0e3b2c627e4d4e74496827525e4f75a30721c152",
       "engine/src/bindings/waveform_codec.rs": "aa62a89518191090db0217905e7f74921c208d319ba740fd407844e4742c4118",
-      "engine/src/bindings/waveform_stream.rs": "e50d56285c1b2f3825c8cf76d528f2b0bfc0a29cfc19ad51ffd15f89016673de",
+      "engine/src/bindings/waveform_container.rs": "6012a72bef066fe0fb06f13ab5849308e097c13b77d0a41bcdb00dc088a489e5",
+      "engine/src/bindings/waveform_stream.rs": "c09b1e61903fc36e807d17c92ba0106dcfe21190bb123f5d9ef7e8ed330c919f",
       "engine/src/bindings/wilson_cowan.rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004",
       "engine/src/bindings/wilson_hr.rs": "abe8c8754262ccc21185dfd9e45ec05f01f0e12280e418756250e008abfac54c",
       "engine/src/bindings/wong_wang.rs": "59d69deca4c6238c00de600a7aaa0bb3cbd2a33551a789ac25c59c7a790ba29b",
@@ -109583,7 +109667,13 @@
       "engine/src/codecs/isi.rs": "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8",
       "engine/src/codecs/isi/framing.rs": "de9e8fd70ae92685f2a2686ee1fdd45a4ccf53a2a6b9b8a0f4ee8e95b0a72e4f",
       "engine/src/codecs/isi/huffman.rs": "3c5d3e4efe70dd1da7196e1f1cd36969e23851aab0f8bc6625a48bf52e1819f4",
-      "engine/src/codecs/mod.rs": "a6ffee381337af5e5a9915a24f14ea882a506ae6bd3dbceb0953cc0d7b0c5396",
+      "engine/src/codecs/mod.rs": "5598ca16105888646b4d87bec727053fccc14f51ed536da0ce91226e3d3723bc",
+      "engine/src/codecs/waveform_container/background.rs": "6d606ce17f5a4467b04ccae6ac67441e96d24f979d0a875bf642578ad9265e49",
+      "engine/src/codecs/waveform_container/compression.rs": "e2edc5c6577330ef94472a5e668a1e4719d6442e859c56dacfdfff5aa196fec1",
+      "engine/src/codecs/waveform_container/mod.rs": "76abc15ea4735d2613230ab378ff5872c6c2567c1d461c5030ab342582a0cba0",
+      "engine/src/codecs/waveform_container/snippets.rs": "b2058b799c8f7efb494ffe0d847a9f5753d1b842004051beca9199ba7288e44a",
+      "engine/src/codecs/waveform_container/wavelet.rs": "315c82803df22ea5c48694b15277367f0156d656774100c3e3003721febe2dae",
+      "engine/src/codecs/waveform_container/wire.rs": "05986441f288da9ad28b0b85da9b1d170f24af8f2d243ffc91e18563eb2247d1",
       "engine/src/connectome.rs": "666d1b867d4d2d56d888592794e5debd13a04325f857cfc655fd20233616f061",
       "engine/src/conv.rs": "33542ebfeaa1d5f2687783fe116b3f3614e35820579e24500b104477530537ef",
       "engine/src/cordiv.rs": "94c7c7bbcf7c88c662af1483f7d3ec9d6482e9d75d596d3418b8e8cbab6f1f46",
@@ -109926,13 +110016,13 @@
       "engine/src/simd/rvv.rs": "2eeae10a90fbc2f539d948d0f667698260ae29c2f403dc659536549bf70e2dc9",
       "engine/src/simd/sve.rs": "519052f48cc89f686bea841a0c1d718ad79b69fe8546f63ffa50bb9efac47ab7",
       "engine/src/sobol.rs": "8c103466daf5734cd80199edd5c0e02dcd647965ebd31f5b3216bb38d025db25",
-      "engine/src/spike_events.rs": "fb18bd8e1382ffa1155c62f8b7f0771e9f7696573ae7a82f8872e5ca477970f3",
+      "engine/src/spike_events.rs": "cc2987dd6d84c1277f68c5dadf5abb56c01285cd943d44073204ee524d7a2891",
       "engine/src/supervisor.rs": "f9be3fa0a304b48db985bb00ecd4c73d29ce026d3b0e3044a740c0c56d18f172",
       "engine/src/synapses/mod.rs": "6693c7619ebdf18af85bb13c9b8a65e86a93e88c446316c4538aab988cfcfa61",
       "engine/src/topology.rs": "177592142138f29565125e38c798c7007a342a759e1c1d2ec406a94aaa1e3815",
-      "engine/src/waveform_codec.rs": "e78074f8675bc80810be07cce79dab1f3f63eaf587cbbb00d4d49c12475a2a60",
-      "engine/src/waveform_stream.rs": "bb55be0f12b833531c473988c48bf873b901a2428084935aca4b4349fdce98a9",
-      "engine/src/waveform_stream_gpu.rs": "106cbdd4d5c0e0c9c514d67889c2550c48465f1e0a12c77d91e0b7c07a7e085f",
+      "engine/src/waveform_codec.rs": "5f2e9da2fc4c17c2bf7ba45fadc50742c3ef831fbd46c1ce4ccb1bac4f9257d0",
+      "engine/src/waveform_stream.rs": "51180d3ad77eec13f879a63454ca309afa30e9336522034fff011f4d342c84f0",
+      "engine/src/waveform_stream_gpu.rs": "49f1bc2f0a83ec5f48215d051dc64f8b5a6b26bc16a81f21b8bf198dbbe7444d",
       "engine/src/waveform_stream_gpu.wgsl": "e122123043758b59ede25d6aecfa572469d94a543358e6079c4d8d02029ab7b4",
       "engine/src/wilson_cowan.rs": "86c4742f5095e497daff90c3b20870e1467cc47bd5be0c1c6fd9b8ab619c34ec",
       "engine/src/wong_wang.rs": "7b7e5433472f4292d3058030d774f62205f8473cab2ada4c89c7b00d2560b4a8",
@@ -109940,9 +110030,14 @@
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "0f146646387c3d38ae6c5f1bb18127b6192c530fc0acdf065d9fcf52dde39b7b",
-    "wheel_filename": "sc_neurocore_engine-4.2.0-cp312-cp312-linux_x86_64.whl",
-    "wheel_sha256": "6d0a58facff68b9307c4aaea2bc0ef108e34c68caf2f67c810e573adf88f642a"
+    "source_manifest_sha256": "d109127195ed71173fb49161138b71f25d466d734012407d61aba95f64c895a2",
+    "source_tree_sha": "d8eecc30d2e700ce98988d990e1e06a08a10b2f7",
+    "wheel_artifact": {
+      "archive_sha256": "1ef1619c96320361eb6640443a927171fa19bfaa68533279d38430b8dfbc52e7",
+      "id": 14648767136
+    },
+    "wheel_filename": "sc_neurocore_engine-4.2.0-cp312-cp312-manylinux_2_39_x86_64.whl",
+    "wheel_sha256": "f11c396687e40da81f72d734257a56c4ad3206d9eeddd1d07d8bae37d4b3cd58"
   },
   "schema": 1
 }
