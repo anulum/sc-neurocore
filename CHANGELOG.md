@@ -399,6 +399,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   The three gates opt in, all 72 digests match, and the committed gate
   report is unchanged.
 
+### Changed
+
+- The engine's four RK4 neuron ports in `engine/src/rk4_neurons.rs`
+  (Izhikevich, Izhikevich 2007, AdEx, Hodgkin-Huxley) and its
+  `py_rk4_neuron_simulate` function are documented in full, each read
+  against its code. Stated by reading: a Hodgkin-Huxley step takes
+  `(1 / dt).round()` RK4 sub-steps, about 1 ms, with a half rounded away
+  from zero, so a `dt` above 2 leaves the state unchanged, and its spike
+  is the upward crossing between the start and the end of that step; the
+  Izhikevich, AdEx and Hodgkin-Huxley ports validate nothing; and the
+  Izhikevich 2007 batch keeps the steps before a refused one. The Python
+  function's docstring now names the models it accepts, their default
+  steps, the arrays it returns and its errors.
+
 ### Fixed
 
 - The docstrings, comments, messages and documentation of the new codec,
