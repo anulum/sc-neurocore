@@ -267,16 +267,42 @@ the spike-band power. `SpikeEventEncoder` and `SpikeEventDecoder`
 samples, window by window:
 
 ```python
-from sc_neurocore.spike_codec.spike_events import SpikeEventDecoder, SpikeEventEncoder
+import wave
 
-encoder = SpikeEventEncoder(1024, 19531.0, power_bins=20, power_shift=6)
-s = encoder.settings                               # bin_samples 20 (about 1 ms), warm-up 1953
-decoder = SpikeEventDecoder(1024, s["bin_samples"], power_bins=s["power_bins"])
-for window in windows:                             # (samples, 1024) int16, e.g. 200 rows = 10 ms
-    events = decoder.decode(encoder.encode(window), len(window))
-    events.events                                  # uint8 (bins, channels): threshold crossings
-    events.power                                   # int32 (periods, channels): spike-band power
+import numpy as np
+
+from sc_neurocore.spike_codec import SpikeEventDecoder, SpikeEventEncoder
+
+with wave.open("recording.wav", "rb") as recording:
+    if recording.getsampwidth() != 2:
+        raise ValueError("expected a PCM16 recording")
+    channels = recording.getnchannels()
+    rate = recording.getframerate()
+    encoder = SpikeEventEncoder(channels, rate, timing="sample", power_bins=20)
+    settings = encoder.settings
+    decoder = SpikeEventDecoder(
+        channels,
+        settings["bin_samples"],
+        timing="sample",
+        power_bins=settings["power_bins"],
+        groups=settings["groups"],
+    )
+    rows = max(1, round(rate * 0.010))
+    while pcm := recording.readframes(rows):
+        samples = np.frombuffer(pcm, dtype="<i2").reshape(-1, channels)
+        packet = encoder.encode(samples)
+        window = decoder.decode(packet, len(samples))
+        print(window.first_bin, window.events.sum(), window.first_period, len(window.power))
 ```
+
+This uses the default filters for a high-rate acquisition. Lower sample rates
+require cutoffs appropriate to the recorded band. Both endpoints report their
+effective `backend`. Keep the window row count and packet order. A final
+partial bin or power period produces no output until a later window completes
+it. Reset both endpoints at the start of a new recording. Reset clears filter
+history, warm-up and adaptive coding. This event stream carries detected
+crossings and filtered amplitude summaries. It discards the original waveform.
+
 
 - Detection: second-order Butterworth high-pass at 250 Hz with Q14
   coefficients; noise from a streaming estimate of the median of the filtered
@@ -293,7 +319,11 @@ for window in windows:                             # (samples, 1024) int16, e.g.
   through the range coder of the lossless coder. All arithmetic is integer, so
   the Rust engine and the pure-Python reference write identical packets.
 
-Measured 2026-10-22 on the 743 challenge recordings (one workstation):
+Current measurements compare detector, encoder and decoder wall time on
+the same recordings in Python and Rust. See the
+[recorded event stream benchmarks](../benchmarks/BENCHMARKS.md#recorded-spike-event-streams).
+
+Historical detector study on the 743 challenge recordings (2026-10-22):
 
 - Rate with the defaults: 4.9 events/s per channel on average, median 0.61;
   52 % of the channels exceed 0.5 events/s. Window lengths do not change the
@@ -324,8 +354,7 @@ Measured 2026-10-22 on the 743 challenge recordings (one workstation):
 
   Each packet costs about 9 bytes of framing and coder flush per group, so
   packets of 10 ms or more (Bluetooth sends at connection intervals anyway)
-  keep 1 ms timing at half the rate of 1 ms packets. Encoding 1024 channels
-  took 0.3-0.5 s of one core per second of signal through the Python wrapper.
+  keep 1 ms timing at half the rate of 1 ms packets in those replays.
 
 `WaveformCodec`'s `spike` and `waveform` modes threshold the unfiltered signal,
 where the field potential inflates the noise estimate (1,864 spikes in the

@@ -75,6 +75,25 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+### Recorded spike-event and band-power streams
+
+Install the matching Python and optimized engine wheels in a fresh environment.
+Use the original PCM16 challenge recording and
+[S001R01.edf](https://physionet.org/files/eegmmidb/1.0.0/S001/S001R01.edf).
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 RAYON_NUM_THREADS=4 \
+  taskset -c 2,3,4,5 python benchmarks/bench_spike_event_stream.py \
+  --wav /path/to/0052503c-2849-4f41-ab51-db382103690c.wav \
+  --edf /path/to/S001R01.edf --repetitions 3 --output spike-events.json
+```
+
+The output includes the acquisition hashes, installed module hashes, measured
+setup and encoding/decoding times, packet latency, event rate and bitrate.
+The two backends must encode the same bytes, cross-decode the packets and
+return identical bins, offsets and band-power values.
+
+
 The whole waveform harness encodes and decodes WFC2 in all five modes with
 the installed Python and Rust implementations. Use the original challenge
 file `0052503c-2849-4f41-ab51-db382103690c.wav` and the pinned 64-channel

@@ -11,17 +11,23 @@
 from __future__ import annotations
 
 import sys
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
-from sc_neurocore.spike_codec import spike_events as se
-from sc_neurocore.spike_codec import waveform_stream as ws
-from sc_neurocore.spike_codec.spike_events import (
+from pathlib import Path
+
+from sc_neurocore.spike_codec import (
     SpikeEventDecoder,
     SpikeEventEncoder,
     SpikeEventWindow,
+    describe_codec,
+    probe_codec,
+    spike_events as se,
+    waveform_stream as ws,
+)
+from sc_neurocore.spike_codec.spike_events import (
     highpass_coefficients,
     lowpass_coefficients,
     threshold_factor,
@@ -208,8 +214,8 @@ def test_decoder_settings_and_windows_are_refused() -> None:
         with pytest.raises(ValueError, match=message):
             encoder.encode(window)
     integral = np.full((40, 2), 3.0)
-    window = SpikeEventDecoder(2, 20, backend="python").decode(encoder.encode(integral), 40)
-    assert window.events.shape == (2, 2) and not window.events.any()
+    decoded = SpikeEventDecoder(2, 20, backend="python").decode(encoder.encode(integral), 40)
+    assert decoded.events.shape == (2, 2) and not decoded.events.any()
 
 
 def _packet(write: Any) -> bytes:
@@ -251,7 +257,7 @@ def test_hostile_packets_are_refused_identically(backend: str) -> None:
         decoder = SpikeEventDecoder(1, 20, timing="sample", power_bins=1, backend=backend)
         with pytest.raises(ValueError, match=message):
             decoder.decode(_packet(write), 20)
-        with pytest.raises(ValueError, match="start a new decoder"):
+        with pytest.raises(ValueError, match="reset for a new stream"):
             decoder.decode(_packet(write), 20)
     short = b"\x00" * 5
     with pytest.raises(ValueError, match="ran past its bytes"):
@@ -300,7 +306,7 @@ def test_invalid_sample_counts_are_refused_before_decoding(backend: str) -> None
     empty = encoder.encode(zeros[:0])
     for samples in (-1, 2.5, None, 1 << 64):
         with pytest.raises(ValueError, match="samples must be"):
-            decoder.decode(empty, samples)
+            decoder.decode(empty, cast(int, samples))
     assert decoder.decode(empty, 0).events.shape == (0, 1)
     window = decoder.decode(encoder.encode(zeros[:15]), 15)
     assert window.first_bin == 0 and window.events.shape == (1, 1)
@@ -332,7 +338,95 @@ def test_framing_errors_leave_the_decoder_unchanged(backend: str) -> None:
 def test_backend_selection(monkeypatch: pytest.MonkeyPatch) -> None:
     """Without the engine ``auto`` uses the reference and ``rust`` is refused."""
     monkeypatch.setitem(sys.modules, "sc_neurocore_engine.sc_neurocore_engine", None)
-    assert isinstance(SpikeEventEncoder(1, RATE)._coder, se._PyEncoder)
-    assert isinstance(SpikeEventDecoder(1, 20)._coder, se._PyDecoder)
+    assert SpikeEventEncoder(1, RATE).backend == "python"
+    assert SpikeEventDecoder(1, 20).backend == "python"
     with pytest.raises(ValueError, match="backend 'rust' needs"):
         SpikeEventDecoder(1, 20, backend="rust")
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_reset_restarts_filters_epochs_and_recovers_decoder(backend: str) -> None:
+    """Reset an encoder with a partial window and a decoder poisoned by invalid content."""
+    data = _recording(2609, [[2020, 2200, 2595], [2100], []])
+    encoder = SpikeEventEncoder(
+        np.int64(3), RATE, timing="sample", groups=2, power_bins=5, backend=backend
+    )
+    decoder = SpikeEventDecoder(3, 20, timing="sample", groups=2, power_bins=5, backend=backend)
+    assert decoder.backend == encoder.backend == backend
+    assert probe_codec("spike_events", "sample").rust_components_available
+    entry = describe_codec("spike_events")
+    assert entry.encoder_entrypoint == "sc_neurocore.spike_codec.SpikeEventEncoder"
+    assert entry.decoder_entrypoint == "sc_neurocore.spike_codec.SpikeEventDecoder"
+
+    original = encoder.encode(data)
+    decoded = decoder.decode(original, len(data))
+    assert decoded.first_bin == decoded.first_period == 0
+    assert decoded.events.shape == (130, 3) and decoded.power.shape == (26, 3)
+    assert np.any(decoded.events)
+    assert np.any(decoded.power)
+    tail_packet = encoder.encode(data[:11])
+    tail = decoder.decode(tail_packet, 11)
+    assert tail.first_bin == 130 and tail.events.shape == (1, 3)
+
+    group_size = int.from_bytes(original[:4], "big")
+    extra_body_byte = (
+        (group_size + 1).to_bytes(4, "big")
+        + original[4 : 4 + group_size]
+        + b"\0"
+        + original[4 + group_size :]
+    )
+    with pytest.raises(ValueError, match="corrupted"):
+        decoder.decode(extra_body_byte, len(data))
+    with pytest.raises(ValueError, match="earlier corrupted"):
+        decoder.decode(original, len(data))
+
+    encoder.settings["power_bins"] = 0  # This public snapshot does not reconfigure the coder.
+    encoder.reset()
+    decoder.reset()
+    assert encoder.encode(data) == original
+    replay = decoder.decode(original, len(data))
+    assert replay.first_bin == replay.first_period == 0
+    np.testing.assert_array_equal(replay.events, decoded.events)
+    np.testing.assert_array_equal(replay.offsets, decoded.offsets)
+    np.testing.assert_array_equal(replay.power, decoded.power)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_invalid_adc_samples_leave_encoder_unchanged(backend: str) -> None:
+    """Reject invalid original values before narrowing them to the int16 transport."""
+    encoder = SpikeEventEncoder(1, RATE, backend=backend)
+    for values, reason in (
+        (np.array([[65536]], dtype=np.uint32), "int16 range"),
+        (np.array([[-32769]], dtype=np.int32), "int16 range"),
+        (np.array([[np.nan]]), "integer samples"),
+        (np.array([[0.5]]), "integer samples"),
+        (np.array([[1 + 0j]]), "integer samples"),
+        (np.array([["1"]]), "integer samples"),
+    ):
+        with pytest.raises(ValueError, match=reason):
+            encoder.encode(values)
+    samples = np.array([[-32768], [32767]], dtype=np.int16)
+    assert encoder.encode(samples.astype(np.float32)) == SpikeEventEncoder(
+        1, RATE, backend=backend
+    ).encode(samples)
+    with pytest.raises(ValueError, match="channels must be an integer"):
+        SpikeEventEncoder(cast(int, 2.5), RATE, backend=backend)
+    with pytest.raises(ValueError, match="bin_samples must be an integer"):
+        SpikeEventDecoder(1, cast(int, 20.5), backend=backend)
+
+
+def test_broken_installed_engine_is_not_treated_as_absent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Propagate missing transitive dependencies from an installed engine package."""
+    package = tmp_path / "sc_neurocore_engine"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "sc_neurocore_engine.py").write_text(
+        "import broken_spike_event_extension_dependency\n", encoding="utf-8"
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.delitem(sys.modules, "sc_neurocore_engine", raising=False)
+    monkeypatch.delitem(sys.modules, "sc_neurocore_engine.sc_neurocore_engine", raising=False)
+    with pytest.raises(ModuleNotFoundError, match="broken_spike_event_extension_dependency"):
+        SpikeEventEncoder(1, RATE)

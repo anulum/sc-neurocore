@@ -33,9 +33,11 @@ from __future__ import annotations
 
 import importlib
 import math
+import operator
 from dataclasses import dataclass
+from functools import partial
 from types import ModuleType
-from typing import Any
+from typing import Any, SupportsIndex
 
 import numpy as np
 
@@ -45,6 +47,7 @@ from .waveform_stream import (
     _RangeDecoder,
     _RangeEncoder,
     _ResidualModel,
+    _integer_samples,
     _sample_count,
     _unzigzag,
     _zigzag,
@@ -190,6 +193,14 @@ def _groups(channels: int, groups: int, bin_samples: int) -> list[_GroupModel]:
     ]
 
 
+def _configuration_int(value: SupportsIndex, name: str) -> int:
+    """Preserve integer scalars and refuse settings that would require truncation."""
+    try:
+        return operator.index(value)
+    except TypeError as error:
+        raise ValueError(f"{name} must be an integer") from error
+
+
 def _validate_layout(channels: int, bin_samples: int, power_bins: int, groups: int) -> None:
     if channels < 1:
         raise ValueError("a spike-event stream needs at least one channel")
@@ -232,9 +243,15 @@ def _engine(backend: str) -> ModuleType | None:
         engine: ModuleType | None = importlib.import_module(
             "sc_neurocore_engine.sc_neurocore_engine"
         )
-    except ImportError:
+    except ModuleNotFoundError as error:
+        if error.name not in ("sc_neurocore_engine", "sc_neurocore_engine.sc_neurocore_engine"):
+            raise
         engine = None
-    if engine is not None and hasattr(engine, "SpikeEventEncoder"):
+    if (
+        engine is not None
+        and callable(getattr(engine, "SpikeEventEncoder", None))
+        and callable(getattr(engine, "SpikeEventDecoder", None))
+    ):
         return engine
     if backend == "rust":
         raise ValueError("backend 'rust' needs sc_neurocore_engine with the spike-event layer")
@@ -381,7 +398,7 @@ class _PyDecoder:
     ) -> tuple[int, np.ndarray[Any, Any], np.ndarray[Any, Any] | None, int, np.ndarray[Any, Any]]:
         if self.broken:
             raise ValueError(
-                "spike-event decoder is broken by an earlier corrupted packet; start a new decoder"
+                "spike-event decoder is broken by an earlier corrupted packet; reset for a new stream"
             )
         bodies = []
         pos = 0
@@ -471,12 +488,7 @@ def _window(window: np.ndarray[Any, Any], channels: int) -> np.ndarray[Any, Any]
     array = np.asarray(window)
     if array.ndim != 2 or array.shape[1] != channels:
         raise ValueError(f"window must be (samples, {channels})")
-    if array.size and not np.issubdtype(array.dtype, np.integer):
-        if not bool(np.all(np.isfinite(array))) or not bool(np.all(array == np.round(array))):
-            raise ValueError("spike-event coding needs integer samples")
-    if array.size and (array.min() < -32768 or array.max() > 32767):
-        raise ValueError("spike-event coding needs samples in the int16 range")
-    return np.ascontiguousarray(array, dtype=np.int16)
+    return _integer_samples(array, "spike-event coding")
 
 
 class SpikeEventEncoder:
@@ -513,23 +525,30 @@ class SpikeEventEncoder:
         Contiguous channel groups, each with its own range coder (coded in parallel in Rust).
     backend : str
         ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
+
+    Attributes
+    ----------
+    backend : str
+        Effective backend selected at construction.
+    settings : dict
+        Snapshot containing the detector configuration and decoder layout.
     """
 
     def __init__(
         self,
-        channels: int,
+        channels: SupportsIndex,
         sample_rate_hz: float,
         *,
-        bin_samples: int | None = None,
-        refractory_samples: int | None = None,
+        bin_samples: SupportsIndex | None = None,
+        refractory_samples: SupportsIndex | None = None,
         threshold_sigma: float = 4.5,
         highpass_hz: float = 250.0,
         lowpass_hz: float = 1000.0,
-        warmup_samples: int | None = None,
+        warmup_samples: SupportsIndex | None = None,
         timing: str = "bin",
-        power_bins: int = 20,
-        power_shift: int = 0,
-        groups: int = 1,
+        power_bins: SupportsIndex = 20,
+        power_shift: SupportsIndex = 0,
+        groups: SupportsIndex = 1,
         backend: str = "auto",
     ) -> None:
         if timing not in _TIMINGS:
@@ -537,30 +556,56 @@ class SpikeEventEncoder:
         rate = float(sample_rate_hz)
         if not (math.isfinite(rate) and rate > 0.0):
             raise ValueError("sample_rate_hz must be positive")
-        bins = max(round(rate / 1000.0), 1) if bin_samples is None else int(bin_samples)
+        bins = (
+            max(round(rate / 1000.0), 1)
+            if bin_samples is None
+            else _configuration_int(bin_samples, "bin_samples")
+        )
         settings: dict[str, Any] = {
-            "channels": int(channels),
+            "channels": _configuration_int(channels, "channels"),
             "sample_rate_hz": rate,
             "bin_samples": bins,
-            "refractory_samples": bins if refractory_samples is None else int(refractory_samples),
+            "refractory_samples": (
+                bins
+                if refractory_samples is None
+                else _configuration_int(refractory_samples, "refractory_samples")
+            ),
             "threshold_sigma": float(threshold_sigma),
             "highpass_hz": float(highpass_hz),
             "lowpass_hz": float(lowpass_hz),
-            "warmup_samples": round(rate / 10.0) if warmup_samples is None else int(warmup_samples),
+            "warmup_samples": (
+                round(rate / 10.0)
+                if warmup_samples is None
+                else _configuration_int(warmup_samples, "warmup_samples")
+            ),
             "sample_timing": timing == "sample",
-            "power_bins": int(power_bins),
-            "power_shift": int(power_shift),
-            "groups": int(groups),
+            "power_bins": _configuration_int(power_bins, "power_bins"),
+            "power_shift": _configuration_int(power_shift, "power_shift"),
+            "groups": _configuration_int(groups, "groups"),
         }
         _validate_settings(settings)
         self.channels = settings["channels"]
         self.settings = dict(settings)
         native = _engine(backend)
-        self._coder: Any = (
-            native.SpikeEventEncoder(*settings.values())
+        self.backend = "rust" if native is not None else "python"
+        self._new_coder = (
+            partial(native.SpikeEventEncoder, *settings.values())
             if native is not None
-            else _PyEncoder(settings)
+            else partial(_PyEncoder, settings)
         )
+        self._coder: Any = self._new_coder()
+
+    def reset(self) -> None:
+        """Start a new stream with the same configuration and backend.
+
+        Discard unfinished bins and band-power periods. The detector, filters,
+        warm-up and adaptive coding state start over at sample zero.
+        """
+        reset = getattr(self._coder, "reset", None)
+        if callable(reset):
+            reset()
+        else:
+            self._coder = self._new_coder()
 
     def encode(self, window: np.ndarray[Any, Any]) -> bytes:
         """Encode a ``(samples, channels)`` window of int16-range integers into a packet.
@@ -584,35 +629,56 @@ class SpikeEventDecoder:
         ``"bin"`` or ``"sample"``, as for the encoder.
     backend : str
         ``"auto"``, ``"rust"`` or ``"python"``.
+
+    Attributes
+    ----------
+    backend : str
+        Effective backend selected at construction.
     """
 
     def __init__(
         self,
-        channels: int,
-        bin_samples: int,
+        channels: SupportsIndex,
+        bin_samples: SupportsIndex,
         *,
         timing: str = "bin",
-        power_bins: int = 20,
-        groups: int = 1,
+        power_bins: SupportsIndex = 20,
+        groups: SupportsIndex = 1,
         backend: str = "auto",
     ) -> None:
         if timing not in _TIMINGS:
             raise ValueError(f"timing must be one of {_TIMINGS}, got {timing!r}")
-        args = (int(channels), int(bin_samples), timing == "sample", int(power_bins), int(groups))
+        args = (
+            _configuration_int(channels, "channels"),
+            _configuration_int(bin_samples, "bin_samples"),
+            timing == "sample",
+            _configuration_int(power_bins, "power_bins"),
+            _configuration_int(groups, "groups"),
+        )
         _validate_layout(args[0], args[1], args[3], args[4])
         native = _engine(backend)
-        self._coder: Any = (
-            native.SpikeEventDecoder(*args) if native is not None else _PyDecoder(*args)
+        self.backend = "rust" if native is not None else "python"
+        self._new_coder = partial(
+            native.SpikeEventDecoder if native is not None else _PyDecoder, *args
         )
+        self._coder: Any = self._new_coder()
 
-    def decode(self, packet: bytes, samples: int) -> SpikeEventWindow:
+    def reset(self) -> None:
+        """Discard coding state and prepare to decode an independent stream from sample zero."""
+        reset = getattr(self._coder, "reset", None)
+        if callable(reset):
+            reset()
+        else:
+            self._coder = self._new_coder()
+
+    def decode(self, packet: bytes, samples: SupportsIndex) -> SpikeEventWindow:
         """Decode the packet of a window of ``samples`` samples.
 
         Raises
         ------
         ValueError
             For a malformed packet. Framing errors leave the decoder unchanged; content found
-            invalid while decoding breaks it, and every later packet is refused. A sample count
+            invalid while decoding breaks it until reset. A sample count
             that is not an integer in ``[0, 2**64)`` is refused before decoding.
         """
         count = _sample_count(samples)

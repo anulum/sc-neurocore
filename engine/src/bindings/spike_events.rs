@@ -68,6 +68,11 @@ impl PySpikeEventEncoder {
         Ok(PySpikeEventEncoder { inner, channels })
     }
 
+    /// Restart detection and coding for an independent stream.
+    fn reset(&mut self, py: Python<'_>) {
+        py.detach(|| self.inner.reset());
+    }
+
     /// Encode a C-contiguous int16 ``(samples, channels)`` window into a packet.
     fn encode<'py>(
         &mut self,
@@ -129,6 +134,11 @@ impl PySpikeEventDecoder {
             channels,
             sample_timing,
         })
+    }
+
+    /// Restart decoding from sample zero, including after content corruption.
+    fn reset(&mut self, py: Python<'_>) {
+        py.detach(|| self.inner.reset());
     }
 
     /// Decode the packet of a window of ``samples`` samples.

@@ -41,9 +41,11 @@ try:
         FixedPointBrunelNetwork as FixedPointBrunelNetwork,
         PySpikingControllerPool as PySpikingControllerPool,
     )
-except ImportError:
+except ImportError as _error:
+    _core_import_failure: ImportError | None = _error
     _core_available = False
 else:
+    _core_import_failure = None
     _core_available = True
 
 try:
@@ -253,6 +255,8 @@ except (ImportError, ModuleNotFoundError):
 
 _ENGINE_AVAILABLE = _core_available and _neurons_available
 if not _ENGINE_AVAILABLE:
+    if _core_import_failure is not None:
+        raise _core_import_failure
     raise ImportError(
         "sc_neurocore_engine not found. Build with:\ncd engine && maturin develop --release"
     )

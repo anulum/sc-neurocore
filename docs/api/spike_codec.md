@@ -266,6 +266,15 @@ encoded samples. Rust (`backend="auto"`/`"rust"`) and the pure-Python reference
 
 ## Spike-Event Layer (Bluetooth-Class Links)
 
+Import `SpikeEventEncoder`, `SpikeEventDecoder` and `SpikeEventWindow` from
+`sc_neurocore.spike_codec`. A pair uses the same channels, bin size, timing
+mode, band-power interval and groups. Each packet carries completed bins and
+periods. Unfinished intervals continue across calls as long as both ends
+receive the same window sizes in order. Call `reset()` on both ends at the
+start of an independent recording. The `backend` attribute reports the
+effective implementation.
+
+
 Threshold-crossing events in 1 ms bins and spike-band power, computed from raw
 int16 samples with integer filters and a streaming noise estimate, coded with
 the range coder of the lossless coder. Rust and the pure-Python reference write

@@ -291,7 +291,7 @@ fn corrupted_packets_are_refused() {
         "more samples than coded"
     );
     let error = decoder.decode(&packet, 4000).unwrap_err();
-    assert!(error.contains("start a new decoder"), "{error}");
+    assert!(error.contains("reset for a new stream"), "{error}");
     let mut decoder = fresh();
     assert!(decoder.decode(&packet[..3], 4000).is_err());
     let window = decoder.decode(&packet, 4000).unwrap();
@@ -305,4 +305,37 @@ fn corrupted_packets_are_refused() {
         }
     }
     assert!(refused > 0);
+}
+
+#[test]
+fn reset_discards_unfinished_bins_and_previous_coding_state() {
+    let cfg = config(3, true, 5, 2);
+    let mut encoder = SpikeEventEncoder::new(cfg).unwrap();
+    let mut decoder = SpikeEventDecoder::new(3, 20, true, 5, 2).unwrap();
+    let values = recording(2209, 3, &[vec![2040], vec![], vec![2112]]);
+    let first = encoder.encode(&values, 2209).unwrap();
+    let expected = decoder.decode(&first, 2209).unwrap();
+    assert!(!expected.power.is_empty() && expected.events.contains(&1));
+    let tail = encoder.encode(&values[..33], 11).unwrap();
+    assert_eq!(decoder.decode(&tail, 11).unwrap().first_bin, 110);
+
+    let size = u32::from_be_bytes(first[..4].try_into().unwrap()) as usize;
+    let mut invalid = Vec::from(((size + 1) as u32).to_be_bytes());
+    invalid.extend_from_slice(&first[4..4 + size]);
+    invalid.push(0);
+    invalid.extend_from_slice(&first[4 + size..]);
+    assert!(decoder.decode(&invalid, 2209).is_err());
+    assert!(decoder
+        .decode(&first, 2209)
+        .unwrap_err()
+        .contains("earlier corrupted"));
+
+    encoder.reset();
+    decoder.reset();
+    assert_eq!(encoder.encode(&values, 2209).unwrap(), first);
+    let replay = decoder.decode(&first, 2209).unwrap();
+    assert_eq!((replay.first_bin, replay.first_period), (0, 0));
+    assert_eq!(replay.events, expected.events);
+    assert_eq!(replay.offsets, expected.offsets);
+    assert_eq!(replay.power, expected.power);
 }

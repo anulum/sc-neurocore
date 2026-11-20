@@ -289,6 +289,15 @@ metadata separately when byte-for-byte WAV restoration is required.
 
 ## Raw stateful lossless and event packets
 
+For spike-event packets, the encoder carries a crossing and the filtered
+amplitude total in unfinished intervals into the next call. An empty window
+carries no bins or periods and does not advance the sample counter. On either
+endpoint, `reset()` discards state, including unfinished intervals. Begin a
+new stream at both ends together. Invalid group framing leaves the decoder
+unchanged. A coded-content failure poisons the current stream, and reset is
+required before decoding an independent stream.
+
+
 Both formats concatenate group bodies as uint32 byte length followed by
 range-coded bytes. They contain no format magic, version, dimensions, packet
 sample count, reset marker or checksum. Keep a versioned application envelope

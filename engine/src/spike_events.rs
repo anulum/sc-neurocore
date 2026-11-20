@@ -243,6 +243,12 @@ impl GroupModel {
             power: ResidualModel::new(),
         }
     }
+
+    fn reset(&mut self) {
+        self.channels.fill(EventModel::new());
+        self.offsets.fill(PROB_INIT);
+        self.power = ResidualModel::new();
+    }
 }
 
 /// Per-channel detector state (encoder only).
@@ -256,6 +262,20 @@ struct Detector {
     power_sum: i64,
     /// An event in the bin the previous window left incomplete.
     carried: Option<u64>,
+}
+
+impl Detector {
+    fn new(refractory: usize) -> Self {
+        Self {
+            highpass: BiquadState::default(),
+            lowpass: BiquadState::default(),
+            noise: 0,
+            below: false,
+            since_event: refractory as u64,
+            power_sum: 0,
+            carried: None,
+        }
+    }
 }
 
 /// Stateful spike-event encoder.
@@ -297,15 +317,7 @@ impl SpikeEventEncoder {
         }
         let highpass = highpass(config.highpass_hz, config.sample_rate_hz)?;
         let lowpass = lowpass(config.lowpass_hz, config.sample_rate_hz)?;
-        let detector = Detector {
-            highpass: BiquadState::default(),
-            lowpass: BiquadState::default(),
-            noise: 0,
-            below: false,
-            since_event: config.refractory_samples as u64,
-            power_sum: 0,
-            carried: None,
-        };
+        let detector = Detector::new(config.refractory_samples);
         let groups = group_bounds(config.channels, config.groups)
             .into_iter()
             .map(|(start, end)| {
@@ -327,6 +339,16 @@ impl SpikeEventEncoder {
         })
     }
 
+    /// Start an independent stream, discarding filter history and unfinished bins.
+    pub fn reset(&mut self) {
+        self.samples_seen = 0;
+        let detector = Detector::new(self.config.refractory_samples);
+        for (_, _, model, detectors) in &mut self.groups {
+            model.reset();
+            detectors.fill(detector.clone());
+        }
+    }
+
     /// Encode one row-major `(samples, channels)` int16 window into a packet.
     ///
     /// The packet holds, per group, a big-endian u32 length and the range-coder bytes.
@@ -341,7 +363,10 @@ impl SpikeEventEncoder {
         let bin = config.bin_samples as u64;
         let period = (config.power_bins as u64) * bin;
         let first_bin = start / bin;
-        let end_bin = (start + samples as u64) / bin;
+        let end = start
+            .checked_add(samples as u64)
+            .ok_or("sample count exceeds the spike-event stream range")?;
+        let end_bin = end / bin;
         let bodies: Vec<Vec<u8>> = self
             .groups
             .par_iter_mut()
@@ -422,7 +447,7 @@ impl SpikeEventEncoder {
                 encoder.finish()
             })
             .collect();
-        self.samples_seen += samples as u64;
+        self.samples_seen = end;
         let mut packet = Vec::with_capacity(bodies.iter().map(|b| b.len() + 4).sum());
         for body in bodies {
             packet.extend_from_slice(&(body.len() as u32).to_be_bytes());
@@ -508,14 +533,23 @@ impl SpikeEventDecoder {
         })
     }
 
+    /// Reset adaptation and recover a decoder for an independent stream.
+    pub fn reset(&mut self) {
+        self.samples_seen = 0;
+        self.broken = false;
+        for (_, _, model) in &mut self.groups {
+            model.reset();
+        }
+    }
+
     /// Decode the packet of a window of `samples` samples.
     ///
     /// Framing errors leave the decoder unchanged; content found invalid while decoding
-    /// breaks it, and every later packet is refused (start a new decoder).
+    /// breaks it, and every later packet is refused until reset.
     pub fn decode(&mut self, packet: &[u8], samples: usize) -> Result<SpikeEventWindow, String> {
         if self.broken {
             return Err(
-                "spike-event decoder is broken by an earlier corrupted packet; start a new decoder"
+                "spike-event decoder is broken by an earlier corrupted packet; reset for a new stream"
                     .into(),
             );
         }
@@ -526,8 +560,8 @@ impl SpikeEventDecoder {
                 .get(pos..pos + 4)
                 .ok_or_else(|| format!("{PACKET}: missing group length"))?;
             let length = u32::from_be_bytes([header[0], header[1], header[2], header[3]]) as usize;
-            let body = packet
-                .get(pos + 4..pos + 4 + length)
+            let body = packet[pos + 4..]
+                .get(..length)
                 .ok_or_else(|| format!("{PACKET}: group longer than packet"))?;
             if body.len() < 5 || body[0] != 0 {
                 return Err(format!("{PACKET}: bad range-coder start"));
@@ -561,6 +595,9 @@ impl SpikeEventDecoder {
                 return Err(too_many());
             }
         }
+        let channels = self.channels;
+        let event_cells = bins.checked_mul(channels).ok_or_else(too_many)?;
+        let power_cells = periods.checked_mul(channels).ok_or_else(too_many)?;
         let (bin_samples, sample_timing) = (self.bin_samples, self.sample_timing);
         let results: Vec<Result<GroupResult, String>> = self
             .groups
@@ -578,17 +615,16 @@ impl SpikeEventDecoder {
                 )
             })
             .collect();
-        let channels = self.channels;
         let mut window = SpikeEventWindow {
             first_bin,
-            events: vec![0; bins * channels],
+            events: vec![0; event_cells],
             offsets: if sample_timing {
-                vec![-1; bins * channels]
+                vec![-1; event_cells]
             } else {
                 Vec::new()
             },
             first_period,
-            power: vec![0; periods * channels],
+            power: vec![0; power_cells],
         };
         for ((start, end, _), result) in self.groups.iter().zip(results) {
             let part = match result {

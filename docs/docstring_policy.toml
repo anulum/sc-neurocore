@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2266
+expected_file_count = 2267
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -1371,6 +1371,10 @@ rationale = "Installed Python and Rust waveform container interoperability and s
 [[file]]
 path = "benchmarks/bench_waveform_container.py"
 rationale = "Paired waveform container performance and reconstruction measurements."
+
+[[file]]
+path = "benchmarks/bench_spike_event_stream.py"
+rationale = "Paired installed spike-event stream and band-power measurements."
 
 [[file]]
 path = "src/sc_neurocore/spike_codec/waveform_codec.py"

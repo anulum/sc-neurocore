@@ -45275,7 +45275,16 @@ groups : int
 backend : str
     ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
 
+Attributes
+----------
+backend : str
+    Effective backend selected at construction.
+settings : dict
+    Snapshot containing the detector configuration and decoder layout.
+
 - **__init__**(channels, sample_rate_hz, \*, bin_samples, refractory_samples, threshold_sigma, highpass_hz, lowpass_hz, warmup_samples, timing, power_bins, power_shift, groups, backend)
+- **reset**()
+  - Start a new stream with the same configuration and backend.
 - **encode**(window)
   - Encode a ``(samples, channels)`` window of int16-range integers into a packet.
 
@@ -45291,7 +45300,14 @@ timing : str
 backend : str
     ``"auto"``, ``"rust"`` or ``"python"``.
 
+Attributes
+----------
+backend : str
+    Effective backend selected at construction.
+
 - **__init__**(channels, bin_samples, \*, timing, power_bins, groups, backend)
+- **reset**()
+  - Discard coding state and prepare to decode an independent stream from sample zero.
 - **decode**(packet, samples)
   - Decode the packet of a window of ``samples`` samples.
 

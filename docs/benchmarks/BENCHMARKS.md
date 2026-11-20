@@ -1373,3 +1373,34 @@ The folded HDL core implements deterministic Q8.8-weight/Q16.16-MAC dense
 execution and is covered by Icarus simulation; it must be selected deliberately
 by deployment code and does not silently replace the existing stochastic dense
 path.
+
+## Recorded spike-event streams
+
+Both installed backends read the same ADC samples and produced the same packet
+bytes. Each decoded the other's packets to the same events, offsets and integer
+band-power values. The mono rows use the entire 98,689-sample challenge file at
+19,531 Hz with 20-sample bins. The EEG rows use all 9,760 time rows from 64
+simultaneous electrodes at 160 Hz with four-sample bins and 3–35 Hz filters.
+Both profiles emit one band-power value per five bins.
+
+The Linux machine used an Intel Core i5-11600K with 32 GiB RAM, CPUs 2–5,
+CPython 3.12.16, NumPy 2.5.4 and Rust 1.98.1 in release mode with four Rayon
+threads. Totals are the medians of three alternating pairs and include
+setup, detection, coding and decoding. Packet p95 measures processing from
+encode to decode. Acquisition, buffering and network time are outside this
+measurement.
+
+| Input | Timing | Rows/packet | Groups | Python total (ms) | Rust total (ms) | Python p95 (ms) | Rust p95 (ms) | Events/s | kbit/s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| mono challenge | bin | 782 | 1 | 192.21 | 2.39 | 2.667 | 0.020 | 2.57 | 3.44 |
+| mono challenge | sample | 1271 | 1 | 179.48 | 1.80 | 2.927 | 0.027 | 2.57 | 2.80 |
+| 64-channel EEG | bin | 7 | 1 | 1,789.91 | 20.54 | 2.246 | 0.024 | 12.11 | 4.41 |
+| 64-channel EEG | sample | 11 | 8 | 1,579.66 | 24.37 | 2.826 | 0.041 | 12.11 | 11.00 |
+
+Event rate is the total across channels. Bitrate includes group lengths and
+range-coder flushes. The
+[record](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/spike_event_stream_backends.json)
+stores the exact inputs, settings, packet digests, installed wheel hashes and
+timing samples. The
+[reproduction steps](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/README.md#recorded-spike-event-and-band-power-streams)
+use the same two acquisitions.

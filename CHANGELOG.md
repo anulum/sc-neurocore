@@ -82,6 +82,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- Export the event and band-power codec from `sc_neurocore.spike_codec`.
+  The Python and Rust encoder and decoder can reset for an independent stream.
+  Paired measurements cover both timing modes and preserve legacy event packets.
+
+
 - The Rust waveform codec reads and writes complete WFC2 packets in all
   five modes. The installed Python API selects the whole-container backend.
   Both implementations validate the declared geometry and compressed sections

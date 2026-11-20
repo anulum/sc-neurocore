@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 25,
+    "current": 26,
     "outdated": 127,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 327,
+  "all_records": 328,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -3064,6 +3064,7 @@
     {
       "changed": [
         "Cargo.lock",
+        "bridge/sc_neurocore_engine/__init__.py",
         "engine/Cargo.toml"
       ],
       "currency": "outdated",
@@ -3076,6 +3077,10 @@
       ],
       "currency": "outdated",
       "name": "raster_stream_backends.json"
+    },
+    {
+      "currency": "current",
+      "name": "spike_event_stream_backends.json"
     },
     {
       "currency": "current",

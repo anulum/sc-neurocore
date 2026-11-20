@@ -19,6 +19,7 @@ from .streaming_codec import StreamingSpikeCodec, StreamingCompressionResult
 from .aer_codec import AERSpikeCodec, AERCompressionResult
 from .waveform_codec import WaveformCodec, WaveformCompressionResult, WaveformDecodeResult
 from .waveform_stream import LosslessStreamDecoder, LosslessStreamEncoder
+from .spike_events import SpikeEventDecoder, SpikeEventEncoder, SpikeEventWindow
 
 _LAZY_EXPORTS = {
     "CodecWireFormat": (".catalogue_types", "CodecWireFormat"),
@@ -92,6 +93,9 @@ __all__ = [
     "WaveformDecodeResult",
     "LosslessStreamEncoder",
     "LosslessStreamDecoder",
+    "SpikeEventEncoder",
+    "SpikeEventDecoder",
+    "SpikeEventWindow",
     "get_codec",
     "list_codecs",
     "recommend_codec",
