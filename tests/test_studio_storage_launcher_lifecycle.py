@@ -55,19 +55,35 @@ def _blocked_signals(pid: int) -> int:
 
 
 def _gone(pid: int, seconds: float) -> bool:
-    """Return whether a process has ended (or is a zombie) within a time."""
+    """Return whether a process has ended (or is a zombie) within a time.
+
+    A process that ends between the open and the read of its ``/proc`` entry makes the
+    read fail with ``ESRCH`` (``ProcessLookupError``); that, too, means it is gone.
+    """
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         try:
             state = (
                 Path(f"/proc/{pid}/stat").read_text(encoding="ascii").rsplit(")", 1)[1].split()[0]
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             return True
         if state == "Z":
             return True
         time.sleep(0.05)
     return False
+
+
+def test_a_process_that_vanishes_during_the_read_counts_as_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``ESRCH`` from reading ``/proc/<pid>/stat`` means the process ended, not a test error."""
+
+    def vanished(self: Path, encoding: str | None = None) -> str:
+        raise ProcessLookupError(3, "No such process")
+
+    monkeypatch.setattr(Path, "read_text", vanished)
+    assert _gone(os.getpid(), 1.0)
 
 
 def test_the_service_stops_on_sigterm_although_its_starter_blocked_it() -> None:

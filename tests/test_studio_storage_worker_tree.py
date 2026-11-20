@@ -206,7 +206,7 @@ _HARNESS = (
     "        with open(f'/proc/{pid}/stat') as handle:\n"
     "            fields = handle.read().rsplit(')', 1)[-1].split()\n"
     "        return fields[0], int(fields[1])\n"
-    "    except FileNotFoundError:\n"
+    "    except (FileNotFoundError, ProcessLookupError):\n"
     "        return 'gone', -1\n"
     "read, write = os.pipe()\n"
     "helper = os.fork()\n"
