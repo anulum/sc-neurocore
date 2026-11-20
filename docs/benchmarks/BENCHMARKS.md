@@ -53,8 +53,29 @@ not an FPGA throughput or latency measurement.
 
 > **v3.14.0 additions:** out-of-context SHD synthesis on Zynq XC7Z020
 > without weights or delays — 990 LUT (1.86%), 670 FF (0.63%), WNS +4.048 ns
-> at 100 MHz. This is not the resource cost of the network with its weights.
+> at 100 MHz (`sc_shd_top`). This is not the resource cost of the network with its weights.
 > See `hdl/reports/vivado_util_xc7z020_100mhz.rpt` and `ARCHITECTURE.md` §SHD.
+
+### Event-driven SHD FPGA synthesis and routing with loaded weights (`sc_shd_event_axi`)
+
+Out-of-context Vivado v2025.2 synthesis and placed-and-routed implementation of
+`hdl/shd_event/sc_shd_event_axi.v` (`P=8` lanes, full trained integer SHD
+weights and 32-bucket time wheels in block RAM plus delay tables in `RAMD64E`
+LUTRAM) on `xc7z020clg400-1` (`100 MHz` target constraint):
+
+- **Synthesised (`hdl/reports/vivado_sc_shd_event_axi_synth_util_xc7z020_100mhz.rpt`):**
+  `12,974` LUT (`24.39%`), `14,073` FF (`13.23%`), `21` Block RAM Tiles
+  (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSP, `WNS -6.887 ns`, `WHS +0.173 ns`.
+- **Placed and routed (`hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt`, `hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt`, `hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt`):**
+  `12,957` LUT (`24.36%`), `14,082` FF (`13.23%`), `21` Block RAM Tiles
+  (`15.00%`), `0` DSP, setup `WNS -3.343 ns` at `100 MHz` (`13.343 ns` implied
+  minimum period: `74.95 MHz` `Fmax` and `+6.657 ns` setup slack at `50 MHz`,
+  estimated from the 100 MHz run's WNS (not a run at that frequency); hold not
+  closed out of context); routed DRC: `0` errors, `44` warnings, including `RAMB`
+  async-control checks (`REQP-1839` ×20, `REQP-1840` ×20 at rule cap:
+  asynchronously reset registers drive BRAM address and enable pins; not
+  analysed by static timing). Physical board execution, hardware latency, and
+  power are not measured.
 
 ---
 

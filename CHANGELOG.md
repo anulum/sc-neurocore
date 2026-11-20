@@ -231,6 +231,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   ready/valid handshakes and a signed fixed-point error bound. The Python
   reference and generated C11, Rust and Verilog return the same codes.
 
+- Out-of-context Vivado v2025.2 synthesis and placed-and-routed implementation
+  artefacts (`hdl/reports/vivado_sc_shd_event_axi_*_xc7z020_100mhz.rpt`),
+  reproducible Tcl script (`hdl/pynq/synth_shd_event_xc7z020.tcl`), and `100 MHz`
+  constraints (`hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc`) for
+  `sc_shd_event_axi` (`P=8`, full trained SHD weights and 32-bucket time wheels
+  in `21` XC7Z020 Block RAM Tiles plus delay tables in `40` `RAMD64E` LUTRAMs:
+  synthesised `12,974` LUT / `14,073` FF / `0` DSP, routed `12,957` LUT /
+  `14,082` FF / `0` DSP / setup `WNS -3.343 ns` at `100 MHz`, with `74.95 MHz`
+  `Fmax` estimated from the 100 MHz run's WNS and hold not closed out of context
+  (`WHS -0.689 ns`), plus routed DRC `0` errors / `44` warnings including `RAMB`
+  async-control checks), bound to public documentation by
+  `tests/test_hardware_number_provenance.py`, alongside Git-tracked source
+  enumeration in `tests/test_shd_event_core.py`.
+
 - `hdl/pynq/sc_shd_driver.py` adds integrity-checked weight and delay loading
   (`load_network` over `hdl/fixtures/shd_int_network.json`, matching
   `zlib.crc32`, validating per-selector `LOAD_TARGET` bounds before bus writes,

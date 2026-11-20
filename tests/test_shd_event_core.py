@@ -110,14 +110,19 @@ def _sparse_frames(seed: int, steps: int) -> npt.NDArray[np.int64]:
     return np.where(mask, counts, 0).astype(np.int64)
 
 
+def _event_relative_files(repo_root: Path = REPO_ROOT) -> set[str]:
+    """Return tracked paths under ``hdl/shd_event``, falling back to disk outside Git."""
+    tracked = tracked_files(repo_root, "hdl/shd_event")
+    if tracked is not None:
+        prefix = "hdl/shd_event/"
+        return {name.removeprefix(prefix) for name in tracked}
+    event_dir = repo_root / "hdl" / "shd_event"
+    return {p.relative_to(event_dir).as_posix() for p in event_dir.rglob("*") if p.is_file()}
+
+
 def test_event_tree_inventory_headers_and_unique_digests() -> None:
     """Every expected file exists, carries the 7-line SPDX header, and has a unique digest."""
-    tracked = tracked_files(REPO_ROOT, "hdl/shd_event")
-    if tracked is None:  # an unpacked source distribution has no Git work tree
-        files = [p for p in EVENT_DIR.rglob("*") if p.is_file()]
-    else:  # only Git's files: ignored simulation or synthesis output is not part of the tree
-        files = [REPO_ROOT / name for name in tracked]
-    actual = {p.relative_to(EVENT_DIR).as_posix() for p in files}
+    actual = _event_relative_files()
     assert actual == EXPECTED_EVENT_FILES
 
     digests: dict[str, str] = {}
@@ -134,8 +139,10 @@ def test_event_tree_inventory_headers_and_unique_digests() -> None:
 def test_zero_target_preprocessor_conditionals_and_zero_branch_testbench() -> None:
     """Core and leaves carry no target ifdef; the derived testbench has zero branches."""
     directive_re = re.compile(r"^\s*`(ifdef|ifndef|elsif|else|endif)\b(.*)$")
-    for path in sorted(EVENT_DIR.rglob("*.v*")):
-        rel = path.relative_to(EVENT_DIR).as_posix()
+    verilog_rels = sorted(r for r in _event_relative_files() if r.endswith((".v", ".vh")))
+    assert verilog_rels
+    for rel in verilog_rels:
+        path = EVENT_DIR / rel
         directives: list[tuple[str, str]] = []
         for line in path.read_text(encoding="utf-8").splitlines():
             match = directive_re.match(line)
@@ -450,3 +457,24 @@ def test_driver_input_and_environment_refusals(
     monkeypatch.setattr(cosim, "_build", _fake_build)
     with pytest.raises(RuntimeError, match="results for"):
         cosim.simulate(net, [valid_frame], timeout_seconds=10.0, work=tmp_path / "trunc")
+
+
+def test_event_relative_files_uses_git_tracking_and_falls_back_outside_git(
+    tmp_path: Path,
+) -> None:
+    """Untracked build artefacts in a Git checkout are ignored; non-Git trees fall back to disk."""
+    non_git = tmp_path / "non_git"
+    (non_git / "hdl" / "shd_event" / "sub").mkdir(parents=True)
+    (non_git / "hdl" / "shd_event" / "sample.v").write_text(
+        "module m; endmodule\n", encoding="utf-8"
+    )
+    assert _event_relative_files(non_git) == {"sample.v"}
+
+    git_root = tmp_path / "git_case"
+    event_sub = git_root / "hdl" / "shd_event"
+    event_sub.mkdir(parents=True)
+    (event_sub / "tracked.v").write_text("module t; endmodule\n", encoding="utf-8")
+    (event_sub / "scratch.vvp").write_text("untracked\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(git_root)], check=True)
+    subprocess.run(["git", "-C", str(git_root), "add", "hdl/shd_event/tracked.v"], check=True)
+    assert _event_relative_files(git_root) == {"tracked.v"}

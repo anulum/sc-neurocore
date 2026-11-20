@@ -143,9 +143,10 @@ def test_crc32_and_word_packing_match_zlib() -> None:
 
 def test_formal_sby_and_harness_structure() -> None:
     """Formal .sby and harness carry SPDX headers and declare prove and cover tasks."""
+    spdx_line = ": ".join(("SPDX-License-Identifier", "AGPL-3.0-or-later"))
     for path in (SBY_FILE, FORMAL_V):
         head = "\n".join(path.read_text(encoding="utf-8").splitlines()[:7])
-        assert "SPDX-License-Identifier: AGPL-3.0-or-later" in head
+        assert spdx_line in head
         assert "ORCID: 0009-0009-3560-0851" in head
 
     sby_text = SBY_FILE.read_text(encoding="utf-8")

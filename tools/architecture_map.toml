@@ -183,7 +183,8 @@ wire_format = "hil-telemetry"
 [boundaries]
 executed = [
   "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
-  "SHD pipeline synthesised for Zynq XC7Z020 without weights or delays: 990 LUT / 1.9% (committed OOC synthesis report; not the cost with weights), co-simulation bit-exact",
+  "SHD pipeline synthesised for Zynq XC7Z020 without weights or delays: 990 LUT / 1.9% (committed OOC synthesis report for legacy sc_shd_top; not the cost with weights), co-simulation bit-exact",
+  "Event-driven SHD core and integrity-checked AXI4-Lite loader sc_shd_event_axi (P=8, including the BRAM and LUTRAM that hold the loaded weights and delays) synthesised and routed OOC on Zynq XC7Z020-1: 12,957 LUT (24.36%), 14,082 FF (13.23%), 21 BRAM tiles (19 RAMB36E1 + 4 RAMB18E1, 15.00%), 0 DSP, routed setup WNS -3.343 ns at 100 MHz (74.95 MHz Fmax estimated from the 100 MHz run's WNS; hold not closed out of context; board execution and power unmeasured)",
 ]
 bounded = [
   "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",

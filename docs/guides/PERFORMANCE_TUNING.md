@@ -80,13 +80,30 @@ Measure your own case before choosing.
 
 ## 3. FPGA clock
 
-There is one committed hardware timing result: the out-of-context Vivado
-synthesis of the SHD core `sc_shd_top` for the Zynq XC7Z020 at 100 MHz. It was
-run without weights or delays. `ARCHITECTURE.md`, section "SHD FPGA Pipeline",
-gives the figures and the report files.
+Two sets of out-of-context Vivado v2025.2 timing reports are committed for Zynq
+`xc7z020clg400-1` (`ARCHITECTURE.md`, section "SHD FPGA Pipeline"):
 
-No other clock, device or design has a committed timing report, and no
-design has been run on a board. Any clock target, even 100 MHz on a board, is
+### Legacy shell (`sc_shd_top`)
+
+Synthesised at `100 MHz` without weights or delays
+(`hdl/reports/vivado_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_timing_xc7z020_100mhz.rpt`).
+
+### Weighted event-driven core (`sc_shd_event_axi`)
+
+`hdl/shd_event/sc_shd_event_axi.v` (`P=8` lanes, full weight banks and time
+wheels in `21` Block RAM Tiles plus delay tables in `RAMD64E` LUTRAM) is
+synthesised and routed out-of-context against a `100 MHz` (`10.000 ns`) target
+(`hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt`). Routed
+setup `WNS` is `-3.343 ns` (`13.343 ns` implied minimum period: `74.95 MHz`
+`Fmax` and `+6.657 ns` setup slack at `50 MHz`, estimated from the 100 MHz
+run's WNS (not a run at that frequency); hold not closed out of context, with
+routed `WHS = -0.689 ns`, and `100 MHz` setup not closed without datapath
+pipelining).
+
+No other clock, device or design has a committed timing report, and no design
+has been run on a board. Physical board execution at any clock target remains
 untested for SC-NeuroCore hardware.
 
 ## 4. Power

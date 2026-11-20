@@ -90,8 +90,9 @@ sc-neurocore/
 │
 ├── hdl/                    Verilog RTL — top-level modules and their testbenches
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper (generic SC network)
-│   ├── sc_shd_top.v        SHD 3-stage pipelined inference core
-│   ├── sc_shd_axi_wrapper.v  AXI4-Lite slave for Zynq PS-PL
+│   ├── sc_shd_top.v        SHD 3-stage pipelined inference core (legacy binary demo)
+│   ├── sc_shd_axi_wrapper.v  AXI4-Lite slave for legacy sc_shd_top
+│   ├── shd_event/          Event-driven integer SHD core + AXI4-Lite loader (sc_shd_event_axi.v)
 │   ├── sc_vmin_lif_neuron.v   Vmin LIF (JIT eval order, Q8.8)
 │   ├── sc_axonal_delay.v   Circular buffer axonal delay
 │   ├── sc_dense_int8_sparse.v  CSR sparse int8 matvec
@@ -219,8 +220,63 @@ and weight ROM with `$readmemh` only when `SYNTHESIS` is undefined, and
 `hdl/sc_shd_axi_wrapper.v` has no weight or delay register, so the
 synthesised design carries no model. The figures are therefore not the
 resource cost of the SHD network with its trained weights, and they do not
-show that the network fits the device. A weight and delay load path and a
-synthesis with the model loaded remain open.
+show that the network fits the device. The event-driven integer core and
+integrity-checked AXI4-Lite loader in the subsection below provide the
+loadable model path and its measured resource and timing cost.
+
+### Event-Driven SHD Core with Loaded Weights and Delays (`sc_shd_event_axi`, Zynq XC7Z020-1CLG400)
+
+`hdl/shd_event/sc_shd_event_axi.v` wraps the 8-lane event-driven integer SHD
+core `hdl/shd_event/sc_shd_event_p.v` (`P=8`, `THETA1=72`, `THETA2=51`,
+`V1_WIDTH=22`, `V2_WIDTH=17`, `CAP1=62`, `CAP2=39`, `WSHAPE=6`, `QSHAPE=12`,
+matching `hdl/fixtures/shd_int_network.json`) in a 9-bit AXI4-Lite slave with
+an integrity-checked 64-bit group-word loader (reflected IEEE CRC-32 matching
+`zlib.crc32`, detecting accidental corruption without claiming authentication).
+All weight banks (`q1`, `q2`, `q3`) and 32-bucket axonal-delay time wheels
+(`w1`, `w2`) synthesise to 7-Series block RAM (`tech/xilinx_7series/sc_mem.v`),
+while per-synapse delay tables (`d1`, `d2`) map to distributed `RAMD64E`
+LUTRAM:
+
+| Stage (`100 MHz` OOC constraint) | Slice LUTs (`53,200`) | Flip-Flops (`106,400`) | Block RAM Tiles (`140`) | DSP48 (`220`) | Setup `WNS` (`10.0 ns`) | Estimated `Fmax` from `100 MHz` `WNS` |
+|---|---:|---:|---:|---:|---:|---:|
+| Synthesised | 12,974 (24.39%) | 14,073 (13.23%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -6.887 ns | — |
+| Placed and routed | 12,957 (24.36%) | 14,082 (13.23%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -3.343 ns | 74.95 MHz (`13.343 ns`) |
+
+Source artefacts: `hdl/reports/vivado_sc_shd_event_axi_synth_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_synth_hier_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_synth_timing_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_routed_hier_util_xc7z020_100mhz.rpt`,
+`hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt`, and
+`hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt`,
+reproducible via `hdl/pynq/synth_shd_event_xc7z020.tcl` and
+`hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc` (Vivado v2025.2, out-of-context
+mode on `xc7z020clg400-1`).
+
+In the routed hierarchy (`5,814 / 13,300` slices = `43.71%`, `12,917` logic
+LUTs + `40` `RAMD64E` LUTRAMs), the AXI4-Lite wrapper and loader use `439`
+LUTs and `906` flip-flops, while `u_core` (`sc_shd_event_p`) uses `12,520`
+LUTs, `13,176` flip-flops, `19` `RAMB36E1` (`q1=9`, `q2=8`, `q3=2`), and `4`
+`RAMB18E1` (`w1=2`, `w2=2`). The routed critical path (`u_core/pend1_reg[90]/C`
+through `d1` `RAMD64E` delay lookup and `CARRY4` address arithmetic to
+`u_core/w1/bk[1].col[0].ram_reg/ENBWREN`, `17` logic levels, `12.917 ns` data
+path) misses the `100 MHz` (`10.000 ns`) constraint by `-3.343 ns` (`13.343 ns`
+implied minimum period: `74.95 MHz` `Fmax` and `+6.657 ns` setup slack at
+`50 MHz` / `20.0 ns`, estimated from the 100 MHz run's WNS (not a run at that
+frequency); hold not closed out of context). Synthesised hold slack is `+0.173 ns` (`0` violations); routed `WHS` is
+`-0.689 ns` (`241 / 38,859` intra-clock endpoints, `THS = -91.934 ns`), whose
+reported worst path is input port `S_AXI_WDATA[0]` to `load_wdata_lo_reg_reg[0]/D`
+(`0.500 + 0.924 - (1.660 + 0.035 + 0.418) = -0.689 ns` under
+`HD.CLK_SRC BUFGCTRL_X0Y0`'s `1.660 ns` destination `BUFG` delay and an ideal
+`0.000 ns` source-clock `set_input_delay -min 0.5` on unrouted OOC ports; the
+summary report does not break the remaining `240` hold endpoints down). Routed
+DRC (`hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt`)
+records `0` errors and `44` warnings (`CHECK-3` ×2, `REQP-1839` ×20, and
+`REQP-1840` ×20 at their 20-violation rule limit where asynchronously reset
+registers drive `RAMB36E1`/`RAMB18E1` address and enable pins — paths not
+analysed by static timing — plus `RTSTAT-10` ×1 and expected out-of-context
+`ZPS7-1` ×1). Full Zynq PS+PL block-design closure, physical PYNQ-Z2 board
+execution, hardware latency, and power or energy consumption are not measured.
 
 ## Build Targets
 

@@ -10,11 +10,13 @@
 
 The public architecture pages and the generated capability highlights
 must quote exactly what the committed out-of-context synthesis and
-timing reports for ``sc_shd_top`` measured — never a hand-typed figure
-that drifts from the artefact, and never an estimator output presented
-as a measurement. That synthesis excludes the weight ROM and delay
-tables, so every quoted figure must say it was obtained without weights
-or delays, and no page may claim a silicon run.
+implementation reports for ``sc_shd_top`` (weightless shell) and
+``sc_shd_event_axi`` (with full weight and delay storage in block RAM
+and distributed LUTRAM) measured — never a hand-typed figure that drifts
+from the artefact, and never an estimator output presented as a
+measurement. The ``sc_shd_top`` synthesis excludes the weight ROM and
+delay tables, so every quoted figure for it must say it was obtained
+without weights or delays, and no page may claim a silicon or board run.
 """
 
 from __future__ import annotations
@@ -25,6 +27,17 @@ import re
 _ROOT = Path(__file__).resolve().parents[1]
 _UTIL_REPORT = _ROOT / "hdl/reports/vivado_util_xc7z020_100mhz.rpt"
 _TIMING_REPORT = _ROOT / "hdl/reports/vivado_timing_xc7z020_100mhz.rpt"
+_EVENT_SYNTH_UTIL = _ROOT / "hdl/reports/vivado_sc_shd_event_axi_synth_util_xc7z020_100mhz.rpt"
+_EVENT_SYNTH_HIER = _ROOT / "hdl/reports/vivado_sc_shd_event_axi_synth_hier_util_xc7z020_100mhz.rpt"
+_EVENT_SYNTH_TIMING = _ROOT / "hdl/reports/vivado_sc_shd_event_axi_synth_timing_xc7z020_100mhz.rpt"
+_EVENT_ROUTED_UTIL = _ROOT / "hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt"
+_EVENT_ROUTED_HIER = (
+    _ROOT / "hdl/reports/vivado_sc_shd_event_axi_routed_hier_util_xc7z020_100mhz.rpt"
+)
+_EVENT_ROUTED_TIMING = (
+    _ROOT / "hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt"
+)
+_EVENT_ROUTED_DRC = _ROOT / "hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt"
 _PUBLIC_FILES = (
     "ARCHITECTURE.md",
     "ROADMAP.md",
@@ -151,3 +164,132 @@ def test_a_qualified_section_quotes_only_the_reported_figures() -> None:
                             f"not the reported {expected}"
                         )
     assert checked >= 8
+
+
+def _signed_slack(report: str, label: str) -> str:
+    """Return the signed slack string (e.g. ``'-3.343'``) for ``Setup`` or ``Hold``."""
+    match = re.search(
+        rf"^{re.escape(label)}\s*:\s*\d+\s+Failing Endpoints,\s+Worst Slack\s+([-0-9.]+)ns",
+        report,
+        flags=re.MULTILINE,
+    )
+    assert match is not None, f"timing report lost its {label!r} worst-slack line"
+    return match.group(1)
+
+
+def test_event_shd_reports_and_public_figures_match_verbatim() -> None:
+    """Every public sc_shd_event_axi figure binds to the committed Vivado reports."""
+    for path in (
+        _EVENT_SYNTH_UTIL,
+        _EVENT_SYNTH_HIER,
+        _EVENT_SYNTH_TIMING,
+        _EVENT_ROUTED_UTIL,
+        _EVENT_ROUTED_HIER,
+        _EVENT_ROUTED_TIMING,
+        _EVENT_ROUTED_DRC,
+    ):
+        text = path.read_text(encoding="utf-8")
+        assert "Design       : sc_shd_event_axi" in text
+        assert "| Host         : build-host (" in text
+        assert f"hdl/reports/{path.name}" in text
+
+    synth_util = _EVENT_SYNTH_UTIL.read_text(encoding="utf-8")
+    s_luts, s_lut_pct = _site_row(synth_util, "Slice LUTs*")
+    s_regs, s_reg_pct = _site_row(synth_util, "Slice Registers")
+    s_bram, s_bram_pct = _site_row(synth_util, "Block RAM Tile")
+    s_ramb36, _ = _site_row(synth_util, "  RAMB36/FIFO*")
+    s_ramb18, _ = _site_row(synth_util, "  RAMB18")
+    s_dsp, _ = _site_row(synth_util, "DSPs")
+    s_wns = _signed_slack(_EVENT_SYNTH_TIMING.read_text(encoding="utf-8"), "Setup")
+
+    routed_util = _EVENT_ROUTED_UTIL.read_text(encoding="utf-8")
+    r_luts, r_lut_pct = _site_row(routed_util, "Slice LUTs")
+    r_regs, r_reg_pct = _site_row(routed_util, "Slice Registers")
+    r_slices, r_slice_pct = _site_row(routed_util, "Slice")
+    r_bram, r_bram_pct = _site_row(routed_util, "Block RAM Tile")
+    r_dsp, _ = _site_row(routed_util, "DSPs")
+    assert (s_bram, r_bram, s_dsp, r_dsp) == (21, 21, 0, 0)
+
+    routed_timing = _EVENT_ROUTED_TIMING.read_text(encoding="utf-8")
+    r_wns = _signed_slack(routed_timing, "Setup")
+    r_whs = _signed_slack(routed_timing, "Hold")
+    min_period_ns = 10.0 - float(r_wns)
+    fmax_mhz = f"{1000.0 / min_period_ns:.2f}"
+
+    routed_hier = _EVENT_ROUTED_HIER.read_text(encoding="utf-8")
+    assert re.search(
+        r"\|\s*\(sc_shd_event_axi\)\s*\|\s*\(top\)\s*\|\s*439\s*\|\s*439\s*\|\s*0\s*\|\s*0\s*\|\s*906\s*\|",
+        routed_hier,
+    )
+    assert re.search(
+        r"\|\s*u_core\s*\|\s*sc_shd_event_p\s*\|\s*12520\s*\|\s*12480\s*\|\s*40\s*\|\s*0\s*\|\s*13176\s*\|\s*19\s*\|\s*4\s*\|",
+        routed_hier,
+    )
+
+    architecture = (_ROOT / "ARCHITECTURE.md").read_text(encoding="utf-8")
+    assert "| Estimated `Fmax` from `100 MHz` `WNS` |" in architecture
+    assert (
+        f"| Synthesised | {s_luts:,} ({s_lut_pct:.2f}%) | {s_regs:,} ({s_reg_pct:.2f}%) | "
+        f"{s_bram} (`{s_ramb36} RAMB36E1 + {s_ramb18} RAMB18E1`, {s_bram_pct:.2f}%) | "
+        f"{s_dsp} (0.00%) | {s_wns} ns | — |"
+    ) in architecture
+    assert (
+        f"| Placed and routed | {r_luts:,} ({r_lut_pct:.2f}%) | {r_regs:,} ({r_reg_pct:.2f}%) | "
+        f"{r_bram} (`{s_ramb36} RAMB36E1 + {s_ramb18} RAMB18E1`, {r_bram_pct:.2f}%) | "
+        f"{r_dsp} (0.00%) | {r_wns} ns | {fmax_mhz} MHz (`{min_period_ns:.3f} ns`) |"
+    ) in architecture
+    assert f"`{r_slices:,} / 13,300` slices = `{r_slice_pct:.2f}%`" in architecture
+    assert f"`{r_whs} ns`" in architecture
+    assert "not measured" in architecture
+
+    derived_label = (
+        "estimated from the 100 MHz run's WNS (not a run at that frequency); "
+        "hold not closed out of context"
+    )
+    drc_text = _EVENT_ROUTED_DRC.read_text(encoding="utf-8")
+    drc_total_match = re.search(r"Checks found:\s*(\d+)", drc_text)
+    assert drc_total_match is not None
+    drc_warnings = int(drc_total_match.group(1))
+    assert "| Error " not in drc_text
+    assert "| REQP-1839 | Warning  | RAMB36 async control check | 20     |" in drc_text
+    assert "| REQP-1840 | Warning  | RAMB18 async control check | 20     |" in drc_text
+    for drc_page in (
+        "ARCHITECTURE.md",
+        "ROADMAP.md",
+        "docs/benchmarks/BENCHMARKS.md",
+        "hdl/README.md",
+    ):
+        page_text = " ".join((_ROOT / drc_page).read_text(encoding="utf-8").split())
+        assert f"`{drc_warnings}` warnings" in page_text
+        assert "REQP-1839" in page_text
+        assert "REQP-1840" in page_text
+        assert derived_label in page_text
+
+    highlight_source = (_ROOT / "tools/architecture_map.toml").read_text(encoding="utf-8")
+    assert (
+        f"{r_luts:,} LUT ({r_lut_pct:.2f}%), {r_regs:,} FF ({r_reg_pct:.2f}%)" in highlight_source
+    )
+    assert (
+        f"{r_bram} BRAM tiles ({s_ramb36} RAMB36E1 + {s_ramb18} RAMB18E1, {r_bram_pct:.2f}%)"
+        in highlight_source
+    )
+    assert (
+        f"WNS {r_wns} ns at 100 MHz ({fmax_mhz} MHz Fmax estimated from the 100 MHz run's WNS; "
+        "hold not closed out of context" in highlight_source
+    )
+
+    for page in (
+        "ROADMAP.md",
+        "docs/benchmarks/BENCHMARKS.md",
+        "docs/guides/PERFORMANCE_TUNING.md",
+        "hdl/README.md",
+    ):
+        content = " ".join((_ROOT / page).read_text(encoding="utf-8").split())
+        assert f"{r_wns} ns" in content
+        assert f"{fmax_mhz} MHz" in content
+        assert derived_label in content
+
+    tcl = (_ROOT / "hdl/pynq/synth_shd_event_xc7z020.tcl").read_text(encoding="utf-8")
+    xdc = (_ROOT / "hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc").read_text(encoding="utf-8")
+    assert "read_xdc ${repo_root}/hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc" in tcl
+    assert "create_clock -period 10.000 -name clk [get_ports S_AXI_ACLK]" in xdc
