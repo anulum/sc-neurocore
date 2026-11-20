@@ -738,6 +738,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   weight per input and one dot product, so all `n_neurons` outputs of a
   `Dense` layer carry the same value; the API page and `add_layer` say so.
 
+- The Z3 safety supervisor no longer reports an unknown run as clean. When
+  its verifier thread ended without a verdict (a panic), the run returned
+  its step count; it now ends with `VerifierEnded`. A forced shutdown is
+  told apart from a failed safety check: `PySpikingControllerPool.start`
+  raises "force_shutdown was called" instead of reporting a safety
+  violation, and `is_safety_tripped` is set only by the verifier.
+
 - `FaultResilienceSuite` declares its evaluation function as a callable from
   the list of weight matrices to an accuracy, so strict type checkers check
   callers, and the module no longer silences the checker on its constructor.

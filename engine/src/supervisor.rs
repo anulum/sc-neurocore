@@ -64,9 +64,13 @@ pub struct SupervisorState {
 pub enum SupervisorExecutionError {
     /// `n_neurons` was 0.
     InvalidNeuronCount,
-    /// The shutdown flag was set after the run: the verifier failed a snapshot, including
-    /// one still queued when the loop ended, or a shutdown was forced.
+    /// The verifier failed a snapshot, including one still queued when the loop ended.
     SafetyViolation,
+    /// The verifier thread ended without a verdict, for example after a panic in it, so the
+    /// run is not known to be safe.
+    VerifierEnded,
+    /// The run was stopped by a forced shutdown while the verifier had failed no snapshot.
+    ForcedShutdown,
 }
 
 impl fmt::Display for SupervisorExecutionError {
@@ -74,6 +78,8 @@ impl fmt::Display for SupervisorExecutionError {
         match self {
             Self::InvalidNeuronCount => f.write_str("n_neurons must be > 0"),
             Self::SafetyViolation => f.write_str("safety contract violation detected"),
+            Self::VerifierEnded => f.write_str("the safety verifier ended without a verdict"),
+            Self::ForcedShutdown => f.write_str("the run was stopped by a forced shutdown"),
         }
     }
 }
@@ -241,12 +247,31 @@ pub fn spawn_z3_verification_worker(
     shutdown_flag: Arc<AtomicBool>,
     target_core: usize,
 ) -> thread::JoinHandle<()> {
+    spawn_verifier(
+        rx_snapshot,
+        shutdown_flag,
+        Arc::new(AtomicBool::new(false)),
+        target_core,
+        verify_bounds_at_depth,
+    )
+}
+
+/// Start a verifier thread that checks each snapshot with `verify` and, on the first that
+/// fails, sets `failed` and then `shutdown_flag`, and stops. `failed` tells a failed snapshot
+/// apart from a forced shutdown, which sets `shutdown_flag` alone.
+fn spawn_verifier(
+    rx_snapshot: Receiver<PetriNetSnapshot>,
+    shutdown_flag: Arc<AtomicBool>,
+    failed: Arc<AtomicBool>,
+    target_core: usize,
+    verify: fn(&PetriNetSnapshot, usize) -> bool,
+) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         bind_core(target_core);
 
         for snapshot in rx_snapshot {
-            let valid = verify_bounds_at_depth(&snapshot, VERIFICATION_DEPTH);
-            if !valid {
+            if !verify(&snapshot, VERIFICATION_DEPTH) {
+                failed.store(true, Ordering::Release);
                 shutdown_flag.store(true, Ordering::Release);
                 break;
             }
@@ -296,7 +321,26 @@ fn execute_snn_control_loop(
     executed_steps
 }
 
-fn run_supervisor_steps_with_flag(
+/// The flags a supervised run shares with its caller.
+///
+/// `stop` ends the control loop; a forced shutdown sets it alone. `failed` is set by the
+/// verifier, before `stop`, when it fails a snapshot.
+#[derive(Clone, Debug)]
+struct RunFlags {
+    stop: Arc<AtomicBool>,
+    failed: Arc<AtomicBool>,
+}
+
+impl RunFlags {
+    fn new() -> Self {
+        Self {
+            stop: Arc::new(AtomicBool::new(false)),
+            failed: Arc::new(AtomicBool::new(false)),
+        }
+    }
+}
+
+fn run_supervisor_steps_with_flags(
     n_neurons: usize,
     seed: u64,
     snapshot_period: u64,
@@ -304,16 +348,27 @@ fn run_supervisor_steps_with_flag(
     core_snn: usize,
     core_z3: usize,
     max_steps: u64,
-    safe_shutdown_flag: Arc<AtomicBool>,
+    flags: &RunFlags,
+    verify: fn(&PetriNetSnapshot, usize) -> bool,
 ) -> Result<u64, SupervisorExecutionError> {
     if n_neurons == 0 {
         return Err(SupervisorExecutionError::InvalidNeuronCount);
     }
 
-    safe_shutdown_flag.store(false, Ordering::Release);
+    // The contract of a run: it starts with both flags cleared, so a shutdown forced before
+    // it begins does not carry into it.
+    flags.failed.store(false, Ordering::Release);
+    flags.stop.store(false, Ordering::Release);
+    let safe_shutdown_flag = flags.stop.clone();
 
     let (tx_snapshot, rx_snapshot) = bounded::<PetriNetSnapshot>(DEFAULT_SNAPSHOT_CAPACITY);
-    let z3_handle = spawn_z3_verification_worker(rx_snapshot, safe_shutdown_flag.clone(), core_z3);
+    let z3_handle = spawn_verifier(
+        rx_snapshot,
+        safe_shutdown_flag.clone(),
+        flags.failed.clone(),
+        core_z3,
+        verify,
+    );
 
     let pool = LightweightSnnPool::new(n_neurons, seed);
     let executed = {
@@ -332,10 +387,16 @@ fn run_supervisor_steps_with_flag(
     };
 
     // All snapshot senders are dropped here so the Z3 worker can observe EOF.
-    let _ = z3_handle.join();
+    let verifier_outcome = z3_handle.join();
 
-    if safe_shutdown_flag.load(Ordering::Acquire) {
+    if flags.failed.load(Ordering::Acquire) {
         return Err(SupervisorExecutionError::SafetyViolation);
+    }
+    if verifier_outcome.is_err() {
+        return Err(SupervisorExecutionError::VerifierEnded);
+    }
+    if safe_shutdown_flag.load(Ordering::Acquire) {
+        return Err(SupervisorExecutionError::ForcedShutdown);
     }
 
     Ok(executed)
@@ -346,15 +407,17 @@ fn run_supervisor_steps_with_flag(
 /// A snapshot is offered to the verifier every `snapshot_period` steps (at least 1) and is
 /// dropped when two are already waiting; the loop sleeps `step_interval_ns` between steps
 /// when that is not 0. The run ends after `max_steps` steps (0 sets no limit), when the
-/// verifier fails a snapshot, or, with `Ok`, at the first snapshot offered after the
-/// verifier thread ended without failing one, as on a panic under an unwinding profile.
-/// Returns the number of steps executed.
+/// verifier fails a snapshot, or at the first snapshot offered after the verifier thread
+/// ended. Returns the number of steps executed when the verifier ended normally and failed
+/// no snapshot.
 ///
 /// # Errors
 ///
-/// [`SupervisorExecutionError::InvalidNeuronCount`] for 0 neurons, and
-/// [`SupervisorExecutionError::SafetyViolation`] when the verifier failed a snapshot,
-/// including one still queued when the loop ended.
+/// - [`SupervisorExecutionError::InvalidNeuronCount`] for 0 neurons;
+/// - [`SupervisorExecutionError::SafetyViolation`] when the verifier failed a snapshot,
+///   including one still queued when the loop ended;
+/// - [`SupervisorExecutionError::VerifierEnded`] when the verifier thread ended without a
+///   verdict, for example after a panic in it (every profile unwinds).
 pub fn run_supervisor_steps(
     n_neurons: usize,
     seed: u64,
@@ -364,7 +427,7 @@ pub fn run_supervisor_steps(
     core_z3: usize,
     max_steps: u64,
 ) -> Result<u64, SupervisorExecutionError> {
-    run_supervisor_steps_with_flag(
+    run_supervisor_steps_with_flags(
         n_neurons,
         seed,
         snapshot_period,
@@ -372,7 +435,8 @@ pub fn run_supervisor_steps(
         core_snn,
         core_z3,
         max_steps,
-        Arc::new(AtomicBool::new(false)),
+        &RunFlags::new(),
+        verify_bounds_at_depth,
     )
 }
 
@@ -382,16 +446,16 @@ pub fn run_supervisor_steps(
 )]
 /// Python handle on a supervised control loop.
 ///
-/// `start` runs [`run_supervisor_steps`] with this handle's flag, which it clears first, so
-/// a shutdown forced before `start` has no effect on the run. Under an interpreter with a
-/// GIL, `start` holds it until the run ends, so no other Python thread can call
-/// `force_shutdown` meanwhile.
+/// `start` runs the loop of [`run_supervisor_steps`] with this handle's flags. It clears them
+/// first: that is the contract, so a shutdown forced before `start` does not carry into the
+/// run. The loop runs without the GIL, so another Python thread can call `force_shutdown`
+/// while it runs.
 pub struct PySpikingControllerPool {
     n_neurons: usize,
     seed: u64,
     snapshot_period: u64,
     step_interval_ns: u64,
-    safe_shutdown_flag: Arc<AtomicBool>,
+    flags: RunFlags,
 }
 
 #[pymethods]
@@ -413,7 +477,7 @@ impl PySpikingControllerPool {
             seed,
             snapshot_period,
             step_interval_ns,
-            safe_shutdown_flag: Arc::new(AtomicBool::new(false)),
+            flags: RunFlags::new(),
         })
     }
 
@@ -425,6 +489,10 @@ impl PySpikingControllerPool {
     ///
     /// The loop runs without the Python GIL, so that another Python thread can call
     /// `force_shutdown` while it runs; with the GIL held, that call waited for the loop.
+    ///
+    /// Returns the number of steps executed. Raises `RuntimeError` naming the cause when the
+    /// verifier failed a snapshot, when the verifier ended without a verdict, or when
+    /// `force_shutdown` stopped the run.
     #[pyo3(signature = (core_snn=1, core_z3=2, max_steps=0))]
     fn start(
         &self,
@@ -439,9 +507,9 @@ impl PySpikingControllerPool {
             self.snapshot_period,
             self.step_interval_ns,
         );
-        let flag = self.safe_shutdown_flag.clone();
+        let flags = self.flags.clone();
         let outcome = py.detach(move || {
-            run_supervisor_steps_with_flag(
+            run_supervisor_steps_with_flags(
                 n_neurons,
                 seed,
                 snapshot_period,
@@ -449,7 +517,8 @@ impl PySpikingControllerPool {
                 core_snn,
                 core_z3,
                 max_steps as u64,
-                flag,
+                &flags,
+                verify_bounds_at_depth,
             )
         });
         match outcome {
@@ -457,17 +526,93 @@ impl PySpikingControllerPool {
             Err(SupervisorExecutionError::SafetyViolation) => Err(PyRuntimeError::new_err(
                 "Hardware execution terminated: safety contract violation detected by Z3 worker.",
             )),
+            Err(SupervisorExecutionError::VerifierEnded) => Err(PyRuntimeError::new_err(
+                "Hardware execution terminated: the Z3 safety verifier ended without a verdict.",
+            )),
+            Err(SupervisorExecutionError::ForcedShutdown) => Err(PyRuntimeError::new_err(
+                "Hardware execution stopped: force_shutdown was called.",
+            )),
             Err(SupervisorExecutionError::InvalidNeuronCount) => Err(PyRuntimeError::new_err(
                 SupervisorExecutionError::InvalidNeuronCount.to_string(),
             )),
         }
     }
 
+    /// Say whether the verifier failed a snapshot in the last run.
+    ///
+    /// A forced shutdown does not trip it. `start` clears it when the next run begins.
     fn is_safety_tripped(&self) -> bool {
-        self.safe_shutdown_flag.load(Ordering::Acquire)
+        self.flags.failed.load(Ordering::Acquire)
     }
 
+    /// Ask the running loop to stop; `start` then raises a `RuntimeError` saying so.
+    ///
+    /// A call before `start` has no effect on the next run, because `start` clears the flag.
     fn force_shutdown(&self) {
-        self.safe_shutdown_flag.store(true, Ordering::Release);
+        self.flags.stop.store(true, Ordering::Release);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn panicking_verifier(_snapshot: &PetriNetSnapshot, _depth: usize) -> bool {
+        panic!("a verifier that ends without a verdict");
+    }
+
+    fn accepting_verifier(_snapshot: &PetriNetSnapshot, _depth: usize) -> bool {
+        true
+    }
+
+    #[test]
+    fn a_verifier_that_ends_without_a_verdict_is_reported_not_counted_as_safe() {
+        let outcome = run_supervisor_steps_with_flags(
+            4,
+            7,
+            1,
+            0,
+            0,
+            0,
+            50,
+            &RunFlags::new(),
+            panicking_verifier,
+        );
+        assert_eq!(outcome, Err(SupervisorExecutionError::VerifierEnded));
+    }
+
+    #[test]
+    fn a_forced_shutdown_is_reported_as_such_and_trips_no_safety_flag() {
+        let flags = RunFlags::new();
+        let stopper = flags.clone();
+        let run = thread::spawn(move || {
+            run_supervisor_steps_with_flags(4, 7, 1, 0, 0, 0, 0, &flags, accepting_verifier)
+        });
+        thread::sleep(Duration::from_millis(50));
+        stopper.stop.store(true, Ordering::Release);
+        let outcome = run.join().expect("the run thread returns");
+        assert_eq!(outcome, Err(SupervisorExecutionError::ForcedShutdown));
+        assert!(!stopper.failed.load(Ordering::Acquire));
+    }
+
+    #[test]
+    fn a_shutdown_forced_before_the_run_does_not_carry_into_it() {
+        let flags = RunFlags::new();
+        flags.stop.store(true, Ordering::Release);
+        let outcome =
+            run_supervisor_steps_with_flags(4, 7, 1, 0, 0, 0, 10, &flags, accepting_verifier);
+        assert_eq!(outcome, Ok(10));
+    }
+
+    #[test]
+    fn each_error_names_its_cause() {
+        assert_eq!(
+            SupervisorExecutionError::VerifierEnded.to_string(),
+            "the safety verifier ended without a verdict"
+        );
+        assert_eq!(
+            SupervisorExecutionError::ForcedShutdown.to_string(),
+            "the run was stopped by a forced shutdown"
+        );
     }
 }
