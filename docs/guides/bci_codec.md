@@ -366,7 +366,7 @@ recovered = codec.decompress(data, T, N)
 | `isi` (auto entropy) | General purpose | ISI + varint/Huffman | 401x at 0.1%, 8.8x at 30% |
 | `predictive` (context) | Structured data | Markov context + XOR | 25.5x on bursty (3x over ISI) |
 | `predictive` (lfsr) | Binary spike rasters | Q8.8 rate tracking, 16-bit LFSR | Python and Rust packet parity |
-| `delta` | Neural probes | Inter-channel XOR residuals | 8.2x on correlated (70% over ISI) |
+| `delta` | Neural probes | Inter-channel XOR residuals | [Measured by group size](../benchmarks/BENCHMARKS.md#inter-channel-delta-codec-in-python-and-rust) |
 | `streaming` | Independent raster windows | Bitmask frames | Measure complete frame size and latency |
 | `aer` (adaptive) | Address-event rasters | Event list, auto-invert >50% | Device and transport adapters require qualification |
 
@@ -489,6 +489,11 @@ Predictor state resets for each batch; lossless raster recovery requires
 
 Exploits spatial correlation on probe arrays. Groups channels, picks reference
 (highest spike count), XOR-encodes others as delta residuals.
+
+Use `backend="rust"` to require the native DSCX path or `backend="python"`
+for the reference. The default selects the available complete backend.
+Both write the same packet format and require the original raster dimensions
+for lossless decoding.
 
 ```python
 from sc_neurocore.spike_codec import DeltaSpikeCodec

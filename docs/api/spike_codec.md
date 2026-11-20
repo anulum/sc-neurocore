@@ -154,8 +154,14 @@ Inter-channel XOR residuals. Groups channels spatially, picks reference
 per group, encodes others as delta. Reference indices are group-local uint8
 values. Construction and compression require group_size in 1–256, including
 after configuration mutation. Wider groups written by 4.0.0 could wrap the
-index; re-encode affected data from its original source. The Python delta
-container delegates its residual packet to `SpikeCodec`.
+index; re-encode affected data from its original source. Decoding validates
+the group count, final group width and local references before reading the
+embedded ISI packet.
+
+Select `backend="python"` for the reference implementation or
+`backend="rust"` for native group selection, XOR and packet coding.
+The default `"auto"` uses the complete native path when the installed
+engine exports it. Both backends read and write the same DSCX format.
 
 ::: sc_neurocore.spike_codec.delta_codec
     options:

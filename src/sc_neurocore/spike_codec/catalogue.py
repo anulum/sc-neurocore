@@ -142,7 +142,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_module,
             selected.native_symbols,
             diagnostics,
-            strict_isi_import=descriptor.name in ("isi", "predictive"),
+            strict_isi_import=descriptor.name in ("isi", "predictive", "delta"),
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:

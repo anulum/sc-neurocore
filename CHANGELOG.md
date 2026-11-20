@@ -82,6 +82,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The inter-channel delta codec supports complete Python and Rust DSCX paths.
+  Both preserve valid legacy packets and check the group layout and local
+  references before decoding the embedded ISI body.
+
 - `PredictiveSpikeCodec` supports explicit Python and Rust backends for all
   four predictors. The Rust engine now encodes and recovers context
   residuals and updates world-model weights. World-model probability

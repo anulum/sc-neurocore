@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2249
+expected_file_count = 2251
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9037,6 +9037,14 @@ rationale = "Exercise installed predictor bindings, whole-packet parity and atom
 [[file]]
 path = "tests/test_predictive_spike_codec_wire_compatibility.py"
 rationale = "Test legacy golden packets, quantised reconstruction and predictor boundary validation."
+
+[[file]]
+path = "tests/test_delta_codec_packet_parity.py"
+rationale = "Exercise DSCX packet parity, group geometry and lossy binning through the public codec."
+
+[[file]]
+path = "benchmarks/bench_delta_codec.py"
+rationale = "Measure full delta and ISI packets on identical rasters through Python and Rust."
 
 [[file]]
 path = "examples/codec_benchmark_suite.py"

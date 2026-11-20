@@ -75,6 +75,25 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+Install both wheels to compare Python and Rust DSCX and ISI on the same
+binary rasters. The benchmark verifies packet parity within each format
+and cross-decodes before and after timing. Warm results use resident input
+and rotate the execution order. Cold results include first calls in fresh
+interpreters and record their wall time and peak RSS where available.
+
+```sh
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THREADS=1
+taskset -c 0 python benchmarks/bench_delta_codec.py compare --group-size 1 \
+  --group-size 8 --group-size 256 --host-profile shared --output delta-synthetic.json
+```
+
+Select an available logical CPU and record activity on its physical core.
+For recorded input, install `h5py` and supply `--shd shd_test.h5` and a
+`--recording` index for each selected recording. Use `--precision 5` to
+measure the quantised paths and report occupancy differences from direct
+binning along with the packet sizes and timings.
+[MSI results and hardware profile](../docs/benchmarks/BENCHMARKS.md#inter-channel-delta-codec-in-python-and-rust).
+
 Run the ISI comparison with the normal Python and Rust wheels installed.
 The harness validates matching packets and cross-decoding before and after
 timing. Each report separates encode, decode and round trip timing and

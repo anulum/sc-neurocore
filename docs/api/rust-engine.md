@@ -125,6 +125,16 @@ the existing EMA, LFSR and ISI bindings. The world-model path evaluates
 probabilities with NumPy and uses the same numerical profile for encoding
 and decoding.
 
+## Inter-channel delta packets
+
+The compiled module exports `delta_encode_raster` and `delta_decode_raster`.
+The encoder accepts a contiguous binary int8 raster, group size, timing
+precision and ISI entropy selection. It returns a complete DSCX packet
+with the original and non-reference residual spike counts. The decoder
+validates group geometry before decoding the ISI body. The public
+[delta codec API](spike_codec.md#delta-codec-neural-probes) handles
+backend selection and builds the compression report.
+
 ## Installed-wheel interface evidence
 
 The [engine bridge contracts](../guides/engine_bridge_contracts.md#capturing-the-installed-interface)

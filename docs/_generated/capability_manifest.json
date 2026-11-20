@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5739
+    "test_files": 5740
   },
   "documentation": {
     "public_pages": [
@@ -4925,6 +4925,7 @@
       "tests/test_decoding_engine_binding_runtime.py",
       "tests/test_default_neuron_engine_binding.py",
       "tests/test_delay_training.py",
+      "tests/test_delta_codec_packet_parity.py",
       "tests/test_delta_spike_codec_delta_spike_codec_compression.py",
       "tests/test_delta_spike_codec_delta_spike_codec_edge_cases.py",
       "tests/test_delta_spike_codec_delta_spike_codec_roundtrip.py",

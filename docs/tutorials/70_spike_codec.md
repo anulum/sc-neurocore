@@ -153,8 +153,13 @@ print(f"{result.compression_ratio:.1f}x, "
       f"{result.n_groups} groups of {result.group_size}")
 ```
 
+The default backend selects the complete Rust codec if available. Use
+`backend="python"` to run the reference implementation. Either backend
+can decode the packet using the original time and channel counts.
+
 Use for spatially correlated rasters and compare its complete packet size with
 ISI on the same data. Group size must be in 1–256, including after mutation.
+[Measured packet sizes and timing](../benchmarks/BENCHMARKS.md#inter-channel-delta-codec-in-python-and-rust).
 
 ## Codec 4: Streaming (Real-Time BCI)
 

@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
     "current": 28,
-    "outdated": 119,
+    "outdated": 120,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 322,
+  "all_records": 323,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -2609,6 +2609,10 @@
     },
     {
       "currency": "current",
+      "name": "delta_codec_backends.json"
+    },
+    {
+      "currency": "current",
       "name": "formal/sc_amari_field/nonvacuity-review.json"
     },
     {
@@ -2708,7 +2712,11 @@
       "name": "formal/sc_chialvo_map_z3memory64/review.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "engine/src/codecs/mod.rs",
+        "src/sc_neurocore/spike_codec/catalogue.py"
+      ],
+      "currency": "outdated",
       "name": "isi_codec_backends.json"
     },
     {

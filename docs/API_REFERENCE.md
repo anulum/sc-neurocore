@@ -44927,33 +44927,38 @@ Quantised packets retain the original dimensions and store bin indices.
 ## Module `spike_codec.delta_codec`
 
 ### Class `DeltaCompressionResult`
-Compression result with delta coding metrics.
+Report group geometry and mean non-reference residual sparsity.
 
 
 ### Class `DeltaSpikeCodec`
-Delta spike codec: compress inter-channel XOR residuals.
-
-Channels are grouped spatially. Within each group, one reference
-channel is transmitted raw; others are XOR'd against the reference
-and ISI-compressed. When channels are correlated, the XOR residuals
-are much sparser than the raw data.
+Compress spatially correlated channels as inter-channel XOR residuals.
 
 Parameters
 ----------
 group_size : int
-    Channels per group. Larger groups = more sharing but weaker
-    correlation with distant channels. Must be in 1..256: the packet
-    stores each group-local reference index in one byte.
+    Channels per group, from 1 to 256. Each DSCX reference index is
+    an unsigned byte relative to its group.
 mode : str
-    'lossless' or 'lossy' for the underlying ISI codec.
+    'lossless' preserves the input. 'lossy' quantises residual timing.
 timing_precision : int
-    For lossy mode: quantize timing resolution.
+    Input samples per complete bin in lossy mode.
+backend : str
+    'python', 'rust', or 'auto'. Auto uses the complete native codec
+    when available and falls back to Python on older wheels.
 
-- **__init__**(group_size, mode, timing_precision)
+Notes
+-----
+Each group keeps its most active channel, choosing the first on ties.
+The remaining channels carry XOR residuals. The embedded ISI body retains
+the original shape. Lossy decoding requires the same timing precision.
+
+- **__init__**(group_size, mode, timing_precision, \*, backend)
+- **backend**()
+  - Return the selected complete implementation, 'python' or 'rust'.
 - **compress**(spikes)
-  - Compress spike raster using inter-channel delta coding.
+  - Encode a binary raster of shape (time, channels).
 - **decompress**(data, T, N)
-  - Decompress delta-coded spike raster.
+  - Decode a validated DSCX packet.
 
 ---
 

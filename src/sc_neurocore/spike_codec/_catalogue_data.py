@@ -15,6 +15,7 @@ from .catalogue_types import CodecDescriptor, CodecVariant, CodecWireFormat
 _PREFIX = "sc_neurocore.spike_codec."
 _ENGINE = "sc_neurocore_engine.sc_neurocore_engine"
 _ISI_SYMBOLS = ("isi_encode_raster", "isi_decode_raster")
+_DELTA_SYMBOLS = ("delta_encode_raster", "delta_decode_raster")
 _WAVEFORM_SYMBOLS = (
     "waveform_codec_noise_thresholds",
     "waveform_codec_extract_background",
@@ -246,13 +247,17 @@ _DELTA = CodecDescriptor(
     encoder_required_parameters=(),
     decoder_required_parameters=(),
     decode_required_parameters=("T", "N"),
-    configuration_parameters=("group_size", "mode", "timing_precision"),
+    configuration_parameters=("group_size", "mode", "timing_precision", "backend"),
     variant_parameter="mode",
-    backend_parameter=False,
+    backend_parameter=True,
     stateful=False,
     variants=(
-        CodecVariant("lossless", "lossless", "none", None, (), (), ("delta_dscx",)),
-        CodecVariant("lossy", "lossy", "none", None, (), (), ("delta_dscx",)),
+        CodecVariant(
+            "lossless", "lossless", "packet_coder", _ENGINE, _DELTA_SYMBOLS, (), ("delta_dscx",)
+        ),
+        CodecVariant(
+            "lossy", "lossy", "packet_coder", _ENGINE, _DELTA_SYMBOLS, (), ("delta_dscx",)
+        ),
     ),
     wire_formats=(
         CodecWireFormat(
@@ -267,6 +272,7 @@ _DELTA = CodecDescriptor(
             (
                 "Group size/count and group-local uint8 reference indices precede base ISI.",
                 "Encoding requires group_size in 1..256, including after configuration mutation.",
+                "Decoding validates the group count and each reference before reading the ISI body.",
             ),
         ),
     ),

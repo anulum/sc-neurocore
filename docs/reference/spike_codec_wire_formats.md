@@ -151,11 +151,19 @@ are **local to each group**. The encoder selects the most active channel
 (first maximum on ties) and XORs each other channel against it. Decoder T,N
 remain external.
 
-Encoding requires group_size in 1..256, both at construction and immediately
-before compression after any configuration mutation. Wider groups written
+Python and Rust write and read the same DSCX representation. The group
+count must equal the ceiling of N divided by group size and fit uint16.
+For N=0 the count is zero. Each reference must be smaller than the actual
+width of its group, including a shorter final group. Both decoders validate
+this layout before reading the embedded packet.
+
+Group size must be in 1..256 for encoding and decoding. The encoder also
+checks this limit after any configuration mutation. Wider groups written
 by 4.0.0 could wrap a selected reference index on serialisation; re-encode
 affected data from its original source. The uint16 group_size field does not
-establish support beyond this limit. No checksum is present.
+establish support beyond this limit. Lossy operation uses the ISI body's
+timing precision, which must match at decode. It bins the reference and
+residuals before XOR recovery. DSCX carries no checksum.
 
 ## Independent raster frames
 

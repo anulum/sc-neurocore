@@ -865,6 +865,85 @@ Install both wheels and run `benchmarks/bench_predictive_codec.py compare`
 with the selected predictor and precision to reproduce a row. For SHD, add
 `--shd shd_test.h5 --recording 0`. [Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/predictive_codec_backends.json).
 
+## Inter-channel delta codec in Python and Rust
+
+Measured on 2026-11-20 UTC on an MSI GS73 Stealth 8RE running Windows 11
+Home (10.0.26300), with an Intel Core i7-8750H and 31.84 GiB of visible RAM.
+Python and Rust both used CPython 3.12.10, NumPy 2.5.5 and logical CPU 8
+on the physical core shared with logical CPU 9. Numerical runtimes were
+limited to one thread. The Rust wheel was built in release mode with
+Rust 1.98.1. Windows processor counters and Job Objects estimated at
+most 19.9% of one logical CPU in other work on that core.
+
+Each timing is the median of nine resident encode–decode round trips
+after two warmups. The Python/Rust column is the median of nine
+paired delta ratios. Packet sizes include all headers. Plain ISI uses the
+same raster and automatic entropy selection. The synthetic cohort contains
+four deterministic sparse, dense and correlated rasters. Spiking Heidelberg
+Digits (SHD) test recording 0 uses 731 time bins at 1 ms and 700 channels.
+[SHD dataset and license](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/).
+
+### Lossless packets
+
+| Input | Group size | Delta (B) | ISI (B) | Delta Python (ms) | Delta Rust (ms) | ISI Python (ms) | ISI Rust (ms) | Delta Python / Rust |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Sparse short | 1 | 34 | 18 | 0.205 | 0.008 | 0.059 | 0.005 | 25.80× |
+| Sparse long | 1 | 5807 | 5735 | 13.837 | 2.385 | 5.971 | 0.484 | 5.80× |
+| Dense | 1 | 7668 | 7596 | 27.800 | 3.260 | 26.508 | 3.016 | 8.51× |
+| Correlated bursts | 1 | 2690 | 2618 | 8.110 | 0.975 | 6.782 | 0.719 | 8.34× |
+| Sparse short | 8 | 54 | 18 | 0.162 | 0.012 | 0.055 | 0.005 | 13.92× |
+| Sparse long | 8 | 9674 | 5735 | 15.655 | 1.850 | 5.945 | 0.476 | 8.51× |
+| Dense | 8 | 8479 | 7596 | 33.034 | 3.996 | 26.824 | 3.018 | 8.26× |
+| Correlated bursts | 8 | 1755 | 2618 | 2.757 | 0.253 | 6.655 | 0.718 | 10.95× |
+| Sparse short | 256 | 54 | 18 | 0.159 | 0.012 | 0.054 | 0.005 | 13.92× |
+| Sparse long | 256 | 10644 | 5735 | 13.972 | 1.862 | 5.909 | 0.467 | 7.65× |
+| Dense | 256 | 8480 | 7596 | 32.679 | 3.962 | 26.108 | 2.912 | 8.29× |
+| Correlated bursts | 256 | 1338 | 2618 | 1.928 | 0.224 | 6.641 | 0.709 | 8.65× |
+| SHD test recording 0 | 1 | 12978 | 12270 | 27.483 | 2.287 | 14.547 | 0.568 | 11.99× |
+| SHD test recording 0 | 8 | 12353 | 12270 | 41.815 | 5.092 | 14.933 | 0.590 | 8.47× |
+| SHD test recording 0 | 256 | 18065 | 12270 | 58.683 | 6.916 | 14.528 | 0.575 | 8.46× |
+
+Choose group size using the channel layout and measured packet sizes.
+Group size 1 keeps each channel as its own reference. Its encode time
+includes delta framing and reference bookkeeping for the same ISI body.
+Larger groups can save bytes when channels
+fire together and increase residual size when channels are independent.
+
+### Quantised packets with five samples per bin
+
+The measured decode returns the complete bins and omits the final partial
+bin. ISI bins each channel directly. Delta bins the XOR residual and
+reference before reconstruction. This produces the same packets and
+reconstruction across languages within each format. Missing and extra
+events measure delta's occupancy difference from direct ISI binning.
+The raw data also records binary occupancy RMSE and decoded event counts.
+
+| Input | Group size | Delta (B) | ISI (B) | Delta Python (ms) | Delta Rust (ms) | ISI Python (ms) | ISI Rust (ms) | Delta Python / Rust | Missing / extra events |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Sparse short | 1 | 33 | 17 | 0.177 | 0.008 | 0.058 | 0.005 | 22.38× | 0 / 0 |
+| Sparse long | 1 | 4282 | 4210 | 10.519 | 1.843 | 4.598 | 0.421 | 5.68× | 0 / 0 |
+| Dense | 1 | 1938 | 1866 | 9.976 | 1.306 | 8.915 | 1.130 | 7.68× | 0 / 0 |
+| Correlated bursts | 1 | 1489 | 1417 | 5.358 | 0.672 | 4.288 | 0.489 | 7.97× | 0 / 0 |
+| Sparse short | 8 | 26 | 17 | 0.103 | 0.008 | 0.057 | 0.005 | 13.39× | 0 / 0 |
+| Sparse long | 8 | 8304 | 4210 | 13.356 | 1.441 | 4.670 | 0.436 | 9.36× | 137 / 0 |
+| Dense | 8 | 1874 | 1866 | 10.347 | 1.310 | 8.735 | 1.145 | 7.85× | 7778 / 0 |
+| Correlated bursts | 8 | 1619 | 1417 | 2.472 | 0.214 | 4.426 | 0.516 | 11.53× | 123 / 0 |
+| Sparse short | 256 | 26 | 17 | 0.105 | 0.008 | 0.057 | 0.005 | 14.37× | 0 / 0 |
+| Sparse long | 256 | 9148 | 4210 | 12.087 | 1.332 | 4.596 | 0.420 | 9.07× | 176 / 0 |
+| Dense | 256 | 1867 | 1866 | 9.968 | 1.265 | 8.842 | 1.129 | 7.83× | 8642 / 0 |
+| Correlated bursts | 256 | 1199 | 1417 | 1.736 | 0.188 | 4.514 | 0.497 | 9.24× | 145 / 0 |
+| SHD test recording 0 | 1 | 12360 | 11652 | 25.176 | 1.881 | 13.520 | 0.559 | 13.45× | 0 / 0 |
+| SHD test recording 0 | 8 | 15202 | 11652 | 22.682 | 1.531 | 13.336 | 0.557 | 14.87× | 2304 / 0 |
+| SHD test recording 0 | 256 | 8091 | 11652 | 33.540 | 4.131 | 13.422 | 0.563 | 8.10× | 4868 / 0 |
+
+The raw artifact retains encode, decode and round-trip samples plus first
+calls in five fresh interpreters per path. It includes dataset, source,
+wheel, raster and packet hashes. Peak RSS is unavailable from the
+Windows harness. The benchmark checks the Python and Rust
+packets and cross-decodes them before and after timing.
+[Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/delta_codec_backends.json).
+[Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
+
 ---
 
 ## 16. Spike Codec Library (2026-03-25)
