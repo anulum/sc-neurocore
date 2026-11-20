@@ -336,9 +336,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   ("normalisation", "serialise", "quantiser", "synchroniser").
   Identifiers, file names and other tools' terms keep their spelling.
 
-  that die's two-stage synchroniser, and the XDC declares it a false path.
-  that is empty or not finite, is a violation and quantises no layer. The
-
 - Correct the Rust PyO3 model inventory to 208 wrappers by excluding five
   codec bindings for lossless waveform and spike-event streams.
 
@@ -386,7 +383,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   creates each die's clock on that port and bounds each link between its two
   dies' clocks at the shorter of the two periods; the link latency is the
   bridge's own pipeline. The one `rst_n` reaches each die's domain through
-  that die's two-stage synchronizer, and the XDC declares it a false path.
+  that die's two-stage synchroniser, and the XDC declares it a false path.
   A bridge counts the link latency in cycles of its destination die's clock
   and sizes its FIFO for the jitter in cycles of the faster clock; at
   200 MHz on both sides nothing changes. Tests check that
@@ -517,7 +514,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The chip compiler no longer returns NaN weights with a successful result
   on a 1-bit target: one bit now codes a sign, each weight becoming plus or
   minus the mean magnitude. A precision below one bit, or a weight matrix
-  that is empty or not finite, is a violation and quantizes no layer. The
+  that is empty or not finite, is a violation and quantises no layer. The
   report's violation and warning lines and the precision-loss warning are
   tested instead of excluded from coverage.
 
