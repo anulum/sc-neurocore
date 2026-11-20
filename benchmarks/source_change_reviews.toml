@@ -20,12 +20,6 @@ source_sha256 = "989b8115d161baccb057ff59d53d5bef97e77d76adb5e0e55ce2d36f6973633
 reason = "Only Rust doc comments changed since the record: their Rustdoc links and array notation were repaired. The code tokens equal those of the measured bytes, so the KL refinement timings and partitions cannot move."
 
 [[review]]
-record = "bench_izhikevich2007_simulate.json"
-path = "src/sc_neurocore/neurons/models/izhikevich2007.py"
-source_sha256 = "39b68f8c97366b80ef403a1e4b8237017c6f07323dfd727737368ee546663860"
-reason = "Only docstrings were added since the record: a module docstring and those of __post_init__, step, reset_state and get_state, so that the module meets the public docstring policy. The syntax tree without docstrings equals that of the measured bytes, so the simulation timings cannot move."
-
-[[review]]
 record = "bench_sc_resetting_wilson_hr_simulate.json"
 path = "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py"
 source_sha256 = "e352496112d3e943d1d0810c2ba40e0d9e264c8efc521d5d3a7bcb533c2571af"

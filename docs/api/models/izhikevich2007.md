@@ -107,21 +107,22 @@ on that band plus exact spike counts, not whole-trace equality.
 Reproduce with `python benchmarks/bench_izhikevich2007_simulate.py --json
 benchmarks/results/bench_izhikevich2007_simulate.json`. Workload: 2,000,000 RK4
 steps, default parameters, current = 300 pA (tonic spiking), median of 5 repeats.
-**Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
+**Non-isolated** (loaded workstation, Python 3.12.16 / NumPy 2.5.4) —
 functional/regression evidence, not isolated-core release numbers.
 
 | backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
 |---|---:|---:|---:|
-| python (NumPy) | 1773.10 | 1.00× | 0 |
-| mojo | 73.12 | 24.25× | 8.78e-12 (FMA band at I=300) |
-| rust | 88.98 | 19.93× | 0 (bit-exact) |
-| go | 92.86 | 19.09× | 0 (bit-exact) |
-| julia | 93.48 | 18.97× | 0 (bit-exact) |
+| python (NumPy) | 1884.85 | 1.00× | 0 |
+| mojo | 76.96 | 24.49× | 8.78e-12 (FMA band at I=300) |
+| julia | 93.96 | 20.06× | 0 (bit-exact) |
+| go | 96.23 | 19.59× | 0 (bit-exact) |
+| rust | 102.09 | 18.46× | 0 (bit-exact) |
 
-Mojo is fastest in raw throughput, but it is not bit-exact, so `auto` selects
-Rust — the fastest backend that is both bit-exact and ships in the wheel. The
-four derivative stages per step keep the absolute per-step cost high, so the
-speedups settle around 19–24×.
+Mojo is fastest in raw throughput, but it is not bit-exact. Julia and Go were
+faster than Rust in this run and are bit-exact too, but the wheel ships neither
+lane for this model, so `auto` selects Rust — the fastest backend that is both
+bit-exact and ships in the wheel. The four derivative stages per step keep the
+absolute per-step cost high, so the speedups settle around 18–25×.
 
 ## NeuroML Import
 
