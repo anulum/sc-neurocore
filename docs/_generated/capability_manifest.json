@@ -988,7 +988,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 212,
     "studio_catalogue_models": 185,
-    "test_files": 5742
+    "test_files": 5744
   },
   "documentation": {
     "public_pages": [
@@ -4014,6 +4014,7 @@
       "tests/test_adc_to_spike_kernel_windows.py",
       "tests/test_adc_to_spike_quantiser.py",
       "tests/test_adc_to_spike_quantiser_synth.py",
+      "tests/test_address_event_packet_parity.py",
       "tests/test_adex_backends_auto_dispatch.py",
       "tests/test_adex_backends_backend_parity.py",
       "tests/test_adex_backends_batch_atomicity.py",
@@ -4032,6 +4033,7 @@
       "tests/test_advanced_plasticity_surrogate_gradient.py",
       "tests/test_advanced_plasticity_tbptt_learner.py",
       "tests/test_aer_priority_queue.py",
+      "tests/test_aer_raster_transport.py",
       "tests/test_aer_spike_codec_aer_spike_codec_compression.py",
       "tests/test_aer_spike_codec_aer_spike_codec_edge_cases.py",
       "tests/test_aer_spike_codec_aer_spike_codec_roundtrip.py",

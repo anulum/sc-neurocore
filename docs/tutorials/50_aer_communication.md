@@ -2,9 +2,9 @@
 
 # Tutorial 50: AER-over-UDP Communication
 
-Route spike events between FPGAs, between FPGA and host, or between
-simulated and physical neuromorphic hardware via standard Ethernet
-using the Address-Event Representation (AER) protocol over UDP.
+Route addressed spike events between software processes over UDP.
+The examples below use the SC-NeuroCore packet format and its localhost
+raster adapter.
 
 ## What is AER
 
@@ -18,8 +18,7 @@ Traditional bus: clock every cycle → N neurons × N timesteps data
 AER bus: fire event only → proportional to spike count
 ```
 
-At 1% firing rate, AER uses 100× less bandwidth than clock-driven
-readout.
+Packet size depends on the event rate, encoded fields and transport headers.
 
 ## Sending Events
 
@@ -69,25 +68,55 @@ while True:
 receiver.close()
 ```
 
+## Sending a compressed raster
+
+```python
+from contextlib import closing
+import numpy as np
+
+from sc_neurocore.comm import AERReceiver, AERSender, receive_aer_packet, send_aer_packet
+from sc_neurocore.spike_codec import AERSpikeCodec
+
+codec = AERSpikeCodec()
+spikes = np.array([[1, 0], [0, 1], [1, 1]], dtype=np.int8)
+packet, _ = codec.compress(spikes)
+with closing(AERReceiver(port=0)) as receiver:
+    with closing(AERSender(port=receiver.bound_port)) as sender:
+        transfer = send_aer_packet(sender, packet, timestamp_origin=100, ticks_per_sample=5)
+        result = receive_aer_packet(receiver, transfer)
+np.testing.assert_array_equal(codec.decompress(result.packet), spikes)
+```
+
+In a distributed application, pass an `announce` callback to
+`send_aer_packet` to share the transfer descriptor through the control
+channel before data is sent. Start the receiver while the sender is
+active. The socket receive queue is finite. The adapter accepts
+reordering within the expected sequence window and reports loss on timeout.
+It refuses malformed or duplicate datagrams and does not retransmit them.
+The verified round trip uses software on localhost.
+
 ## Packet Format
 
 ```
-AER-over-UDP Packet (max 1500 bytes = Ethernet MTU):
+AER-over-UDP packet (up to 1500 bytes of UDP payload):
 
 Header (8 bytes):
   [0:2]  Magic: 0xAE01 (identifies AER packet)
   [2:4]  Sequence number (for drop detection)
-  [4:6]  Event count (0-180 events per packet)
-  [6:8]  Reserved (protocol version, flags)
+  [4:6]  Event count (0–186)
+  [6:8]  Reserved (zero)
 
 Per Event (8 bytes):
-  [0:4]  Timestamp (32-bit microseconds, wraps at ~71 minutes)
-  [4:6]  Neuron ID (16-bit, supports up to 65,535 neurons)
+  [0:4]  Timestamp (uint32 ticks, units selected by the application)
+  [4:6]  Neuron ID (uint16, 0–65,535)
   [6:8]  Data (16-bit: payload, polarity, layer ID, etc.)
 
-Max events per packet: (1500 - 8) / 8 = 186 events
-Typical: 180 events/packet for alignment
+Max events per packet: floor((1500 - 8) / 8) = 186
 ```
+
+All datagram fields use big-endian byte order. The raster adapter uses a
+zero data field and requires the complete timestamp range to fit uint32.
+The payload limit excludes IP and UDP headers.
 
 ## Multi-FPGA Cluster
 

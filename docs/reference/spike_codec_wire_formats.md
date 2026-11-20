@@ -202,17 +202,33 @@ density. Events are ordered by time, then channel.
 
 Each item contains dt:uint16 and neuron_id encoded in neuron_bytes
 big-endian bytes. The all-FF address is reserved as an escape: add that
-item's actual dt to the current time and keep reading without consuming an
-event. Ordinary items add dt, set their raster position and consume one event.
-The encoder widens addresses when needed to keep all-FF separate from valid
-IDs. Encoder timestamp_bits affects escape splitting; actual stored deltas
-and neuron_bytes suffice for decoding. The default timestamp_bits is 16;
-the physical delta field remains uint16.
+item's positive dt to the current sample index and keep reading without
+consuming an event. The first delta starts at row zero. Ordinary items add
+dt and consume one event. Equal timestamps must use increasing channel
+addresses, with one event per raster position. The encoder widens
+addresses to keep the escape separate from valid IDs. Encoder
+`timestamp_bits` ranges from 1 to 16 and controls escape splitting.
+The physical delta slot remains uint16. The decoder uses the stored
+deltas and address width. It validates counts, time overflow, ordering,
+address bounds and the end of the packet before reconstructing samples.
+These packets carry no checksum, absolute start time or sample rate.
 
-AERX/AERI are raster codec packets. Compatibility with the separate
-comm.aer_udp protocol or any physical neuromorphic device requires an
-explicit, exercised adapter. Names alone do not establish interoperability.
-No embedded checksum is present.
+### UDP translation
+
+UDP uses its existing distinct header with uint16 magic `0xAE01`, sequence,
+event count and reserved word, followed by absolute uint32 ticks, uint16
+neuron addresses and uint16 data. All fields are big-endian. The explicit
+adapter emits active binary events with data set to zero, including for
+silence-inverted AERI. It maps row `r` to `timestamp_origin +
+r * ticks_per_sample`. A single transfer must fit the uint32 clock.
+
+The application shares the raster shape, clock and sequence window using
+the adapter's transfer descriptor. Sequence numbers wrap at uint16.
+The receiver accepts reordering inside the described window, reports
+missing packets on timeout, and refuses duplicate datagrams or inconsistent
+sources. Repeated events at the same raster coordinate coalesce. Sender
+payloads are capped at 1500 bytes. UDP delivery and physical device
+interoperability require separate application and device validation.
 
 ## WFC2 waveform container and legacy WFCX
 

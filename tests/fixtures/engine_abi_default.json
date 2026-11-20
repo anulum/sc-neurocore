@@ -104696,6 +104696,38 @@
           "constant": "4.2.0",
           "kind": "str"
         },
+        "address_event_decode_raster": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "address_event_decode_raster",
+          "__qualname__": "address_event_decode_raster",
+          "__text_signature__": "(packet, rows, channels)",
+          "aliases": [
+            "sc_neurocore_engine.sc_neurocore_engine.address_event_decode_raster"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(packet, rows, channels)",
+          "signature_error": null
+        },
+        "address_event_encode_raster": {
+          "__module__": "sc_neurocore_engine.sc_neurocore_engine",
+          "__name__": "address_event_encode_raster",
+          "__qualname__": "address_event_encode_raster",
+          "__text_signature__": "(samples, timestamp_bits, neuron_bits)",
+          "aliases": [
+            "sc_neurocore_engine.sc_neurocore_engine.address_event_encode_raster"
+          ],
+          "global_reference": {
+            "error": null,
+            "same_object": true
+          },
+          "kind": "builtin_function_or_method",
+          "signature": "(samples, timestamp_bits, neuron_bits)",
+          "signature_error": null
+        },
         "adex_simulate_complete": {
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "adex_simulate_complete",
@@ -109190,7 +109222,7 @@
     }
   },
   "provenance": {
-    "capture_sha256": "493575c5ba2e6446ca4aa52cde538dad7d96d2c6b20212108502c9b6c3f1e97f",
+    "capture_sha256": "44bab3db13673bb065cf241466304538621407f2960830677f939d306d587c4e",
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
       "sc_neurocore_engine": {
@@ -109201,11 +109233,11 @@
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "d62abf6a16bc585071a91fb81d9ec7312d56d68966dfee19824fb6afaa0127bc"
+        "sha256": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
       }
     },
     "python": "3.12.3",
-    "qualification_scope": "Default release wheel built on Linux x86-64. The installed interface was captured under CPython 3.12.3 and NumPy 2.5.5. The compiled module adds four SSCF and standalone raster frame functions. The package facade and preexisting compiled exports match the prior reference.",
+    "qualification_scope": "Default release wheel on Linux x86-64, under CPython 3.12.3 and NumPy 2.5.5. The compiled module adds AERX and AERI raster encoding and decoding. The package facade and all previous compiled exports match the preceding reference.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
@@ -109217,7 +109249,7 @@
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "5652af701064584ff288910345aaad6bffbb95d5",
+    "source_base_sha": "8d7a6f55046e635611290c47d6890c7f9725a603",
     "source_files_sha256": {
       ".github/workflows/v3-wheels.yml": "e7cfc65da9225eeaa9e21279faba5beb6326b7b8905f6059423f612f054c5a10",
       "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
@@ -109246,6 +109278,8 @@
       "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
       "engine/Cargo.toml": "6e60942c76bd4e8f02688bab0a13b62cfa9762a762eac883701bc0418cd4edb5",
       "engine/src/adc_to_spike.rs": "1e8ccc32cf7686197739aca5140810e64e24278a95780f60d14e50a228bf6e34",
+      "engine/src/address_events.rs": "1b9f27e8c643d3bf911bf40a67460c9f7421ab4433ed56121b3572240eb7fc95",
+      "engine/src/address_events/bindings.rs": "cf3be9589de974893d0d4768396324fce153518c8b3360d796381e5f34712e3f",
       "engine/src/analysis/basic.rs": "381b14051d9c8cf331f563eaefe76e0c3946aafed856b0c73c9fcac139fee2c9",
       "engine/src/analysis/bindings.rs": "17b2933e8ec52a076a2d523fe373994c76c3cbe3fe74cfe18de1c912444b9321",
       "engine/src/analysis/bindings/arrays.rs": "0e6d7d326611bda91980ba57043e67bc246a53fe814545acbe30b54d1a836685",
@@ -109625,7 +109659,7 @@
       "engine/src/layer.rs": "603cb56084a4ec13106ec80937eeeff6e973ddfaca16a33a19bf972bfa2e2fd4",
       "engine/src/learning_bindings.rs": "215cbeb17fac59eaa5924bead913c1ad2e2e1490cdc7178ffd855c9ea3b4cc05",
       "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
-      "engine/src/lib.rs": "d36a4900adecc2dd7a64b40392b3c1f1c44db95b2472e7033893b328d552e0d0",
+      "engine/src/lib.rs": "f6b74e8acbf3e8684d32c9cb14d5789c4fdb0f29332b493bc8cbed945ef92b67",
       "engine/src/network_runner.rs": "aebc603b06925a43456beabef437d6eaeb08f3cdbf7ead092fd25132d2a2c020",
       "engine/src/network_runner/input_adapters.rs": "02d15b8b382ef13f1c22aeb2e10ed91e6d7ed798b80295931ffe9cc1455c4604",
       "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
@@ -109906,9 +109940,9 @@
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "440fdc5da1276a4eb15d03bc0e454bc9f25c91a990125934470338a8e92f6277",
+    "source_manifest_sha256": "0f146646387c3d38ae6c5f1bb18127b6192c530fc0acdf065d9fcf52dde39b7b",
     "wheel_filename": "sc_neurocore_engine-4.2.0-cp312-cp312-linux_x86_64.whl",
-    "wheel_sha256": "0b542dc20f22181ea8bf02811d094488970fba4f6975f79f29dd3db9c98fcdbb"
+    "wheel_sha256": "6d0a58facff68b9307c4aaea2bc0ef108e34c68caf2f67c810e573adf88f642a"
   },
   "schema": 1
 }

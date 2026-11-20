@@ -145,6 +145,15 @@ channels summed over frames, and the largest frame size. The decoder
 validates lengths, dimensions and padding before allocating the raster.
 [Public streaming codec](spike_codec.md#streaming-codec-real-time).
 
+## Address-event packets
+
+The compiled module exports `address_event_encode_raster` and
+`address_event_decode_raster`. The encoder accepts contiguous binary int8
+samples, timestamp escape width and minimum neuron address width. It
+returns the complete packet plus original spike and encoded event counts.
+The decoder checks timestamp and address bounds before allocating the
+raster. [Public AER codec](spike_codec.md#aer-codec-neuromorphic).
+
 ## Installed-wheel interface evidence
 
 The [engine bridge contracts](../guides/engine_bridge_contracts.md#capturing-the-installed-interface)

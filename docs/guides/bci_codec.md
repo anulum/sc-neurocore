@@ -532,10 +532,10 @@ buffer and stops pulling input.
 ## AER Codec (Neuromorphic)
 
 Address-Event Representation: compact (timestamp_delta, neuron_id) event stream.
-It uses AERX/AERI raster packets, distinct from the `comm/aer_udp.py`
-transport header. An explicit adapter and real integration test are required
-before claiming transport or physical-device interoperability. Packet size
-also includes framing, address widths and timestamp escapes.
+It uses AERX or AERI raster packets. Python and Rust share this wire format,
+and the UDP adapter translates the active positions to transport events.
+Packet size includes framing, address widths and timestamp escapes.
+[Localhost UDP example](../tutorials/50_aer_communication.md#sending-a-compressed-raster).
 
 ```python
 from sc_neurocore.spike_codec import AERSpikeCodec

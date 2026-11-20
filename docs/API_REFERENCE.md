@@ -8492,10 +8492,92 @@ int
 
 ---
 
+## Module `comm.aer_raster`
+
+### Class `AERTransfer`
+Out-of-band raster geometry, clock and sequence window for one transfer.
+
+Rows count samples, channels count binary raster columns, and timestamps
+use unsigned transport ticks. Each row advances by ticks_per_sample
+from timestamp_origin. The UDP datagrams carry only active events and
+their sequence numbers. Share this descriptor through the controlling
+application before receiving the packet batch.
+
+- **__post_init__**()
+  - Validate dimensions, clock and the unambiguous sequence range.
+
+### Class `ReceivedAERPacket`
+Reconstructed raster packet and the number of reordered datagrams.
+
+
+### Function `send_aer_packet(sender, packet, *, codec, timestamp_origin, ticks_per_sample, announce)`
+Send the active positions from an AERX or AERI packet over the real UDP sender.
+
+Parameters
+----------
+sender : AERSender
+    UDP sender reserved for this transfer until the call returns.
+packet : bytes
+    Complete compressed raster packet.
+codec : AERSpikeCodec or None
+    Decoder to use. None selects the automatic backend.
+timestamp_origin, ticks_per_sample : int
+    Map raster row zero and each subsequent row to absolute UDP ticks.
+announce : callable or None
+    Optional application callback to publish the transfer descriptor
+    before the first data datagram is sent.
+
+Returns
+-------
+AERTransfer
+    Batch shape, sequence window and clock for the receiving application.
+
+Notes
+-----
+Each UDP event carries a zero data field. The adapter buffers at most
+one datagram of events. A socket error may follow partial UDP delivery.
+
+### Function `receive_aer_packet(receiver, transfer, *, codec)`
+Receive a complete described UDP batch and encode its binary raster.
+
+Parameters
+----------
+receiver : AERReceiver
+    UDP receiver exclusively assigned to this transfer.
+transfer : AERTransfer
+    Shape, clock and sequence window supplied by the controlling application.
+codec : AERSpikeCodec or None
+    Encoder to use. Match the sending codec settings for the same wire bytes.
+
+Returns
+-------
+ReceivedAERPacket
+    Encoded raster and count of distinct datagrams that arrived ahead of a gap.
+
+Raises
+------
+TimeoutError
+    If the sequence window was incomplete when a receive timed out.
+ValueError
+    If a datagram is malformed, empty, duplicated, outside the window or
+    contains data outside the described binary raster and clock.
+
+Notes
+-----
+Processing retains one raster, one datagram and a bounded sequence
+bitmap. Reordered datagrams are placed in their raster positions.
+Repeated occurrences of the same spike remain one binary position.
+
+---
+
 ## Module `comm.aer_udp`
 
 ### Class `AEREvent`
 Single AER spike event.
+
+
+### Class `AERDatagram`
+One strictly validated datagram and its unsigned 16-bit sequence.
 
 
 ### Class `AERSender`
@@ -8509,11 +8591,14 @@ port : int
     Destination UDP port.
 
 - **__init__**(host, port)
+- **next_sequence**()
+  - Return the sequence that the next nonempty send will use.
 - **send**(events)
   - Send a batch of AER events. Returns number of packets sent.
 - **send_spikes**(spike_vector, timestamp)
   - Convert a binary spike vector to AER events and send.
 - **close**()
+  - Close the sending socket.
 
 ### Class `AERReceiver`
 Receive AER spike events over UDP.
@@ -8528,11 +8613,16 @@ timeout : float
     Socket timeout in seconds.
 
 - **__init__**(host, port, timeout)
+- **bound_port**()
+  - Return the actual UDP port, including automatic allocation with port zero.
+- **receive_packet**()
+  - Receive one complete datagram and its sequence, or None on timeout.
 - **receive**()
   - Receive one packet of AER events. Returns empty list on timeout.
 - **receive_as_vector**(n_neurons)
   - Receive and convert to binary spike vector.
 - **close**()
+  - Close the receiving socket.
 
 ---
 
@@ -44678,28 +44768,37 @@ Recover world-model residuals with the same optional native weight update.
 ## Module `spike_codec.aer_codec`
 
 ### Class `AERCompressionResult`
-Compression result with AER codec metrics.
+Compression result with address-event counts and byte costs.
 
 
 ### Class `AERSpikeCodec`
-AER spike codec: event-list encoding for sparse spike data.
-
-Converts spike raster (T, N) to a compact stream of (timestamp,
-neuron_id) events. Delta-encodes timestamps for further compression.
+Encode a raster as ordered spike events, or silences above 50% density.
 
 Parameters
 ----------
 timestamp_bits : int
-    Bits for delta-coded timestamps. 16 = max gap of 65535 samples.
-    Larger windows between spikes use escape codes.
+    Escape gap width in 1 through 16. The default emits an escape for
+    gaps above 65535 rows. Wire delta slots always use two bytes.
 neuron_bits : int
-    Bits for neuron ID. Auto-sized from N if 0.
+    Minimum address width in 0 through 2040. Zero selects the minimum
+    safe width. The encoder reserves the all-ones address for escapes.
+backend : str
+    'python', 'rust', or 'auto'. Auto selects a complete installed
+    native backend when available.
 
-- **__init__**(timestamp_bits, neuron_bits)
+Notes
+-----
+Each raster position contributes at most one event. Equal timestamps
+are ordered by increasing channel. The packets record sample-index
+deltas and carry neither an absolute start time nor a sample rate.
+
+- **__init__**(timestamp_bits, neuron_bits, \*, backend)
+- **backend**()
+  - Return the selected complete implementation, 'python' or 'rust'.
 - **compress**(spikes)
-  - Compress spike raster to AER event stream.
+  - Encode an entire binary time-by-channel raster.
 - **decompress**(data, T, N)
-  - Decompress AER event stream to spike raster.
+  - Validate and decode an AERX or AERI raster packet.
 
 ---
 
@@ -44751,7 +44850,7 @@ CodecAvailability
     later does not update existing instances. Start a fresh process in that case.
     Native loader OSError or RuntimeError excludes ``auto`` from advertised
     choices. An ImportError loading a present extension does as well
-    for ISI, predictive, delta and framed raster packets.
+    for ISI, predictive, delta, framed rasters and address events.
     An absent engine permits the classes' documented Python fallback.
 
 Raises

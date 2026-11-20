@@ -75,6 +75,22 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+The address-event harness measures full AERX and AERI containers and runs
+two separate UDP measurements. The first uses raw events on localhost.
+The second uses the raster adapter, including conversion on both sides.
+Install both wheels and use the same logical CPU for all lanes.
+
+```sh
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 RAYON_NUM_THREADS=1
+taskset -c 0 python benchmarks/bench_address_events.py compare \
+  --timestamp-bits 16 --output address-events-synthetic.json
+```
+
+Repeat with `--timestamp-bits 8` to measure shorter escape steps. For a
+recorded input, install `h5py` and supply `--shd shd_test.h5 --recording 0`.
+Results include the complete packet sizes, raw samples and first-call
+RSS. [Hardware and paired results](../docs/benchmarks/BENCHMARKS.md#address-event-packets-and-localhost-udp).
+
 Install the Python and Rust wheels to measure complete SSCF packets and
 bounded pull streams. Use one logical CPU for both paths. Record the CPU
 and activity on its SMT sibling. The sample rate labels acquisition

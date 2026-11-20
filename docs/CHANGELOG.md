@@ -82,6 +82,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `AERSpikeCodec` supports matching AERX and AERI packets in Python and
+  Rust. The UDP adapter translates sample positions to absolute ticks,
+  accepts reordering within a transfer and reports missing or invalid
+  datagrams.
+
 - `StreamingSpikeCodec` supports Python and Rust SSCF containers and
   standalone frames. Pull iterators conserve the short final frame and
   provide cancellation at the consumer boundary. Decoders check geometry,

@@ -199,10 +199,10 @@ Both backends produce the same SSCF and standalone frame bytes.
 
 ## Codec 5: AER (Neuromorphic Routing)
 
-Address-Event Representation: (timestamp_delta, neuron_id) event list.
-Delta-encoded timestamps, variable-width neuron IDs. Its AERX/AERI raster
-packets differ from the transport format in `sc_neurocore.comm.aer_udp`;
-integration requires an explicit, qualified adapter.
+Address-Event Representation stores sample deltas and variable-width
+neuron addresses. The codec uses AERI silence events for dense inputs.
+Use `send_aer_packet` and `receive_aer_packet` from `sc_neurocore.comm`
+to translate between raster packets and absolute UDP timestamps.
 
 ```python
 from sc_neurocore.spike_codec import AERSpikeCodec

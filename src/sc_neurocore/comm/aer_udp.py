@@ -15,10 +15,7 @@ Packet format::
 
   Header: magic(16) | seq(16) | n_events(16) | reserved(16) = 8 bytes
   Events: timestamp(32) | neuron_id(16) | data(16) = 8 bytes each
-  Max events per packet: 180 (fits in 1500-byte Ethernet MTU)
-
-No equivalent open standard exists for multi-FPGA SNN communication.
-SpiNNaker uses a proprietary protocol. BrainScaleS uses wafer routing.
+  Datagram payloads are capped at 1500 bytes by the sender.
 """
 
 from __future__ import annotations
@@ -47,6 +44,15 @@ class AEREvent:
     data: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class AERDatagram:
+    """One strictly validated datagram and its unsigned 16-bit sequence."""
+
+    sequence: int
+    events: tuple[AEREvent, ...]
+    source: tuple[str, int]
+
+
 class AERSender:
     """Send AER spike events over UDP.
 
@@ -63,6 +69,11 @@ class AERSender:
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._seq = 0
+
+    @property
+    def next_sequence(self) -> int:
+        """Return the sequence that the next nonempty send will use."""
+        return self._seq & 0xFFFF
 
     def send(self, events: list[AEREvent]) -> int:
         """Send a batch of AER events. Returns number of packets sent."""
@@ -91,6 +102,7 @@ class AERSender:
         return 0
 
     def close(self) -> None:
+        """Close the sending socket."""
         self._sock.close()
 
 
@@ -113,6 +125,35 @@ class AERReceiver:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.settimeout(timeout)
         self._sock.bind((host, port))
+
+    @property
+    def bound_port(self) -> int:
+        """Return the actual UDP port, including automatic allocation with port zero."""
+        return int(self._sock.getsockname()[1])
+
+    def receive_packet(self) -> AERDatagram | None:
+        """Receive one complete datagram and its sequence, or None on timeout.
+
+        Raises
+        ------
+        ValueError
+            If the header is invalid or the body cannot hold exactly the
+            announced number of events.
+        """
+        try:
+            packet, endpoint = self._sock.recvfrom(65535)
+        except TimeoutError:
+            return None
+        if len(packet) < HEADER_SIZE:
+            raise ValueError("truncated AER UDP header")
+        magic, sequence, count, reserved = struct.unpack_from(HEADER_FMT, packet)
+        if magic != MAGIC or reserved:
+            raise ValueError("invalid AER UDP header")
+        body = memoryview(packet)[HEADER_SIZE:]
+        if count > MAX_EVENTS_PER_PACKET or len(body) != count * EVENT_SIZE:
+            raise ValueError("invalid AER UDP event body length")
+        events = tuple(AEREvent(*fields) for fields in struct.iter_unpack(EVENT_FMT, body))
+        return AERDatagram(sequence, events, (str(endpoint[0]), int(endpoint[1])))
 
     def receive(self) -> list[AEREvent]:
         """Receive one packet of AER events. Returns empty list on timeout."""
@@ -154,4 +195,5 @@ class AERReceiver:
         return vector, ts
 
     def close(self) -> None:
+        """Close the receiving socket."""
         self._sock.close()

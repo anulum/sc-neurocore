@@ -995,6 +995,76 @@ and decoded samples before and after timing.
 [Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/raster_stream_backends.json).
 [Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
 
+## Address-event packets and localhost UDP
+
+Measured on 2026-11-20 UTC on a ProLiant ML350p Gen8 with two
+Intel Xeon E5-2640 processors, 251.9 GiB of visible memory and Linux
+6.8.0-149-generic. Both implementations ran on logical CPU 9 with
+SMT sibling 21, one numerical thread and the schedutil governor.
+Other CPU activity reached an estimated 0.2% of one logical CPU on
+that physical core. The release wheels used Rust 1.98.1, CPython
+3.12.3 and NumPy 2.5.5.
+
+The complete packet comparison uses six deterministic rasters and
+Spiking Heidelberg Digits test recording 0. The recording has 731
+one-millisecond rows and 700 channels. The dense inverted case exercises
+AERI silences. The long-gap raster exercises escapes with both settings.
+Address width is selected automatically. Each timing is the median of
+nine alternating, resident calls after two warmups.
+[SHD dataset and license](https://zenkelab.org/resources/spiking-heidelberg-datasets-shd/).
+
+### Complete address-event packets
+
+| Input | Escape bits | Format | Packet (B) | Python round trip (ms) | Rust round trip (ms) | Paired Python / Rust |
+|---|---:|---|---:|---:|---:|---:|
+| Sparse short | 8 | AERX | 23 | 0.098 | 0.011 | 9.00× |
+| Sparse long | 8 | AERX | 12542 | 17.599 | 1.263 | 13.94× |
+| Dense | 8 | AERX | 59141 | 69.354 | 1.003 | 69.11× |
+| Correlated bursts | 8 | AERX | 9092 | 10.900 | 0.237 | 46.05× |
+| Inverted dense | 8 | AERI | 39548 | 45.827 | 0.739 | 61.95× |
+| Long timestamp gap | 8 | AERX | 794 | 1.821 | 0.606 | 3.00× |
+| Sparse short | 16 | AERX | 23 | 0.098 | 0.011 | 8.89× |
+| Sparse long | 16 | AERX | 12542 | 17.130 | 1.276 | 13.39× |
+| Dense | 16 | AERX | 59141 | 66.868 | 1.003 | 66.72× |
+| Correlated bursts | 16 | AERX | 9092 | 10.696 | 0.236 | 45.62× |
+| Inverted dense | 16 | AERI | 39548 | 45.292 | 0.737 | 61.72× |
+| Long timestamp gap | 16 | AERX | 26 | 1.522 | 0.602 | 2.53× |
+| SHD recording 0 | 8 | AERX | 45109 | 41.869 | 1.482 | 28.26× |
+| SHD recording 0 | 16 | AERX | 45109 | 42.055 | 1.486 | 28.34× |
+
+### Localhost UDP
+
+The raw UDP column measures one datagram of active addresses with
+the existing sender and strict receiver. The adapter columns time
+a small raster region from the first active row, including translation
+from and back to the compressed packet. Region size is capped so the
+test queues at most eight datagrams. The raw path sends up to one
+datagram from the same region. Payload sizes include UDP application
+headers and event fields. The artifact lists each region's shape and hash.
+
+| Input | Escape bits | Raw events | Raw UDP (µs) | Adapter events | Adapter datagrams | Adapter payload (B) | Python adapter (µs) | Rust adapter (µs) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Sparse short | 8 | 2 | 51.30 | 2 | 1 | 24 | 236.91 | 143.97 |
+| Sparse long | 8 | 16 | 63.03 | 16 | 1 | 136 | 434.00 | 284.93 |
+| Dense | 8 | 186 | 197.45 | 420 | 3 | 3384 | 2643.55 | 1164.68 |
+| Correlated bursts | 8 | 82 | 116.63 | 82 | 1 | 664 | 762.07 | 395.55 |
+| Inverted dense | 8 | 186 | 199.21 | 1178 | 7 | 9480 | 3759.53 | 2697.95 |
+| Long timestamp gap | 8 | 1 | 49.63 | 1 | 1 | 16 | 356.49 | 274.79 |
+| Sparse short | 16 | 2 | 50.38 | 2 | 1 | 24 | 229.00 | 142.04 |
+| Sparse long | 16 | 16 | 62.79 | 16 | 1 | 136 | 429.89 | 279.86 |
+| Dense | 16 | 186 | 197.46 | 420 | 3 | 3384 | 2619.18 | 1162.64 |
+| Correlated bursts | 16 | 82 | 116.75 | 82 | 1 | 664 | 748.28 | 390.85 |
+| Inverted dense | 16 | 186 | 198.98 | 1178 | 7 | 9480 | 3749.54 | 2693.67 |
+| Long timestamp gap | 16 | 1 | 49.37 | 1 | 1 | 16 | 352.79 | 277.91 |
+| SHD recording 0 | 8 | 3 | 51.96 | 3 | 1 | 32 | 244.50 | 142.43 |
+| SHD recording 0 | 16 | 3 | 51.95 | 3 | 1 | 32 | 253.50 | 142.07 |
+
+The artifact retains the full encode and decode timings, fresh-process
+latency and peak RSS, packet hashes and the measured process receipts.
+The measurement covers software on localhost.
+[Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/address_event_backends.json).
+[Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
+
 ---
 
 ## 16. Spike Codec Library (2026-03-25)

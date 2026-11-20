@@ -16,6 +16,7 @@ _PREFIX = "sc_neurocore.spike_codec."
 _ENGINE = "sc_neurocore_engine.sc_neurocore_engine"
 _ISI_SYMBOLS = ("isi_encode_raster", "isi_decode_raster")
 _DELTA_SYMBOLS = ("delta_encode_raster", "delta_decode_raster")
+_ADDRESS_EVENT_SYMBOLS = ("address_event_encode_raster", "address_event_decode_raster")
 _RASTER_STREAM_SYMBOLS = (
     "raster_stream_encode_frame",
     "raster_stream_decode_frame",
@@ -359,11 +360,21 @@ _AER = CodecDescriptor(
     encoder_required_parameters=(),
     decoder_required_parameters=(),
     decode_required_parameters=(),
-    configuration_parameters=("timestamp_bits", "neuron_bits"),
+    configuration_parameters=("timestamp_bits", "neuron_bits", "backend"),
     variant_parameter=None,
-    backend_parameter=False,
+    backend_parameter=True,
     stateful=False,
-    variants=(CodecVariant("lossless", "lossless", "none", None, (), (), ("aerx", "aeri")),),
+    variants=(
+        CodecVariant(
+            "lossless",
+            "lossless",
+            "packet_coder",
+            _ENGINE,
+            _ADDRESS_EVENT_SYMBOLS,
+            (),
+            ("aerx", "aeri"),
+        ),
+    ),
     wire_formats=tuple(
         CodecWireFormat(
             name,
@@ -381,8 +392,8 @@ _AER = CodecDescriptor(
     input_dtype="binary bool or int8",
     notes=(
         "Above 50% density the encoder stores silence events using AERI.",
-        "Encoder timestamp_bits defaults to16; actual deltas/address width suffice for decoding.",
-        "Packet compatibility with comm.aer_udp or physical hardware is not established by this catalogue.",
+        "Encoder timestamp_bits defaults to 16; actual deltas and address width suffice for decoding.",
+        "The UDP adapter translates raster packets into absolute timestamp events.",
     ),
 )
 _WFC2 = CodecWireFormat(

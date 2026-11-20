@@ -12,7 +12,6 @@
     clippy::too_many_arguments,
     deprecated
 )]
-
 use pyo3::prelude::*;
 
 pub mod adc_to_spike;
@@ -34,6 +33,7 @@ mod exp_if_binding;
 #[path = "bindings/hdc.rs"]
 mod hdc_binding;
 pub use hdc_binding::PyBitStreamTensor;
+pub mod address_events;
 pub mod brunel;
 #[path = "bindings/coba_lif.rs"]
 mod coba_lif_binding;
@@ -140,9 +140,7 @@ pub mod wilson_cowan;
 #[path = "bindings/wilson_cowan.rs"]
 mod wilson_cowan_binding;
 pub mod wong_wang;
-
 /// SC-NeuroCore ─ High-Performance Rust Engine
-
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
@@ -179,7 +177,9 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ei_network_binding::register(m)?;
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     cordiv_binding::register(m)?;
-    codecs::register(m).and_then(|()| raster_stream::bindings::register(m))?;
+    codecs::register(m)?;
+    raster_stream::bindings::register(m)?;
+    address_events::bindings::register(m)?;
     phi_binding::register(m)?;
     cortical_column_binding::register(m)?;
     rall_dendrite_binding::register(m)?;

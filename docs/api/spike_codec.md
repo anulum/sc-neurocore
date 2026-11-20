@@ -193,10 +193,17 @@ new iterator at a known frame boundary to restart.
 
 ## AER Codec (Neuromorphic)
 
-Address-Event Representation: compact event stream with delta-coded
-timestamps. Size depends on address width and timestamp escapes. Above 50%
-density the encoder stores silence events. This catalogue does not establish
-compatibility with comm.aer_udp or physical hardware.
+Address-Event Representation stores ordered spike positions with
+delta-coded sample indices. Above 50% density it stores silence
+positions. Python and Rust encode the same bytes and cross-decode
+AERX and AERI. Use `backend="auto"` for native selection with Python
+fallback, or select either backend explicitly.
+
+Use the UDP adapter to translate those containers into absolute-timestamp
+events and reconstruct the raster on the receiver. Use the announcement
+callback to pass the shape, clock and sequence window to the receiver
+through the application's control channel.
+[Wire formats and UDP translation](../reference/spike_codec_wire_formats.md#aer-eventsilence-containers).
 
 ::: sc_neurocore.spike_codec.aer_codec
     options:

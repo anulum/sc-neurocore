@@ -6,8 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — AER-over-UDP spike communication
 
-"""AER-over-UDP: inter-FPGA spike communication protocol."""
+"""Transport address-event datagrams and translate binary raster packets."""
 
-from .aer_udp import AERSender, AERReceiver, AEREvent
+from .aer_raster import AERTransfer, ReceivedAERPacket, receive_aer_packet, send_aer_packet
+from .aer_udp import AERDatagram, AEREvent, AERReceiver, AERSender
 
-__all__ = ["AERSender", "AERReceiver", "AEREvent"]
+__all__ = [
+    "AERDatagram",
+    "AEREvent",
+    "AERReceiver",
+    "AERSender",
+    "AERTransfer",
+    "ReceivedAERPacket",
+    "receive_aer_packet",
+    "send_aer_packet",
+]

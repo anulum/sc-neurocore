@@ -1,0 +1,4634 @@
+{
+  "schema": 1,
+  "source_base_sha": "8d7a6f55046e635611290c47d6890c7f9725a603",
+  "runtime_source_tree": "ea477cb57a6b08d97b1eeac1a3753ab31f748d40",
+  "source_hashes": {
+    "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
+    "benchmarks/bench_address_events.py": "fb9f0d1dec48aac3513f6e995699a987a6f14026dc62910e456ccef8c10c0ebf",
+    "benchmarks/bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+    "benchmarks/bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+    "benchmarks/isi_codec_timing.py": "f7555a1baa2e69314471497e34077f8888059518d243d241f61b80010faabfc9",
+    "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
+    "engine/Cargo.toml": "6e60942c76bd4e8f02688bab0a13b62cfa9762a762eac883701bc0418cd4edb5",
+    "engine/rust-toolchain.toml": "8ecd8d4ef06fc3aa75cdb339fb76e0fb6b5989f04243862df4769c755ecd162f",
+    "engine/src/address_events.rs": "1b9f27e8c643d3bf911bf40a67460c9f7421ab4433ed56121b3572240eb7fc95",
+    "engine/src/address_events/bindings.rs": "cf3be9589de974893d0d4768396324fce153518c8b3360d796381e5f34712e3f",
+    "src/sc_neurocore/comm/aer_raster.py": "6a46dd0170d712d3364e0fce9d9f4f169e865fc963568199907c8e9aa707a46d",
+    "src/sc_neurocore/comm/aer_udp.py": "602719a0747b5cc3e0267bd9167c8fdbe8e8b5c4d8241d4c77945529c4ab5772",
+    "src/sc_neurocore/spike_codec/aer_codec.py": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+    "src/sc_neurocore/spike_codec/aer_packet.py": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a"
+  },
+  "wheel_sha256": {
+    "sc_neurocore-4.2.0-py3-none-any.whl": "0a671ecc3cb10e6b35dcd46f20ec4181dbf2190cf2a1b157319ec486b2a3e381",
+    "sc_neurocore_engine-4.2.0-cp312-cp312-linux_x86_64.whl": "6d0a58facff68b9307c4aaea2bc0ef108e34c68caf2f67c810e573adf88f642a"
+  },
+  "native_profile": {
+    "architecture": "x86_64",
+    "build": "release",
+    "features": [
+      "z3"
+    ],
+    "rust": "1.98.1"
+  },
+  "measurement_profile": {
+    "server_model": "ProLiant ML350p Gen8",
+    "cpu": {
+      "Architecture": "x86_64",
+      "CPU(s)": "24",
+      "Model name": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+      "Thread(s) per core": "2",
+      "Core(s) per socket": "6",
+      "Socket(s)": "2",
+      "NUMA node(s)": "2"
+    },
+    "platform": "Linux 6.8.0-149-generic x86_64 GNU/Linux",
+    "visible_memory_bytes": 270423326720,
+    "physical_pair": [
+      9,
+      21
+    ],
+    "assigned_cpu": 9,
+    "governor": "schedutil",
+    "outside_cpu_busy_maximum": 0.002359310545829496,
+    "runner_sha256": "1139aa7d62ec3273b6968a99d7e4cd7b1be3da2f229ce77263a136e54a1d6022"
+  },
+  "process_receipts": [
+    {
+      "case": "synthetic-8",
+      "exit_code": 0,
+      "started_utc": "2026-11-20T09:35:38.817965+00:00",
+      "finished_utc": "2026-11-20T09:36:15.554967+00:00",
+      "physical_pair": [
+        9,
+        21
+      ],
+      "effective_affinity": [
+        9
+      ],
+      "pre_run_busy_fraction": [
+        0.0,
+        0.00995024875621886
+      ],
+      "other_cpu_busy_fraction": 0.0013450983081184642,
+      "process_wall_seconds": 36.73611834808253,
+      "process_cpu_seconds": 36.657008999999995,
+      "report_sha256": "ddede190f701526f15a9f381c48b4528a5edc633264c541c88b1fb3c8468b907"
+    },
+    {
+      "case": "synthetic-16",
+      "exit_code": 0,
+      "started_utc": "2026-11-20T09:36:17.559189+00:00",
+      "finished_utc": "2026-11-20T09:36:53.989763+00:00",
+      "physical_pair": [
+        9,
+        21
+      ],
+      "effective_affinity": [
+        9
+      ],
+      "pre_run_busy_fraction": [
+        0.0,
+        0.0050000000000000044
+      ],
+      "other_cpu_busy_fraction": 0.002359310545829496,
+      "process_wall_seconds": 36.430086920037866,
+      "process_cpu_seconds": 36.344181,
+      "report_sha256": "9ab8294d73a505331bb2d6f73c6500adb61adb5026d453545db0c0815eb5b5ca"
+    },
+    {
+      "case": "shd-8",
+      "exit_code": 0,
+      "started_utc": "2026-11-20T09:36:55.991750+00:00",
+      "finished_utc": "2026-11-20T09:37:03.717477+00:00",
+      "physical_pair": [
+        9,
+        21
+      ],
+      "effective_affinity": [
+        9
+      ],
+      "pre_run_busy_fraction": [
+        0.0,
+        0.09999999999999998
+      ],
+      "other_cpu_busy_fraction": 0,
+      "process_wall_seconds": 7.725289118010551,
+      "process_cpu_seconds": 7.689598000000018,
+      "report_sha256": "4ac3732f0aeb871f2370a0c6699b3550c7533c86d0cc4175335bda4291581d64"
+    },
+    {
+      "case": "shd-16",
+      "exit_code": 0,
+      "started_utc": "2026-11-20T09:37:05.719296+00:00",
+      "finished_utc": "2026-11-20T09:37:13.395270+00:00",
+      "physical_pair": [
+        9,
+        21
+      ],
+      "effective_affinity": [
+        9
+      ],
+      "pre_run_busy_fraction": [
+        0.0,
+        0.00497512437810943
+      ],
+      "other_cpu_busy_fraction": 0,
+      "process_wall_seconds": 7.675516374991275,
+      "process_cpu_seconds": 7.661836999999991,
+      "report_sha256": "e60a7c1cda64f83ccf84fdb31a435876b1ac1a1b951ef0dbf6f1eaa489b5f5a7"
+    }
+  ],
+  "cross_platform_packet_parity": {
+    "cases": 10,
+    "capture_sha256": "14d1b4156fa70d65cc725ac8c26531601a4fa87068688c43c9aacf6370739321",
+    "windows_engine_wheel_sha256": "695b48feb0e8e2ca1accc0e9bc23c99d1801f8c2442e3466452dd579490227e1"
+  },
+  "comparisons": [
+    {
+      "schema": 1,
+      "started_utc": "2026-11-20T09:35:39.379294+00:00",
+      "finished_utc": "2026-11-20T09:36:15.325820+00:00",
+      "hardware_before": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.91259765625,
+          1.88671875,
+          2.36669921875
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "hardware_after": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.5693359375,
+          1.8046875,
+          2.31787109375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "dataset": "synthetic",
+      "dataset_sha256": null,
+      "recording_indices": [],
+      "timestamp_bits": 8,
+      "neuron_bits": 0,
+      "warmups": 2,
+      "repetitions": 9,
+      "cold_repetitions": 5,
+      "harness_sha256": {
+        "bench_address_events.py": "fb9f0d1dec48aac3513f6e995699a987a6f14026dc62910e456ccef8c10c0ebf",
+        "bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+        "bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+        "isi_codec_timing.py": "f7555a1baa2e69314471497e34077f8888059518d243d241f61b80010faabfc9"
+      },
+      "modules_sha256": {
+        "sc_neurocore.spike_codec.aer_codec": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+        "sc_neurocore.spike_codec.aer_packet": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a",
+        "sc_neurocore.comm.aer_raster": "6a46dd0170d712d3364e0fce9d9f4f169e865fc963568199907c8e9aa707a46d",
+        "sc_neurocore.comm.aer_udp": "602719a0747b5cc3e0267bd9167c8fdbe8e8b5c4d8241d4c77945529c4ab5772",
+        "sc_neurocore_engine.sc_neurocore_engine": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
+      },
+      "rows": [
+        {
+          "recording": "sparse_short",
+          "shape": [
+            32,
+            8
+          ],
+          "raster_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+          "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+          "packet_bytes": 23,
+          "wire_format": "AERX",
+          "events": 2,
+          "spikes": 2,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                69556,
+                67780,
+                66498,
+                65905,
+                65143,
+                65956,
+                66973,
+                65466,
+                64701
+              ],
+              "decode": [
+                34444,
+                33056,
+                32568,
+                34523,
+                32591,
+                32262,
+                32018,
+                31910,
+                31690
+              ],
+              "roundtrip": [
+                99582,
+                111844,
+                99909,
+                97676,
+                96273,
+                106032,
+                95439,
+                95436,
+                95416
+              ]
+            },
+            "rust": {
+              "encode": [
+                14285,
+                9568,
+                13041,
+                9373,
+                13060,
+                8784,
+                12807,
+                8751,
+                12830
+              ],
+              "decode": [
+                4435,
+                2833,
+                4133,
+                2792,
+                4083,
+                2726,
+                4080,
+                2783,
+                4080
+              ],
+              "roundtrip": [
+                12016,
+                10937,
+                11104,
+                10614,
+                10966,
+                10521,
+                10964,
+                10375,
+                10938
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 65956,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 813,
+                "raster_values_per_second": 3881375.4624294983,
+                "source_bytes_per_second": 3881375.4624294983
+              },
+              "decode": {
+                "p50_ns": 32568,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 550,
+                "raster_values_per_second": 7860476.541390322,
+                "source_bytes_per_second": 7860476.541390322
+              },
+              "roundtrip": {
+                "p50_ns": 97676,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2237,
+                "raster_values_per_second": 2620909.9471722837,
+                "source_bytes_per_second": 2620909.9471722837
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 12807,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1478,
+                "raster_values_per_second": 19989068.478175998,
+                "source_bytes_per_second": 19989068.478175998
+              },
+              "decode": {
+                "p50_ns": 4080,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 355,
+                "raster_values_per_second": 62745098.039215684,
+                "source_bytes_per_second": 62745098.039215684
+              },
+              "roundtrip": {
+                "p50_ns": 10938,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 166,
+                "raster_values_per_second": 23404644.359115012,
+                "source_bytes_per_second": 23404644.359115012
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 5.229405793706567,
+            "decode": 7.982120989468528,
+            "roundtrip": 8.997568443804035
+          },
+          "transport": {
+            "raster_row_start": 27,
+            "raster_shape": [
+              5,
+              8
+            ],
+            "raster_sha256": "1e839d6732f73cdb6c69b96bf8d3a7e4516f0f5ce09b63e45aed415bfbb1c685",
+            "aer_packet_sha256": "3963d44e63d06640afe2cf0aabb8c414e51b03aebfa8b29cc7bfa2e392164224",
+            "raw_udp_events": 2,
+            "raw_udp_payload_bytes": 24,
+            "raw_udp_samples_ns": [
+              54441,
+              50346,
+              52242,
+              48841,
+              52413,
+              48674,
+              51297,
+              48876,
+              51550
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 2,
+            "adapter_udp_payload_bytes": 24,
+            "adapter_samples_ns": {
+              "python": [
+                238217,
+                246895,
+                230517,
+                242644,
+                230223,
+                226348,
+                240528,
+                225565,
+                236913
+              ],
+              "rust": [
+                151324,
+                144984,
+                144688,
+                142534,
+                143970,
+                141821,
+                144274,
+                142362,
+                143068
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 367183,
+                "encode_ns": 191364,
+                "decode_ns": 81479,
+                "roundtrip_ns": 272843,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 516816617
+              },
+              {
+                "load_and_construct_ns": 360431,
+                "encode_ns": 190267,
+                "decode_ns": 71964,
+                "roundtrip_ns": 262231,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 518320465
+              },
+              {
+                "load_and_construct_ns": 341780,
+                "encode_ns": 190703,
+                "decode_ns": 73558,
+                "roundtrip_ns": 264261,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 520246839
+              },
+              {
+                "load_and_construct_ns": 434448,
+                "encode_ns": 202970,
+                "decode_ns": 71689,
+                "roundtrip_ns": 274659,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 520707573
+              },
+              {
+                "load_and_construct_ns": 357018,
+                "encode_ns": 204369,
+                "decode_ns": 72022,
+                "roundtrip_ns": 276391,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 519293888
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 382650,
+                "encode_ns": 252364,
+                "decode_ns": 28798,
+                "roundtrip_ns": 281162,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 518291684
+              },
+              {
+                "load_and_construct_ns": 372003,
+                "encode_ns": 259226,
+                "decode_ns": 29883,
+                "roundtrip_ns": 289109,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 519108657
+              },
+              {
+                "load_and_construct_ns": 367182,
+                "encode_ns": 271251,
+                "decode_ns": 29174,
+                "roundtrip_ns": 300425,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 516985437
+              },
+              {
+                "load_and_construct_ns": 373808,
+                "encode_ns": 263542,
+                "decode_ns": 28458,
+                "roundtrip_ns": 292000,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 520450927
+              },
+              {
+                "load_and_construct_ns": 377233,
+                "encode_ns": 269528,
+                "decode_ns": 30122,
+                "roundtrip_ns": 299650,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65257472,
+                "fresh_process_wall_ns": 524620066
+              }
+            ]
+          }
+        },
+        {
+          "recording": "sparse_long",
+          "shape": [
+            8192,
+            64
+          ],
+          "raster_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+          "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+          "packet_bytes": 12542,
+          "wire_format": "AERX",
+          "events": 4175,
+          "spikes": 4175,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                6338339,
+                6364982,
+                6300584,
+                6331140,
+                6297227,
+                6341767,
+                6303149,
+                6329963,
+                6313390
+              ],
+              "decode": [
+                11272272,
+                11298042,
+                11510371,
+                11419276,
+                11246863,
+                11484647,
+                11610799,
+                11296797,
+                11394892
+              ],
+              "roundtrip": [
+                17700906,
+                17701421,
+                18318450,
+                17591400,
+                17599264,
+                17511456,
+                17591627,
+                17596259,
+                17673347
+              ]
+            },
+            "rust": {
+              "encode": [
+                1198820,
+                1170655,
+                1174583,
+                1179978,
+                1178560,
+                1177212,
+                1182671,
+                1168431,
+                1182654
+              ],
+              "decode": [
+                93574,
+                93151,
+                92711,
+                92967,
+                94102,
+                93201,
+                92872,
+                103458,
+                92799
+              ],
+              "roundtrip": [
+                1267029,
+                1261857,
+                1261945,
+                1581156,
+                1263162,
+                1263454,
+                1263236,
+                1261929,
+                1264980
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 6329963,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 16573,
+                "raster_values_per_second": 82826392.50813946,
+                "source_bytes_per_second": 82826392.50813946
+              },
+              "decode": {
+                "p50_ns": 11394892,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 98095,
+                "raster_values_per_second": 46010791.50201687,
+                "source_bytes_per_second": 46010791.50201687
+              },
+              "roundtrip": {
+                "p50_ns": 17599264,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 74083,
+                "raster_values_per_second": 29790336.686806902,
+                "source_bytes_per_second": 29790336.686806902
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 1178560,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 4094,
+                "raster_values_per_second": 444854737.98533803,
+                "source_bytes_per_second": 444854737.98533803
+              },
+              "decode": {
+                "p50_ns": 93151,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 352,
+                "raster_values_per_second": 5628366845.229788,
+                "source_bytes_per_second": 5628366845.229788
+              },
+              "roundtrip": {
+                "p50_ns": 1263236,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1307,
+                "raster_values_per_second": 415035670.2943868,
+                "source_bytes_per_second": 415035670.2943868
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 5.364102834793284,
+            "decode": 122.7911076627981,
+            "roundtrip": 13.94393741644736
+          },
+          "transport": {
+            "raster_row_start": 3,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "d409c478fccc25ecf521102073f2912d7e5b3390a64e118f702e8375d7694a2d",
+            "aer_packet_sha256": "050c18373e0788290d6eaf3e41f8561b40218cb96f9e349eae98cb07f49231ec",
+            "raw_udp_events": 16,
+            "raw_udp_payload_bytes": 136,
+            "raw_udp_samples_ns": [
+              65095,
+              61736,
+              63844,
+              60389,
+              64054,
+              60215,
+              64700,
+              61079,
+              63029
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 16,
+            "adapter_udp_payload_bytes": 136,
+            "adapter_samples_ns": {
+              "python": [
+                433997,
+                439611,
+                428642,
+                429298,
+                438514,
+                438926,
+                427353,
+                438574,
+                426050
+              ],
+              "rust": [
+                298114,
+                282984,
+                284926,
+                294357,
+                283632,
+                281984,
+                291897,
+                611098,
+                282555
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 795772,
+                "encode_ns": 7631607,
+                "decode_ns": 11439152,
+                "roundtrip_ns": 19070759,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 540805961
+              },
+              {
+                "load_and_construct_ns": 774186,
+                "encode_ns": 7544938,
+                "decode_ns": 11360697,
+                "roundtrip_ns": 18905635,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 540500279
+              },
+              {
+                "load_and_construct_ns": 745046,
+                "encode_ns": 7593502,
+                "decode_ns": 11081691,
+                "roundtrip_ns": 18675193,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 540111198
+              },
+              {
+                "load_and_construct_ns": 746589,
+                "encode_ns": 7888787,
+                "decode_ns": 11247076,
+                "roundtrip_ns": 19135863,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 538700225
+              },
+              {
+                "load_and_construct_ns": 775801,
+                "encode_ns": 7729694,
+                "decode_ns": 11041917,
+                "roundtrip_ns": 18771611,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 542118221
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 772323,
+                "encode_ns": 1476468,
+                "decode_ns": 462159,
+                "roundtrip_ns": 1938627,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523516455
+              },
+              {
+                "load_and_construct_ns": 732011,
+                "encode_ns": 1415623,
+                "decode_ns": 474631,
+                "roundtrip_ns": 1890254,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522105256
+              },
+              {
+                "load_and_construct_ns": 772229,
+                "encode_ns": 1454418,
+                "decode_ns": 450218,
+                "roundtrip_ns": 1904636,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523574168
+              },
+              {
+                "load_and_construct_ns": 753172,
+                "encode_ns": 1412008,
+                "decode_ns": 443732,
+                "roundtrip_ns": 1855740,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522319655
+              },
+              {
+                "load_and_construct_ns": 789174,
+                "encode_ns": 1432100,
+                "decode_ns": 461574,
+                "roundtrip_ns": 1893674,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523901835
+              }
+            ]
+          }
+        },
+        {
+          "recording": "dense",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+          "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+          "packet_bytes": 59141,
+          "wire_format": "AERX",
+          "events": 19708,
+          "spikes": 19708,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                15956674,
+                15946886,
+                15915402,
+                16374042,
+                15957145,
+                16050345,
+                16008355,
+                15913796,
+                16163317
+              ],
+              "decode": [
+                53265118,
+                52964104,
+                53360144,
+                53082210,
+                53120025,
+                53052372,
+                53037338,
+                53106596,
+                53444569
+              ],
+              "roundtrip": [
+                68994386,
+                69161957,
+                69037263,
+                70291030,
+                69764452,
+                70282118,
+                69545594,
+                69051830,
+                69353815
+              ]
+            },
+            "rust": {
+              "encode": [
+                720987,
+                689420,
+                720113,
+                700275,
+                749082,
+                704635,
+                711521,
+                696336,
+                737733
+              ],
+              "decode": [
+                312478,
+                322540,
+                305528,
+                304758,
+                321727,
+                304642,
+                299261,
+                304789,
+                318353
+              ],
+              "roundtrip": [
+                1005103,
+                1001342,
+                1003124,
+                1001744,
+                1003470,
+                1002960,
+                1002647,
+                1000910,
+                1003590
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 15957145,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 43349,
+                "raster_values_per_second": 4107000.3437331677,
+                "source_bytes_per_second": 4107000.3437331677
+              },
+              "decode": {
+                "p50_ns": 53106596,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 69258,
+                "raster_values_per_second": 1234046.3320224856,
+                "source_bytes_per_second": 1234046.3320224856
+              },
+              "roundtrip": {
+                "p50_ns": 69353815,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 316552,
+                "raster_values_per_second": 944951.6223440628,
+                "source_bytes_per_second": 944951.6223440628
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 711521,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 11246,
+                "raster_values_per_second": 92106909.00198308,
+                "source_bytes_per_second": 92106909.00198308
+              },
+              "decode": {
+                "p50_ns": 305528,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 6267,
+                "raster_values_per_second": 214500798.61747533,
+                "source_bytes_per_second": 214500798.61747533
+              },
+              "roundtrip": {
+                "p50_ns": 1002960,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 630,
+                "raster_values_per_second": 65342585.945601024,
+                "source_bytes_per_second": 65342585.945601024
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 22.498780780890513,
+            "decode": 174.14661143243544,
+            "roundtrip": 69.10572544565012
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "c319f808fe6e854f5e80458caf1489037a88cb2a3c715335c5888c5960da6bef",
+            "aer_packet_sha256": "4e0a5dfd7fb42a2ebba71ba94ddbee344adf7f95a2360cc6f84e830ce9bd3313",
+            "raw_udp_events": 186,
+            "raw_udp_payload_bytes": 1496,
+            "raw_udp_samples_ns": [
+              198501,
+              193599,
+              197446,
+              202969,
+              199099,
+              193848,
+              198234,
+              192708,
+              197357
+            ],
+            "adapter_datagrams": 3,
+            "adapter_events": 420,
+            "adapter_udp_payload_bytes": 3384,
+            "adapter_samples_ns": {
+              "python": [
+                2630942,
+                2636040,
+                2790777,
+                2656001,
+                2622587,
+                2666875,
+                2643546,
+                2629637,
+                2649084
+              ],
+              "rust": [
+                1161645,
+                1170667,
+                1179285,
+                1161764,
+                1180061,
+                1164787,
+                1164679,
+                1160789,
+                1162843
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 394441,
+                "encode_ns": 16264758,
+                "decode_ns": 51786790,
+                "roundtrip_ns": 68051548,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 589092186
+              },
+              {
+                "load_and_construct_ns": 374965,
+                "encode_ns": 16109135,
+                "decode_ns": 51461163,
+                "roundtrip_ns": 67570298,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 587877919
+              },
+              {
+                "load_and_construct_ns": 409051,
+                "encode_ns": 16954754,
+                "decode_ns": 55027217,
+                "roundtrip_ns": 71981971,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 601839529
+              },
+              {
+                "load_and_construct_ns": 407535,
+                "encode_ns": 16959309,
+                "decode_ns": 53443324,
+                "roundtrip_ns": 70402633,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 618186701
+              },
+              {
+                "load_and_construct_ns": 400657,
+                "encode_ns": 16968444,
+                "decode_ns": 54868307,
+                "roundtrip_ns": 71836751,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 607540142
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 395250,
+                "encode_ns": 935694,
+                "decode_ns": 343889,
+                "roundtrip_ns": 1279583,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 520255894
+              },
+              {
+                "load_and_construct_ns": 388218,
+                "encode_ns": 947507,
+                "decode_ns": 338294,
+                "roundtrip_ns": 1285801,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523356527
+              },
+              {
+                "load_and_construct_ns": 405108,
+                "encode_ns": 972657,
+                "decode_ns": 354473,
+                "roundtrip_ns": 1327130,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 551195504
+              },
+              {
+                "load_and_construct_ns": 418451,
+                "encode_ns": 973428,
+                "decode_ns": 334662,
+                "roundtrip_ns": 1308090,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 549800836
+              },
+              {
+                "load_and_construct_ns": 396640,
+                "encode_ns": 944334,
+                "decode_ns": 329328,
+                "roundtrip_ns": 1273662,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 540443364
+              }
+            ]
+          }
+        },
+        {
+          "recording": "correlated_bursts",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+          "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+          "packet_bytes": 9092,
+          "wire_format": "AERX",
+          "events": 3025,
+          "spikes": 3025,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                2822465,
+                2811153,
+                2833121,
+                2855383,
+                2804817,
+                2820451,
+                2818406,
+                2824226,
+                2814850
+              ],
+              "decode": [
+                8026464,
+                8051546,
+                8077112,
+                8117494,
+                8045923,
+                8098294,
+                8023084,
+                8040942,
+                8355173
+              ],
+              "roundtrip": [
+                11002628,
+                10790017,
+                11174075,
+                10871911,
+                10844575,
+                10946689,
+                10755274,
+                10899596,
+                10921819
+              ]
+            },
+            "rust": {
+              "encode": [
+                191790,
+                183782,
+                192362,
+                193272,
+                199100,
+                185621,
+                194936,
+                182875,
+                191103
+              ],
+              "decode": [
+                52504,
+                52672,
+                52694,
+                53156,
+                54060,
+                52532,
+                53084,
+                60186,
+                52693
+              ],
+              "roundtrip": [
+                245151,
+                234306,
+                237481,
+                234557,
+                237729,
+                234276,
+                237621,
+                234747,
+                237168
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 2820451,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 5601,
+                "raster_values_per_second": 23236000.199968018,
+                "source_bytes_per_second": 23236000.199968018
+              },
+              "decode": {
+                "p50_ns": 8051546,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 25566,
+                "raster_values_per_second": 8139554.813448249,
+                "source_bytes_per_second": 8139554.813448249
+              },
+              "roundtrip": {
+                "p50_ns": 10899596,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 55021,
+                "raster_values_per_second": 6012699.920253925,
+                "source_bytes_per_second": 6012699.920253925
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 191790,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3146,
+                "raster_values_per_second": 341707075.4471036,
+                "source_bytes_per_second": 341707075.4471036
+              },
+              "decode": {
+                "p50_ns": 52694,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 190,
+                "raster_values_per_second": 1243708961.17205,
+                "source_bytes_per_second": 1243708961.17205
+              },
+              "roundtrip": {
+                "p50_ns": 237168,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2421,
+                "raster_values_per_second": 276327329.15064424,
+                "source_bytes_per_second": 276327329.15064424
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 14.729491426089595,
+            "decode": 152.86197600243014,
+            "roundtrip": 46.050980739391484
+          },
+          "transport": {
+            "raster_row_start": 6,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "a8cf739ce639c06a805de0b52ab8a1101cb73bbfd626ae6613c5ff31317a44dc",
+            "aer_packet_sha256": "a46a4139de366af92e1e63fe3bb3c51cee20bf3a38d186160fa31bc54d4c57af",
+            "raw_udp_events": 82,
+            "raw_udp_payload_bytes": 664,
+            "raw_udp_samples_ns": [
+              117809,
+              114742,
+              116634,
+              114093,
+              116686,
+              115091,
+              116978,
+              113379,
+              127062
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 82,
+            "adapter_udp_payload_bytes": 664,
+            "adapter_samples_ns": {
+              "python": [
+                768456,
+                764960,
+                763088,
+                767199,
+                762073,
+                761798,
+                750433,
+                749032,
+                751210
+              ],
+              "rust": [
+                395391,
+                401466,
+                395545,
+                390970,
+                405372,
+                391515,
+                393158,
+                402002,
+                409455
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 404432,
+                "encode_ns": 2949815,
+                "decode_ns": 8110548,
+                "roundtrip_ns": 11060363,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 529847041
+              },
+              {
+                "load_and_construct_ns": 379627,
+                "encode_ns": 2967064,
+                "decode_ns": 8017272,
+                "roundtrip_ns": 10984336,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 530482012
+              },
+              {
+                "load_and_construct_ns": 375494,
+                "encode_ns": 2968807,
+                "decode_ns": 8002827,
+                "roundtrip_ns": 10971634,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 528899059
+              },
+              {
+                "load_and_construct_ns": 382163,
+                "encode_ns": 3291561,
+                "decode_ns": 8123825,
+                "roundtrip_ns": 11415386,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 529780577
+              },
+              {
+                "load_and_construct_ns": 364738,
+                "encode_ns": 2936272,
+                "decode_ns": 8113930,
+                "roundtrip_ns": 11050202,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 529446931
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 395179,
+                "encode_ns": 441489,
+                "decode_ns": 80858,
+                "roundtrip_ns": 522347,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521310679
+              },
+              {
+                "load_and_construct_ns": 386361,
+                "encode_ns": 478032,
+                "decode_ns": 87778,
+                "roundtrip_ns": 565810,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521885344
+              },
+              {
+                "load_and_construct_ns": 386707,
+                "encode_ns": 441650,
+                "decode_ns": 84465,
+                "roundtrip_ns": 526115,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521271536
+              },
+              {
+                "load_and_construct_ns": 404100,
+                "encode_ns": 430723,
+                "decode_ns": 87480,
+                "roundtrip_ns": 518203,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521216420
+              },
+              {
+                "load_and_construct_ns": 392204,
+                "encode_ns": 440764,
+                "decode_ns": 85920,
+                "roundtrip_ns": 526684,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 520082262
+              }
+            ]
+          }
+        },
+        {
+          "recording": "inverted_dense",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+          "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+          "packet_bytes": 39548,
+          "wire_format": "AERI",
+          "events": 13177,
+          "spikes": 52359,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                10732829,
+                10742120,
+                10786090,
+                10778675,
+                10759711,
+                10825463,
+                10955219,
+                10761971,
+                10767912
+              ],
+              "decode": [
+                34764335,
+                34624098,
+                35033369,
+                34707016,
+                35121896,
+                34863660,
+                36276735,
+                34932786,
+                34786538
+              ],
+              "roundtrip": [
+                45827479,
+                45684349,
+                45212883,
+                46071934,
+                46135776,
+                46356894,
+                46656189,
+                45552961,
+                45437653
+              ]
+            },
+            "rust": {
+              "encode": [
+                539192,
+                524407,
+                539315,
+                525532,
+                539955,
+                532828,
+                526682,
+                534054,
+                531578
+              ],
+              "decode": [
+                202401,
+                205824,
+                202397,
+                208508,
+                211780,
+                208934,
+                204365,
+                205903,
+                210230
+              ],
+              "roundtrip": [
+                740516,
+                735750,
+                738822,
+                736482,
+                766954,
+                737781,
+                743151,
+                740325,
+                733415
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 10767912,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 18178,
+                "raster_values_per_second": 6086231.016746794,
+                "source_bytes_per_second": 6086231.016746794
+              },
+              "decode": {
+                "p50_ns": 34863660,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 156644,
+                "raster_values_per_second": 1879779.6903710053,
+                "source_bytes_per_second": 1879779.6903710053
+              },
+              "roundtrip": {
+                "p50_ns": 45827479,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 308297,
+                "raster_values_per_second": 1430059.0263758563,
+                "source_bytes_per_second": 1430059.0263758563
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 532828,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 6364,
+                "raster_values_per_second": 122996539.22091182,
+                "source_bytes_per_second": 122996539.22091182
+              },
+              "decode": {
+                "p50_ns": 205903,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3031,
+                "raster_values_per_second": 318285794.767439,
+                "source_bytes_per_second": 318285794.767439
+              },
+              "roundtrip": {
+                "p50_ns": 738822,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2340,
+                "raster_values_per_second": 88703368.33499815,
+                "source_bytes_per_second": 88703368.33499815
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 20.256504219512472,
+            "decode": 168.2218691697761,
+            "roundtrip": 61.953536537976454
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "88f604f6e8bc42038e552cd65f3ce883bf57f5cc84471595c380b1ebfd5a7b22",
+            "aer_packet_sha256": "b616f55bbade495fd81d62d9fe53ef6326a460c1a7cd3aaa45fd15138b7a552c",
+            "raw_udp_events": 186,
+            "raw_udp_payload_bytes": 1496,
+            "raw_udp_samples_ns": [
+              199854,
+              195731,
+              209370,
+              196298,
+              199209,
+              195634,
+              214602,
+              195296,
+              200217
+            ],
+            "adapter_datagrams": 7,
+            "adapter_events": 1178,
+            "adapter_udp_payload_bytes": 9480,
+            "adapter_samples_ns": {
+              "python": [
+                3753821,
+                3750640,
+                3738899,
+                3761743,
+                3765292,
+                3762033,
+                3754319,
+                3764722,
+                3759527
+              ],
+              "rust": [
+                2696199,
+                2689727,
+                2718408,
+                2704855,
+                2696762,
+                2691004,
+                2697948,
+                2701172,
+                2698164
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 385942,
+                "encode_ns": 11040992,
+                "decode_ns": 35457999,
+                "roundtrip_ns": 46498991,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 565632553
+              },
+              {
+                "load_and_construct_ns": 384150,
+                "encode_ns": 11042869,
+                "decode_ns": 34911857,
+                "roundtrip_ns": 45954726,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 565705277
+              },
+              {
+                "load_and_construct_ns": 370982,
+                "encode_ns": 10907873,
+                "decode_ns": 34771017,
+                "roundtrip_ns": 45678890,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 565282253
+              },
+              {
+                "load_and_construct_ns": 397663,
+                "encode_ns": 11098910,
+                "decode_ns": 35044016,
+                "roundtrip_ns": 46142926,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 569363170
+              },
+              {
+                "load_and_construct_ns": 402411,
+                "encode_ns": 11447757,
+                "decode_ns": 35144633,
+                "roundtrip_ns": 46592390,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 566977827
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 389841,
+                "encode_ns": 778525,
+                "decode_ns": 230245,
+                "roundtrip_ns": 1008770,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 519808855
+              },
+              {
+                "load_and_construct_ns": 383586,
+                "encode_ns": 773394,
+                "decode_ns": 232908,
+                "roundtrip_ns": 1006302,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521650363
+              },
+              {
+                "load_and_construct_ns": 385420,
+                "encode_ns": 773765,
+                "decode_ns": 234031,
+                "roundtrip_ns": 1007796,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 519540894
+              },
+              {
+                "load_and_construct_ns": 410078,
+                "encode_ns": 789278,
+                "decode_ns": 232966,
+                "roundtrip_ns": 1022244,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 520774221
+              },
+              {
+                "load_and_construct_ns": 396678,
+                "encode_ns": 781548,
+                "decode_ns": 242188,
+                "roundtrip_ns": 1023736,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 519169573
+              }
+            ]
+          }
+        },
+        {
+          "recording": "long_timestamp_gap",
+          "shape": [
+            65546,
+            4
+          ],
+          "raster_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+          "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+          "packet_bytes": 794,
+          "wire_format": "AERX",
+          "events": 2,
+          "spikes": 2,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                1469806,
+                1484065,
+                1466005,
+                1469810,
+                1475127,
+                1474801,
+                1474269,
+                1481156,
+                1466583
+              ],
+              "decode": [
+                364517,
+                346205,
+                352475,
+                355093,
+                344086,
+                347056,
+                345296,
+                343660,
+                354833
+              ],
+              "roundtrip": [
+                1823117,
+                1821111,
+                1808534,
+                1815448,
+                1823232,
+                1830777,
+                1818732,
+                1820503,
+                2156699
+              ]
+            },
+            "rust": {
+              "encode": [
+                584827,
+                581232,
+                591801,
+                580203,
+                591740,
+                587463,
+                583047,
+                587450,
+                583611
+              ],
+              "decode": [
+                18581,
+                17936,
+                18543,
+                17842,
+                18732,
+                18051,
+                18547,
+                17995,
+                18514
+              ],
+              "roundtrip": [
+                637310,
+                608496,
+                605486,
+                604934,
+                598106,
+                608585,
+                606105,
+                597378,
+                606387
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 1474269,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 4463,
+                "raster_values_per_second": 177840000.70543435,
+                "source_bytes_per_second": 177840000.70543435
+              },
+              "decode": {
+                "p50_ns": 347056,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3396,
+                "raster_values_per_second": 755451569.7754829,
+                "source_bytes_per_second": 755451569.7754829
+              },
+              "roundtrip": {
+                "p50_ns": 1821111,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2379,
+                "raster_values_per_second": 143969258.3263733,
+                "source_bytes_per_second": 143969258.3263733
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 584827,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2636,
+                "raster_values_per_second": 448310355.0280681,
+                "source_bytes_per_second": 448310355.0280681
+              },
+              "decode": {
+                "p50_ns": 18514,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 218,
+                "raster_values_per_second": 14161391379.496597,
+                "source_bytes_per_second": 14161391379.496597
+              },
+              "roundtrip": {
+                "p50_ns": 606105,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2391,
+                "raster_values_per_second": 432571914.10729164,
+                "source_bytes_per_second": 432571914.10729164
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 2.5132321182161563,
+            "decode": 19.16565842065464,
+            "roundtrip": 3.001067885091597
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              32,
+              4
+            ],
+            "raster_sha256": "0b1b0c9c7f91eae825ed6fb7702130527ec6894c2dd9e1297624071d8a42687d",
+            "aer_packet_sha256": "37fb44ab74e1391c982758146206347aca6e0577a34820ba648b7f4dee685229",
+            "raw_udp_events": 1,
+            "raw_udp_payload_bytes": 16,
+            "raw_udp_samples_ns": [
+              51120,
+              47909,
+              60808,
+              47432,
+              50003,
+              48061,
+              50143,
+              47531,
+              49631
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 1,
+            "adapter_udp_payload_bytes": 16,
+            "adapter_samples_ns": {
+              "python": [
+                357610,
+                355509,
+                355792,
+                366836,
+                356493,
+                354387,
+                367788,
+                363702,
+                354990
+              ],
+              "rust": [
+                291385,
+                274786,
+                274563,
+                275484,
+                288072,
+                274747,
+                274727,
+                273565,
+                275331
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 443604,
+                "encode_ns": 1915605,
+                "decode_ns": 379207,
+                "roundtrip_ns": 2294812,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523196619
+              },
+              {
+                "load_and_construct_ns": 422414,
+                "encode_ns": 1931376,
+                "decode_ns": 379272,
+                "roundtrip_ns": 2310648,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 524114103
+              },
+              {
+                "load_and_construct_ns": 435118,
+                "encode_ns": 1922573,
+                "decode_ns": 381228,
+                "roundtrip_ns": 2303801,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522884002
+              },
+              {
+                "load_and_construct_ns": 432206,
+                "encode_ns": 1911054,
+                "decode_ns": 383210,
+                "roundtrip_ns": 2294264,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522914836
+              },
+              {
+                "load_and_construct_ns": 447227,
+                "encode_ns": 1918775,
+                "decode_ns": 383013,
+                "roundtrip_ns": 2301788,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521670015
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 474347,
+                "encode_ns": 841740,
+                "decode_ns": 74510,
+                "roundtrip_ns": 916250,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 523088842
+              },
+              {
+                "load_and_construct_ns": 440679,
+                "encode_ns": 839980,
+                "decode_ns": 59937,
+                "roundtrip_ns": 899917,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 521713049
+              },
+              {
+                "load_and_construct_ns": 456537,
+                "encode_ns": 841877,
+                "decode_ns": 61827,
+                "roundtrip_ns": 903704,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522659003
+              },
+              {
+                "load_and_construct_ns": 442627,
+                "encode_ns": 833400,
+                "decode_ns": 62272,
+                "roundtrip_ns": 895672,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522185932
+              },
+              {
+                "load_and_construct_ns": 441013,
+                "encode_ns": 832621,
+                "decode_ns": 65874,
+                "roundtrip_ns": 898495,
+                "packet_sha256": "c6e6f0c5080de1bfd790278094ab42e891a2cfb79025186ff09b6b459848e488",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 69976064,
+                "fresh_process_wall_ns": 522160106
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "schema": 1,
+      "started_utc": "2026-11-20T09:36:18.123319+00:00",
+      "finished_utc": "2026-11-20T09:36:53.758809+00:00",
+      "hardware_before": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.5693359375,
+          1.8046875,
+          2.31787109375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "hardware_after": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.69873046875,
+          1.79736328125,
+          2.29443359375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "dataset": "synthetic",
+      "dataset_sha256": null,
+      "recording_indices": [],
+      "timestamp_bits": 16,
+      "neuron_bits": 0,
+      "warmups": 2,
+      "repetitions": 9,
+      "cold_repetitions": 5,
+      "harness_sha256": {
+        "bench_address_events.py": "fb9f0d1dec48aac3513f6e995699a987a6f14026dc62910e456ccef8c10c0ebf",
+        "bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+        "bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+        "isi_codec_timing.py": "f7555a1baa2e69314471497e34077f8888059518d243d241f61b80010faabfc9"
+      },
+      "modules_sha256": {
+        "sc_neurocore.spike_codec.aer_codec": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+        "sc_neurocore.spike_codec.aer_packet": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a",
+        "sc_neurocore.comm.aer_raster": "6a46dd0170d712d3364e0fce9d9f4f169e865fc963568199907c8e9aa707a46d",
+        "sc_neurocore.comm.aer_udp": "602719a0747b5cc3e0267bd9167c8fdbe8e8b5c4d8241d4c77945529c4ab5772",
+        "sc_neurocore_engine.sc_neurocore_engine": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
+      },
+      "rows": [
+        {
+          "recording": "sparse_short",
+          "shape": [
+            32,
+            8
+          ],
+          "raster_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+          "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+          "packet_bytes": 23,
+          "wire_format": "AERX",
+          "events": 2,
+          "spikes": 2,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                70563,
+                69914,
+                66728,
+                66736,
+                65775,
+                65536,
+                65864,
+                65560,
+                64804
+              ],
+              "decode": [
+                34708,
+                59139,
+                32274,
+                34677,
+                32571,
+                31829,
+                31736,
+                31914,
+                31421
+              ],
+              "roundtrip": [
+                102511,
+                101114,
+                100713,
+                98454,
+                96222,
+                109412,
+                96039,
+                95624,
+                94741
+              ]
+            },
+            "rust": {
+              "encode": [
+                14195,
+                9340,
+                13385,
+                9286,
+                13115,
+                8734,
+                12986,
+                8761,
+                12926
+              ],
+              "decode": [
+                4506,
+                2831,
+                4351,
+                2825,
+                4156,
+                2761,
+                4270,
+                2759,
+                4049
+              ],
+              "roundtrip": [
+                11824,
+                10715,
+                11327,
+                10420,
+                11152,
+                10412,
+                11131,
+                10474,
+                11167
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 65864,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 864,
+                "raster_values_per_second": 3886797.03631726,
+                "source_bytes_per_second": 3886797.03631726
+              },
+              "decode": {
+                "p50_ns": 32274,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 538,
+                "raster_values_per_second": 7932081.551713454,
+                "source_bytes_per_second": 7932081.551713454
+              },
+              "roundtrip": {
+                "p50_ns": 98454,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2660,
+                "raster_values_per_second": 2600199.0777418897,
+                "source_bytes_per_second": 2600199.0777418897
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 12926,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1269,
+                "raster_values_per_second": 19805044.097168498,
+                "source_bytes_per_second": 19805044.097168498
+              },
+              "decode": {
+                "p50_ns": 4049,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 457,
+                "raster_values_per_second": 63225487.7747592,
+                "source_bytes_per_second": 63225487.7747592
+              },
+              "roundtrip": {
+                "p50_ns": 11131,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 416,
+                "raster_values_per_second": 22998832.090557903,
+                "source_bytes_per_second": 22998832.090557903
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 5.071923610041583,
+            "decode": 7.837102983638114,
+            "roundtrip": 8.891409905535447
+          },
+          "transport": {
+            "raster_row_start": 27,
+            "raster_shape": [
+              5,
+              8
+            ],
+            "raster_sha256": "1e839d6732f73cdb6c69b96bf8d3a7e4516f0f5ce09b63e45aed415bfbb1c685",
+            "aer_packet_sha256": "3963d44e63d06640afe2cf0aabb8c414e51b03aebfa8b29cc7bfa2e392164224",
+            "raw_udp_events": 2,
+            "raw_udp_payload_bytes": 24,
+            "raw_udp_samples_ns": [
+              54625,
+              49833,
+              52469,
+              48142,
+              51840,
+              48337,
+              60917,
+              47925,
+              50375
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 2,
+            "adapter_udp_payload_bytes": 24,
+            "adapter_samples_ns": {
+              "python": [
+                236299,
+                243364,
+                228995,
+                239307,
+                228616,
+                223342,
+                227079,
+                223012,
+                238432
+              ],
+              "rust": [
+                149205,
+                143968,
+                143899,
+                141272,
+                142042,
+                140867,
+                142950,
+                139797,
+                141318
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 368759,
+                "encode_ns": 192375,
+                "decode_ns": 70347,
+                "roundtrip_ns": 262722,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 518588741
+              },
+              {
+                "load_and_construct_ns": 354076,
+                "encode_ns": 192534,
+                "decode_ns": 72707,
+                "roundtrip_ns": 265241,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 518363188
+              },
+              {
+                "load_and_construct_ns": 378583,
+                "encode_ns": 194833,
+                "decode_ns": 74353,
+                "roundtrip_ns": 269186,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 521147172
+              },
+              {
+                "load_and_construct_ns": 363588,
+                "encode_ns": 272008,
+                "decode_ns": 72580,
+                "roundtrip_ns": 344588,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 520843343
+              },
+              {
+                "load_and_construct_ns": 361166,
+                "encode_ns": 193611,
+                "decode_ns": 81557,
+                "roundtrip_ns": 275168,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 520404972
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 365088,
+                "encode_ns": 265015,
+                "decode_ns": 30762,
+                "roundtrip_ns": 295777,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 519154298
+              },
+              {
+                "load_and_construct_ns": 368049,
+                "encode_ns": 258141,
+                "decode_ns": 30342,
+                "roundtrip_ns": 288483,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 519186473
+              },
+              {
+                "load_and_construct_ns": 372617,
+                "encode_ns": 251362,
+                "decode_ns": 28955,
+                "roundtrip_ns": 280317,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 518016030
+              },
+              {
+                "load_and_construct_ns": 369627,
+                "encode_ns": 263085,
+                "decode_ns": 29068,
+                "roundtrip_ns": 292153,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 518418198
+              },
+              {
+                "load_and_construct_ns": 376851,
+                "encode_ns": 254815,
+                "decode_ns": 30031,
+                "roundtrip_ns": 284846,
+                "packet_sha256": "a4dfa4e0291c970dd1ddb62eafe9f44b5c0c78da8d209b73d3eb3e585bef95c3",
+                "decoded_sha256": "7001944733e14a84fac6892b0456f147a4a14d0f1f44e41753507f252966505f",
+                "peak_rss_bytes": 65261568,
+                "fresh_process_wall_ns": 518779561
+              }
+            ]
+          }
+        },
+        {
+          "recording": "sparse_long",
+          "shape": [
+            8192,
+            64
+          ],
+          "raster_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+          "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+          "packet_bytes": 12542,
+          "wire_format": "AERX",
+          "events": 4175,
+          "spikes": 4175,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                6212892,
+                6175349,
+                6274715,
+                6174441,
+                6165867,
+                6209906,
+                6126562,
+                6143937,
+                6144548
+              ],
+              "decode": [
+                10839101,
+                10877931,
+                11465511,
+                10788722,
+                11177295,
+                10868044,
+                10797129,
+                11008152,
+                11249994
+              ],
+              "roundtrip": [
+                17416392,
+                17129919,
+                17427018,
+                17069070,
+                16991916,
+                17041790,
+                16958893,
+                17460524,
+                17143426
+              ]
+            },
+            "rust": {
+              "encode": [
+                1189466,
+                1182680,
+                1200814,
+                1188524,
+                1195023,
+                1190160,
+                1193942,
+                1186903,
+                1187233
+              ],
+              "decode": [
+                95582,
+                100121,
+                107032,
+                93262,
+                107880,
+                93314,
+                97777,
+                93507,
+                93221
+              ],
+              "roundtrip": [
+                1275784,
+                1275530,
+                1276194,
+                1274562,
+                1281988,
+                1274586,
+                1276114,
+                1273473,
+                1283744
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 6174441,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 30504,
+                "raster_values_per_second": 84912626.09845977,
+                "source_bytes_per_second": 84912626.09845977
+              },
+              "decode": {
+                "p50_ns": 10877931,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 89209,
+                "raster_values_per_second": 48197400.77409941,
+                "source_bytes_per_second": 48197400.77409941
+              },
+              "roundtrip": {
+                "p50_ns": 17129919,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 138003,
+                "raster_values_per_second": 30606566.20734751,
+                "source_bytes_per_second": 30606566.20734751
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 1189466,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2563,
+                "raster_values_per_second": 440775944.8357498,
+                "source_bytes_per_second": 440775944.8357498
+              },
+              "decode": {
+                "p50_ns": 95582,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2320,
+                "raster_values_per_second": 5485216881.839677,
+                "source_bytes_per_second": 5485216881.839677
+              },
+              "roundtrip": {
+                "p50_ns": 1275784,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1198,
+                "raster_values_per_second": 410953578.348686,
+                "source_bytes_per_second": 410953578.348686
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 5.195049489955609,
+            "decode": 113.40106923897805,
+            "roundtrip": 13.392106464809087
+          },
+          "transport": {
+            "raster_row_start": 3,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "d409c478fccc25ecf521102073f2912d7e5b3390a64e118f702e8375d7694a2d",
+            "aer_packet_sha256": "050c18373e0788290d6eaf3e41f8561b40218cb96f9e349eae98cb07f49231ec",
+            "raw_udp_events": 16,
+            "raw_udp_payload_bytes": 136,
+            "raw_udp_samples_ns": [
+              65027,
+              60928,
+              62921,
+              59919,
+              62418,
+              88858,
+              63598,
+              60645,
+              62786
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 16,
+            "adapter_udp_payload_bytes": 136,
+            "adapter_samples_ns": {
+              "python": [
+                431006,
+                425023,
+                429888,
+                433177,
+                422054,
+                425650,
+                438847,
+                437392,
+                420507
+              ],
+              "rust": [
+                284860,
+                295558,
+                279864,
+                278124,
+                279594,
+                283694,
+                279300,
+                277415,
+                292168
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 786633,
+                "encode_ns": 7474958,
+                "decode_ns": 10940395,
+                "roundtrip_ns": 18415353,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 540828687
+              },
+              {
+                "load_and_construct_ns": 737938,
+                "encode_ns": 7681750,
+                "decode_ns": 11169833,
+                "roundtrip_ns": 18851583,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 540627463
+              },
+              {
+                "load_and_construct_ns": 755855,
+                "encode_ns": 7492475,
+                "decode_ns": 11065856,
+                "roundtrip_ns": 18558331,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 540998541
+              },
+              {
+                "load_and_construct_ns": 762900,
+                "encode_ns": 7614643,
+                "decode_ns": 10998442,
+                "roundtrip_ns": 18613085,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 541943199
+              },
+              {
+                "load_and_construct_ns": 762962,
+                "encode_ns": 7493874,
+                "decode_ns": 11253472,
+                "roundtrip_ns": 18747346,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 539649029
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 779155,
+                "encode_ns": 1439766,
+                "decode_ns": 444079,
+                "roundtrip_ns": 1883845,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 524785214
+              },
+              {
+                "load_and_construct_ns": 784351,
+                "encode_ns": 1447479,
+                "decode_ns": 451489,
+                "roundtrip_ns": 1898968,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 524825252
+              },
+              {
+                "load_and_construct_ns": 799269,
+                "encode_ns": 1429890,
+                "decode_ns": 474631,
+                "roundtrip_ns": 1904521,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 527014536
+              },
+              {
+                "load_and_construct_ns": 775109,
+                "encode_ns": 1444083,
+                "decode_ns": 453798,
+                "roundtrip_ns": 1897881,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 524477771
+              },
+              {
+                "load_and_construct_ns": 784995,
+                "encode_ns": 1456808,
+                "decode_ns": 458551,
+                "roundtrip_ns": 1915359,
+                "packet_sha256": "1b656526f85263e15b9126edca56ae8d4f13203624f35d9e8958151e67203882",
+                "decoded_sha256": "619cb679d5e4e55c9f6b2a6ea65a04d8d6d77e3a2f449cdd042f758d2ec9292f",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 526203278
+              }
+            ]
+          }
+        },
+        {
+          "recording": "dense",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+          "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+          "packet_bytes": 59141,
+          "wire_format": "AERX",
+          "events": 19708,
+          "spikes": 19708,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                15503720,
+                15547071,
+                15512901,
+                15517179,
+                15562253,
+                15537047,
+                15515336,
+                15651529,
+                15514478
+              ],
+              "decode": [
+                50876288,
+                51400512,
+                50981742,
+                51886477,
+                51781324,
+                51355827,
+                51588047,
+                51380487,
+                51297398
+              ],
+              "roundtrip": [
+                66788658,
+                66902770,
+                67148400,
+                66927281,
+                66867904,
+                66900659,
+                66739372,
+                66415033,
+                66483152
+              ]
+            },
+            "rust": {
+              "encode": [
+                706586,
+                697883,
+                723353,
+                697548,
+                724416,
+                698476,
+                713781,
+                690750,
+                697960
+              ],
+              "decode": [
+                298922,
+                304707,
+                304939,
+                304571,
+                315701,
+                304624,
+                311704,
+                312381,
+                309730
+              ],
+              "roundtrip": [
+                996553,
+                1002688,
+                1004298,
+                1000421,
+                1002576,
+                1000426,
+                1003615,
+                1001438,
+                1003597
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 15517179,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 13459,
+                "raster_values_per_second": 4223448.08937243,
+                "source_bytes_per_second": 4223448.08937243
+              },
+              "decode": {
+                "p50_ns": 51380487,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 207560,
+                "raster_values_per_second": 1275503.6751597936,
+                "source_bytes_per_second": 1275503.6751597936
+              },
+              "roundtrip": {
+                "p50_ns": 66867904,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 79246,
+                "raster_values_per_second": 980081.5649911802,
+                "source_bytes_per_second": 980081.5649911802
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 698476,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 7726,
+                "raster_values_per_second": 93827132.2135621,
+                "source_bytes_per_second": 93827132.2135621
+              },
+              "decode": {
+                "p50_ns": 304939,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 4791,
+                "raster_values_per_second": 214915114.17037505,
+                "source_bytes_per_second": 214915114.17037505
+              },
+              "roundtrip": {
+                "p50_ns": 1002576,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1138,
+                "raster_values_per_second": 65367613.02883771,
+                "source_bytes_per_second": 65367613.02883771
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 22.228319674479913,
+            "decode": 167.1866897969758,
+            "roundtrip": 66.72341745388395
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "c319f808fe6e854f5e80458caf1489037a88cb2a3c715335c5888c5960da6bef",
+            "aer_packet_sha256": "4e0a5dfd7fb42a2ebba71ba94ddbee344adf7f95a2360cc6f84e830ce9bd3313",
+            "raw_udp_events": 186,
+            "raw_udp_payload_bytes": 1496,
+            "raw_udp_samples_ns": [
+              208974,
+              194303,
+              197458,
+              194231,
+              197889,
+              196085,
+              198895,
+              196184,
+              198637
+            ],
+            "adapter_datagrams": 3,
+            "adapter_events": 420,
+            "adapter_udp_payload_bytes": 3384,
+            "adapter_samples_ns": {
+              "python": [
+                2603603,
+                2619175,
+                2620835,
+                2623569,
+                2609092,
+                2621902,
+                2607222,
+                2611346,
+                2621921
+              ],
+              "rust": [
+                1173233,
+                1161061,
+                1170790,
+                1153141,
+                1166610,
+                1154426,
+                1169604,
+                1154485,
+                1162638
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 399764,
+                "encode_ns": 15807579,
+                "decode_ns": 52271327,
+                "roundtrip_ns": 68078906,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 589245603
+              },
+              {
+                "load_and_construct_ns": 375887,
+                "encode_ns": 15898400,
+                "decode_ns": 52113410,
+                "roundtrip_ns": 68011810,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 587036315
+              },
+              {
+                "load_and_construct_ns": 385190,
+                "encode_ns": 15695108,
+                "decode_ns": 52406872,
+                "roundtrip_ns": 68101980,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 587904715
+              },
+              {
+                "load_and_construct_ns": 371051,
+                "encode_ns": 15792564,
+                "decode_ns": 52368721,
+                "roundtrip_ns": 68161285,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 586706936
+              },
+              {
+                "load_and_construct_ns": 377595,
+                "encode_ns": 16031310,
+                "decode_ns": 52411849,
+                "roundtrip_ns": 68443159,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 587949316
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 399979,
+                "encode_ns": 946851,
+                "decode_ns": 332166,
+                "roundtrip_ns": 1279017,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 526704468
+              },
+              {
+                "load_and_construct_ns": 397634,
+                "encode_ns": 949122,
+                "decode_ns": 333950,
+                "roundtrip_ns": 1283072,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 519966077
+              },
+              {
+                "load_and_construct_ns": 399209,
+                "encode_ns": 949231,
+                "decode_ns": 336318,
+                "roundtrip_ns": 1285549,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 520198748
+              },
+              {
+                "load_and_construct_ns": 386269,
+                "encode_ns": 949464,
+                "decode_ns": 336588,
+                "roundtrip_ns": 1286052,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 521486880
+              },
+              {
+                "load_and_construct_ns": 390553,
+                "encode_ns": 951465,
+                "decode_ns": 333030,
+                "roundtrip_ns": 1284495,
+                "packet_sha256": "9a976beaa7306d59c372c1febd38a1cb8077305d482adafcd581c27bbabc3cd5",
+                "decoded_sha256": "803af4e05002bb0adc6763f8782fd989179bb2a9edcac719fdf36cfabbaf8b87",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 520707010
+              }
+            ]
+          }
+        },
+        {
+          "recording": "correlated_bursts",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+          "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+          "packet_bytes": 9092,
+          "wire_format": "AERX",
+          "events": 3025,
+          "spikes": 3025,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                2741116,
+                2735907,
+                2746602,
+                2756111,
+                2734652,
+                2727457,
+                2743343,
+                2735543,
+                2755884
+              ],
+              "decode": [
+                7873357,
+                7950456,
+                8133354,
+                7983105,
+                7937119,
+                7952270,
+                7889539,
+                7933715,
+                7842418
+              ],
+              "roundtrip": [
+                10614963,
+                11059244,
+                10694357,
+                10696359,
+                10642216,
+                10803913,
+                10664085,
+                10921067,
+                10782769
+              ]
+            },
+            "rust": {
+              "encode": [
+                190034,
+                181265,
+                197833,
+                182530,
+                189574,
+                182946,
+                189795,
+                181269,
+                194990
+              ],
+              "decode": [
+                52769,
+                52480,
+                52943,
+                52600,
+                53156,
+                60077,
+                61273,
+                52462,
+                52694
+              ],
+              "roundtrip": [
+                235631,
+                241799,
+                246637,
+                232562,
+                235607,
+                234005,
+                234956,
+                239370,
+                234901
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 2741116,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 5573,
+                "raster_values_per_second": 23908510.256406516,
+                "source_bytes_per_second": 23908510.256406516
+              },
+              "decode": {
+                "p50_ns": 7937119,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 45986,
+                "raster_values_per_second": 8256900.268220749,
+                "source_bytes_per_second": 8256900.268220749
+              },
+              "roundtrip": {
+                "p50_ns": 10696359,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 81396,
+                "raster_values_per_second": 6126944.692114391,
+                "source_bytes_per_second": 6126944.692114391
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 189574,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 6628,
+                "raster_values_per_second": 345701414.750968,
+                "source_bytes_per_second": 345701414.750968
+              },
+              "decode": {
+                "p50_ns": 52769,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 289,
+                "raster_values_per_second": 1241941291.288446,
+                "source_bytes_per_second": 1241941291.288446
+              },
+              "roundtrip": {
+                "p50_ns": 235607,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1602,
+                "raster_values_per_second": 278158119.2409394,
+                "source_bytes_per_second": 278158119.2409394
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 14.45424273558313,
+            "decode": 149.31746181051997,
+            "roundtrip": 45.62420938296361
+          },
+          "transport": {
+            "raster_row_start": 6,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "a8cf739ce639c06a805de0b52ab8a1101cb73bbfd626ae6613c5ff31317a44dc",
+            "aer_packet_sha256": "a46a4139de366af92e1e63fe3bb3c51cee20bf3a38d186160fa31bc54d4c57af",
+            "raw_udp_events": 82,
+            "raw_udp_payload_bytes": 664,
+            "raw_udp_samples_ns": [
+              118320,
+              113575,
+              127138,
+              113874,
+              116753,
+              113414,
+              117001,
+              113132,
+              117012
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 82,
+            "adapter_udp_payload_bytes": 664,
+            "adapter_samples_ns": {
+              "python": [
+                749186,
+                739059,
+                736527,
+                751823,
+                745488,
+                748281,
+                747871,
+                748918,
+                748319
+              ],
+              "rust": [
+                390851,
+                402279,
+                403025,
+                390734,
+                389272,
+                390802,
+                392094,
+                389766,
+                427964
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 396678,
+                "encode_ns": 2884162,
+                "decode_ns": 8040556,
+                "roundtrip_ns": 10924718,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 530605461
+              },
+              {
+                "load_and_construct_ns": 396797,
+                "encode_ns": 2906412,
+                "decode_ns": 8210427,
+                "roundtrip_ns": 11116839,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 532569788
+              },
+              {
+                "load_and_construct_ns": 384845,
+                "encode_ns": 2875103,
+                "decode_ns": 8045562,
+                "roundtrip_ns": 10920665,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 529719229
+              },
+              {
+                "load_and_construct_ns": 385002,
+                "encode_ns": 2936569,
+                "decode_ns": 8010775,
+                "roundtrip_ns": 10947344,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 529214073
+              },
+              {
+                "load_and_construct_ns": 375227,
+                "encode_ns": 2896752,
+                "decode_ns": 7968133,
+                "roundtrip_ns": 10864885,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 529730630
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 390780,
+                "encode_ns": 436718,
+                "decode_ns": 82225,
+                "roundtrip_ns": 518943,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 517851201
+              },
+              {
+                "load_and_construct_ns": 399131,
+                "encode_ns": 433143,
+                "decode_ns": 83352,
+                "roundtrip_ns": 516495,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 519505480
+              },
+              {
+                "load_and_construct_ns": 380368,
+                "encode_ns": 419390,
+                "decode_ns": 86541,
+                "roundtrip_ns": 505931,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 518741713
+              },
+              {
+                "load_and_construct_ns": 384701,
+                "encode_ns": 448572,
+                "decode_ns": 83974,
+                "roundtrip_ns": 532546,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 517385448
+              },
+              {
+                "load_and_construct_ns": 380501,
+                "encode_ns": 442737,
+                "decode_ns": 80347,
+                "roundtrip_ns": 523084,
+                "packet_sha256": "6099d4c8e7e0a7181bc471955c384eecdca432136a3c0604861c9f67c8435026",
+                "decoded_sha256": "6a21833365bcc8a690541230956a641dbbdc91fc0c89c85b3e2691668403d1ae",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 525792407
+              }
+            ]
+          }
+        },
+        {
+          "recording": "inverted_dense",
+          "shape": [
+            1024,
+            64
+          ],
+          "raster_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+          "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+          "packet_bytes": 39548,
+          "wire_format": "AERI",
+          "events": 13177,
+          "spikes": 52359,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                10682524,
+                10641730,
+                10906118,
+                10608289,
+                10597152,
+                10770625,
+                10817139,
+                10752610,
+                10678303
+              ],
+              "decode": [
+                34420848,
+                34331485,
+                34259688,
+                34864824,
+                34342869,
+                36305457,
+                35402821,
+                34564124,
+                34467008
+              ],
+              "roundtrip": [
+                45158506,
+                45031762,
+                44904109,
+                44697819,
+                45292353,
+                46006010,
+                46293879,
+                45292021,
+                45297003
+              ]
+            },
+            "rust": {
+              "encode": [
+                556160,
+                524491,
+                537128,
+                523703,
+                530538,
+                532826,
+                539178,
+                524734,
+                538979
+              ],
+              "decode": [
+                210428,
+                213263,
+                202559,
+                213392,
+                241867,
+                206101,
+                207751,
+                213477,
+                203175
+              ],
+              "roundtrip": [
+                739434,
+                729637,
+                740211,
+                728357,
+                733526,
+                737115,
+                739316,
+                729456,
+                1040074
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 10682524,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 74235,
+                "raster_values_per_second": 6134879.734414825,
+                "source_bytes_per_second": 6134879.734414825
+              },
+              "decode": {
+                "p50_ns": 34467008,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 135523,
+                "raster_values_per_second": 1901412.5043868038,
+                "source_bytes_per_second": 1901412.5043868038
+              },
+              "roundtrip": {
+                "p50_ns": 45292021,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 260259,
+                "raster_values_per_second": 1446965.6807763116,
+                "source_bytes_per_second": 1446965.6807763116
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 532826,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 6352,
+                "raster_values_per_second": 122997000.89710337,
+                "source_bytes_per_second": 122997000.89710337
+              },
+              "decode": {
+                "p50_ns": 210428,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3049,
+                "raster_values_per_second": 311441443.1539529,
+                "source_bytes_per_second": 311441443.1539529
+              },
+              "roundtrip": {
+                "p50_ns": 737115,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3589,
+                "raster_values_per_second": 88908786.28165212,
+                "source_bytes_per_second": 88908786.28165212
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 20.21415058574469,
+            "decode": 163.57541772007528,
+            "roundtrip": 61.71803513253851
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              23,
+              64
+            ],
+            "raster_sha256": "88f604f6e8bc42038e552cd65f3ce883bf57f5cc84471595c380b1ebfd5a7b22",
+            "aer_packet_sha256": "b616f55bbade495fd81d62d9fe53ef6326a460c1a7cd3aaa45fd15138b7a552c",
+            "raw_udp_events": 186,
+            "raw_udp_payload_bytes": 1496,
+            "raw_udp_samples_ns": [
+              207617,
+              194951,
+              199288,
+              195739,
+              208458,
+              195864,
+              199714,
+              196403,
+              198981
+            ],
+            "adapter_datagrams": 7,
+            "adapter_events": 1178,
+            "adapter_udp_payload_bytes": 9480,
+            "adapter_samples_ns": {
+              "python": [
+                3759382,
+                3772470,
+                3745162,
+                3737692,
+                3732816,
+                3749538,
+                3756815,
+                3750142,
+                3745207
+              ],
+              "rust": [
+                2692759,
+                2684515,
+                2701539,
+                2693039,
+                2708721,
+                2693666,
+                2697488,
+                2683932,
+                2722056
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 363164,
+                "encode_ns": 10698561,
+                "decode_ns": 34803578,
+                "roundtrip_ns": 45502139,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 559271386
+              },
+              {
+                "load_and_construct_ns": 349441,
+                "encode_ns": 11132525,
+                "decode_ns": 34975886,
+                "roundtrip_ns": 46108411,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 564561603
+              },
+              {
+                "load_and_construct_ns": 353397,
+                "encode_ns": 10827279,
+                "decode_ns": 35201657,
+                "roundtrip_ns": 46028936,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 560402500
+              },
+              {
+                "load_and_construct_ns": 352855,
+                "encode_ns": 10719096,
+                "decode_ns": 34781112,
+                "roundtrip_ns": 45500208,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 560000804
+              },
+              {
+                "load_and_construct_ns": 371533,
+                "encode_ns": 10642638,
+                "decode_ns": 34863440,
+                "roundtrip_ns": 45506078,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 560939278
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 363029,
+                "encode_ns": 767211,
+                "decode_ns": 230759,
+                "roundtrip_ns": 997970,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 514356637
+              },
+              {
+                "load_and_construct_ns": 378900,
+                "encode_ns": 777014,
+                "decode_ns": 227444,
+                "roundtrip_ns": 1004458,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 529006376
+              },
+              {
+                "load_and_construct_ns": 374407,
+                "encode_ns": 756718,
+                "decode_ns": 238352,
+                "roundtrip_ns": 995070,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 514274893
+              },
+              {
+                "load_and_construct_ns": 384001,
+                "encode_ns": 757995,
+                "decode_ns": 238845,
+                "roundtrip_ns": 996840,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 518185675
+              },
+              {
+                "load_and_construct_ns": 372062,
+                "encode_ns": 753717,
+                "decode_ns": 232821,
+                "roundtrip_ns": 986538,
+                "packet_sha256": "da73c0a927519a694e7bb8a28a274b85f761e61175ad6a9ba6c79a60d7b81386",
+                "decoded_sha256": "947d6a02abba4c9b946a983ccccac6b07cfd526a351499dc61fb33cd0736cae2",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 514877571
+              }
+            ]
+          }
+        },
+        {
+          "recording": "long_timestamp_gap",
+          "shape": [
+            65546,
+            4
+          ],
+          "raster_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+          "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+          "packet_bytes": 26,
+          "wire_format": "AERX",
+          "events": 2,
+          "spikes": 2,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                1464553,
+                1473665,
+                1475659,
+                1464266,
+                1460162,
+                1471997,
+                1469550,
+                1465248,
+                1463664
+              ],
+              "decode": [
+                53299,
+                54973,
+                52695,
+                54117,
+                52759,
+                54418,
+                52324,
+                53750,
+                52558
+              ],
+              "roundtrip": [
+                1529194,
+                1517608,
+                1520111,
+                1523295,
+                1526028,
+                1517016,
+                1515146,
+                1521670,
+                1521870
+              ]
+            },
+            "rust": {
+              "encode": [
+                580739,
+                577861,
+                589862,
+                586505,
+                580672,
+                577704,
+                588806,
+                584891,
+                580569
+              ],
+              "decode": [
+                17389,
+                16714,
+                17525,
+                16759,
+                17297,
+                16713,
+                17381,
+                16520,
+                17079
+              ],
+              "roundtrip": [
+                603660,
+                601229,
+                594673,
+                602338,
+                603309,
+                602198,
+                594527,
+                602338,
+                603262
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 1465248,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 4302,
+                "raster_values_per_second": 178934897.0276704,
+                "source_bytes_per_second": 178934897.0276704
+              },
+              "decode": {
+                "p50_ns": 53299,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 741,
+                "raster_values_per_second": 4919116681.363627,
+                "source_bytes_per_second": 4919116681.363627
+              },
+              "roundtrip": {
+                "p50_ns": 1521670,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 4062,
+                "raster_values_per_second": 172300170.2077323,
+                "source_bytes_per_second": 172300170.2077323
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 580739,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3035,
+                "raster_values_per_second": 451466149.1651155,
+                "source_bytes_per_second": 451466149.1651155
+              },
+              "decode": {
+                "p50_ns": 17079,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 320,
+                "raster_values_per_second": 15351250073.189297,
+                "source_bytes_per_second": 15351250073.189297
+              },
+              "roundtrip": {
+                "p50_ns": 602338,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 971,
+                "raster_values_per_second": 435277203.1650004,
+                "source_bytes_per_second": 435277203.1650004
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 2.5146072137110105,
+            "decode": 3.0773464488553195,
+            "roundtrip": 2.528970445165339
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              32,
+              4
+            ],
+            "raster_sha256": "0b1b0c9c7f91eae825ed6fb7702130527ec6894c2dd9e1297624071d8a42687d",
+            "aer_packet_sha256": "37fb44ab74e1391c982758146206347aca6e0577a34820ba648b7f4dee685229",
+            "raw_udp_events": 1,
+            "raw_udp_payload_bytes": 16,
+            "raw_udp_samples_ns": [
+              83053,
+              47537,
+              49452,
+              47184,
+              49691,
+              46248,
+              49371,
+              46441,
+              49661
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 1,
+            "adapter_udp_payload_bytes": 16,
+            "adapter_samples_ns": {
+              "python": [
+                359564,
+                353224,
+                351229,
+                352223,
+                366490,
+                367507,
+                350339,
+                351764,
+                352794
+              ],
+              "rust": [
+                277912,
+                286232,
+                286561,
+                276645,
+                274182,
+                272270,
+                274069,
+                284621,
+                288039
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 429883,
+                "encode_ns": 1892197,
+                "decode_ns": 91444,
+                "roundtrip_ns": 1983641,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 519878308
+              },
+              {
+                "load_and_construct_ns": 411203,
+                "encode_ns": 1914720,
+                "decode_ns": 89462,
+                "roundtrip_ns": 2004182,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 516100708
+              },
+              {
+                "load_and_construct_ns": 422824,
+                "encode_ns": 1896485,
+                "decode_ns": 93041,
+                "roundtrip_ns": 1989526,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 520244663
+              },
+              {
+                "load_and_construct_ns": 416046,
+                "encode_ns": 1884427,
+                "decode_ns": 89934,
+                "roundtrip_ns": 1974361,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 517266615
+              },
+              {
+                "load_and_construct_ns": 410679,
+                "encode_ns": 1883439,
+                "decode_ns": 88827,
+                "roundtrip_ns": 1972266,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 516092864
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 405831,
+                "encode_ns": 818819,
+                "decode_ns": 55367,
+                "roundtrip_ns": 874186,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 516207585
+              },
+              {
+                "load_and_construct_ns": 417459,
+                "encode_ns": 810681,
+                "decode_ns": 63087,
+                "roundtrip_ns": 873768,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 515361908
+              },
+              {
+                "load_and_construct_ns": 426602,
+                "encode_ns": 812540,
+                "decode_ns": 55405,
+                "roundtrip_ns": 867945,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 517781259
+              },
+              {
+                "load_and_construct_ns": 407320,
+                "encode_ns": 817815,
+                "decode_ns": 53619,
+                "roundtrip_ns": 871434,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 516503651
+              },
+              {
+                "load_and_construct_ns": 417629,
+                "encode_ns": 819380,
+                "decode_ns": 55993,
+                "roundtrip_ns": 875373,
+                "packet_sha256": "ec6960b842eff29ba3f548d3b656bbe7e00d46f66ae70cc018596482a10f77c2",
+                "decoded_sha256": "beb4e9a215f002e4da523b8e150a061d5786c98d5aefef75113924ac5d617829",
+                "peak_rss_bytes": 70008832,
+                "fresh_process_wall_ns": 522736530
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "schema": 1,
+      "started_utc": "2026-11-20T09:36:56.556409+00:00",
+      "finished_utc": "2026-11-20T09:37:03.143990+00:00",
+      "hardware_before": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.80322265625,
+          1.8173828125,
+          2.29833984375
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "hardware_after": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          1.9794921875,
+          1.85400390625,
+          2.3076171875
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "dataset": "Spiking Heidelberg Digits",
+      "dataset_sha256": "47d8621a092cb483bea9448a93c0a3375a6726d370045090c2f7a77f70f95df3",
+      "recording_indices": [
+        0
+      ],
+      "timestamp_bits": 8,
+      "neuron_bits": 0,
+      "warmups": 2,
+      "repetitions": 9,
+      "cold_repetitions": 5,
+      "harness_sha256": {
+        "bench_address_events.py": "fb9f0d1dec48aac3513f6e995699a987a6f14026dc62910e456ccef8c10c0ebf",
+        "bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+        "bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+        "isi_codec_timing.py": "f7555a1baa2e69314471497e34077f8888059518d243d241f61b80010faabfc9"
+      },
+      "modules_sha256": {
+        "sc_neurocore.spike_codec.aer_codec": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+        "sc_neurocore.spike_codec.aer_packet": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a",
+        "sc_neurocore.comm.aer_raster": "6a46dd0170d712d3364e0fce9d9f4f169e865fc963568199907c8e9aa707a46d",
+        "sc_neurocore.comm.aer_udp": "602719a0747b5cc3e0267bd9167c8fdbe8e8b5c4d8241d4c77945529c4ab5772",
+        "sc_neurocore_engine.sc_neurocore_engine": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
+      },
+      "rows": [
+        {
+          "recording": "0",
+          "shape": [
+            731,
+            700
+          ],
+          "raster_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+          "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+          "packet_bytes": 45109,
+          "wire_format": "AERX",
+          "events": 11273,
+          "spikes": 11273,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                11934277,
+                11681666,
+                11664767,
+                11944413,
+                11662920,
+                11700010,
+                11642783,
+                11658779,
+                11653081
+              ],
+              "decode": [
+                30098716,
+                30138202,
+                30247578,
+                30129779,
+                30214746,
+                30124284,
+                30168098,
+                30536385,
+                30173350
+              ],
+              "roundtrip": [
+                41736315,
+                42416677,
+                41462798,
+                41696365,
+                42017217,
+                41868727,
+                42000217,
+                41736960,
+                42165854
+              ]
+            },
+            "rust": {
+              "encode": [
+                1282609,
+                1255499,
+                1261173,
+                1254981,
+                1268409,
+                1260023,
+                1260932,
+                1254215,
+                1281191
+              ],
+              "decode": [
+                244899,
+                231254,
+                221092,
+                224092,
+                221686,
+                224143,
+                221019,
+                223793,
+                234206
+              ],
+              "roundtrip": [
+                1479897,
+                1478088,
+                1484520,
+                1482255,
+                1481044,
+                1478863,
+                1486247,
+                1485150,
+                1485376
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 11664767,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 16899,
+                "raster_values_per_second": 43867142.824198715,
+                "source_bytes_per_second": 43867142.824198715
+              },
+              "decode": {
+                "p50_ns": 30168098,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 43814,
+                "raster_values_per_second": 16961626.152235385,
+                "source_bytes_per_second": 16961626.152235385
+              },
+              "roundtrip": {
+                "p50_ns": 41868727,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 148490,
+                "raster_values_per_second": 12221532.31456022,
+                "source_bytes_per_second": 12221532.31456022
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 1260932,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 5951,
+                "raster_values_per_second": 405810939.84449595,
+                "source_bytes_per_second": 405810939.84449595
+              },
+              "decode": {
+                "p50_ns": 224092,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3000,
+                "raster_values_per_second": 2283437159.7379646,
+                "source_bytes_per_second": 2283437159.7379646
+              },
+              "roundtrip": {
+                "p50_ns": 1482255,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 2895,
+                "raster_values_per_second": 345217253.44154686,
+                "source_bytes_per_second": 345217253.44154686
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 9.285552724037577,
+            "decode": 134.4527203113007,
+            "roundtrip": 28.259244257515743
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              2,
+              700
+            ],
+            "raster_sha256": "ee4a07ecab44df4a3ef1e75b1b8062f35c0a215c665fe907a8ce18159142e01a",
+            "aer_packet_sha256": "8d25e1320037d8d29e358afb4e1a94f87f107381e1f2e7153bd141b23abdf264",
+            "raw_udp_events": 3,
+            "raw_udp_payload_bytes": 32,
+            "raw_udp_samples_ns": [
+              54820,
+              51962,
+              53951,
+              51705,
+              53320,
+              59660,
+              51959,
+              50151,
+              51952
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 3,
+            "adapter_udp_payload_bytes": 32,
+            "adapter_samples_ns": {
+              "python": [
+                252996,
+                250743,
+                247482,
+                246919,
+                244495,
+                243019,
+                242067,
+                243958,
+                241605
+              ],
+              "rust": [
+                158878,
+                144600,
+                152483,
+                142429,
+                141572,
+                141146,
+                141659,
+                149537,
+                139725
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 727000,
+                "encode_ns": 13012918,
+                "decode_ns": 30269068,
+                "roundtrip_ns": 43281986,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 565407160
+              },
+              {
+                "load_and_construct_ns": 715492,
+                "encode_ns": 13292720,
+                "decode_ns": 30016202,
+                "roundtrip_ns": 43308922,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 561120482
+              },
+              {
+                "load_and_construct_ns": 726466,
+                "encode_ns": 13037772,
+                "decode_ns": 30017925,
+                "roundtrip_ns": 43055697,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 565778215
+              },
+              {
+                "load_and_construct_ns": 713455,
+                "encode_ns": 12978162,
+                "decode_ns": 29951193,
+                "roundtrip_ns": 42929355,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 559093664
+              },
+              {
+                "load_and_construct_ns": 729152,
+                "encode_ns": 13029383,
+                "decode_ns": 30319778,
+                "roundtrip_ns": 43349161,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 564029374
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 727406,
+                "encode_ns": 1497304,
+                "decode_ns": 557898,
+                "roundtrip_ns": 2055202,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 519155747
+              },
+              {
+                "load_and_construct_ns": 732180,
+                "encode_ns": 1499282,
+                "decode_ns": 558600,
+                "roundtrip_ns": 2057882,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 521651574
+              },
+              {
+                "load_and_construct_ns": 709086,
+                "encode_ns": 1499219,
+                "decode_ns": 563832,
+                "roundtrip_ns": 2063051,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 520037760
+              },
+              {
+                "load_and_construct_ns": 730196,
+                "encode_ns": 1496557,
+                "decode_ns": 558876,
+                "roundtrip_ns": 2055433,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 520562748
+              },
+              {
+                "load_and_construct_ns": 721577,
+                "encode_ns": 1507591,
+                "decode_ns": 559198,
+                "roundtrip_ns": 2066789,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80506880,
+                "fresh_process_wall_ns": 520133914
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "schema": 1,
+      "started_utc": "2026-11-20T09:37:06.279114+00:00",
+      "finished_utc": "2026-11-20T09:37:12.843306+00:00",
+      "hardware_before": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          2.2216796875,
+          1.90625,
+          2.322265625
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "hardware_after": {
+        "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+        "processor": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+        "logical_cpus": 24,
+        "affinity": [
+          9
+        ],
+        "thread_siblings": {
+          "9": "9,21"
+        },
+        "host_load_averages": [
+          2.2841796875,
+          1.9248046875,
+          2.326171875
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "numpy": "2.5.5"
+      },
+      "dataset": "Spiking Heidelberg Digits",
+      "dataset_sha256": "47d8621a092cb483bea9448a93c0a3375a6726d370045090c2f7a77f70f95df3",
+      "recording_indices": [
+        0
+      ],
+      "timestamp_bits": 16,
+      "neuron_bits": 0,
+      "warmups": 2,
+      "repetitions": 9,
+      "cold_repetitions": 5,
+      "harness_sha256": {
+        "bench_address_events.py": "fb9f0d1dec48aac3513f6e995699a987a6f14026dc62910e456ccef8c10c0ebf",
+        "bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+        "bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+        "isi_codec_timing.py": "f7555a1baa2e69314471497e34077f8888059518d243d241f61b80010faabfc9"
+      },
+      "modules_sha256": {
+        "sc_neurocore.spike_codec.aer_codec": "25438bad5c806e1d38d02663588868009bb4d4125afbf5bf9d8937aa6cb31b6e",
+        "sc_neurocore.spike_codec.aer_packet": "78dc895b9772455f00ccc0bda6ad78f97d71cbb311e6105b6076488d9c89463a",
+        "sc_neurocore.comm.aer_raster": "6a46dd0170d712d3364e0fce9d9f4f169e865fc963568199907c8e9aa707a46d",
+        "sc_neurocore.comm.aer_udp": "602719a0747b5cc3e0267bd9167c8fdbe8e8b5c4d8241d4c77945529c4ab5772",
+        "sc_neurocore_engine.sc_neurocore_engine": "b7d45bcc66d6170dbf066758cd64aa5bec2da98d0659e90a8f0d45005a296f9e"
+      },
+      "rows": [
+        {
+          "recording": "0",
+          "shape": [
+            731,
+            700
+          ],
+          "raster_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+          "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+          "packet_bytes": 45109,
+          "wire_format": "AERX",
+          "events": 11273,
+          "spikes": 11273,
+          "samples_ns": {
+            "python": {
+              "encode": [
+                11591388,
+                11636677,
+                11682668,
+                11607773,
+                11645041,
+                11741392,
+                11620466,
+                11626587,
+                11645085
+              ],
+              "decode": [
+                30225731,
+                30632021,
+                30245199,
+                30296315,
+                30607998,
+                30328481,
+                30633465,
+                30610587,
+                30220230
+              ],
+              "roundtrip": [
+                42054516,
+                41925460,
+                42346818,
+                41961501,
+                41959860,
+                42366255,
+                42326887,
+                41937858,
+                42079476
+              ]
+            },
+            "rust": {
+              "encode": [
+                1265649,
+                1260205,
+                1262545,
+                1255139,
+                1263751,
+                1255034,
+                1267067,
+                1256788,
+                1265553
+              ],
+              "decode": [
+                221567,
+                224042,
+                221604,
+                224301,
+                226130,
+                224048,
+                228611,
+                224163,
+                222931
+              ],
+              "roundtrip": [
+                1480174,
+                1479204,
+                1485819,
+                1484750,
+                1488073,
+                1484857,
+                1486813,
+                1486081,
+                1486844
+              ]
+            }
+          },
+          "summary": {
+            "python": {
+              "encode": {
+                "p50_ns": 11636677,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 16211,
+                "raster_values_per_second": 43973034.56992061,
+                "source_bytes_per_second": 43973034.56992061
+              },
+              "decode": {
+                "p50_ns": 30328481,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 108251,
+                "raster_values_per_second": 16871929.72176879,
+                "source_bytes_per_second": 16871929.72176879
+              },
+              "roundtrip": {
+                "p50_ns": 42054516,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 116658,
+                "raster_values_per_second": 12167539.866586505,
+                "source_bytes_per_second": 12167539.866586505
+              }
+            },
+            "rust": {
+              "encode": {
+                "p50_ns": 1262545,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 3104,
+                "raster_values_per_second": 405292484.62431043,
+                "source_bytes_per_second": 405292484.62431043
+              },
+              "decode": {
+                "p50_ns": 224048,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1117,
+                "raster_values_per_second": 2283885595.9437265,
+                "source_bytes_per_second": 2283885595.9437265
+              },
+              "roundtrip": {
+                "p50_ns": 1485819,
+                "p95_ns": null,
+                "p99_ns": null,
+                "median_absolute_deviation_ns": 1025,
+                "raster_values_per_second": 344389188.7235255,
+                "source_bytes_per_second": 344389188.7235255
+              }
+            }
+          },
+          "paired_python_over_rust": {
+            "encode": 9.23395558659107,
+            "decode": 135.5586706200573,
+            "roundtrip": 28.343257589892943
+          },
+          "transport": {
+            "raster_row_start": 0,
+            "raster_shape": [
+              2,
+              700
+            ],
+            "raster_sha256": "ee4a07ecab44df4a3ef1e75b1b8062f35c0a215c665fe907a8ce18159142e01a",
+            "aer_packet_sha256": "8d25e1320037d8d29e358afb4e1a94f87f107381e1f2e7153bd141b23abdf264",
+            "raw_udp_events": 3,
+            "raw_udp_payload_bytes": 32,
+            "raw_udp_samples_ns": [
+              62618,
+              51280,
+              52741,
+              50819,
+              52649,
+              49901,
+              52150,
+              49639,
+              51949
+            ],
+            "adapter_datagrams": 1,
+            "adapter_events": 3,
+            "adapter_udp_payload_bytes": 32,
+            "adapter_samples_ns": {
+              "python": [
+                259506,
+                253496,
+                263392,
+                250873,
+                258884,
+                246388,
+                257582,
+                244346,
+                244634
+              ],
+              "rust": [
+                149285,
+                143809,
+                143980,
+                140469,
+                142006,
+                139056,
+                142069,
+                138983,
+                151682
+              ]
+            }
+          },
+          "fresh_process": {
+            "python": [
+              {
+                "load_and_construct_ns": 749607,
+                "encode_ns": 12898238,
+                "decode_ns": 30080071,
+                "roundtrip_ns": 42978309,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 562157275
+              },
+              {
+                "load_and_construct_ns": 725104,
+                "encode_ns": 12816141,
+                "decode_ns": 29542491,
+                "roundtrip_ns": 42358632,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 562551585
+              },
+              {
+                "load_and_construct_ns": 720942,
+                "encode_ns": 12811081,
+                "decode_ns": 30224177,
+                "roundtrip_ns": 43035258,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 558898137
+              },
+              {
+                "load_and_construct_ns": 721644,
+                "encode_ns": 13192984,
+                "decode_ns": 29814933,
+                "roundtrip_ns": 43007917,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 561975018
+              },
+              {
+                "load_and_construct_ns": 713909,
+                "encode_ns": 12916657,
+                "decode_ns": 29654314,
+                "roundtrip_ns": 42570971,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 561179140
+              }
+            ],
+            "rust": [
+              {
+                "load_and_construct_ns": 753214,
+                "encode_ns": 1517139,
+                "decode_ns": 561292,
+                "roundtrip_ns": 2078431,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 519839615
+              },
+              {
+                "load_and_construct_ns": 720840,
+                "encode_ns": 1494013,
+                "decode_ns": 563392,
+                "roundtrip_ns": 2057405,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 521683517
+              },
+              {
+                "load_and_construct_ns": 728170,
+                "encode_ns": 1492272,
+                "decode_ns": 552822,
+                "roundtrip_ns": 2045094,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 518543099
+              },
+              {
+                "load_and_construct_ns": 726688,
+                "encode_ns": 1491694,
+                "decode_ns": 557293,
+                "roundtrip_ns": 2048987,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 518471671
+              },
+              {
+                "load_and_construct_ns": 729369,
+                "encode_ns": 1492417,
+                "decode_ns": 564831,
+                "roundtrip_ns": 2057248,
+                "packet_sha256": "0e65dec5da397713c801020d509ca5ef16211f170df9739a1a9e81d3bd09b43c",
+                "decoded_sha256": "99cbfbe3718cacab8fff27b2554d224f3501eee9dcdd5357c32bec5fea7ea050",
+                "peak_rss_bytes": 80289792,
+                "fresh_process_wall_ns": 519608698
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

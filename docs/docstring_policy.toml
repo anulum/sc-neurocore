@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2255
+expected_file_count = 2261
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -9069,3 +9069,27 @@ rationale = "Exercise bounded raster processing, cancellation and recovery throu
 [[file]]
 path = "benchmarks/bench_raster_stream.py"
 rationale = "Measure the public raster container, standalone frames and bounded pull on both backends."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/aer_packet.py"
+rationale = "Validate address-event packet grammar and escapes."
+
+[[file]]
+path = "src/sc_neurocore/comm/aer_udp.py"
+rationale = "Expose legacy and strict UDP event receivers and socket lifecycle."
+
+[[file]]
+path = "src/sc_neurocore/comm/aer_raster.py"
+rationale = "Translate binary raster packets to and from sequenced UDP batches."
+
+[[file]]
+path = "tests/test_address_event_packet_parity.py"
+rationale = "Exercise both packet backends, retained bytes and malformed input."
+
+[[file]]
+path = "tests/test_aer_raster_transport.py"
+rationale = "Exercise real localhost UDP delivery, reorder and loss."
+
+[[file]]
+path = "benchmarks/bench_address_events.py"
+rationale = "Measure the public packet codecs and UDP translation separately."

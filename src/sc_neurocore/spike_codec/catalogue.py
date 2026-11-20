@@ -117,7 +117,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         later does not update existing instances. Start a fresh process in that case.
         Native loader OSError or RuntimeError excludes ``auto`` from advertised
         choices. An ImportError loading a present extension does as well
-        for ISI, predictive, delta and framed raster packets.
+        for ISI, predictive, delta, framed rasters and address events.
         An absent engine permits the classes' documented Python fallback.
 
     Raises
@@ -143,7 +143,8 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_module,
             selected.native_symbols,
             diagnostics,
-            strict_native_import=descriptor.name in ("isi", "predictive", "delta", "streaming"),
+            strict_native_import=descriptor.name
+            in ("isi", "predictive", "delta", "streaming", "aer"),
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:
