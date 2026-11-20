@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import struct
 import sys
-from typing import Any
+from pathlib import Path
+from typing import Any, SupportsIndex, cast
 
 import numpy as np
 import pytest
 
-from sc_neurocore.spike_codec import waveform_stream as ws
+from sc_neurocore.spike_codec import probe_codec, waveform_stream as ws
 from sc_neurocore.spike_codec.waveform_codec import WaveformCodec
 from sc_neurocore.spike_codec.waveform_stream import (
     LosslessStreamDecoder,
@@ -38,7 +39,7 @@ def _adc_stream(samples: int, channels: int, seed: int) -> np.ndarray[Any, Any]:
         + rng.integers(-40, 41, (samples, channels))
     )
     levels = np.clip(np.round(levels), 0, 1023).astype(np.int64)
-    return np.vectorize(lambda level: ws.nominal_value(int(level), 10))(levels).astype(np.int16)
+    return np.asarray(np.vectorize(ws.nominal_value)(levels, 10), dtype=np.int16)
 
 
 def _packets(
@@ -84,7 +85,7 @@ def _missing_code_stream(samples: int, channels: int, rare: int) -> np.ndarray[A
     levels = levels.astype(np.int64)
     index = np.arange(levels.size).reshape(levels.shape)
     levels[(levels == 500) & (index % rare != 0)] = 501
-    return np.vectorize(lambda level: ws.nominal_value(int(level), 10))(levels).astype(np.int16)
+    return np.asarray(np.vectorize(ws.nominal_value)(levels, 10), dtype=np.int16)
 
 
 def test_missing_codes_leave_the_numbering_identically() -> None:
@@ -199,7 +200,7 @@ def test_invalid_sample_counts_are_refused_before_decoding(backend: str) -> None
     np.testing.assert_array_equal(decoder.decode(first, np.int64(20)), data[:20])
     for samples in (-1, 1.5, "20", 1 << 64):
         with pytest.raises(ValueError, match="samples must be"):
-            decoder.decode(second, samples)
+            decoder.decode(second, cast(SupportsIndex, samples))
     np.testing.assert_array_equal(decoder.decode(second, 20), data[20:])
 
 
@@ -256,11 +257,11 @@ def test_corrupted_packets_are_refused(backend: str) -> None:
     ]:
         with pytest.raises(ValueError, match=message):
             fresh().decode(broken, 200)
-    broken = fresh()
+    decoder_with_bad_content = fresh()
     with pytest.raises(ValueError, match="corrupted lossless packet"):
-        broken.decode(packet, 201)
+        decoder_with_bad_content.decode(packet, 201)
     with pytest.raises(ValueError, match="start a new decoder"):
-        broken.decode(packet, 200)
+        decoder_with_bad_content.decode(packet, 200)
     decoder = fresh()
     with pytest.raises(ValueError):
         decoder.decode(packet[:3], 200)
@@ -290,13 +291,160 @@ def test_configuration_and_window_refusals(backend: str) -> None:
 
 
 def test_backend_selection(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Unknown backends are refused; without the engine auto falls back and rust refuses."""
+    """An absent engine permits auto; explicit selections require their entry point."""
     with pytest.raises(ValueError, match="backend must be one of"):
-        LosslessStreamEncoder(1, 16, 1, "gpu")
+        LosslessStreamEncoder(1, backend="unknown")
     monkeypatch.setitem(sys.modules, "sc_neurocore_engine.sc_neurocore_engine", None)
-    assert isinstance(LosslessStreamEncoder(1, 16, 1, "auto")._coder, ws._PyEncoder)
+    encoder = LosslessStreamEncoder(1, backend="auto")
+    assert encoder.backend == "python" and encoder.device is None
+    assert LosslessStreamDecoder(1, backend="auto").backend == "python"
     with pytest.raises(ValueError, match="backend 'rust' needs"):
-        LosslessStreamDecoder(1, 16, 1, "rust")
+        LosslessStreamDecoder(1, backend="rust")
+    with pytest.raises(ValueError, match="WaveformLosslessGpuEncoder"):
+        LosslessStreamEncoder(1, backend="gpu", gpu_max_samples=4)
+
+
+def test_auto_does_not_hide_loader_failures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The real import mechanism propagates a dependency failure from a present engine."""
+    name = "sc_neurocore_engine"
+    package = tmp_path / name
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / f"{name}.py").write_text(
+        "import missing_waveform_codec_dependency\n", encoding="utf-8"
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.delitem(sys.modules, name, raising=False)
+    monkeypatch.delitem(sys.modules, f"{name}.{name}", raising=False)
+    with pytest.raises(ModuleNotFoundError, match="missing_waveform_codec_dependency"):
+        LosslessStreamEncoder(1)
+
+
+def test_encoder_only_gpu_configuration() -> None:
+    """GPU capacity and one-group-per-channel are explicit; decoding stays on CPU."""
+    with pytest.raises(ValueError, match="groups == channels"):
+        LosslessStreamEncoder(2, backend="gpu", gpu_max_samples=4)
+    with pytest.raises(ValueError, match="requires gpu_max_samples"):
+        LosslessStreamEncoder(1, backend="gpu")
+    for capacity in (0, 1 << 32):
+        with pytest.raises(ValueError, match="gpu_max_samples"):
+            LosslessStreamEncoder(1, backend="gpu", gpu_max_samples=capacity)
+    with pytest.raises(ValueError, match="requires backend"):
+        LosslessStreamEncoder(1, backend="python", gpu_max_samples=4)
+    with pytest.raises(ValueError, match="backend must be one of"):
+        LosslessStreamDecoder(1, backend="gpu")
+    with pytest.raises(ValueError, match="backend must be one of"):
+        detect_adc_bits(np.array([0]), backend="gpu")
+
+
+def test_installed_gpu_encoder_uses_the_reported_physical_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The installed GPU export encodes, resets and rejects an unavailable device."""
+    probe = probe_codec("lossless_stream")
+    assert "gpu" not in probe.backend_choices
+    if probe.encoder_only_backends:
+        assert probe.encoder_only_backends == ("gpu",)
+        encoder = LosslessStreamEncoder(3, 10, 3, "gpu", gpu_max_samples=12)
+        cpu = LosslessStreamEncoder(3, 10, 3, "rust")
+        decoder = LosslessStreamDecoder(3, 10, 3, "rust")
+        assert encoder.backend == "gpu" and encoder.device is not None
+        device_name, device_api = encoder.device
+        assert device_name and device_api in ("Vulkan", "Metal", "Dx12")
+        data = _adc_stream(26, 3, 71)
+        for window in (data[:12], data[12:24], data[24:], data[:0]):
+            packet = encoder.encode(window)
+            assert packet == cpu.encode(window)
+            np.testing.assert_array_equal(decoder.decode(packet, len(window)), window)
+        with pytest.raises(ValueError, match="exceeds max_samples"):
+            encoder.encode(data)
+        encoder.reset()
+        cpu.reset()
+        assert encoder.device == (device_name, device_api)
+        assert encoder.encode(data[:2]) == cpu.encode(data[:2])
+        monkeypatch.setenv("SC_GPU_ADAPTER", "sc-neurocore-unavailable-physical-adapter")
+        with pytest.raises(ValueError, match="no GPU adapter available"):
+            LosslessStreamEncoder(3, 10, 3, "gpu", gpu_max_samples=12)
+    else:
+        with pytest.raises(ValueError, match="WaveformLosslessGpuEncoder"):
+            LosslessStreamEncoder(3, 10, 3, "gpu", gpu_max_samples=12)
+
+
+@pytest.mark.parametrize("bits", range(1, 17))
+@pytest.mark.parametrize("groups", (1, 3, 5))
+def test_all_adc_widths_and_uneven_groups(bits: int, groups: int) -> None:
+    """Both encoders and both decoders conserve every row across an empty and a short tail."""
+    channels = 5
+    levels = (np.arange(19 * channels).reshape(19, channels) * 3) % (1 << bits)
+    values = np.vectorize(ws.nominal_value)(levels, bits).astype(np.int16)
+    encoders = [LosslessStreamEncoder(channels, bits, groups, backend) for backend in BACKENDS]
+    decoders = [LosslessStreamDecoder(channels, bits, groups, backend) for backend in BACKENDS]
+    for window in (values[:7], values[7:7], values[7:18], values[18:]):
+        left, right = (encoder.encode(window) for encoder in encoders)
+        assert left == right
+        for decoder, packet in zip(decoders, (right, left), strict=True):
+            np.testing.assert_array_equal(decoder.decode(packet, len(window)), window)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_reset_matches_a_fresh_stream_after_content_failure(backend: str) -> None:
+    """Reset clears prediction, ADC mapping and failure state while preserving the backend."""
+    channels, groups, bits = 3, 2, 10
+    encoder = LosslessStreamEncoder(channels, bits, groups, backend)
+    decoder = LosslessStreamDecoder(channels, bits, groups, backend)
+    first = _adc_stream(63, channels, 18)
+    np.testing.assert_array_equal(decoder.decode(encoder.encode(first), len(first)), first)
+    empty = np.empty((0, channels), dtype=np.int16)
+    wire = encoder.encode(empty)
+    with pytest.raises(ValueError, match="invalid range-coder tail"):
+        decoder.decode(wire[:-1] + b"\x01", 0)
+    with pytest.raises(ValueError, match="earlier corrupted packet"):
+        decoder.decode(wire, 0)
+    encoder.reset()
+    decoder.reset()
+    assert encoder.backend == decoder.backend == backend
+    assert encoder.device is None
+
+    new = _adc_stream(23, channels, 42)
+    fresh = LosslessStreamEncoder(channels, bits, groups, "python")
+    for window in (new[:16], new[16:]):
+        packet = encoder.encode(window)
+        assert packet == fresh.encode(window)
+        np.testing.assert_array_equal(decoder.decode(packet, len(window)), window)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_int16_deviation_must_belong_to_the_claimed_level(backend: str) -> None:
+    """A valid range-coded value in the wrong ADC bucket breaks the decoder."""
+    coder = ws._RangeEncoder()
+    ws._ResidualModel().put(coder, 0)  # Initial predicted level for a 1-bit ADC is 1.
+    ws._ResidualModel().put(coder, ws._zigzag(-65535))  # Force the first value to level 0.
+    body = coder.finish()
+    packet = len(body).to_bytes(4, "big") + body
+    decoder = LosslessStreamDecoder(1, 1, 1, backend)
+    with pytest.raises(ValueError, match="sample outside ADC level"):
+        decoder.decode(packet, 1)
+    with pytest.raises(ValueError, match="earlier corrupted packet"):
+        decoder.decode(packet, 1)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_window_and_adc_input_are_validated_before_conversion(backend: str) -> None:
+    """Strided integer input keeps its values and nonnumeric inputs raise ValueError."""
+    encoder = LosslessStreamEncoder(np.int64(2), np.int64(16), np.int64(1), backend)
+    decoder = LosslessStreamDecoder(2, backend=backend)
+    values = np.arange(24, dtype=np.uint16).reshape(6, 4)[::-1, ::2]
+    np.testing.assert_array_equal(decoder.decode(encoder.encode(values), len(values)), values)
+    for array in (np.array([[1j, 2j]]), np.array([["0", "0"]]), np.array([[np.inf, 0]])):
+        with pytest.raises(ValueError, match="integer samples"):
+            encoder.encode(array)
+        with pytest.raises(ValueError, match="integer samples"):
+            detect_adc_bits(array, backend)
+    for factory in (LosslessStreamEncoder, LosslessStreamDecoder):
+        with pytest.raises(ValueError, match="must be integers"):
+            factory(cast(int, 1.0), backend=backend)
 
 
 @pytest.mark.parametrize("backend", BACKENDS)

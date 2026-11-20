@@ -24,6 +24,36 @@ with SIMD-accelerated bitstream operations, IR compilation, and HDC support.
 
 **[Criterion Benchmarks →](rust-benchmarks.md)** — all measured latencies for engine, neurons, and analysis.
 
+## Lossless waveform streaming
+
+Use `codecs::waveform_stream::{StreamEncoder, StreamDecoder}` on row-major
+`i16` samples. Both endpoints use the same channel count, ADC width and
+contiguous group count. Pass the number of rows separately for each packet.
+
+```rust
+use sc_neurocore_engine::codecs::waveform_stream::{StreamDecoder, StreamEncoder};
+
+fn round_trip() -> Result<(), String> {
+    let mut encoder = StreamEncoder::new(2, 16, 1)?;
+    let mut decoder = StreamDecoder::new(2, 16, 1)?;
+    let window = [40, -2, 42, -1, 43, -3];
+    let packet = encoder.encode(&window, 3)?;
+    assert_eq!(decoder.decode(&packet, 3)?, window);
+    encoder.reset();
+    decoder.reset();
+    Ok(())
+}
+```
+
+With the `gpu` feature, `codecs::waveform_stream_gpu::GpuStreamEncoder`
+encodes one group per channel on a selected physical adapter. Read
+`adapter_name` and `device_api()` after constructing it. Pass the packets
+to a CPU `StreamDecoder` with `groups == channels`. The matching PyO3
+classes in `sc_neurocore_engine.sc_neurocore_engine` are
+`WaveformLosslessEncoder`, `WaveformLosslessDecoder` and the optional
+`WaveformLosslessGpuEncoder`. The [BCI guide](../guides/bci_codec.md#streaming-lossless-coder)
+documents Python backend selection and device qualification.
+
 ## Fallible dense storage
 
 `layer::DenseLayer::try_new` and the `try_get_weights`, `try_set_weights`,

@@ -1,0 +1,812 @@
+{
+  "schema": 1,
+  "source_hashes": {
+    "Cargo.lock": "4e0b91dc6a252d60305ef71958bf8c0e5543bac8714b4d991e578bba0e06dc57",
+    "benchmarks/bench_isi_codec.py": "a279f179f2e3a750e80887d30b02fa4b06713d89932eed4ec00dfe3a675a931e",
+    "benchmarks/bench_predictive_codec.py": "41cffc6a52a7ec42f92f8f993c42e70a772458e4a1dcf94e002654d8ee1c5ff0",
+    "benchmarks/bench_waveform_stream_backends.py": "43459530df33df5b034e06702b8aaa25d58f120c827f16058a0858eaf198d5c2",
+    "benchmarks/bench_waveform_stream_fixture.py": "ea1a61da0f5b34a9d3b086754f8024b102563c50f9deaf40d9de6ec69045b601",
+    "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
+    "engine/Cargo.toml": "6e60942c76bd4e8f02688bab0a13b62cfa9762a762eac883701bc0418cd4edb5",
+    "engine/rust-toolchain.toml": "8ecd8d4ef06fc3aa75cdb339fb76e0fb6b5989f04243862df4769c755ecd162f",
+    "src/sc_neurocore/spike_codec/waveform_stream.py": "00acf569dc29b937d66dd94d5aa60716adc7a00449ff750fdcc34190cf574b0b",
+    "engine/src/waveform_stream.rs": "51180d3ad77eec13f879a63454ca309afa30e9336522034fff011f4d342c84f0",
+    "engine/src/waveform_stream_gpu.rs": "49f1bc2f0a83ec5f48215d051dc64f8b5a6b26bc16a81f21b8bf198dbbe7444d",
+    "engine/src/waveform_stream_gpu.wgsl": "e122123043758b59ede25d6aecfa572469d94a543358e6079c4d8d02029ab7b4",
+    "engine/src/bindings/waveform_stream.rs": "c09b1e61903fc36e807d17c92ba0106dcfe21190bb123f5d9ef7e8ed330c919f"
+  },
+  "recording": {
+    "url": "https://physionet.org/files/eegmmidb/1.0.0/S001/S001R01.edf",
+    "sha256": "4743b736131a7e147c150e8b37711029b6cda5e356c4b3e8261a03cdcaaf8b0c",
+    "sample_rate_hz": 160
+  },
+  "recording_license": "Open Data Commons Attribution License v1.0",
+  "method": "Constructor setup plus every encode and CPU decode, recorded on installed wheels.",
+  "native_profile": {
+    "rust": "1.98.1",
+    "build": "release",
+    "features": [
+      "z3",
+      "gpu"
+    ]
+  },
+  "repetitions": 3,
+  "profiles": [
+    {
+      "label": "Linux · Radeon RX 6600 XT",
+      "host": {
+        "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+        "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+        "logical_cpus": 12,
+        "affinity": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "thread_siblings": {
+          "2": "2,8",
+          "3": "3,9",
+          "4": "4,10",
+          "5": "5,11"
+        },
+        "host_load_averages": [
+          5.66455078125,
+          5.43505859375,
+          6.05712890625
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+        "numpy": "2.5.4",
+        "visible_memory_kib": 32638724
+      },
+      "driver": "Mesa 25.2.8-0ubuntu0.24.04.4 (RADV)",
+      "rayon_num_threads": "4",
+      "recorded_at_utc": "2026-11-20T10:04:50.155153+00:00",
+      "wheel_sha256": {
+        "python": "72586f8d4eadd7cbe4ede2ab963ef45dc082d27eeec304a930f0faa483184178",
+        "engine": "948920a11df44df9357ca91cf8e1d751dd5d638716f387b49a82d045d82f7366"
+      },
+      "installed_sha256": {
+        "sc_neurocore.spike_codec.waveform_stream": "00acf569dc29b937d66dd94d5aa60716adc7a00449ff750fdcc34190cf574b0b",
+        "sc_neurocore_engine.sc_neurocore_engine": "eadbeaba803d419c139eb0762a42e2bfeed94ee3eed0053a4e37820f75b09497"
+      },
+      "measurement_receipt_sha256": "a143ae2c60fe2fe0ca0e4428f69fca3966da479ae26bf163e37144ddfee1836e",
+      "cases": [
+        {
+          "channels": 1,
+          "groups": 1,
+          "adc_bits": 16,
+          "window_rows": 17,
+          "tail_rows": 2,
+          "packets": 575,
+          "rows": 9760,
+          "input_bytes": 19520,
+          "packet_bytes": 12510,
+          "packet_sha256": "9bcf095500cda11e7a7b37f7970d76e83cf4e3bdf4f6a4bb214573e6a6686816",
+          "median_total_ns": {
+            "python": 306000285,
+            "rust": 4401601,
+            "gpu": 569271655
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 3611812,
+              "encode_stream_median_ns": 158706744,
+              "decode_stream_median_ns": 143681729,
+              "total_ns": [
+                279728246,
+                332398205,
+                306000285
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 429250,
+              "encode_stream_median_ns": 2623342,
+              "decode_stream_median_ns": 1391007,
+              "total_ns": [
+                4833502,
+                4401601,
+                4196511
+              ]
+            },
+            "gpu": {
+              "device": [
+                "AMD Radeon RX 6600 XT (RADV NAVI23)",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 139273786,
+              "encode_stream_median_ns": 357146662,
+              "decode_stream_median_ns": 6334057,
+              "total_ns": [
+                501411129,
+                569271655,
+                796088113
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 3,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 61652,
+          "packet_sha256": "0c5696061beeb1b928113e75bb150add51f2e6d064d540d006b0648fb7894eb5",
+          "median_total_ns": {
+            "python": 1920504593,
+            "rust": 6775649
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 17028697,
+              "encode_stream_median_ns": 991493119,
+              "decode_stream_median_ns": 910060255,
+              "total_ns": [
+                2199745447,
+                1798600975,
+                1920504593
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 1616441,
+              "encode_stream_median_ns": 3245506,
+              "decode_stream_median_ns": 2545127,
+              "total_ns": [
+                7848181,
+                6775649,
+                5868010
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 8,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 64297,
+          "packet_sha256": "295cebba0840d281713bfb2eb1dc4cecf123c0736c9681e6f6ff952af4cfe4b0",
+          "median_total_ns": {
+            "python": 1774225094,
+            "rust": 9111893,
+            "gpu": 409568021
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 29929589,
+              "encode_stream_median_ns": 904140340,
+              "decode_stream_median_ns": 835126085,
+              "total_ns": [
+                1774225094,
+                1878690173,
+                1743158005
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 3276410,
+              "encode_stream_median_ns": 3251870,
+              "decode_stream_median_ns": 2553119,
+              "total_ns": [
+                10423413,
+                9111893,
+                8847165
+              ]
+            },
+            "gpu": {
+              "device": [
+                "AMD Radeon RX 6600 XT (RADV NAVI23)",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 145033036,
+              "encode_stream_median_ns": 259909785,
+              "decode_stream_median_ns": 5537052,
+              "total_ns": [
+                542315884,
+                409568021,
+                405423924
+              ]
+            }
+          }
+        },
+        {
+          "channels": 64,
+          "groups": 64,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 1249280,
+          "packet_bytes": 509952,
+          "packet_sha256": "91eea17acd6f720056aad07ac634c75d48e19aa28f2d402c30aebd4a0db8c72e",
+          "median_total_ns": {
+            "python": 13982756618,
+            "rust": 67732856,
+            "gpu": 1361689438
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 425055646,
+              "encode_stream_median_ns": 7028253048,
+              "decode_stream_median_ns": 6480872640,
+              "total_ns": [
+                13982756618,
+                13863392134,
+                15154899159
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 32134840,
+              "encode_stream_median_ns": 15624269,
+              "decode_stream_median_ns": 15187255,
+              "total_ns": [
+                77640231,
+                67732856,
+                61470082
+              ]
+            },
+            "gpu": {
+              "device": [
+                "AMD Radeon RX 6600 XT (RADV NAVI23)",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 384115899,
+              "encode_stream_median_ns": 965135883,
+              "decode_stream_median_ns": 17694667,
+              "total_ns": [
+                1361689438,
+                1344793815,
+                1446425098
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "Linux · GeForce GTX 1070 Ti",
+      "host": {
+        "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+        "processor": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+        "logical_cpus": 12,
+        "affinity": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "thread_siblings": {
+          "2": "2,8",
+          "3": "3,9",
+          "4": "4,10",
+          "5": "5,11"
+        },
+        "host_load_averages": [
+          7.5732421875,
+          5.85400390625,
+          6.15087890625
+        ],
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+        "numpy": "2.5.4",
+        "visible_memory_kib": 32638724
+      },
+      "driver": "NVIDIA 580.178.04",
+      "rayon_num_threads": "4",
+      "recorded_at_utc": "2026-11-20T10:05:54.467464+00:00",
+      "wheel_sha256": {
+        "python": "72586f8d4eadd7cbe4ede2ab963ef45dc082d27eeec304a930f0faa483184178",
+        "engine": "948920a11df44df9357ca91cf8e1d751dd5d638716f387b49a82d045d82f7366"
+      },
+      "installed_sha256": {
+        "sc_neurocore.spike_codec.waveform_stream": "00acf569dc29b937d66dd94d5aa60716adc7a00449ff750fdcc34190cf574b0b",
+        "sc_neurocore_engine.sc_neurocore_engine": "eadbeaba803d419c139eb0762a42e2bfeed94ee3eed0053a4e37820f75b09497"
+      },
+      "measurement_receipt_sha256": "d48c66f6bd153f33b0fcfeb7fff0c085da8e8036221c238e801bc6c191d1dee3",
+      "cases": [
+        {
+          "channels": 1,
+          "groups": 1,
+          "adc_bits": 16,
+          "window_rows": 17,
+          "tail_rows": 2,
+          "packets": 575,
+          "rows": 9760,
+          "input_bytes": 19520,
+          "packet_bytes": 12510,
+          "packet_sha256": "9bcf095500cda11e7a7b37f7970d76e83cf4e3bdf4f6a4bb214573e6a6686816",
+          "median_total_ns": {
+            "python": 256339113,
+            "rust": 4083062,
+            "gpu": 372797360
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 1826128,
+              "encode_stream_median_ns": 130942438,
+              "decode_stream_median_ns": 120109790,
+              "total_ns": [
+                256339113,
+                259216413,
+                236022573
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 405659,
+              "encode_stream_median_ns": 2378923,
+              "decode_stream_median_ns": 1258950,
+              "total_ns": [
+                4477909,
+                4083062,
+                3749957
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1070 Ti",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 139373223,
+              "encode_stream_median_ns": 229833755,
+              "decode_stream_median_ns": 3590382,
+              "total_ns": [
+                750433106,
+                360926528,
+                372797360
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 3,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 61652,
+          "packet_sha256": "0c5696061beeb1b928113e75bb150add51f2e6d064d540d006b0648fb7894eb5",
+          "median_total_ns": {
+            "python": 1729488094,
+            "rust": 7416873
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 9808407,
+              "encode_stream_median_ns": 878971547,
+              "decode_stream_median_ns": 838708047,
+              "total_ns": [
+                1729488094,
+                1815346479,
+                1702858334
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 948742,
+              "encode_stream_median_ns": 3703595,
+              "decode_stream_median_ns": 2808038,
+              "total_ns": [
+                8277028,
+                7416873,
+                7397589
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 8,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 64297,
+          "packet_sha256": "295cebba0840d281713bfb2eb1dc4cecf123c0736c9681e6f6ff952af4cfe4b0",
+          "median_total_ns": {
+            "python": 2192801832,
+            "rust": 10236464,
+            "gpu": 506977879
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 42386670,
+              "encode_stream_median_ns": 1121621176,
+              "decode_stream_median_ns": 1027303556,
+              "total_ns": [
+                2149742279,
+                2192801832,
+                2269660810
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 2777764,
+              "encode_stream_median_ns": 4298965,
+              "decode_stream_median_ns": 3317248,
+              "total_ns": [
+                19049380,
+                10236464,
+                9555471
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1070 Ti",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 160339319,
+              "encode_stream_median_ns": 331744270,
+              "decode_stream_median_ns": 7194315,
+              "total_ns": [
+                506977879,
+                473833461,
+                516506943
+              ]
+            }
+          }
+        },
+        {
+          "channels": 64,
+          "groups": 64,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 1249280,
+          "packet_bytes": 509952,
+          "packet_sha256": "91eea17acd6f720056aad07ac634c75d48e19aa28f2d402c30aebd4a0db8c72e",
+          "median_total_ns": {
+            "python": 15892550121,
+            "rust": 73506354,
+            "gpu": 1319574698
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 434985015,
+              "encode_stream_median_ns": 7991455668,
+              "decode_stream_median_ns": 7332313322,
+              "total_ns": [
+                15892550121,
+                16154953401,
+                14438271848
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 39505080,
+              "encode_stream_median_ns": 14411834,
+              "decode_stream_median_ns": 14295114,
+              "total_ns": [
+                73506354,
+                87091873,
+                54348360
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1070 Ti",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 241362407,
+              "encode_stream_median_ns": 1056671454,
+              "decode_stream_median_ns": 33291404,
+              "total_ns": [
+                1396936835,
+                1306729942,
+                1319574698
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "Windows · GeForce GTX 1060",
+      "host": {
+        "platform": "Windows-11-10.0.26300-SP0",
+        "processor": "Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz",
+        "logical_cpus": 12,
+        "affinity": [],
+        "thread_siblings": {},
+        "host_load_averages": null,
+        "thread_environment": {
+          "OPENBLAS_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1"
+        },
+        "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "numpy": "2.5.5",
+        "system_model": "GS73 Stealth 8RE",
+        "physical_memory_bytes": 34191597568
+      },
+      "driver": "NVIDIA 32.0.15.8278 (582.78)",
+      "rayon_num_threads": "4",
+      "recorded_at_utc": "2026-11-20T10:03:48.638206+00:00",
+      "wheel_sha256": {
+        "python": "72586f8d4eadd7cbe4ede2ab963ef45dc082d27eeec304a930f0faa483184178",
+        "engine": "e208a6f99d6e52c51909a17c3a6d7eb2787354428f0a9d2275b40f14fcf853bc"
+      },
+      "installed_sha256": {
+        "sc_neurocore.spike_codec.waveform_stream": "00acf569dc29b937d66dd94d5aa60716adc7a00449ff750fdcc34190cf574b0b",
+        "sc_neurocore_engine.sc_neurocore_engine": "b69698526e8089097ea011f7268a04828a6abbb7a909d8734a12f43c40d69ef3"
+      },
+      "measurement_receipt_sha256": "559987e061b149946b156898a9cae3472ce7f675e9c8d07ed3d1ab109c50233e",
+      "cases": [
+        {
+          "channels": 1,
+          "groups": 1,
+          "adc_bits": 16,
+          "window_rows": 17,
+          "tail_rows": 2,
+          "packets": 575,
+          "rows": 9760,
+          "input_bytes": 19520,
+          "packet_bytes": 12510,
+          "packet_sha256": "9bcf095500cda11e7a7b37f7970d76e83cf4e3bdf4f6a4bb214573e6a6686816",
+          "median_total_ns": {
+            "python": 342165800,
+            "rust": 5523800,
+            "gpu": 499430000
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 2852500,
+              "encode_stream_median_ns": 178160600,
+              "decode_stream_median_ns": 161152700,
+              "total_ns": [
+                338241800,
+                342165800,
+                348759100
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 682600,
+              "encode_stream_median_ns": 3136700,
+              "decode_stream_median_ns": 1732100,
+              "total_ns": [
+                6409600,
+                5523800,
+                5519700
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1060",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 143033100,
+              "encode_stream_median_ns": 349682100,
+              "decode_stream_median_ns": 6779900,
+              "total_ns": [
+                2407510500,
+                499430000,
+                498952100
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 3,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 61652,
+          "packet_sha256": "0c5696061beeb1b928113e75bb150add51f2e6d064d540d006b0648fb7894eb5",
+          "median_total_ns": {
+            "python": 2308565000,
+            "rust": 12127200
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 9790600,
+              "encode_stream_median_ns": 1194549600,
+              "decode_stream_median_ns": 1104224800,
+              "total_ns": [
+                2329023000,
+                2308565000,
+                2274828400
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 1670800,
+              "encode_stream_median_ns": 5928100,
+              "decode_stream_median_ns": 4424800,
+              "total_ns": [
+                12127200,
+                11259400,
+                13083400
+              ]
+            }
+          }
+        },
+        {
+          "channels": 8,
+          "groups": 8,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 156160,
+          "packet_bytes": 64297,
+          "packet_sha256": "295cebba0840d281713bfb2eb1dc4cecf123c0736c9681e6f6ff952af4cfe4b0",
+          "median_total_ns": {
+            "python": 2589001300,
+            "rust": 17348800,
+            "gpu": 509196000
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 26666600,
+              "encode_stream_median_ns": 1329578600,
+              "decode_stream_median_ns": 1231424000,
+              "total_ns": [
+                2589878100,
+                2589001300,
+                2580843000
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 4291000,
+              "encode_stream_median_ns": 7376100,
+              "decode_stream_median_ns": 5608000,
+              "total_ns": [
+                17348800,
+                17760800,
+                15874200
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1060",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 155556000,
+              "encode_stream_median_ns": 342978200,
+              "decode_stream_median_ns": 9772600,
+              "total_ns": [
+                516521700,
+                496992200,
+                509196000
+              ]
+            }
+          }
+        },
+        {
+          "channels": 64,
+          "groups": 64,
+          "adc_bits": 16,
+          "window_rows": 173,
+          "tail_rows": 72,
+          "packets": 57,
+          "rows": 9760,
+          "input_bytes": 1249280,
+          "packet_bytes": 509952,
+          "packet_sha256": "91eea17acd6f720056aad07ac634c75d48e19aa28f2d402c30aebd4a0db8c72e",
+          "median_total_ns": {
+            "python": 20907796000,
+            "rust": 81774300,
+            "gpu": 2529816000
+          },
+          "measurements": {
+            "python": {
+              "device": null,
+              "decoder": "python",
+              "setup_median_ns": 319472700,
+              "encode_stream_median_ns": 10728032300,
+              "decode_stream_median_ns": 9860291000,
+              "total_ns": [
+                20312406200,
+                21033109600,
+                20907796000
+              ]
+            },
+            "rust": {
+              "device": null,
+              "decoder": "rust",
+              "setup_median_ns": 35564500,
+              "encode_stream_median_ns": 23893700,
+              "decode_stream_median_ns": 22316100,
+              "total_ns": [
+                82194000,
+                74528100,
+                81774300
+              ]
+            },
+            "gpu": {
+              "device": [
+                "NVIDIA GeForce GTX 1060",
+                "Vulkan"
+              ],
+              "decoder": "rust",
+              "setup_median_ns": 1348911500,
+              "encode_stream_median_ns": 1156983500,
+              "decode_stream_median_ns": 24337700,
+              "total_ns": [
+                2551104900,
+                1437516300,
+                2529816000
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

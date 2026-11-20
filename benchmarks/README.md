@@ -75,6 +75,23 @@ gate, so the comparison cannot run before the commit.
 
 ## Scripts
 
+The lossless waveform harness compares clean stream setup and sequential
+encode-plus-decode on the published PhysioNet EEG recording. Install the
+Python wheel and an engine wheel built with Cargo's `gpu` feature. Use
+the recorded driver description for the selected adapter.
+
+```sh
+curl -fLO https://physionet.org/files/eegmmidb/1.0.0/S001/S001R01.edf
+export RAYON_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+SC_GPU_ADAPTER='RX 6600 XT' taskset -c 2,3,4,5 \
+  python benchmarks/bench_waveform_stream_backends.py S001R01.edf \
+  --gpu --gpu-driver 'Mesa 25.2.8 (RADV)' --output waveform-backends.json
+```
+
+The harness checks the recording SHA-256, every packet and every restored
+sample. Omit both GPU arguments to compare the CPU implementations.
+See the [waveform backend reference measurements](../docs/benchmarks/BENCHMARKS.md#lossless-waveform-streaming-backends).
+
 The address-event harness measures full AERX and AERI containers and runs
 two separate UDP measurements. The first uses raw events on localhost.
 The second uses the raster adapter, including conversion on both sides.

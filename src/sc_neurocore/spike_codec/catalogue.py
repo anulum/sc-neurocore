@@ -117,7 +117,9 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         later does not update existing instances. Start a fresh process in that case.
         Native loader OSError or RuntimeError excludes ``auto`` from advertised
         choices. An ImportError loading a present extension does as well
-        for ISI, predictive, delta, framed rasters and address events.
+        for ISI, predictive, delta, framed rasters, address events and lossless
+        waveform streaming. The optional GPU waveform entry is an encoder-only
+        selector and is advertised separately from the CPU backend choices.
         An absent engine permits the classes' documented Python fallback.
 
     Raises
@@ -144,7 +146,7 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             selected.native_symbols,
             diagnostics,
             strict_native_import=descriptor.name
-            in ("isi", "predictive", "delta", "streaming", "aer"),
+            in ("isi", "predictive", "delta", "streaming", "aer", "lossless_stream"),
         )
     choices: tuple[str, ...] = ()
     if descriptor.backend_parameter and python_available:
@@ -153,6 +155,13 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
             choices = ("auto", "python")
         if native_status == "available":
             choices += ("rust",)
+    encoder_only: tuple[str, ...] = ()
+    if descriptor.name == "lossless_stream" and python_available and native_status == "available":
+        gpu_status = _check_module(
+            selected.native_module or "", ("WaveformLosslessGpuEncoder",), []
+        )
+        if gpu_status == "available":
+            encoder_only = ("gpu",)
     return CodecAvailability(
         name=descriptor.name,
         variant=selected.name,
@@ -161,4 +170,5 @@ def probe_codec(name: str, variant: str | None = None) -> CodecAvailability:
         native_scope=selected.native_scope,
         backend_choices=choices,
         diagnostics=tuple(diagnostics),
+        encoder_only_backends=encoder_only,
     )

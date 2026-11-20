@@ -305,6 +305,9 @@ impl<'a> RangeDecoder<'a> {
         if self.pos != self.data.len() {
             return Err("corrupted lossless packet: trailing range-coder bytes".into());
         }
+        if self.code != 0 {
+            return Err("corrupted lossless packet: invalid range-coder tail".into());
+        }
         Ok(())
     }
 }
@@ -628,7 +631,10 @@ impl GroupState {
 
 pub(crate) fn group_bounds(channels: usize, groups: usize) -> Vec<(usize, usize)> {
     (0..groups)
-        .map(|g| (g * channels / groups, (g + 1) * channels / groups))
+        .map(|g| {
+            let boundary = |n| ((n as u128 * channels as u128) / groups as u128) as usize;
+            (boundary(g), boundary(g + 1))
+        })
         .collect()
 }
 
@@ -671,6 +677,13 @@ impl StreamEncoder {
             levels,
             groups,
         })
+    }
+
+    /// Start an independent stream with the same channel configuration.
+    pub fn reset(&mut self) {
+        for (start, end, state) in &mut self.groups {
+            *state = GroupState::new(*end - *start, self.bits);
+        }
     }
 
     /// Encode one row-major `(samples, channels)` window into a packet.
@@ -810,6 +823,9 @@ fn decode_sample(
         if !(-32768..=32767).contains(&value) {
             return Err("corrupted lossless packet: sample outside int16".into());
         }
+        if level_of(value, bits) != level as i64 {
+            return Err("corrupted lossless packet: sample outside ADC level".into());
+        }
         table[level] = value as i32;
         value as i32
     };
@@ -841,13 +857,20 @@ impl StreamDecoder {
         })
     }
 
+    /// Start an independent stream with the same configuration and clear any content error.
+    pub fn reset(&mut self) {
+        for (start, end, state) in &mut self.groups {
+            *state = GroupState::new(*end - *start, self.bits);
+        }
+        self.broken = false;
+    }
+
     /// Decode a packet of `samples` rows into a row-major `(samples, channels)` window.
     ///
     /// Packet framing (group lengths, trailing bytes) is checked before any state changes,
     /// and such a packet is refused with the decoder unchanged. A packet whose coded content
     /// turns out invalid while decoding leaves the stream state inconsistent: the decoder
-    /// refuses it and every later packet, and a new decoder must be started (as for any
-    /// stateful stream codec after a lost packet).
+    /// refuses it and later packets until reset for a new, independent stream.
     pub fn decode(&mut self, packet: &[u8], samples: usize) -> Result<Vec<i16>, String> {
         if self.broken {
             return Err("lossless stream decoder is broken by an earlier corrupted packet; start a new decoder".into());
@@ -856,11 +879,13 @@ impl StreamDecoder {
         let mut pos = 0;
         for _ in 0..self.groups.len() {
             let header = packet
-                .get(pos..pos + 4)
+                .get(pos..)
+                .and_then(|remaining| remaining.get(..4))
                 .ok_or_else(|| "corrupted lossless packet: missing group length".to_string())?;
             let length = u32::from_be_bytes([header[0], header[1], header[2], header[3]]) as usize;
             let body = packet
-                .get(pos + 4..pos + 4 + length)
+                .get(pos + 4..)
+                .and_then(|remaining| remaining.get(..length))
                 .ok_or_else(|| "corrupted lossless packet: group longer than packet".to_string())?;
             if body.len() < 5 || body[0] != 0 {
                 return Err("corrupted lossless packet: bad range-coder start".into());
@@ -883,7 +908,14 @@ impl StreamDecoder {
             }
         }
         let (bits, channels) = (self.bits, self.channels);
-        let mut window = vec![0_i16; samples * channels];
+        let value_count = samples
+            .checked_mul(channels)
+            .ok_or_else(|| "corrupted lossless packet: decoded shape is too large".to_string())?;
+        let mut window = Vec::new();
+        window
+            .try_reserve_exact(value_count)
+            .map_err(|error| format!("lossless stream decode output allocation: {error}"))?;
+        window.resize(value_count, 0_i16);
         let results: Vec<Result<Vec<i16>, String>> = self
             .groups
             .par_iter_mut()

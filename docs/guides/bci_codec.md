@@ -135,31 +135,50 @@ for window in windows:                             # (samples, 1024) int16, e.g.
 4. An adaptive binary tree with an Elias-gamma escape codes the prediction
    error through an LZMA-style binary range coder.
 
-All arithmetic is integer, so the Rust engine and the pure-Python reference
-write identical bytes. Channel groups have their own range coders and run in
-parallel in Rust. A sample that contradicts the stream's ADC levels is refused
-before any state changes; a packet whose content is corrupted breaks the
-decoder, which then refuses every later packet (start a new decoder, as for any
-stateful stream codec after a lost packet). With the engine's `gpu` feature,
-`GpuStreamEncoder` (Rust only) encodes one range coder per channel on a GPU and
-writes the same packets as the CPU encoder with `groups == channels`.
+The Rust CPU engine and the pure-Python reference write identical packets
+for the same configuration. Rust runs independent channel groups in
+parallel. Contradictory ADC values and framing errors leave stream state
+usable. Invalid coded content stops decoding until `reset()`. Call
+`reset()` on both endpoints at a shared stream boundary. For a lost
+packet, discard the old sequence and agree on a new boundary.
 
-The GPU encoder accepts 1–65,535 channels, ADC widths of 1–16 bits, and
-nonzero maximum window lengths that fit a `u32`. It checks the output,
-state and lookup-table storage against the device's buffer and binding
-limits before allocation. Invalid window shapes, windows above the configured
-capacity and contradictory ADC samples return an error; a valid window can
-then continue the same stream. The GPU contract tests require a physical
-Vulkan, Metal or DX12 adapter and fail if it is unavailable:
+An engine wheel built with the Cargo `gpu` feature also accepts
+`backend="gpu"` on the waveform encoder. It needs exactly one group per
+channel and a positive `gpu_max_samples`. Windows may contain fewer rows
+than that capacity, including the final short window. The GPU produces the
+same bytes as the CPU encoder for those groups. Decode on Rust CPU or with
+the Python reference.
 
-```bash
-cargo test --manifest-path engine/Cargo.toml --no-default-features --features gpu \
-  --test waveform_stream_gpu -- --test-threads=1
+```python
+encoder = LosslessStreamEncoder(
+    64, adc_bits=16, groups=64, backend="gpu", gpu_max_samples=173
+)
+decoder = LosslessStreamDecoder(64, adc_bits=16, groups=64, backend="rust")
+adapter_name, graphics_api = encoder.device
+for window in windows:  # At most 173 rows by 64 channels per packet.
+    packet = encoder.encode(window)
+    assert (decoder.decode(packet, len(window)) == window).all()
 ```
 
-Set `SC_GPU_ADAPTER` to a substring of the desired adapter's name to select it.
-The contract vectors exercise integer boundaries, missing ADC codes and
-stream-state recovery; they are separate from recording-based benchmarks.
+For Rust callers, `codecs::waveform_stream_gpu::GpuStreamEncoder` accepts
+1–65,535 channels, ADC widths of 1–16 bits, and a maximum window that fits a
+nonzero `u32`. Actual capacity also depends on the device's buffer and
+storage-binding limits. An invalid shape, capacity refusal or contradictory
+ADC value allows a corrected window to continue the same sequence. After a
+device or readback failure, start a new encoder and coordinate a new stream
+with the receiver.
+
+Set `SC_GPU_ADAPTER` to a substring of the physical adapter's name. The
+reported graphics API identifies the execution path. The published AMD and
+NVIDIA Linux results use Vulkan and WGSL. Run the physical contract tests and
+compare setup, transfer, packet readback and CPU decoding on your workload.
+
+```bash
+cargo test --locked --features gpu --test waveform_stream_gpu -- --test-threads=1
+```
+
+See the [waveform streaming comparison](../benchmarks/BENCHMARKS.md#lossless-waveform-streaming-backends)
+for the complete path measured on a 64-electrode recording.
 
 ### Rust kernels
 

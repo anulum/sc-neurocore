@@ -1,11 +1,11 @@
 {
   "all_record_currency_totals": {
-    "current": 30,
+    "current": 31,
     "outdated": 120,
     "reviewed": 0,
     "unbound": 175
   },
-  "all_records": 325,
+  "all_records": 326,
   "attribution_totals": {
     "bound_script": 61,
     "class_name": 26
@@ -3048,6 +3048,10 @@
     {
       "currency": "current",
       "name": "raster_stream_backends.json"
+    },
+    {
+      "currency": "current",
+      "name": "waveform_stream_backends.json"
     }
   ],
   "unused_source_change_reviews": []

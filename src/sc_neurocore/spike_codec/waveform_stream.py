@@ -31,7 +31,8 @@ Channels split into contiguous groups, each with its own range coder and level t
 code in parallel in the Rust engine. Within a group each channel's samples of the window are
 coded together (channel-major), which keeps one channel's state in cache. The production implementation is the Rust one in
 ``sc_neurocore_engine`` (``backend="rust"`` or ``"auto"``); this module's pure-Python coder is the
-reference it is tested against (identical bytes) and is far too slow for real-time use.
+byte-identical reference. An optional GPU-feature engine encodes one group per channel, using
+the same packet format and CPU decoder.
 """
 
 from __future__ import annotations
@@ -39,7 +40,7 @@ from __future__ import annotations
 import importlib
 import operator
 from types import ModuleType
-from typing import Any
+from typing import Any, SupportsIndex, cast
 
 import numpy as np
 
@@ -57,6 +58,9 @@ EXCLUDE_MIN_COUNT = 8
 INCLUDE_RATIO = 16
 COUNT_LIMIT = 1 << 16
 STREAM_BACKENDS = ("auto", "python", "rust")
+_ENCODER_BACKENDS = (*STREAM_BACKENDS, "gpu")
+_ENGINE_PACKAGE = "sc_neurocore_engine"
+_ENGINE_MODULE = f"{_ENGINE_PACKAGE}.{_ENGINE_PACKAGE}"
 _PROB_INIT = 1 << (PROB_BITS - 1)
 _TOP = 1 << 24
 _MASK32 = 0xFFFFFFFF
@@ -94,14 +98,9 @@ def detect_adc_bits(samples: np.ndarray[Any, Any], backend: str = "auto") -> int
     ValueError
         For non-integer samples or samples outside the int16 range.
     """
-    array = np.asarray(samples)
-    if array.size and not np.issubdtype(array.dtype, np.integer):
-        if not bool(np.all(np.isfinite(array))) or not bool(np.all(array == np.round(array))):
-            raise ValueError("ADC detection needs integer samples")
-    if array.size and (array.min() < -32768 or array.max() > 32767):
-        raise ValueError("ADC detection needs samples in the int16 range")
-    flat = np.ascontiguousarray(array.astype(np.int16).reshape(-1))
-    native = _native(backend)
+    _validate_cpu_backend(backend)
+    flat = _integer_samples(np.asarray(samples), "ADC detection").reshape(-1)
+    native = _native(backend, "waveform_codec_detect_adc_bits")
     if native is not None:
         return int(native.waveform_codec_detect_adc_bits(flat))
     values = np.unique(flat).astype(np.int64)
@@ -112,28 +111,34 @@ def detect_adc_bits(samples: np.ndarray[Any, Any], backend: str = "auto") -> int
     return 16
 
 
-def _native(backend: str) -> ModuleType | None:
-    """Return the engine module with the stream coder, or None for the Python reference."""
-    if backend not in STREAM_BACKENDS:
-        raise ValueError(f"backend must be one of {STREAM_BACKENDS}, got {backend!r}")
+def _native(backend: str, symbol: str) -> ModuleType | None:
+    """Resolve one engine entry point without suppressing a broken dependency."""
+    if backend not in _ENCODER_BACKENDS:
+        raise ValueError(f"backend must be one of {_ENCODER_BACKENDS}, got {backend!r}")
     if backend == "python":
         return None
     try:
-        engine: ModuleType | None = importlib.import_module(
-            "sc_neurocore_engine.sc_neurocore_engine"
-        )
-    except ImportError:
-        engine = None
-    if engine is not None and hasattr(engine, "WaveformLosslessEncoder"):
-        return engine
-    if backend == "rust":
+        engine = importlib.import_module(_ENGINE_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in (_ENGINE_PACKAGE, _ENGINE_MODULE):
+            raise
+    else:
+        if callable(getattr(engine, symbol, None)):
+            return engine
+    if backend != "auto":
         raise ValueError(
-            "backend 'rust' needs sc_neurocore_engine with the streaming lossless coder"
+            f"backend {backend!r} needs sc_neurocore_engine with the {symbol} entry point"
         )
     return None
 
 
-def _sample_count(samples: Any) -> int:
+def _validate_cpu_backend(backend: str) -> None:
+    """Check the backend names supported by CPU-only stream operations."""
+    if backend not in STREAM_BACKENDS:
+        raise ValueError(f"backend must be one of {STREAM_BACKENDS}, got {backend!r}")
+
+
+def _sample_count(samples: SupportsIndex) -> int:
     """Return ``samples`` as an int in ``[0, 2**64)``; refuse anything else before any decoding."""
     try:
         count = operator.index(samples)
@@ -144,13 +149,23 @@ def _sample_count(samples: Any) -> int:
     return count
 
 
-def _validate(channels: int, adc_bits: int, groups: int) -> None:
-    if channels < 1:
-        raise ValueError("a lossless stream needs at least one channel")
+def _validate(
+    channels: SupportsIndex, adc_bits: SupportsIndex, groups: SupportsIndex
+) -> tuple[int, int, int]:
+    """Normalize integer-valued configuration before allocating encoder or decoder state."""
+    try:
+        channels = operator.index(channels)
+        adc_bits = operator.index(adc_bits)
+        groups = operator.index(groups)
+    except TypeError:
+        raise ValueError("channels, adc_bits and groups must be integers") from None
+    if not 1 <= channels <= np.iinfo(np.intp).max:
+        raise ValueError("a lossless stream needs at least one channel and a representable shape")
     if not 1 <= adc_bits <= 16:
         raise ValueError("adc_bits must be 1..16")
     if not 1 <= groups <= min(channels, 65535):
         raise ValueError("groups must be 1..min(channels, 65535)")
+    return channels, adc_bits, groups
 
 
 class _RangeEncoder:
@@ -291,6 +306,8 @@ class _RangeDecoder:
     def finish(self) -> None:
         if self.pos != len(self.data):
             raise ValueError("corrupted lossless packet: trailing range-coder bytes")
+        if self.code != 0:
+            raise ValueError("corrupted lossless packet: invalid range-coder tail")
 
 
 class _ResidualModel:
@@ -448,6 +465,10 @@ class _PyEncoder:
         self.channels, self.bits = channels, adc_bits
         self.groups = _groups(channels, groups, adc_bits)
 
+    def reset(self) -> None:
+        """Discard prediction and ADC state for the next independent stream."""
+        self.groups = _groups(self.channels, len(self.groups), self.bits)
+
     def encode(self, window: np.ndarray[Any, Any]) -> bytes:
         bits = self.bits
         columns = window.astype(np.int64).T.tolist()
@@ -495,6 +516,11 @@ class _PyDecoder:
     def __init__(self, channels: int, adc_bits: int, groups: int) -> None:
         self.channels, self.bits = channels, adc_bits
         self.groups = _groups(channels, groups, adc_bits)
+        self.broken = False
+
+    def reset(self) -> None:
+        """Discard prediction and ADC state, including any previous content error."""
+        self.groups = _groups(self.channels, len(self.groups), self.bits)
         self.broken = False
 
     def decode(self, packet: bytes, samples: int) -> np.ndarray[Any, Any]:
@@ -563,6 +589,8 @@ class _PyDecoder:
                         )
                         if not -32768 <= value <= 32767:
                             raise ValueError("corrupted lossless packet: sample outside int16")
+                        if level_of(value, bits) != level:
+                            raise ValueError("corrupted lossless packet: sample outside ADC level")
                         group.table[level] = value
                     ranks.observe(level)
                     window[row, group.start + offset] = value
@@ -570,16 +598,26 @@ class _PyDecoder:
         return window
 
 
+def _integer_samples(array: np.ndarray[Any, Any], operation: str) -> np.ndarray[Any, Any]:
+    """Return contiguous int16 samples after validating the original values."""
+    if array.size:
+        if array.dtype.kind not in "biuf":
+            raise ValueError(f"{operation} needs integer samples")
+        if array.dtype.kind == "f" and (
+            not np.all(np.isfinite(array)) or not np.all(array == np.rint(array))
+        ):
+            raise ValueError(f"{operation} needs integer samples")
+        if array.min() < -32768 or array.max() > 32767:
+            raise ValueError(f"{operation} needs samples in the int16 range")
+    return np.ascontiguousarray(array, dtype=np.int16)
+
+
 def _window(window: np.ndarray[Any, Any], channels: int) -> np.ndarray[Any, Any]:
+    """Check the frame-major layout and normalize to lossless int16 input."""
     array = np.asarray(window)
     if array.ndim != 2 or array.shape[1] != channels:
         raise ValueError(f"window must be (samples, {channels})")
-    if array.size and not np.issubdtype(array.dtype, np.integer):
-        if not bool(np.all(np.isfinite(array))) or not bool(np.all(array == np.round(array))):
-            raise ValueError("lossless coding needs integer samples")
-    if array.size and (array.min() < -32768 or array.max() > 32767):
-        raise ValueError("lossless coding needs samples in the int16 range")
-    return np.ascontiguousarray(array, dtype=np.int16)
+    return _integer_samples(array, "lossless coding")
 
 
 class LosslessStreamEncoder:
@@ -594,20 +632,60 @@ class LosslessStreamEncoder:
     groups : int
         Contiguous channel groups, each with its own range coder (coded in parallel in Rust).
     backend : str
-        ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
+        ``"auto"`` (Rust CPU when available), ``"rust"``, ``"python"`` or ``"gpu"``.
+        Explicit GPU selection requires a GPU-feature engine and one group per channel.
+    gpu_max_samples : int, optional
+        Maximum rows per packet, required for ``backend="gpu"``.
     """
 
     def __init__(
-        self, channels: int, adc_bits: int = 16, groups: int = 1, backend: str = "auto"
+        self,
+        channels: SupportsIndex,
+        adc_bits: SupportsIndex = 16,
+        groups: SupportsIndex = 1,
+        backend: str = "auto",
+        *,
+        gpu_max_samples: SupportsIndex | None = None,
     ) -> None:
-        _validate(channels, adc_bits, groups)
+        channels, adc_bits, groups = _validate(channels, adc_bits, groups)
         self.channels = channels
-        native = _native(backend)
-        self._coder: Any = (
-            native.WaveformLosslessEncoder(channels, adc_bits, groups)
-            if native is not None
-            else _PyEncoder(channels, adc_bits, groups)
-        )
+        self._device: tuple[str, str] | None = None
+        if backend == "gpu":
+            if groups != channels:
+                raise ValueError("GPU waveform encoding requires groups == channels")
+            if gpu_max_samples is None:
+                raise ValueError("GPU waveform encoding requires gpu_max_samples")
+            capacity = _sample_count(gpu_max_samples)
+            if not 1 <= capacity < 1 << 32:
+                raise ValueError("gpu_max_samples must be in [1, 2**32)")
+            gpu = cast(ModuleType, _native(backend, "WaveformLosslessGpuEncoder"))
+            self._coder: Any = gpu.WaveformLosslessGpuEncoder(channels, adc_bits, capacity)
+            self._backend = "gpu"
+            self._device = (self._coder.device_name, self._coder.device_api)
+        else:
+            if gpu_max_samples is not None:
+                raise ValueError("gpu_max_samples requires backend='gpu'")
+            native = _native(backend, "WaveformLosslessEncoder")
+            self._backend = "rust" if native is not None else "python"
+            self._coder = (
+                native.WaveformLosslessEncoder(channels, adc_bits, groups)
+                if native is not None
+                else _PyEncoder(channels, adc_bits, groups)
+            )
+
+    @property
+    def backend(self) -> str:
+        """Active backend: ``"python"``, ``"rust"`` or ``"gpu"``."""
+        return self._backend
+
+    @property
+    def device(self) -> tuple[str, str] | None:
+        """Selected GPU adapter name and graphics API, or ``None`` for CPU encoding."""
+        return self._device
+
+    def reset(self) -> None:
+        """Start an independent stream with the same configuration and selected backend."""
+        self._coder.reset()
 
     def encode(self, window: np.ndarray[Any, Any]) -> bytes:
         """Encode a ``(samples, channels)`` window of int16-range integers into a packet.
@@ -625,18 +703,33 @@ class LosslessStreamDecoder:
     """Stateful lossless decoder matching ``LosslessStreamEncoder`` (same parameters)."""
 
     def __init__(
-        self, channels: int, adc_bits: int = 16, groups: int = 1, backend: str = "auto"
+        self,
+        channels: SupportsIndex,
+        adc_bits: SupportsIndex = 16,
+        groups: SupportsIndex = 1,
+        backend: str = "auto",
     ) -> None:
-        _validate(channels, adc_bits, groups)
+        channels, adc_bits, groups = _validate(channels, adc_bits, groups)
+        _validate_cpu_backend(backend)
         self.channels = channels
-        native = _native(backend)
+        native = _native(backend, "WaveformLosslessDecoder")
+        self._backend = "rust" if native is not None else "python"
         self._coder: Any = (
             native.WaveformLosslessDecoder(channels, adc_bits, groups)
             if native is not None
             else _PyDecoder(channels, adc_bits, groups)
         )
 
-    def decode(self, packet: bytes, samples: int) -> np.ndarray[Any, Any]:
+    @property
+    def backend(self) -> str:
+        """Active CPU backend for packets written by any compatible encoder."""
+        return self._backend
+
+    def reset(self) -> None:
+        """Start an independent stream and clear a previous decoding failure."""
+        self._coder.reset()
+
+    def decode(self, packet: bytes, samples: SupportsIndex) -> np.ndarray[Any, Any]:
         """Decode a packet of ``samples`` rows into an int16 ``(samples, channels)`` window.
 
         Raises
@@ -644,7 +737,7 @@ class LosslessStreamDecoder:
         ValueError
             For a malformed packet. A framing error (group lengths, trailing bytes, range-coder
             start) leaves the decoder unchanged; content found invalid while decoding breaks the
-            stream state, and the decoder then refuses every later packet (start a new one). A
+            stream state, and the decoder then refuses packets until reset. A
             sample count that is not an integer in ``[0, 2**64)`` is refused before decoding.
         """
         count = _sample_count(samples)

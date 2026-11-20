@@ -15,6 +15,7 @@
 //! the channel outputs to word-aligned offsets so only coded bytes cross the bus.
 
 use super::waveform_stream::{level_of, nominal_value};
+use std::sync::{mpsc, Arc, Mutex};
 use wgpu::util::DeviceExt;
 
 const STATE_WORDS: usize = 306;
@@ -49,6 +50,8 @@ pub struct GpuStreamEncoder {
     bits: u32,
     max_samples: usize,
     max_words: usize,
+    device_api: String,
+    failure: Arc<Mutex<Option<String>>>,
     /// Name of the adapter in use.
     pub adapter_name: String,
 }
@@ -80,7 +83,25 @@ fn storage(device: &wgpu::Device, label: &str, size: usize, map: bool) -> wgpu::
     })
 }
 
+/// Initial channel state and both level tables shared by construction and reset.
+fn initial_state(channels: usize, bits: u32) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
+    // Structure of arrays: word `w` of channel `c` lives at `w * channels + c`.
+    let mut state = vec![0; channels * STATE_WORDS];
+    state[..channels].fill(1 << (bits - 1));
+    state[82 * channels..].fill(PROB_INIT);
+    let table = (0..channels)
+        .flat_map(|_| (0..1_i32 << bits).flat_map(|level| [UNSET, 0, level]))
+        .collect();
+    let pending = vec![UNSET; channels << bits];
+    (state, table, pending)
+}
+
 impl GpuStreamEncoder {
+    /// Graphics API of the physical adapter (for example `Vulkan`).
+    pub fn device_api(&self) -> &str {
+        &self.device_api
+    }
+
     /// New GPU encoder for `channels` channels of a `bits`-bit ADC and windows of at most
     /// `max_samples` samples. The adapter whose name contains `SC_GPU_ADAPTER` (if set) is used,
     /// otherwise the high-performance default.
@@ -120,12 +141,37 @@ impl GpuStreamEncoder {
             .ok()
         }
         .ok_or_else(|| "no GPU adapter available".to_string())?;
-        let adapter_name = adapter.get_info().name.clone();
+        let info = adapter.get_info();
+        if !matches!(
+            info.device_type,
+            wgpu::DeviceType::DiscreteGpu | wgpu::DeviceType::IntegratedGpu
+        ) {
+            return Err(format!("{} is not a physical GPU adapter", info.name));
+        }
+        let adapter_name = info.name;
+        let device_api = format!("{:?}", info.backend);
         let mut limits = wgpu::Limits::default();
         limits.max_storage_buffers_per_shader_stage =
             limits.max_storage_buffers_per_shader_stage.max(11);
         limits.max_storage_buffer_binding_size = adapter.limits().max_storage_buffer_binding_size;
         limits.max_buffer_size = adapter.limits().max_buffer_size;
+        let max_words = (12 * max_samples as u128 + 8).div_ceil(4);
+        // Output buffers bound sample and per-channel staging sizes; the level lookup also
+        // bounds the nominal lookup, and the three-word table bounds pending level values.
+        // Check state and both lookup tables as well as output before allocating any of them.
+        let largest = (4 * channels as u128 * max_words)
+            .max(4 * channels as u128 * STATE_WORDS as u128)
+            .max(u128::from(table_bytes))
+            .max(4 * 65536);
+        let buffer_limit = u128::from(limits.max_buffer_size)
+            .min(u128::from(limits.max_storage_buffer_binding_size))
+            .min(u128::from(u32::MAX));
+        if largest > buffer_limit {
+            return Err(format!(
+                "{channels} channels with windows of {max_samples} samples need {largest}-byte buffers, above the GPU buffer, binding or index limit"
+            ));
+        }
+        let max_words = max_words as usize;
         let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("waveform-stream-gpu"),
             required_features: wgpu::Features::empty(),
@@ -133,6 +179,20 @@ impl GpuStreamEncoder {
             ..Default::default()
         }))
         .map_err(|error| format!("GPU device: {error}"))?;
+        let failure = Arc::new(Mutex::new(None));
+        let errors = Arc::clone(&failure);
+        device.on_uncaptured_error(Arc::new(move |error: wgpu::Error| {
+            errors
+                .lock()
+                .expect("GPU error lock")
+                .get_or_insert_with(|| format!("GPU device: {error}"));
+        }));
+        let lost = Arc::clone(&failure);
+        device.set_device_lost_callback(move |reason, message| {
+            lost.lock()
+                .expect("GPU error lock")
+                .get_or_insert_with(|| format!("GPU device lost ({reason:?}): {message}"));
+        });
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("waveform_stream_gpu"),
             source: wgpu::ShaderSource::Wgsl(include_str!("waveform_stream_gpu.wgsl").into()),
@@ -176,23 +236,6 @@ impl GpuStreamEncoder {
             pipeline("encode"),
             pipeline("compact_out"),
         );
-        let max_words = (12 * max_samples as u128 + 8).div_ceil(4);
-        // Output buffers bound sample and per-channel staging sizes; the level lookup also
-        // bounds the nominal lookup, and the three-word table bounds pending level values.
-        // Check state and both lookup tables as well as output before allocating any of them.
-        let largest = (4 * channels as u128 * max_words)
-            .max(4 * channels as u128 * STATE_WORDS as u128)
-            .max(u128::from(table_bytes))
-            .max(4 * 65536);
-        let buffer_limit = u128::from(limits.max_buffer_size)
-            .min(u128::from(limits.max_storage_buffer_binding_size))
-            .min(u128::from(u32::MAX));
-        if largest > buffer_limit {
-            return Err(format!(
-                "{channels} channels with windows of {max_samples} samples need {largest}-byte buffers, above the GPU buffer, binding or index limit"
-            ));
-        }
-        let max_words = max_words as usize;
         let level_table: Vec<u32> = (-32768_i64..=32767)
             .map(|v| level_of(v, bits) as u32)
             .collect();
@@ -208,15 +251,8 @@ impl GpuStreamEncoder {
         };
         let levels = init("levels", bytemuck::cast_slice(&level_table));
         let nominal = init("nominal", bytemuck::cast_slice(&nominal_table));
-        // Structure of arrays: word `w` of channel `c` lives at `w * channels + c`.
-        let mut state_init = vec![0_i32; channels * STATE_WORDS];
-        state_init[..channels].fill(1 << (bits - 1));
-        state_init[82 * channels..].fill(PROB_INIT);
+        let (state_init, table_init, unset) = initial_state(channels, bits);
         let state = init("state", bytemuck::cast_slice(&state_init));
-        let unset = vec![UNSET; channels << bits];
-        let table_init: Vec<i32> = (0..channels)
-            .flat_map(|_| (0..1_i32 << bits).flat_map(|level| [UNSET, 0, level]))
-            .collect();
         let table = init("table", bytemuck::cast_slice(&table_init));
         let pending = init("pending", bytemuck::cast_slice(&unset));
         let params = device.create_buffer(&wgpu::BufferDescriptor {
@@ -251,10 +287,13 @@ impl GpuStreamEncoder {
             max_samples,
             max_words,
             adapter_name,
+            device_api,
+            failure,
             pending,
             bind_group: None,
         };
         encoder.bind_group = Some(encoder.make_bind_group());
+        encoder.check_device()?;
         Ok(encoder)
     }
 
@@ -288,26 +327,77 @@ impl GpuStreamEncoder {
         })
     }
 
-    fn read(&self, staging: &wgpu::Buffer, bytes: u64) -> Vec<u32> {
+    /// Return a stored device or readback error. A failed instance cannot resume a stream.
+    fn check_device(&self) -> Result<(), String> {
+        match self.failure.lock().expect("GPU error lock").as_ref() {
+            Some(message) => Err(message.clone()),
+            None => Ok(()),
+        }
+    }
+
+    /// Wait for submitted GPU work and surface device errors.
+    fn wait(&self) -> Result<(), String> {
+        self.device
+            .poll(wgpu::PollType::Wait {
+                submission_index: None,
+                timeout: None,
+            })
+            .map_err(|error| format!("GPU poll: {error}"))?;
+        self.check_device()
+    }
+
+    /// Read a submitted staging copy and invalidate the stream if readback fails.
+    fn read(&self, staging: &wgpu::Buffer, bytes: u64) -> Result<Vec<u32>, String> {
         let slice = staging.slice(0..bytes.max(4));
-        slice.map_async(wgpu::MapMode::Read, |_| {});
-        let _ = self.device.poll(wgpu::PollType::Wait {
-            submission_index: None,
-            timeout: None,
+        let (ready, completed) = mpsc::sync_channel(1);
+        slice.map_async(wgpu::MapMode::Read, move |result| {
+            let _ = ready.send(result);
         });
-        let data = slice
-            .get_mapped_range()
-            .expect("staging buffer is mapped for readback");
-        let words: Vec<u32> = bytemuck::cast_slice(&data).to_vec();
-        drop(data);
+        let result = self.wait().and_then(|()| match completed.try_recv() {
+            Ok(Ok(())) => {
+                let data = slice
+                    .get_mapped_range()
+                    .map_err(|error| format!("GPU readback range: {error}"))?;
+                let words = bytemuck::cast_slice(&data).to_vec();
+                drop(data);
+                Ok(words)
+            }
+            Ok(Err(error)) => Err(format!("GPU readback: {error}")),
+            Err(error) => Err(format!("GPU readback did not complete: {error}")),
+        });
         staging.unmap();
-        words
+        if let Err(message) = &result {
+            self.failure
+                .lock()
+                .expect("GPU error lock")
+                .get_or_insert_with(|| message.clone());
+        }
+        result
+    }
+
+    /// Reset all channel and ADC state on the original adapter for an independent stream.
+    ///
+    /// A failed device or readback requires a new encoder.
+    pub fn reset(&mut self) -> Result<(), String> {
+        self.check_device()?;
+        let (state, table, pending) = initial_state(self.channels, self.bits);
+        for (buffer, values) in [
+            (&self.state, &state),
+            (&self.table, &table),
+            (&self.pending, &pending),
+        ] {
+            self.queue
+                .write_buffer(buffer, 0, bytemuck::cast_slice(values));
+        }
+        self.queue.submit([]);
+        self.wait()
     }
 
     /// Encode one row-major `(samples, channels)` window into a packet (CPU packet format with
     /// one group per channel). A contradicting sample refuses the window with the encoder
     /// state unchanged.
     pub fn encode(&mut self, window: &[i16], samples: usize) -> Result<Vec<u8>, String> {
+        self.check_device()?;
         if samples.checked_mul(self.channels) != Some(window.len()) {
             return Err("window size does not match samples x channels".into());
         }
@@ -327,8 +417,10 @@ impl GpuStreamEncoder {
         ];
         self.queue
             .write_buffer(&self.params, 0, bytemuck::cast_slice(&params));
-        self.queue
-            .write_buffer(&self.samples, 0, bytemuck::cast_slice(&values));
+        if !values.is_empty() {
+            self.queue
+                .write_buffer(&self.samples, 0, bytemuck::cast_slice(&values));
+        }
         self.queue
             .write_buffer(&self.conflict, 0, bytemuck::cast_slice(&[0_u32]));
         let bind_group = self.bind_group.as_ref().expect("bind group created in new");
@@ -362,7 +454,7 @@ impl GpuStreamEncoder {
             4,
         );
         self.queue.submit(std::iter::once(commands.finish()));
-        let small = self.read(&self.small_staging, 4 * (channels as u64 + 1));
+        let small = self.read(&self.small_staging, 4 * (channels as u64 + 1))?;
         if small[channels] != 0 {
             let channel = small[..channels]
                 .iter()
@@ -404,7 +496,7 @@ impl GpuStreamEncoder {
             4 * u64::from(total.max(1)),
         );
         self.queue.submit(std::iter::once(commands.finish()));
-        let words = self.read(&self.big_staging, 4 * u64::from(total.max(1)));
+        let words = self.read(&self.big_staging, 4 * u64::from(total.max(1)))?;
         let bytes: &[u8] = bytemuck::cast_slice(&words);
         let mut packet = Vec::with_capacity(bytes.len() + 4 * channels);
         for (c, &length) in lengths.iter().enumerate() {

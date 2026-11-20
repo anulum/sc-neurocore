@@ -82,6 +82,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The lossless waveform stream exposes a GPU encoder in wheels built with
+  the engine's \`gpu\` feature. The encoder reports the physical adapter and
+  graphics API, writes one group per channel and uses a CPU decoder.
+  Python, Rust and GPU waveform endpoints can reset for a new stream.
+  Python and Rust reject invalid range-coder tails and ADC level values.
+
+
 - `AERSpikeCodec` supports matching AERX and AERI packets in Python and
   Rust. The UDP adapter translates sample positions to absolute ticks,
   accepts reordering within a transfer and reports missing or invalid

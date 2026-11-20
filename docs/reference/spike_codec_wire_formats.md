@@ -294,8 +294,11 @@ concatenating packet bodies alone loses necessary metadata.
 
 Lossless decoding needs channels, adc_bits (1..16) and groups plus samples
 for each packet. Groups are contiguous channel ranges. Adaptive level
-numbering, predictors and entropy state continue across windows. A short
-final window is encoded with its real length; no padding sample is invented.
+numbering, predictors and entropy state continue across windows. Even an
+empty window carries each group's completed range-coder body. Use the
+actual row count for a partial final window. The decoder checks the
+range-coder tail and verifies that each transmitted ADC value belongs to
+its declared level.
 
 Event encoding additionally applies integer filters, warmup/noise adaptation,
 threshold crossing and refractory state. The decoder needs channels,
@@ -306,12 +309,12 @@ and int32 power matrices. Original waveform reconstruction is unavailable.
 An unfinished bin/power period continues into the next packet; there is no
 public flush operation for the last partial bin.
 
-Create a new encoder/decoder pair to reset either stream. Preserve order and
-all preceding packets. Framing errors leave decoder state unchanged; invalid
-content encountered during decoding permanently breaks it. Later decode
-calls then refuse; begin a new stream. Raw packets cannot be assumed to
-detect every content corruption. Security and recovery require the owning
-application's explicit contract rather than an inferred container guarantee.
+Preserve order and all preceding packets. Framing errors leave decoder state
+unchanged. Invalid waveform content stops the decoder until `reset()`.
+Reset both waveform endpoints at the same independent stream boundary.
+Create a new encoder and decoder for a new event stream. Raw packets offer
+structural checks. Use an outer integrity check and recovery protocol when
+the application needs corruption or loss detection.
 
 ## Compatibility and implementation languages
 
@@ -320,10 +323,12 @@ for the components named above. Generated Go, Julia and Mojo codec files are
 not supported selectable implementations. No standalone whole-container Rust
 support is implied by a kernel or packet-coder capability.
 
-The lossless stream also has an optional native Vulkan WGSL encoder, with
-CPU decode. It has no Python GPU selector, GPU decoder or ROCm codec path.
-Physical-device qualification is specific to the tested geometry and driver;
-a device or source file existing is not proof of another configuration.
+Lossless waveform encoders on physical GPUs use one group per channel and
+produce the same packets as the corresponding CPU encoder. Both Python and
+Rust CPU decoders can read those packets. A GPU-feature Python engine exposes
+the optional encoder through `backend="gpu"` and reports the selected
+adapter and graphics API. Published Linux comparisons use Vulkan and WGSL
+on the recorded devices and drivers.
 
 Preserve old packets and their external metadata when changing consumers.
 The catalogue does not rewrite any format, add an envelope or silently migrate

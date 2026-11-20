@@ -995,6 +995,54 @@ and decoded samples before and after timing.
 [Raw artifact](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/raster_stream_backends.json).
 [Benchmark instructions](https://github.com/anulum/sc-neurocore/tree/main/benchmarks#scripts).
 
+
+## Lossless waveform streaming backends
+
+Each run encodes and decodes all 9,760 time rows of the original digital EEG
+in PhysioNet EEGMMIDB 1.0.0 `S001R01.edf` at 160 Hz. The eight- and one-channel
+runs select the first eight electrodes or the first electrode. The 64-channel
+run uses the complete simultaneous recording. All lanes use 16-bit ADC
+geometry, preserve the short final window, and produce identical packet bytes
+for matching configurations. [Recording and licence](https://physionet.org/content/eegmmidb/1.0.0/).
+
+Times are milliseconds for one complete recording, including the encoder and
+decoder constructors, every encode call and every CPU decode. The GPU call
+includes upload, processing and packet readback. Each cell is the median of
+three runs with rotated backend order on the same host. Input parsing and
+verification are outside the measured interval.
+
+| Host and physical adapter | Channels / groups | Window rows | Python CPU (ms) | Rust CPU (ms) | GPU encode + Rust CPU decode (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Linux · Radeon RX 6600 XT | 1 / 1 | 17 | 306.00 | 4.40 | 569.27 |
+| Linux · Radeon RX 6600 XT | 8 / 3 | 173 | 1,920.50 | 6.78 | — |
+| Linux · Radeon RX 6600 XT | 8 / 8 | 173 | 1,774.23 | 9.11 | 409.57 |
+| Linux · Radeon RX 6600 XT | 64 / 64 | 173 | 13,982.76 | 67.73 | 1,361.69 |
+| Linux · GeForce GTX 1070 Ti | 1 / 1 | 17 | 256.34 | 4.08 | 372.80 |
+| Linux · GeForce GTX 1070 Ti | 8 / 3 | 173 | 1,729.49 | 7.42 | — |
+| Linux · GeForce GTX 1070 Ti | 8 / 8 | 173 | 2,192.80 | 10.24 | 506.98 |
+| Linux · GeForce GTX 1070 Ti | 64 / 64 | 173 | 15,892.55 | 73.51 | 1,319.57 |
+| Windows · GeForce GTX 1060 | 1 / 1 | 17 | 342.17 | 5.52 | 499.43 |
+| Windows · GeForce GTX 1060 | 8 / 3 | 173 | 2,308.57 | 12.13 | — |
+| Windows · GeForce GTX 1060 | 8 / 8 | 173 | 2,589.00 | 17.35 | 509.20 |
+| Windows · GeForce GTX 1060 | 64 / 64 | 173 | 20,907.80 | 81.77 | 2,529.82 |
+
+The Linux host used a Core i5-11600K with 32 GiB RAM, CPython 3.12.16 and
+NumPy 2.5.4. The Radeon used RADV from Mesa 25.2.8 and the GeForce GTX 1070 Ti
+used NVIDIA 580.178.04. Linux measurements used logical CPUs 2–5.
+The Windows MSI GS73 used a Core i7-8750H with 32 GiB RAM, CPython 3.12.10,
+NumPy 2.5.5 and NVIDIA 582.78 for the GeForce GTX 1060. It used the OS
+scheduler. All three GPU runs reported Vulkan. The installed engine builds
+used Rust 1.98.1 release settings and four Rayon workers.
+
+Rust CPU had the lowest measured total time in every configuration. The GPU
+lane uses one group per channel. The eight-channel, three-group case measures
+the CPU layouts only. Separate functional tests also checked grouped streams
+using PhysioNet `S002R02.edf` and the original 743 single-electrode challenge
+recordings. The [results record](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/waveform_stream_backends.json)
+includes setup and stream timings, configuration, driver and input, wheel,
+and source digests. The [benchmark command](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/README.md#scripts)
+recreates the per-packet measurements.
+
 ## Address-event packets and localhost UDP
 
 Measured on 2026-11-20 UTC on a ProLiant ML350p Gen8 with two

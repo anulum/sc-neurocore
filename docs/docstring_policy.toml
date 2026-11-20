@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2261
+expected_file_count = 2263
 
 [[file]]
 path = "tools/capability_manifest.py"
@@ -5561,6 +5561,14 @@ rationale = "Streaming lossless coder: Python reference of the Rust stream coder
 [[file]]
 path = "tests/test_waveform_stream.py"
 rationale = "Streaming lossless coder: Rust and Python packet identity, refusals and hostile packets."
+
+[[file]]
+path = "benchmarks/bench_waveform_stream_backends.py"
+rationale = "Waveform stream setup, conversion, transport and CPU decode measurements."
+
+[[file]]
+path = "benchmarks/bench_waveform_stream_fixture.py"
+rationale = "Pinned PhysioNet EEG digital sample fixture for waveform stream measurements."
 
 [[file]]
 path = "src/sc_neurocore/spike_codec/spike_events.py"

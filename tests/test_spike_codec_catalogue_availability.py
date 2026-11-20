@@ -177,10 +177,18 @@ def test_all_variants_report_actual_importable_components() -> None:
 
 
 def test_no_gpu_or_placeholder_backend_is_advertised() -> None:
-    """A Vulkan Rust encoder and generated language files do not create Python backend selectors."""
+    """Common selectors apply to both sides; GPU may be available for waveform encoding."""
     for descriptor in list_codec_descriptors():
         result = probe_codec(descriptor.name)
         assert set(result.backend_choices) <= {"python", "rust", "auto"}
+        if descriptor.name == "lossless_stream" and result.rust_components_available:
+            extension = import_module("sc_neurocore_engine.sc_neurocore_engine")
+            expected = (
+                ("gpu",) if callable(getattr(extension, "WaveformLosslessGpuEncoder", None)) else ()
+            )
+            assert result.encoder_only_backends == expected
+        else:
+            assert result.encoder_only_backends == ()
         assert result.variant == descriptor.variant().name
     for name in ("go", "julia", "mojo", "rust", "gpu", "waveform_stream"):
         with pytest.raises(ValueError, match="Unknown codec"):

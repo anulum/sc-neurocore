@@ -986,7 +986,7 @@
     "public_documentation_pages": 676,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
-    "rust_pyo3_model_wrappers": 212,
+    "rust_pyo3_model_wrappers": 213,
     "studio_catalogue_models": 185,
     "test_files": 5744
   },
@@ -3198,6 +3198,7 @@
       "WangBuzsakiNeuron",
       "WaveformLosslessDecoder",
       "WaveformLosslessEncoder",
+      "WaveformLosslessGpuEncoder",
       "WendlingNeuron",
       "WilsonCowanUnit",
       "WilsonHRNeuron",

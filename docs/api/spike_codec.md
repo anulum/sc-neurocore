@@ -56,7 +56,7 @@ Python fallback. The probe reports an unavailable Python class separately.
 | streaming | Binary raster / raster | Independent frames | None | None |
 | aer | Binary raster / raster | Adaptive event/silence coding | None | None |
 | waveform | Numeric waveform / WaveformDecodeResult | full, waveform, spike, lossless, lossless_rice | Reset per recording | auto, python, rust when available |
-| lossless_stream | Integer waveform / exact int16 waveform | Lossless | Yes | auto, python, rust when available |
+| lossless_stream | Integer waveform / exact int16 waveform | Lossless | Yes | auto, python, rust when available, optional GPU encoder |
 | spike_events | Integer waveform / events and power | timing: bin, sample | Yes | auto, python, rust when available |
 
 Arrays use time rows and channel columns. Raster values are binary.
@@ -300,17 +300,20 @@ for first in range(0, len(x), 20):
 np.testing.assert_array_equal(np.concatenate(restored), x)
 ```
 
-Rust accelerates actual predictors, waveform kernels/channel coders and the
-two packet pipelines; native_scope distinguishes these. It does not imply a
-standalone Rust implementation of every enclosing Python format. An optional
-native Vulkan encoder exists for lossless waveform streaming with CPU decode;
-there is no Python backend="gpu" or ROCm selector. Python is the reference
-language and Rust the native implementation language. Go, Julia and Mojo
-codec mirrors are not selectable supported backends.
+Use `backend="rust"` for CPU encoding and decoding with the installed engine.
+The `backend` property reports the backend selected by `"auto"`. A
+GPU-feature engine also supports `LosslessStreamEncoder(..., groups=channels,
+backend="gpu", gpu_max_samples=window_rows)`. Read `encoder.device` for the
+adapter name and graphics API. Pass the same channel count, ADC width and
+group count to a CPU decoder. The catalogue reports an importable GPU
+encoder in `probe_codec("lossless_stream").encoder_only_backends`. Device
+initialization happens when the encoder is created.
 
-Raw lossless/event packets have no checksum, dimensions or reset marker.
-Bad framing leaves decoder state unchanged, but invalid content encountered
-during decoding breaks the stream; start a fresh pair afterward. Event
+Raw lossless and event packets carry their group lengths and range-coded
+bodies. Supply the stream configuration, packet boundaries and row counts
+out of band. Bad framing leaves decoder state unchanged. Invalid coded
+content stops a lossless waveform decoder until `reset()`. Reset both
+waveform endpoints together to start an independent stream. Event
 streams preserve coded events/power, not the original waveform. Incomplete
 event bins/power periods continue in the next packet; no flush API exists
 for the final partial bin. See the wire guide before persisting raw packets.

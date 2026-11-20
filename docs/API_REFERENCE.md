@@ -44850,7 +44850,9 @@ CodecAvailability
     later does not update existing instances. Start a fresh process in that case.
     Native loader OSError or RuntimeError excludes ``auto`` from advertised
     choices. An ImportError loading a present extension does as well
-    for ISI, predictive, delta, framed rasters and address events.
+    for ISI, predictive, delta, framed rasters, address events and lossless
+    waveform streaming. The optional GPU waveform entry is an encoder-only
+    selector and is advertised separately from the CPU backend choices.
     An absent engine permits the classes' documented Python fallback.
 
 Raises
@@ -44976,10 +44978,13 @@ rust_components_available : bool
 native_scope : str
     Scope of the native callables, as declared by the variant.
 backend_choices : tuple of str
-    Explicit backend selector values available to the public Python interface.
-    Empty when that interface has no backend parameter or cannot be loaded.
+    Explicit backend selectors available for both encoding and decoding.
+    Empty when the interface has no backend parameter or cannot be loaded.
 diagnostics : tuple of str
     Missing modules, missing symbols or actual loader errors observed by the probe.
+encoder_only_backends : tuple of str
+    Additional importable encoder selectors. Device initialization still happens
+    when constructing an encoder.
 
 
 ---
@@ -45420,9 +45425,18 @@ adc_bits : int
 groups : int
     Contiguous channel groups, each with its own range coder (coded in parallel in Rust).
 backend : str
-    ``"auto"`` (Rust when installed), ``"rust"`` or ``"python"``; identical packets.
+    ``"auto"`` (Rust CPU when available), ``"rust"``, ``"python"`` or ``"gpu"``.
+    Explicit GPU selection requires a GPU-feature engine and one group per channel.
+gpu_max_samples : int, optional
+    Maximum rows per packet, required for ``backend="gpu"``.
 
-- **__init__**(channels, adc_bits, groups, backend)
+- **__init__**(channels, adc_bits, groups, backend, \*, gpu_max_samples)
+- **backend**()
+  - Active backend: ``"python"``, ``"rust"`` or ``"gpu"``.
+- **device**()
+  - Selected GPU adapter name and graphics API, or ``None`` for CPU encoding.
+- **reset**()
+  - Start an independent stream with the same configuration and selected backend.
 - **encode**(window)
   - Encode a ``(samples, channels)`` window of int16-range integers into a packet.
 
@@ -45430,6 +45444,10 @@ backend : str
 Stateful lossless decoder matching ``LosslessStreamEncoder`` (same parameters).
 
 - **__init__**(channels, adc_bits, groups, backend)
+- **backend**()
+  - Active CPU backend for packets written by any compatible encoder.
+- **reset**()
+  - Start an independent stream and clear a previous decoding failure.
 - **decode**(packet, samples)
   - Decode a packet of ``samples`` rows into an int16 ``(samples, channels)`` window.
 

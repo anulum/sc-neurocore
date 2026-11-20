@@ -215,10 +215,13 @@ class CodecAvailability:
     native_scope : str
         Scope of the native callables, as declared by the variant.
     backend_choices : tuple of str
-        Explicit backend selector values available to the public Python interface.
-        Empty when that interface has no backend parameter or cannot be loaded.
+        Explicit backend selectors available for both encoding and decoding.
+        Empty when the interface has no backend parameter or cannot be loaded.
     diagnostics : tuple of str
         Missing modules, missing symbols or actual loader errors observed by the probe.
+    encoder_only_backends : tuple of str
+        Additional importable encoder selectors. Device initialization still happens
+        when constructing an encoder.
     """
 
     name: str
@@ -228,3 +231,4 @@ class CodecAvailability:
     native_scope: NativeCodecScope
     backend_choices: tuple[str, ...]
     diagnostics: tuple[str, ...]
+    encoder_only_backends: tuple[str, ...] = ()

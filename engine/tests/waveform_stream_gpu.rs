@@ -14,7 +14,9 @@
 
 #![cfg(feature = "gpu")]
 
-use sc_neurocore_engine::codecs::waveform_stream::{StreamDecoder, StreamEncoder, COUNT_LIMIT};
+use sc_neurocore_engine::codecs::waveform_stream::{
+    nominal_value, StreamDecoder, StreamEncoder, COUNT_LIMIT,
+};
 use sc_neurocore_engine::codecs::waveform_stream_gpu::GpuStreamEncoder;
 
 /// Require the public constructor to refuse a request without panicking.
@@ -130,20 +132,21 @@ fn device_storage_overflow_is_refused_before_buffer_creation() {
 #[test]
 fn adc_widths_and_workgroup_boundaries_keep_streaming_byte_parity() {
     physical_limits();
-    for (bits, values) in [
-        (1, &[-32768, 32767][..]),
-        (10, &[-32768, -1, 0, 32767][..]),
-        (16, &[-32768, -1, 0, 1, 32767][..]),
-    ] {
+    for bits in 1..=16 {
+        let last = (1_i64 << bits) - 1;
+        let values = [0, last / 3, last / 2, (last / 2) + 1, last]
+            .map(|level| nominal_value(level, bits) as i16);
         for channels in [1, 63, 64, 65] {
             let mut gpu = GpuStreamEncoder::new(channels, bits, 4).unwrap();
             let mut cpu = StreamEncoder::new(channels, bits, channels).unwrap();
             let mut decoder = StreamDecoder::new(channels, bits, channels).unwrap();
-            for offset in [0, 1, 2] {
-                let input: Vec<i16> = (0..4 * channels)
+            assert!(!gpu.adapter_name.is_empty());
+            assert!(matches!(gpu.device_api(), "Vulkan" | "Metal" | "Dx12"));
+            for (rows, offset) in [(4, 0), (0, 0), (4, 1), (3, 2)] {
+                let input: Vec<i16> = (0..rows * channels)
                     .map(|index| values[(index + offset) % values.len()])
                     .collect();
-                equal_packet(&mut gpu, &mut cpu, &mut decoder, &input, 4);
+                equal_packet(&mut gpu, &mut cpu, &mut decoder, &input, rows);
             }
         }
     }
@@ -216,4 +219,21 @@ fn missing_adc_code_exclusion_and_return_keep_cpu_parity() {
     // Repeated observations of level 1 exercise its escape and subsequent return.
     equal_packet(&mut gpu, &mut cpu, &mut decoder, &[-10923; 8], 8);
     equal_packet(&mut gpu, &mut cpu, &mut decoder, &common, 64);
+}
+
+#[test]
+fn reset_discards_state_and_uses_the_original_adapter() {
+    physical_limits();
+    let mut gpu = GpuStreamEncoder::new(2, 10, 3).unwrap();
+    let adapter = gpu.adapter_name.clone();
+    let api = gpu.device_api().to_owned();
+    let mut cpu = StreamEncoder::new(2, 10, 2).unwrap();
+    let mut decoder = StreamDecoder::new(2, 10, 2).unwrap();
+    equal_packet(&mut gpu, &mut cpu, &mut decoder, &[0; 6], 3);
+    gpu.reset().unwrap();
+    cpu.reset();
+    decoder.reset();
+    assert_eq!(gpu.adapter_name, adapter);
+    assert_eq!(gpu.device_api(), api);
+    equal_packet(&mut gpu, &mut cpu, &mut decoder, &[1; 4], 2);
 }

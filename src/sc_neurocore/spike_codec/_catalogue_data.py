@@ -526,7 +526,7 @@ _LOSSLESS_STREAM = CodecDescriptor(
     encoder_required_parameters=("channels",),
     decoder_required_parameters=("channels",),
     decode_required_parameters=("samples",),
-    configuration_parameters=("channels", "adc_bits", "groups", "backend"),
+    configuration_parameters=("channels", "adc_bits", "groups", "backend", "gpu_max_samples"),
     variant_parameter=None,
     backend_parameter=True,
     stateful=True,
@@ -557,9 +557,10 @@ _LOSSLESS_STREAM = CodecDescriptor(
     input_dtype="int16-range integer samples",
     notes=(
         "adc_bits 1..16 describes representable ADC levels;16 accepts the entire int16 range.",
-        "Preserve packet order and exact sample counts; create a new encoder/decoder pair to reset.",
-        "Bad framing leaves state unchanged; invalid decoded content breaks the decoder permanently.",
-        "Optional Rust Vulkan GPU encoder has CPU decode; no Python GPU backend selector exists.",
+        "Preserve packet order and row counts. Reset both endpoints for a new stream.",
+        "Bad framing leaves state unchanged; invalid coded content requires a decoder reset.",
+        "GPU encoding requires an engine built with gpu, one group per channel and gpu_max_samples.",
+        "GPU packets use a CPU decoder; the encoder reports its physical adapter and graphics API.",
     ),
 )
 _EVENTS = CodecDescriptor(
