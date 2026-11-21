@@ -434,6 +434,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The advisory-exception reads (`tools/security_scan/advisory_exceptions.py`)
+  repeat Cloudflare's origin statuses 520 to 524 as temporary, like 502 to
+  504. The conda-forge channel index is served through Cloudflare, and a
+  hosted runner's live read met a 524 (origin timeout) that failed the test
+  at once instead of being repeated after 2 and 8 seconds.
+
 - The docstrings, comments, messages and documentation of the new codec,
   function-synthesis and chiplet work use British spelling
   ("normalisation", "serialise", "quantiser", "synchroniser").

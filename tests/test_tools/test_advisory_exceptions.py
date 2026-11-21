@@ -643,7 +643,7 @@ def scripted_server(outcomes: list[Outcome]) -> Iterator[tuple[str, _ScriptedSer
 
 @pytest.mark.parametrize(
     "failures",
-    [[503], [429, 502], ["drop"], ["truncated"], [408, "drop"]],
+    [[503], [429, 502], ["drop"], ["truncated"], [408, "drop"], [524], [520, 522]],
 )
 def test_read_url_repeats_a_temporary_failure(failures: list[Outcome]) -> None:
     """Temporary server or transport failures are repeated until the source is read.

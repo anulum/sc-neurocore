@@ -49,7 +49,9 @@ CHANNEL_INDEX_TIMEOUT_SECONDS = 180.0
 # Hosted runners met transient HTTP errors and timeouts on these reads; three requests in
 # about ten seconds outlast a short service interruption without hiding a lasting one.
 RETRY_DELAYS = (2.0, 8.0)
-TRANSIENT_HTTP_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
+# 520-524 are the statuses Cloudflare, which fronts api.anaconda.org, sends when the origin behind it
+# fails or does not answer in time; a hosted runner met a 524 on the channel index on 2026-11-21.
+TRANSIENT_HTTP_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524})
 # Each (reason, advisory) pair admits exactly the immutable CPython file that proves it.
 _SOURCES = {
     ("fixed_code_present", "CVE-2025-15367"): (

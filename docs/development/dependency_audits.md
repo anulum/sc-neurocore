@@ -196,7 +196,9 @@ which the service builds for each request, may wait up to 180 seconds: uncached,
 it once took 74 seconds to its first byte.
 Vendor-source and channel reads are made up to three times, 2 and 8 seconds
 apart, after a timeout, a dropped connection, a body shorter than its declared
-length or HTTP status 408, 425, 429, 500, 502, 503 or 504. Any other status
+length or HTTP status 408, 425, 429, 500, 502, 503 or 504, or one of the
+statuses 520 to 524 that Cloudflare, in front of api.anaconda.org, sends when
+the origin behind it fails or does not answer in time. Any other status
 fails at once, and the last failure stops the audit; a partial body is never
 compared or parsed.
 
