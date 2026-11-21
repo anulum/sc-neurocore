@@ -288,6 +288,25 @@ def _gone(pid: int) -> bool:
     return stat.rsplit(")", 1)[1].split()[0] == "Z"
 
 
+def _stat_line(pid: int) -> str:
+    """Return the kernel's status line of a process, for a failure message.
+
+    Parameters
+    ----------
+    pid : int
+        The process.
+
+    Returns
+    -------
+    str
+        The process's ``/proc/<pid>/stat`` line, or a note that it is absent.
+    """
+    try:
+        return Path(f"/proc/{pid}/stat").read_text(encoding="utf-8").strip()
+    except (FileNotFoundError, ProcessLookupError):
+        return f"/proc/{pid}/stat is absent"
+
+
 def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: Path) -> None:
     """At the deadline the check's whole session is killed, not only the interpreter.
 
@@ -298,17 +317,20 @@ def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: P
     """
     child = base / "child.pid"
     config = _interpreter(
-        base, "forking-python", f'sleep 30 &\necho $! > "{child}"\nexec sleep 60\n'
+        base, "forking-python", f'sleep 600 &\necho $! > "{child}"\nexec sleep 60\n'
     )
     # Seconds, not the half second of the hang test: the stand-in must write the
     # child's pid before the deadline, also on a loaded host.
     with pytest.raises(WorkerInterpreterRefused):
         check_worker_interpreter(config, privileged=False, timeout=5.0)
     pid = int(child.read_text(encoding="utf-8"))
-    deadline = time.monotonic() + 10.0
+    # A killed child ends only once the kernel schedules its exit. On one loaded
+    # hosted run it still ran 10 s after the kill, so the wait is 60 s. The child
+    # sleeps 600 s, so the wait cannot mistake its natural end for the kill.
+    deadline = time.monotonic() + 60.0
     while not _gone(pid) and time.monotonic() < deadline:
         time.sleep(0.05)
-    assert _gone(pid)
+    assert _gone(pid), _stat_line(pid)
 
 
 def test_a_process_that_ends_while_its_stat_is_read_counts_as_gone(
