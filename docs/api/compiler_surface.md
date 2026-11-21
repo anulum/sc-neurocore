@@ -22,6 +22,8 @@ can change without a deprecation window.
 
 | Module | Status | Decision |
 | --- | --- | --- |
+| `_ir_equivalence_models` | internal build tool | Symbolic references of the bit-exact Python LFSR encoder, signed fixed-point LIF and Q8.8 DCLS transitions for the bounded IR equivalence reference. |
+| `_ir_equivalence_reference` | internal build tool | Builds the independent reference of a verified canonical IR graph and its declared ports for the bounded IR equivalence proof. |
 | `_sby_runner` | internal build tool | Shared SymbiYosys task runner behind the equivalence and property proof runners. |
 | `_verilog_folded_datapath` | internal build tool | Combinational processing-element emitter reached through the stable Verilog compiler facade. |
 | `_verilog_integrators` | internal build tool | Fixed-point lowering for Euler, Gauss-Seidel, RK4, exponential-Euler, and map recurrences. |
@@ -68,6 +70,7 @@ can change without a deprecation window.
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
 | `hardware_numeric_contract` | direct public module | Reports the RTL encoding of a neuron at a chosen fixed-point format for Studio and compiler consumers. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
+| `ir_equivalence` | internal build tool | Bounded equivalence proof of an emitted IR top level against its independent reference, behind `compile-ir --equivalence-depth`. |
 | `ir_type_checker` | public facade | Package-level exports provide stochastic IR validation helpers. |
 | `layer_precision` | internal build tool | Validated row model behind adaptive precision layer manifests. |
 | `length_planner` | internal build tool | Validated layer-length planner behind adaptive precision manifests. |
