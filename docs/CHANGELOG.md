@@ -14,6 +14,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The release-only Semgrep environment takes wcmatch 11.2 instead of
+  8.5.2, which matches multi-star patterns against untrusted names in
+  polynomial time (GHSA-53pm-wgxf-c6qf). Semgrep 1.185.0 still declares
+  wcmatch~=8.3, so `requirements/semgrep-overrides.txt` carries a reviewed
+  pin, as it does for click and PyJWT. The repository's own Semgrep scan
+  of `src` and `tools` gives the same findings and scans the same files
+  with either version.
+
 - The dependency lock audit records CVE-2026-16052 (http.cookies) for the
   Mojo build environment's locked Python 3.15.2 as a reviewed exception
   until a 3.15 release carries the fix. The environment sets or parses no

@@ -26,3 +26,9 @@ opentelemetry-sdk==1.45.2
 opentelemetry-exporter-otlp-proto-http==1.45.2
 opentelemetry-instrumentation-requests==0.66b2
 opentelemetry-instrumentation-threading==0.66b2
+# wcmatch 8.5.2 matches multi-star patterns against untrusted names in
+# polynomial time (GHSA-53pm-wgxf-c6qf), first patched in 11.2. Semgrep
+# (1.185.0 and 1.186.0) still declares wcmatch~=8.3, so the reviewed
+# security pin overrides it, and the real repository scan is the
+# compatibility gate.
+wcmatch==11.2
