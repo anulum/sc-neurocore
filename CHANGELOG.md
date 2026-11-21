@@ -434,6 +434,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The large-checkpoint serialisation test
+  (`tests/test_tools/test_function_synthesis_checkpoint_serialization.py`)
+  takes the prior arcsin input on every Yosys version. On Yosys 0.70 it used
+  the prior arctan input, which exceeds the 64 MiB native parser budget only
+  where the SDK is installed at a long path: Yosys writes the techlib paths
+  into cell names, so the raw checkpoint grows with the install path. At the
+  short path of hosted CI the arctan checkpoint stayed under the budget
+  (53.5 MB at a 29-character path), no normalisation took place and the
+  fixture failed in every shard that ran it. The arcsin checkpoint is 113.8 MB
+  there. The unused arctan fixture is removed.
+
 - The advisory-exception reads (`tools/security_scan/advisory_exceptions.py`)
   repeat Cloudflare's origin statuses 520 to 524 as temporary, like 502 to
   504. The conda-forge channel index is served through Cloudflare, and a

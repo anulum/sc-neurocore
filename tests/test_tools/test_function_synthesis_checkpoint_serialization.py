@@ -90,14 +90,13 @@ def oversized_native_checkpoint(
     root = tmp_path_factory.mktemp("actual-oversized-pre-lut")
     tools = SynthesisToolchain.inspect(root / "inspection")
     bounded = replace(tools, cohort_deadline=time.monotonic() + 900)
-    legacy = dict(tools.versions)["yosys"].startswith("Yosys 0.33 ")
-    if legacy:
-        filename = "arcsin_q16_16_before_bounded_division.v"
-        original_sha256 = "f2f5b4e139b199f6921276add6d5ca2cbb80e95dae2a813f27ed9ab339d37868"
-    else:
-        filename = "arctan_q16_16_before_bounded_reciprocal.v"
-        original_sha256 = "ac32e0e1d9ebacddefe86eeacf7693e245beaa87596732ce89c606c6c2342d4f"
-    # Each genuine prior compiler input exceeded the native parser budget on this SDK.
+    # This genuine prior compiler input exceeds the native parser budget on Yosys 0.33 and on
+    # Yosys 0.70 at any install path. The raw checkpoint also carries the SDK's techlib paths in
+    # cell names, so its size only grows with the install path: on 0.70 it is 113.8 MB at a
+    # 29-character path (1.7 times the budget) and 137.0 MB at a 61-character one. The former
+    # arctan input passed the budget only from long install paths (53.5 MB at 29 characters).
+    filename = "arcsin_q16_16_before_bounded_division.v"
+    original_sha256 = "f2f5b4e139b199f6921276add6d5ca2cbb80e95dae2a813f27ed9ab339d37868"
     fixture = Path(__file__).resolve().parents[1] / "fixtures/function_synthesis" / filename
     rtl = fixture.read_bytes()
     assert hashlib.sha256(rtl).hexdigest() == original_sha256
