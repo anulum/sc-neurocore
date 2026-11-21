@@ -124,6 +124,11 @@ jobs:
       - name: Engine monolith no-growth guard
         run: python tools/engine_monolith_guard.py --check
 
+      - name: Split import gate (report mode)
+        # Reports imports that cross the planned SC-NC destinations against their order
+        # (tools/sc_nc_split_map.json). Report mode exits 0; a malformed map exits 2.
+        run: python tools/sc_nc_import_gate.py
+
       - name: API reference drift
         run: python scripts/generate_docs.py --check
 

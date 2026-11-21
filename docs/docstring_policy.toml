@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2303
+expected_file_count = 2305
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -75,6 +75,14 @@ rationale = "Verify installed wheel identities and exercise exact packet compati
 [[file]]
 path = "tools/installed_codec_cases.py"
 rationale = "Exercise public raster, waveform and stream workflows using deterministic acquisition and optional recorded PCM."
+
+[[file]]
+path = "tools/sc_nc_import_gate.py"
+rationale = "Document the split map loader, the import resolver and the gate's report and exit contract."
+
+[[file]]
+path = "tests/test_tools/test_sc_nc_import_gate.py"
+rationale = "Exercise the split import gate on the real tree and on a tracked fixture with every refusal."
 
 [[file]]
 path = "tools/capability_manifest.py"

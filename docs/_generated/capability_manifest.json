@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5757
+    "test_files": 5758
   },
   "documentation": {
     "public_pages": [
@@ -8785,6 +8785,7 @@
       "tests/test_tools/test_rust_model_field_docs.py",
       "tests/test_tools/test_rust_supply_chain_scanner_plan.py",
       "tests/test_tools/test_rustdoc_symbols_native.py",
+      "tests/test_tools/test_sc_nc_import_gate.py",
       "tests/test_tools/test_scan_wheel_isa.py",
       "tests/test_tools/test_schema_gap_report.py",
       "tests/test_tools/test_security_provider_workflows.py",

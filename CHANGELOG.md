@@ -97,6 +97,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- A split import gate (`tools/sc_nc_import_gate.py`, with its plan in
+  `tools/sc_nc_split_map.json`) measures how far the integrated package is from
+  the planned SC-NC extractions. The map gives the order of the destinations,
+  the destinations each one may import, and the destination of every top-level
+  package and module. The gate resolves every import in the tracked sources and
+  reports each one that a destination may not make, and each import of
+  SC-NeuroCore code from a package that leaves for the circuit platform. The
+  main CI workflow runs it in report mode, which never fails a build. A
+  destination becomes blocking with `--blocking` once its count reaches zero.
+
 - The accelerated-lane stub triage records a seat's reading of each of the
   83 originals its rule left unclear, with the reason: 20 are compute (the
   holonomic adapters' JAX numerics behind the package's shim, bit-level SC

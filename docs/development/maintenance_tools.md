@@ -451,6 +451,59 @@ python -m tools.toolchain_manifest --list        # every declaration and where i
 - **A version raise** is one edit of the manifest followed by every declaration
   the check then names.
 
+### Split import gate
+
+The planned SC-NC extractions (see the [ecosystem page](../ecosystem.md)) can
+only move code that does not import across them in a cycle. Their imports
+must follow one order: each destination may import only destinations earlier
+in it.
+
+`tools/sc_nc_split_map.json` holds that plan:
+- the order of the destinations;
+- the destinations each one may import;
+- the destination of every top-level package and module of `src/sc_neurocore`;
+- the facade packages and modules that stay in SC-NeuroCore;
+- the packages that leave for the circuit platform.
+
+`tools/sc_nc_import_gate.py` measures the tracked sources against it:
+
+```bash
+python tools/sc_nc_import_gate.py                              # report, exit 0
+python tools/sc_nc_import_gate.py --output gate.json           # also the JSON report
+python tools/sc_nc_import_gate.py --blocking SC-NC-CORE        # exit 1 on its findings
+```
+
+- **What it reads.** The tracked Python files of `src/sc_neurocore`, through
+  `git ls-files`. It resolves every absolute and relative import of
+  `sc_neurocore.<name>`, where a name is a top-level package or module.
+  `import sc_neurocore` and `from sc_neurocore import X`, with `X` not such a
+  name, count as imports of the package root, which runs the facade.
+- **What it reports.**
+  - Each import that the source's destination may not make. An import into a
+    facade or circuit-side name is reported, because neither belongs to the
+    split graph.
+  - Each import of SC-NeuroCore code from a circuit-side package. Such a
+    package must leave without it.
+  - A tracked package or module missing from the map, and a map entry with no
+    tracked file. These are report lines, not failures.
+- **What it does not restrict.** Facade packages and modules may import anything.
+- **What it cannot see.** Only static `import` statements count: an
+  `importlib` call or an import string is not seen. An import under
+  `if TYPE_CHECKING:` counts like any other.
+- **Exit status.**
+  - 0 for a report or a clean blocking check.
+  - 1 when a destination named with `--blocking` has findings.
+  - 2 for a malformed map: a column that names a destination not earlier in the
+    order, an unknown destination, a name placed twice or a repeated key. Also
+    2 when the root is not a Git work tree or tracks no Python file under
+    `src/sc_neurocore`, so that an empty measurement never reads as clean, and
+    when a tracked file is missing or does not decode or parse; the message
+    names the file.
+- **In CI.** The main CI workflow runs it in report mode, which prints the count
+  for each destination in the job log and never fails the build. A destination
+  is added with `--blocking` once its findings reach zero. It is extracted only
+  while that check passes.
+
 ## Validation
 
 Focused tests for these tools live under `tests/test_tools/`.
