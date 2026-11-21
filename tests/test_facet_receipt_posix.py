@@ -29,6 +29,18 @@ from tests.facet_receipt_budget_support import command_budget, poll_interval
 from tools.facet_receipt import run_command
 
 
+def _leader_exited(state_path: Path) -> bool:
+    """Return whether the process behind a ``/proc/<pid>/stat`` path has exited or is a zombie.
+
+    A process that ends between the existence check and the read makes the read fail with
+    ``FileNotFoundError`` or with ``ESRCH`` (``ProcessLookupError``); both mean it has exited.
+    """
+    try:
+        return not state_path.exists() or state_path.read_text().split()[2] == "Z"
+    except (FileNotFoundError, ProcessLookupError):
+        return True
+
+
 @contextmanager
 def _adopt_exited_child_descendants() -> Iterator[None]:
     """Reap this test's orphaned descendant and restore the prior subreaper setting."""
@@ -96,13 +108,12 @@ def test_linux_interruption_kills_the_remaining_group_after_its_leader_exits(
                 facts = json.loads(identity.read_text())
                 leader_pid = int(facts["leader"])
                 child_pid = int(facts["child"])
-                state_path = Path(f"/proc/{leader_pid}/stat")
-                if not state_path.exists() or state_path.read_text().split()[2] == "Z":
+                if _leader_exited(Path(f"/proc/{leader_pid}/stat")):
                     seen.update(leader=leader_pid, child=child_pid, pgid=os.getpgid(child_pid))
                     observed.set()
                     _thread.interrupt_main()
                     return
-            except (FileNotFoundError, json.JSONDecodeError):
+            except (FileNotFoundError, ProcessLookupError, json.JSONDecodeError):
                 continue
 
     control = threading.Thread(target=interrupt_after_leader_exit)
@@ -375,3 +386,18 @@ def test_linux_concurrent_output_truncation_cannot_crash_the_public_recorder(
         )
         + "\n"
     )
+
+
+def test_a_leader_that_vanishes_during_the_read_counts_as_exited(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``ESRCH`` from reading the leader's ``/proc`` stat means it exited, not a thread error."""
+    state = Path(f"/proc/{os.getpid()}/stat")
+    assert not _leader_exited(state)
+
+    def vanished(self: Path, encoding: str | None = None) -> str:
+        raise ProcessLookupError(3, "No such process")
+
+    monkeypatch.setattr(Path, "read_text", vanished)
+    assert _leader_exited(state)
+    assert _leader_exited(Path("/proc/0/absent-stat"))

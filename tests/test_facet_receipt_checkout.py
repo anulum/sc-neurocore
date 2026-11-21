@@ -28,6 +28,30 @@ from tests.facet_receipt_budget_support import command_budget, poll_interval
 from tools.facet_receipt import REPO_ROOT, run_command
 
 
+def _children(listing: Path) -> list[str]:
+    """Return the child pids a ``/proc`` children listing names, none once its process is gone.
+
+    A process that ends between the poll and the read makes the read fail with
+    ``FileNotFoundError`` or with ``ESRCH`` (``ProcessLookupError``); both mean it is gone.
+    """
+    try:
+        return listing.read_text().split()
+    except (FileNotFoundError, ProcessLookupError):
+        return []
+
+
+def _command_line(child: str) -> list[bytes] | None:
+    """Return a child's argument vector, or ``None`` when the child is already gone.
+
+    A short-lived child can end between the children listing and this read; the read then
+    fails with ``FileNotFoundError`` or ``ProcessLookupError``, which both mean it is gone.
+    """
+    try:
+        return Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+
+
 def _copy_public_checkout_tree(
     directory: str,
     checkout: Path,
@@ -353,8 +377,10 @@ def test_cli_refuses_subject_membership_changes_during_a_real_validator(
             deadline = time.monotonic() + budget
             children = Path(f"/proc/{process.pid}/task/{process.pid}/children")
             while process.poll() is None and time.monotonic() < deadline:
-                for child in children.read_text().split():
-                    arguments = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
+                for child in _children(children):
+                    arguments = _command_line(child)
+                    if arguments is None:
+                        continue
                     if selector.encode() in arguments and b"pytest" in arguments:
                         validator_pid = int(child)
                         os.kill(validator_pid, signal.SIGSTOP)
@@ -433,3 +459,27 @@ def test_cli_refuses_subject_membership_changes_during_a_real_validator(
         )
         + "\n"
     )
+
+
+def test_a_child_that_vanishes_during_the_read_counts_as_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``ESRCH`` from reading a child's or a listing's ``/proc`` entry means it ended."""
+
+    def vanished_bytes(self: Path) -> bytes:
+        raise ProcessLookupError(3, "No such process")
+
+    def vanished_text(self: Path, encoding: str | None = None) -> str:
+        raise ProcessLookupError(3, "No such process")
+
+    monkeypatch.setattr(Path, "read_bytes", vanished_bytes)
+    monkeypatch.setattr(Path, "read_text", vanished_text)
+    assert _command_line(str(os.getpid())) is None
+    assert _children(Path(f"/proc/{os.getpid()}/task/{os.getpid()}/children")) == []
+
+
+def test_a_live_child_listing_and_command_line_are_read() -> None:
+    """A present process gives its argument vector and its (possibly empty) children."""
+    arguments = _command_line(str(os.getpid()))
+    assert arguments is not None and arguments[0]
+    assert isinstance(_children(Path(f"/proc/{os.getpid()}/task/{os.getpid()}/children")), list)
