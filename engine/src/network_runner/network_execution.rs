@@ -8,11 +8,16 @@
 
 //! Multi-population simulation orchestration over populations and projections.
 
+#![deny(missing_docs)]
+
 use super::simulation_results::pack_spike_event;
 use super::{admit_csr, PopulationRunner, ProjectionRunner, SimResults};
 
+/// Neuron populations connected by CSR projections, advanced together one step at a time.
 pub struct NetworkRunner {
+    /// The populations, indexed in the order they were added.
     pub populations: Vec<PopulationRunner>,
+    /// The projections, applied on every step in the order they were added.
     pub projections: Vec<ProjectionRunner>,
 }
 
@@ -48,6 +53,7 @@ fn propagate_projection(populations: &mut [PopulationRunner], projection: &mut P
 }
 
 impl NetworkRunner {
+    /// Construct a network with no population and no projection.
     pub fn new() -> Self {
         Self {
             populations: Vec::new(),
@@ -55,12 +61,18 @@ impl NetworkRunner {
         }
     }
 
+    /// Append a population and return its index.
     pub fn add_population(&mut self, pop: PopulationRunner) -> usize {
         let idx = self.populations.len();
         self.populations.push(pop);
         idx
     }
 
+    /// Append a projection without checking it.
+    ///
+    /// [`Self::admit_projection`] checks the population indices and the connectivity
+    /// first. A projection whose source or target index does not exist makes
+    /// [`Self::run`] panic.
     pub fn add_projection(&mut self, proj: ProjectionRunner) {
         self.projections.push(proj);
     }
@@ -111,6 +123,12 @@ impl NetworkRunner {
             .validate_currents(currents)
     }
 
+    /// Set one population's input currents, advance only that population by one step, and
+    /// return its spike flags and soma voltages.
+    ///
+    /// No projection is applied and no other population moves. An index that does not
+    /// exist, or a current vector whose length differs from the population's size, returns
+    /// `Err` and leaves the population unchanged.
     pub fn step_population_with_currents(
         &mut self,
         pop_idx: usize,
@@ -125,6 +143,22 @@ impl NetworkRunner {
         Ok((pop.spikes.clone(), pop.collect_voltages()))
     }
 
+    /// Run the whole network for `n_steps` steps and return its spikes and final voltages.
+    ///
+    /// Each step first sets every population's currents to zero. Each projection then adds,
+    /// in the order the projections were added, its source population's spike flags as the
+    /// previous step left them to its target's currents; on the first step these are the
+    /// flags an earlier call left, zero for a new population. Every population then
+    /// advances, in index order. A projection with a delay of `d` steps adds flags that are
+    /// `d` propagations older, so a spike reaches its target's currents `d + 1` steps after
+    /// it is emitted. Spike events are packed as `(neuron << 32) | step`, with steps
+    /// counted from 0 in this call; the voltages are each population's soma voltages after
+    /// the last step.
+    ///
+    /// # Panics
+    ///
+    /// When a projection names a population that does not exist, or when a spike occurs at
+    /// a step above `u32::MAX`.
     pub fn run(&mut self, n_steps: usize) -> SimResults {
         let n_pops = self.populations.len();
         let mut spike_counts = vec![0usize; n_pops];

@@ -8,11 +8,18 @@
 
 //! Public simulation-result records and their lossless spike-event encoding.
 
+#![deny(missing_docs)]
+
+/// What `NetworkRunner::run` returns: each population's spikes and final voltages.
 pub struct SimResults {
+    /// Number of spikes each population emitted during the run, in population order.
     pub spike_counts: Vec<usize>,
     /// Per-population flat spike data: `(neuron_id << 32) | timestep` packed as `u64`.
-    /// Supports up to 2^32 neurons and 2^32 timesteps.
+    /// Supports up to 2^32 neurons and 2^32 timesteps. The packing refuses a timestep
+    /// above `u32::MAX` with a panic; it does not check the neuron index, whose bits above
+    /// the 32nd would be lost.
     pub spike_data: Vec<Vec<u64>>,
+    /// Each population's soma voltages after the last step, in neuron order.
     pub voltages: Vec<Vec<f64>>,
 }
 

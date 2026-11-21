@@ -9,6 +9,8 @@
 //! Normalise neuron models with non-standard inputs or outputs to the network
 //! runner's `step(f64) -> i32` contract.
 
+#![deny(missing_docs)]
+
 use crate::neurons::*;
 
 /// Define an adapter for a model whose step accepts one additional input.
@@ -156,15 +158,22 @@ wrap_2arg_f64!(WrHayL5, HayL5PyramidalNeuron, v_s, 0.0_f64);
 #[derive(Clone, Debug)]
 pub struct WrTwoCompLIF(pub TwoCompartmentLIFNeuron);
 impl WrTwoCompLIF {
+    /// Construct the adapter around a freshly constructed TC-LIF neuron.
     pub fn new() -> Self {
         Self(TwoCompartmentLIFNeuron::new())
     }
+    /// Pass the runner drive as the external dendritic current and return the spike value.
+    ///
+    /// A drive that is not finite, or a step the model refuses, returns 0 and leaves the
+    /// model's state unchanged.
     pub fn step(&mut self, current: f64) -> i32 {
         self.0.step(current)
     }
+    /// Set the dendritic and somatic potentials and the previous spike to zero.
     pub fn reset(&mut self) {
         self.0.reset();
     }
+    /// Report the somatic potential `u_s`.
     pub fn v(&self) -> f64 {
         self.0.u_s
     }
@@ -191,10 +200,19 @@ wrap_i32_input!(
 pub struct WrMcCullochPitts(pub McCullochPittsNeuron);
 
 impl WrMcCullochPitts {
+    /// Construct the adapter around the default unit, whose threshold is one afferent.
     pub fn new() -> Self {
         Self(McCullochPittsNeuron::default())
     }
 
+    /// Evaluate one afferent pattern given by the runner drive and return the unit's output.
+    ///
+    /// A drive of exactly `-1.0` is the absolute-inhibition marker: the unit is evaluated
+    /// with no excitatory afferent and inhibition active, so the output is 0. Any other
+    /// drive is the count of active excitatory afferents and must be a finite, non-negative
+    /// whole number no larger than `i32::MAX`; a drive outside that set returns 0, and every
+    /// drive returns 0 while the public threshold `theta` is invalid. The unit holds no
+    /// state, so no drive changes it.
     pub fn step(&mut self, current: f64) -> i32 {
         if current == -1.0 {
             return self.0.try_step(0, true).unwrap_or(0);
@@ -209,10 +227,12 @@ impl WrMcCullochPitts {
         self.0.try_step(current as i32, false).unwrap_or(0)
     }
 
+    /// Change nothing, since the unit holds no state; debug builds assert its threshold.
     pub fn reset(&mut self) {
         debug_assert!(self.0.validate().is_ok());
     }
 
+    /// Report 0.0, since the unit has no membrane variable.
     pub fn v(&self) -> f64 {
         0.0
     }

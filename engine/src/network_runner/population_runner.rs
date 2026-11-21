@@ -8,10 +8,13 @@
 
 //! Parallel execution and state management for one heterogeneous neuron population.
 
+#![deny(missing_docs)]
+
 use rayon::prelude::*;
 
 use super::NeuronVariant;
 
+/// Neurons that advance together, with one spike flag and one input current per neuron.
 pub struct PopulationRunner {
     pub(super) neurons: Vec<NeuronVariant>,
     pub(super) spikes: Vec<u8>,
@@ -21,6 +24,7 @@ pub struct PopulationRunner {
 const CHUNK_SIZE: usize = 256;
 
 impl PopulationRunner {
+    /// Construct a population from its neurons, with every spike flag and current at zero.
     pub fn new(neurons: Vec<NeuronVariant>) -> Self {
         let n = neurons.len();
         Self {
@@ -30,10 +34,12 @@ impl PopulationRunner {
         }
     }
 
+    /// Return the number of neurons.
     pub fn len(&self) -> usize {
         self.neurons.len()
     }
 
+    /// Return whether the population has no neurons.
     pub fn is_empty(&self) -> bool {
         self.neurons.is_empty()
     }
@@ -59,6 +65,7 @@ impl PopulationRunner {
             });
     }
 
+    /// Reset every neuron, and set every spike flag and current to zero.
     pub fn reset_all(&mut self) {
         for n in &mut self.neurons {
             n.reset();
@@ -67,6 +74,7 @@ impl PopulationRunner {
         self.currents.fill(0.0);
     }
 
+    /// Set every input current to zero, leaving the neurons and the spike flags unchanged.
     pub fn reset_currents(&mut self) {
         self.currents.fill(0.0);
     }
@@ -90,6 +98,7 @@ impl PopulationRunner {
         Ok(())
     }
 
+    /// Return each neuron's soma voltage, in neuron order.
     pub fn collect_voltages(&self) -> Vec<f64> {
         self.neurons.iter().map(|n| n.soma_voltage()).collect()
     }

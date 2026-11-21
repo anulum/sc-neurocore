@@ -409,6 +409,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The network runner in `engine/src/network_runner` is documented apart
+  from `create_neuron`: its network, populations, projections, results and
+  the TC-LIF and McCulloch-Pitts input adapters, each read against its code.
+  Stated by reading: a projection with a delay of `d` steps delivers a
+  spike `d + 1` runner steps after it is emitted; `add_projection` checks
+  nothing, so a projection that names a missing population makes `run`
+  panic, while `admit_projection` refuses it; `step_population_with_currents`
+  applies no projection; and the spike-event packing refuses a timestep
+  above `u32::MAX` but does not check the neuron index, whose bits above the
+  32nd would be lost.
+
 - The engine's four RK4 neuron ports in `engine/src/rk4_neurons.rs`
   (Izhikevich, Izhikevich 2007, AdEx, Hodgkin-Huxley) and its
   `py_rk4_neuron_simulate` function are documented in full, each read

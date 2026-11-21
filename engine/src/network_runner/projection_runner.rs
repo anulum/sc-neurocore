@@ -8,9 +8,13 @@
 
 //! CSR synaptic projection propagation with optional discrete axonal delay.
 
+#![deny(missing_docs)]
+
 /// CSR-stored synaptic projection with optional axonal delay.
 pub struct ProjectionRunner {
+    /// Index of the source population in the network.
     pub src_pop: usize,
+    /// Index of the target population in the network.
     pub tgt_pop: usize,
     row_offsets: Vec<usize>,
     col_indices: Vec<usize>,
@@ -85,6 +89,12 @@ pub fn admit_csr(
 }
 
 impl ProjectionRunner {
+    /// Construct a projection from CSR connectivity without checking it.
+    ///
+    /// [`admit_csr`] checks the connectivity first, as `NetworkRunner::admit_projection`
+    /// does. A `delay_steps` above zero allocates that many slots of zero spike flags, one
+    /// flag per source row (`row_offsets.len() - 1`), so the first `delay_steps`
+    /// propagations deliver no spike.
     pub fn new(
         src_pop: usize,
         tgt_pop: usize,
