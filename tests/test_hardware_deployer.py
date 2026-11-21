@@ -40,6 +40,20 @@ class TestDeployer:
         pkg = deployer.package(adj, device, placements)
         assert deployer.validate(pkg) is True
 
+    @pytest.mark.parametrize("strategy", ["map_greedy", "map_balanced", "map_locality"])
+    def test_isolated_neurons_are_placed_and_validate(self, strategy: str) -> None:
+        """A network whose last neurons have no synapse validates after every mapping strategy."""
+        n = 12
+        adj = np.zeros((n, n))
+        adj[0, 1] = adj[1, 2] = adj[2, 0] = 0.5
+        device = get_device(DeviceFamily.LOIHI)
+        placements = getattr(Mapper(), strategy)(adj, device)
+        deployer = Deployer()
+        pkg = deployer.package(adj, device, placements)
+        assert sorted(p.neuron_id for p in placements) == list(range(n))
+        assert pkg.metadata["n_neurons"] == n
+        assert deployer.validate(pkg) is True
+
     def test_validate_empty_blob_fails(self):
         """An empty configuration blob fails validation."""
         deployer, adj, device, placements = self._pipeline()
