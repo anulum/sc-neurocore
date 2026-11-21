@@ -144,19 +144,23 @@ def test_no_refactored_module_or_test_is_a_godfile() -> None:
 
 
 def test_false_certification_mirrors_are_absent_but_monitor_chain_remains() -> None:
-    """Non-functional report mirrors must stay removed without monitor damage."""
+    """Non-functional mirrors must stay removed without monitor damage.
+
+    The report mirrors and the Julia and Mojo transcripts of the monitor are removed; the Rust
+    and Go monitors are its implementations.
+    """
     removed = (
         "src/sc_neurocore/accel/rust/safety/safety_cert.rs",
         "src/sc_neurocore/accel/go/services/safety_cert/safety_cert.go",
         "src/sc_neurocore/accel/go/services/safety_cert/__init__.py",
         "src/sc_neurocore/accel/julia/safety_cert/safety_cert.jl",
         "src/sc_neurocore/accel/mojo/kernels/safety_cert.mojo",
+        "src/sc_neurocore/accel/julia/safety_cert/safety_monitor.jl",
+        "src/sc_neurocore/accel/mojo/kernels/safety_monitor.mojo",
     )
     retained = (
         "src/sc_neurocore/accel/rust/safety/safety_monitor.rs",
         "src/sc_neurocore/accel/go/services/safety_monitor/safety_monitor.go",
-        "src/sc_neurocore/accel/julia/safety_cert/safety_monitor.jl",
-        "src/sc_neurocore/accel/mojo/kernels/safety_monitor.mojo",
     )
     assert all(not (_REPO_ROOT / relative).exists() for relative in removed)
     assert all((_REPO_ROOT / relative).is_file() for relative in retained)

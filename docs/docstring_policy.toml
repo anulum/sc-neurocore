@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2299
+expected_file_count = 2303
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9244,3 +9244,19 @@ rationale = "Document public bounded IR proofs and solver counterexample control
 [[file]]
 path = "tests/test_sby_runner_run_sby_task.py"
 rationale = "Record timeout termination and interpretation checks."
+
+[[file]]
+path = "benchmarks/bench_evo_substrate_multilang.py"
+rationale = "Measure the evolutionary kernels in five languages and bind the record to the sources it ran."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/__init__.py"
+rationale = "Declare which Mojo files are authoritative backends and which are mirrors or transcripts."
+
+[[file]]
+path = "tests/test_accel/test_accel_mirror_authority.py"
+rationale = "Hold the declared acceleration entry points and mirror patterns to the files of the tree."
+
+[[file]]
+path = "tests/test_evo_substrate/test_architecture.py"
+rationale = "Hold the evolution substrate's module split, facade and benchmark-bound polyglot sources."

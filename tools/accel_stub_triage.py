@@ -119,11 +119,6 @@ class Resolution(TypedDict):
 
 #: Readings of modules the rule leaves unclear, by repository path.
 READINGS: dict[str, Reading] = {
-    "src/sc_neurocore/adapters/base.py": {
-        "class": "application",
-        "reason": "an abstract adapter interface with no computation of its own",
-        "reader": "aadb",
-    },
     "src/sc_neurocore/adapters/holonomic/l10_fire.py": {
         "class": "compute",
         "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
@@ -174,89 +169,9 @@ READINGS: dict[str, Reading] = {
         "reason": "JAX array numerics through the package's _jax_compat shim (jnp, rng), a relative import the rule does not see",
         "reader": "aadb",
     },
-    "src/sc_neurocore/analysis/spike_stats/basic.py": {
-        "class": "application",
-        "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/analysis/spike_stats/spectral.py": {
-        "class": "application",
-        "reason": "a re-export of spike_train_statistics; the code it re-exports is classed on its own",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/audio/user_profile.py": {
-        "class": "application",
-        "reason": "user preference and chronotype records",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/benchmarks/tasks.py": {
-        "class": "application",
-        "reason": "benchmark task definitions",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/bridges/aer_router.py": {
-        "class": "application",
-        "reason": "a UDP spike router with threads and packet framing (network I/O)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/chip_compiler/chip_spec.py": {
-        "class": "application",
-        "reason": "chip specification records loaded from JSON",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/comm/aer_udp.py": {
-        "class": "application",
-        "reason": "an AER-over-UDP sender and receiver; numpy only frames packets",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/compiler/ir_type_checker.py": {
-        "class": "application",
-        "reason": "a type checker over the IR graph",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/compiler/quantizer.py": {
-        "class": "application",
-        "reason": "a dispatcher to the quantization modules, which are classed on their own",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/control/adaptive_loop.py": {
-        "class": "application",
-        "reason": "a closed-loop controller orchestrating drift detection and reconfiguration",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/core/mdl_parser.py": {
-        "class": "application",
-        "reason": "YAML serialisation of orchestrator state",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/dashboard/text_dashboard.py": {
-        "class": "application",
-        "reason": "a terminal dashboard",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/debug/sc_doctor.py": {
-        "class": "application",
-        "reason": "a runtime adaptation wrapper that delegates to the package",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/drivers/physical_twin.py": {
-        "class": "application",
-        "reason": "a socket bridge to a physical twin",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/drivers/verify_hardware_link.py": {
-        "class": "application",
-        "reason": "a hardware-link diagnostic command",
-        "reader": "aadb",
-    },
     "src/sc_neurocore/edge/bitstream.py": {
         "class": "compute",
         "reason": "packed 32-bit bitstream arithmetic (popcount, SC and/or/xor/mux) in bitwise operators the rule does not count",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/edge/deploy.py": {
-        "class": "application",
-        "reason": "a generator of cargo and linker configuration files",
         "reader": "aadb",
     },
     "src/sc_neurocore/edge/lfsr.py": {
@@ -269,114 +184,9 @@ READINGS: dict[str, Reading] = {
         "reason": "LIF and Izhikevich neuron updates in the SC domain",
         "reader": "aadb",
     },
-    "src/sc_neurocore/edge/power_estimator.py": {
-        "class": "application",
-        "reason": "configuration-time scalar estimates from board tables, not a runtime kernel",
-        "reader": "aadb",
-    },
     "src/sc_neurocore/edge/sc_network.py": {
         "class": "compute",
         "reason": "feed-forward inference over packed binary connection masks",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/edge/telemetry.py": {
-        "class": "application",
-        "reason": "telemetry counters and a ring buffer",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/edge/weights.py": {
-        "class": "application",
-        "reason": "weight serialisation with struct",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/energy/fpga_models.py": {
-        "class": "application",
-        "reason": "FPGA resource and power model records",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/energy_accounting/unified_reporter.py": {
-        "class": "application",
-        "reason": "a report combining other energy estimates",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/evo_substrate/evo_substrate.py": {
-        "class": "application",
-        "reason": "an API re-export over focused modules, which are classed on their own",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/experiments/demo_pattern_pca.py": {
-        "class": "application",
-        "reason": "a plotting demonstration",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/experiments/demo_sc_dense_layer.py": {
-        "class": "application",
-        "reason": "a demonstration script",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/experiments/demo_sc_pipeline.py": {
-        "class": "application",
-        "reason": "a demonstration script",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/experiments/demonstration_convergence.py": {
-        "class": "application",
-        "reason": "a demonstration script with logging",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/experiments/learning_demo.py": {
-        "class": "application",
-        "reason": "a plotting demonstration",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/export/compiler_export.py": {
-        "class": "application",
-        "reason": "an SSA compiler front end for the IR graph (code generation)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/export/onnx_export.py": {
-        "class": "application",
-        "reason": "an ONNX exporter (serialisation)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/export/pipeline.py": {
-        "class": "application",
-        "reason": "an export pipeline orchestrating the exporters",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/export/tvm_lowering.py": {
-        "class": "application",
-        "reason": "a lowering of the IR to TVM Relay (code generation)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/hdl_gen/spice_generator.py": {
-        "class": "application",
-        "reason": "a SPICE netlist generator (code generation)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/hdl_gen/verilog_generator.py": {
-        "class": "application",
-        "reason": "a Verilog generator (code generation)",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/hypervisor/hypervisor.py": {
-        "class": "application",
-        "reason": "multi-tenant admission and scheduling logic",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/learning/callbacks.py": {
-        "class": "application",
-        "reason": "training logging callbacks",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/nas/search_space.py": {
-        "class": "application",
-        "reason": "an architecture search-space definition and sampler",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/neurons/base.py": {
-        "class": "application",
-        "reason": "an abstract neuron interface with no computation of its own",
         "reader": "aadb",
     },
     "src/sc_neurocore/neurons/dendritic.py": {
@@ -399,139 +209,14 @@ READINGS: dict[str, Reading] = {
         "reason": "a central pattern generator built from coupled neuron updates",
         "reader": "aadb",
     },
-    "src/sc_neurocore/safety_cert/safety_monitor.py": {
-        "class": "application",
-        "reason": "range checks of a safety monitor",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/security/ethics.py": {
-        "class": "application",
-        "reason": "an action governor with logging",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/security/zkp.py": {
-        "class": "application",
-        "reason": "a hash-based verifier",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/serve/server.py": {
-        "class": "application",
-        "reason": "an HTTP inference server",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/sleep/protocol_library.py": {
-        "class": "application",
-        "reason": "protocol definitions",
-        "reader": "aadb",
-    },
     "src/sc_neurocore/spike_codec/entropy.py": {
         "class": "compute",
         "reason": "canonical Huffman encoding and decoding of integer streams",
         "reader": "aadb",
     },
-    "src/sc_neurocore/spike_codec/registry.py": {
-        "class": "application",
-        "reason": "a codec registry and recommender",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/codegen.py": {
-        "class": "application",
-        "reason": "Studio code generation",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/compiler.py": {
-        "class": "application",
-        "reason": "Studio adapters to the Verilog compiler and co-simulation",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/model_scan.py": {
-        "class": "application",
-        "reason": "a Studio scan workflow writing evidence",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/models.py": {
-        "class": "application",
-        "reason": "Studio catalogue helpers",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/network_graph.py": {
-        "class": "application",
-        "reason": "Studio canvas graph operations",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/presets.py": {
-        "class": "application",
-        "reason": "Studio preset definitions",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/project.py": {
-        "class": "application",
-        "reason": "Studio project storage and pipeline",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/synthesis.py": {
-        "class": "application",
-        "reason": "Studio runs of FPGA toolchains as bounded processes",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/templates.py": {
-        "class": "application",
-        "reason": "Studio equation templates",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/studio/training.py": {
-        "class": "application",
-        "reason": "the Studio training service boundary",
-        "reader": "aadb",
-    },
     "src/sc_neurocore/synapses/r_stdp.py": {
         "class": "compute",
         "reason": "a reward-modulated STDP weight update",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/utils/adapter_discovery.py": {
-        "class": "application",
-        "reason": "adapter discovery from entry points",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/utils/adaptive.py": {
-        "class": "application",
-        "reason": "an early-exit control loop around a step function supplied by the caller",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/utils/deprecation.py": {
-        "class": "application",
-        "reason": "deprecation decorators",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/utils/logging.py": {
-        "class": "application",
-        "reason": "logging configuration",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/utils/registry.py": {
-        "class": "application",
-        "reason": "a component registry",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/uvm_gen/uvm_gen.py": {
-        "class": "application",
-        "reason": "an API re-export over the UVM generator modules",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/verification/safety.py": {
-        "class": "application",
-        "reason": "static safety screening of generated code",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/viz/plots.py": {
-        "class": "application",
-        "reason": "plotting",
-        "reader": "aadb",
-    },
-    "src/sc_neurocore/viz/web_viz.py": {
-        "class": "application",
-        "reason": "a web visualiser",
         "reader": "aadb",
     },
 }

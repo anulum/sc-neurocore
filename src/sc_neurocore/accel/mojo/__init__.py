@@ -31,7 +31,6 @@ AUTHORITATIVE_MOJO_ENTRYPOINTS: tuple[str, ...] = (
 
 NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS: tuple[str, ...] = (
     "kernels/*.mojo",
-    "kernels/app.mojo",
     "kernels/compiler.mojo",
 )
 

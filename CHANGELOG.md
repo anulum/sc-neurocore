@@ -975,6 +975,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   could leave the token bucket below zero, is refused and changes
   nothing; Refill in Go now returns an error.
 
+### Removed
+
+- The accelerated lanes drop 120 transcripts of application code, deleted on
+  the owner's approval of the listed set: 54 Mojo and 66 Julia files that
+  copied Python modules which are not compute kernels (web and command-line
+  applications, network I/O, records, re-exports and demonstrations) into
+  functions returning zero. No loader read any of them. The stub triage and
+  the Mojo and Julia lane inventories now list the 610 transcripts that remain,
+  608 of compute kernels and 2 of the one original still unclassified.
+- The mirror-authority declarations no longer name the deleted `app.mojo`, and
+  a test requires every declared mirror pattern to name files of the tree.
+  The safety-certificate and evolution-substrate architecture tests no longer
+  expect the deleted monitor and substrate transcripts; the Rust and Go
+  monitors remain.
+- The evolution-substrate multi-language benchmark no longer binds the
+  deleted Mojo transcript, which it never ran, and was measured again in all
+  five lanes; the API page shows the new medians.
+
 ### Repository hygiene
 
 - The engine takes z3 0.23 (from 0.22); z3-sys and its bundled solver stay

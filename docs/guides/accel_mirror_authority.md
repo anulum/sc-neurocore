@@ -132,8 +132,14 @@ Python loader and tests are added later:
 
 Known transcript-style examples:
 
-- `src/sc_neurocore/accel/julia/studio/compiler.jl`
-- `src/sc_neurocore/accel/mojo/kernels/app.mojo`
+- `src/sc_neurocore/accel/julia/studio/simulation.jl`
+- `src/sc_neurocore/accel/mojo/kernels/prescott.mojo`
+
+The complete lists are the generated inventories `docs/_generated/julia_lane_inventory.json`
+and `docs/_generated/mojo_lane_inventory.json`, and `docs/_generated/accel_stub_triage.json`
+classes each transcript's original as a compute kernel or an application. Transcripts of
+application code were deleted; transcripts of compute kernels are to be replaced by real
+implementations held by parity tests.
 
 ## Practical workflow
 

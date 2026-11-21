@@ -302,10 +302,7 @@ def _source_digest() -> tuple[str, int]:
             and path.suffix in {".py", ".rs", ".go", ".jl", ".toml"}
         )
     mojo = _REPO_ROOT / "src" / "sc_neurocore" / "accel" / "mojo" / "kernels"
-    files.extend(
-        mojo / name
-        for name in ("evo_substrate.mojo", "evo_substrate_bench.mojo", "evo_runner.mojo")
-    )
+    files.extend(mojo / name for name in ("evo_substrate_bench.mojo", "evo_runner.mojo"))
     unique = sorted(set(files))
     digest = hashlib.sha256()
     for path in unique:

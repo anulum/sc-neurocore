@@ -572,10 +572,10 @@ def test_the_committed_record_names_the_module_of_every_stub() -> None:
         sum(counts[f"transcription_rule_{rule}"] for rule in TRANSCRIPTION_RULES)
         == counts["translated_stub"]
     )
-    app = next(s for s in record["sources"] if s["path"].endswith("kernels/app.mojo"))
-    assert (app["transcribed_module"], app["transcription_rule"]) == (
-        "src/sc_neurocore/studio/app.py",
-        "header_source_of_truth",
+    prescott = next(s for s in record["sources"] if s["path"].endswith("kernels/prescott.mojo"))
+    assert (prescott["transcribed_module"], prescott["transcription_rule"]) == (
+        "src/sc_neurocore/neurons/models/prescott.py",
+        "file_stem",
     )
 
 

@@ -1,18 +1,18 @@
 {
   "generator": "tools/mojo_lane_inventory.py",
   "counts": {
-    "sources": 535,
+    "sources": 481,
     "comment_only": 4,
-    "translated_stub": 363,
+    "translated_stub": 309,
     "implementation_fn": 39,
     "implementation_def": 129,
     "built_by_builder": 50,
     "implementation_fn_built_by_builder": 0,
-    "translated_stub_declared_mirror": 363,
-    "transcription_rule_header_source_of_truth": 1,
-    "transcription_rule_header_stem": 322,
+    "translated_stub_declared_mirror": 309,
+    "transcription_rule_header_source_of_truth": 0,
+    "transcription_rule_header_stem": 278,
     "transcription_rule_file_stem": 4,
-    "transcription_rule_stem_by_lines": 34,
+    "transcription_rule_stem_by_lines": 25,
     "transcription_rule_ambiguous": 2,
     "transcription_rule_none": 0,
     "library_literals": 110,
@@ -212,17 +212,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/adaptive.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/adaptive.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "8/11",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/adaptive_engine.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -231,17 +220,6 @@
       "transcribed_module": "src/sc_neurocore/audio/adaptive_engine.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "81/174",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/adaptive_loop.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/control/adaptive_loop.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "26/49",
       "transcription_candidates": []
     },
     {
@@ -321,28 +299,6 @@
       "transcribed_module": "src/sc_neurocore/spike_codec/aer_codec.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "5/86",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/aer_router.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/bridges/aer_router.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "1/27",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/aer_udp.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/comm/aer_udp.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "28/40",
       "transcription_candidates": []
     },
     {
@@ -522,17 +478,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/app.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/app.py",
-      "transcription_rule": "header_source_of_truth",
-      "verbatim_line_share": "80/963",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/arcane_neuron.mojo",
       "class": "implementation_fn",
       "declared": "mirror",
@@ -618,17 +563,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/base.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/adapters/base.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "4/4",
       "transcription_candidates": []
     },
     {
@@ -830,17 +764,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/callbacks.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/learning/callbacks.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "3/14",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/category_theory.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -929,17 +852,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/chip_spec.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/chip_compiler/chip_spec.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "0/5",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/circadian_optimizer.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -997,17 +909,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/codegen.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/codegen.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "0/90",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/collective_fields.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -1027,17 +928,6 @@
       "transcribed_module": "src/sc_neurocore/chip_compiler/compiler.py",
       "transcription_rule": "stem_by_lines",
       "verbatim_line_share": "74/105",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/compiler_export.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/compiler_export.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "43/71",
       "transcription_candidates": []
     },
     {
@@ -1285,17 +1175,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/demo_pattern_pca.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_pattern_pca.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "47/55",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/demo_poisson_spikes.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -1304,28 +1183,6 @@
       "transcribed_module": "src/sc_neurocore/experiments/demo_poisson_spikes.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "14/17",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/demo_sc_dense_layer.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_sc_dense_layer.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "38/39",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/demo_sc_pipeline.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_sc_pipeline.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "36/36",
       "transcription_candidates": []
     },
     {
@@ -1362,17 +1219,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/demonstration_convergence.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demonstration_convergence.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "35/63",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo",
       "class": "implementation_def",
       "declared": "mirror",
@@ -1381,28 +1227,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/deploy.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/deploy.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "5/9",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/deprecation.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/deprecation.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "27/29",
       "transcription_candidates": []
     },
     {
@@ -1741,17 +1565,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/equiv.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/nas/equiv.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "60/66",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo",
       "class": "implementation_def",
       "declared": "mirror",
@@ -1776,17 +1589,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/ethics.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/security/ethics.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "15/23",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/evo_runner.mojo",
       "class": "implementation_def",
       "declared": "mirror",
@@ -1795,17 +1597,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/evo_substrate.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/evo_substrate/evo_substrate.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "41/504",
       "transcription_candidates": []
     },
     {
@@ -2311,17 +2102,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/hypervisor.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hypervisor/hypervisor.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "64/316",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/ilif.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -2376,17 +2156,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/ir_type_checker.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/ir_type_checker.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "54/56",
       "transcription_candidates": []
     },
     {
@@ -2821,17 +2590,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/learning_demo.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/learning_demo.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "27/31",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/lfp.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -2873,17 +2631,6 @@
       "transcribed_module": "src/sc_neurocore/datasets/loaders.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "117/164",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/logging.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/logging.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "14/21",
       "transcription_candidates": []
     },
     {
@@ -2999,17 +2746,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/mdl_parser.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/core/mdl_parser.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "13/17",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/mega_advancements_demo.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3076,17 +2812,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/mlir_emitter.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/mlir_emitter.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "19/40",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/model_bridge.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3098,17 +2823,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/model_scan.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/model_scan.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "7/28",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/model_zoo.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3117,17 +2831,6 @@
       "transcribed_module": "src/sc_neurocore/model_zoo/model_zoo.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "232/260",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/models.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/models.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "4/239",
       "transcription_candidates": []
     },
     {
@@ -3205,17 +2908,6 @@
       "transcribed_module": "src/sc_neurocore/analysis/spike_stats/network.py",
       "transcription_rule": "stem_by_lines",
       "verbatim_line_share": "68/88",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/network_graph.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/network_graph.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "65/150",
       "transcription_candidates": []
     },
     {
@@ -3406,17 +3098,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/onnx_export.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/onnx_export.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "55/90",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/onnx_exporter.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3562,17 +3243,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/physical_twin.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/drivers/physical_twin.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "1/10",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/pinsky_rinzel.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3581,17 +3251,6 @@
       "transcribed_module": "src/sc_neurocore/neurons/models/pinsky_rinzel.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "1/29",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/pipeline.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/pipeline.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "17/48",
       "transcription_candidates": []
     },
     {
@@ -3625,17 +3284,6 @@
       "transcribed_module": "src/sc_neurocore/profiler/platform_profiler.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "91/104",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/plots.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/viz/plots.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "141/178",
       "transcription_candidates": []
     },
     {
@@ -3685,17 +3333,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/power_estimator.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/power_estimator.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "19/21",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/predictive_codec.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -3726,17 +3363,6 @@
       "transcribed_module": "src/sc_neurocore/neurons/models/prescott.py",
       "transcription_rule": "file_stem",
       "verbatim_line_share": "0/6",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/presets.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/presets.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "8/8",
       "transcription_candidates": []
     },
     {
@@ -3781,17 +3407,6 @@
       "transcribed_module": "src/sc_neurocore/network/projection.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "66/150",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/protocol_library.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/sleep/protocol_library.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "327/341",
       "transcription_candidates": []
     },
     {
@@ -3882,17 +3497,6 @@
       "transcribed_module": "src/sc_neurocore/qat/quantize.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "15/30",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/quantizer.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/quantizer.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "1/48",
       "transcription_candidates": []
     },
     {
@@ -3995,17 +3599,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/registry.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/registry.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "11/17",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/regulator.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -4072,28 +3665,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/safety.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/verification/safety.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "24/40",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/safety_monitor.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/safety_cert/safety_monitor.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "33/51",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/sc_conv_layer.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -4124,17 +3695,6 @@
       "transcribed_module": "src/sc_neurocore/layers/sc_dense_layer.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "19/29",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/sc_doctor.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/debug/sc_doctor.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "26/35",
       "transcription_candidates": []
     },
     {
@@ -4347,17 +3907,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/search_space.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/nas/search_space.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "42/62",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/sensor_fusion.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -4366,17 +3915,6 @@
       "transcribed_module": "src/sc_neurocore/fusion/sensor_fusion.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "140/287",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/server.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/serve/server.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "48/119",
       "transcription_candidates": []
     },
     {
@@ -4588,17 +4126,6 @@
       "transcribed_module": "src/sc_neurocore/spike_train_statistics/spectral.py",
       "transcription_rule": "stem_by_lines",
       "verbatim_line_share": "2/6",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/spice_generator.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hdl_gen/spice_generator.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "23/23",
       "transcription_candidates": []
     },
     {
@@ -4943,17 +4470,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/synthesis.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/synthesis.py",
-      "transcription_rule": "stem_by_lines",
-      "verbatim_line_share": "76/121",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/system_level_demo.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -4987,28 +4503,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/telemetry.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/telemetry.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "13/40",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/templates.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/templates.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "0/0",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/temporal.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -5039,17 +4533,6 @@
       "transcribed_module": "src/sc_neurocore/core/tensor_stream.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "5/17",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/text_dashboard.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/dashboard/text_dashboard.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "19/28",
       "transcription_candidates": []
     },
     {
@@ -5211,17 +4694,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/tvm_lowering.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/tvm_lowering.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "77/106",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/twinsync.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -5266,17 +4738,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/uvm_gen.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/uvm_gen/uvm_gen.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "20/349",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/variability.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -5296,28 +4757,6 @@
       "transcribed_module": "src/sc_neurocore/layers/vectorized_layer.py",
       "transcription_rule": "header_stem",
       "verbatim_line_share": "40/102",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/verify_hardware_link.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/drivers/verify_hardware_link.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "45/51",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/verilog_generator.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hdl_gen/verilog_generator.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "6/43",
       "transcription_candidates": []
     },
     {
@@ -5387,28 +4826,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/mojo/kernels/web_viz.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/viz/web_viz.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "17/20",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/weights.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/weights.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "24/29",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/mojo/kernels/whitepaper_benchmark.mojo",
       "class": "translated_stub",
       "declared": "mirror",
@@ -5439,17 +4856,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/mojo/kernels/zkp.mojo",
-      "class": "translated_stub",
-      "declared": "mirror",
-      "built_by_builder": false,
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/security/zkp.py",
-      "transcription_rule": "header_stem",
-      "verbatim_line_share": "8/10",
       "transcription_candidates": []
     },
     {

@@ -210,9 +210,8 @@ def test_polyglot_runner_sources_remain_wired() -> None:
         "src/sc_neurocore/accel/go/evo_substrate/main.go",
         "src/sc_neurocore/accel/go/evo_substrate/runner.go",
         "src/sc_neurocore/accel/julia/evo_substrate/evo_runner.jl",
-        "src/sc_neurocore/accel/julia/evo_substrate/evo_substrate.jl",
         "src/sc_neurocore/accel/mojo/kernels/evo_runner.mojo",
-        "src/sc_neurocore/accel/mojo/kernels/evo_substrate.mojo",
+        "src/sc_neurocore/accel/mojo/kernels/evo_substrate_bench.mojo",
         "benchmarks/bench_evo_substrate.py",
         "benchmarks/bench_evo_substrate_multilang.py",
     )
@@ -240,8 +239,7 @@ def test_polyglot_runner_sources_remain_wired() -> None:
         )
     mojo = REPO_ROOT / "src/sc_neurocore/accel/mojo/kernels"
     multilang_sources.update(
-        mojo / name
-        for name in ("evo_substrate.mojo", "evo_substrate_bench.mojo", "evo_runner.mojo")
+        mojo / name for name in ("evo_substrate_bench.mojo", "evo_runner.mojo")
     )
     multilang_evidence = json.loads(
         (REPO_ROOT / "benchmarks/results/bench_evo_substrate_multilang.json").read_text(

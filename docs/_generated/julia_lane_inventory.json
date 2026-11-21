@@ -5,23 +5,23 @@
     "parse_method": "Meta.parseall; every :error and :incomplete node is a refusal; nothing is evaluated"
   },
   "counts": {
-    "sources": 638,
-    "parses": 298,
-    "does_not_parse": 340,
+    "sources": 572,
+    "parses": 292,
+    "does_not_parse": 280,
     "authoritative_entrypoint": 5,
     "authoritative_entrypoint_does_not_parse": 0,
     "loaded_by_python": 110,
     "loaded_by_python_does_not_parse": 0,
-    "declared_mirror": 81,
-    "declared_mirror_does_not_parse": 58,
-    "undeclared": 442,
-    "undeclared_does_not_parse": 282,
+    "declared_mirror": 65,
+    "declared_mirror_does_not_parse": 42,
+    "undeclared": 392,
+    "undeclared_does_not_parse": 238,
     "loaded_under_a_mirror_glob": 4,
-    "transcription_rule_header": 284,
-    "transcription_rule_header_underscore_dir": 56,
+    "transcription_rule_header": 226,
+    "transcription_rule_header_underscore_dir": 54,
     "transcription_rule_ambiguous": 0,
     "transcription_rule_none": 0,
-    "transcription_rule_not_a_transcript": 298,
+    "transcription_rule_not_a_transcript": 292,
     "references": 225,
     "references_resolved": 118,
     "references_named": 103,
@@ -55,20 +55,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/adapters/base.jl",
-      "sha256": "7c14c66f372801338b6d49894e7cf9119ca30ed77c85542b97fe701933ed7aa0",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/adapters/base.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "4/15",
       "transcription_candidates": []
     },
     {
@@ -796,20 +782,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/basic.jl",
-      "sha256": "8ec180519cc023f374fff6da3fd910d0a66c9e14a1a05d10e16800837b342bad",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/analysis/spike_stats/basic.py",
-      "transcription_rule": "header_underscore_dir",
-      "verbatim_line_share": "0/29",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/causality.jl",
       "sha256": "3b059056f84c1e630733625a3af0503d885f341533ed2c655a130505cf56022a",
       "parses": false,
@@ -1020,20 +992,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/spectral.jl",
-      "sha256": "62635704a825931f574943f57e4905d9328eb7fefebd5909f7ca870f2dff8603",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/analysis/spike_stats/spectral.py",
-      "transcription_rule": "header_underscore_dir",
-      "verbatim_line_share": "0/13",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/statistics.jl",
       "sha256": "d930000c4e4cb4992bed01fcf1f13911fd1666ecc93a0a120e57ff8c1b46cc7d",
       "parses": false,
@@ -1160,20 +1118,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/audio/user_profile.jl",
-      "sha256": "9eb6138ffe6421cc4fc6cb372661dc0cfcc605a21cd96c22db944b873c79f373",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/audio/user_profile.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "22/74",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/augmentation/curriculum.jl",
       "sha256": "6724b040adfdd712ebc40dc6696c4cea0b7268ec51387e869e8db44c3c2ff3f1",
       "parses": false,
@@ -1272,20 +1216,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/benchmarks/tasks.jl",
-      "sha256": "3ef17725121ba793a138209f0d8b78b40acc32415d3efed711f2c9eb085f13a7",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/bio/dna_storage.jl",
       "sha256": "1ce5acd457ee99fc6f9fe0d17ed3358e18d73f2c5f63c6bb38b5ec4c457048ba",
       "parses": false,
@@ -1342,20 +1272,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/bridges/aer_router.jl",
-      "sha256": "f0e7718e79991f6f5476d111cee923b1a5126764c3292b645fa8e7d7968d154b",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/bridges/aer_router.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "2/77",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/bridges/photonic_noc.jl",
       "sha256": "a7391f2ed46d4a8c528386ddcd939742a219f0ced5432f61fe925be64ba2d434",
       "parses": false,
@@ -1381,20 +1297,6 @@
       "transcribed_module": "src/sc_neurocore/chaos/rng.py",
       "transcription_rule": "header",
       "verbatim_line_share": "31/112",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/chip_compiler/chip_spec.jl",
-      "sha256": "e67f886237ab03d00fdd7292370b1eb6c81b59cb79700488a9e2e522513aca62",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/chip_compiler/chip_spec.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "0/44",
       "transcription_candidates": []
     },
     {
@@ -1429,20 +1331,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/comm/aer_udp.jl",
-      "sha256": "c2bbfe1e1ef8c74e911262fdf024dd9e118af369e2ca73d8d2eba4fc57991f6f",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/comm/aer_udp.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "28/75",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/compiler/adaptive_precision.jl",
       "sha256": "9f448c5f510f1a2a394f1ce1096d664741c5025c02681c22e947121d7c0f9e90",
       "parses": true,
@@ -1454,62 +1342,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/compiler/ir_type_checker.jl",
-      "sha256": "fbb5691501da79af4adf3dc99b79dd926784d724d16662f2fb821b74e8ec3bc3",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/ir_type_checker.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "44/84",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/compiler/mlir_emitter.jl",
-      "sha256": "551fd84c010e3c010b7f38e4f6711be0162887eac0f8ab5b75781d79a9dd5209",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/mlir_emitter.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "17/70",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/compiler/pipeline.jl",
-      "sha256": "55537c0be4ac073d239bd52e01a89880ea8a5ee5b94aec9cb5413386355dd06d",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/pipeline.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "20/69",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/compiler/quantizer.jl",
-      "sha256": "a6afeb9758aa07ac5329e45bda9c83afbcf63f780b0e963834963795f8326d47",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/compiler/quantizer.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "1/85",
       "transcription_candidates": []
     },
     {
@@ -1580,20 +1412,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/control/adaptive_loop.jl",
-      "sha256": "2adc4c6bb713ad1982ffcd5d89d96517cdf347a3f184b0176f9a28cb349d9c05",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/control/adaptive_loop.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "27/83",
       "transcription_candidates": []
     },
     {
@@ -1797,20 +1615,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/core/mdl_parser.jl",
-      "sha256": "c22ebcca043f75e71f2c2d57a33f0272805826a697e8fe3ea8a5ad81a51156a0",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/core/mdl_parser.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "10/33",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/core/orchestrator.jl",
       "sha256": "213719834b15d6c10bda18e7a720647d38a0b2ae00ea4d943690497493ba8a91",
       "parses": false,
@@ -1850,20 +1654,6 @@
       "transcribed_module": "src/sc_neurocore/core/types.py",
       "transcription_rule": "header",
       "verbatim_line_share": "28/102",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/dashboard/text_dashboard.jl",
-      "sha256": "c437cabfbd0024c7912f0e1dd509fcf900661c45e2441fda061991173b62fc2c",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/dashboard/text_dashboard.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "11/36",
       "transcription_candidates": []
     },
     {
@@ -2069,20 +1859,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/debug/sc_doctor.jl",
-      "sha256": "ba412d28fd4b95410455817fedf069c3fa76a9a7f1827b4d07025e2d1035d3da",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/debug/sc_doctor.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "28/56",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/debug/sc_scope.jl",
       "sha256": "aec49007d0e7844b7034b1c672a2ae259f3360a7f77cdc5a762a44208252b0d1",
       "parses": false,
@@ -2181,20 +1957,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/drivers/physical_twin.jl",
-      "sha256": "61b0aa2c2944f4e40e4071e0ed4715c974d3a7c604b8cb052029ab2031694fe6",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/drivers/physical_twin.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "2/20",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/drivers/sc_neurocore_driver.jl",
       "sha256": "560b703d044c68b259054471c971c5a9fe775513b966417cf9997a64561c1afc",
       "parses": false,
@@ -2209,20 +1971,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/drivers/verify_hardware_link.jl",
-      "sha256": "4e56bde2059f15c734bf85faf58e3c5dab55a93d94db4fc7ed0a62d431a115f2",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/drivers/verify_hardware_link.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "32/54",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/edge/bitstream.jl",
       "sha256": "5e50adc3ad325ca698e70c5756711d2daa515579e0079a27f66b05943e2bedfd",
       "parses": false,
@@ -2234,20 +1982,6 @@
       "transcribed_module": "src/sc_neurocore/edge/bitstream.py",
       "transcription_rule": "header",
       "verbatim_line_share": "29/67",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/edge/deploy.jl",
-      "sha256": "e4f49bf78aa2f2a5d91368ee62dc868875aed98189abab366e559c5e216c73f2",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/deploy.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "6/22",
       "transcription_candidates": []
     },
     {
@@ -2279,20 +2013,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/edge/power_estimator.jl",
-      "sha256": "874febf534a6817e6f9dd308b9bec3b4460d2b5cddd6d9571e37d9112d34d4a6",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/power_estimator.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "21/56",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/edge/sc_network.jl",
       "sha256": "54ffa6c005180c1c4f3399f8a6c8cd125098856ea5192f4511fff027da4ff831",
       "parses": false,
@@ -2318,34 +2038,6 @@
       "transcribed_module": "src/sc_neurocore/edge/sobol.py",
       "transcription_rule": "header",
       "verbatim_line_share": "5/33",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/edge/telemetry.jl",
-      "sha256": "8bce3f4c82e480be7b75972ce06b27ae4a82b2c0854ece4622c8762c813b7afa",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/telemetry.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "16/99",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/edge/weights.jl",
-      "sha256": "cfbbbfd294defffacc4d60fc4efecc336a2d7a0729940b69445d4075f2bbde61",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/edge/weights.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "19/69",
       "transcription_candidates": []
     },
     {
@@ -2405,36 +2097,8 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/energy/fpga_models.jl",
-      "sha256": "b36f411b24836e488e0572b911c434f1562ca440ca72b0a2106640908034ebee",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/energy/sustainability_profiler.jl",
       "sha256": "05680b47bc2dc648502f5b6ee3edccfb8f9f207bec8f08f5c6c70f7da76c8497",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/energy/unified_reporter.jl",
-      "sha256": "eeb2b4a90b4fdc5c38ff20bc4b0e272bdf539643eebcad930def9bed4d69c6ab",
       "parses": true,
       "authoritative": false,
       "loaded": false,
@@ -2472,20 +2136,6 @@
       "transcribed_module": "src/sc_neurocore/energy_accounting/sustainability_profiler.py",
       "transcription_rule": "header",
       "verbatim_line_share": "137/349",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/energy_accounting/unified_reporter.jl",
-      "sha256": "dc985218a9568993b3c7312ba71230a88dd8b6511237606ab7ba9fc9c58d4f21",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/energy_accounting/unified_reporter.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "15/54",
       "transcription_candidates": []
     },
     {
@@ -2528,20 +2178,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/evo_substrate/evo_substrate.jl",
-      "sha256": "b60012b6e70a2fc9028ba99f5332b676d3c7c9f21c1080a419075ff41d525906",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/evo_substrate/evo_substrate.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "41/802",
       "transcription_candidates": []
     },
     {
@@ -2701,20 +2337,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/experiments/demo_pattern_pca.jl",
-      "sha256": "a5e24dd06bcf945fcd8ec6936e293d1f5158e50c46ffe6cb33737e1b43262b41",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_pattern_pca.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "43/56",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/experiments/demo_poisson_spikes.jl",
       "sha256": "42a019ed987be0ec65cb08c60dee047f7ffba85ee8ee63e41f2c172ef4a35828",
       "parses": false,
@@ -2726,34 +2348,6 @@
       "transcribed_module": "src/sc_neurocore/experiments/demo_poisson_spikes.py",
       "transcription_rule": "header",
       "verbatim_line_share": "14/22",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/experiments/demo_sc_dense_layer.jl",
-      "sha256": "3032a0773a6ca6394d316417c375f0d6b611920f22ec5977aa7766ff3f7a0241",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_sc_dense_layer.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "37/43",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/experiments/demo_sc_pipeline.jl",
-      "sha256": "ff4a474955b959ad6e0b78cfdc637a4ee5bea748bbb70987923e556dda6e6b89",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/demo_sc_pipeline.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "34/40",
       "transcription_candidates": []
     },
     {
@@ -2799,20 +2393,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/experiments/demonstration_convergence.jl",
-      "sha256": "6f2b2d9ddc6fd107bf4b9bb2d7beb050f9e7098da06e33c1aebf7514e3e3dac1",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/experiments/exascale_demo.jl",
       "sha256": "645867003a5043f5ff0052ad35ff22c26b35da9f3e582da32d59b1db1bce9aef",
       "parses": true,
@@ -2852,20 +2432,6 @@
       "transcribed_module": "src/sc_neurocore/experiments/l7_symbolic_coupling.py",
       "transcription_rule": "header",
       "verbatim_line_share": "53/64",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/experiments/learning_demo.jl",
-      "sha256": "1a86464d043f38a4bf035f05e996f97124cfe70153b98106a101d4362cb3082d",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/experiments/learning_demo.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "20/31",
       "transcription_candidates": []
     },
     {
@@ -2995,34 +2561,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/export/compiler_export.jl",
-      "sha256": "297e7ba34f8b9139f5c5c855ac19a06ca363ba7711d36b52c13c565d1091a959",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/compiler_export.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "28/101",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/export/onnx_export.jl",
-      "sha256": "f0273d1deb44e621415fbf9fa83255fbe8fccd280b89d731a35c886909c5d8ad",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/onnx_export.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "49/122",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/export/onnx_exporter.jl",
       "sha256": "804f56666a09c28de786144a0fa8152e47ead5b7b8fc575e076d4450f9a1d9ec",
       "parses": false,
@@ -3034,34 +2572,6 @@
       "transcribed_module": "src/sc_neurocore/export/onnx_exporter.py",
       "transcription_rule": "header",
       "verbatim_line_share": "78/107",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/export/pipeline.jl",
-      "sha256": "e4df03097c9ba6438231cc8b373aa14de2b97c77a155a8955c659098405d6365",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/pipeline.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "54/152",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/export/tvm_lowering.jl",
-      "sha256": "17dc39e0dd4d4d95b960cb7a28df6e298a75a28acee2d1c4b17ad5b2cb287d23",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/export/tvm_lowering.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "80/151",
       "transcription_candidates": []
     },
     {
@@ -3207,34 +2717,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/hdl_gen/spice_generator.jl",
-      "sha256": "405018438f27706b166b033cbc4d5877c9268ec303b73d4494a5391268048fd1",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hdl_gen/spice_generator.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "14/24",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/hdl_gen/verilog_generator.jl",
-      "sha256": "3e9127e185430a624c00a0f1f537a776803d50edd55d38149a46259f5b02731d",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hdl_gen/verilog_generator.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "3/56",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/hodgkin_huxley_parity_test.jl",
       "sha256": "bbcf8eb4a87a039778641ae31497b000110926de395ff745f18af8768dede28c",
       "parses": true,
@@ -3260,20 +2742,6 @@
       "transcribed_module": "src/sc_neurocore/homeostasis/regulator.py",
       "transcription_rule": "header",
       "verbatim_line_share": "21/88",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/hypervisor/hypervisor.jl",
-      "sha256": "e52aa7365bb65c6bb584c2a831b49e9418c9089c810e3f605a7a92d30f849f78",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/hypervisor/hypervisor.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "59/532",
       "transcription_candidates": []
     },
     {
@@ -3627,20 +3095,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/learning/callbacks.jl",
-      "sha256": "64ec9cc190ae8ea714c870946993849c69ff64d6c1a2e56cd1bec072927e1880",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/learning/callbacks.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "3/42",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/learning/federated.jl",
       "sha256": "331fec8b32818d279bf69453635ee4d07071d6e15573ae033573e2338959999e",
       "parses": false,
@@ -3855,20 +3309,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/nas/equiv.jl",
-      "sha256": "bc6ce4c8edf49d07f66644ae9446bd822d204dace724dfda3090aff72d3d7aad",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/nas/equiv.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "61/94",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/nas/sc_nas_engine.jl",
       "sha256": "e8a5bead4d3105500bbeea335763247a3a32c61957b487998aae7a1380608718",
       "parses": false,
@@ -3894,20 +3334,6 @@
       "transcribed_module": "src/sc_neurocore/nas/search.py",
       "transcription_rule": "header",
       "verbatim_line_share": "43/97",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/nas/search_space.jl",
-      "sha256": "bcb5a0af7565771d57b10ca5ff8085d779f036e3750a9fb18748f84f16a71cf7",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/nas/search_space.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "36/106",
       "transcription_candidates": []
     },
     {
@@ -4289,20 +3715,6 @@
     {
       "path": "src/sc_neurocore/accel/julia/neurons/balanced_resonate_and_fire.jl",
       "sha256": "69758f2a296c1612e3320d41aaf696d3225b1378bb3b36b2457ddfaee00f2d62",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/neurons/base.jl",
-      "sha256": "1e7c724d410b5f02b7e88e0a18f962119e8a2303d1e9651541c0cf0510040788",
       "parses": true,
       "authoritative": false,
       "loaded": false,
@@ -7223,20 +6635,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/safety_cert/safety_monitor.jl",
-      "sha256": "7a022d2a0c3c31b7bc1a05f22ad53e88e24d1e174fd46d514dd6db4bae7e7269",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/safety_cert/safety_monitor.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "20/70",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl",
       "sha256": "c42aa82bcd907523a3fbc8354edc26a9c043498e4c634f7d2cd8c26c7bb4611f",
       "parses": true,
@@ -7549,20 +6947,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/security/ethics.jl",
-      "sha256": "f924d89b3b301e5d9d2762e3a64556b361f4823df871ea23b9a80eba011f12cb",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/security/ethics.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "7/25",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/security/immune.jl",
       "sha256": "7b35b6167ff9bcf503c42b222cfd7eb08bad33783e9e32cf66b8bfd9894d0ada",
       "parses": false,
@@ -7591,20 +6975,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/security/zkp.jl",
-      "sha256": "05d3f4922d2e940deb3be2efd08bbe98e7773470e3a6f99c8cd10375152b862f",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/security/zkp.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "6/18",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/sensors/dvs.jl",
       "sha256": "32cbe1399c7b0b83efc8700fa4f8a2776f3bee13790e04459fc93ef04b5d1d47",
       "parses": false,
@@ -7619,20 +6989,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/serve/server.jl",
-      "sha256": "7f6aa5d506902ee3eb5d23c963ea90412f820890dab40700472a14460e0355ae",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/serve/server.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "40/145",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/sleep/circadian_optimizer.jl",
       "sha256": "ed5a22bf1c7a84d114d8b34eee03f59eb03ce740b3eaa64654aa7d79ccf3cc3c",
       "parses": false,
@@ -7644,20 +7000,6 @@
       "transcribed_module": "src/sc_neurocore/sleep/circadian_optimizer.py",
       "transcription_rule": "header",
       "verbatim_line_share": "10/49",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/sleep/protocol_library.jl",
-      "sha256": "0c9ae0cf87777d8dbdbfa1d34864273b0ff34aa6cdd840774b1bc0e752b7172d",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/sleep/protocol_library.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "18/58",
       "transcription_candidates": []
     },
     {
@@ -7915,20 +7257,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/spike_codec/registry.jl",
-      "sha256": "96701e9c83a8250f47b956178f0be9c1f661418d3c0c0691b08e0b7d60010996",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/spike_codec/registry.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "12/30",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/spike_codec/streaming_codec.jl",
       "sha256": "10a57bb45f982459ed8d8e144706b4852989a8ae870caf31d24783e1b6d6f180",
       "parses": false,
@@ -8083,20 +7411,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/studio/app.jl",
-      "sha256": "84b41bc135318eb56e904fe53dbbba2185317ab804f8d16ad27b89319a8bd199",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/app.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "34/521",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/studio/characterize.jl",
       "sha256": "803eb605000f0cbfce03c6fae5aa3e992ae29ffcda131b822712ad20a150c0b1",
       "parses": false,
@@ -8111,62 +7425,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/studio/codegen.jl",
-      "sha256": "8f2f65be2ac761526be7a11abe316ccfad94b67d34f3490badae414df0b36ac3",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/codegen.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "0/108",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/studio/compiler.jl",
-      "sha256": "11b9702088ac30cadcb5aa131c4557fb03b0e44acd36be8f66f382839aa6a0b3",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/compiler.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "34/112",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/studio/model_scan.jl",
-      "sha256": "aa4dbde263aa357e902ca68e9d85aff6d8b9e218dd418a641cd9dd684bca6980",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/model_scan.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "5/35",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/studio/models.jl",
-      "sha256": "c16d4822d30b73d3e364a1c9eb19bdebf7fa75ee477bf05069b78ef0e460e720",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/models.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "5/178",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/studio/network.jl",
       "sha256": "057fc9496888a2961264ec255adf9650fc8967e329a140220bc36faac801b07f",
       "parses": false,
@@ -8178,20 +7436,6 @@
       "transcribed_module": "src/sc_neurocore/studio/network.py",
       "transcription_rule": "header",
       "verbatim_line_share": "33/42",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/studio/network_graph.jl",
-      "sha256": "691232843514c356e90afa0e0eaf7784c29338b229a2572e3327842575034958",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/network_graph.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "63/176",
       "transcription_candidates": []
     },
     {
@@ -8223,20 +7467,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/studio/project.jl",
-      "sha256": "f79a6686a9adc001087f2bf5e55372474a19f6ce2cdb7579429b0c6479540aa8",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/project.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "24/92",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/studio/simulation.jl",
       "sha256": "6cc5dcf468b97cfbea604fb77a7abf36d7c1bebaa4285f66a7c4645b21e96899",
       "parses": false,
@@ -8265,20 +7495,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/studio/synthesis.jl",
-      "sha256": "a5798a049bdf1a803d63cc71263d5613e1675926e2ddfdc69608aabac6cfdfae",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/synthesis.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "57/131",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/studio/templates.jl",
       "sha256": "fb640d1ba9d50ce6ac4ccad9d8c48f9592a288cbdf7f77e382ecd4fc3e6b22f3",
       "parses": true,
@@ -8290,20 +7506,6 @@
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/studio/training.jl",
-      "sha256": "2003f8212ced8e2baf9ef45717211c3c8a8967e707847195e9fad6603ba150d4",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": true,
-      "class": "declared_mirror",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/studio/training.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "4/233",
       "transcription_candidates": []
     },
     {
@@ -8811,34 +8013,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/utils/adapter_discovery.jl",
-      "sha256": "3106c163259946dacdf76dc273bfa76e290ec134209d2065b095192a06d4fef7",
-      "parses": true,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": null,
-      "transcription_rule": "not_a_transcript",
-      "verbatim_line_share": null,
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/utils/adaptive.jl",
-      "sha256": "56e8f49deb35fff4342c5e215ee4e91e98003fc8fd232629cdd928591eebcaff",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/adaptive.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "6/25",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/utils/bitstreams.jl",
       "sha256": "e2927b40ce257f32bbc7f80aa8daccf3c4019576570647af0aeae5293ddf332c",
       "parses": false,
@@ -8878,20 +8052,6 @@
       "transcribed_module": "src/sc_neurocore/utils/decorrelators.py",
       "transcription_rule": "header",
       "verbatim_line_share": "3/30",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/utils/deprecation.jl",
-      "sha256": "11f374c031ea567524261826dbf9bc64f76a04bc385a9332d52b8e48082ba9cf",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/deprecation.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "13/22",
       "transcription_candidates": []
     },
     {
@@ -8937,20 +8097,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/utils/logging.jl",
-      "sha256": "e8eaed2cb8aa9ad3ebdd1aec0ce9cc1eb87f2fbf309f1ce17df8a8a7f75326dd",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/logging.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "14/29",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/utils/model_bridge.jl",
       "sha256": "ab91731065cbe9676468f72092be977ee39b9fa48aa2ec5f670ffc26215a31fb",
       "parses": false,
@@ -8993,20 +8139,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/utils/registry.jl",
-      "sha256": "36e934b0de1f85a9a24e3b067bb38412f8fbab9013b79bf9bc4628fab2dffba3",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/utils/registry.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "4/30",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/utils/rng.jl",
       "sha256": "10d6b5e48236c25397dedb4ce19878995777b1811b7eec8eff186000f4633e14",
       "parses": false,
@@ -9021,20 +8153,6 @@
       "transcription_candidates": []
     },
     {
-      "path": "src/sc_neurocore/accel/julia/uvm_gen/uvm_gen.jl",
-      "sha256": "3c2ca79fadd37811005606282f7e19efc2dfbc7028f7d4b211e800c11f0ee673",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/uvm_gen/uvm_gen.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "21/439",
-      "transcription_candidates": []
-    },
-    {
       "path": "src/sc_neurocore/accel/julia/verification/formal_proofs.jl",
       "sha256": "cc60819f01e2f2b3d0492bb2da80df8918279755ee08f777f17acc6f7bc8e257",
       "parses": false,
@@ -9046,20 +8164,6 @@
       "transcribed_module": "src/sc_neurocore/verification/formal_proofs.py",
       "transcription_rule": "header",
       "verbatim_line_share": "9/28",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/verification/safety.jl",
-      "sha256": "836c8040e5528a292f7517b18a514278bcfa4ab532fee5031b4a1425d0241a1b",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/verification/safety.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "17/55",
       "transcription_candidates": []
     },
     {
@@ -9088,34 +8192,6 @@
       "transcribed_module": "src/sc_neurocore/viz/neuro_art.py",
       "transcription_rule": "header",
       "verbatim_line_share": "6/25",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/viz/plots.jl",
-      "sha256": "99bd210e36258921142faac5b81ad815cf5122b92f8046bea2acf844671504e7",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/viz/plots.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "153/221",
-      "transcription_candidates": []
-    },
-    {
-      "path": "src/sc_neurocore/accel/julia/viz/web_viz.jl",
-      "sha256": "e26e82d0a732afcdc986bd41fdadf2c74e0fc11085d7ffd90a7e3b337af0b534",
-      "parses": false,
-      "authoritative": false,
-      "loaded": false,
-      "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
-      "transcribed_module": "src/sc_neurocore/viz/web_viz.py",
-      "transcription_rule": "header",
-      "verbatim_line_share": "10/20",
       "transcription_candidates": []
     },
     {

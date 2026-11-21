@@ -283,14 +283,22 @@ def test_a_stub_is_named_only_at_a_path_boundary() -> None:
 def test_an_unclear_original_stays_out_of_the_deletion_list(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Without its reading, a module the rule leaves unclear is unclear, and none of its stubs is deleted."""
-    module = next(
-        name
-        for name, reading in accel_stub_triage.READINGS.items()
-        if reading["class"] == "application"
-    )
-    monkeypatch.delitem(accel_stub_triage.READINGS, module)
+    """Without a reading, a module the rule leaves unclear stays unclear and none of its stubs is deleted.
+
+    Only a reading that classes it as an application puts its stubs, and nothing else, on the list.
+    """
     triage = build(REPO_ROOT)
-    original = next(o for o in triage["originals"] if o["module"] == module)
-    assert (original["class"], original["decided_by"]) == ("unclear", "rule")
-    assert module not in {entry["module"] for entry in triage["deletion_list"]}
+    unclear = next(o for o in triage["originals"] if o["class"] == "unclear")
+    assert unclear["decided_by"] == "rule"
+    assert unclear["module"] not in {entry["module"] for entry in triage["deletion_list"]}
+    monkeypatch.setitem(
+        accel_stub_triage.READINGS,
+        unclear["module"],
+        {"class": "application", "reason": "a reading made by this test", "reader": "test"},
+    )
+    read = build(REPO_ROOT)
+    original = next(o for o in read["originals"] if o["module"] == unclear["module"])
+    assert (original["class"], original["decided_by"]) == ("application", "reading")
+    assert {entry["path"] for entry in read["deletion_list"]} == {
+        stub["path"] for stub in unclear["stubs"]
+    }
