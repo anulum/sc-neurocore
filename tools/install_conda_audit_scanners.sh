@@ -13,13 +13,16 @@ audit_scanner_bin="${1:?Provide the scanner binary directory}"
 audit_download_dir=$(mktemp -d "${TMPDIR:?Set TMPDIR to an owned directory}/conda-audit-scanners.XXXXXX")
 trap 'rm -rf -- "$audit_download_dir"' EXIT
 mkdir -p "$audit_scanner_bin"
-curl -fsSL --retry 3 \
+# GitHub's release storage sometimes answers a hosted runner with a transient 403, which
+# curl's plain --retry treats as final. Every failed answer is therefore retried; the
+# pinned SHA-256 below still decides whether a download is accepted.
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
   https://github.com/anchore/syft/releases/download/v1.57.0/syft_1.57.0_linux_amd64.tar.gz \
   -o "$audit_download_dir/syft.tar.gz"
 printf '%s  %s\n' 9c077a7d43029b3b13e98a8db720661e700c4d58db6352153a06395ae4a2a704 \
   "$audit_download_dir/syft.tar.gz" | sha256sum --check --status
 tar -xzf "$audit_download_dir/syft.tar.gz" -C "$audit_scanner_bin" syft
-curl -fsSL --retry 3 \
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
   https://github.com/anchore/grype/releases/download/v0.121.2/grype_0.121.2_linux_amd64.tar.gz \
   -o "$audit_download_dir/grype.tar.gz"
 printf '%s  %s\n' 9c8965ced9df657e5e851c14021bae838802f711edd7a48f9bc3c923a8d28f12 \

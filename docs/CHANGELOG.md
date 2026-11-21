@@ -434,6 +434,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Conda audit scanner installer (`tools/install_conda_audit_scanners.sh`)
+  retries every failed download of its Syft and Grype archives, up to five
+  times, 5 seconds apart. GitHub's release storage answered one hosted test
+  shard with a 403, which `curl --retry` treats as final, and the shard failed
+  before its tests ran. The pinned SHA-256 of each archive is unchanged and
+  still decides whether a download is accepted. The dependency-audit guide
+  names the pinned scanner versions, Syft 1.57.0 and Grype 0.121.2.
+
 - The large-checkpoint serialisation test
   (`tests/test_tools/test_function_synthesis_checkpoint_serialization.py`)
   takes the prior arcsin input on every Yosys version. On Yosys 0.70 it used
