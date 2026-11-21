@@ -17,8 +17,10 @@ refusal and success belong to the disposable three-identity proof.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -307,6 +309,22 @@ def _stat_line(pid: int) -> str:
         return f"/proc/{pid}/stat is absent"
 
 
+def _end_stand_in_child(pid: int) -> None:
+    """End a stand-in's child that outlived a failed check, and nothing else.
+
+    Only a process whose command line is still exactly the stand-in's ``sleep 600``
+    is killed, so an unrelated process that reused the pid is never signalled.
+
+    Parameters
+    ----------
+    pid : int
+        The child the stand-in recorded.
+    """
+    with contextlib.suppress(FileNotFoundError, ProcessLookupError):
+        if Path(f"/proc/{pid}/cmdline").read_bytes() == b"sleep\x00600\x00":
+            os.kill(pid, signal.SIGKILL)
+
+
 def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: Path) -> None:
     """At the deadline the check's whole session is killed, not only the interpreter.
 
@@ -330,7 +348,12 @@ def test_what_a_hanging_interpreter_started_does_not_outlive_the_refusal(base: P
     deadline = time.monotonic() + 60.0
     while not _gone(pid) and time.monotonic() < deadline:
         time.sleep(0.05)
-    assert _gone(pid), _stat_line(pid)
+    # The verdict is taken before the clean-up, so ending a survivor cannot pass the test.
+    outlived = not _gone(pid)
+    survivor = _stat_line(pid)
+    if outlived:
+        _end_stand_in_child(pid)
+    assert not outlived, survivor
 
 
 def test_a_process_that_ends_while_its_stat_is_read_counts_as_gone(
