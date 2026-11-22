@@ -106,7 +106,7 @@ pub(super) fn encode(values: &[i32], output: &mut Vec<u8>) -> Result<(), &'stati
     }
     let bit_count = values.iter().try_fold(0u32, |bits, symbol| {
         bits.checked_add(u32::from(by_symbol[symbol].0))
-            .ok_or("Huffman bit count exceeds uint32")
+            .ok_or("Huffman bit count must fit uint32")
     })?;
     output.extend_from_slice(&bit_count.to_be_bytes());
     let start = output.len();

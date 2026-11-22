@@ -2610,12 +2610,15 @@
       "changed": [
         "Cargo.lock",
         "engine/Cargo.toml",
+        "engine/src/codecs/isi/huffman.rs",
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
         "src/sc_neurocore/spike_codec/_predictive_kernels.py",
         "src/sc_neurocore/spike_codec/_world_model.py",
         "src/sc_neurocore/spike_codec/catalogue_types.py",
+        "src/sc_neurocore/spike_codec/codec.py",
+        "src/sc_neurocore/spike_codec/entropy.py",
         "src/sc_neurocore/spike_codec/waveform_codec.py",
         "src/sc_neurocore/spike_codec/waveform_stream.py"
       ],
@@ -2626,7 +2629,10 @@
       "changed": [
         "Cargo.lock",
         "engine/Cargo.toml",
-        "engine/src/codecs/mod.rs"
+        "engine/src/codecs/isi/huffman.rs",
+        "engine/src/codecs/mod.rs",
+        "src/sc_neurocore/spike_codec/codec.py",
+        "src/sc_neurocore/spike_codec/entropy.py"
       ],
       "currency": "outdated",
       "name": "delta_codec_backends.json"
@@ -2735,12 +2741,15 @@
       "changed": [
         "Cargo.lock",
         "engine/Cargo.toml",
+        "engine/src/codecs/isi/huffman.rs",
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
         "src/sc_neurocore/spike_codec/_predictive_kernels.py",
         "src/sc_neurocore/spike_codec/_world_model.py",
         "src/sc_neurocore/spike_codec/catalogue_types.py",
+        "src/sc_neurocore/spike_codec/codec.py",
+        "src/sc_neurocore/spike_codec/entropy.py",
         "src/sc_neurocore/spike_codec/waveform_codec.py",
         "src/sc_neurocore/spike_codec/waveform_stream.py"
       ],
@@ -2751,8 +2760,11 @@
       "changed": [
         "Cargo.lock",
         "engine/Cargo.toml",
+        "engine/src/codecs/isi/huffman.rs",
         "engine/src/codecs/mod.rs",
         "src/sc_neurocore/spike_codec/catalogue.py",
+        "src/sc_neurocore/spike_codec/codec.py",
+        "src/sc_neurocore/spike_codec/entropy.py",
         "src/sc_neurocore/spike_codec/waveform_codec.py"
       ],
       "currency": "outdated",
@@ -3095,8 +3107,11 @@
         "Cargo.lock",
         "bridge/sc_neurocore_engine/__init__.py",
         "engine/Cargo.toml",
+        "engine/src/codecs/isi/huffman.rs",
         "src/sc_neurocore/spike_codec/_predictive_kernels.py",
         "src/sc_neurocore/spike_codec/_world_model.py",
+        "src/sc_neurocore/spike_codec/codec.py",
+        "src/sc_neurocore/spike_codec/entropy.py",
         "src/sc_neurocore/spike_codec/predictive_codec.py"
       ],
       "currency": "outdated",

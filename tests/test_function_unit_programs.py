@@ -73,7 +73,7 @@ class TestProgramsEqualReference:
         for code in range(-(1 << 15), 1 << 15):
             assert unit.evaluate(code) == fu.evaluate(function, code, 16, 8), code
 
-    @pytest.mark.parametrize(("dw", "fr"), [(32, 16), (32, 24), (8, 4)])
+    @pytest.mark.parametrize(("dw", "fr"), [(32, 16), (32, 24), (8, 4), (31, 30)])
     @pytest.mark.parametrize("function", fu.UNARY_FUNCTIONS)
     def test_sampled_other_formats(self, function: str, dw: int, fr: int) -> None:
         """Extremes, a grid over the word and a dense window around zero."""

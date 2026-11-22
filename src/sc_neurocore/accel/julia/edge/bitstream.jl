@@ -80,8 +80,6 @@ function scc(a, b, bit_length)
         denom = min(pa, pb) - (pa * pb)
     else
         denom = (pa * pb) - max(pa + pb - 1.0, 0.0)
-    if abs(denom) < 1e-7
-        return 0.0
     return max(-1.0, min(1.0, num / denom))
 end
 

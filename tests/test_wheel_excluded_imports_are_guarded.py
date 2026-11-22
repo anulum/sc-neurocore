@@ -13,8 +13,10 @@ one of them has two allowed forms:
 
 - **inside the function that needs it,** after a call of
   :func:`sc_neurocore._source_checkout.require_source_checkout_package` that names the package;
-- **at module level,** when the whole module needs the package: inside a ``try`` whose
-  ``except ModuleNotFoundError`` calls the refusal and re-raises.
+- **at module level,** when the whole module needs the package: after a module-level call of
+  the refusal that names the package, or inside a ``try`` whose ``except ModuleNotFoundError``
+  calls the refusal and re-raises. The first form is used where the package's ``__init__``
+  imports the target itself, since there the refusal's success makes the re-raise unreachable.
 
 Any other form makes an installed wheel fail with a bare ``ModuleNotFoundError`` that does not
 say why. The rule is read from the syntax tree of every shipped module, so these do not count:

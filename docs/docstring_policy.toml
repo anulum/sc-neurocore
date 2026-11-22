@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2309
+expected_file_count = 2312
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -7718,6 +7718,18 @@ rationale = "The info and --version commands print the version module's VERSION,
 [[file]]
 path = "src/sc_neurocore/_version.py"
 rationale = "The package version is stated once, in a module that imports nothing; the package root re-exports it as __version__."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/wire_fields.py"
+rationale = "The ISI header dimensions and the Huffman bit count are refused by name, with a ValueError, when the value does not fit an unsigned 32-bit field."
+
+[[file]]
+path = "src/sc_neurocore/spike_codec/_waveform_gpu.py"
+rationale = "The lossless waveform stream's GPU encoder, which exists only in an engine built with its gpu feature and runs only on a physical GPU adapter, is opened here and nowhere else."
+
+[[file]]
+path = "tests/test_spike_codec_python_paths_and_older_engines.py"
+rationale = "The spike codecs' Python refusals are held by asking for the Python backend, and an engine without a codec makes rust refuse with the reason while auto falls back to Python and round-trips."
 
 [[file]]
 path = "src/sc_neurocore/_source_checkout.py"

@@ -44,6 +44,8 @@ from typing import Any, SupportsIndex, cast
 
 import numpy as np
 
+from ._waveform_gpu import open_gpu_encoder
+
 PROB_BITS = 12
 ADAPT_SHIFT = 6
 LMS_ORDER = 16
@@ -658,10 +660,13 @@ class LosslessStreamEncoder:
             capacity = _sample_count(gpu_max_samples)
             if not 1 <= capacity < 1 << 32:
                 raise ValueError("gpu_max_samples must be in [1, 2**32)")
-            gpu = cast(ModuleType, _native(backend, "WaveformLosslessGpuEncoder"))
-            self._coder: Any = gpu.WaveformLosslessGpuEncoder(channels, adc_bits, capacity)
-            self._backend = "gpu"
-            self._device = (self._coder.device_name, self._coder.device_api)
+            self._coder: Any
+            self._coder, self._device, self._backend = open_gpu_encoder(
+                cast(ModuleType, _native(backend, "WaveformLosslessGpuEncoder")),
+                channels,
+                adc_bits,
+                capacity,
+            )
         else:
             if gpu_max_samples is not None:
                 raise ValueError("gpu_max_samples requires backend='gpu'")

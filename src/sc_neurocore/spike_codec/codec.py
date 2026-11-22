@@ -20,6 +20,7 @@ from typing import Any, Protocol, cast
 import numpy as np
 
 from .isi_packet import decode_packet, encode_packet, encode_varint
+from .wire_fields import uint32_field
 
 _ENGINE_PACKAGE = "sc_neurocore_engine"
 _ENGINE = f"{_ENGINE_PACKAGE}.sc_neurocore_engine"
@@ -63,10 +64,7 @@ def _native(backend: str) -> _NativeIsi | None:
 
 
 def _dimension(value: int) -> int:
-    value = index(value)
-    if not 0 <= value < 1 << 32:
-        raise ValueError("ISI dimensions must fit uint32")
-    return value
+    return uint32_field(value, "ISI dimensions")
 
 
 @dataclass

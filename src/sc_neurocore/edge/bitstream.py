@@ -121,10 +121,10 @@ def scc(a: list[int], b: list[int], bit_length: int) -> float:
     num = p_and - (pa * pb)
     if abs(num) < 1e-7:
         return 0.0
+    # The Fréchet bounds max(pa + pb - 1, 0) <= p_and <= min(pa, pb) give denom >= |num|,
+    # and |num| >= 1e-7 here, so the denominator is never zero.
     if num > 0.0:
         denom = min(pa, pb) - (pa * pb)
     else:
         denom = (pa * pb) - max(pa + pb - 1.0, 0.0)
-    if abs(denom) < 1e-7:
-        return 0.0
     return max(-1.0, min(1.0, num / denom))

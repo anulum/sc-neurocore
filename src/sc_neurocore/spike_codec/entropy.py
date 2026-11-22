@@ -14,6 +14,8 @@ import heapq
 import struct
 from collections import Counter
 
+from .wire_fields import uint32_field
+
 _MAX_CODE_LENGTH = 63
 _ENTRY = struct.Struct("!iB")
 
@@ -75,9 +77,7 @@ class HuffmanEncoder:
             header.extend(_ENTRY.pack(symbol, length))
 
         bit_count = sum(table[symbol][1] for symbol in values)
-        if bit_count >= 1 << 32:
-            raise ValueError("Huffman bit count exceeds uint32")
-        header.extend(struct.pack("!I", bit_count))
+        header.extend(struct.pack("!I", uint32_field(bit_count, "Huffman bit count")))
         packed = bytearray()
         pending = width = 0
         for symbol in values:

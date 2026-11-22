@@ -31,16 +31,14 @@ from sc_neurocore.edge.lfsr import Lfsr16
 
 # sc_neurocore.optics ships only in a source checkout, and this whole module needs it: an
 # installed wheel refuses the import with the reason; any other missing module is raised as
-# it is.
-try:
-    from sc_neurocore.optics.photonic_emitter import (
-        CompilationResult,
-        PhotonicCompiler,
-        PhotonicTarget,
-    )
-except ModuleNotFoundError:
-    require_source_checkout_package("sc_neurocore.optics", "sc_neurocore.bridges.photonic_codesign")
-    raise
+# it is. The package's __init__ imports photonic_emitter, so once the refusal has imported
+# the package the import below cannot fail for a missing module.
+require_source_checkout_package("sc_neurocore.optics", "sc_neurocore.bridges.photonic_codesign")
+from sc_neurocore.optics.photonic_emitter import (
+    CompilationResult,
+    PhotonicCompiler,
+    PhotonicTarget,
+)
 
 from .photonic_noc import (
     CrosstalkAnalyzer,

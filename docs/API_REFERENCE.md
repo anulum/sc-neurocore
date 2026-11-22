@@ -45016,6 +45016,30 @@ Check an optional dependency and propagate errors from a present installation.
 
 ---
 
+## Module `spike_codec._waveform_gpu`
+
+### Function `open_gpu_encoder(engine, channels, adc_bits, capacity)`
+Return the engine's GPU encoder, the adapter it runs on, and the backend name.
+
+Parameters
+----------
+engine : ModuleType
+    The engine extension; the caller has checked that it exports
+    ``WaveformLosslessGpuEncoder``.
+channels : int
+    The number of channels the encoder takes.
+adc_bits : int
+    The converter's resolution in bits.
+capacity : int
+    The most samples the encoder accepts in one call.
+
+Returns
+-------
+tuple
+    The encoder, its adapter as ``(device_name, device_api)``, and ``"gpu"``.
+
+---
+
 ## Module `spike_codec._world_model`
 
 ### Class `SpikePredictor`
@@ -45797,6 +45821,33 @@ Raises
 ------
 ValueError
     For non-integer samples or samples outside the int16 range.
+
+---
+
+## Module `spike_codec.wire_fields`
+
+### Function `uint32_field(value, what)`
+Return ``value`` as an ``int`` that fits an unsigned 32-bit field, or refuse it.
+
+Parameters
+----------
+value : SupportsIndex
+    The value to be written into the field.
+what : str
+    What the field holds; the refusal names it.
+
+Returns
+-------
+int
+    The value, in ``&#91;0, 2**32)``.
+
+Raises
+------
+ValueError
+    If the value is negative or at least ``2**32``; the message is
+    ``"<what> must fit uint32"``.
+TypeError
+    If the value is not an integer.
 
 ---
 

@@ -455,6 +455,40 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The coverage union gate of the main CI workflow had gone unmeasured: every
+  main run since 2026-11-17 whose state could be read had skipped it,
+  because a test shard had failed first, and the first run to reach it
+  missed 26 lines in 14 files. Of those, the 22 outside the GPU encoder's
+  success path are now reached through their public entry, or removed where
+  an earlier check makes them unreachable.
+
+  Tests now ask the spike codecs for backend="python", so the Python
+  parsers' header checks and the varint refusal at T = 2**24 run on every
+  host, not only where the engine is missing. A child process with an engine
+  that lacks a codec, as an older or partial engine build does, holds that
+  backend="rust" refuses with the reason and backend="auto" falls back to
+  Python and round-trips. The fixed-point function units are compared with
+  their reference at format (31, 30), the widest one the format check
+  admits, and a bandwidth window narrowed to zero cycles after recording
+  reads 0.0.
+
+  scc in sc_neurocore.edge.bitstream no longer has a zero-denominator check
+  after its zero-numerator one. By the Fréchet bounds the denominator is at
+  least the numerator's magnitude, so the check could fire only within
+  rounding of the 1e-7 threshold, where it returned 0.0 for a coefficient
+  near -1; the function now returns the coefficient there. The Julia and
+  Mojo mirror stubs of scc lose the same check. bridges.photonic_codesign
+  refuses a wheel without sc_neurocore.optics before its import, as the
+  other wheel-excluded imports do, instead of in a handler whose re-raise
+  could not run.
+
+  The ISI header dimensions and the Huffman bit count go through one public
+  check, sc_neurocore.spike_codec.wire_fields.uint32_field, which refuses an
+  out-of-range value by name; the ISI dimension refusal keeps its message,
+  and the Huffman bit count, in Python and in the engine, now reads "Huffman
+  bit count must fit uint32". The lossless waveform stream's GPU encoder is
+  opened in its own private module, spike_codec._waveform_gpu.
+
 - The split map of the split import gate, tools/sc_nc_split_map.json, has
   its REUSE ownership sidecar, tools/sc_nc_split_map.json.license, with the
   licence and both copyright records. Every JSON file added since the

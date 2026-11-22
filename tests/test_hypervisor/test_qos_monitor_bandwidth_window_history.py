@@ -50,6 +50,21 @@ def test_every_rate_equals_the_rate_of_the_whole_history(seed: int) -> None:
         assert meter.throughput("t0") == _full_history_rate(counts, stamps, window)
 
 
+def test_a_window_narrowed_to_zero_knows_no_interval_and_reads_zero() -> None:
+    """A window narrowed to zero cycles after recording puts its base on the last sample.
+
+    No cycles then separate the base from the last sample, so no interval is known and the
+    rate is 0.0, as it is for the whole history.
+    """
+    meter = BandwidthMeter(window_cycles=100)
+    meter.record("t0", 5, 10)
+    meter.record("t0", 7, 20)
+    assert meter.throughput("t0") == 7 / 10
+    meter.window_cycles = 0
+    assert meter.throughput("t0") == 0.0
+    assert _full_history_rate([5, 7], [10, 20], 0) == 0.0
+
+
 def test_a_long_run_keeps_the_history_within_one_window_and_its_base() -> None:
     """Fifty thousand samples seven cycles apart leave at most one window of them and the base."""
     window, step = 1_000, 7

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5758
+    "test_files": 5759
   },
   "documentation": {
     "public_pages": [
@@ -7873,6 +7873,7 @@
       "tests/test_spike_codec_catalogue_workflows.py",
       "tests/test_spike_codec_huffman_encoder.py",
       "tests/test_spike_codec_isi_backend.py",
+      "tests/test_spike_codec_python_paths_and_older_engines.py",
       "tests/test_spike_codec_spike_codec.py",
       "tests/test_spike_codec_spike_codec_huffman.py",
       "tests/test_spike_codec_spike_codec_module_exports.py",
