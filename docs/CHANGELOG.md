@@ -455,6 +455,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The split map of the split import gate, tools/sc_nc_split_map.json, has
+  its REUSE ownership sidecar, tools/sc_nc_split_map.json.license, with the
+  licence and both copyright records. Every JSON file added since the
+  2026-10-01 ownership contract must carry one, and the map was added
+  without it, so the JSON ownership test failed.
+
 - The Conda audit scanner installer (`tools/install_conda_audit_scanners.sh`)
   retries every failed download of its Syft and Grype archives, up to five
   times, 5 seconds apart. GitHub's release storage answered one hosted test
