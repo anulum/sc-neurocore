@@ -237,6 +237,7 @@
   "modules": {
     "_host_identity": "SC-NC-CORE",
     "_source_checkout": "SC-NC-CORE",
+    "_version": "SC-NC-CORE",
     "arcane_zenith": "SC-NC-RESEARCH",
     "compiler_service": "SC-NC-COMPILER",
     "constants": "SC-NC-CORE",

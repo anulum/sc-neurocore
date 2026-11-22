@@ -222,7 +222,7 @@ def review_packet(document: Mapping[str, Any]) -> dict[str, Any]:
     against the parent, the reference-test results, the environment that
     produced them and what the packet does not establish, all under one digest.
     """
-    from sc_neurocore import __version__
+    from sc_neurocore._version import VERSION as __version__
 
     validation = validate_candidate(document)
     if not validation.valid:

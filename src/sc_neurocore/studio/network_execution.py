@@ -31,7 +31,7 @@ from typing import Any
 
 import numpy as np
 
-import sc_neurocore
+from sc_neurocore._version import VERSION
 from sc_neurocore.network import (
     Network,
     PoissonInput,
@@ -340,7 +340,7 @@ def _execution_block(lowered: LoweredGraph) -> dict[str, Any]:
         "autapses": "removed on self-projections unless the projection declares autapses",
         "state_check": "final membrane voltages must be finite; no per-step state trace",
         "runtime": {
-            "package_version": sc_neurocore.__version__,
+            "package_version": VERSION,
             "python": platform.python_version(),
             "numpy": np.__version__,
         },

@@ -18,9 +18,31 @@ import pytest
 from tests.cli_test_support import fake_module, run_cli
 
 
+@pytest.mark.parametrize("command", [("info",), ("--version",)])
+def test_cli_reports_the_version_the_version_module_states(
+    capsys: pytest.CaptureFixture[str], command: tuple[str, ...]
+) -> None:
+    """``info`` and ``--version`` print ``_version.VERSION``, which the root re-exports.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture[str]
+        Captures the command's output.
+    command : tuple[str, ...]
+        The command line.
+    """
+    import sc_neurocore
+    from sc_neurocore._version import VERSION
+
+    assert sc_neurocore.__version__ is VERSION
+    assert run_cli(*command) == 0
+    assert f"sc-neurocore {VERSION}\n" in capsys.readouterr().out
+
+
 def test_info_command_reports_loaded_optional_dependency(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A loaded optional dependency is reported with the version it states."""
     fake_jax = fake_module("jax", __version__="0.0-test")
     with mock.patch.dict("sys.modules", {"jax": fake_jax}):
         rc = run_cli("info")
@@ -33,6 +55,7 @@ def test_info_command_reports_loaded_optional_dependency(
 
 
 def test_info_without_rust_engine(capsys: pytest.CaptureFixture[str]) -> None:
+    """Without the Rust engine, info says it is not available and still succeeds."""
     with mock.patch.dict("sys.modules", {"sc_neurocore_engine": None}):
         rc = run_cli("info")
     assert rc == 0
@@ -40,6 +63,7 @@ def test_info_without_rust_engine(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_info_reports_engine_version_mismatch(capsys: pytest.CaptureFixture[str]) -> None:
+    """An engine whose version differs from the package's is named as a mismatch."""
     fake = fake_module(
         "sc_neurocore_engine",
         __version__="0.0.0",
@@ -56,6 +80,8 @@ def test_info_reports_engine_version_mismatch(capsys: pytest.CaptureFixture[str]
 def test_info_uses_metadata_without_importing_optional_jax(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """An optional dependency that is not loaded is reported from its installed metadata."""
+
     def fake_version(name: str) -> str:
         if name == "jax":
             return "0.0-meta"
@@ -77,6 +103,7 @@ def test_info_uses_metadata_without_importing_optional_jax(
 
 
 def test_info_ignores_missing_optional_metadata(capsys: pytest.CaptureFixture[str]) -> None:
+    """An optional dependency that is neither loaded nor installed is left out."""
     with (
         mock.patch.dict("sys.modules", {"numpy": None, "jax": None}),
         mock.patch(
@@ -90,6 +117,7 @@ def test_info_ignores_missing_optional_metadata(capsys: pytest.CaptureFixture[st
 
 
 def test_info_reports_unknown_simd_tier(capsys: pytest.CaptureFixture[str]) -> None:
+    """An engine without a SIMD probe is reported with an unknown tier."""
     from sc_neurocore import __version__
 
     fake = fake_module("sc_neurocore_engine", __version__=__version__)
@@ -99,6 +127,7 @@ def test_info_reports_unknown_simd_tier(capsys: pytest.CaptureFixture[str]) -> N
 
 
 def test_info_contains_broken_simd_probe(capsys: pytest.CaptureFixture[str]) -> None:
+    """A SIMD probe that raises is contained and reported as an unknown tier."""
     from sc_neurocore import __version__
 
     def explode() -> str:

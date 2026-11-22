@@ -116,7 +116,8 @@ def _version_tree(root: Path, version: str = "9.9.9", **overrides: str) -> None:
     """
     texts = {
         "pyproject.toml": f'[project]\nname = "sc-neurocore"\nversion = "{version}"\n',
-        "src/sc_neurocore/__init__.py": f'__version__ = "{version}"\n',
+        "src/sc_neurocore/_version.py": f'VERSION: Final[str] = "{version}"\n',
+        "src/sc_neurocore/__init__.py": f"{audit.INIT_IMPORT}\n\n{audit.INIT_REEXPORT}\n",
         "engine/Cargo.toml": f'[package]\nname = "sc-neurocore-engine"\nversion = "{version}"\n',
         "bridge/pyproject.toml": f'[project]\nname = "sc-neurocore-bridge"\nversion = "{version}"\n',
         ".zenodo.json": f'{{"title": "SC-NeuroCore", "version": "{version}"}}\n',
@@ -135,7 +136,7 @@ def test_release_metadata_files_are_audited() -> None:
     labels = [surface.label for surface in audit.source_surfaces()]
     assert labels[:4] == [
         "pyproject.toml",
-        "src/sc_neurocore/__init__.py",
+        "src/sc_neurocore/_version.py",
         "engine/Cargo.toml",
         "bridge/pyproject.toml",
     ]
@@ -198,18 +199,56 @@ def test_release_metadata_without_a_version_is_refused(
         audit.audit_versions(include_installed=False, root=tmp_path)
 
 
-def test_a_package_file_without_a_version_is_refused_by_its_label(tmp_path: Path) -> None:
-    """A checkout whose package file defines no ``__version__`` is named, wherever the checkout is.
+def test_a_version_file_without_a_version_is_refused_by_its_label(tmp_path: Path) -> None:
+    """A checkout whose version file defines no ``VERSION`` is named, wherever the checkout is.
 
     Parameters
     ----------
     tmp_path : Path
         A checkout outside this repository.
     """
-    _version_tree(tmp_path, src_sc_neurocore___init___py='"""No version here."""\n')
+    _version_tree(tmp_path, src_sc_neurocore__version_py='"""No version here."""\n')
     with pytest.raises(
-        RuntimeError, match=re.escape("src/sc_neurocore/__init__.py does not define __version__")
+        RuntimeError, match=re.escape("src/sc_neurocore/_version.py does not define VERSION")
     ):
+        audit.audit_versions(include_installed=False, root=tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("init_text", "message"),
+    [
+        ('__version__ = "9.9.9"\n', "states its own __version__; re-export VERSION"),
+        ('__version__: str = "9.9.9"\n', "states its own __version__; re-export VERSION"),
+        (
+            "from sc_neurocore import _version\n"
+            "__version__: str = _version.VERSION\n"
+            '__version__ = "9.9.9"\n',
+            "states its own __version__; re-export VERSION",
+        ),
+        (
+            "from sc_neurocore._version import VERSION\n__version__ = VERSION\n",
+            "states its own __version__; re-export VERSION",
+        ),
+        ('"""No re-export."""\n', "does not re-export VERSION as __version__"),
+        ("__version__: str = _version.VERSION\n", "does not re-export VERSION as __version__"),
+    ],
+)
+def test_a_package_root_that_does_not_re_export_the_version_is_refused(
+    tmp_path: Path, init_text: str, message: str
+) -> None:
+    """The package root may only re-export ``VERSION``; any version of its own is refused.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    init_text : str
+        The package root's text.
+    message : str
+        The refusal it must produce.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=init_text)
+    with pytest.raises(RuntimeError, match=re.escape(f"src/sc_neurocore/__init__.py {message}")):
         audit.audit_versions(include_installed=False, root=tmp_path)
 
 

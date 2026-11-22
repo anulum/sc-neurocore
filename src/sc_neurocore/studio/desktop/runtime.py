@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
-from sc_neurocore import __version__
+from sc_neurocore._version import VERSION as __version__
 from sc_neurocore.studio.desktop import DesktopStartRefused
 from sc_neurocore.studio.desktop.configuration import (
     DesktopConfiguration,

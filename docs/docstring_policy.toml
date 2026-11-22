@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2305
+expected_file_count = 2309
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -7702,6 +7702,22 @@ rationale = "The PYNQ-Z2 driver for the SHD core writes the AXI-Lite registers o
 [[file]]
 path = "hdl/pynq/demo_shd_fpga.py"
 rationale = "The PYNQ-Z2 demo drives the SHD core and states that its cycle count is not a measured latency and that the bitstream carries no trained model."
+
+[[file]]
+path = "src/sc_neurocore/fitting/fit.py"
+rationale = "A fit records the package version it ran under, read from the import-free version module, so the fit's provenance does not depend on importing the package root."
+
+[[file]]
+path = "src/sc_neurocore/fitting/cohort_run.py"
+rationale = "A cohort run records the package version it ran under, read from the import-free version module."
+
+[[file]]
+path = "tests/test_cli_info.py"
+rationale = "The info and --version commands print the version module's VERSION, and info reports the engine, optional dependencies and SIMD tier without failing on a missing or broken probe."
+
+[[file]]
+path = "src/sc_neurocore/_version.py"
+rationale = "The package version is stated once, in a module that imports nothing; the package root re-exports it as __version__."
 
 [[file]]
 path = "src/sc_neurocore/_source_checkout.py"

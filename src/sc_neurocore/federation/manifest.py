@@ -59,11 +59,13 @@ def _resolve_studio_version() -> str:
         fabricated version.
     """
     try:
-        from sc_neurocore import __version__
+        from sc_neurocore._version import VERSION
     except ImportError:  # pragma: no cover - only in a broken source tree
-        __version__ = ""
-    if __version__:
-        return __version__
+        source_version = ""
+    else:
+        source_version = VERSION
+    if source_version:
+        return source_version
     try:
         return version("sc-neurocore")
     except PackageNotFoundError:  # pragma: no cover - only in a non-installed tree

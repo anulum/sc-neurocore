@@ -145,7 +145,7 @@ def run_cohort(
             selection.append(
                 {"model": model.name, "trial_sha256": None, "reason": "no complete feasible trial"}
             )
-    from sc_neurocore import __version__
+    from sc_neurocore._version import VERSION as __version__
     import numpy as np
 
     document = cohort.to_public_dict()

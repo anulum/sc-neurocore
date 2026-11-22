@@ -21,7 +21,7 @@ from types import FrameType
 
 import uvicorn
 
-from sc_neurocore import __version__
+from sc_neurocore._version import VERSION as __version__
 from sc_neurocore.studio.desktop import DesktopStartRefused
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_identity

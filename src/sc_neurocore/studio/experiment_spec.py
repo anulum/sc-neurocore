@@ -36,7 +36,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-import sc_neurocore
+from sc_neurocore._version import VERSION
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.neurons import equation_builder
 from sc_neurocore.neurons.seed_domain import (
@@ -134,7 +134,7 @@ def _sha256_file(path: Path) -> str:
 
 def _runtime_block() -> dict[str, str]:
     return {
-        "package_version": sc_neurocore.__version__,
+        "package_version": VERSION,
         "python": platform.python_version(),
         "numpy": np.__version__,
         "equation_builder_sha256": _sha256_file(Path(equation_builder.__file__)),

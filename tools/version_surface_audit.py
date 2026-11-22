@@ -28,7 +28,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 #: The label of the package's own version line, also its path below the checkout.
+VERSION_LABEL = "src/sc_neurocore/_version.py"
+
+#: The package root, which re-exports that version as ``__version__``.
 INIT_LABEL = "src/sc_neurocore/__init__.py"
+
+#: The line by which the package root imports the version module.
+INIT_IMPORT = "from sc_neurocore import _version"
+
+#: The one line by which the package root re-exports the version as ``__version__``.
+INIT_REEXPORT = "__version__: str = _version.VERSION"
 
 
 @dataclass(frozen=True)
@@ -84,7 +93,10 @@ def _toml_version(path: Path, table: str) -> str:
 
 
 def _init_version(root: Path) -> str:
-    """Return the package's ``__version__``, or refuse a package file without one.
+    """Return the package's ``VERSION``, refusing a root that states another one.
+
+    The version is stated once, in ``_version.py``. The package root must
+    re-export it and must not state a version of its own.
 
     Parameters
     ----------
@@ -99,12 +111,22 @@ def _init_version(root: Path) -> str:
     Raises
     ------
     RuntimeError
-        If the file defines no ``__version__``, named by its label in any checkout.
+        If ``_version.py`` defines no ``VERSION``, or if the package root does not
+        re-export it or states a literal ``__version__``; named by its label in
+        any checkout.
     """
-    text = (root / INIT_LABEL).read_text(encoding="utf-8")
-    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
+    text = (root / VERSION_LABEL).read_text(encoding="utf-8")
+    match = re.search(
+        r'^VERSION\s*(?::\s*Final\[str\])?\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE
+    )
     if match is None:
-        raise RuntimeError(f"{INIT_LABEL} does not define __version__")
+        raise RuntimeError(f"{VERSION_LABEL} does not define VERSION")
+    init_lines = (root / INIT_LABEL).read_text(encoding="utf-8").splitlines()
+    bindings = [line for line in init_lines if re.match(r"__version__\s*[:=]", line)]
+    if any(line != INIT_REEXPORT for line in bindings):
+        raise RuntimeError(f"{INIT_LABEL} states its own __version__; re-export VERSION")
+    if not bindings or INIT_IMPORT not in init_lines:
+        raise RuntimeError(f"{INIT_LABEL} does not re-export VERSION as __version__")
     return match.group(1)
 
 
@@ -182,7 +204,7 @@ def source_surfaces(root: Path = ROOT) -> list[VersionSurface]:
     """
     return [
         VersionSurface("pyproject.toml", _toml_version(root / "pyproject.toml", "project")),
-        VersionSurface(INIT_LABEL, _init_version(root)),
+        VersionSurface(VERSION_LABEL, _init_version(root)),
         VersionSurface(
             "engine/Cargo.toml", _toml_version(root / "engine" / "Cargo.toml", "package")
         ),

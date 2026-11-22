@@ -251,7 +251,7 @@ def fit_parameters(
     import scipy
     from scipy.optimize import NonlinearConstraint, differential_evolution
 
-    from sc_neurocore import __version__
+    from sc_neurocore._version import VERSION as __version__
 
     if generations < 1 or population < 4:
         raise LaboratoryRefusal("generations must be at least 1 and population at least 4")

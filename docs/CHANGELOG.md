@@ -419,6 +419,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The package version is stated once, as `VERSION` in
+  `src/sc_neurocore/_version.py`, a module that imports nothing. The package
+  root re-exports it as `__version__`, so `sc_neurocore.__version__` is
+  unchanged. Modules that stamp the version into a manifest, a fit, a
+  certificate packet or a Studio record now import `_version` instead of the
+  package root, so they depend on the module the split map places in
+  SC-NC-CORE rather than on the facade; the split import gate reports 12
+  fewer findings. The version surface audit reads `_version.py`, and refuses
+  a package root that states a version of its own or does not re-export
+  `VERSION`.
+
 - The network runner in `engine/src/network_runner` is documented apart
   from `create_neuron`: its network, populations, projections, results and
   the TC-LIF and McCulloch-Pitts input adapters, each read against its code.

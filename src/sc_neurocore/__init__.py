@@ -35,7 +35,10 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any
 
-__version__ = "4.2.0"
+from sc_neurocore import _version
+
+#: The release version, stated once in :mod:`sc_neurocore._version`.
+__version__: str = _version.VERSION
 
 # Public symbols load lazily (PEP 562) so ``import sc_neurocore`` stays
 # lightweight and, crucially, torch-free: eager submodule imports pulled torch

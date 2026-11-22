@@ -600,7 +600,7 @@ def tool_versions() -> dict[str, Any]:
     ImportError
         The ``sc_neurocore_engine`` package is not installed.
     """
-    import sc_neurocore
+    from sc_neurocore._version import VERSION
 
     tools: dict[str, dict[str, Any]] = {}
     for name in TOOLS:
@@ -618,7 +618,7 @@ def tool_versions() -> dict[str, Any]:
             "version": platform.python_version(),
             "implementation": platform.python_implementation(),
         },
-        "sc_neurocore": sc_neurocore.__version__,
+        "sc_neurocore": VERSION,
         "sc_neurocore_engine": engine,
     }
 
@@ -637,9 +637,9 @@ def source_identity(repository: Path | None) -> dict[str, Any]:
         ``package_version`` and ``checkout``; with a checkout, ``commit`` and ``dirty``
         (uncommitted or untracked files), otherwise the ``reason``.
     """
-    import sc_neurocore
+    from sc_neurocore._version import VERSION
 
-    identity: dict[str, Any] = {"package_version": sc_neurocore.__version__}
+    identity: dict[str, Any] = {"package_version": VERSION}
     git = shutil.which("git")
     if repository is None or git is None:
         reason = "git is not installed" if git is None else "not run from a source checkout"

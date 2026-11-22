@@ -52,7 +52,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-import sc_neurocore
+from sc_neurocore._version import VERSION
 from sc_neurocore.refusals import AuthoredRefusal
 from sc_neurocore.studio.experiment_spec import (
     ExperimentRejected,
@@ -238,7 +238,7 @@ def experiment_identity_sha256(public: Mapping[str, Any]) -> str:
 
 def _environment_block() -> dict[str, str]:
     return {
-        "package_version": sc_neurocore.__version__,
+        "package_version": VERSION,
         "python": platform.python_version(),
         "numpy": np.__version__,
         "platform": platform.system(),

@@ -195,7 +195,7 @@ class _Recorder:
         boundary: Mapping[str, list[str]],
     ) -> tuple[Path, Path, dict[str, Any]]:
         """Write the manifest and its text summary."""
-        from sc_neurocore import __version__
+        from sc_neurocore._version import VERSION as __version__
 
         manifest: dict[str, Any] = {
             "schema_version": HARDWARE_PATH_SCHEMA_VERSION,
