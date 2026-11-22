@@ -51244,73 +51244,6 @@ HardwarePathRefusal
     differing cycle and signals of the requested run or of the stress
     schedule.
 
-### Function `model_guarantee_summary(configuration, verilog, cosim_report, *, formal_inventory, readiness_seal)`
-Classify what the emitted RTL of one model is guaranteed by.
-
-Parameters
-----------
-configuration : ResolvedModelCompileConfiguration
-    The resolved model configuration.
-verilog : str
-    The RTL emitted for it.
-cosim_report : Mapping
-    Its bit-exact ``studio.cosim-parity.v1`` report.
-formal_inventory : Path, optional
-    The catalogue formal inventory.
-readiness_seal : Path, optional
-    The sealed verified-readiness record.
-
-Returns
--------
-dict
-    Schema, model, RTL digest, the co-simulation and formal guarantee
-    entries, the readiness labels and the number of entries per class of
-    :data:`~sc_neurocore.compiler.guarantee_summary.GUARANTEE_CLASSES`.
-
-### Function `formal_guarantee(model_name, verilog, run_parameters, *, inventory)`
-Classify the catalogue formal job of a model against the emitted RTL.
-
-The job is never run here: the inventory states what it checks. A job
-covers this RTL only when its RTL file holds exactly the bytes the catalogue
-emitter (``tools/emit_catalogue_formal.py``) writes for this RTL: the
-compiler's text, terminated by one newline when it does not end with one.
-Both digests are recorded.
-
-Parameters
-----------
-model_name : str
-    The catalogue model.
-verilog : str
-    The emitted RTL.
-run_parameters : Mapping
-    This run's ``module``, ``schema`` and ``q_format`` (compared with the
-    job's ``module``, ``profile`` and ``q_format``) and its other settings.
-inventory : Path, optional
-    ``hdl/formal/catalogue/inventory.json``; job RTL files are read beside it.
-
-Returns
--------
-dict
-    A ``FORMAL``, ``PROVEN AT OTHER PARAMETERS`` or ``NONE`` entry with the
-    reason; the first two carry the job and both parameter sets.
-
-### Function `readiness_labels(model_name, seal)`
-Return a model's verified readiness labels from the sealed record.
-
-Parameters
-----------
-model_name : str
-    The catalogue model.
-seal : Path, optional
-    The sealed ``verified_readiness.json``.
-
-Returns
--------
-dict
-    ``source`` (``sealed`` or ``unsealed``), the verified ``profile``,
-    ``science_label`` and ``silicon_label``, every facet's status and, for
-    an unsealed record, the reason.
-
 ### Function `supported_models(names, *, tool_status, capabilities)`
 Say, for every catalogue model, whether the hardware path is supported and why not.
 
@@ -51336,19 +51269,6 @@ list of dict
     operation and reason, or ``None``), ``supported``, ``refusal`` (the
     first required operation this host disables, or ``None``) and the
     mirrored ``combinations``.
-
-### Function `render_model_guarantee_text(summary)`
-Render a model guarantee summary as short text.
-
-Parameters
-----------
-summary : Mapping
-    A summary returned by :func:`model_guarantee_summary`.
-
-Returns
--------
-str
-    One line per guarantee, the readiness labels and the class counts.
 
 ### Function `render_hardware_path_text(manifest)`
 Render a hardware path manifest as text for people.
@@ -51654,6 +51574,90 @@ ValueError
     No bit-true kernel mirrors ``neuron`` at this configuration.
 RuntimeError
     A tool is unavailable or a command fails.
+
+---
+
+## Module `studio.model_guarantee`
+
+### Function `model_guarantee_summary(configuration, verilog, cosim_report, *, formal_inventory, readiness_seal)`
+Classify what the emitted RTL of one model is guaranteed by.
+
+Parameters
+----------
+configuration : ResolvedModelCompileConfiguration
+    The resolved model configuration.
+verilog : str
+    The RTL emitted for it.
+cosim_report : Mapping
+    Its bit-exact ``studio.cosim-parity.v1`` report.
+formal_inventory : Path, optional
+    The catalogue formal inventory.
+readiness_seal : Path, optional
+    The sealed verified-readiness record.
+
+Returns
+-------
+dict
+    Schema, model, RTL digest, the co-simulation and formal guarantee
+    entries, the readiness labels and the number of entries per class of
+    :data:`~sc_neurocore.compiler.guarantee_summary.GUARANTEE_CLASSES`.
+
+### Function `formal_guarantee(model_name, verilog, run_parameters, *, inventory)`
+Classify the catalogue formal job of a model against the emitted RTL.
+
+The job is never run here: the inventory states what it checks. A job
+covers this RTL only when its RTL file holds exactly the bytes the catalogue
+emitter (``tools/emit_catalogue_formal.py``) writes for this RTL: the
+compiler's text, terminated by one newline when it does not end with one.
+Both digests are recorded.
+
+Parameters
+----------
+model_name : str
+    The catalogue model.
+verilog : str
+    The emitted RTL.
+run_parameters : Mapping
+    This run's ``module``, ``schema`` and ``q_format`` (compared with the
+    job's ``module``, ``profile`` and ``q_format``) and its other settings.
+inventory : Path, optional
+    ``hdl/formal/catalogue/inventory.json``; job RTL files are read beside it.
+
+Returns
+-------
+dict
+    A ``FORMAL``, ``PROVEN AT OTHER PARAMETERS`` or ``NONE`` entry with the
+    reason; the first two carry the job and both parameter sets.
+
+### Function `readiness_labels(model_name, seal)`
+Return a model's verified readiness labels from the sealed record.
+
+Parameters
+----------
+model_name : str
+    The catalogue model.
+seal : Path, optional
+    The sealed ``verified_readiness.json``.
+
+Returns
+-------
+dict
+    ``source`` (``sealed`` or ``unsealed``), the verified ``profile``,
+    ``science_label`` and ``silicon_label``, every facet's status and, for
+    an unsealed record, the reason.
+
+### Function `render_model_guarantee_text(summary)`
+Render a model guarantee summary as short text.
+
+Parameters
+----------
+summary : Mapping
+    A summary returned by :func:`model_guarantee_summary`.
+
+Returns
+-------
+str
+    One line per guarantee, the readiness labels and the class counts.
 
 ---
 

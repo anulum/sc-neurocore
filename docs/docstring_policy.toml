@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2320
+expected_file_count = 2322
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -7553,7 +7553,13 @@ path = "tests/test_evidence_packet.py"
 rationale = "Export real packets, run their formal and synthesis members, and refuse every tamper class."
 [[file]]
 path = "src/sc_neurocore/studio/hardware_path.py"
-rationale = "Take one catalogue model through its capability gate, RTL, bit-exact co-simulation, guarantee summary and synthesis, refusing by name at each stage."
+rationale = "Take one catalogue model through its capability gate, RTL, bit-exact co-simulation, guarantee summary and synthesis, refusing by name at each stage; the guarantee names it re-exports are the classification module's own objects."
+[[file]]
+path = "src/sc_neurocore/studio/model_guarantee.py"
+rationale = "Classify what one model's emitted RTL is guaranteed by: co-simulated only, the catalogue formal job by byte identity, and the sealed readiness labels, with no formal job run here."
+[[file]]
+path = "tests/test_studio_model_guarantee_split.py"
+rationale = "Bind the hardware path and guarantee split: historical imports reach the same objects, the classification owns its qualified names and pickles, and the moved helpers left the hardware path."
 [[file]]
 path = "src/sc_neurocore/cli/commands/hardware_path.py"
 rationale = "Run the hardware path of one model or list the supported set from the command line with exit status zero or one."

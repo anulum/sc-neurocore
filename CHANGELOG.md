@@ -446,6 +446,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.studio.hardware_path` held two responsibilities: running one
+  catalogue model through the stages to synthesis, and classifying what its
+  emitted RTL is guaranteed by. The classification
+  (`model_guarantee_summary`, `formal_guarantee`, `readiness_labels`,
+  `render_model_guarantee_text`, `MODEL_GUARANTEE_SCHEMA_VERSION`) now lives in
+  `sc_neurocore.studio.model_guarantee`; the code moved unchanged. The hardware
+  path re-exports those names as the same objects, so historical imports and
+  pickles keep working, and its guarantee stage records what the new module
+  returns.
+
 - `sc_neurocore.studio.project` held two responsibilities, project storage
   and the graph-to-target pipeline. The pipeline (`run_pipeline`,
   `PIPELINE_ROUTE`, `PIPELINE_COSIM_STEP_LIMIT`, `PIPELINE_Q_FORMATS`) now
