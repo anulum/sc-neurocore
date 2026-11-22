@@ -18,7 +18,7 @@ from sc_neurocore.studio.platform.action_evidence import (
     write_studio_action_evidence_manifest,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobContext
-from sc_neurocore.studio.project import PIPELINE_Q_FORMATS, run_pipeline
+from sc_neurocore.studio.project_pipeline import PIPELINE_Q_FORMATS, run_pipeline
 from sc_neurocore.studio.synthesis import EdaProcessLimits, supported_targets
 
 PIPELINE_PROCESS_TASK = "sc_neurocore.studio.platform.pipeline_process:run_pipeline_process_task"
@@ -32,9 +32,9 @@ def run_pipeline_process_task(
 
     Parameters
     ----------
-    context:
+    context : StudioJobContext
         Job sandbox used to write path-confined result and evidence artifacts.
-    payload:
+    payload : Mapping[str, object]
         JSON object matching the public ``/api/pipeline/run`` request contract.
 
     Returns
@@ -47,7 +47,6 @@ def run_pipeline_process_task(
     ValueError
         If the payload does not match the JSON-serializable pipeline contract.
     """
-
     request = _pipeline_request_from_payload(payload)
     raw_result = run_pipeline(
         request.graph,

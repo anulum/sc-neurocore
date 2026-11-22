@@ -55222,9 +55222,9 @@ Run one Studio graph-to-synthesis pipeline in an isolated process.
 
 Parameters
 ----------
-context:
+context : StudioJobContext
     Job sandbox used to write path-confined result and evidence artifacts.
-payload:
+payload : Mapping&#91;str, object&#93;
     JSON object matching the public ``/api/pipeline/run`` request contract.
 
 Returns
@@ -59830,46 +59830,6 @@ Return one revision as a self-contained document for transfer.
 ### Function `import_project(name, document)`
 Create a workspace from an exported document.
 
-### Function `run_pipeline(graph, target, *, q_format, process_limits)`
-Validate, simulate, lower, co-simulate and synthesise a Studio network.
-
-The hardware is the network the caller drew: the graph is lowered with each
-catalogue model's own step (:mod:`sc_neurocore.studio.network_hardware`) or
-refused with every reason it cannot be. The compiled RTL is then run beside
-its bit-true model and the Studio's own run
-(:mod:`sc_neurocore.studio.network_hardware_cosim`); synthesis runs only
-when the RTL reproduces its model on every co-simulated step. The result's
-``trace`` binds the lowering's input digest, the RTL, the model and the
-synthesised source.
-
-Before the lowering existed the step compiled one hardcoded leaky
-integrate-and-fire equation, ignoring the graph, and later refused every
-graph; neither was the caller's network.
-
-Parameters
-----------
-graph:
-    Studio network graph payload.
-target:
-    Studio synthesis target identifier.
-q_format:
-    ``Q8.8`` or ``Q16.16``, the fixed-point format of the hardware.
-process_limits:
-    Optional host-supported CPU and address-space ceilings for the
-    downstream synthesis child process.
-
-Returns
--------
-dict&#91;str, Any&#93;
-    ``success``, the ``step`` it ended at, each step's payload under
-    ``steps``, and ``trace`` once the RTL was built; a stop carries
-    ``error`` and, when the lowering refused, every ``reasons`` entry.
-
-Raises
-------
-ValueError
-    When ``q_format`` is not one the pipeline compiles to.
-
 ---
 
 ## Module `studio.project_manifest`
@@ -59963,6 +59923,50 @@ Raises
 StudioProjectRootRefused
     The configured value is empty, relative, unresolvable, or an existing
     filesystem object that is not a directory.
+
+---
+
+## Module `studio.project_pipeline`
+
+### Function `run_pipeline(graph, target, *, q_format, process_limits)`
+Validate, simulate, lower, co-simulate and synthesise a Studio network.
+
+The hardware is the network the caller drew: the graph is lowered with each
+catalogue model's own step (:mod:`sc_neurocore.studio.network_hardware`) or
+refused with every reason it cannot be. The compiled RTL is then run beside
+its bit-true model and the Studio's own run
+(:mod:`sc_neurocore.studio.network_hardware_cosim`); synthesis runs only
+when the RTL reproduces its model on every co-simulated step. The result's
+``trace`` binds the lowering's input digest, the RTL, the model and the
+synthesised source.
+
+Before the lowering existed the step compiled one hardcoded leaky
+integrate-and-fire equation, ignoring the graph, and later refused every
+graph; neither was the caller's network.
+
+Parameters
+----------
+graph:
+    Studio network graph payload.
+target:
+    Studio synthesis target identifier.
+q_format:
+    ``Q8.8`` or ``Q16.16``, the fixed-point format of the hardware.
+process_limits:
+    Optional host-supported CPU and address-space ceilings for the
+    downstream synthesis child process.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    ``success``, the ``step`` it ended at, each step's payload under
+    ``steps``, and ``trace`` once the RTL was built; a stop carries
+    ``error`` and, when the lowering refused, every ``reasons`` entry.
+
+Raises
+------
+ValueError
+    When ``q_format`` is not one the pipeline compiles to.
 
 ---
 

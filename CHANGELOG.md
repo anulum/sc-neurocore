@@ -446,6 +446,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.studio.project` held two responsibilities, project storage
+  and the graph-to-target pipeline. The pipeline (`run_pipeline`,
+  `PIPELINE_ROUTE`, `PIPELINE_COSIM_STEP_LIMIT`, `PIPELINE_Q_FORMATS`) now
+  lives in `sc_neurocore.studio.project_pipeline`, and the storage module
+  re-exports those names as the same objects, so historical imports and
+  pickles keep working. The pipeline process task imports the pipeline from
+  its own module. The code moved unchanged.
+
 - The package version is stated once, as `VERSION` in
   `src/sc_neurocore/_version.py`, a module that imports nothing from the
   package. The package root re-exports it as `__version__`, so
