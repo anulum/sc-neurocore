@@ -1,0 +1,27 @@
+{
+  "schema": "sc_neurocore.coverage_platform_exceptions.v1",
+  "decisions": [
+    "523df20b",
+    "fd2fcd90"
+  ],
+  "decision_records": [
+    "DECISION_2026-11-22T073204Z (owner): the GPU encoder's success line gets a narrow platform exception, backed by physical-GPU evidence",
+    "ERRATUM 1, 2026-11-22T073305Z: only post-construction success statements may be excepted, each by path, line and source sha256",
+    "ERRATUM 2, 2026-11-22T081733Z: the evidence is a physical GPU adapter recorded by name and graphics API; the adapter's make is not a condition"
+  ],
+  "evidence": "tools/gpu_waveform_encoder_evidence.json",
+  "source_set": [
+    "engine/src/waveform_stream_gpu.rs",
+    "engine/src/waveform_stream_gpu.wgsl",
+    "src/sc_neurocore/spike_codec/_waveform_gpu.py",
+    "engine/src/bindings/waveform_stream.rs"
+  ],
+  "entries": [
+    {
+      "path": "src/sc_neurocore/spike_codec/_waveform_gpu.py",
+      "line": 46,
+      "source_sha256": "527162240224750f63d328135ffd4e4c9eeddf8fdb8cdb706710d1c2ebc528f1",
+      "reason": "platform boundary: the success return after the GPU encoder is built on a physical GPU adapter; hosted runners have none, and the engine refuses a software adapter"
+    }
+  ]
+}

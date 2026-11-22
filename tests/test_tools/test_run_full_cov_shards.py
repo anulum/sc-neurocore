@@ -85,12 +85,14 @@ def project(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def _run(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def _run(
+    project: Path, *args: str, extra: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     """Run the copied runner with this interpreter first on PATH and no outer coverage.
 
     The outer coverage session's process hooks are removed from the environment,
     so the child runs measure only the small project and never write into the
-    repository's own coverage data.
+    repository's own coverage data. ``extra`` adds environment variables.
     """
     environment = {
         key: value
@@ -98,6 +100,7 @@ def _run(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
         if not key.startswith(("COV_CORE_", "COVERAGE_", "PYTEST_"))
     }
     environment["PATH"] = os.pathsep.join([str(Path(sys.executable).parent), environment["PATH"]])
+    environment.update(extra or {})
     return subprocess.run(
         ["bash", "tools/run_full_cov.sh", "--batch-size=1", *args],
         cwd=project,
@@ -322,3 +325,101 @@ def test_inconsistent_shard_arguments_are_refused_before_any_test_runs(
     assert result.returncode == 2
     assert message in result.stderr
     assert "batch 1/3" not in result.stdout
+
+
+def _excepted_project(project: Path, *, registered: bool, evidence_matches: bool) -> Path:
+    """Give the project a never-called GPU function, the exception gate and its register.
+
+    Parameters
+    ----------
+    project : Path
+        The project from the fixture.
+    registered : bool
+        Whether the register names the function's return line.
+    evidence_matches : bool
+        Whether the evidence record digests the function's source as it is.
+
+    Returns
+    -------
+    Path
+        The union directory holding both shards' data.
+    """
+    import hashlib
+
+    gpu = project / "src" / "sc_neurocore" / "_gpu.py"
+    gpu.write_text('def gpu():\n    return "gpu"\n', encoding="utf-8")
+    shutil.copy2(_ROOT / "tools" / "coverage_exception_gate.py", project / "tools")
+    line = '    return "gpu"'
+    entries = (
+        [
+            {
+                "path": "src/sc_neurocore/_gpu.py",
+                "line": 2,
+                "source_sha256": hashlib.sha256(line.encode()).hexdigest(),
+            }
+        ]
+        if registered
+        else []
+    )
+    register = {
+        "schema": "sc_neurocore.coverage_platform_exceptions.v1",
+        "decisions": ["523df20b", "fd2fcd90"],
+        "evidence": "tools/gpu_waveform_encoder_evidence.json",
+        "source_set": ["src/sc_neurocore/_gpu.py"],
+        "entries": entries,
+    }
+    digest = hashlib.sha256(gpu.read_bytes()).hexdigest() if evidence_matches else "0" * 64
+    evidence = {
+        "schema": "sc_neurocore.gpu_waveform_encoder_evidence.v1",
+        "decisions": ["523df20b", "fd2fcd90"],
+        "source_sha256": {"src/sc_neurocore/_gpu.py": digest},
+        "excepted_lines_covered": [{"path": "src/sc_neurocore/_gpu.py", "line": 2}]
+        if registered
+        else [],
+    }
+    (project / "tools" / "coverage_platform_exceptions.json").write_text(json.dumps(register))
+    (project / "tools" / "gpu_waveform_encoder_evidence.json").write_text(json.dumps(evidence))
+    (project / "tests" / "test_delta.py").write_text(
+        "import sc_neurocore._gpu\n\n\ndef test_import():\n    assert sc_neurocore._gpu.gpu\n"
+    )
+    union = project / "union"
+    _run_shards(project, union, 2)
+    return union
+
+
+def test_the_exception_gate_mode_passes_a_union_missing_only_a_registered_line(
+    project: Path,
+) -> None:
+    """With SCN_COVERAGE_EXCEPTION_GATE=1 the registered, evidenced line may stay uncovered."""
+    union = _excepted_project(project, registered=True, evidence_matches=True)
+    result = _run(
+        project,
+        f"--combine-from={union}",
+        "--expect-shards=2",
+        extra={"SCN_COVERAGE_EXCEPTION_GATE": "1"},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1 of 1 missing excepted by the register; pass" in result.stdout
+    assert (project / "coverage.json").is_file() and (project / "coverage.xml").is_file()
+
+
+@pytest.mark.parametrize(
+    ("registered", "evidence_matches", "finding"),
+    [
+        (False, True, "src/sc_neurocore/_gpu.py:2 is not covered and not in the register"),
+        (True, False, "src/sc_neurocore/_gpu.py differs from the physical-GPU evidence"),
+    ],
+)
+def test_the_exception_gate_mode_fails_an_unregistered_or_unevidenced_line(
+    project: Path, registered: bool, evidence_matches: bool, finding: str
+) -> None:
+    """An uncovered line outside the register, or a source that left its evidence, fails."""
+    union = _excepted_project(project, registered=registered, evidence_matches=evidence_matches)
+    result = _run(
+        project,
+        f"--combine-from={union}",
+        "--expect-shards=2",
+        extra={"SCN_COVERAGE_EXCEPTION_GATE": "1"},
+    )
+    assert result.returncode == 1
+    assert finding in result.stdout

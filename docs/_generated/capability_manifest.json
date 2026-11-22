@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5759
+    "test_files": 5762
   },
   "documentation": {
     "public_pages": [
@@ -8635,6 +8635,7 @@
       "tests/test_tools/test_compiler_e2e_workflow_contract.py",
       "tests/test_tools/test_conda_dependency_reports.py",
       "tests/test_tools/test_cosim_q88_import_contract.py",
+      "tests/test_tools/test_coverage_exception_gate.py",
       "tests/test_tools/test_coverage_scope.py",
       "tests/test_tools/test_crate_format_check.py",
       "tests/test_tools/test_crates_io_release_status.py",
@@ -8718,6 +8719,7 @@
       "tests/test_tools/test_go_doc_measurement_native.py",
       "tests/test_tools/test_go_security_baseline.py",
       "tests/test_tools/test_godoc_coverage_native.py",
+      "tests/test_tools/test_gpu_waveform_encoder_evidence.py",
       "tests/test_tools/test_hdl_toolchain_published_sdk_contract.py",
       "tests/test_tools/test_icarus_verilog_dependency.py",
       "tests/test_tools/test_ice40_up5k_calibration.py",
@@ -9040,6 +9042,7 @@
       "tests/test_waveform_codec_waveform_codec.py",
       "tests/test_waveform_codec_waveform_codec_mode.py",
       "tests/test_waveform_container.py",
+      "tests/test_waveform_gpu_software_adapter_refusal.py",
       "tests/test_waveform_stream.py",
       "tests/test_wheel_excluded_imports_are_guarded.py",
       "tests/test_wheel_shipped_subpackages_import.py",

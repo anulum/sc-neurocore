@@ -62,7 +62,7 @@ def test_native_gate_follows_same_job_producers_and_retained_full_suite_results(
         "Stage this shard's coverage data",
         "Preserve this shard's coverage data",
     ]
-    assert steps[staging]["if"] == steps[preservation]["if"] == "matrix.coverage"
+    assert steps[staging]["if"] == steps[preservation]["if"] == "always() && matrix.coverage"
     assert all(
         str(step.get("uses", "")).startswith("actions/upload-artifact@")
         for step in steps[index + 1 :]

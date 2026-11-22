@@ -489,6 +489,113 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  gpu-software-adapter-refusal:
+    # The GPU waveform encoder runs only on a physical GPU adapter. A hosted runner has none, so
+    # this job builds the engine with its gpu feature on Mesa's software Vulkan driver and holds
+    # the refusal of that adapter, with its reason, through the public encoder. It is a
+    # software-adapter run: it makes no hardware and no performance claim. The success line
+    # after construction is a registered platform exception (tools/coverage_platform_exceptions.json)
+    # backed by physical-GPU evidence (tools/gpu_waveform_encoder_evidence.json).
+    name: GPU encoder refusal on a software adapter
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.16"
+          cache: pip
+      - name: Install Mesa's software Vulkan driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers=25.2.8-0ubuntu0.24.04.4 libvulkan1=1.3.275.0-1build1
+          ls /usr/share/vulkan/icd.d/lvp_icd*.json
+      - name: Restore an exact-source GPU engine wheel
+        id: gpu-engine-wheel
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/engine-wheel-gpu
+          key: ubuntu24-x64-engine-v1-release-gpu-py3.12.16-rust1.98.1-${{ hashFiles('engine/src/**', 'engine/Cargo.*', 'engine/rust-toolchain.toml', 'engine/vendor/**', 'engine/.cargo/**', 'bridge/**/*.py', 'bridge/pyproject.toml', 'bridge/.cargo/**', 'bridge/vendor/**', 'bridge/rayon_source_patch.toml', '.cargo/**', 'rust-toolchain.*', 'Cargo.toml', 'Cargo.lock', 'requirements/maturin.txt') }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # 1.98.1
+        if: steps.gpu-engine-wheel.outputs.cache-hit != 'true'
+        with:
+          toolchain: "1.98.1"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        if: steps.gpu-engine-wheel.outputs.cache-hit != 'true'
+        with:
+          workspaces: engine
+          key: ${{ github.repository }}-gpu-wheel-py3.12.16
+      - name: Build the engine with its gpu feature
+        if: steps.gpu-engine-wheel.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          python -m pip install --require-hashes -r requirements/maturin.txt
+          cd bridge
+          maturin build --release --locked --features gpu --out "$RUNNER_TEMP/engine-wheel-gpu"
+      - name: Save the exact-source GPU engine wheel
+        if: steps.gpu-engine-wheel.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/engine-wheel-gpu
+          key: ${{ steps.gpu-engine-wheel.outputs.cache-primary-key }}
+      - name: Install package with the GPU engine
+        env:
+          SC_NEUROCORE_CI_ENGINE_WHEEL_DIR: ${{ runner.temp }}/engine-wheel-gpu
+        run: |
+          python tools/ci_install_dev.py
+          python - "$RUNNER_TEMP/test-tool-pins.txt" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path("requirements/ci-dev.txt").read_text(encoding="utf-8").splitlines()
+          blocks = []
+          for name in ("coverage", "pytest", "pluggy", "iniconfig", "packaging", "pygments", "pytest-cov"):
+              start = next(i for i, line in enumerate(lines)
+                           if re.match(re.escape(name) + r"==\S+ \\$", line))
+              block = [lines[start]]
+              for line in lines[start + 1 :]:
+                  if not line.strip().startswith("--hash="):
+                      break
+                  block.append(line)
+              blocks.append("\n".join(block).rstrip(" \\"))
+          Path(sys.argv[1]).write_text("\n".join(blocks) + "\n", encoding="utf-8")
+          PY
+          python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/test-tool-pins.txt"
+      - name: Record the software adapter the engine refuses
+        env:
+          SC_GPU_ADAPTER: llvmpipe
+        run: |
+          python - <<'PY'
+          from sc_neurocore.spike_codec.waveform_stream import LosslessStreamEncoder
+
+          try:
+              LosslessStreamEncoder(3, 10, 3, "gpu", gpu_max_samples=12)
+          except ValueError as refusal:
+              print(f"software-adapter run, no hardware or performance claim: {refusal}")
+          else:
+              raise SystemExit("the engine accepted a software adapter")
+          PY
+      - name: GPU encoder refusal through the public encoder
+        env:
+          SC_NEUROCORE_REQUIRE_ENGINE: "1"
+          SC_NEUROCORE_REQUIRE_SOFTWARE_GPU_REFUSAL: "1"
+          COVERAGE_FILE: ${{ runner.temp }}/gpu-software-adapter-coverage/.coverage.gpu-software-adapter
+        run: |
+          mkdir -p "$RUNNER_TEMP/gpu-software-adapter-coverage"
+          python -m pytest -q -p no:cacheprovider --cov=sc_neurocore --cov-report= \
+            tests/test_waveform_gpu_software_adapter_refusal.py \
+            tests/test_spike_codec_catalogue_availability.py
+      - name: Preserve the software-adapter coverage
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: gpu-software-adapter-coverage
+          path: ${{ runner.temp }}/gpu-software-adapter-coverage/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
   test:
     # Coverage shards are not required checks themselves; the union job
     # `coverage-union` carries the required `test (3.12)` name and the gate.
@@ -1751,14 +1858,14 @@ jobs:
           retention-days: 7
 
       - name: Stage this shard's coverage data
-        if: matrix.coverage
+        if: always() && matrix.coverage
         shell: bash
         run: |
           mkdir -p coverage-shard
           cp .coverage "coverage-shard/.coverage.shard-${{ matrix.shard-index }}"
 
       - name: Preserve this shard's coverage data
-        if: matrix.coverage
+        if: always() && matrix.coverage
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: coverage-data-shard-${{ matrix.shard-index }}
@@ -1916,7 +2023,7 @@ jobs:
     # Windows refusal leg.
     name: test (3.12)
     runs-on: ubuntu-24.04
-    needs: [test, shd-non-linux-refusal, native-go-windows-refusal, recorder-coverage]
+    needs: [test, shd-non-linux-refusal, native-go-windows-refusal, recorder-coverage, gpu-software-adapter-refusal]
     # A skipped job would report success to branch protection, so this job
     # runs after failed legs too and requires every test shard to pass.
     if: ${{ !cancelled() }}
@@ -1927,10 +2034,11 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
           WINDOWS_RESULT: ${{ needs.shd-non-linux-refusal.result }}
           RECORDER_RESULT: ${{ needs.recorder-coverage.result }}
+          GPU_REFUSAL_RESULT: ${{ needs.gpu-software-adapter-refusal.result }}
         shell: bash
         run: >-
           test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success
-          && test "$RECORDER_RESULT" = success
+          && test "$RECORDER_RESULT" = success && test "$GPU_REFUSAL_RESULT" = success
 
       - name: Require successful native Go Windows refusal
         env:
@@ -1938,13 +2046,18 @@ jobs:
         shell: bash
         run: test "$GO_WINDOWS_RESULT" = success
 
+      # The union's own verdict is shown on every run that is not cancelled, even when a test
+      # shard or a refusal leg failed above; skipping it hid a coverage gap from 2026-11-17.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !cancelled() }}
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        if: ${{ !cancelled() }}
         with:
           python-version: "3.12.16"
 
       - name: Install the locked coverage tool
+        if: ${{ !cancelled() }}
         id: native_counter_tools
         shell: bash
         run: |
@@ -1971,6 +2084,7 @@ jobs:
           python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/coverage-requirements.txt"
 
       - name: Retrieve every coverage shard
+        if: ${{ !cancelled() }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           pattern: coverage-data-shard-*
@@ -1978,14 +2092,27 @@ jobs:
           path: ${{ runner.temp }}/coverage-shards
 
       - name: Retrieve actual Windows refusal coverage
+        if: ${{ !cancelled() }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: shd-non-linux-coverage
           path: ${{ runner.temp }}/shd-platform-coverage
 
+      - name: Retrieve the GPU encoder's software-adapter refusal coverage
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: gpu-software-adapter-coverage
+          path: ${{ runner.temp }}/shd-platform-coverage
+
       - name: Coverage union gate
+        if: ${{ !cancelled() }}
         env:
           SCN_EXTRA_COVERAGE_DIR: ${{ runner.temp }}/shd-platform-coverage
+          # 100 % except the lines tools/coverage_platform_exceptions.json registers, each with
+          # its source hash and the physical-GPU evidence; a GPU source that leaves that
+          # evidence fails here too.
+          SCN_COVERAGE_EXCEPTION_GATE: "1"
         shell: bash
         run: |
           bash tools/run_full_cov.sh --combine-from="$RUNNER_TEMP/coverage-shards" \

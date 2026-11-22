@@ -82,13 +82,79 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
         for step in union["steps"]
         if step.get("name") == "Retrieve actual Windows refusal coverage"
     )
-    assert "if" not in download
+    assert download["if"] == "${{ !cancelled() }}"
     assert download["with"]["name"] == upload["with"]["name"]
     aggregate = next(step for step in union["steps"] if step.get("name") == "Coverage union gate")
     assert aggregate["env"]["SCN_EXTRA_COVERAGE_DIR"] == download["with"]["path"]
     runner = (_ROOT / "tools/run_full_cov.sh").read_text()
     assert 'coverage combine --append --keep "$SCN_EXTRA_COVERAGE_DIR"' in runner
     assert runner.index("coverage combine --append") < runner.index("coverage report --skip-empty")
+
+
+def test_the_union_is_shown_on_every_run_and_excepts_only_registered_gpu_lines() -> None:
+    """The union runs after failed legs, reads the GPU refusal leg, and gates through the register.
+
+    Its verdict was skipped on every main run from 2026-11-17 while a shard failed first, so
+    every step it needs runs unless the run is cancelled. The 100 % gate becomes the exception
+    gate, and the software-adapter job that feeds it builds the engine with its gpu feature.
+    """
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    union = workflow["jobs"]["coverage-union"]
+    assert "gpu-software-adapter-refusal" in union["needs"]
+    steps = union["steps"]
+    first_needed = next(index for index, step in enumerate(steps) if "uses" in step)
+    gate_index = next(
+        i for i, step in enumerate(steps) if step.get("name") == "Coverage union gate"
+    )
+    for step in steps[first_needed : gate_index + 1]:
+        assert step["if"] == "${{ !cancelled() }}", step.get("name", step.get("uses"))
+    gate = steps[gate_index]
+    assert gate["env"]["SCN_COVERAGE_EXCEPTION_GATE"] == "1"
+    retrieve = next(
+        step
+        for step in steps
+        if step.get("with", {}).get("name") == "gpu-software-adapter-coverage"
+    )
+    assert retrieve["with"]["path"] == gate["env"]["SCN_EXTRA_COVERAGE_DIR"]
+    job = workflow["jobs"]["gpu-software-adapter-refusal"]
+    runs = "\n".join(str(step.get("run", "")) for step in job["steps"])
+    assert "maturin build --release --locked --features gpu" in runs
+    assert "mesa-vulkan-drivers=25.2.8-0ubuntu0.24.04.4" in runs
+    assert "tests/test_waveform_gpu_software_adapter_refusal.py" in runs
+    refusal = next(
+        step for step in job["steps"] if "test_waveform_gpu_software" in step.get("run", "")
+    )
+    assert refusal["env"]["SC_NEUROCORE_REQUIRE_SOFTWARE_GPU_REFUSAL"] == "1"
+    upload = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Preserve the software-adapter coverage"
+    )
+    assert upload["if"] == "always()" and upload["with"]["name"] == "gpu-software-adapter-coverage"
+    runner = (_ROOT / "tools/run_full_cov.sh").read_text(encoding="utf-8")
+    assert "python tools/coverage_exception_gate.py --coverage-json coverage.json" in runner
+
+
+def test_the_union_requires_the_success_of_every_job_it_needs() -> None:
+    """Each job in the union's ``needs`` has its result required to be ``success``.
+
+    The union runs after failed legs, and some legs upload their coverage even when they fail,
+    so a needed job whose result nobody checks could fail while the required check passes.
+    """
+    import yaml
+
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
+    union = workflow["jobs"]["coverage-union"]
+    required: set[str] = set()
+    for step in union["steps"]:
+        run = str(step.get("run", ""))
+        for variable, value in step.get("env", {}).items():
+            needed = re.fullmatch(r"\$\{\{ needs\.([\w-]+)\.result \}\}", str(value))
+            if needed and f'test "${variable}" = success' in run:
+                required.add(needed.group(1))
+    assert required == set(union["needs"])
 
 
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
@@ -168,7 +234,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert "matrix.coverage" in test["name"]
 
     stage, preserve = test["steps"][-2:]
-    assert stage["if"] == preserve["if"] == "matrix.coverage"
+    assert stage["if"] == preserve["if"] == "always() && matrix.coverage"
     assert ".coverage.shard-${{ matrix.shard-index }}" in stage["run"]
     assert preserve["with"]["name"] == "coverage-data-shard-${{ matrix.shard-index }}"
     assert preserve["with"]["include-hidden-files"] is True
@@ -193,10 +259,11 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
         "TEST_RESULT": "${{ needs.test.result }}",
         "WINDOWS_RESULT": "${{ needs.shd-non-linux-refusal.result }}",
         "RECORDER_RESULT": "${{ needs.recorder-coverage.result }}",
+        "GPU_REFUSAL_RESULT": "${{ needs.gpu-software-adapter-refusal.result }}",
     }
     assert readiness["run"] == (
         'test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success '
-        '&& test "$RECORDER_RESULT" = success'
+        '&& test "$RECORDER_RESULT" = success && test "$GPU_REFUSAL_RESULT" = success'
     )
     compatibility = workflow["jobs"]["compatibility-union"]
     assert compatibility["name"] == "test (${{ matrix.python-minor }})"
@@ -892,14 +959,19 @@ def test_every_recorder_importing_test_feeds_the_linux_recorder_data() -> None:
     )
 
 
+@pytest.mark.parametrize("variable", ["RECORDER_RESULT", "GPU_REFUSAL_RESULT"])
 @pytest.mark.parametrize("result", ["success", "failure", "cancelled", "skipped"])
-def test_recorder_result_controls_the_actual_primary_union_shell(result: str) -> None:
-    """Execute the real union guard for each recorder terminal result.
+def test_recorder_result_controls_the_actual_primary_union_shell(
+    variable: str, result: str
+) -> None:
+    """Execute the real union guard for each recorder and GPU refusal terminal result.
 
     Parameters
     ----------
+    variable : str
+        The guard's variable that carries the job result under test.
     result : str
-        Recorder job result; only success may admit the primary union.
+        That job's result; only success may admit the primary union.
     """
     import os
     import subprocess
@@ -909,7 +981,13 @@ def test_recorder_result_controls_the_actual_primary_union_shell(result: str) ->
     workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
     guard = workflow["jobs"]["coverage-union"]["steps"][0]
     environment = dict(os.environ)
-    environment.update(TEST_RESULT="success", WINDOWS_RESULT="success", RECORDER_RESULT=result)
+    environment.update(
+        TEST_RESULT="success",
+        WINDOWS_RESULT="success",
+        RECORDER_RESULT="success",
+        GPU_REFUSAL_RESULT="success",
+    )
+    environment[variable] = result
     completed = subprocess.run(
         ["bash", "-euo", "pipefail", "-c", guard["run"]],
         env=environment,

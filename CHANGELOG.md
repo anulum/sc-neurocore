@@ -97,6 +97,33 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- The coverage union of the main CI workflow runs on every run that is not
+  cancelled, and the test shards keep their coverage data after a failure,
+  so the union's verdict is visible even when a leg fails first. On every
+  main run from 2026-11-17 a failed shard had skipped it and hidden a
+  coverage gap.
+
+  Its 100 % gate is now tools/coverage_exception_gate.py, which reads the
+  union's coverage json report and the owner-approved register
+  tools/coverage_platform_exceptions.json. The register excepts one line,
+  the success return of the GPU waveform encoder in
+  spike_codec/_waveform_gpu.py, which runs only on a physical GPU adapter.
+  The gate fails on any other missing line or branch, on a registered line
+  whose text changed, and on a GPU source that differs from its physical-GPU
+  evidence. No omit entry or pragma is used.
+
+  The evidence, tools/gpu_waveform_encoder_evidence.json, records one run on
+  a physical GPU: the adapter, the GPU encoder test passing with GPU packets
+  equal to CPU packets, the excepted line run, and the digest of each GPU
+  source. tools/gpu_waveform_encoder_evidence.py writes it from that run's
+  reports and refuses a run that does not prove the line.
+
+  A new job, "GPU encoder refusal on a software adapter", builds the engine
+  with its gpu feature on Mesa's software Vulkan driver at a pinned version
+  and holds the refusal of that adapter, with its reason, through the public
+  encoder; its coverage joins the union. It makes no hardware or performance
+  claim.
+
 - A split import gate (`tools/sc_nc_import_gate.py`, with its plan in
   `tools/sc_nc_split_map.json`) measures how far the integrated package is from
   the planned SC-NC extractions. The map gives the order of the destinations,

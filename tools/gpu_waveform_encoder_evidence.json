@@ -1,0 +1,38 @@
+{
+  "adapter": {
+    "api": "Vulkan",
+    "name": "NVIDIA GeForce GTX 1070 Ti"
+  },
+  "claim": "a physical-GPU run of the GPU encoder; no performance claim",
+  "decisions": [
+    "523df20b",
+    "fd2fcd90"
+  ],
+  "excepted_lines_covered": [
+    {
+      "line": 46,
+      "path": "src/sc_neurocore/spike_codec/_waveform_gpu.py"
+    }
+  ],
+  "parity": {
+    "declared_input": "_adc_stream(26, 3, 71) in tests/test_waveform_stream.py: windows of 12, 12, 2 and 0 samples, then 2 samples after reset",
+    "result": "GPU packets equal CPU packets and decode back to the input, bit for bit"
+  },
+  "recorded_at": "2026-11-22T08:20:11Z",
+  "schema": "sc_neurocore.gpu_waveform_encoder_evidence.v1",
+  "source_sha256": {
+    "engine/src/bindings/waveform_stream.rs": "c09b1e61903fc36e807d17c92ba0106dcfe21190bb123f5d9ef7e8ed330c919f",
+    "engine/src/waveform_stream_gpu.rs": "49f1bc2f0a83ec5f48215d051dc64f8b5a6b26bc16a81f21b8bf198dbbe7444d",
+    "engine/src/waveform_stream_gpu.wgsl": "e122123043758b59ede25d6aecfa572469d94a543358e6079c4d8d02029ab7b4",
+    "src/sc_neurocore/spike_codec/_waveform_gpu.py": "94d62594a8b2e7591924582bf69c33e81de2ecdc04829531ed96a3d045cea1d3"
+  },
+  "test": {
+    "nodeid": "tests/test_waveform_stream.py::test_installed_gpu_encoder_uses_the_reported_physical_backend",
+    "outcome": "passed"
+  },
+  "tool_versions": {
+    "coverage": "7.17.3",
+    "python": "3.12.16",
+    "sc_neurocore_engine": "4.2.0"
+  }
+}

@@ -372,16 +372,28 @@ _NAMED_BY_THE_KEY_OUTSIDE_THE_LIBRARY = frozenset({"bridge/__init__.py"})
 
 
 def _engine_wheel_cache_patterns() -> list[str]:
-    """Return the path patterns of the engine wheel's exact-source cache key in the main workflow."""
+    """Return the path patterns every engine wheel's exact-source cache key names.
+
+    The main workflow keys two engine wheels: the default build and the gpu-feature build of
+    the software-adapter job. Both must name the same build inputs, so neither can be reused
+    after a source the other would rebuild for.
+    """
     workflow = (_REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     keys = [
         line
         for line in workflow.splitlines()
         if "-engine-v1-release-" in line and "hashFiles(" in line
     ]
-    assert len(keys) == 1, keys
-    inside = keys[0].split("hashFiles(", 1)[1].rsplit(")", 1)[0]
-    return [part.strip().strip("'") for part in inside.split(",")]
+    assert len(keys) == 2, keys
+    patterns = [
+        [
+            part.strip().strip("'")
+            for part in key.split("hashFiles(", 1)[1].rsplit(")", 1)[0].split(",")
+        ]
+        for key in keys
+    ]
+    assert patterns[0] == patterns[1], patterns
+    return patterns[0]
 
 
 def test_the_rust_lane_binds_what_the_engine_wheel_cache_key_names() -> None:

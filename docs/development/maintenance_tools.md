@@ -504,6 +504,63 @@ python tools/sc_nc_import_gate.py --blocking SC-NC-CORE        # exit 1 on its f
   is added with `--blocking` once its findings reach zero. It is extracted only
   while that check passes.
 
+### Coverage platform exceptions
+
+The coverage union of the main CI workflow holds `src/sc_neurocore` to 100 %.
+One line cannot run on a hosted runner: the success return of the GPU waveform
+encoder, which the engine builds only on a physical GPU adapter. The owner
+allowed a narrow platform exception for it, backed by physical-GPU evidence.
+No `omit` entry and no `pragma: no cover` is used.
+
+- **The register.** `tools/coverage_platform_exceptions.json` names each
+  excepted line by path, line number and the sha256 of its text, with the
+  reason and the owner decision. It also names the GPU sources the evidence
+  digests: `engine/src/waveform_stream_gpu.rs`,
+  `engine/src/waveform_stream_gpu.wgsl`,
+  `src/sc_neurocore/spike_codec/_waveform_gpu.py` and the shared bindings file
+  `engine/src/bindings/waveform_stream.rs`.
+- **The gate.** `tools/coverage_exception_gate.py` reads the union's
+  `coverage json` report and fails when:
+  - a missing line is not registered;
+  - a registered line's text changed;
+  - any branch is missing;
+  - a GPU source differs from the evidence record;
+  - the evidence does not cite the decision or show each registered line run.
+
+  `tools/run_full_cov.sh` runs it in place of `--fail-under` when
+  `SCN_COVERAGE_EXCEPTION_GATE=1`, which the union job sets. Exit status 0
+  passes, 1 has findings, and 2 is a missing or malformed input.
+- **The refusal job.** "GPU encoder refusal on a software adapter" builds the
+  engine with its `gpu` feature on Mesa's software Vulkan driver and holds the
+  refusal of that adapter, with its reason, through the public encoder. Its
+  coverage joins the union. It is a software-adapter run, with no hardware or
+  performance claim.
+- **The evidence.** `tools/gpu_waveform_encoder_evidence.json` records one run on
+  a physical GPU: the adapter, the passing GPU encoder test (GPU packets equal CPU
+  packets and decode back on its declared input), the registered lines run, and
+  the digest of each GPU source. Record it again on every change to a GPU
+  source, on a host with a physical GPU that is not otherwise loaded:
+
+  ```bash
+  # an engine built with: maturin build --release --locked --features gpu
+  python -c "import json, sc_neurocore_engine
+  from sc_neurocore.spike_codec.waveform_stream import LosslessStreamEncoder
+  name, api = LosslessStreamEncoder(3, 10, 3, 'gpu', gpu_max_samples=12).device
+  print(json.dumps({'name': name, 'api': api, 'engine_version': sc_neurocore_engine.__version__}))" > adapter.json
+  python -m pytest --junitxml=junit.xml --cov=src/sc_neurocore/spike_codec \
+      --cov-report=json:coverage.json \
+      "tests/test_waveform_stream.py::test_installed_gpu_encoder_uses_the_reported_physical_backend"
+  python tools/gpu_waveform_encoder_evidence.py --adapter adapter.json \
+      --junit junit.xml --coverage-json coverage.json --python-version "$(python -c 'import platform; print(platform.python_version())')"
+  ```
+
+  The recorder refuses an adapter whose graphics API is not `Vulkan`, `Metal` or
+  `Dx12` (the engine's names), an adapter named as a known software one
+  (llvmpipe, lavapipe, SwiftShader, WARP, Microsoft Basic Render), a test that
+  did not pass, and a registered line that did not run. The
+  engine itself refuses a software adapter, so `adapter.json` can only come from
+  a physical one.
+
 ## Validation
 
 Focused tests for these tools live under `tests/test_tools/`.

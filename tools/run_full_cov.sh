@@ -53,11 +53,19 @@ DEFAULT_COV_FAIL_UNDER=100
 SKIP_SLOW=("tests/test_safety" "tests/test_nas" "tests/test_studio")
 
 # Gate the union: optional external data (native platform legs) joins first.
+# With SCN_COVERAGE_EXCEPTION_GATE=1 the 100 % gate is the exception gate: every missing line
+# must be in tools/coverage_platform_exceptions.json, unchanged, and backed by its evidence.
 report_union() {
     if [[ -n "${SCN_EXTRA_COVERAGE_DIR:-}" ]]; then
         python -m coverage combine --append --keep "$SCN_EXTRA_COVERAGE_DIR"
     fi
-    python -m coverage report --skip-empty --show-missing --precision=2 --fail-under="$cov_fail_under"
+    if [[ "${SCN_COVERAGE_EXCEPTION_GATE:-}" == 1 ]]; then
+        python -m coverage report --skip-empty --show-missing --precision=2 --fail-under=0
+        python -m coverage json -o coverage.json
+        python tools/coverage_exception_gate.py --coverage-json coverage.json
+    else
+        python -m coverage report --skip-empty --show-missing --precision=2 --fail-under="$cov_fail_under"
+    fi
     python -m coverage xml -o coverage.xml
     if $write_html; then
         python -m coverage html -d htmlcov
