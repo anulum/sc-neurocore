@@ -446,6 +446,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.studio.synthesis` held two responsibilities: running the
+  bounded FPGA toolchains, and judging whether a synthesised design fits its
+  target device. The judgement (`capacity_verdict`, `capacity_device_name`,
+  `capacity_sentence` and the judged resource keys) now lives in
+  `sc_neurocore.studio.synthesis_capacity`; the code moved unchanged. The
+  toolchain module re-exports those names as the same objects, so historical
+  imports and pickles keep working, and the Studio pipeline imports them from
+  their own module.
+
 - `sc_neurocore.studio.hardware_path` held two responsibilities: running one
   catalogue model through the stages to synthesis, and classifying what its
   emitted RTL is guaranteed by. The classification

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2322
+expected_file_count = 2324
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -6425,7 +6425,15 @@ rationale = "Public read-only HTTP metadata has a declared schema and submits no
 
 [[file]]
 path = "src/sc_neurocore/studio/synthesis.py"
-rationale = "The existing toolchain consumes one shared profile owner and publicly re-exports independent metadata snapshots."
+rationale = "The existing toolchain consumes one shared profile owner and publicly re-exports independent metadata snapshots and the capacity judgement as the same objects."
+
+[[file]]
+path = "src/sc_neurocore/studio/synthesis_capacity.py"
+rationale = "Judge whether a synthesised design fits its target device, refusing a verdict without capacity data and treating uncounted cells as a floor."
+
+[[file]]
+path = "tests/test_studio_synthesis_capacity_split.py"
+rationale = "Bind the toolchain and capacity split: historical imports reach the same objects, the judgement owns its qualified names and pickles, and the estimate still records a verdict."
 
 [[file]]
 path = "tests/test_studio_hardware_catalogue.py"

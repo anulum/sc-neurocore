@@ -95,11 +95,8 @@ def run_pipeline(
         synthesis_source,
     )
     from sc_neurocore.studio import synthesis as synthesis_module
-    from sc_neurocore.studio.synthesis import (
-        capacity_device_name,
-        capacity_sentence,
-        run_synthesis,
-    )
+    from sc_neurocore.studio.synthesis import run_synthesis
+    from sc_neurocore.studio.synthesis_capacity import capacity_device_name, capacity_sentence
 
     if q_format not in PIPELINE_Q_FORMATS:
         raise ValueError(f"q_format must be one of {sorted(PIPELINE_Q_FORMATS)}, got {q_format!r}")

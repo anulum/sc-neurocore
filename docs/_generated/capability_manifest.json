@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5764
+    "test_files": 5765
   },
   "documentation": {
     "public_pages": [
@@ -8480,6 +8480,7 @@
       "tests/test_studio_storage_worker_tree_faults.py",
       "tests/test_studio_svg_export.py",
       "tests/test_studio_svg_export_contrast.py",
+      "tests/test_studio_synthesis_capacity_split.py",
       "tests/test_studio_synthesis_capacity_verdict.py",
       "tests/test_studio_synthesis_device_capacity.py",
       "tests/test_studio_synthesis_endpoint.py",
