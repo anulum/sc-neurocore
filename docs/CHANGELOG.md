@@ -447,15 +447,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ### Changed
 
 - The package version is stated once, as `VERSION` in
-  `src/sc_neurocore/_version.py`, a module that imports nothing. The package
-  root re-exports it as `__version__`, so `sc_neurocore.__version__` is
-  unchanged. Modules that stamp the version into a manifest, a fit, a
-  certificate packet or a Studio record now import `_version` instead of the
-  package root, so they depend on the module the split map places in
-  SC-NC-CORE rather than on the facade; the split import gate reports 12
-  fewer findings. The version surface audit reads `_version.py`, and refuses
-  a package root that states a version of its own or does not re-export
-  `VERSION`.
+  `src/sc_neurocore/_version.py`, a module that imports nothing from the
+  package. The package root re-exports it as `__version__`, so
+  `sc_neurocore.__version__` is unchanged. Modules that stamp the version
+  into a manifest, a fit, a certificate packet or a Studio record now import
+  `_version` instead of the package root, so they depend on the module the
+  split map places in SC-NC-CORE rather than on the facade; the split import
+  gate reports 12 fewer findings. The version surface audit reads
+  `_version.py`, and refuses a package root that states a version of its own
+  or does not re-export `VERSION`.
 
 - The network runner in `engine/src/network_runner` is documented apart
   from `create_neuron`: its network, populations, projections, results and
@@ -481,6 +481,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   steps, the arrays it returns and its errors.
 
 ### Fixed
+
+- The version surface audit reads the package root's syntax tree instead of
+  its lines. The root must bind `__version__` exactly once, at the top
+  level, by `__version__: str = _version.VERSION`, and import `_version`
+  from the package. Any other binding of the name, at any depth and by any
+  form (an indented, augmented or walrus assignment, a loop, comprehension,
+  `with` or `except` target, a `match` capture, star or mapping rest, a
+  `type` alias, a deletion, an import alias, a `global` declaration, a
+  function or class of that name), and any `"__version__"` string outside
+  `__all__`, such as `globals()["__version__"]` or `setattr`, is refused as
+  a version of the root's own. The line-based check had passed an indented
+  rebinding and a `globals()` one.
 
 - The coverage union gate of the main CI workflow had gone unmeasured: every
   main run since 2026-11-17 whose state could be read had skipped it,

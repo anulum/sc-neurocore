@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import importlib.metadata
 import json
 import re
@@ -38,6 +39,9 @@ INIT_IMPORT = "from sc_neurocore import _version"
 
 #: The one line by which the package root re-exports the version as ``__version__``.
 INIT_REEXPORT = "__version__: str = _version.VERSION"
+
+#: The name the package root binds once, and only by :data:`INIT_REEXPORT`.
+VERSION_NAME = "__version__"
 
 
 @dataclass(frozen=True)
@@ -92,11 +96,136 @@ def _toml_version(path: Path, table: str) -> str:
     return str(payload[table]["version"])
 
 
+def _names_in(target: ast.expr | None) -> list[str]:
+    """Return every plain name a binding target binds, through tuples, lists and stars.
+
+    Parameters
+    ----------
+    target : ast.expr or None
+        An assignment, loop or ``with`` target.
+
+    Returns
+    -------
+    list[str]
+        The bound names; an attribute or subscript target binds none.
+    """
+    if isinstance(target, ast.Name):
+        return [target.id]
+    if isinstance(target, ast.Starred):
+        return _names_in(target.value)
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return [name for element in target.elts for name in _names_in(element)]
+    return []
+
+
+def _version_bindings(tree: ast.Module) -> list[ast.AST]:
+    """Return every node of a module that binds ``__version__``, at any depth.
+
+    A binding is an assignment, an annotated or augmented assignment, a walrus, a
+    ``for``, comprehension, ``with`` or ``except`` target, a ``match`` capture,
+    star or mapping rest, a ``type`` alias (Python 3.12 and later), a deletion, an
+    import alias, a ``global`` or ``nonlocal`` declaration, or a function or class
+    named ``__version__``.
+
+    Parameters
+    ----------
+    tree : ast.Module
+        The parsed package root.
+
+    Returns
+    -------
+    list[ast.AST]
+        The binding nodes, in walk order.
+    """
+    found: list[ast.AST] = []
+    for node in ast.walk(tree):
+        targets: list[ast.expr | None] = []
+        names: list[str] = []
+        if isinstance(node, (ast.Assign, ast.Delete)):
+            targets = list(node.targets)
+        elif isinstance(
+            node,
+            (ast.AnnAssign, ast.AugAssign, ast.NamedExpr, ast.For, ast.AsyncFor, ast.comprehension),
+        ):
+            targets = [node.target]
+        elif isinstance(node, (ast.With, ast.AsyncWith)):
+            targets = [item.optional_vars for item in node.items]
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [alias.asname or alias.name for alias in node.names]
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            names = list(node.names)
+        elif isinstance(
+            node,
+            (
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+                ast.ClassDef,
+                ast.ExceptHandler,
+                ast.MatchAs,
+                ast.MatchStar,
+            ),
+        ):
+            names = [node.name] if node.name else []
+        elif isinstance(node, ast.MatchMapping):
+            names = [node.rest] if node.rest else []
+        elif sys.version_info >= (3, 12) and isinstance(node, ast.TypeAlias):
+            targets = [node.name]
+        names += [name for target in targets for name in _names_in(target)]
+        if VERSION_NAME in names:
+            found.append(node)
+    return found
+
+
+def _is_reexport(node: ast.AST) -> bool:
+    """Return whether ``node`` is exactly ``__version__: str = _version.VERSION``."""
+    return (
+        isinstance(node, ast.AnnAssign)
+        and isinstance(node.target, ast.Name)
+        and isinstance(node.annotation, ast.Name)
+        and node.annotation.id == "str"
+        and isinstance(node.value, ast.Attribute)
+        and isinstance(node.value.value, ast.Name)
+        and node.value.value.id == "_version"
+        and node.value.attr == "VERSION"
+    )
+
+
+def _named_by_text(tree: ast.Module) -> bool:
+    """Return whether a ``"__version__"`` string occurs outside the module's ``__all__``.
+
+    Such a string can bind the name without an assignment, for example through
+    ``globals()``, ``vars()`` or ``setattr``.
+
+    Parameters
+    ----------
+    tree : ast.Module
+        The parsed package root.
+
+    Returns
+    -------
+    bool
+        True when one occurs.
+    """
+    exported: set[int] = set()
+    for statement in tree.body:
+        if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            targets = statement.targets if isinstance(statement, ast.Assign) else [statement.target]
+            if any(_names_in(target) == ["__all__"] for target in targets):
+                exported |= {id(node) for node in ast.walk(statement)}
+    return any(
+        isinstance(node, ast.Constant) and node.value == VERSION_NAME and id(node) not in exported
+        for node in ast.walk(tree)
+    )
+
+
 def _init_version(root: Path) -> str:
     """Return the package's ``VERSION``, refusing a root that states another one.
 
-    The version is stated once, in ``_version.py``. The package root must
-    re-export it and must not state a version of its own.
+    The version is stated once, in ``_version.py``. The package root's syntax tree
+    must bind ``__version__`` exactly once, at the top level, by
+    ``__version__: str = _version.VERSION``, and import ``_version`` from the
+    package. Any other binding, at any depth, or a ``"__version__"`` string outside
+    ``__all__`` is a version of its own.
 
     Parameters
     ----------
@@ -111,9 +240,9 @@ def _init_version(root: Path) -> str:
     Raises
     ------
     RuntimeError
-        If ``_version.py`` defines no ``VERSION``, or if the package root does not
-        re-export it or states a literal ``__version__``; named by its label in
-        any checkout.
+        If ``_version.py`` defines no ``VERSION``, if the package root cannot be
+        parsed, does not re-export it, or states a ``__version__`` of its own;
+        named by its label in any checkout.
     """
     text = (root / VERSION_LABEL).read_text(encoding="utf-8")
     match = re.search(
@@ -121,11 +250,24 @@ def _init_version(root: Path) -> str:
     )
     if match is None:
         raise RuntimeError(f"{VERSION_LABEL} does not define VERSION")
-    init_lines = (root / INIT_LABEL).read_text(encoding="utf-8").splitlines()
-    bindings = [line for line in init_lines if re.match(r"__version__\s*[:=]", line)]
-    if any(line != INIT_REEXPORT for line in bindings):
+    try:
+        tree = ast.parse((root / INIT_LABEL).read_text(encoding="utf-8"), filename=INIT_LABEL)
+    except SyntaxError as error:
+        raise RuntimeError(f"{INIT_LABEL} cannot be parsed: {error.msg}") from error
+    bindings = _version_bindings(tree)
+    own = len(bindings) > 1 or any(
+        not (_is_reexport(node) and node in tree.body) for node in bindings
+    )
+    if own or _named_by_text(tree):
         raise RuntimeError(f"{INIT_LABEL} states its own __version__; re-export VERSION")
-    if not bindings or INIT_IMPORT not in init_lines:
+    imported = any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == "sc_neurocore"
+        and node.level == 0
+        and [(alias.name, alias.asname) for alias in node.names] == [("_version", None)]
+        for node in tree.body
+    )
+    if not bindings or not imported:
         raise RuntimeError(f"{INIT_LABEL} does not re-export VERSION as __version__")
     return match.group(1)
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import sys
 
 import pytest
 
@@ -249,6 +250,141 @@ def test_a_package_root_that_does_not_re_export_the_version_is_refused(
     """
     _version_tree(tmp_path, src_sc_neurocore___init___py=init_text)
     with pytest.raises(RuntimeError, match=re.escape(f"src/sc_neurocore/__init__.py {message}")):
+        audit.audit_versions(include_installed=False, root=tmp_path)
+
+
+#: The correct re-export, after which each rebinding below is added.
+_REEXPORT = f"{audit.INIT_IMPORT}\n\n{audit.INIT_REEXPORT}\n"
+
+
+@pytest.mark.parametrize(
+    "rebinding",
+    [
+        'if True:\n    __version__ = "9.9.9"\n',
+        'globals()["__version__"] = "9.9.9"\n',
+        'import sys\nsetattr(sys.modules[__name__], "__version__", "9.9.9")\n',
+        '__version__ += "-local"\n',
+        'if (__version__ := "9.9.9"):\n    pass\n',
+        "for __version__ in ['9.9.9']:\n    pass\n",
+        "_ = [__version__ for __version__ in ['9.9.9']]\n",
+        "import contextlib\nwith contextlib.nullcontext('9.9.9') as __version__:\n    pass\n",
+        "try:\n    pass\nexcept ValueError as __version__:\n    pass\n",
+        "del __version__\n",
+        "from os import sep as __version__\n",
+        "def f() -> None:\n    global __version__\n",
+        "def __version__() -> str:\n    return '9.9.9'\n",
+        "class __version__:\n    pass\n",
+        "a, (b, *__version__) = 1, (2, 3)\n",
+        'match "9.9.9":\n    case __version__:\n        pass\n',
+        'match "9.9.9":\n    case str() as __version__:\n        pass\n',
+        "match ['9.9.9']:\n    case [*__version__]:\n        pass\n",
+        "match {'v': '9.9.9'}:\n    case {**__version__}:\n        pass\n",
+    ],
+)
+def test_every_other_binding_of_the_version_name_is_refused(tmp_path: Path, rebinding: str) -> None:
+    """A rebinding at any depth, by any form, or through a string is a version of the root's own.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    rebinding : str
+        A second binding of ``__version__``, added after the correct re-export.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=_REEXPORT + rebinding)
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "src/sc_neurocore/__init__.py states its own __version__; re-export VERSION"
+        ),
+    ):
+        audit.audit_versions(include_installed=False, root=tmp_path)
+
+
+def test_a_type_alias_of_the_version_name_is_refused(tmp_path: Path) -> None:
+    """``type __version__ = str`` binds the name from Python 3.12, and cannot even parse before it.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=_REEXPORT + "type __version__ = str\n")
+    message = (
+        "states its own __version__; re-export VERSION"
+        if sys.version_info >= (3, 12)
+        else "cannot be parsed"
+    )
+    with pytest.raises(RuntimeError, match=re.escape(f"src/sc_neurocore/__init__.py {message}")):
+        audit.audit_versions(include_installed=False, root=tmp_path)
+
+
+@pytest.mark.parametrize(
+    "harmless",
+    [
+        '__all__ = ["__version__"]\n',
+        "__all__: list[str] = ['__version__']\n",
+        '__all__ += ["__version__"]\n',
+        "obj.__version__ = 1\n",
+        'values = {"key": "__version__x"}\n',
+    ],
+)
+def test_the_export_list_and_attribute_targets_are_not_bindings(
+    tmp_path: Path, harmless: str
+) -> None:
+    """Naming ``__version__`` in ``__all__``, or setting another object's attribute, is allowed.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    harmless : str
+        A statement that does not bind the root's ``__version__``.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=_REEXPORT + harmless)
+    assert audit.audit_versions(include_installed=False, root=tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "init_text",
+    [
+        "import sc_neurocore._version as _version\n" + audit.INIT_REEXPORT + "\n",
+        "from sc_neurocore import _version as v\n" + audit.INIT_REEXPORT + "\n",
+        "from . import _version\n" + audit.INIT_REEXPORT + "\n",
+    ],
+)
+def test_the_version_module_must_be_imported_by_the_selected_line(
+    tmp_path: Path, init_text: str
+) -> None:
+    """Only ``from sc_neurocore import _version`` counts as importing the version module.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    init_text : str
+        A root that imports the module by another form.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=init_text)
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape("src/sc_neurocore/__init__.py does not re-export VERSION as __version__"),
+    ):
+        audit.audit_versions(include_installed=False, root=tmp_path)
+
+
+def test_a_package_root_that_cannot_be_parsed_is_refused(tmp_path: Path) -> None:
+    """A root with a syntax error is refused by its label and the parser's reason.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        A checkout outside this repository.
+    """
+    _version_tree(tmp_path, src_sc_neurocore___init___py=_REEXPORT + "def (:\n")
+    with pytest.raises(
+        RuntimeError, match=re.escape("src/sc_neurocore/__init__.py cannot be parsed")
+    ):
         audit.audit_versions(include_installed=False, root=tmp_path)
 
 

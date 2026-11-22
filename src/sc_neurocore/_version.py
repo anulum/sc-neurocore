@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Package version source
 
-"""The package version, in one module that imports nothing.
+"""The package version, in one module that imports nothing from the package.
 
 Code that records which SC-NeuroCore produced a result reads :data:`VERSION`
 from here instead of from the package root, whose import runs the whole facade.
