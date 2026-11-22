@@ -446,6 +446,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.safety_cert.evidence_packet` held two responsibilities: the
+  packet's format, manifest and verification, and running the external
+  toolchains it records. The runners and their provenance (`run_formal_job`
+  with its job helpers, `synthesize`, `place_and_route`, `tool_versions`,
+  `source_identity`, `checkout_root`, `FormalTarget` and `TOOLS`) now live in
+  `sc_neurocore.safety_cert.evidence_toolchain`; the code moved unchanged. The
+  packet module re-exports the public names as the same objects, so historical
+  imports and pickles keep working, and the compiler guide names the new
+  module.
+
 - `sc_neurocore.bridges.dna_io` held three responsibilities: interchange
   exports, synthesis-order and assembly planning, and text views. It keeps the
   exports (GenBank, FASTA, NUPACK input, JSON); the oligo cost estimate, the

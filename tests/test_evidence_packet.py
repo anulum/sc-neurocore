@@ -935,7 +935,7 @@ def test_the_solver_an_engine_line_needs(engine: str, binary: str | None) -> Non
     binary : str or None
         Solver executable it needs.
     """
-    from sc_neurocore.safety_cert.evidence_packet import _solver_binary
+    from sc_neurocore.safety_cert.evidence_toolchain import _solver_binary
 
     assert _solver_binary(engine) == binary
 

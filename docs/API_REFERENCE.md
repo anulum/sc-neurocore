@@ -42918,22 +42918,6 @@ Ordered manifest of uniquely named evidence artifacts.
 
 ## Module `safety_cert.evidence_packet`
 
-### Class `FormalTarget`
-One library module whose committed formal job the packet runs.
-
-Attributes
-----------
-module : str
-    Verilog module name.
-job : str
-    Repository path of its ``.sby`` job.
-origin : str
-    Why the packet runs it: named by the guarantee summary, or instantiated
-    inside a co-simulated-only module.
-summary : Mapping&#91;str, Any&#93; or None
-    The guarantee summary entry, when the summary names the module.
-
-
 ### Class `PacketExport`
 Outcome of :func:`export_evidence_packet`.
 
@@ -42968,6 +42952,117 @@ manifest_sha256 : str or None
     The digest the manifest records, when it could be read.
 
 
+### Function `formal_targets(summary)`
+Return the formal jobs a summary calls for and the co-simulated-only boundaries.
+
+Parameters
+----------
+summary : Mapping&#91;str, Any&#93;
+    A guarantee summary of :func:`sc_neurocore.compiler.guarantee_summary.summarize_ir_text`.
+
+Returns
+-------
+tuple
+    The jobs to run, one per module, and one boundary record per co-simulated-only
+    operation.
+
+### Function `boundary_statement(cosim, formal, boundaries, synthesis)`
+Say what a packet establishes and what it does not.
+
+Parameters
+----------
+cosim : Mapping&#91;str, Any&#93;
+    Co-simulation verdict of :meth:`CosimResult.verdict`.
+formal : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
+    Formal job records of :func:`run_formal_job`.
+boundaries : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
+    Co-simulated-only records of :func:`formal_targets`.
+synthesis : Mapping&#91;str, Any&#93;
+    Synthesis record of :func:`synthesize`, with the record of
+    :func:`place_and_route` under ``place_and_route`` when one was made.
+
+Returns
+-------
+dict
+    ``establishes`` and ``does_not_establish``, each a list of sentences.
+
+### Function `export_evidence_packet(graph_text, out_dir, *, cycles, synthesis_target, clock_mhz, formal_timeout_s, repository, pnr_timeout_s)`
+Write the evidence packet of one dense layer design into a new directory.
+
+Parameters
+----------
+graph_text : str
+    IR text of a supported dense layer graph.
+out_dir : Path
+    Directory to create; an existing one must be empty.
+cycles : int, default 256
+    Cycles of the co-simulation stimulus.
+synthesis_target : str, default "ice40"
+    Yosys synthesis and place-and-route target.
+clock_mhz : int, default 12
+    Clock the routed timing is judged at; must be positive.
+formal_timeout_s : float, default 1800.0
+    Wall-clock limit of each formal job.
+repository : Path or None, optional
+    Source checkout holding the formal jobs and the Git identity; the checkout this
+    package runs from when omitted, if any.
+pnr_timeout_s : float
+    Limit for each Yosys and nextpnr run of the place and route, set for the
+    executing host.
+
+Returns
+-------
+PacketExport
+    Directory, manifest digest, member count and co-simulation outcome.
+
+Raises
+------
+ValueError
+    The text is not valid IR, fails verification, is not a supported dense design
+    (:class:`~sc_neurocore.safety_cert.dense_cosim.UnsupportedDesignError` names the
+    unsupported operations), or ``out_dir`` exists and is not an empty directory.
+sc_neurocore.safety_cert.dense_cosim.SimulatorUnavailableError
+    Icarus Verilog is not installed.
+sc_neurocore.safety_cert.dense_cosim.CosimError
+    The simulator fails.
+
+### Function `verify_evidence_packet(directory)`
+Re-read and re-hash every member of an evidence packet.
+
+Parameters
+----------
+directory : Path
+    The packet directory.
+
+Returns
+-------
+PacketVerification
+    ``ok`` only when the manifest's digest matches its member list, every listed
+    member is a regular file with the listed SHA-256 and size, and the directory
+    holds no other file, no directory that holds no member, no entry that is not a
+    regular file (such as a FIFO or a socket) and no symbolic link. No such entry is
+    ever opened.
+
+---
+
+## Module `safety_cert.evidence_toolchain`
+
+### Class `FormalTarget`
+One library module whose committed formal job the packet runs.
+
+Attributes
+----------
+module : str
+    Verilog module name.
+job : str
+    Repository path of its ``.sby`` job.
+origin : str
+    Why the packet runs it: named by the guarantee summary, or instantiated
+    inside a co-simulated-only module.
+summary : Mapping&#91;str, Any&#93; or None
+    The guarantee summary entry, when the summary names the module.
+
+
 ### Function `checkout_root(module_file)`
 Return the source checkout a package module lies in, or ``None`` when installed.
 
@@ -42982,20 +43077,6 @@ Path or None
     The directory three levels above the package directory (``src/sc_neurocore``
     sits below it) when it holds ``hdl/formal`` and ``src/sc_neurocore``; ``None``
     for an installed package.
-
-### Function `formal_targets(summary)`
-Return the formal jobs a summary calls for and the co-simulated-only boundaries.
-
-Parameters
-----------
-summary : Mapping&#91;str, Any&#93;
-    A guarantee summary of :func:`sc_neurocore.compiler.guarantee_summary.summarize_ir_text`.
-
-Returns
--------
-tuple
-    The jobs to run, one per module, and one boundary record per co-simulated-only
-    operation.
 
 ### Function `run_formal_job(repository, target, out_dir, *, timeout_s, scratch_parent)`
 Run one committed SymbiYosys job in a scratch copy and record its outcome.
@@ -43106,83 +43187,6 @@ Returns
 dict
     ``package_version`` and ``checkout``; with a checkout, ``commit`` and ``dirty``
     (uncommitted or untracked files), otherwise the ``reason``.
-
-### Function `boundary_statement(cosim, formal, boundaries, synthesis)`
-Say what a packet establishes and what it does not.
-
-Parameters
-----------
-cosim : Mapping&#91;str, Any&#93;
-    Co-simulation verdict of :meth:`CosimResult.verdict`.
-formal : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
-    Formal job records of :func:`run_formal_job`.
-boundaries : Sequence&#91;Mapping&#91;str, Any&#93;&#93;
-    Co-simulated-only records of :func:`formal_targets`.
-synthesis : Mapping&#91;str, Any&#93;
-    Synthesis record of :func:`synthesize`, with the record of
-    :func:`place_and_route` under ``place_and_route`` when one was made.
-
-Returns
--------
-dict
-    ``establishes`` and ``does_not_establish``, each a list of sentences.
-
-### Function `export_evidence_packet(graph_text, out_dir, *, cycles, synthesis_target, clock_mhz, formal_timeout_s, repository, pnr_timeout_s)`
-Write the evidence packet of one dense layer design into a new directory.
-
-Parameters
-----------
-graph_text : str
-    IR text of a supported dense layer graph.
-out_dir : Path
-    Directory to create; an existing one must be empty.
-cycles : int, default 256
-    Cycles of the co-simulation stimulus.
-synthesis_target : str, default "ice40"
-    Yosys synthesis and place-and-route target.
-clock_mhz : int, default 12
-    Clock the routed timing is judged at; must be positive.
-formal_timeout_s : float, default 1800.0
-    Wall-clock limit of each formal job.
-repository : Path or None, optional
-    Source checkout holding the formal jobs and the Git identity; the checkout this
-    package runs from when omitted, if any.
-pnr_timeout_s : float
-    Limit for each Yosys and nextpnr run of the place and route, set for the
-    executing host.
-
-Returns
--------
-PacketExport
-    Directory, manifest digest, member count and co-simulation outcome.
-
-Raises
-------
-ValueError
-    The text is not valid IR, fails verification, is not a supported dense design
-    (:class:`~sc_neurocore.safety_cert.dense_cosim.UnsupportedDesignError` names the
-    unsupported operations), or ``out_dir`` exists and is not an empty directory.
-sc_neurocore.safety_cert.dense_cosim.SimulatorUnavailableError
-    Icarus Verilog is not installed.
-sc_neurocore.safety_cert.dense_cosim.CosimError
-    The simulator fails.
-
-### Function `verify_evidence_packet(directory)`
-Re-read and re-hash every member of an evidence packet.
-
-Parameters
-----------
-directory : Path
-    The packet directory.
-
-Returns
--------
-PacketVerification
-    ``ok`` only when the manifest's digest matches its member list, every listed
-    member is a regular file with the listed SHA-256 and size, and the directory
-    holds no other file, no directory that holds no member, no entry that is not a
-    regular file (such as a FIFO or a socket) and no symbolic link. No such entry is
-    ever opened.
 
 ---
 

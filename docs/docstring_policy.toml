@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2328
+expected_file_count = 2330
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -7565,7 +7565,13 @@ path = "src/sc_neurocore/safety_cert/dense_cosim.py"
 rationale = "Co-simulate an emitted dense layer graph against its bit-true Python reference, cycle by cycle."
 [[file]]
 path = "src/sc_neurocore/safety_cert/evidence_packet.py"
-rationale = "Export and verify the hash-bound evidence packet of one generated dense layer design."
+rationale = "Export and verify the hash-bound evidence packet of one generated dense layer design; the toolchain names it re-exports are the toolchain module's own objects."
+[[file]]
+path = "src/sc_neurocore/safety_cert/evidence_toolchain.py"
+rationale = "Run the committed formal jobs, Yosys synthesis and out-of-context place and route a packet records, and identify the tools and the source."
+[[file]]
+path = "tests/test_evidence_toolchain_division.py"
+rationale = "Bind the packet and toolchain division: historical imports reach the same objects, the runners own their qualified names and pickles, and the packet defines only the packet."
 [[file]]
 path = "src/sc_neurocore/cli/commands/evidence_packet.py"
 rationale = "Export or verify an evidence packet from the command line with exit status zero or one."

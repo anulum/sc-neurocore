@@ -337,7 +337,11 @@ is not a regular file (such as a FIFO, which is never opened), an altered
 member, a symbolic link and a manifest whose digest does not match its list. The Python API is
 `sc_neurocore.safety_cert.evidence_packet` (`export_evidence_packet`,
 `verify_evidence_packet`) and `sc_neurocore.safety_cert.dense_cosim`
-(`parse_dense_design`, `reference_trace`, `run_rtl`, `cosimulate`).
+(`parse_dense_design`, `reference_trace`, `run_rtl`, `cosimulate`). The
+toolchain runs a packet records are in
+`sc_neurocore.safety_cert.evidence_toolchain` (`run_formal_job`,
+`synthesize`, `place_and_route`, `tool_versions`, `source_identity`); the
+packet module re-exports them as the same objects.
 
 ### 3.7 One-Command Hardware Path of a Catalogue Model
 

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5766
+    "test_files": 5767
   },
   "documentation": {
     "public_pages": [
@@ -5188,6 +5188,7 @@
       "tests/test_event_driven_spike_event.py",
       "tests/test_evidence_packet.py",
       "tests/test_evidence_references.py",
+      "tests/test_evidence_toolchain_division.py",
       "tests/test_evo_substrate/__init__.py",
       "tests/test_evo_substrate/ecology_support.py",
       "tests/test_evo_substrate/fitness_support.py",
