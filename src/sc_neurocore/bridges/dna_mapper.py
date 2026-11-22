@@ -51,17 +51,8 @@ from .dna_analysis import (
 from .dna_bridge import BitstreamToDNA, SCNetworkBridge
 from .dna_compilers import EnzymaticGateCompiler, StrandDisplacementCompiler
 from .dna_encoding import DualRailEncoder, GF4ErrorCorrection
-from .dna_io import (
-    PlateLayout,
-    estimate_cost,
-    export_fasta,
-    export_genbank,
-    export_json,
-    export_nupack_input,
-    generate_protocol,
-    visualize_circuit,
-    visualize_kinetics,
-)
+from .dna_io import export_fasta, export_genbank, export_json, export_nupack_input
+from .dna_lab import PlateLayout, estimate_cost, generate_protocol
 from .dna_sequences import SequenceDesigner
 from .dna_simulation import (
     ConcentrationOptimizer,
@@ -109,6 +100,7 @@ from .dna_types import (
     DNAStrand,
     GateType,
 )
+from .dna_views import visualize_circuit, visualize_kinetics
 
 __all__ = [
     "BitstreamToDNA",

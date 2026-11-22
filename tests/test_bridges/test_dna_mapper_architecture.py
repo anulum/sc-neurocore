@@ -29,10 +29,12 @@ _RESPONSIBILITY_MODULES = (
     "dna_compilers",
     "dna_encoding",
     "dna_io",
+    "dna_lab",
     "dna_sequences",
     "dna_simulation",
     "dna_thermodynamics",
     "dna_types",
+    "dna_views",
 )
 _PUBLIC_NAMES = (
     "BitstreamToDNA",

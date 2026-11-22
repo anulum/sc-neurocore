@@ -6249,22 +6249,6 @@ This provides single-fault detection for each signal.
 
 ## Module `bridges.dna_io`
 
-### Class `PlateLayout`
-Organize oligos into 96-well synthesis plate format.
-
-Maps each unique oligo to a well position (A01–H12), generates
-ordering manifests for IDT/Sigma/Eurofins, and computes plate
-utilization.
-
-Parameters
-----------
-n_wells : int
-    Wells per plate (default 96).
-
-- **__init__**(n_wells)
-- **layout**(design)
-  - Generate plate layout for a circuit design.
-
 ### Function `export_genbank(design, path)`
 Export circuit design to GenBank format.
 
@@ -6309,6 +6293,26 @@ design : DNACircuitDesign
 path : str
     Output file path (e.g. ``"circuit.json"``).
 
+---
+
+## Module `bridges.dna_lab`
+
+### Class `PlateLayout`
+Organize oligos into 96-well synthesis plate format.
+
+Maps each unique oligo to a well position (A01–H12), generates
+ordering manifests for IDT/Sigma/Eurofins, and computes plate
+utilization.
+
+Parameters
+----------
+n_wells : int
+    Wells per plate (default 96).
+
+- **__init__**(n_wells)
+- **layout**(design)
+  - Generate plate layout for a circuit design.
+
 ### Function `estimate_cost(design, price_per_base_usd, fixed_per_oligo_usd, purification)`
 Estimate oligo synthesis cost for a circuit design.
 
@@ -6344,37 +6348,6 @@ Returns
 -------
 str
     Markdown-formatted protocol.
-
-### Function `visualize_circuit(design)`
-Generate a text-based circuit diagram.
-
-Returns an ASCII diagram showing gate connectivity, signal flow,
-and strand counts per gate.
-
-Parameters
-----------
-design : DNACircuitDesign
-    Compiled circuit.
-
-Returns
--------
-str
-    Multi-line ASCII circuit diagram.
-
-### Function `visualize_kinetics(result)`
-Generate a text-based time-course chart.
-
-Produces a simple ASCII sparkline for each output trace.
-
-Parameters
-----------
-result : dict
-    Simulation result from ``KineticSimulator.simulate()``.
-
-Returns
--------
-str
-    Multi-line ASCII sparkline chart.
 
 ---
 
@@ -6663,6 +6636,41 @@ na_concentration_M : float
   - Return the total nucleotide count across all circuit strands.
 - **validate**()
   - Run design rule checks. Returns list of warnings.
+
+---
+
+## Module `bridges.dna_views`
+
+### Function `visualize_circuit(design)`
+Generate a text-based circuit diagram.
+
+Returns an ASCII diagram showing gate connectivity, signal flow,
+and strand counts per gate.
+
+Parameters
+----------
+design : DNACircuitDesign
+    Compiled circuit.
+
+Returns
+-------
+str
+    Multi-line ASCII circuit diagram.
+
+### Function `visualize_kinetics(result)`
+Generate a text-based time-course chart.
+
+Produces a simple ASCII sparkline for each output trace.
+
+Parameters
+----------
+result : dict
+    Simulation result from ``KineticSimulator.simulate()``.
+
+Returns
+-------
+str
+    Multi-line ASCII sparkline chart.
 
 ---
 

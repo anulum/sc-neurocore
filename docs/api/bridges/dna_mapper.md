@@ -156,7 +156,7 @@ at positions `i` and `i+1`. This determines:
 
 | Module | Responsibility | Physical lines |
 |---|---|---:|
-| `dna_mapper.py` | Stable imports, optional-backend state, compatibility identity | 213 |
+| `dna_mapper.py` | Stable imports, optional-backend state, compatibility identity | 205 |
 | `dna_types.py` | Physical constants, enums, strand/gate/circuit contracts | 342 |
 | `dna_sequences.py` | Deterministic constrained sequence generation | 163 |
 | `dna_compilers.py` | Strand-displacement and enzymatic gate compilation | 573 |
@@ -165,7 +165,9 @@ at positions `i` and `i+1`. This determines:
 | `dna_bridge.py` | High-level network and adjacency orchestration | 343 |
 | `dna_encoding.py` | GF(4) error correction and dual-rail encoding | 213 |
 | `dna_analysis.py` | Hybridization, topology, hairpin, and gate analysis | 338 |
-| `dna_io.py` | Exports, costing, protocols, visualization, plate layout | 548 |
+| `dna_io.py` | GenBank, FASTA, NUPACK input and JSON exports | 198 |
+| `dna_lab.py` | Oligo cost, assembly protocol, plate layout | 268 |
+| `dna_views.py` | Text circuit diagram and kinetics chart | 113 |
 
 An architecture contract caps the façade at 250 lines and every responsibility
 module at 650 lines. It also parses imports and rejects cycles or a dependency

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5765
+    "test_files": 5766
   },
   "documentation": {
     "public_pages": [
@@ -4340,6 +4340,7 @@
       "tests/test_bridges/quantum_annealing_solvers_backends_support.py",
       "tests/test_bridges/quantum_annealing_test_helpers.py",
       "tests/test_bridges/test_bridges_optional_exports.py",
+      "tests/test_bridges/test_dna_io_division.py",
       "tests/test_bridges/test_dna_mapper_architecture.py",
       "tests/test_bridges/test_dna_mapper_bitstream_to_dna.py",
       "tests/test_bridges/test_dna_mapper_concentration_optimizer.py",

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2324
+expected_file_count = 2328
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -2030,7 +2030,23 @@ rationale = "GF(4) error-correction and dual-rail molecular encoding surfaces."
 
 [[file]]
 path = "src/sc_neurocore/bridges/dna_io.py"
-rationale = "DNA circuit exports, costing, protocols, visualization, and plate-layout helpers."
+rationale = "DNA circuit interchange exports: GenBank, FASTA, NUPACK input and JSON."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_lab.py"
+rationale = "DNA circuit synthesis-order and assembly planning: oligo cost, assembly protocol and plate layout."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_views.py"
+rationale = "Text views of a DNA circuit design and its simulated kinetics."
+
+[[file]]
+path = "tests/test_bridges/test_dna_io_division.py"
+rationale = "Bind the DNA export, planning and view division: each helper is defined by its owner and exposed by the facade as the same object."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_architecture.py"
+rationale = "Keep the DNA facade thin, every responsibility module bounded and acyclic, and the public surface and historical module identity stable."
 
 [[file]]
 path = "src/sc_neurocore/bridges/dna_sequences.py"

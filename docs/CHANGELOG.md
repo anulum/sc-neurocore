@@ -446,6 +446,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.bridges.dna_io` held three responsibilities: interchange
+  exports, synthesis-order and assembly planning, and text views. It keeps the
+  exports (GenBank, FASTA, NUPACK input, JSON); the oligo cost estimate, the
+  assembly protocol and the plate layout moved unchanged to
+  `sc_neurocore.bridges.dna_lab`, and the circuit diagram and kinetics chart to
+  `sc_neurocore.bridges.dna_views`. The `dna_mapper` façade exposes every name
+  as the same object under its historical module, so imports and pickles
+  through it are unchanged; the architecture contract and the responsibility
+  table list the two new modules.
+
 - `sc_neurocore.studio.synthesis` held two responsibilities: running the
   bounded FPGA toolchains, and judging whether a synthesised design fits its
   target device. The judgement (`capacity_verdict`, `capacity_device_name`,
