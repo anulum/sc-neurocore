@@ -6,12 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (extract_parse) from former test_extract_orca_params.py
 
+"""Sections the ORCA parameter extractor reads from a full output."""
+
 from __future__ import annotations
 
-from extract_orca_params_support import *  # noqa: F403
+import hashlib
+import json
+import pytest
+from extract_orca_params_support import (
+    _full_output,
+    _load_tool,
+    _write_output,
+)
+from pathlib import (
+    Path,
+)
 
 
 def test_extract_parses_every_section(tmp_path: Path) -> None:
+    """Extraction reads the energy, termination and run settings of a full output."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -38,6 +51,7 @@ def test_extract_parses_every_section(tmp_path: Path) -> None:
 
 
 def test_extract_g_tensor_values(tmp_path: Path) -> None:
+    """Extraction reads the g-matrix, its principal values and its shifts."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -52,6 +66,7 @@ def test_extract_g_tensor_values(tmp_path: Path) -> None:
 
 
 def test_extract_phosphorus_hyperfine_includes_orbital_term(tmp_path: Path) -> None:
+    """The phosphorus hyperfine record includes its orbital term."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -72,6 +87,7 @@ def test_extract_phosphorus_hyperfine_includes_orbital_term(tmp_path: Path) -> N
 
 
 def test_extract_calcium_hyperfine_has_no_orbital_term(tmp_path: Path) -> None:
+    """The calcium hyperfine record has no orbital term."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -88,6 +104,7 @@ def test_extract_calcium_hyperfine_has_no_orbital_term(tmp_path: Path) -> None:
 
 
 def test_nucleus_count_and_element_grouping(tmp_path: Path) -> None:
+    """Hyperfine nuclei are counted and grouped by element."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -97,6 +114,7 @@ def test_nucleus_count_and_element_grouping(tmp_path: Path) -> None:
 
 
 def test_provenance_records_sha256_and_absolute_paths(tmp_path: Path) -> None:
+    """Provenance records each source's digest and absolute path."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
     extra = tmp_path / "REPRO.md"
@@ -112,6 +130,7 @@ def test_provenance_records_sha256_and_absolute_paths(tmp_path: Path) -> None:
 
 
 def test_missing_extra_source_fails_closed(tmp_path: Path) -> None:
+    """A missing extra provenance source is refused."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -120,6 +139,7 @@ def test_missing_extra_source_fails_closed(tmp_path: Path) -> None:
 
 
 def test_serialised_json_is_deterministic(tmp_path: Path) -> None:
+    """Serialising one record twice gives the same valid JSON."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 

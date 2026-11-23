@@ -6,13 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_readiness_evidence_index.py
 
-from __future__ import annotations
-
 """Real-surface tests for tools/readiness_evidence_index.py.
 
 Exercises the shipped module (not a reimplementation): inventory construction,
 facet builders, apply dry-path against a temporary descriptor payload, and the
-CLI entry points."""
+CLI entry points.
+"""
+
+from __future__ import annotations
 
 import importlib.util
 
@@ -30,8 +31,6 @@ if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
-
-import pytest
 
 import tomli_w
 
@@ -56,12 +55,6 @@ def _load_tool() -> ModuleType:
     return module
 
 
-@pytest.fixture(scope="module")
-def tool() -> ModuleType:
-    """Shared loaded tool module."""
-    return _load_tool()
-
-
 __all__ = [
     "importlib",
     "json",
@@ -70,11 +63,9 @@ __all__ = [
     "ModuleType",
     "Any",
     "tomllib",
-    "pytest",
     "tomli_w",
     "ModelDescriptor",
     "REPO_ROOT",
     "TOOL_PATH",
     "_load_tool",
-    "tool",
 ]

@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from build_accel_backends_support import *  # noqa: F403
+import pytest
+import sys
+from build_accel_backends_support import (
+    _stub_targets,
+    MOD,
+)
+from typing import (
+    Any,
+)
 
 
 def test_main_all_ok(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:

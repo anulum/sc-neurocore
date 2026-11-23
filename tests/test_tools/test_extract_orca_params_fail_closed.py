@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (fail_closed) from former test_extract_orca_params.py
 
+"""Outputs the ORCA parameter extractor refuses."""
+
 from __future__ import annotations
 
-from extract_orca_params_support import *  # noqa: F403
+import pytest
+from extract_orca_params_support import (
+    _full_output,
+    _load_tool,
+    _P_BLOCK,
+    _write_output,
+)
+from pathlib import (
+    Path,
+)
 
 
 def test_missing_termination_marker_raises(tmp_path: Path) -> None:
+    """An output without the termination marker is refused."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(terminated=False))
 
@@ -20,6 +32,7 @@ def test_missing_termination_marker_raises(tmp_path: Path) -> None:
 
 
 def test_missing_run_time_raises(tmp_path: Path) -> None:
+    """An output without the total run time is refused."""
     tool = _load_tool()
     text = _full_output().replace(
         "TOTAL RUN TIME: 0 days 4 hours 0 minutes 52 seconds 740 msec\n", ""
@@ -31,6 +44,7 @@ def test_missing_run_time_raises(tmp_path: Path) -> None:
 
 
 def test_missing_final_energy_raises(tmp_path: Path) -> None:
+    """An output without the final single-point energy is refused."""
     tool = _load_tool()
     text = _full_output(final_energy_line="")
     out = _write_output(tmp_path / "run.out", text)
@@ -40,6 +54,7 @@ def test_missing_final_energy_raises(tmp_path: Path) -> None:
 
 
 def test_missing_g_matrix_raises(tmp_path: Path) -> None:
+    """An output without the electronic g-matrix is refused."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(g_block=""))
 
@@ -48,6 +63,7 @@ def test_missing_g_matrix_raises(tmp_path: Path) -> None:
 
 
 def test_incomplete_g_matrix_block_raises(tmp_path: Path) -> None:
+    """A truncated g-matrix block is refused as malformed."""
     tool = _load_tool()
     truncated = "ELECTRONIC G-MATRIX\nThe g-matrix: \n   2.0  0.0  0.0\n"
     out = _write_output(tmp_path / "run.out", _full_output(g_block=truncated))
@@ -57,6 +73,7 @@ def test_incomplete_g_matrix_block_raises(tmp_path: Path) -> None:
 
 
 def test_required_element_absent_raises(tmp_path: Path) -> None:
+    """An output without the required calcium nucleus is refused."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(ca_block=""))
 
@@ -65,6 +82,7 @@ def test_required_element_absent_raises(tmp_path: Path) -> None:
 
 
 def test_custom_required_elements_pass_when_present(tmp_path: Path) -> None:
+    """Custom required elements pass when they are present."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(ca_block=""))
 
@@ -73,6 +91,7 @@ def test_custom_required_elements_pass_when_present(tmp_path: Path) -> None:
 
 
 def test_nucleus_block_missing_a_tot_raises(tmp_path: Path) -> None:
+    """A nucleus block without its total coupling line is refused."""
     tool = _load_tool()
     broken_p = _P_BLOCK.replace(
         " A(Tot)        -29.5120             -31.8702             -33.8414    A(iso)=  -31.7412\n",
@@ -87,18 +106,21 @@ def test_nucleus_block_missing_a_tot_raises(tmp_path: Path) -> None:
 
 
 def test_missing_input_file_raises(tmp_path: Path) -> None:
+    """A missing output file is refused."""
     tool = _load_tool()
     with pytest.raises(tool.OrcaExtractionError, match="ORCA output file not found"):
         tool.extract_orca_parameters(tmp_path / "absent.out")
 
 
 def test_parse_hyperfine_without_section_header_raises() -> None:
+    """Hyperfine parsing without its section header is refused."""
     tool = _load_tool()
     with pytest.raises(tool.OrcaExtractionError, match="HYPERFINE STRUCTURE section not found"):
         tool.parse_hyperfine("no property section here\n")
 
 
 def test_parse_hyperfine_section_without_nuclei_raises() -> None:
+    """A hyperfine section without nucleus blocks is refused."""
     tool = _load_tool()
     text = "ELECTRIC AND MAGNETIC HYPERFINE STRUCTURE (0 nuclei)\nno nucleus blocks\n"
     with pytest.raises(tool.OrcaExtractionError, match="No hyperfine nucleus blocks found"):

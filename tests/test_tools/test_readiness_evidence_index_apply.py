@@ -10,7 +10,30 @@
 
 from __future__ import annotations
 
-from readiness_evidence_index_support import *  # noqa: F403
+import pytest
+import tomli_w
+import tomllib
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.model_descriptor import (
+    ModelDescriptor,
+)
+from types import (
+    ModuleType,
+)
+from typing import (
+    Any,
+)
+from tests.test_tools.readiness_evidence_index_support import (
+    _load_tool,
+)
+
+
+@pytest.fixture(scope="module")
+def tool() -> ModuleType:
+    """Load the readiness evidence index tool once for this module."""
+    return _load_tool()
 
 
 def test_apply_writes_facets_and_raises_live_tiers(

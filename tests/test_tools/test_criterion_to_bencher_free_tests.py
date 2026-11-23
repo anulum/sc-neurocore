@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from criterion_to_bencher_support import *  # noqa: F403
+import pytest
+from criterion_to_bencher_support import (
+    _CONVERTER,
+)
 
 
-def test_main_reads_stdin(monkeypatch, capsys) -> None:
+def test_main_reads_stdin(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """The CLI entry point converts stdin to stdout."""
     import io
 

@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from criterion_to_bencher_support import *  # noqa: F403
+import pytest
+from criterion_to_bencher_support import (
+    _one,
+)
 
 
 class TestSingleUnitEstimates:
@@ -27,4 +30,5 @@ class TestSingleUnitEstimates:
         ],
     )
     def test_median_conversion(self, line: str, expected: int) -> None:
+        """The median estimate converts to nanoseconds in each unit."""
         assert _one(line) == expected

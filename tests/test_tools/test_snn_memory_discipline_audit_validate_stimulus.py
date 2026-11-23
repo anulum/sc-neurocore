@@ -6,16 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (validate_stimulus) from former test_snn_memory_discipline_audit.py
 
+"""Stimulus validation and supersession in the memory-discipline audit."""
+
 from __future__ import annotations
 
 import os
 
-from snn_memory_discipline_audit_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from snn_memory_discipline_audit_support import (
+    _canonical_payload,
+    _write_json,
+)
+from tools import (
+    snn_memory_discipline_audit as audit_tool,
+)
 
 
 def test_validate_stimulus_file_accepts_canonical_payload(tmp_path: Path) -> None:
     """A record with exactly the fleet schema has no violations."""
-
     path = tmp_path / "record.json"
     _write_json(path, _canonical_payload())
 
@@ -28,7 +39,6 @@ def test_validate_stimulus_file_accepts_recovery_grade_continuity_extension(
     tmp_path: Path,
 ) -> None:
     """The exact Tier-0 extension remains canonical and recovery-addressable."""
-
     path = tmp_path / "record.json"
     _write_json(
         path,
@@ -52,7 +62,6 @@ def test_validate_stimulus_file_rejects_malformed_continuity_extension(
     tmp_path: Path,
 ) -> None:
     """Extension fields and kinds remain narrow instead of becoming aliases."""
-
     path = tmp_path / "record.json"
     _write_json(
         path,
@@ -76,7 +85,6 @@ def test_validate_stimulus_file_rejects_malformed_continuity_extension(
 
 def test_validate_stimulus_file_rejects_arbitrary_extra_key(tmp_path: Path) -> None:
     """An unrelated extension key cannot broaden the accepted schema."""
-
     path = tmp_path / "record.json"
     _write_json(path, _canonical_payload(uncontrolled_extension=True))
 
@@ -87,7 +95,6 @@ def test_validate_stimulus_file_rejects_arbitrary_extra_key(tmp_path: Path) -> N
 
 def test_validate_stimulus_file_rejects_legacy_aliases(tmp_path: Path) -> None:
     """Legacy summary/source-style records are reported as schema violations."""
-
     path = tmp_path / "record.json"
     _write_json(
         path,
@@ -114,7 +121,6 @@ def test_validate_stimulus_file_rejects_legacy_aliases(tmp_path: Path) -> None:
 
 def test_validate_stimulus_file_rejects_invalid_json_and_non_object(tmp_path: Path) -> None:
     """Malformed JSON and non-object JSON never pass the schema gate."""
-
     bad_json = tmp_path / "bad.json"
     bad_json.write_text("{", encoding="utf-8")
     list_json = tmp_path / "list.json"
@@ -138,7 +144,6 @@ def test_validate_stimulus_file_rejects_invalid_json_and_non_object(tmp_path: Pa
 
 def test_validate_stimulus_file_rejects_bad_timestamps(tmp_path: Path) -> None:
     """Boolean and unparsable timestamps are rejected."""
-
     boolean_path = tmp_path / "boolean.json"
     text_path = tmp_path / "text.json"
     _write_json(boolean_path, _canonical_payload(timestamp=False))
@@ -159,6 +164,7 @@ def test_validate_stimulus_file_rejects_bad_timestamps(tmp_path: Path) -> None:
 def test_audit_accepts_later_canonical_append_only_successor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A later canonical successor supersedes a legacy record and the audit passes."""
     legacy = tmp_path / "legacy.json"
     successor = tmp_path / "successor.json"
     _write_json(legacy, {"summary": "Legacy noncanonical memory record."})
@@ -190,6 +196,7 @@ def test_audit_accepts_later_canonical_append_only_successor(
 def test_audit_rejects_noncanonical_or_older_supersession(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """An older or noncanonical successor does not supersede a legacy record."""
     legacy = tmp_path / "legacy.json"
     older = tmp_path / "older.json"
     invalid = tmp_path / "invalid.json"

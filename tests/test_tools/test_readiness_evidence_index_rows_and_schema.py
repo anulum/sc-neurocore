@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rows_and_schema) from former test_readiness_evidence_index.py
 
+"""Rows, sections, payload schema and report of the readiness evidence index."""
+
 from __future__ import annotations
 
-from readiness_evidence_index_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from types import (
+    ModuleType,
+)
+from tests.test_tools.readiness_evidence_index_support import (
+    _load_tool,
+)
+
+
+@pytest.fixture(scope="module")
+def tool() -> ModuleType:
+    """Load the readiness evidence index tool once for this module."""
+    return _load_tool()
 
 
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:

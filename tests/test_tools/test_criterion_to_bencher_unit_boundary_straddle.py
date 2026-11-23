@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from criterion_to_bencher_support import *  # noqa: F403
+from criterion_to_bencher_support import (
+    _one,
+)
 
 
 class TestUnitBoundaryStraddle:
     """The regression the missing test let through: median paired with the wrong unit."""
 
     def test_us_to_ms_straddle_median_uses_its_own_unit(self) -> None:
+        """A millisecond median between microsecond and millisecond bounds scales as milliseconds."""
         # Median 1.0001 ms must scale as ms (1000100 ns), NOT as the low bound's µs (1000 ns).
         assert _one("vip_1k_steps  time:   [999.50 µs 1.0001 ms 1.0050 ms]") == 1_000_100
 
     def test_ns_to_us_straddle(self) -> None:
+        """A microsecond median above a nanosecond low bound scales as microseconds."""
         assert _one("k  time:   [980.0 ns 1.0002 µs 1.0100 µs]") == 1_000  # 1.0002 µs → 1000 ns
 
     def test_ms_to_s_straddle(self) -> None:
+        """A second median above a millisecond low bound scales as seconds."""
         assert _one("k  time:   [999.0 ms 1.0005 s 1.0100 s]") == 1_000_500_000

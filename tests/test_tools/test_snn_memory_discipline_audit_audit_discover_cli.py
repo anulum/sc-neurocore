@@ -6,14 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (audit_discover_cli) from former test_snn_memory_discipline_audit.py
 
+"""Audit, producer discovery and command line of the memory-discipline audit."""
+
 from __future__ import annotations
 
-from snn_memory_discipline_audit_support import *  # noqa: F403
+import json
+import pytest
+import runpy
+import subprocess
+import sys
+from pathlib import (
+    Path,
+)
+from snn_memory_discipline_audit_support import (
+    _actor_detail,
+    _canonical_payload,
+    _write_json,
+)
+from tools import (
+    snn_memory_discipline_audit as audit_tool,
+)
 
 
 def test_audit_memory_discipline_reports_directory_violations(tmp_path: Path) -> None:
     """The aggregate audit includes checked count and violation details."""
-
     _write_json(tmp_path / "good.json", _canonical_payload())
     _write_json(tmp_path / "bad.json", _canonical_payload(project="OTHER"))
 
@@ -41,7 +57,6 @@ def test_audit_memory_discipline_reports_directory_violations(tmp_path: Path) ->
 
 def test_audit_memory_discipline_builds_real_report(tmp_path: Path) -> None:
     """The aggregate builder discovers producers and validates real files."""
-
     _write_json(tmp_path / "good.json", _canonical_payload())
 
     result = audit_tool.audit_memory_discipline(Path.cwd(), tmp_path, "SC-NEUROCORE")
@@ -53,7 +68,6 @@ def test_audit_memory_discipline_builds_real_report(tmp_path: Path) -> None:
 
 def test_discover_snn_producers_finds_quantum_cognition_writer() -> None:
     """Producer discovery finds the real quantum-cognition stimulus writer."""
-
     candidates = audit_tool.discover_snn_producers(Path.cwd())
 
     assert (
@@ -68,7 +82,6 @@ def test_discover_snn_producers_finds_quantum_cognition_writer() -> None:
 
 def test_discover_snn_producers_ignores_syntax_errors(tmp_path: Path) -> None:
     """Producer discovery skips tracked Python files that cannot be parsed."""
-
     subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     (tmp_path / "bad.py").write_text("def broken(:\n", encoding="utf-8")
     subprocess.run(["git", "add", "bad.py"], cwd=tmp_path, check=True, capture_output=True)
@@ -78,7 +91,6 @@ def test_discover_snn_producers_ignores_syntax_errors(tmp_path: Path) -> None:
 
 def test_cli_outputs_json_report_and_returns_failure_for_bad_record(tmp_path: Path) -> None:
     """The CLI writes machine-readable evidence and fails on violations."""
-
     stimulus_dir = tmp_path / "stimuli"
     stimulus_dir.mkdir()
     _write_json(stimulus_dir / "bad.json", _canonical_payload(actor="worker-1"))
@@ -106,7 +118,6 @@ def test_cli_outputs_json_report_and_returns_failure_for_bad_record(tmp_path: Pa
 
 def test_cli_repair_outputs_passing_report(tmp_path: Path) -> None:
     """The CLI repair mode normalises legacy records before reporting."""
-
     stimulus_dir = tmp_path / "stimuli"
     stimulus_dir.mkdir()
     _write_json(
@@ -141,7 +152,6 @@ def test_cli_repair_outputs_passing_report(tmp_path: Path) -> None:
 
 def test_display_path_keeps_absolute_path_outside_root(tmp_path: Path) -> None:
     """Validation reports absolute paths for files outside the selected root."""
-
     root = tmp_path / "root"
     root.mkdir()
     path = tmp_path / "record.json"
@@ -154,7 +164,6 @@ def test_module_entrypoint_exits_with_cli_status(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The module `__main__` path delegates to the CLI."""
-
     stimulus_dir = tmp_path / "stimuli"
     stimulus_dir.mkdir()
     _write_json(stimulus_dir / "record.json", _canonical_payload())

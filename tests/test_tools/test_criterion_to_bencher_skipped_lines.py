@@ -10,19 +10,25 @@
 
 from __future__ import annotations
 
-from criterion_to_bencher_support import *  # noqa: F403
+from criterion_to_bencher_support import (
+    _CONVERTER,
+    _one,
+)
 
 
 class TestSkippedLines:
     """Lines that are not well-formed measurements yield nothing."""
 
     def test_time_line_without_bracket_is_skipped(self) -> None:
+        """A time line without a bracketed estimate yields nothing."""
         assert _one("noisy  time:   pending") is None
 
     def test_bracket_with_single_estimate_is_skipped(self) -> None:
+        """A bracket holding only one estimate yields nothing."""
         assert _one("weird  time:   [42.0 µs]") is None
 
     def test_warmup_and_progress_lines_are_ignored(self) -> None:
+        """Warm-up, progress and outlier lines are ignored around a measurement."""
         text = (
             "Benchmarking vip_1k_steps: Warming up for 3.0000 s\n"
             "Benchmarking vip_1k_steps: Collecting 100 samples in estimated 5.01 s\n"

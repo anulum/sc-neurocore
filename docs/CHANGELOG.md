@@ -1307,6 +1307,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 15 tool test modules under `tests/test_tools` that still took
+  their names from a suppressed star import (build accel backends,
+  criterion to bencher, extract ORCA params, readiness evidence index,
+  SNN memory-discipline audit) import them explicitly, gain their
+  missing module and test docstrings and are enrolled in the docstring
+  policy. The readiness evidence index tests define their module-scoped
+  `tool` fixture themselves instead of receiving it through the star
+  import.
+
 - The behavioural-equivalence support module
   (`tests/behavioral_equivalence_support.py`), whose four importers
   now import their names explicitly, is deleted.

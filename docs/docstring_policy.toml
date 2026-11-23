@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2472
+expected_file_count = 2486
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9932,3 +9932,59 @@ rationale = "Exercise the hierarchical partitioner reporting: incremental repart
 [[file]]
 path = "tests/test_chiplet/test_hierarchical_partitioner_reporting_rank_mapper.py"
 rationale = "Exercise the hierarchical partitioner reporting: rank mapper."
+
+[[file]]
+path = "tests/test_tools/readiness_evidence_index_support.py"
+rationale = "Support the readiness evidence index tool tests."
+
+[[file]]
+path = "tests/test_tools/test_criterion_to_bencher_free_tests.py"
+rationale = "Exercise the criterion to bencher tool: free tests."
+
+[[file]]
+path = "tests/test_tools/test_criterion_to_bencher_name_resolution.py"
+rationale = "Exercise the criterion to bencher tool: name resolution."
+
+[[file]]
+path = "tests/test_tools/test_criterion_to_bencher_single_unit_estimates.py"
+rationale = "Exercise the criterion to bencher tool: single unit estimates."
+
+[[file]]
+path = "tests/test_tools/test_criterion_to_bencher_skipped_lines.py"
+rationale = "Exercise the criterion to bencher tool: skipped lines."
+
+[[file]]
+path = "tests/test_tools/test_criterion_to_bencher_unit_boundary_straddle.py"
+rationale = "Exercise the criterion to bencher tool: unit boundary straddle."
+
+[[file]]
+path = "tests/test_tools/test_extract_orca_params_cli_and_main.py"
+rationale = "Exercise the extract orca params tool: cli and main."
+
+[[file]]
+path = "tests/test_tools/test_extract_orca_params_extract_parse.py"
+rationale = "Exercise the extract orca params tool: extract parse."
+
+[[file]]
+path = "tests/test_tools/test_extract_orca_params_fail_closed.py"
+rationale = "Exercise the extract orca params tool: fail closed."
+
+[[file]]
+path = "tests/test_tools/test_readiness_evidence_index_enrolment.py"
+rationale = "Exercise the readiness evidence index tool: enrolment."
+
+[[file]]
+path = "tests/test_tools/test_readiness_evidence_index_rows_and_schema.py"
+rationale = "Exercise the readiness evidence index tool: rows and schema."
+
+[[file]]
+path = "tests/test_tools/test_snn_memory_discipline_audit_audit_discover_cli.py"
+rationale = "Exercise the snn memory discipline audit tool: audit discover cli."
+
+[[file]]
+path = "tests/test_tools/test_snn_memory_discipline_audit_repair_stimulus.py"
+rationale = "Exercise the snn memory discipline audit tool: repair stimulus."
+
+[[file]]
+path = "tests/test_tools/test_snn_memory_discipline_audit_validate_stimulus.py"
+rationale = "Exercise the snn memory discipline audit tool: validate stimulus."

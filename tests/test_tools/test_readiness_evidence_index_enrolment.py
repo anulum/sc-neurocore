@@ -6,9 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (enrolment) from former test_readiness_evidence_index.py
 
+"""Enrolment table of the readiness evidence index."""
+
 from __future__ import annotations
 
-from readiness_evidence_index_support import *  # noqa: F403
+import pytest
+from types import (
+    ModuleType,
+)
+from tests.test_tools.readiness_evidence_index_support import (
+    _load_tool,
+)
+
+
+@pytest.fixture(scope="module")
+def tool() -> ModuleType:
+    """Load the readiness evidence index tool once for this module."""
+    return _load_tool()
 
 
 def test_enrolled_shortlist_excludes_peer_wang_buzsaki_from_apply(tool: ModuleType) -> None:

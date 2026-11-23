@@ -6,12 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (cli_and_main) from former test_extract_orca_params.py
 
+"""Command line and entry point of the ORCA parameter extractor."""
+
 from __future__ import annotations
 
-from extract_orca_params_support import *  # noqa: F403
+import json
+import pytest
+import subprocess
+import sys
+from extract_orca_params_support import (
+    _full_output,
+    _load_tool,
+    _write_output,
+    REPO,
+    TOOL,
+)
+from pathlib import (
+    Path,
+)
 
 
 def test_cli_writes_deterministic_json_file(tmp_path: Path) -> None:
+    """The command line writes the same JSON file on two runs."""
     out = _write_output(tmp_path / "run.out", _full_output())
     target = tmp_path / "nested" / "params.json"
 
@@ -38,6 +54,7 @@ def test_cli_writes_deterministic_json_file(tmp_path: Path) -> None:
 
 
 def test_cli_stdout_when_no_output(tmp_path: Path) -> None:
+    """Without an output path the command line prints the JSON record."""
     out = _write_output(tmp_path / "run.out", _full_output())
 
     result = subprocess.run(
@@ -54,6 +71,7 @@ def test_cli_stdout_when_no_output(tmp_path: Path) -> None:
 
 
 def test_cli_fails_closed_without_writing(tmp_path: Path) -> None:
+    """A run without the termination marker fails and writes no file."""
     out = _write_output(tmp_path / "run.out", _full_output(terminated=False))
     target = tmp_path / "params.json"
 
@@ -71,6 +89,7 @@ def test_cli_fails_closed_without_writing(tmp_path: Path) -> None:
 
 
 def test_main_writes_file_and_extra_source(tmp_path: Path) -> None:
+    """The entry point writes the record and lists the extra provenance source."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
     extra = tmp_path / "REPRO.md"
@@ -88,6 +107,7 @@ def test_main_writes_file_and_extra_source(tmp_path: Path) -> None:
 
 
 def test_main_writes_to_stdout(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Without an output path the entry point prints the JSON record."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())
 
@@ -99,6 +119,7 @@ def test_main_writes_to_stdout(tmp_path: Path, capsys: pytest.CaptureFixture[str
 
 
 def test_main_custom_required_element_override(tmp_path: Path) -> None:
+    """A required-element override lets a run without calcium pass."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(ca_block=""))
 
@@ -110,6 +131,7 @@ def test_main_custom_required_element_override(tmp_path: Path) -> None:
 def test_main_returns_one_and_writes_nothing_on_error(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """On an extraction error the entry point returns one and writes nothing."""
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output(terminated=False))
     target = tmp_path / "params.json"

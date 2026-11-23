@@ -6,14 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (repair_stimulus) from former test_snn_memory_discipline_audit.py
 
+"""Stimulus repair of the memory-discipline audit."""
+
 from __future__ import annotations
 
-from snn_memory_discipline_audit_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from snn_memory_discipline_audit_support import (
+    _write_json,
+)
+from tools import (
+    snn_memory_discipline_audit as audit_tool,
+)
 
 
 def test_repair_stimulus_file_normalises_legacy_payload(tmp_path: Path) -> None:
     """The repair path preserves legacy facts in canonical fields."""
-
     path = tmp_path / "legacy.json"
     _write_json(
         path,
@@ -45,7 +56,6 @@ def test_repair_stimulus_file_normalises_legacy_payload(tmp_path: Path) -> None:
 
 def test_repair_stimulus_file_rejects_non_object_payload(tmp_path: Path) -> None:
     """Repair mode fails loudly when a record is not a JSON object."""
-
     path = tmp_path / "list.json"
     path.write_text("[]", encoding="utf-8")
 
@@ -55,7 +65,6 @@ def test_repair_stimulus_file_rejects_non_object_payload(tmp_path: Path) -> None
 
 def test_repair_uses_unix_epoch_when_timestamp_is_missing(tmp_path: Path) -> None:
     """Legacy unix_epoch values remain valid canonical timestamps."""
-
     path = tmp_path / "legacy.json"
     _write_json(
         path,
@@ -74,7 +83,6 @@ def test_repair_uses_unix_epoch_when_timestamp_is_missing(tmp_path: Path) -> Non
 
 def test_repair_preserves_valid_kind_entities_and_source_ref(tmp_path: Path) -> None:
     """Repair keeps valid canonical optional fields when legacy extras exist."""
-
     path = tmp_path / "legacy.json"
     _write_json(
         path,
@@ -100,7 +108,6 @@ def test_repair_preserves_valid_kind_entities_and_source_ref(tmp_path: Path) -> 
 
 def test_repair_uses_fallback_content_and_requires_timestamp(tmp_path: Path) -> None:
     """Repair has deterministic fallback text but still requires time provenance."""
-
     content_path = tmp_path / "content.json"
     missing_time_path = tmp_path / "missing_time.json"
     _write_json(
