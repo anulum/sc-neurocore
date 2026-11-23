@@ -1302,6 +1302,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The behavioural-equivalence support module
+  (`tests/behavioral_equivalence_support.py`), whose four importers
+  now import their names explicitly, is deleted.
+
 - The 13 hierarchical-partitioner graph and reporting test modules
   (`tests/test_chiplet/test_hierarchical_partitioner_*`) import their
   names explicitly instead of through a suppressed star import, gain
