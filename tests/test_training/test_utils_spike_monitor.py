@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.test_training.utils_support import *  # noqa: F403
+from tests.test_training.utils_support import (
+    SpikeMonitor,
+    SpikingNet,
+    torch,
+)
 
 
 class TestSpikeMonitor:

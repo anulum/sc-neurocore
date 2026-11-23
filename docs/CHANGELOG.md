@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 21 surrogate-gradient training test modules (`tests/test_training`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and type annotations and
+  are enrolled in the docstring policy. They take every name their
+  support module re-exports from that module, so its torch skip still
+  runs before anything that needs torch.
+
 - The 18 meta-plasticity test modules (`tests/test_meta_plasticity`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and type annotations and

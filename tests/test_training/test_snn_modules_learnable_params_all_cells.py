@@ -10,13 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    AdExCell,
+    AlphaCell,
+    ExpIFCell,
+    IFCell,
+    LapicqueCell,
+    SecondOrderLIFCell,
+    SynapticCell,
+    torch,
+)
 
 
 class TestLearnableParamsAllCells:
     """Verify learn_beta/learn_threshold across all cell types (Tier 5.9)."""
 
-    def test_if_learnable_threshold(self):
+    def test_if_learnable_threshold(self) -> None:
+        """The IF cell's threshold is learnable."""
         cell = IFCell(threshold=1.5, learn_threshold=True)
         assert cell.threshold.item() == pytest.approx(1.5, abs=1e-4)
         x = torch.ones(4) * 2.0
@@ -25,7 +36,8 @@ class TestLearnableParamsAllCells:
         spike.sum().backward()
         assert cell._threshold_log.grad is not None
 
-    def test_synaptic_learnable_threshold(self):
+    def test_synaptic_learnable_threshold(self) -> None:
+        """The synaptic cell's decay and threshold are learnable."""
         cell = SynapticCell(learn_beta=True, learn_threshold=True)
         assert "_beta_logit" in [n for n, _ in cell.named_parameters()]
         assert "_threshold_log" in [n for n, _ in cell.named_parameters()]
@@ -36,7 +48,8 @@ class TestLearnableParamsAllCells:
         spike.sum().backward()
         assert cell._threshold_log.grad is not None
 
-    def test_expif_learnable(self):
+    def test_expif_learnable(self) -> None:
+        """The ExpIF cell's decay and threshold are learnable."""
         cell = ExpIFCell(beta=0.8, threshold=1.0, learn_beta=True, learn_threshold=True)
         assert cell.beta.item() == pytest.approx(0.8, abs=1e-4)
         x = torch.ones(4) * 3.0
@@ -46,7 +59,8 @@ class TestLearnableParamsAllCells:
         assert cell._beta_logit.grad is not None
         assert cell._threshold_log.grad is not None
 
-    def test_adex_learnable(self):
+    def test_adex_learnable(self) -> None:
+        """The AdEx cell's decay is learnable."""
         cell = AdExCell(beta=0.85, threshold=1.0, learn_beta=True, learn_threshold=True)
         assert cell.beta.item() == pytest.approx(0.85, abs=1e-4)
         x = torch.ones(4) * 3.0
@@ -56,7 +70,8 @@ class TestLearnableParamsAllCells:
         spike.sum().backward()
         assert cell._beta_logit.grad is not None
 
-    def test_lapicque_learnable_threshold(self):
+    def test_lapicque_learnable_threshold(self) -> None:
+        """The Lapicque cell's threshold is learnable."""
         cell = LapicqueCell(threshold=2.0, learn_threshold=True)
         assert cell.threshold.item() == pytest.approx(2.0, abs=1e-4)
         x = torch.ones(4) * 5.0
@@ -65,7 +80,8 @@ class TestLearnableParamsAllCells:
         spike.sum().backward()
         assert cell._threshold_log.grad is not None
 
-    def test_alpha_learnable(self):
+    def test_alpha_learnable(self) -> None:
+        """The alpha cell's decay is learnable."""
         cell = AlphaCell(beta=0.9, threshold=1.0, learn_beta=True, learn_threshold=True)
         assert cell.beta.item() == pytest.approx(0.9, abs=1e-4)
         exc = torch.ones(4) * 2.0
@@ -77,7 +93,8 @@ class TestLearnableParamsAllCells:
         spike.sum().backward()
         assert cell._beta_logit.grad is not None
 
-    def test_second_order_learnable(self):
+    def test_second_order_learnable(self) -> None:
+        """The second-order cell's decay and threshold are learnable."""
         cell = SecondOrderLIFCell(beta=0.9, threshold=1.0, learn_beta=True, learn_threshold=True)
         assert cell.beta.item() == pytest.approx(0.9, abs=1e-4)
         x = torch.ones(4) * 3.0

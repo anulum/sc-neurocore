@@ -10,25 +10,35 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    ConvSpikingNet,
+    SCWeightNoiseModel,
+    torch,
+)
 
 
 class TestConvSpikingNet:
-    def test_forward_shape(self):
+    """The convolutional spiking network."""
+
+    def test_forward_shape(self) -> None:
+        """The network gives spikes and membranes per sample and class."""
         net = ConvSpikingNet(n_output=10)
         x = torch.randn(10, 4, 1, 28, 28)
         spk, mem = net(x)
         assert spk.shape == (4, 10)
         assert mem.shape == (4, 10)
 
-    def test_gradient_flows(self):
+    def test_gradient_flows(self) -> None:
+        """Gradients reach the input."""
         net = ConvSpikingNet(n_output=5)
         x = torch.randn(5, 2, 1, 28, 28, requires_grad=True)
         spk, _ = net(x)
         spk.sum().backward()
         assert x.grad is not None
 
-    def test_to_sc_weights(self):
+    def test_to_sc_weights(self) -> None:
+        """Unipolar export gives four non-negative weight entries."""
         net = ConvSpikingNet(n_output=3)
         weights = net.to_sc_weights()
         assert len(weights) == 4  # conv1, conv2, fc1, fc2
@@ -37,7 +47,8 @@ class TestConvSpikingNet:
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
 
-    def test_to_sc_weights_bipolar_range(self):
+    def test_to_sc_weights_bipolar_range(self) -> None:
+        """Bipolar export gives four entries within minus one to one."""
         net = ConvSpikingNet(n_output=3)
         weights = net.to_sc_weights(encoding="bipolar", include_bias=False)
         assert len(weights) == 4
@@ -47,10 +58,12 @@ class TestConvSpikingNet:
             assert entry["weight"].max() <= 1.0
             assert bool((entry["weight"] < 0.0).any())
 
-    def test_to_sc_weights_bipolar_scales_conv_and_linear_biases(self):
+    def test_to_sc_weights_bipolar_scales_conv_and_linear_biases(self) -> None:
+        """Bipolar export scales convolution and linear biases with their weights."""
         net = ConvSpikingNet(n_output=3)
         with torch.no_grad():
             net.conv1.weight.fill_(2.0)
+            assert net.conv1.bias is not None
             net.conv1.bias.fill_(1.0)
             net.fc2.weight.fill_(4.0)
             net.fc2.bias.fill_(2.0)
@@ -62,7 +75,8 @@ class TestConvSpikingNet:
         assert weights[0]["weight_scale"].item() == pytest.approx(2.0)
         assert weights[3]["weight_scale"].item() == pytest.approx(4.0)
 
-    def test_to_sc_weights_noise_metadata(self):
+    def test_to_sc_weights_noise_metadata(self) -> None:
+        """Export records its binomial noise model."""
         net = ConvSpikingNet(n_output=3)
         weights = net.to_sc_weights(
             noise_model=SCWeightNoiseModel(mode="binomial", bitstream_length=16, seed=5)
@@ -70,7 +84,8 @@ class TestConvSpikingNet:
         assert len(weights) == 4
         assert all(entry["noise_model"]["mode"] == "binomial" for entry in weights)
 
-    def test_learnable_params(self):
+    def test_learnable_params(self) -> None:
+        """The network has a learnable decay per LIF layer."""
         net = ConvSpikingNet(n_output=5, learn_beta=True, learn_threshold=True)
         x = torch.randn(3, 2, 1, 28, 28)
         spk, _ = net(x)
@@ -78,7 +93,8 @@ class TestConvSpikingNet:
         beta_params = [p for n, p in net.named_parameters() if "beta_logit" in n]
         assert len(beta_params) == 4  # 4 LIF layers
 
-    def test_spike_counts_nonnegative(self):
+    def test_spike_counts_nonnegative(self) -> None:
+        """Spike counts are not negative."""
         net = ConvSpikingNet(n_output=10)
         x = torch.randn(5, 4, 1, 28, 28)
         spk, _ = net(x)

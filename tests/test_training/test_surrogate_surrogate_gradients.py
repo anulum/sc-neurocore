@@ -13,7 +13,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from tests.test_training.surrogate_support import *  # noqa: F403
+import pytest
+from tests.test_training.surrogate_support import (
+    atan_surrogate,
+    fast_sigmoid,
+    superspike,
+    torch,
+)
 
 
 @pytest.mark.parametrize("fn", [fast_sigmoid, superspike, atan_surrogate])

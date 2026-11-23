@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_training.losses_support import *  # noqa: F403
+from tests.test_training.losses_support import (
+    spike_l1_loss,
+    torch,
+)
 
 
 class TestSpikeL1Loss:
-    def test_loss_is_nonnegative(self):
+    """The L1 spike-activity penalty."""
+
+    def test_loss_is_nonnegative(self) -> None:
+        """The penalty is not negative."""
         spikes = torch.randn(8, 10).abs()
 
         loss = spike_l1_loss(spikes, n_timesteps=25)
 
         assert loss.item() >= 0
 
-    def test_silent_spikes_have_zero_penalty(self):
+    def test_silent_spikes_have_zero_penalty(self) -> None:
+        """Silent spikes have no penalty."""
         spikes = torch.zeros(8, 10)
 
         assert spike_l1_loss(spikes, n_timesteps=25).item() == 0.0

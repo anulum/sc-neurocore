@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+from tests.test_training.snn_modules_support import (
+    RecurrentLIFCell,
+    torch,
+)
 
 
 class TestRecurrentLIFCell:
-    def test_recurrent_connection(self):
+    """The recurrent LIF cell."""
+
+    def test_recurrent_connection(self) -> None:
+        """The recurrent cell keeps the batch shape."""
         cell = RecurrentLIFCell(n_neurons=4)
         v = torch.zeros(1, 4)
         spike_prev = torch.ones(1, 4)
@@ -22,7 +28,8 @@ class TestRecurrentLIFCell:
         spike, v_next = cell(current, v, spike_prev)
         assert spike.shape == (1, 4)
 
-    def test_gradient_flows(self):
+    def test_gradient_flows(self) -> None:
+        """Gradients reach the input current."""
         cell = RecurrentLIFCell(n_neurons=4)
         current = torch.randn(1, 4, requires_grad=True)
         v = torch.zeros(1, 4)

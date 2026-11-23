@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    LIFCell,
+    torch,
+)
 
 
 class TestLearnableThreshold:
-    def test_threshold_is_parameter(self):
+    """The learnable firing threshold."""
+
+    def test_threshold_is_parameter(self) -> None:
+        """The threshold is a parameter."""
         lif = LIFCell(threshold=1.0, learn_threshold=True)
         param_names = [n for n, _ in lif.named_parameters()]
         assert "_threshold_log" in param_names
 
-    def test_threshold_gradient_flows(self):
+    def test_threshold_gradient_flows(self) -> None:
+        """Gradients reach the threshold."""
         lif = LIFCell(threshold=1.0, learn_threshold=True)
         current = torch.ones(4) * 1.5
         v = torch.zeros(4)
@@ -27,6 +35,7 @@ class TestLearnableThreshold:
         spike.sum().backward()
         assert lif._threshold_log.grad is not None
 
-    def test_threshold_round_trips(self):
+    def test_threshold_round_trips(self) -> None:
+        """A set threshold reads back."""
         lif = LIFCell(threshold=2.5, learn_threshold=True)
         assert lif.threshold.item() == pytest.approx(2.5, abs=1e-5)

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    ALIFCell,
+    torch,
+)
 
 
 class TestALIFCell:
-    def test_adaptation_increases_threshold(self):
+    """The adaptive LIF cell."""
+
+    def test_adaptation_increases_threshold(self) -> None:
+        """Spiking raises the adaptation."""
         alif = ALIFCell(beta=0.0, threshold=1.0, rho=0.9, beta_adapt=1.0)
         v = torch.zeros(4)
         a = torch.zeros(4)
@@ -23,7 +30,8 @@ class TestALIFCell:
         # After first spike, a should increase
         assert (a_next > 0).all()
 
-    def test_adaptation_decays_without_spikes(self):
+    def test_adaptation_decays_without_spikes(self) -> None:
+        """Without spikes the adaptation decays."""
         alif = ALIFCell(beta=0.0, threshold=100.0, rho=0.5)
         v = torch.zeros(4)
         a = torch.ones(4)
@@ -32,7 +40,8 @@ class TestALIFCell:
         # rho=0.5, no spikes: a decays to 0.5
         assert a_next.mean().item() == pytest.approx(0.5, abs=0.01)
 
-    def test_gradient_flows(self):
+    def test_gradient_flows(self) -> None:
+        """Gradients reach the input current."""
         alif = ALIFCell()
         current = torch.randn(8, requires_grad=True)
         v = torch.zeros(8)
@@ -41,7 +50,8 @@ class TestALIFCell:
         spike.sum().backward()
         assert current.grad is not None
 
-    def test_output_shapes(self):
+    def test_output_shapes(self) -> None:
+        """Spike, voltage and adaptation keep the batch shape."""
         alif = ALIFCell()
         current = torch.randn(2, 8)
         v = torch.zeros(2, 8)

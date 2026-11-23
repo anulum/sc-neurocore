@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2733
+expected_file_count = 2750
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10976,3 +10976,71 @@ rationale = "Exercise the meta-plasticity engine: stp params."
 [[file]]
 path = "tests/test_meta_plasticity/test_meta_plasticity_synaptic_tagging.py"
 rationale = "Exercise the meta-plasticity engine: synaptic tagging."
+
+[[file]]
+path = "tests/test_training/test_encoding_delta_encode.py"
+rationale = "Exercise the surrogate-gradient training stack: encoding delta encode."
+
+[[file]]
+path = "tests/test_training/test_encoding_latency_encode.py"
+rationale = "Exercise the surrogate-gradient training stack: encoding latency encode."
+
+[[file]]
+path = "tests/test_training/test_encoding_rate_encode.py"
+rationale = "Exercise the surrogate-gradient training stack: encoding rate encode."
+
+[[file]]
+path = "tests/test_training/test_losses_spike_l1_loss.py"
+rationale = "Exercise the surrogate-gradient training stack: losses spike l1 loss."
+
+[[file]]
+path = "tests/test_training/test_losses_spike_l2_loss.py"
+rationale = "Exercise the surrogate-gradient training stack: losses spike l2 loss."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_alif_cell.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules alif cell."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_conv_spiking_net.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules conv spiking net."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_if_cell_contracts.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules if cell contracts."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_learnable_beta.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules learnable beta."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_learnable_params_all_cells.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules learnable params all cells."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_learnable_threshold.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules learnable threshold."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_lif_cell.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules lif cell."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_recurrent_lif_cell.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules recurrent lif cell."
+
+[[file]]
+path = "tests/test_training/test_snn_modules_synaptic_cell_contracts.py"
+rationale = "Exercise the surrogate-gradient training stack: snn modules synaptic cell contracts."
+
+[[file]]
+path = "tests/test_training/test_utils_population_decode.py"
+rationale = "Exercise the surrogate-gradient training stack: utils population decode."
+
+[[file]]
+path = "tests/test_training/test_utils_reset_states.py"
+rationale = "Exercise the surrogate-gradient training stack: utils reset states."
+
+[[file]]
+path = "tests/test_training/test_utils_spike_monitor.py"
+rationale = "Exercise the surrogate-gradient training stack: utils spike monitor."

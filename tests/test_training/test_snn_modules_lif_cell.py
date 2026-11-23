@@ -10,34 +10,46 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    LIFCell,
+    superspike,
+    torch,
+)
 
 
 class TestLIFCell:
-    def test_above_threshold_spikes(self):
+    """The leaky integrate-and-fire cell."""
+
+    def test_above_threshold_spikes(self) -> None:
+        """Input above threshold makes every unit spike."""
         lif = LIFCell(beta=0.0, threshold=0.5)
         v = torch.zeros(4)
         spike, _ = lif(torch.ones(4), v)
         assert spike.sum().item() == 4
 
-    def test_below_threshold_silent(self):
+    def test_below_threshold_silent(self) -> None:
+        """Input below threshold keeps every unit silent."""
         lif = LIFCell(beta=0.0, threshold=2.0)
         v = torch.zeros(4)
         spike, _ = lif(torch.ones(4), v)
         assert spike.sum().item() == 0
 
-    def test_membrane_reset_after_spike(self):
+    def test_membrane_reset_after_spike(self) -> None:
+        """A spike resets the membrane by the threshold."""
         lif = LIFCell(beta=0.0, threshold=1.0)
         spike, v = lif(torch.tensor([2.0]), torch.zeros(1))
         assert spike.item() == 1.0
         assert v.item() == pytest.approx(1.0)
 
-    def test_leak_decay(self):
+    def test_leak_decay(self) -> None:
+        """Without input the membrane decays."""
         lif = LIFCell(beta=0.5, threshold=10.0)
         _, v1 = lif(torch.tensor([0.0]), torch.tensor([4.0]))
         assert v1.item() == pytest.approx(2.0)
 
-    def test_gradient_flows(self):
+    def test_gradient_flows(self) -> None:
+        """Gradients reach the input current."""
         lif = LIFCell()
         current = torch.randn(8, requires_grad=True)
         v = torch.zeros(8)
@@ -45,7 +57,8 @@ class TestLIFCell:
         spike.sum().backward()
         assert current.grad is not None
 
-    def test_alternate_surrogate(self):
+    def test_alternate_surrogate(self) -> None:
+        """Another surrogate still spikes above threshold."""
         lif = LIFCell(surrogate_fn=superspike)
         spike, _ = lif(torch.tensor([2.0]), torch.zeros(1))
         assert spike.item() == 1.0

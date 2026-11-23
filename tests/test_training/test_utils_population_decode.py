@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.test_training.utils_support import *  # noqa: F403
+import pytest
+from tests.test_training.utils_support import (
+    population_decode,
+    torch,
+)
 
 
 class TestPopulationDecode:

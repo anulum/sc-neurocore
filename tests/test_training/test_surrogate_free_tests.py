@@ -12,7 +12,12 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from tests.test_training.surrogate_support import *  # noqa: F403
+from tests.test_training.surrogate_support import (
+    fast_sigmoid,
+    sigmoid_surrogate,
+    torch,
+    triangular,
+)
 
 
 def test_fast_sigmoid_slope_effect() -> None:

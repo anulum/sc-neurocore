@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+import pytest
+from tests.test_training.snn_modules_support import (
+    IFCell,
+    torch,
+)
 
 
 class TestIFCellContracts:
-    def test_no_leak_preserves_subthreshold_voltage(self):
+    """Contracts of the integrate-and-fire cell."""
+
+    def test_no_leak_preserves_subthreshold_voltage(self) -> None:
+        """Without leak a subthreshold voltage is kept."""
         cell = IFCell(threshold=10.0)
 
         spike, voltage = cell(torch.tensor([0.0]), torch.tensor([5.0]))
@@ -22,7 +29,8 @@ class TestIFCellContracts:
         assert spike.item() == 0.0
         assert voltage.item() == pytest.approx(5.0)
 
-    def test_spike_resets_by_threshold_subtraction(self):
+    def test_spike_resets_by_threshold_subtraction(self) -> None:
+        """A spike subtracts the threshold from the voltage."""
         cell = IFCell(threshold=1.0)
 
         spike, voltage = cell(torch.tensor([2.0]), torch.zeros(1))
@@ -30,7 +38,8 @@ class TestIFCellContracts:
         assert spike.item() == 1.0
         assert voltage.item() == pytest.approx(1.0)
 
-    def test_surrogate_allows_input_gradient_flow(self):
+    def test_surrogate_allows_input_gradient_flow(self) -> None:
+        """The surrogate lets gradients reach the input."""
         cell = IFCell()
         current = torch.randn(8, requires_grad=True)
 

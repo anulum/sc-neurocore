@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.test_training.snn_modules_support import *  # noqa: F403
+from collections.abc import Callable
+from typing import Any, cast
+
+import pytest
+from tests.test_training.snn_modules_support import (
+    SCWeightNoiseModel,
+    SpikingNet,
+    torch,
+)
 
 
 class TestSpikingNet:
     """SpikingNet output shapes, gradient paths and stochastic-computing weight export."""
 
-    def test_forward_shape(self):
+    def test_forward_shape(self) -> None:
         """Spike counts and membrane sums come back shaped (batch, n_output)."""
         net = SpikingNet(n_input=10, n_hidden=32, n_output=3, n_layers=2)
         x = torch.randn(25, 8, 10)
@@ -24,7 +32,7 @@ class TestSpikingNet:
         assert spk.shape == (8, 3)
         assert mem.shape == (8, 3)
 
-    def test_gradient_flows_to_all_params(self):
+    def test_gradient_flows_to_all_params(self) -> None:
         """Every parameter receives a non-zero gradient through the spike path.
 
         A weight fed by a layer that never spikes has an exactly zero gradient,
@@ -39,8 +47,8 @@ class TestSpikingNet:
             x = torch.randn(10, 4, 10)
         fired = [0.0] * len(net.lifs)
 
-        def count_spikes(index):
-            def hook(_module, _inputs, output):
+        def count_spikes(index: int) -> Callable[[object, object, Any], None]:
+            def hook(_module: object, _inputs: object, output: Any) -> None:
                 fired[index] += float(output[0].detach().sum())
 
             return hook
@@ -54,14 +62,14 @@ class TestSpikingNet:
             assert p.grad is not None, f"No gradient for {name}"
             assert p.grad.abs().sum() > 0, f"Zero gradient for {name}"
 
-    def test_spike_counts_nonnegative(self):
+    def test_spike_counts_nonnegative(self) -> None:
         """Spike counts are never negative."""
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3)
         x = torch.randn(20, 4, 5)
         spk, _ = net(x)
         assert (spk >= 0).all()
 
-    def test_to_sc_weights(self):
+    def test_to_sc_weights(self) -> None:
         """Unipolar export gives one entry per layer, with every weight inside [0, 1]."""
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
         weights = net.to_sc_weights()
@@ -71,23 +79,24 @@ class TestSpikingNet:
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
 
-    def test_to_sc_weights_bipolar_preserves_sign(self):
+    def test_to_sc_weights_bipolar_preserves_sign(self) -> None:
         """Bipolar export keeps each weight's sign and divides by the largest magnitude."""
         net = SpikingNet(n_input=2, n_hidden=2, n_output=1, n_layers=0)
         with torch.no_grad():
-            net.linears[0].weight.copy_(torch.tensor([[-2.0, 1.0]]))
+            cast(torch.nn.Linear, net.linears[0]).weight.copy_(torch.tensor([[-2.0, 1.0]]))
 
         weights = net.to_sc_weights(encoding="bipolar", include_bias=False)
 
         assert weights[0]["encoding"] == "bipolar"
         torch.testing.assert_close(weights[0]["weight"], torch.tensor([[-1.0, 0.5]]))
 
-    def test_to_sc_weights_bipolar_scales_bias_with_weight_normalisation(self):
+    def test_to_sc_weights_bipolar_scales_bias_with_weight_normalisation(self) -> None:
         """Bipolar export divides the bias by the weight scale and reports that scale."""
         net = SpikingNet(n_input=2, n_hidden=2, n_output=1, n_layers=0)
         with torch.no_grad():
-            net.linears[0].weight.copy_(torch.tensor([[-4.0, 2.0]]))
-            net.linears[0].bias.copy_(torch.tensor([2.0]))
+            first = cast(torch.nn.Linear, net.linears[0])
+            first.weight.copy_(torch.tensor([[-4.0, 2.0]]))
+            first.bias.copy_(torch.tensor([2.0]))
 
         weights = net.to_sc_weights(encoding="bipolar")
 
@@ -95,7 +104,7 @@ class TestSpikingNet:
         torch.testing.assert_close(weights[0]["bias"], torch.tensor([0.5]))
         assert weights[0]["weight_scale"].item() == pytest.approx(4.0)
 
-    def test_to_sc_weights_binomial_noise_is_deterministic(self):
+    def test_to_sc_weights_binomial_noise_is_deterministic(self) -> None:
         """A seeded binomial noise model gives the same noisy weights on every export."""
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
         model = SCWeightNoiseModel(mode="binomial", bitstream_length=32, seed=17)
