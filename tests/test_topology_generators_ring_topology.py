@@ -10,15 +10,26 @@
 
 from __future__ import annotations
 
-from tests.topology_generators_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.topology import (
+    ring_topology,
+)
+from tests.topology_generators_support import (
+    _csr_to_dense,
+    _validate_csr,
+)
 
 
 class TestRingTopology:
+    """The ring lattice generator."""
+
     def test_csr_valid(self) -> None:
+        """The generated graph is a valid CSR matrix."""
         indptr, indices, data = ring_topology(50, k=3, weight=1.0)
         _validate_csr(indptr, indices, data, 50, 50)
 
     def test_exact_degree(self) -> None:
+        """Every node has degree 2k."""
         n, k = 30, 4
         indptr, indices, data = ring_topology(n, k=k, weight=1.0)
         mat = _csr_to_dense(indptr, indices, data, n, n)

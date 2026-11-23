@@ -10,14 +10,28 @@
 
 from __future__ import annotations
 
-from tests.synthesis_conjectures_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore import (
+    StochasticLIFNeuron,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
 
 
 class TestSTDPFIMCompetition:
-    """STDP asymmetric updates and FIM symmetric corrections should
-    produce measurably different weight trajectories."""
+    """STDP asymmetric updates and FIM symmetric corrections should produce measurably different weight trajectories."""
 
-    def test_stdp_only_vs_stdp_plus_fim(self):
+    def test_stdp_only_vs_stdp_plus_fim(self) -> None:
         """With FIM active, weight distribution should differ from STDP-only."""
         results = {}
         for label, lam in [("stdp_only", 0.0), ("stdp_fim", 5.0)]:
@@ -32,7 +46,7 @@ class TestSTDPFIMCompetition:
         diff = np.mean(np.abs(results["stdp_only"] - results["stdp_fim"]))
         assert diff > 0.0001, f"FIM had no measurable effect (diff={diff:.6f})"
 
-    def test_fim_does_not_collapse_weights(self):
+    def test_fim_does_not_collapse_weights(self) -> None:
         """FIM should not drive all weights to zero or a single value."""
         pop = Population(StochasticLIFNeuron, n=20, label="e")
         proj = Projection(pop, pop, weight=0.3, probability=0.3, plasticity="stdp", seed=42)

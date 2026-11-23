@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (lif_homeostatic) from former test_stochastic_core_properties.py
 
+"""Property-based checks of the LIF, fixed-point LIF and homeostatic LIF neurons."""
+
 from __future__ import annotations
 
-from tests.stochastic_core_properties_support import *  # noqa: F403
+from hypothesis import (
+    given,
+    settings,
+    strategies as st,
+)
+from sc_neurocore import (
+    FixedPointLIFNeuron,
+    HomeostaticLIFNeuron,
+    StochasticLIFNeuron,
+)
+from sc_neurocore.constants import (
+    LIF_V_REST,
+    LIF_V_THRESHOLD,
+)
 
 
 @given(
@@ -16,7 +31,8 @@ from tests.stochastic_core_properties_support import *  # noqa: F403
     dt=st.floats(min_value=0.1, max_value=2.0),
 )
 @settings(max_examples=50)
-def test_lif_step_returns_binary(current, dt):
+def test_lif_step_returns_binary(current: float, dt: float) -> None:
+    """Any current and step gives a binary spike."""
     n = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, dt=dt)
     spike = n.step(current)
     assert spike in (0, 1, True, False)
@@ -24,7 +40,8 @@ def test_lif_step_returns_binary(current, dt):
 
 @given(current_int=st.integers(min_value=-128, max_value=127))
 @settings(max_examples=30)
-def test_fixed_point_lif_no_crash(current_int):
+def test_fixed_point_lif_no_crash(current_int: int) -> None:
+    """The fixed-point LIF accepts any 8-bit current."""
     n = FixedPointLIFNeuron()
     for _ in range(10):
         n.step(leak_k=240, gain_k=16, I_t=current_int)
@@ -32,7 +49,8 @@ def test_fixed_point_lif_no_crash(current_int):
 
 @given(rate=st.floats(min_value=0.0, max_value=1.0))
 @settings(max_examples=20)
-def test_homeostatic_lif_adapts(rate):
+def test_homeostatic_lif_adapts(rate: float) -> None:
+    """The homeostatic LIF runs at any target rate."""
     n = HomeostaticLIFNeuron(target_rate=rate)
     for _ in range(50):
         n.step(1.5)
@@ -43,7 +61,8 @@ def test_homeostatic_lif_adapts(rate):
     current=st.floats(min_value=-1.0, max_value=3.0),
 )
 @settings(max_examples=30)
-def test_lif_voltage_resets_on_spike(steps, current):
+def test_lif_voltage_resets_on_spike(steps: int, current: float) -> None:
+    """A spike resets the voltage to rest."""
     n = StochasticLIFNeuron(v_threshold=LIF_V_THRESHOLD, noise_std=0.0)
     for _ in range(steps):
         spike = n.step(current)
@@ -53,7 +72,8 @@ def test_lif_voltage_resets_on_spike(steps, current):
 
 @given(target=st.floats(min_value=0.01, max_value=0.5))
 @settings(max_examples=20)
-def test_homeostatic_threshold_stays_bounded(target):
+def test_homeostatic_threshold_stays_bounded(target: float) -> None:
+    """The adapted threshold stays inside its bounds."""
     n = HomeostaticLIFNeuron(target_rate=target)
     for _ in range(200):
         n.step(1.5)

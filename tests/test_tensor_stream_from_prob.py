@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.tensor_stream_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.core.tensor_stream import (
+    TensorStream,
+)
 
 
 class TestFromProb:
-    def test_creates_prob_domain(self):
+    """Building a tensor stream from probabilities."""
+
+    def test_creates_prob_domain(self) -> None:
+        """The stream starts in the probability domain."""
         ts = TensorStream.from_prob(np.array([0.5]))
         assert ts.domain == "prob"
 
-    def test_preserves_data(self):
+    def test_preserves_data(self) -> None:
+        """The stream keeps its data."""
         data = np.array([0.1, 0.5, 0.9])
         ts = TensorStream.from_prob(data)
         np.testing.assert_array_equal(ts.data, data)

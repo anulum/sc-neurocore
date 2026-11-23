@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.topological_observables_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    sheaf_consistency_defect,
+)
 
 
 class TestSheafConsistencyDefect:
-    def test_synchronised_zero(self):
+    """The sheaf consistency defect of the phases."""
+
+    def test_synchronised_zero(self) -> None:
         """All phases equal → defect = 0."""
         N = 8
         K = np.ones((N, N)) * 0.5
@@ -23,7 +28,7 @@ class TestSheafConsistencyDefect:
         defect = sheaf_consistency_defect(phases, K)
         np.testing.assert_allclose(defect, 0.0, atol=1e-10)
 
-    def test_incoherent_positive(self):
+    def test_incoherent_positive(self) -> None:
         """Random phases → defect > 0."""
         N = 8
         K = np.ones((N, N)) * 0.5
@@ -32,7 +37,7 @@ class TestSheafConsistencyDefect:
         defect = sheaf_consistency_defect(phases, K)
         assert defect > 0
 
-    def test_zero_coupling_zero_defect(self):
+    def test_zero_coupling_zero_defect(self) -> None:
         """No coupling → defect = 0 regardless of phases."""
         N = 5
         K = np.zeros((N, N))
@@ -40,7 +45,7 @@ class TestSheafConsistencyDefect:
         defect = sheaf_consistency_defect(phases, K)
         np.testing.assert_allclose(defect, 0.0, atol=1e-10)
 
-    def test_anti_phase_maximum(self):
+    def test_anti_phase_maximum(self) -> None:
         """Anti-phase (0, pi, 0, pi, ...) on complete graph → near-maximum defect."""
         N = 8
         K = np.ones((N, N)) * 0.5
@@ -50,7 +55,7 @@ class TestSheafConsistencyDefect:
         defect_sync = sheaf_consistency_defect(np.zeros(N), K)
         assert defect_anti > defect_sync
 
-    def test_monotonic_with_noise(self):
+    def test_monotonic_with_noise(self) -> None:
         """Increasing phase noise → increasing defect."""
         N = 6
         K = np.ones((N, N)) * 0.3

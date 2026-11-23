@@ -1320,6 +1320,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 67 top-level test modules of the SpikeInterface adapter,
+  Spikformer, static analysis, stochastic core property, streaming
+  spike codec, symbolic, STDP synapse, synthesis conjecture, temporal
+  hierarchy and properties, tensor stream, theta backend, topological
+  observable and topology suites import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy, and the support modules left without an importer are
+  deleted.
+
 - The 43 top-level test modules of the quantizer, quantum cognition,
   quantum stabilisation, quasi-random emitter, reservoir, residual,
   resilience and SymbiYosys runner suites import their names

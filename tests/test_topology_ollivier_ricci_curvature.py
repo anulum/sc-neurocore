@@ -10,28 +10,39 @@
 
 from __future__ import annotations
 
-from tests.topology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    _lazy_random_walk,
+    _minimum_transport_cost,
+    ollivier_ricci_curvature,
+)
 
 
 class TestOllivierRicciCurvature:
-    def test_identical_neighborhoods(self):
+    """Ollivier-Ricci curvature on small graphs."""
+
+    def test_identical_neighborhoods(self) -> None:
+        """Nodes of a complete four-node graph have curvature two thirds."""
         knm = np.ones((4, 4))
         np.fill_diagonal(knm, 0.0)
         kappa = ollivier_ricci_curvature(knm, 0, 1)
         np.testing.assert_allclose(kappa, 2.0 / 3.0, atol=1e-12)
 
-    def test_disconnected_nodes(self):
+    def test_disconnected_nodes(self) -> None:
+        """Disconnected nodes have zero curvature."""
         knm = np.zeros((4, 4))
         kappa = ollivier_ricci_curvature(knm, 0, 1)
         assert kappa == 0.0
 
-    def test_nearest_neighbor_chain(self):
+    def test_nearest_neighbor_chain(self) -> None:
+        """Chain neighbours have curvature below one."""
         knm = np.diag(np.ones(3), 1) + np.diag(np.ones(3), -1)
         kappa = ollivier_ricci_curvature(knm, 0, 1)
         # Chain: neighborhoods have minimal overlap
         assert kappa < 1.0
 
-    def test_rejects_invalid_coupling_graph(self):
+    def test_rejects_invalid_coupling_graph(self) -> None:
+        """A node index out of range is rejected."""
         with np.testing.assert_raises_regex(ValueError, "at least one node"):
             ollivier_ricci_curvature(np.zeros((0, 0)), 0, 0)
         with np.testing.assert_raises_regex(ValueError, "square"):
@@ -43,14 +54,16 @@ class TestOllivierRicciCurvature:
         with np.testing.assert_raises_regex(ValueError, "out of range"):
             ollivier_ricci_curvature(np.eye(2), 0, 2)
 
-    def test_isolated_lazy_random_walk_stays_at_source(self):
+    def test_isolated_lazy_random_walk_stays_at_source(self) -> None:
+        """An isolated walker stays at its source."""
         graph = np.zeros((3, 3))
 
         distribution = _lazy_random_walk(graph, 1)
 
         np.testing.assert_allclose(distribution, [0.0, 1.0, 0.0])
 
-    def test_transport_helper_handles_empty_or_disconnected_support(self):
+    def test_transport_helper_handles_empty_or_disconnected_support(self) -> None:
+        """Transport with empty or disconnected support is handled."""
         distances = np.array([[0.0, np.inf], [np.inf, 0.0]])
 
         assert _minimum_transport_cost(np.zeros(2), np.array([1.0, 0.0]), distances) == 0.0

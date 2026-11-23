@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (c_abi_and_unavailable) from former test_theta_backends.py
 
+"""The C ABI of the theta neuron kernels and unavailable backends."""
+
 from __future__ import annotations
 
-from tests.theta_backends_support import *  # noqa: F403
+import ctypes
+import math
+import numpy as np
+import pytest
+from sc_neurocore.accel import (
+    theta as backends,
+)
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))

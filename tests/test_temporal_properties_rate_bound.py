@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.temporal_properties_support import *  # noqa: F403
+from sc_neurocore.verification.temporal_properties import (
+    PropertyResult,
+    rate_bound,
+)
+from tests.temporal_properties_support import (
+    _make_spikes,
+)
 
 
 class TestRateBound:

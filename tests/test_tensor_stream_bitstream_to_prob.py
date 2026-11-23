@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.tensor_stream_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.core.tensor_stream import (
+    TensorStream,
+)
 
 
 class TestBitstreamToProb:
-    def test_all_ones(self):
+    """Converting a bitstream tensor to probabilities."""
+
+    def test_all_ones(self) -> None:
+        """All ones give probability one."""
         bits = np.ones((1, 100), dtype=np.uint8)
         ts = TensorStream(data=bits, domain="bitstream")
         np.testing.assert_allclose(ts.to_prob(), 1.0)
 
-    def test_all_zeros(self):
+    def test_all_zeros(self) -> None:
+        """All zeros give probability zero."""
         bits = np.zeros((1, 100), dtype=np.uint8)
         ts = TensorStream(data=bits, domain="bitstream")
         np.testing.assert_allclose(ts.to_prob(), 0.0)
 
-    def test_half(self):
+    def test_half(self) -> None:
+        """Half ones give probability one half."""
         bits = np.array([[1, 0, 1, 0, 1, 0, 1, 0, 1, 0]], dtype=np.uint8)
         ts = TensorStream(data=bits, domain="bitstream")
         np.testing.assert_allclose(ts.to_prob(), 0.5)

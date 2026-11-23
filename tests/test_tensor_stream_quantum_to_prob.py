@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from tests.tensor_stream_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.core.tensor_stream import (
+    TensorStream,
+)
 
 
 class TestQuantumToProb:
-    def test_roundtrip_exact(self):
-        """prob → quantum → prob should be exact."""
+    """Converting qubit amplitudes back to probabilities."""
+
+    def test_roundtrip_exact(self) -> None:
+        """Probability → quantum → probability should be exact."""
         probs = np.array([0.0, 0.3, 0.5, 0.8, 1.0])
         ts = TensorStream.from_prob(probs)
         q = ts.to_quantum()

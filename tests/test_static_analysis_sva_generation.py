@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.static_analysis_support import *  # noqa: F403
+from sc_neurocore.compiler.static_analysis import (
+    generate_sva,
+)
 
 
 class TestSVAGeneration:

@@ -6,9 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects_and_reset) from former test_theta_backends.py
 
+"""Contract rejections and reset of the theta neuron."""
+
 from __future__ import annotations
 
-from tests.theta_backends_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
+from tests.theta_backends_support import (
+    _assert_phase_parity,
+    _configured,
+)
+from typing import (
+    cast,
+)
 
 
 def test_rust_accepts_non_default_complete_contract() -> None:

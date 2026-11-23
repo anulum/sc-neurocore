@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.streaming_spike_codec_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.spike_codec.streaming_codec import (
+    StreamingCompressionResult,
+    StreamingSpikeCodec,
+)
 
 
 class TestStreamingSpikeCodecEdgeCases:
-    def test_invalid_magic_raises(self):
+    """Edge cases of the streaming codec."""
+
+    def test_invalid_magic_raises(self) -> None:
+        """A stream with a wrong header magic is rejected."""
         codec = StreamingSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):
             codec.decompress(b"XXXX" + b"\x00" * 100)
 
-    def test_result_type(self):
+    def test_result_type(self) -> None:
+        """Compression returns a streaming compression result."""
         spikes = np.zeros((20, 4), dtype=np.int8)
         _, result = StreamingSpikeCodec().compress(spikes)
         assert isinstance(result, StreamingCompressionResult)

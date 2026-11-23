@@ -10,33 +10,43 @@
 
 from __future__ import annotations
 
-from tests.spikformer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.transformers.spikformer import (
+    SpikeDrivenAttention,
+)
 
 
 class TestSpikeDrivenAttention:
-    def test_basic_forward(self):
+    """Multiplication-free spike-driven self-attention."""
+
+    def test_basic_forward(self) -> None:
+        """Attention keeps the token and feature shape."""
         ssa = SpikeDrivenAttention(embed_dim=16, num_heads=1, T=4)
         x = np.random.rand(5, 16)  # 5 tokens, 16 dims
         out = ssa.forward(x)
         assert out.shape == (5, 16)
 
-    def test_single_token(self):
+    def test_single_token(self) -> None:
+        """A single token keeps its feature width."""
         ssa = SpikeDrivenAttention(embed_dim=8, T=4)
         x = np.random.rand(8)
         out = ssa.forward(x)
         assert out.shape == (8,)
 
-    def test_zero_multiplications(self):
+    def test_zero_multiplications(self) -> None:
+        """Attention performs no multiplications."""
         ssa = SpikeDrivenAttention(embed_dim=16)
         assert ssa.num_multiply_ops == 0
 
-    def test_output_finite(self):
+    def test_output_finite(self) -> None:
+        """The attention output is finite."""
         ssa = SpikeDrivenAttention(embed_dim=32, T=8)
         x = np.random.rand(10, 32)
         out = ssa.forward(x)
         assert np.all(np.isfinite(out))
 
-    def test_different_timesteps(self):
+    def test_different_timesteps(self) -> None:
+        """The time-step count does not change the output shape."""
         ssa4 = SpikeDrivenAttention(embed_dim=8, T=4)
         ssa16 = SpikeDrivenAttention(embed_dim=8, T=16)
         x = np.random.rand(3, 8)
@@ -45,14 +55,16 @@ class TestSpikeDrivenAttention:
         # Both produce valid output, different T changes precision
         assert out4.shape == out16.shape
 
-    def test_multi_head(self):
+    def test_multi_head(self) -> None:
+        """Several heads split the feature width."""
         ssa = SpikeDrivenAttention(embed_dim=16, num_heads=4, T=4)
         assert ssa.head_dim == 4
         x = np.random.rand(6, 16)
         out = ssa.forward(x)
         assert out.shape == (6, 16)
 
-    def test_threshold_low_more_spikes(self):
+    def test_threshold_low_more_spikes(self) -> None:
+        """A low threshold still keeps the output shape."""
         ssa = SpikeDrivenAttention(embed_dim=8, T=16, threshold=0.01)
         x = np.random.rand(4, 8)
         out = ssa.forward(x)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3424
+expected_file_count = 3491
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -13740,3 +13740,271 @@ rationale = "Exercise SC-NeuroCore: sby runner raise for incomplete."
 [[file]]
 path = "tests/test_sby_runner_run_sby_task_end_to_end.py"
 rationale = "Exercise SC-NeuroCore: sby runner run sby task end to end."
+
+[[file]]
+path = "tests/test_spikeinterface_adapter_firing_rates_to_sc_probs.py"
+rationale = "Exercise SC-NeuroCore: spikeinterface adapter firing rates to sc probs."
+
+[[file]]
+path = "tests/test_spikeinterface_adapter_spike_trains_to_bitstreams.py"
+rationale = "Exercise SC-NeuroCore: spikeinterface adapter spike trains to bitstreams."
+
+[[file]]
+path = "tests/test_spikeinterface_adapter_spike_trains_to_population_input.py"
+rationale = "Exercise SC-NeuroCore: spikeinterface adapter spike trains to population input."
+
+[[file]]
+path = "tests/test_spikformer_cpg_positional_encoding.py"
+rationale = "Exercise SC-NeuroCore: spikformer cpg positional encoding."
+
+[[file]]
+path = "tests/test_spikformer_spike_driven_attention.py"
+rationale = "Exercise SC-NeuroCore: spikformer spike driven attention."
+
+[[file]]
+path = "tests/test_spikformer_spiky_state_space.py"
+rationale = "Exercise SC-NeuroCore: spikformer spiky state space."
+
+[[file]]
+path = "tests/test_static_analysis_fixed_point_envelope_proof.py"
+rationale = "Exercise SC-NeuroCore: static analysis fixed point envelope proof."
+
+[[file]]
+path = "tests/test_static_analysis_guard_bits.py"
+rationale = "Exercise SC-NeuroCore: static analysis guard bits."
+
+[[file]]
+path = "tests/test_static_analysis_interval_arithmetic.py"
+rationale = "Exercise SC-NeuroCore: static analysis interval arithmetic."
+
+[[file]]
+path = "tests/test_static_analysis_overflow_proof.py"
+rationale = "Exercise SC-NeuroCore: static analysis overflow proof."
+
+[[file]]
+path = "tests/test_static_analysis_sva_generation.py"
+rationale = "Exercise SC-NeuroCore: static analysis sva generation."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_bitstream.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties bitstream."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_layers.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties layers."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_lfsr.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties lfsr."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_lif_homeostatic.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties lif homeostatic."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_rng_recorder_encoder.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties rng recorder encoder."
+
+[[file]]
+path = "tests/test_stochastic_core_properties_stdp_fixed_point_izhikevich.py"
+rationale = "Exercise SC-NeuroCore: stochastic core properties stdp fixed point izhikevich."
+
+[[file]]
+path = "tests/test_streaming_spike_codec_streaming_spike_codec_compression.py"
+rationale = "Exercise SC-NeuroCore: streaming spike codec streaming spike codec compression."
+
+[[file]]
+path = "tests/test_streaming_spike_codec_streaming_spike_codec_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: streaming spike codec streaming spike codec edge cases."
+
+[[file]]
+path = "tests/test_streaming_spike_codec_streaming_spike_codec_frame_api.py"
+rationale = "Exercise SC-NeuroCore: streaming spike codec streaming spike codec frame api."
+
+[[file]]
+path = "tests/test_streaming_spike_codec_streaming_spike_codec_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: streaming spike codec streaming spike codec roundtrip."
+
+[[file]]
+path = "tests/test_symbolic_spike_alu.py"
+rationale = "Exercise SC-NeuroCore: symbolic spike alu."
+
+[[file]]
+path = "tests/test_symbolic_spike_gate.py"
+rationale = "Exercise SC-NeuroCore: symbolic spike gate."
+
+[[file]]
+path = "tests/test_symbolic_spike_register.py"
+rationale = "Exercise SC-NeuroCore: symbolic spike register."
+
+[[file]]
+path = "tests/test_symbolic_spike_sorter.py"
+rationale = "Exercise SC-NeuroCore: symbolic spike sorter."
+
+[[file]]
+path = "tests/test_synapses_stdp_reward_modulated_stdp_synapse.py"
+rationale = "Exercise SC-NeuroCore: synapses stdp reward modulated stdp synapse."
+
+[[file]]
+path = "tests/test_synapses_stdp_stochastic_stdp_synapse.py"
+rationale = "Exercise SC-NeuroCore: synapses stdp stochastic stdp synapse."
+
+[[file]]
+path = "tests/test_synthesis_conjectures_coherence_restoration.py"
+rationale = "Exercise SC-NeuroCore: synthesis conjectures coherence restoration."
+
+[[file]]
+path = "tests/test_synthesis_conjectures_effective_phase_resolution.py"
+rationale = "Exercise SC-NeuroCore: synthesis conjectures effective phase resolution."
+
+[[file]]
+path = "tests/test_synthesis_conjectures_sc_encoding_precision.py"
+rationale = "Exercise SC-NeuroCore: synthesis conjectures sc encoding precision."
+
+[[file]]
+path = "tests/test_synthesis_conjectures_stdpfim_competition.py"
+rationale = "Exercise SC-NeuroCore: synthesis conjectures stdpfim competition."
+
+[[file]]
+path = "tests/test_temporal_hierarchy_het_syn_layer.py"
+rationale = "Exercise SC-NeuroCore: temporal hierarchy het syn layer."
+
+[[file]]
+path = "tests/test_temporal_hierarchy_multi_clock_snn.py"
+rationale = "Exercise SC-NeuroCore: temporal hierarchy multi clock snn."
+
+[[file]]
+path = "tests/test_temporal_properties_bounded_activity.py"
+rationale = "Exercise SC-NeuroCore: temporal properties bounded activity."
+
+[[file]]
+path = "tests/test_temporal_properties_causal_order.py"
+rationale = "Exercise SC-NeuroCore: temporal properties causal order."
+
+[[file]]
+path = "tests/test_temporal_properties_fires_within.py"
+rationale = "Exercise SC-NeuroCore: temporal properties fires within."
+
+[[file]]
+path = "tests/test_temporal_properties_mutual_exclusion.py"
+rationale = "Exercise SC-NeuroCore: temporal properties mutual exclusion."
+
+[[file]]
+path = "tests/test_temporal_properties_rate_bound.py"
+rationale = "Exercise SC-NeuroCore: temporal properties rate bound."
+
+[[file]]
+path = "tests/test_temporal_properties_refractory_guarantee.py"
+rationale = "Exercise SC-NeuroCore: temporal properties refractory guarantee."
+
+[[file]]
+path = "tests/test_tensor_stream_bitstream_to_prob.py"
+rationale = "Exercise SC-NeuroCore: tensor stream bitstream to prob."
+
+[[file]]
+path = "tests/test_tensor_stream_domain_passthrough.py"
+rationale = "Exercise SC-NeuroCore: tensor stream domain passthrough."
+
+[[file]]
+path = "tests/test_tensor_stream_from_prob.py"
+rationale = "Exercise SC-NeuroCore: tensor stream from prob."
+
+[[file]]
+path = "tests/test_tensor_stream_invalid_conversions.py"
+rationale = "Exercise SC-NeuroCore: tensor stream invalid conversions."
+
+[[file]]
+path = "tests/test_tensor_stream_prob_to_bitstream.py"
+rationale = "Exercise SC-NeuroCore: tensor stream prob to bitstream."
+
+[[file]]
+path = "tests/test_tensor_stream_prob_to_quantum.py"
+rationale = "Exercise SC-NeuroCore: tensor stream prob to quantum."
+
+[[file]]
+path = "tests/test_tensor_stream_quantum_to_prob.py"
+rationale = "Exercise SC-NeuroCore: tensor stream quantum to prob."
+
+[[file]]
+path = "tests/test_theta_backends_auto_dispatch.py"
+rationale = "Exercise SC-NeuroCore: theta backends auto dispatch."
+
+[[file]]
+path = "tests/test_theta_backends_backend_parity.py"
+rationale = "Exercise SC-NeuroCore: theta backends backend parity."
+
+[[file]]
+path = "tests/test_theta_backends_c_abi_and_unavailable.py"
+rationale = "Exercise SC-NeuroCore: theta backends c abi and unavailable."
+
+[[file]]
+path = "tests/test_theta_backends_rejects_and_reset.py"
+rationale = "Exercise SC-NeuroCore: theta backends rejects and reset."
+
+[[file]]
+path = "tests/test_topological_observables_connection_curvature.py"
+rationale = "Exercise SC-NeuroCore: topological observables connection curvature."
+
+[[file]]
+path = "tests/test_topological_observables_ollivier_ricci_curvature.py"
+rationale = "Exercise SC-NeuroCore: topological observables ollivier ricci curvature."
+
+[[file]]
+path = "tests/test_topological_observables_sheaf_consistency_defect.py"
+rationale = "Exercise SC-NeuroCore: topological observables sheaf consistency defect."
+
+[[file]]
+path = "tests/test_topological_observables_winding_number.py"
+rationale = "Exercise SC-NeuroCore: topological observables winding number."
+
+[[file]]
+path = "tests/test_topology_backends_availability_rejects.py"
+rationale = "Exercise SC-NeuroCore: topology backends availability rejects."
+
+[[file]]
+path = "tests/test_topology_backends_backend_parity.py"
+rationale = "Exercise SC-NeuroCore: topology backends backend parity."
+
+[[file]]
+path = "tests/test_topology_backends_loaders.py"
+rationale = "Exercise SC-NeuroCore: topology backends loaders."
+
+[[file]]
+path = "tests/test_topology_connection_curvature.py"
+rationale = "Exercise SC-NeuroCore: topology connection curvature."
+
+[[file]]
+path = "tests/test_topology_generators_all_to_all.py"
+rationale = "Exercise SC-NeuroCore: topology generators all to all."
+
+[[file]]
+path = "tests/test_topology_generators_grid_topology.py"
+rationale = "Exercise SC-NeuroCore: topology generators grid topology."
+
+[[file]]
+path = "tests/test_topology_generators_random_connectivity.py"
+rationale = "Exercise SC-NeuroCore: topology generators random connectivity."
+
+[[file]]
+path = "tests/test_topology_generators_ring_topology.py"
+rationale = "Exercise SC-NeuroCore: topology generators ring topology."
+
+[[file]]
+path = "tests/test_topology_generators_scale_free.py"
+rationale = "Exercise SC-NeuroCore: topology generators scale free."
+
+[[file]]
+path = "tests/test_topology_generators_small_world.py"
+rationale = "Exercise SC-NeuroCore: topology generators small world."
+
+[[file]]
+path = "tests/test_topology_ollivier_ricci_curvature.py"
+rationale = "Exercise SC-NeuroCore: topology ollivier ricci curvature."
+
+[[file]]
+path = "tests/test_topology_sheaf_consistency_defect.py"
+rationale = "Exercise SC-NeuroCore: topology sheaf consistency defect."
+
+[[file]]
+path = "tests/test_topology_winding_number.py"
+rationale = "Exercise SC-NeuroCore: topology winding number."

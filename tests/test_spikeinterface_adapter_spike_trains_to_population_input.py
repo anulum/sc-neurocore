@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.spikeinterface_adapter_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.adapters.spikeinterface import (
+    spike_trains_to_population_input,
+)
 
 
 class TestSpikeTrainsToPopulationInput:
-    def test_output_shape(self):
+    """Turning spike trains into population input currents."""
+
+    def test_output_shape(self) -> None:
+        """The input has one row per step and one column per unit."""
         spikes = {0: np.array([1.0, 3.0]), 1: np.array([2.0])}
         inp = spike_trains_to_population_input(spikes, duration_ms=5.0, dt=1.0)
         assert inp.shape == (5, 2)  # (n_timesteps, n_units)
 
-    def test_values_are_float(self):
+    def test_values_are_float(self) -> None:
+        """The input is float64."""
         spikes = {0: np.array([1.0])}
         inp = spike_trains_to_population_input(spikes, duration_ms=3.0, dt=1.0)
         assert inp.dtype == np.float64

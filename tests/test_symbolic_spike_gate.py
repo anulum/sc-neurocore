@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.symbolic_support import *  # noqa: F403
+import pytest
+from sc_neurocore.symbolic import (
+    SpikeGate,
+)
 
 
 class TestSpikeGate:
+    """Spiking logic gates."""
+
     @pytest.mark.parametrize(
         "gate,inputs,expected",
         [
@@ -36,24 +41,29 @@ class TestSpikeGate:
             ("XOR", (0, 0), 0),
         ],
     )
-    def test_truth_tables(self, gate, inputs, expected):
+    def test_truth_tables(self, gate: str, inputs: tuple[int, ...], expected: int) -> None:
+        """Each gate matches its truth table."""
         g = SpikeGate(gate)
         assert g(*inputs) == expected
 
-    def test_xor_three_inputs(self):
+    def test_xor_three_inputs(self) -> None:
+        """Three-input XOR is the parity of its inputs."""
         g = SpikeGate("XOR")
         assert g(1, 1, 1) == 1
         assert g(1, 1, 0) == 0
         assert g(1, 0, 0) == 1
 
-    def test_lif_config_keys(self):
+    def test_lif_config_keys(self) -> None:
+        """A gate exposes its LIF configuration."""
         for gate_type in ("AND", "OR", "NOT", "NAND", "XOR"):
             config = SpikeGate(gate_type).lif_config
             assert isinstance(config, dict)
             assert len(config) > 0
 
-    def test_and_gate_lif_threshold(self):
+    def test_and_gate_lif_threshold(self) -> None:
+        """The AND gate fires at threshold 2."""
         assert SpikeGate("AND").lif_config["threshold"] == 2
 
-    def test_or_gate_lif_threshold(self):
+    def test_or_gate_lif_threshold(self) -> None:
+        """The OR gate fires at threshold 1."""
         assert SpikeGate("OR").lif_config["threshold"] == 1

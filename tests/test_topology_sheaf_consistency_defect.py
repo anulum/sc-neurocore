@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from tests.topology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    sheaf_consistency_defect,
+)
 
 
 class TestSheafConsistencyDefect:
-    def test_synchronized_is_zero(self):
+    """The sheaf consistency defect."""
+
+    def test_synchronized_is_zero(self) -> None:
+        """Synchronised phases have no defect."""
         phases = np.zeros(5)
         knm = np.ones((5, 5))
         assert sheaf_consistency_defect(phases, knm) == 0.0
 
-    def test_anti_phase_is_positive(self):
+    def test_anti_phase_is_positive(self) -> None:
+        """Anti-phase oscillators have a positive defect."""
         phases = np.array([0.0, np.pi, 0.0, np.pi])
         knm = np.ones((4, 4))
         defect = sheaf_consistency_defect(phases, knm)
         assert defect > 0.0
 
-    def test_zero_coupling_is_zero(self):
+    def test_zero_coupling_is_zero(self) -> None:
+        """Without coupling there is no defect."""
         phases = np.random.rand(5) * 2 * np.pi
         knm = np.zeros((5, 5))
         assert sheaf_consistency_defect(phases, knm) == 0.0

@@ -6,9 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (stdp_fixed_point_izhikevich) from former test_stochastic_core_properties.py
 
+"""Property-based checks of STDP, fixed-point LIF and encoder, and Izhikevich neurons."""
+
 from __future__ import annotations
 
-from tests.stochastic_core_properties_support import *  # noqa: F403
+from hypothesis import (
+    given,
+    settings,
+    strategies as st,
+)
+from sc_neurocore import (
+    FixedPointBitstreamEncoder,
+    FixedPointLIFNeuron,
+    RewardModulatedSTDPSynapse,
+    SCIzhikevichNeuron,
+    StochasticSTDPSynapse,
+)
+from sc_neurocore.constants import (
+    FP_DATA_WIDTH,
+)
 
 
 @given(
@@ -16,7 +32,8 @@ from tests.stochastic_core_properties_support import *  # noqa: F403
     lr=st.floats(min_value=0.001, max_value=0.1),
 )
 @settings(max_examples=30)
-def test_stdp_weight_stays_bounded(w, lr):
+def test_stdp_weight_stays_bounded(w: float, lr: float) -> None:
+    """STDP keeps the weight in the unit interval."""
     w_clamped = max(0.0, min(1.0, w))
     syn = StochasticSTDPSynapse(w_min=0.0, w_max=1.0, w=w_clamped, learning_rate=lr, length=64)
     for _ in range(50):
@@ -26,7 +43,8 @@ def test_stdp_weight_stays_bounded(w, lr):
 
 @given(reward=st.floats(min_value=-5.0, max_value=5.0))
 @settings(max_examples=30)
-def test_rstdp_weight_bounded_after_reward(reward):
+def test_rstdp_weight_bounded_after_reward(reward: float) -> None:
+    """Reward-modulated STDP keeps the weight in range."""
     syn = RewardModulatedSTDPSynapse(w_min=0.0, w_max=1.0, w=0.5, length=64)
     for _ in range(20):
         syn.process_step(pre_bit=1, post_bit=1)
@@ -40,7 +58,8 @@ def test_rstdp_weight_bounded_after_reward(reward):
     gain_k=st.integers(min_value=0, max_value=255),
 )
 @settings(max_examples=50)
-def test_fixed_point_lif_no_overflow(I_t, leak_k, gain_k):
+def test_fixed_point_lif_no_overflow(I_t: int, leak_k: int, gain_k: int) -> None:
+    """The fixed-point LIF never overflows its width."""
     n = FixedPointLIFNeuron()
     for _ in range(20):
         spike, v = n.step(leak_k=leak_k, gain_k=gain_k, I_t=I_t)
@@ -51,7 +70,8 @@ def test_fixed_point_lif_no_overflow(I_t, leak_k, gain_k):
 
 @given(seed=st.integers(min_value=1, max_value=0xFFFF))
 @settings(max_examples=20)
-def test_fixed_point_encoder_output_binary(seed):
+def test_fixed_point_encoder_output_binary(seed: int) -> None:
+    """The fixed-point encoder gives binary bits."""
     enc = FixedPointBitstreamEncoder(seed_init=seed)
     bits = [enc.step(x_value=128) for _ in range(100)]
     assert all(b in (0, 1) for b in bits)
@@ -62,7 +82,8 @@ def test_fixed_point_encoder_output_binary(seed):
     current=st.floats(min_value=0.0, max_value=10.0),
 )
 @settings(max_examples=20)
-def test_izhikevich_spike_resets_voltage(steps, current):
+def test_izhikevich_spike_resets_voltage(steps: int, current: float) -> None:
+    """An Izhikevich spike resets the voltage to c."""
     n = SCIzhikevichNeuron(noise_std=0.0)
     for _ in range(steps):
         spike = n.step(current)

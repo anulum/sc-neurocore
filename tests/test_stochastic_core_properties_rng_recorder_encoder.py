@@ -6,14 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rng_recorder_encoder) from former test_stochastic_core_properties.py
 
+"""Property-based checks of the RNG, the spike recorder and the encoder."""
+
 from __future__ import annotations
 
-from tests.stochastic_core_properties_support import *  # noqa: F403
+import numpy as np
+from hypothesis import (
+    given,
+    settings,
+    strategies as st,
+)
+from sc_neurocore import (
+    BitstreamEncoder,
+    BitstreamSpikeRecorder,
+    RNG,
+)
 
 
 @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
 @settings(max_examples=20)
-def test_rng_deterministic(seed):
+def test_rng_deterministic(seed: int) -> None:
+    """The same seed gives the same random values."""
     a = RNG(seed=seed)
     b = RNG(seed=seed)
     va = a.random(100)
@@ -23,15 +36,18 @@ def test_rng_deterministic(seed):
 
 @given(n=st.integers(min_value=1, max_value=1000))
 @settings(max_examples=20)
-def test_rng_output_shape(n):
+def test_rng_output_shape(n: int) -> None:
+    """A draw of n values has length n."""
     r = RNG(seed=42)
     out = r.random(n)
+    assert isinstance(out, np.ndarray)
     assert out.shape == (n,)
 
 
 @given(n=st.integers(min_value=100, max_value=500))
 @settings(max_examples=10)
-def test_rng_output_range(n):
+def test_rng_output_range(n: int) -> None:
+    """Random values lie in the unit interval."""
     r = RNG(seed=42)
     out = r.random(n)
     assert np.all(out >= 0.0)
@@ -40,7 +56,8 @@ def test_rng_output_range(n):
 
 @given(n_steps=st.integers(min_value=1, max_value=100))
 @settings(max_examples=20)
-def test_recorder_accumulates(n_steps):
+def test_recorder_accumulates(n_steps: int) -> None:
+    """The recorder keeps every recorded bit."""
     rec = BitstreamSpikeRecorder()
     for i in range(n_steps):
         rec.record(i % 2)
@@ -50,7 +67,8 @@ def test_recorder_accumulates(n_steps):
 
 @given(p=st.floats(min_value=0.0, max_value=1.0))
 @settings(max_examples=30)
-def test_encoder_output_binary(p):
+def test_encoder_output_binary(p: float) -> None:
+    """Any value encodes to a binary bitstream."""
     enc = BitstreamEncoder(x_min=0.0, x_max=1.0, length=256)
     bs = enc.encode(p)
     assert set(np.unique(bs)).issubset({0, 1})

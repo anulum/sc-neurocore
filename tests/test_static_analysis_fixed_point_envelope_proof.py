@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.static_analysis_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.static_analysis import (
+    FixedPointEnvelopeProof,
+    prove_fixed_point_envelope,
+)
+from typing import (
+    Any,
+)
 
 
 class TestFixedPointEnvelopeProof:

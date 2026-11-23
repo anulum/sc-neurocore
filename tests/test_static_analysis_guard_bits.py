@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.static_analysis_support import *  # noqa: F403
+from sc_neurocore.compiler.static_analysis import (
+    compute_guard_bits,
+    compute_guard_bits_multi,
+)
 
 
 class TestGuardBits:

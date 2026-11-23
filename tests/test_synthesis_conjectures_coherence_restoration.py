@@ -10,14 +10,31 @@
 
 from __future__ import annotations
 
-from tests.synthesis_conjectures_support import *  # noqa: F403
+import numpy as np
+import os
+import tempfile
+from sc_neurocore import (
+    StochasticLIFNeuron,
+)
+from sc_neurocore.identity.checkpoint import (
+    Checkpoint,
+)
+from sc_neurocore.identity.substrate import (
+    IdentitySubstrate,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
 
 
 class TestCoherenceRestoration:
     """After checkpoint restore, network should recover activity.
-    This tests the engineering fact, not the consciousness claim."""
 
-    def test_checkpoint_preserves_weights(self):
+    This tests the engineering fact, not the consciousness claim.
+    """
+
+    def test_checkpoint_preserves_weights(self) -> None:
+        """A checkpoint restores the weights exactly."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
 
@@ -34,7 +51,7 @@ class TestCoherenceRestoration:
         finally:
             os.remove(path)
 
-    def test_restored_network_has_weights(self):
+    def test_restored_network_has_weights(self) -> None:
         """After restore, weight structure should be intact."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
@@ -52,7 +69,7 @@ class TestCoherenceRestoration:
         finally:
             os.remove(path)
 
-    def test_population_reset_clears_state(self):
+    def test_population_reset_clears_state(self) -> None:
         """reset_all() should return neurons to initial conditions."""
         pop = Population(StochasticLIFNeuron, n=10, label="test")
         # Drive neuron to near-threshold

@@ -6,23 +6,40 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (availability_rejects) from former test_topology_backends.py
 
+"""Topology backend selection, availability and dispatch rejections."""
+
 from __future__ import annotations
 
-from tests.topology_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.math import (
+    topology,
+)
+from sc_neurocore.math.topology import (
+    ollivier_ricci_curvature,
+)
+from tests.topology_backends_support import (
+    _complete,
+    _go_available,
+    _mojo_available,
+)
 
 
 def test_invalid_backend_name_raises() -> None:
+    """An unknown backend name is rejected."""
     with pytest.raises(ValueError, match="backend must be"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="cuda")
 
 
 def test_backend_param_preserves_index_validation() -> None:
+    """Index validation holds for every backend."""
     with np.testing.assert_raises_regex(ValueError, "integer"):
         ollivier_ricci_curvature(_complete(3), True, 1, backend="python")
 
 
 @pytest.mark.skipif(_go_available(), reason="Go backend is built; cannot test the unavailable path")
 def test_go_unavailable_raises_when_requested() -> None:
+    """Requesting Go without its library is reported."""
     with pytest.raises(RuntimeError, match="Go topology backend"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="go")
 
@@ -31,53 +48,62 @@ def test_go_unavailable_raises_when_requested() -> None:
     _mojo_available(), reason="Mojo backend is built; cannot test the unavailable path"
 )
 def test_mojo_unavailable_raises_when_requested() -> None:
+    """Requesting Mojo without its library is reported."""
     with pytest.raises(RuntimeError, match="Mojo topology backend"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="mojo")
 
 
-def test_rust_dispatch_without_handle_raises(monkeypatch) -> None:
+def test_rust_dispatch_without_handle_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dispatching to Rust without a handle is reported."""
     monkeypatch.setattr(topology, "_rust_ollivier", None)
     with pytest.raises(RuntimeError, match="Rust topology backend probed False"):
         topology._ollivier_ricci_rust(_complete(3), 0, 1)
 
 
-def test_julia_dispatch_without_module_raises(monkeypatch) -> None:
+def test_julia_dispatch_without_module_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dispatching to Julia without a module is reported."""
     monkeypatch.setattr(topology, "_julia_module", None)
     with pytest.raises(RuntimeError, match="Julia topology module not loaded"):
         topology._ollivier_ricci_julia(_complete(3), 0, 1)
 
 
-def test_go_dispatch_without_lib_raises(monkeypatch) -> None:
+def test_go_dispatch_without_lib_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dispatching to Go without a library is reported."""
     monkeypatch.setattr(topology, "_go_lib", None)
     with pytest.raises(RuntimeError, match="Go topology library not loaded"):
         topology._ollivier_ricci_go(_complete(3), 0, 1)
 
 
-def test_mojo_dispatch_without_lib_raises(monkeypatch) -> None:
+def test_mojo_dispatch_without_lib_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dispatching to Mojo without a library is reported."""
     monkeypatch.setattr(topology, "_mojo_lib", None)
     with pytest.raises(RuntimeError, match="Mojo topology library not loaded"):
         topology._ollivier_ricci_mojo(_complete(3), 0, 1)
 
 
-def test_rust_backend_requested_but_unavailable_raises(monkeypatch) -> None:
+def test_rust_backend_requested_but_unavailable_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting Rust when it is unavailable is reported."""
     monkeypatch.setattr(topology, "_HAS_RUST_TOPOLOGY", False)
     with pytest.raises(RuntimeError, match="Rust topology backend requested"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="rust")
 
 
-def test_julia_backend_requested_but_unavailable_raises(monkeypatch) -> None:
+def test_julia_backend_requested_but_unavailable_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting Julia when it is unavailable is reported."""
     monkeypatch.setattr(topology, "_ensure_julia_loaded", lambda: False)
     with pytest.raises(RuntimeError, match="Julia topology backend requested"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="julia")
 
 
-def test_go_backend_requested_but_unavailable_raises(monkeypatch) -> None:
+def test_go_backend_requested_but_unavailable_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting Go when it is unavailable is reported."""
     monkeypatch.setattr(topology, "_ensure_go_loaded", lambda: False)
     with pytest.raises(RuntimeError, match="Go topology backend requested"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="go")
 
 
-def test_mojo_backend_requested_but_unavailable_raises(monkeypatch) -> None:
+def test_mojo_backend_requested_but_unavailable_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting Mojo when it is unavailable is reported."""
     monkeypatch.setattr(topology, "_ensure_mojo_loaded", lambda: False)
     with pytest.raises(RuntimeError, match="Mojo topology backend requested"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="mojo")

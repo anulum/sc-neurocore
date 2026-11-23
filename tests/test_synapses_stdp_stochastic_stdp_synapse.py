@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.synapses_stdp_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.synapses.stochastic_stdp import (
+    StochasticSTDPSynapse,
+)
 
 
 class TestStochasticSTDPSynapse:
-    def _make(self, w=0.5, lr=0.01, seed=42):
+    """The stochastic STDP synapse."""
+
+    def _make(self, w: float = 0.5, lr: float = 0.01, seed: int = 42) -> StochasticSTDPSynapse:
         return StochasticSTDPSynapse(
             w_min=0.0,
             w_max=1.0,
@@ -25,7 +32,8 @@ class TestStochasticSTDPSynapse:
             seed=seed,
         )
 
-    def test_construction(self):
+    def test_construction(self) -> None:
+        """A new synapse keeps its weight and an empty trace."""
         syn = self._make()
         assert syn.w == pytest.approx(0.5)
         assert syn._pre_trace.shape == (5,)
@@ -44,8 +52,9 @@ class TestStochasticSTDPSynapse:
             ("ltd_ratio", float("inf")),
         ],
     )
-    def test_invalid_stdp_parameters_fail_closed(self, field, value):
-        kwargs = {
+    def test_invalid_stdp_parameters_fail_closed(self, field: str, value: object) -> None:
+        """Each invalid parameter is rejected by name."""
+        kwargs: dict[str, Any] = {
             "w_min": 0.0,
             "w_max": 1.0,
             "length": 256,
@@ -68,24 +77,26 @@ class TestStochasticSTDPSynapse:
             (1, False),
         ],
     )
-    def test_invalid_stdp_step_bits_fail_closed(self, pre_bit, post_bit):
+    def test_invalid_stdp_step_bits_fail_closed(self, pre_bit: int, post_bit: int) -> None:
+        """Each bit that is not 0 or 1 is rejected."""
         syn = self._make()
         with pytest.raises(ValueError, match="bit"):
             syn.process_step(pre_bit=pre_bit, post_bit=post_bit)
 
-    def test_process_step_returns_binary(self):
+    def test_process_step_returns_binary(self) -> None:
+        """One step gives a binary output."""
         syn = self._make()
         for _ in range(100):
             out = syn.process_step(pre_bit=1, post_bit=0)
             assert out in (0, 1)
 
-    def test_output_is_and_of_pre_and_weight(self):
+    def test_output_is_and_of_pre_and_weight(self) -> None:
         """Output is pre_bit AND weight_bit; when pre=0, output must be 0."""
         syn = self._make()
         for _ in range(50):
             assert syn.process_step(pre_bit=0, post_bit=1) == 0
 
-    def test_ltp_increases_weight(self):
+    def test_ltp_increases_weight(self) -> None:
         """Sustained pre=1, post=1 should increase weight over many steps."""
         syn = self._make(w=0.3, lr=0.05, seed=0)
         initial_w = syn.w
@@ -93,7 +104,7 @@ class TestStochasticSTDPSynapse:
             syn.process_step(pre_bit=1, post_bit=1)
         assert syn.w > initial_w
 
-    def test_ltd_decreases_weight(self):
+    def test_ltd_decreases_weight(self) -> None:
         """Sustained pre=1, post=0 should decrease weight over many steps."""
         syn = self._make(w=0.7, lr=0.05, seed=0)
         initial_w = syn.w
@@ -101,7 +112,7 @@ class TestStochasticSTDPSynapse:
             syn.process_step(pre_bit=1, post_bit=0)
         assert syn.w < initial_w
 
-    def test_weight_stays_in_bounds(self):
+    def test_weight_stays_in_bounds(self) -> None:
         """Weight should never exceed [w_min, w_max] regardless of input."""
         syn = self._make(w=0.99, lr=0.1, seed=0)
         for _ in range(1000):
@@ -113,17 +124,19 @@ class TestStochasticSTDPSynapse:
             syn2.process_step(pre_bit=1, post_bit=0)
         assert syn2.w >= syn2.w_min
 
-    def test_potentiate_directly(self):
+    def test_potentiate_directly(self) -> None:
+        """Potentiation raises the weight."""
         syn = self._make(w=0.5)
         syn._potentiate()
         assert syn.w > 0.5
 
-    def test_depress_directly(self):
+    def test_depress_directly(self) -> None:
+        """Depression lowers the weight."""
         syn = self._make(w=0.5)
         syn._depress()
         assert syn.w < 0.5
 
-    def test_pre_trace_shifts(self):
+    def test_pre_trace_shifts(self) -> None:
         """Pre-trace buffer should shift bits in correctly."""
         syn = self._make()
         syn.process_step(pre_bit=1, post_bit=0)

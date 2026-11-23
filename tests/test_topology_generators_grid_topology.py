@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.topology_generators_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.topology import (
+    grid_topology,
+)
+from tests.topology_generators_support import (
+    _csr_to_dense,
+    _validate_csr,
+)
 
 
 class TestGridTopology:
+    """The 2-D grid connectivity generator."""
+
     def test_csr_valid(self) -> None:
+        """The generated graph is a valid CSR matrix."""
         indptr, indices, data = grid_topology(5, 5, radius=1, weight=1.0)
         _validate_csr(indptr, indices, data, 25, 25)
 
@@ -34,6 +44,7 @@ class TestGridTopology:
         assert centre_deg == 8, f"centre degree {centre_deg} != 8"
 
     def test_no_self_connections(self) -> None:
+        """No node connects to itself."""
         indptr, indices, data = grid_topology(4, 4, radius=1, weight=1.0)
         mat = _csr_to_dense(indptr, indices, data, 16, 16)
         assert np.all(np.diag(mat) == 0)

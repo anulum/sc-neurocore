@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.topological_observables_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    ollivier_ricci_curvature,
+)
 
 
 class TestOllivierRicciCurvature:
-    def test_complete_graph_positive(self):
+    """Ollivier-Ricci curvature of the coupling graph."""
+
+    def test_complete_graph_positive(self) -> None:
         """Complete graph has positive lazy Ollivier-Ricci curvature."""
         N = 8
         K = np.ones((N, N)) * 0.5
@@ -22,7 +27,7 @@ class TestOllivierRicciCurvature:
         kappa = ollivier_ricci_curvature(K, 0, 1)
         assert kappa > 0, f"complete graph curvature {kappa} not positive"
 
-    def test_disconnected_zero(self):
+    def test_disconnected_zero(self) -> None:
         """If i and j are not connected, curvature should be 0 or undefined."""
         N = 4
         K = np.zeros((N, N))
@@ -31,14 +36,15 @@ class TestOllivierRicciCurvature:
         # Depending on implementation, may be 0 or handled gracefully
         assert np.isfinite(kappa)
 
-    def test_self_curvature_zero(self):
+    def test_self_curvature_zero(self) -> None:
+        """The curvature of a node with itself is finite."""
         N = 5
         K = np.ones((N, N))
         np.fill_diagonal(K, 0)
         kappa = ollivier_ricci_curvature(K, 0, 0)
         assert kappa == 0.0 or np.isfinite(kappa)
 
-    def test_ring_lower_than_complete(self):
+    def test_ring_lower_than_complete(self) -> None:
         """Ring graph should have lower curvature than complete graph."""
         N = 10
         K_ring = np.zeros((N, N))
@@ -50,7 +56,8 @@ class TestOllivierRicciCurvature:
         kappa_complete = ollivier_ricci_curvature(K_complete, 0, 1)
         assert kappa_ring < kappa_complete
 
-    def test_path_bridge_uses_graph_metric_transport(self):
+    def test_path_bridge_uses_graph_metric_transport(self) -> None:
+        """Transport on a path uses the graph metric."""
         K = np.zeros((5, 5))
         for node in range(4):
             K[node, node + 1] = 1.0
@@ -62,7 +69,8 @@ class TestOllivierRicciCurvature:
         np.testing.assert_allclose(middle_edge, 0.0, atol=1e-12)
         assert 0.0 < endpoint_edge < 1.0
 
-    def test_rejects_boolean_node_index(self):
+    def test_rejects_boolean_node_index(self) -> None:
+        """A boolean node index is rejected."""
         K = np.ones((3, 3)) - np.eye(3)
 
         with np.testing.assert_raises_regex(ValueError, "integer"):

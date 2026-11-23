@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.synthesis_conjectures_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore import (
+    bitstream_to_probability,
+    BitstreamEncoder,
+)
 
 
 class TestSCEncodingPrecision:
     """Necessary condition for SC-FIM analogy: error ~ 1/sqrt(L)."""
 
-    def test_error_decreases_with_L(self):
+    def test_error_decreases_with_L(self) -> None:
+        """The encoding error falls as the length grows."""
         target = 0.65
         L_values = [64, 256, 1024, 4096]
         errors = {}
@@ -33,7 +38,7 @@ class TestSCEncodingPrecision:
                 f"error at L={L_values[i + 1]} not lower than L={L_values[i]}"
             )
 
-    def test_error_scales_approximately_sqrt(self):
+    def test_error_scales_approximately_sqrt(self) -> None:
         """Error ratio between L and 4L should be ~2 (from 1/sqrt scaling)."""
         target = 0.5
         n_trials = 500

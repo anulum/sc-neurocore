@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.streaming_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec.streaming_codec import (
+    StreamingSpikeCodec,
+)
 
 
 class TestStreamingSpikeCodecCompression:
-    def test_silent_frames_small(self):
+    """Compression statistics of the streaming codec."""
+
+    def test_silent_frames_small(self) -> None:
         """Silent frames should be very compact."""
         silent = np.zeros((20, 64), dtype=np.int8)
         codec = StreamingSpikeCodec(window_size=20)
@@ -22,7 +27,8 @@ class TestStreamingSpikeCodecCompression:
         # Header(4) + skip_bitmap(8) = 12 bytes minimum
         assert len(frame) <= 20
 
-    def test_max_frame_bytes_reported(self):
+    def test_max_frame_bytes_reported(self) -> None:
+        """The result reports the largest frame and the codec type."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
         _, result = StreamingSpikeCodec(window_size=20).compress(spikes)

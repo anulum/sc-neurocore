@@ -10,40 +10,51 @@
 
 from __future__ import annotations
 
-from tests.spikformer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.transformers.spikformer import (
+    CPGPositionalEncoding,
+)
 
 
 class TestCPGPositionalEncoding:
-    def test_encode_shape(self):
+    """The central-pattern-generator positional encoding."""
+
+    def test_encode_shape(self) -> None:
+        """The encoding has one row per position."""
         cpe = CPGPositionalEncoding(d_model=16)
         enc = cpe.encode(seq_len=10)
         assert enc.shape == (10, 16)
 
-    def test_encode_range(self):
+    def test_encode_range(self) -> None:
+        """Every encoding value lies in the unit interval."""
         cpe = CPGPositionalEncoding(d_model=8)
         enc = cpe.encode(seq_len=50)
         assert enc.min() >= 0.0
         assert enc.max() <= 1.0
 
-    def test_different_positions_different_encodings(self):
+    def test_different_positions_different_encodings(self) -> None:
+        """Different positions encode differently."""
         cpe = CPGPositionalEncoding(d_model=8)
         enc = cpe.encode(seq_len=10)
         assert not np.allclose(enc[0], enc[5])
 
-    def test_encode_spikes(self):
+    def test_encode_spikes(self) -> None:
+        """Spike encoding gives binary rows."""
         cpe = CPGPositionalEncoding(d_model=16)
         spikes = cpe.encode_spikes(seq_len=20)
         assert spikes.shape == (20, 16)
         assert set(np.unique(spikes)).issubset({0, 1})
 
-    def test_encode_spikes_with_rng(self):
+    def test_encode_spikes_with_rng(self) -> None:
+        """The same generator seed gives the same spikes."""
         cpe = CPGPositionalEncoding(d_model=8)
         rng = np.random.RandomState(42)
         s1 = cpe.encode_spikes(10, rng=np.random.RandomState(42))
         s2 = cpe.encode_spikes(10, rng=np.random.RandomState(42))
         np.testing.assert_array_equal(s1, s2)
 
-    def test_max_len(self):
+    def test_max_len(self) -> None:
+        """The encoder keeps its maximum length."""
         cpe = CPGPositionalEncoding(d_model=4, max_len=100)
         assert cpe.max_len == 100
         enc = cpe.encode(seq_len=100)

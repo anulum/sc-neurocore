@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.synthesis_conjectures_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore import (
+    StochasticLIFNeuron,
+)
 
 
 class TestEffectivePhaseResolution:
     """Test that LIF phase resolution depends on dt/period, not voltage precision."""
 
-    def test_phase_resolution_from_firing_rate(self):
+    def test_phase_resolution_from_firing_rate(self) -> None:
         """A 50 Hz neuron at dt=1ms has ~20 steps per cycle → q_eff ≈ 20."""
         neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, dt=1.0)
         spikes = []

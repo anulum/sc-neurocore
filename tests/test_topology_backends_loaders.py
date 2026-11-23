@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (loaders) from former test_topology_backends.py
 
+"""Soft failures of the topology backend loaders."""
+
 from __future__ import annotations
 
-from tests.topology_backends_support import *  # noqa: F403
+import os
+import pytest
+from sc_neurocore.math import (
+    topology,
+)
+from typing import Never
 
 
-def test_julia_loader_returns_false_without_juliacall(monkeypatch) -> None:
+def test_julia_loader_returns_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without juliacall the Julia loader fails softly."""
     import importlib.util as importlib_util
 
     monkeypatch.setattr(topology, "_julia_module", None)
@@ -21,11 +29,12 @@ def test_julia_loader_returns_false_without_juliacall(monkeypatch) -> None:
     assert topology._ensure_julia_loaded() is False
 
 
-def test_julia_loader_returns_false_without_module_file(monkeypatch) -> None:
+def test_julia_loader_returns_false_without_module_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without topology.jl the Julia loader fails softly."""
     monkeypatch.setattr(topology, "_julia_module", None)
-    real_isfile = topology._os.path.isfile
+    real_isfile = os.path.isfile
     monkeypatch.setattr(
-        topology._os.path,
+        os.path,
         "isfile",
         lambda p: False if str(p).endswith("topology.jl") else real_isfile(p),
     )
@@ -36,11 +45,14 @@ def test_julia_loader_returns_false_without_module_file(monkeypatch) -> None:
     "lib_global,ensure_fn",
     [("_go_lib", "_ensure_go_loaded"), ("_mojo_lib", "_ensure_mojo_loaded")],
 )
-def test_native_loader_returns_false_when_so_absent(monkeypatch, lib_global, ensure_fn) -> None:
+def test_native_loader_returns_false_when_so_absent(
+    monkeypatch: pytest.MonkeyPatch, lib_global: str, ensure_fn: str
+) -> None:
+    """Without the shared object a native loader fails softly."""
     monkeypatch.setattr(topology, lib_global, None)
-    real_isfile = topology._os.path.isfile
+    real_isfile = os.path.isfile
     monkeypatch.setattr(
-        topology._os.path,
+        os.path,
         "isfile",
         lambda p: False if str(p).endswith("libtopology.so") else real_isfile(p),
     )
@@ -51,13 +63,16 @@ def test_native_loader_returns_false_when_so_absent(monkeypatch, lib_global, ens
     "lib_global,ensure_fn",
     [("_go_lib", "_ensure_go_loaded"), ("_mojo_lib", "_ensure_mojo_loaded")],
 )
-def test_native_loader_returns_false_on_cdll_oserror(monkeypatch, lib_global, ensure_fn) -> None:
+def test_native_loader_returns_false_on_cdll_oserror(
+    monkeypatch: pytest.MonkeyPatch, lib_global: str, ensure_fn: str
+) -> None:
+    """A broken shared object makes a native loader fail softly."""
     import ctypes
 
     monkeypatch.setattr(topology, lib_global, None)
-    monkeypatch.setattr(topology._os.path, "isfile", lambda p: True)
+    monkeypatch.setattr(os.path, "isfile", lambda p: True)
 
-    def _raise(_path):
+    def _raise(_path: str) -> Never:
         raise OSError("simulated broken shared object")
 
     monkeypatch.setattr(ctypes, "CDLL", _raise)
@@ -69,16 +84,17 @@ def test_native_loader_returns_false_on_cdll_oserror(monkeypatch, lib_global, en
     [("_go_lib", "_ensure_go_loaded"), ("_mojo_lib", "_ensure_mojo_loaded")],
 )
 def test_native_loader_returns_false_when_symbol_missing(
-    monkeypatch, lib_global, ensure_fn
+    monkeypatch: pytest.MonkeyPatch, lib_global: str, ensure_fn: str
 ) -> None:
+    """A missing symbol makes a native loader fail softly."""
     import ctypes
 
     monkeypatch.setattr(topology, lib_global, None)
-    monkeypatch.setattr(topology._os.path, "isfile", lambda p: True)
+    monkeypatch.setattr(os.path, "isfile", lambda p: True)
 
     class _EmptyLib:
         # No ollivier_ricci_curvature_c attribute, and getattr default returns None.
-        def __getattr__(self, name):
+        def __getattr__(self, name: str) -> Never:
             raise AttributeError(name)
 
     monkeypatch.setattr(ctypes, "CDLL", lambda _path: _EmptyLib())
@@ -86,6 +102,7 @@ def test_native_loader_returns_false_when_symbol_missing(
 
 
 def test_rust_import_failure_sets_flag_false() -> None:
+    """A failed Rust import clears the Rust flag and handle."""
     # Reload the module with a stand-in sc_neurocore_engine that lacks the
     # curvature symbol, driving the import-time AttributeError fallback, then
     # restore the real module state.

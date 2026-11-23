@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.tensor_stream_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.core.tensor_stream import (
+    TensorStream,
+)
 
 
 class TestInvalidConversions:
-    def test_spike_to_bitstream_raises(self):
+    """Conversions that are not defined."""
+
+    def test_spike_to_bitstream_raises(self) -> None:
+        """A spike tensor cannot become a bitstream."""
         ts = TensorStream(data=np.array([1]), domain="spike")
         with pytest.raises(ValueError):
             ts.to_bitstream()

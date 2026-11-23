@@ -10,32 +10,40 @@
 
 from __future__ import annotations
 
-from tests.topological_observables_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    winding_number,
+)
 
 
 class TestWindingNumber:
-    def test_zero_wraps(self):
+    """The winding number of a phase loop."""
+
+    def test_zero_wraps(self) -> None:
         """Half rotation (0 to pi) = 0 wraps."""
         phases = np.linspace(0, np.pi * 0.9, 500)
         assert winding_number(phases) == 0
 
-    def test_one_wrap(self):
+    def test_one_wrap(self) -> None:
+        """One wrap gives winding number one."""
         T = 1000
         omega = 2 * np.pi / T
         phases = np.array([(omega * t) % (2 * np.pi) for t in range(T)])
         assert winding_number(phases) == 1
 
-    def test_three_wraps(self):
+    def test_three_wraps(self) -> None:
+        """Three wraps give winding number three."""
         T = 1000
         omega = 3 * 2 * np.pi / T
         phases = np.array([(omega * t) % (2 * np.pi) for t in range(T)])
         assert winding_number(phases) == 3
 
-    def test_constant_phase_zero(self):
+    def test_constant_phase_zero(self) -> None:
+        """A constant phase gives winding number zero."""
         phases = np.full(100, 1.5)
         assert winding_number(phases) == 0
 
-    def test_negative_direction(self):
+    def test_negative_direction(self) -> None:
         """Negative frequency should give negative winding."""
         T = 1000
         omega = -2 * 2 * np.pi / T

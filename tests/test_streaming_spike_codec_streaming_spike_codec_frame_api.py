@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.streaming_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec.streaming_codec import (
+    StreamingSpikeCodec,
+)
 
 
 class TestStreamingSpikeCodecFrameAPI:
-    def test_single_frame_roundtrip(self):
+    """The frame-by-frame codec interface."""
+
+    def test_single_frame_roundtrip(self) -> None:
+        """One frame round-trips losslessly."""
         rng = np.random.RandomState(42)
         window = (rng.random((20, 16)) < 0.05).astype(np.int8)
         codec = StreamingSpikeCodec(window_size=20)
@@ -22,7 +28,7 @@ class TestStreamingSpikeCodecFrameAPI:
         recovered = codec.decompress_frame(frame)
         np.testing.assert_array_equal(recovered, window)
 
-    def test_frame_independence(self):
+    def test_frame_independence(self) -> None:
         """Each frame must be decodable without any other frame."""
         rng = np.random.RandomState(42)
         codec = StreamingSpikeCodec(window_size=10)

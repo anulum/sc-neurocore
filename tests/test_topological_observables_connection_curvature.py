@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.topological_observables_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.math.topology import (
+    connection_curvature,
+)
 
 
 class TestConnectionCurvature:
-    def test_synchronised_equals_coupling(self):
+    """The phase connection curvature observable."""
+
+    def test_synchronised_equals_coupling(self) -> None:
         """cos(0) = 1, so F_ij = K_ij when synchronised."""
         N = 4
         K = np.array([[0, 0.5, 0.3, 0], [0.5, 0, 0, 0.2], [0.3, 0, 0, 0.1], [0, 0.2, 0.1, 0]])
@@ -22,7 +27,7 @@ class TestConnectionCurvature:
         F = connection_curvature(phases, K)
         np.testing.assert_allclose(F, K, atol=1e-10)
 
-    def test_anti_phase_negative(self):
+    def test_anti_phase_negative(self) -> None:
         """cos(pi) = -1, so F_ij = -K_ij for anti-phase pairs."""
         N = 4
         K = np.zeros((N, N))
@@ -31,7 +36,8 @@ class TestConnectionCurvature:
         F = connection_curvature(phases, K)
         np.testing.assert_allclose(F[0, 1], -0.5, atol=1e-10)
 
-    def test_diagonal_zero(self):
+    def test_diagonal_zero(self) -> None:
+        """The curvature diagonal is zero."""
         N = 4
         K = np.ones((N, N))
         np.fill_diagonal(K, 0)
@@ -39,7 +45,8 @@ class TestConnectionCurvature:
         F = connection_curvature(phases, K)
         np.testing.assert_allclose(np.diag(F), 0.0, atol=1e-10)
 
-    def test_output_shape(self):
+    def test_output_shape(self) -> None:
+        """The curvature is N by N."""
         N = 6
         K = np.random.default_rng(42).uniform(0, 1, (N, N))
         K = (K + K.T) / 2
@@ -48,7 +55,7 @@ class TestConnectionCurvature:
         F = connection_curvature(phases, K)
         assert F.shape == (N, N)
 
-    def test_values_bounded(self):
+    def test_values_bounded(self) -> None:
         """F_ij should be bounded by |K_ij| since |cos| <= 1."""
         N = 5
         K = np.random.default_rng(42).uniform(0, 1, (N, N))

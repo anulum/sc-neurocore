@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.topology_generators_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network.topology import (
+    scale_free,
+)
+from tests.topology_generators_support import (
+    _csr_to_dense,
+    _validate_csr,
+)
+from typing import (
+    cast,
+)
 
 
 class TestScaleFree:
+    """The scale-free graph generator."""
+
     def test_csr_valid(self) -> None:
+        """The generated graph is a valid CSR matrix."""
         indptr, indices, data = scale_free(50, m=3, weight=1.0)
         _validate_csr(indptr, indices, data, 50, 50)
 
@@ -29,12 +43,14 @@ class TestScaleFree:
         assert max_degree > 3 * mean_degree, "no hub found"
 
     def test_symmetric(self) -> None:
+        """The graph is undirected."""
         n = 30
         indptr, indices, data = scale_free(n, m=2, weight=1.0, seed=42)
         mat = _csr_to_dense(indptr, indices, data, n, n)
         np.testing.assert_array_equal(mat, mat.T)
 
     def test_edge_count(self) -> None:
+        """The graph has at least the expected edge count."""
         n, m = 100, 3
         indptr, indices, data = scale_free(n, m=m, weight=1.0)
         # Undirected: each new node adds m edges (both directions) = 2*m

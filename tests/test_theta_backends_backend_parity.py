@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_theta_backends.py
 
+"""Parity of the theta neuron backends against Python."""
+
 from __future__ import annotations
 
-from tests.theta_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+import subprocess
+from sc_neurocore.accel import (
+    theta as backends,
+)
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
+from tests.theta_backends_support import (
+    _assert_phase_parity,
+    _COMPILED_BACKENDS,
+    _configured,
+    _GOLDENS,
+    _REPOSITORY,
+    _run,
+)
 
 
 def test_every_acceleration_backend_is_executable() -> None:

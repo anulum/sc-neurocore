@@ -10,35 +10,45 @@
 
 from __future__ import annotations
 
-from tests.symbolic_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.symbolic import (
+    SpikeRegister,
+)
 
 
 class TestSpikeRegister:
-    def test_write_read_roundtrip(self):
+    """The spiking register."""
+
+    def test_write_read_roundtrip(self) -> None:
+        """A written value reads back."""
         reg = SpikeRegister(8)
         for val in [0, 1, 127, 255]:
             reg.write(val)
             assert reg.read() == val
 
-    def test_write_bits(self):
+    def test_write_bits(self) -> None:
+        """Written bits read back as their value."""
         reg = SpikeRegister(4)
         reg.write_bits(np.array([1, 0, 1, 1], dtype=np.int8))
         # bit 0=1, bit 1=0, bit 2=1, bit 3=1 → 0b1101 = 13
         assert reg.read() == 0b1101
 
-    def test_clear(self):
+    def test_clear(self) -> None:
+        """A clear reads back zero."""
         reg = SpikeRegister(8)
         reg.write(255)
         reg.clear()
         assert reg.read() == 0
 
-    def test_read_bits(self):
+    def test_read_bits(self) -> None:
+        """The register reads back its bits, least significant first."""
         reg = SpikeRegister(4)
         reg.write(0b1010)
         bits = reg.read_bits()
         np.testing.assert_array_equal(bits, [0, 1, 0, 1])
 
-    def test_16bit_register(self):
+    def test_16bit_register(self) -> None:
+        """A 16-bit register holds 0xABCD."""
         reg = SpikeRegister(16)
         reg.write(0xABCD)
         assert reg.read() == 0xABCD

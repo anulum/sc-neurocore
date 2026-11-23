@@ -10,26 +10,35 @@
 
 from __future__ import annotations
 
-from tests.spikeinterface_adapter_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.adapters.spikeinterface import (
+    firing_rates_to_sc_probs,
+)
 
 
 class TestFiringRatesToSCProbs:
-    def test_output_shape(self):
+    """Turning sorted-unit firing rates into SC probabilities."""
+
+    def test_output_shape(self) -> None:
+        """There is one probability per unit."""
         spikes = {0: np.array([1.0, 2.0]), 1: np.array([3.0])}
         probs = firing_rates_to_sc_probs(spikes, duration_ms=100.0)
         assert probs.shape == (2,)
 
-    def test_bounded(self):
+    def test_bounded(self) -> None:
+        """Each probability lies in the unit interval."""
         spikes = {0: np.linspace(0, 1000, 200)}  # 200 spikes in 1s = 200 Hz
         probs = firing_rates_to_sc_probs(spikes, duration_ms=1000.0, max_rate_hz=100.0)
         assert 0.0 <= probs[0] <= 1.0
 
-    def test_zero_spikes(self):
+    def test_zero_spikes(self) -> None:
+        """A silent unit has probability zero."""
         spikes = {0: np.array([])}
         probs = firing_rates_to_sc_probs(spikes, duration_ms=1000.0)
         assert probs[0] == 0.0
 
-    def test_rate_scaling(self):
+    def test_rate_scaling(self) -> None:
+        """Half the maximum rate gives probability one half."""
         spikes = {0: np.arange(0, 1000, 20)}  # 50 spikes in 1s = 50 Hz
         probs = firing_rates_to_sc_probs(spikes, duration_ms=1000.0, max_rate_hz=100.0)
         np.testing.assert_allclose(probs[0], 0.5, atol=0.05)

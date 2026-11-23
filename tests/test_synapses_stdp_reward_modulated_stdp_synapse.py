@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.synapses_stdp_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.synapses.r_stdp import (
+    RewardModulatedSTDPSynapse,
+)
 
 
 class TestRewardModulatedSTDPSynapse:
-    def _make(self, w=0.5, lr=0.01, seed=42):
+    """The reward-modulated stochastic STDP synapse."""
+
+    def _make(self, w: float = 0.5, lr: float = 0.01, seed: int = 42) -> RewardModulatedSTDPSynapse:
         return RewardModulatedSTDPSynapse(
             w_min=0.0,
             w_max=1.0,
@@ -26,7 +32,8 @@ class TestRewardModulatedSTDPSynapse:
             trace_decay=0.9,
         )
 
-    def test_construction(self):
+    def test_construction(self) -> None:
+        """A new synapse has an empty eligibility trace."""
         syn = self._make()
         assert syn.eligibility_trace == 0.0
         assert syn.trace_decay == 0.9
@@ -42,8 +49,9 @@ class TestRewardModulatedSTDPSynapse:
             ("anti_hebbian_scale", float("inf")),
         ],
     )
-    def test_invalid_reward_stdp_parameters_fail_closed(self, field, value):
-        kwargs = {
+    def test_invalid_reward_stdp_parameters_fail_closed(self, field: str, value: object) -> None:
+        """Each invalid parameter is rejected by name."""
+        kwargs: dict[str, Any] = {
             "w_min": 0.0,
             "w_max": 1.0,
             "length": 256,
@@ -67,39 +75,42 @@ class TestRewardModulatedSTDPSynapse:
             (1, False),
         ],
     )
-    def test_invalid_reward_stdp_step_bits_fail_closed(self, pre_bit, post_bit):
+    def test_invalid_reward_stdp_step_bits_fail_closed(self, pre_bit: int, post_bit: int) -> None:
+        """Each bit that is not 0 or 1 is rejected."""
         syn = self._make()
         with pytest.raises(ValueError, match="bit"):
             syn.process_step(pre_bit=pre_bit, post_bit=post_bit)
 
     @pytest.mark.parametrize("reward", [float("nan"), float("inf"), -float("inf")])
-    def test_invalid_reward_signal_fails_closed(self, reward):
+    def test_invalid_reward_signal_fails_closed(self, reward: float) -> None:
+        """A non-finite reward is rejected."""
         syn = self._make()
         syn.process_step(pre_bit=1, post_bit=1)
         with pytest.raises(ValueError, match="reward"):
             syn.apply_reward(reward=reward)
 
-    def test_process_step_returns_binary(self):
+    def test_process_step_returns_binary(self) -> None:
+        """One step gives a binary output."""
         syn = self._make()
         for _ in range(50):
             out = syn.process_step(pre_bit=1, post_bit=1)
             assert out in (0, 1)
 
-    def test_eligibility_builds_on_coincidence(self):
+    def test_eligibility_builds_on_coincidence(self) -> None:
         """Pre=1 + Post=1 should increase eligibility trace."""
         syn = self._make()
         for _ in range(20):
             syn.process_step(pre_bit=1, post_bit=1)
         assert syn.eligibility_trace > 0
 
-    def test_eligibility_decreases_on_mismatch(self):
+    def test_eligibility_decreases_on_mismatch(self) -> None:
         """Pre=1 + Post=0 should decrease (or keep negative) eligibility trace."""
         syn = self._make()
         for _ in range(50):
             syn.process_step(pre_bit=1, post_bit=0)
         assert syn.eligibility_trace < 0
 
-    def test_trace_decays(self):
+    def test_trace_decays(self) -> None:
         """After a burst, trace should decay toward 0 with no input."""
         syn = self._make()
         for _ in range(10):
@@ -110,7 +121,7 @@ class TestRewardModulatedSTDPSynapse:
             syn.process_step(pre_bit=0, post_bit=0)
         assert abs(syn.eligibility_trace) < abs(trace_after_burst)
 
-    def test_positive_reward_increases_weight(self):
+    def test_positive_reward_increases_weight(self) -> None:
         """Positive eligibility + positive reward should increase weight."""
         syn = self._make(w=0.5, lr=0.05)
         # Build positive eligibility
@@ -121,7 +132,7 @@ class TestRewardModulatedSTDPSynapse:
         syn.apply_reward(reward=1.0)
         assert syn.w > w_before
 
-    def test_negative_reward_decreases_weight(self):
+    def test_negative_reward_decreases_weight(self) -> None:
         """Positive eligibility + negative reward should decrease weight."""
         syn = self._make(w=0.5, lr=0.05)
         for _ in range(30):
@@ -131,7 +142,7 @@ class TestRewardModulatedSTDPSynapse:
         syn.apply_reward(reward=-1.0)
         assert syn.w < w_before
 
-    def test_zero_reward_no_change(self):
+    def test_zero_reward_no_change(self) -> None:
         """Zero reward should not change weight."""
         syn = self._make(w=0.5, lr=0.05)
         for _ in range(30):
@@ -140,7 +151,7 @@ class TestRewardModulatedSTDPSynapse:
         syn.apply_reward(reward=0.0)
         assert syn.w == pytest.approx(w_before)
 
-    def test_reward_respects_weight_bounds(self):
+    def test_reward_respects_weight_bounds(self) -> None:
         """Weight should stay in [w_min, w_max] after reward."""
         syn = self._make(w=0.99, lr=0.5)
         for _ in range(50):
@@ -154,7 +165,7 @@ class TestRewardModulatedSTDPSynapse:
         syn2.apply_reward(reward=-10.0)
         assert syn2.w >= syn2.w_min
 
-    def test_no_weight_change_without_reward(self):
+    def test_no_weight_change_without_reward(self) -> None:
         """process_step should NOT change weight (only eligibility)."""
         syn = self._make(w=0.5)
         for _ in range(100):

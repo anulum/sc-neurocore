@@ -10,33 +10,43 @@
 
 from __future__ import annotations
 
-from tests.spikeinterface_adapter_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.adapters.spikeinterface import (
+    spike_trains_to_bitstreams,
+)
 
 
 class TestSpikeTrainsToBitstreams:
-    def test_output_shape(self):
+    """Binning sorted spike trains into bitstreams."""
+
+    def test_output_shape(self) -> None:
+        """There is one bitstream row per unit and one bin per step."""
         spikes = {0: np.array([10.0, 20.0]), 1: np.array([15.0])}
         mat = spike_trains_to_bitstreams(spikes, duration_ms=50.0, dt=1.0)
         assert mat.shape == (2, 50)
 
-    def test_binary_output(self):
+    def test_binary_output(self) -> None:
+        """The bitstreams hold only zeros and ones."""
         spikes = {0: np.array([5.0, 10.0])}
         mat = spike_trains_to_bitstreams(spikes, duration_ms=20.0, dt=1.0)
         assert set(np.unique(mat)).issubset({0, 1})
 
-    def test_spike_at_correct_bin(self):
+    def test_spike_at_correct_bin(self) -> None:
+        """A spike lands in the bin of its time."""
         spikes = {0: np.array([5.0])}
         mat = spike_trains_to_bitstreams(spikes, duration_ms=10.0, dt=1.0)
         assert mat[0, 5] == 1
         assert mat[0, 0] == 0
 
-    def test_empty_unit(self):
+    def test_empty_unit(self) -> None:
+        """A unit without spikes gives an empty row."""
         spikes = {0: np.array([]), 1: np.array([3.0])}
         mat = spike_trains_to_bitstreams(spikes, duration_ms=10.0, dt=1.0)
         assert mat[0].sum() == 0
         assert mat[1].sum() == 1
 
-    def test_dt_binning(self):
+    def test_dt_binning(self) -> None:
+        """A wider bin gives fewer bins."""
         spikes = {0: np.array([0.5, 1.5, 2.5])}
         mat = spike_trains_to_bitstreams(spikes, duration_ms=5.0, dt=2.0)
         assert mat.shape == (1, 3)  # ceil(5/2) = 3 bins
