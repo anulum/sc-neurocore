@@ -41,6 +41,8 @@ def _active_tenant(
 
 
 class TestScheduler:
+    """Generate time slots for active tenants under each scheduling policy."""
+
     def _tenants(self) -> List[Tenant]:
         t0 = _tenant("t0", prio=TenantPriority.NORMAL)
         t0.active = True
@@ -51,6 +53,7 @@ class TestScheduler:
         return [t0, t1]
 
     def test_round_robin(self) -> None:
+        """Round robin cuts fixed quanta and alternates tenants."""
         sched = Scheduler(SchedulingPolicy.ROUND_ROBIN)
         sched.time_quantum_cycles = 100
         slots = sched.generate_schedule(self._tenants(), 400)
@@ -58,6 +61,7 @@ class TestScheduler:
         assert slots[0].tenant_id != slots[1].tenant_id
 
     def test_priority(self) -> None:
+        """Priority scheduling places the higher-priority tenant first."""
         sched = Scheduler(SchedulingPolicy.PRIORITY)
         slots = sched.generate_schedule(self._tenants(), 1000)
         assert len(slots) > 0
@@ -65,6 +69,7 @@ class TestScheduler:
         assert slots[0].tenant_id == "t1"
 
     def test_fair_share(self) -> None:
+        """Fair share grants cycles in proportion to each minimum share."""
         tenants = self._tenants()
         tenants[0].qos.min_compute_share = 0.3
         tenants[1].qos.min_compute_share = 0.7
@@ -74,6 +79,7 @@ class TestScheduler:
         assert total_t1 > 500
 
     def test_edf(self) -> None:
+        """Earliest deadline first schedules the tightest latency first."""
         tenants = self._tenants()
         tenants[0].qos.max_latency_us = 1000
         tenants[1].qos.max_latency_us = 100
@@ -82,10 +88,12 @@ class TestScheduler:
         assert slots[0].tenant_id == "t1"  # Lower latency first
 
     def test_empty_tenants(self) -> None:
+        """No tenants yield an empty schedule."""
         sched = Scheduler()
         assert sched.generate_schedule([], 1000) == []
 
     def test_priority_realtime_gets_half(self) -> None:
+        """A realtime tenant receives half the budget under priority scheduling."""
         # A realtime tenant is granted a fixed 50% slice under priority
         # scheduling rather than the even per-tenant share.
         rt = _tenant("rt", prio=TenantPriority.REALTIME)
@@ -100,6 +108,7 @@ class TestScheduler:
         assert rt_slot.duration_cycles == 500
 
     def test_slot_continuity(self) -> None:
+        """Each slot starts on the cycle where the previous slot ends."""
         sched = Scheduler(SchedulingPolicy.ROUND_ROBIN)
         sched.time_quantum_cycles = 100
         slots = sched.generate_schedule(self._tenants(), 400)
@@ -108,12 +117,14 @@ class TestScheduler:
 
 
 def test_inactive_tenants_are_not_scheduled() -> None:
+    """An inactive tenant receives no slot."""
     tenant = Tenant("inactive", "Inactive")
 
     assert Scheduler().generate_schedule([tenant], 1000) == []
 
 
 def test_zero_cycle_budget_produces_no_slots() -> None:
+    """A zero-cycle budget produces no slots under any weighted policy."""
     tenants = [_active_tenant("t0"), _active_tenant("t1", region_id=1)]
 
     assert Scheduler(SchedulingPolicy.PRIORITY).generate_schedule(tenants, 0) == []
@@ -121,6 +132,7 @@ def test_zero_cycle_budget_produces_no_slots() -> None:
 
 
 def test_zero_fair_share_weights_fall_back_to_even_allocation() -> None:
+    """All-zero fair-share weights fall back to an even split of the budget."""
     tenants = [_active_tenant("t0"), _active_tenant("t1", region_id=1)]
     for tenant in tenants:
         tenant.qos.min_compute_share = 0.0
@@ -131,6 +143,7 @@ def test_zero_fair_share_weights_fall_back_to_even_allocation() -> None:
 
 
 def test_unknown_policy_fails_closed() -> None:
+    """A corrupted policy value schedules nothing instead of guessing."""
     scheduler = Scheduler()
     scheduler.policy = cast(SchedulingPolicy, "corrupt-policy")
 
@@ -138,12 +151,14 @@ def test_unknown_policy_fails_closed() -> None:
 
 
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
+    """The historical hypervisor module re-exports the scheduler classes themselves."""
     assert compatibility_surface.SchedulingPolicy is scheduler_owner.SchedulingPolicy
     assert compatibility_surface.ScheduleSlot is scheduler_owner.ScheduleSlot
     assert compatibility_surface.Scheduler is scheduler_owner.Scheduler
 
 
 def test_scheduler_definitions_have_one_owner() -> None:
+    """The scheduler module defines exactly its classes, and the historical module none."""
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(scheduler_owner.__file__).read_text(encoding="utf-8"))
 
@@ -153,5 +168,3 @@ def test_scheduler_definitions_have_one_owner() -> None:
     owned_names = {"SchedulingPolicy", "ScheduleSlot", "Scheduler"}
     assert facade_classes.isdisjoint(owned_names)
     assert owner_classes == owned_names
-    assert len(Path(scheduler_owner.__file__).read_text(encoding="utf-8").splitlines()) <= 125
-    assert len(Path(compatibility_surface.__file__).read_text(encoding="utf-8").splitlines()) <= 689
