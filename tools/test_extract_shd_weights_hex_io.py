@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from extract_shd_weights_support import *  # noqa: F403
+from extract_shd_weights import (
+    write_delays_hex,
+    write_int8_hex,
+)
+from extract_shd_weights_support import (
+    torch,
+)
+from pathlib import (
+    Path,
+)
 
 
 class TestHexIO:
+    """Write signed int8 weights and delays as two's-complement hex lines."""
+
     def test_write_signed_int8_hex_round_trip(self, tmp_path: Path) -> None:
+        """Signed int8 weights are written as their two's-complement bytes."""
         w = torch.tensor([[-128, -1, 0, 1, 127]], dtype=torch.int8)
         path = str(tmp_path / "w.hex")
         write_int8_hex(w, path)
@@ -24,6 +36,7 @@ class TestHexIO:
         assert lines == ["80", "ff", "00", "01", "7f"]
 
     def test_write_delays_negative_range(self, tmp_path: Path) -> None:
+        """Negative delays are written as their two's-complement bytes."""
         delays = [-15, -1, 0, 1, 15]
         path = str(tmp_path / "d.hex")
         write_delays_hex(delays, path)

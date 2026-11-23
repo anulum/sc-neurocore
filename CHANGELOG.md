@@ -1287,6 +1287,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The six SHD weight-extraction tool test modules
+  (`tools/test_extract_shd_weights_*`) import their names explicitly
+  instead of through a suppressed star import, gain their missing test
+  docstrings and are enrolled in the docstring policy.
+
 - The 15 equivalence test modules (`tests/equivalence/test_encoder_equiv_*`,
   `tests/test_behavioral_equivalence_*`, `tests/test_equivalence_check_*`
   and `tests/test_equivalence_miter_*`) import their names explicitly

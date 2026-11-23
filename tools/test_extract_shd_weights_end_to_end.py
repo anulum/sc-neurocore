@@ -10,12 +10,27 @@
 
 from __future__ import annotations
 
-from extract_shd_weights_support import *  # noqa: F403
+import os
+import pytest
+from extract_shd_weights import (
+    extract,
+    SHD_LAYERS,
+)
+from extract_shd_weights_support import (
+    _sha256,
+    CKPT,
+)
+from pathlib import (
+    Path,
+)
 
 
 @pytest.mark.skipif(not os.path.exists(CKPT), reason="dcls_max checkpoint not present")
 class TestEndToEnd:
+    """Extract the committed SHD checkpoint into hardware artefacts."""
+
     def test_extraction_produces_all_files(self, tmp_path: Path) -> None:
+        """Extraction writes the weight, sparse and delay files for every layer."""
         out = str(tmp_path / "artifacts")
         stats = extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         files = set(os.listdir(out))
@@ -29,6 +44,7 @@ class TestEndToEnd:
         assert "metadata.json" in files
 
     def test_dequant_error_bounded_for_real_weights(self, tmp_path: Path) -> None:
+        """Each layer's quantisation error stays within half a step and one percent overall."""
         out = str(tmp_path / "artifacts")
         stats = extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         for layer in stats["layers"]:
@@ -37,6 +53,7 @@ class TestEndToEnd:
             assert layer["rel_quant_err"] < 0.01
 
     def test_extracted_delays_are_integers(self, tmp_path: Path) -> None:
+        """Every extracted delay decodes to an integer within the signed range."""
         out = str(tmp_path / "artifacts")
         extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         # delays_*.hex should only contain values that decode to [-15, 15]

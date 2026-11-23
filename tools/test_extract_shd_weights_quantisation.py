@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from extract_shd_weights_support import *  # noqa: F403
+import pytest
+from extract_shd_weights import (
+    quantise_per_tensor_symmetric,
+)
+from extract_shd_weights_support import (
+    torch,
+)
 
 
 class TestQuantisation:
+    """Quantise float weights to int8 with one symmetric scale per tensor."""
+
     def test_zero_tensor(self) -> None:
+        """An all-zero tensor quantises to zeros with a zero scale."""
         w = torch.zeros(10, 5)
         w_q, scale = quantise_per_tensor_symmetric(w)
         assert (w_q == 0).all()
         assert scale == 0.0
 
     def test_symmetric_range(self) -> None:
+        """The largest magnitude maps to plus or minus 127."""
         w = torch.tensor([[-1.0, -0.5, 0.0, 0.5, 1.0]])
         w_q, scale = quantise_per_tensor_symmetric(w)
         # max abs = 1.0 → scale = 1/127
@@ -31,6 +41,7 @@ class TestQuantisation:
         assert int(w_q[0, 2]) == 0
 
     def test_int8_dtype(self) -> None:
+        """Quantised weights are int8 within the signed range."""
         w = torch.randn(10, 10) * 0.5
         w_q, _ = quantise_per_tensor_symmetric(w)
         assert w_q.dtype == torch.int8
@@ -38,6 +49,7 @@ class TestQuantisation:
         assert int(w_q.max()) <= 127
 
     def test_dequant_max_error_bounded(self) -> None:
+        """Dequantisation error never exceeds half a quantisation step."""
         w = torch.randn(50, 50) * 2.5
         w_q, scale = quantise_per_tensor_symmetric(w)
         w_dequant = w_q.float() * scale
@@ -46,6 +58,7 @@ class TestQuantisation:
         assert max_err <= scale / 2 + 1e-6
 
     def test_clipping_outliers(self) -> None:
+        """One large outlier sets the scale without zeroing the small weights."""
         # Single huge outlier shouldn't make all other weights zero
         w = torch.tensor([[100.0, 0.5, -0.5, 0.0, 1.0]])
         w_q, scale = quantise_per_tensor_symmetric(w)

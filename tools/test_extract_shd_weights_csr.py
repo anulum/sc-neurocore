@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from extract_shd_weights_support import *  # noqa: F403
+import pytest
+from extract_shd_weights import (
+    to_csr,
+)
+from extract_shd_weights_support import (
+    torch,
+)
 
 
 class TestCsr:
+    """Convert int8 weight matrices to compressed sparse rows."""
+
     def test_dense_matrix(self) -> None:
+        """A sparse matrix gives its shape, non-zero count and row, column and value arrays."""
         # 90% sparse: 1 nz out of 10
         w = torch.zeros(2, 5, dtype=torch.int8)
         w[0, 2] = 5
@@ -28,6 +37,7 @@ class TestCsr:
         assert csr["sparsity_pct"] == pytest.approx(80.0)
 
     def test_all_zero(self) -> None:
+        """An all-zero matrix gives empty column and value arrays."""
         w = torch.zeros(3, 4, dtype=torch.int8)
         csr = to_csr(w)
         assert csr["nnz"] == 0
@@ -36,6 +46,7 @@ class TestCsr:
         assert csr["values"] == []
 
     def test_dense_no_zeros(self) -> None:
+        """A matrix without zeros reports zero sparsity and full rows."""
         w = torch.full((2, 3), 5, dtype=torch.int8)
         csr = to_csr(w)
         assert csr["nnz"] == 6
