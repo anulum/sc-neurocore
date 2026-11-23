@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2354
+expected_file_count = 2355
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9460,3 +9460,7 @@ rationale = "Declare the Studio jobs modules, their owned definitions and the im
 [[file]]
 path = "tests/test_studio_jobs_architecture.py"
 rationale = "Hold the Studio jobs facade contract, one-way imports and per-module definition ownership."
+
+[[file]]
+path = "tests/test_cosim_support_architecture_architecture_invariants.py"
+rationale = "Pin the co-simulation facade's re-exports, its import-only body and the one-way owner graph."

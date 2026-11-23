@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The co-simulation support architecture test no longer caps the facade
+  and its 29 owner modules by length. In its place,
+  `test_owners_are_facade_independent_and_the_facade_defines_nothing`
+  checks every owner, the statistics module included, for a facade
+  import, and holds the facade to a docstring and imports. Each owner's
+  exact definitions stay pinned by the ownership tests. The test also
+  replaces its suppressed star import with explicit imports.
+
 - The Studio jobs architecture test no longer caps the jobs modules and
   their focused tests at 300 lines. In its place,
   `test_studio_jobs_modules_own_exactly_their_declared_definitions` holds
