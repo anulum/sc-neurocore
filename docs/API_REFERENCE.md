@@ -22552,6 +22552,28 @@ EnergyReport
 
 ## Module `energy.folded_estimator`
 
+### Class `FoldedMetrics`
+The architectural counts of a folded compile that the estimate reads.
+
+:class:`~sc_neurocore.nir_bridge.fpga_compilation_result.FoldedResourceMetrics`
+satisfies this protocol structurally. The estimator names only the counts it uses,
+so it imports no compiler or bridge module, not even for type checking.
+
+- **neurons**()
+  - Total neurons sharing the datapath across all folded populations.
+- **pe_instances**()
+  - Physical processing elements instantiated, one per distinct neuron type.
+- **shared_multipliers**()
+  - Multipliers in the shared weighted fan-in, summed over source columns.
+- **state_ram_bits**()
+  - Total BRAM-backed neuron-state storage, in bits.
+- **cycles_per_tick**()
+  - Clock cycles to advance the whole network by one timestep.
+- **populations**()
+  - Number of folded populations sharing the sequencer and the spike bus.
+- **param_rom_bits**()
+  - Total per-neuron parameter-ROM storage, in bits.
+
 ### Class `FoldedAreaEstimate`
 Area, latency, and power estimate for a folded-interconnect network.
 
@@ -22559,6 +22581,7 @@ All counts are pre-synthesis estimates derived from Yosys-calibrated per-block
 costs; treat them as ~20%-accurate architectural guidance, not synthesis truth.
 
 - **__post_init__**()
+  - Derive the totals, the energy per tick and the fit against the target budget.
 - **as_dict**()
   - Return a plain mapping of the estimate (for JSON artefacts).
 - **summary**()
@@ -22569,9 +22592,9 @@ Estimate folded-interconnect FPGA resources, latency, and power.
 
 Parameters
 ----------
-metrics : FoldedResourceMetrics
+metrics : FoldedMetrics
     The architectural summary attached to a folded compile
-    (``NetworkCompilationResult.folded_metrics``).
+    (``NetworkCompilationResult.folded_metrics``, a ``FoldedResourceMetrics``).
 target : str
     FPGA target key in :data:`sc_neurocore.energy.fpga_models.TARGETS`
     (``'ice40'``, ``'ecp5'``, ``'artix7'``, ``'zynq'``).

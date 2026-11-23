@@ -13,7 +13,7 @@ element per neuron *type* across every neuron of that type, holds per-neuron sta
 in BRAM, and walks the network one neuron per cycle. Its resource profile is
 therefore unlike the fully-unrolled direct path that :mod:`sc_neurocore.energy.estimator`
 models (one neuron datapath per neuron); this module maps the architectural counts
-in a :class:`~sc_neurocore.nir_bridge.fpga_compiler.FoldedResourceMetrics` summary
+in a :class:`~sc_neurocore.nir_bridge.fpga_compilation_result.FoldedResourceMetrics` summary
 onto the same Yosys-calibrated per-block costs in :mod:`sc_neurocore.energy.fpga_models`,
 so the folded estimate inherits those primitives' accuracy (~20% of synthesis) rather
 than introducing new, uncalibrated coefficients.
@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from .fpga_models import (
     TARGETS,
@@ -55,8 +55,49 @@ from .fpga_models import (
     AER_ROUTER,
 )
 
-if TYPE_CHECKING:
-    from sc_neurocore.nir_bridge.fpga_compiler import FoldedResourceMetrics
+
+class FoldedMetrics(Protocol):
+    """The architectural counts of a folded compile that the estimate reads.
+
+    :class:`~sc_neurocore.nir_bridge.fpga_compilation_result.FoldedResourceMetrics`
+    satisfies this protocol structurally. The estimator names only the counts it uses,
+    so it imports no compiler or bridge module, not even for type checking.
+    """
+
+    @property
+    def neurons(self) -> int:
+        """Total neurons sharing the datapath across all folded populations."""
+        ...
+
+    @property
+    def pe_instances(self) -> int:
+        """Physical processing elements instantiated, one per distinct neuron type."""
+        ...
+
+    @property
+    def shared_multipliers(self) -> int:
+        """Multipliers in the shared weighted fan-in, summed over source columns."""
+        ...
+
+    @property
+    def state_ram_bits(self) -> int:
+        """Total BRAM-backed neuron-state storage, in bits."""
+        ...
+
+    @property
+    def cycles_per_tick(self) -> int:
+        """Clock cycles to advance the whole network by one timestep."""
+        ...
+
+    @property
+    def populations(self) -> int:
+        """Number of folded populations sharing the sequencer and the spike bus."""
+        ...
+
+    @property
+    def param_rom_bits(self) -> int:
+        """Total per-neuron parameter-ROM storage, in bits."""
+        ...
 
 
 @dataclass
@@ -89,6 +130,7 @@ class FoldedAreaEstimate:
     lut_utilisation_pct: float = field(init=False)
 
     def __post_init__(self) -> None:
+        """Derive the totals, the energy per tick and the fit against the target budget."""
         self.total_luts = self.pe_luts + self.multiplier_luts + self.rom_luts + self.infra_luts
         self.total_ffs = self.spike_bus_ffs + self.sequencer_ffs
         self.total_bram_kb = self.bram_bits / 8192.0
@@ -150,7 +192,7 @@ class FoldedAreaEstimate:
 
 
 def estimate_folded_area(
-    metrics: FoldedResourceMetrics,
+    metrics: FoldedMetrics,
     *,
     target: str = "ice40",
     data_width: int = 16,
@@ -162,9 +204,9 @@ def estimate_folded_area(
 
     Parameters
     ----------
-    metrics : FoldedResourceMetrics
+    metrics : FoldedMetrics
         The architectural summary attached to a folded compile
-        (``NetworkCompilationResult.folded_metrics``).
+        (``NetworkCompilationResult.folded_metrics``, a ``FoldedResourceMetrics``).
     target : str
         FPGA target key in :data:`sc_neurocore.energy.fpga_models.TARGETS`
         (``'ice40'``, ``'ecp5'``, ``'artix7'``, ``'zynq'``).

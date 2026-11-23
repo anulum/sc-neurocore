@@ -446,6 +446,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.energy.folded_estimator` no longer imports
+  `FoldedResourceMetrics`, the summary of the NIR bridge's FPGA compiler,
+  not even for type checking. It names the seven counts the estimate reads
+  in a structural `FoldedMetrics` protocol, which that dataclass satisfies
+  unchanged, so the energy package needs no bridge module. A test keeps the
+  protocol, the attributes the estimator reads and the dataclass fields in
+  step. Behaviour is unchanged.
+
 - The copyright notices state the project's two dates, concepts from 1996
   and code from 2020, instead of a third range starting in 1998. This
   covers COPYRIGHT, the NOTICE files, CONTRIBUTING, the README, the REUSE
