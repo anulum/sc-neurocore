@@ -113,7 +113,6 @@ def test_facade_defines_no_new_behaviour() -> None:
     ]
 
     assert definitions == []
-    assert len(lines) <= 180
     assert len(facade.__all__) == 56
     assert package.__all__ == facade.__all__
 

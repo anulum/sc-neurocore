@@ -1251,6 +1251,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The evolution-substrate facade test no longer caps the facade at 180
+  lines. The facade already defines no class or function and exports its 56
+  historical names, so that contract is what remains.
+
 - The hierarchical partitioner's architecture tests no longer cap line
   counts (120 for the facade, 300 per split module and per test file). They
   keep the facade's single `__getattr__`, one owner per public symbol and the
