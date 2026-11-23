@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+import pytest
+from sc_neurocore.uvm_gen.uvm_gen import (
+    ScoreboardConfig,
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestGoldenModelScoreboard:
-    def test_golden_comparison_enabled_with_explicit_reference(self):
+    """Golden-model comparison in the generated scoreboard."""
+
+    def test_golden_comparison_enabled_with_explicit_reference(self) -> None:
+        """An explicit reference expression becomes the golden computation."""
         sb = ScoreboardConfig(
             check_golden_comparison=True,
             golden_expressions={"v_out": "txn.I_t"},
@@ -24,7 +34,8 @@ class TestGoldenModelScoreboard:
         assert "golden_compute" in bench.scoreboard_sv
         assert "return txn.I_t;" in bench.scoreboard_sv
 
-    def test_golden_vars_present(self):
+    def test_golden_vars_present(self) -> None:
+        """The scoreboard declares its expected outputs."""
         sb = ScoreboardConfig(
             check_golden_comparison=True,
             golden_expressions={"v_out": "txn.I_t"},
@@ -33,7 +44,8 @@ class TestGoldenModelScoreboard:
         bench = gen.generate(lif_module())
         assert "expected_v_out" in bench.scoreboard_sv
 
-    def test_mismatch_detection(self):
+    def test_mismatch_detection(self) -> None:
+        """The scoreboard reports a mismatch."""
         sb = ScoreboardConfig(
             check_golden_comparison=True,
             golden_expressions={"v_out": "txn.I_t"},
@@ -42,13 +54,15 @@ class TestGoldenModelScoreboard:
         bench = gen.generate(lif_module())
         assert "MISMATCH" in bench.scoreboard_sv
 
-    def test_golden_comparison_requires_explicit_reference(self):
+    def test_golden_comparison_requires_explicit_reference(self) -> None:
+        """Golden comparison without a reference expression is refused."""
         sb = ScoreboardConfig(check_golden_comparison=True)
         gen = UVMGenerator(scoreboard=sb)
         with pytest.raises(ValueError, match="Missing golden reference expression"):
             gen.generate(lif_module())
 
-    def test_golden_disabled(self):
+    def test_golden_disabled(self) -> None:
+        """Without golden comparison the scoreboard has no golden computation."""
         sb = ScoreboardConfig(check_golden_comparison=False)
         gen = UVMGenerator(scoreboard=sb)
         bench = gen.generate(lif_module())

@@ -10,82 +10,104 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    UVMBenchmark,
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    dense_module,
+    lif_module,
+)
 
 
 class TestUVMGenerator:
-    def test_generate_returns_benchmark(self):
+    """The files of a generated UVM testbench."""
+
+    def test_generate_returns_benchmark(self) -> None:
+        """Generation returns a benchmark named after the DUT."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert isinstance(bench, UVMBenchmark)
         assert bench.module_name == "sc_lif_neuron"
 
-    def test_transaction_has_fields(self):
+    def test_transaction_has_fields(self) -> None:
+        """The transaction holds the DUT inputs as a sequence item."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "I_t" in bench.transaction_sv
         assert "leak_k" in bench.transaction_sv
         assert "uvm_sequence_item" in bench.transaction_sv
 
-    def test_transaction_has_constraints(self):
+    def test_transaction_has_constraints(self) -> None:
+        """The transaction has constraints."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "constraint" in bench.transaction_sv
 
-    def test_sequence_has_random(self):
+    def test_sequence_has_random(self) -> None:
+        """The sequence file has a random sequence with a body."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "random_seq" in bench.sequence_sv
         assert "body" in bench.sequence_sv
 
-    def test_sequence_has_corner(self):
+    def test_sequence_has_corner(self) -> None:
+        """The sequence file has a corner-case sequence."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "corner_seq" in bench.sequence_sv
 
-    def test_sequence_has_lfsr(self):
+    def test_sequence_has_lfsr(self) -> None:
+        """The sequence file has an LFSR sequence."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "lfsr_seq" in bench.sequence_sv
         assert "lfsr[15]" in bench.sequence_sv
 
-    def test_driver_has_drive_logic(self):
+    def test_driver_has_drive_logic(self) -> None:
+        """The driver drives the inputs through the interface."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "driver" in bench.driver_sv
         assert "vif" in bench.driver_sv
         assert "I_t" in bench.driver_sv
 
-    def test_monitor_samples_ports(self):
+    def test_monitor_samples_ports(self) -> None:
+        """The monitor samples the spike output into its analysis port."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "monitor" in bench.monitor_sv
         assert "spike_out" in bench.monitor_sv
         assert "analysis_port" in bench.monitor_sv
 
-    def test_scoreboard_checks(self):
+    def test_scoreboard_checks(self) -> None:
+        """The scoreboard counts its transactions."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "scoreboard" in bench.scoreboard_sv
         assert "transaction_count" in bench.scoreboard_sv
 
-    def test_scoreboard_spike_check(self):
+    def test_scoreboard_spike_check(self) -> None:
+        """The scoreboard counts spikes."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "spike_count" in bench.scoreboard_sv
 
-    def test_coverage_coverpoints(self):
+    def test_coverage_coverpoints(self) -> None:
+        """The coverage file has a covergroup with coverpoints."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "covergroup" in bench.coverage_sv
         assert "coverpoint" in bench.coverage_sv
 
-    def test_coverage_toggle(self):
+    def test_coverage_toggle(self) -> None:
+        """The coverage file covers spike toggling."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "spike_out_toggle" in bench.coverage_sv
 
-    def test_agent_connections(self):
+    def test_agent_connections(self) -> None:
+        """The agent holds a driver, a monitor and a sequencer."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "agent" in bench.agent_sv
@@ -93,63 +115,73 @@ class TestUVMGenerator:
         assert "mon" in bench.agent_sv
         assert "sqr" in bench.agent_sv
 
-    def test_env_wiring(self):
+    def test_env_wiring(self) -> None:
+        """The environment connects the monitor in its connect phase."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "env" in bench.env_sv
         assert "connect_phase" in bench.env_sv
         assert "agt.mon.ap.connect" in bench.env_sv
 
-    def test_top_has_dut(self):
+    def test_top_has_dut(self) -> None:
+        """The top module instantiates the DUT."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "sc_lif_neuron" in bench.top_sv
         assert "module tb_sc_lif_neuron_top" in bench.top_sv
 
-    def test_top_has_clock_gen(self):
+    def test_top_has_clock_gen(self) -> None:
+        """The top module generates the clock."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "always #5" in bench.top_sv
 
-    def test_top_has_reset(self):
+    def test_top_has_reset(self) -> None:
+        """The top module asserts and releases reset."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "rst_n = 0" in bench.top_sv
         assert "rst_n = 1" in bench.top_sv
 
-    def test_top_has_test_class(self):
+    def test_top_has_test_class(self) -> None:
+        """The top module defines and runs a UVM test."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "uvm_test" in bench.top_sv
         assert "run_test" in bench.top_sv
 
-    def test_top_has_interface(self):
+    def test_top_has_interface(self) -> None:
+        """The top module declares the DUT interface."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "interface sc_lif_neuron_if" in bench.top_sv
 
-    def test_sby_config_valid(self):
+    def test_sby_config_valid(self) -> None:
+        """The SymbiYosys configuration proves with an SMT solver."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "[options]" in bench.sby_config
         assert "prove" in bench.sby_config
         assert "smtbmc" in bench.sby_config
 
-    def test_filelist(self):
+    def test_filelist(self) -> None:
+        """The file list names the eleven testbench files."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert len(bench.filelist) == 11
         assert "sc_lif_neuron_transaction.sv" in bench.filelist
         assert "sc_lif_neuron_bind.sv" in bench.filelist
 
-    def test_to_dict_keys(self):
+    def test_to_dict_keys(self) -> None:
+        """The file dictionary holds the transaction and top files."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         d = bench.to_dict()
         assert "sc_lif_neuron_transaction.sv" in d
         assert "tb_sc_lif_neuron_top.sv" in d
 
-    def test_spdx_in_all_files(self):
+    def test_spdx_in_all_files(self) -> None:
+        """Every generated file carries an SPDX header."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         skip_ext = (".sby", ".list")
@@ -158,7 +190,8 @@ class TestUVMGenerator:
                 continue
             assert "SPDX" in content, f"missing SPDX in {fname}"
 
-    def test_dense_layer_generation(self):
+    def test_dense_layer_generation(self) -> None:
+        """A dense-layer DUT gets its own top and bus driver."""
         gen = UVMGenerator()
         bench = gen.generate(dense_module())
         assert "sc_dense_layer_core" in bench.top_sv

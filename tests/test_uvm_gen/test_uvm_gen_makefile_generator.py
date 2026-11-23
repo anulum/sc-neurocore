@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    SIM_TARGETS,
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestMakefileGenerator:
-    def test_makefile_generated(self):
+    """The generated simulation Makefile."""
+
+    def test_makefile_generated(self) -> None:
+        """A Makefile is generated."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert len(bench.makefile) > 0
 
-    def test_makefile_has_targets(self):
+    def test_makefile_has_targets(self) -> None:
+        """The Makefile has compile, simulation, coverage and clean targets."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "compile:" in bench.makefile
@@ -27,12 +37,14 @@ class TestMakefileGenerator:
         assert "coverage:" in bench.makefile
         assert "clean:" in bench.makefile
 
-    def test_makefile_has_regression(self):
+    def test_makefile_has_regression(self) -> None:
+        """The Makefile has a regression target."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "regression:" in bench.makefile
 
-    def test_sim_targets_defined(self):
+    def test_sim_targets_defined(self) -> None:
+        """VCS, Questa and Xcelium are known simulators."""
         assert "vcs" in SIM_TARGETS
         assert "questa" in SIM_TARGETS
         assert "xcelium" in SIM_TARGETS

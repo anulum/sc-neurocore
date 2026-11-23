@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    RTLModule,
+)
+from uvm_gen_support import (
+    PARAMLESS_VERILOG_WITH_BLANK_PORT,
+)
 
 
-def test_from_verilog_source_handles_paramless_module_and_blank_port_entries():
+def test_from_verilog_source_handles_paramless_module_and_blank_port_entries() -> None:
+    """A module without parameters keeps its ports and drops blank port entries."""
     # No `#(...)` block exercises the parameter-less port-section branch, and the
     # stray comma yields a blank port entry that must be skipped, not parsed.
     module = RTLModule.from_verilog_source(PARAMLESS_VERILOG_WITH_BLANK_PORT)

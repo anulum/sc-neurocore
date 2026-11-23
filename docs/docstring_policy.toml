@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2622
+expected_file_count = 2634
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10532,3 +10532,51 @@ rationale = "Exercise the optimizer suite: sc optimizer optimization."
 [[file]]
 path = "tests/test_optimizer/test_sc_optimizer_resource_estimation.py"
 rationale = "Exercise the optimizer suite: sc optimizer resource estimation."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_assertion_bind.py"
+rationale = "Exercise the UVM testbench generator: assertion bind."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_configuration.py"
+rationale = "Exercise the UVM testbench generator: configuration."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_coverage_target.py"
+rationale = "Exercise the UVM testbench generator: coverage target."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_formal_links.py"
+rationale = "Exercise the UVM testbench generator: formal links."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_free_tests.py"
+rationale = "Exercise the UVM testbench generator: free tests."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_golden_model_scoreboard.py"
+rationale = "Exercise the UVM testbench generator: golden model scoreboard."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_makefile_generator.py"
+rationale = "Exercise the UVM testbench generator: makefile generator."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_multi_dut.py"
+rationale = "Exercise the UVM testbench generator: multi dut."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_regression_list.py"
+rationale = "Exercise the UVM testbench generator: regression list."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_scc_coverage.py"
+rationale = "Exercise the UVM testbench generator: scc coverage."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_toggle_coverage.py"
+rationale = "Exercise the UVM testbench generator: toggle coverage."
+
+[[file]]
+path = "tests/test_uvm_gen/test_uvm_gen_uvm_generator.py"
+rationale = "Exercise the UVM testbench generator: uvm generator."

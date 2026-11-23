@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    CoverageSpec,
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestSCCCoverage:
-    def test_scc_bins_generated(self):
+    """SCC coverage bins in the generated coverage."""
+
+    def test_scc_bins_generated(self) -> None:
+        """The coverage file holds SCC bins."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "scc" in bench.coverage_sv.lower()
 
-    def test_scc_bins_count(self):
+    def test_scc_bins_count(self) -> None:
+        """The configured number of SCC bins reaches the coverage file."""
         cov = CoverageSpec(scc_bins=12)
         gen = UVMGenerator(coverage=cov)
         bench = gen.generate(lif_module())

@@ -10,23 +10,33 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestRegressionList:
-    def test_regression_list_generated(self):
+    """The generated regression list."""
+
+    def test_regression_list_generated(self) -> None:
+        """A regression list is generated."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert len(bench.regression_list) > 0
 
-    def test_regression_has_tests(self):
+    def test_regression_has_tests(self) -> None:
+        """The list holds random, corner and LFSR tests."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "random" in bench.regression_list
         assert "corner" in bench.regression_list
         assert "lfsr" in bench.regression_list
 
-    def test_regression_in_dict(self):
+    def test_regression_in_dict(self) -> None:
+        """The regression list appears in the file dictionary."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         d = bench.to_dict()

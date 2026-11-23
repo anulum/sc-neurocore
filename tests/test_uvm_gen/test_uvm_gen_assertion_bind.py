@@ -10,36 +10,49 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestAssertionBind:
-    def test_bind_generated(self):
+    """The generated SystemVerilog assertion bind file."""
+
+    def test_bind_generated(self) -> None:
+        """A bind file is generated."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert len(bench.bind_sv) > 0
 
-    def test_bind_has_assertions(self):
+    def test_bind_has_assertions(self) -> None:
+        """The bind file holds assertion properties."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "assert property" in bench.bind_sv
 
-    def test_bind_has_cover(self):
+    def test_bind_has_cover(self) -> None:
+        """The bind file holds cover properties."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "cover property" in bench.bind_sv
 
-    def test_bind_has_reset_check(self):
+    def test_bind_has_reset_check(self) -> None:
+        """The bind file checks the reset signal."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "rst_n" in bench.bind_sv
 
-    def test_bind_module_name(self):
+    def test_bind_module_name(self) -> None:
+        """The bind file names its assertion module after the DUT."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "sc_lif_neuron_assertions" in bench.bind_sv
 
-    def test_bind_in_dict(self):
+    def test_bind_in_dict(self) -> None:
+        """The bind file appears in the file dictionary."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         d = bench.to_dict()

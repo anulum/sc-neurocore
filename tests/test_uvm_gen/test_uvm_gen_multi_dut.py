@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    dense_module,
+    lif_module,
+)
 
 
 class TestMultiDUT:
-    def test_generate_multi(self):
+    """Testbench generation for several DUTs at once."""
+
+    def test_generate_multi(self) -> None:
+        """Two DUTs give two testbenches named after them."""
         gen = UVMGenerator()
         benchmarks = gen.generate_multi([lif_module(), dense_module()])
         assert len(benchmarks) == 2
         assert benchmarks[0].module_name == "sc_lif_neuron"
         assert benchmarks[1].module_name == "sc_dense_layer_core"
 
-    def test_multi_independent(self):
+    def test_multi_independent(self) -> None:
+        """The two testbenches have different top files."""
         gen = UVMGenerator()
         benchmarks = gen.generate_multi([lif_module(), dense_module()])
         assert benchmarks[0].top_sv != benchmarks[1].top_sv

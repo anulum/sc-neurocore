@@ -10,29 +10,40 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestFormalLinks:
-    def test_generate_links(self):
+    """Links from the testbench to formal properties."""
+
+    def test_generate_links(self) -> None:
+        """Formal links are generated."""
         gen = UVMGenerator()
         rtl = lif_module()
         links = gen.generate_formal_links(rtl)
         assert len(links) > 0
 
-    def test_link_has_assertion(self):
+    def test_link_has_assertion(self) -> None:
+        """Each link holds an assertion property."""
         gen = UVMGenerator()
         links = gen.generate_formal_links(lif_module())
         for link in links:
             assert "assert property" in link.assertion_sv
 
-    def test_link_has_cover(self):
+    def test_link_has_cover(self) -> None:
+        """Each link holds a cover property."""
         gen = UVMGenerator()
         links = gen.generate_formal_links(lif_module())
         for link in links:
             assert "cover property" in link.cover_sv
 
-    def test_link_references_reset(self):
+    def test_link_references_reset(self) -> None:
+        """Some link's assertion checks the reset signal."""
         gen = UVMGenerator()
         links = gen.generate_formal_links(lif_module())
         any_rst = any("rst_n" in link.assertion_sv for link in links)

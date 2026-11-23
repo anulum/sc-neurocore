@@ -10,23 +10,34 @@
 
 from __future__ import annotations
 
-from uvm_gen_support import *  # noqa: F403
+from sc_neurocore.uvm_gen.uvm_gen import (
+    CoverageSpec,
+    UVMGenerator,
+)
+from uvm_gen_support import (
+    lif_module,
+)
 
 
 class TestCoverageTarget:
-    def test_target_percent_in_coverage(self):
+    """The coverage target of the generated testbench."""
+
+    def test_target_percent_in_coverage(self) -> None:
+        """The default target of 95 percent reaches the coverage file."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "coverage_target" in bench.coverage_sv
         assert "95.0" in bench.coverage_sv
 
-    def test_custom_target(self):
+    def test_custom_target(self) -> None:
+        """A custom target of 99 percent reaches the coverage file."""
         cov = CoverageSpec(target_percent=99.0)
         gen = UVMGenerator(coverage=cov)
         bench = gen.generate(lif_module())
         assert "99.0" in bench.coverage_sv
 
-    def test_warning_on_miss(self):
+    def test_warning_on_miss(self) -> None:
+        """Missing the target raises a warning."""
         gen = UVMGenerator()
         bench = gen.generate(lif_module())
         assert "uvm_warning" in bench.coverage_sv.lower() or "warning" in bench.coverage_sv.lower()

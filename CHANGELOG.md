@@ -1320,6 +1320,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 UVM testbench-generator test modules (`tests/test_uvm_gen`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and return annotations and
+  are enrolled in the docstring policy.
+
 - The 11 optimizer and hardware-observation test modules
   (`tests/test_optimizer`) import their names explicitly instead of
   through a suppressed star import, gain their missing module and test
