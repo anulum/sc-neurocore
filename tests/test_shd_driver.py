@@ -508,6 +508,51 @@ def test_legacy_wrapper_mode_and_signed_voltages_preserved() -> None:
     assert int(voltages[19]) == 83
 
 
+class BudgetedBus(ScriptedBus):
+    """Scripted bus that fails the test instead of hanging once a read budget is spent."""
+
+    def __init__(self, responses: dict[int, list[int] | int], *, budget: int) -> None:
+        super().__init__(responses)
+        self._budget = budget
+        self.ctrl_reads = 0
+
+    def read(self, offset: int) -> int:
+        """Count ``CTRL`` reads and refuse every read past the budget."""
+        assert self._budget > 0, "read budget spent: the done wait is unbounded"
+        self._budget -= 1
+        if offset == drv.REG_CTRL:
+            self.ctrl_reads += 1
+        return super().read(offset)
+
+
+def test_legacy_classify_bounds_the_done_wait() -> None:
+    """classify(mode='legacy') polls CTRL.done a bounded number of times and aborts on idle."""
+    raster = np.zeros((3, 140), dtype=np.uint8)
+
+    hung = BudgetedBus({drv.REG_CTRL: drv.CTRL_BUSY}, budget=10_000)
+    with pytest.raises(drv.SHDDriverError, match="timed out after 50 polls") as timed_out:
+        drv.SHDAccelerator(hung).classify(raster, max_poll_iters=50)
+    assert hung.ctrl_reads == 50
+    assert timed_out.value.status == drv.CTRL_BUSY
+
+    idle = BudgetedBus({drv.REG_CTRL: 0}, budget=10_000)
+    with pytest.raises(drv.SHDDriverError, match="idle without done") as went_idle:
+        drv.SHDAccelerator(idle).classify(raster, max_poll_iters=50)
+    assert idle.ctrl_reads == 1
+    assert went_idle.value.status == 0
+
+    refused = BudgetedBus({drv.REG_CTRL: drv.CTRL_DONE}, budget=10_000)
+    with pytest.raises(ValueError, match="max_poll_iters"):
+        drv.SHDAccelerator(refused).classify(raster, max_poll_iters=0)
+    assert refused.writes == []
+
+    finished = BudgetedBus(
+        {drv.REG_CTRL: [drv.CTRL_BUSY, drv.CTRL_BUSY, drv.CTRL_DONE]}, budget=10_000
+    )
+    assert drv.SHDAccelerator(finished).classify(raster, max_poll_iters=3) == 0
+    assert finished.ctrl_reads == 3
+
+
 def test_validation_and_unsealed_or_abort_refusals(tmp_path: Path) -> None:
     """Driver refuses invalid inputs before bus writes and aborts with status on faults."""
     with pytest.raises(TypeError, match="read.*write"):

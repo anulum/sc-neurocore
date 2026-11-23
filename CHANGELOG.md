@@ -546,6 +546,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `SHDAccelerator.classify(mode="legacy")` waited for `CTRL.done` in an
+  unbounded loop, so a hung legacy wrapper hung the caller. It now reads
+  `CTRL` at most `max_poll_iters` times, raises `SHDDriverError` with the
+  last status word on a timeout or when the wrapper drops `busy` without
+  `done`, and refuses `max_poll_iters < 1` before any bus write, as the
+  event path does.
+
 - The integrity-checked loader of `sc_shd_event_axi` seals a network only
   after exactly `LOAD_WORDS` committed words (`4,940` for `P=8`) with a
   matching CRC-32. It had sealed any non-empty stream whose CRC matched, so

@@ -730,7 +730,9 @@ class SHDAccelerator:
             commits); ``"event"`` targets ``sc_shd_event_axi`` via
             :meth:`classify_event`.
         max_poll_iters : int, default 100000
-            Bounded poll limit used when ``mode="event"``.
+            Maximum MMIO status reads per wait: each ``frame_ready`` or ``done``
+            wait when ``mode="event"``, and the final ``done`` wait when
+            ``mode="legacy"``.
 
         Returns
         -------
@@ -740,12 +742,19 @@ class SHDAccelerator:
         Raises
         ------
         ValueError
-            If ``mode`` is neither ``"legacy"`` nor ``"event"``.
+            If ``mode`` is neither ``"legacy"`` nor ``"event"``, or
+            ``max_poll_iters < 1``.
+        SHDDriverError
+            If, in legacy mode, the wrapper drops ``busy`` without ``done`` or
+            polling exceeds ``max_poll_iters``; event-mode refusals are those
+            of :meth:`run_event`.
         """
         if mode == "event":
             return self.classify_event(spike_raster, max_poll_iters=max_poll_iters)
         if mode != "legacy":
             raise ValueError(f"mode must be 'legacy' or 'event', got {mode!r}")
+        if max_poll_iters < 1:
+            raise ValueError(f"max_poll_iters must be >= 1, got {max_poll_iters}")
 
         t_orig = spike_raster.shape[0]
         self._mmio.write(_T_ORIG, t_orig)
@@ -771,12 +780,26 @@ class SHDAccelerator:
             self._mmio.write(_SPIKE_IN_4, (bits >> 128) & 0xFFF)
             self._mmio.write(_SPIKE_COMMIT, 1)
 
-        while True:
-            status = self._mmio.read(_CTRL)
-            if status & 0x4:
-                break
-
+        self._poll_legacy_done(max_poll_iters)
         return self.read_output_argmax()
+
+    def _poll_legacy_done(self, max_poll_iters: int) -> None:
+        # sc_shd_axi_wrapper's CTRL carries only busy (bit 1) and the sticky done (bit 2).
+        status = 0
+        for _ in range(max_poll_iters):
+            status = self._mmio.read(_CTRL) & 0xFFFF_FFFF
+            if status & CTRL_DONE:
+                return
+            if (status & CTRL_BUSY) == 0:
+                raise SHDDriverError(
+                    f"legacy accelerator idle without done after start (CTRL=0x{status:08x})",
+                    status=status,
+                )
+        raise SHDDriverError(
+            f"timed out after {max_poll_iters} polls waiting for legacy CTRL.done "
+            f"(CTRL=0x{status:08x})",
+            status=status,
+        )
 
     def read_output_argmax(self) -> int:
         """Read the 20 output voltage sums and return argmax."""
