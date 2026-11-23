@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.analysis_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bioware.bioware import (
+    LatencyBudget,
+)
 
 
 class TestLatencyBudget:
+    """The closed-loop latency budget."""
+
     def test_within_budget(self) -> None:
+        """A latency within budget is no violation."""
         lb = LatencyBudget(max_latency_us=1000.0)
         assert lb.record(500.0) is True
         assert lb.violations == 0
 
     def test_exceeds_budget(self) -> None:
+        """A latency over budget is a violation."""
         lb = LatencyBudget(max_latency_us=1000.0)
         assert lb.record(1500.0) is False
         assert lb.violations == 1
 
     def test_compliance_ratio(self) -> None:
+        """Two compliant of three give a ratio of two thirds."""
         lb = LatencyBudget(max_latency_us=1000.0)
         lb.record(500.0)
         lb.record(500.0)
@@ -32,16 +40,19 @@ class TestLatencyBudget:
         assert lb.compliance_ratio == pytest.approx(2.0 / 3.0)
 
     def test_p99_latency(self) -> None:
+        """The 99th percentile latency is reported."""
         lb = LatencyBudget()
         for i in range(100):
             lb.record(float(i))
         assert lb.p99_latency_us > 90.0
 
     def test_mean_latency(self) -> None:
+        """The mean latency averages the records."""
         lb = LatencyBudget()
         lb.record(100.0)
         lb.record(300.0)
         assert lb.mean_latency_us == pytest.approx(200.0)
 
     def test_compliance_ratio_empty_history(self) -> None:
+        """No records give a compliance ratio of 1."""
         assert LatencyBudget().compliance_ratio == 1.0

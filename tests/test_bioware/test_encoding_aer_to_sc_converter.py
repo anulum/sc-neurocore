@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.encoding_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    AEREvent,
+    AERToSCConverter,
+)
 
 
 class TestAERToSCConverter:
+    """Converting address events to bitstreams."""
+
     def test_convert(self) -> None:
+        """Each neuron gets a bitstream of 128 bits."""
         events = [
             AEREvent(neuron_id=0, timestamp=100),
             AEREvent(neuron_id=0, timestamp=200),
@@ -27,6 +34,7 @@ class TestAERToSCConverter:
         assert len(bitstreams[0]) == 128
 
     def test_density_proportional(self) -> None:
+        """A busier neuron gets a denser bitstream."""
         events = [AEREvent(neuron_id=0, timestamp=i) for i in range(10)]
         events += [AEREvent(neuron_id=1, timestamp=i) for i in range(5)]
         conv = AERToSCConverter(bitstream_length=1024)
@@ -36,11 +44,13 @@ class TestAERToSCConverter:
         assert d0 > d1
 
     def test_empty_events(self) -> None:
+        """No events give no bitstreams."""
         conv = AERToSCConverter()
         bs = conv.convert([])
         assert len(bs) == 0
 
     def test_lfsr_encode_zero_seed_is_reset(self) -> None:
+        """A zero seed still encodes a full uint8 stream."""
         # A zero LFSR register is a fixed point; with lfsr_seed=0 and neuron 0
         # the derived seed is 0 and must be bumped to 1 before stepping.
         conv = AERToSCConverter(bitstream_length=64, num_neurons=4, lfsr_seed=0)

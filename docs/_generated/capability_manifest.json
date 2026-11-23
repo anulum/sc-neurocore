@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5727
+    "test_files": 5723
   },
   "documentation": {
     "public_pages": [
@@ -4260,9 +4260,6 @@
       "tests/test_bioware/__init__.py",
       "tests/test_bioware/acquisition_support.py",
       "tests/test_bioware/analysis_support.py",
-      "tests/test_bioware/encoding_support.py",
-      "tests/test_bioware/experiment_support.py",
-      "tests/test_bioware/plasticity_support.py",
       "tests/test_bioware/session_support.py",
       "tests/test_bioware/test_acquisition_artifact_rejection.py",
       "tests/test_bioware/test_acquisition_refractory_period.py",
@@ -4298,7 +4295,6 @@
       "tests/test_bioware/test_validation_session_free_tests.py",
       "tests/test_bioware/test_validation_session_session_construction_validation.py",
       "tests/test_bioware/test_validation_session_session_frame_validation.py",
-      "tests/test_bioware/validation_contracts_support.py",
       "tests/test_bioware/validation_experiment_support.py",
       "tests/test_bioware/validation_session_support.py",
       "tests/test_bipolar_sc_bipolar_encode_decode.py",

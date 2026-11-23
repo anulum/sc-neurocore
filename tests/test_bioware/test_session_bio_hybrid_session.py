@@ -10,10 +10,30 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.session_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    AERToSCConverter,
+    ArtifactRejector,
+    BioHybridSession,
+    LatencyBudget,
+    MEAConfig,
+    MEAToAERTranscoder,
+    PharmModel,
+    SCToOptoEncoder,
+    SpikeDetector,
+    SpikeSorter,
+)
+from tests.test_bioware.session_support import (
+    _synth_voltage,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestBioHybridSession:
+    """Running a closed-loop bio-hybrid session."""
+
     def _make_session(self) -> BioHybridSession:
         cfg = MEAConfig(num_channels=10)
         det = SpikeDetector(config=cfg)
@@ -29,6 +49,7 @@ class TestBioHybridSession:
         )
 
     def test_process_frame(self) -> None:
+        """A frame gives round 1 with spikes."""
         session = self._make_session()
         data = _synth_voltage(n_channels=10)
         result = session.process_frame(data)
@@ -36,6 +57,7 @@ class TestBioHybridSession:
         assert result["num_spikes"] > 0
 
     def test_full_pipeline(self) -> None:
+        """A frame yields events, bitstreams and light pulses."""
         session = self._make_session()
         data = _synth_voltage(n_channels=10)
         result = session.process_frame(data)
@@ -45,6 +67,7 @@ class TestBioHybridSession:
         assert "health" in result
 
     def test_multiple_rounds(self) -> None:
+        """Three frames are three rounds."""
         session = self._make_session()
         for i in range(3):
             data = _synth_voltage(n_channels=10, seed=42 + i)
@@ -52,6 +75,7 @@ class TestBioHybridSession:
         assert session.round_count == 3
 
     def test_health_in_result(self) -> None:
+        """A frame reports the culture's health."""
         session = self._make_session()
         data = _synth_voltage(n_channels=10)
         result = session.process_frame(data)
@@ -59,6 +83,7 @@ class TestBioHybridSession:
         assert "is_viable" in result["health"]
 
     def test_latency_measured(self) -> None:
+        """A frame reports a positive latency."""
         session = self._make_session()
         data = _synth_voltage(n_channels=10)
         result = session.process_frame(data)
@@ -66,6 +91,7 @@ class TestBioHybridSession:
         assert result["latency_us"] > 0
 
     def test_process_frame_runs_all_optional_stages(self) -> None:
+        """Every optional stage runs on a frame."""
         cfg = MEAConfig(num_channels=10)
         captured: dict[str, object] = {}
 

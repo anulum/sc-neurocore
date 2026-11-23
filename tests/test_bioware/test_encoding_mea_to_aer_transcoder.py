@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.encoding_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    DetectedSpike,
+    MEAToAERTranscoder,
+)
 
 
 class TestMEAToAERTranscoder:
+    """Transcoding MEA spikes to address events."""
+
     def test_transcode(self) -> None:
+        """Two spikes give two events."""
         spikes = [
             DetectedSpike(channel=0, timestamp_s=0.001, amplitude_uv=-50),
             DetectedSpike(channel=3, timestamp_s=0.005, amplitude_uv=-40),
@@ -24,18 +30,21 @@ class TestMEAToAERTranscoder:
         assert len(events) == 2
 
     def test_timestamp_conversion(self) -> None:
+        """Seconds convert to ticks of the event clock."""
         spikes = [DetectedSpike(channel=0, timestamp_s=0.001, amplitude_uv=-50)]
         tc = MEAToAERTranscoder(hw_clock_hz=1e6)
         events = tc.transcode(spikes)
         assert events[0].timestamp == 1000  # 0.001s * 1MHz = 1000
 
     def test_channel_mapping(self) -> None:
+        """The channel map sets the neuron id."""
         spikes = [DetectedSpike(channel=5, timestamp_s=0.0, amplitude_uv=-50)]
         tc = MEAToAERTranscoder(channel_map={5: 42})
         events = tc.transcode(spikes)
         assert events[0].neuron_id == 42
 
     def test_sorted_by_time(self) -> None:
+        """Events are ordered by time."""
         spikes = [
             DetectedSpike(channel=0, timestamp_s=0.005, amplitude_uv=-50),
             DetectedSpike(channel=1, timestamp_s=0.001, amplitude_uv=-30),

@@ -10,31 +10,40 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.plasticity_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    BiologicalSTDP,
+)
 
 
 class TestBiologicalSTDP:
+    """Spike-timing-dependent plasticity."""
+
     def test_potentiation(self) -> None:
+        """Pre before post potentiates."""
         stdp = BiologicalSTDP()
         dw = stdp.compute_dw(5.0)  # post after pre
         assert dw > 0
 
     def test_depression(self) -> None:
+        """Post before pre depresses."""
         stdp = BiologicalSTDP()
         dw = stdp.compute_dw(-5.0)  # pre after post
         assert dw < 0
 
     def test_zero_dt(self) -> None:
+        """Simultaneous spikes change nothing."""
         stdp = BiologicalSTDP()
         assert stdp.compute_dw(0.0) == 0.0
 
     def test_exponential_decay(self) -> None:
+        """Closer spikes change the weight more."""
         stdp = BiologicalSTDP(tau_plus_ms=20.0)
         dw_near = stdp.compute_dw(1.0)
         dw_far = stdp.compute_dw(40.0)
         assert abs(dw_near) > abs(dw_far)
 
     def test_update_weight_bounded(self) -> None:
+        """Updated weights stay between 0 and 512."""
         stdp = BiologicalSTDP(w_max_q88=512, w_min_q88=0)
         w = stdp.update_weight(500, 1.0)
         assert w <= 512

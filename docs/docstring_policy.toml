@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2932
+expected_file_count = 2962
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11772,3 +11772,123 @@ rationale = "Exercise the evolutionary substrate: variation crossover."
 [[file]]
 path = "tests/test_evo_substrate/test_variation_mutation_engine.py"
 rationale = "Exercise the evolutionary substrate: variation mutation engine."
+
+[[file]]
+path = "tests/test_bioware/test_acquisition_artifact_rejection.py"
+rationale = "Exercise the bio-hybrid interface: acquisition artifact rejection."
+
+[[file]]
+path = "tests/test_bioware/test_acquisition_refractory_period.py"
+rationale = "Exercise the bio-hybrid interface: acquisition refractory period."
+
+[[file]]
+path = "tests/test_bioware/test_acquisition_spike_detector.py"
+rationale = "Exercise the bio-hybrid interface: acquisition spike detector."
+
+[[file]]
+path = "tests/test_bioware/test_acquisition_spike_sorter.py"
+rationale = "Exercise the bio-hybrid interface: acquisition spike sorter."
+
+[[file]]
+path = "tests/test_bioware/test_analysis_culture_health.py"
+rationale = "Exercise the bio-hybrid interface: analysis culture health."
+
+[[file]]
+path = "tests/test_bioware/test_analysis_latency_budget.py"
+rationale = "Exercise the bio-hybrid interface: analysis latency budget."
+
+[[file]]
+path = "tests/test_bioware/test_analysis_lfp_extraction.py"
+rationale = "Exercise the bio-hybrid interface: analysis lfp extraction."
+
+[[file]]
+path = "tests/test_bioware/test_analysis_network_burst_detection.py"
+rationale = "Exercise the bio-hybrid interface: analysis network burst detection."
+
+[[file]]
+path = "tests/test_bioware/test_encoding_aer_to_sc_converter.py"
+rationale = "Exercise the bio-hybrid interface: encoding aer to sc converter."
+
+[[file]]
+path = "tests/test_bioware/test_encoding_bitstream_rate_decoder.py"
+rationale = "Exercise the bio-hybrid interface: encoding bitstream rate decoder."
+
+[[file]]
+path = "tests/test_bioware/test_encoding_mea_to_aer_transcoder.py"
+rationale = "Exercise the bio-hybrid interface: encoding mea to aer transcoder."
+
+[[file]]
+path = "tests/test_bioware/test_encoding_opto_safety.py"
+rationale = "Exercise the bio-hybrid interface: encoding opto safety."
+
+[[file]]
+path = "tests/test_bioware/test_encoding_sc_to_opto_encoder.py"
+rationale = "Exercise the bio-hybrid interface: encoding sc to opto encoder."
+
+[[file]]
+path = "tests/test_bioware/test_experiment_bio_audit_log.py"
+rationale = "Exercise the bio-hybrid interface: experiment bio audit log."
+
+[[file]]
+path = "tests/test_bioware/test_experiment_multi_well_plate.py"
+rationale = "Exercise the bio-hybrid interface: experiment multi well plate."
+
+[[file]]
+path = "tests/test_bioware/test_experiment_pharm_model.py"
+rationale = "Exercise the bio-hybrid interface: experiment pharm model."
+
+[[file]]
+path = "tests/test_bioware/test_plasticity_bcm_plasticity.py"
+rationale = "Exercise the bio-hybrid interface: plasticity bcm plasticity."
+
+[[file]]
+path = "tests/test_bioware/test_plasticity_biological_stdp.py"
+rationale = "Exercise the bio-hybrid interface: plasticity biological stdp."
+
+[[file]]
+path = "tests/test_bioware/test_plasticity_homeostatic_plasticity.py"
+rationale = "Exercise the bio-hybrid interface: plasticity homeostatic plasticity."
+
+[[file]]
+path = "tests/test_bioware/test_session_bio_hybrid_frame_result.py"
+rationale = "Exercise the bio-hybrid interface: session bio hybrid frame result."
+
+[[file]]
+path = "tests/test_bioware/test_session_bio_hybrid_session.py"
+rationale = "Exercise the bio-hybrid interface: session bio hybrid session."
+
+[[file]]
+path = "tests/test_bioware/test_validation_contracts_component_boundary_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation contracts component boundary validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_contracts_data_contract_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation contracts data contract validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_contracts_scalar_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation contracts scalar validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_experiment_audit_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation experiment audit validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_experiment_experiment_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation experiment experiment validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_experiment_plasticity_and_fitness_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation experiment plasticity and fitness validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_session_free_tests.py"
+rationale = "Exercise the bio-hybrid interface: validation session free tests."
+
+[[file]]
+path = "tests/test_bioware/test_validation_session_session_construction_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation session session construction validation."
+
+[[file]]
+path = "tests/test_bioware/test_validation_session_session_frame_validation.py"
+rationale = "Exercise the bio-hybrid interface: validation session session frame validation."

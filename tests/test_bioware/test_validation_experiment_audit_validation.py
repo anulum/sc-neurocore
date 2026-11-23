@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_experiment_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bioware.bioware import (
+    BioAuditEntry,
+    BioAuditLog,
+)
+from tests.test_bioware.validation_experiment_support import (
+    _entry,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestAuditValidation:
+    """Checks on audit entries and logs."""
+
     def test_entry_rejects_invalid_metadata(self) -> None:
+        """An entry with bad metadata is rejected."""
         with pytest.raises(ValueError, match="timestamp_iso must not be empty"):
             BioAuditEntry(1, " ", 0, 0, 0.0, 0.0)
         with pytest.raises(ValueError, match="ISO-8601"):
@@ -25,6 +39,7 @@ class TestAuditValidation:
             BioAuditEntry(1, "2026-07-13", 0, 0, 0.0, 0.0, notes=cast(Any, 1))
 
     def test_log_rejects_invalid_identity_entries_and_order(self) -> None:
+        """A log rejects bad identities, entries and order."""
         with pytest.raises(TypeError, match="experiment_id must be a string"):
             BioAuditLog(experiment_id=cast(Any, 1))
         with pytest.raises(ValueError, match="whitespace"):

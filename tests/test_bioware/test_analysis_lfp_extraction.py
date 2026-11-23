@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.analysis_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    extract_lfp_power,
+    LFPBand,
+)
+from tests.test_bioware.analysis_support import (
+    _synth_voltage,
+)
 
 
 class TestLFPExtraction:
+    """Extracting local field potential band power."""
+
     def test_default_bands(self) -> None:
+        """The default bands give one power per channel."""
         data = _synth_voltage(n_samples=2000, n_channels=5)
         result = extract_lfp_power(data, sample_rate_hz=20000.0)
         assert "delta" in result
@@ -22,6 +32,7 @@ class TestLFPExtraction:
         assert result["delta"].shape == (5,)
 
     def test_custom_band(self) -> None:
+        """A custom band gives non-negative power."""
         data = _synth_voltage(n_samples=2000, n_channels=5)
         bands = [LFPBand("custom", 10.0, 50.0)]
         result = extract_lfp_power(data, sample_rate_hz=20000.0, bands=bands)

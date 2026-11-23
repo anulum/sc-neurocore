@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.acquisition_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    MEAConfig,
+    SpikeDetector,
+)
+from tests.test_bioware.acquisition_support import (
+    _synth_voltage,
+)
 
 
 class TestSpikeDetector:
+    """Detecting spikes in MEA voltage data."""
+
     def test_estimate_noise(self) -> None:
+        """Each of ten channels has a positive noise estimate."""
         cfg = MEAConfig(num_channels=10)
         det = SpikeDetector(config=cfg)
         data = _synth_voltage()
@@ -23,6 +33,7 @@ class TestSpikeDetector:
         assert np.all(noise > 0)
 
     def test_detect_spikes(self) -> None:
+        """Injected spikes are detected."""
         cfg = MEAConfig(num_channels=10, spike_threshold_sigma=3.0)
         det = SpikeDetector(config=cfg)
         data = _synth_voltage()
@@ -30,6 +41,7 @@ class TestSpikeDetector:
         assert len(spikes) > 0
 
     def test_spike_channels(self) -> None:
+        """Spikes are found on the injected channel."""
         cfg = MEAConfig(num_channels=10, spike_threshold_sigma=3.0)
         det = SpikeDetector(config=cfg)
         data = _synth_voltage()
@@ -38,6 +50,7 @@ class TestSpikeDetector:
         assert 0 in channels  # We injected spikes on channel 0
 
     def test_spike_has_timestamp(self) -> None:
+        """Detected spikes carry a non-negative time."""
         cfg = MEAConfig(num_channels=10)
         det = SpikeDetector(config=cfg)
         spikes = det.detect(_synth_voltage())
@@ -45,6 +58,7 @@ class TestSpikeDetector:
             assert s.timestamp_s >= 0
 
     def test_edge_spike_waveform_is_padded_to_fixed_length(self) -> None:
+        """A spike at the edge gets a padded full-length waveform."""
         # A spike close to the start of the recording yields a truncated raw
         # snippet that must be left-padded to the fixed snippet length.
         cfg = MEAConfig(num_channels=1, sample_rate_hz=20000.0, spike_threshold_sigma=3.0)

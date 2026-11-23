@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.analysis_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    detect_network_bursts,
+    DetectedSpike,
+)
 
 
 class TestNetworkBurstDetection:
+    """Detecting network-wide bursts."""
+
     def test_synchronised_burst(self) -> None:
+        """A synchronised burst over five channels is found."""
         rng = np.random.default_rng(42)
         spikes: list[DetectedSpike] = []
         # Background: sparse spikes
@@ -43,6 +50,7 @@ class TestNetworkBurstDetection:
         assert bursts[0].participating_channels >= 5
 
     def test_no_burst(self) -> None:
+        """Spikes on one channel, a second apart, give no burst."""
         spikes = [
             DetectedSpike(channel=0, timestamp_s=float(i), amplitude_uv=-30) for i in range(10)
         ]
@@ -50,9 +58,11 @@ class TestNetworkBurstDetection:
         assert len(bursts) == 0
 
     def test_empty_spikes(self) -> None:
+        """No spikes give no burst."""
         assert detect_network_bursts([]) == []
 
     def test_same_timestamp_spikes_have_no_temporal_span(self) -> None:
+        """Spikes at a single instant give no burst."""
         spikes = [
             DetectedSpike(channel=ch, timestamp_s=0.25, amplitude_uv=-40.0) for ch in range(4)
         ]
@@ -60,6 +70,7 @@ class TestNetworkBurstDetection:
         assert detect_network_bursts(spikes, min_channels=1) == []
 
     def test_uniform_bin_counts_have_no_burst_threshold(self) -> None:
+        """Uniform activity gives no burst."""
         spikes = [
             DetectedSpike(channel=0, timestamp_s=0.00, amplitude_uv=-40.0),
             DetectedSpike(channel=1, timestamp_s=0.01, amplitude_uv=-40.0),

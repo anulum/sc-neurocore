@@ -10,26 +10,34 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.plasticity_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    HomeostaticPlasticity,
+)
 
 
 class TestHomeostaticPlasticity:
+    """Homeostatic threshold adjustment."""
+
     def test_at_target_no_change(self) -> None:
+        """Firing at the target keeps the threshold."""
         hp = HomeostaticPlasticity(target_rate_hz=10.0)
         new = hp.update_threshold(256, observed_rate_hz=10.0, dt_ms=100.0)
         assert new == 256
 
     def test_too_fast_increases_threshold(self) -> None:
+        """Firing too fast raises the threshold."""
         hp = HomeostaticPlasticity(target_rate_hz=10.0, tau_homeo_ms=1000.0)
         new = hp.update_threshold(256, observed_rate_hz=50.0, dt_ms=1000.0)
         assert new > 256
 
     def test_too_slow_decreases_threshold(self) -> None:
+        """Firing too slowly lowers the threshold."""
         hp = HomeostaticPlasticity(target_rate_hz=10.0, tau_homeo_ms=1000.0)
         new = hp.update_threshold(256, observed_rate_hz=1.0, dt_ms=1000.0)
         assert new < 256
 
     def test_bounded(self) -> None:
+        """The threshold stays between 64 and 512."""
         hp = HomeostaticPlasticity(max_threshold_q88=512, min_threshold_q88=64)
         new = hp.update_threshold(500, observed_rate_hz=1000.0, dt_ms=10000.0)
         assert new <= 512

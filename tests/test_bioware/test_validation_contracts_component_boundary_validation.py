@@ -10,11 +10,34 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_contracts_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bioware.bioware import (
+    AEREvent,
+    AERToSCConverter,
+    ArtifactRejector,
+    CultureHealth,
+    DetectedSpike,
+    extract_lfp_power,
+    LatencyBudget,
+    LFPBand,
+    MEAConfig,
+    MEAToAERTranscoder,
+    SCToOptoEncoder,
+    SpikeDetector,
+    SpikeSorter,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestComponentBoundaryValidation:
+    """Input checks at each component boundary."""
+
     def test_acquisition_rejects_invalid_configuration_and_frames(self) -> None:
+        """Acquisition rejects bad configuration and short frames."""
         with pytest.raises(TypeError, match="config must be an MEAConfig"):
             SpikeDetector(cast(Any, object()))
         detector = SpikeDetector(MEAConfig(num_channels=1, sample_rate_hz=1_000.0))
@@ -22,6 +45,7 @@ class TestComponentBoundaryValidation:
             detector.detect(np.ones((10, 1)), snippet_ms=0.1)
 
     def test_sorter_rejects_inconsistent_and_assignment_waveforms(self) -> None:
+        """The sorter rejects mismatched waveforms."""
         spikes = [
             DetectedSpike(0, 0.0, -1.0, waveform=np.ones(2)),
             DetectedSpike(0, 0.1, -1.0, waveform=np.ones(3)),
@@ -39,10 +63,12 @@ class TestComponentBoundaryValidation:
             sorter.assign([DetectedSpike(0, 0.0, -1.0, waveform=np.ones(1))])
 
     def test_artifact_rejector_requires_stimulus_inside_frame(self) -> None:
+        """A stimulus outside the frame is rejected."""
         with pytest.raises(ValueError, match="inside the voltage frame"):
             ArtifactRejector().blank(np.ones((10, 1)), [1.0], 10.0)
 
     def test_analysis_rejects_invalid_health_inputs(self) -> None:
+        """Health analysis rejects invalid inputs."""
         with pytest.raises(ValueError, match="must exceed"):
             CultureHealth(min_firing_rate_hz=1.0, max_firing_rate_hz=1.0)
         health = CultureHealth()
@@ -58,6 +84,7 @@ class TestComponentBoundaryValidation:
                 health.assess(counts, 1.0)
 
     def test_lfp_and_latency_configuration_is_fail_closed(self) -> None:
+        """LFP and latency settings reject bad values."""
         with pytest.raises(ValueError, match="name must not be empty"):
             LFPBand(" ", 1.0, 2.0)
         with pytest.raises(ValueError, match="must exceed"):
@@ -76,6 +103,7 @@ class TestComponentBoundaryValidation:
             LatencyBudget(history=[], violations=1)
 
     def test_encoding_rejects_epoch_window_and_lfsr_violations(self) -> None:
+        """Encoding rejects bad epochs, windows and seeds."""
         transcoder = MEAToAERTranscoder()
         with pytest.raises(ValueError, match="precedes"):
             transcoder.transcode([DetectedSpike(0, 0.0, -1.0)], t_start_s=0.1)

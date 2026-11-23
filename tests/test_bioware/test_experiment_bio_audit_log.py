@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.experiment_support import *  # noqa: F403
+import hashlib
+import json
+from sc_neurocore.bioware.bioware import (
+    BioAuditEntry,
+    BioAuditLog,
+)
 
 
 class TestBioAuditLog:
+    """The audit log of a bio-hybrid experiment."""
+
     def test_log_entry(self) -> None:
+        """A logged round is counted."""
         log = BioAuditLog(experiment_id="EXP001")
         log.log(BioAuditEntry(1, "2026-04-16T08:00:00", 100, 5, 500.0, 0.95))
         assert log.total_rounds == 1
 
     def test_to_list(self) -> None:
+        """The log lists rounds with their spike counts."""
         log = BioAuditLog()
         log.log(BioAuditEntry(1, "2026-04-16", 50, 3, 300.0, 0.9))
         entries = log.to_list()
@@ -27,6 +36,7 @@ class TestBioAuditLog:
         assert entries[0]["spikes"] == 50
 
     def test_checksum_deterministic(self) -> None:
+        """The same log gives the same SHA-256 checksum."""
         log = BioAuditLog()
         log.log(BioAuditEntry(1, "2026-04-16", 50, 3, 300.0, 0.9))
         c1 = log.checksum()
@@ -35,6 +45,7 @@ class TestBioAuditLog:
         assert len(c1) == 64  # SHA-256 hex
 
     def test_checksum_changes(self) -> None:
+        """A changed log gives a new checksum."""
         log = BioAuditLog()
         log.log(BioAuditEntry(1, "2026-04-16", 50, 3, 300.0, 0.9))
         c1 = log.checksum()
@@ -43,6 +54,7 @@ class TestBioAuditLog:
         assert c1 != c2
 
     def test_checksum_uses_canonical_schema_and_experiment_identity(self) -> None:
+        """The checksum covers the canonical schema and identity."""
         log = BioAuditLog(experiment_id="EXP001")
         log.log(BioAuditEntry(1, "2026-04-16", 50, 3, 300.0, 0.9))
         payload = {

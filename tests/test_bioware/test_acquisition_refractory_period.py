@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.acquisition_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    MEAConfig,
+    SpikeDetector,
+)
+from tests.test_bioware.acquisition_support import (
+    _synth_voltage,
+)
 
 
 class TestRefractoryPeriod:
+    """The spike detector's refractory period."""
+
     def test_refractory_reduces_spikes(self) -> None:
+        """A refractory period never adds spikes."""
         cfg = MEAConfig(num_channels=10, spike_threshold_sigma=3.0)
         det_no_ref = SpikeDetector(config=cfg, refractory_samples=0)
         det_with_ref = SpikeDetector(config=cfg, refractory_samples=50)
@@ -24,6 +33,7 @@ class TestRefractoryPeriod:
         assert len(spikes_yes) <= len(spikes_no)
 
     def test_refractory_zero_matches_original(self) -> None:
+        """With no refractory period spikes are still found."""
         cfg = MEAConfig(num_channels=10, spike_threshold_sigma=3.0)
         # refractory_samples=0 means no refractory filter
         det = SpikeDetector(config=cfg, refractory_samples=0)

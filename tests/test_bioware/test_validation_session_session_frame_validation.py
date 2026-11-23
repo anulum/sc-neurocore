@@ -10,11 +10,30 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_session_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bioware.bioware import (
+    AERToSCConverter,
+    BioHybridSession,
+    DetectedSpike,
+    MEAConfig,
+    MEAToAERTranscoder,
+    SpikeDetector,
+)
+from tests.test_bioware.validation_session_support import (
+    _parts,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestSessionFrameValidation:
+    """Checks on each processed frame."""
+
     def test_frame_must_fit_aer_epoch_without_advancing_round(self) -> None:
+        """An oversized frame is rejected without a new round."""
         session = BioHybridSession(**_parts())
         long_frame = np.ones((2_000, 2))
         with pytest.raises(ValueError, match="16-bit AER"):
@@ -22,6 +41,7 @@ class TestSessionFrameValidation:
         assert session.round_count == 0
 
     def test_frame_must_fit_converter_window_without_advancing_round(self) -> None:
+        """A frame past the window is rejected without a new round."""
         parts = _parts()
         parts["sc_converter"] = AERToSCConverter(window_ticks=10, num_neurons=2)
         session = BioHybridSession(**parts)
@@ -30,11 +50,14 @@ class TestSessionFrameValidation:
         assert session.round_count == 0
 
     def test_experiment_time_must_be_nonnegative(self) -> None:
+        """A negative start time is rejected."""
         session = BioHybridSession(**_parts())
         with pytest.raises(ValueError, match="t_start_s"):
             session.process_frame(np.ones((1, 2)), t_start_s=-1.0)
 
     def test_health_accounting_ignores_mapped_non_mea_source_channel(self) -> None:
+        """A spike from a non-MEA channel is not counted as activity."""
+
         class _MappedDetector(SpikeDetector):
             def detect(
                 self,

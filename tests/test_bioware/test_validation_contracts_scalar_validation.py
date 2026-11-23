@@ -10,16 +10,34 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_contracts_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bioware.bioware_validation import (
+    require_finite,
+    require_nonnegative,
+    require_nonnegative_int,
+    require_positive,
+    require_positive_int,
+    validate_binary_bitstream,
+    validate_voltage_matrix,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestScalarValidation:
+    """The scalar and array guards."""
+
     @pytest.mark.parametrize("value", [float("nan"), float("inf")])
     def test_require_finite_rejects_non_finite(self, value: float) -> None:
+        """Non-finite values are rejected."""
         with pytest.raises(ValueError, match="value must be finite"):
             require_finite(value, "value")
 
     def test_scalar_sign_and_integer_guards(self) -> None:
+        """Sign and integer guards reject bad values."""
         with pytest.raises(ValueError, match="value must be >= 0"):
             require_nonnegative(-1.0, "value")
         with pytest.raises(ValueError, match="value must be > 0"):
@@ -33,6 +51,7 @@ class TestScalarValidation:
 
     @pytest.mark.parametrize("value", [True, np.bool_(False), "1.0"])
     def test_scalar_guards_reject_non_real_values(self, value: Any) -> None:
+        """Non-real values are rejected."""
         with pytest.raises(TypeError, match="value must be a real number"):
             require_finite(cast(Any, value), "value")
 
@@ -52,10 +71,12 @@ class TestScalarValidation:
         matrix: Any,
         error: type[Exception],
     ) -> None:
+        """Invalid voltage matrices are rejected."""
         with pytest.raises(error):
             validate_voltage_matrix(matrix)
 
     def test_voltage_matrix_rejects_channel_mismatch(self) -> None:
+        """A voltage matrix with the wrong channels is rejected."""
         with pytest.raises(ValueError, match="expected 2"):
             validate_voltage_matrix(np.ones((2, 1)), expected_channels=2)
 
@@ -76,5 +97,6 @@ class TestScalarValidation:
         allow_empty: bool,
         error: type[Exception],
     ) -> None:
+        """Invalid bitstreams are rejected."""
         with pytest.raises(error):
             validate_binary_bitstream(bitstream, name="bits", allow_empty=allow_empty)

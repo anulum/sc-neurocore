@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.analysis_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    CultureHealth,
+)
 
 
 class TestCultureHealth:
+    """Assessing the health of a neural culture."""
+
     def test_healthy_culture(self) -> None:
+        """Enough active channels make the culture viable."""
         ch = CultureHealth(min_active_channels=3)
         counts = np.array([10, 15, 20, 5, 8, 0, 0, 0])
         result = ch.assess(counts, duration_s=1.0)
         assert result["is_viable"] is True
 
     def test_dead_culture(self) -> None:
+        """A silent culture has health 0 and is not viable."""
         ch = CultureHealth(min_active_channels=5)
         counts = np.zeros(60)
         result = ch.assess(counts, duration_s=1.0)
@@ -28,12 +35,14 @@ class TestCultureHealth:
         assert result["is_viable"] is False
 
     def test_bursting_detection(self) -> None:
+        """Two bursting channels are counted."""
         ch = CultureHealth(burst_threshold_hz=50.0)
         counts = np.array([100, 200, 5, 3])
         result = ch.assess(counts, duration_s=1.0)
         assert result["bursting_channels"] == 2
 
     def test_excessive_firing_rate_caps_health(self) -> None:
+        """Excessive firing lowers the health score below 1."""
         # A mean rate above the hyperactivity ceiling scales the health score
         # down rather than leaving it at 1.0.
         ch = CultureHealth(min_active_channels=1, max_firing_rate_hz=10.0)

@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.session_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bioware.bioware import (
+    BioHybridFrameResult,
+)
+from typing import (
+    Any,
+)
 
 
 class TestBioHybridFrameResult:
-    """The packet returned by ``BioHybridSession.process_frame`` must be
-    both a typed dataclass (new callers) and a read-only mapping view
-    (legacy callers that did ``result["round"]``). Both surfaces carry
+    """The packet returned by ``BioHybridSession.process_frame``.
+
+    It must be both a typed dataclass (new callers) and a read-only mapping
+    view (legacy callers that did ``result["round"]``). Both surfaces carry
     identical data; the mapping wraps the dataclass, not a shadow dict.
     """
 
@@ -38,18 +45,21 @@ class TestBioHybridFrameResult:
         return BioHybridFrameResult(**base)
 
     def test_attribute_access(self) -> None:
+        """Fields are readable as attributes."""
         r = self._make()
         assert r.round == 3
         assert r.latency_us == pytest.approx(1234.5)
         assert r.health["score"] == pytest.approx(0.95)
 
     def test_dict_subscript_matches_attribute(self) -> None:
+        """Subscripts return the same objects as attributes."""
         r = self._make()
         assert r["round"] == r.round
         assert r["latency_us"] == r.latency_us
         assert r["health"] is r.health  # same object, not a copy
 
     def test_contains_reports_field_names(self) -> None:
+        """Membership tests report the field names."""
         r = self._make()
         assert "round" in r
         assert "latency_us" in r
@@ -57,17 +67,20 @@ class TestBioHybridFrameResult:
         assert 42 not in r  # non-string keys are not fields
 
     def test_unknown_key_raises_keyerror(self) -> None:
+        """An unknown key raises KeyError."""
         r = self._make()
         with pytest.raises(KeyError, match="nope"):
             _ = r["nope"]
 
     def test_private_attribute_hidden_from_mapping(self) -> None:
+        """Dunder names are hidden from the mapping."""
         # Mapping view must not leak Python dunder / private names.
         r = self._make()
         with pytest.raises(KeyError):
             _ = r["__class__"]
 
     def test_keys_returns_declared_fields(self) -> None:
+        """The keys are the declared fields."""
         r = self._make()
         assert set(r.keys()) == {
             "round",

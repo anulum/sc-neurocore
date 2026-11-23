@@ -10,26 +10,36 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.experiment_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    MEAConfig,
+    MultiWellPlate,
+    WellConfig,
+)
 
 
 class TestMultiWellPlate:
+    """Multi-well culture plates."""
+
     def test_standard_6_well(self) -> None:
+        """The standard plate has six wells."""
         plate = MultiWellPlate.standard_6_well()
         assert plate.num_wells == 6
 
     def test_get_well(self) -> None:
+        """A well is found by its id."""
         plate = MultiWellPlate.standard_6_well()
         w = plate.get_well("W1")
         assert w is not None
         assert w.well_id == "W1"
 
     def test_well_label(self) -> None:
+        """A well label joins its id, tissue and age."""
         w = WellConfig(
             well_id="W1", mea_config=MEAConfig(), culture_type="hippocampal", passage_number=3
         )
         assert w.label == "W1_hippocampal_P3"
 
     def test_get_missing_well(self) -> None:
+        """An unknown well id finds nothing."""
         plate = MultiWellPlate.standard_6_well()
         assert plate.get_well("W99") is None

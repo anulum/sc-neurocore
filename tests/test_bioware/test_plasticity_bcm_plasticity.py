@@ -10,28 +10,36 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.plasticity_support import *  # noqa: F403
+from sc_neurocore.bioware.bioware import (
+    BCMPlasticity,
+)
 
 
 class TestBCMPlasticity:
+    """BCM plasticity with a sliding threshold."""
+
     def test_threshold_update(self) -> None:
+        """Activity raises the sliding threshold above 0."""
         bcm = BCMPlasticity()
         bcm.update_theta(10.0, dt_ms=10.0)
         assert bcm.theta > 0
 
     def test_ltp_above_threshold(self) -> None:
+        """Activity above the threshold potentiates."""
         bcm = BCMPlasticity()
         bcm.theta = 5.0
         dw = bcm.compute_dw(10.0, 10.0)  # post > theta
         assert dw > 0
 
     def test_ltd_below_threshold(self) -> None:
+        """Activity below the threshold depresses."""
         bcm = BCMPlasticity()
         bcm.theta = 20.0
         dw = bcm.compute_dw(10.0, 10.0)  # post < theta
         assert dw < 0
 
     def test_weight_bounded(self) -> None:
+        """The weight never exceeds 512."""
         bcm = BCMPlasticity(w_max_q88=512, w_min_q88=0)
         bcm.theta = 0.0
         w = bcm.update_weight(510, 100.0, 100.0)

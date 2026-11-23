@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_contracts_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bioware.bioware import (
+    AEREvent,
+    BioHybridFrameResult,
+    DetectedSpike,
+    MEAConfig,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestDataContractValidation:
+    """Checks on the shared data records."""
+
     def test_mea_layout_type_is_explicit(self) -> None:
+        """An MEA layout must be a layout object."""
         with pytest.raises(TypeError, match="layout must be a MEALayout"):
             MEAConfig(layout=cast(Any, "60ch"))
         with pytest.raises(TypeError, match="layout must be a MEALayout"):
@@ -31,10 +45,12 @@ class TestDataContractValidation:
         ],
     )
     def test_detected_spike_rejects_invalid_waveforms(self, waveform: Any) -> None:
+        """A spike with an invalid waveform is rejected."""
         with pytest.raises((TypeError, ValueError)):
             DetectedSpike(0, 0.0, -1.0, waveform=waveform)
 
     def test_aer_packet_rejects_out_of_range_fields(self) -> None:
+        """An event with out-of-range fields is rejected."""
         with pytest.raises(ValueError, match="timestamp must fit"):
             AEREvent(0, 0x10000)
         with pytest.raises(TypeError, match="valid must be a bool"):
@@ -56,6 +72,7 @@ class TestDataContractValidation:
         field: str,
         value: int,
     ) -> None:
+        """A frame result with mismatched counts is rejected."""
         payload: dict[str, Any] = {
             "round": 1,
             "num_spikes": 0,

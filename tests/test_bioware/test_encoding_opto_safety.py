@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.encoding_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    SCToOptoEncoder,
+)
 
 
 class TestOptoSafety:
+    """Safety caps on optogenetic stimulation."""
+
     def test_power_cap(self) -> None:
+        """Total optical power stays within its cap."""
         # Create many active neurons exceeding total cap
         bs = {i: np.ones(100, dtype=np.uint8) for i in range(100)}
         enc = SCToOptoEncoder(
@@ -26,6 +32,7 @@ class TestOptoSafety:
         assert total_mw <= 10.0
 
     def test_no_cap_violation_with_few(self) -> None:
+        """A single active neuron gets its pulse."""
         bs = {0: np.ones(100, dtype=np.uint8)}
         enc = SCToOptoEncoder(max_total_power_mw=50.0)
         pulses = enc.encode(bs)

@@ -10,29 +10,38 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.encoding_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bioware.bioware import (
+    SCToOptoEncoder,
+)
 
 
 class TestSCToOptoEncoder:
+    """Encoding bitstreams as light pulses."""
+
     def test_encode(self) -> None:
+        """A silent neuron gets no pulse."""
         bs = {0: np.ones(128, dtype=np.uint8), 1: np.zeros(128, dtype=np.uint8)}
         enc = SCToOptoEncoder(max_intensity_mw_mm2=5.0)
         pulses = enc.encode(bs)
         assert len(pulses) == 1  # neuron 1 is silent, skipped
 
     def test_intensity_scaling(self) -> None:
+        """A full bitstream gets the maximum intensity."""
         bs = {0: np.ones(100, dtype=np.uint8)}
         enc = SCToOptoEncoder(max_intensity_mw_mm2=10.0)
         pulses = enc.encode(bs)
         assert pulses[0].intensity_mw_mm2 == 10.0
 
     def test_wavelength(self) -> None:
+        """Pulses use the 590 nm wavelength."""
         bs = {0: np.ones(100, dtype=np.uint8)}
         enc = SCToOptoEncoder(wavelength_nm=590)
         pulses = enc.encode(bs)
         assert pulses[0].wavelength_nm == 590
 
     def test_duration_range(self) -> None:
+        """Pulse durations stay within the set range."""
         bs = {0: np.ones(100, dtype=np.uint8)}
         enc = SCToOptoEncoder(min_pulse_ms=1.0, max_pulse_ms=50.0)
         pulses = enc.encode(bs)

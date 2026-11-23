@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_experiment_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bioware.bioware import (
+    _mea_response_latency_ms,
+    BCMPlasticity,
+    BiologicalSTDP,
+    DetectedSpike,
+    HomeostaticPlasticity,
+    mea_fitness_hook,
+)
 
 
 class TestPlasticityAndFitnessValidation:
+    """Checks on plasticity and fitness settings."""
+
     def test_plasticity_rejects_inverted_bounds_and_outside_state(self) -> None:
+        """Plasticity rejects inverted bounds and stray weights."""
         with pytest.raises(ValueError, match="w_max_q88"):
             BiologicalSTDP(w_min_q88=2, w_max_q88=1)
         with pytest.raises(ValueError, match="configured weight bounds"):
@@ -29,6 +40,7 @@ class TestPlasticityAndFitnessValidation:
             HomeostaticPlasticity().update_threshold(999, 1.0, 1.0)
 
     def test_fitness_rejects_negative_target_and_mutated_timestamp(self) -> None:
+        """Fitness rejects a negative target and bad timestamps."""
         with pytest.raises(ValueError, match="target_rate"):
             mea_fitness_hook([], target_rate=-1.0)
         spike = DetectedSpike(0, 0.0, -1.0)

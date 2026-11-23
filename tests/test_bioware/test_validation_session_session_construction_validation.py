@@ -10,15 +10,39 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.validation_session_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bioware.bioware import (
+    AERToSCConverter,
+    ArtifactRejector,
+    BioHybridSession,
+    BiologicalSTDP,
+    CultureHealth,
+    HomeostaticPlasticity,
+    LatencyBudget,
+    MEAConfig,
+    MEAToAERTranscoder,
+    PharmModel,
+    SpikeDetector,
+    SpikeSorter,
+)
+from tests.test_bioware.validation_session_support import (
+    _parts,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestSessionConstructionValidation:
+    """Checks when a session is built."""
+
     @pytest.mark.parametrize(
         "field",
         ["mea_config", "detector", "transcoder", "sc_converter", "opto_encoder"],
     )
     def test_core_component_types_are_enforced(self, field: str) -> None:
+        """Core components must have the right types."""
         parts = _parts()
         parts[field] = object()
         with pytest.raises(TypeError):
@@ -38,6 +62,7 @@ class TestSessionConstructionValidation:
         ],
     )
     def test_optional_component_types_are_enforced(self, field: str) -> None:
+        """Optional components must have the right types."""
         parts = _parts()
         parts.update(
             {
@@ -58,12 +83,14 @@ class TestSessionConstructionValidation:
             BioHybridSession(**parts)
 
     def test_detector_configuration_must_match(self) -> None:
+        """The detector must share the session's configuration."""
         parts = _parts()
         parts["detector"] = SpikeDetector(MEAConfig(num_channels=3))
         with pytest.raises(ValueError, match="detector.config"):
             BioHybridSession(**parts)
 
     def test_converter_and_channel_map_must_cover_mea(self) -> None:
+        """The converter and channel map must cover the MEA."""
         parts = _parts()
         parts["sc_converter"] = AERToSCConverter(num_neurons=1)
         with pytest.raises(ValueError, match="cover every MEA channel"):

@@ -10,13 +10,28 @@
 
 from __future__ import annotations
 
-from tests.test_bioware.acquisition_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sys
+from collections.abc import (
+    MutableMapping,
+)
+from sc_neurocore.bioware.bioware import (
+    DetectedSpike,
+    SpikeSorter,
+)
+from typing import (
+    cast,
+)
 
 
 class TestSpikeSorter:
+    """Sorting spikes into units."""
+
     def test_fit_without_sklearn_raises_actionable_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Fitting without scikit-learn names what is required."""
         module_cache = cast(MutableMapping[str, object], sys.modules)
         monkeypatch.setitem(module_cache, "sklearn.cluster", None)
         monkeypatch.setitem(module_cache, "sklearn.decomposition", None)
@@ -34,6 +49,7 @@ class TestSpikeSorter:
             SpikeSorter(num_units=2).fit(spikes)
 
     def test_fit_and_assign(self) -> None:
+        """PCA and k-means sort the spikes into several units."""
         # SpikeSorter clusters on the waveform shape, not the scalar
         # amplitude — construct three clearly distinct waveforms so PCA +
         # KMeans have enough variance to separate them into distinct
@@ -66,18 +82,21 @@ class TestSpikeSorter:
         assert len(units) > 1, f"PCA+KMeans produced a single cluster: {units}"
 
     def test_no_fit_returns_original(self) -> None:
+        """An unfitted sorter leaves spikes in unit 0."""
         sorter = SpikeSorter(num_units=3)
         spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-50)]
         result = sorter.assign(spikes)
         assert result[0].unit_id == 0
 
     def test_empty_spikes(self) -> None:
+        """No spikes sort to no spikes."""
         sorter = SpikeSorter()
         sorter.fit([])
         result = sorter.assign([])
         assert len(result) == 0
 
     def test_assign_passes_through_spike_without_waveform(self) -> None:
+        """A spike without a waveform passes through unsorted."""
         pytest.importorskip("sklearn")
         rng = np.random.default_rng(seed=7)
         t = np.linspace(0.0, 1.0, 32, dtype=np.float64)
