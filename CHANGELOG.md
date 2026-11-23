@@ -463,6 +463,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The docstring scope guard lets an enrolled file's policy row leave in
+  the commit that deletes the file from the index. A file removed only
+  from the working tree still counts as present, a rename is a deletion
+  and an addition whose new path must be enrolled, and every other
+  omission from the baseline cohort is still refused. Before this, no
+  change could delete an enrolled file at all.
+
 - The quantum-annealing bridge validates its user-supplied scalars in one
   module, `sc_neurocore.bridges.annealing_validation`, instead of six
   private copies. Behaviour changes:

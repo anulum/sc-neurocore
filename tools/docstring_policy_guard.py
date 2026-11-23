@@ -21,6 +21,7 @@ from tools.docstring_policy_git import (
     POLICY_PATH,
     baseline_commit,
     changed_python_paths,
+    deleted_python_paths,
     explicit_baseline_commit,
     git_bytes,
 )
@@ -77,7 +78,8 @@ def check_scope(
     except OSError as exc:
         raise PolicyError("Candidate docstring policy could not be read.") from exc
     changed = changed_python_paths(root, commit)
-    violations = compare_policies(candidate, baseline, changed)
+    deleted = frozenset(deleted_python_paths(root, commit))
+    violations = compare_policies(candidate, baseline, changed, deleted)
     for relative in candidate.files:
         source = root / relative
         if not source.is_file() or not source.resolve().is_relative_to(root):

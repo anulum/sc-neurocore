@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2518
+expected_file_count = 2519
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10116,3 +10116,7 @@ rationale = "Exercise the world model suite: predictive model backends probe and
 [[file]]
 path = "tests/test_world_model/test_predictive_model_backends_rust_loader.py"
 rationale = "Exercise the world model suite: predictive model backends rust loader."
+
+[[file]]
+path = "tests/test_tools/test_docstring_policy_guard_deletion_native.py"
+rationale = "Bind the scope guard's deletion rule: a staged deletion takes its row, while a kept file, a working-tree-only deletion, a kept row of a deleted file, an over-lowered count and an unenrolled rename target are refused."

@@ -113,9 +113,15 @@ def parse_policy(raw: bytes) -> DocstringPolicy:
 
 
 def compare_policies(
-    candidate: DocstringPolicy, baseline: DocstringPolicy, changed_python: set[str]
+    candidate: DocstringPolicy,
+    baseline: DocstringPolicy,
+    changed_python: set[str],
+    deleted_python: frozenset[str] = frozenset(),
 ) -> list[str]:
     """Reject cohort omissions, weaker documentation rules and new allowances.
+
+    A baseline path may leave the policy only when the candidate deletes that
+    file; every other omission from the baseline cohort is refused.
 
     Parameters
     ----------
@@ -125,6 +131,8 @@ def compare_policies(
         Policy read from the trusted original Git commit.
     changed_python : set of str
         All added or modified Python paths, including untracked maintained files.
+    deleted_python : frozenset of str, optional
+        Python paths present at the baseline commit and absent from the index.
 
     Returns
     -------
@@ -134,7 +142,7 @@ def compare_policies(
     violations: list[str] = []
     if candidate.minimum_chars < max(20, baseline.minimum_chars):
         violations.append("Docstring minimum length must not decrease below the trusted floor.")
-    for path in sorted(set(baseline.files) | changed_python):
+    for path in sorted((set(baseline.files) - deleted_python) | changed_python):
         if path not in candidate.files:
             violations.append(f"Missing required policy file: {path}")
     for path, rule in sorted(candidate.files.items()):

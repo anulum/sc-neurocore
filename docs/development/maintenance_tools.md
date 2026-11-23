@@ -169,8 +169,12 @@ original Git policy cohort and documentation floor. Every added or modified
 tracked Python file and every nonignored untracked Python file must be enrolled,
 including tests, tooling and source roots outside the main package. Removing a
 file while lowering its declared count, reducing the minimum length or adding
-missing-symbol allowances fails the guard. Policy sources must exist inside the
-repository. Scope acceptance is separate from native documentation acceptance.
+missing-symbol allowances fails the guard. An enrolled file's row may leave the
+policy only in the commit that deletes the file from the index; a file deleted
+only in the working tree still counts as present, and a rename is a deletion of
+the old path and an addition of the new one, which must be enrolled. Policy
+sources must exist inside the repository. Scope acceptance is separate from
+native documentation acceptance.
 
 Locally the baseline is committed `HEAD`, or the commit named by `--since REV`
 or by the `SC_NEUROCORE_POLICY_BASELINE` variable. The variable reaches every

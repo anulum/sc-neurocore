@@ -219,3 +219,46 @@ def changed_python_paths(root: Path, baseline: str) -> set[str]:
         return {part.decode("utf-8") for part in changed.split(b"\0") if part}
     except UnicodeError as exc:
         raise PolicyError("Changed source paths must be valid UTF-8.") from exc
+
+
+def deleted_python_paths(root: Path, baseline: str) -> set[str]:
+    """Discover the Python files that the commit candidate deletes.
+
+    A path counts as deleted only when it exists at the baseline commit and is
+    absent from the index, so a file removed from the working tree alone still
+    counts as present. Renames are not detected: a moved file is a deletion of
+    its old path and an addition of its new one, which must then be enrolled.
+
+    Parameters
+    ----------
+    root : Path
+        Validated repository root.
+    baseline : str
+        Available original Git commit used by the policy comparison.
+
+    Returns
+    -------
+    set of str
+        Repository-relative Python paths that the index no longer holds.
+
+    Raises
+    ------
+    PolicyError
+        If the native index query fails or a path is not valid UTF-8.
+    """
+    deleted = git_bytes(
+        root,
+        "diff",
+        "--cached",
+        "--name-only",
+        "-z",
+        "--no-renames",
+        "--diff-filter=D",
+        baseline,
+        "--",
+        "*.py",
+    )
+    try:
+        return {part.decode("utf-8") for part in deleted.split(b"\0") if part}
+    except UnicodeError as exc:
+        raise PolicyError("Deleted source paths must be valid UTF-8.") from exc
