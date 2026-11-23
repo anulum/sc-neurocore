@@ -592,6 +592,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The notebooks `06_network_engine` and `07_identity_substrate` held
+  their header and some text as CP1250 mojibake, so they still showed a
+  `1998–2026` copyright line and broken dashes and arrows. Their text is
+  decoded back to UTF-8, and the copyright line is the same two-line
+  concepts and code pair as in the other notebooks. The earlier search for
+  the old range missed both, because it matched only correctly encoded
+  text.
+
 - Tracked files no longer name development-host paths, the private monorepo
   or the group's private record tree. 56 facet receipts recorded between
   2026-09-05 and 2026-10-05 named the absolute interpreter in `command[0]`;
