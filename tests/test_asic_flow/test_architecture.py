@@ -23,7 +23,6 @@ from sc_neurocore.asic_flow import asic_flow as historical
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIR = ROOT / "src/sc_neurocore/asic_flow"
-TEST_DIR = ROOT / "tests/test_asic_flow"
 ACCEL_DIR = ROOT / "src/sc_neurocore/accel"
 
 SYMBOL_OWNERS = {
@@ -75,6 +74,19 @@ SYMBOL_OWNERS = {
         "SignoffSummary",
     },
 }
+
+# Module-private helpers each responsibility module defines beside its owned symbols.
+PRIVATE_DEFINITIONS = {
+    "flow": {
+        "_build_asic_flow_manifest",
+        "_design_to_manifest",
+        "_formal_evidence_status",
+        "_normalise_pdk_type",
+        "_pdk_to_manifest",
+    },
+}
+# Owned public names bound by assignment rather than defined as a class or function.
+PUBLIC_CONSTANTS = {"DEFAULT_CORNERS"}
 
 
 def _tree(path: Path) -> ast.Module:
@@ -185,19 +197,18 @@ def test_package_facade_remains_intentionally_narrow() -> None:
     assert package.generate_asic_flow_bundle is historical.generate_asic_flow_bundle
 
 
-def test_source_and_test_files_remain_responsibility_sized() -> None:
-    """No implementation or focused test file may become a replacement GodFile."""
-    source_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in SOURCE_DIR.glob("*.py")
-    }
-    test_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in TEST_DIR.glob("test_*.py")
-    }
-
-    assert max(source_sizes.values()) <= 350, source_sizes
-    assert max(test_sizes.values()) <= 250, test_sizes
+def test_each_module_is_declared_and_defines_exactly_what_it_owns() -> None:
+    """Every package module is declared, and each defines only its owned symbols and helpers."""
+    declared = {"__init__", "asic_flow", *SYMBOL_OWNERS}
+    assert {path.stem for path in SOURCE_DIR.glob("*.py")} == declared
+    for module_name, symbols in SYMBOL_OWNERS.items():
+        definitions = {
+            node.name
+            for node in _tree(SOURCE_DIR / f"{module_name}.py").body
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        expected = (symbols - PUBLIC_CONSTANTS) | PRIVATE_DEFINITIONS.get(module_name, set())
+        assert definitions == expected, module_name
 
 
 def test_nonfunctional_polyglot_mirrors_are_absent() -> None:

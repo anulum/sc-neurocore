@@ -1268,6 +1268,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The ASIC-flow architecture test no longer caps the package modules at
+  350 lines or its focused tests at 250. In its place,
+  `test_each_module_is_declared_and_defines_exactly_what_it_owns`
+  requires every package module to be declared and each to define only
+  its owned symbols and declared private helpers, where the ownership
+  test before checked only the historical public symbols.
+
 - The safety-certification architecture test no longer caps the
   compatibility module at 120 lines, the ten domain modules at 600 or
   the safety-certification tests at 500. In its place,
