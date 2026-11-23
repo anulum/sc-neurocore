@@ -10,45 +10,53 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from isolation_support import *  # noqa: F403
+from sc_neurocore.hypervisor.isolation import (
+    BitstreamFirewall,
+    FirewallRule,
+)
 
 
 class TestBitstreamFirewall:
+    """Address rules and violations of the bitstream firewall."""
+
     def test_allow_read(self) -> None:
+        """A tenant reads inside its own range."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
         assert fw.check_access("t0", 0x1050) is True
 
     def test_deny_out_of_range(self) -> None:
+        """An access outside the tenant's range is denied."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
         assert fw.check_access("t0", 0x2000) is False
 
     def test_deny_cross_tenant(self) -> None:
+        """Another tenant is denied the range."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
         assert fw.check_access("t1", 0x1050) is False
 
     def test_deny_write(self) -> None:
+        """A write to a read-only range is denied."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100, write_allowed=False))
         assert fw.check_access("t0", 0x1050, is_write=True) is False
 
     def test_deny_read(self) -> None:
+        """A read from a range without read access is denied."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100, read_allowed=False))
         assert fw.check_access("t0", 0x1050) is False
 
     def test_violation_logged(self) -> None:
+        """A denied access is logged as a violation."""
         fw = BitstreamFirewall()
         fw.check_access("t0", 0x1000)
         assert fw.violation_count == 1
 
     def test_remove_rules(self) -> None:
+        """Removing a tenant's rules denies its accesses."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
         fw.add_rule(FirewallRule("t1", 0x2000, 0x100))
@@ -57,6 +65,7 @@ class TestBitstreamFirewall:
         assert fw.check_access("t0", 0x1050) is False
 
     def test_clear_violations(self) -> None:
+        """Clearing violations resets their count."""
         fw = BitstreamFirewall()
         fw.check_access("t0", 0x1000)
         fw.clear_violations()

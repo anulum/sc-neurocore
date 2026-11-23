@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from hypervisor_support import *  # noqa: F403
+from hypervisor_support import (
+    _region,
+)
+from sc_neurocore.hypervisor.hypervisor import (
+    Hypervisor,
+    HypervisorConfig,
+)
 
 
 class TestNoFirewall:
-    def test_firewall_disabled(self):
+    """The hypervisor with its firewall disabled."""
+
+    def test_firewall_disabled(self) -> None:
+        """Without the firewall every access is allowed."""
         hv = Hypervisor(HypervisorConfig(enable_firewall=False))
         hv.add_region(_region(0))
         assert hv.check_access("anyone", 0xDEAD_BEEF) is True

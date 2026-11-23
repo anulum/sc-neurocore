@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from hypervisor_support import *  # noqa: F403
+from hypervisor_support import (
+    _region,
+    _tenant,
+)
+from sc_neurocore.hypervisor.hypervisor import (
+    Hypervisor,
+)
 
 
 class TestOvercommit:
+    """Overcommit detection of the hypervisor."""
+
     def _setup(self) -> Hypervisor:
         hv = Hypervisor()
         hv.add_region(_region(0, neurons=512))
         return hv
 
-    def test_no_overcommit(self):
+    def test_no_overcommit(self) -> None:
+        """Tenants within capacity are not overcommitted."""
         hv = self._setup()
         t = _tenant("t0")
         t.qos.max_neurons = 256
@@ -27,7 +36,8 @@ class TestOvercommit:
         hv.allocate("t0")
         assert hv.check_overcommit() is False
 
-    def test_overcommit_detected(self):
+    def test_overcommit_detected(self) -> None:
+        """Tenants beyond capacity are overcommitted."""
         hv = self._setup()
         for i in range(3):
             t = _tenant(f"t{i}")

@@ -10,15 +10,18 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from isolation_support import *  # noqa: F403
+from sc_neurocore.hypervisor.isolation import (
+    BitstreamFirewall,
+    FirewallRule,
+    verify_isolation,
+)
 
 
 class TestIsolationVerification:
+    """Verification that tenant address ranges do not overlap."""
+
     def test_no_overlap(self) -> None:
+        """Disjoint ranges give no violation."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
         fw.add_rule(FirewallRule("t1", 0x2000, 0x100))
@@ -26,6 +29,7 @@ class TestIsolationVerification:
         assert violations == []
 
     def test_overlap_detected(self) -> None:
+        """Overlapping ranges give one overlap violation."""
         fw = BitstreamFirewall()
         fw.add_rule(FirewallRule("t0", 0x1000, 0x200))
         fw.add_rule(FirewallRule("t1", 0x1100, 0x200))

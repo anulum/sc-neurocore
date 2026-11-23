@@ -10,21 +10,28 @@
 
 from __future__ import annotations
 
-from hypervisor_support import *  # noqa: F403
+from sc_neurocore.hypervisor.hypervisor import (
+    MigrationThrottle,
+)
 
 
 class TestMigrationThrottle:
-    def test_initial_allow(self):
+    """Rate limiting of tenant migrations."""
+
+    def test_initial_allow(self) -> None:
+        """The first migration is allowed."""
         mt = MigrationThrottle(max_per_window=3)
         assert mt.allow() is True
 
-    def test_throttled(self):
+    def test_throttled(self) -> None:
+        """Migrations beyond the limit are throttled."""
         mt = MigrationThrottle(max_per_window=2, window_ns=10_000_000_000)
         mt.record()
         mt.record()
         assert mt.allow() is False
 
-    def test_recent_count(self):
+    def test_recent_count(self) -> None:
+        """The throttle counts its recent migrations."""
         mt = MigrationThrottle()
         mt.record()
         mt.record()

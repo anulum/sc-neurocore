@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from hypervisor_support import *  # noqa: F403
+from hypervisor_support import (
+    _region,
+    _tenant,
+)
+from sc_neurocore.hypervisor.hypervisor import (
+    admission_check,
+)
 
 
 class TestAdmissionControl:
-    def test_admit_ok(self):
+    """Admission of tenants against free capacity."""
+
+    def test_admit_ok(self) -> None:
+        """A tenant that fits is admitted."""
         t = _tenant("new")
         t.qos.max_neurons = 512
         regions = {0: _region(0, neurons=1024)}
         ok, msg = admission_check(t, regions, {})
         assert ok is True
 
-    def test_reject_insufficient(self):
+    def test_reject_insufficient(self) -> None:
+        """A tenant beyond the free capacity is refused as insufficient."""
         t = _tenant("new")
         t.qos.max_neurons = 2048
         regions = {0: _region(0, neurons=512)}
@@ -29,7 +39,8 @@ class TestAdmissionControl:
         assert ok is False
         assert "insufficient" in msg
 
-    def test_reject_no_single_region_large_enough(self):
+    def test_reject_no_single_region_large_enough(self) -> None:
+        """A tenant no single region can hold is refused."""
         # Aggregate free capacity is sufficient, but no single region can hold
         # the tenant: admission is refused because a tenant cannot be split.
         t = _tenant("new")

@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 16 FPGA-hypervisor, isolation, QoS and region test modules
+  (`tests/test_hypervisor`) import their names explicitly instead of
+  through a suppressed star import, gain their missing test docstrings
+  and type annotations and are enrolled in the docstring policy. The
+  isolation support module, left without an importer, is deleted.
+
 - The 12 UVM testbench-generator test modules (`tests/test_uvm_gen`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and return annotations and

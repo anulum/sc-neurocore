@@ -14,17 +14,26 @@ import sys
 from pathlib import Path as _Path
 
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from qos_monitor_support import *  # noqa: F403
+from qos_monitor_support import (
+    _tenant,
+)
+from sc_neurocore.hypervisor.qos_monitor import (
+    SLAMonitor,
+)
 
 
 class TestSLAMonitor:
+    """Latency and bandwidth checks against tenant SLAs."""
+
     def test_latency_ok(self) -> None:
+        """Latency within the SLA gives no violation."""
         mon = SLAMonitor()
         t = _tenant("t0")
         t.qos.max_latency_us = 1000.0
         assert mon.check_latency(t, 500.0, 100) is None
 
     def test_latency_violation(self) -> None:
+        """Latency beyond the SLA gives a latency violation."""
         mon = SLAMonitor()
         t = _tenant("t0")
         t.qos.max_latency_us = 1000.0
@@ -34,12 +43,14 @@ class TestSLAMonitor:
         assert mon.total_violations == 1
 
     def test_bandwidth_ok(self) -> None:
+        """Bandwidth within the SLA gives no violation."""
         mon = SLAMonitor()
         t = _tenant("t0")
         t.qos.max_bandwidth_mbps = 100.0
         assert mon.check_bandwidth(t, 50.0, 10) is None
 
     def test_bandwidth_violation(self) -> None:
+        """Bandwidth beyond the SLA gives a bandwidth violation."""
         mon = SLAMonitor()
         t = _tenant("t0")
         t.qos.max_bandwidth_mbps = 100.0
@@ -47,6 +58,7 @@ class TestSLAMonitor:
         assert v is not None
 
     def test_violations_for(self) -> None:
+        """Violations can be listed per tenant."""
         mon = SLAMonitor()
         t0 = _tenant("t0")
         t0.qos.max_latency_us = 10.0

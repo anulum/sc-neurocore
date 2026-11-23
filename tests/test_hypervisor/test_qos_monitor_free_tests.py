@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from qos_monitor_support import *  # noqa: F403
+import ast
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.hypervisor import (
+    hypervisor as compatibility_surface,
+    qos_monitor as qos_owner,
+)
+from sc_neurocore.hypervisor.qos_monitor import (
+    BandwidthMeter,
+)
 
 
 def test_defensive_empty_history_has_zero_throughput() -> None:

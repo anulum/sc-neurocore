@@ -10,10 +10,26 @@
 
 from __future__ import annotations
 
-from region_support import *  # noqa: F403
+import ast
+from pathlib import (
+    Path,
+)
+from region_support import (
+    _region,
+)
+from sc_neurocore.hypervisor import (
+    hypervisor as compatibility_surface,
+    region as region_owner,
+)
+from sc_neurocore.hypervisor.region import (
+    RegionHealth,
+    RegionState,
+    select_region_multi_die,
+)
 
 
 def test_selector_ignores_busy_regions_and_chooses_smallest_fit() -> None:
+    """The selector skips busy regions and picks the smallest fit."""
     busy = _region(0, neurons=512)
     busy.state = RegionState.ALLOCATED
     regions = {
@@ -26,6 +42,7 @@ def test_selector_ignores_busy_regions_and_chooses_smallest_fit() -> None:
 
 
 def test_health_score_clamps_at_zero() -> None:
+    """Health never drops below zero and then counts as degraded."""
     health = RegionHealth(region_id=0, error_count=20, temperature_c=200.0, age_hours=200_000)
 
     assert health.health_score == 0.0
@@ -33,6 +50,7 @@ def test_health_score_clamps_at_zero() -> None:
 
 
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
+    """The historical surface re-exports the owner's objects unchanged."""
     assert compatibility_surface.RegionState is region_owner.RegionState
     assert compatibility_surface.HWRegion is region_owner.HWRegion
     assert compatibility_surface.RegionHealth is region_owner.RegionHealth
@@ -40,6 +58,7 @@ def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
 
 
 def test_region_definitions_have_one_owner() -> None:
+    """Region definitions live in one owner module only."""
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(region_owner.__file__).read_text(encoding="utf-8"))
 

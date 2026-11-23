@@ -10,11 +10,9 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from qos_monitor_support import *  # noqa: F403
+from sc_neurocore.hypervisor.qos_monitor import (
+    BandwidthMeter,
+)
 
 
 class TestBandwidthMeter:

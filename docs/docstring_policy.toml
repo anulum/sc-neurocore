@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2634
+expected_file_count = 2648
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10580,3 +10580,59 @@ rationale = "Exercise the UVM testbench generator: toggle coverage."
 [[file]]
 path = "tests/test_uvm_gen/test_uvm_gen_uvm_generator.py"
 rationale = "Exercise the UVM testbench generator: uvm generator."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_admission_control.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor admission control."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_hypervisor.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor hypervisor."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_migration_throttle.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor migration throttle."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_no_firewall.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor no firewall."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_overcommit.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor overcommit."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_region_fault.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor region fault."
+
+[[file]]
+path = "tests/test_hypervisor/test_hypervisor_utilisation.py"
+rationale = "Exercise the FPGA hypervisor suite: hypervisor utilisation."
+
+[[file]]
+path = "tests/test_hypervisor/test_isolation_bitstream_firewall.py"
+rationale = "Exercise the FPGA hypervisor suite: isolation bitstream firewall."
+
+[[file]]
+path = "tests/test_hypervisor/test_isolation_isolation_verification.py"
+rationale = "Exercise the FPGA hypervisor suite: isolation isolation verification."
+
+[[file]]
+path = "tests/test_hypervisor/test_qos_monitor_sla_monitor.py"
+rationale = "Exercise the FPGA hypervisor suite: qos monitor sla monitor."
+
+[[file]]
+path = "tests/test_hypervisor/test_region_free_tests.py"
+rationale = "Exercise the FPGA hypervisor suite: region free tests."
+
+[[file]]
+path = "tests/test_hypervisor/test_region_hw_region.py"
+rationale = "Exercise the FPGA hypervisor suite: region hw region."
+
+[[file]]
+path = "tests/test_hypervisor/test_region_multi_die_selector.py"
+rationale = "Exercise the FPGA hypervisor suite: region multi die selector."
+
+[[file]]
+path = "tests/test_hypervisor/test_region_region_health.py"
+rationale = "Exercise the FPGA hypervisor suite: region region health."

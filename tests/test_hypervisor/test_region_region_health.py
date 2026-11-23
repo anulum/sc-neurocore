@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from region_support import *  # noqa: F403
+import pytest
+from sc_neurocore.hypervisor.region import (
+    RegionHealth,
+)
 
 
 class TestRegionHealth:
+    """Health scores of hardware regions."""
+
     def test_healthy_default(self) -> None:
+        """A new region is fully healthy."""
         rh = RegionHealth(region_id=0)
         assert rh.health_score == pytest.approx(1.0)
         assert not rh.is_degraded
 
     def test_degraded_by_errors(self) -> None:
+        """Errors degrade a region's health."""
         rh = RegionHealth(region_id=0, error_count=5)
         assert rh.health_score < 0.8
         assert rh.is_degraded
 
     def test_temperature_penalty(self) -> None:
+        """High temperature lowers the health score."""
         rh = RegionHealth(region_id=0, temperature_c=100.0)
         assert rh.health_score < 1.0
 
     def test_record_error(self) -> None:
+        """Recording an error counts it."""
         rh = RegionHealth(region_id=0)
         rh.record_error()
         assert rh.error_count == 1
