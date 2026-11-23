@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.kane_mapper import (
+    KaneSiliconMapper,
+)
 
 
 class TestKaneRegisterFeasibility:
     """Generate large registers, verify properties."""
 
     def test_512_qubit_grid(self) -> None:
+        """A 512-qubit grid register has a symmetric, non-negative coupling matrix with a zero diagonal."""
         mapper = KaneSiliconMapper(spacing_nm=10.0, topology="grid")
         layout = mapper.map_pool_to_register(512)
         assert layout.n_qubits == 512

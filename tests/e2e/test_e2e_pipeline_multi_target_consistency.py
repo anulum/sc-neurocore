@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestMultiTargetConsistency:
     """Cross-target comparison: same ODE, different targets."""
 
-    def test_guard_bits_target_independent(self):
+    def test_guard_bits_target_independent(self) -> None:
         """Guard bits depend on the expression, not the target."""
         from sc_neurocore.compiler.deployment import compile_multi_target
 
@@ -28,7 +28,7 @@ class TestMultiTargetConsistency:
         guards = {r.guard_bits for r in results}
         assert len(guards) == 1
 
-    def test_dsps_scale_with_dsp_block(self):
+    def test_dsps_scale_with_dsp_block(self) -> None:
         """Targets with DSP blocks allocate DSPs."""
         from sc_neurocore.compiler.deployment import compile_multi_target
 
@@ -40,7 +40,7 @@ class TestMultiTargetConsistency:
         for r in results:
             assert r.estimated_dsps > 0
 
-    def test_table_includes_all_targets(self):
+    def test_table_includes_all_targets(self) -> None:
         """Comparison table mentions every target."""
         from sc_neurocore.compiler.deployment import (
             compile_multi_target,

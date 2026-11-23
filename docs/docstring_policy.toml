@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2378
+expected_file_count = 2398
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9556,3 +9556,83 @@ rationale = "Document the engine binding-location rule, its git listing and its 
 [[file]]
 path = "tests/test_tools/test_engine_bindings_location.py"
 rationale = "Exercise the binding-location rule on the live tree and planted repositories."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_analysis_chain.py"
+rationale = "Exercise the end-to-end pipeline case analysis chain."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_dvs_to_driver_pipeline.py"
+rationale = "Exercise the end-to-end pipeline case dvs to driver pipeline."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_formal_to_certification.py"
+rationale = "Exercise the end-to-end pipeline case formal to certification."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_multi_target_consistency.py"
+rationale = "Exercise the end-to-end pipeline case multi target consistency."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_mxfp_round_trip.py"
+rationale = "Exercise the end-to-end pipeline case mxfp round trip."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_network_pipeline.py"
+rationale = "Exercise the end-to-end pipeline case network pipeline."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_ode_to_driver_pipeline.py"
+rationale = "Exercise the end-to-end pipeline case ode to driver pipeline."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_thermal_full_flow.py"
+rationale = "Exercise the end-to-end pipeline case thermal full flow."
+
+[[file]]
+path = "tests/e2e/test_e2e_pipeline_weight_format_consistency.py"
+rationale = "Exercise the end-to-end pipeline case weight format consistency."
+
+[[file]]
+path = "tests/test_qc_e2e_content_indexer_adversarial.py"
+rationale = "Exercise the quantum-cognition end-to-end case content indexer adversarial."
+
+[[file]]
+path = "tests/test_qc_e2e_cross_backend_parity.py"
+rationale = "Exercise the quantum-cognition end-to-end case cross backend parity."
+
+[[file]]
+path = "tests/test_qc_e2e_directive_driven_coherence.py"
+rationale = "Exercise the quantum-cognition end-to-end case directive driven coherence."
+
+[[file]]
+path = "tests/test_qc_e2e_full_pipeline_stress.py"
+rationale = "Exercise the quantum-cognition end-to-end case full pipeline stress."
+
+[[file]]
+path = "tests/test_qc_e2e_kane_register_feasibility.py"
+rationale = "Exercise the quantum-cognition end-to-end case kane register feasibility."
+
+[[file]]
+path = "tests/test_qc_e2e_large_scale_population.py"
+rationale = "Exercise the quantum-cognition end-to-end case large scale population."
+
+[[file]]
+path = "tests/test_qc_e2e_metabolic_crisis_recovery.py"
+rationale = "Exercise the quantum-cognition end-to-end case metabolic crisis recovery."
+
+[[file]]
+path = "tests/test_qc_e2e_radical_pair_field_response.py"
+rationale = "Exercise the quantum-cognition end-to-end case radical pair field response."
+
+[[file]]
+path = "tests/test_qc_e2e_ram_aware_qubit_sizing.py"
+rationale = "Exercise the quantum-cognition end-to-end case ram aware qubit sizing."
+
+[[file]]
+path = "tests/test_qc_e2e_rust_compilation.py"
+rationale = "Exercise the quantum-cognition end-to-end case rust compilation."
+
+[[file]]
+path = "tests/test_qc_e2e_studio_hook_integration.py"
+rationale = "Exercise the quantum-cognition end-to-end case studio hook integration."

@@ -10,7 +10,22 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.quantum_cognition.kane_mapper import (
+    KaneSiliconMapper,
+)
+from sc_neurocore.quantum_cognition.radical_pair import (
+    RadicalPairModel,
+    RadicalPairParams,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
+from tests.qc_e2e_support import (
+    _QC_DIR,
+)
 
 
 class TestCrossBackendParity:

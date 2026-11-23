@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestNetworkPipeline:
     """BRAM array → weight ROM → constraints → testbench."""
 
-    def test_bram_array_is_synthesisable(self):
+    def test_bram_array_is_synthesisable(self) -> None:
         """BRAM array Verilog is structurally valid."""
         from sc_neurocore.compiler.intelligence import (
             storage_recommendation,
@@ -35,7 +35,7 @@ class TestNetworkPipeline:
         assert "spike_out" in v
         assert "tick_done" in v
 
-    def test_weight_rom_matches_dimensions(self):
+    def test_weight_rom_matches_dimensions(self) -> None:
         """Weight ROM entries match weight matrix dimensions."""
         from sc_neurocore.compiler.intelligence import generate_weight_rom
 
@@ -45,7 +45,7 @@ class TestNetworkPipeline:
 
         assert "DEPTH=32" in mif  # 8×4 = 32
 
-    def test_bram_array_plus_constraints(self):
+    def test_bram_array_plus_constraints(self) -> None:
         """BRAM array → constraints: valid artefacts from same data width."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
         from sc_neurocore.compiler.platforms import get_profile

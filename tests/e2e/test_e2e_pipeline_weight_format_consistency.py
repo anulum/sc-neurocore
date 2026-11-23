@@ -10,14 +10,15 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
+import re
 
 
 @pytest.mark.e2e
 class TestWeightFormatConsistency:
     """All weight formats contain identical data."""
 
-    def test_all_formats_same_values(self):
+    def test_all_formats_same_values(self) -> None:
         """Verilog, .coe, .mif all encode the same weights."""
         from sc_neurocore.compiler.intelligence import generate_weight_rom
 

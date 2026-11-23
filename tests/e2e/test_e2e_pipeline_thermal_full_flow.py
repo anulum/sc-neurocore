@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestThermalFullFlow:
     """Power estimation → thermal analysis → derated constraints."""
 
-    def test_power_to_thermal_to_constraints(self):
+    def test_power_to_thermal_to_constraints(self) -> None:
         """Power → thermal → XDC: derated frequency propagates."""
         from sc_neurocore.compiler.static_analysis import estimate_power
         from sc_neurocore.compiler.intelligence import (
@@ -43,7 +43,7 @@ class TestThermalFullFlow:
         assert str(therm.derated_freq_mhz) in xdc
         assert "create_clock" in xdc
 
-    def test_high_power_triggers_warning(self):
+    def test_high_power_triggers_warning(self) -> None:
         """Very high power → thermal unsafe → warning in XDC."""
         from sc_neurocore.compiler.intelligence import (
             thermal_analysis,

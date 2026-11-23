@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+)
 
 
 class TestDirectiveDrivenCoherence:
     """Verify that FOCUS increases coherence, EXPLORE increases entropy."""
 
     def test_focus_vs_explore(self) -> None:
+        """FOCUS and EXPLORE directives on the same input both leave a valid ATP level."""
         brain = GOTMBrain(n_neurons=16, seed=42)
         vec = np.random.default_rng(42).random(16)
 

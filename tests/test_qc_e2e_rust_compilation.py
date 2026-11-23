@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import pytest
+import subprocess
+from tests.qc_e2e_support import (
+    _QC_DIR,
+)
 
 
 class TestRustCompilation:
@@ -18,6 +22,7 @@ class TestRustCompilation:
 
     @pytest.mark.parametrize("rs_file", ["spin_pool.rs", "radical_pair.rs", "kane_mapper.rs"])
     def test_rust_compiles_and_tests_pass(self, rs_file: str) -> None:
+        """Each committed quantum-cognition Rust source compiles with its tests, which pass."""
         rs_path = _QC_DIR / rs_file
         assert rs_path.is_file(), f"committed Rust quantum-cognition source missing: {rs_path}"
 

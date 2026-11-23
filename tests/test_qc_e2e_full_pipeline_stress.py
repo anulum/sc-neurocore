@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+from pathlib import (
+    Path,
+)
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+)
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+)
 
 
 class TestFullPipelineStress:

@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestDVSToDriverPipeline:
     """DVS event camera → AER bridge → RISC-V driver chain."""
 
-    def test_dvs_aer_bridge_valid(self):
+    def test_dvs_aer_bridge_valid(self) -> None:
         """DVS bridge Verilog is structurally valid."""
         from sc_neurocore.compiler.intelligence import generate_dvs_aer_bridge
 
@@ -28,7 +28,7 @@ class TestDVSToDriverPipeline:
         assert "module sc_dvs_bridge" in bridge
         assert "endmodule" in bridge
 
-    def test_dvs_bridge_plus_riscv_driver(self):
+    def test_dvs_bridge_plus_riscv_driver(self) -> None:
         """DVS bridge + RISC-V driver: both produce valid artefacts."""
         from sc_neurocore.compiler.intelligence import generate_dvs_aer_bridge
         from sc_neurocore.compiler.deployment import generate_riscv_driver

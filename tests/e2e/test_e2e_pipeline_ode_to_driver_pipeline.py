@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestODEToDriverPipeline:
     """Full pipeline: compile → estimate → constrain → driver."""
 
-    def test_lif_full_pipeline_artix7(self):
+    def test_lif_full_pipeline_artix7(self) -> None:
         """LIF on Artix-7: every artefact is internally consistent."""
         from sc_neurocore.compiler.platforms import get_profile
         from sc_neurocore.compiler.deployment import (
@@ -71,7 +71,7 @@ class TestODEToDriverPipeline:
         assert "import cocotb" in tb
         assert module in tb
 
-    def test_pipeline_data_width_consistency(self):
+    def test_pipeline_data_width_consistency(self) -> None:
         """Data widths match across constraints and drivers."""
         from sc_neurocore.compiler.platforms import get_profile
         from sc_neurocore.compiler.deployment import (

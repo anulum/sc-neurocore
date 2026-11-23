@@ -1287,6 +1287,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 20 end-to-end test modules (`tests/e2e/test_e2e_pipeline_*` and
+  `tests/test_qc_e2e_*`) import their names explicitly instead of
+  through a suppressed star import, so ruff checks them without a
+  `noqa: F403`. They gain the missing test docstrings and are enrolled
+  in the docstring policy.
+
 - The engine monolith guard is replaced by a rule for where Python
   bindings live. `tools/engine_bindings_location.py --check` refuses any
   `#[pyfunction]` in a tracked `engine/src` Rust file outside a binding

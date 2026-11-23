@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.fisher_posner import (
+    HybridFisherPosnerLIF,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
 
 
 class TestMetabolicCrisisRecovery:
     """Drain ATP, verify neurons recover and resume spiking."""
 
     def test_atp_recovery_after_depletion(self) -> None:
+        """Depleted neurons record metabolic failures, then recover ATP at rest and spike again."""
         pool = SpinPoolMPS(n_sites=8)
         neurons = [HybridFisherPosnerLIF(i, pool) for i in range(8)]
 

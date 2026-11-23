@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestMXFPRoundTrip:
     """Block-FP encode → decode preserves values within precision bounds."""
 
-    def test_mxfp8_e4m3_round_trip(self):
+    def test_mxfp8_e4m3_round_trip(self) -> None:
         """MXFP8 E4M3: encode → decode → sign preservation."""
         from sc_neurocore.compiler.intelligence import (
             MXFP8_E4M3,
@@ -35,7 +35,7 @@ class TestMXFPRoundTrip:
             if orig != 0:
                 assert (orig > 0) == (dec > 0), f"Sign flip: {orig} → {dec}"
 
-    def test_zero_stability(self):
+    def test_zero_stability(self) -> None:
         """Zero encodes and decodes as zero."""
         from sc_neurocore.compiler.intelligence import (
             MXFP8_E5M2,
@@ -48,7 +48,7 @@ class TestMXFPRoundTrip:
         decoded = mxfp_decode_block(shared_exp, elements, MXFP8_E5M2)
         assert all(d == 0.0 for d in decoded)
 
-    def test_all_configs_round_trip(self):
+    def test_all_configs_round_trip(self) -> None:
         """Every block-FP config can encode/decode without crashing."""
         from sc_neurocore.compiler.intelligence import (
             MXFP4,

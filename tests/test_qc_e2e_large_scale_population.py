@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.fisher_posner import (
+    HybridFisherPosnerLIF,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
 
 
 class TestLargeScalePopulation:

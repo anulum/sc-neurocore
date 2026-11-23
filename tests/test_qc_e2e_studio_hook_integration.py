@@ -10,13 +10,33 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import json
+import numpy as np
+from sc_neurocore.quantum_cognition.bridge_adapter import (
+    FisherPosnerQuantumBridge,
+)
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+)
+from sc_neurocore.quantum_cognition.dashboard import (
+    TerminalDashboard,
+)
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
+from sc_neurocore.quantum_cognition.studio_hook import (
+    QuantumStudioHook,
+)
 
 
 class TestStudioHookIntegration:
     """Verify telemetry hook produces valid structured data."""
 
     def test_snapshot_structure(self) -> None:
+        """An entanglement snapshot carries a timestamp and one entry per site."""
         pool = SpinPoolMPS(n_sites=8)
         bridge = FisherPosnerQuantumBridge(n_qubits=4, backend="emulated")
         hook = QuantumStudioHook(pool, bridge)
@@ -29,6 +49,7 @@ class TestStudioHookIntegration:
         assert len(snap["atp_efficiencies"]) == 8
 
     def test_json_event_valid(self) -> None:
+        """A JSON telemetry event parses and carries its name and a data payload."""
         pool = SpinPoolMPS(n_sites=4)
         bridge = FisherPosnerQuantumBridge(n_qubits=4, backend="emulated")
         hook = QuantumStudioHook(pool, bridge)

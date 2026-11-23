@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
 
 
 @pytest.mark.e2e
 class TestAnalysisChain:
     """Pipeline depth → power → thermal → multi-target: all consistent."""
 
-    def test_complex_ode_analysis_chain(self):
+    def test_complex_ode_analysis_chain(self) -> None:
         """HH-class ODE: pipeline → power → thermal → compare."""
         from sc_neurocore.compiler.static_analysis import (
             critical_path_depth,
@@ -43,7 +43,7 @@ class TestAnalysisChain:
         assert len(results) == 2
         assert len({r.guard_bits for r in results}) == 1
 
-    def test_slr_placement_valid(self):
+    def test_slr_placement_valid(self) -> None:
         """SLR placement constraints are structurally valid."""
         from sc_neurocore.compiler.deployment import (
             generate_slr_constraints,

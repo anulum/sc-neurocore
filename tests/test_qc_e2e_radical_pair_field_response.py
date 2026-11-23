@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.qc_e2e_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.quantum_cognition.radical_pair import (
+    RadicalPairModel,
+)
 
 
 class TestRadicalPairFieldResponse:
     """Sweep B from 0 to 100 µT, verify monotonic physics response."""
 
     def test_field_sweep_monotonicity(self) -> None:
+        """A weak-field sweep yields finite singlet yields within the unit interval."""
         model = RadicalPairModel()
         fields = np.linspace(0, 1e-4, 200)
         yields = model.singlet_yield_field_sweep(fields)

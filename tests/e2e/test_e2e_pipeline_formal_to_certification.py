@@ -10,14 +10,17 @@
 
 from __future__ import annotations
 
-from tests.e2e.e2e_pipeline_support import *  # noqa: F403
+import pytest
+from tests.e2e.e2e_pipeline_support import (
+    STATE_VARS_LIF,
+)
 
 
 @pytest.mark.e2e
 class TestFormalToCertification:
     """Formal verification → safety certification evidence chain."""
 
-    def test_sva_matches_verilog_ports(self):
+    def test_sva_matches_verilog_ports(self) -> None:
         """SVA variable names match what a compiled Verilog module would have."""
         from sc_neurocore.compiler.static_analysis import generate_sva
 
@@ -32,7 +35,7 @@ class TestFormalToCertification:
         assert "I_t" in sva
         assert "sc_lif_formal" in sva
 
-    def test_sby_references_correct_module(self):
+    def test_sby_references_correct_module(self) -> None:
         """SymbiYosys script references the correct module name."""
         from sc_neurocore.compiler.deployment import generate_sby_script
 
@@ -45,7 +48,7 @@ class TestFormalToCertification:
         assert "sc_lif_sva.sv" in sby
         assert "sc_lif_formal" in sby
 
-    def test_certification_with_items(self):
+    def test_certification_with_items(self) -> None:
         """Certification evidence XML includes all items."""
         from sc_neurocore.compiler.deployment import (
             generate_certification_evidence,
@@ -80,7 +83,7 @@ class TestFormalToCertification:
         assert "REQ-001" in xml
         assert "REQ-002" in xml
 
-    def test_full_formal_chain(self):
+    def test_full_formal_chain(self) -> None:
         """SVA → .sby → certification: all module names consistent."""
         from sc_neurocore.compiler.static_analysis import generate_sva
         from sc_neurocore.compiler.deployment import (
