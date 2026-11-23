@@ -36,6 +36,94 @@ _RESPONSIBILITY_MODULES = (
     "dna_types",
     "dna_views",
 )
+# The concern of each responsibility module, as the top-level classes and functions it owns.
+# A new definition is placed by deciding which concern it belongs to, then listing it here.
+_OWNED_DEFINITIONS: dict[str, frozenset[str]] = {
+    "dna_analysis": frozenset(
+        {
+            "CrossHybridizationChecker",
+            "GateOptimizer",
+            "HairpinChecker",
+            "TopologicalAnalyzer",
+        }
+    ),
+    "dna_bridge": frozenset(
+        {
+            "BitstreamToDNA",
+            "SCNetworkBridge",
+        }
+    ),
+    "dna_compilers": frozenset(
+        {
+            "EnzymaticGateCompiler",
+            "StrandDisplacementCompiler",
+        }
+    ),
+    "dna_encoding": frozenset(
+        {
+            "DualRailEncoder",
+            "GF4ErrorCorrection",
+        }
+    ),
+    "dna_io": frozenset(
+        {
+            "export_fasta",
+            "export_genbank",
+            "export_json",
+            "export_nupack_input",
+        }
+    ),
+    "dna_lab": frozenset(
+        {
+            "PlateLayout",
+            "estimate_cost",
+            "generate_protocol",
+        }
+    ),
+    "dna_sequences": frozenset(
+        {
+            "SequenceDesigner",
+        }
+    ),
+    "dna_simulation": frozenset(
+        {
+            "ConcentrationOptimizer",
+            "DegradationModel",
+            "KineticSimulator",
+            "NoiseModel",
+            "SCPrecisionAnalyzer",
+            "check_kinetics",
+        }
+    ),
+    "dna_thermodynamics": frozenset(
+        {
+            "NUPACKInterface",
+            "_can_pair",
+            "_canonical_sequence",
+            "_configure_nupack_backend",
+            "_fallback_nupack_backend",
+            "_fallback_pair_energy",
+            "_fallback_pair_probability_matrix",
+            "_fallback_secondary_structure",
+            "_hairpin_loop_penalty",
+        }
+    ),
+    "dna_types": frozenset(
+        {
+            "CompilationMethod",
+            "DNACircuitDesign",
+            "DNAGate",
+            "DNAStrand",
+            "GateType",
+        }
+    ),
+    "dna_views": frozenset(
+        {
+            "visualize_circuit",
+            "visualize_kinetics",
+        }
+    ),
+}
 _PUBLIC_NAMES = (
     "BitstreamToDNA",
     "CompilationMethod",
@@ -116,26 +204,34 @@ def _assert_acyclic(graph: dict[str, set[str]]) -> None:
 
 
 def test_facade_stays_thin_and_definition_free() -> None:
-    """Keep the public module as a compatibility and composition boundary."""
-    source = _FACADE.read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    public_definitions = [
+    """Keep the public module a compatibility boundary that defines nothing of its own."""
+    tree = ast.parse(_FACADE.read_text(encoding="utf-8"))
+    definitions = [
         node.name
         for node in tree.body
-        if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and not node.name.startswith("_")
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
     ]
 
-    assert len(source.splitlines()) <= 250
-    assert public_definitions == []
+    assert definitions == []
 
 
-def test_responsibility_modules_stay_bounded_and_acyclic() -> None:
-    """Prevent a new GodFile or circular responsibility graph."""
+def test_responsibility_modules_own_their_concerns_and_stay_acyclic() -> None:
+    """Each module defines exactly its declared names, none twice, in an acyclic graph."""
     graph: dict[str, set[str]] = {}
+    assert set(_OWNED_DEFINITIONS) == set(_RESPONSIBILITY_MODULES)
+    owner: dict[str, str] = {}
     for module in _RESPONSIBILITY_MODULES:
         path = _module_path(module)
         assert path.is_file()
-        assert len(path.read_text(encoding="utf-8").splitlines()) <= 650
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+        defined = {node.name for node in tree.body if isinstance(node, kinds)}
+        assert defined == _OWNED_DEFINITIONS[module], module
+        for definition in defined:
+            assert definition not in owner, (
+                f"{definition} is defined in {owner.get(definition)} and {module}"
+            )
+            owner[definition] = module
         imports = _dna_imports(path)
         assert "dna_mapper" not in imports
         graph[module] = imports & set(_RESPONSIBILITY_MODULES)

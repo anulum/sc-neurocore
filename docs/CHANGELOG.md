@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The DNA mapper's architecture tests no longer cap line counts (250 for the
+  facade, 650 per responsibility module). They now hold what the caps stood
+  for:
+  - each of the eleven responsibility modules defines exactly the top-level
+    names of its declared concern, and no name is defined twice;
+  - the facade defines nothing at all, private names included.
+  The responsibility import graph stays acyclic.
+
 - The Bioware architecture tests no longer cap line counts: 300 per source
   and test file, 350 for the benchmark and 200 for its probe. They now hold
   the responsibility the caps stood for:
