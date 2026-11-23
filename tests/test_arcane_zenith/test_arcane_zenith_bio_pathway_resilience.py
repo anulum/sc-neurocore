@@ -10,15 +10,30 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+from sc_neurocore.arcane_zenith import (
+    ArcaneZenithCognitiveCore,
+    create_arcane_neuron_with_zenith_plasticity,
+)
+from sc_neurocore.fault_injection import (
+    RadiationProfile,
+)
+
+pytest.importorskip("torch")
 
 
 class TestBioPathwayResilience:
+    """Resilience evaluation of a biological input pathway."""
+
     @pytest.fixture
     def core(self) -> ArcaneZenithCognitiveCore:
+        """Return a cognitive core on the torch backend."""
         return create_arcane_neuron_with_zenith_plasticity(backend="torch")
 
-    def test_resilience_payload_contains_pathway_identity(self, core):
+    def test_resilience_payload_contains_pathway_identity(
+        self, core: ArcaneZenithCognitiveCore
+    ) -> None:
+        """The resilience payload names the pathway, its channels and its input shape."""
         payload = core.evaluate_bio_pathway_resilience(
             {2: 20.0, 0: 5.0, 1: 10.0},
             pathway_name="visual-cortex",
@@ -33,7 +48,10 @@ class TestBioPathwayResilience:
         assert payload["input_shape"] == [3, 64]
         assert payload["seed"] == 12
 
-    def test_resilience_is_deterministic_for_same_seed(self, core):
+    def test_resilience_is_deterministic_for_same_seed(
+        self, core: ArcaneZenithCognitiveCore
+    ) -> None:
+        """Two evaluations with the same seed give the same payload."""
         rates = {0: 8.0, 1: 16.0}
         first = core.evaluate_bio_pathway_resilience(
             rates,
@@ -50,7 +68,10 @@ class TestBioPathwayResilience:
 
         assert first == second
 
-    def test_resilience_empty_rates_falls_back_to_single_channel(self, core):
+    def test_resilience_empty_rates_falls_back_to_single_channel(
+        self, core: ArcaneZenithCognitiveCore
+    ) -> None:
+        """Empty rates fall back to one silent channel."""
         payload = core.evaluate_bio_pathway_resilience(
             {},
             pathway_name="silent",
@@ -60,7 +81,8 @@ class TestBioPathwayResilience:
         assert payload["input_shape"] == [1, 16]
         assert payload["nominal_probability"] == 0.0
 
-    def test_resilience_rejects_invalid_arguments(self, core):
+    def test_resilience_rejects_invalid_arguments(self, core: ArcaneZenithCognitiveCore) -> None:
+        """An empty pathway name or an invalid bitstream length is refused."""
         with pytest.raises(ValueError, match="pathway_name"):
             core.evaluate_bio_pathway_resilience({0: 1.0}, pathway_name="")
         with pytest.raises(ValueError, match="bitstream_length"):

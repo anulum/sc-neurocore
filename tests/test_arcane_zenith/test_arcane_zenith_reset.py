@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+
+from sc_neurocore.arcane_zenith import (
+    ArcaneZenithCognitiveCore,
+)
+
+pytest.importorskip("torch")
 
 
 class TestReset:
-    def test_reset_clears_fast_and_working_compartments(self):
+    """Resetting the cognitive core."""
+
+    def test_reset_clears_fast_and_working_compartments(self) -> None:
+        """A reset zeros the fast and working compartments."""
         core = ArcaneZenithCognitiveCore(backend="torch")
         for _ in range(50):
             core.step(5.0)
@@ -22,7 +31,8 @@ class TestReset:
         assert core.neuron.v_fast == 0.0
         assert core.neuron.v_work == 0.0
 
-    def test_reset_preserves_identity_deep_compartment(self):
+    def test_reset_preserves_identity_deep_compartment(self) -> None:
+        """A reset keeps the deep identity compartment."""
         # v_deep is the identity of the neuron; reset() must not clear it.
         core = ArcaneZenithCognitiveCore(backend="torch")
         for _ in range(200):
@@ -31,7 +41,8 @@ class TestReset:
         core.reset()
         assert core.neuron.v_deep == v_deep_before
 
-    def test_reset_zeroes_identity_drift_accumulator(self):
+    def test_reset_zeroes_identity_drift_accumulator(self) -> None:
+        """A reset zeros the identity drift."""
         core = ArcaneZenithCognitiveCore(backend="torch")
         for _ in range(50):
             core.step(5.0)

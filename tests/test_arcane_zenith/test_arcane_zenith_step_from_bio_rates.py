@@ -10,24 +10,36 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+from sc_neurocore.arcane_zenith import (
+    ArcaneZenithCognitiveCore,
+    create_arcane_neuron_with_zenith_plasticity,
+)
+
+pytest.importorskip("torch")
 
 
 class TestStepFromBioRates:
+    """Stepping the cognitive core from biological firing rates."""
+
     @pytest.fixture
     def core(self) -> ArcaneZenithCognitiveCore:
+        """Return a cognitive core on the torch backend."""
         return create_arcane_neuron_with_zenith_plasticity(backend="torch")
 
-    def test_populated_dict_advances_by_one_step(self, core):
+    def test_populated_dict_advances_by_one_step(self, core: ArcaneZenithCognitiveCore) -> None:
+        """A rate dictionary advances the clock by one step."""
         core.step_from_bio_rates({0: 10.0, 1: 20.0, 2: 30.0})
         assert core.neuron.get_state()["total_steps"] == 1
 
-    def test_empty_dict_treated_as_zero_current(self, core):
+    def test_empty_dict_treated_as_zero_current(self, core: ArcaneZenithCognitiveCore) -> None:
+        """An empty rate dictionary still advances one step."""
         # Empty dict → mean 0.0 → equivalent to step(0.0). Must not raise.
         core.step_from_bio_rates({})
         assert core.neuron.get_state()["total_steps"] == 1
 
-    def test_multiple_calls_keep_parameters_bounded(self, core):
+    def test_multiple_calls_keep_parameters_bounded(self, core: ArcaneZenithCognitiveCore) -> None:
+        """Repeated rate steps keep every meta-parameter in range."""
         for i in range(100):
             core.step_from_bio_rates({0: float(i % 50), 1: float((i * 3) % 40)})
         assert 1000.0 <= core.neuron.tau_deep <= 50000.0

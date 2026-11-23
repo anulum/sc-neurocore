@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+import pytest
+from sc_neurocore.arcane_zenith import (
+    create_arcane_neuron_with_zenith_plasticity,
+)
+
+pytest.importorskip("torch")
+
+
+if TYPE_CHECKING:
+    from sc_neurocore.evo_substrate.evo_substrate import Genome
 
 
 class TestStepFromGenome:
-    """``step_from_genome`` seeds ``tau_fast`` and ``tau_work`` from the
+    """Stepping the cognitive core from an evolved genome.
+
+    ``step_from_genome`` seeds ``tau_fast`` and ``tau_work`` from the
     ``NeuronGene`` fields of an evo_substrate Genome, and steps the
     cognitive core with ``genome.topology.connectivity`` as drive
     current. (``tau_deep`` is also seeded from the genome but is
@@ -24,7 +37,8 @@ class TestStepFromGenome:
     """
 
     @pytest.fixture
-    def genome(self):
+    def genome(self) -> Genome:
+        """Return a genome with known neuron time constants and connectivity."""
         pytest.importorskip("sc_neurocore.evo_substrate.evo_substrate")
         from sc_neurocore.evo_substrate.evo_substrate import (
             Genome,
@@ -37,7 +51,8 @@ class TestStepFromGenome:
         g.topology = TopologyGene(connectivity=0.42)
         return g
 
-    def test_seeds_tau_fast_and_tau_work_from_neuron_gene(self, genome):
+    def test_seeds_tau_fast_and_tau_work_from_neuron_gene(self, genome: Genome) -> None:
+        """A genome step seeds the fast and working time constants."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         core.step_from_genome(genome)
         # tau_fast and tau_work are seeded and NOT touched by plasticity
@@ -45,20 +60,23 @@ class TestStepFromGenome:
         assert core.neuron.tau_fast == pytest.approx(7.5)
         assert core.neuron.tau_work == pytest.approx(250.0)
 
-    def test_advances_neuron_clock_once(self, genome):
+    def test_advances_neuron_clock_once(self, genome: Genome) -> None:
+        """A genome step advances the clock by one."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         steps_before = core.neuron.get_state()["total_steps"]
         core.step_from_genome(genome)
         assert core.neuron.get_state()["total_steps"] == steps_before + 1
 
-    def test_tau_deep_stays_in_biological_range(self, genome):
+    def test_tau_deep_stays_in_biological_range(self, genome: Genome) -> None:
+        """A genome step keeps the deep time constant in range."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         core.step_from_genome(genome)
         # After step(), the sigmoid map clamps tau_deep into [1000, 50000]
         # regardless of whatever the genome seeded.
         assert 1000.0 <= core.neuron.tau_deep <= 50000.0
 
-    def test_repeated_calls_keep_all_meta_params_bounded(self, genome):
+    def test_repeated_calls_keep_all_meta_params_bounded(self, genome: Genome) -> None:
+        """Repeated genome steps keep every meta-parameter in range."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         for _ in range(50):
             core.step_from_genome(genome)

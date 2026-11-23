@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2598
+expected_file_count = 2610
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10436,3 +10436,51 @@ rationale = "Exercise the SC neural-architecture search: sc nas engine sc fitnes
 [[file]]
 path = "tests/test_nas/test_sc_nas_engine_scnas_engine_edge_branches.py"
 rationale = "Exercise the SC neural-architecture search: sc nas engine scnas engine edge branches."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_bio_pathway_resilience.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: bio pathway resilience."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_construction.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: construction."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_free_tests.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: free tests."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_integration.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: integration."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_meta_learning_episode.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: meta learning episode."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_reset.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: reset."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_serialization.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: serialization."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_sigmoid_mapping.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: sigmoid mapping."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_step.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: step."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_step_from_bio_rates.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: step from bio rates."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_step_from_genome.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: step from genome."
+
+[[file]]
+path = "tests/test_arcane_zenith/test_arcane_zenith_symbolic_reasoning_log.py"
+rationale = "Exercise the Arcane-Zenith cognitive core: symbolic reasoning log."

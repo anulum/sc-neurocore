@@ -1314,6 +1314,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 Arcane-Zenith cognitive-core test modules
+  (`tests/test_arcane_zenith`) import their names explicitly instead of
+  through a suppressed star import, gain their missing test docstrings
+  and type annotations, including typed fixture parameters, and are
+  enrolled in the docstring policy. Their support module, left without
+  an importer, is deleted.
+
 - The ten SC neural-architecture-search test modules (`tests/test_nas`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and are enrolled in the

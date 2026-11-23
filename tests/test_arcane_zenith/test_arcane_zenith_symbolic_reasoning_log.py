@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+
+from sc_neurocore.arcane_zenith import (
+    create_arcane_neuron_with_zenith_plasticity,
+)
+
+pytest.importorskip("torch")
 
 
 class TestSymbolicReasoningLog:
-    def test_reasoning_log_has_stable_schema_and_fields(self):
+    """The symbolic reasoning log of the cognitive core."""
+
+    def test_reasoning_log_has_stable_schema_and_fields(self) -> None:
+        """The log has its schema version, tick and level fields."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         core.step(1.5)
         log = core.export_symbolic_reasoning_log()
@@ -27,7 +36,8 @@ class TestSymbolicReasoningLog:
         assert log["identity_shift"] in {"stable", "drifting"}
         assert log["adaptation_regime"] in {"conservative", "aggressive"}
 
-    def test_reasoning_log_tick_progresses_after_steps(self):
+    def test_reasoning_log_tick_progresses_after_steps(self) -> None:
+        """The log tick advances after steps."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         core.step(0.5)
         first = core.export_symbolic_reasoning_log()
@@ -35,7 +45,8 @@ class TestSymbolicReasoningLog:
         second = core.export_symbolic_reasoning_log()
         assert second["tick"] > first["tick"]
 
-    def test_episode_trace_embeds_symbolic_log(self):
+    def test_episode_trace_embeds_symbolic_log(self) -> None:
+        """Each episode trace row embeds a symbolic log."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         result = core.run_meta_learning_episode([0.2, 0.4, 0.6], reset_before=True)
         for row in result["trace"]:

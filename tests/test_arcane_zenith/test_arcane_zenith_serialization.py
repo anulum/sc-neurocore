@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+from sc_neurocore.arcane_zenith import (
+    ArcaneZenithCognitiveCore,
+)
+
+pytest.importorskip("torch")
 
 
 class TestSerialization:
-    def test_get_state_contains_neuron_and_four_weights(self):
+    """State export and restore of the cognitive core."""
+
+    def test_get_state_contains_neuron_and_four_weights(self) -> None:
+        """The state holds the neuron and the four rule weights as floats."""
         core = ArcaneZenithCognitiveCore(backend="torch")
         state = core.get_state()
         # Neuron state keys:
@@ -25,7 +33,8 @@ class TestSerialization:
             assert key in state
             assert isinstance(state[key], float)
 
-    def test_state_dict_roundtrip_restores_four_weights(self):
+    def test_state_dict_roundtrip_restores_four_weights(self) -> None:
+        """Loading a state dictionary restores the four rule weights."""
         src = ArcaneZenithCognitiveCore(backend="torch")
         # Drive the rules so weights diverge from the defaults.
         for _ in range(100):

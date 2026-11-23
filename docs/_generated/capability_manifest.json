@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5755
+    "test_files": 5754
   },
   "documentation": {
     "public_pages": [
@@ -4075,7 +4075,6 @@
       "tests/test_analog_bridge/test_analog_bridge_quantization.py",
       "tests/test_analysis_causality_contracts.py",
       "tests/test_arcane_zenith/__init__.py",
-      "tests/test_arcane_zenith/arcane_zenith_support.py",
       "tests/test_arcane_zenith/test_arcane_zenith_bio_pathway_resilience.py",
       "tests/test_arcane_zenith/test_arcane_zenith_construction.py",
       "tests/test_arcane_zenith/test_arcane_zenith_free_tests.py",

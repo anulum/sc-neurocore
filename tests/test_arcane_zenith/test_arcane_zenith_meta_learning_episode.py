@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
+import pytest
+from sc_neurocore.arcane_zenith import (
+    create_arcane_neuron_with_zenith_plasticity,
+)
+
+pytest.importorskip("torch")
 
 
 class TestMetaLearningEpisode:
-    def test_episode_returns_deterministic_summary_and_trace(self):
+    """Meta-learning episodes and their reasoning traces."""
+
+    def test_episode_returns_deterministic_summary_and_trace(self) -> None:
+        """An episode reports its steps, spikes, rate and one trace row per current."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         currents = [0.0, 1.0, 2.0, 3.0, 2.0, 1.0]
         result = core.run_meta_learning_episode(currents, reset_before=True)
@@ -26,7 +34,8 @@ class TestMetaLearningEpisode:
         assert result["trace"][0]["current"] == pytest.approx(currents[0])
         assert result["trace"][-1]["current"] == pytest.approx(currents[-1])
 
-    def test_episode_trace_contains_required_contract_fields(self):
+    def test_episode_trace_contains_required_contract_fields(self) -> None:
+        """Every trace row has the contract fields within their ranges."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         result = core.run_meta_learning_episode([0.25, 0.5, 0.75], reset_before=True)
 
@@ -48,12 +57,14 @@ class TestMetaLearningEpisode:
             assert 0.0 <= float(item["delta_conf"]) <= 1.0
             assert 0.001 <= float(item["lr_base"]) <= 0.1
 
-    def test_episode_rejects_empty_currents(self):
+    def test_episode_rejects_empty_currents(self) -> None:
+        """An episode without currents is refused."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         with pytest.raises(ValueError, match="currents must be non-empty"):
             core.run_meta_learning_episode([])
 
-    def test_compact_reasoning_trace_export(self):
+    def test_compact_reasoning_trace_export(self) -> None:
+        """The compact trace holds its fields within their ranges."""
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
         core.run_meta_learning_episode([1.0, 2.0, 3.0], reset_before=True)
         trace = core.export_reasoning_trace()
