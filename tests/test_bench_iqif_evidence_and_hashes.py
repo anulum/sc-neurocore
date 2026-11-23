@@ -6,9 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (evidence_and_hashes) from former test_bench_iqif.py
 
+"""Tests of the IQIF benchmark evidence and its hashes."""
+
 from __future__ import annotations
 
-from tests.bench_iqif_support import *  # noqa: F403
+import hashlib
+import json
+import pytest
+from benchmarks import (
+    bench_model_iqif as benchmark,
+)
+from pathlib import (
+    Path,
+)
+from tests.bench_iqif_support import (
+    _passing_safety,
+)
 from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 

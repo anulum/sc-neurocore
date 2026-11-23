@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.adc_to_spike_kernel_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.sensors.adc_to_spike_kernel import (
+    ADCSpikeWindowConfig,
+)
 
 
 class TestConfig:

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.autofit.fitter import (
+    FittedModel,
+)
 
 
 class TestFittedModelDataclass:
-    def test_fields(self):
+    """The fitted-model record."""
+
+    def test_fields(self) -> None:
+        """The record keeps its name and RMSE."""
         fm = FittedModel(
             model_name="test",
             model_class=type,

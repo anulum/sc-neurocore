@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (route_modes) from former test_alternative_path.py
 
+"""Tests of the baseline, shadow and candidate route modes."""
+
 from __future__ import annotations
 
-from tests.alternative_path_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.experimental import (
+    AlternativePathConfig,
+    AlternativePathMode,
+    AlternativePathRoute,
+)
+from tests.alternative_path_support import (
+    _broken_shadow_route,
+)
 
 
-def test_baseline_mode_does_not_call_candidate():
+def test_baseline_mode_does_not_call_candidate() -> None:
+    """Baseline mode never calls the candidate."""
     calls = {"candidate": 0}
 
     def baseline(x: int) -> int:
@@ -37,7 +49,8 @@ def test_baseline_mode_does_not_call_candidate():
     assert result.candidate_value is None
 
 
-def test_shadow_mode_returns_baseline_and_compares_candidate():
+def test_shadow_mode_returns_baseline_and_compares_candidate() -> None:
+    """Shadow mode returns the baseline and compares the candidate."""
     route = AlternativePathRoute(
         name="safe.vector",
         baseline=lambda: np.array([1.0, 2.0, 3.0]),
@@ -57,7 +70,8 @@ def test_shadow_mode_returns_baseline_and_compares_candidate():
     assert result.comparison.matched
 
 
-def test_candidate_mode_returns_candidate_and_records_baseline():
+def test_candidate_mode_returns_candidate_and_records_baseline() -> None:
+    """Candidate mode returns the candidate and keeps the baseline."""
     route = AlternativePathRoute(
         name="safe.scalar",
         baseline=lambda x: x + 1,
@@ -78,7 +92,8 @@ def test_candidate_mode_returns_candidate_and_records_baseline():
     assert not result.comparison.matched
 
 
-def test_candidate_mode_fail_open_falls_back_to_baseline():
+def test_candidate_mode_fail_open_falls_back_to_baseline() -> None:
+    """A failing candidate falls back to the baseline when open."""
     route = AlternativePathRoute(
         name="safe.fail-open",
         baseline=lambda: "stable",
@@ -101,7 +116,8 @@ def test_candidate_mode_fail_open_falls_back_to_baseline():
     assert "candidate broke" in result.candidate_error
 
 
-def test_candidate_mode_fail_closed_raises():
+def test_candidate_mode_fail_closed_raises() -> None:
+    """A failing candidate raises when closed."""
     route = AlternativePathRoute(
         name="safe.fail-closed",
         baseline=lambda: "stable",
@@ -120,7 +136,8 @@ def test_candidate_mode_fail_closed_raises():
         )
 
 
-def test_shadow_mode_records_candidate_error_without_comparison():
+def test_shadow_mode_records_candidate_error_without_comparison() -> None:
+    """Shadow mode records a candidate error without comparing."""
     result = _broken_shadow_route().run(
         AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW)
     )

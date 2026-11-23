@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.benchmarks_neurobench_support import *  # noqa: F403
+import json
+from sc_neurocore.benchmarks import (
+    BenchmarkResult,
+)
 
 
 class TestBenchmarkResult:
-    def test_to_json(self):
+    """NeuroBench benchmark results."""
+
+    def test_to_json(self) -> None:
+        """The JSON form carries the task, accuracy and parameters."""
         r = BenchmarkResult(
             task="mnist",
             model="test_snn",
@@ -32,7 +38,8 @@ class TestBenchmarkResult:
         assert j["metrics"]["complexity"]["total_parameters"] == 1000
         assert j["framework"] == "sc-neurocore"
 
-    def test_to_json_with_energy(self):
+    def test_to_json_with_energy(self) -> None:
+        """The JSON form carries the energy."""
         r = BenchmarkResult(
             task="shd",
             model="m",
@@ -48,7 +55,8 @@ class TestBenchmarkResult:
         j = json.loads(r.to_neurobench_json())
         assert j["metrics"]["system"]["energy_nj"] == 42.0
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary names the task, accuracy and model."""
         r = BenchmarkResult(
             task="dvs_gesture",
             model="snn_v1",
@@ -65,7 +73,8 @@ class TestBenchmarkResult:
         assert "0.9200" in s
         assert "snn_v1" in s
 
-    def test_summary_with_energy(self):
+    def test_summary_with_energy(self) -> None:
+        """The summary includes the energy figure."""
         r = BenchmarkResult(
             task="t",
             model="m",
@@ -81,7 +90,8 @@ class TestBenchmarkResult:
         s = r.summary()
         assert "99.50" in s
 
-    def test_extra_field(self):
+    def test_extra_field(self) -> None:
+        """Extra metrics appear under custom."""
         r = BenchmarkResult(
             task="t",
             model="m",

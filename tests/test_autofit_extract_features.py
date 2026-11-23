@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.autofit.features import (
+    extract_features,
+)
 
 
 class TestExtractFeatures:
-    def test_silent_trace(self):
+    """Extracting spike features from a voltage trace."""
+
+    def test_silent_trace(self) -> None:
+        """A silent trace has no spikes and zero rates."""
         v = np.full(100, -1.0)
         feats = extract_features(v, dt=0.1, threshold=0.0)
         assert feats["spike_count"] == 0
@@ -22,7 +28,8 @@ class TestExtractFeatures:
         assert feats["mean_isi"] == 0.0
         assert feats["cv_isi"] == 0.0
 
-    def test_spiking_trace(self):
+    def test_spiking_trace(self) -> None:
+        """Two spikes give a positive rate and interval."""
         v = np.zeros(200)
         # Two spikes: voltage goes above threshold at indices 50 and 150
         v[49:55] = [-0.5, 0.5, 1.0, 0.5, -0.5, -1.0]
@@ -35,7 +42,8 @@ class TestExtractFeatures:
         assert "ap_height" in feats
         assert "ap_width" in feats
 
-    def test_single_spike_with_clear_width(self):
+    def test_single_spike_with_clear_width(self) -> None:
+        """A single spike has no interval and a width."""
         v = np.full(100, -1.0)
         # Crossing detected at idx 49 (v goes from <0 to >0).
         # extract_spike_times returns idx of the transition = 49.
@@ -52,7 +60,8 @@ class TestExtractFeatures:
         # This is a known limitation of the implementation.
         assert feats["ap_width"] >= 0.0
 
-    def test_feature_keys(self):
+    def test_feature_keys(self) -> None:
+        """The feature set has its expected keys."""
         v = np.random.randn(100)
         feats = extract_features(v)
         expected_keys = {

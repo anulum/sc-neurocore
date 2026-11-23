@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestGalvesLocherbach:
-    def test_stochastic_firing(self):
+    """The Galves-Locherbach stochastic neuron."""
+
+    def test_stochastic_firing(self) -> None:
+        """The neuron fires under drive."""
         from sc_neurocore.neurons.models import GalvesLocherbachNeuron
 
         n = GalvesLocherbachNeuron()
         spikes = sum(n.step(2.0) for _ in range(1000))
         assert spikes > 0
 
-    def test_no_fire_without_input(self):
+    def test_no_fire_without_input(self) -> None:
+        """Without input the neuron stays silent."""
         from sc_neurocore.neurons.models import GalvesLocherbachNeuron
 
         n = GalvesLocherbachNeuron(steepness=20.0, threshold_rate=5.0)

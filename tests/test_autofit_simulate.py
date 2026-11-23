@@ -10,54 +10,69 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.autofit.fitter import (
+    _simulate,
+)
+from typing import Never
 
 
 class TestSimulate:
-    def test_with_mock_model(self):
+    """Simulating a model for fitting."""
+
+    def test_with_mock_model(self) -> None:
+        """A simulated trace has one value per input step."""
+
         class MockNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 0.0
                 self.dt = 1.0
 
-            def step(self, current):
+            def step(self, current: float) -> None:
                 self.v += current * 0.1
 
         v = _simulate(MockNeuron, {}, np.ones(10), dt=0.1)
         assert len(v) == 10
         assert v[-1] > 0
 
-    def test_model_with_params(self):
+    def test_model_with_params(self) -> None:
+        """Model parameters reach the simulated model."""
+
         class MockNeuron:
-            def __init__(self, gain=1.0):
+            def __init__(self, gain: float = 1.0) -> None:
                 self.v = 0.0
                 self.gain = gain
 
-            def step(self, current):
+            def step(self, current: float) -> None:
                 self.v = current * self.gain
 
         v = _simulate(MockNeuron, {"gain": 2.0}, np.ones(5), dt=0.1)
         assert v[-1] == pytest.approx(2.0)
 
-    def test_model_exception_handling(self):
+    def test_model_exception_handling(self) -> None:
+        """A model that raises still gives a full trace."""
+
         class BrokenNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 0.0
 
-            def step(self, current):
+            def step(self, current: float) -> Never:
                 raise RuntimeError("boom")
 
         v = _simulate(BrokenNeuron, {}, np.ones(5), dt=0.1)
         assert len(v) == 5
 
-    def test_model_init_fallback(self):
+    def test_model_init_fallback(self) -> None:
+        """A model that cannot be built still gives a full trace."""
+
         class FussyNeuron:
-            def __init__(self, required_param=None):
+            def __init__(self, required_param: str | None = None) -> None:
                 if required_param == "bad":
                     raise TypeError("bad param")
                 self.v = 0.0
 
-            def step(self, current):
+            def step(self, current: float) -> None:
                 self.v = current
 
         v = _simulate(FussyNeuron, {"required_param": "bad"}, np.ones(3), dt=0.1)

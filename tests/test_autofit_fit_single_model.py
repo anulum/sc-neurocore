@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.autofit.fitter import (
+    _fit_single_model,
+    FittedModel,
+)
 
 
 class TestFitSingleModel:
-    def test_fit_returns_fitted_model(self):
+    """Fitting one neuron model."""
+
+    def test_fit_returns_fitted_model(self) -> None:
+        """A fit returns a fitted model with its name and RMSE."""
+
         class GoodNeuron:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.v = 0.0
 
-            def step(self, current):
+            def step(self, current: float) -> None:
                 self.v = current * 0.5
 
         v_target = np.random.randn(100) * 0.1

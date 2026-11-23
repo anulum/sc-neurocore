@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestFractionalLIF:
-    def test_fires(self):
+    """The fractional-order LIF neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         from sc_neurocore.neurons.models import FractionalLIFNeuron
 
         n = FractionalLIFNeuron(alpha=0.9, resistance=5.0)
         spikes = sum(n.step(3.0) for _ in range(200))
         assert spikes > 0
 
-    def test_memory_effect(self):
+    def test_memory_effect(self) -> None:
+        """The neuron keeps a voltage history."""
         from sc_neurocore.neurons.models import FractionalLIFNeuron
 
         n = FractionalLIFNeuron(alpha=0.5)

@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from tests.benchmarks_neurobench_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.benchmarks import (
+    compute_metrics,
+)
 
 
 class TestComputeMetrics:
-    def test_perfect_accuracy(self):
+    """Computing NeuroBench metrics."""
+
+    def test_perfect_accuracy(self) -> None:
+        """Matching predictions give an accuracy of 1."""
         preds = np.array([0, 1, 2, 3])
         targets = np.array([0, 1, 2, 3])
         r = compute_metrics(preds, targets)
         assert r.accuracy == 1.0
 
-    def test_zero_accuracy(self):
+    def test_zero_accuracy(self) -> None:
+        """Wrong predictions give an accuracy of 0."""
         preds = np.array([1, 2, 3, 0])
         targets = np.array([0, 1, 2, 3])
         r = compute_metrics(preds, targets)
         assert r.accuracy == 0.0
 
-    def test_with_spike_counts(self):
+    def test_with_spike_counts(self) -> None:
+        """Spike counts give a total and a sparsity in [0, 1]."""
         preds = np.array([0, 1, 0, 1])
         targets = np.array([0, 1, 0, 1])
         spike_counts = np.array([10, 20, 15, 25])
@@ -36,12 +44,14 @@ class TestComputeMetrics:
         assert r.activation_sparsity >= 0
         assert r.activation_sparsity <= 1.0
 
-    def test_no_weights(self):
+    def test_no_weights(self) -> None:
+        """No weights give no parameters or operations."""
         r = compute_metrics(np.array([0]), np.array([0]))
         assert r.total_parameters == 0
         assert r.synaptic_operations == 0
 
-    def test_custom_task_model(self):
+    def test_custom_task_model(self) -> None:
+        """The task and model names are kept."""
         r = compute_metrics(
             np.array([0]),
             np.array([0]),
@@ -51,7 +61,8 @@ class TestComputeMetrics:
         assert r.task == "keyword_spotting"
         assert r.model == "my_snn"
 
-    def test_no_spike_counts(self):
+    def test_no_spike_counts(self) -> None:
+        """No spike counts give zero spikes and sparsity."""
         r = compute_metrics(np.array([0, 1]), np.array([0, 1]))
         assert r.total_spikes == 0
         assert r.activation_sparsity == 0.0

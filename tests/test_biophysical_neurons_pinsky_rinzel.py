@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestPinskyRinzel:
-    def test_fires(self):
+    """The two-compartment Pinsky-Rinzel neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         from sc_neurocore.neurons.models import PinskyRinzelNeuron
 
         n = PinskyRinzelNeuron()
         spikes = sum(n.step(10.0) for _ in range(2000))
         assert spikes > 0
 
-    def test_two_compartments(self):
+    def test_two_compartments(self) -> None:
+        """Soma and dendrite reach different voltages."""
         from sc_neurocore.neurons.models import PinskyRinzelNeuron
 
         n = PinskyRinzelNeuron()

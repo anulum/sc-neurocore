@@ -6,13 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_augmentation.py
 
+"""Shared names and a spike-raster maker for the augmentation tests."""
+
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from sc_neurocore.augmentation import SpikeAugment, SpikeCurriculum
 
 
-def _make_spikes(T=20, N=10, rate=0.2, seed=42):
+def _make_spikes(
+    T: int = 20, N: int = 10, rate: float = 0.2, seed: int = 42
+) -> npt.NDArray[np.int8]:
     rng = np.random.RandomState(seed)
     return (rng.random((T, N)) < rate).astype(np.int8)
 

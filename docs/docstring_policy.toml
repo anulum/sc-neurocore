@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2990
+expected_file_count = 3047
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -12004,3 +12004,231 @@ rationale = "Exercise the safety certification: traceability boundary contracts.
 [[file]]
 path = "tests/test_safety_cert/test_traceability_traceability_matrix.py"
 rationale = "Exercise the safety certification: traceability traceability matrix."
+
+[[file]]
+path = "tests/alternative_path_support.py"
+rationale = "Provide the names and broken shadow route shared by the alternative-path tests."
+
+[[file]]
+path = "tests/augmentation_support.py"
+rationale = "Provide the names and spike-raster maker shared by the augmentation tests."
+
+[[file]]
+path = "tests/bio_chaos_spatial_learning_support.py"
+rationale = "Provide the names and genome stand-in shared by the chaos, spatial, learning and bio tests."
+
+[[file]]
+path = "tests/test_adc_to_spike_kernel_config.py"
+rationale = "Exercise SC-NeuroCore: adc to spike kernel config."
+
+[[file]]
+path = "tests/test_adc_to_spike_kernel_dispatch.py"
+rationale = "Exercise SC-NeuroCore: adc to spike kernel dispatch."
+
+[[file]]
+path = "tests/test_adc_to_spike_kernel_free_tests.py"
+rationale = "Exercise SC-NeuroCore: adc to spike kernel free tests."
+
+[[file]]
+path = "tests/test_adc_to_spike_kernel_quantise_adc.py"
+rationale = "Exercise SC-NeuroCore: adc to spike kernel quantise adc."
+
+[[file]]
+path = "tests/test_adc_to_spike_kernel_windows.py"
+rationale = "Exercise SC-NeuroCore: adc to spike kernel windows."
+
+[[file]]
+path = "tests/test_adex_backends_auto_dispatch.py"
+rationale = "Exercise SC-NeuroCore: adex backends auto dispatch."
+
+[[file]]
+path = "tests/test_adex_backends_backend_parity.py"
+rationale = "Exercise SC-NeuroCore: adex backends backend parity."
+
+[[file]]
+path = "tests/test_adex_backends_c_abi_and_loaders.py"
+rationale = "Exercise SC-NeuroCore: adex backends c abi and loaders."
+
+[[file]]
+path = "tests/test_adex_backends_rejects_and_integrators.py"
+rationale = "Exercise SC-NeuroCore: adex backends rejects and integrators."
+
+[[file]]
+path = "tests/test_aer_spike_codec_aer_spike_codec_compression.py"
+rationale = "Exercise SC-NeuroCore: aer spike codec aer spike codec compression."
+
+[[file]]
+path = "tests/test_aer_spike_codec_aer_spike_codec_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: aer spike codec aer spike codec edge cases."
+
+[[file]]
+path = "tests/test_aer_spike_codec_aer_spike_codec_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: aer spike codec aer spike codec roundtrip."
+
+[[file]]
+path = "tests/test_alternative_path_compare_utils.py"
+rationale = "Exercise SC-NeuroCore: alternative path compare utils."
+
+[[file]]
+path = "tests/test_alternative_path_evaluate_cases.py"
+rationale = "Exercise SC-NeuroCore: alternative path evaluate cases."
+
+[[file]]
+path = "tests/test_alternative_path_physics_routes.py"
+rationale = "Exercise SC-NeuroCore: alternative path physics routes."
+
+[[file]]
+path = "tests/test_alternative_path_registry.py"
+rationale = "Exercise SC-NeuroCore: alternative path registry."
+
+[[file]]
+path = "tests/test_alternative_path_reports.py"
+rationale = "Exercise SC-NeuroCore: alternative path reports."
+
+[[file]]
+path = "tests/test_alternative_path_route_modes.py"
+rationale = "Exercise SC-NeuroCore: alternative path route modes."
+
+[[file]]
+path = "tests/test_astrocyte_adapter_astrocyte_neuron.py"
+rationale = "Exercise SC-NeuroCore: astrocyte adapter astrocyte neuron."
+
+[[file]]
+path = "tests/test_astrocyte_adapter_astrocyte_population.py"
+rationale = "Exercise SC-NeuroCore: astrocyte adapter astrocyte population."
+
+[[file]]
+path = "tests/test_augmentation_spike_augment.py"
+rationale = "Exercise SC-NeuroCore: augmentation spike augment."
+
+[[file]]
+path = "tests/test_augmentation_spike_curriculum.py"
+rationale = "Exercise SC-NeuroCore: augmentation spike curriculum."
+
+[[file]]
+path = "tests/test_autofit_cost_functions.py"
+rationale = "Exercise SC-NeuroCore: autofit cost functions."
+
+[[file]]
+path = "tests/test_autofit_extract_features.py"
+rationale = "Exercise SC-NeuroCore: autofit extract features."
+
+[[file]]
+path = "tests/test_autofit_extract_spike_times_basic.py"
+rationale = "Exercise SC-NeuroCore: autofit extract spike times basic."
+
+[[file]]
+path = "tests/test_autofit_fit.py"
+rationale = "Exercise SC-NeuroCore: autofit fit."
+
+[[file]]
+path = "tests/test_autofit_fit_single_model.py"
+rationale = "Exercise SC-NeuroCore: autofit fit single model."
+
+[[file]]
+path = "tests/test_autofit_fitted_model_dataclass.py"
+rationale = "Exercise SC-NeuroCore: autofit fitted model dataclass."
+
+[[file]]
+path = "tests/test_autofit_simulate.py"
+rationale = "Exercise SC-NeuroCore: autofit simulate."
+
+[[file]]
+path = "tests/test_bench_iqif_evidence_and_hashes.py"
+rationale = "Exercise SC-NeuroCore: bench iqif evidence and hashes."
+
+[[file]]
+path = "tests/test_bench_iqif_gates_and_rejects.py"
+rationale = "Exercise SC-NeuroCore: bench iqif gates and rejects."
+
+[[file]]
+path = "tests/test_bench_iqif_probes_and_metadata.py"
+rationale = "Exercise SC-NeuroCore: bench iqif probes and metadata."
+
+[[file]]
+path = "tests/test_benchmarks_neurobench_benchmark_result.py"
+rationale = "Exercise SC-NeuroCore: benchmarks neurobench benchmark result."
+
+[[file]]
+path = "tests/test_benchmarks_neurobench_compute_metrics.py"
+rationale = "Exercise SC-NeuroCore: benchmarks neurobench compute metrics."
+
+[[file]]
+path = "tests/test_benchmarks_neurobench_tasks.py"
+rationale = "Exercise SC-NeuroCore: benchmarks neurobench tasks."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_chaotic_rng.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning chaotic rng."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_neuromodulator_system.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning neuromodulator system."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_point_cloud.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning point cloud."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_snn_genetic_evolver.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning snn genetic evolver."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_spatial_transformer3_d.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning spatial transformer3 d."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_spike_to_concept_mapper.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning spike to concept mapper."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_swarm_coupling.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning swarm coupling."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_voxel_grid.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning voxel grid."
+
+[[file]]
+path = "tests/test_bio_chaos_spatial_learning_wolfram_hypergraph.py"
+rationale = "Exercise SC-NeuroCore: bio chaos spatial learning wolfram hypergraph."
+
+[[file]]
+path = "tests/test_bio_dna_encoder.py"
+rationale = "Exercise SC-NeuroCore: bio dna encoder."
+
+[[file]]
+path = "tests/test_bio_genetic_regulatory_layer.py"
+rationale = "Exercise SC-NeuroCore: bio genetic regulatory layer."
+
+[[file]]
+path = "tests/test_bio_neuromodulator_system.py"
+rationale = "Exercise SC-NeuroCore: bio neuromodulator system."
+
+[[file]]
+path = "tests/test_biophysical_neurons_chialvo_map.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons chialvo map."
+
+[[file]]
+path = "tests/test_biophysical_neurons_connor_stevens.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons connor stevens."
+
+[[file]]
+path = "tests/test_biophysical_neurons_fractional_lif.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons fractional lif."
+
+[[file]]
+path = "tests/test_biophysical_neurons_galves_locherbach.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons galves locherbach."
+
+[[file]]
+path = "tests/test_biophysical_neurons_pinsky_rinzel.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons pinsky rinzel."
+
+[[file]]
+path = "tests/test_biophysical_neurons_wang_buzsaki.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons wang buzsaki."
+
+[[file]]
+path = "tests/test_biophysical_neurons_wilson_cowan.py"
+rationale = "Exercise SC-NeuroCore: biophysical neurons wilson cowan."

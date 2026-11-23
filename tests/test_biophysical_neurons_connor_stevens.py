@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestConnorStevens:
-    def test_fires(self):
+    """The Connor-Stevens neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         from sc_neurocore.neurons.models import ConnorStevensNeuron
 
         n = ConnorStevensNeuron()
         spikes = sum(n.step(10.0) for _ in range(100))
         assert spikes > 0
 
-    def test_a_type_current(self):
+    def test_a_type_current(self) -> None:
+        """The A-type activation evolves."""
         from sc_neurocore.neurons.models import ConnorStevensNeuron
 
         n = ConnorStevensNeuron()

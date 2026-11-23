@@ -10,21 +10,30 @@
 
 from __future__ import annotations
 
-from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.explainability import (
+    SpikeToConceptMapper,
+)
 
 
 class TestSpikeToConceptMapper:
-    def test_active_spikes(self):
+    """Explaining spikes as concepts."""
+
+    def test_active_spikes(self) -> None:
+        """Active spikes are named by their concepts."""
         mapper = SpikeToConceptMapper({0: "Motor", 2: "Vision"})
         out = mapper.explain(np.array([1, 0, 1, 0]))
         assert "Motor" in out and "Vision" in out
 
-    def test_no_spikes(self):
+    def test_no_spikes(self) -> None:
+        """No spikes are explained as idle."""
         assert "idle" in SpikeToConceptMapper({0: "Motor"}).explain(np.array([0, 0, 0]))
 
-    def test_unknown_index(self):
+    def test_unknown_index(self) -> None:
+        """An unmapped spike is named Unknown."""
         assert "Unknown(1)" in SpikeToConceptMapper({0: "Motor"}).explain(np.array([0, 1]))
 
-    def test_empty_concept_map(self):
+    def test_empty_concept_map(self) -> None:
+        """With no concept map every spike is Unknown."""
         out = SpikeToConceptMapper({}).explain(np.array([1, 1]))
         assert "Unknown(0)" in out and "Unknown(1)" in out

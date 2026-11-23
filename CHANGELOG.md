@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 54 top-level test modules of the AdEx, AER, alternative-path,
+  astrocyte, augmentation, auto-fit, benchmark, bio and biophysical
+  suites import their names explicitly instead of through a
+  suppressed star import, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy. Seven support
+  modules left without an importer are deleted; three that keep
+  importers gain types and module docstrings.
+
 - The 29 safety-certification test modules that star-imported a
   support module (`tests/test_safety_cert`) import their names
   explicitly instead, gain their missing test and module docstrings

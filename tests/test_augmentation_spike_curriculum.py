@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.augmentation_support import *  # noqa: F403
+from sc_neurocore.augmentation import (
+    SpikeCurriculum,
+)
+from tests.augmentation_support import (
+    _make_spikes,
+)
 
 
 class TestSpikeCurriculum:
-    def test_timesteps_progression(self):
+    """The spike training curriculum."""
+
+    def test_timesteps_progression(self) -> None:
+        """The number of time steps grows from 10 to 200."""
         c = SpikeCurriculum(total_epochs=100, start_timesteps=10, end_timesteps=200)
         assert c.timesteps(0) == 10
         t_mid = c.timesteps(50)
@@ -22,7 +30,8 @@ class TestSpikeCurriculum:
         t_end = c.timesteps(100)
         assert t_end == 200
 
-    def test_rate_scale_progression(self):
+    def test_rate_scale_progression(self) -> None:
+        """The rate scale falls from 3 to 1."""
         c = SpikeCurriculum(
             total_epochs=100,
             start_rate_scale=3.0,
@@ -33,7 +42,8 @@ class TestSpikeCurriculum:
         assert c.rate_scale(100) == 1.0
         assert 1.0 < c.rate_scale(25) < 3.0
 
-    def test_noise_progression(self):
+    def test_noise_progression(self) -> None:
+        """The noise rate grows from 0 to 0.1."""
         c = SpikeCurriculum(
             total_epochs=100,
             start_noise=0.0,
@@ -43,19 +53,22 @@ class TestSpikeCurriculum:
         assert c.noise_rate(0) == 0.0
         assert c.noise_rate(100) == 0.1
 
-    def test_apply_to_spikes_truncate(self):
+    def test_apply_to_spikes_truncate(self) -> None:
+        """A short schedule truncates a long raster."""
         c = SpikeCurriculum(total_epochs=100, start_timesteps=5, end_timesteps=50)
         spikes = _make_spikes(T=100)
         out = c.apply_to_spikes(spikes, epoch=0)
         assert out.shape[0] == 5
 
-    def test_apply_to_spikes_pad(self):
+    def test_apply_to_spikes_pad(self) -> None:
+        """A long schedule pads a short raster."""
         c = SpikeCurriculum(total_epochs=100, start_timesteps=50, end_timesteps=50)
         spikes = _make_spikes(T=10)
         out = c.apply_to_spikes(spikes, epoch=0)
         assert out.shape[0] == 50
 
-    def test_apply_rate_amplification(self):
+    def test_apply_rate_amplification(self) -> None:
+        """Rate amplification never removes spikes."""
         c = SpikeCurriculum(
             total_epochs=100,
             start_timesteps=20,
@@ -69,12 +82,14 @@ class TestSpikeCurriculum:
         # Rate scale 2.0 should add extra spikes
         assert out.sum() >= spikes.sum()
 
-    def test_schedule_summary(self):
+    def test_schedule_summary(self) -> None:
+        """The schedule summary lists epochs and rate scales."""
         c = SpikeCurriculum(total_epochs=50, start_timesteps=10, end_timesteps=100)
         s = c.schedule_summary()
         assert "Epoch" in s
         assert "Rate Scale" in s
 
-    def test_warmup_zero(self):
+    def test_warmup_zero(self) -> None:
+        """Without warm-up the end time steps apply at once."""
         c = SpikeCurriculum(total_epochs=100, warmup_fraction=0.0)
         assert c.timesteps(0) == c.end_timesteps

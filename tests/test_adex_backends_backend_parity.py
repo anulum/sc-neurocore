@@ -6,9 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_adex_backends.py
 
+"""Tests that the AdEx Python and Rust backends agree."""
+
 from __future__ import annotations
 
-from tests.adex_backends_support import *  # noqa: F403
+import importlib
+import math
+import numpy as np
+import pytest
+import sc_neurocore.neurons.models.adex as adex
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.adex_backends_support import (
+    _COMPILED_BACKENDS,
+    _GOLDENS,
+    _run,
+    _TRACE_ATOL,
+)
+from typing import (
+    cast,
+    Literal,
+)
 
 
 def test_every_acceleration_backend_is_executable() -> None:

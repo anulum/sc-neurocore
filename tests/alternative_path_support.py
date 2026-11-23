@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_alternative_path.py
 
+"""Shared names and a broken shadow route for the alternative-path tests."""
+
 from __future__ import annotations
 
 
@@ -42,7 +44,7 @@ from sc_neurocore.experimental.alternative_path import compare_outputs
 from sc_neurocore.experimental.builtins import builtin_cases_for_route
 
 
-def _broken_shadow_route():
+def _broken_shadow_route() -> AlternativePathRoute[float]:
     return AlternativePathRoute(
         name="safe.shadow-broken",
         baseline=lambda: 1.0,

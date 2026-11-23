@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestWangBuzsaki:
-    def test_fires(self):
+    """The Wang-Buzsaki interneuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         from sc_neurocore.neurons.models import WangBuzsakiNeuron
 
         n = WangBuzsakiNeuron()
         spikes = sum(n.step(1.0) for _ in range(200))
         assert spikes > 0
 
-    def test_fast_spiking(self):
+    def test_fast_spiking(self) -> None:
+        """The interneuron fires at least three times."""
         from sc_neurocore.neurons.models import WangBuzsakiNeuron
 
         n = WangBuzsakiNeuron()

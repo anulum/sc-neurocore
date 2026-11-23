@@ -10,27 +10,37 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.autofit.features import (
+    extract_spike_times,
+)
 
 
 class TestExtractSpikeTimesBasic:
-    def test_no_spikes_subthreshold(self):
+    """Extracting spike times from threshold crossings."""
+
+    def test_no_spikes_subthreshold(self) -> None:
+        """A subthreshold trace has no spike times."""
         v = np.array([0.0, 0.0, 0.0, 0.0])
         times = extract_spike_times(v, threshold=0.5)
         assert len(times) == 0
 
-    def test_single_crossing(self):
+    def test_single_crossing(self) -> None:
+        """One crossing gives one spike time."""
         v = np.array([-1.0, -0.5, 0.5, 1.0, 0.5])
         times = extract_spike_times(v, threshold=0.0, dt=1.0)
         assert len(times) == 1
         assert times[0] == pytest.approx(1.0)
 
-    def test_multiple_crossings(self):
+    def test_multiple_crossings(self) -> None:
+        """Two crossings give two spike times."""
         v = np.array([-1.0, 1.0, -1.0, 1.0, -1.0])
         times = extract_spike_times(v, threshold=0.0, dt=0.5)
         assert len(times) == 2
 
-    def test_dt_scaling(self):
+    def test_dt_scaling(self) -> None:
+        """Doubling dt doubles the spike times."""
         v = np.array([-1.0, 1.0, -1.0])
         times_dt1 = extract_spike_times(v, threshold=0.0, dt=1.0)
         times_dt2 = extract_spike_times(v, threshold=0.0, dt=2.0)

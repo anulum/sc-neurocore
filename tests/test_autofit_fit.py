@@ -10,21 +10,30 @@
 
 from __future__ import annotations
 
-from tests.autofit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.autofit.fitter import (
+    _get_model_class,
+    fit,
+    FittedModel,
+)
 
 
 class TestFit:
-    def test_no_matching_candidates(self):
+    """Fitting neuron models to a trace."""
+
+    def test_no_matching_candidates(self) -> None:
+        """No matching candidate gives no result."""
         v = np.random.randn(50)
         c = np.ones(50)
         results = fit(v, c, candidates=["NonExistentModel123"])
         assert results == []
 
-    def test_fit_handles_model_exceptions(self):
+    def test_fit_handles_model_exceptions(self) -> None:
+        """A model that raises gives no result."""
         from unittest.mock import patch
 
         class CrashingModel:
-            def __init__(self):
+            def __init__(self) -> None:
                 raise ValueError("model init crash")
 
         v = np.random.randn(50)
@@ -33,11 +42,12 @@ class TestFit:
             results = fit(v, c, candidates=["CrashingModel"])
         assert results == []
 
-    def test_get_model_class_missing(self):
+    def test_get_model_class_missing(self) -> None:
+        """An unknown model name finds no class."""
         cls = _get_model_class("DefinitelyNotAModel")
         assert cls is None
 
-    def test_every_shipped_candidate_resolves(self):
+    def test_every_shipped_candidate_resolves(self) -> None:
         """A name the sweep cannot resolve narrows it silently, so none may exist.
 
         `fit` skips a candidate `_get_model_class` returns None for — a
@@ -54,7 +64,8 @@ class TestFit:
 
         assert unresolvable == [], f"shipped fit candidates that no longer resolve: {unresolvable}"
 
-    def test_fit_with_real_models(self):
+    def test_fit_with_real_models(self) -> None:
+        """Real models give fitted-model results."""
         v = np.random.randn(50) * 0.5
         c = np.ones(50) * 0.5
         # Use whatever models exist in registry

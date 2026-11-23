@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.adc_to_spike_kernel_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import numpy.typing as nptyping
+import pytest
+from sc_neurocore.sensors import (
+    adc_to_spike_kernel as kernel,
+)
+from sc_neurocore.sensors.adc_to_spike_kernel import (
+    adc_to_spike_windows,
+    adc_to_spike_windows_q,
+    ADCSpikeWindowResult,
+    available_backends,
+)
 
 
 class TestDispatch:

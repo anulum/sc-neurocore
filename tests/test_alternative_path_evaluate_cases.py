@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (evaluate_cases) from former test_alternative_path.py
 
+"""Tests of evaluating an alternative-path route over cases."""
+
 from __future__ import annotations
 
-from tests.alternative_path_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.experimental import (
+    AlternativePathCase,
+    AlternativePathConfig,
+    AlternativePathMode,
+    AlternativePathRoute,
+)
+from tests.alternative_path_support import (
+    _broken_shadow_route,
+)
 
 
-def test_route_evaluate_cases_aggregates_reports():
+def test_route_evaluate_cases_aggregates_reports() -> None:
+    """Case reports are aggregated into one summary."""
     route = AlternativePathRoute(
         name="safe.batch",
         baseline=lambda x: np.asarray(x, dtype=np.float64) * 2.0,
@@ -36,7 +48,8 @@ def test_route_evaluate_cases_aggregates_reports():
     assert summary.to_report()["mode"] == "shadow"
 
 
-def test_evaluate_cases_counts_candidate_failures():
+def test_evaluate_cases_counts_candidate_failures() -> None:
+    """Candidate failures are counted and never match."""
     summary = _broken_shadow_route().evaluate_cases(
         [AlternativePathCase("c1"), AlternativePathCase("c2")],
         AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
@@ -45,7 +58,8 @@ def test_evaluate_cases_counts_candidate_failures():
     assert summary.matched_cases == 0
 
 
-def test_evaluate_cases_without_benchmark_yields_no_median_runtimes():
+def test_evaluate_cases_without_benchmark_yields_no_median_runtimes() -> None:
+    """Without benchmarking no median runtime is reported."""
     route = AlternativePathRoute(
         name="safe.nobench",
         baseline=lambda: 1.0,

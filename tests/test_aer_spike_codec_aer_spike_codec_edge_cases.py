@@ -10,22 +10,32 @@
 
 from __future__ import annotations
 
-from tests.aer_spike_codec_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.spike_codec.aer_codec import (
+    AERCompressionResult,
+    AERSpikeCodec,
+)
 
 
 class TestAERSpikeCodecEdgeCases:
-    def test_invalid_magic_raises(self):
+    """Edge cases of the AER spike codec."""
+
+    def test_invalid_magic_raises(self) -> None:
+        """A stream with a bad header magic is rejected."""
         codec = AERSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):
             codec.decompress(b"XXXX" + b"\x00" * 100)
 
-    def test_result_type(self):
+    def test_result_type(self) -> None:
+        """Compression returns an AER result record."""
         spikes = np.zeros((10, 4), dtype=np.int8)
         _, result = AERSpikeCodec().compress(spikes)
         assert isinstance(result, AERCompressionResult)
         assert result.codec_type == "aer"
 
-    def test_single_channel(self):
+    def test_single_channel(self) -> None:
+        """A single channel round-trips unchanged."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 1)) < 0.05).astype(np.int8)
         codec = AERSpikeCodec()

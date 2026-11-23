@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.adc_to_spike_kernel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.sensors.adc_to_spike_kernel import (
+    adc_to_spike_windows_q,
+    ADCSpikeWindowConfig,
+    ADCSpikeWindowResult,
+)
 
 
 class TestWindows:
-    """Per-window encode."""
+    """Encoding the ADC samples window by window."""
 
     def test_offset_binary_zero_window_is_full_negative(self) -> None:
         """An all-zero offset-binary window emits the expected negative full-scale rate."""

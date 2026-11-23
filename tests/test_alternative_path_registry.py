@@ -6,12 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (registry) from former test_alternative_path.py
 
+"""Tests of the alternative-path route registry."""
+
 from __future__ import annotations
 
-from tests.alternative_path_support import *  # noqa: F403
+import pytest
+from sc_neurocore.experimental import (
+    AlternativePathCase,
+    AlternativePathConfig,
+    AlternativePathMode,
+    AlternativePathRegistry,
+    AlternativePathRoute,
+    build_builtin_registry,
+    build_demo_registry,
+)
+from sc_neurocore.experimental.builtins import (
+    builtin_cases_for_route,
+)
 
 
-def test_registry_register_get_and_run():
+def test_registry_register_get_and_run() -> None:
+    """A registered route is listed, found and run."""
     registry = AlternativePathRegistry()
     route = AlternativePathRoute(
         name="safe.registry",
@@ -28,7 +43,8 @@ def test_registry_register_get_and_run():
     assert result.value == 10
 
 
-def test_registry_rejects_duplicate_names():
+def test_registry_rejects_duplicate_names() -> None:
+    """A duplicate route name is rejected."""
     registry = AlternativePathRegistry()
     route = AlternativePathRoute(
         name="safe.dup",
@@ -43,7 +59,8 @@ def test_registry_rejects_duplicate_names():
         registry.register(route)
 
 
-def test_registry_describe_returns_metadata():
+def test_registry_describe_returns_metadata() -> None:
+    """The registry describes each route."""
     registry = build_demo_registry()
 
     descriptions = registry.describe()
@@ -53,7 +70,8 @@ def test_registry_describe_returns_metadata():
     assert "vectorised NumPy sigmoid candidate" in descriptions[0]["summary"]
 
 
-def test_demo_registry_evaluate_matches_on_demo_route():
+def test_demo_registry_evaluate_matches_on_demo_route() -> None:
+    """The demo route matches on both demo cases."""
     registry = build_demo_registry()
 
     summary = registry.evaluate(
@@ -72,7 +90,8 @@ def test_demo_registry_evaluate_matches_on_demo_route():
     assert summary.median_candidate_runtime_ns is not None
 
 
-def test_builtin_registry_exposes_real_physics_route():
+def test_builtin_registry_exposes_real_physics_route() -> None:
+    """The built-in registry lists the physics routes."""
     registry = build_builtin_registry()
 
     descriptions = registry.describe()
@@ -86,6 +105,7 @@ def test_builtin_registry_exposes_real_physics_route():
 
 
 def test_builtin_cases_cover_shared_state_route_and_reject_unknown() -> None:
+    """Built-in cases exist for a route and not for an unknown one."""
     cases = builtin_cases_for_route("memory.delayed-recall.shared-state")
     assert len(cases) >= 1
 
@@ -93,7 +113,8 @@ def test_builtin_cases_cover_shared_state_route_and_reject_unknown() -> None:
         builtin_cases_for_route("route.that.does.not.exist")
 
 
-def test_registry_get_unknown_route_raises_keyerror():
+def test_registry_get_unknown_route_raises_keyerror() -> None:
+    """An unknown route raises KeyError."""
     registry = AlternativePathRegistry()
     with pytest.raises(KeyError, match="Unknown alternative path"):
         registry.get("missing")

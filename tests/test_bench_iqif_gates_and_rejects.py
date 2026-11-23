@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (gates_and_rejects) from former test_bench_iqif.py
 
+"""Tests of the IQIF benchmark gates and rejections."""
+
 from __future__ import annotations
 
-from tests.bench_iqif_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import os
+import pytest
+from benchmarks import (
+    bench_model_iqif as benchmark,
+)
+from pathlib import (
+    Path,
+)
+from tests.bench_iqif_support import (
+    _measured_python,
+    _passing_safety,
+)
 
 
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:

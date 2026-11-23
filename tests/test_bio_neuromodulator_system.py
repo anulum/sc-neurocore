@@ -10,38 +10,48 @@
 
 from __future__ import annotations
 
-from tests.bio_support import *  # noqa: F403
+from sc_neurocore.bio import (
+    NeuromodulatorSystem,
+)
 
 
 class TestNeuromodulatorSystem:
-    def test_defaults(self):
+    """Neuromodulator responses to reward and stress."""
+
+    def test_defaults(self) -> None:
+        """Levels start at their defaults."""
         nm = NeuromodulatorSystem()
         assert nm.da_level == 0.5
         assert nm.ht_level == 0.5
         assert nm.ne_level == 0.1
 
-    def test_reward_boosts_dopamine(self):
+    def test_reward_boosts_dopamine(self) -> None:
+        """Reward raises dopamine."""
         nm = NeuromodulatorSystem(da_level=0.5)
         nm.update_levels(reward=1.0, stress=0.0)
         assert nm.da_level > 0.5
 
-    def test_stress_boosts_ne(self):
+    def test_stress_boosts_ne(self) -> None:
+        """Stress raises noradrenaline."""
         nm = NeuromodulatorSystem(ne_level=0.1)
         nm.update_levels(reward=0.0, stress=1.0)
         assert nm.ne_level > 0.1
 
-    def test_stress_drops_serotonin(self):
+    def test_stress_drops_serotonin(self) -> None:
+        """Stress lowers serotonin."""
         nm = NeuromodulatorSystem(ht_level=0.5)
         nm.update_levels(reward=0.0, stress=1.0)
         assert nm.ht_level < 0.5
 
-    def test_serotonin_bounded(self):
+    def test_serotonin_bounded(self) -> None:
+        """Serotonin never falls below 0.1."""
         nm = NeuromodulatorSystem()
         for _ in range(100):
             nm.update_levels(reward=0.0, stress=1.0)
         assert nm.ht_level >= 0.1
 
-    def test_modulate_neuron(self):
+    def test_modulate_neuron(self) -> None:
+        """Modulation lowers the threshold and sets noise."""
         nm = NeuromodulatorSystem(da_level=0.8, ht_level=0.5, ne_level=0.3)
         params = {"v_threshold": 1.0, "noise_std": 0.1}
         mod = nm.modulate_neuron(params)

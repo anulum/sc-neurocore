@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (c_abi_and_loaders) from former test_adex_backends.py
 
+"""Tests of the AdEx C ABI and its library loaders."""
+
 from __future__ import annotations
 
-from tests.adex_backends_support import *  # noqa: F403
+import ctypes
+import importlib
+import math
+import numpy as np
+import os
+import pytest
+import sc_neurocore.neurons.models.adex as adex
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.adex_backends_support import (
+    _c_arguments,
+    _require_adex_backend,
+)
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))

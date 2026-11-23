@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.adc_to_spike_kernel_support import *  # noqa: F403
+import sc_neurocore.sensors as sensors
+from sc_neurocore.sensors.adc_to_spike_kernel import (
+    adc_to_spike_windows,
+    adc_to_spike_windows_q,
+    ADCSpikeWindowConfig,
+)
 
 
 def test_sensors_package_exports_adc_to_spike_kernel_surface() -> None:

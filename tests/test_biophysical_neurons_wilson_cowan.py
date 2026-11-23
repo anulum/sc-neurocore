@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestWilsonCowan:
-    def test_oscillation(self):
+    """The Wilson-Cowan population model."""
+
+    def test_oscillation(self) -> None:
+        """The population rate oscillates."""
         from sc_neurocore.neurons.models import WilsonCowanUnit
 
         n = WilsonCowanUnit()

@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.astrocyte_adapter_support import *  # noqa: F403
+from sc_neurocore.neurons.models.astrocyte_adapter import (
+    AstrocyteNeuron,
+)
 
 
 class TestAstrocyteNeuron:

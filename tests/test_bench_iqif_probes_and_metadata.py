@@ -6,9 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (probes_and_metadata) from former test_bench_iqif.py
 
+"""Tests of the IQIF benchmark probes and metadata."""
+
 from __future__ import annotations
 
-from tests.bench_iqif_support import *  # noqa: F403
+import json
+import os
+import platform
+import pytest
+import shutil
+import subprocess
+from benchmarks import (
+    bench_model_iqif as benchmark,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.accel import (
+    iqif as backends,
+)
+from tests.bench_iqif_support import (
+    _measured_python,
+    _passing_safety,
+)
 
 
 def test_backend_probes_report_each_runtime(monkeypatch: pytest.MonkeyPatch) -> None:

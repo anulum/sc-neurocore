@@ -10,34 +10,44 @@
 
 from __future__ import annotations
 
-from tests.bio_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bio import (
+    GeneticRegulatoryLayer,
+)
 
 
 class TestGeneticRegulatoryLayer:
-    def test_initial_protein_zero(self):
+    """The genetic regulatory protein layer."""
+
+    def test_initial_protein_zero(self) -> None:
+        """Protein levels start at zero."""
         grn = GeneticRegulatoryLayer(n_neurons=10)
         np.testing.assert_array_equal(grn.protein_levels, 0.0)
 
-    def test_spike_increases_protein(self):
+    def test_spike_increases_protein(self) -> None:
+        """A spike raises its neuron's protein only."""
         grn = GeneticRegulatoryLayer(n_neurons=5, production_rate=0.1)
         spikes = np.array([1, 0, 1, 0, 1], dtype=np.float64)
         grn.step(spikes)
         assert grn.protein_levels[0] > 0
         assert grn.protein_levels[1] == 0
 
-    def test_decay_without_spikes(self):
+    def test_decay_without_spikes(self) -> None:
+        """Without spikes protein levels decay."""
         grn = GeneticRegulatoryLayer(n_neurons=3, production_rate=0.1, decay_rate=0.05)
         grn.protein_levels = np.array([1.0, 1.0, 1.0])
         grn.step(np.zeros(3))
         assert np.all(grn.protein_levels < 1.0)
 
-    def test_protein_bounded(self):
+    def test_protein_bounded(self) -> None:
+        """Protein levels never exceed 10."""
         grn = GeneticRegulatoryLayer(n_neurons=2, production_rate=1.0)
         for _ in range(1000):
             grn.step(np.ones(2))
         assert np.all(grn.protein_levels <= 10.0)
 
-    def test_modulators(self):
+    def test_modulators(self) -> None:
+        """The modulators are the protein levels."""
         grn = GeneticRegulatoryLayer(n_neurons=3)
         grn.protein_levels = np.array([0.5, 1.0, 0.0])
         m = grn.get_threshold_modulators()

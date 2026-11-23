@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.biophysical_neurons_support import *  # noqa: F403
-
 
 class TestChialvoMap:
-    def test_dynamics(self):
+    """The Chialvo map neuron."""
+
+    def test_dynamics(self) -> None:
+        """The map state evolves under input."""
         from sc_neurocore.neurons.models import ChialvoMapNeuron
 
         n = ChialvoMapNeuron()

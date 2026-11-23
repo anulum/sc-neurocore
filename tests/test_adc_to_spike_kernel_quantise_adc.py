@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.adc_to_spike_kernel_support import *  # noqa: F403
+from sc_neurocore.sensors.adc_to_spike_kernel import (
+    ADCSpikeWindowConfig,
+    quantise_adc,
+)
 
 
 class TestQuantiseAdc:

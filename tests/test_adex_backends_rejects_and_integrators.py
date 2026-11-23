@@ -6,9 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects_and_integrators) from former test_adex_backends.py
 
+"""Tests of the AdEx backend rejections and integrator choices."""
+
 from __future__ import annotations
 
-from tests.adex_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.adex_backends_support import (
+    _COMPILED_BACKENDS,
+    _TRACE_ATOL,
+)
 
 
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
@@ -28,7 +38,9 @@ def test_rust_accepts_the_complete_baseline_parameter_surface() -> None:
     expected = reference.simulate_complete(100, 410.0, backend="python")
     observed = candidate.simulate_complete(100, 410.0, backend="rust")
     for expected_trace, observed_trace in zip(expected, observed, strict=True):
-        np.testing.assert_allclose(observed_trace, expected_trace, rtol=0.0, atol=_TRACE_ATOL)
+        np.testing.assert_allclose(
+            np.asarray(observed_trace), np.asarray(expected_trace), rtol=0.0, atol=_TRACE_ATOL
+        )
 
 
 def test_auto_uses_python_for_alternative_integrators() -> None:

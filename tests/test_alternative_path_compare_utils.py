@@ -6,12 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (compare_utils) from former test_alternative_path.py
 
+"""Tests of the alternative-path result comparison helpers."""
+
 from __future__ import annotations
 
-from tests.alternative_path_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.experimental import (
+    AlternativePathConfig,
+)
+from sc_neurocore.experimental.alternative_path import (
+    compare_outputs,
+)
 
 
-def test_compare_numeric_shape_mismatch_is_reported_as_diverged():
+def test_compare_numeric_shape_mismatch_is_reported_as_diverged() -> None:
+    """Arrays of different shapes are reported as diverged."""
     stats = compare_outputs(
         np.array([1.0, 2.0]), np.array([1.0, 2.0, 3.0]), AlternativePathConfig()
     )
@@ -19,7 +28,8 @@ def test_compare_numeric_shape_mismatch_is_reported_as_diverged():
     assert "shape mismatch" in stats.detail
 
 
-def test_compare_empty_numeric_arrays_match_trivially():
+def test_compare_empty_numeric_arrays_match_trivially() -> None:
+    """Two empty arrays match with one comparable leaf."""
     stats = compare_outputs(np.array([]), np.array([]), AlternativePathConfig())
     assert stats.matched
     assert stats.comparable_leaf_count == 1
@@ -27,20 +37,23 @@ def test_compare_empty_numeric_arrays_match_trivially():
     assert "empty numeric outputs matched" in stats.detail
 
 
-def test_compare_empty_mappings_have_no_comparable_leaves():
+def test_compare_empty_mappings_have_no_comparable_leaves() -> None:
+    """Two empty mappings match with no comparable leaf."""
     stats = compare_outputs({}, {}, AlternativePathConfig())
     assert stats.matched
     assert stats.comparable_leaf_count == 0
     assert "no comparable leaves" in stats.detail
 
 
-def test_compare_mappings_with_different_keys_diverge():
+def test_compare_mappings_with_different_keys_diverge() -> None:
+    """Mappings with different keys diverge."""
     stats = compare_outputs({"a": 1}, {"b": 1}, AlternativePathConfig())
     assert not stats.matched
     assert "mapping keys differ" in stats.detail
 
 
-def test_compare_ragged_sequences_of_unequal_length_diverge():
+def test_compare_ragged_sequences_of_unequal_length_diverge() -> None:
+    """Sequences of different lengths diverge."""
     # A ragged baseline makes ``np.asarray`` raise, so the numeric comparator
     # returns None and the sequence branch handles the length mismatch.
     stats = compare_outputs([1, [2, 3]], [1], AlternativePathConfig())
@@ -48,7 +61,8 @@ def test_compare_ragged_sequences_of_unequal_length_diverge():
     assert "sequence length mismatch" in stats.detail
 
 
-def test_compare_mixed_sequences_combine_per_element_matches():
+def test_compare_mixed_sequences_combine_per_element_matches() -> None:
+    """Mixed sequences match element by element."""
     # Mixed numeric/string sequences are non-numeric to ``np.asarray`` (string
     # dtype), so each element is compared recursively and combined.
     stats = compare_outputs([1, "tag"], [1, "tag"], AlternativePathConfig())

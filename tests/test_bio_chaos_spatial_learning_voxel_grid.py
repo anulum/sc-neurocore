@@ -10,26 +10,35 @@
 
 from __future__ import annotations
 
-from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spatial.representations import (
+    VoxelGrid,
+)
 
 
 class TestVoxelGrid:
-    def test_init_zeros(self):
+    """Voxel grids and their bitstreams."""
+
+    def test_init_zeros(self) -> None:
+        """A new grid is all zeros."""
         vg = VoxelGrid(resolution=4)
         assert vg.data.shape == (4, 4, 4)
         assert np.all(vg.data == 0)
 
-    def test_set_voxel(self):
+    def test_set_voxel(self) -> None:
+        """Setting a voxel stores its value."""
         vg = VoxelGrid(resolution=4)
         vg.set_voxel(1, 2, 3, 0.9)
         assert vg.data[1, 2, 3] == 0.9
 
-    def test_set_voxel_out_of_bounds(self):
+    def test_set_voxel_out_of_bounds(self) -> None:
+        """Setting outside the grid changes nothing."""
         vg = VoxelGrid(resolution=4)
         vg.set_voxel(10, 10, 10, 1.0)
         assert np.all(vg.data == 0)
 
-    def test_bitstream_shape(self):
+    def test_bitstream_shape(self) -> None:
+        """Each voxel gets a 64-bit uint8 stream."""
         bs = VoxelGrid(resolution=2).get_as_bitstream(length=64)
         assert bs.shape == (2, 2, 2, 64)
         assert bs.dtype == np.uint8

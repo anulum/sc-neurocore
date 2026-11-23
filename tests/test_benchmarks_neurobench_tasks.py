@@ -10,17 +10,29 @@
 
 from __future__ import annotations
 
-from tests.benchmarks_neurobench_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.benchmarks import (
+    TASKS,
+)
+from sc_neurocore.benchmarks.tasks import (
+    BenchmarkTask,
+)
 
 
 class TestTasks:
-    def test_task_registry(self):
+    """The NeuroBench task registry."""
+
+    def test_task_registry(self) -> None:
+        """The registry lists at least five tasks."""
         assert len(TASKS) >= 5
         assert "mnist" in TASKS
         assert "dvs_gesture" in TASKS
         assert "keyword_spotting" in TASKS
 
-    def test_task_fields(self):
+    def test_task_fields(self) -> None:
+        """The MNIST task has ten classes and an accuracy metric."""
         t = TASKS["mnist"]
         assert isinstance(t, BenchmarkTask)
         assert t.n_classes == 10
@@ -28,16 +40,19 @@ class TestTasks:
         assert t.input_shape == (784,)
         assert t.baseline_accuracy > 0
 
-    def test_all_tasks_frozen(self):
+    def test_all_tasks_frozen(self) -> None:
+        """Task records cannot be changed."""
         for name, task in TASKS.items():
             with pytest.raises(AttributeError):
-                task.name = "mutated"
+                cast(Any, task).name = "mutated"
 
-    def test_shd_task(self):
+    def test_shd_task(self) -> None:
+        """The SHD task has twenty classes."""
         t = TASKS["shd"]
         assert t.n_classes == 20
         assert t.neurobench_id == "shd"
 
-    def test_heartbeat_task(self):
+    def test_heartbeat_task(self) -> None:
+        """The heartbeat task has two classes."""
         t = TASKS["heartbeat_anomaly"]
         assert t.n_classes == 2

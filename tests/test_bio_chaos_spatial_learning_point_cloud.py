@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spatial.representations import (
+    PointCloud,
+)
 
 
 class TestPointCloud:
-    def test_normalize(self):
+    """Normalising point clouds."""
+
+    def test_normalize(self) -> None:
+        """Normalised points and intensities lie in [0, 1]."""
         pc = PointCloud(
             points=np.array([[0.0, 10.0, 20.0], [5.0, 15.0, 25.0]]),
             intensities=np.array([0.5, 1.5]),

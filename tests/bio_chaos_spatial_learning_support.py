@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_bio_chaos_spatial_learning.py
 
+"""Shared names and a genome stand-in for the chaos, spatial, learning and bio tests."""
+
 from __future__ import annotations
 
-"""Tests for de-omitted modules: chaos, analysis, physics, robotics, learning, spatial, bio."""
 import numpy as np
 import pytest
 from sc_neurocore.bio.neuromodulation import NeuromodulatorSystem
@@ -23,7 +24,7 @@ from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
 
 
 class _Individual:
-    def __init__(self):
+    def __init__(self) -> None:
         self.weights = np.random.rand(4, 4)
 
 

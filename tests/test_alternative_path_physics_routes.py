@@ -6,12 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (physics_routes) from former test_alternative_path.py
 
+"""Tests of the built-in physics alternative-path routes."""
+
 from __future__ import annotations
 
-from tests.alternative_path_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import pytest
+from sc_neurocore.experimental import (
+    AlternativePathConfig,
+    AlternativePathMode,
+    make_delayed_recall_shared_state_route,
+    make_harmonic_symplectic_route,
+    make_heat_cosine_mode_route,
+    make_kuramoto_noiseless_symplectic_lift_route,
+    make_lif_subthreshold_exact_route,
+    solver_routes,
+)
+from sc_neurocore.experimental.builtins import (
+    builtin_cases_for_route,
+)
 
 
-def test_heat_cosine_mode_route_matches_exact_candidate_within_sampling_tolerance():
+def test_heat_cosine_mode_route_matches_exact_candidate_within_sampling_tolerance() -> None:
+    """The heat cosine-mode candidate matches within tolerance."""
     route = make_heat_cosine_mode_route()
 
     result = route.run(
@@ -36,7 +54,8 @@ def test_heat_cosine_mode_route_matches_exact_candidate_within_sampling_toleranc
     assert result.comparison.matched
 
 
-def test_builtin_kuramoto_cases_include_higher_coupling_evidence():
+def test_builtin_kuramoto_cases_include_higher_coupling_evidence() -> None:
+    """The Kuramoto cases include a coupling of at least 1."""
     cases = builtin_cases_for_route("physics.kuramoto.noiseless-symplectic-lift")
 
     couplings = [case.kwargs["coupling"] for case in cases]
@@ -55,7 +74,8 @@ def test_builtin_kuramoto_cases_include_higher_coupling_evidence():
     )
 
 
-def test_delayed_recall_shared_state_route_beats_local_baseline():
+def test_delayed_recall_shared_state_route_beats_local_baseline() -> None:
+    """The shared-state recall route reports both values."""
     route = make_delayed_recall_shared_state_route()
 
     result = route.run(
@@ -72,7 +92,8 @@ def test_delayed_recall_shared_state_route_beats_local_baseline():
     assert result.candidate_value["mean_accuracy"] >= 0.6
 
 
-def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon():
+def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon() -> None:
+    """The Kuramoto lift matches on a short horizon."""
     route = make_kuramoto_noiseless_symplectic_lift_route()
 
     result = route.run(
@@ -94,7 +115,8 @@ def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon()
     assert result.comparison.matched
 
 
-def test_kuramoto_noiseless_symplectic_lift_route_matches_at_higher_coupling():
+def test_kuramoto_noiseless_symplectic_lift_route_matches_at_higher_coupling() -> None:
+    """The Kuramoto lift matches at higher coupling."""
     route = make_kuramoto_noiseless_symplectic_lift_route()
 
     result = route.run(
@@ -121,7 +143,8 @@ def test_kuramoto_noiseless_symplectic_lift_route_matches_at_higher_coupling():
     assert np.isfinite(result.candidate_value["interaction_energy_drift"])
 
 
-def test_kuramoto_noiseless_symplectic_lift_report_carries_regime_metadata():
+def test_kuramoto_noiseless_symplectic_lift_report_carries_regime_metadata() -> None:
+    """The Kuramoto report carries the regime metadata."""
     route = make_kuramoto_noiseless_symplectic_lift_route()
     cases = builtin_cases_for_route("physics.kuramoto.noiseless-symplectic-lift")
 
@@ -165,13 +188,14 @@ def test_kuramoto_noiseless_symplectic_lift_report_carries_regime_metadata():
     ],
 )
 def test_kuramoto_noiseless_symplectic_lift_route_rejects_invalid_inputs(
-    initial_phases,
-    horizon,
-    omegas,
-    coupling,
-    dt,
-    match,
-):
+    initial_phases: npt.NDArray[np.float64],
+    horizon: float,
+    omegas: npt.NDArray[np.float64],
+    coupling: float,
+    dt: float,
+    match: str,
+) -> None:
+    """The Kuramoto lift rejects each invalid input."""
     route = make_kuramoto_noiseless_symplectic_lift_route()
 
     with pytest.raises(ValueError, match=match):
@@ -185,7 +209,8 @@ def test_kuramoto_noiseless_symplectic_lift_route_rejects_invalid_inputs(
         )
 
 
-def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift():
+def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift() -> None:
+    """The symplectic oscillator matches RK4 with little energy drift."""
     route = make_harmonic_symplectic_route()
 
     result = route.run(
@@ -221,8 +246,9 @@ def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift():
     ],
 )
 def test_harmonic_symplectic_route_rejects_invalid_hamiltonian_inputs(
-    q0, p0, horizon, kwargs, match
-):
+    q0: float, p0: float, horizon: float, kwargs: dict[str, float], match: str
+) -> None:
+    """The symplectic oscillator rejects each invalid input."""
     route = make_harmonic_symplectic_route()
 
     with pytest.raises(ValueError, match=match):
@@ -238,7 +264,8 @@ def test_harmonic_symplectic_route_rejects_invalid_hamiltonian_inputs(
         )
 
 
-def test_lif_subthreshold_exact_route_matches_rk4_and_stays_below_threshold():
+def test_lif_subthreshold_exact_route_matches_rk4_and_stays_below_threshold() -> None:
+    """The exact LIF route matches RK4 below threshold."""
     route = make_lif_subthreshold_exact_route()
 
     result = route.run(
@@ -280,7 +307,10 @@ def test_lif_subthreshold_exact_route_matches_rk4_and_stays_below_threshold():
         (-65.0, 10.0, 20.0, {"dt": 0.0}, "dt"),
     ],
 )
-def test_lif_subthreshold_exact_route_rejects_invalid_domain(v0, current, horizon, kwargs, match):
+def test_lif_subthreshold_exact_route_rejects_invalid_domain(
+    v0: float, current: float, horizon: float, kwargs: dict[str, float], match: str
+) -> None:
+    """The exact LIF route rejects each invalid input."""
     route = make_lif_subthreshold_exact_route()
 
     with pytest.raises(ValueError, match=match):
@@ -297,7 +327,8 @@ def test_lif_subthreshold_exact_route_rejects_invalid_domain(v0, current, horizo
         )
 
 
-def test_lif_subthreshold_exact_route_rejects_nonfinite_steady_state_voltage():
+def test_lif_subthreshold_exact_route_rejects_nonfinite_steady_state_voltage() -> None:
+    """A non-finite steady-state voltage is rejected."""
     route = make_lif_subthreshold_exact_route()
 
     with pytest.raises(ValueError, match="steady-state voltage"):
@@ -314,7 +345,8 @@ def test_lif_subthreshold_exact_route_rejects_nonfinite_steady_state_voltage():
         )
 
 
-def test_lif_rk4_baseline_rejects_nonfinite_numerical_candidate():
+def test_lif_rk4_baseline_rejects_nonfinite_numerical_candidate() -> None:
+    """A non-finite RK4 candidate is rejected with a warning."""
     with pytest.warns(RuntimeWarning), pytest.raises(ValueError, match="baseline voltage"):
         solver_routes._lif_rk4_baseline(
             -60.0,
