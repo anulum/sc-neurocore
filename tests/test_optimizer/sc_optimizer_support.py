@@ -6,10 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_sc_optimizer.py
 
+"""Tests for the stochastic optimizer module."""
+
 from __future__ import annotations
 
-"""Tests for the stochastic optimizer module."""
 import unittest
+from typing import Any
+
+import pytest
 from sc_neurocore.optimizer.sc_optimizer import (
     SCOptimizer,
     HardwareBudget,
@@ -18,7 +22,7 @@ from sc_neurocore.optimizer.sc_optimizer import (
 )
 
 
-def _fake_sa_result(n, *, feasible=True, with_pareto=True):
+def _fake_sa_result(n: int, *, feasible: bool = True, with_pareto: bool = True) -> dict[str, Any]:
     return {
         "feasible": feasible,
         "layer_luts": [100] * n,
@@ -30,7 +34,7 @@ def _fake_sa_result(n, *, feasible=True, with_pareto=True):
     }
 
 
-def _install_fake_rust(monkeypatch, sa_result):
+def _install_fake_rust(monkeypatch: pytest.MonkeyPatch, sa_result: dict[str, Any]) -> None:
     import sc_neurocore.optimizer.sc_optimizer as mod
 
     monkeypatch.setattr(mod, "_HAS_RUST", True)

@@ -6,12 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (surrogate_feed) from former test_observation_loader.py
 
+"""Loaded hardware observations feeding the surrogate optimizer."""
+
 from __future__ import annotations
 
-from observation_loader_support import *  # noqa: F403
+from observation_loader_support import (
+    _design,
+)
+from sc_neurocore.optimizer import (
+    observations_from_payload,
+)
+from sc_neurocore.optimizer.sc_optimizer import (
+    HardwareBudget,
+    LayerProfile,
+)
+from sc_neurocore.optimizer.surrogate_sc_optimizer import (
+    SurrogateSCOptimizer,
+    TargetHardwareProfile,
+)
 
 
 def test_loaded_observation_feeds_surrogate_optimizer() -> None:
+    """A loaded observation drives the surrogate optimizer to a feasible encoder."""
     observations = observations_from_payload(
         {
             "observations": [

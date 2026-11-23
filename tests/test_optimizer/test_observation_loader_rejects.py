@@ -6,12 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects) from former test_observation_loader.py
 
+"""Inputs the hardware observation loader refuses."""
+
 from __future__ import annotations
 
-from observation_loader_support import *  # noqa: F403
+from pathlib import Path
+
+import pytest
+from observation_loader_support import (
+    _design,
+)
+from sc_neurocore.optimizer import (
+    load_observations,
+    observation_from_synthesis_reports,
+    observations_from_payload,
+)
+from sc_neurocore.optimizer.observation_loader import (
+    ObservationLoadError,
+)
 
 
 def test_rejects_incomplete_synthesis_reports_without_fabricating_metrics() -> None:
+    """Synthesis reports without power or latency are refused rather than filled in."""
     with pytest.raises(ObservationLoadError, match="missing power_mw"):
         observation_from_synthesis_reports(
             {"utilisation": "CLB LUTs | 256"},
@@ -33,7 +49,8 @@ def test_rejects_incomplete_synthesis_reports_without_fabricating_metrics() -> N
         )
 
 
-def test_rejects_invalid_json_file(tmp_path) -> None:
+def test_rejects_invalid_json_file(tmp_path: Path) -> None:
+    """A file that is not valid JSON is refused."""
     path = tmp_path / "broken.json"
     path.write_text("{not-json", encoding="utf-8")
 
@@ -42,11 +59,13 @@ def test_rejects_invalid_json_file(tmp_path) -> None:
 
 
 def test_rejects_payload_without_records() -> None:
+    """A payload with no observations is refused."""
     with pytest.raises(ObservationLoadError, match="contains no observation records"):
         observations_from_payload({"metadata": {"source": "empty"}}, source="empty.json")
 
 
 def test_rejects_non_mapping_payload_and_record() -> None:
+    """A payload or record that is not a JSON object is refused."""
     with pytest.raises(ObservationLoadError, match="payload must be a JSON object or list"):
         observations_from_payload("bad")
 
@@ -55,6 +74,7 @@ def test_rejects_non_mapping_payload_and_record() -> None:
 
 
 def test_rejects_missing_measurement_fields() -> None:
+    """A record without its measurement fields is refused."""
     payload = {"observations": [{**_design(), "luts_used": 300}]}
 
     with pytest.raises(ObservationLoadError, match="missing one of power_mw"):
@@ -62,6 +82,7 @@ def test_rejects_missing_measurement_fields() -> None:
 
 
 def test_rejects_non_numeric_measurement_values() -> None:
+    """A measurement that is not a number is refused."""
     payload = {
         "observations": [
             {
@@ -79,6 +100,7 @@ def test_rejects_non_numeric_measurement_values() -> None:
 
 
 def test_rejects_boolean_integer_fields() -> None:
+    """A boolean in an integer field is refused."""
     payload = {
         "observations": [
             {
@@ -96,6 +118,7 @@ def test_rejects_boolean_integer_fields() -> None:
 
 
 def test_rejects_invalid_design_and_negative_measurements() -> None:
+    """An invalid design or a negative measurement is refused."""
     with pytest.raises(ObservationLoadError, match="decorrelator must be a string"):
         observations_from_payload(
             {
@@ -131,6 +154,7 @@ def test_rejects_invalid_design_and_negative_measurements() -> None:
 
 
 def test_rejects_non_finite_float_measurements() -> None:
+    """A non-finite measurement is refused."""
     payload = {
         "observations": [
             {

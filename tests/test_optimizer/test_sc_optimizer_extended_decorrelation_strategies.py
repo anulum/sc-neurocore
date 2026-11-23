@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from sc_optimizer_extended_support import *  # noqa: F403
+import unittest
+from sc_neurocore.optimizer.sc_optimizer import (
+    ComputeMode,
+    DecorrelationStrategy,
+    HardwareBudget,
+    SCOptimizer,
+)
 
 
 class TestDecorrelationStrategies(unittest.TestCase):
-    def test_all_strategies_exist(self):
+    """Decorrelation strategies and compute modes of the optimizer."""
+
+    def test_all_strategies_exist(self) -> None:
+        """LFSR, Sobol, Halton and the SCC decorrelator are all offered."""
         strategies = [s.value for s in DecorrelationStrategy]
         self.assertIn("LFSR", strategies)
         self.assertIn("Sobol", strategies)
@@ -22,13 +31,15 @@ class TestDecorrelationStrategies(unittest.TestCase):
         self.assertIn("SCC_Decorrelator", strategies)
         self.assertIn("None", strategies)
 
-    def test_all_modes_exist(self):
+    def test_all_modes_exist(self) -> None:
+        """Stochastic, deterministic and hybrid modes are all offered."""
         modes = [m.value for m in ComputeMode]
         self.assertIn("SC", modes)
         self.assertIn("Deterministic", modes)
         self.assertIn("Hybrid", modes)
 
-    def test_hybrid_mode_resources(self):
+    def test_hybrid_mode_resources(self) -> None:
+        """Hybrid mode has positive cost and accuracy above nine tenths."""
         budget = HardwareBudget(max_luts=10_000_000, max_power_mw=100000.0)
         opt = SCOptimizer(budget)
         l, p, a, lat = opt._estimate_resources(100, 256, "Sobol", "Hybrid")
@@ -36,14 +47,16 @@ class TestDecorrelationStrategies(unittest.TestCase):
         self.assertGreater(p, 0)
         self.assertGreater(a, 0.9)
 
-    def test_sobol_higher_accuracy_than_lfsr(self):
+    def test_sobol_higher_accuracy_than_lfsr(self) -> None:
+        """Sobol is more accurate than LFSR."""
         budget = HardwareBudget(max_luts=10_000_000, max_power_mw=100000.0)
         opt = SCOptimizer(budget)
         _, _, acc_sobol, _ = opt._estimate_resources(100, 256, "Sobol", "SC")
         _, _, acc_lfsr, _ = opt._estimate_resources(100, 256, "LFSR", "SC")
         self.assertGreater(acc_sobol, acc_lfsr)
 
-    def test_sobol_more_luts_than_lfsr(self):
+    def test_sobol_more_luts_than_lfsr(self) -> None:
+        """Sobol costs more LUTs than LFSR."""
         budget = HardwareBudget(max_luts=10_000_000, max_power_mw=100000.0)
         opt = SCOptimizer(budget)
         luts_sobol, _, _, _ = opt._estimate_resources(100, 256, "Sobol", "SC")

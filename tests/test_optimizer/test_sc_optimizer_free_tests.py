@@ -10,10 +10,21 @@
 
 from __future__ import annotations
 
-from sc_optimizer_support import *  # noqa: F403
+import pytest
+
+from sc_neurocore.optimizer.sc_optimizer import (
+    HardwareBudget,
+    LayerProfile,
+    SCOptimizer,
+)
+from sc_optimizer_support import (
+    _fake_sa_result,
+    _install_fake_rust,
+)
 
 
-def test_is_feasible_rejects_power_over_budget():
+def test_is_feasible_rejects_power_over_budget() -> None:
+    """A power budget below every candidate gives no report."""
     # LUTs fit comfortably but the power ceiling is below any candidate, so the
     # power branch of the feasibility check rejects the configuration.
     opt = SCOptimizer(HardwareBudget(max_luts=10**9, max_power_mw=1e-9))
@@ -21,7 +32,8 @@ def test_is_feasible_rejects_power_over_budget():
     assert report is None
 
 
-def test_annealing_python_handles_infeasible_trials():
+def test_annealing_python_handles_infeasible_trials() -> None:
+    """Python annealing skips infeasible trials and still reports its feasible start."""
     # Pin the LUT ceiling to exactly the cheapest candidate: the annealing start
     # is feasible, but any pricier trial overshoots it and takes the
     # cool-and-continue rejection path. The feasible start is still returned.
@@ -33,7 +45,8 @@ def test_annealing_python_handles_infeasible_trials():
     assert report is not None
 
 
-def test_annealing_dispatches_to_rust_backend(monkeypatch):
+def test_annealing_dispatches_to_rust_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Annealing uses the Rust backend's frontier when it is present."""
     network = [LayerProfile(id="L0", mac_count=100), LayerProfile(id="L1", mac_count=200)]
     _install_fake_rust(monkeypatch, _fake_sa_result(len(network)))
     opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
@@ -42,7 +55,10 @@ def test_annealing_dispatches_to_rust_backend(monkeypatch):
     assert len(report.pareto_frontier) == 2
 
 
-def test_annealing_rust_frontier_is_sorted_and_deduplicated(monkeypatch):
+def test_annealing_rust_frontier_is_sorted_and_deduplicated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A Rust frontier is sorted by LUTs and deduplicated."""
     # A Rust backend may emit non-dominated points in arbitrary order and with
     # exact duplicates; the report must still expose a LUT-sorted, deduplicated
     # frontier so it honours the same contract as the pure-Python fallback.
@@ -60,14 +76,16 @@ def test_annealing_rust_frontier_is_sorted_and_deduplicated(monkeypatch):
     assert luts_vals == [100, 200]
 
 
-def test_annealing_rust_infeasible_returns_none(monkeypatch):
+def test_annealing_rust_infeasible_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An infeasible Rust result gives no report."""
     network = [LayerProfile(id="L0", mac_count=100)]
     _install_fake_rust(monkeypatch, _fake_sa_result(len(network), feasible=False))
     opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
     assert opt.optimize_annealing(network) is None
 
 
-def test_annealing_rust_without_pareto_points(monkeypatch):
+def test_annealing_rust_without_pareto_points(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A Rust result without Pareto points gives an empty frontier."""
     network = [LayerProfile(id="L0", mac_count=100)]
     _install_fake_rust(monkeypatch, _fake_sa_result(len(network), with_pareto=False))
     opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
@@ -76,7 +94,8 @@ def test_annealing_rust_without_pareto_points(monkeypatch):
     assert report.pareto_frontier == []
 
 
-def test_module_detects_rust_engine_when_importable():
+def test_module_detects_rust_engine_when_importable() -> None:
+    """Importing the module detects an importable Rust engine."""
     # Drive the import-time `_HAS_RUST = True` branch by making a stand-in
     # sc_neurocore_engine importable, then restore the real (engine-absent) state.
     import importlib
@@ -88,8 +107,10 @@ def test_module_detects_rust_engine_when_importable():
     from tests.module_reload import preserve_module_identity
 
     fake = types.ModuleType("sc_neurocore_engine")
-    fake.py_opt_sa_search = lambda *a, **k: {}  # type: ignore[attr-defined]
-    fake.py_opt_extract_pareto = lambda *a, **k: {}  # type: ignore[attr-defined]
+    vars(fake).update(
+        py_opt_sa_search=lambda *a, **k: {},
+        py_opt_extract_pareto=lambda *a, **k: {},
+    )
     had = sys.modules.get("sc_neurocore_engine")
     sys.modules["sc_neurocore_engine"] = fake
     try:

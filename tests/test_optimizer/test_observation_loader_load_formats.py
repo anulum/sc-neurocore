@@ -6,12 +6,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (load_formats) from former test_observation_loader.py
 
+"""Formats the hardware observation loader reads."""
+
 from __future__ import annotations
 
-from observation_loader_support import *  # noqa: F403
+from pathlib import Path
+
+import json
+from observation_loader_support import (
+    _design,
+)
+from sc_neurocore.optimizer import (
+    load_observations,
+    load_synthesis_observation,
+    observation_from_synthesis_reports,
+    observations_from_payload,
+)
 
 
 def test_loads_generic_benchmark_records() -> None:
+    """A generic benchmark record loads its MAC count, LUTs and power."""
     payload = {
         "observations": [
             {
@@ -36,6 +50,7 @@ def test_loads_generic_benchmark_records() -> None:
 
 
 def test_loads_top_level_observation_list() -> None:
+    """A top-level list of observations loads."""
     observations = observations_from_payload(
         [
             {
@@ -53,6 +68,7 @@ def test_loads_top_level_observation_list() -> None:
 
 
 def test_loads_nested_candidate_and_measurement_views() -> None:
+    """Nested candidate and measurement views load their metrics."""
     payload = {
         "benchmark_observations": [
             {
@@ -74,6 +90,7 @@ def test_loads_nested_candidate_and_measurement_views() -> None:
 
 
 def test_loads_vivado_style_manifest_with_design_defaults() -> None:
+    """A Vivado-style manifest loads with its design defaults."""
     payload = {
         "design_defaults": _design(),
         "observations": [
@@ -97,6 +114,7 @@ def test_loads_vivado_style_manifest_with_design_defaults() -> None:
 
 
 def test_loads_quartus_aliases() -> None:
+    """Quartus field aliases load as the same metrics."""
     payload = {
         **_design(),
         "measurement": {
@@ -115,7 +133,8 @@ def test_loads_quartus_aliases() -> None:
     assert observations[0].accuracy_score == 0.982
 
 
-def test_loads_observations_from_file(tmp_path) -> None:
+def test_loads_observations_from_file(tmp_path: Path) -> None:
+    """Observations load from a JSON file."""
     path = tmp_path / "bench_observations.json"
     path.write_text(
         json.dumps(
@@ -141,6 +160,7 @@ def test_loads_observations_from_file(tmp_path) -> None:
 
 
 def test_loads_vivado_text_reports_with_explicit_design_and_accuracy() -> None:
+    """Vivado text reports load with an explicit design and accuracy."""
     observation = observation_from_synthesis_reports(
         {
             "utilisation": """
@@ -167,6 +187,7 @@ def test_loads_vivado_text_reports_with_explicit_design_and_accuracy() -> None:
 
 
 def test_loads_quartus_text_reports_and_embedded_latency() -> None:
+    """Quartus text reports load with their embedded latency."""
     observation = observation_from_synthesis_reports(
         {
             "fit": """
@@ -190,7 +211,8 @@ def test_loads_quartus_text_reports_and_embedded_latency() -> None:
     assert observation.accuracy_score == 0.982
 
 
-def test_loads_synthesis_observation_from_report_files(tmp_path) -> None:
+def test_loads_synthesis_observation_from_report_files(tmp_path: Path) -> None:
+    """A synthesis observation loads from utilisation and power report files."""
     utilisation = tmp_path / "utilisation.rpt"
     power = tmp_path / "power.rpt"
     utilisation.write_text("Slice LUTs | 421\nLatency: 64 cycles\n", encoding="utf-8")

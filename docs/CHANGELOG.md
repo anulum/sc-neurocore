@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 11 optimizer and hardware-observation test modules
+  (`tests/test_optimizer`) import their names explicitly instead of
+  through a suppressed star import, gain their missing module and test
+  docstrings and type annotations and are enrolled in the docstring
+  policy. Optimizer results the tests read are narrowed with
+  `assert ... is not None`, the fake Rust engine is built without type
+  suppressions, and the optimizer support's helpers are typed.
+
 - The 12 Arcane-Zenith cognitive-core test modules
   (`tests/test_arcane_zenith`) import their names explicitly instead of
   through a suppressed star import, gain their missing test docstrings

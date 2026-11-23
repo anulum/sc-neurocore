@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from sc_optimizer_extended_support import *  # noqa: F403
+import unittest
+from sc_neurocore.optimizer.sc_optimizer import (
+    SCOptimizer,
+)
 
 
 class TestParetoExtraction(unittest.TestCase):
-    def test_empty_input(self):
+    """Pareto extraction over cost and accuracy points."""
+
+    def test_empty_input(self) -> None:
+        """No points give an empty front."""
         result = SCOptimizer._extract_pareto([])
         self.assertEqual(result, [])
 
-    def test_single_point(self):
+    def test_single_point(self) -> None:
+        """One point is its own front."""
         result = SCOptimizer._extract_pareto([(100, 1.0, 0.9)])
         self.assertEqual(len(result), 1)
 
-    def test_dominated_removed(self):
+    def test_dominated_removed(self) -> None:
+        """A dominated point is removed."""
         points = [
             (100, 1.0, 0.9),  # dominated by below
             (90, 0.8, 0.95),  # non-dominated
@@ -31,7 +39,8 @@ class TestParetoExtraction(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 90)
 
-    def test_non_dominated_kept(self):
+    def test_non_dominated_kept(self) -> None:
+        """Two non-dominated points are both kept."""
         points = [
             (100, 1.0, 0.95),  # good accuracy, more resources
             (50, 0.5, 0.80),  # less resources, lower accuracy

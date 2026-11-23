@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2610
+expected_file_count = 2622
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10484,3 +10484,51 @@ rationale = "Exercise the Arcane-Zenith cognitive core: step from genome."
 [[file]]
 path = "tests/test_arcane_zenith/test_arcane_zenith_symbolic_reasoning_log.py"
 rationale = "Exercise the Arcane-Zenith cognitive core: symbolic reasoning log."
+
+[[file]]
+path = "tests/test_optimizer/sc_optimizer_support.py"
+rationale = "Support the stochastic optimizer tests with typed fake Rust-engine results."
+
+[[file]]
+path = "tests/test_optimizer/test_observation_loader_load_formats.py"
+rationale = "Exercise the optimizer suite: observation loader load formats."
+
+[[file]]
+path = "tests/test_optimizer/test_observation_loader_rejects.py"
+rationale = "Exercise the optimizer suite: observation loader rejects."
+
+[[file]]
+path = "tests/test_optimizer/test_observation_loader_surrogate_feed.py"
+rationale = "Exercise the optimizer suite: observation loader surrogate feed."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_candidate_generation.py"
+rationale = "Exercise the optimizer suite: sc optimizer candidate generation."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_extended_decorrelation_strategies.py"
+rationale = "Exercise the optimizer suite: sc optimizer extended decorrelation strategies."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_extended_greedy_optimizer.py"
+rationale = "Exercise the optimizer suite: sc optimizer extended greedy optimizer."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_extended_pareto_extraction.py"
+rationale = "Exercise the optimizer suite: sc optimizer extended pareto extraction."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_extended_simulated_annealing.py"
+rationale = "Exercise the optimizer suite: sc optimizer extended simulated annealing."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_free_tests.py"
+rationale = "Exercise the optimizer suite: sc optimizer free tests."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_optimization.py"
+rationale = "Exercise the optimizer suite: sc optimizer optimization."
+
+[[file]]
+path = "tests/test_optimizer/test_sc_optimizer_resource_estimation.py"
+rationale = "Exercise the optimizer suite: sc optimizer resource estimation."
