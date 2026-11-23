@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from autonomous_learning_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+import pytest
+from autonomous_learning_support import (
+    create_plasticity_layer,
+    FFI_AVAILABLE,
+    RULE_BCM,
+    RULE_ELIGENT,
+    RULE_REWARD_STDP,
+    RULE_STDP,
+)
 
 
 @pytest.mark.skipif(not FFI_AVAILABLE, reason="Rust autonomous_learning shared library not built.")
@@ -23,10 +34,10 @@ class TestTorchRuleLayerReset:
     """
 
     @pytest.fixture(autouse=True)
-    def _require_torch(self):
+    def _require_torch(self) -> None:
         pytest.importorskip("torch")
 
-    def _drive(self, rule_type: int):
+    def _drive(self, rule_type: int) -> Any:
         import torch
 
         layer = create_plasticity_layer(count=4, rule_type=rule_type, backend="torch")
@@ -38,13 +49,15 @@ class TestTorchRuleLayerReset:
         return layer
 
     @pytest.mark.parametrize("rule_type", [RULE_STDP, RULE_REWARD_STDP, RULE_BCM, RULE_ELIGENT])
-    def test_reset_preserves_weights(self, rule_type):
+    def test_reset_preserves_weights(self, rule_type: int) -> None:
+        """Resetting a driven torch rule layer keeps its weights."""
         layer = self._drive(rule_type)
         before = layer.get_weights().copy()
         layer.reset()
         assert np.allclose(layer.get_weights(), before)
 
-    def test_stdp_reset_zeros_pre_and_post_traces(self):
+    def test_stdp_reset_zeros_pre_and_post_traces(self) -> None:
+        """Resetting an STDP layer zeros its pre and post traces."""
         import torch
 
         layer = self._drive(RULE_STDP)
@@ -53,14 +66,16 @@ class TestTorchRuleLayerReset:
         assert torch.all(layer.pre_trace == 0.0)
         assert torch.all(layer.post_trace == 0.0)
 
-    def test_reward_stdp_reset_zeros_eligibility(self):
+    def test_reward_stdp_reset_zeros_eligibility(self) -> None:
+        """Resetting a reward STDP layer zeros its eligibility."""
         import torch
 
         layer = self._drive(RULE_REWARD_STDP)
         layer.reset()
         assert torch.all(layer.eligibility == 0.0)
 
-    def test_bcm_reset_restores_theta_m_to_half(self):
+    def test_bcm_reset_restores_theta_m_to_half(self) -> None:
+        """Resetting a BCM layer zeros its activity average and sets theta to one half."""
         import torch
 
         layer = self._drive(RULE_BCM)
@@ -68,14 +83,16 @@ class TestTorchRuleLayerReset:
         assert torch.all(layer.act_avg == 0.0)
         assert torch.allclose(layer.theta_m, torch.full_like(layer.theta_m, 0.5))
 
-    def test_eligent_reset_zeros_eligibility_only(self):
+    def test_eligent_reset_zeros_eligibility_only(self) -> None:
+        """Resetting an eligent layer zeros its eligibility."""
         import torch
 
         layer = self._drive(RULE_ELIGENT)
         layer.reset()
         assert torch.all(layer.eligibility == 0.0)
 
-    def test_scalar_mixed_precision_quantises_weights_and_traces(self):
+    def test_scalar_mixed_precision_quantises_weights_and_traces(self) -> None:
+        """Scalar weight and trace bit widths keep weights and traces on their grids."""
         import torch
 
         layer = create_plasticity_layer(
@@ -106,7 +123,8 @@ class TestTorchRuleLayerReset:
         assert torch.allclose(scaled_pre, torch.round(scaled_pre), atol=1e-5)
         assert torch.allclose(scaled_post, torch.round(scaled_post), atol=1e-5)
 
-    def test_per_synapse_weight_bits_accept_vector_spec(self):
+    def test_per_synapse_weight_bits_accept_vector_spec(self) -> None:
+        """A bit width per synapse keeps each weight on its own grid."""
         import torch
 
         bits = [2, 3, 4, 5]
@@ -131,7 +149,8 @@ class TestTorchRuleLayerReset:
             scaled = weights[idx] / step
             assert torch.allclose(scaled, torch.round(scaled), atol=1e-5)
 
-    def test_rejects_malformed_weight_bits_vector_length(self):
+    def test_rejects_malformed_weight_bits_vector_length(self) -> None:
+        """A weight bit-width vector of the wrong length is refused."""
         with pytest.raises(ValueError, match="weight_bits must be scalar or have length 4"):
             create_plasticity_layer(
                 count=4,

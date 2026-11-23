@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2486
+expected_file_count = 2505
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9988,3 +9988,79 @@ rationale = "Exercise the snn memory discipline audit tool: repair stimulus."
 [[file]]
 path = "tests/test_tools/test_snn_memory_discipline_audit_validate_stimulus.py"
 rationale = "Exercise the snn memory discipline audit tool: validate stimulus."
+
+[[file]]
+path = "tests/test_analog_bridge/test_analog_bridge_emit_analog_config.py"
+rationale = "Exercise the analog bridge suite: analog bridge emit analog config."
+
+[[file]]
+path = "tests/test_analog_bridge/test_analog_bridge_extended_calibration_routine.py"
+rationale = "Exercise the analog bridge suite: analog bridge extended calibration routine."
+
+[[file]]
+path = "tests/test_analog_bridge/test_analog_bridge_extended_event_driven_interface.py"
+rationale = "Exercise the analog bridge suite: analog bridge extended event driven interface."
+
+[[file]]
+path = "tests/test_analog_bridge/test_analog_bridge_extended_substrate_profiles.py"
+rationale = "Exercise the analog bridge suite: analog bridge extended substrate profiles."
+
+[[file]]
+path = "tests/test_analog_bridge/test_analog_bridge_quantization.py"
+rationale = "Exercise the analog bridge suite: analog bridge quantization."
+
+[[file]]
+path = "tests/test_integration/test_cross_module_adaptive_loop.py"
+rationale = "Exercise the integration suite: cross module adaptive loop."
+
+[[file]]
+path = "tests/test_integration/test_cross_module_core_types.py"
+rationale = "Exercise the integration suite: cross module core types."
+
+[[file]]
+path = "tests/test_integration/test_cross_module_export_pipeline.py"
+rationale = "Exercise the integration suite: cross module export pipeline."
+
+[[file]]
+path = "tests/test_integration/test_cross_module_rust_wiring.py"
+rationale = "Exercise the integration suite: cross module rust wiring."
+
+[[file]]
+path = "tests/test_integration/test_cross_module_unified_energy_reporter.py"
+rationale = "Exercise the integration suite: cross module unified energy reporter."
+
+[[file]]
+path = "tests/test_interfaces/test_bci_bci_decoder_legacy.py"
+rationale = "Exercise the interfaces suite: bci bci decoder legacy."
+
+[[file]]
+path = "tests/test_interfaces/test_bci_bci_encoder.py"
+rationale = "Exercise the interfaces suite: bci bci encoder."
+
+[[file]]
+path = "tests/test_learning/test_autonomous_learning_autonomous_learning.py"
+rationale = "Exercise the learning suite: autonomous learning autonomous learning."
+
+[[file]]
+path = "tests/test_learning/test_autonomous_learning_meta_plasticity_integration.py"
+rationale = "Exercise the learning suite: autonomous learning meta plasticity integration."
+
+[[file]]
+path = "tests/test_learning/test_autonomous_learning_rust_rule_layer_reset.py"
+rationale = "Exercise the learning suite: autonomous learning rust rule layer reset."
+
+[[file]]
+path = "tests/test_learning/test_autonomous_learning_torch_rule_layer_reset.py"
+rationale = "Exercise the learning suite: autonomous learning torch rule layer reset."
+
+[[file]]
+path = "tests/test_stochastic_doctor/test_diagnostics_drift_detector.py"
+rationale = "Exercise the stochastic doctor suite: diagnostics drift detector."
+
+[[file]]
+path = "tests/test_stochastic_doctor/test_diagnostics_scc.py"
+rationale = "Exercise the stochastic doctor suite: diagnostics scc."
+
+[[file]]
+path = "tests/test_stochastic_doctor/test_diagnostics_stochastic_doctor.py"
+rationale = "Exercise the stochastic doctor suite: diagnostics stochastic doctor."

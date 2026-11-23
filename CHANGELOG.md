@@ -1307,6 +1307,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 19 star-import test modules of five small suites
+  (`tests/test_analog_bridge`, `test_integration`, `test_interfaces`,
+  `test_learning`, `test_stochastic_doctor`) import their names
+  explicitly, gain their missing test docstrings and type annotations
+  and are enrolled in the docstring policy. The analog-bridge export
+  test names the objects it checks instead of reading them from the
+  module globals, and the four support modules left without an
+  importer are deleted.
+
 - The 15 tool test modules under `tests/test_tools` that still took
   their names from a suppressed star import (build accel backends,
   criterion to bencher, extract ORCA params, readiness evidence index,

@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from autonomous_learning_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+import pytest
+from autonomous_learning_support import (
+    FFI_AVAILABLE,
+    RULE_BCM,
+    RULE_ELIGENT,
+    RULE_REWARD_STDP,
+    RULE_STDP,
+    RustRuleLayer,
+)
 
 
 @pytest.mark.skipif(not FFI_AVAILABLE, reason="Rust autonomous_learning shared library not built.")
@@ -24,7 +35,7 @@ class TestRustRuleLayerReset:
     the layer keeps its identity across a reset.
     """
 
-    def _drive_and_capture(self, rule_type: int):
+    def _drive_and_capture(self, rule_type: int) -> tuple[RustRuleLayer, np.ndarray[Any, Any]]:
         layer = RustRuleLayer(count=4, rule_type=rule_type, weight=0.5, param_a=0.1, param_b=0.05)
         pre = np.ones(4, dtype=bool)
         post = np.ones(4, dtype=bool)
@@ -36,18 +47,21 @@ class TestRustRuleLayerReset:
         return layer, weights_before
 
     @pytest.mark.parametrize("rule_type", [RULE_STDP, RULE_REWARD_STDP, RULE_BCM, RULE_ELIGENT])
-    def test_reset_preserves_weights(self, rule_type):
+    def test_reset_preserves_weights(self, rule_type: int) -> None:
+        """Resetting a driven native rule layer keeps its weights."""
         layer, weights_before = self._drive_and_capture(rule_type)
         assert np.allclose(layer.get_weights(), weights_before)
 
-    def test_reset_is_idempotent(self):
+    def test_reset_is_idempotent(self) -> None:
+        """Resetting twice leaves the weights as one reset does."""
         layer, _ = self._drive_and_capture(RULE_STDP)
         snap = layer.get_weights().copy()
         layer.reset()
         layer.reset()
         assert np.allclose(layer.get_weights(), snap)
 
-    def test_reset_followed_by_step_still_works(self):
+    def test_reset_followed_by_step_still_works(self) -> None:
+        """A reset layer keeps stepping with finite weights."""
         layer, _ = self._drive_and_capture(RULE_REWARD_STDP)
         # After reset we must be able to continue stepping without crash
         # and the engine must keep producing finite weights.

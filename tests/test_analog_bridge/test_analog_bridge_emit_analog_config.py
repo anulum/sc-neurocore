@@ -14,7 +14,13 @@ import sys
 from pathlib import Path as _Path
 
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from analog_bridge_support import *  # noqa: F403
+import unittest
+from analog_bridge_support import (
+    MockNode,
+)
+from sc_neurocore.analog_bridge import (
+    AnalogBridge,
+)
 
 
 class TestEmitAnalogConfig(unittest.TestCase):

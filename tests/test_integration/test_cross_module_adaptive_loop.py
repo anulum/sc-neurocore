@@ -10,13 +10,14 @@
 
 from __future__ import annotations
 
-from cross_module_support import *  # noqa: F403
+import numpy as np
 
 
 class TestAdaptiveLoop:
     """Verify Runtime → Optimizer closed loop."""
 
-    def test_controller_creation(self):
+    def test_controller_creation(self) -> None:
+        """A new adaptive controller has no current report."""
         from sc_neurocore.core.types import HardwareBudget, LayerSpec
         from sc_neurocore.control.adaptive_loop import AdaptiveController
 
@@ -25,7 +26,8 @@ class TestAdaptiveLoop:
         ctrl = AdaptiveController(budget, layers)
         assert ctrl.current_report is None
 
-    def test_no_drift_no_adaptation(self):
+    def test_no_drift_no_adaptation(self) -> None:
+        """Independent random streams never trigger an adaptation."""
         from sc_neurocore.core.types import HardwareBudget, LayerSpec
         from sc_neurocore.control.adaptive_loop import AdaptiveController
 
@@ -41,7 +43,8 @@ class TestAdaptiveLoop:
             event = ctrl.step(a, b)
         assert len(ctrl.adaptation_log) == 0
 
-    def test_drift_triggers_adaptation(self):
+    def test_drift_triggers_adaptation(self) -> None:
+        """Identical streams drive the correlation over threshold and trigger an adaptation."""
         from sc_neurocore.core.types import HardwareBudget, LayerSpec
         from sc_neurocore.control.adaptive_loop import AdaptiveController, AdaptiveLoopConfig
 
@@ -62,7 +65,8 @@ class TestAdaptiveLoop:
 
         assert len(ctrl.adaptation_log) >= 1
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The controller summary names the adaptive controller."""
         from sc_neurocore.core.types import HardwareBudget, LayerSpec
         from sc_neurocore.control.adaptive_loop import AdaptiveController
 
@@ -72,7 +76,8 @@ class TestAdaptiveLoop:
         s = ctrl.summary()
         assert "AdaptiveController" in s
 
-    def test_cooldown_suppresses_back_to_back_reoptimisation(self):
+    def test_cooldown_suppresses_back_to_back_reoptimisation(self) -> None:
+        """Within the cooldown a second drift step triggers no new adaptation."""
         from sc_neurocore.core.types import HardwareBudget, LayerSpec
         from sc_neurocore.control.adaptive_loop import (
             AdaptiveController,

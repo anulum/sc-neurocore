@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from analog_bridge_extended_support import *  # noqa: F403
+import unittest
+from sc_neurocore.analog_bridge import (
+    AnalogBridge,
+    CalibrationRoutine,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 class TestCalibrationRoutine(unittest.TestCase):

@@ -10,13 +10,14 @@
 
 from __future__ import annotations
 
-from cross_module_support import *  # noqa: F403
+import pytest
 
 
 class TestRustWiring:
     """Verify Rust backends are importable and callable from Python."""
 
-    def test_optimizer_rust_import(self):
+    def test_optimizer_rust_import(self) -> None:
+        """The engine's annealing search and Pareto extraction are callable."""
         try:
             from sc_neurocore_engine import py_opt_sa_search, py_opt_extract_pareto
         except ImportError:
@@ -24,7 +25,8 @@ class TestRustWiring:
         assert callable(py_opt_sa_search)
         assert callable(py_opt_extract_pareto)
 
-    def test_optimizer_sa_via_python_api(self):
+    def test_optimizer_sa_via_python_api(self) -> None:
+        """Annealing through the Python optimizer returns a report above one half accuracy."""
         from sc_neurocore.optimizer.sc_optimizer import SCOptimizer, HardwareBudget, LayerProfile
 
         budget = HardwareBudget(max_luts=100_000, max_power_mw=1000.0)
@@ -37,7 +39,8 @@ class TestRustWiring:
         assert report is not None
         assert report.mean_accuracy > 0.5
 
-    def test_evo_rust_functions(self):
+    def test_evo_rust_functions(self) -> None:
+        """The engine's evolution kernels are callable and mutation changes a population."""
         try:
             from sc_neurocore_engine import (
                 py_evo_batch_mutate,
@@ -62,7 +65,8 @@ class TestRustWiring:
         assert len(mutated) == 20
         assert any(w != 0.0 for g in mutated for w in g)
 
-    def test_pareto_extraction_rust(self):
+    def test_pareto_extraction_rust(self) -> None:
+        """Pareto extraction in the engine returns indices and a non-empty front."""
         try:
             from sc_neurocore_engine import py_opt_extract_pareto
         except ImportError:

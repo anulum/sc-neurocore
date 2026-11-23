@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from analog_bridge_extended_support import *  # noqa: F403
+import sc_neurocore.analog_bridge as analog_bridge
+import unittest
+from sc_neurocore.analog_bridge import (
+    AEREvent,
+    AnalogBridge,
+    AnalogSubstrateProfile,
+    CalibrationRoutine,
+    EventDrivenInterface,
+)
 
 
 class TestSubstrateProfiles(unittest.TestCase):
@@ -18,17 +26,17 @@ class TestSubstrateProfiles(unittest.TestCase):
 
     def test_package_exports_bridge_api(self) -> None:
         """Package entry point exports the documented analog bridge API."""
-        expected = [
-            "AEREvent",
-            "AnalogBridge",
-            "AnalogSubstrateProfile",
-            "CalibrationRoutine",
-            "EventDrivenInterface",
-        ]
+        expected: dict[str, object] = {
+            "AEREvent": AEREvent,
+            "AnalogBridge": AnalogBridge,
+            "AnalogSubstrateProfile": AnalogSubstrateProfile,
+            "CalibrationRoutine": CalibrationRoutine,
+            "EventDrivenInterface": EventDrivenInterface,
+        }
         self.assertEqual(analog_bridge.__tier__, "research")
-        self.assertEqual(analog_bridge.__all__, expected)
-        for name in expected:
-            self.assertIs(getattr(analog_bridge, name), globals()[name])
+        self.assertEqual(analog_bridge.__all__, list(expected))
+        for name, exported in expected.items():
+            self.assertIs(getattr(analog_bridge, name), exported)
 
     def test_brainscales3(self) -> None:
         """The BrainScaleS-3 profile exposes its DAC and fan-in limits."""

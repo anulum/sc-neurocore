@@ -10,24 +10,31 @@
 
 from __future__ import annotations
 
-from diagnostics_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.stochastic_doctor.diagnostics import (
+    compute_scc,
+)
 
 
 class TestSCC(unittest.TestCase):
     """SCC computation tests."""
 
-    def test_identical_streams(self):
+    def test_identical_streams(self) -> None:
+        """Identical streams have an SCC of one."""
         a = np.array([1, 0, 1, 1, 0, 0, 1, 0, 1, 0], dtype=np.uint8)
         scc = compute_scc(a, a)
         self.assertAlmostEqual(scc, 1.0, places=5)
 
-    def test_anticorrelated_streams(self):
+    def test_anticorrelated_streams(self) -> None:
+        """Complementary streams have an SCC of minus one."""
         a = np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8)
         b = np.array([0, 1, 0, 1, 0, 1, 0, 1], dtype=np.uint8)
         scc = compute_scc(a, b)
         self.assertAlmostEqual(scc, -1.0, places=5)
 
-    def test_independent_streams(self):
+    def test_independent_streams(self) -> None:
+        """Independent random streams have an SCC near zero."""
         rng = np.random.default_rng(42)
         a = rng.integers(0, 2, size=10000, dtype=np.uint8)
         b = rng.integers(0, 2, size=10000, dtype=np.uint8)

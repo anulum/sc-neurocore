@@ -10,12 +10,24 @@
 
 from __future__ import annotations
 
-from autonomous_learning_support import *  # noqa: F403
+import pytest
+from autonomous_learning_support import (
+    FFI_AVAILABLE,
+    RULE_BCM,
+    RULE_REWARD_STDP,
+    RULE_STDP,
+    RustEligentLearner,
+    RustOnlineO1Synapse,
+    RustPlasticityRule,
+)
 
 
 @pytest.mark.skipif(not FFI_AVAILABLE, reason="Rust autonomous_learning shared library not built.")
 class TestAutonomousLearning:
-    def test_stdp_rule_potentiation(self):
+    """Plasticity rules and learners of the native learning bridge."""
+
+    def test_stdp_rule_potentiation(self) -> None:
+        """A pre spike before a post spike raises the STDP weight."""
         rule = RustPlasticityRule(rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05)
         initial_w = rule.weight
 
@@ -25,7 +37,8 @@ class TestAutonomousLearning:
 
         assert rule.weight > initial_w
 
-    def test_stdp_rule_depression(self):
+    def test_stdp_rule_depression(self) -> None:
+        """A post spike before a pre spike lowers the STDP weight."""
         rule = RustPlasticityRule(rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05)
         initial_w = rule.weight
 
@@ -35,7 +48,8 @@ class TestAutonomousLearning:
 
         assert rule.weight < initial_w
 
-    def test_reward_stdp_needs_reward(self):
+    def test_reward_stdp_needs_reward(self) -> None:
+        """Reward STDP keeps its weight without reward and changes it with reward."""
         rule = RustPlasticityRule(rule_type=RULE_REWARD_STDP, weight=0.5, param_a=0.1, param_b=0.95)
         initial_w = rule.weight
 
@@ -49,18 +63,21 @@ class TestAutonomousLearning:
 
         assert rule.weight != initial_w
 
-    def test_bcm_rule(self):
+    def test_bcm_rule(self) -> None:
+        """A coincident pre and post spike changes the BCM weight."""
         rule = RustPlasticityRule(rule_type=RULE_BCM, weight=0.5, param_a=0.01, param_b=10.0)
         initial_w = rule.weight
         rule.step(True, True)
         assert rule.weight != initial_w
 
-    def test_eligent_learner(self):
+    def test_eligent_learner(self) -> None:
+        """The eligent learner accepts a rewarded step without error."""
         learner = RustEligentLearner(threshold=1.0, target_rate=0.1, weight=0.5)
         learner.step(fired=True, pre_spike=True, global_reward=1.0)
         # Should not crash and execute C-FFI correctly
 
-    def test_online_o1_matches_python_reference_trace(self):
+    def test_online_o1_matches_python_reference_trace(self) -> None:
+        """The native online O(1) synapse follows the Python reference step by step."""
         from sc_neurocore.learning.online_o1 import OnlineO1Config, OnlineO1Synapse
 
         config = OnlineO1Config(

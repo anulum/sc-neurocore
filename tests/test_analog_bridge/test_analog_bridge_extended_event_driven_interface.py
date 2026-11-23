@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from analog_bridge_extended_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.analog_bridge import (
+    AEREvent,
+    EventDrivenInterface,
+)
 
 
 class TestEventDrivenInterface(unittest.TestCase):

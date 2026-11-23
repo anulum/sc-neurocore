@@ -10,34 +10,36 @@
 
 from __future__ import annotations
 
-from cross_module_support import *  # noqa: F403
-
 
 class TestCoreTypes:
     """Verify shared type system works across modules."""
 
-    def test_hardware_budget(self):
+    def test_hardware_budget(self) -> None:
+        """Half the LUT budget reports a utilisation of one half."""
         from sc_neurocore.core.types import HardwareBudget
 
         b = HardwareBudget(max_luts=100_000)
         util = b.utilisation(luts=50_000)
         assert abs(util["luts"] - 0.5) < 1e-10
 
-    def test_resource_report_meets_budget(self):
+    def test_resource_report_meets_budget(self) -> None:
+        """A report within the LUT and power budget meets it."""
         from sc_neurocore.core.types import HardwareBudget, ResourceReport
 
         b = HardwareBudget(max_luts=100_000, max_power_mw=1000.0)
         r = ResourceReport(total_luts=50_000, total_power_mw=500.0)
         assert r.meets_budget(b)
 
-    def test_resource_report_exceeds_budget(self):
+    def test_resource_report_exceeds_budget(self) -> None:
+        """A report over the LUT budget does not meet it."""
         from sc_neurocore.core.types import HardwareBudget, ResourceReport
 
         b = HardwareBudget(max_luts=100_000, max_power_mw=1000.0)
         r = ResourceReport(total_luts=200_000, total_power_mw=500.0)
         assert not r.meets_budget(b)
 
-    def test_layer_spec_estimation(self):
+    def test_layer_spec_estimation(self) -> None:
+        """A Sobol-decorrelated layer has positive LUT and power estimates and a valid accuracy."""
         from sc_neurocore.core.types import LayerSpec, DecorrelationStrategy
 
         ls = LayerSpec(
@@ -50,7 +52,8 @@ class TestCoreTypes:
         assert ls.estimate_power_mw() > 0
         assert 0 < ls.estimate_accuracy() <= 1.0
 
-    def test_estimate_network(self):
+    def test_estimate_network(self) -> None:
+        """Estimating a two-layer network gives positive LUTs and accuracy."""
         from sc_neurocore.core.types import LayerSpec, estimate_network
 
         layers = [
@@ -61,13 +64,15 @@ class TestCoreTypes:
         assert report.total_luts > 0
         assert report.mean_accuracy > 0
 
-    def test_layer_spec_deterministic(self):
+    def test_layer_spec_deterministic(self) -> None:
+        """A deterministic layer has an estimated accuracy of one."""
         from sc_neurocore.core.types import LayerSpec, ComputeMode
 
         ls = LayerSpec(layer_id="L0", neurons=10, mode=ComputeMode.DETERMINISTIC)
         assert ls.estimate_accuracy() == 1.0
 
     def test_resource_report_exceeds_each_budget_dimension(self) -> None:
+        """Power, latency, flip-flops and DSPs each fail the budget when over it."""
         # meets_budget returns on the first failing dimension, so each branch
         # needs a report that clears the earlier checks and breaches one.
         from sc_neurocore.core.types import HardwareBudget, ResourceReport
@@ -85,6 +90,7 @@ class TestCoreTypes:
         assert not dsp.meets_budget(HardwareBudget(max_dsp=256))
 
     def test_resource_report_summary_is_human_readable(self) -> None:
+        """The report summary prints the LUT count and the accuracy."""
         from sc_neurocore.core.types import ResourceReport
 
         report = ResourceReport(
@@ -101,6 +107,7 @@ class TestCoreTypes:
         assert "Accuracy: 0.9876" in text
 
     def test_layer_spec_deterministic_luts_and_power(self) -> None:
+        """A deterministic layer costs 120 LUTs and 0.5 mW per MAC."""
         # The deterministic mode takes the dedicated MAC-count cost paths in
         # estimate_luts and estimate_power_mw rather than the stochastic ones.
         from sc_neurocore.core.types import ComputeMode, LayerSpec

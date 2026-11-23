@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from autonomous_learning_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    EngineConfig,
+    MetaPlasticityEngine,
+)
 
 
 class TestMetaPlasticityIntegration:
-    def test_meta_plasticity_engine_step(self):
+    """Stepping the meta-plasticity engine without evolution."""
+
+    def test_meta_plasticity_engine_step(self) -> None:
+        """One engine step reports step one, the current rules and neuromodulator levels."""
         engine = MetaPlasticityEngine(config=EngineConfig(enable_evolution=False))
         metrics = {
             "novelty": 0.8,

@@ -10,19 +10,19 @@
 
 from __future__ import annotations
 
-from cross_module_support import *  # noqa: F403
-
 
 class TestExportPipeline:
     """Verify Model Zoo → ONNX → TVM → MLIR → Verilog pipeline."""
 
-    def test_pipeline_creation(self):
+    def test_pipeline_creation(self) -> None:
+        """A new export pipeline has a model registry."""
         from sc_neurocore.export.pipeline import ExportPipeline
 
         p = ExportPipeline()
         assert p.registry is not None
 
-    def test_pipeline_result_dataclass(self):
+    def test_pipeline_result_dataclass(self) -> None:
+        """A result whose only stage succeeded is a success and names the stage."""
         from sc_neurocore.export.pipeline import PipelineResult, PipelineStageResult
 
         r = PipelineResult()
@@ -30,7 +30,8 @@ class TestExportPipeline:
         assert r.success
         assert "test" in r.summary()
 
-    def test_pipeline_stage_failure(self):
+    def test_pipeline_stage_failure(self) -> None:
+        """A result with a failed stage is not a success."""
         from sc_neurocore.export.pipeline import PipelineResult, PipelineStageResult
 
         r = PipelineResult()

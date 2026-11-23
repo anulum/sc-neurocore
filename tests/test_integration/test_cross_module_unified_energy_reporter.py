@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from cross_module_support import *  # noqa: F403
-
 
 class TestUnifiedEnergyReporter:
     """Verify Sustainability ↔ Profiling integration."""
 
-    def test_basic_analysis(self):
+    def test_basic_analysis(self) -> None:
+        """A one-layer analysis reports at least its layer power under the unified title."""
         from sc_neurocore.energy_accounting.unified_reporter import UnifiedEnergyReporter
         from sc_neurocore.energy_accounting.sustainability_profiler import GridRegion
 
@@ -28,7 +27,8 @@ class TestUnifiedEnergyReporter:
         assert report.summary().startswith("Unified Energy Report")
         assert report.total_power_mw >= 10.0
 
-    def test_asic_power_included(self):
+    def test_asic_power_included(self) -> None:
+        """The ASIC power is reported and counted in the total."""
         from sc_neurocore.energy_accounting.unified_reporter import UnifiedEnergyReporter
 
         reporter = UnifiedEnergyReporter(asic_power_mw=500.0)
@@ -36,7 +36,8 @@ class TestUnifiedEnergyReporter:
         assert report.asic_power_mw == 500.0
         assert report.total_power_mw >= 500.0
 
-    def test_thermal_check(self):
+    def test_thermal_check(self) -> None:
+        """A 100 mW total gives a junction above ambient that stays thermally safe."""
         from sc_neurocore.energy_accounting.unified_reporter import UnifiedEnergyReporter
 
         reporter = UnifiedEnergyReporter()

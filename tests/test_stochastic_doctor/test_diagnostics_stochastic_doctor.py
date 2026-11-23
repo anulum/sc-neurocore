@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from diagnostics_support import *  # noqa: F403
+import json
+import numpy as np
+import unittest
+from sc_neurocore.stochastic_doctor.diagnostics import (
+    AuditSeverity,
+    StochasticDoctor,
+)
 
 
 class TestStochasticDoctor(unittest.TestCase):
     """Full doctor audit tests."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Create a doctor with correlation and critical thresholds."""
         self.doc = StochasticDoctor(
             correlation_threshold=0.3,
             critical_threshold=0.7,
         )
 
-    def test_compute_correlation(self):
+    def test_compute_correlation(self) -> None:
+        """Independent streams correlate near zero and a stream with itself near one."""
         rng = np.random.default_rng(42)
         a = rng.integers(0, 2, size=10000, dtype=np.uint8)
         b = rng.integers(0, 2, size=10000, dtype=np.uint8)
@@ -31,7 +39,8 @@ class TestStochasticDoctor(unittest.TestCase):
         scc_same = self.doc.compute_correlation(a, a)
         self.assertGreater(scc_same, 0.9)
 
-    def test_estimate_precision(self):
+    def test_estimate_precision(self) -> None:
+        """A half-ones stream estimates one half with its binomial variance."""
         bs = np.zeros(1000, dtype=np.uint8)
         bs[:500] = 1
         p, var = self.doc.estimate_precision(bs)
@@ -40,14 +49,16 @@ class TestStochasticDoctor(unittest.TestCase):
         # Theoretical: 0.5*0.5/1000 = 0.00025
         self.assertAlmostEqual(var, 0.00025, places=4)
 
-    def test_compute_histogram(self):
+    def test_compute_histogram(self) -> None:
+        """An all-ones stream fills only the top bin of the word histogram."""
         bs = np.ones(128, dtype=np.uint8)
         hist = self.doc.compute_histogram(bs, word_size=64)
         self.assertEqual(len(hist), 65)
         self.assertEqual(hist[64], 2)
         self.assertEqual(hist[:64].sum(), 0)
 
-    def test_audit_layer_critical_correlation(self):
+    def test_audit_layer_critical_correlation(self) -> None:
+        """A layer with two identical neurons is audited as critical with hot neurons."""
         a = np.zeros(1024, dtype=np.uint8)
         a[:512] = 1
         b = a.copy()
@@ -60,13 +71,15 @@ class TestStochasticDoctor(unittest.TestCase):
         self.assertEqual(report.status, AuditSeverity.CRITICAL)
         self.assertGreater(len(report.hot_neurons), 0)
 
-    def test_audit_layer_ok(self):
+    def test_audit_layer_ok(self) -> None:
+        """A layer of independent random neurons is audited as OK."""
         rng = np.random.default_rng(42)
         streams = rng.integers(0, 2, size=(3, 1024), dtype=np.uint8)
         report = self.doc.audit_layer("ok_layer", streams)
         self.assertEqual(report.status, AuditSeverity.OK)
 
-    def test_report_json_serialization(self):
+    def test_report_json_serialization(self) -> None:
+        """The audit report serialises to JSON with its layer, status and findings."""
         a = np.zeros(128, dtype=np.uint8)
         a[:64] = 1
         report = self.doc.audit_layer("json_test", np.stack([a, a]))
@@ -76,7 +89,8 @@ class TestStochasticDoctor(unittest.TestCase):
         self.assertIn("status", parsed)
         self.assertIn("findings", parsed)
 
-    def test_report_to_dict(self):
+    def test_report_to_dict(self) -> None:
+        """The audit report converts to a dictionary with its layer."""
         a = np.zeros(64, dtype=np.uint8)
         a[:32] = 1
         report = self.doc.audit_layer("dict_test", np.stack([a, a]))
@@ -84,7 +98,8 @@ class TestStochasticDoctor(unittest.TestCase):
         self.assertIsInstance(d, dict)
         self.assertEqual(d["layer"], "dict_test")
 
-    def test_precision_in_report(self):
+    def test_precision_in_report(self) -> None:
+        """Random streams give a mean precision near one half."""
         rng = np.random.default_rng(42)
         streams = rng.integers(0, 2, size=(4, 2048), dtype=np.uint8)
         report = self.doc.audit_layer("prec_test", streams)
