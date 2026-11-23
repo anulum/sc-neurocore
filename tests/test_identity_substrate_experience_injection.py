@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+import numpy as np
+from tests.identity_substrate_support import (
+    _make_substrate,
+)
 
 
 class TestExperienceInjection:
-    def test_inject_changes_weights(self):
+    """Injecting experiences into the substrate."""
+
+    def test_inject_changes_weights(self) -> None:
+        """Injection changes the weights."""
         sub = _make_substrate()
         weights_before = sub.ee_weights.copy()
         sub.inject_experience("The system decided to increase inhibition based on rate analysis.")
         weights_after = sub.ee_weights
         assert not np.array_equal(weights_before, weights_after)
 
-    def test_inject_increases_step_count(self):
+    def test_inject_increases_step_count(self) -> None:
+        """Injection advances the step count."""
         sub = _make_substrate()
         steps_before = sub._total_steps
         sub.inject_experience("Short trace.")

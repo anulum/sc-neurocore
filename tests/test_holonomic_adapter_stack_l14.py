@@ -6,12 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused holonomic adapter contracts
 
+"""Contract tests of the L14 holonomic adapter."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+from sc_neurocore.accel.jax_backend import (
+    jnp,
+)
+from sc_neurocore.adapters.holonomic.l14_trans import (
+    L14_HolonomicParameters,
+    L14_TransdimensionalAdapter,
+)
 
 
-def test_l14_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l14_adapter_init_and_step() -> None:
+    """The L14 adapter steps and reports its alignment metrics."""
     params = L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=64)
     adapter = L14_TransdimensionalAdapter(params)
     out = adapter.step_jax(0.1)
@@ -23,7 +32,8 @@ def test_l14_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserve
     assert "brane_resonance_r14" in decoded
 
 
-def test_l14_with_inputs():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l14_with_inputs() -> None:
+    """The L14 adapter takes an input stream."""
     adapter = L14_TransdimensionalAdapter(
         L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32)
     )
@@ -32,7 +42,8 @@ def test_l14_with_inputs():  # type: ignore[no-untyped-def] # Preserved legacy t
     assert out.shape == (5, 32)
 
 
-def test_l14_input_broadcast():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l14_input_broadcast() -> None:
+    """The L14 adapter broadcasts its input."""
     adapter = L14_TransdimensionalAdapter(
         L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32)
     )

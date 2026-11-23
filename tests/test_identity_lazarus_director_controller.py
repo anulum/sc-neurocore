@@ -10,25 +10,35 @@
 
 from __future__ import annotations
 
-from tests.identity_lazarus_support import *  # noqa: F403
+from sc_neurocore.identity.director import (
+    DirectorController,
+)
+from sc_neurocore.identity.substrate import (
+    IdentitySubstrate,
+)
 
 
 class TestDirectorController:
-    def test_monitor_returns_dict(self):
+    """Smoke tests of the director controller."""
+
+    def test_monitor_returns_dict(self) -> None:
+        """Monitoring returns a dict; its contents are not checked."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         director = DirectorController(sub)
         metrics = director.monitor()
         assert isinstance(metrics, dict)
 
-    def test_diagnose_returns_list(self):
+    def test_diagnose_returns_list(self) -> None:
+        """Diagnosis returns a list; its contents are not checked."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         director = DirectorController(sub)
         problems = director.diagnose()
         assert isinstance(problems, list)
 
-    def test_report_returns_string(self):
+    def test_report_returns_string(self) -> None:
+        """The report is a non-empty string."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         director = DirectorController(sub)
@@ -36,7 +46,8 @@ class TestDirectorController:
         assert isinstance(report, str)
         assert len(report) > 0
 
-    def test_correct_does_not_crash(self):
+    def test_correct_does_not_crash(self) -> None:
+        """A correction runs; its effect is not checked."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         director = DirectorController(sub)

@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.identity_lazarus_support import *  # noqa: F403
+import os
+import tempfile
+from sc_neurocore.identity.checkpoint import (
+    Checkpoint,
+)
+from sc_neurocore.identity.substrate import (
+    IdentitySubstrate,
+)
 
 
 class TestCheckpoint:
-    def test_save_load_roundtrip(self):
+    """Saving and loading identity checkpoints."""
+
+    def test_save_load_roundtrip(self) -> None:
+        """A checkpoint round-trips through a file."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.02, dt=0.001)
         state_before = sub.extract_state()
@@ -35,7 +45,7 @@ class TestCheckpoint:
         finally:
             os.remove(path)
 
-    def test_merge_same_architecture(self):
+    def test_merge_same_architecture(self) -> None:
         """Merge two checkpoints from same architecture, same seed."""
         sub1 = IdentitySubstrate(n_cortical=20, n_inhibitory=8, n_memory=4, seed=42)
         sub1.run(duration=0.01, dt=0.001)
@@ -60,7 +70,8 @@ class TestCheckpoint:
             os.remove(p2)
             os.rmdir(tmpdir)
 
-    def test_load_file_not_found(self):
+    def test_load_file_not_found(self) -> None:
+        """Loading a missing checkpoint raises."""
         try:
             Checkpoint.load("/nonexistent/path.npz")
             raise AssertionError("should raise FileNotFoundError")

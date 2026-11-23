@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.hypothesis_fuzz_support import *  # noqa: F403
+import math
+from hypothesis import (
+    given,
+    HealthCheck,
+    settings,
+    strategies as st,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestUniversalDSLFuzz:

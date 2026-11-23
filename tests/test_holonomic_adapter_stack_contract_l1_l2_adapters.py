@@ -6,12 +6,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (l1_l2_adapters) from former test_holonomic_adapter_stack_contract.py
 
+"""Contract tests of the L1 and L2 holonomic adapters."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+import pytest
+from sc_neurocore.accel.jax_backend import (
+    jnp,
+)
+from sc_neurocore.adapters.holonomic.l1_quantum import (
+    L1_HolonomicParameters,
+    L1_QuantumAdapter,
+)
+from sc_neurocore.adapters.holonomic.l2_chem import (
+    L2_HolonomicParameters,
+    L2_NeurochemicalAdapter,
+)
 
 
-def test_l1_adapter_contract():
+def test_l1_adapter_contract() -> None:
+    """The L1 adapter steps, reports coherence and decodes."""
     params = L1_HolonomicParameters(n_qubits=10)
     adapter = L1_QuantumAdapter(params)
     out = adapter.step_jax(0.1)
@@ -22,7 +36,8 @@ def test_l1_adapter_contract():
     assert "avg_coherence" in decoded
 
 
-def test_l2_adapter_contract():
+def test_l2_adapter_contract() -> None:
+    """The L2 adapter steps, reports field potential and decodes."""
     params = L2_HolonomicParameters(n_transmitters=4)
     adapter = L2_NeurochemicalAdapter(params)
     out = adapter.step_jax(0.1, inputs=jnp.ones((4, 1024)))
@@ -33,7 +48,8 @@ def test_l2_adapter_contract():
     assert "dopamine" in decoded
 
 
-def test_l2_iiief_wave_speed_controls_spatial_spread():
+def test_l2_iiief_wave_speed_controls_spatial_spread() -> None:
+    """A faster wave spreads further to the neighbour."""
     slow = L2_NeurochemicalAdapter(
         L2_HolonomicParameters(n_transmitters=5, bitstream_length=32, c_info=0.1)
     )
@@ -52,7 +68,8 @@ def test_l2_iiief_wave_speed_controls_spatial_spread():
     assert fast_neighbour > slow_neighbour
 
 
-def test_l2_hqc_release_uses_threshold_and_bridge_parameters():
+def test_l2_hqc_release_uses_threshold_and_bridge_parameters() -> None:
+    """A lower release threshold raises the concentrations."""
     low_threshold = L2_NeurochemicalAdapter(
         L2_HolonomicParameters(
             n_transmitters=2,
@@ -84,7 +101,8 @@ def test_l2_hqc_release_uses_threshold_and_bridge_parameters():
     )
 
 
-def test_l2_rejects_invalid_holonomic_parameters():
+def test_l2_rejects_invalid_holonomic_parameters() -> None:
+    """Each invalid L2 parameter is rejected."""
     with pytest.raises(ValueError, match="n_transmitters"):
         L2_NeurochemicalAdapter(L2_HolonomicParameters(n_transmitters=0))
     with pytest.raises(ValueError, match="n_receptors"):
@@ -109,7 +127,8 @@ def test_l2_rejects_invalid_holonomic_parameters():
         adapter.step_jax(0.0)
 
 
-def test_l1_adapter_consumes_metabolic_drive():
+def test_l1_adapter_consumes_metabolic_drive() -> None:
+    """The L1 adapter takes a metabolic drive input."""
     # Supplying a metabolic/field drive advances the pump term rather than
     # leaving it at its initial value.
     adapter = L1_QuantumAdapter(L1_HolonomicParameters(n_qubits=4))

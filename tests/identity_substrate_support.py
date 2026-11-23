@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_identity_substrate.py
 
+"""Shared names and a substrate builder for the identity substrate tests."""
+
 from __future__ import annotations
 
-"""Tests for the identity continuity substrate (Phase 1)."""
 import numpy as np
 from sc_neurocore.identity import (
     IdentitySubstrate,
@@ -23,7 +24,7 @@ N_INHIBITORY = 8
 N_MEMORY = 5
 
 
-def _make_substrate(seed=42):
+def _make_substrate(seed: int = 42) -> IdentitySubstrate:
     return IdentitySubstrate(N_CORTICAL, N_INHIBITORY, N_MEMORY, seed=seed)
 
 

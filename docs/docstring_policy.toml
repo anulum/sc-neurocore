@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3150
+expected_file_count = 3189
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -12644,3 +12644,159 @@ rationale = "Exercise SC-NeuroCore: hls export structure and backends."
 [[file]]
 path = "tests/test_hls_export_threshold_and_reset.py"
 rationale = "Exercise SC-NeuroCore: hls export threshold and reset."
+
+[[file]]
+path = "tests/identity_director_support.py"
+rationale = "Provide the names and run substrate shared by the identity director tests."
+
+[[file]]
+path = "tests/identity_substrate_support.py"
+rationale = "Provide the names and substrate builder shared by the identity substrate tests."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_contract_compiler_pipeline.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack contract compiler pipeline."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_contract_l1_l2_adapters.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack contract l1 l2 adapters."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_contract_l3_l7_adapters.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack contract l3 l7 adapters."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_contract_l8_l12_and_support.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack contract l8 l12 and support."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_contract_user_profile_and_meta.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack contract user profile and meta."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_l13.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack l13."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_l14.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack l14."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_l15.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack l15."
+
+[[file]]
+path = "tests/test_holonomic_adapter_stack_l16.py"
+rationale = "Exercise SC-NeuroCore: holonomic adapter stack l16."
+
+[[file]]
+path = "tests/test_homeostasis_free_tests.py"
+rationale = "Exercise SC-NeuroCore: homeostasis free tests."
+
+[[file]]
+path = "tests/test_homeostasis_network_regulator.py"
+rationale = "Exercise SC-NeuroCore: homeostasis network regulator."
+
+[[file]]
+path = "tests/test_homeostasis_sleep_consolidation.py"
+rationale = "Exercise SC-NeuroCore: homeostasis sleep consolidation."
+
+[[file]]
+path = "tests/test_hypothesis_fuzz_equation_builder_fuzz.py"
+rationale = "Exercise SC-NeuroCore: hypothesis fuzz equation builder fuzz."
+
+[[file]]
+path = "tests/test_hypothesis_fuzz_sanitize_ident_fuzz.py"
+rationale = "Exercise SC-NeuroCore: hypothesis fuzz sanitize ident fuzz."
+
+[[file]]
+path = "tests/test_hypothesis_fuzz_universal_dsl_fuzz.py"
+rationale = "Exercise SC-NeuroCore: hypothesis fuzz universal dsl fuzz."
+
+[[file]]
+path = "tests/test_identity_director_correct.py"
+rationale = "Exercise SC-NeuroCore: identity director correct."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_connectivity.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose connectivity."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_rate_too_high.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose rate too high."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_rate_too_low.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose rate too low."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_silent.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose silent."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_too_chaotic_bursty.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose too chaotic bursty."
+
+[[file]]
+path = "tests/test_identity_director_diagnose_too_regular.py"
+rationale = "Exercise SC-NeuroCore: identity director diagnose too regular."
+
+[[file]]
+path = "tests/test_identity_director_helper_functions.py"
+rationale = "Exercise SC-NeuroCore: identity director helper functions."
+
+[[file]]
+path = "tests/test_identity_director_report.py"
+rationale = "Exercise SC-NeuroCore: identity director report."
+
+[[file]]
+path = "tests/test_identity_lazarus_checkpoint.py"
+rationale = "Exercise SC-NeuroCore: identity lazarus checkpoint."
+
+[[file]]
+path = "tests/test_identity_lazarus_director_controller.py"
+rationale = "Exercise SC-NeuroCore: identity lazarus director controller."
+
+[[file]]
+path = "tests/test_identity_lazarus_identity_substrate.py"
+rationale = "Exercise SC-NeuroCore: identity lazarus identity substrate."
+
+[[file]]
+path = "tests/test_identity_lazarus_state_decoder.py"
+rationale = "Exercise SC-NeuroCore: identity lazarus state decoder."
+
+[[file]]
+path = "tests/test_identity_lazarus_trace_encoder.py"
+rationale = "Exercise SC-NeuroCore: identity lazarus trace encoder."
+
+[[file]]
+path = "tests/test_identity_substrate_checkpoint.py"
+rationale = "Exercise SC-NeuroCore: identity substrate checkpoint."
+
+[[file]]
+path = "tests/test_identity_substrate_decoder.py"
+rationale = "Exercise SC-NeuroCore: identity substrate decoder."
+
+[[file]]
+path = "tests/test_identity_substrate_director.py"
+rationale = "Exercise SC-NeuroCore: identity substrate director."
+
+[[file]]
+path = "tests/test_identity_substrate_experience_injection.py"
+rationale = "Exercise SC-NeuroCore: identity substrate experience injection."
+
+[[file]]
+path = "tests/test_identity_substrate_health_check.py"
+rationale = "Exercise SC-NeuroCore: identity substrate health check."
+
+[[file]]
+path = "tests/test_identity_substrate_state_extraction.py"
+rationale = "Exercise SC-NeuroCore: identity substrate state extraction."
+
+[[file]]
+path = "tests/test_identity_substrate_substrate_creation.py"
+rationale = "Exercise SC-NeuroCore: identity substrate substrate creation."
+
+[[file]]
+path = "tests/test_identity_substrate_trace_encoder.py"
+rationale = "Exercise SC-NeuroCore: identity substrate trace encoder."

@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.homeostasis_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import pytest
+from sc_neurocore.homeostasis import (
+    NetworkRegulator,
+    StabilityMetrics,
+)
 
 
 class TestNetworkRegulator:
+    """Homeostatic regulation of a network."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -32,6 +40,7 @@ class TestNetworkRegulator:
         ],
     )
     def test_invalid_regulator_parameters_fail_closed(self, field: str, value: float) -> None:
+        """Each invalid regulator parameter is rejected."""
         kwargs: dict[str, float] = {
             "target_rate": 0.1,
             "rate_tolerance": 0.5,
@@ -43,6 +52,7 @@ class TestNetworkRegulator:
             NetworkRegulator(**kwargs)
 
     def test_stable(self) -> None:
+        """A stable network keeps its thresholds."""
         reg = NetworkRegulator(target_rate=0.1)
         rates = np.full(20, 0.1)
         thresholds = np.ones(20)
@@ -51,6 +61,7 @@ class TestNetworkRegulator:
         np.testing.assert_array_equal(new_th, thresholds)
 
     def test_too_active(self) -> None:
+        """An over-active network raises its thresholds."""
         reg = NetworkRegulator(target_rate=0.1, rate_tolerance=0.5)
         rates = np.full(20, 0.5)
         thresholds = np.ones(20)
@@ -59,6 +70,7 @@ class TestNetworkRegulator:
         assert (new_th > thresholds).all()
 
     def test_too_quiet(self) -> None:
+        """A quiet network lowers its thresholds."""
         reg = NetworkRegulator(target_rate=0.1, rate_tolerance=0.5)
         rates = np.full(20, 0.01)
         thresholds = np.ones(20)
@@ -66,6 +78,7 @@ class TestNetworkRegulator:
         assert (new_th < thresholds).all()
 
     def test_high_variance_reduces_lr(self) -> None:
+        """High variance lowers the learning rate."""
         reg = NetworkRegulator(target_rate=0.1)
         rates = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0])
         thresholds = np.ones(10)
@@ -73,6 +86,7 @@ class TestNetworkRegulator:
         assert new_lr < 0.01
 
     def test_with_weights(self) -> None:
+        """Weights give a positive weight norm."""
         reg = NetworkRegulator(target_rate=0.1)
         rates = np.full(10, 0.1)
         thresholds = np.ones(10)
@@ -102,11 +116,13 @@ class TestNetworkRegulator:
         thresholds: npt.NDArray[np.float64],
         learning_rate: float,
     ) -> None:
+        """Invalid regulation inputs are rejected."""
         reg = NetworkRegulator(target_rate=0.1)
         with pytest.raises(ValueError, match="regulate"):
             reg.regulate(rates, thresholds, learning_rate)
 
     def test_invalid_weight_matrix_fails_closed(self) -> None:
+        """An invalid weight matrix is rejected."""
         reg = NetworkRegulator(target_rate=0.1)
         rates = np.full(2, 0.1)
         thresholds = np.ones(2)
@@ -114,11 +130,13 @@ class TestNetworkRegulator:
             reg.regulate(rates, thresholds, 0.01, weights=[np.array([[1.0, float("nan")]])])
 
     def test_summary(self) -> None:
+        """A stable network is summarised as stable."""
         m = StabilityMetrics(mean_firing_rate=0.15, is_stable=True)
         s = m.summary()
         assert "STABLE" in s
 
     def test_summary_lists_adjustments(self) -> None:
+        """An unstable summary lists its adjustments."""
         m = StabilityMetrics(mean_firing_rate=0.25, is_stable=False, adjustments_made=["lr *0.95"])
 
         summary = m.summary()

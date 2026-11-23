@@ -6,12 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused holonomic adapter contracts
 
+"""Contract tests of the L13 holonomic adapter."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+import pytest
+from sc_neurocore.accel.jax_backend import (
+    jnp,
+)
+from sc_neurocore.adapters.holonomic.l13_source import (
+    L13_HolonomicParameters,
+    L13_SourceAdapter,
+)
 
 
-def test_l13_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_adapter_init_and_step() -> None:
+    """The L13 adapter steps and reports its vacuum metrics."""
     params = L13_HolonomicParameters(n_vacuum_nodes=8, bitstream_length=64)
     adapter = L13_SourceAdapter(params)
     out = adapter.step_jax(0.1)
@@ -23,14 +33,16 @@ def test_l13_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserve
     assert "source_coherence_r13" in decoded
 
 
-def test_l13_encode():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_encode() -> None:
+    """The L13 adapter encodes to uint8 bits."""
     adapter = L13_SourceAdapter(L13_HolonomicParameters(n_vacuum_nodes=4, bitstream_length=32))
     bits = adapter.encode(None)
     assert bits.shape == (4, 32)
     assert bits.dtype == jnp.uint8
 
 
-def test_l13_vacuum_kernel_clip():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_vacuum_kernel_clip() -> None:
+    """The vacuum state stays within [0, 1]."""
     adapter = L13_SourceAdapter(L13_HolonomicParameters(n_vacuum_nodes=4))
     for _ in range(50):
         adapter.step_jax(0.5)
@@ -39,7 +51,8 @@ def test_l13_vacuum_kernel_clip():  # type: ignore[no-untyped-def] # Preserved l
     assert float(jnp.max(state)) <= 1.0
 
 
-def test_l13_vacuum_kernel_uses_local_lattice_coupling():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_vacuum_kernel_uses_local_lattice_coupling() -> None:
+    """The vacuum kernel lifts neighbours more than distant nodes."""
     adapter = L13_SourceAdapter(
         L13_HolonomicParameters(
             n_vacuum_nodes=7,
@@ -58,7 +71,8 @@ def test_l13_vacuum_kernel_uses_local_lattice_coupling():  # type: ignore[no-unt
     assert neighbour_lift > far_lift
 
 
-def test_l13_scission_rate_controls_symmetry_breaking():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_scission_rate_controls_symmetry_breaking() -> None:
+    """The scission rate drives symmetry breaking."""
     no_scission = L13_SourceAdapter(
         L13_HolonomicParameters(n_vacuum_nodes=16, bitstream_length=16, lambda_scission=0.0),
         seed=77,
@@ -76,7 +90,8 @@ def test_l13_scission_rate_controls_symmetry_breaking():  # type: ignore[no-unty
     )
 
 
-def test_l13_l16_feedback_modulates_vacuum_potential():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_l16_feedback_modulates_vacuum_potential() -> None:
+    """L16 feedback raises the vacuum state."""
     baseline = L13_SourceAdapter(
         L13_HolonomicParameters(
             n_vacuum_nodes=4,
@@ -102,7 +117,8 @@ def test_l13_l16_feedback_modulates_vacuum_potential():  # type: ignore[no-untyp
     assert float(jnp.mean(driven.vacuum_state)) > float(jnp.mean(baseline.vacuum_state))
 
 
-def test_l13_rejects_invalid_holonomic_parameters_and_dt():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l13_rejects_invalid_holonomic_parameters_and_dt() -> None:
+    """Each invalid L13 parameter or step is rejected."""
     with pytest.raises(ValueError, match="n_vacuum_nodes"):
         L13_SourceAdapter(L13_HolonomicParameters(n_vacuum_nodes=0))
     with pytest.raises(ValueError, match="bitstream_length"):

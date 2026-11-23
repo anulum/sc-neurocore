@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.identity import (
+    DirectorController,
+)
+from tests.identity_substrate_support import (
+    _make_substrate,
+    N_CORTICAL,
+)
 
 
 class TestDirector:
-    def test_monitor_returns_metrics(self):
+    """Monitoring and reporting on the substrate."""
+
+    def test_monitor_returns_metrics(self) -> None:
+        """Monitoring reports rate, CV and Fano factor."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (100, N_CORTICAL))
         sub.run(duration=0.1, dt=0.001, stimuli_sequence=stim)
@@ -24,20 +34,23 @@ class TestDirector:
         assert "cv" in metrics
         assert "fano" in metrics
 
-    def test_diagnose_returns_list(self):
+    def test_diagnose_returns_list(self) -> None:
+        """Diagnosis returns a list; its contents are not checked."""
         sub = _make_substrate()
         director = DirectorController(sub)
         problems = director.diagnose()
         assert isinstance(problems, list)
 
-    def test_correct_does_not_crash(self):
+    def test_correct_does_not_crash(self) -> None:
+        """A correction runs; its effect is not checked."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (100, N_CORTICAL))
         sub.run(duration=0.1, dt=0.001, stimuli_sequence=stim)
         director = DirectorController(sub)
         director.correct()
 
-    def test_report_is_readable(self):
+    def test_report_is_readable(self) -> None:
+        """The report names rate, CV and the diagnosis."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (100, N_CORTICAL))
         sub.run(duration=0.1, dt=0.001, stimuli_sequence=stim)

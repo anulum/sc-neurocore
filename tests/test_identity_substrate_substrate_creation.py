@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+import numpy as np
+from tests.identity_substrate_support import (
+    _make_substrate,
+    N_CORTICAL,
+    N_INHIBITORY,
+    N_MEMORY,
+)
 
 
 class TestSubstrateCreation:
-    def test_populations_created(self):
+    """Building the identity substrate."""
+
+    def test_populations_created(self) -> None:
+        """The three populations have their sizes."""
         sub = _make_substrate()
         assert sub.cortical.n == N_CORTICAL
         assert sub.inhibitory.n == N_INHIBITORY
         assert sub.memory.n == N_MEMORY
 
-    def test_projections_exist(self):
+    def test_projections_exist(self) -> None:
+        """The projections have weights."""
         sub = _make_substrate()
         assert sub.proj_ee.data.size > 0
         assert sub.proj_ei.data.size > 0
@@ -28,26 +38,30 @@ class TestSubstrateCreation:
         assert sub.proj_em.data.size > 0
         assert sub.proj_me.data.size > 0
 
-    def test_single_step(self):
+    def test_single_step(self) -> None:
+        """A step gives int8 spikes per cortical neuron."""
         sub = _make_substrate()
         spikes = sub.step()
         assert spikes.shape == (N_CORTICAL,)
         assert spikes.dtype == np.int8
         assert sub._total_steps == 1
 
-    def test_step_zero_pads_short_stimuli(self):
+    def test_step_zero_pads_short_stimuli(self) -> None:
+        """A short stimulus is zero-padded."""
         # Stimuli narrower than the cortical population are zero-padded to the
         # full width rather than truncating the injection.
         sub = _make_substrate()
         spikes = sub.step(stimuli=np.ones(N_CORTICAL // 4))
         assert spikes.shape == (N_CORTICAL,)
 
-    def test_run_returns_correct_shape(self):
+    def test_run_returns_correct_shape(self) -> None:
+        """A run returns one row per step."""
         sub = _make_substrate()
         result = sub.run(duration=0.01, dt=0.001)
         assert result.shape == (10, N_CORTICAL)
 
-    def test_run_with_stimuli_sequence(self):
+    def test_run_with_stimuli_sequence(self) -> None:
+        """A stimulus sequence drives a run."""
         sub = _make_substrate()
         n_steps = 10
         stim = np.random.default_rng(0).uniform(5, 15, (n_steps, N_CORTICAL))

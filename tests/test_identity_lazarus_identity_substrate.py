@@ -10,36 +10,46 @@
 
 from __future__ import annotations
 
-from tests.identity_lazarus_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.identity.substrate import (
+    IdentitySubstrate,
+)
 
 
 class TestIdentitySubstrate:
-    def test_creation(self):
+    """Smoke tests of the identity substrate."""
+
+    def test_creation(self) -> None:
+        """A substrate keeps its population sizes."""
         sub = IdentitySubstrate(n_cortical=50, n_inhibitory=20, n_memory=10, seed=42)
         assert sub.n_cortical == 50
         assert sub.n_inhibitory == 20
         assert sub.n_memory == 10
 
-    def test_step_returns_array(self):
+    def test_step_returns_array(self) -> None:
+        """A step returns spikes per cortical neuron."""
         sub = IdentitySubstrate(n_cortical=20, n_inhibitory=10, n_memory=5, seed=42)
         spikes = sub.step(dt=0.001)
         assert isinstance(spikes, np.ndarray)
         assert len(spikes) == 20
 
-    def test_run_shape(self):
+    def test_run_shape(self) -> None:
+        """A run returns one row per step."""
         sub = IdentitySubstrate(n_cortical=20, n_inhibitory=10, n_memory=5, seed=42)
         result = sub.run(duration=0.05, dt=0.001)
         assert result.shape[0] == 50  # 50 ms / 1 ms
         assert result.shape[1] == 20
 
-    def test_extract_state_keys(self):
+    def test_extract_state_keys(self) -> None:
+        """The extracted state names its rates or steps."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.02, dt=0.001)
         state = sub.extract_state()
         assert isinstance(state, dict)
         assert "firing_rates" in state or "total_steps" in state
 
-    def test_health_check(self):
+    def test_health_check(self) -> None:
+        """The health check names health or rate."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         health = sub.health_check()

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5700
+    "test_files": 5697
   },
   "documentation": {
     "public_pages": [
@@ -3544,12 +3544,9 @@
       "tests/hh_validation_support.py",
       "tests/hindmarsh_rose_backends_support.py",
       "tests/hls_export_support.py",
-      "tests/holonomic_adapter_stack_contract_support.py",
-      "tests/homeostasis_support.py",
       "tests/hypothesis_fuzz_support.py",
       "tests/ibm_verification_circuits_support.py",
       "tests/identity_director_support.py",
-      "tests/identity_lazarus_support.py",
       "tests/identity_substrate_support.py",
       "tests/intelligence_digital_twin_support.py",
       "tests/intelligence_drift_compensation_support.py",

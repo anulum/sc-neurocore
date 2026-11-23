@@ -6,13 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (compiler_pipeline) from former test_holonomic_adapter_stack_contract.py
 
+"""Tests of the compiler pipeline behind the holonomic adapter stack."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+import pytest
+import subprocess
+from sc_neurocore.compiler.pipeline import (
+    CompilerPipeline,
+)
 
 
-def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
-    def fake_tool(cmd, check, capture_output=False, text=False):
+def test_compiler_pipeline_invokes_real_lowering(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The pipeline runs CIRCT, Yosys and nextpnr in turn."""
+
+    def fake_tool(
+        cmd: list[str], check: bool, capture_output: bool = False, text: bool = False
+    ) -> subprocess.CompletedProcess[str]:
         assert check is True
         if cmd[0] == "circt-opt":
             # compile_mlir_to_verilog runs circt-opt --export-verilog and captures

@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.homeostasis_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.homeostasis import (
+    NetworkRegulator,
+)
 
 
 def test_regulate_rejects_non_finite_thresholds() -> None:
+    """Non-finite thresholds are rejected."""
     reg = NetworkRegulator(target_rate=0.1)
     rates = np.full(4, 0.1)
     thresholds = np.array([1.0, 1.0, np.nan, 1.0])

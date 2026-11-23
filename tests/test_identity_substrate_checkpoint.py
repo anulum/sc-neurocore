@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+from pathlib import Path
+import numpy as np
+from sc_neurocore.identity import (
+    Checkpoint,
+)
+from tests.identity_substrate_support import (
+    _make_substrate,
+    N_CORTICAL,
+)
 
 
 class TestCheckpoint:
-    def test_round_trip(self, tmp_path):
+    """Checkpoints of the identity substrate."""
+
+    def test_round_trip(self, tmp_path: Path) -> None:
+        """A substrate round-trips through a checkpoint."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (50, N_CORTICAL))
         sub.run(duration=0.05, dt=0.001, stimuli_sequence=stim)
@@ -30,7 +41,8 @@ class TestCheckpoint:
         np.testing.assert_array_almost_equal(restored.ee_weights, sub.ee_weights)
         assert len(restored.spike_history) == len(sub.spike_history)
 
-    def test_merge_two_checkpoints(self, tmp_path):
+    def test_merge_two_checkpoints(self, tmp_path: Path) -> None:
+        """Merging two checkpoints adds their step counts."""
         sub1 = _make_substrate(seed=42)
         sub1.run(duration=0.02, dt=0.001)
         p1 = str(tmp_path / "ckpt1.npz")

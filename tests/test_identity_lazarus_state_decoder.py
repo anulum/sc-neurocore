@@ -10,32 +10,44 @@
 
 from __future__ import annotations
 
-from tests.identity_lazarus_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.identity.decoder import (
+    StateDecoder,
+)
+from sc_neurocore.identity.substrate import (
+    IdentitySubstrate,
+)
 
 
 class TestStateDecoder:
-    def test_dominant_patterns_shape(self):
+    """Smoke tests of the state decoder."""
+
+    def test_dominant_patterns_shape(self) -> None:
+        """Dominant patterns are an array; their shape is not checked."""
         sub = IdentitySubstrate(n_cortical=50, n_inhibitory=20, n_memory=10, seed=42)
         sub.run(duration=0.05, dt=0.001)
         dec = StateDecoder(sub)
         patterns = dec.extract_dominant_patterns(n_components=3)
         assert isinstance(patterns, np.ndarray)
 
-    def test_attractor_states(self):
+    def test_attractor_states(self) -> None:
+        """Attractor states are a list; their contents are not checked."""
         sub = IdentitySubstrate(n_cortical=50, n_inhibitory=20, n_memory=10, seed=42)
         sub.run(duration=0.1, dt=0.001)
         dec = StateDecoder(sub)
         attractors = dec.extract_attractor_states(threshold=0.3)
         assert isinstance(attractors, list)
 
-    def test_connectivity_signature(self):
+    def test_connectivity_signature(self) -> None:
+        """The connectivity signature is an array."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         dec = StateDecoder(sub)
         conn = dec.extract_connectivity_signature()
         assert isinstance(conn, np.ndarray)
 
-    def test_priming_context_is_string(self):
+    def test_priming_context_is_string(self) -> None:
+        """The priming context is a string."""
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
         sub.run(duration=0.05, dt=0.001)
         dec = StateDecoder(sub)

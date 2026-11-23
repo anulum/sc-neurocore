@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_identity_director.py
 
+"""Shared names and a run substrate for the identity director tests."""
+
 from __future__ import annotations
 
-"""Exercise DirectorController.diagnose(), correct(), report(), and helpers."""
 from unittest.mock import patch
 import numpy as np
 from sc_neurocore.identity.substrate import IdentitySubstrate
@@ -21,7 +22,7 @@ from sc_neurocore.identity.director import (
 )
 
 
-def _make_substrate():
+def _make_substrate() -> IdentitySubstrate:
     sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
     sub.run(duration=0.1, dt=0.001)
     return sub

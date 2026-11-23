@@ -6,12 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused holonomic adapter contracts
 
+"""Contract tests of the L15 holonomic adapter."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+from sc_neurocore.accel.jax_backend import (
+    jnp,
+)
+from sc_neurocore.adapters.holonomic.l15_cons import (
+    L15_ConsiliumAdapter,
+    L15_HolonomicParameters,
+)
 
 
-def test_l15_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l15_adapter_init_and_step() -> None:
+    """The L15 adapter steps and reports its GCI metrics."""
     params = L15_HolonomicParameters(n_metric_dimensions=8, bitstream_length=64)
     adapter = L15_ConsiliumAdapter(params)
     out = adapter.step_jax(0.1)
@@ -24,7 +33,8 @@ def test_l15_adapter_init_and_step():  # type: ignore[no-untyped-def] # Preserve
     assert "global_coherence_r15" in decoded
 
 
-def test_l15_with_inputs():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l15_with_inputs() -> None:
+    """The L15 adapter takes an input stream."""
     adapter = L15_ConsiliumAdapter(
         L15_HolonomicParameters(n_metric_dimensions=8, bitstream_length=32)
     )
@@ -33,7 +43,8 @@ def test_l15_with_inputs():  # type: ignore[no-untyped-def] # Preserved legacy t
     assert out.shape == (8, 32)
 
 
-def test_l15_partial_stack_padding():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_l15_partial_stack_padding() -> None:
+    """A partial stack is padded to full height."""
     adapter = L15_ConsiliumAdapter(
         L15_HolonomicParameters(n_metric_dimensions=16, bitstream_length=32)
     )

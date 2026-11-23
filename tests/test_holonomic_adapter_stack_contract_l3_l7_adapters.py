@@ -6,12 +6,37 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (l3_l7_adapters) from former test_holonomic_adapter_stack_contract.py
 
+"""Contract tests of the L3 to L7 holonomic adapters."""
+
 from __future__ import annotations
 
-from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel.jax_backend import (
+    jnp,
+)
+from sc_neurocore.adapters.holonomic.l3_gen import (
+    L3_GenomicAdapter,
+    L3_HolonomicParameters,
+)
+from sc_neurocore.adapters.holonomic.l4_cell import (
+    L4_CellularAdapter,
+)
+from sc_neurocore.adapters.holonomic.l5_org import (
+    L5_OrganismalAdapter,
+)
+from sc_neurocore.adapters.holonomic.l6_plan import (
+    L6_HolonomicParameters,
+    L6_PlanetaryAdapter,
+)
+from sc_neurocore.adapters.holonomic.l7_sym import (
+    L7_HolonomicParameters,
+    L7_SymbolicAdapter,
+)
 
 
-def test_l3_adapter_contract():
+def test_l3_adapter_contract() -> None:
+    """The L3 adapter steps, reports coherence and decodes."""
     params = L3_HolonomicParameters(n_genes=10)
     adapter = L3_GenomicAdapter(params)
     out = adapter.step_jax(0.1, inputs=jnp.ones((10, 1024)))
@@ -22,7 +47,8 @@ def test_l3_adapter_contract():
     assert "avg_accessibility" in decoded
 
 
-def test_l4_adapter_contract():
+def test_l4_adapter_contract() -> None:
+    """The L4 adapter steps and reports its order parameter."""
     adapter = L4_CellularAdapter()
     out = adapter.step_jax(0.1)
     assert out.shape[0] == 400
@@ -30,7 +56,8 @@ def test_l4_adapter_contract():
     assert "order_parameter" in metrics
 
 
-def test_l5_adapter_contract():
+def test_l5_adapter_contract() -> None:
+    """The L5 adapter steps and reports HRV coherence."""
     adapter = L5_OrganismalAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((100, 1024)))
     assert out.shape[0] == 100
@@ -38,7 +65,8 @@ def test_l5_adapter_contract():
     assert "hrv_coherence_r5" in metrics
 
 
-def test_l6_adapter_contract():
+def test_l6_adapter_contract() -> None:
+    """The L6 adapter steps and reports its potential."""
     adapter = L6_PlanetaryAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((100, 1024)))
     assert out.shape[0] == 100
@@ -46,7 +74,8 @@ def test_l6_adapter_contract():
     assert "gaia_potential" in metrics
 
 
-def test_l6_percolation_threshold_controls_regional_coherence():
+def test_l6_percolation_threshold_controls_regional_coherence() -> None:
+    """A lower percolation threshold raises regional coherence."""
     low_threshold = L6_PlanetaryAdapter(
         L6_HolonomicParameters(n_regions=8, bitstream_length=16, p_percolation=0.2)
     )
@@ -63,7 +92,8 @@ def test_l6_percolation_threshold_controls_regional_coherence():
     )
 
 
-def test_l6_quality_factor_amplifies_coherent_drive():
+def test_l6_quality_factor_amplifies_coherent_drive() -> None:
+    """A higher quality factor amplifies the planetary field."""
     low_q = L6_PlanetaryAdapter(
         L6_HolonomicParameters(n_regions=8, bitstream_length=16, q_factor=1.0)
     )
@@ -80,7 +110,8 @@ def test_l6_quality_factor_amplifies_coherent_drive():
     )
 
 
-def test_l6_rejects_invalid_holonomic_parameters():
+def test_l6_rejects_invalid_holonomic_parameters() -> None:
+    """Each invalid L6 parameter is rejected."""
     with pytest.raises(ValueError, match="n_regions"):
         L6_PlanetaryAdapter(L6_HolonomicParameters(n_regions=0))
     with pytest.raises(ValueError, match="bitstream_length"):
@@ -91,7 +122,8 @@ def test_l6_rejects_invalid_holonomic_parameters():
         L6_PlanetaryAdapter(L6_HolonomicParameters(p_percolation=1.0))
 
 
-def test_l7_adapter_contract():
+def test_l7_adapter_contract() -> None:
+    """The L7 adapter steps over 13 nodes and reports routing coherence."""
     adapter = L7_SymbolicAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((13, 1024)))
     assert out.shape == (13, 1024)
@@ -99,7 +131,8 @@ def test_l7_adapter_contract():
     assert "routing_coherence" in metrics
 
 
-def test_l7_metatron_matrix_is_full_13_node_geometry():
+def test_l7_metatron_matrix_is_full_13_node_geometry() -> None:
+    """The Metatron matrix is a symmetric 13-node geometry."""
     adapter = L7_SymbolicAdapter()
     matrix = np.asarray(adapter.metatron_matrix)
 
@@ -111,7 +144,8 @@ def test_l7_metatron_matrix_is_full_13_node_geometry():
     assert matrix[0, 1] > matrix[0, 7]
 
 
-def test_l7_rejects_invalid_routing_parameters():
+def test_l7_rejects_invalid_routing_parameters() -> None:
+    """Each invalid L7 parameter is rejected."""
     with pytest.raises(ValueError, match="n_nodes"):
         L7_SymbolicAdapter(L7_HolonomicParameters(n_nodes=0))
     with pytest.raises(ValueError, match="bitstream_length"):

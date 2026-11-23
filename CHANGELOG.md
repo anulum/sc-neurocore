@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 37 top-level test modules of the holonomic adapter-stack,
+  homeostasis, hypothesis fuzz and identity suites import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy. Sixteen `type: ignore` comments the annotations
+  made unnecessary are removed, two helper supports gain types and
+  module docstrings, and three support modules left without an
+  importer are deleted.
+
 - The 49 top-level test modules of the fusion, gamma-oscillation, gap
   junction, GPFA, GPU backend, graph topology, hardware mapping,
   Hodgkin-Huxley validation and HLS export suites import their names

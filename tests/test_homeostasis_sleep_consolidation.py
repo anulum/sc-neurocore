@@ -10,10 +10,20 @@
 
 from __future__ import annotations
 
-from tests.homeostasis_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import pytest
+from sc_neurocore.homeostasis import (
+    SleepConsolidation,
+)
+from typing import (
+    cast,
+)
 
 
 class TestSleepConsolidation:
+    """Sleep-time consolidation of weights."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -30,6 +40,7 @@ class TestSleepConsolidation:
         ],
     )
     def test_invalid_sleep_parameters_fail_closed(self, field: str, value: float) -> None:
+        """Each invalid sleep parameter is rejected."""
         kwargs: dict[str, float] = {
             "decay_exponent": 0.5,
             "noise_amplitude": 0.01,
@@ -40,6 +51,7 @@ class TestSleepConsolidation:
             SleepConsolidation(**kwargs)
 
     def test_apply(self) -> None:
+        """Consolidation changes the weights."""
         sleep = SleepConsolidation(decay_exponent=0.5, noise_amplitude=0.001)
         weights = [np.random.randn(10, 10)]
         consolidated = sleep.apply(weights, seed=42)
@@ -47,6 +59,7 @@ class TestSleepConsolidation:
         assert not np.array_equal(consolidated[0], weights[0])
 
     def test_large_weights_decay_more(self) -> None:
+        """Large weights decay more than small ones."""
         sleep = SleepConsolidation(decay_exponent=1.0, noise_amplitude=0.0)
         w = np.array([[0.1, 1.0]])
         cons = sleep.apply([w], seed=42)[0]
@@ -56,6 +69,7 @@ class TestSleepConsolidation:
         assert ratio_after < ratio_before
 
     def test_should_sleep(self) -> None:
+        """Sleep comes every ten epochs."""
         sleep = SleepConsolidation(duration_fraction=0.1)
         assert not sleep.should_sleep(0, 100)
         assert sleep.should_sleep(10, 100)
@@ -72,11 +86,13 @@ class TestSleepConsolidation:
         ],
     )
     def test_invalid_sleep_weights_fail_closed(self, weights: object) -> None:
+        """Invalid weights are rejected."""
         sleep = SleepConsolidation()
         with pytest.raises(ValueError, match="weights"):
             sleep.apply(cast(list[npt.NDArray[np.float64]], weights))
 
     def test_empty_sleep_weight_matrix_fails_closed_before_reduction(self) -> None:
+        """An empty weight matrix is rejected."""
         sleep = SleepConsolidation()
 
         with pytest.raises(ValueError, match="weights must contain non-empty arrays"):
@@ -84,6 +100,7 @@ class TestSleepConsolidation:
 
     @pytest.mark.parametrize("seed", [True, -1, 2**32])
     def test_invalid_sleep_seed_fails_closed_before_rng(self, seed: int) -> None:
+        """A seed that is not an integer is rejected."""
         sleep = SleepConsolidation()
 
         with pytest.raises(ValueError, match="seed must be an integer in"):
@@ -94,6 +111,7 @@ class TestSleepConsolidation:
         [(-1, 10), (1, 0), (1, -10), (float("nan"), 10)],
     )
     def test_invalid_sleep_schedule_fails_closed(self, epoch: int, total_epochs: int) -> None:
+        """An invalid sleep schedule is rejected."""
         sleep = SleepConsolidation()
         with pytest.raises(ValueError, match="epoch"):
             sleep.should_sleep(epoch, total_epochs)

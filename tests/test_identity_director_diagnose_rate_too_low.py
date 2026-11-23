@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.identity_director_support import *  # noqa: F403
+from sc_neurocore.identity.director import (
+    DirectorController,
+)
+from tests.identity_director_support import (
+    _make_substrate,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 class TestDiagnoseRateTooLow:
-    def test_rate_too_low(self):
+    """Diagnosing too low a rate."""
+
+    def test_rate_too_low(self) -> None:
+        """Too low a firing rate is diagnosed."""
         sub = _make_substrate()
         director = DirectorController(sub)
         with patch.object(

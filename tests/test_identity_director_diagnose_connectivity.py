@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.identity_director_support import *  # noqa: F403
+from sc_neurocore.identity.director import (
+    DirectorController,
+)
+from tests.identity_director_support import (
+    _make_substrate,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 class TestDiagnoseConnectivity:
-    def test_connectivity_too_dense(self):
+    """Diagnosing connectivity problems."""
+
+    def test_connectivity_too_dense(self) -> None:
+        """Dense connectivity is diagnosed."""
         sub = _make_substrate()
         # Force dense connectivity
         sub.proj_ee.data[:] = 1.0
@@ -33,7 +44,8 @@ class TestDiagnoseConnectivity:
             problems = director.diagnose()
             assert "connectivity_too_dense" in problems
 
-    def test_connectivity_too_sparse(self):
+    def test_connectivity_too_sparse(self) -> None:
+        """Sparse connectivity is diagnosed."""
         sub = _make_substrate()
         # Force sparse connectivity
         sub.proj_ee.data[:] = 0.0

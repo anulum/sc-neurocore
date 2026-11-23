@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.identity_director_support import *  # noqa: F403
+from sc_neurocore.identity.director import (
+    DirectorController,
+)
+from tests.identity_director_support import (
+    _make_substrate,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 class TestDiagnoseTooChaoticBursty:
-    def test_too_chaotic(self):
+    """Diagnosing chaotic and bursty firing."""
+
+    def test_too_chaotic(self) -> None:
+        """Chaotic firing is diagnosed."""
         sub = _make_substrate()
         director = DirectorController(sub)
         with patch.object(
@@ -31,7 +42,8 @@ class TestDiagnoseTooChaoticBursty:
             problems = director.diagnose()
             assert "too_chaotic" in problems
 
-    def test_bursty(self):
+    def test_bursty(self) -> None:
+        """Bursty firing is diagnosed."""
         sub = _make_substrate()
         director = DirectorController(sub)
         with patch.object(

@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+import numpy as np
+from tests.identity_substrate_support import (
+    _make_substrate,
+    N_CORTICAL,
+)
 
 
 class TestStateExtraction:
-    def test_extract_state_empty(self):
+    """Extracting the substrate's state."""
+
+    def test_extract_state_empty(self) -> None:
+        """A fresh state has rates, patterns and zero steps."""
         sub = _make_substrate()
         state = sub.extract_state()
         assert "firing_rates" in state
         assert "dominant_patterns" in state
         assert state["total_steps"] == 0
 
-    def test_extract_state_after_run(self):
+    def test_extract_state_after_run(self) -> None:
+        """A run is recorded in the state."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (100, N_CORTICAL))
         sub.run(duration=0.1, dt=0.001, stimuli_sequence=stim)

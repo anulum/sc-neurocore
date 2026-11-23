@@ -10,18 +10,32 @@
 
 from __future__ import annotations
 
-from tests.hypothesis_fuzz_support import *  # noqa: F403
+from hypothesis import (
+    given,
+    settings,
+    strategies as st,
+)
+from sc_neurocore.hdl_gen._ident import (
+    sanitize_ident,
+)
+from tests.hypothesis_fuzz_support import (
+    _IDENT_STRINGS,
+)
 
 
 class TestSanitizeIdentFuzz:
-    """Property: sanitize_ident always produces a valid Verilog identifier
-    or raises ValueError for empty/wholly-invalid input."""
+    """Property: sanitize_ident always produces a valid Verilog identifier.
+
+    It raises ValueError for empty or wholly invalid input.
+    """
 
     @given(name=_IDENT_STRINGS)
     @settings(max_examples=500)
     def test_output_is_always_valid_verilog(self, name: str) -> None:
-        """No matter the input, the output must be a valid Verilog identifier
-        (alphanumeric + underscore, not starting with a digit)."""
+        """Whatever the input, the output is a valid Verilog identifier.
+
+        It is alphanumeric plus underscore and does not start with a digit.
+        """
         try:
             result = sanitize_ident(name)
         except ValueError:

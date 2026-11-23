@@ -10,7 +10,22 @@
 
 from __future__ import annotations
 
-from tests.hypothesis_fuzz_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from hypothesis import (
+    given,
+    HealthCheck,
+    settings,
+    strategies as st,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from tests.hypothesis_fuzz_support import (
+    _EXPR,
+    _HOSTILE_STRINGS,
+)
 
 
 class TestEquationBuilderFuzz:
@@ -19,8 +34,10 @@ class TestEquationBuilderFuzz:
     @given(expr=_EXPR)
     @settings(max_examples=200, suppress_health_check=[HealthCheck.too_slow])
     def test_safe_expressions_fail_closed_or_produce_finite_state(self, expr: str) -> None:
-        """Random but syntactically-plausible expressions should either
-        succeed or raise ValueError — never an uncontrolled exception."""
+        """Random but syntactically plausible expressions either succeed or raise ValueError.
+
+        They never raise an uncontrolled exception.
+        """
         try:
             neuron = EquationNeuron(
                 equations={"v": expr},

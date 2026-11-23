@@ -10,17 +10,28 @@
 
 from __future__ import annotations
 
-from tests.identity_substrate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.identity import (
+    StateDecoder,
+)
+from tests.identity_substrate_support import (
+    _make_substrate,
+    N_CORTICAL,
+)
 
 
 class TestDecoder:
-    def test_priming_context_dormant(self):
+    """Decoding the substrate's state."""
+
+    def test_priming_context_dormant(self) -> None:
+        """A fresh substrate reads as dormant."""
         sub = _make_substrate()
         dec = StateDecoder(sub)
         ctx = dec.generate_priming_context()
         assert "dormant" in ctx.lower() or "0 steps" in ctx
 
-    def test_priming_context_after_activity(self):
+    def test_priming_context_after_activity(self) -> None:
+        """An active substrate reads as active."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (200, N_CORTICAL))
         sub.run(duration=0.2, dt=0.001, stimuli_sequence=stim)
@@ -29,7 +40,8 @@ class TestDecoder:
         assert "active" in ctx.lower() or "steps" in ctx.lower()
         assert len(ctx) > 20
 
-    def test_connectivity_signature_shape(self):
+    def test_connectivity_signature_shape(self) -> None:
+        """The connectivity signature is a square matrix."""
         sub = _make_substrate()
         stim = np.random.default_rng(0).uniform(5, 15, (200, N_CORTICAL))
         sub.run(duration=0.2, dt=0.001, stimuli_sequence=stim)
