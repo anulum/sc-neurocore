@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+    MonteCarloSimulator,
+)
 
 
 class TestMonteCarloSimulator:
+    """Monte Carlo simulation of crossbar MACs."""
+
     def test_simulate_mac(self) -> None:
+        """A simulation runs its trials and reports the mean error."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=50, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -24,6 +32,7 @@ class TestMonteCarloSimulator:
         assert report.mean_output_error >= 0
 
     def test_yield_bounded(self) -> None:
+        """The yield lies between zero and one."""
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         sim = MonteCarloSimulator(m, num_trials=50, tolerance=0.5, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -32,6 +41,7 @@ class TestMonteCarloSimulator:
         assert 0.0 <= report.yield_fraction <= 1.0
 
     def test_low_variability_high_yield(self) -> None:
+        """Low variability gives a yield above one half."""
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         sim = MonteCarloSimulator(m, num_trials=100, tolerance=0.20, seed=42)
         w = np.ones((2, 2)) * 0.5
@@ -40,6 +50,7 @@ class TestMonteCarloSimulator:
         assert report.yield_fraction > 0.5
 
     def test_error_histogram_shape(self) -> None:
+        """The error histogram has its bins."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=30, seed=42)
         w = np.random.default_rng(0).random((3, 3))
@@ -48,6 +59,7 @@ class TestMonteCarloSimulator:
         assert len(report.error_histogram) == 50
 
     def test_output_distribution_shape(self) -> None:
+        """The output distribution has one entry per output."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=20, seed=42)
         w = np.random.default_rng(0).random((3, 4))

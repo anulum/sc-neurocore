@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.memristor.memristor_mapper import (
+    StuckFaultMap,
+)
 
 
 class TestStuckFaultMap:
+    """Maps of stuck-on and stuck-off devices."""
+
     def test_generate_faults(self) -> None:
+        """A fault rate generates faults."""
         fm = StuckFaultMap.generate(100, 100, fault_rate=0.01, seed=42)
         assert fm.num_faults > 0
         assert fm.fault_rate > 0
 
     def test_is_stuck(self) -> None:
+        """A device reports whether it is stuck on, stuck off or healthy."""
         fm = StuckFaultMap(10, 10, stuck_on=[(0, 0)], stuck_off=[(1, 1)])
         assert fm.is_stuck(0, 0) == "on"
         assert fm.is_stuck(1, 1) == "off"
         assert fm.is_stuck(5, 5) is None
 
     def test_zero_rate_no_faults(self) -> None:
+        """A zero rate generates no faults."""
         fm = StuckFaultMap.generate(10, 10, fault_rate=0.0, seed=42)
         assert fm.num_faults == 0
 
     def test_fault_rate_property(self) -> None:
+        """The map reports its fault rate."""
         fm = StuckFaultMap(10, 10, stuck_on=[(0, 0)], stuck_off=[(1, 1)])
         assert fm.fault_rate == pytest.approx(0.02)

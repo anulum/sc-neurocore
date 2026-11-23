@@ -10,22 +10,33 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.memristor.memristor_mapper import (
+    AgingSimulator,
+    ConductanceModel,
+    MemristorTechnology,
+    VariabilityInjector,
+)
 
 
 class TestAgingSimulator:
+    """Conductance drift and aging of memristor arrays."""
+
     def test_drift_reduces_conductance(self) -> None:
+        """Drift lowers a device's conductance over time."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_drifted = m.drift(g0, elapsed_s=3.15e7)
         assert g_drifted < g0
 
     def test_no_drift_at_t0(self) -> None:
+        """Within the reference time there is no drift."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         assert m.drift(g0, elapsed_s=0.5) == g0
 
     def test_aging_simulator(self) -> None:
+        """Aging an array drifts its conductances downwards."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.ones((4, 4)) * 0.5
@@ -36,6 +47,7 @@ class TestAgingSimulator:
         assert np.all(drifted <= g)
 
     def test_short_time_no_shift(self) -> None:
+        """A short elapsed time causes no drift."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g = np.full((2, 2), 50e-6)
         sim = AgingSimulator(m)

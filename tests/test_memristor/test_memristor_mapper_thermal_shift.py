@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+)
 
 
 class TestThermalShift:
+    """Temperature dependence of conductance."""
+
     def test_higher_temp_shifts(self) -> None:
+        """A higher temperature shifts the conductance."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_hot = m.thermal_shift(g0, temp_c=85.0)
         assert g_hot != g0
 
     def test_ref_temp_no_shift(self) -> None:
+        """At the reference temperature there is no shift."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_ref = m.thermal_shift(g0, temp_c=25.0)

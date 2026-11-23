@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+    VariabilityInjector,
+)
 
 
 class TestVariabilityInjector:
+    """Quantisation and variability injected into weights."""
+
     def test_quantize_weights(self) -> None:
+        """Weights quantise onto the lowest and highest levels at the extremes."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.array([[0.0, 0.5, 1.0]])
@@ -23,6 +31,7 @@ class TestVariabilityInjector:
         assert levels[0, 2] == m.num_levels - 1
 
     def test_inject_d2d_changes_values(self) -> None:
+        """Device-to-device variability changes the conductances."""
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         inj = VariabilityInjector(m, seed=42)
         levels = np.array([[8, 8, 8]])
@@ -30,6 +39,7 @@ class TestVariabilityInjector:
         assert not np.all(g == g[0, 0])
 
     def test_inject_rw_adds_noise(self) -> None:
+        """Read-write variability adds noise."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         g = np.full((4, 4), 50e-6)
@@ -37,6 +47,7 @@ class TestVariabilityInjector:
         assert not np.allclose(g, noisy)
 
     def test_inject_full_pipeline(self) -> None:
+        """The full pipeline gives levels and conductances of the matrix's shape."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -47,6 +58,7 @@ class TestVariabilityInjector:
         assert np.all(levels < m.num_levels)
 
     def test_compute_error_positive(self) -> None:
+        """The error statistics are not negative."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -56,6 +68,7 @@ class TestVariabilityInjector:
         assert err["mean_rel_err"] >= 0
 
     def test_deterministic_with_same_seed(self) -> None:
+        """The same seed gives the same conductances."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.random.default_rng(0).random((3, 3))
         inj1 = VariabilityInjector(m, seed=42)

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+    SCAbsorbEncoder,
+    VariabilityInjector,
+)
 
 
 class TestSCAbsorbEncoder:
+    """Stochastic encoding that absorbs device deviation."""
+
     def test_adjusted_thresholds_shape(self) -> None:
+        """Adjusted thresholds have the array's shape."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -23,6 +32,7 @@ class TestSCAbsorbEncoder:
         assert thresholds.shape == (4, 4)
 
     def test_ideal_gives_256(self) -> None:
+        """Ideal devices keep the nominal threshold of 256."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.ones((2, 2)) * 0.5
         g_ideal = np.array([[m.target_conductance(int(round(0.5 * (m.num_levels - 1))))] * 2] * 2)
@@ -30,6 +40,7 @@ class TestSCAbsorbEncoder:
         assert np.all(thresholds == 256)
 
     def test_deviated_compensates(self) -> None:
+        """Deviated devices raise their thresholds."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.ones((2, 2)) * 0.5
         g_deviated = (

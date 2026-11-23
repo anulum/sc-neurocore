@@ -10,35 +10,48 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+)
 
 
 class TestConductanceModel:
+    """Conductance levels and noise of memristor technologies."""
+
     def test_defaults_from_technology(self) -> None:
+        """A technology sets its on and off conductance and variability."""
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         assert m.g_on == 100e-6
         assert m.g_off == 1e-6
         assert m.sigma_g == 0.05
 
     def test_dynamic_range(self) -> None:
+        """The dynamic range is the on over the off conductance."""
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         assert m.dynamic_range == pytest.approx(100.0)
 
     def test_level_step_positive(self) -> None:
+        """Conductance levels are a positive step apart."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         assert m.level_step > 0
 
     def test_target_conductance_bounds(self) -> None:
+        """The lowest and highest levels map to the off and on conductance."""
         m = ConductanceModel(MemristorTechnology.PCM)
         assert m.target_conductance(0) == m.g_off
         assert m.target_conductance(m.num_levels - 1) == pytest.approx(m.g_on)
 
     def test_target_conductance_clamps(self) -> None:
+        """Levels outside the range clamp to the off and on conductance."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         assert m.target_conductance(-1) == m.g_off
         assert m.target_conductance(9999) == pytest.approx(m.g_on)
 
     def test_sample_d2d_different_each_call(self) -> None:
+        """Device-to-device samples differ between calls."""
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         rng = np.random.default_rng(42)
         s1 = m.sample_d2d(8, rng)
@@ -46,21 +59,25 @@ class TestConductanceModel:
         assert s1 != s2
 
     def test_sample_rw_adds_noise(self) -> None:
+        """Read-write sampling adds noise."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         rng = np.random.default_rng(42)
         vals = [m.sample_rw(50e-6, rng) for _ in range(100)]
         assert np.std(vals) > 0
 
     def test_all_technologies_load(self) -> None:
+        """Every technology loads with a valid range and levels."""
         for tech in MemristorTechnology:
             m = ConductanceModel(tech)
             assert m.g_on > m.g_off
             assert m.num_levels >= 1
 
     def test_mythic_high_levels(self) -> None:
+        """The Mythic technology has 256 levels."""
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         assert m.num_levels == 256
 
     def test_2d_material_higher_endurance_model(self) -> None:
+        """The 2D-material technology has its own variability."""
         m = ConductanceModel(MemristorTechnology.RERAM_2D)
         assert m.sigma_g == 0.08

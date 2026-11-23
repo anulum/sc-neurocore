@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+from sc_neurocore.memristor.memristor_mapper import (
+    ConductanceModel,
+    MemristorTechnology,
+    WriteVerifyProtocol,
+)
 
 
 class TestWriteVerifyProtocol:
+    """The program-and-verify write protocol."""
+
     def test_converges(self) -> None:
+        """Writing reaches its target level within some iterations."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         wv = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.05, seed=42)
         result = wv.program_cell(8)
@@ -22,6 +29,7 @@ class TestWriteVerifyProtocol:
         assert result.target_level == 8
 
     def test_low_tolerance_may_need_more_iterations(self) -> None:
+        """A tighter tolerance needs no fewer iterations unless it does not converge."""
         m = ConductanceModel(MemristorTechnology.GENERIC)
         wv1 = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.10, seed=42)
         wv2 = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.001, seed=42)

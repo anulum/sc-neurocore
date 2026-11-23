@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+from sc_neurocore.memristor.memristor_mapper import (
+    CrossbarArray,
+    CrossbarEstimator,
+    MemristorTechnology,
+)
 
 
 class TestCrossbarEstimator:
+    """Power, area and latency estimates of crossbars."""
+
     def test_estimate_standard(self) -> None:
+        """Writes draw more power than reads, and area is positive."""
         xbar = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_HFOX)
         est = CrossbarEstimator.estimate(xbar)
         assert est.read_power_uw > 0
@@ -22,6 +29,7 @@ class TestCrossbarEstimator:
         assert est.area_um2 > 0
 
     def test_2d_lower_area(self) -> None:
+        """A 2D-material crossbar takes less area."""
         xbar_hfox = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_HFOX)
         xbar_2d = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_2D)
         e1 = CrossbarEstimator.estimate(xbar_hfox)
@@ -29,6 +37,7 @@ class TestCrossbarEstimator:
         assert e2.area_um2 < e1.area_um2
 
     def test_all_technologies(self) -> None:
+        """Every technology has positive read and write latency."""
         for tech in MemristorTechnology:
             xbar = CrossbarArray(16, 16, technology=tech)
             est = CrossbarEstimator.estimate(xbar)

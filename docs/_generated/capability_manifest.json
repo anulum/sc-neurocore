@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5753
+    "test_files": 5752
   },
   "documentation": {
     "public_pages": [
@@ -5975,7 +5975,6 @@
       "tests/test_mckean_source_engine_binding.py",
       "tests/test_medvedev_map_backends.py",
       "tests/test_medvedev_map_engine_binding.py",
-      "tests/test_memristor/memristor_mapper_support.py",
       "tests/test_memristor/test_memristor_mapper_aging_simulator.py",
       "tests/test_memristor/test_memristor_mapper_compensation_lut.py",
       "tests/test_memristor/test_memristor_mapper_conductance_model.py",

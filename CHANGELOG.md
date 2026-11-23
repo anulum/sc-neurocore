@@ -1320,6 +1320,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 16 memristor-mapper test modules (`tests/test_memristor`) import
+  their names explicitly instead of through a suppressed star import,
+  gain their missing test docstrings and are enrolled in the docstring
+  policy. Their support module, left without an importer, is deleted.
+
 - The 16 FPGA-hypervisor, isolation, QoS and region test modules
   (`tests/test_hypervisor`) import their names explicitly instead of
   through a suppressed star import, gain their missing test docstrings

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2648
+expected_file_count = 2664
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10636,3 +10636,67 @@ rationale = "Exercise the FPGA hypervisor suite: region multi die selector."
 [[file]]
 path = "tests/test_hypervisor/test_region_region_health.py"
 rationale = "Exercise the FPGA hypervisor suite: region region health."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_aging_simulator.py"
+rationale = "Exercise the memristor mapper: aging simulator."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_compensation_lut.py"
+rationale = "Exercise the memristor mapper: compensation lut."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_conductance_model.py"
+rationale = "Exercise the memristor mapper: conductance model."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_crossbar_array.py"
+rationale = "Exercise the memristor mapper: crossbar array."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_crossbar_estimator.py"
+rationale = "Exercise the memristor mapper: crossbar estimator."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_free_tests.py"
+rationale = "Exercise the memristor mapper: free tests."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_ir_drop_model.py"
+rationale = "Exercise the memristor mapper: ir drop model."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_memristor_mapper.py"
+rationale = "Exercise the memristor mapper: memristor mapper."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_monte_carlo_simulator.py"
+rationale = "Exercise the memristor mapper: monte carlo simulator."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_sc_absorb_encoder.py"
+rationale = "Exercise the memristor mapper: sc absorb encoder."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_sneak_path_model.py"
+rationale = "Exercise the memristor mapper: sneak path model."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_stuck_fault_map.py"
+rationale = "Exercise the memristor mapper: stuck fault map."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_thermal_shift.py"
+rationale = "Exercise the memristor mapper: thermal shift."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_variability_injector.py"
+rationale = "Exercise the memristor mapper: variability injector."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_verilog_emitter.py"
+rationale = "Exercise the memristor mapper: verilog emitter."
+
+[[file]]
+path = "tests/test_memristor/test_memristor_mapper_write_verify_protocol.py"
+rationale = "Exercise the memristor mapper: write verify protocol."

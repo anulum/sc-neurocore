@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.memristor.memristor_mapper import (
+    CompensationStrategy,
+    MemristorMapper,
+    MemristorTechnology,
+    VerilogEmitter,
+)
 
 
 class TestVerilogEmitter:
+    """SystemVerilog emitted for memristor crossbars."""
+
     def test_emit_crossbar_module(self) -> None:
+        """A crossbar module is emitted."""
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -24,6 +33,7 @@ class TestVerilogEmitter:
         assert "endmodule" in sv
 
     def test_emit_contains_spdx(self) -> None:
+        """The module carries its SPDX header."""
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -32,6 +42,7 @@ class TestVerilogEmitter:
         assert "SPDX-License-Identifier" in sv
 
     def test_emit_weight_parameters(self) -> None:
+        """Each weight becomes a parameter."""
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -41,6 +52,7 @@ class TestVerilogEmitter:
         assert "W_3_3" in sv
 
     def test_emit_compensation_lut(self) -> None:
+        """The compensation table is emitted."""
         mapper = MemristorMapper(compensation=CompensationStrategy.LUT, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -49,6 +61,7 @@ class TestVerilogEmitter:
         assert "comp_lut" in sv
 
     def test_emit_no_comp_when_none(self) -> None:
+        """Without a table the module says so."""
         mapper = MemristorMapper(compensation=CompensationStrategy.NONE, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -57,6 +70,7 @@ class TestVerilogEmitter:
         assert "No compensation LUT" in sv
 
     def test_emit_top_module(self) -> None:
+        """A top module instantiates every tile."""
         mapper = MemristorMapper(max_crossbar_size=4, seed=42)
         w = np.random.default_rng(0).random((8, 8))
         result = mapper.map_weights(w)
@@ -67,6 +81,7 @@ class TestVerilogEmitter:
         assert "tile_1" in sv
 
     def test_custom_bit_width(self) -> None:
+        """A custom bit width sets the port width."""
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((2, 2))
         result = mapper.map_weights(w)
@@ -75,6 +90,7 @@ class TestVerilogEmitter:
         assert "[31:0]" in sv
 
     def test_emit_technology_in_header(self) -> None:
+        """The header names the technology."""
         mapper = MemristorMapper(technology=MemristorTechnology.PCM, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)

@@ -10,19 +10,28 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+from sc_neurocore.memristor.memristor_mapper import (
+    CrossbarArray,
+    CrossbarTopology,
+    MemristorTechnology,
+)
 
 
 class TestCrossbarArray:
+    """Device counts and models of crossbar arrays."""
+
     def test_num_devices_standard(self) -> None:
+        """A standard crossbar has one device per weight."""
         xbar = CrossbarArray(64, 64)
         assert xbar.num_devices == 4096
 
     def test_num_devices_differential(self) -> None:
+        """A differential crossbar of half the columns has half the devices."""
         xbar = CrossbarArray(32, 32, CrossbarTopology.DIFFERENTIAL)
         assert xbar.num_devices == 2048
 
     def test_conductance_model(self) -> None:
+        """The crossbar's model has its technology."""
         xbar = CrossbarArray(16, 16, technology=MemristorTechnology.PCM)
         m = xbar.conductance_model
         assert m.technology == MemristorTechnology.PCM

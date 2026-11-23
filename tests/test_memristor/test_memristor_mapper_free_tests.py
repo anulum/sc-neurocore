@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from memristor_mapper_support import *  # noqa: F403
+import sc_neurocore.memristor as memristor
+from sc_neurocore.memristor.memristor_mapper import (
+    SneakPathModel,
+)
 
 
 def test_memristor_package_exports_mapper_surface() -> None:
@@ -47,6 +50,7 @@ def test_memristor_package_exports_mapper_surface() -> None:
 
 
 def test_signal_to_sneak_ratio_is_infinite_without_sneak_current() -> None:
+    """Without off-state conduction the signal-to-sneak ratio is infinite."""
     # A zero off-conductance gives zero worst-case sneak current, so the
     # signal-to-sneak ratio is infinite rather than dividing by zero.
     assert SneakPathModel.signal_to_sneak_ratio(g_on=1e-3, g_off=0.0, rows=8, cols=8) == float(
