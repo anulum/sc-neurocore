@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.sensors_dvs_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.sensors import (
+    events_to_spike_trains,
+)
+from tests.sensors_dvs_support import (
+    _make_events,
+)
 
 
 class TestEventsToSpikeTrains:
+    """Turning events into spike trains."""
+
     def test_basic_shape(self) -> None:
+        """Spike trains have one channel per pixel and polarity."""
         events = _make_events(n=50, width=4, height=3)
         spikes = events_to_spike_trains(events, width=4, height=3, dt_us=10000.0)
         n_channels = 4 * 3 * 2  # ON + OFF
@@ -22,11 +31,13 @@ class TestEventsToSpikeTrains:
         assert spikes.shape[0] >= 1
 
     def test_binary_output(self) -> None:
+        """Spike trains hold only zeros and ones."""
         events = _make_events()
         spikes = events_to_spike_trains(events, width=8, height=6, dt_us=10000.0)
         assert set(np.unique(spikes)).issubset({0, 1})
 
     def test_explicit_duration(self) -> None:
+        """An explicit duration sets the step count."""
         events = _make_events()
         spikes = events_to_spike_trains(
             events,
@@ -38,6 +49,7 @@ class TestEventsToSpikeTrains:
         assert spikes.shape[0] == 5
 
     def test_on_off_channels(self) -> None:
+        """ON and OFF events go to separate channels."""
         dtype = np.dtype([("x", np.int32), ("y", np.int32), ("t", np.int64), ("p", np.int8)])
         events = np.zeros(2, dtype=dtype)
         events[0] = (0, 0, 0, 1)  # ON event at pixel (0,0)
@@ -48,6 +60,7 @@ class TestEventsToSpikeTrains:
         assert spikes[0, 3] == 1  # OFF pixel 1
 
     def test_empty_after_filtering(self) -> None:
+        """A single early event still gives at least one step."""
         dtype = np.dtype([("x", np.int32), ("y", np.int32), ("t", np.int64), ("p", np.int8)])
         events = np.zeros(1, dtype=dtype)
         events[0] = (0, 0, 500, 1)

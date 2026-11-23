@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.sc_primitives_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.accel.vector_ops import (
+    vec_and,
+)
+from tests.sc_primitives_support import (
+    _bernoulli_packed,
+    _prob,
+)
 
 
 class TestVecAnd:
-    def test_multiply(self):
+    """The packed AND gate as unipolar multiplication."""
+
+    def test_multiply(self) -> None:
+        """AND of two streams gives the product of their probabilities."""
         pa, pb = 0.6, 0.4
         a, length = _bernoulli_packed(pa, 10000, seed=100)
         b, _ = _bernoulli_packed(pb, 10000, seed=200)

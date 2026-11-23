@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+import math
+import numpy as np
+from sc_neurocore.solvers import (
+    HeunSolver,
+)
+from tests.solvers_ode_support import (
+    decay_ode,
+)
 
 
 class TestHeunSolver:
-    def test_convergence_order_2(self):
+    """The Heun predictor-corrector solver."""
+
+    def test_convergence_order_2(self) -> None:
+        """Halving the step quarters the error."""
         y0 = np.array([1.0])
         t_end = 1.0
         exact = math.exp(-t_end)

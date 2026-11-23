@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.sc_primitives_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.accel.vector_ops import (
+    vec_xnor,
+)
+from tests.sc_primitives_support import (
+    _bernoulli_packed,
+    _prob,
+)
 
 
 class TestVecXnor:
-    def test_bipolar_multiply(self):
+    """The packed XNOR gate as bipolar multiplication."""
+
+    def test_bipolar_multiply(self) -> None:
+        """XNOR gives the bipolar product."""
         # XNOR on unipolar streams gives P(A)*P(B) + (1-P(A))*(1-P(B))
         pa, pb = 0.8, 0.6
         a, length = _bernoulli_packed(pa, 10000, seed=10)
@@ -23,7 +33,8 @@ class TestVecXnor:
         expected = pa * pb + (1 - pa) * (1 - pb)
         np.testing.assert_allclose(_prob(result, length), expected, atol=0.03)
 
-    def test_self_xnor_is_all_ones(self):
+    def test_self_xnor_is_all_ones(self) -> None:
+        """XNOR of a stream with itself is all ones."""
         packed, length = _bernoulli_packed(0.5, 1000, seed=42)
         result = vec_xnor(packed, packed)
         # XNOR(x, x) = NOT(XOR(x, x)) = NOT(0) = all 1s

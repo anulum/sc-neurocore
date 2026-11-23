@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
-from tests.sc_convergence_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore import (
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.bitstreams import (
+    sc_divide,
+)
+from sc_neurocore.utils.rng import (
+    RNG,
+)
 
 
 class TestCORDIVMonotonicity:
     """CORDIV output should increase with numerator probability."""
 
-    def test_monotonic_in_numerator(self):
+    def test_monotonic_in_numerator(self) -> None:
+        """CORDIV division grows with the numerator."""
         L = 8192
         pd = 0.8
         y = generate_bernoulli_bitstream(pd, L, rng=RNG(99))

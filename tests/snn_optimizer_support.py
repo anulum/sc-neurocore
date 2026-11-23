@@ -6,21 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_snn_optimizer.py
 
+"""Shared three-layer graph builder for the SNN optimiser suites."""
+
 from __future__ import annotations
 
 import numpy as np
 from sc_neurocore.snn_optimizer import (
     SNNGraph,
     LayerNode,
-    dead_neuron_elimination,
-    layer_fusion,
-    redundancy_elimination,
-    optimize,
-    OptimizationReport,
 )
 
 
-def _make_graph():
+def _make_graph() -> SNNGraph:
+    """Build a random three-layer graph with low firing rates."""
     return SNNGraph(
         layers=[
             LayerNode("h1", 10, 8, np.random.randn(8, 10), firing_rates=np.full(8, 0.15)),
@@ -31,13 +29,5 @@ def _make_graph():
 
 
 __all__ = [
-    "np",
-    "SNNGraph",
-    "LayerNode",
-    "dead_neuron_elimination",
-    "layer_fusion",
-    "redundancy_elimination",
-    "optimize",
-    "OptimizationReport",
     "_make_graph",
 ]

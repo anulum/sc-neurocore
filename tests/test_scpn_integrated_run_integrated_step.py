@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from tests.scpn_integrated_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.scpn import (
+    create_full_stack,
+    run_integrated_step,
+)
 
 
 class TestRunIntegratedStep:
-    def test_returns_dict(self):
+    """One integrated step across all layers."""
+
+    def test_returns_dict(self) -> None:
+        """The call returns a dictionary."""
         stack = create_full_stack()
         result = run_integrated_step(stack, dt=0.001)
         assert isinstance(result, dict)
 
-    def test_all_layers_in_result(self):
+    def test_all_layers_in_result(self) -> None:
+        """The result has an entry for every layer."""
         stack = create_full_stack()
         result = run_integrated_step(stack, dt=0.001)
         for key in stack:
             assert key in result, f"{key} missing from integrated step result"
 
-    def test_finite_outputs(self):
+    def test_finite_outputs(self) -> None:
         """All layer outputs should be finite after one step."""
         stack = create_full_stack()
         result = run_integrated_step(stack, dt=0.001)
@@ -37,7 +45,7 @@ class TestRunIntegratedStep:
                     elif isinstance(v, np.ndarray):
                         assert np.all(np.isfinite(v)), f"{key}.{k} contains non-finite"
 
-    def test_multiple_steps_stable(self):
+    def test_multiple_steps_stable(self) -> None:
         """10 steps should not diverge."""
         stack = create_full_stack()
         for _ in range(10):

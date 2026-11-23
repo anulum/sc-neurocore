@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    prob_to_ry_angle,
+    ry_gate,
+)
 
 
 class TestRyGate:
     """Ry gate construction and probability encoding contracts."""
 
     def test_ry_zero_is_identity(self) -> None:
+        """A zero-angle Ry gate is the identity."""
         np.testing.assert_allclose(ry_gate(0.0), np.eye(2), atol=1e-12)
 
     def test_ry_pi_is_Y_rotation(self) -> None:

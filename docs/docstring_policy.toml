@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3493
+expected_file_count = 3552
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -5160,10 +5160,6 @@ rationale = "Shared test support with maintained docstrings and strict typing (R
 
 [[file]]
 path = "tests/lapicque_backends_support.py"
-rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
-
-[[file]]
-path = "tests/schema_validator_support.py"
 rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
 
 [[file]]
@@ -14016,3 +14012,243 @@ rationale = "Exercise SC-NeuroCore: adapter ecosystem adapter discovery."
 [[file]]
 path = "tests/test_adapter_ecosystem_registry_wiring.py"
 rationale = "Exercise SC-NeuroCore: adapter ecosystem registry wiring."
+
+[[file]]
+path = "tests/sc_primitives_support.py"
+rationale = "Provide the packed Bernoulli bitstream helpers shared by the SC primitive gate suites."
+
+[[file]]
+path = "tests/snn_optimizer_support.py"
+rationale = "Provide the three-layer graph builder shared by the SNN optimiser suites."
+
+[[file]]
+path = "tests/solvers_ode_support.py"
+rationale = "Provide the reference right-hand sides shared by the ODE solver suites."
+
+[[file]]
+path = "tests/spade_gpfa_support.py"
+rationale = "Provide the spike-train generators shared by the SPADE and GPFA suites."
+
+[[file]]
+path = "tests/test_sc_convergence_and_multiplication_convergence.py"
+rationale = "Exercise SC-NeuroCore: sc convergence and multiplication convergence."
+
+[[file]]
+path = "tests/test_sc_convergence_bitstream_encoder_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: sc convergence bitstream encoder roundtrip."
+
+[[file]]
+path = "tests/test_sc_convergence_cordiv_monotonicity.py"
+rationale = "Exercise SC-NeuroCore: sc convergence cordiv monotonicity."
+
+[[file]]
+path = "tests/test_sc_convergence_correlation_violation.py"
+rationale = "Exercise SC-NeuroCore: sc convergence correlation violation."
+
+[[file]]
+path = "tests/test_sc_convergence_popcount_exact.py"
+rationale = "Exercise SC-NeuroCore: sc convergence popcount exact."
+
+[[file]]
+path = "tests/test_sc_convergence_sobol_convergence.py"
+rationale = "Exercise SC-NeuroCore: sc convergence sobol convergence."
+
+[[file]]
+path = "tests/test_sc_forward_accuracy.py"
+rationale = "Exercise SC-NeuroCore: sc forward accuracy."
+
+[[file]]
+path = "tests/test_sc_forward_backend_selector.py"
+rationale = "Exercise SC-NeuroCore: sc forward backend selector."
+
+[[file]]
+path = "tests/test_sc_forward_bit_identical.py"
+rationale = "Exercise SC-NeuroCore: sc forward bit identical."
+
+[[file]]
+path = "tests/test_sc_forward_encoder_compatibility.py"
+rationale = "Exercise SC-NeuroCore: sc forward encoder compatibility."
+
+[[file]]
+path = "tests/test_sc_forward_validation.py"
+rationale = "Exercise SC-NeuroCore: sc forward validation."
+
+[[file]]
+path = "tests/test_sc_primitives_bipolar_encoding.py"
+rationale = "Exercise SC-NeuroCore: sc primitives bipolar encoding."
+
+[[file]]
+path = "tests/test_sc_primitives_vec_and.py"
+rationale = "Exercise SC-NeuroCore: sc primitives vec and."
+
+[[file]]
+path = "tests/test_sc_primitives_vec_mux.py"
+rationale = "Exercise SC-NeuroCore: sc primitives vec mux."
+
+[[file]]
+path = "tests/test_sc_primitives_vec_not.py"
+rationale = "Exercise SC-NeuroCore: sc primitives vec not."
+
+[[file]]
+path = "tests/test_sc_primitives_vec_xnor.py"
+rationale = "Exercise SC-NeuroCore: sc primitives vec xnor."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_amplitude_encoding.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler amplitude encoding."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_compile_sc_layer.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler compile sc layer."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_free_tests.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler free tests."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_noisy_simulation.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler noisy simulation."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_output_probability.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler output probability."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_ry_gate.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler ry gate."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_sc_multiply_circuit.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler sc multiply circuit."
+
+[[file]]
+path = "tests/test_sc_quantum_compiler_two_qubit_gate.py"
+rationale = "Exercise SC-NeuroCore: sc quantum compiler two qubit gate."
+
+[[file]]
+path = "tests/test_scpn_integrated_create_full_stack.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated create full stack."
+
+[[file]]
+path = "tests/test_scpn_integrated_get_global_metrics.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated get global metrics."
+
+[[file]]
+path = "tests/test_scpn_integrated_knm_matrix.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated knm matrix."
+
+[[file]]
+path = "tests/test_scpn_integrated_layer_registry.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated layer registry."
+
+[[file]]
+path = "tests/test_scpn_integrated_omega_n.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated omega n."
+
+[[file]]
+path = "tests/test_scpn_integrated_run_integrated_step.py"
+rationale = "Exercise SC-NeuroCore: scpn integrated run integrated step."
+
+[[file]]
+path = "tests/test_sensors_dvs_dvs_loader.py"
+rationale = "Exercise SC-NeuroCore: sensors dvs dvs loader."
+
+[[file]]
+path = "tests/test_sensors_dvs_events_to_frames.py"
+rationale = "Exercise SC-NeuroCore: sensors dvs events to frames."
+
+[[file]]
+path = "tests/test_sensors_dvs_events_to_spike_trains.py"
+rationale = "Exercise SC-NeuroCore: sensors dvs events to spike trains."
+
+[[file]]
+path = "tests/test_snn_optimizer_dead_neuron_elimination.py"
+rationale = "Exercise SC-NeuroCore: snn optimizer dead neuron elimination."
+
+[[file]]
+path = "tests/test_snn_optimizer_layer_fusion.py"
+rationale = "Exercise SC-NeuroCore: snn optimizer layer fusion."
+
+[[file]]
+path = "tests/test_snn_optimizer_optimize.py"
+rationale = "Exercise SC-NeuroCore: snn optimizer optimize."
+
+[[file]]
+path = "tests/test_snn_optimizer_redundancy_elimination.py"
+rationale = "Exercise SC-NeuroCore: snn optimizer redundancy elimination."
+
+[[file]]
+path = "tests/test_snn_optimizer_snn_graph.py"
+rationale = "Exercise SC-NeuroCore: snn optimizer snn graph."
+
+[[file]]
+path = "tests/test_solvers_ode_dormand_prince_solver.py"
+rationale = "Exercise SC-NeuroCore: solvers ode dormand prince solver."
+
+[[file]]
+path = "tests/test_solvers_ode_euler_solver.py"
+rationale = "Exercise SC-NeuroCore: solvers ode euler solver."
+
+[[file]]
+path = "tests/test_solvers_ode_exact_lif_solver.py"
+rationale = "Exercise SC-NeuroCore: solvers ode exact lif solver."
+
+[[file]]
+path = "tests/test_solvers_ode_exponential_euler.py"
+rationale = "Exercise SC-NeuroCore: solvers ode exponential euler."
+
+[[file]]
+path = "tests/test_solvers_ode_factory.py"
+rationale = "Exercise SC-NeuroCore: solvers ode factory."
+
+[[file]]
+path = "tests/test_solvers_ode_heun_solver.py"
+rationale = "Exercise SC-NeuroCore: solvers ode heun solver."
+
+[[file]]
+path = "tests/test_solvers_ode_implicit_solvers.py"
+rationale = "Exercise SC-NeuroCore: solvers ode implicit solvers."
+
+[[file]]
+path = "tests/test_solvers_ode_rk4_solver.py"
+rationale = "Exercise SC-NeuroCore: solvers ode rk4 solver."
+
+[[file]]
+path = "tests/test_solvers_ode_solver_benchmark.py"
+rationale = "Exercise SC-NeuroCore: solvers ode solver benchmark."
+
+[[file]]
+path = "tests/test_solvers_ode_symplectic_solvers.py"
+rationale = "Exercise SC-NeuroCore: solvers ode symplectic solvers."
+
+[[file]]
+path = "tests/test_sources_and_profiling_bitstream_current_source.py"
+rationale = "Exercise SC-NeuroCore: sources and profiling bitstream current source."
+
+[[file]]
+path = "tests/test_sources_and_profiling_energy_metrics.py"
+rationale = "Exercise SC-NeuroCore: sources and profiling energy metrics."
+
+[[file]]
+path = "tests/test_sources_and_profiling_quantum_entropy_source.py"
+rationale = "Exercise SC-NeuroCore: sources and profiling quantum entropy source."
+
+[[file]]
+path = "tests/test_sources_and_profiling_track_energy_decorator.py"
+rationale = "Exercise SC-NeuroCore: sources and profiling track energy decorator."
+
+[[file]]
+path = "tests/test_spade_gpfa_find_frequent_itemsets.py"
+rationale = "Exercise SC-NeuroCore: spade gpfa find frequent itemsets."
+
+[[file]]
+path = "tests/test_spade_gpfa_gp_kernel.py"
+rationale = "Exercise SC-NeuroCore: spade gpfa gp kernel."
+
+[[file]]
+path = "tests/test_spade_gpfa_gpfa.py"
+rationale = "Exercise SC-NeuroCore: spade gpfa gpfa."
+
+[[file]]
+path = "tests/test_spade_gpfa_spade_detect.py"
+rationale = "Exercise SC-NeuroCore: spade gpfa spade detect."

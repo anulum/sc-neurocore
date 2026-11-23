@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5654
+    "test_files": 5650
   },
   "documentation": {
     "public_pages": [
@@ -3742,14 +3742,11 @@
       "tests/sc_forward_support.py",
       "tests/sc_neurocore_engine_reexports_support.py",
       "tests/sc_primitives_support.py",
-      "tests/sc_quantum_compiler_support.py",
       "tests/sc_stochastic_rate_adaptation_support.py",
       "tests/schema_validator_contract_support.py",
-      "tests/schema_validator_support.py",
       "tests/scnir_compatibility_support.py",
       "tests/scnir_handoff_audit_support.py",
       "tests/scnir_schema_support.py",
-      "tests/scpn_integrated_support.py",
       "tests/scpn_l7_symbolic_support.py",
       "tests/scpn_neurocore_bridge_support.py",
       "tests/security_side_channel_benchmark_support.py",
@@ -3767,7 +3764,6 @@
       "tests/sources/test_bitstream_current_source_step_state.py",
       "tests/sources/test_bitstream_current_source_trace.py",
       "tests/sources/test_bitstream_current_source_validation.py",
-      "tests/sources_and_profiling_support.py",
       "tests/spade_gpfa_support.py",
       "tests/spike_alu_support.py",
       "tests/spike_codec_support.py",

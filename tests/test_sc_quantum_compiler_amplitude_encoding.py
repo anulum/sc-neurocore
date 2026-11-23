@@ -10,21 +10,28 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    sc_prob_to_statevector,
+    statevector_to_prob,
+)
 
 
 class TestAmplitudeEncoding:
     """Amplitude encoding contracts for SC probabilities."""
 
     def test_zero_prob(self) -> None:
+        """Probability zero encodes to the state |0>."""
         sv = sc_prob_to_statevector(0.0)
         np.testing.assert_allclose(sv, [1.0, 0.0])
 
     def test_one_prob(self) -> None:
+        """Probability one encodes to the state |1>."""
         sv = sc_prob_to_statevector(1.0)
         np.testing.assert_allclose(sv, [0.0, 1.0])
 
     def test_half_prob(self) -> None:
+        """Probability one half gives equal amplitudes."""
         sv = sc_prob_to_statevector(0.5)
         np.testing.assert_allclose(np.abs(sv) ** 2, [0.5, 0.5])
 

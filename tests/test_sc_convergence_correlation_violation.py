@@ -10,14 +10,20 @@
 
 from __future__ import annotations
 
-from tests.sc_convergence_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore import (
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.rng import (
+    RNG,
+)
 
 
 class TestCorrelationViolation:
-    """Using the SAME RNG for both bitstreams violates independence
-    and should produce biased multiplication results."""
+    """Using the SAME RNG for both bitstreams violates independence and should produce biased multiplication results."""
 
-    def test_correlated_inputs_biased(self):
+    def test_correlated_inputs_biased(self) -> None:
+        """Correlated inputs multiply with a larger error than independent ones."""
         px, py = 0.5, 0.5
         L = 10000
         # Same seed = correlated

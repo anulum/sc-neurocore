@@ -10,23 +10,38 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+from numpy.typing import NDArray
+import numpy as np
+import pytest
+from sc_neurocore.solvers import (
+    LeapfrogSolver,
+    StormerVerlet,
+)
+from tests.solvers_ode_support import (
+    harmonic_oscillator,
+)
 
 
 class TestSymplecticSolvers:
-    def _run_oscillator(self, solver, n_steps=10000, dt=0.01):
+    """Energy-conserving symplectic solvers."""
+
+    def _run_oscillator(
+        self, solver: StormerVerlet | LeapfrogSolver, n_steps: int = 10000, dt: float = 0.01
+    ) -> list[float]:
         y = np.array([1.0, 0.0])  # q=1, p=0
-        energies = []
+        energies: list[float] = []
         for _ in range(n_steps):
             y, _ = solver.step(harmonic_oscillator, y, 0.0, dt)
             energies.append(0.5 * (y[0] ** 2 + y[1] ** 2))
         return energies
 
-    def test_verlet_energy_conservation(self):
+    def test_verlet_energy_conservation(self) -> None:
+        """Stormer-Verlet conserves oscillator energy."""
         energies = self._run_oscillator(StormerVerlet(), n_steps=10000)
         assert abs(energies[0] - energies[-1]) / energies[0] < 0.01
 
-    def test_leapfrog_energy_conservation(self):
+    def test_leapfrog_energy_conservation(self) -> None:
+        """Leapfrog conserves oscillator energy."""
         energies = self._run_oscillator(LeapfrogSolver(), n_steps=10000)
         assert abs(energies[0] - energies[-1]) / energies[0] < 0.01
 
@@ -44,17 +59,31 @@ class TestSymplecticSolvers:
             (np.array([1.0, 0.0]), 0.0, float("inf"), "dt"),
         ],
     )
-    def test_symplectic_solvers_reject_invalid_state_contracts(self, solver, y, t, dt, match):
+    def test_symplectic_solvers_reject_invalid_state_contracts(
+        self,
+        solver: StormerVerlet | LeapfrogSolver,
+        y: NDArray[np.float64],
+        t: float,
+        dt: float,
+        match: str,
+    ) -> None:
+        """Each invalid state, time or step is rejected."""
         with pytest.raises(ValueError, match=match):
             solver.step(harmonic_oscillator, y, t, dt)
 
     @pytest.mark.parametrize("solver", [StormerVerlet(), LeapfrogSolver()])
-    def test_symplectic_solvers_reject_bad_rhs_shape(self, solver):
+    def test_symplectic_solvers_reject_bad_rhs_shape(
+        self, solver: StormerVerlet | LeapfrogSolver
+    ) -> None:
+        """A right-hand side of the wrong shape is rejected."""
         with pytest.raises(ValueError, match="state shape"):
             solver.step(lambda _t, _y: np.array([1.0]), np.array([1.0, 0.0]), 0.0, 0.01)
 
     @pytest.mark.parametrize("solver", [StormerVerlet(), LeapfrogSolver()])
-    def test_symplectic_solvers_reject_nonfinite_rhs(self, solver):
+    def test_symplectic_solvers_reject_nonfinite_rhs(
+        self, solver: StormerVerlet | LeapfrogSolver
+    ) -> None:
+        """A non-finite right-hand side is rejected."""
         with pytest.raises(ValueError, match="finite"):
             solver.step(
                 lambda _t, _y: np.array([0.0, np.nan]),
@@ -64,8 +93,12 @@ class TestSymplecticSolvers:
             )
 
     @pytest.mark.parametrize("solver", [StormerVerlet(), LeapfrogSolver()])
-    def test_symplectic_solvers_reject_nonfinite_candidate_state(self, solver):
-        def rhs(_t, _y):
+    def test_symplectic_solvers_reject_nonfinite_candidate_state(
+        self, solver: StormerVerlet | LeapfrogSolver
+    ) -> None:
+        """A non-finite next state is rejected."""
+
+        def rhs(_t: float, _y: NDArray[np.float64]) -> NDArray[np.float64]:
             return np.array([1e308, 1e308])
 
         with pytest.raises(ValueError, match="non-finite state"):

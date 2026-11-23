@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+from numpy.typing import NDArray
+import math
+import numpy as np
+from sc_neurocore.solvers import (
+    ExponentialEuler,
+)
 
 
 class TestExponentialEuler:
-    def test_exact_for_constant_current(self):
+    """The exponential Euler solver for linear membranes."""
+
+    def test_exact_for_constant_current(self) -> None:
         """ExponentialEuler is exact for linear LIF with constant I."""
         tau = 20.0
         v_rest = -65.0
         solver = ExponentialEuler(tau=tau, y_rest=v_rest, r_m=1.0)
 
-        def current_fn(t, y):
+        def current_fn(t: float, y: NDArray[np.float64]) -> NDArray[np.float64]:
             return np.array([10.0])
 
         y = np.array([v_rest])

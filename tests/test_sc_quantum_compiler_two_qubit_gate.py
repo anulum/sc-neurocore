@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
 
 
 class TestTwoQubitGate:
@@ -48,6 +48,7 @@ class TestTwoQubitGate:
         np.testing.assert_allclose(np.abs(state[3]) ** 2, 1.0, atol=1e-10)
 
     def test_three_qubit_gate_raises(self) -> None:
+        """A three-qubit gate is not supported."""
         from sc_neurocore.quantum.sc_quantum_compiler import _apply_gate
         import pytest
 

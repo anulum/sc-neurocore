@@ -6,26 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_sc_primitives.py
 
+"""Shared packed Bernoulli bitstream helpers for the SC primitive gate suites."""
+
 from __future__ import annotations
 
-"""Tests for SC fundamental gates: MUX (addition), XNOR (bipolar multiply), NOT (complement)."""
+from typing import Any
+
 import numpy as np
 from sc_neurocore.accel.vector_ops import (
     pack_bitstream,
-    vec_and,
-    vec_xnor,
-    vec_not,
-    vec_mux,
     vec_popcount,
 )
 
 
-def _prob(packed, length):
+def _prob(packed: np.ndarray[Any, Any], length: int) -> float:
     """Estimate probability from packed bitstream."""
     return vec_popcount(packed) / length
 
 
-def _bernoulli_packed(p, length, seed):
+def _bernoulli_packed(p: float, length: int, seed: int) -> tuple[np.ndarray[Any, Any], int]:
     """Generate a packed Bernoulli bitstream."""
     rng = np.random.RandomState(seed)
     bits = (rng.random(length) < p).astype(np.uint8)
@@ -33,13 +32,6 @@ def _bernoulli_packed(p, length, seed):
 
 
 __all__ = [
-    "np",
-    "pack_bitstream",
-    "vec_and",
-    "vec_xnor",
-    "vec_not",
-    "vec_mux",
-    "vec_popcount",
     "_prob",
     "_bernoulli_packed",
 ]

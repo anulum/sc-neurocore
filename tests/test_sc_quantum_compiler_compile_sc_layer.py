@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    compile_sc_layer,
+)
 
 
 class TestCompileSCLayer:
     """Dense-layer compiler output contracts."""
 
     def test_output_format(self) -> None:
+        """Each compiled neuron reports its index and rotation angles."""
         weights = np.array([[0.5, 0.3], [0.8, 0.2]])
         inputs = np.array([0.6, 0.4])
         results = compile_sc_layer(weights, inputs)
@@ -36,6 +40,7 @@ class TestCompileSCLayer:
         np.testing.assert_allclose(r["expected_output"], r["quantum_output"], atol=1e-10)
 
     def test_all_outputs_bounded(self) -> None:
+        """Expected and quantum outputs lie in the unit interval."""
         rng = np.random.RandomState(42)
         weights = rng.uniform(0, 1, (4, 6))
         inputs = rng.uniform(0, 1, 6)

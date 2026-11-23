@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.spade_gpfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    _gp_kernel,
+)
 
 
 class TestGPKernel:
-    def test_shape_and_symmetry(self):
+    """The squared-exponential GP kernel."""
+
+    def test_shape_and_symmetry(self) -> None:
+        """The kernel matrix is square and symmetric."""
         K = _gp_kernel(50, tau=10.0)
         assert K.shape == (50, 50)
         np.testing.assert_allclose(K, K.T)
 
-    def test_diagonal_equals_sigma_squared(self):
+    def test_diagonal_equals_sigma_squared(self) -> None:
+        """The diagonal equals the signal variance."""
         K = _gp_kernel(30, tau=5.0, sigma=2.0)
         np.testing.assert_allclose(np.diag(K), 4.0)
 
-    def test_positive_definite(self):
+    def test_positive_definite(self) -> None:
+        """The kernel matrix is positive semi-definite."""
         K = _gp_kernel(20, tau=8.0)
         eigvals = np.linalg.eigvalsh(K)
         assert np.all(eigvals >= -1e-10)

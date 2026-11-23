@@ -10,22 +10,29 @@
 
 from __future__ import annotations
 
-from tests.scpn_integrated_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.scpn.params import (
+    OMEGA_N,
+)
 
 
 class TestOmegaN:
-    def test_length(self):
+    """The natural frequency of each layer."""
+
+    def test_length(self) -> None:
+        """There is one frequency per layer."""
         assert len(OMEGA_N) == 16
 
-    def test_all_positive(self):
+    def test_all_positive(self) -> None:
+        """Every frequency is positive."""
         assert np.all(OMEGA_N > 0)
 
-    def test_l2_matches_gamma(self):
+    def test_l2_matches_gamma(self) -> None:
         """L2 neurochemical ≈ 40 Hz × 2π."""
         expected = 40.0 * 2 * np.pi
         np.testing.assert_allclose(OMEGA_N[1], expected, rtol=0.01)
 
-    def test_l5_matches_one_hz(self):
+    def test_l5_matches_one_hz(self) -> None:
         """L5 intentional frame ≈ 1 Hz × 2π."""
         expected = 1.0 * 2 * np.pi
         np.testing.assert_allclose(OMEGA_N[4], expected, rtol=0.01)

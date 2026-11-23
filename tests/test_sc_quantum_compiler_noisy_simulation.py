@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    compile_sc_multiply,
+)
 
 
 class TestNoisySimulation:
     """Noisy quantum simulation contracts."""
 
     def test_noisy_returns_density_matrix(self) -> None:
+        """Noisy simulation returns a density matrix of trace one."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         circuit = compile_sc_multiply(0.6, 0.7)
@@ -27,6 +31,7 @@ class TestNoisySimulation:
         np.testing.assert_allclose(np.trace(rho).real, 1.0, atol=1e-10)
 
     def test_noisy_probability_bounded(self) -> None:
+        """The noisy output probability lies in the unit interval."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         circuit = compile_sc_multiply(0.5, 0.5)

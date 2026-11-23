@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
-from tests.sc_convergence_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore import (
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.rng import (
+    RNG,
+)
+from tests.sc_convergence_support import (
+    N_TRIALS,
+)
 
 
 class TestANDMultiplicationConvergence:
     """AND gate computes p_x * p_y for independent bitstreams."""
 
-    def test_converges_with_length(self):
+    def test_converges_with_length(self) -> None:
         """MAE should decrease as L increases."""
         px, py = 0.7, 0.4
         errors_by_L = {}
@@ -29,7 +39,7 @@ class TestANDMultiplicationConvergence:
             errors_by_L[L] = np.mean(errs)
         assert errors_by_L[8192] < errors_by_L[128]
 
-    def test_hoeffding_bound_holds(self):
+    def test_hoeffding_bound_holds(self) -> None:
         """Error should stay within 3/sqrt(L) (3-sigma) for 99%+ of trials."""
         px, py = 0.5, 0.5
         L = 4096
@@ -44,7 +54,7 @@ class TestANDMultiplicationConvergence:
         assert violations < 25, f"{violations}/500 violated 3-sigma bound"
 
     @pytest.mark.parametrize("px,py", [(0.1, 0.9), (0.5, 0.5), (0.9, 0.1), (0.3, 0.7)])
-    def test_unbiased(self, px, py):
+    def test_unbiased(self, px: float, py: float) -> None:
         """Mean over many trials should converge to exact product."""
         L = 4096
         products = []

@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.sc_primitives_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.accel.vector_ops import (
+    vec_not,
+)
+from tests.sc_primitives_support import (
+    _bernoulli_packed,
+    _prob,
+)
 
 
 class TestVecNot:
-    def test_complement_probability(self):
+    """The packed NOT gate as complement."""
+
+    def test_complement_probability(self) -> None:
+        """NOT gives the complementary probability."""
         p = 0.7
         packed, length = _bernoulli_packed(p, 10000, seed=42)
         result = vec_not(packed)
         estimated = _prob(result, length)
         np.testing.assert_allclose(estimated, 1.0 - p, atol=0.03)
 
-    def test_double_not_identity(self):
+    def test_double_not_identity(self) -> None:
+        """Two NOTs give the original stream."""
         packed, length = _bernoulli_packed(0.6, 1000, seed=99)
         result = vec_not(vec_not(packed))
         assert np.array_equal(packed, result)

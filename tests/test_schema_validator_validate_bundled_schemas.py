@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.schema_validator_support import *  # noqa: F403
+from sc_neurocore.neurons.schema_validator import (
+    validate_all_bundled,
+    validate_schema,
+)
 
 
 class TestValidateBundledSchemas:

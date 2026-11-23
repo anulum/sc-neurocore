@@ -10,12 +10,22 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.solvers import (
+    ExactLIFSolver,
+    RK4Solver,
+)
+from tests.solvers_ode_support import (
+    decay_ode,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSolverBenchmark:
-    def test_rk4_throughput(self):
+    """Timing the solvers against each other."""
+
+    def test_rk4_throughput(self) -> None:
         """100k RK4 steps in < 5s."""
         solver = RK4Solver()
         y = np.array([1.0])
@@ -29,7 +39,7 @@ class TestSolverBenchmark:
             strict_minimum_per_second=20_000.0,
         )
 
-    def test_exact_lif_throughput(self):
+    def test_exact_lif_throughput(self) -> None:
         """1000 exact LIF simulations, 100ms each."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
         t0 = time.perf_counter()

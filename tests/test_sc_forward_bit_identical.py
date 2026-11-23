@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.sc_forward_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.accel import (
+    sc_forward,
+)
+from tests.sc_forward_support import (
+    _pack_weights,
+    _RUST_AVAILABLE,
+)
 
 
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="rust backend not built in this environment")
@@ -20,6 +29,7 @@ class TestBitIdentical:
     @pytest.mark.parametrize("shape", [(1, 1), (5, 9), (16, 33)])
     @pytest.mark.parametrize("length", [64, 1024, 4096])
     def test_rust_numpy_exact(self, shape: tuple[int, int], length: int) -> None:
+        """The Rust backend matches the NumPy floor bit for bit."""
         rng = np.random.default_rng(shape[0] * 1000 + shape[1] + length)
         weights = rng.random(shape)
         probs = rng.random(shape[1])
@@ -29,5 +39,6 @@ class TestBitIdentical:
         npt.assert_array_equal(rust, numpy_floor)
 
     def test_rust_backend_rejects_non_3d_weights(self) -> None:
+        """The Rust backend rejects weights that are not 3-D."""
         with pytest.raises(ValueError, match="must be 3-D"):
             sc_forward(np.zeros((1, 1), dtype=np.uint64), np.zeros(1), length=64, backend="rust")

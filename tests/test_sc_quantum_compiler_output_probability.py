@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    compile_sc_multiply,
+)
 
 
 class TestOutputProbability:

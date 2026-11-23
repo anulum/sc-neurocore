@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spade_gpfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.spade import (
+    _find_frequent_itemsets,
+)
 
 
 class TestFindFrequentItemsets:
-    def test_single_coactive_pair(self):
+    """Mining frequent co-active neuron sets."""
+
+    def test_single_coactive_pair(self) -> None:
+        """A co-active pair is found."""
         mat = np.array(
             [
                 [1, 0, 1, 0, 1],
@@ -27,7 +33,8 @@ class TestFindFrequentItemsets:
         pair_sets = [s for s, c in result if len(s) == 2]
         assert frozenset([0, 1]) in pair_sets
 
-    def test_min_support_filters(self):
+    def test_min_support_filters(self) -> None:
+        """A high minimum support filters every pair out."""
         mat = np.array(
             [
                 [1, 0, 1, 0, 0],

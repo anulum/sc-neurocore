@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 59 top-level test modules of the SC convergence, SC forward,
+  SC primitive, SC-to-quantum compiler, schema validator, integrated
+  SCPN, DVS sensor, SNN optimiser, ODE solver, source and profiling,
+  and SPADE and GPFA suites import their names explicitly instead of
+  through a suppressed star import, gain their missing docstrings and
+  type annotations and are enrolled in the docstring policy. Four
+  helper supports gain types and module docstrings, and the support
+  modules left without an importer are deleted.
+
 - The two top-level adapter-ecosystem test modules import their names
   explicitly instead of through a suppressed star import, gain their
   missing docstrings and are enrolled in the docstring policy.

@@ -10,25 +10,33 @@
 
 from __future__ import annotations
 
-from tests.sc_convergence_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore import (
+    bitstream_to_probability,
+    BitstreamEncoder,
+)
 
 
 class TestBitstreamEncoderRoundtrip:
     """BitstreamEncoder.encode → bitstream_to_probability roundtrip."""
 
     @pytest.mark.parametrize("p", [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0])
-    def test_roundtrip_accuracy(self, p):
+    def test_roundtrip_accuracy(self, p: float) -> None:
+        """An encoded probability decodes back within tolerance."""
         enc = BitstreamEncoder(x_min=0.0, x_max=1.0, length=4096, seed=42)
         bits = enc.encode(p)
         recovered = bitstream_to_probability(bits)
         np.testing.assert_allclose(recovered, p, atol=0.03)
 
-    def test_output_is_binary(self):
+    def test_output_is_binary(self) -> None:
+        """The encoded bitstream holds only zeros and ones."""
         enc = BitstreamEncoder(x_min=0.0, x_max=1.0, length=1024, seed=42)
         bits = enc.encode(0.6)
         assert set(np.unique(bits)).issubset({0, 1})
 
-    def test_output_length(self):
+    def test_output_length(self) -> None:
+        """The bitstream has the requested length."""
         enc = BitstreamEncoder(x_min=0.0, x_max=1.0, length=777, seed=42)
         bits = enc.encode(0.5)
         assert len(bits) == 777

@@ -6,18 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_spade_gpfa.py
 
+"""Shared spike-train generators for the SPADE and GPFA suites."""
+
 from __future__ import annotations
 
-"""Tests for SPADE and GPFA modules."""
+from typing import Any
+
 import numpy as np
-from sc_neurocore.analysis.spike_stats import spade_detect, gpfa, gpfa_transform
-from sc_neurocore.analysis.spike_stats.spade import (
-    _find_frequent_itemsets,
-)
-from sc_neurocore.analysis.spike_stats.gpfa import _gp_kernel, _gpfa_log_likelihood
 
 
-def _sync_trains(n_neurons=5, n_steps=2000, sync_every=100, seed=42):
+def _sync_trains(
+    n_neurons: int = 5, n_steps: int = 2000, sync_every: int = 100, seed: int = 42
+) -> list[np.ndarray[Any, Any]]:
     """Generate spike trains with a planted synchronous pattern."""
     rng = np.random.default_rng(seed)
     trains = []
@@ -34,7 +34,14 @@ def _sync_trains(n_neurons=5, n_steps=2000, sync_every=100, seed=42):
     return trains
 
 
-def _poisson_trains(n_neurons=6, rate_hz=30.0, duration_s=1.0, dt=0.001, seed=42):
+def _poisson_trains(
+    n_neurons: int = 6,
+    rate_hz: float = 30.0,
+    duration_s: float = 1.0,
+    dt: float = 0.001,
+    seed: int = 42,
+) -> list[np.ndarray[Any, Any]]:
+    """Generate independent Poisson spike trains at a fixed rate."""
     rng = np.random.default_rng(seed)
     n_steps = int(duration_s / dt)
     trains = []
@@ -45,13 +52,6 @@ def _poisson_trains(n_neurons=6, rate_hz=30.0, duration_s=1.0, dt=0.001, seed=42
 
 
 __all__ = [
-    "np",
-    "spade_detect",
-    "gpfa",
-    "gpfa_transform",
-    "_find_frequent_itemsets",
-    "_gp_kernel",
-    "_gpfa_log_likelihood",
     "_sync_trains",
     "_poisson_trains",
 ]

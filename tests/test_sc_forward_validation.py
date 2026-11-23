@@ -10,28 +10,37 @@
 
 from __future__ import annotations
 
-from tests.sc_forward_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel import (
+    sc_forward_numpy,
+)
 
 
 class TestValidation:
     """Shape and range validation of the NumPy reference."""
 
     def test_non_positive_length(self) -> None:
+        """A length that is not positive is rejected."""
         with pytest.raises(ValueError, match="length must be positive"):
             sc_forward_numpy(np.zeros((1, 1, 1), dtype=np.uint64), np.zeros(1), 0)
 
     def test_weights_not_3d(self) -> None:
+        """Weights that are not 3-D are rejected."""
         with pytest.raises(ValueError, match="must be 3-D"):
             sc_forward_numpy(np.zeros((1, 1), dtype=np.uint64), np.zeros(1), 64)
 
     def test_word_count_mismatch(self) -> None:
+        """A packed word count that does not fit the length is rejected."""
         with pytest.raises(ValueError, match="ceil"):
             sc_forward_numpy(np.zeros((1, 1, 5), dtype=np.uint64), np.zeros(1), 64)
 
     def test_input_length_mismatch(self) -> None:
+        """Inputs of the wrong length are rejected."""
         with pytest.raises(ValueError, match="length n_in"):
             sc_forward_numpy(np.zeros((1, 2, 1), dtype=np.uint64), np.zeros(3), 64)
 
     def test_probability_out_of_range(self) -> None:
+        """A probability outside [0, 1] is rejected."""
         with pytest.raises(ValueError, match=r"\[0, 1\]"):
             sc_forward_numpy(np.zeros((1, 1, 1), dtype=np.uint64), np.array([1.5]), 64)

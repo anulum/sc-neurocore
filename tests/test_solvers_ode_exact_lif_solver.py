@@ -10,12 +10,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any, cast
 import json
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import sc_neurocore.solvers.exact_lif_profile as lif_profile_module
-from tests.solvers_ode_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.solvers import (
+    CurrentDriveTick,
+    ExactCurrentLIFProfile,
+    ExactCurrentLIFSession,
+    ExactLIFExecutionPacket,
+    ExactLIFSolver,
+)
 
 _ROOT = Path(__file__).resolve().parents[1]
 _PROFILE_RECEIPT = (
@@ -27,7 +37,10 @@ _PACKET_RECEIPT = (
 
 
 class TestExactLIFSolver:
-    def test_spike_time_matches_analytical(self):
+    """The closed-form LIF solver."""
+
+    def test_spike_time_matches_analytical(self) -> None:
+        """The spike time puts the voltage on threshold."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)
         # V_inf = -65 + 20 = -45 (above threshold)
         t = solver.next_spike_time(v0=-65.0, current=20.0)
@@ -35,22 +48,26 @@ class TestExactLIFSolver:
         v_at_t = solver.evolve_to_time(-65.0, t, 20.0)
         assert abs(v_at_t - solver.v_thresh) < 1e-8
 
-    def test_subthreshold_no_spike(self):
+    def test_subthreshold_no_spike(self) -> None:
+        """A subthreshold current gives no spike."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)
         t = solver.next_spike_time(v0=-65.0, current=10.0)
         assert t is None  # V_inf = -55, never reaches -50
 
-    def test_already_threshold_spikes_immediately(self):
+    def test_already_threshold_spikes_immediately(self) -> None:
+        """A neuron at threshold spikes at once."""
         solver = ExactLIFSolver(v_thresh=-50.0)
 
         assert solver.next_spike_time(v0=-50.0, current=20.0) == 0.0
 
-    def test_evolve_to_time_at_zero(self):
+    def test_evolve_to_time_at_zero(self) -> None:
+        """Evolving for zero time keeps the voltage."""
         solver = ExactLIFSolver()
         v = solver.evolve_to_time(v0=-60.0, t=0.0, current=0.0)
         assert v == pytest.approx(-60.0)
 
-    def test_subthreshold_evolution_is_bounded_by_equilibrium(self):
+    def test_subthreshold_evolution_is_bounded_by_equilibrium(self) -> None:
+        """Subthreshold evolution stays below equilibrium."""
         solver = ExactLIFSolver(tau=20.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)
 
         voltage = solver.evolve_to_time(v0=-65.0, t=20.0, current=10.0)
@@ -58,22 +75,26 @@ class TestExactLIFSolver:
         assert -65.0 < voltage < -55.0
         assert voltage < solver.v_thresh
 
-    def test_firing_rate_suprathreshold(self):
+    def test_firing_rate_suprathreshold(self) -> None:
+        """A suprathreshold current gives a positive rate."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
         rate = solver.firing_rate(current=30.0)
         assert rate > 0
 
-    def test_firing_rate_subthreshold(self):
+    def test_firing_rate_subthreshold(self) -> None:
+        """A subthreshold current gives a zero rate."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)
         rate = solver.firing_rate(current=5.0)
         assert rate == 0.0
 
-    def test_simulate_produces_spikes(self):
+    def test_simulate_produces_spikes(self) -> None:
+        """A strong current produces spikes."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
         spikes, _ = solver.simulate(current=30.0, t_end=100.0)
         assert len(spikes) >= 2
 
-    def test_simulate_breaks_when_next_spike_exceeds_window(self):
+    def test_simulate_breaks_when_next_spike_exceeds_window(self) -> None:
+        """A spike beyond the window ends the simulation."""
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
 
         spikes, voltages = solver.simulate(current=20.0, t_end=1.0)
@@ -93,7 +114,8 @@ class TestExactLIFSolver:
             ({"r_m": 0.0}, "r_m"),
         ],
     )
-    def test_rejects_invalid_physical_parameters(self, kwargs, match):
+    def test_rejects_invalid_physical_parameters(self, kwargs: dict[str, Any], match: str) -> None:
+        """Each invalid physical parameter is rejected."""
         with pytest.raises(ValueError, match=match):
             ExactLIFSolver(**kwargs)
 
@@ -109,7 +131,10 @@ class TestExactLIFSolver:
             ("simulate", {"current": 20.0, "t_end": 1.0, "v0": float("nan")}, "v0"),
         ],
     )
-    def test_rejects_invalid_runtime_inputs(self, method, args, match):
+    def test_rejects_invalid_runtime_inputs(
+        self, method: str, args: dict[str, Any], match: str
+    ) -> None:
+        """Each invalid runtime input is rejected."""
         solver = ExactLIFSolver()
 
         with pytest.raises(ValueError, match=match):
@@ -117,9 +142,12 @@ class TestExactLIFSolver:
 
 
 class TestExactCurrentLIFProfile:
+    """The source-bound exact current LIF profile and session."""
+
     _COMMIT = "1" * 40
 
-    def test_profile_is_immutable_source_bound_and_canonical(self):
+    def test_profile_is_immutable_source_bound_and_canonical(self) -> None:
+        """The profile is frozen, digest-bound and canonical."""
         profile = ExactCurrentLIFProfile()
 
         profile.verify_source_binding()
@@ -130,9 +158,10 @@ class TestExactCurrentLIFProfile:
         assert len(profile.digest) == 64
         assert profile.to_json() == restored.to_json()
         with pytest.raises(FrozenInstanceError):
-            profile.tau_ms = 1.0
+            cast(Any, profile).tau_ms = 1.0
 
-    def test_profile_rejects_bound_source_drift(self, monkeypatch):
+    def test_profile_rejects_bound_source_drift(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A changed model source digest is rejected."""
         profile = ExactCurrentLIFProfile()
         monkeypatch.setattr(lif_profile_module, "MODEL_SOURCE_SHA256", "0" * 64)
 
@@ -151,7 +180,10 @@ class TestExactCurrentLIFProfile:
             ),
         ],
     )
-    def test_profile_rejects_schema_fields_units_and_source_drift(self, mutation, match):
+    def test_profile_rejects_schema_fields_units_and_source_drift(
+        self, mutation: Callable[[dict[str, Any]], object], match: str
+    ) -> None:
+        """Each changed schema, field, unit or source is rejected."""
         payload = ExactCurrentLIFProfile().to_payload()
         mutation(payload)
 
@@ -162,17 +194,20 @@ class TestExactCurrentLIFProfile:
         "serialized",
         ["not-json", b"\xff", json.dumps([])],
     )
-    def test_profile_rejects_malformed_json(self, serialized):
+    def test_profile_rejects_malformed_json(self, serialized: str | bytes) -> None:
+        """Malformed JSON is rejected."""
         with pytest.raises(ValueError):
             ExactCurrentLIFProfile.from_json(serialized)
 
-    def test_profile_rejects_non_convertible_values(self):
+    def test_profile_rejects_non_convertible_values(self) -> None:
+        """Values that cannot convert to floats are rejected."""
         with pytest.raises(ValueError, match="tau_ms"):
-            ExactCurrentLIFProfile(tau_ms=object())
+            ExactCurrentLIFProfile(tau_ms=cast(Any, object()))
         with pytest.raises(ValueError, match="tau_ms"):
             ExactCurrentLIFProfile(tau_ms=True)
 
-    def test_profile_rejects_duplicate_json_members(self):
+    def test_profile_rejects_duplicate_json_members(self) -> None:
+        """Duplicate JSON fields are rejected."""
         with pytest.raises(ValueError, match="duplicate JSON field"):
             ExactCurrentLIFProfile.from_json('{"schema":"a","schema":"b"}')
 
@@ -185,11 +220,15 @@ class TestExactCurrentLIFProfile:
             ({"resistance": float("inf")}, "resistance"),
         ],
     )
-    def test_profile_rejects_invalid_parameter_domains(self, kwargs, match):
+    def test_profile_rejects_invalid_parameter_domains(
+        self, kwargs: dict[str, Any], match: str
+    ) -> None:
+        """Each parameter outside its domain is rejected."""
         with pytest.raises(ValueError, match=match):
             ExactCurrentLIFProfile(**kwargs)
 
-    def test_free_decay_matches_independent_closed_form(self):
+    def test_free_decay_matches_independent_closed_form(self) -> None:
+        """Free decay matches an independent closed form."""
         profile = ExactCurrentLIFProfile()
         session = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT)
         state = json.loads(session.serialize_state())
@@ -203,7 +242,8 @@ class TestExactCurrentLIFProfile:
         assert packet.final_state.voltage == pytest.approx(expected, abs=1e-12)
         assert packet.state_trace[-1].phase == "tick_end"
 
-    def test_exact_first_spike_threshold_reset_and_remaining_flow(self):
+    def test_exact_first_spike_threshold_reset_and_remaining_flow(self) -> None:
+        """The first spike, its reset and the remaining flow are exact."""
         profile = ExactCurrentLIFProfile(tau_ms=10.0)
         current = 30.0
         equilibrium = profile.v_rest + profile.resistance * current
@@ -228,7 +268,8 @@ class TestExactCurrentLIFProfile:
         )
         assert packet.final_state.voltage == pytest.approx(expected_final, abs=1e-12)
 
-    def test_threshold_equality_emits_at_exact_tick_end(self):
+    def test_threshold_equality_emits_at_exact_tick_end(self) -> None:
+        """Reaching threshold exactly at tick end emits a spike."""
         profile = ExactCurrentLIFProfile(tau_ms=10.0)
         current = 30.0
         equilibrium = profile.v_rest + profile.resistance * current
@@ -242,7 +283,8 @@ class TestExactCurrentLIFProfile:
         assert [event.time_ms for event in packet.events] == pytest.approx([crossing], abs=1e-12)
         assert packet.final_state.voltage == profile.v_reset
 
-    def test_simultaneous_inputs_and_multi_call_state_are_order_independent(self):
+    def test_simultaneous_inputs_and_multi_call_state_are_order_independent(self) -> None:
+        """Simultaneous inputs and split calls give the same result in any order."""
         profile = ExactCurrentLIFProfile()
         split = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT)
         first = split.execute([CurrentDriveTick(1.0, (10.0, 20.0))])
@@ -256,7 +298,8 @@ class TestExactCurrentLIFProfile:
         assert second.final_state.time_ms == 2.0
         assert first.ticks[0].total_current == second.ticks[0].total_current == 30.0
 
-    def test_state_restore_replay_is_digest_bound_and_deterministic(self):
+    def test_state_restore_replay_is_digest_bound_and_deterministic(self) -> None:
+        """Restoring a checkpoint replays the same digest-bound packet."""
         profile = ExactCurrentLIFProfile()
         original = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT, shot_id="shot-a")
         original.execute([CurrentDriveTick(3.0, (25.0,))])
@@ -276,7 +319,10 @@ class TestExactCurrentLIFProfile:
             ("profile_sha256", "0" * 64, "digest mismatch"),
         ],
     )
-    def test_restore_rejects_version_and_digest_without_mutation(self, field, value, match):
+    def test_restore_rejects_version_and_digest_without_mutation(
+        self, field: str, value: object, match: str
+    ) -> None:
+        """A wrong version or digest is rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
         payload = json.loads(session.serialize_state())
@@ -287,7 +333,8 @@ class TestExactCurrentLIFProfile:
 
         assert session.state == before
 
-    def test_restore_rejects_unknown_fields_and_threshold_state_atomically(self):
+    def test_restore_rejects_unknown_fields_and_threshold_state_atomically(self) -> None:
+        """Unknown fields and a threshold state are rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
         payload = json.loads(session.serialize_state())
@@ -300,7 +347,8 @@ class TestExactCurrentLIFProfile:
             session.restore_state(json.dumps(payload))
         assert session.state == before
 
-    def test_shot_reset_is_explicit_and_increments_epoch(self):
+    def test_shot_reset_is_explicit_and_increments_epoch(self) -> None:
+        """A shot reset is explicit and increments the epoch."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         session.execute([CurrentDriveTick(2.0, (10.0,))])
 
@@ -321,7 +369,10 @@ class TestExactCurrentLIFProfile:
             ("shot_id", "x" * 129, "at most 128"),
         ],
     )
-    def test_restore_rejects_invalid_complete_state_fields(self, field, value, match):
+    def test_restore_rejects_invalid_complete_state_fields(
+        self, field: str, value: object, match: str
+    ) -> None:
+        """Each invalid state field is rejected without change."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
         payload = json.loads(session.serialize_state())
@@ -332,7 +383,8 @@ class TestExactCurrentLIFProfile:
 
         assert session.state == before
 
-    def test_packet_is_canonical_and_binds_execution_provenance(self):
+    def test_packet_is_canonical_and_binds_execution_provenance(self) -> None:
+        """The packet is canonical and binds its provenance."""
         profile = ExactCurrentLIFProfile()
         packet = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT).execute([])
         payload = json.loads(packet.to_json())
@@ -350,7 +402,8 @@ class TestExactCurrentLIFProfile:
             == packet
         )
 
-    def test_immutable_multitick_receipt_matches_independent_oracle(self):
+    def test_immutable_multitick_receipt_matches_independent_oracle(self) -> None:
+        """The frozen multi-tick receipt matches an independent oracle."""
         implementation_commit = "bc76e5b3c217fec191534bb650685316e645ad34"
         profile_json = _PROFILE_RECEIPT.read_text(encoding="utf-8").strip()
         profile = ExactCurrentLIFProfile.from_json(profile_json)
@@ -423,7 +476,10 @@ class TestExactCurrentLIFProfile:
             ),
         ],
     )
-    def test_packet_parser_rejects_schema_provenance_and_trace_tampering(self, mutate, match):
+    def test_packet_parser_rejects_schema_provenance_and_trace_tampering(
+        self, mutate: Callable[[dict[str, Any]], object], match: str
+    ) -> None:
+        """Tampering with schema, provenance or trace is rejected."""
         profile = ExactCurrentLIFProfile()
         packet = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT).execute(
             [CurrentDriveTick(1.0, (2.0, 3.0))]
@@ -443,7 +499,10 @@ class TestExactCurrentLIFProfile:
             ("currents", {}, "tick currents must be an array"),
         ],
     )
-    def test_packet_parser_rejects_non_array_inputs(self, field, value, match):
+    def test_packet_parser_rejects_non_array_inputs(
+        self, field: str, value: object, match: str
+    ) -> None:
+        """Ticks and currents that are not arrays are rejected."""
         profile = ExactCurrentLIFProfile()
         packet = ExactCurrentLIFSession(profile, producer_commit=self._COMMIT).execute(
             [CurrentDriveTick(1.0, (2.0,))]
@@ -459,7 +518,8 @@ class TestExactCurrentLIFProfile:
                 json.dumps(payload), profile=profile, expected_producer_commit=self._COMMIT
             )
 
-    def test_packet_parser_rejects_duplicate_and_malformed_json(self):
+    def test_packet_parser_rejects_duplicate_and_malformed_json(self) -> None:
+        """Duplicate fields and malformed JSON are rejected."""
         profile = ExactCurrentLIFProfile()
         with pytest.raises(ValueError, match="duplicate JSON field"):
             ExactLIFExecutionPacket.from_json(
@@ -474,7 +534,8 @@ class TestExactCurrentLIFProfile:
                 expected_producer_commit=self._COMMIT,
             )
 
-    def test_execute_is_failure_atomic_on_late_time_overflow(self):
+    def test_execute_is_failure_atomic_on_late_time_overflow(self) -> None:
+        """A late time overflow leaves the state unchanged."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
 
@@ -488,65 +549,76 @@ class TestExactCurrentLIFProfile:
 
         assert session.state == before
 
-    def test_tick_rejects_non_finite_simultaneous_sum(self):
+    def test_tick_rejects_non_finite_simultaneous_sum(self) -> None:
+        """Simultaneous currents with a non-finite sum are rejected."""
         with pytest.raises(ValueError, match="summed current"):
             CurrentDriveTick(1.0, (1e308, 1e308))
 
-    def test_tick_rejects_non_finite_sum_result(self, monkeypatch):
-        monkeypatch.setattr(lif_profile_module.math, "fsum", lambda _: float("inf"))
+    def test_tick_rejects_non_finite_sum_result(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A non-finite summed current is rejected."""
+        monkeypatch.setattr(math, "fsum", lambda _: float("inf"))
 
         with pytest.raises(ValueError, match="summed current"):
             CurrentDriveTick(1.0, (1.0,))
 
-    def test_execute_rejects_non_positive_crossing_atomically(self, monkeypatch):
+    def test_execute_rejects_non_positive_crossing_atomically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A non-positive crossing time is rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
-        monkeypatch.setattr(lif_profile_module.ExactLIFSolver, "next_spike_time", lambda *_: 0.0)
+        monkeypatch.setattr(ExactLIFSolver, "next_spike_time", lambda *_: 0.0)
 
         with pytest.raises(FloatingPointError, match="non-positive"):
             session.execute([CurrentDriveTick(1.0, (30.0,))])
 
         assert session.state == before
 
-    def test_execute_rejects_non_finite_crossing_atomically(self, monkeypatch):
+    def test_execute_rejects_non_finite_crossing_atomically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A non-finite crossing time is rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
-        monkeypatch.setattr(
-            lif_profile_module.ExactLIFSolver, "next_spike_time", lambda *_: float("nan")
-        )
+        monkeypatch.setattr(ExactLIFSolver, "next_spike_time", lambda *_: float("nan"))
 
         with pytest.raises(FloatingPointError, match="non-finite"):
             session.execute([CurrentDriveTick(1.0, (30.0,))])
 
         assert session.state == before
 
-    def test_execute_rejects_non_finite_evolution_atomically(self, monkeypatch):
+    def test_execute_rejects_non_finite_evolution_atomically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A non-finite evolved voltage is rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
-        monkeypatch.setattr(lif_profile_module.ExactLIFSolver, "next_spike_time", lambda *_: None)
-        monkeypatch.setattr(
-            lif_profile_module.ExactLIFSolver, "evolve_to_time", lambda *_: float("inf")
-        )
+        monkeypatch.setattr(ExactLIFSolver, "next_spike_time", lambda *_: None)
+        monkeypatch.setattr(ExactLIFSolver, "evolve_to_time", lambda *_: float("inf"))
 
         with pytest.raises(FloatingPointError, match="non-finite voltage"):
             session.execute([CurrentDriveTick(1.0, (1.0,))])
 
         assert session.state == before
 
-    def test_execute_rejects_crossing_without_clock_progress_atomically(self, monkeypatch):
+    def test_execute_rejects_crossing_without_clock_progress_atomically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A crossing that does not advance the clock is rejected without change."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         state = json.loads(session.serialize_state())
         state["state"]["time_ms"] = 1e20
         session.restore_state(json.dumps(state))
         before = session.state
-        monkeypatch.setattr(lif_profile_module.ExactLIFSolver, "next_spike_time", lambda *_: 1.0)
+        monkeypatch.setattr(ExactLIFSolver, "next_spike_time", lambda *_: 1.0)
 
         with pytest.raises(FloatingPointError, match="no finite progress"):
             session.execute([CurrentDriveTick(1e6, (30.0,))])
 
         assert session.state == before
 
-    def test_execute_enforces_event_bound_atomically(self, monkeypatch):
+    def test_execute_enforces_event_bound_atomically(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The event bound is enforced without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
         monkeypatch.setattr(lif_profile_module, "_MAX_EVENTS_PER_TICK", 0)
@@ -566,7 +638,9 @@ class TestExactCurrentLIFProfile:
                 "producer_commit",
             ),
             (
-                lambda: ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=True),
+                lambda: ExactCurrentLIFSession(
+                    ExactCurrentLIFProfile(), producer_commit=cast(Any, True)
+                ),
                 "producer_commit",
             ),
             (
@@ -577,19 +651,24 @@ class TestExactCurrentLIFProfile:
             ),
         ],
     )
-    def test_public_contract_rejects_invalid_inputs(self, factory, match):
+    def test_public_contract_rejects_invalid_inputs(
+        self, factory: Callable[[], object], match: str
+    ) -> None:
+        """Each invalid public input is rejected."""
         with pytest.raises(ValueError, match=match):
             factory()
 
-    def test_execute_rejects_non_tick_values_without_mutation(self):
+    def test_execute_rejects_non_tick_values_without_mutation(self) -> None:
+        """A value that is no tick is rejected without changing state."""
         session = ExactCurrentLIFSession(ExactCurrentLIFProfile(), producer_commit=self._COMMIT)
         before = session.state
 
         with pytest.raises(TypeError, match="CurrentDriveTick"):
-            session.execute([object()])
+            session.execute([cast(Any, object())])
 
         assert session.state == before
 
-    def test_session_rejects_wrong_profile_type(self):
+    def test_session_rejects_wrong_profile_type(self) -> None:
+        """A session refuses an object that is no profile."""
         with pytest.raises(TypeError, match="ExactCurrentLIFProfile"):
-            ExactCurrentLIFSession(object(), producer_commit=self._COMMIT)
+            ExactCurrentLIFSession(cast(Any, object()), producer_commit=self._COMMIT)

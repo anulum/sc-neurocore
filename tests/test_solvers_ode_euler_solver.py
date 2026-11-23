@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+import math
+import numpy as np
+from sc_neurocore.solvers import (
+    EulerSolver,
+)
+from tests.solvers_ode_support import (
+    decay_ode,
+)
 
 
 class TestEulerSolver:
-    def test_decay_direction(self):
+    """The explicit Euler solver."""
+
+    def test_decay_direction(self) -> None:
+        """One Euler step moves a decay downwards."""
         solver = EulerSolver()
         y = np.array([1.0])
         y_new, _ = solver.step(decay_ode, y, t=0.0, dt=0.01)
         assert y_new[0] < 1.0
 
-    def test_convergence_order_1(self):
+    def test_convergence_order_1(self) -> None:
         """Euler error should be O(h)."""
         y0 = np.array([1.0])
         t_end = 1.0

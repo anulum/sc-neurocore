@@ -10,32 +10,49 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.solvers import (
+    DormandPrinceSolver,
+    ExponentialEuler,
+    get_solver,
+    RosenbrockEuler,
+)
+from tests.solvers_ode_support import (
+    decay_ode,
+)
 
 
 class TestFactory:
+    """The solver factory by name."""
+
     @pytest.mark.parametrize("name", ["euler", "heun", "rk4"])
-    def test_get_solver(self, name):
+    def test_get_solver(self, name: str) -> None:
+        """Each named explicit solver steps a decay downwards."""
         solver = get_solver(name)
         y, _ = solver.step(decay_ode, np.array([1.0]), 0.0, 0.01)
         assert y[0] < 1.0
 
-    def test_unknown_solver_raises(self):
+    def test_unknown_solver_raises(self) -> None:
+        """An unknown solver name is rejected."""
         with pytest.raises(ValueError):
             get_solver("nonexistent_solver")
 
-    def test_dp45_with_kwargs(self):
+    def test_dp45_with_kwargs(self) -> None:
+        """The dp45 name gives a Dormand-Prince solver."""
         solver = get_solver("dp45", atol=1e-6, rtol=1e-4)
         assert isinstance(solver, DormandPrinceSolver)
 
-    def test_exponential_euler_with_kwargs(self):
+    def test_exponential_euler_with_kwargs(self) -> None:
+        """Keyword arguments reach the exponential Euler solver."""
         solver = get_solver("exponential_euler", tau=5.0, y_rest=-60.0)
         assert isinstance(solver, ExponentialEuler)
         assert solver.tau == pytest.approx(5.0)
         assert solver.y_rest == pytest.approx(-60.0)
 
     @pytest.mark.parametrize("name", ["rosenbrock", "rosenbrock_euler"])
-    def test_rosenbrock_aliases(self, name):
+    def test_rosenbrock_aliases(self, name: str) -> None:
+        """Both Rosenbrock names give a Rosenbrock-Euler solver."""
         solver = get_solver(name, gamma=0.5)
         assert isinstance(solver, RosenbrockEuler)
         assert solver.gamma == pytest.approx(0.5)

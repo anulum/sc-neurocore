@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.snn_optimizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.snn_optimizer import (
+    LayerNode,
+    OptimizationReport,
+    optimize,
+    SNNGraph,
+)
+from tests.snn_optimizer_support import (
+    _make_graph,
+)
 
 
 class TestOptimize:
-    def test_full_pipeline(self):
+    """The full SNN optimisation pipeline."""
+
+    def test_full_pipeline(self) -> None:
+        """The pipeline never adds neurons and reports its work."""
         g = SNNGraph(
             layers=[
                 LayerNode(
@@ -33,17 +45,20 @@ class TestOptimize:
         s = report.summary()
         assert "SNN Optimizer" in s
 
-    def test_specific_passes(self):
+    def test_specific_passes(self) -> None:
+        """Only the named passes run."""
         g = _make_graph()
         _, report = optimize(g, passes=["dead_neuron_elimination"])
         assert len(report.pass_results) == 1
 
-    def test_compression_ratio(self):
+    def test_compression_ratio(self) -> None:
+        """The compression ratio is at least one."""
         g = _make_graph()
         _, report = optimize(g)
         assert report.compression_ratio >= 1.0
 
-    def test_unknown_pass_ignored(self):
+    def test_unknown_pass_ignored(self) -> None:
+        """An unknown pass name is skipped."""
         g = _make_graph()
         _, report = optimize(g, passes=["nonexistent_pass"])
         assert len(report.pass_results) == 0

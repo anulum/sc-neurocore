@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.sc_forward_support import *  # noqa: F403
+from sc_neurocore import (
+    BitstreamEncoder,
+)
 
 
 class TestEncoderCompatibility:
     """NEU-SCPN.3 — BitstreamEncoder(length=, seed=) constructs without ranges."""
 
     def test_length_seed_only(self) -> None:
+        """An encoder built from length and seed alone uses the unit range."""
         encoder = BitstreamEncoder(length=1024, seed=123)
         assert encoder.x_min == 0.0
         assert encoder.x_max == 1.0

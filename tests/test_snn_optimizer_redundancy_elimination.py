@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.snn_optimizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.snn_optimizer import (
+    LayerNode,
+    redundancy_elimination,
+    SNNGraph,
+)
+from tests.snn_optimizer_support import (
+    _make_graph,
+)
 
 
 class TestRedundancyElimination:
-    def test_merges_identical(self):
+    """Merging neurons with identical weights."""
+
+    def test_merges_identical(self) -> None:
+        """Identical neurons are merged."""
         w = np.random.randn(1, 4)
         # 3 identical neurons
         weights = np.vstack([w, w, w + 0.001 * np.random.randn(1, 4)])
@@ -27,7 +38,8 @@ class TestRedundancyElimination:
         result = redundancy_elimination(g, correlation_threshold=0.99)
         assert result.neurons_removed >= 1
 
-    def test_no_redundancy(self):
+    def test_no_redundancy(self) -> None:
+        """Distinct neurons are kept."""
         g = _make_graph()
         result = redundancy_elimination(g)
         assert result.neurons_removed == 0

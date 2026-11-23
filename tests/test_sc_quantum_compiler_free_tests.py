@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import sc_neurocore.quantum as quantum
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    compile_sc_layer,
+    compile_sc_multiply,
+)
 
 
 def test_quantum_package_exports_sc_compiler_surface() -> None:

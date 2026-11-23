@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.snn_optimizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.snn_optimizer import (
+    layer_fusion,
+    LayerNode,
+    SNNGraph,
+)
+from tests.snn_optimizer_support import (
+    _make_graph,
+)
 
 
 class TestLayerFusion:
-    def test_fuses_silent_layer(self):
+    """Fusing silent layers into their neighbours."""
+
+    def test_fuses_silent_layer(self) -> None:
+        """A silent layer is fused away."""
         g = SNNGraph(
             layers=[
                 LayerNode(
@@ -28,7 +39,8 @@ class TestLayerFusion:
         assert len(g.layers) == 1
         assert g.layers[0].weights.shape == (2, 4)
 
-    def test_no_fusion_active_layers(self):
+    def test_no_fusion_active_layers(self) -> None:
+        """Active layers are not fused."""
         g = _make_graph()
         result = layer_fusion(g)
         assert result.layers_fused == 0

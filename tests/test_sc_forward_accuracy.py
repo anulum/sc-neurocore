@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from tests.sc_forward_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.accel import (
+    sc_forward,
+    sc_forward_numpy,
+)
+from tests.sc_forward_support import (
+    _pack_weights,
+)
 
 
 class TestAccuracy:
     """NEU-SCPN.4 — sc_forward estimates W @ probs within stochastic tolerance."""
 
     def test_single_product_within_three_sigma(self) -> None:
+        """One SC product lies within three sigma of the exact value."""
         length = 4096
         weights = np.array([[0.4]])
         probs = np.array([0.7])
@@ -28,6 +37,7 @@ class TestAccuracy:
         assert abs(estimate[0] - reference) <= tolerance + 0.005
 
     def test_network_within_tolerance(self) -> None:
+        """A small network stays within its statistical tolerance."""
         rng = np.random.default_rng(20260621)
         n_out, n_in, length = 8, 32, 4096
         weights = rng.random((n_out, n_in))
@@ -41,6 +51,7 @@ class TestAccuracy:
         npt.assert_array_less(np.abs(estimate - reference), tolerance)
 
     def test_seed_zero_uses_non_zero_lfsr_seed(self) -> None:
+        """Seed zero still gives a working non-zero LFSR seed."""
         # base seed 0 forces the per-input seed-zero guard.
         packed = _pack_weights(np.array([[0.5, 0.5]]), 1024, seed=0x99)
         estimate = sc_forward_numpy(packed, np.array([0.5, 0.5]), 1024, seed=0)

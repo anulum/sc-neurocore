@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spade_gpfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spade_detect,
+)
+from tests.spade_gpfa_support import (
+    _sync_trains,
+)
 
 
 class TestSpadeDetect:
-    def test_planted_pattern_detected(self):
+    """SPADE detection of repeated spike patterns."""
+
+    def test_planted_pattern_detected(self) -> None:
+        """A planted synchronous pattern is found."""
         trains = _sync_trains(n_neurons=5, n_steps=2000, sync_every=100)
         results = spade_detect(
             trains,
@@ -28,14 +37,17 @@ class TestSpadeDetect:
         detected_sets = [frozenset(r["neurons"]) for r in results]
         assert any(frozenset([0, 1, 2]).issubset(s) for s in detected_sets)
 
-    def test_empty_trains(self):
+    def test_empty_trains(self) -> None:
+        """No spike trains give no patterns."""
         assert spade_detect([], bin_ms=5.0) == []
 
-    def test_single_train(self):
+    def test_single_train(self) -> None:
+        """One spike train gives no patterns."""
         trains = [np.zeros(100, dtype=np.uint8)]
         assert spade_detect(trains) == []
 
-    def test_results_have_required_keys(self):
+    def test_results_have_required_keys(self) -> None:
+        """Each pattern reports its neurons, lags and count."""
         trains = _sync_trains()
         results = spade_detect(trains, n_surrogates=20, alpha=0.5)
         for r in results:
@@ -45,7 +57,8 @@ class TestSpadeDetect:
             assert "p_value" in r
             assert 0.0 <= r["p_value"] <= 1.0
 
-    def test_no_false_positives_on_independent(self):
+    def test_no_false_positives_on_independent(self) -> None:
+        """Independent trains give no patterns."""
         rng = np.random.default_rng(99)
         trains = []
         for i in range(4):

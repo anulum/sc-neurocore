@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.solvers_ode_support import *  # noqa: F403
+import math
+import numpy as np
+from sc_neurocore.solvers import (
+    EulerSolver,
+    RK4Solver,
+)
+from tests.solvers_ode_support import (
+    decay_ode,
+)
 
 
 class TestRK4Solver:
-    def test_convergence_order_4(self):
+    """The classical fourth-order Runge-Kutta solver."""
+
+    def test_convergence_order_4(self) -> None:
+        """Halving the step divides the error by about 16."""
         y0 = np.array([1.0])
         t_end = 1.0
         exact = math.exp(-t_end)
@@ -29,7 +40,8 @@ class TestRK4Solver:
         ratio = errors[0] / errors[1]
         assert 12.0 < ratio < 20.0  # O(h⁴) → ratio ~16
 
-    def test_accuracy_better_than_euler(self):
+    def test_accuracy_better_than_euler(self) -> None:
+        """RK4 is more accurate than Euler."""
         y0 = np.array([1.0])
         n_steps = 20
         dt = 1.0 / n_steps

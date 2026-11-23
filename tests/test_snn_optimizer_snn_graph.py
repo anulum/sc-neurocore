@@ -10,19 +10,26 @@
 
 from __future__ import annotations
 
-from tests.snn_optimizer_support import *  # noqa: F403
+from tests.snn_optimizer_support import (
+    _make_graph,
+)
 
 
 class TestSNNGraph:
-    def test_total_params(self):
+    """The SNN graph description."""
+
+    def test_total_params(self) -> None:
+        """The parameter count sums every weight matrix."""
         g = _make_graph()
         assert g.total_params == 80 + 32 + 8
 
-    def test_total_neurons(self):
+    def test_total_neurons(self) -> None:
+        """The neuron count sums every layer."""
         g = _make_graph()
         assert g.total_neurons == 14
 
-    def test_copy(self):
+    def test_copy(self) -> None:
+        """A copy does not share weights with the original."""
         g = _make_graph()
         c = g.copy()
         c.layers[0].weights[0, 0] = 999

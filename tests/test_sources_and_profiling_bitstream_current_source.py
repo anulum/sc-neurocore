@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.sources_and_profiling_support import *  # noqa: F403
+import pytest
+from sc_neurocore.sources.bitstream_current_source import (
+    BitstreamCurrentSource,
+)
 
 
 class TestBitstreamCurrentSource:
-    def test_construction(self):
+    """The bitstream-driven current source."""
+
+    def test_construction(self) -> None:
+        """The source builds one bitstream row per input."""
         src = BitstreamCurrentSource(
             x_inputs=[0.5, 0.5],
             x_min=0.0,
@@ -29,7 +35,8 @@ class TestBitstreamCurrentSource:
         assert src.pre_matrix.shape == (2, 256)
         assert src.post_matrix.shape == (2, 256)
 
-    def test_input_weight_mismatch_raises(self):
+    def test_input_weight_mismatch_raises(self) -> None:
+        """Inputs and weights of different lengths are rejected."""
         with pytest.raises(ValueError):
             BitstreamCurrentSource(
                 x_inputs=[0.5, 0.5],
@@ -40,7 +47,8 @@ class TestBitstreamCurrentSource:
                 w_max=1.0,
             )
 
-    def test_step_returns_float_in_range(self):
+    def test_step_returns_float_in_range(self) -> None:
+        """One step gives a current in the unit interval."""
         src = BitstreamCurrentSource(
             x_inputs=[0.8],
             x_min=0.0,
@@ -57,7 +65,7 @@ class TestBitstreamCurrentSource:
             I_t = src.step()
             assert 0.0 <= I_t <= 1.0
 
-    def test_step_clamps_past_length(self):
+    def test_step_clamps_past_length(self) -> None:
         """After length steps, it should clamp at the last index."""
         src = BitstreamCurrentSource(
             x_inputs=[0.5],
@@ -73,7 +81,8 @@ class TestBitstreamCurrentSource:
             I_t = src.step()
         assert isinstance(I_t, float)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset replays the same currents."""
         src = BitstreamCurrentSource(
             x_inputs=[0.5],
             x_min=0.0,
@@ -89,7 +98,8 @@ class TestBitstreamCurrentSource:
         second_vals = [src.step() for _ in range(5)]
         assert first_vals == second_vals
 
-    def test_full_current_estimate(self):
+    def test_full_current_estimate(self) -> None:
+        """The full current estimate is a small float."""
         src = BitstreamCurrentSource(
             x_inputs=[0.8, 0.6],
             x_min=0.0,
@@ -106,7 +116,7 @@ class TestBitstreamCurrentSource:
         assert isinstance(est, float)
         assert 0.0 <= est <= 0.1
 
-    def test_high_weight_high_input_gives_more_current(self):
+    def test_high_weight_high_input_gives_more_current(self) -> None:
         """Higher weights and inputs should produce more current."""
         src_low = BitstreamCurrentSource(
             x_inputs=[0.2],

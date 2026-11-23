@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.scpn_integrated_support import *  # noqa: F403
+from sc_neurocore.scpn.layers import (
+    LAYER_REGISTRY,
+)
 
 
 class TestLayerRegistry:
-    def test_has_16_layers(self):
+    """The registry of SCPN layers."""
+
+    def test_has_16_layers(self) -> None:
+        """The registry has 16 layers."""
         assert len(LAYER_REGISTRY) == 16
 
-    def test_keys_l1_to_l16(self):
+    def test_keys_l1_to_l16(self) -> None:
+        """The registry keys run from l1 to l16."""
         for i in range(1, 17):
             assert f"l{i}" in LAYER_REGISTRY, f"l{i} missing from registry"

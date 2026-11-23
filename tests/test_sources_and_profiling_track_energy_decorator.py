@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.sources_and_profiling_support import *  # noqa: F403
+from sc_neurocore.profiling.energy import (
+    profiler,
+    track_energy,
+)
 
 
 class TestTrackEnergyDecorator:
-    def test_decorator_accumulates_ops(self):
+    """The energy-tracking decorator."""
+
+    def test_decorator_accumulates_ops(self) -> None:
         """track_energy should add AND ops for a layer-like object."""
         profiler.reset()
 
@@ -24,7 +29,7 @@ class TestTrackEnergyDecorator:
             length = 100
 
             @track_energy
-            def forward(self):
+            def forward(self) -> str:
                 return "done"
 
         layer = MockLayer()
@@ -34,7 +39,8 @@ class TestTrackEnergyDecorator:
         # mem = (n_neurons * n_inputs * length) + (n_inputs * length) = 1200 + 300
         assert profiler.total_bits_mem == 1500
 
-    def test_decorator_returns_original_result(self):
+    def test_decorator_returns_original_result(self) -> None:
+        """The decorated call returns the original result."""
         profiler.reset()
 
         class MockLayer:
@@ -43,18 +49,18 @@ class TestTrackEnergyDecorator:
             length = 10
 
             @track_energy
-            def forward(self):
+            def forward(self) -> int:
                 return 42
 
         layer = MockLayer()
         assert layer.forward() == 42
 
-    def test_decorator_no_layer_attributes(self):
+    def test_decorator_no_layer_attributes(self) -> None:
         """Decorator should still work if the object lacks layer attributes."""
         profiler.reset()
 
         @track_energy
-        def simple_func():
+        def simple_func() -> str:
             return "ok"
 
         assert simple_func() == "ok"

@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.sc_quantum_compiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum.sc_quantum_compiler import (
+    compile_sc_multiply,
+)
 
 
 class TestSCMultiplyCircuit:
@@ -26,18 +29,21 @@ class TestSCMultiplyCircuit:
         np.testing.assert_allclose(p_11, 0.6 * 0.7, atol=1e-10)
 
     def test_zero_times_anything(self) -> None:
+        """Multiplying by zero gives zero."""
         circuit = compile_sc_multiply(0.0, 0.8)
         state = circuit.simulate()
         p_11 = np.abs(state[3]) ** 2
         np.testing.assert_allclose(p_11, 0.0, atol=1e-10)
 
     def test_one_times_p(self) -> None:
+        """Multiplying by one gives the other probability."""
         circuit = compile_sc_multiply(1.0, 0.3)
         state = circuit.simulate()
         p_11 = np.abs(state[3]) ** 2
         np.testing.assert_allclose(p_11, 0.3, atol=1e-10)
 
     def test_summary(self) -> None:
+        """The circuit summary names the circuit and its gates."""
         circuit = compile_sc_multiply(0.5, 0.5)
         s = circuit.summary()
         assert "SCQuantumCircuit" in s
