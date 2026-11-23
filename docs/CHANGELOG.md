@@ -446,6 +446,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- Models can resolve their simulator from the installed package instead of
+  importing their executor. `sc_neurocore.core.backends.resolve_simulator`
+  reads the `sc_neurocore.simulators` entry points, and the alpha model is the
+  first to use it: `AlphaNeuron.simulate` resolves `alpha` to the engine's batch
+  simulator, with an unchanged result. The registry refuses, with a typed error
+  that names the cause, two registrations of one model id, a registration from a
+  distribution other than sc-neurocore, a registration that fails to load and a
+  checkout without installed metadata; it never skips one for another backend.
+  Refresh the editable install after a change to that entry point group.
+
 - `sc_neurocore.energy.folded_estimator` no longer imports
   `FoldedResourceMetrics`, the summary of the NIR bridge's FPGA compiler,
   not even for type checking. It names the seven counts the estimate reads

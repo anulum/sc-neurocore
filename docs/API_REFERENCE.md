@@ -19446,6 +19446,58 @@ ValueError
 
 ---
 
+## Module `core.backends`
+
+### Class `SimulatorRegistryError`
+Base class of every refusal to resolve a simulator.
+
+
+### Class `NoDistributionMetadata`
+No allowed distribution is installed, so no registration can be read.
+
+
+### Class `NoSimulatorRegistered`
+No allowed distribution registers a simulator for the model id.
+
+
+### Class `DuplicateSimulatorRegistration`
+More than one entry point registers a simulator for the model id.
+
+
+### Class `SimulatorLoadRefused`
+The registered entry point did not load to a callable.
+
+
+### Function `resolve_simulator(model_id)`
+Return the simulator registered for ``model_id``.
+
+Parameters
+----------
+model_id : str
+    The model's registry id, the entry-point name in the ``sc_neurocore.simulators`` group.
+
+Returns
+-------
+Callable&#91;..., Any&#93;
+    The loaded simulator callable, cached for the life of the process.
+
+Raises
+------
+NoDistributionMetadata
+    If no allowed distribution has installed metadata.
+DuplicateSimulatorRegistration
+    If more than one installed entry point, from any distribution, registers ``model_id``.
+NoSimulatorRegistered
+    If no allowed distribution registers ``model_id``. A registration from a distribution
+    outside the allowlist is named in the message.
+SimulatorLoadRefused
+    If the registered entry point fails to load or does not load to a callable.
+
+### Function `clear_simulator_cache()`
+Forget the scanned metadata and every resolved simulator, so the next resolution reads again.
+
+---
+
 ## Module `core.bipolar`
 
 ### Function `bipolar_encode(value, L, rng)`

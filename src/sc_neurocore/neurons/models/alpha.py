@@ -245,10 +245,16 @@ class AlphaNeuron:
         *,
         backend: str = "auto",
     ) -> AlphaResult:
-        """Run one atomic piecewise-constant-input batch on a maintained backend."""
-        from sc_neurocore.accel.alpha import simulate_alpha
+        """Run one atomic piecewise-constant-input batch on a maintained backend.
 
-        result = simulate_alpha(
+        The simulator is resolved from the ``alpha`` entry point of the
+        ``sc_neurocore.simulators`` group (:func:`sc_neurocore.core.backends.resolve_simulator`),
+        so the model does not import its executor.
+        """
+        from sc_neurocore.core.backends import resolve_simulator
+
+        simulate_alpha = resolve_simulator("alpha")
+        result: AlphaResult = simulate_alpha(
             self.v,
             self.a_exc,
             self.i_exc,

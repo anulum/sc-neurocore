@@ -79,6 +79,7 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/mojo/alpha/alpha.mojo",
     "src/sc_neurocore/accel/alpha.py",
     "src/sc_neurocore/accel/rust/safety/alpha.rs",
+    "src/sc_neurocore/core/backends.py",
     "src/sc_neurocore/neurons/model_descriptors/AlphaNeuron.toml",
     "src/sc_neurocore/neurons/model_schemas/alpha.json",
     "src/sc_neurocore/neurons/model_schemas/alpha.toml",
@@ -362,6 +363,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Measure every alpha backend on one pinned CPU and write the evidence record."""
     args = _parser().parse_args(argv)
     if args.steps <= 0 or args.repeats <= 0:
         raise ValueError("steps and repeats must be positive")

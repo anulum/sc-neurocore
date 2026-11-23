@@ -18,11 +18,11 @@
     "library_literals": 110,
     "library_literals_attributed_to_mojo": 50,
     "models": 177,
-    "models_selector": 24,
+    "models_selector": 23,
     "models_fixed_order": 10,
     "models_direct_backend": 0,
     "models_single_backend": 20,
-    "models_no_accelerated_backend": 123
+    "models_no_accelerated_backend": 124
   },
   "sources": [
     {
@@ -6127,25 +6127,16 @@
     },
     {
       "path": "src/sc_neurocore/neurons/models/alpha.py",
-      "class": "selector",
-      "dispatch_modules": [
-        "src/sc_neurocore/accel/alpha.py"
-      ],
+      "class": "no_accelerated_backend",
+      "dispatch_modules": [],
       "features": {
-        "calls_selector": true,
-        "backend_names": [
-          "go",
-          "julia",
-          "mojo",
-          "rust"
-        ],
-        "static_order": true,
+        "calls_selector": false,
+        "backend_names": [],
+        "static_order": false,
         "backend_packages": [],
         "opens_library": false,
-        "rust_engine": true,
-        "dispatch_modules": [
-          "alpha"
-        ],
+        "rust_engine": false,
+        "dispatch_modules": [],
         "auto_branch": false,
         "auto_backend_names": [],
         "auto_static_order": false

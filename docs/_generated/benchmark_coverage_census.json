@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 26,
-    "outdated": 129,
+    "current": 27,
+    "outdated": 128,
     "reviewed": 0,
     "unbound": 175
   },
@@ -13,8 +13,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 2,
-    "outdated": 84,
+    "current": 3,
+    "outdated": 83,
     "reviewed": 0,
     "unbound": 1
   },
@@ -111,20 +111,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            ".github/workflows/ci.yml",
-            "Cargo.lock",
-            "bridge/sc_neurocore_engine/__init__.py",
-            "engine/Cargo.toml",
-            "pyproject.toml",
-            "src/sc_neurocore/accel/go/go.mod",
-            "src/sc_neurocore/accel/go/services/alpha.go",
-            "src/sc_neurocore/accel/mojo/alpha/__init__.py",
-            "src/sc_neurocore/accel/mojo/pixi.lock",
-            "src/sc_neurocore/accel/mojo/pixi.toml",
-            "tools/build_accel_backends.py"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "bench_alpha.json",
           "script": "bench_model_alpha.py"
         }
@@ -2614,6 +2601,7 @@
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
+        "pyproject.toml",
         "src/sc_neurocore/spike_codec/_predictive_kernels.py",
         "src/sc_neurocore/spike_codec/_world_model.py",
         "src/sc_neurocore/spike_codec/catalogue_types.py",
@@ -2745,6 +2733,7 @@
         "engine/src/codecs/waveform_container/mod.rs",
         "engine/src/codecs/waveform_container/snippets.rs",
         "engine/src/codecs/waveform_container/wire.rs",
+        "pyproject.toml",
         "src/sc_neurocore/spike_codec/_predictive_kernels.py",
         "src/sc_neurocore/spike_codec/_world_model.py",
         "src/sc_neurocore/spike_codec/catalogue_types.py",

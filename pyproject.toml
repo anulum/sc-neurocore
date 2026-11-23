@@ -75,6 +75,11 @@ holonomic_dna_storage = "sc_neurocore.adapters.holonomic.dna_storage:DNAEncoder"
 holonomic_grn = "sc_neurocore.adapters.holonomic.grn:GeneticRegulatoryLayer"
 holonomic_neuromodulation = "sc_neurocore.adapters.holonomic.neuromodulation:NeuromodulatorSystem"
 
+# Model simulators, resolved by sc_neurocore.core.backends.resolve_simulator so that a model
+# never imports its executor. Reinstall the package after changing this group.
+[project.entry-points."sc_neurocore.simulators"]
+alpha = "sc_neurocore.accel.alpha:simulate_alpha"
+
 [project.optional-dependencies]
 minimal = []
 core = []

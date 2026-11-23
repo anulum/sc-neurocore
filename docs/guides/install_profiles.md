@@ -189,7 +189,10 @@ sc-neurocore info
 Contributor environments must keep the editable Python package, Rust engine
 wheel, and checked-in release metadata on the same version. After changing
 release metadata or rebuilding the engine, refresh the editable install and run
-the version audit:
+the version audit. Refresh it as well after a change to the
+`sc_neurocore.simulators` entry points in `pyproject.toml`: models resolve their
+simulators from the installed metadata, and an install made before the change
+refuses the new model ids. The commands:
 
 ```bash
 python -m pip install -e ".[dev]"
