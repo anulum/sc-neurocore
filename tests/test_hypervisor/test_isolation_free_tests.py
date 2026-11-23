@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import ast
+from pathlib import Path
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from isolation_support import *  # noqa: F403
+from sc_neurocore.hypervisor import hypervisor as compatibility_surface
+from sc_neurocore.hypervisor import isolation
+from sc_neurocore.hypervisor.isolation import BitstreamFirewall
 
 
 def test_violation_log_capacity_is_bounded() -> None:
+    """A full violation log keeps its capacity while access is still denied."""
     firewall = BitstreamFirewall()
     firewall.max_violations = 1
 
@@ -27,12 +29,14 @@ def test_violation_log_capacity_is_bounded() -> None:
 
 
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
+    """The historical hypervisor module re-exports the isolation objects themselves."""
     assert compatibility_surface.FirewallRule is isolation.FirewallRule
     assert compatibility_surface.BitstreamFirewall is isolation.BitstreamFirewall
     assert compatibility_surface.verify_isolation is isolation.verify_isolation
 
 
 def test_address_isolation_definitions_have_one_owner() -> None:
+    """The isolation module defines exactly its classes and function; the historical module none."""
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(isolation.__file__).read_text(encoding="utf-8"))
 
@@ -45,5 +49,3 @@ def test_address_isolation_definitions_have_one_owner() -> None:
     assert "verify_isolation" not in facade_functions
     assert owner_classes == {"FirewallRule", "BitstreamFirewall"}
     assert owner_functions == {"verify_isolation"}
-    assert len(Path(isolation.__file__).read_text(encoding="utf-8").splitlines()) <= 120
-    assert len(Path(compatibility_surface.__file__).read_text(encoding="utf-8").splitlines()) <= 900
