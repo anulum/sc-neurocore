@@ -10,24 +10,34 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    create_bridge,
+)
 
 
 class TestBitstreamToFrequency:
-    def test_all_ones_maps_to_max(self):
+    """Mapping bitstream density to frequency."""
+
+    def test_all_ones_maps_to_max(self) -> None:
+        """An all-ones stream maps to the top frequency."""
         bridge = create_bridge()
         assert bridge.bitstream_to_frequency(np.ones(8)) == pytest.approx(40.0)
 
-    def test_all_zeros_maps_to_min(self):
+    def test_all_zeros_maps_to_min(self) -> None:
+        """An all-zeros stream maps to the bottom frequency."""
         bridge = create_bridge()
         assert bridge.bitstream_to_frequency(np.zeros(8)) == pytest.approx(1.0)
 
-    def test_half_density_maps_to_midpoint(self):
+    def test_half_density_maps_to_midpoint(self) -> None:
+        """A half-density stream maps to the midpoint."""
         bridge = create_bridge()
         bits = np.array([1, 0, 1, 0])
         assert bridge.bitstream_to_frequency(bits) == pytest.approx(20.5)
 
-    def test_custom_range(self):
+    def test_custom_range(self) -> None:
+        """A custom frequency range is honoured."""
         bridge = create_bridge()
         # prob = 0.25 -> 100 + 0.25 * (200 - 100) = 125
         bits = np.array([1, 0, 0, 0])

@@ -6,18 +6,35 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects_and_reset) from former test_chialvo_map_backends.py
 
+"""Tests of the Chialvo map's rejections and reset."""
+
 from __future__ import annotations
 
-from tests.chialvo_map_backends_support import *  # noqa: F403
+import ctypes
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models import (
+    chialvo_map,
+)
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
+from tests.chialvo_map_backends_support import (
+    _go_available,
+    _mojo_available,
+    _require,
+)
 
 
 def test_invalid_backend_rejected() -> None:
+    """An unknown backend is rejected."""
     for backend in ("cuda", "", "RUST"):
         with pytest.raises(ValueError, match="backend must be"):
             ChialvoMapNeuron().simulate(1, backend=backend)
 
 
 def test_invalid_batch_arguments_and_mutable_configuration_rejected() -> None:
+    """Invalid batch arguments and configuration are rejected."""
     neuron = ChialvoMapNeuron()
     with pytest.raises(ValueError, match="non-negative"):
         neuron.simulate(-1)
@@ -29,6 +46,7 @@ def test_invalid_batch_arguments_and_mutable_configuration_rejected() -> None:
 
 
 def test_complete_python_batch_is_failure_atomic() -> None:
+    """A failing Python batch leaves the state unchanged."""
     neuron = ChialvoMapNeuron(x=1.0e308, y=0.0)
     initial = (neuron.x, neuron.y)
     with pytest.raises(FloatingPointError, match="candidate state"):
@@ -38,6 +56,7 @@ def test_complete_python_batch_is_failure_atomic() -> None:
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_complete_c_abi_failure_leaves_output_buffers_untouched(backend: str) -> None:
+    """A failing C ABI call leaves the output buffers untouched."""
     available = _go_available if backend == "go" else _mojo_available
     _require(backend, available)
     library = chialvo_map._go_lib if backend == "go" else chialvo_map._mojo_lib
@@ -61,6 +80,7 @@ def test_complete_c_abi_failure_leaves_output_buffers_untouched(backend: str) ->
 
 
 def test_reset_preserves_configuration() -> None:
+    """A reset clears the state and keeps the configuration."""
     neuron = ChialvoMapNeuron(a=0.8, b=0.4, c=0.2, k=0.03, x_threshold=0.75)
     neuron.step(0.01)
     neuron.reset()

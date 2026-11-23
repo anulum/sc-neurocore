@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.bridges.photonic_noc import (
+    ThermalPhaseShifter,
+)
 
 
 class TestThermalPhaseShifter:
-    def test_power_for_pi_phase_positive(self):
+    """Heater power of a thermal phase shifter."""
+
+    def test_power_for_pi_phase_positive(self) -> None:
+        """A pi shift needs positive power."""
         shifter = ThermalPhaseShifter()
         power = shifter.power_for_phase(math.pi)
         assert power > 0
 
-    def test_power_for_zero_phase(self):
+    def test_power_for_zero_phase(self) -> None:
+        """No shift needs no power."""
         shifter = ThermalPhaseShifter()
         power = shifter.power_for_phase(0.0)
         assert power == pytest.approx(0.0, abs=1e-6)

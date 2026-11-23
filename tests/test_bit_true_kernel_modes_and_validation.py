@@ -12,7 +12,18 @@ from __future__ import annotations
 
 from sc_neurocore.compiler.intelligence.bit_true_kernel import kernel_arithmetic_contract
 from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
-from tests.bit_true_kernel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.intelligence.bit_true_kernel import (
+    generate_bittrue_kernel,
+    generate_bittrue_kernel_from_neuron,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+    from_equations,
+)
+from tests.bit_true_kernel_support import (
+    _lif,
+)
 
 
 def test_arithmetic_contract_refuses_an_unknown_function_lowering() -> None:

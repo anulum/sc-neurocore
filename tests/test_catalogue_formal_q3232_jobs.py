@@ -6,9 +6,16 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (q3232_jobs) from former test_catalogue_formal.py
 
+"""Tests of the Q32.32 formal-catalogue jobs."""
+
 from __future__ import annotations
 
-from tests.catalogue_formal_support import *  # noqa: F403
+import pytest
+import sys
+from tests.catalogue_formal_support import (
+    CATALOGUE,
+    EMITTER,
+)
 
 
 def test_expif_formal_job_uses_enrolled_q3232_precision() -> None:

@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.bridges.photonic_noc import (
+    SCToPhotonic,
+    WDMAssigner,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPhotonicBenchmark:
-    def test_compile_50_node_network(self):
+    """Benchmarks of the photonic NoC."""
+
+    def test_compile_50_node_network(self) -> None:
         """End-to-end 50-node SC → photonic compile."""
         compiler = SCToPhotonic()
         rng = np.random.default_rng(42)
@@ -31,7 +38,7 @@ class TestPhotonicBenchmark:
             strict_minimum_per_second=5.0,
         )
 
-    def test_wdm_assignment_throughput(self):
+    def test_wdm_assignment_throughput(self) -> None:
         """WDM assignment for 100 signals."""
         assigner = WDMAssigner(max_channels=128)
         signals = [f"sig_{i}" for i in range(100)]

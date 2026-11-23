@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNAGate,
+    EnzymaticGateCompiler,
+)
 
 
 class TestEnzymaticGateCompiler:
+    """Smoke tests of the enzymatic gate compiler."""
+
     def test_compile_nand(self) -> None:
+        """The result is a DNA gate; its structure is not checked."""
         compiler = EnzymaticGateCompiler()
         gate = compiler.compile_nand("a", "b", "out")
         assert isinstance(gate, DNAGate)
 
     def test_compile_xor(self) -> None:
+        """The result is a DNA gate; its structure is not checked."""
         compiler = EnzymaticGateCompiler()
         gate = compiler.compile_xor("a", "b", "out")
         assert isinstance(gate, DNAGate)

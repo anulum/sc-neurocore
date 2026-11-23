@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from tests.bipolar_sc_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.core.bipolar import (
+    bipolar_mac,
+)
 
 
 class TestBipolarMAC:
-    def test_single_input(self):
+    """Bipolar multiply-accumulate."""
+
+    def test_single_input(self) -> None:
+        """One input and weight give their product."""
         # 1 input: dot product = 0.5 * 0.8 = 0.4
         inputs = np.array([0.5])
         weights = np.array([[0.8]])
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
         assert abs(result[0] - 0.4) < 0.05
 
-    def test_two_inputs_dot_product(self):
+    def test_two_inputs_dot_product(self) -> None:
+        """Two inputs give their dot product."""
         # dot product: 0.6*0.5 + (-0.4)*0.3 = 0.3 - 0.12 = 0.18
         inputs = np.array([0.6, -0.4])
         weights = np.array([[0.5, 0.3]])
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
         assert abs(result[0] - 0.18) < 0.1
 
-    def test_multiple_outputs(self):
+    def test_multiple_outputs(self) -> None:
+        """Two output rows give two dot products."""
         inputs = np.array([0.5, -0.5])
         weights = np.array([[0.8, 0.2], [-0.3, 0.7]])
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
@@ -38,7 +47,8 @@ class TestBipolarMAC:
         assert abs(result[0] - 0.3) < 0.1
         assert abs(result[1] - (-0.5)) < 0.1
 
-    def test_longer_bitstream_more_accurate(self):
+    def test_longer_bitstream_more_accurate(self) -> None:
+        """A longer bitstream is no less accurate."""
         inputs = np.array([0.5])
         weights = np.array([[0.8]])
         r1 = bipolar_mac(inputs, weights, L=1000, seed=42)
@@ -46,11 +56,13 @@ class TestBipolarMAC:
         expected = 0.4
         assert abs(r2[0] - expected) < abs(r1[0] - expected) + 0.01
 
-    def test_rejects_shape_mismatch(self):
+    def test_rejects_shape_mismatch(self) -> None:
+        """Mismatched inputs and weights are rejected."""
         with pytest.raises(ValueError, match="shape"):
             bipolar_mac(np.array([0.5, -0.2]), np.array([[0.8]]), L=1000, seed=42)
 
-    def test_rejects_out_of_range_inputs_and_weights(self):
+    def test_rejects_out_of_range_inputs_and_weights(self) -> None:
+        """Inputs or weights outside [-1, 1] are rejected."""
         with pytest.raises(ValueError, match=r"\[-1, 1\]"):
             bipolar_mac(np.array([1.2]), np.array([[0.8]]), L=1000, seed=42)
         with pytest.raises(ValueError, match=r"\[-1, 1\]"):

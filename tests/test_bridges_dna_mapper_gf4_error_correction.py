@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    GF4ErrorCorrection,
+)
 
 
 class TestGF4ErrorCorrection:
+    """GF(4) error correction of DNA sequences."""
+
     def test_encode_decode_roundtrip(self) -> None:
+        """A sequence round-trips with no error."""
         ecc = GF4ErrorCorrection(n_parity=4)
         data = "ATCGATCG"
         encoded = ecc.encode(data)
@@ -24,6 +29,7 @@ class TestGF4ErrorCorrection:
         assert errors == 0
 
     def test_detects_errors(self) -> None:
+        """Decoding a mutated sequence runs; the count is not checked."""
         ecc = GF4ErrorCorrection(n_parity=4)
         data = "ATCGATCG"
         encoded = ecc.encode(data)

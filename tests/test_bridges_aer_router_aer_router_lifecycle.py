@@ -10,31 +10,37 @@
 
 from __future__ import annotations
 
-from tests.bridges_aer_router_support import *  # noqa: F403
+from sc_neurocore.bridges.aer_router import (
+    AERRouter,
+)
 
 
 class TestAERRouterLifecycle:
     """Route registration, unregistration, counting."""
 
-    def test_empty_router(self):
+    def test_empty_router(self) -> None:
+        """A new router has no routes and no traffic."""
         router = AERRouter()
         assert router.route_count == 0
         assert router.total_sent == 0
         assert router.total_acked == 0
         assert router.pending_count == 0
 
-    def test_register_single_route(self):
+    def test_register_single_route(self) -> None:
+        """One registered route is counted."""
         router = AERRouter()
         router.register_route(neuron_id=1, addr="192.168.1.1:5000")
         assert router.route_count == 1
 
-    def test_register_multiple_routes(self):
+    def test_register_multiple_routes(self) -> None:
+        """Twenty registered routes are counted."""
         router = AERRouter()
         for i in range(20):
             router.register_route(neuron_id=i, addr=f"host{i}:5000")
         assert router.route_count == 20
 
-    def test_unregister_decreases_count(self):
+    def test_unregister_decreases_count(self) -> None:
+        """Unregistering removes a route."""
         router = AERRouter()
         router.register_route(neuron_id=1, addr="h:5000")
         router.register_route(neuron_id=2, addr="h:5001")
@@ -42,12 +48,14 @@ class TestAERRouterLifecycle:
         router.unregister_route(neuron_id=1)
         assert router.route_count == 1
 
-    def test_unregister_nonexistent_is_noop(self):
+    def test_unregister_nonexistent_is_noop(self) -> None:
+        """Unregistering an unknown route does nothing."""
         router = AERRouter()
         router.unregister_route(neuron_id=999)
         assert router.route_count == 0
 
-    def test_re_register_overwrites(self):
+    def test_re_register_overwrites(self) -> None:
+        """Registering a route twice keeps one."""
         router = AERRouter()
         router.register_route(neuron_id=1, addr="old:5000")
         router.register_route(neuron_id=1, addr="new:5001")

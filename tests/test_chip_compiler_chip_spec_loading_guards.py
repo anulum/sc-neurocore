@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.chip_compiler_support import *  # noqa: F403
+from pathlib import Path
+import pytest
 
 
 class TestChipSpecLoadingGuards:
-    def test_load_chip_spec_rejects_invalid_json(self, tmp_path):
+    """Checks when loading chip specifications."""
+
+    def test_load_chip_spec_rejects_invalid_json(self, tmp_path: Path) -> None:
+        """Invalid JSON is rejected."""
         from sc_neurocore.chip_compiler.chip_spec import load_chip_spec
 
         bad = tmp_path / "bad.json"
@@ -22,13 +26,15 @@ class TestChipSpecLoadingGuards:
         with pytest.raises(ValueError, match="not valid chip spec JSON"):
             load_chip_spec(bad)
 
-    def test_validate_core_payload_rejects_non_object(self):
+    def test_validate_core_payload_rejects_non_object(self) -> None:
+        """A core that is not an object is rejected."""
         from sc_neurocore.chip_compiler.chip_spec import _validate_core_payload
 
         with pytest.raises(ValueError, match="core must be an object"):
             _validate_core_payload([1, 2], source="spec")
 
-    def test_required_float_rejects_non_numeric(self):
+    def test_required_float_rejects_non_numeric(self) -> None:
+        """A non-numeric required field is rejected."""
         from sc_neurocore.chip_compiler.chip_spec import _required_float
 
         with pytest.raises(ValueError, match="must be numeric"):

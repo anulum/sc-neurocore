@@ -16,7 +16,22 @@ from __future__ import annotations
 
 import math
 
-from tests.chialvo_map_backends_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import pytest
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
+from tests.chialvo_map_backends_support import (
+    _assert_backend_contract,
+    _go_available,
+    _julia_available,
+    _mojo_available,
+    _OPERATING_CURRENTS,
+    _require,
+    _run,
+    _rust_available,
+)
 
 
 def test_rust_backend_contract() -> None:

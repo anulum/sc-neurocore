@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.photonic_noc import (
+    PowerBudgetAnalyzer,
+    SCToPhotonic,
+)
 
 
 class TestPowerBudgetAnalyzer:
-    def test_analyze_returns_dict(self):
+    """Smoke test of the power budget analysis."""
+
+    def test_analyze_returns_dict(self) -> None:
+        """The result is a dict; its contents are not checked."""
         compiler = SCToPhotonic()
         adj = np.array([[0, 1], [0, 0]], dtype=float)
         design = compiler.compile(adj)

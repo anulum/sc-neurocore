@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+import os
+import time
+from sc_neurocore.bridges.dna_mapper import (
+    SequenceDesigner,
+    StrandDisplacementCompiler,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDNAMapperBenchmark:
+    """Benchmarks of the DNA mapper."""
+
     def test_sequence_generation_throughput(self) -> None:
         """Generate 500 random 20nt sequences."""
         designer = SequenceDesigner(seed=42)

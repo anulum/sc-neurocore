@@ -10,30 +10,40 @@
 
 from __future__ import annotations
 
-from tests.bipolar_sc_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.core.bipolar import (
+    bipolar_sc_layer,
+)
 
 
 class TestBipolarSCLayer:
-    def test_output_shape(self):
+    """A bipolar stochastic-computing layer."""
+
+    def test_output_shape(self) -> None:
+        """The layer gives one output per unit."""
         inputs = np.array([0.5, -0.3, 0.1])
         weights = np.array([[0.2, 0.4, -0.1], [-0.5, 0.3, 0.8]])
         out = bipolar_sc_layer(inputs, weights, bias=None, L=1000)
         assert out.shape == (2,)
 
-    def test_relu_clips_negative(self):
+    def test_relu_clips_negative(self) -> None:
+        """ReLU clips negative outputs to 0."""
         inputs = np.array([-0.9])
         weights = np.array([[0.9]])
         out = bipolar_sc_layer(inputs, weights, bias=None, L=50000, activation="relu")
         # -0.9 * 0.9 = -0.81, relu -> 0
         assert out[0] >= 0.0
 
-    def test_output_bounded(self):
+    def test_output_bounded(self) -> None:
+        """Outputs stay in [-1, 1]."""
         inputs = np.random.default_rng(42).uniform(-1, 1, 10)
         weights = np.random.default_rng(43).uniform(-1, 1, (5, 10))
         out = bipolar_sc_layer(inputs, weights, bias=None, L=1000)
         assert (out >= -1.0).all() and (out <= 1.0).all()
 
-    def test_rejects_unknown_activation(self):
+    def test_rejects_unknown_activation(self) -> None:
+        """An unknown activation is rejected."""
         with pytest.raises(ValueError, match="activation"):
             bipolar_sc_layer(
                 np.array([0.5]),

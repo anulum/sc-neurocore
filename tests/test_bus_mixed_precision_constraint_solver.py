@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.bus_mixed_precision_support import *  # noqa: F403
+from sc_neurocore.compiler.mixed_precision import (
+    solve_precision,
+)
 
 
 class TestConstraintSolver:

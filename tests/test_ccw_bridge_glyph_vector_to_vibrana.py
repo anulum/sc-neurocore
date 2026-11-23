@@ -10,46 +10,68 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    create_bridge,
+)
 
 
 class TestGlyphVectorToVibrana:
-    def _full(self, phi=0.0, fib=0.0, metatron=0.0, platonic=0.0, e8=0.0, health=0.0):
+    """Mapping glyph vectors to the visual state."""
+
+    def _full(
+        self,
+        phi: float = 0.0,
+        fib: float = 0.0,
+        metatron: float = 0.0,
+        platonic: float = 0.0,
+        e8: float = 0.0,
+        health: float = 0.0,
+    ) -> npt.NDArray[np.float64]:
         return np.array([phi, fib, metatron, platonic, e8, health])
 
-    def test_short_vector_is_padded(self):
+    def test_short_vector_is_padded(self) -> None:
+        """A short vector is padded to six weights."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(np.array([0.5, 0.5]))
         # Padding to 6 entries means the missing components read as zero.
         assert out["glyph_weights"]["symbolic_health"] == pytest.approx(0.0)
         assert bridge.vibrana_state.glyph_weights.shape == (6,)
 
-    def test_mode_theurgic_on_high_metatron(self):
+    def test_mode_theurgic_on_high_metatron(self) -> None:
+        """A high Metatron weight selects theurgic mode."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(metatron=0.8))
         assert out["mode"] == "theurgic"
 
-    def test_mode_cosmic_on_phi_and_fibonacci(self):
+    def test_mode_cosmic_on_phi_and_fibonacci(self) -> None:
+        """High phi and Fibonacci weights select cosmic mode."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(phi=0.9, fib=0.9, metatron=0.1))
         assert out["mode"] == "cosmic"
 
-    def test_mode_healing_on_symbolic_health(self):
+    def test_mode_healing_on_symbolic_health(self) -> None:
+        """A high health weight selects healing mode."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(health=0.7))
         assert out["mode"] == "healing"
 
-    def test_mode_meditation_on_e8(self):
+    def test_mode_meditation_on_e8(self) -> None:
+        """A high E8 weight selects meditation mode."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(e8=0.8))
         assert out["mode"] == "meditation"
 
-    def test_mode_focus_is_the_fallback(self):
+    def test_mode_focus_is_the_fallback(self) -> None:
+        """Otherwise the mode is focus."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(platonic=0.2))
         assert out["mode"] == "focus"
 
-    def test_output_structure_and_frequencies(self):
+    def test_output_structure_and_frequencies(self) -> None:
+        """The output carries phase, intensity and speed."""
         bridge = create_bridge()
         out = bridge.glyph_vector_to_vibrana(self._full(metatron=0.8, health=0.4))
         # Geometry phase is wrapped into [0, 2π).
@@ -69,7 +91,8 @@ class TestGlyphVectorToVibrana:
         assert out["frequencies"]["base"] == pytest.approx(7.83)
         assert out["frequencies"]["harmonic"] == pytest.approx(14.3)
 
-    def test_geometry_phase_accumulates_across_calls(self):
+    def test_geometry_phase_accumulates_across_calls(self) -> None:
+        """The geometry phase accumulates across calls."""
         bridge = create_bridge()
         first = bridge.glyph_vector_to_vibrana(self._full(platonic=1.0))
         second = bridge.glyph_vector_to_vibrana(self._full(platonic=1.0))

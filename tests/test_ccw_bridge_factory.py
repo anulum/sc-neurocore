@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    CCWBridge,
+    CCWParameters,
+    create_bridge,
+)
 
 
 class TestFactory:
-    def test_create_bridge_without_params(self):
+    """The CCW bridge factory."""
+
+    def test_create_bridge_without_params(self) -> None:
+        """The factory builds a bridge with defaults."""
         bridge = create_bridge()
         assert isinstance(bridge, CCWBridge)
         assert isinstance(bridge.params, CCWParameters)
 
-    def test_create_bridge_with_params(self):
+    def test_create_bridge_with_params(self) -> None:
+        """The factory keeps given parameters."""
         params = CCWParameters(binaural_offset=6.0)
         bridge = create_bridge(params)
         assert bridge.params.binaural_offset == pytest.approx(6.0)

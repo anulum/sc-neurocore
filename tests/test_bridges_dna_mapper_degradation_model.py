@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.dna_mapper import (
+    DegradationModel,
+)
 
 
 class TestDegradationModel:
+    """Smoke test of the degradation model."""
+
     def test_predict_concentration_decays(self) -> None:
+        """Concentration decays over time and not at time 0."""
         model = DegradationModel(half_life_hr=2.0)
         c0 = 100.0
         c1 = model.predict_concentration(c0, strand_length=20, time_hr=2.0)

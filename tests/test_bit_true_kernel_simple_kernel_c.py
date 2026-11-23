@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.bit_true_kernel_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence.bit_true_kernel import (
+    generate_bittrue_kernel,
+)
 
 
 class TestSimpleKernelC:

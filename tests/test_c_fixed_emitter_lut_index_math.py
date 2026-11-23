@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.c_fixed_emitter_support import *  # noqa: F403
+from tests.c_fixed_emitter_support import (
+    _c,
+)
 
 
 class TestLutIndexMath:

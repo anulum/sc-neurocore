@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3047
+expected_file_count = 3102
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -12232,3 +12232,223 @@ rationale = "Exercise SC-NeuroCore: biophysical neurons wang buzsaki."
 [[file]]
 path = "tests/test_biophysical_neurons_wilson_cowan.py"
 rationale = "Exercise SC-NeuroCore: biophysical neurons wilson cowan."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_encode_decode.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar encode decode."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_mac.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar mac."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_multiply.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar multiply."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_sc_layer.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar sc layer."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_sc_layer_bias_and_activation.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar sc layer bias and activation."
+
+[[file]]
+path = "tests/test_bipolar_sc_bipolar_validation_paths.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc bipolar validation paths."
+
+[[file]]
+path = "tests/test_bipolar_sc_float_to_bipolar_weights.py"
+rationale = "Exercise SC-NeuroCore: bipolar sc float to bipolar weights."
+
+[[file]]
+path = "tests/test_bridges_aer_router_aer_router_lifecycle.py"
+rationale = "Exercise SC-NeuroCore: bridges aer router aer router lifecycle."
+
+[[file]]
+path = "tests/test_bridges_aer_router_aer_router_stats.py"
+rationale = "Exercise SC-NeuroCore: bridges aer router aer router stats."
+
+[[file]]
+path = "tests/test_bridges_aer_router_spike_packet.py"
+rationale = "Exercise SC-NeuroCore: bridges aer router spike packet."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_bitstream_to_dna.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper bitstream to dna."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_cross_hybridization_checker.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper cross hybridization checker."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_degradation_model.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper degradation model."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_dna_mapper_benchmark.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper dna mapper benchmark."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_dna_strand.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper dna strand."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_enzymatic_gate_compiler.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper enzymatic gate compiler."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_gf4_error_correction.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper gf4 error correction."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_hairpin_checker.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper hairpin checker."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_kinetic_simulator.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper kinetic simulator."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_sc_network_bridge.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper sc network bridge."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_sequence_designer.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper sequence designer."
+
+[[file]]
+path = "tests/test_bridges_dna_mapper_strand_displacement_compiler.py"
+rationale = "Exercise SC-NeuroCore: bridges dna mapper strand displacement compiler."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_crosstalk_analyzer.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc crosstalk analyzer."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_mzi_compiler.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc mzi compiler."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_photonic_benchmark.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc photonic benchmark."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_power_budget_analyzer.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc power budget analyzer."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_sc_to_photonic.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc sc to photonic."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_thermal_phase_shifter.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc thermal phase shifter."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_waveguide_router.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc waveguide router."
+
+[[file]]
+path = "tests/test_bridges_photonic_noc_wdm_assigner.py"
+rationale = "Exercise SC-NeuroCore: bridges photonic noc wdm assigner."
+
+[[file]]
+path = "tests/test_bus_mixed_precision_constraint_solver.py"
+rationale = "Exercise SC-NeuroCore: bus mixed precision constraint solver."
+
+[[file]]
+path = "tests/test_bus_mixed_precision_from_preset.py"
+rationale = "Exercise SC-NeuroCore: bus mixed precision from preset."
+
+[[file]]
+path = "tests/test_bus_mixed_precision_mixed_precision_spec.py"
+rationale = "Exercise SC-NeuroCore: bus mixed precision mixed precision spec."
+
+[[file]]
+path = "tests/test_bus_mixed_precision_precision_config.py"
+rationale = "Exercise SC-NeuroCore: bus mixed precision precision config."
+
+[[file]]
+path = "tests/test_catalogue_formal_q3232_jobs.py"
+rationale = "Exercise SC-NeuroCore: catalogue formal q3232 jobs."
+
+[[file]]
+path = "tests/test_catalogue_formal_smoke.py"
+rationale = "Exercise SC-NeuroCore: catalogue formal smoke."
+
+[[file]]
+path = "tests/test_ccw_bridge_bitstream_to_frequency.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge bitstream to frequency."
+
+[[file]]
+path = "tests/test_ccw_bridge_create_session_config.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge create session config."
+
+[[file]]
+path = "tests/test_ccw_bridge_defaults.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge defaults."
+
+[[file]]
+path = "tests/test_ccw_bridge_export_glyph_stream.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge export glyph stream."
+
+[[file]]
+path = "tests/test_ccw_bridge_factory.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge factory."
+
+[[file]]
+path = "tests/test_ccw_bridge_generate_binaural_sample.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge generate binaural sample."
+
+[[file]]
+path = "tests/test_ccw_bridge_generate_ccw_metadata.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge generate ccw metadata."
+
+[[file]]
+path = "tests/test_ccw_bridge_glyph_vector_to_vibrana.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge glyph vector to vibrana."
+
+[[file]]
+path = "tests/test_ccw_bridge_scpn_metrics_to_ccw.py"
+rationale = "Exercise SC-NeuroCore: ccw bridge scpn metrics to ccw."
+
+[[file]]
+path = "tests/test_chaos_chaotic_rng.py"
+rationale = "Exercise SC-NeuroCore: chaos chaotic rng."
+
+[[file]]
+path = "tests/test_chaos_tent_map_rng.py"
+rationale = "Exercise SC-NeuroCore: chaos tent map rng."
+
+[[file]]
+path = "tests/test_chialvo_map_backends_auto_dispatch.py"
+rationale = "Exercise SC-NeuroCore: chialvo map backends auto dispatch."
+
+[[file]]
+path = "tests/test_chialvo_map_backends_fail_closed_loaders.py"
+rationale = "Exercise SC-NeuroCore: chialvo map backends fail closed loaders."
+
+[[file]]
+path = "tests/test_chialvo_map_backends_rejects_and_reset.py"
+rationale = "Exercise SC-NeuroCore: chialvo map backends rejects and reset."
+
+[[file]]
+path = "tests/test_chip_compiler_chip_spec.py"
+rationale = "Exercise SC-NeuroCore: chip compiler chip spec."
+
+[[file]]
+path = "tests/test_chip_compiler_chip_spec_loading_guards.py"
+rationale = "Exercise SC-NeuroCore: chip compiler chip spec loading guards."
+
+[[file]]
+path = "tests/test_chip_compiler_compile_for_chip.py"
+rationale = "Exercise SC-NeuroCore: chip compiler compile for chip."
+
+[[file]]
+path = "tests/test_circuit_primitives_lateral_inhibition.py"
+rationale = "Exercise SC-NeuroCore: circuit primitives lateral inhibition."
+
+[[file]]
+path = "tests/test_circuit_primitives_winner_take_all.py"
+rationale = "Exercise SC-NeuroCore: circuit primitives winner take all."

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    CCWMode,
+    create_bridge,
+)
 
 
 class TestCreateSessionConfig:
-    def test_default_meditation_session(self):
+    """Building CCW session configurations."""
+
+    def test_default_meditation_session(self) -> None:
+        """The default is a 20-minute meditation session."""
         bridge = create_bridge()
         cfg = bridge.create_session_config()
         assert cfg["session"]["mode"] == "meditation"
@@ -24,7 +31,8 @@ class TestCreateSessionConfig:
         assert cfg["audio"]["harmonic_frequency"] == pytest.approx(7.83)
         assert cfg["scpn_integration"]["enabled"] is True
 
-    def test_explicit_mode_and_duration(self):
+    def test_explicit_mode_and_duration(self) -> None:
+        """An explicit mode and duration are kept."""
         bridge = create_bridge()
         cfg = bridge.create_session_config(mode=CCWMode.COSMIC, duration_minutes=45)
         assert cfg["session"]["mode"] == "cosmic"

@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.c_fixed_emitter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.c_fixed_emitter import (
+    _CFixedExprEmitter,
+    emit_c_fixed_expr,
+)
+from sc_neurocore.compiler.verilog_compiler_config import (
+    Q88,
+)
+from tests.c_fixed_emitter_support import (
+    Q,
+)
 
 
 class TestValidation:

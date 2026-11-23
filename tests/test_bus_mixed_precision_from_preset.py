@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.bus_mixed_precision_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.mixed_precision import (
+    BlockFloatingPrecisionConfig,
+    from_preset,
+    PRECISION_PRESETS,
+)
 
 
 class TestFromPreset:

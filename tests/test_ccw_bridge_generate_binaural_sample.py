@@ -10,30 +10,40 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    create_bridge,
+)
 
 
 class TestGenerateBinauralSample:
-    def test_shapes_match_requested_duration(self):
+    """Generating binaural audio samples."""
+
+    def test_shapes_match_requested_duration(self) -> None:
+        """Both channels have the asked length."""
         bridge = create_bridge()
         left, right = bridge.generate_binaural_sample({"carrier_frequency": 432.0}, 256)
         assert left.shape == (256,)
         assert right.shape == (256,)
 
-    def test_default_duration_is_1024(self):
+    def test_default_duration_is_1024(self) -> None:
+        """The default length is 1024 samples."""
         bridge = create_bridge()
         left, right = bridge.generate_binaural_sample({})
         assert left.shape == (1024,)
         assert right.shape == (1024,)
 
-    def test_amplitude_bounds_the_signal(self):
+    def test_amplitude_bounds_the_signal(self) -> None:
+        """The amplitude bounds both channels."""
         bridge = create_bridge()
         amplitude = 0.3
         left, right = bridge.generate_binaural_sample({"amplitude": amplitude}, 512)
         assert np.max(np.abs(left)) <= amplitude + 1e-9
         assert np.max(np.abs(right)) <= amplitude + 1e-9
 
-    def test_phase_state_is_continuous(self):
+    def test_phase_state_is_continuous(self) -> None:
+        """The phase carries over between calls."""
         bridge = create_bridge()
         bridge.generate_binaural_sample({"carrier_frequency": 100.0}, 128)
         first_phase = bridge.phase_left

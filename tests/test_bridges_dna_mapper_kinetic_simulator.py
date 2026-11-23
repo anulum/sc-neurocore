@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    DNAStrand,
+    KineticSimulator,
+    StrandDisplacementCompiler,
+)
 
 
 class TestKineticSimulator:
+    """Smoke test of the kinetic simulator."""
+
     def test_simulate_produces_trajectory(self) -> None:
+        """The result is a dict; its contents are not checked."""
         compiler = StrandDisplacementCompiler()
         and_gate = compiler.compile_and("a", "b", "out")
         design = DNACircuitDesign(

@@ -10,7 +10,26 @@
 
 from __future__ import annotations
 
-from tests.bit_true_cosim_support import *  # noqa: F403
+import pytest
+import tempfile
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import (
+    ErmentroutKopellMapNeuron,
+)
+from tests.bit_true_cosim_support import (
+    _c_trace,
+    _CASES,
+    _ermentrout_kopell_map,
+    _nearest_negative_half_tie_map,
+    _q_input,
+    _rust_trace,
+    _verilog_trace,
+    HAS_COSIM,
+    HAS_RUST,
+    NeuronFactory,
+)
 
 
 @pytest.mark.skipif(

@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+from sc_neurocore.bridges.photonic_noc import (
+    WDMAssigner,
+)
 
 
 class TestWDMAssigner:
-    def test_assign_no_conflicts(self):
+    """Assigning WDM wavelengths."""
+
+    def test_assign_no_conflicts(self) -> None:
+        """Three signals get three distinct wavelengths."""
         assigner = WDMAssigner(max_channels=8)
         channels = assigner.assign(["sig_a", "sig_b", "sig_c"])
         assert isinstance(channels, list)
@@ -22,7 +27,8 @@ class TestWDMAssigner:
         wavelengths = [ch.wavelength_nm for ch in channels]
         assert len(set(wavelengths)) == 3
 
-    def test_channel_wavelength_positive(self):
+    def test_channel_wavelength_positive(self) -> None:
+        """Channels have positive wavelength and bandwidth."""
         assigner = WDMAssigner()
         channels = assigner.assign(["s1", "s2"])
         for ch in channels:

@@ -10,23 +10,32 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.dna_mapper import (
+    DNAStrand,
+)
 
 
 class TestDNAStrand:
+    """Properties of a DNA strand."""
+
     def test_gc_content_all_gc(self) -> None:
+        """An all-GC strand has GC content 1."""
         s = DNAStrand(name="s1", sequence="GCGC")
         assert s.gc_content == pytest.approx(1.0)
 
     def test_gc_content_all_at(self) -> None:
+        """An all-AT strand has GC content 0."""
         s = DNAStrand(name="s2", sequence="ATAT")
         assert s.gc_content == pytest.approx(0.0)
 
     def test_gc_content_mixed(self) -> None:
+        """A half-GC strand has GC content 0.5."""
         s = DNAStrand(name="s3", sequence="ATGC")
         assert s.gc_content == pytest.approx(0.5)
 
     def test_complement(self) -> None:
+        """The complement is a DNA string of the same length."""
         s = DNAStrand(name="s4", sequence="ATCG")
         comp = s.complement
         assert isinstance(comp, str)
@@ -34,10 +43,12 @@ class TestDNAStrand:
         assert set(comp).issubset(set("ATCG"))
 
     def test_max_homopolymer_run(self) -> None:
+        """A long run of one base is found."""
         s = DNAStrand(name="s5", sequence="AAAAATCG")
         assert s.max_homopolymer_run >= 5
 
     def test_delta_g_37(self) -> None:
+        """The free energy is a float; its value is not checked."""
         s = DNAStrand(name="s6", sequence="GCGCGCGCGCGC")
         dg = s.delta_g_37()
         assert isinstance(dg, float)

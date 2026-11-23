@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.catalogue_formal_support import *  # noqa: F403
+import pytest
+import shutil
+import sys
+from pathlib import (
+    Path,
+)
+from tests.catalogue_formal_support import (
+    _perfect_class_names,
+    CATALOGUE,
+    EMITTER,
+)
 
 
 def test_emitter_lists_every_perfect_model() -> None:

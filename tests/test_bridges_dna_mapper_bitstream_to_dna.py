@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    DNACircuitDesign,
+)
 
 
 class TestBitstreamToDNA:
+    """Smoke tests of compiling to DNA."""
+
     def test_compile_network(self) -> None:
+        """Compilation returns a DNA circuit design."""
         bridge = BitstreamToDNA(seed=42)
         gates = [
             {"type": "AND", "inputs": ["a", "b"], "output": "c"},
@@ -24,6 +30,7 @@ class TestBitstreamToDNA:
         assert isinstance(design, DNACircuitDesign)
 
     def test_validate(self) -> None:
+        """The result is a dict; its contents are not checked."""
         bridge = BitstreamToDNA(seed=42)
         gates = [{"type": "NOT", "inputs": ["a"], "output": "b"}]
         design = bridge.compile_network(gates, input_names=["a"], output_names=["b"])

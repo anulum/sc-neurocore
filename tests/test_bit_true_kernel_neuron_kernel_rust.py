@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.bit_true_kernel_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence.bit_true_kernel import (
+    generate_bittrue_kernel_from_neuron,
+)
+from sc_neurocore.neurons.equation_builder import (
+    from_equations,
+)
+from tests.bit_true_kernel_support import (
+    _adaptive_reset_neuron,
+    _lif,
+    _wrapped_phase_neuron,
+)
 
 
 class TestNeuronKernelRust:

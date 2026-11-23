@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.ccw_bridge_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.interfaces.ccw_bridge import (
+    CCWBridge,
+    CCWMode,
+    CCWParameters,
+    VIBRANAState,
+)
 
 
 class TestDefaults:
-    def test_ccw_parameters_defaults(self):
+    """Default CCW parameters and state."""
+
+    def test_ccw_parameters_defaults(self) -> None:
+        """The default frequencies are the Schumann and carrier values."""
         p = CCWParameters()
         assert p.base_frequency == pytest.approx(7.83)  # Schumann
         assert p.carrier_frequency == pytest.approx(432.0)  # Verdi A4
@@ -22,7 +32,8 @@ class TestDefaults:
         assert p.modulation_depth == pytest.approx(0.5)
         assert p.sample_rate == 44100
 
-    def test_vibrana_state_defaults(self):
+    def test_vibrana_state_defaults(self) -> None:
+        """The visual state starts in meditation mode."""
         s = VIBRANAState()
         assert s.mode is CCWMode.MEDITATION
         assert s.geometry_phase == 0.0
@@ -30,7 +41,8 @@ class TestDefaults:
         assert s.glyph_weights.shape == (6,)
         assert np.all(s.glyph_weights == 0.0)
 
-    def test_ccw_mode_string_values(self):
+    def test_ccw_mode_string_values(self) -> None:
+        """Each mode has its string value."""
         assert CCWMode.THEURGIC.value == "theurgic"
         assert {m.value for m in CCWMode} == {
             "theurgic",
@@ -41,14 +53,16 @@ class TestDefaults:
             "creativity",
         }
 
-    def test_init_uses_default_parameters_when_none(self):
+    def test_init_uses_default_parameters_when_none(self) -> None:
+        """Without parameters the bridge uses the defaults."""
         bridge = CCWBridge()
         assert isinstance(bridge.params, CCWParameters)
         assert bridge.params.sample_rate == 44100
         assert bridge.vibrana_state.mode is CCWMode.MEDITATION
         assert bridge.smoothing_window == 10
 
-    def test_init_accepts_explicit_parameters(self):
+    def test_init_accepts_explicit_parameters(self) -> None:
+        """Explicit parameters are kept."""
         params = CCWParameters(carrier_frequency=528.0, sample_rate=22050)
         bridge = CCWBridge(params)
         assert bridge.params is params

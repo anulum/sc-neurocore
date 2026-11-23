@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    HairpinChecker,
+)
 
 
 class TestHairpinChecker:
+    """Smoke test of the hairpin check."""
+
     def test_check_strand(self) -> None:
+        """The result is a list; its contents are not checked."""
         checker = HairpinChecker()
         result = checker.check_strand("GCGATCGC")
         assert isinstance(result, list)

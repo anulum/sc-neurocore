@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.photonic_noc import (
+    WaveguideRouter,
+    WaveguideSegment,
+)
 
 
 class TestWaveguideRouter:
-    def test_route_two_nodes(self):
+    """Routing waveguides between nodes."""
+
+    def test_route_two_nodes(self) -> None:
+        """Two nodes are joined by waveguide segments."""
         router = WaveguideRouter()
         adj = np.array([[0, 1], [0, 0]], dtype=float)
         segments = router.route(adj)
@@ -22,26 +29,30 @@ class TestWaveguideRouter:
         assert len(segments) >= 1
         assert all(isinstance(s, WaveguideSegment) for s in segments)
 
-    def test_route_triangle(self):
+    def test_route_triangle(self) -> None:
+        """A triangle gives at least three segments."""
         router = WaveguideRouter()
         adj = np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]], dtype=float)
         segments = router.route(adj)
         assert len(segments) >= 3
 
-    def test_no_self_loops(self):
+    def test_no_self_loops(self) -> None:
+        """No segment returns to its own node."""
         router = WaveguideRouter()
         adj = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=float)
         segments = router.route(adj)
         for seg in segments:
             assert seg.source != seg.target
 
-    def test_route_empty_graph(self):
+    def test_route_empty_graph(self) -> None:
+        """An empty graph gives no segment."""
         router = WaveguideRouter()
         adj = np.zeros((5, 5), dtype=float)
         segments = router.route(adj)
         assert len(segments) == 0
 
-    def test_segment_positive_length(self):
+    def test_segment_positive_length(self) -> None:
+        """Every segment has a positive length."""
         router = WaveguideRouter()
         adj = np.array([[0, 1], [0, 0]], dtype=float)
         segments = router.route(adj)

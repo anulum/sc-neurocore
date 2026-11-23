@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 83 top-level test modules of the bipolar SC, bit-true, bridge,
+  bus, catalogue, CCW bridge, C emitter, chaos, Chialvo map, chip
+  compiler and circuit-primitive suites import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy. Nine support modules left without an importer are deleted.
+
 - The 54 top-level test modules of the AdEx, AER, alternative-path,
   astrocyte, augmentation, auto-fit, benchmark, bio and biophysical
   suites import their names explicitly instead of through a

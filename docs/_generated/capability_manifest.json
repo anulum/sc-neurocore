@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5716
+    "test_files": 5707
   },
   "documentation": {
     "public_pages": [
@@ -3388,24 +3388,15 @@
       "tests/bench_iqif_support.py",
       "tests/benchmark_history_support.py",
       "tests/bio_chaos_spatial_learning_support.py",
-      "tests/bipolar_sc_support.py",
       "tests/bit_true_cosim_support.py",
       "tests/bit_true_kernel_support.py",
-      "tests/bridges_aer_router_support.py",
-      "tests/bridges_dna_mapper_support.py",
-      "tests/bridges_photonic_noc_support.py",
       "tests/brunel_regression_support.py",
       "tests/brunel_translator_support.py",
       "tests/bus_interface_wrappers_support.py",
-      "tests/bus_mixed_precision_support.py",
       "tests/c_expr_emitter_support.py",
       "tests/c_fixed_emitter_support.py",
       "tests/catalogue_formal_support.py",
-      "tests/ccw_bridge_support.py",
-      "tests/chaos_support.py",
       "tests/chialvo_map_backends_support.py",
-      "tests/chip_compiler_support.py",
-      "tests/circuit_primitives_support.py",
       "tests/cli_deploy_support.py",
       "tests/cli_formal_support.py",
       "tests/cli_nir_test_support.py",

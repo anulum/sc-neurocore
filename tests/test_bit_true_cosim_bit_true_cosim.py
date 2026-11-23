@@ -10,7 +10,23 @@
 
 from __future__ import annotations
 
-from tests.bit_true_cosim_support import *  # noqa: F403
+import pytest
+import tempfile
+from pathlib import (
+    Path,
+)
+from tests.bit_true_cosim_support import (
+    _c_trace,
+    _CASES,
+    _ermentrout_kopell_map,
+    _fire,
+    _nearest_negative_half_tie_map,
+    _q_input,
+    _sqrt_map,
+    _verilog_trace,
+    HAS_COSIM,
+    NeuronFactory,
+)
 
 
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")

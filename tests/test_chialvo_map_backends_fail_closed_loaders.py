@@ -6,9 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (fail_closed_loaders) from former test_chialvo_map_backends.py
 
+"""Tests that the Chialvo map's native loaders fail closed."""
+
 from __future__ import annotations
 
-from tests.chialvo_map_backends_support import *  # noqa: F403
+import ctypes
+import importlib
+import importlib.util
+import os
+import pytest
+from sc_neurocore.neurons.models import (
+    chialvo_map,
+)
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
 
 
 def test_explicit_unavailable_backend_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:

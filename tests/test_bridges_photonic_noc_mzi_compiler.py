@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import math
+from sc_neurocore.bridges.photonic_noc import (
+    MZICompiler,
+    MZIGate,
+)
 
 
 class TestMZICompiler:
-    def test_compile_gate(self):
+    """Compiling MZI gates."""
+
+    def test_compile_gate(self) -> None:
+        """A gate compiles to an MZI gate."""
         compiler = MZICompiler()
         gate = compiler.compile_gate(gate_type="cross", input_ports=[0, 1], output_port=0)
         assert isinstance(gate, MZIGate)
 
-    def test_compile_network(self):
+    def test_compile_network(self) -> None:
+        """A network compiles to at least one gate."""
         compiler = MZICompiler()
         gates = [
             {"type": "cross", "inputs": [0, 1], "output": 0},
@@ -29,7 +37,8 @@ class TestMZICompiler:
         assert isinstance(result, list)
         assert len(result) >= 1
 
-    def test_phase_shift_range(self):
+    def test_phase_shift_range(self) -> None:
+        """The phase shift lies in [0, 2 pi]."""
         compiler = MZICompiler()
         gate = compiler.compile_gate(gate_type="bar", input_ports=[0, 1], output_port=1)
         assert 0 <= gate.phase_shift_rad <= 2 * math.pi

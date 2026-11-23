@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    SCNetworkBridge,
+)
 
 
 class TestSCNetworkBridge:
+    """Smoke test of the SC network bridge."""
+
     def test_from_adjacency(self) -> None:
+        """An adjacency compiles to a DNA circuit design."""
         adj = np.array([[0, 1, 0.5], [0, 0, 1], [0, 0, 0]], dtype=float)
         bridge = SCNetworkBridge(seed=42)
         design = bridge.from_adjacency(adj, input_indices=[0], output_indices=[2])

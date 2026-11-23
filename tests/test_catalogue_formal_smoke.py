@@ -6,9 +6,16 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (smoke) from former test_catalogue_formal.py
 
+"""Smoke tests of the formal catalogue."""
+
 from __future__ import annotations
 
-from tests.catalogue_formal_support import *  # noqa: F403
+import pytest
+import shutil
+import subprocess
+from tests.catalogue_formal_support import (
+    CATALOGUE,
+)
 
 
 @pytest.mark.parametrize(

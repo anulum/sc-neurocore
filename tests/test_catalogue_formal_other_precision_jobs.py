@@ -12,7 +12,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.catalogue_formal_support import *  # noqa: F403
+import sys
+from tests.catalogue_formal_support import (
+    CATALOGUE,
+    EMITTER,
+)
 
 
 def test_hodgkin_huxley_formal_job_uses_enrolled_q1616_precision() -> None:

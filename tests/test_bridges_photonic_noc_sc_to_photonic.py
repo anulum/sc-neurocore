@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.photonic_noc import (
+    PhotonicCircuitDesign,
+    SCToPhotonic,
+)
 
 
 class TestSCToPhotonic:
-    def test_compile_simple_network(self):
+    """Compiling SC networks to photonic designs."""
+
+    def test_compile_simple_network(self) -> None:
+        """A small network gives nodes and waveguides."""
         compiler = SCToPhotonic()
         adj = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]], dtype=float)
         design = compiler.compile(adj)
@@ -23,7 +30,8 @@ class TestSCToPhotonic:
         assert len(design.waveguides) >= 1
         assert len(design.mzi_gates) >= 1
 
-    def test_compile_larger_network(self):
+    def test_compile_larger_network(self) -> None:
+        """A ten-node network keeps ten nodes."""
         compiler = SCToPhotonic()
         rng = np.random.default_rng(42)
         adj = (rng.random((10, 10)) > 0.7).astype(float)
@@ -31,7 +39,8 @@ class TestSCToPhotonic:
         design = compiler.compile(adj)
         assert design.n_nodes == 10
 
-    def test_design_has_wdm_channels(self):
+    def test_design_has_wdm_channels(self) -> None:
+        """The design has WDM channels."""
         compiler = SCToPhotonic()
         adj = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]], dtype=float)
         design = compiler.compile(adj)

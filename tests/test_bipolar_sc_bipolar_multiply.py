@@ -10,26 +10,38 @@
 
 from __future__ import annotations
 
-from tests.bipolar_sc_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.core.bipolar import (
+    bipolar_decode,
+    bipolar_encode,
+    bipolar_multiply,
+)
 
 
 class TestBipolarMultiply:
-    def test_xnor_same_inputs(self):
+    """Bipolar multiplication by XNOR."""
+
+    def test_xnor_same_inputs(self) -> None:
+        """Equal streams XNOR to all ones."""
         a = np.array([1, 0, 1, 1, 0], dtype=np.uint8)
         result = bipolar_multiply(a, a)
         assert (result == 1).all()
 
-    def test_xnor_opposite_inputs(self):
+    def test_xnor_opposite_inputs(self) -> None:
+        """Opposite streams XNOR to all zeros."""
         a = np.array([1, 0, 1, 1, 0], dtype=np.uint8)
         b = 1 - a
         result = bipolar_multiply(a, b)
         assert (result == 0).all()
 
-    def test_xnor_rejects_shape_mismatch(self):
+    def test_xnor_rejects_shape_mismatch(self) -> None:
+        """Streams of different shapes are rejected."""
         with pytest.raises(ValueError, match="same shape"):
             bipolar_multiply(np.array([1, 0], dtype=np.uint8), np.array([1], dtype=np.uint8))
 
-    def test_statistical_multiplication(self):
+    def test_statistical_multiplication(self) -> None:
+        """Decoded products are within 0.03."""
         rng = np.random.default_rng(42)
         L = 100000
         for va, vb in [(0.5, 0.5), (-0.5, 0.5), (0.8, -0.3)]:

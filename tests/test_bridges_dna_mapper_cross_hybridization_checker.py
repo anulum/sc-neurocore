@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    CrossHybridizationChecker,
+    DNACircuitDesign,
+    DNAStrand,
+    StrandDisplacementCompiler,
+)
 
 
 class TestCrossHybridizationChecker:
+    """Smoke test of the cross-hybridisation check."""
+
     def test_check_returns_list(self) -> None:
+        """The result is a list; its contents are not checked."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_and("a", "b", "out")
         design = DNACircuitDesign(

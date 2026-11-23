@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.bit_true_kernel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.intelligence.bit_true_kernel import (
+    _accumulate_bias,
+    _ctype,
+    _format_tables_c,
+    _rtype,
+)
 
 
 class TestTypeHelpers:

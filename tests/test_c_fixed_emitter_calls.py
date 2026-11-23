@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.c_fixed_emitter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.c_fixed_emitter import (
+    signed_q,
+)
+from tests.c_fixed_emitter_support import (
+    _c,
+    Q,
+)
 
 
 class TestCalls:

@@ -6,9 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (auto_dispatch) from former test_chialvo_map_backends.py
 
+"""Tests of the Chialvo map's automatic backend dispatch."""
+
 from __future__ import annotations
 
-from tests.chialvo_map_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models import (
+    chialvo_map,
+)
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
+from tests.chialvo_map_backends_support import (
+    _run,
+    RunResult,
+)
 
 
 def test_auto_uses_measured_first_available_backend(monkeypatch: pytest.MonkeyPatch) -> None:

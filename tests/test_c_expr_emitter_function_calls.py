@@ -12,7 +12,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.c_expr_emitter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.c_expr_emitter import (
+    emit_c_expr,
+)
+from tests.c_expr_emitter_support import (
+    _emit,
+)
 
 
 class TestFunctionCalls:
@@ -116,7 +122,6 @@ class TestFunctionCalls:
 def test_discrete_cpp_executes_python_semantics(function: str, tmp_path: Path) -> None:
     """A real C++ compiler evaluates signed ties, zero selection and nested inputs."""
     import subprocess
-    from sc_neurocore.compiler.c_expr_emitter import emit_c_expr
 
     expression = "round(round(x))" if function == "round" else "heaviside(round(x), z)"
     generated, free = emit_c_expr(expression, {"x", "z"}, math_ns="std", fp_type="double")

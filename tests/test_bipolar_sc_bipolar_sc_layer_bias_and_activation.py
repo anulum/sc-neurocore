@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.bipolar_sc_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.core.bipolar import (
+    bipolar_sc_layer,
+)
 
 
 class TestBipolarSCLayerBiasAndActivation:
     """The optional-bias branch and the tanh activation of the SC layer."""
 
-    def test_bias_is_added_to_output(self):
+    def test_bias_is_added_to_output(self) -> None:
+        """A bias keeps the output shape and bounds."""
         inputs = np.array([0.5, -0.3])
         weights = np.array([[0.2, 0.4], [-0.5, 0.3]])
         bias = np.array([0.5, -0.5])
@@ -24,7 +29,8 @@ class TestBipolarSCLayerBiasAndActivation:
         assert out.shape == (2,)
         assert (out >= -1.0).all() and (out <= 1.0).all()
 
-    def test_bias_shape_mismatch_rejected(self):
+    def test_bias_shape_mismatch_rejected(self) -> None:
+        """A bias of the wrong shape is rejected."""
         with pytest.raises(ValueError, match="bias shape"):
             bipolar_sc_layer(
                 np.array([0.5, -0.3]),
@@ -33,7 +39,8 @@ class TestBipolarSCLayerBiasAndActivation:
                 L=1000,
             )
 
-    def test_bias_non_finite_rejected(self):
+    def test_bias_non_finite_rejected(self) -> None:
+        """A non-finite bias is rejected."""
         with pytest.raises(ValueError, match="NaN or Inf"):
             bipolar_sc_layer(
                 np.array([0.5, -0.3]),
@@ -42,7 +49,8 @@ class TestBipolarSCLayerBiasAndActivation:
                 L=1000,
             )
 
-    def test_tanh_activation_bounds_output(self):
+    def test_tanh_activation_bounds_output(self) -> None:
+        """Tanh keeps the output in [-1, 1]."""
         inputs = np.array([0.9, 0.8])
         weights = np.array([[0.9, 0.9]])
         out = bipolar_sc_layer(inputs, weights, bias=None, L=50000, activation="tanh")

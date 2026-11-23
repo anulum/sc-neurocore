@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.circuit_primitives_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.layers.circuit_primitives import (
+    WinnerTakeAll,
+)
 
 
 class TestWinnerTakeAll:
-    def test_single_winner(self):
+    """Winner-take-all selection."""
+
+    def test_single_winner(self) -> None:
+        """One winner keeps its rate."""
         wta = WinnerTakeAll(n_neurons=5, k=1)
         rates = np.array([0.1, 0.8, 0.3, 0.5, 0.2])
         result = wta.apply(rates)
         assert result[1] == 0.8  # winner preserved
         assert np.count_nonzero(result) == 1
 
-    def test_k_winners(self):
+    def test_k_winners(self) -> None:
+        """The top two keep their rates."""
         wta = WinnerTakeAll(n_neurons=5, k=2)
         rates = np.array([0.1, 0.8, 0.3, 0.9, 0.2])
         result = wta.apply(rates)
@@ -29,20 +36,23 @@ class TestWinnerTakeAll:
         assert result[3] > 0  # 1st place
         assert np.count_nonzero(result) == 2
 
-    def test_winners_indices(self):
+    def test_winners_indices(self) -> None:
+        """The winners are listed in rank order."""
         wta = WinnerTakeAll(n_neurons=5, k=2)
         rates = np.array([0.1, 0.8, 0.3, 0.9, 0.2])
         idx = wta.winners(rates)
         assert idx[0] == 3  # top winner
         assert idx[1] == 1  # 2nd winner
 
-    def test_k_equals_n(self):
+    def test_k_equals_n(self) -> None:
+        """With k equal to n all rates are kept."""
         wta = WinnerTakeAll(n_neurons=3, k=3)
         rates = np.array([0.5, 0.3, 0.7])
         result = wta.apply(rates)
         np.testing.assert_allclose(result, rates)
 
-    def test_all_equal_rates(self):
+    def test_all_equal_rates(self) -> None:
+        """Equal rates still give one winner."""
         wta = WinnerTakeAll(n_neurons=4, k=1)
         rates = np.array([0.5, 0.5, 0.5, 0.5])
         result = wta.apply(rates)

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.bridges_photonic_noc_support import *  # noqa: F403
+from sc_neurocore.bridges.photonic_noc import (
+    CrosstalkAnalyzer,
+    WDMChannel,
+)
 
 
 class TestCrosstalkAnalyzer:
-    def test_analyze_returns_result(self):
+    """Smoke test of the crosstalk analysis."""
+
+    def test_analyze_returns_result(self) -> None:
+        """The result is a dict; its contents are not checked."""
         analyzer = CrosstalkAnalyzer()
         ch1 = WDMChannel(channel_id=0, wavelength_nm=1550.0, bandwidth_nm=0.4, signal_name="s1")
         ch2 = WDMChannel(channel_id=1, wavelength_nm=1550.8, bandwidth_nm=0.4, signal_name="s2")

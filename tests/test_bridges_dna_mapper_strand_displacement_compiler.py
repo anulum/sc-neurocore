@@ -10,42 +10,55 @@
 
 from __future__ import annotations
 
-from tests.bridges_dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNAGate,
+    GateType,
+    StrandDisplacementCompiler,
+)
 
 
 class TestStrandDisplacementCompiler:
+    """Compiling strand-displacement gates."""
+
     def test_compile_and_gate(self) -> None:
+        """An AND gate compiles with its type."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_and("input_a", "input_b", "output")
         assert isinstance(gate, DNAGate)
         assert gate.gate_type == GateType.AND
 
     def test_compile_or_gate(self) -> None:
+        """An OR gate compiles with its type."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_or("a", "b", "out")
         assert gate.gate_type == GateType.OR
 
     def test_compile_not_gate(self) -> None:
+        """A NOT gate compiles with its type."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_not("in", "out")
         assert gate.gate_type == GateType.NOT
 
     def test_compile_threshold(self) -> None:
+        """A threshold gate compiles with its type."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_threshold("in", "out", threshold=2.0)
         assert gate.gate_type == GateType.THRESHOLD
 
     def test_compile_mux(self) -> None:
+        """The result is a DNA gate; its structure is not checked."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_mux("sel", "a", "b", "out")
         assert isinstance(gate, DNAGate)
 
     def test_compile_amplifier(self) -> None:
+        """The result is a DNA gate; its structure is not checked."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_amplifier("in", "out")
         assert isinstance(gate, DNAGate)
 
     def test_compile_buffer(self) -> None:
+        """The result is a DNA gate; its structure is not checked."""
         compiler = StrandDisplacementCompiler()
         gate = compiler.compile_buffer("in", "out")
         assert isinstance(gate, DNAGate)

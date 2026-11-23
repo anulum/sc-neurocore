@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.c_fixed_emitter_support import *  # noqa: F403
+from sc_neurocore.compiler.c_fixed_emitter import (
+    signed_q,
+)
+from tests.c_fixed_emitter_support import (
+    Q,
+)
 
 
 class TestSignedQ:

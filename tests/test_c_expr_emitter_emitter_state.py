@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.c_expr_emitter_support import *  # noqa: F403
+from sc_neurocore.compiler.c_expr_emitter import (
+    CExprEmitter,
+)
 
 
 class TestEmitterState:
