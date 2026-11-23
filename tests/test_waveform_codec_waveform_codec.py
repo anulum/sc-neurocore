@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.waveform_codec_support import *  # noqa: F403
+import numpy as np
+import pytest
+import struct
+import sys
+from sc_neurocore.spike_codec.waveform_codec import (
+    WaveformCodec,
+)
+from tests.waveform_codec_support import (
+    _make_waveform,
+)
+from typing import (
+    Any,
+)
 
 
 class TestWaveformCodec:

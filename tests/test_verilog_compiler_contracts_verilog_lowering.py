@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (verilog_lowering) from former test_verilog_compiler_contracts.py
 
+"""Lowering contracts of the Verilog compiler."""
+
 from __future__ import annotations
 
-from tests.verilog_compiler_contracts_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.verilog_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from tests.verilog_compiler_contracts_support import (
+    _candidate_reset_neuron,
+)
 
 
 def test_compile_to_verilog_resets_from_candidate_and_exposes_post_reset_state() -> None:

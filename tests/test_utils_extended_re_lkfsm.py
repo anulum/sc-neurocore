@@ -10,22 +10,28 @@
 
 from __future__ import annotations
 
-from tests.utils_extended_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.utils.fsm_activations import (
+    ReLKFSM,
+)
 
 
 class TestReLKFSM:
-    def test_initial_state_zero(self):
+    """The rectified-linear finite-state machine."""
+
+    def test_initial_state_zero(self) -> None:
+        """The machine starts in state zero."""
         fsm = ReLKFSM(states=16)
         assert fsm.state == 0
 
-    def test_all_zeros_stays_off(self):
+    def test_all_zeros_stays_off(self) -> None:
         """All-zeros input keeps state at 0, output always 0."""
         fsm = ReLKFSM(states=8)
         bs = np.zeros(100, dtype=np.uint8)
         out = fsm.process(bs)
         assert np.all(out == 0)
 
-    def test_all_ones_turns_on(self):
+    def test_all_ones_turns_on(self) -> None:
         """All-ones input drives state above 0, output becomes 1."""
         fsm = ReLKFSM(states=8)
         bs = np.ones(100, dtype=np.uint8)
@@ -34,7 +40,7 @@ class TestReLKFSM:
         assert out[0] == 1
         assert np.all(out == 1)
 
-    def test_relu_like_behavior(self):
+    def test_relu_like_behavior(self) -> None:
         """Low input (p<0.5) should produce lower output than high input (p>0.5)."""
         rng = np.random.default_rng(42)
         fsm_low = ReLKFSM(states=16)
@@ -45,7 +51,7 @@ class TestReLKFSM:
         out_high = fsm_high.process(bs_high)
         assert out_high.mean() > out_low.mean()
 
-    def test_step_transitions(self):
+    def test_step_transitions(self) -> None:
         """Verify individual step state transitions."""
         fsm = ReLKFSM(states=4)
         # state=0, input 0 -> state stays 0, output 0

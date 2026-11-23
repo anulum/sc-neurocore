@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.universal_dsl_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestUniversalNeuronSimulation:

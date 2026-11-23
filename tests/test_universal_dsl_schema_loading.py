@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.universal_dsl_support import *  # noqa: F403
+import pytest
+import sys
+from _pytest.monkeypatch import (
+    MonkeyPatch,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    load_schema,
+)
 
 
 class TestSchemaLoading:

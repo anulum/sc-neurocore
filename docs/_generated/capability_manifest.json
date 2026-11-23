@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5650
+    "test_files": 5645
   },
   "documentation": {
     "public_pages": [
@@ -8998,15 +8998,11 @@
       "tests/topology_backends_support.py",
       "tests/topology_generators_support.py",
       "tests/torch_training_support.py",
-      "tests/transcriptomic_support.py",
       "tests/transfer_support.py",
-      "tests/universal_dsl_support.py",
-      "tests/utils_extended_support.py",
       "tests/variability_edge_cases_support.py",
       "tests/verify_dois_support.py",
       "tests/verilog_compiler_contracts_support.py",
       "tests/verilog_expr_emitter_support.py",
-      "tests/verilog_integration_support.py",
       "tests/viz_plots_support.py",
       "tests/waveform_codec_support.py",
       "tests/whitebox_taps_support.py",
@@ -9014,8 +9010,7 @@
       "tests/wilson_cowan_go_parity_support.py",
       "tests/wilson_cowan_julia_parity_support.py",
       "tests/wilson_cowan_mojo_parity_support.py",
-      "tests/wilson_cowan_parity_support.py",
-      "tests/world_model_support.py"
+      "tests/wilson_cowan_parity_support.py"
     ]
   },
   "schema_version": "capability-manifest.v2"

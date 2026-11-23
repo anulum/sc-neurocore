@@ -10,16 +10,33 @@
 
 from __future__ import annotations
 
-from tests.transfer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from numpy.typing import (
+    NDArray,
+)
+from sc_neurocore.transfer import (
+    SNNCheckpoint,
+)
+from tests.transfer_support import (
+    _make_checkpoint,
+)
+from typing import (
+    cast,
+)
 
 
 class TestSNNCheckpoint:
+    """The SNN checkpoint record."""
+
     def test_fields(self) -> None:
+        """A checkpoint counts its layers and parameters."""
         c = _make_checkpoint()
         assert c.n_layers == 2
         assert c.total_params == 32 * 64 + 10 * 32
 
     def test_rejects_duplicate_layer_names(self) -> None:
+        """Duplicate layer names are rejected."""
         with pytest.raises(ValueError, match="layer_names must be unique"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1)), np.ones((1, 1))],
@@ -28,6 +45,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_weight_shape_mismatch(self) -> None:
+        """A weight of the wrong shape is rejected."""
         with pytest.raises(ValueError, match="shape must match layer_sizes"):
             SNNCheckpoint(
                 weights=[np.ones((3, 2), dtype=np.float64)],
@@ -36,6 +54,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_weight_count_mismatch(self) -> None:
+        """The wrong number of weights is rejected."""
         with pytest.raises(ValueError, match="weights length must match"):
             SNNCheckpoint(
                 weights=[],
@@ -44,6 +63,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_layer_size_count_mismatch(self) -> None:
+        """The wrong number of layer sizes is rejected."""
         with pytest.raises(ValueError, match="layer_sizes length must match"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -52,6 +72,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_neuron_type_count_mismatch(self) -> None:
+        """The wrong number of neuron types is rejected."""
         with pytest.raises(ValueError, match="neuron_types length must match"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -61,6 +82,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_non_finite_weights(self) -> None:
+        """Non-finite weights are rejected."""
         with pytest.raises(ValueError, match="finite numeric"):
             SNNCheckpoint(
                 weights=[np.array([[np.nan]], dtype=np.float64)],
@@ -69,6 +91,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_unknown_frozen_layer(self) -> None:
+        """A frozen layer that does not exist is rejected."""
         with pytest.raises(ValueError, match="frozen_layers must reference known layers"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -78,6 +101,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_non_string_layer_name(self) -> None:
+        """A layer name that is not a string is rejected."""
         with pytest.raises(ValueError, match="layer_names must be a list of strings"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -86,6 +110,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_boolean_layer_size(self) -> None:
+        """A boolean layer size is rejected."""
         with pytest.raises(ValueError, match="layer_sizes entries must be integer pairs"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -94,6 +119,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_negative_layer_size_constructor(self) -> None:
+        """A negative layer size is rejected."""
         with pytest.raises(ValueError, match="layer_sizes entries must be non-negative"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],
@@ -102,6 +128,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_object_weight_constructor(self) -> None:
+        """Weights holding Python objects are rejected."""
         with pytest.raises(ValueError, match="must not contain Python objects"):
             SNNCheckpoint(
                 weights=[cast(NDArray[np.float64], np.array([[{"bad": "object"}]], dtype=object))],
@@ -110,6 +137,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_string_weight_constructor(self) -> None:
+        """String weights are rejected."""
         with pytest.raises(ValueError, match="must be numeric"):
             SNNCheckpoint(
                 weights=[cast(NDArray[np.float64], np.array([["bad"]], dtype=np.str_))],
@@ -118,6 +146,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_one_dimensional_weight_constructor(self) -> None:
+        """One-dimensional weights are rejected."""
         with pytest.raises(ValueError, match="two-dimensional"):
             SNNCheckpoint(
                 weights=[cast(NDArray[np.float64], np.array([1.0], dtype=np.float64))],
@@ -126,6 +155,7 @@ class TestSNNCheckpoint:
             )
 
     def test_rejects_non_serializable_metadata(self) -> None:
+        """Metadata that cannot be JSON is rejected."""
         with pytest.raises(ValueError, match="metadata must be JSON serializable"):
             SNNCheckpoint(
                 weights=[np.ones((1, 1), dtype=np.float64)],

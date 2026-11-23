@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.universal_dsl_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    load_schema,
+    UniversalNeuron,
+)
 
 
 class TestErrorHandling:

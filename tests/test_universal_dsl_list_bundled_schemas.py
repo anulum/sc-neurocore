@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.universal_dsl_support import *  # noqa: F403
+from sc_neurocore.neurons.universal_dsl import (
+    list_bundled_schemas,
+)
 
 
 class TestListBundledSchemas:

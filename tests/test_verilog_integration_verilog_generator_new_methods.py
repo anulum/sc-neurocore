@@ -10,30 +10,36 @@
 
 from __future__ import annotations
 
-from tests.verilog_integration_support import *  # noqa: F403
+from sc_neurocore.hdl_gen.verilog_generator import (
+    VerilogGenerator,
+)
 
 
 class TestVerilogGeneratorNewMethods:
     """Test the new emit methods on VerilogGenerator."""
 
     def test_emit_halton16_source(self) -> None:
+        """The generator emits the Halton source module."""
         gen = VerilogGenerator()
         code = gen.emit_halton16_source()
         assert "module sc_halton16_source" in code
         assert "reversed" in code
 
     def test_emit_quasirandom_source_sobol(self) -> None:
+        """The generator emits the Sobol source module."""
         gen = VerilogGenerator()
         code = gen.emit_quasirandom_source(method="sobol")
         assert "module sc_sobol16_source" in code
         assert "casez" in code
 
     def test_emit_quasirandom_source_halton(self) -> None:
+        """The generator emits the quasi-random Halton module."""
         gen = VerilogGenerator()
         code = gen.emit_quasirandom_source(method="halton")
         assert "module sc_halton16_source" in code
 
     def test_emit_decorrelator(self) -> None:
+        """The generator emits a parameterised decorrelator."""
         gen = VerilogGenerator()
         code = gen.emit_decorrelator(num_streams=4, stream_width=8)
         assert "sc_decorrelator" in code
@@ -41,6 +47,7 @@ class TestVerilogGeneratorNewMethods:
         assert "STREAM_WIDTH(8)" in code
 
     def test_emit_edt_controller(self) -> None:
+        """The generator emits a parameterised EDT controller."""
         gen = VerilogGenerator()
         code = gen.emit_edt_controller(data_width=16, margin=0x0080, stable_cycles=4)
         assert "sc_edt_controller" in code
@@ -49,6 +56,7 @@ class TestVerilogGeneratorNewMethods:
         assert "STABLE_CYCLES(4)" in code
 
     def test_emit_tmr_wrapper(self) -> None:
+        """The generator emits a TMR wrapper with its replicas."""
         gen = VerilogGenerator()
         code = gen.emit_tmr_wrapper(
             module_name="sc_aer_router",

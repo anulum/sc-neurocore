@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.whitebox_taps_support import *  # noqa: F403
+from sc_neurocore.compiler.whitebox_taps import (
+    StateTap,
+)
 
 
 class TestStateTap:
-    """The tap value type."""
+    """The white-box state tap value type."""
 
     def test_declaration_sized_signed(self) -> None:
+        """A sized signed tap declares a signed bus."""
         tap = StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True)
         assert tap.declaration() == "output wire signed [DATA_WIDTH-1:0] v_state"
 
     def test_declaration_scalar_unsigned(self) -> None:
+        """A scalar tap declares a single wire."""
         assert StateTap("flag", "ready").declaration() == "output wire flag"
 
     def test_assignment(self) -> None:
+        """A tap assigns its source expression."""
         assert StateTap("t", "32'd0", msb="31").assignment() == "    assign t = 32'd0;"

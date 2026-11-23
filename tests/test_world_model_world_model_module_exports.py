@@ -10,15 +10,20 @@
 
 from __future__ import annotations
 
-from tests.world_model_support import *  # noqa: F403
+import pytest
+import sc_neurocore.world_model as world_model_module
 
 
 class TestWorldModelModuleExports:
-    def test_lazy_exports_are_available(self):
+    """The lazy exports of the world-model package."""
+
+    def test_lazy_exports_are_available(self) -> None:
+        """The lazy exports resolve."""
         assert world_model_module.SCPlanner is not None
         assert world_model_module.PredictiveWorldModel is not None
         assert "SpikePredictor" in world_model_module.__all__
 
-    def test_unknown_lazy_export_raises_attribute_error(self):
+    def test_unknown_lazy_export_raises_attribute_error(self) -> None:
+        """An unknown export raises AttributeError."""
         with pytest.raises(AttributeError):
             world_model_module.__getattr__("not_an_export")

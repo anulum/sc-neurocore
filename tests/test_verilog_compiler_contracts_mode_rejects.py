@@ -6,9 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (mode_rejects) from former test_verilog_compiler_contracts.py
 
+"""Mode rejections of the Verilog compiler."""
+
 from __future__ import annotations
 
-from tests.verilog_compiler_contracts_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.verilog_compiler import (
+    compile_to_datapath,
+    compile_to_verilog,
+)
+from tests.verilog_compiler_contracts_support import (
+    _lif_without_threshold,
+)
+from typing import (
+    cast,
+)
 
 
 def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:

@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (stochastic_rejects) from former test_verilog_compiler_contracts.py
 
+"""Stochastic-mode rejections of the Verilog compiler."""
+
 from __future__ import annotations
 
-from tests.verilog_compiler_contracts_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.verilog_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from tests.verilog_compiler_contracts_support import (
+    _escape_rate_neuron,
+)
 
 
 def test_stochastic_compilation_rejects_mutated_missing_probability() -> None:

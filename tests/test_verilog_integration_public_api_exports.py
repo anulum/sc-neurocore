@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.verilog_integration_support import *  # noqa: F403
-
 
 class TestPublicAPIExports:
     """Test that new modules are accessible from public API."""
 
     def test_hdl_gen_exports(self) -> None:
+        """The HDL generator package exports its emitters."""
         from sc_neurocore.hdl_gen import (
             QuasiRandomEmitter,
             Halton16Emitter,
@@ -30,6 +29,7 @@ class TestPublicAPIExports:
     def test_generate_tmr_wrapper_handles_multi_bit_input_and_single_bit_output(
         self,
     ) -> None:
+        """The TMR wrapper handles multi-bit inputs and single-bit outputs."""
         from sc_neurocore.hdl_gen.tmr_wrapper import generate_tmr_wrapper
 
         code = generate_tmr_wrapper(
@@ -44,6 +44,7 @@ class TestPublicAPIExports:
         assert "wire rep0_done;" in code
 
     def test_neurons_exports(self) -> None:
+        """The neurons package exports the universal neuron and schemas."""
         from sc_neurocore.neurons import UniversalNeuron, list_bundled_schemas
 
         assert UniversalNeuron is not None
@@ -51,6 +52,7 @@ class TestPublicAPIExports:
         assert len(list_bundled_schemas()) >= 9
 
     def test_universal_neuron_from_neurons_package(self) -> None:
+        """The universal neuron steps to an integer spike."""
         from sc_neurocore.neurons import UniversalNeuron
 
         neuron = UniversalNeuron.from_schema("lif")

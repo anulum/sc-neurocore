@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.world_model_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.world_model.spike_predictor import (
+    predict_and_xor_world_model,
+    xor_and_recover_world_model,
+)
 
 
 class TestCodecRoundtrip:
-    def test_lossless_roundtrip(self):
+    """Round trips of the world-model spike codec."""
+
+    def test_lossless_roundtrip(self) -> None:
+        """Spikes round-trip losslessly."""
         n_ch = 4
         T = 20
         rng = np.random.RandomState(42)
@@ -24,7 +31,8 @@ class TestCodecRoundtrip:
         recovered = xor_and_recover_world_model(errors, n_channels=n_ch, seed=0)
         np.testing.assert_array_equal(spikes, recovered)
 
-    def test_correct_count_sane(self):
+    def test_correct_count_sane(self) -> None:
+        """The correct-prediction count stays in range."""
         n_ch = 4
         T = 30
         rng = np.random.RandomState(0)
@@ -32,7 +40,8 @@ class TestCodecRoundtrip:
         _, correct = predict_and_xor_world_model(spikes, n_channels=n_ch)
         assert 0 <= correct <= T * n_ch
 
-    def test_errors_are_binary(self):
+    def test_errors_are_binary(self) -> None:
+        """The prediction errors are binary."""
         n_ch = 2
         T = 20
         spikes = np.zeros((T, n_ch), dtype=np.int8)

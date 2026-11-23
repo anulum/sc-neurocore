@@ -10,13 +10,24 @@
 
 from __future__ import annotations
 
-from tests.whitebox_taps_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equivalence_miter import (
+    parse_module_interface,
+)
+from sc_neurocore.compiler.whitebox_taps import (
+    expose_state_taps,
+    StateTap,
+)
+from tests.whitebox_taps_support import (
+    _MODULE,
+)
 
 
 class TestExposeStateTaps:
     """The instrumentation transform."""
 
     def test_adds_ports_and_assigns(self) -> None:
+        """Taps add output ports and their assignments."""
         out = expose_state_taps(
             _MODULE,
             top="foo",
@@ -41,10 +52,12 @@ class TestExposeStateTaps:
         assert "always @(posedge clk) begin s <= x; y <= s; end" in out
 
     def test_rejects_empty_taps(self) -> None:
+        """An empty tap list is rejected."""
         with pytest.raises(ValueError, match="must not be empty"):
             expose_state_taps(_MODULE, top="foo", taps=[])
 
     def test_rejects_duplicate_tap_names(self) -> None:
+        """Duplicate tap names are rejected."""
         with pytest.raises(ValueError, match="unique"):
             expose_state_taps(
                 _MODULE,
@@ -53,14 +66,17 @@ class TestExposeStateTaps:
             )
 
     def test_rejects_collision_with_existing_port(self) -> None:
+        """A tap named like an existing port is rejected."""
         with pytest.raises(ValueError, match="already exists"):
             expose_state_taps(_MODULE, top="foo", taps=[StateTap("y", "s", msb="W-1")])
 
     def test_missing_endmodule_raises(self) -> None:
+        """A module without endmodule is rejected."""
         truncated = "module bar(input wire clk); reg r; assign x = r;"
         with pytest.raises(ValueError, match="endmodule"):
             expose_state_taps(truncated, top="bar", taps=[StateTap("t", "r")])
 
     def test_unknown_module_raises(self) -> None:
+        """An unknown module name is rejected."""
         with pytest.raises(ValueError, match="not found"):
             expose_state_taps(_MODULE, top="nope", taps=[StateTap("t", "s", msb="W-1")])

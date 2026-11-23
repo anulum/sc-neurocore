@@ -6,9 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (datapath) from former test_verilog_compiler_contracts.py
 
+"""Datapath contracts of the Verilog compiler."""
+
 from __future__ import annotations
 
-from tests.verilog_compiler_contracts_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.verilog_compiler import (
+    compile_to_datapath,
+)
+from tests.verilog_compiler_contracts_support import (
+    _candidate_reset_neuron,
+    _lif_without_threshold,
+)
+from typing import (
+    cast,
+)
 
 
 def test_compile_to_datapath_resets_from_the_same_candidate_expression() -> None:

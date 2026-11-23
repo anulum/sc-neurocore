@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
-from tests.utils_extended_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.utils.fault_injection import (
+    FaultInjector,
+)
 
 
 class TestFaultInjector:
-    def test_bit_flip_zero_rate(self):
+    """Injecting faults into bitstreams."""
+
+    def test_bit_flip_zero_rate(self) -> None:
         """Error rate 0 should return unchanged bitstream."""
         bs = np.array([0, 1, 0, 1, 1, 0], dtype=np.uint8)
         result = FaultInjector.inject_bit_flips(bs, 0.0)
         np.testing.assert_array_equal(result, bs)
 
-    def test_bit_flip_full_rate(self):
+    def test_bit_flip_full_rate(self) -> None:
         """Error rate 1.0 should flip every bit."""
         bs = np.array([0, 1, 0, 1, 1, 0], dtype=np.uint8)
         np.random.seed(0)
@@ -28,14 +34,14 @@ class TestFaultInjector:
         expected = 1 - bs
         np.testing.assert_array_equal(result, expected)
 
-    def test_bit_flip_output_binary(self):
+    def test_bit_flip_output_binary(self) -> None:
         """Output must be strictly 0/1."""
         np.random.seed(0)
         bs = np.zeros(1000, dtype=np.uint8)
         result = FaultInjector.inject_bit_flips(bs, 0.5)
         assert set(np.unique(result)).issubset({0, 1})
 
-    def test_bit_flip_approximate_rate(self):
+    def test_bit_flip_approximate_rate(self) -> None:
         """Fraction of flipped bits should roughly match error_rate."""
         np.random.seed(42)
         bs = np.zeros(10000, dtype=np.uint8)
@@ -43,7 +49,7 @@ class TestFaultInjector:
         flip_rate = result.mean()  # started all zeros, flips become ones
         assert flip_rate == pytest.approx(0.1, abs=0.02)
 
-    def test_stuck_at_zero(self):
+    def test_stuck_at_zero(self) -> None:
         """Stuck-at-0 forces selected bits to 0."""
         np.random.seed(0)
         bs = np.ones(1000, dtype=np.uint8)
@@ -54,7 +60,7 @@ class TestFaultInjector:
         zero_frac = 1.0 - result.mean()
         assert zero_frac == pytest.approx(0.3, abs=0.05)
 
-    def test_stuck_at_one(self):
+    def test_stuck_at_one(self) -> None:
         """Stuck-at-1 forces selected bits to 1."""
         np.random.seed(0)
         bs = np.zeros(1000, dtype=np.uint8)
@@ -62,7 +68,8 @@ class TestFaultInjector:
         one_frac = result.mean()
         assert one_frac == pytest.approx(0.3, abs=0.05)
 
-    def test_stuck_at_preserves_shape(self):
+    def test_stuck_at_preserves_shape(self) -> None:
+        """Stuck-at faults keep the array shape."""
         bs = np.zeros((4, 5), dtype=np.uint8)
         result = FaultInjector.inject_stuck_at(bs, 0.5, value=1)
         assert result.shape == (4, 5)

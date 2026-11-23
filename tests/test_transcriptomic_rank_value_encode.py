@@ -10,23 +10,29 @@
 
 from __future__ import annotations
 
-from tests.transcriptomic_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bio.transcriptomic import (
+    rank_value_encode,
+)
 
 
 class TestRankValueEncode:
     """Theodoris et al. (2023) rank-value tokenisation."""
 
     def test_all_zeros(self) -> None:
+        """No expression gives no ranks."""
         result = rank_value_encode(np.zeros(10))
         assert len(result) == 0
 
     def test_descending_order(self) -> None:
+        """Genes are ranked by descending expression."""
         expr = np.array([0.0, 5.0, 1.0, 10.0, 3.0])
         ranked = rank_value_encode(expr)
         assert ranked[0] == 3  # gene 3 has highest expression (10.0)
         assert ranked[1] == 1  # gene 1 has second highest (5.0)
 
     def test_zeros_excluded(self) -> None:
+        """Unexpressed genes are left out."""
         expr = np.array([0.0, 1.0, 0.0, 2.0])
         ranked = rank_value_encode(expr)
         assert 0 not in ranked
@@ -42,6 +48,7 @@ class TestRankValueEncode:
         assert ranked[0] == 1
 
     def test_single_gene(self) -> None:
+        """A single expressed gene gives one rank."""
         expr = np.array([0.0, 0.0, 5.0])
         ranked = rank_value_encode(expr)
         assert len(ranked) == 1

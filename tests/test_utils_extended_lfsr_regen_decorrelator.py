@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.utils_extended_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.utils.decorrelators import (
+    LFSRRegenDecorrelator,
+)
 
 
 class TestLFSRRegenDecorrelator:
-    def test_preserves_approximate_probability(self):
+    """Decorrelating bitstreams by LFSR regeneration."""
+
+    def test_preserves_approximate_probability(self) -> None:
         """Regenerated stream should have approximately the same probability."""
         rng = np.random.default_rng(0)
         bs = (rng.random(2048) < 0.4).astype(np.uint8)
@@ -23,13 +29,14 @@ class TestLFSRRegenDecorrelator:
         assert result.mean() == pytest.approx(bs.mean(), abs=0.05)
         assert len(result) == len(bs)
 
-    def test_output_is_binary(self):
+    def test_output_is_binary(self) -> None:
+        """The decorrelated stream holds only zeros and ones."""
         bs = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
         dec = LFSRRegenDecorrelator(seed=0)
         result = dec.process(bs)
         assert set(np.unique(result)).issubset({0, 1})
 
-    def test_produces_different_sequence(self):
+    def test_produces_different_sequence(self) -> None:
         """Regenerated bitstream should not be identical to input."""
         rng = np.random.default_rng(0)
         bs = (rng.random(512) < 0.5).astype(np.uint8)

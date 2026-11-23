@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.transcriptomic_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bio.transcriptomic import (
+    ScKGBERTInterface,
+)
 
 
 class TestScKGBERTInterface:
+    """The knowledge-graph BERT transcriptomic interface."""
+
     def test_defaults(self) -> None:
+        """The interface keeps its default width and sigma."""
         iface = ScKGBERTInterface(n_genes=50)
         assert iface.d_model == 64
         assert iface.sigma == pytest.approx(1.0)
 
     def test_gaussian_attention_shape(self) -> None:
+        """Gaussian attention keeps the token and model shape."""
         iface = ScKGBERTInterface(d_model=8, n_genes=20)
         q = np.random.default_rng(1).normal(0, 1, (5, 8))
         k = np.random.default_rng(2).normal(0, 1, (7, 8))
@@ -48,12 +56,14 @@ class TestScKGBERTInterface:
         np.testing.assert_allclose(out[0], [1.0, 0.0], atol=1e-4)
 
     def test_encode_expression_shape(self) -> None:
+        """Expression encodes to one model-width vector."""
         iface = ScKGBERTInterface(d_model=16, n_genes=100)
         expr = np.random.default_rng(1).poisson(3, 100).astype(np.float64)
         emb = iface.encode_expression(expr)
         assert emb.shape == (16,)
 
     def test_encode_all_zeros(self) -> None:
+        """Silent expression encodes to zeros."""
         iface = ScKGBERTInterface(d_model=8, n_genes=20)
         emb = iface.encode_expression(np.zeros(20))
         assert np.allclose(emb, 0.0)
@@ -67,6 +77,7 @@ class TestScKGBERTInterface:
         assert not np.allclose(s_emb, k_emb)
 
     def test_predict_cell_type(self) -> None:
+        """The closest prototype gives the cell type."""
         iface = ScKGBERTInterface(d_model=8, n_genes=30, seed=1)
         rng = np.random.default_rng(10)
         # Create two distinct prototype profiles
@@ -81,6 +92,7 @@ class TestScKGBERTInterface:
         assert pred == "neuron"
 
     def test_gene_importance_nonzero(self) -> None:
+        """Gene importance has one entry per gene and is not all zero."""
         iface = ScKGBERTInterface(d_model=8, n_genes=30, seed=3)
         expr = np.random.default_rng(5).poisson(3, 30).astype(np.float64)
         imp = iface.gene_importance(expr)
@@ -88,6 +100,7 @@ class TestScKGBERTInterface:
         assert imp.sum() > 0
 
     def test_gene_importance_zeros_for_unexpressed(self) -> None:
+        """Unexpressed genes have zero importance."""
         iface = ScKGBERTInterface(d_model=8, n_genes=20, seed=1)
         expr = np.zeros(20)
         expr[5] = 10.0

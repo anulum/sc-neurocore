@@ -10,27 +10,36 @@
 
 from __future__ import annotations
 
-from tests.world_model_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.world_model.spike_predictor import (
+    SpikePredictor,
+)
 
 
 class TestSpikePredictor:
-    def test_construction(self):
+    """The online spike predictor."""
+
+    def test_construction(self) -> None:
+        """Weights and biases have one row per channel."""
         p = SpikePredictor(n_channels=4, history_len=8)
         assert p.W.shape == (4, 32)
         assert p.bias.shape == (4,)
 
-    def test_predict_shape(self):
+    def test_predict_shape(self) -> None:
+        """A prediction has one int8 value per channel."""
         p = SpikePredictor(n_channels=4)
         pred = p.predict()
         assert pred.shape == (4,)
         assert pred.dtype == np.int8
 
-    def test_predict_probs_range(self):
+    def test_predict_probs_range(self) -> None:
+        """Predicted probabilities lie in the unit interval."""
         p = SpikePredictor(n_channels=4)
         probs = p.predict_probs()
         assert np.all(probs >= 0) and np.all(probs <= 1)
 
-    def test_update_changes_weights(self):
+    def test_update_changes_weights(self) -> None:
+        """An update changes the weights."""
         p = SpikePredictor(n_channels=4, lr=0.1)
         # First update populates history (features are zero → W unchanged via outer)
         p.update(np.array([1, 0, 1, 0]))
@@ -39,20 +48,23 @@ class TestSpikePredictor:
         p.update(np.array([0, 1, 0, 1]))
         assert not np.array_equal(p.W, w_before)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset restores the initial weights."""
         p = SpikePredictor(n_channels=4, seed=42)
         w_init = p.W.copy()
         p.update(np.array([1, 0, 1, 0]))
         p.reset()
         np.testing.assert_array_equal(p.W, w_init)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same seed gives the same predictor."""
         a = SpikePredictor(n_channels=4, seed=99)
         b = SpikePredictor(n_channels=4, seed=99)
         np.testing.assert_array_equal(a.W, b.W)
         np.testing.assert_array_equal(a.predict(), b.predict())
 
-    def test_learning_improves_prediction(self):
+    def test_learning_improves_prediction(self) -> None:
+        """Learning does not raise the prediction error."""
         p = SpikePredictor(n_channels=2, history_len=4, lr=0.05, seed=0)
         # Alternating pattern: [1,0], [0,1], [1,0], [0,1], ...
         pattern = np.array([[1, 0], [0, 1]] * 50)
@@ -69,14 +81,16 @@ class TestSpikePredictor:
         # After training on the pattern, errors should decrease
         assert errors_last_10 <= errors_first_10
 
-    def test_predict_uses_strict_greater_than_threshold(self):
+    def test_predict_uses_strict_greater_than_threshold(self) -> None:
+        """A probability equal to the threshold predicts no spike."""
         p = SpikePredictor(n_channels=3, history_len=2, threshold=0.5, seed=7)
         p.W[:] = 0.0
         p.bias[:] = 0.0  # sigmoid(0) == 0.5 exactly
         pred = p.predict()
         np.testing.assert_array_equal(pred, np.zeros(3, dtype=np.int8))
 
-    def test_reset_clears_history_and_time_counter(self):
+    def test_reset_clears_history_and_time_counter(self) -> None:
+        """A reset clears the history and the time counter."""
         p = SpikePredictor(n_channels=2, history_len=3, seed=11)
         p.update(np.array([1, 0], dtype=np.int8))
         p.update(np.array([0, 1], dtype=np.int8))

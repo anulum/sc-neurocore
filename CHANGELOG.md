@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 41 top-level test modules of the transcriptomic, transfer,
+  universal DSL, utilities, Verilog compiler and integration, waveform
+  codec, white-box tap and world-model suites import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy, and the support modules left without an importer
+  are deleted.
+
 - The 59 top-level test modules of the SC convergence, SC forward,
   SC primitive, SC-to-quantum compiler, schema validator, integrated
   SCPN, DVS sensor, SNN optimiser, ODE solver, source and profiling,

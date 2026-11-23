@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.transcriptomic_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bio.transcriptomic import (
+    GeneformerInterface,
+    ScKGBERTInterface,
+)
 
 
 class TestTranscriptomicEmptyExpression:
+    """The transcriptomic interfaces on empty expression."""
+
     def test_kgbert_returns_zero_embeddings_for_silent_expression(self) -> None:
+        """Silent expression gives zero embeddings."""
         enc = ScKGBERTInterface(d_model=8, n_genes=10)
         silent = np.zeros(10)
         assert enc.encode_expression(silent).shape == (8,)
@@ -24,6 +31,7 @@ class TestTranscriptomicEmptyExpression:
         assert np.allclose(enc.gene_importance(silent), 0.0)
 
     def test_kgbert_returns_zero_when_only_out_of_vocab_genes_expressed(self) -> None:
+        """Expression only outside the vocabulary gives zeros."""
         # Genes expressed only at indices beyond the model vocabulary rank
         # non-empty but filter to no valid tokens, so the cell embedding is zero.
         enc = ScKGBERTInterface(d_model=8, n_genes=10)
@@ -34,6 +42,7 @@ class TestTranscriptomicEmptyExpression:
         assert np.allclose(result, 0.0)
 
     def test_kgbert_uses_self_embedding_for_neighbourless_gene(self) -> None:
+        """A gene without neighbours uses its own embedding."""
         enc = ScKGBERTInterface(d_model=8, n_genes=10)
         enc._kg_adjacency[0, :] = 0.0  # isolate gene 0 in the PPI graph
         expression = np.zeros(10)
@@ -42,6 +51,7 @@ class TestTranscriptomicEmptyExpression:
         assert result.shape == (8,)
 
     def test_geneformer_attention_empty_for_too_few_tokens(self) -> None:
+        """Too few tokens give empty attention."""
         iface = GeneformerInterface(d_model=8, n_genes=10)
         attn = iface.gene_network_attention(np.zeros(10))
         assert attn.size == 0

@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (escape_rate_and_licence) from former test_verilog_compiler_contracts.py
 
+"""Escape-rate and licence-header contracts of the Verilog compiler."""
+
 from __future__ import annotations
 
-from tests.verilog_compiler_contracts_support import *  # noqa: F403
+import pytest
+import shutil
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.verilog_compiler import (
+    compile_to_datapath,
+    compile_to_verilog,
+)
+from tests.verilog_compiler_contracts_support import (
+    _escape_rate_neuron,
+    _lif_without_threshold,
+)
 
 
 def test_generated_registered_and_folded_rtl_carry_licence_headers() -> None:
