@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    sinusoidal_position_encode,
+)
 
 
 class TestSinusoidalPositionEncode:
+    """Sinusoidal position encoding."""
+
     def test_shape(self) -> None:
+        """Each timestamp gets an encoding of the asked size."""
         timestamps = np.array([0.0, 1.0, 2.0])
         pe = sinusoidal_position_encode(timestamps, 16)
         assert pe.shape == (3, 16)
 
     def test_zero_timestamp(self) -> None:
+        """Time 0 encodes as sine 0 and cosine 1."""
         pe = sinusoidal_position_encode(np.array([0.0]), 8)
         # sin(0) = 0 for all even dims
         assert pe[0, 0] == pytest.approx(0.0)
@@ -27,5 +35,6 @@ class TestSinusoidalPositionEncode:
         assert pe[0, 1] == pytest.approx(1.0)
 
     def test_different_timestamps_differ(self) -> None:
+        """Different times encode differently."""
         pe = sinusoidal_position_encode(np.array([0.0, 100.0]), 32)
         assert not np.allclose(pe[0], pe[1])

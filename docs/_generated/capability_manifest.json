@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5688
+    "test_files": 5680
   },
   "documentation": {
     "public_pages": [
@@ -3555,7 +3555,6 @@
       "tests/interfaces/test_dvs_input_surface.py",
       "tests/interfaces/test_dvs_input_validation.py",
       "tests/izhikevich2007_backends_support.py",
-      "tests/jax_adapter_fallback_contracts_support.py",
       "tests/jax_backend_support.py",
       "tests/julia_requirement.py",
       "tests/julia_runtimes.py",
@@ -3571,9 +3570,7 @@
       "tests/layers/test_sc_conv_layer_configuration.py",
       "tests/layers/test_sc_conv_layer_geometry.py",
       "tests/layers/test_sc_conv_layer_validation.py",
-      "tests/lds_decorrelation_support.py",
       "tests/learning_advanced_support.py",
-      "tests/mixed_dense_kernel_support.py",
       "tests/model_adaptive_threshold_if_support.py",
       "tests/model_adaptive_threshold_moe_support.py",
       "tests/model_adex_support.py",
@@ -3681,7 +3678,6 @@
       "tests/model_yamada_support.py",
       "tests/model_zoo_support.py",
       "tests/module_reload.py",
-      "tests/nas_support.py",
       "tests/native/test_learning_bridge_validation_bool_vectors.py",
       "tests/native/test_learning_bridge_validation_float.py",
       "tests/native/test_learning_bridge_validation_integral.py",
@@ -3710,7 +3706,6 @@
       "tests/network_basic_support.py",
       "tests/network_execution_paths_support.py",
       "tests/network_monitors_stimulus_support.py",
-      "tests/neural_decoders_support.py",
       "tests/neuroml_import_support.py",
       "tests/neuron_families_support.py",
       "tests/neuron_integrator_paths_support.py",
@@ -3719,10 +3714,7 @@
       "tests/nir_fpga_pipeline_support.py",
       "tests/nir_import_support.py",
       "tests/numpy_interop_support.py",
-      "tests/online_learning_support.py",
       "tests/operator_abstraction_support.py",
-      "tests/optimizer_resource_support.py",
-      "tests/overflow_proof_support.py",
       "tests/perfect_integrator_backends_support.py",
       "tests/performance_guard.py",
       "tests/phi_estimation_support.py",

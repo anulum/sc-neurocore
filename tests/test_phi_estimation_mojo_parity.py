@@ -10,12 +10,24 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.phi_estimation import (
+    phi_star,
+)
+from tests.phi_estimation_support import (
+    _MOJO_AVAILABLE,
+    _PHI_MODULE,
+)
 
 
 @pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo Phi library not built")
 class TestMojoParity:
+    """Phi on the Mojo backend."""
+
     def test_parity(self) -> None:
+        """Mojo matches Python within tolerance."""
         rng = np.random.RandomState(19)
         for n in (2, 4, 6):
             data = np.vstack([rng.randn(200) for _ in range(n)])
@@ -24,5 +36,6 @@ class TestMojoParity:
             npt.assert_allclose(mo, py, atol=1e-7)
 
     def test_ensure_mojo_is_cached(self) -> None:
+        """The lane is loaded once and cached."""
         assert _PHI_MODULE._ensure_mojo_phi() is True
         assert _PHI_MODULE._ensure_mojo_phi() is True

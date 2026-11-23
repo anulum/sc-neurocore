@@ -10,15 +10,23 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.phi_estimation import (
+    _logdet_spd,
+)
 
 
 class TestLogdetSpd:
+    """Log-determinants of SPD matrices."""
+
     def test_diagonal(self) -> None:
+        """A diagonal matrix gives the log of its product."""
         m = np.diag([2.0, 8.0])
         npt.assert_allclose(_logdet_spd(m), np.log(16.0))
 
     def test_matches_slogdet(self) -> None:
+        """The result matches NumPy's slogdet."""
         rng = np.random.RandomState(0)
         a = rng.randn(5, 5)
         spd = a @ a.T + np.eye(5)

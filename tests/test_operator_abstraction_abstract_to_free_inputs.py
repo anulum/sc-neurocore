@@ -10,13 +10,25 @@
 
 from __future__ import annotations
 
-from tests.operator_abstraction_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equivalence_miter import (
+    parse_module_interface,
+)
+from sc_neurocore.compiler.operator_abstraction import (
+    abstract_to_free_inputs,
+    LiftedSignal,
+)
+from tests.operator_abstraction_support import (
+    _MODULE,
+    _MODULE_INLINE,
+)
 
 
 class TestAbstractToFreeInputs:
     """The lifting transform."""
 
     def test_lifts_and_renames(self) -> None:
+        """An operator output becomes a renamed free input."""
         out = abstract_to_free_inputs(
             _MODULE,
             top="foo",
@@ -33,6 +45,7 @@ class TestAbstractToFreeInputs:
         assert "assign scaled = prod_in >>> 2;" in out
 
     def test_lifts_inline_wire_initializer(self) -> None:
+        """An inline wire initialiser is lifted too."""
         # ``wire NAME = EXPR;`` — the declaration itself is the driver (QIF style).
         out = abstract_to_free_inputs(
             _MODULE_INLINE,
@@ -47,6 +60,7 @@ class TestAbstractToFreeInputs:
         assert "scaled = sq_in >>> 2" in out
 
     def test_lifts_without_rename(self) -> None:
+        """An output can be lifted under its own name."""
         out = abstract_to_free_inputs(
             _MODULE, top="foo", signals=[LiftedSignal("prod", "prod", msb="2*W-1", signed=True)]
         )
@@ -57,10 +71,12 @@ class TestAbstractToFreeInputs:
         assert "a * b" not in out
 
     def test_rejects_empty(self) -> None:
+        """An empty lift list is rejected."""
         with pytest.raises(ValueError, match="must not be empty"):
             abstract_to_free_inputs(_MODULE, top="foo", signals=[])
 
     def test_rejects_duplicate_ports(self) -> None:
+        """Duplicate port names are rejected."""
         with pytest.raises(ValueError, match="unique"):
             abstract_to_free_inputs(
                 _MODULE,
@@ -72,12 +88,14 @@ class TestAbstractToFreeInputs:
             )
 
     def test_rejects_collision_with_existing_port(self) -> None:
+        """A name that is already a port is rejected."""
         with pytest.raises(ValueError, match="already exists"):
             abstract_to_free_inputs(
                 _MODULE, top="foo", signals=[LiftedSignal("prod", "a", msb="2*W-1")]
             )
 
     def test_missing_declaration_raises(self) -> None:
+        """A signal without a declaration is rejected."""
         # ``zz`` is an implicit internal net — a continuous assign but no wire decl.
         src = (
             "module bar(input wire clk, output reg y);\n"
@@ -89,6 +107,7 @@ class TestAbstractToFreeInputs:
             abstract_to_free_inputs(src, top="bar", signals=[LiftedSignal("zz", "zz_in")])
 
     def test_missing_driver_raises(self) -> None:
+        """A signal without a driver is rejected."""
         # ``w`` is declared but never driven by a continuous assign.
         src = "module bar(input wire clk); wire [7:0] w; endmodule"
         with pytest.raises(ValueError, match="driver"):

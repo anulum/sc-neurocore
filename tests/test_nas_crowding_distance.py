@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search import (
+    _crowding_distance,
+)
+from sc_neurocore.nas.search_space import (
+    Architecture,
+)
 
 
 class TestCrowdingDistance:
+    """Crowding distance in NSGA-II."""
+
     def _make_arch(self, acc: float, energy: float) -> Architecture:
         return Architecture(
             n_inputs=16,
@@ -26,11 +33,13 @@ class TestCrowdingDistance:
         )
 
     def test_two_points(self) -> None:
+        """Two points both have infinite distance."""
         front = [self._make_arch(0.9, 100), self._make_arch(0.8, 200)]
         dist = _crowding_distance(front)
         assert all(d == float("inf") for d in dist)
 
     def test_three_points(self) -> None:
+        """The boundary points have infinite distance."""
         front = [
             self._make_arch(0.9, 300),
             self._make_arch(0.85, 200),

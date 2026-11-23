@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search_space import (
+    Architecture,
+)
 
 
 class TestArchitecture:
+    """Candidate network architectures."""
+
     def test_fields(self) -> None:
+        """An architecture counts its layers and parameters."""
         a = Architecture(
             n_inputs=64,
             layer_widths=[32, 16],
@@ -27,6 +32,7 @@ class TestArchitecture:
         assert a.total_params == 64 * 32 + 32 * 16
 
     def test_single_layer(self) -> None:
+        """A single layer counts its parameters."""
         a = Architecture(
             n_inputs=10,
             layer_widths=[5],

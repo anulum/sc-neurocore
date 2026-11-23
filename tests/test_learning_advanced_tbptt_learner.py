@@ -10,14 +10,24 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    TBPTTLearner,
+)
+from tests.learning_advanced_support import (
+    _make_small_network,
+)
 
 
 class TestTBPTTLearner:
-    def test_chunked_loss_finite(self):
+    """Truncated backpropagation through time."""
+
+    def test_chunked_loss_finite(self) -> None:
+        """A chunked step gives a finite loss."""
         net, proj = _make_small_network()
 
-        def mse(s, t):
+        def mse(s: np.ndarray[Any, Any], t: np.ndarray[Any, Any]) -> float:
             return float(np.mean((s - t) ** 2))
 
         learner = TBPTTLearner(net, loss_fn=mse, lr=0.001, k=10)
@@ -26,7 +36,8 @@ class TestTBPTTLearner:
         loss = learner.train_step(inputs, targets)
         assert np.isfinite(loss)
 
-    def test_chunk_size_respected(self):
+    def test_chunk_size_respected(self) -> None:
+        """The chunk size is kept."""
         net, proj = _make_small_network()
         learner = TBPTTLearner(net, loss_fn=lambda s, t: 0.0, lr=0.01, k=7)
         assert learner.k == 7

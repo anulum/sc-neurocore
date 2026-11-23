@@ -10,14 +10,24 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.phi_estimation import (
+    phi_star,
+)
+from tests.phi_estimation_support import (
+    _PHI_MODULE,
+)
 from tests.julia_requirement import require_julia
 
 require_julia()
 
 
 class TestJuliaParity:
+    """Phi on the Julia backend."""
+
     def test_parity(self) -> None:
+        """Julia matches Python within tolerance."""
         rng = np.random.RandomState(13)
         data = np.vstack([rng.randn(200) for _ in range(4)])
         py = phi_star(data, tau=1, backend="python")
@@ -25,5 +35,6 @@ class TestJuliaParity:
         npt.assert_allclose(ju, py, atol=1e-9)
 
     def test_ensure_julia_is_cached(self) -> None:
+        """The lane is loaded once and cached."""
         assert _PHI_MODULE._ensure_julia_phi() is True
         assert _PHI_MODULE._ensure_julia_phi() is True

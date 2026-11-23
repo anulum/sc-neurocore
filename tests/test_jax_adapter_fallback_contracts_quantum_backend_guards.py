@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
+import pytest
+from unittest.mock import (
+    patch,
+)
 
 
 class TestQuantumBackendGuards:
-    def test_aer_without_qiskit(self):
+    """Quantum backends without their libraries."""
+
+    def test_aer_without_qiskit(self) -> None:
+        """The Aer backend without Qiskit is rejected."""
         with patch("sc_neurocore.quantum.hardware_bridge.HAS_QISKIT", False):
             from sc_neurocore.quantum.hardware_bridge import QuantumHardwareLayer
 
             with pytest.raises(RuntimeError, match="Qiskit"):
                 QuantumHardwareLayer(n_qubits=2, backend_type="aer_simulator")
 
-    def test_pennylane_without_pennylane(self):
+    def test_pennylane_without_pennylane(self) -> None:
+        """The PennyLane backend without PennyLane is rejected."""
         with patch("sc_neurocore.quantum.hardware_bridge.HAS_PENNYLANE", False):
             from sc_neurocore.quantum.hardware_bridge import QuantumHardwareLayer
 

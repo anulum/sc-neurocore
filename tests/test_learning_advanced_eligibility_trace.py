@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    EligibilityTrace,
+)
 
 
 class TestEligibilityTrace:
-    def test_trace_starts_zero(self):
+    """Eligibility traces for learning."""
+
+    def test_trace_starts_zero(self) -> None:
+        """A new trace is all zeros."""
         et = EligibilityTrace(tau_e=20.0, dt=1.0)
         pre = np.zeros(5)
         post = np.zeros(3)
@@ -23,7 +29,8 @@ class TestEligibilityTrace:
         assert dw.shape == (5, 3)
         np.testing.assert_allclose(dw, 0.0)
 
-    def test_trace_accumulates(self):
+    def test_trace_accumulates(self) -> None:
+        """Coincident spikes build up the trace."""
         et = EligibilityTrace(tau_e=20.0, dt=1.0)
         pre = np.array([1.0, 0.0, 0.0])
         post = np.array([0.0, 1.0])
@@ -32,7 +39,8 @@ class TestEligibilityTrace:
         # Pre=1 and post=1 should produce nonzero at [0,1]
         assert dw1[0, 1] > 0
 
-    def test_trace_decays(self):
+    def test_trace_decays(self) -> None:
+        """Without spikes the trace decays."""
         et = EligibilityTrace(tau_e=10.0, dt=1.0)
         pre = np.array([1.0, 0.0])
         post = np.array([1.0])
@@ -42,7 +50,7 @@ class TestEligibilityTrace:
         dw2 = et.update(np.zeros(2), np.zeros(1), np.array([1.0]))
         assert abs(dw2[0, 0]) < abs(dw1[0, 0])
 
-    def test_error_gating(self):
+    def test_error_gating(self) -> None:
         """Zero error should produce zero weight delta."""
         et = EligibilityTrace(tau_e=20.0, dt=1.0)
         pre = np.array([1.0])
@@ -50,7 +58,8 @@ class TestEligibilityTrace:
         dw = et.update(pre, post, np.array([0.0]))
         np.testing.assert_allclose(dw, 0.0)
 
-    def test_decay_constant(self):
+    def test_decay_constant(self) -> None:
+        """The decay matches the time constant."""
         et = EligibilityTrace(tau_e=20.0, dt=1.0)
         expected_decay = np.exp(-1.0 / 20.0)
         np.testing.assert_allclose(et.decay, expected_decay)

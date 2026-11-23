@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+from sc_neurocore.learning.advanced import (
+    ShortTermPlasticity,
+)
 
 
 class TestShortTermPlasticity:
-    def test_class_exists(self):
+    """Short-term synaptic plasticity."""
+
+    def test_class_exists(self) -> None:
         """ShortTermPlasticity should be importable."""
         assert ShortTermPlasticity is not None

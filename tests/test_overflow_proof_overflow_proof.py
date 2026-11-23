@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.overflow_proof_support import *  # noqa: F403
+from sc_neurocore.compiler.overflow_proof import (
+    prove_no_overflow,
+)
 
 
 class TestOverflowProof:

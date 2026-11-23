@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import pytest
+from sc_neurocore.analysis.phi_estimation import (
+    phi_star,
+)
+from tests.phi_estimation_support import (
+    _correlated,
+    _PHI_MODULE,
+)
 
 
 def test_ensure_julia_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without juliacall the Julia lane is off."""
     monkeypatch.setattr(_PHI_MODULE, "_julia_phi", None)
     monkeypatch.setattr(_PHI_MODULE._importlib_util, "find_spec", lambda _name: None)
     assert _PHI_MODULE._ensure_julia_phi() is False
 
 
 def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without its module file the Julia lane is off."""
     monkeypatch.setattr(_PHI_MODULE, "_julia_phi", None)
     monkeypatch.setattr(_PHI_MODULE._importlib_util, "find_spec", lambda _name: object())
     monkeypatch.setattr(_PHI_MODULE._os.path, "isfile", lambda _path: False)
@@ -27,6 +36,7 @@ def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Julia lane raises."""
     monkeypatch.setattr(_PHI_MODULE, "_ensure_julia_phi", lambda: False)
     with pytest.raises(RuntimeError, match="Julia Phi backend is not available"):
         phi_star(_correlated(), tau=1, backend="julia")

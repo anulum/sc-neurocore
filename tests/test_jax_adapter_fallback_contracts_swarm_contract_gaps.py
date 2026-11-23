@@ -10,33 +10,40 @@
 
 from __future__ import annotations
 
-from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
+import numpy as np
 
 
 class TestSwarmContractGaps:
-    def test_fitness_cohesion_single_agent(self):
+    """Remaining swarm fitness and environment paths."""
+
+    def test_fitness_cohesion_single_agent(self) -> None:
+        """A single agent has its cohesion score."""
         from sc_neurocore.swarm.fitness import SwarmFitness
 
         assert SwarmFitness.cohesion_score(np.array([[0.0, 0.0]])) == 0.0
 
-    def test_fitness_alignment_empty(self):
+    def test_fitness_alignment_empty(self) -> None:
+        """No agents give an alignment of 0."""
         from sc_neurocore.swarm.fitness import SwarmFitness
 
         assert SwarmFitness.alignment_score(np.array([])) == 0.0
 
-    def test_fitness_target_no_targets(self):
+    def test_fitness_target_no_targets(self) -> None:
+        """No targets give a target score of 0."""
         from sc_neurocore.swarm.fitness import SwarmFitness
 
         pos = np.array([[1.0, 2.0]])
         assert SwarmFitness.target_score(pos, np.array([])) == 0.0
 
-    def test_fitness_obstacle_no_obstacles(self):
+    def test_fitness_obstacle_no_obstacles(self) -> None:
+        """No obstacles give no penalty."""
         from sc_neurocore.swarm.fitness import SwarmFitness
 
         pos = np.array([[1.0, 2.0]])
         assert SwarmFitness.obstacle_penalty(pos, np.array([])) == 0.0
 
-    def test_collective_deposit_symbolic(self):
+    def test_collective_deposit_symbolic(self) -> None:
+        """A symbolic deposit leaves a positive trace."""
         from sc_neurocore.swarm.collective_fields import CollectiveFields, FieldConfig
 
         fields = CollectiveFields(FieldConfig(grid_size=50))
@@ -44,7 +51,8 @@ class TestSwarmContractGaps:
         val = fields.get_symbolic_at(25.0, 25.0)
         assert val[0] > 0
 
-    def test_env_clamp_boundary(self):
+    def test_env_clamp_boundary(self) -> None:
+        """Agents are clamped to the environment."""
         from sc_neurocore.swarm.swarm_env import SwarmEnvironment, EnvConfig
         from sc_neurocore.swarm.agent import SwarmAgent, AgentConfig
 

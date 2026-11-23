@@ -10,20 +10,31 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    RewardModulatedLearner,
+)
+from tests.learning_advanced_support import (
+    _make_small_network,
+)
 
 
 class TestRewardModulatedLearner:
-    def test_positive_reward_does_not_crash(self):
-        """R-STDP step with positive reward should execute without error.
-        Weight changes depend on spike coincidence detection (voltage > 0.9)
-        which may not trigger with default LIF parameters."""
+    """Reward-modulated STDP."""
+
+    def test_positive_reward_does_not_crash(self) -> None:
+        """An R-STDP step with positive reward executes without error.
+
+        Weight changes depend on spike coincidence detection (voltage > 0.9),
+        which may not trigger with default LIF parameters.
+        """
         net, proj = _make_small_network()
         rstdp = RewardModulatedLearner(net, tau_reward=100.0)
         net.run(duration=0.05, dt=0.001)
         rstdp.step(reward=10.0)  # should not raise
 
-    def test_zero_reward_minimal_change(self):
+    def test_zero_reward_minimal_change(self) -> None:
+        """Zero reward leaves the weights unchanged."""
         net, proj = _make_small_network()
         rstdp = RewardModulatedLearner(net, tau_reward=100.0)
         w_before = proj.data.copy()

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    scaled_dot_product_attention,
+)
 
 
 class TestScaledDotProductAttention:
+    """Scaled dot-product attention."""
+
     def test_identity_keys(self) -> None:
+        """Attention keeps the query shape."""
         n, d = 4, 8
         q = np.eye(n, d)
         k = np.eye(n, d)
@@ -23,6 +29,7 @@ class TestScaledDotProductAttention:
         assert out.shape == (n, d)
 
     def test_uniform_attention_on_equal_keys(self) -> None:
+        """Equal keys average the values."""
         q = np.ones((2, 4))
         k = np.ones((3, 4))
         v = np.arange(12, dtype=np.float64).reshape(3, 4)

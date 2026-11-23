@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from tests.mixed_dense_kernel_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.compiler import (
+    mixed_dense_kernel as kernel,
+)
+from sc_neurocore.compiler.mixed_dense_kernel import (
+    available_backends,
+    mixed_dense_forward_batch,
+    mixed_dense_forward_batch_q88_q1616,
+    MixedDenseBatchResult,
+)
 
 
 class TestDispatch:
@@ -25,12 +36,14 @@ class TestDispatch:
         return weights, inputs, n_outputs, n_inputs
 
     def test_explicit_python_backend(self) -> None:
+        """The Python backend matches the reference."""
         weights, inputs, n_outputs, n_inputs = self._workload()
         ref = mixed_dense_forward_batch_q88_q1616(weights, inputs, n_outputs, n_inputs)
         out = mixed_dense_forward_batch(weights, inputs, n_outputs, n_inputs, backend="python")
         npt.assert_array_equal(out.outputs_q1616, ref.outputs_q1616)
 
     def test_auto_backend_matches_python(self) -> None:
+        """The automatic backend matches Python."""
         weights, inputs, n_outputs, n_inputs = self._workload()
         ref = mixed_dense_forward_batch_q88_q1616(weights, inputs, n_outputs, n_inputs)
         out = mixed_dense_forward_batch(weights, inputs, n_outputs, n_inputs, backend="auto")
@@ -39,15 +52,19 @@ class TestDispatch:
         npt.assert_array_equal(out.underflow, ref.underflow)
 
     def test_unknown_backend_rejected(self) -> None:
+        """An unknown backend is rejected."""
         with pytest.raises(ValueError, match="unknown backend"):
             mixed_dense_forward_batch([1], [1], 1, 1, backend="cuda")
 
     def test_available_backends_reports_python(self) -> None:
+        """Python is always reported available."""
         status = available_backends()
         assert status["python"] is True
         assert set(status) == set(kernel.FASTEST_FIRST_BACKENDS)
 
     def test_auto_falls_back_to_python(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Without a native backend the call falls back to Python."""
+
         def _boom(*_args: object, **_kwargs: object) -> MixedDenseBatchResult:
             raise ImportError("forced unavailable")
 
@@ -61,6 +78,8 @@ class TestDispatch:
         npt.assert_array_equal(out.outputs_q1616, ref.outputs_q1616)
 
     def test_available_backends_marks_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A failing backend is reported unavailable."""
+
         def _boom(*_args: object, **_kwargs: object) -> MixedDenseBatchResult:
             raise OSError("library missing")
 

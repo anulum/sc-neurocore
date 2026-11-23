@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.phi_estimation import (
+    _gaussian_mi,
+)
 
 
 class TestGaussianMI:
+    """Gaussian mutual information."""
+
     def test_nonnegative_and_symmetric(self) -> None:
+        """The mutual information is not negative."""
         rng = np.random.RandomState(1)
         x = rng.randn(2, 120)
         y = rng.randn(2, 120)
@@ -23,6 +30,7 @@ class TestGaussianMI:
         npt.assert_allclose(mi, _gaussian_mi(y, x), atol=1e-12)
 
     def test_single_channel_blocks(self) -> None:
+        """Single-channel blocks give a non-negative value."""
         # 1-row blocks must use the unbiased variance (ddof=1) without error.
         rng = np.random.RandomState(2)
         mi = _gaussian_mi(rng.randn(1, 80), rng.randn(1, 80))

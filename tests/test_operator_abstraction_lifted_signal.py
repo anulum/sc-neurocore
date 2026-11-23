@@ -10,15 +10,19 @@
 
 from __future__ import annotations
 
-from tests.operator_abstraction_support import *  # noqa: F403
+from sc_neurocore.compiler.operator_abstraction import (
+    LiftedSignal,
+)
 
 
 class TestLiftedSignal:
     """The lifted-signal value type."""
 
     def test_declaration_sized_signed(self) -> None:
+        """A sized signed signal declares its width."""
         sig = LiftedSignal("prod", "prod_in", msb="2*W-1", signed=True)
         assert sig.declaration() == "input wire signed [2*W-1:0] prod_in"
 
     def test_declaration_scalar_unsigned(self) -> None:
+        """A scalar unsigned signal declares a plain wire."""
         assert LiftedSignal("q", "q_in").declaration() == "input wire q_in"

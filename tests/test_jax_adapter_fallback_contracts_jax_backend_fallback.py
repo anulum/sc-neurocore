@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
+import numpy as np
+from unittest.mock import (
+    patch,
+)
 
 
 class TestJaxBackendFallback:
-    def test_surrogate_paths_declared_without_jax(self):
+    """The JAX backend without JAX installed."""
+
+    def test_surrogate_paths_declared_without_jax(self) -> None:
+        """The surrogate paths are declared without JAX."""
         from sc_neurocore.accel.jax_backend import JAX_SURROGATE_PATHS
 
         assert JAX_SURROGATE_PATHS == ("custom_vjp", "legacy_stop_gradient")
 
-    def test_to_jax_no_jax(self):
+    def test_to_jax_no_jax(self) -> None:
+        """Without JAX an array passes through unchanged."""
         with patch("sc_neurocore.accel.jax_backend.HAS_JAX", False):
             from sc_neurocore.accel.jax_backend import to_jax
 

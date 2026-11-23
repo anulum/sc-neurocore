@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
-
 
 class TestVectorizedLayerForward:
-    def test_forward_correct_shape(self):
+    """The vectorised layer forward pass."""
+
+    def test_forward_correct_shape(self) -> None:
+        """The forward pass gives one output per neuron."""
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
         layer = VectorizedSCLayer(n_inputs=4, n_neurons=8, use_gpu=False)

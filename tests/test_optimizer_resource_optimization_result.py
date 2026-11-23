@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.optimizer_resource_support import *  # noqa: F403
+from sc_neurocore.optimizer import (
+    OptimizationResult,
+)
+from sc_neurocore.optimizer.resource_optimizer import (
+    OptimizationStep,
+)
 
 
 class TestOptimizationResult:
-    def test_summary(self):
+    """Optimisation results."""
+
+    def test_summary(self) -> None:
+        """The summary names the target and fit."""
         r = OptimizationResult(
             fits=True,
             target="ice40",
@@ -38,7 +46,8 @@ class TestOptimizationResult:
         assert "YES" in s
         assert "1,000" in s
 
-    def test_summary_does_not_fit(self):
+    def test_summary_does_not_fit(self) -> None:
+        """A result that does not fit says so."""
         r = OptimizationResult(
             fits=False,
             target="ice40",

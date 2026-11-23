@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    POSSMDecoder,
+)
 
 
 class TestPOSSMDecoder:
+    """The POSSM state-space decoder."""
+
     def test_defaults(self) -> None:
+        """The decoder has its default sizes."""
         dec = POSSMDecoder()
         assert dec.d_model == 64
         assert dec.d_state == 32
@@ -27,23 +33,27 @@ class TestPOSSMDecoder:
         np.testing.assert_allclose(a_bar, expected_a)
 
     def test_step_output_shape(self) -> None:
+        """A step gives the output size."""
         dec = POSSMDecoder(d_model=8, d_state=4)
         x = np.ones(8)
         y = dec.step(x)
         assert y.shape == (8,)
 
     def test_step_state_changes(self) -> None:
+        """A step changes the hidden state."""
         dec = POSSMDecoder(d_model=4, d_state=2, seed=3)
         h_before = dec._h.copy()
         dec.step(np.ones(4))
         assert not np.allclose(dec._h, h_before)
 
     def test_encode_causal_empty(self) -> None:
+        """No input gives an empty output."""
         dec = POSSMDecoder(d_model=8)
         out = dec.encode_causal([])
         assert out.shape == (0, 8)
 
     def test_encode_causal_shape(self) -> None:
+        """Causal encoding gives one row per step."""
         dec = POSSMDecoder(d_model=16, d_state=8)
         trains = [np.zeros(50), np.zeros(50)]
         trains[0][10] = 1
@@ -66,6 +76,7 @@ class TestPOSSMDecoder:
         np.testing.assert_allclose(out1[:25], out2[:25])
 
     def test_reset_zeros_state(self) -> None:
+        """A reset zeroes the hidden state."""
         dec = POSSMDecoder(d_model=4, d_state=2)
         dec.step(np.ones(4))
         dec.reset()

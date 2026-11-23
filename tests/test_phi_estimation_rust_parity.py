@@ -10,12 +10,24 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.phi_estimation import (
+    phi_star,
+)
+from tests.phi_estimation_support import (
+    _correlated,
+    _RUST_AVAILABLE,
+)
 
 
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust Phi backend not built")
 class TestRustParity:
+    """Phi on the Rust backend."""
+
     def test_parity_across_sizes(self) -> None:
+        """Rust matches Python across sizes."""
         rng = np.random.RandomState(11)
         for n in (2, 3, 5, 8):
             data = np.vstack([rng.randn(220) for _ in range(n)])
@@ -24,6 +36,7 @@ class TestRustParity:
             npt.assert_allclose(ru, py, atol=1e-9)
 
     def test_auto_selects_rust(self) -> None:
+        """The automatic backend selects Rust."""
         data = _correlated(n_channels=4)
         npt.assert_array_equal(
             phi_star(data, tau=1, backend="auto"), phi_star(data, tau=1, backend="rust")

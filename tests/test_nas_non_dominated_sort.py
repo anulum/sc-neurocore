@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search import (
+    _non_dominated_sort,
+)
+from sc_neurocore.nas.search_space import (
+    Architecture,
+)
 
 
 class TestNonDominatedSort:
+    """Non-dominated sorting."""
+
     def _make_arch(self, acc: float, energy: float) -> Architecture:
         return Architecture(
             n_inputs=16,
@@ -26,12 +33,14 @@ class TestNonDominatedSort:
         )
 
     def test_single_front(self) -> None:
+        """Mutually non-dominated points form one front."""
         pop = [self._make_arch(0.9, 200), self._make_arch(0.8, 100)]
         fronts = _non_dominated_sort(pop)
         assert len(fronts) == 1
         assert len(fronts[0]) == 2
 
     def test_two_fronts(self) -> None:
+        """A dominated point forms a second front."""
         pop = [
             self._make_arch(0.9, 100),  # dominates c
             self._make_arch(0.8, 50),  # dominates c

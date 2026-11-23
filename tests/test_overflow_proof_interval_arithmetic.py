@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.overflow_proof_support import *  # noqa: F403
+from sc_neurocore.compiler.overflow_proof import (
+    Interval,
+)
 
 
 class TestIntervalArithmetic:
@@ -42,7 +44,7 @@ class TestIntervalArithmetic:
         assert r.lo == float("-inf")
 
     def test_negation(self) -> None:
-        """-[2,5] = [-5,-2]."""
+        """Negating the interval [2,5] gives [-5,-2]."""
         r = -Interval(2, 5)
         assert r.lo == -5 and r.hi == -2
 

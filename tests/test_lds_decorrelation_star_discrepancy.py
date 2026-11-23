@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.lds_decorrelation_support import *  # noqa: F403
+import numpy as np
+import scipy.stats.qmc as qmc
+from sc_neurocore.utils.lds_decorrelation import (
+    star_discrepancy_estimate,
+)
 
 
 class TestStarDiscrepancy:
-    def test_sobol_lower_discrepancy_than_random(self):
+    """The star discrepancy of a sequence."""
+
+    def test_sobol_lower_discrepancy_than_random(self) -> None:
         """Sobol samples should have lower discrepancy than random."""
         sobol = qmc.Sobol(d=2, seed=42).random(256)
         rand = np.random.RandomState(42).uniform(0, 1, (256, 2))
@@ -22,7 +28,8 @@ class TestStarDiscrepancy:
         disc_rand = star_discrepancy_estimate(rand, n_test=1000)
         assert disc_sobol < disc_rand
 
-    def test_discrepancy_nonnegative(self):
+    def test_discrepancy_nonnegative(self) -> None:
+        """The discrepancy is not negative."""
         samples = np.random.uniform(0, 1, (100, 3))
         disc = star_discrepancy_estimate(samples, n_test=500)
         assert disc >= 0.0

@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
-
 
 class TestDNAMutation:
-    def test_decode_triggers_mutation(self):
+    """Mutation in the DNA encoder."""
+
+    def test_decode_triggers_mutation(self) -> None:
+        """Decoding with mutation still gives eight bits."""
         from sc_neurocore.adapters.holonomic.dna_storage import DNAEncoder
 
         enc = DNAEncoder(mutation_rate=1.0)

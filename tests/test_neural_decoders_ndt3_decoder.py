@@ -10,21 +10,30 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    NDT3Decoder,
+)
 
 
 class TestNDT3Decoder:
+    """The NDT3 transformer decoder."""
+
     def test_defaults(self) -> None:
+        """The decoder has its default size and bin width."""
         dec = NDT3Decoder()
         assert dec.d_model == 64
         assert dec.bin_size_ms == pytest.approx(20.0)
 
     def test_bin_and_embed_empty(self) -> None:
+        """No spikes give no bins."""
         dec = NDT3Decoder(d_model=8)
         binned, embedded = dec.bin_and_embed([])
         assert binned.shape[0] == 0
 
     def test_bin_and_embed_shape(self) -> None:
+        """Binning and embedding give their shapes."""
         dec = NDT3Decoder(d_model=16, bin_size_ms=10.0)
         trains = [np.zeros(100), np.zeros(100)]  # 100 steps @ dt=1 → 10 bins
         trains[0][5] = 1
@@ -33,6 +42,7 @@ class TestNDT3Decoder:
         assert embedded.shape == (10, 16)
 
     def test_binning_counts_spikes(self) -> None:
+        """Each bin counts its spikes."""
         dec = NDT3Decoder(bin_size_ms=10.0)
         train = np.zeros(100)
         train[3] = 1
@@ -59,6 +69,7 @@ class TestNDT3Decoder:
         np.testing.assert_allclose(out[0], out2[0], atol=1e-10)
 
     def test_decode_pipeline(self) -> None:
+        """The pipeline gives outputs of the asked size."""
         dec = NDT3Decoder(d_model=8, bin_size_ms=5.0)
         trains = [np.zeros(30) for _ in range(3)]
         for i, t in enumerate(trains):
@@ -68,6 +79,7 @@ class TestNDT3Decoder:
         assert out.shape[0] > 0
 
     def test_different_activity_different_output(self) -> None:
+        """Different activity gives different outputs."""
         dec = NDT3Decoder(d_model=8, bin_size_ms=10.0, seed=99)
         t1 = [np.zeros(50)]
         t1[0][5] = 1
@@ -78,8 +90,10 @@ class TestNDT3Decoder:
         assert not np.allclose(o1, o2)
 
     def test_bin_and_embed_train_shorter_than_one_bin(self) -> None:
-        """Trains too short to fill a single 20 ms bin yield no bins at all,
-        keeping the neuron dimension on the (empty) binned matrix."""
+        """Trains too short to fill a single 20 ms bin yield no bins at all.
+
+        The neuron dimension is kept on the empty binned matrix.
+        """
         dec = NDT3Decoder(d_model=8)
         trains = [np.zeros(5), np.zeros(5)]
         binned, embedded = dec.bin_and_embed(trains, dt=1.0)
@@ -87,8 +101,10 @@ class TestNDT3Decoder:
         assert embedded.shape == (0, 8)
 
     def test_predict_next_on_empty_embedding(self) -> None:
-        """Predicting from an empty embedding short-circuits to an empty
-        output rather than running attention over zero positions."""
+        """Predicting from an empty embedding gives an empty output.
+
+        It short-circuits rather than running attention over zero positions.
+        """
         dec = NDT3Decoder(d_model=8)
         empty = np.zeros((0, 8))
         out = dec.predict_next(empty)

@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_learning_advanced.py
 
+"""Shared names and a small two-population network for the advanced learning tests."""
+
 from __future__ import annotations
 
-"""Tests for BPTT, TBPTT, EligibilityTrace, R-STDP, Homeostatic, STP."""
 import numpy as np
 from sc_neurocore import StochasticLIFNeuron
 from sc_neurocore.network.population import Population
@@ -25,7 +26,9 @@ from sc_neurocore.learning.advanced import (
 )
 
 
-def _make_small_network(n_in=10, n_out=5, w=0.3, p=0.5):
+def _make_small_network(
+    n_in: int = 10, n_out: int = 5, w: float = 0.3, p: float = 0.5
+) -> tuple[Network, Projection]:
     pop_in = Population(StochasticLIFNeuron, n=n_in, label="in")
     pop_out = Population(StochasticLIFNeuron, n=n_out, label="out")
     proj = Projection(pop_in, pop_out, weight=w, probability=p, seed=42)

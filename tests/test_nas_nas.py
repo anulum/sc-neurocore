@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search import (
+    nas,
+    NASResult,
+)
+from sc_neurocore.nas.search_space import (
+    SearchSpace,
+)
 
 
 class TestNAS:
+    """Neural architecture search."""
+
     def test_small_search(self) -> None:
+        """A short search returns a Pareto front."""
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)
         result = nas(sp, target="artix7", population_size=10, generations=3, seed=42)
         assert isinstance(result, NASResult)
@@ -23,6 +32,7 @@ class TestNAS:
         assert result.total_evaluations > 0
 
     def test_best_accuracy(self) -> None:
+        """The most accurate architecture is found."""
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)
         result = nas(sp, target="artix7", population_size=10, generations=3)
         best = result.best_accuracy()
@@ -30,6 +40,7 @@ class TestNAS:
         assert best.fitness_accuracy > 0
 
     def test_best_efficiency(self) -> None:
+        """The most efficient architecture is found."""
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)
         result = nas(sp, target="artix7", population_size=10, generations=3)
         best = result.best_efficiency()
@@ -37,6 +48,7 @@ class TestNAS:
         assert best.fitness_energy_nj > 0
 
     def test_summary(self) -> None:
+        """The summary names the Pareto front."""
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)
         result = nas(sp, target="ice40", population_size=10, generations=2)
         s = result.summary()
@@ -44,12 +56,14 @@ class TestNAS:
         assert "Pareto front" in s
 
     def test_lut_constraint(self) -> None:
+        """Architectures respect the LUT budget."""
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)
         result = nas(sp, target="ice40", population_size=10, generations=3, max_luts=5000)
         for arch in result.pareto_front:
             assert arch.fitness_luts > 0
 
     def test_custom_accuracy(self) -> None:
+        """A custom accuracy function shapes the front."""
         sp = SearchSpace(n_inputs=8, n_outputs=2, min_layers=1, max_layers=1)
         result = nas(
             sp,
@@ -61,6 +75,7 @@ class TestNAS:
         assert all(a.fitness_accuracy >= 0.5 for a in result.pareto_front)
 
     def test_empty_pareto_front_methods(self) -> None:
+        """An empty front has no best architecture."""
         r = NASResult(pareto_front=[], all_evaluated=[], generations=0, total_evaluations=0)
         assert r.best_accuracy() is None
         assert r.best_efficiency() is None

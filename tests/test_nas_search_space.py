@@ -10,17 +10,28 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.nas.search_space import (
+    Architecture,
+    L_CHOICES,
+    NEURON_CHOICES,
+    SearchSpace,
+    WIDTH_CHOICES,
+)
 
 
 class TestSearchSpace:
+    """The architecture search space."""
+
     def test_defaults(self) -> None:
+        """The default space spans one to four layers."""
         sp = SearchSpace(n_inputs=64, n_outputs=10)
         assert sp.min_layers == 1
         assert sp.max_layers == 4
         assert len(sp.width_choices) == len(WIDTH_CHOICES)
 
     def test_random_architecture(self) -> None:
+        """A random architecture has the fixed input and output."""
         sp = SearchSpace(n_inputs=64, n_outputs=10)
         rng = np.random.RandomState(42)
         arch = sp.random_architecture(rng)
@@ -34,6 +45,7 @@ class TestSearchSpace:
             assert L in L_CHOICES
 
     def test_mutate(self) -> None:
+        """Mutation keeps the inputs and layer count."""
         sp = SearchSpace(n_inputs=64, n_outputs=10)
         rng = np.random.RandomState(42)
         original = sp.random_architecture(rng)
@@ -42,6 +54,7 @@ class TestSearchSpace:
         assert mutated.n_layers == original.n_layers
 
     def test_mutate_all_genes(self) -> None:
+        """Mutation runs across every gene; nothing is checked."""
         sp = SearchSpace(n_inputs=64, n_outputs=10, min_layers=3, max_layers=3)
         # Run enough mutations to hit all gene types including width (gene=0)
         for seed in range(50):
@@ -50,6 +63,7 @@ class TestSearchSpace:
             sp.mutate(original, rng)
 
     def test_crossover_same_layers(self) -> None:
+        """Crossover of equal depths keeps the depth."""
         sp = SearchSpace(n_inputs=32, n_outputs=8, min_layers=2, max_layers=2)
         rng = np.random.RandomState(42)
         a = sp.random_architecture(rng)
@@ -59,6 +73,7 @@ class TestSearchSpace:
         assert child.layer_widths[-1] == 8
 
     def test_crossover_different_layers(self) -> None:
+        """Crossover takes the smaller depth."""
         sp = SearchSpace(n_inputs=32, n_outputs=8)
         rng = np.random.RandomState(42)
         a = Architecture(
@@ -79,5 +94,6 @@ class TestSearchSpace:
         assert child.n_layers == 2  # min(2, 3)
 
     def test_space_size(self) -> None:
+        """The space has a positive size."""
         sp = SearchSpace(n_inputs=64, n_outputs=10, min_layers=1, max_layers=2)
         assert sp.space_size > 0

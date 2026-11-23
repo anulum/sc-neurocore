@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
-from tests.online_learning_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.online_learning.online_trainer import (
+    OnlineLIFLayer,
+)
 
 
 class TestOnlineLIFLayer:
-    def test_step(self):
+    """An online-learning LIF layer."""
+
+    def test_step(self) -> None:
+        """A step gives binary spikes per neuron."""
         layer = OnlineLIFLayer(n_inputs=4, n_neurons=8)
         x = np.random.rand(4)
         spikes = layer.step(x)
         assert spikes.shape == (8,)
         assert set(np.unique(spikes)).issubset({0.0, 1.0})
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset zeroes the voltages."""
         layer = OnlineLIFLayer(n_inputs=4, n_neurons=8)
         layer.step(np.ones(4))
         layer.reset()
         assert np.allclose(layer._v, 0)
 
-    def test_apply_learning_signal(self):
+    def test_apply_learning_signal(self) -> None:
+        """A learning signal changes the weights."""
         layer = OnlineLIFLayer(n_inputs=4, n_neurons=8, lr=0.1)
         layer.step(np.ones(4))
         w_before = layer.W.copy()

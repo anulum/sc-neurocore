@@ -10,29 +10,43 @@
 
 from __future__ import annotations
 
-from tests.optimizer_resource_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.optimizer import (
+    fit_to_target,
+    OptimizationResult,
+)
+from sc_neurocore.optimizer.resource_optimizer import (
+    OptimizationStep,
+)
 
 
 class TestFitToTarget:
-    def test_small_network_fits(self):
+    """Fitting a network to an FPGA target."""
+
+    def test_small_network_fits(self) -> None:
+        """A small network fits without change."""
         layers = [(4, 2)]
         weights = [np.random.randn(2, 4) * 0.1]
         result = fit_to_target(layers, weights, target="artix7")
         assert isinstance(result, OptimizationResult)
         assert result.fits is True
 
-    def test_ice40_may_need_optimization(self):
+    def test_ice40_may_need_optimization(self) -> None:
+        """An iCE40 target gets a result for its target."""
         layers = [(64, 32), (32, 16)]
         weights = [np.random.randn(32, 64), np.random.randn(16, 32)]
         result = fit_to_target(layers, weights, target="ice40", initial_bitstream_length=256)
         assert isinstance(result, OptimizationResult)
         assert result.target == "ice40"
 
-    def test_unknown_target_raises(self):
+    def test_unknown_target_raises(self) -> None:
+        """An unknown target is rejected."""
         with pytest.raises(ValueError, match="Unknown target"):
             fit_to_target([(4, 2)], [np.random.randn(2, 4)], target="nonexistent_fpga")
 
-    def test_steps_recorded(self):
+    def test_steps_recorded(self) -> None:
+        """Optimisation steps are recorded."""
         layers = [(32, 16)]
         weights = [np.random.randn(16, 32)]
         result = fit_to_target(layers, weights, target="ice40", initial_bitstream_length=512)
@@ -40,20 +54,23 @@ class TestFitToTarget:
         for step in result.steps:
             assert isinstance(step, OptimizationStep)
 
-    def test_sparsity_range(self):
+    def test_sparsity_range(self) -> None:
+        """The final sparsity lies in [0, 1]."""
         layers = [(16, 8)]
         weights = [np.random.randn(8, 16)]
         result = fit_to_target(layers, weights, target="ice40")
         assert 0.0 <= result.final_sparsity <= 1.0
 
-    def test_optimized_weights_returned(self):
+    def test_optimized_weights_returned(self) -> None:
+        """The optimised weights keep their shapes."""
         layers = [(8, 4)]
         weights = [np.random.randn(4, 8)]
         result = fit_to_target(layers, weights, target="ecp5")
         assert len(result.optimized_weights) == 1
         assert result.optimized_weights[0].shape == (4, 8)
 
-    def test_prune_and_quantize_path_when_l_reduction_disabled(self):
+    def test_prune_and_quantize_path_when_l_reduction_disabled(self) -> None:
+        """Without length reduction the optimiser prunes and quantises."""
         layers = [(64, 32), (32, 16)]
         weights = [np.random.randn(32, 64), np.random.randn(16, 32)]
         result = fit_to_target(

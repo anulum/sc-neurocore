@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.overflow_proof_support import *  # noqa: F403
+from typing import Any, cast
+from sc_neurocore.compiler.overflow_proof import (
+    FixedPointEnvelopeProof,
+    prove_fixed_point_envelope,
+)
 
 
 class TestFixedPointEnvelopeProof:
@@ -99,7 +103,7 @@ class TestFixedPointEnvelopeProof:
             {"total_bits": 16, "fractional_bits": 16},
         ):
             with pytest.raises(ValueError):
-                prove_fixed_point_envelope([1], **kwargs)
+                prove_fixed_point_envelope([1], **cast(Any, kwargs))
 
         with pytest.raises(ValueError, match="at least one"):
             prove_fixed_point_envelope([])
@@ -110,4 +114,4 @@ class TestFixedPointEnvelopeProof:
 
         for bad_code in (1.0, True):
             with pytest.raises(TypeError, match="integer Q-code"):
-                prove_fixed_point_envelope([bad_code])
+                prove_fixed_point_envelope([cast(Any, bad_code)])

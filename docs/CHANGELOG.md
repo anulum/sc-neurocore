@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 55 top-level test modules of the JAX adapter fallback, LDS,
+  advanced learning, mixed dense kernel, NAS, neural decoder, online
+  learning, operator abstraction, resource optimiser, overflow proof
+  and Phi estimation suites import their names explicitly instead of
+  through a suppressed star import, gain their missing docstrings and
+  type annotations and are enrolled in the docstring policy. One
+  helper support gains types and a module docstring, and the support
+  modules left without an importer are deleted.
+
 - The 73 top-level test modules of the compiler-intelligence suites
   (digital twin, drift compensation, power and thermal, reporting,
   security and compliance, SoC and chiplet, timescale partitioning,

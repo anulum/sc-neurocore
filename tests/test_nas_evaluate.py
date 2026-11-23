@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search import (
+    _evaluate,
+)
+from sc_neurocore.nas.search_space import (
+    Architecture,
+)
 
 
 class TestEvaluate:
+    """Evaluating candidate architectures."""
+
     def test_default_proxy(self) -> None:
+        """The default proxy gives LUTs, energy and accuracy."""
         arch = Architecture(
             n_inputs=64,
             layer_widths=[32, 10],
@@ -28,6 +36,7 @@ class TestEvaluate:
         assert 0 < arch.fitness_accuracy <= 1.0
 
     def test_custom_accuracy_fn(self) -> None:
+        """A custom accuracy function is used."""
         arch = Architecture(
             n_inputs=16,
             layer_widths=[8],

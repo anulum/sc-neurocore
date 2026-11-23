@@ -10,23 +10,30 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    tokenise_spikes,
+)
 
 
 class TestTokeniseSpikes:
     """Spike tokenisation used by POYO+ and POSSM."""
 
     def test_empty_input(self) -> None:
+        """No input gives no tokens."""
         uids, ts = tokenise_spikes([])
         assert len(uids) == 0
         assert len(ts) == 0
 
     def test_no_spikes(self) -> None:
+        """No spikes give no tokens."""
         trains = [np.zeros(100), np.zeros(100)]
         uids, ts = tokenise_spikes(trains)
         assert len(uids) == 0
 
     def test_single_spike(self) -> None:
+        """One spike gives one token at its time."""
         train = np.zeros(50)
         train[10] = 1
         uids, ts = tokenise_spikes([train], dt=0.5)
@@ -35,6 +42,7 @@ class TestTokeniseSpikes:
         assert ts[0] == pytest.approx(5.0)
 
     def test_sorted_by_time(self) -> None:
+        """Tokens are ordered by time."""
         t0 = np.zeros(100)
         t0[50] = 1
         t1 = np.zeros(100)
@@ -45,6 +53,7 @@ class TestTokeniseSpikes:
         assert uids[1] == 0
 
     def test_multiple_spikes_per_unit(self) -> None:
+        """Each spike of a unit is a token."""
         train = np.zeros(20)
         train[5] = 1
         train[15] = 1
@@ -53,6 +62,7 @@ class TestTokeniseSpikes:
         assert np.all(uids == 0)
 
     def test_dt_scaling(self) -> None:
+        """Token times scale with dt."""
         train = np.zeros(10)
         train[4] = 1
         _, ts1 = tokenise_spikes([train], dt=1.0)

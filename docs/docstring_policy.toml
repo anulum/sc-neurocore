@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3262
+expected_file_count = 3318
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -13092,3 +13092,227 @@ rationale = "Exercise SC-NeuroCore: ir type checker check ir types."
 [[file]]
 path = "tests/test_ir_type_checker_types_compatible.py"
 rationale = "Exercise SC-NeuroCore: ir type checker types compatible."
+
+[[file]]
+path = "tests/learning_advanced_support.py"
+rationale = "Provide the names and small network builder shared by the advanced learning tests."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_dna_mutation.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts dna mutation."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_holonomic_adapter_gaps.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts holonomic adapter gaps."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_jax_backend_fallback.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts jax backend fallback."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_jax_compat_fallback.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts jax compat fallback."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_quantum_backend_guards.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts quantum backend guards."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_swarm_contract_gaps.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts swarm contract gaps."
+
+[[file]]
+path = "tests/test_jax_adapter_fallback_contracts_vectorized_layer_forward.py"
+rationale = "Exercise SC-NeuroCore: jax adapter fallback contracts vectorized layer forward."
+
+[[file]]
+path = "tests/test_lds_decorrelation_star_discrepancy.py"
+rationale = "Exercise SC-NeuroCore: lds decorrelation star discrepancy."
+
+[[file]]
+path = "tests/test_learning_advanced_bptt_learner.py"
+rationale = "Exercise SC-NeuroCore: learning advanced bptt learner."
+
+[[file]]
+path = "tests/test_learning_advanced_eligibility_trace.py"
+rationale = "Exercise SC-NeuroCore: learning advanced eligibility trace."
+
+[[file]]
+path = "tests/test_learning_advanced_homeostatic_plasticity.py"
+rationale = "Exercise SC-NeuroCore: learning advanced homeostatic plasticity."
+
+[[file]]
+path = "tests/test_learning_advanced_reward_modulated_learner.py"
+rationale = "Exercise SC-NeuroCore: learning advanced reward modulated learner."
+
+[[file]]
+path = "tests/test_learning_advanced_short_term_plasticity.py"
+rationale = "Exercise SC-NeuroCore: learning advanced short term plasticity."
+
+[[file]]
+path = "tests/test_learning_advanced_tbptt_learner.py"
+rationale = "Exercise SC-NeuroCore: learning advanced tbptt learner."
+
+[[file]]
+path = "tests/test_mixed_dense_kernel_dispatch.py"
+rationale = "Exercise SC-NeuroCore: mixed dense kernel dispatch."
+
+[[file]]
+path = "tests/test_mixed_dense_kernel_forward.py"
+rationale = "Exercise SC-NeuroCore: mixed dense kernel forward."
+
+[[file]]
+path = "tests/test_nas_architecture.py"
+rationale = "Exercise SC-NeuroCore: nas architecture."
+
+[[file]]
+path = "tests/test_nas_crowding_distance.py"
+rationale = "Exercise SC-NeuroCore: nas crowding distance."
+
+[[file]]
+path = "tests/test_nas_dominance.py"
+rationale = "Exercise SC-NeuroCore: nas dominance."
+
+[[file]]
+path = "tests/test_nas_equiv_checker.py"
+rationale = "Exercise SC-NeuroCore: nas equiv checker."
+
+[[file]]
+path = "tests/test_nas_equiv_result.py"
+rationale = "Exercise SC-NeuroCore: nas equiv result."
+
+[[file]]
+path = "tests/test_nas_evaluate.py"
+rationale = "Exercise SC-NeuroCore: nas evaluate."
+
+[[file]]
+path = "tests/test_nas_nas.py"
+rationale = "Exercise SC-NeuroCore: nas nas."
+
+[[file]]
+path = "tests/test_nas_non_dominated_sort.py"
+rationale = "Exercise SC-NeuroCore: nas non dominated sort."
+
+[[file]]
+path = "tests/test_nas_search_space.py"
+rationale = "Exercise SC-NeuroCore: nas search space."
+
+[[file]]
+path = "tests/test_neural_decoders_cebra_encoder.py"
+rationale = "Exercise SC-NeuroCore: neural decoders cebra encoder."
+
+[[file]]
+path = "tests/test_neural_decoders_ndt3_decoder.py"
+rationale = "Exercise SC-NeuroCore: neural decoders ndt3 decoder."
+
+[[file]]
+path = "tests/test_neural_decoders_possm_decoder.py"
+rationale = "Exercise SC-NeuroCore: neural decoders possm decoder."
+
+[[file]]
+path = "tests/test_neural_decoders_poyo_decoder.py"
+rationale = "Exercise SC-NeuroCore: neural decoders poyo decoder."
+
+[[file]]
+path = "tests/test_neural_decoders_scaled_dot_product_attention.py"
+rationale = "Exercise SC-NeuroCore: neural decoders scaled dot product attention."
+
+[[file]]
+path = "tests/test_neural_decoders_sinusoidal_position_encode.py"
+rationale = "Exercise SC-NeuroCore: neural decoders sinusoidal position encode."
+
+[[file]]
+path = "tests/test_neural_decoders_tokenise_spikes.py"
+rationale = "Exercise SC-NeuroCore: neural decoders tokenise spikes."
+
+[[file]]
+path = "tests/test_online_learning_eprop_trainer.py"
+rationale = "Exercise SC-NeuroCore: online learning eprop trainer."
+
+[[file]]
+path = "tests/test_online_learning_online_lif_layer.py"
+rationale = "Exercise SC-NeuroCore: online learning online lif layer."
+
+[[file]]
+path = "tests/test_online_learning_online_trainer.py"
+rationale = "Exercise SC-NeuroCore: online learning online trainer."
+
+[[file]]
+path = "tests/test_operator_abstraction_abstract_to_free_inputs.py"
+rationale = "Exercise SC-NeuroCore: operator abstraction abstract to free inputs."
+
+[[file]]
+path = "tests/test_operator_abstraction_lifted_signal.py"
+rationale = "Exercise SC-NeuroCore: operator abstraction lifted signal."
+
+[[file]]
+path = "tests/test_optimizer_resource_fit_to_target.py"
+rationale = "Exercise SC-NeuroCore: optimizer resource fit to target."
+
+[[file]]
+path = "tests/test_optimizer_resource_optimization_result.py"
+rationale = "Exercise SC-NeuroCore: optimizer resource optimization result."
+
+[[file]]
+path = "tests/test_overflow_proof_fixed_point_envelope_proof.py"
+rationale = "Exercise SC-NeuroCore: overflow proof fixed point envelope proof."
+
+[[file]]
+path = "tests/test_overflow_proof_interval_arithmetic.py"
+rationale = "Exercise SC-NeuroCore: overflow proof interval arithmetic."
+
+[[file]]
+path = "tests/test_overflow_proof_overflow_proof.py"
+rationale = "Exercise SC-NeuroCore: overflow proof overflow proof."
+
+[[file]]
+path = "tests/test_overflow_proof_overflow_proof_edge_branches.py"
+rationale = "Exercise SC-NeuroCore: overflow proof overflow proof edge branches."
+
+[[file]]
+path = "tests/test_phi_estimation_dispatch_rust.py"
+rationale = "Exercise SC-NeuroCore: phi estimation dispatch rust."
+
+[[file]]
+path = "tests/test_phi_estimation_gaussian_mi.py"
+rationale = "Exercise SC-NeuroCore: phi estimation gaussian mi."
+
+[[file]]
+path = "tests/test_phi_estimation_go.py"
+rationale = "Exercise SC-NeuroCore: phi estimation go."
+
+[[file]]
+path = "tests/test_phi_estimation_go_parity.py"
+rationale = "Exercise SC-NeuroCore: phi estimation go parity."
+
+[[file]]
+path = "tests/test_phi_estimation_julia.py"
+rationale = "Exercise SC-NeuroCore: phi estimation julia."
+
+[[file]]
+path = "tests/test_phi_estimation_julia_parity.py"
+rationale = "Exercise SC-NeuroCore: phi estimation julia parity."
+
+[[file]]
+path = "tests/test_phi_estimation_logdet_spd.py"
+rationale = "Exercise SC-NeuroCore: phi estimation logdet spd."
+
+[[file]]
+path = "tests/test_phi_estimation_mojo.py"
+rationale = "Exercise SC-NeuroCore: phi estimation mojo."
+
+[[file]]
+path = "tests/test_phi_estimation_mojo_parity.py"
+rationale = "Exercise SC-NeuroCore: phi estimation mojo parity."
+
+[[file]]
+path = "tests/test_phi_estimation_phi_from_spike_trains.py"
+rationale = "Exercise SC-NeuroCore: phi estimation phi from spike trains."
+
+[[file]]
+path = "tests/test_phi_estimation_phi_star.py"
+rationale = "Exercise SC-NeuroCore: phi estimation phi star."
+
+[[file]]
+path = "tests/test_phi_estimation_rust_parity.py"
+rationale = "Exercise SC-NeuroCore: phi estimation rust parity."

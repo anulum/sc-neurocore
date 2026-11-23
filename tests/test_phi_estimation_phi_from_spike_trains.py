@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.phi_estimation import (
+    phi_from_spike_trains,
+)
 
 
 class TestPhiFromSpikeTrains:
+    """Phi from binned spike trains."""
+
     def test_spike_trains_integration(self) -> None:
+        """Coupled spike trains give integration."""
         rng = np.random.RandomState(42)
         n_neurons, n_steps = 4, 1000
         shared = rng.random(n_steps) < 0.3
@@ -25,10 +31,12 @@ class TestPhiFromSpikeTrains:
         assert phi_from_spike_trains(spikes, bin_size=10, tau=1, backend="python") >= 0.0
 
     def test_random_spikes_low_phi(self) -> None:
+        """Random spikes give low phi."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((4, 500)) < 0.3).astype(np.uint8)
         assert phi_from_spike_trains(spikes, bin_size=10, tau=1, backend="python") < 1.0
 
     def test_too_short_returns_zero(self) -> None:
+        """Too short a recording gives 0."""
         spikes = np.zeros((3, 10), dtype=np.uint8)
         assert phi_from_spike_trains(spikes, bin_size=5, tau=1) == 0.0

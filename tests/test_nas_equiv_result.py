@@ -10,14 +10,20 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.equiv import (
+    EquivResult,
+)
 
 
 class TestEquivResult:
+    """Equivalence results."""
+
     def test_summary_pass(self) -> None:
+        """A passing result reads as proved."""
         r = EquivResult(module="sc_lif_neuron", passed=True, depth=30, engine="z3", log="ok")
         assert "PROVED" in r.summary()
 
     def test_summary_fail(self) -> None:
+        """A failing result reads as failed."""
         r = EquivResult(module="sc_lif_neuron", passed=False, depth=30, engine="z3", log="err")
         assert "FAILED" in r.summary()

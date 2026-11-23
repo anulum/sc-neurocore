@@ -10,10 +10,24 @@
 
 from __future__ import annotations
 
-from tests.phi_estimation_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+import sc_neurocore.analysis as analysis
+from sc_neurocore.analysis.phi_estimation import (
+    _load_rust_phi,
+    _phi_star_dispatch,
+    _phi_star_python,
+    phi_star,
+)
+from tests.phi_estimation_support import (
+    _correlated,
+    _PHI_MODULE,
+)
 
 
 def test_dispatch_python_matches_reference() -> None:
+    """The Python dispatch matches the reference."""
     data = _correlated(n_channels=4, seed=3)
     direct = _phi_star_python(data, 1)
     routed = _phi_star_dispatch(data, 1, "python")
@@ -35,6 +49,8 @@ def test_phi_estimators_are_public_analysis_exports() -> None:
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the engine the Rust probe finds nothing."""
+
     def _raise(_name: str) -> object:
         raise ImportError("engine absent")
 
@@ -43,6 +59,7 @@ def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Rust lane raises."""
     monkeypatch.setattr(_PHI_MODULE, "_rust_phi", None)
     with pytest.raises(RuntimeError, match="not available"):
         phi_star(_correlated(), tau=1, backend="rust")

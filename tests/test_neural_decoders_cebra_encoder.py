@@ -10,23 +10,32 @@
 
 from __future__ import annotations
 
-from tests.neural_decoders_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.neural_decoders import (
+    CEBRAEncoder,
+)
 
 
 class TestCEBRAEncoder:
+    """The CEBRA contrastive encoder."""
+
     def test_defaults(self) -> None:
+        """The encoder has its default sizes and temperature."""
         enc = CEBRAEncoder()
         assert enc.d_input == 64
         assert enc.d_output == 8
         assert enc.temperature == pytest.approx(1.0)
 
     def test_encode_shape(self) -> None:
+        """A batch encodes to the output size."""
         enc = CEBRAEncoder(d_input=10, d_output=3)
         x = np.random.default_rng(1).normal(0, 1, (5, 10))
         z = enc.encode(x)
         assert z.shape == (5, 3)
 
     def test_encode_single_vector(self) -> None:
+        """A single vector encodes to the output size."""
         enc = CEBRAEncoder(d_input=10, d_output=3)
         x = np.random.default_rng(1).normal(0, 1, 10)
         z = enc.encode(x)
@@ -41,17 +50,20 @@ class TestCEBRAEncoder:
         np.testing.assert_allclose(norms, 1.0, atol=1e-6)
 
     def test_cosine_similarity_self(self) -> None:
+        """Each vector has similarity 1 with itself."""
         a = np.array([[1.0, 0.0], [0.0, 1.0]])
         sim = CEBRAEncoder.cosine_similarity(a, a)
         np.testing.assert_allclose(np.diag(sim), 1.0, atol=1e-10)
 
     def test_cosine_similarity_orthogonal(self) -> None:
+        """Orthogonal vectors have similarity 0."""
         a = np.array([[1.0, 0.0]])
         b = np.array([[0.0, 1.0]])
         sim = CEBRAEncoder.cosine_similarity(a, b)
         assert abs(sim[0, 0]) < 1e-10
 
     def test_infonce_loss_positive(self) -> None:
+        """The InfoNCE loss is not negative."""
         enc = CEBRAEncoder(d_input=8, d_output=4, seed=42)
         data = np.random.default_rng(1).normal(0, 1, (10, 8))
         loss = enc.infonce_loss(data, data)
@@ -78,11 +90,13 @@ class TestCEBRAEncoder:
         assert final_loss < initial_loss
 
     def test_transform_equals_encode(self) -> None:
+        """Transform and encode agree."""
         enc = CEBRAEncoder(d_input=8, d_output=4)
         x = np.random.default_rng(3).normal(0, 1, (5, 8))
         np.testing.assert_array_equal(enc.transform(x), enc.encode(x))
 
     def test_fit_insufficient_data(self) -> None:
+        """Too little data gives zero loss."""
         enc = CEBRAEncoder(d_input=4, d_output=2)
         data = np.ones((1, 4))
         loss = enc.fit(data, n_steps=10)

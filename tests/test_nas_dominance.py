@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.nas_support import *  # noqa: F403
+from sc_neurocore.nas.search import (
+    _dominates,
+)
+from sc_neurocore.nas.search_space import (
+    Architecture,
+)
 
 
 class TestDominance:
+    """Pareto dominance between points."""
+
     def test_dominates(self) -> None:
+        """A better point dominates a worse one."""
         a = Architecture(
             n_inputs=16,
             layer_widths=[8],
@@ -37,6 +45,7 @@ class TestDominance:
         assert not _dominates(b, a)
 
     def test_no_dominance(self) -> None:
+        """Trade-off points do not dominate each other."""
         a = Architecture(
             n_inputs=16,
             layer_widths=[8],

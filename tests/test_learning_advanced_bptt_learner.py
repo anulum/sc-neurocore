@@ -10,14 +10,24 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    BPTTLearner,
+)
+from tests.learning_advanced_support import (
+    _make_small_network,
+)
 
 
 class TestBPTTLearner:
-    def test_loss_returns_float(self):
+    """Backpropagation through time."""
+
+    def test_loss_returns_float(self) -> None:
+        """A training step returns a finite float loss."""
         net, proj = _make_small_network()
 
-        def mse_loss(spikes, targets):
+        def mse_loss(spikes: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
             # spikes are the output population's spike trains (n_out=5)
             return float(np.mean((spikes - targets) ** 2))
 
@@ -28,11 +38,12 @@ class TestBPTTLearner:
         assert isinstance(loss, float)
         assert np.isfinite(loss)
 
-    def test_weights_change_after_step(self):
+    def test_weights_change_after_step(self) -> None:
+        """A training step changes the weights."""
         net, proj = _make_small_network()
         w_before = proj.data.copy()
 
-        def mse_loss(spikes, targets):
+        def mse_loss(spikes: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
             return float(np.mean((spikes - targets) ** 2))
 
         learner = BPTTLearner(net, loss_fn=mse_loss, lr=0.01)

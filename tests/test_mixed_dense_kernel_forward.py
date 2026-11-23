@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
-from tests.mixed_dense_kernel_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.compiler import (
+    mixed_dense_kernel as kernel,
+)
+from sc_neurocore.compiler.mixed_dense_kernel import (
+    mixed_dense_forward_batch_q88_q1616,
+    MixedDenseBatchResult,
+)
 
 
 class TestForward:
     """Integer mixed-precision dense contraction."""
 
     def test_hand_computed(self) -> None:
+        """The output matches a hand computation."""
         # raw = 512*256 + 1024*128 = 262144 -> 262144 >> 8 = 1024.
         result = mixed_dense_forward_batch_q88_q1616([256, 128], [512, 1024], 1, 2)
         assert isinstance(result, MixedDenseBatchResult)
@@ -26,17 +36,20 @@ class TestForward:
         assert not result.underflow[0, 0]
 
     def test_cancellation_to_zero_without_underflow(self) -> None:
+        """Exact cancellation gives zero without underflow."""
         # raw = 512*256 + 1024*(-128) = 0 -> not an underflow (raw == 0).
         result = mixed_dense_forward_batch_q88_q1616([256, -128], [512, 1024], 1, 2)
         assert result.outputs_q1616[0, 0] == 0
         assert not result.underflow[0, 0]
 
     def test_signed_floor_division(self) -> None:
+        """Signed results round toward negative infinity."""
         # raw = -1 -> -1 >> 8 = -1 (floor, not truncation toward zero).
         result = mixed_dense_forward_batch_q88_q1616([1], [-1], 1, 1)
         assert result.outputs_q1616[0, 0] == -1
 
     def test_underflow_flag(self) -> None:
+        """A tiny result is flagged as underflow."""
         # raw = 1 -> 1 >> 8 = 0, non-zero contraction -> underflow.
         result = mixed_dense_forward_batch_q88_q1616([1], [1], 1, 1)
         assert result.outputs_q1616[0, 0] == 0
@@ -44,16 +57,19 @@ class TestForward:
         assert not result.overflow[0, 0]
 
     def test_positive_overflow_saturates(self) -> None:
+        """A large positive sum saturates and is flagged."""
         result = mixed_dense_forward_batch_q88_q1616([32767] * 64, [2_000_000_000] * 64, 1, 64)
         assert result.outputs_q1616[0, 0] == kernel.ACCUM_MAX
         assert result.overflow[0, 0]
 
     def test_negative_overflow_saturates(self) -> None:
+        """A large negative sum saturates and is flagged."""
         result = mixed_dense_forward_batch_q88_q1616([-32768] * 64, [2_000_000_000] * 64, 1, 64)
         assert result.outputs_q1616[0, 0] == kernel.ACCUM_MIN
         assert result.overflow[0, 0]
 
     def test_batch_shape(self) -> None:
+        """A batch gives one row per sample."""
         weights = [256, 128, -64, 512]
         inputs = [512, 1024, 256, 768, 0, 0]
         result = mixed_dense_forward_batch_q88_q1616(weights, inputs, 2, 2)
@@ -64,18 +80,22 @@ class TestForward:
         assert not result.underflow[2].any()
 
     def test_non_positive_shape_rejected(self) -> None:
+        """A non-positive shape is rejected."""
         with pytest.raises(ValueError, match="must be positive"):
             mixed_dense_forward_batch_q88_q1616([1], [1], 0, 1)
 
     def test_weight_length_mismatch_rejected(self) -> None:
+        """Weights of the wrong length are rejected."""
         with pytest.raises(ValueError, match="weights length must be"):
             mixed_dense_forward_batch_q88_q1616([1, 1], [1], 1, 1)
 
     def test_input_not_multiple_rejected(self) -> None:
+        """Inputs that do not fill whole rows are rejected."""
         with pytest.raises(ValueError, match="not a multiple of n_inputs"):
             mixed_dense_forward_batch_q88_q1616([1, 1], [1, 1, 1], 1, 2)
 
     def test_accumulation_bound_rejected(self) -> None:
+        """Sums that could exceed int64 are rejected."""
         # 32767 * (2**31 - 1) * 200000 overflows int64 -> fail closed.
         big_inputs = np.full(200000, (1 << 31) - 1, dtype=np.int32)
         big_weights = np.full(200000, 32767, dtype=np.int16)

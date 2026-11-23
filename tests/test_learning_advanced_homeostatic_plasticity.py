@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.learning_advanced_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    HomeostaticPlasticity,
+)
 
 
 class TestHomeostaticPlasticity:
-    def test_class_exists(self):
+    """Homeostatic plasticity."""
+
+    def test_class_exists(self) -> None:
         """HomeostaticPlasticity should be importable."""
         assert HomeostaticPlasticity is not None
 
-    def test_active_population_rescales_incoming_projection_weights(self):
+    def test_active_population_rescales_incoming_projection_weights(self) -> None:
+        """An over-active population pulls its weights down."""
+
         # An above-target firing population drives the rate estimate positive, so
         # the controller rescales every incoming projection's weights toward the
         # target rate (clipped to the [0.9, 1.1] per-step band).
@@ -36,6 +43,7 @@ class TestHomeostaticPlasticity:
 
         controller.update(population)
 
+        assert controller._rate_estimate is not None
         assert controller._rate_estimate > 0
         # Over-firing relative to target -> weights pulled down to the band floor.
         assert np.allclose(population._projections[0].data, 0.9)
