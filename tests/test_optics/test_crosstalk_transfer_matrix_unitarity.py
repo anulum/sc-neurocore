@@ -10,27 +10,38 @@
 
 from __future__ import annotations
 
-from crosstalk_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.optics.photonic_emitter import (
+    CrosstalkModel,
+    WaveguidePair,
+)
 
 
 class TestTransferMatrixUnitarity:
+    """Unitarity and power conservation of the coupler transfer matrix."""
+
     @pytest.fixture
     def model(self) -> CrosstalkModel:
+        """Return a crosstalk model with default parameters."""
         return CrosstalkModel()
 
-    def test_transfer_matrix_is_unitary(self, model):
+    def test_transfer_matrix_is_unitary(self, model: CrosstalkModel) -> None:
+        """The transfer matrix times its conjugate transpose is the identity."""
         pair = WaveguidePair(gap_nm=150.0, coupling_length_um=25.0)
         t = model.transfer_matrix(pair)
         # T · T† == I for any real κL
         identity = t @ t.conj().T
         assert np.allclose(identity, np.eye(2), atol=1e-12)
 
-    def test_power_conservation_on_single_port_excitation(self, model):
+    def test_power_conservation_on_single_port_excitation(self, model: CrosstalkModel) -> None:
+        """Power into one port leaves the coupler in total."""
         pair = WaveguidePair(gap_nm=200.0, coupling_length_um=7.0)
         p_a, p_b = model.compute_crosstalk(pair, (1.0, 0.0))
         assert p_a + p_b == pytest.approx(1.0, rel=1e-12)
 
-    def test_power_conservation_on_two_port_excitation(self, model):
+    def test_power_conservation_on_two_port_excitation(self, model: CrosstalkModel) -> None:
+        """Power into both ports leaves the coupler in total."""
         # ``compute_crosstalk`` takes input field amplitudes (the FFI name
         # ``input_power`` is historical); output power sums must match
         # |a|² + |b|² of the input amplitude tuple under unitary evolution.

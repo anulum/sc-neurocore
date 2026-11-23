@@ -10,60 +10,80 @@
 
 from __future__ import annotations
 
-from fdtd_support import *  # noqa: F403
+import pytest
+import sys
+import types
+from sc_neurocore.optics.photonic_emitter import (
+    MeepAdapter,
+    PhotonicTarget,
+)
 
 
 class TestMeepAdapterContract:
-    def test_available_meep_path_builds_simulation_and_reports_flux(self, monkeypatch):
+    """The Meep adapter's calls into an available Meep."""
+
+    def test_available_meep_path_builds_simulation_and_reports_flux(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With Meep available the adapter builds the simulation and reports its flux."""
         calls: dict[str, object] = {}
 
         class FakeVector3:
-            def __init__(self, *coords):
+            def __init__(self, *coords: object) -> None:
                 self.coords = coords
 
         class FakeContinuousSource:
-            def __init__(self, frequency):
+            def __init__(self, frequency: object) -> None:
                 self.frequency = frequency
 
         class FakeSource:
-            def __init__(self, source, component, center, size):
+            def __init__(
+                self, source: object, component: object, center: FakeVector3, size: FakeVector3
+            ) -> None:
                 calls["source"] = source
                 calls["component"] = component
                 calls["source_center"] = center.coords
                 calls["source_size"] = size.coords
 
         class FakeMedium:
-            def __init__(self, index):
+            def __init__(self, index: object) -> None:
                 calls["medium_index"] = index
 
         class FakeBlock:
-            def __init__(self, size, center, material):
+            def __init__(self, size: FakeVector3, center: FakeVector3, material: object) -> None:
                 calls["block_size"] = size.coords
                 calls["block_center"] = center.coords
                 calls["block_material"] = material
 
         class FakePML:
-            def __init__(self, thickness):
+            def __init__(self, thickness: object) -> None:
                 calls["pml"] = thickness
 
         class FakeFluxRegion:
-            def __init__(self, center, size):
+            def __init__(self, center: FakeVector3, size: FakeVector3) -> None:
                 calls["flux_center"] = center.coords
                 calls["flux_size"] = size.coords
 
         class FakeSimulation:
-            def __init__(self, cell_size, resolution, sources, geometry, boundary_layers):
+            def __init__(
+                self,
+                cell_size: FakeVector3,
+                resolution: object,
+                sources: list[object],
+                geometry: list[object],
+                boundary_layers: list[object],
+            ) -> None:
                 calls["cell_size"] = cell_size.coords
                 calls["resolution"] = resolution
                 calls["sources_count"] = len(sources)
                 calls["geometry_count"] = len(geometry)
                 calls["boundary_count"] = len(boundary_layers)
 
-            def add_flux(self, freq, df, nfreq, region):
+            def add_flux(self, freq: object, df: object, nfreq: object, region: object) -> str:
                 calls["flux"] = (freq, df, nfreq, region)
                 return "flux-handle"
 
-            def run(self, until):
+            def run(self, until: object) -> None:
                 calls["run_until"] = until
 
         fake_meep = types.SimpleNamespace(

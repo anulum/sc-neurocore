@@ -10,29 +10,39 @@
 
 from __future__ import annotations
 
-from crosstalk_support import *  # noqa: F403
+import pytest
+from sc_neurocore.optics.photonic_emitter import (
+    WaveguidePair,
+)
 
 
 class TestWaveguidePairPhysics:
-    def test_isolation_grows_with_gap(self):
+    """Coupling and isolation of a single waveguide pair."""
+
+    def test_isolation_grows_with_gap(self) -> None:
+        """A wider gap gives a better isolation."""
         narrow = WaveguidePair(gap_nm=100.0, coupling_length_um=10.0)
         wide = WaveguidePair(gap_nm=400.0, coupling_length_um=10.0)
         assert wide.isolation_db > narrow.isolation_db
 
-    def test_coupling_ratio_in_unit_interval(self):
+    def test_coupling_ratio_in_unit_interval(self) -> None:
+        """The coupling ratio lies between zero and one."""
         p = WaveguidePair(gap_nm=200.0, coupling_length_um=10.0)
         assert 0.0 <= p.coupling_ratio <= 1.0
 
-    def test_zero_coupling_length_is_perfect_isolation(self):
+    def test_zero_coupling_length_is_perfect_isolation(self) -> None:
+        """A zero coupling length gives no coupling and the isolation ceiling."""
         p = WaveguidePair(gap_nm=200.0, coupling_length_um=0.0)
         assert p.coupling_ratio == pytest.approx(0.0, abs=1e-30)
         assert p.isolation_db >= 300.0 - 1.0  # saturates to ceiling
 
-    def test_coupling_coefficient_positive(self):
+    def test_coupling_coefficient_positive(self) -> None:
+        """The coupling coefficient is positive."""
         p = WaveguidePair(gap_nm=200.0, coupling_length_um=10.0)
         assert p.coupling_coefficient > 0.0
 
-    def test_larger_index_contrast_tighter_mode(self):
+    def test_larger_index_contrast_tighter_mode(self) -> None:
+        """A larger index contrast gives a smaller effective-index difference."""
         # High contrast (Si/SiO2) should give shorter L_decay and hence
         # smaller Δn_eff at the same gap compared with a low-contrast stack.
         hi = WaveguidePair(gap_nm=300.0, core_index=3.48, cladding_index=1.45)

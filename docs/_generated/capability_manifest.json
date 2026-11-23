@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5757
+    "test_files": 5755
   },
   "documentation": {
     "public_pages": [
@@ -7123,8 +7123,6 @@
       "tests/test_online_o1_learning.py",
       "tests/test_operator_abstraction_abstract_to_free_inputs.py",
       "tests/test_operator_abstraction_lifted_signal.py",
-      "tests/test_optics/crosstalk_support.py",
-      "tests/test_optics/fdtd_support.py",
       "tests/test_optics/gdsii_support.py",
       "tests/test_optics/test_crosstalk_analyze_bank.py",
       "tests/test_optics/test_crosstalk_analyze_pairs.py",

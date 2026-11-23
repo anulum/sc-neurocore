@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2556
+expected_file_count = 2564
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10268,3 +10268,35 @@ rationale = "Exercise the native suite: core engine bridge native delegation."
 [[file]]
 path = "tests/test_native/test_core_engine_bridge_rejects.py"
 rationale = "Exercise the native suite: core engine bridge rejects."
+
+[[file]]
+path = "tests/test_optics/test_crosstalk_analyze_bank.py"
+rationale = "Exercise the optics suite: crosstalk analyze bank."
+
+[[file]]
+path = "tests/test_optics/test_crosstalk_analyze_pairs.py"
+rationale = "Exercise the optics suite: crosstalk analyze pairs."
+
+[[file]]
+path = "tests/test_optics/test_crosstalk_backend_parity.py"
+rationale = "Exercise the optics suite: crosstalk backend parity."
+
+[[file]]
+path = "tests/test_optics/test_crosstalk_transfer_matrix_unitarity.py"
+rationale = "Exercise the optics suite: crosstalk transfer matrix unitarity."
+
+[[file]]
+path = "tests/test_optics/test_crosstalk_waveguide_pair_physics.py"
+rationale = "Exercise the optics suite: crosstalk waveguide pair physics."
+
+[[file]]
+path = "tests/test_optics/test_fdtd_fdtd2_d_solver_berenger_pml.py"
+rationale = "Exercise the optics suite: fdtd fdtd2 d solver berenger pml."
+
+[[file]]
+path = "tests/test_optics/test_fdtd_fdtd_solver1_d.py"
+rationale = "Exercise the optics suite: fdtd fdtd solver1 d."
+
+[[file]]
+path = "tests/test_optics/test_fdtd_meep_adapter_contract.py"
+rationale = "Exercise the optics suite: fdtd meep adapter contract."

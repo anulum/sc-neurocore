@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from crosstalk_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.optics.photonic_emitter import (
+    CrosstalkModel,
+)
 
 
 class TestBackendParity:
-    """The Rust and Python code paths solve the same coupled-mode equations
+    """Rust and Python crosstalk results agree.
+
+    The Rust and Python code paths solve the same coupled-mode equations
     — their outputs must agree to within floating-point tolerance. Any drift
     is a regression in the Rust FFI layer.
     """
 
-    def test_analyze_bank_rust_matches_python(self):
+    def test_analyze_bank_rust_matches_python(self) -> None:
+        """Bank analysis in Rust agrees with the Python path."""
         import sc_neurocore.optics.photonic_emitter as mod
 
         if not mod._HAS_RUST_PH:
@@ -53,7 +60,8 @@ class TestBackendParity:
                 f"{key}: rust={r_rust[key]} python={r_py[key]}"
             )
 
-    def test_analyze_pairs_rust_matches_python(self):
+    def test_analyze_pairs_rust_matches_python(self) -> None:
+        """Pair analysis in Rust agrees with the Python path."""
         import sc_neurocore.optics.photonic_emitter as mod
 
         if not mod._HAS_RUST_PH:

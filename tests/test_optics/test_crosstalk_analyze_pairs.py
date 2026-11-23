@@ -10,15 +10,23 @@
 
 from __future__ import annotations
 
-from crosstalk_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.optics.photonic_emitter import (
+    CrosstalkModel,
+)
 
 
 class TestAnalyzePairs:
+    """Crosstalk analysis of explicitly listed waveguide pairs."""
+
     @pytest.fixture
     def model(self) -> CrosstalkModel:
+        """Return a crosstalk model with default parameters."""
         return CrosstalkModel()
 
-    def test_length_mismatch_rejected(self, model):
+    def test_length_mismatch_rejected(self, model: CrosstalkModel) -> None:
+        """Pair, gap and length lists of different lengths are refused."""
         with pytest.raises(ValueError):
             model.analyze_pairs(
                 pair_indices=[(0, 1), (1, 2)],
@@ -26,7 +34,8 @@ class TestAnalyzePairs:
                 coupling_lengths_um=[10.0, 10.0],
             )
 
-    def test_returns_one_entry_per_input_pair(self, model):
+    def test_returns_one_entry_per_input_pair(self, model: CrosstalkModel) -> None:
+        """Three pairs give three isolation entries."""
         r = model.analyze_pairs(
             pair_indices=[(0, 1), (1, 2), (0, 2)],
             gaps_nm=[200.0, 400.0, 800.0],
@@ -35,7 +44,8 @@ class TestAnalyzePairs:
         assert r["num_pairs"] == 3
         assert len(r["isolation_db"]) == 3
 
-    def test_isolation_ordering_by_gap(self, model):
+    def test_isolation_ordering_by_gap(self, model: CrosstalkModel) -> None:
+        """Isolation rises with the pair's gap."""
         r = model.analyze_pairs(
             pair_indices=[(0, 1), (1, 2), (0, 2)],
             gaps_nm=[200.0, 400.0, 800.0],
@@ -44,11 +54,15 @@ class TestAnalyzePairs:
         iso = r["isolation_db"]
         assert iso[0] <= iso[1] <= iso[2]
 
-    def test_empty_input_returns_zero_pairs(self, model):
+    def test_empty_input_returns_zero_pairs(self, model: CrosstalkModel) -> None:
+        """No pairs give a count of zero."""
         r = model.analyze_pairs(pair_indices=[], gaps_nm=[], coupling_lengths_um=[])
         assert r["num_pairs"] == 0
 
-    def test_python_fallback_pairs_preserves_per_pair_geometry(self, monkeypatch):
+    def test_python_fallback_pairs_preserves_per_pair_geometry(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The Python fallback keeps each pair's indices and gap."""
         import sc_neurocore.optics.photonic_emitter as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST_PH", False)

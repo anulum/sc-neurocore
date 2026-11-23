@@ -1314,6 +1314,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The eight photonic crosstalk and FDTD test modules
+  (`tests/test_optics`) import their names explicitly instead of
+  through a suppressed star import, gain their missing test docstrings
+  and type annotations, including typed fixture parameters and typed
+  Meep fakes, and are enrolled in the docstring policy. Both support
+  modules are left without an importer and are deleted.
+
 - The ten native array-guard and core-engine-bridge test modules
   (`tests/test_native`) import their names explicitly instead of
   through a suppressed star import, gain their missing module and test

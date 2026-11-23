@@ -10,43 +10,59 @@
 
 from __future__ import annotations
 
-from crosstalk_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.optics.photonic_emitter import (
+    CrosstalkModel,
+)
 
 
 class TestAnalyzeBank:
+    """Crosstalk analysis of a bank of parallel waveguides."""
+
     @pytest.fixture
     def model(self) -> CrosstalkModel:
+        """Return a crosstalk model with default parameters."""
         return CrosstalkModel()
 
-    def test_requires_at_least_one_waveguide(self, model):
+    def test_requires_at_least_one_waveguide(self, model: CrosstalkModel) -> None:
+        """A bank without waveguides is refused."""
         with pytest.raises(ValueError):
             model.analyze_bank(waveguides=0, gap_nm=200.0, coupling_length_um=10.0)
 
-    def test_pair_counts_match_bank_size(self, model):
+    def test_pair_counts_match_bank_size(self, model: CrosstalkModel) -> None:
+        """Five waveguides give four adjacent and three next-nearest pairs."""
         r = model.analyze_bank(waveguides=5, gap_nm=200.0, coupling_length_um=10.0)
         assert r["num_near_pairs"] == 4  # N-1 adjacent
         assert r["num_far_pairs"] == 3  # N-2 next-nearest
 
-    def test_single_waveguide_has_no_pairs(self, model):
+    def test_single_waveguide_has_no_pairs(self, model: CrosstalkModel) -> None:
+        """One waveguide has no pairs and an infinite worst isolation."""
         r = model.analyze_bank(waveguides=1, gap_nm=200.0, coupling_length_um=10.0)
         assert r["num_near_pairs"] == 0
         assert r["num_far_pairs"] == 0
         assert math.isinf(r["worst_isolation_db"])
 
-    def test_isolation_grows_with_gap(self, model):
+    def test_isolation_grows_with_gap(self, model: CrosstalkModel) -> None:
+        """A wider gap gives a better worst isolation."""
         narrow = model.analyze_bank(waveguides=4, gap_nm=100.0, coupling_length_um=10.0)
         wide = model.analyze_bank(waveguides=4, gap_nm=400.0, coupling_length_um=10.0)
         assert wide["worst_isolation_db"] > narrow["worst_isolation_db"]
 
-    def test_crosstalk_safe_flag_at_20_db_threshold(self, model):
+    def test_crosstalk_safe_flag_at_20_db_threshold(self, model: CrosstalkModel) -> None:
+        """The safe flag holds exactly when the worst isolation exceeds 20 dB."""
         r = model.analyze_bank(waveguides=8, gap_nm=600.0, coupling_length_um=10.0)
         assert (r["worst_isolation_db"] > 20.0) == r["crosstalk_safe"]
 
-    def test_near_pair_couples_more_than_far_pair(self, model):
+    def test_near_pair_couples_more_than_far_pair(self, model: CrosstalkModel) -> None:
+        """Adjacent waveguides couple at least as much as next-nearest ones."""
         r = model.analyze_bank(waveguides=4, gap_nm=200.0, coupling_length_um=10.0)
         assert r["adjacent_coupling_ratio"] >= r["next_nearest_coupling_ratio"]
 
-    def test_python_fallback_bank_preserves_physical_accounting(self, monkeypatch):
+    def test_python_fallback_bank_preserves_physical_accounting(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The Python fallback counts the pairs and reports the worse pair's isolation."""
         import sc_neurocore.optics.photonic_emitter as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST_PH", False)
