@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    CuriositySignal,
+)
 
 
 class TestCuriositySignal:
-    def test_first_update_high_curiosity(self):
+    """Curiosity driven by input change."""
+
+    def test_first_update_high_curiosity(self) -> None:
+        """The first input is fully curious."""
         cs = CuriositySignal()
         c = cs.update(np.array([1.0, 2.0, 3.0]))
         assert c == 1.0
 
-    def test_stable_input_low_curiosity(self):
+    def test_stable_input_low_curiosity(self) -> None:
+        """A stable input brings curiosity near zero."""
         cs = CuriositySignal(alpha=0.5)
         state = np.array([1.0, 2.0, 3.0])
         cs.update(state)
@@ -27,7 +34,8 @@ class TestCuriositySignal:
             cs.update(state)
         assert cs.curiosity < 0.01
 
-    def test_changing_input_high_curiosity(self):
+    def test_changing_input_high_curiosity(self) -> None:
+        """A changing input keeps curiosity high."""
         cs = CuriositySignal(alpha=0.1)
         cs.update(np.zeros(5))
         c = cs.update(np.ones(5) * 100)

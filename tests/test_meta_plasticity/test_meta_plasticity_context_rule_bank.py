@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    ContextRuleBank,
+    PlasticityRuleSet,
+)
 
 
 class TestContextRuleBank:
-    def test_store_and_switch(self):
+    """Rule sets stored per context."""
+
+    def test_store_and_switch(self) -> None:
+        """Switching to a context restores its rules."""
         bank = ContextRuleBank()
         rs = PlasticityRuleSet()
         rs.stdp.lr = 0.05
@@ -23,11 +29,13 @@ class TestContextRuleBank:
         assert restored is not None
         assert restored.stdp.lr == 0.05
 
-    def test_missing_context(self):
+    def test_missing_context(self) -> None:
+        """Switching to an unknown context gives nothing."""
         bank = ContextRuleBank()
         assert bank.switch("missing") is None
 
-    def test_contexts_list(self):
+    def test_contexts_list(self) -> None:
+        """The bank lists and counts its contexts."""
         bank = ContextRuleBank()
         bank.store("A", PlasticityRuleSet())
         bank.store("B", PlasticityRuleSet())

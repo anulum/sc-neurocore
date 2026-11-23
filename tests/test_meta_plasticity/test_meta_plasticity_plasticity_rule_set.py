@@ -10,23 +10,30 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    PlasticityRuleSet,
+)
 
 
 class TestPlasticityRuleSet:
-    def test_to_vector(self):
+    """Vector form and copies of a plasticity rule set."""
+
+    def test_to_vector(self) -> None:
+        """The vector has the rule set's dimension."""
         rs = PlasticityRuleSet()
         v = rs.to_vector()
         assert len(v) == rs.vector_dim
 
-    def test_from_vector_roundtrip(self):
+    def test_from_vector_roundtrip(self) -> None:
+        """A rule set survives a round trip through its vector."""
         rs = PlasticityRuleSet()
         v = rs.to_vector()
         rs2 = PlasticityRuleSet.from_vector(v)
         assert abs(rs2.stdp.tau_plus - rs.stdp.tau_plus) < 1e-6
         assert abs(rs2.stp.u_base - rs.stp.u_base) < 1e-6
 
-    def test_copy_independent(self):
+    def test_copy_independent(self) -> None:
+        """Changing a copy leaves the original unchanged."""
         rs = PlasticityRuleSet()
         rs2 = rs.copy()
         rs2.stdp.lr = 999.0

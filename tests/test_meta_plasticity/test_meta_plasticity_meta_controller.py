@@ -10,35 +10,54 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    MetaController,
+    MetaControlSignal,
+    MetaSignalType,
+    PlasticityRuleSet,
+    STPParams,
+)
 
 
 class TestMetaController:
-    def _feed_observations(self, mc, n=20, novelty=0.8, surprise=0.5, gci=0.5):
+    """Meta-control signals from observed metrics."""
+
+    def _feed_observations(
+        self,
+        mc: MetaController,
+        n: int = 20,
+        novelty: float = 0.8,
+        surprise: float = 0.5,
+        gci: float = 0.5,
+    ) -> None:
         for _ in range(n):
             mc.observe({"novelty": novelty, "surprise": surprise, "gci": gci})
 
-    def test_no_op_few_observations(self):
+    def test_no_op_few_observations(self) -> None:
+        """Too few observations give no action."""
         mc = MetaController()
         mc.observe({"novelty": 0.5})
         signals = mc.decide()
         assert signals[0].signal_type == MetaSignalType.NO_OP
 
-    def test_increase_lr_on_high_novelty(self):
+    def test_increase_lr_on_high_novelty(self) -> None:
+        """High novelty raises the learning rate."""
         mc = MetaController()
         self._feed_observations(mc, novelty=0.9, surprise=0.5, gci=0.5)
         signals = mc.decide()
         types = [s.signal_type for s in signals]
         assert MetaSignalType.INCREASE_LR in types
 
-    def test_decrease_lr_on_low_novelty(self):
+    def test_decrease_lr_on_low_novelty(self) -> None:
+        """Low novelty lowers the learning rate."""
         mc = MetaController()
         self._feed_observations(mc, novelty=0.1, surprise=0.05, gci=0.5)
         signals = mc.decide()
         types = [s.signal_type for s in signals]
         assert MetaSignalType.DECREASE_LR in types
 
-    def test_apply_increase_lr(self):
+    def test_apply_increase_lr(self) -> None:
+        """Applying an increase raises the STDP learning rate."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         old_lr = rules.stdp.lr
@@ -46,7 +65,8 @@ class TestMetaController:
         mc.apply_signals(rules, [sig])
         assert rules.stdp.lr > old_lr
 
-    def test_apply_decrease_lr(self):
+    def test_apply_decrease_lr(self) -> None:
+        """Applying a decrease lowers the STDP learning rate."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         old_lr = rules.stdp.lr
@@ -54,7 +74,8 @@ class TestMetaController:
         mc.apply_signals(rules, [sig])
         assert rules.stdp.lr < old_lr
 
-    def test_apply_widen_window(self):
+    def test_apply_widen_window(self) -> None:
+        """Applying a widening lengthens the STDP window."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         old_tau = rules.stdp.tau_plus
@@ -62,7 +83,8 @@ class TestMetaController:
         mc.apply_signals(rules, [sig])
         assert rules.stdp.tau_plus > old_tau
 
-    def test_apply_narrow_window(self):
+    def test_apply_narrow_window(self) -> None:
+        """Applying a narrowing shortens the STDP window."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         rules.stdp.tau_plus = 50.0
@@ -70,32 +92,37 @@ class TestMetaController:
         mc.apply_signals(rules, [sig])
         assert rules.stdp.tau_plus < 50.0
 
-    def test_signal_history(self):
+    def test_signal_history(self) -> None:
+        """Decisions are kept in the signal history."""
         mc = MetaController()
         self._feed_observations(mc, novelty=0.9)
         mc.decide()
         assert len(mc.signal_history) > 0
 
-    def test_widen_window_on_unstable_gci(self):
+    def test_widen_window_on_unstable_gci(self) -> None:
+        """Unstable coherence widens the window."""
         mc = MetaController()
         for i in range(10):
             mc.observe({"novelty": 0.5, "surprise": 0.5, "gci": 0.1 if i % 2 else 0.9})
         types = [s.signal_type for s in mc.decide()]
         assert MetaSignalType.WIDEN_WINDOW in types
 
-    def test_no_op_when_metrics_are_mid_range_and_stable(self):
+    def test_no_op_when_metrics_are_mid_range_and_stable(self) -> None:
+        """Stable mid-range metrics give no action."""
         mc = MetaController()
         self._feed_observations(mc, novelty=0.5, surprise=0.5, gci=0.5)
         assert [s.signal_type for s in mc.decide()] == [MetaSignalType.NO_OP]
 
-    def test_apply_increase_homeostatic(self):
+    def test_apply_increase_homeostatic(self) -> None:
+        """Applying a homeostatic increase raises its adaptation rate."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         old = rules.homeostatic.gain_adaptation_rate
         mc.apply_signals(rules, [MetaControlSignal(MetaSignalType.INCREASE_HOMEOSTATIC)])
         assert rules.homeostatic.gain_adaptation_rate > old
 
-    def test_apply_reset_stp(self):
+    def test_apply_reset_stp(self) -> None:
+        """Applying a reset restores the STP defaults."""
         mc = MetaController()
         rules = PlasticityRuleSet()
         rules.stp.u_base = 0.9

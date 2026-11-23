@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2715
+expected_file_count = 2733
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10904,3 +10904,75 @@ rationale = "Exercise the sustainability profiler: thermal suggestion."
 [[file]]
 path = "tests/test_energy_accounting/test_sustainability_profiler_vivado_parser.py"
 rationale = "Exercise the sustainability profiler: vivado parser."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_checkpoint_store.py"
+rationale = "Exercise the meta-plasticity engine: checkpoint store."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_context_rule_bank.py"
+rationale = "Exercise the meta-plasticity engine: context rule bank."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_curiosity_signal.py"
+rationale = "Exercise the meta-plasticity engine: curiosity signal."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_ewc_protection.py"
+rationale = "Exercise the meta-plasticity engine: ewc protection."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_fitness_trajectory.py"
+rationale = "Exercise the meta-plasticity engine: fitness trajectory."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_homeostatic_params.py"
+rationale = "Exercise the meta-plasticity engine: homeostatic params."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_meta_controller.py"
+rationale = "Exercise the meta-plasticity engine: meta controller."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_meta_learning_rate.py"
+rationale = "Exercise the meta-plasticity engine: meta learning rate."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_meta_plasticity_engine.py"
+rationale = "Exercise the meta-plasticity engine: meta plasticity engine."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_neuromodulator_state.py"
+rationale = "Exercise the meta-plasticity engine: neuromodulator state."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_plasticity_rule_set.py"
+rationale = "Exercise the meta-plasticity engine: plasticity rule set."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_population_diversity.py"
+rationale = "Exercise the meta-plasticity engine: population diversity."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_rule_constraints.py"
+rationale = "Exercise the meta-plasticity engine: rule constraints."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_rule_evolver.py"
+rationale = "Exercise the meta-plasticity engine: rule evolver."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_sleep_phase.py"
+rationale = "Exercise the meta-plasticity engine: sleep phase."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_stdp_params.py"
+rationale = "Exercise the meta-plasticity engine: stdp params."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_stp_params.py"
+rationale = "Exercise the meta-plasticity engine: stp params."
+
+[[file]]
+path = "tests/test_meta_plasticity/test_meta_plasticity_synaptic_tagging.py"
+rationale = "Exercise the meta-plasticity engine: synaptic tagging."

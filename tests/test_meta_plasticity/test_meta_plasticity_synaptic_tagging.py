@@ -10,42 +10,52 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    TaggingModel,
+)
 
 
 class TestSynapticTagging:
-    def test_create_tag(self):
+    """Synaptic tags and their consolidation."""
+
+    def test_create_tag(self) -> None:
+        """A new tag has its strength and is not captured."""
         tm = TaggingModel()
         tag = tm.create_tag(synapse_id=0, strength=0.8, time_ms=100.0)
         assert tag.tag_strength == 0.8
         assert not tag.captured
 
-    def test_decay_reduces_strength(self):
+    def test_decay_reduces_strength(self) -> None:
+        """Decay weakens a tag."""
         tm = TaggingModel(tag_decay_rate=0.1)
         tag = tm.create_tag(0, 0.8, 0.0)
         tm.decay_tags(10.0)
         assert tag.tag_strength < 0.8
 
-    def test_consolidate_captures(self):
+    def test_consolidate_captures(self) -> None:
+        """A strong signal captures a tag."""
         tm = TaggingModel(capture_threshold=0.3)
         tm.create_tag(0, 0.5, 0.0)
         captured = tm.consolidate(consolidation_strength=0.8)
         assert captured == 1
         assert tm.tags[0].captured
 
-    def test_consolidate_weak_signal(self):
+    def test_consolidate_weak_signal(self) -> None:
+        """A weak signal captures nothing."""
         tm = TaggingModel(capture_threshold=0.3)
         tm.create_tag(0, 0.5, 0.0)
         captured = tm.consolidate(consolidation_strength=0.2)
         assert captured == 0
 
-    def test_prune_expired(self):
+    def test_prune_expired(self) -> None:
+        """Expired tags are pruned."""
         tm = TaggingModel()
         tm.create_tag(0, 0.001, 0.0)  # below 0.01 threshold
         pruned = tm.prune_expired()
         assert pruned == 1
 
-    def test_active_tags(self):
+    def test_active_tags(self) -> None:
+        """Active tags are counted."""
         tm = TaggingModel()
         tm.create_tag(0, 0.5, 0.0)
         tm.create_tag(1, 0.005, 0.0)  # expired

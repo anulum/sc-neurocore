@@ -10,21 +10,28 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    HomeostaticParams,
+)
 
 
 class TestHomeostaticParams:
-    def test_adapt_increases_gain(self):
+    """Homeostatic gain adaptation."""
+
+    def test_adapt_increases_gain(self) -> None:
+        """A low rate raises the gain."""
         hp = HomeostaticParams(target_rate_hz=10.0, current_gain=1.0)
         hp.adapt(5.0)  # Below target
         assert hp.current_gain > 1.0
 
-    def test_adapt_decreases_gain(self):
+    def test_adapt_decreases_gain(self) -> None:
+        """A high rate lowers the gain."""
         hp = HomeostaticParams(target_rate_hz=5.0, current_gain=1.0)
         hp.adapt(10.0)  # Above target
         assert hp.current_gain < 1.0
 
-    def test_gain_bounded(self):
+    def test_gain_bounded(self) -> None:
+        """The gain stays at or below its maximum."""
         hp = HomeostaticParams(target_rate_hz=100.0, gain_adaptation_rate=1.0)
         for _ in range(100):
             hp.adapt(0.0)

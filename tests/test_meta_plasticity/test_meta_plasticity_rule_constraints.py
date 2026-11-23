@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    PlasticityRuleSet,
+    RuleConstraints,
+)
 
 
 class TestRuleConstraints:
-    def test_valid_rules(self):
+    """Valid ranges of plasticity rules."""
+
+    def test_valid_rules(self) -> None:
+        """Default rules are valid."""
         rc = RuleConstraints()
         rs = PlasticityRuleSet()
         assert rc.is_valid(rs)
 
-    def test_invalid_lr(self):
+    def test_invalid_lr(self) -> None:
+        """An out-of-range learning rate is invalid."""
         rc = RuleConstraints()
         rs = PlasticityRuleSet()
         rs.stdp.lr = 999.0
         assert not rc.is_valid(rs)
 
-    def test_invalid_tau_with_valid_lr(self):
+    def test_invalid_tau_with_valid_lr(self) -> None:
+        """An out-of-range time constant is invalid."""
         # lr passes its range check so validation proceeds to the tau check,
         # which an out-of-range tau_plus fails.
         rc = RuleConstraints()
@@ -34,7 +42,8 @@ class TestRuleConstraints:
         rs.stdp.tau_plus = 1000.0
         assert not rc.is_valid(rs)
 
-    def test_enforce_clamps(self):
+    def test_enforce_clamps(self) -> None:
+        """Enforcing the constraints clamps rate, time constant and length."""
         rc = RuleConstraints()
         rs = PlasticityRuleSet()
         rs.stdp.lr = 999.0

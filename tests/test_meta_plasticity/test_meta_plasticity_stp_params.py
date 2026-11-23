@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    STPParams,
+)
 
 
 class TestSTPParams:
-    def test_to_vector(self):
+    """Vector form of short-term plasticity parameters."""
+
+    def test_to_vector(self) -> None:
+        """The vector holds the three STP parameters."""
         p = STPParams()
         assert len(p.to_vector()) == 3
 
-    def test_from_vector_clamps_u(self):
+    def test_from_vector_clamps_u(self) -> None:
+        """The utilisation is clamped below one."""
         v = np.array([2.0, 100.0, 50.0])
         p = STPParams.from_vector(v)
         assert p.u_base <= 0.99

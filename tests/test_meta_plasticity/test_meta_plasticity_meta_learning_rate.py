@@ -10,21 +10,28 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    MetaLearningRate,
+)
 
 
 class TestMetaLearningRate:
-    def test_positive_delta_increases(self):
+    """The meta learning rate of the rule evolver."""
+
+    def test_positive_delta_increases(self) -> None:
+        """Improving fitness raises the rate."""
         mlr = MetaLearningRate(meta_lr=0.01)
         new = mlr.update(0.1)
         assert new > 0.01
 
-    def test_negative_delta_decreases(self):
+    def test_negative_delta_decreases(self) -> None:
+        """Worsening fitness lowers the rate."""
         mlr = MetaLearningRate(meta_lr=0.01)
         new = mlr.update(-0.1)
         assert new < 0.01
 
-    def test_bounded(self):
+    def test_bounded(self) -> None:
+        """The rate stays at or below its maximum."""
         mlr = MetaLearningRate(meta_lr=0.01, max_meta_lr=0.1)
         for _ in range(100):
             mlr.update(1.0)

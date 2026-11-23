@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5748
+    "test_files": 5747
   },
   "documentation": {
     "public_pages": [
@@ -5987,7 +5987,6 @@
       "tests/test_memristor/test_memristor_mapper_variability_injector.py",
       "tests/test_memristor/test_memristor_mapper_verilog_emitter.py",
       "tests/test_memristor/test_memristor_mapper_write_verify_protocol.py",
-      "tests/test_meta_plasticity/meta_plasticity_support.py",
       "tests/test_meta_plasticity/test_meta_plasticity_checkpoint_store.py",
       "tests/test_meta_plasticity/test_meta_plasticity_context_rule_bank.py",
       "tests/test_meta_plasticity/test_meta_plasticity_curiosity_signal.py",

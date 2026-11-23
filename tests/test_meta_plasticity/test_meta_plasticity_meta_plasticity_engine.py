@@ -10,37 +10,47 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    EngineConfig,
+    MetaPlasticityEngine,
+)
 
 
 class TestMetaPlasticityEngine:
-    def test_single_step(self):
+    """Steps, control and evolution of the meta-plasticity engine."""
+
+    def test_single_step(self) -> None:
+        """One step reports step one."""
         engine = MetaPlasticityEngine()
         result = engine.step({"novelty": 0.5, "surprise": 0.1, "gci": 0.7})
         assert result["step"] == 1
 
-    def test_meta_control_fires(self):
+    def test_meta_control_fires(self) -> None:
+        """Meta-control changes the rules."""
         cfg = EngineConfig(meta_interval=5, evolve_interval=1000)
         engine = MetaPlasticityEngine(config=cfg)
         for i in range(10):
             engine.step({"novelty": 0.9, "surprise": 0.5, "gci": 0.5})
         assert engine.rule_changes > 0
 
-    def test_evolution_fires(self):
+    def test_evolution_fires(self) -> None:
+        """Evolution advances a generation."""
         cfg = EngineConfig(meta_interval=10, evolve_interval=5, enable_evolution=True)
         engine = MetaPlasticityEngine(config=cfg)
         for i in range(10):
             engine.step({"novelty": 0.5, "surprise": 0.1, "gci": 0.8, "gci_std": 0.02})
         assert engine.evolver.generation > 0
 
-    def test_performance_log(self):
+    def test_performance_log(self) -> None:
+        """Each step is logged with its STDP rate."""
         engine = MetaPlasticityEngine()
         for _ in range(5):
             engine.step({"novelty": 0.5})
         assert len(engine.performance_log) == 5
         assert "stdp_lr" in engine.performance_log[0]
 
-    def test_status(self):
+    def test_status(self) -> None:
+        """The status reports steps, rule changes and dopamine."""
         engine = MetaPlasticityEngine()
         engine.step({"novelty": 0.5})
         st = engine.status()
@@ -48,7 +58,8 @@ class TestMetaPlasticityEngine:
         assert "rule_changes" in st
         assert "neuromod_dopamine" in st
 
-    def test_neuromodulation_changes_lr(self):
+    def test_neuromodulation_changes_lr(self) -> None:
+        """Neuromodulation changes the STDP learning rate."""
         cfg = EngineConfig(meta_interval=1, evolve_interval=10000, enable_neuromodulation=True)
         engine = MetaPlasticityEngine(config=cfg)
         initial_lr = engine.rules.stdp.lr

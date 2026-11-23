@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
-from meta_plasticity_support import *  # noqa: F403
+from sc_neurocore.meta_plasticity.meta_plasticity import (
+    SleepPhase,
+)
 
 
 class TestSleepPhase:
-    def test_record_and_buffer_size(self):
+    """Replay of experiences during sleep."""
+
+    def test_record_and_buffer_size(self) -> None:
+        """Recorded experiences fill the buffer."""
         sp = SleepPhase()
         sp.record({"novelty": 0.5})
         sp.record({"novelty": 0.8})
         assert sp.buffer_size == 2
 
-    def test_sleep_replays(self):
+    def test_sleep_replays(self) -> None:
+        """Sleep replays the requested experiences and then wakes."""
         sp = SleepPhase(consolidation_rounds=3)
         for i in range(5):
             sp.record({"novelty": float(i) / 4})
@@ -30,7 +36,8 @@ class TestSleepPhase:
         assert len(calls) == 3
         assert not sp.is_sleeping
 
-    def test_empty_buffer_no_replay(self):
+    def test_empty_buffer_no_replay(self) -> None:
+        """An empty buffer replays nothing."""
         sp = SleepPhase()
         replays = sp.sleep(lambda m: None)
         assert replays == 0
