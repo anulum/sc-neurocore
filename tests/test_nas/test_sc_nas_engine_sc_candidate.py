@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from sc_nas_engine_support import *  # noqa: F403
+from sc_neurocore.nas.sc_nas_engine import (
+    DecorrelationStrategy,
+    FPGAResourceBudget,
+    LayerConfig,
+    NeuronType,
+    SCCandidate,
+)
 
 
 class TestSCCandidate:
+    """Resources, budget checks and fingerprints of candidates."""
+
     def test_evaluate_resources(self) -> None:
+        """A candidate's LUT, flip-flop, DSP and BRAM totals are positive."""
         c = SCCandidate(
             layers=[
                 LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
@@ -29,6 +38,7 @@ class TestSCCandidate:
         assert c.total_power_mw > 0
 
     def test_meets_budget_within_limits(self) -> None:
+        """A candidate within its limits meets the budget."""
         c = SCCandidate(
             layers=[
                 LayerConfig(16, NeuronType.LIF, 64, DecorrelationStrategy.LFSR),
@@ -38,6 +48,7 @@ class TestSCCandidate:
         assert c.meets_budget(budget)
 
     def test_exceeds_budget(self) -> None:
+        """A candidate over its limits does not meet the budget."""
         c = SCCandidate(
             layers=[
                 LayerConfig(256, NeuronType.HH, 4096, DecorrelationStrategy.HYBRID),
@@ -48,6 +59,7 @@ class TestSCCandidate:
         assert not c.meets_budget(budget)
 
     def test_fingerprint_deterministic(self) -> None:
+        """A candidate's fingerprint is stable."""
         c = SCCandidate(
             layers=[
                 LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
@@ -56,6 +68,7 @@ class TestSCCandidate:
         assert c.fingerprint == c.fingerprint
 
     def test_fingerprint_differs_for_different_configs(self) -> None:
+        """Different configurations have different fingerprints."""
         a = SCCandidate(
             layers=[
                 LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
@@ -69,6 +82,7 @@ class TestSCCandidate:
         assert a.fingerprint != b.fingerprint
 
     def test_dsp_budget_check(self) -> None:
+        """A candidate over the DSP budget does not meet it."""
         c = SCCandidate(
             layers=[
                 LayerConfig(256, NeuronType.HH, 256, DecorrelationStrategy.LFSR),

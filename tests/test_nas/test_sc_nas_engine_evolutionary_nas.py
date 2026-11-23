@@ -10,33 +10,49 @@
 
 from __future__ import annotations
 
-from sc_nas_engine_support import *  # noqa: F403
+from sc_nas_engine_support import (
+    _FakeSurrogateOptimiser,
+)
+from sc_neurocore.nas.sc_nas_engine import (
+    EvolutionaryNAS,
+    FPGAResourceBudget,
+    NASObjective,
+    run_nas,
+)
 
 
 class TestEvolutionaryNAS:
+    """The evolutionary architecture search."""
+
     def test_search_returns_non_empty_front(self) -> None:
+        """A search returns a non-empty Pareto front."""
         report = run_nas(population_size=10, num_generations=5, seed=42)
         assert len(report.pareto_front) > 0
 
     def test_search_history_recorded(self) -> None:
+        """A five-generation search records five history entries."""
         report = run_nas(population_size=10, num_generations=5, seed=42)
         assert len(report.search_history) == 5
 
     def test_best_accuracy_positive(self) -> None:
+        """The best accuracy is positive."""
         report = run_nas(population_size=10, num_generations=10, seed=42)
         assert report.best_accuracy > 0.0
 
     def test_most_efficient_exists(self) -> None:
+        """The report names a most efficient candidate."""
         report = run_nas(population_size=10, num_generations=5, seed=42)
         assert report.most_efficient is not None
 
     def test_budget_constraint_respected(self) -> None:
+        """Every front candidate fits the LUT budget."""
         budget = FPGAResourceBudget(max_luts=10_000_000)
         report = run_nas(budget=budget, population_size=10, num_generations=5, seed=42)
         for c in report.pareto_front:
             assert c.total_luts <= budget.max_luts
 
     def test_search_can_score_candidates_with_surrogate_optimizer(self) -> None:
+        """A surrogate scorer is called and its accuracy reaches the front."""
         surrogate = _FakeSurrogateOptimiser()
         report = run_nas(
             population_size=6,
@@ -50,16 +66,19 @@ class TestEvolutionaryNAS:
         assert all(candidate.accuracy == 0.99 for candidate in report.pareto_front)
 
     def test_summary_format(self) -> None:
+        """The summary names the report and the front size."""
         report = run_nas(population_size=10, num_generations=3, seed=42)
         s = report.summary()
         assert "SC-NAS Report" in s
         assert "Pareto front size" in s
 
     def test_wall_time_recorded(self) -> None:
+        """The search records a positive wall time."""
         report = run_nas(population_size=10, num_generations=3, seed=42)
         assert report.wall_time_s > 0.0
 
     def test_mutation_preserves_min_layers(self) -> None:
+        """Mutation keeps at least two layers."""
         nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
         for _ in range(50):
             parent = nas._random_candidate()
@@ -67,6 +86,7 @@ class TestEvolutionaryNAS:
             assert len(child.layers) >= 2
 
     def test_crossover_produces_valid_candidate(self) -> None:
+        """Crossover gives a candidate with layers and LUTs."""
         nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
         a = nas._random_candidate()
         b = nas._random_candidate()
@@ -76,6 +96,7 @@ class TestEvolutionaryNAS:
         assert child.total_luts > 0
 
     def test_convergence_early_stop(self) -> None:
+        """A converged search stops before its generation limit."""
         report = run_nas(
             population_size=10,
             num_generations=100,
@@ -85,11 +106,13 @@ class TestEvolutionaryNAS:
         assert len(report.search_history) < 100
 
     def test_history_has_dsp_bram(self) -> None:
+        """History entries record the best DSP and BRAM use."""
         report = run_nas(population_size=10, num_generations=3, seed=42)
         assert "best_dsp" in report.search_history[0]
         assert "best_bram_kb" in report.search_history[0]
 
     def test_neuron_count_mutation(self) -> None:
+        """Mutation changes some layer's neuron count."""
         nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
         parent = nas._random_candidate()
         original_neurons = [l.neurons for l in parent.layers]

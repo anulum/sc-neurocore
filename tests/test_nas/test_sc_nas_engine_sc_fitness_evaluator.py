@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from sc_nas_engine_support import *  # noqa: F403
+from sc_neurocore.nas.sc_nas_engine import (
+    DecorrelationStrategy,
+    LayerConfig,
+    NeuronType,
+    SCCandidate,
+    SCFitnessEvaluator,
+)
 
 
 class TestSCFitnessEvaluator:
+    """Accuracy estimates of the SC fitness evaluator."""
+
     def test_longer_bitstreams_higher_accuracy(self) -> None:
+        """Longer bitstreams give a higher estimated accuracy."""
         ev = SCFitnessEvaluator(seed=42)
         short = SCCandidate(
             layers=[
@@ -31,6 +40,7 @@ class TestSCFitnessEvaluator:
         assert acc_long > acc_short
 
     def test_sobol_decorrelation_bonus(self) -> None:
+        """Sobol decorrelation scores above LFSR."""
         ev = SCFitnessEvaluator(seed=42)
         lfsr = SCCandidate(
             layers=[
@@ -45,6 +55,7 @@ class TestSCFitnessEvaluator:
         assert ev.evaluate(sobol) > ev.evaluate(lfsr)
 
     def test_accuracy_bounded_0_1(self) -> None:
+        """The estimated accuracy lies between zero and one."""
         ev = SCFitnessEvaluator(seed=42)
         c = SCCandidate(
             layers=[

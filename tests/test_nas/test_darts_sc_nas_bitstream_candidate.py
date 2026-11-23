@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from darts_sc_nas_support import *  # noqa: F403
+import unittest
+from darts_sc_nas_support import (
+    torch,
+)
+from sc_neurocore.nas.darts_sc_nas import (
+    BitstreamCandidate,
+)
 
 
 class TestBitstreamCandidate(unittest.TestCase):
+    """A bitstream-length candidate operation in the DARTS search."""
+
     def test_eval_passthrough(self) -> None:
+        """In evaluation mode the operation passes its input through."""
         op = BitstreamCandidate(256, 100.0, 1.0)
         op.eval()
         x = torch.tensor([0.3, 0.5, 0.7])
@@ -22,6 +31,7 @@ class TestBitstreamCandidate(unittest.TestCase):
         self.assertTrue(torch.equal(x, out))
 
     def test_train_adds_noise(self) -> None:
+        """In training mode the operation adds stochastic noise."""
         torch.manual_seed(42)
         op = BitstreamCandidate(64, 100.0, 1.0)
         op.train()
@@ -30,6 +40,7 @@ class TestBitstreamCandidate(unittest.TestCase):
         self.assertFalse(torch.equal(x, out))
 
     def test_output_clamped_to_unit(self) -> None:
+        """The output stays between zero and one."""
         torch.manual_seed(0)
         op = BitstreamCandidate(64, 100.0, 1.0)
         op.train()
@@ -39,6 +50,7 @@ class TestBitstreamCandidate(unittest.TestCase):
         self.assertTrue((out <= 1.0).all())
 
     def test_longer_bitstream_less_noise(self) -> None:
+        """A longer bitstream adds less noise."""
         torch.manual_seed(42)
         op_short = BitstreamCandidate(64, 100.0, 1.0)
         op_short.train()
@@ -55,6 +67,7 @@ class TestBitstreamCandidate(unittest.TestCase):
         self.assertGreater(var_short, var_long)
 
     def test_cost_attributes(self) -> None:
+        """The operation keeps its length, LUT cost and power cost."""
         op = BitstreamCandidate(256, 42.0, 3.14)
         self.assertEqual(op.length, 256)
         self.assertAlmostEqual(op.lut_cost, 42.0)

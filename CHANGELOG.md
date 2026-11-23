@@ -1314,6 +1314,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The ten SC neural-architecture-search test modules (`tests/test_nas`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and are enrolled in the
+  docstring policy.
+
 - The 12 sensor-fusion test modules (`tests/test_fusion`) import their
   names explicitly instead of through a suppressed star import, gain
   their missing test docstrings and return annotations and are enrolled

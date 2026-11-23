@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from sc_nas_engine_support import *  # noqa: F403
+from sc_neurocore.nas.sc_nas_engine import (
+    DecorrelationStrategy,
+    LayerConfig,
+    NASVerilogEmitter,
+    NeuronType,
+    SCCandidate,
+)
 
 
 class TestNASVerilogEmitter:
+    """SystemVerilog emitted for searched networks."""
+
     def _make_candidate(self) -> SCCandidate:
         c = SCCandidate(
             layers=[
@@ -26,12 +34,14 @@ class TestNASVerilogEmitter:
         return c
 
     def test_emit_contains_module(self) -> None:
+        """The emitted text is a complete network module."""
         c = self._make_candidate()
         v = NASVerilogEmitter.emit(c)
         assert "module sc_nas_network" in v
         assert "endmodule" in v
 
     def test_emit_has_parameters(self) -> None:
+        """Each layer's neuron count and bitstream length become parameters."""
         c = self._make_candidate()
         v = NASVerilogEmitter.emit(c)
         assert "L0_NEURONS    = 32" in v
@@ -39,12 +49,14 @@ class TestNASVerilogEmitter:
         assert "L0_BITSTREAM  = 256" in v
 
     def test_emit_has_neuron_modules(self) -> None:
+        """The layers instantiate their neuron modules."""
         c = self._make_candidate()
         v = NASVerilogEmitter.emit(c)
         assert "sc_lif_neuron" in v
         assert "sc_izhikevich_neuron" in v
 
     def test_emit_has_resource_comment(self) -> None:
+        """The module comments its LUT, DSP and BRAM use."""
         c = self._make_candidate()
         v = NASVerilogEmitter.emit(c)
         assert "LUTs" in v
@@ -52,11 +64,13 @@ class TestNASVerilogEmitter:
         assert "BRAM" in v
 
     def test_emit_custom_name(self) -> None:
+        """A custom module name names the module."""
         c = self._make_candidate()
         v = NASVerilogEmitter.emit(c, module_name="my_net")
         assert "module my_net" in v
 
     def test_emit_pareto(self) -> None:
+        """Each Pareto candidate gets its own module."""
         c1 = self._make_candidate()
         c2 = self._make_candidate()
         result = NASVerilogEmitter.emit_pareto([c1, c2])
@@ -65,6 +79,7 @@ class TestNASVerilogEmitter:
         assert "sc_nas_pareto_1" in result
 
     def test_emit_all_neuron_types(self) -> None:
+        """Every neuron type emits a complete module."""
         for nt in NeuronType:
             c = SCCandidate(
                 layers=[

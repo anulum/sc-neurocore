@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from darts_sc_nas_support import *  # noqa: F403
+import unittest
+from darts_sc_nas_support import (
+    _backward,
+    torch,
+)
+from sc_neurocore.nas.darts_sc_nas import (
+    SCNASNetwork,
+)
 
 
 class TestSCNASNetwork(unittest.TestCase):
+    """The searchable SC network built from mixed operations."""
+
     def test_forward_shape(self) -> None:
+        """The network gives one score per class for each sample."""
         net = SCNASNetwork()
         net.eval()
         x = torch.rand(2, 1, 28, 28)
@@ -22,12 +32,14 @@ class TestSCNASNetwork(unittest.TestCase):
         self.assertEqual(out.shape, (2, 10))
 
     def test_hardware_penalty_returns_two_tensors(self) -> None:
+        """The hardware penalty returns LUT and power tensors."""
         net = SCNASNetwork()
         luts, power = net.hardware_penalty()
         self.assertIsInstance(luts, torch.Tensor)
         self.assertIsInstance(power, torch.Tensor)
 
     def test_gradients_flow(self) -> None:
+        """The loss sends a nonzero gradient to the architecture weights."""
         net = SCNASNetwork()
         net.train()
         x = torch.rand(2, 1, 28, 28)
@@ -41,6 +53,7 @@ class TestSCNASNetwork(unittest.TestCase):
         self.assertGreater(grad.norm().item(), 0)
 
     def test_hardware_penalty_differentiable(self) -> None:
+        """The hardware penalty is differentiable in the architecture weights."""
         net = SCNASNetwork()
         luts, power = net.hardware_penalty()
         total = luts + power

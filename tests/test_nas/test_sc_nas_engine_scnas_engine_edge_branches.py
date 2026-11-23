@@ -10,12 +10,36 @@
 
 from __future__ import annotations
 
-from sc_nas_engine_support import *  # noqa: F403
+import importlib
+import pytest
+import sys
+from sc_nas_engine_support import (
+    RustTournament,
+)
+from sc_neurocore.nas import (
+    sc_nas_engine as nas_module,
+)
+from sc_neurocore.nas.sc_nas_engine import (
+    DecorrelationStrategy,
+    EvolutionaryNAS,
+    FPGAResourceBudget,
+    LayerConfig,
+    NASObjective,
+    NASReport,
+    NeuronType,
+    SCCandidate,
+)
+from types import (
+    ModuleType,
+)
 
 
 class TestSCNASEngineEdgeBranches:
-    """Resource-utilisation ratios, empty-front report accessors, and the
-    Rust-evolution tournament path (flag + import branch)."""
+    """Edge branches of the SC-NAS engine.
+
+    Resource-utilisation ratios, empty-front report accessors, and the
+    Rust-evolution tournament path (flag + import branch).
+    """
 
     @staticmethod
     def _candidate(fitness: float) -> SCCandidate:
@@ -25,6 +49,7 @@ class TestSCNASEngineEdgeBranches:
         )
 
     def test_resource_budget_utilisation_ratios(self) -> None:
+        """Budget utilisation is each total over its limit."""
         budget = FPGAResourceBudget(max_luts=1000, max_ffs=2000, max_bram_kb=100, max_dsp=50)
         util = budget.utilisation(luts=500, ffs=500, bram=25, dsp=25)
         assert util["luts"] == 0.5
@@ -33,6 +58,7 @@ class TestSCNASEngineEdgeBranches:
         assert util["dsp"] == 0.5
 
     def test_report_accessors_on_empty_pareto_front(self) -> None:
+        """An empty front reports zero accuracy and no efficient candidate."""
         report = NASReport(pareto_front=[], search_history=[])
         assert report.best_accuracy == 0.0
         assert report.most_efficient is None
@@ -40,6 +66,7 @@ class TestSCNASEngineEdgeBranches:
     def test_tournament_select_uses_rust_evo_when_available(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Tournament selection uses the Rust kernel when it is present."""
         nas = EvolutionaryNAS(
             objective=NASObjective(),
             budget=FPGAResourceBudget(),
@@ -66,6 +93,7 @@ class TestSCNASEngineEdgeBranches:
     def test_module_import_enables_rust_evo_when_extension_is_available(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Importing the module enables the Rust evolution path when its extension loads."""
         captured: dict[str, list[float]] = {}
 
         def _fake_evo(fitness: list[float], n: int, k: int, seed: int) -> list[int]:

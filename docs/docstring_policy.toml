@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2588
+expected_file_count = 2598
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10396,3 +10396,43 @@ rationale = "Exercise the sensor fusion suite: tactile adapter."
 [[file]]
 path = "tests/test_fusion/test_sensor_fusion_temporal_aligner.py"
 rationale = "Exercise the sensor fusion suite: temporal aligner."
+
+[[file]]
+path = "tests/test_nas/test_darts_sc_nas_bitstream_candidate.py"
+rationale = "Exercise the SC neural-architecture search: darts sc nas bitstream candidate."
+
+[[file]]
+path = "tests/test_nas/test_darts_sc_nas_sc_mixed_op.py"
+rationale = "Exercise the SC neural-architecture search: darts sc nas sc mixed op."
+
+[[file]]
+path = "tests/test_nas/test_darts_sc_nas_scnas_network.py"
+rationale = "Exercise the SC neural-architecture search: darts sc nas scnas network."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_evolutionary_nas.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine evolutionary nas."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_layer_config.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine layer config."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_nas_verilog_emitter.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine nas verilog emitter."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_pareto_front.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine pareto front."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_sc_candidate.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine sc candidate."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_sc_fitness_evaluator.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine sc fitness evaluator."
+
+[[file]]
+path = "tests/test_nas/test_sc_nas_engine_scnas_engine_edge_branches.py"
+rationale = "Exercise the SC neural-architecture search: sc nas engine scnas engine edge branches."
