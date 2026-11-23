@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2355
+expected_file_count = 2356
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9464,3 +9464,7 @@ rationale = "Hold the Studio jobs facade contract, one-way imports and per-modul
 [[file]]
 path = "tests/test_cosim_support_architecture_architecture_invariants.py"
 rationale = "Pin the co-simulation facade's re-exports, its import-only body and the one-way owner graph."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_decomposition_architecture.py"
+rationale = "Pin annealing decomposition, the facade surface, the module DAG and definition ownership."

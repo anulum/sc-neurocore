@@ -48,6 +48,78 @@ _RESPONSIBILITY_MODULES = (
     "annealing_io",
     "annealing_decomposition",
 )
+# Top-level classes and functions each module defines. Public names have one
+# owner; the compatibility facade defines none.
+_OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
+    "quantum_annealing": (),
+    "annealing_backends": (
+        "require_rust_energy",
+        "require_rust_batch_energy",
+        "require_rust_annealer",
+        "build_spin_bqm",
+        "require_dwave_components",
+    ),
+    "annealing_models": (
+        "validate_backend_choice",
+        "_require_finite",
+        "_require_index",
+        "ProblemType",
+        "QubitSpec",
+        "CouplerSpec",
+        "IsingModel",
+        "QUBOModel",
+    ),
+    "annealing_compilers": (
+        "_finite_scalar",
+        "_square_matrix",
+        "_labels",
+        "SCToIsing",
+        "SCToQUBO",
+        "SCBitstreamQUBO",
+    ),
+    "annealing_solvers": (
+        "_positive_int",
+        "_positive_float",
+        "_finite_float",
+        "_spin_sequence",
+        "SimulatedAnnealer",
+        "DWaveInterface",
+    ),
+    "annealing_analysis": (
+        "_finite",
+        "_validated_sample",
+        "EnergyLandscape",
+        "EmbeddingAnalyzer",
+        "SampleAggregator",
+        "TTSAnalyzer",
+    ),
+    "annealing_hardware": (
+        "_validated_chains",
+        "_validated_physical_samples",
+        "HardwareGraph",
+        "ChainBreakResolver",
+    ),
+    "annealing_transforms": (
+        "_finite",
+        "_positive_duration",
+        "_anneal_fraction",
+        "AnnealingSchedule",
+        "GaugeTransform",
+        "SCPrecisionEncoder",
+    ),
+    "annealing_io": (
+        "_install_temporary",
+        "_atomic_json_write",
+        "export_ising_json",
+        "export_qubo_json",
+        "export_bqm",
+        "visualize_ising",
+    ),
+    "annealing_decomposition": (
+        "_positive_int",
+        "ProblemDecomposer",
+    ),
+}
 
 
 class FixedSpinSolver(SimulatedAnnealer):
@@ -247,15 +319,22 @@ def test_responsibility_graph_is_acyclic() -> None:
         visit(module_name)
 
 
-def test_source_and_test_size_caps() -> None:
-    """The facade, responsibility modules, and focused tests remain bounded."""
-    facade_lines = (_BRIDGES_ROOT / "quantum_annealing.py").read_text(encoding="utf-8").count("\n")
-    assert facade_lines <= 120
-    for name in _RESPONSIBILITY_MODULES:
-        line_count = (_BRIDGES_ROOT / f"{name}.py").read_text(encoding="utf-8").count("\n")
-        assert line_count <= 400, (name, line_count)
-    for path in Path(__file__).parent.glob("test_quantum_annealing*.py"):
-        assert path.read_text(encoding="utf-8").count("\n") <= 500, path
+def test_modules_own_their_declared_definitions_and_the_facade_defines_none() -> None:
+    """Each module defines exactly its declared names, and each public name has one owner."""
+    assert set(_OWNED_DEFINITIONS) == {"quantum_annealing", *_RESPONSIBILITY_MODULES}
+    public_owners: dict[str, str] = {}
+    for module_name, declared in _OWNED_DEFINITIONS.items():
+        tree = ast.parse((_BRIDGES_ROOT / f"{module_name}.py").read_text(encoding="utf-8"))
+        defined = [
+            node.name
+            for node in tree.body
+            if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+        ]
+        assert sorted(defined) == sorted(declared), module_name
+        for name in defined:
+            if not name.startswith("_"):
+                owner = public_owners.setdefault(name, module_name)
+                assert owner == module_name, f"{name} is defined in {owner} and {module_name}"
 
 
 def test_false_polyglot_mirrors_are_absent_and_native_engine_remains() -> None:

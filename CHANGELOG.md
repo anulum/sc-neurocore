@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The quantum-annealing architecture test no longer caps the facade at
+  120 lines, the responsibility modules at 400 or the focused tests at
+  500. In its place,
+  `test_modules_own_their_declared_definitions_and_the_facade_defines_none`
+  holds each of the ten modules to its declared top-level classes and
+  functions, with each public name defined in one module and none in
+  the facade.
+
 - The co-simulation support architecture test no longer caps the facade
   and its 29 owner modules by length. In its place,
   `test_owners_are_facade_independent_and_the_facade_defines_nothing`
