@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.quasirandom_emitter_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+import shutil
+import subprocess
+from sc_neurocore.hdl_gen.quasirandom_emitter import (
+    Halton16Emitter,
+)
 
 
 class TestHalton16Emitter:
     """Test Halton-16 RTL generation."""
 
     def test_generates_valid_verilog(self) -> None:
+        """The Halton emitter writes a complete Verilog module."""
         emitter = Halton16Emitter()
         code = emitter.generate()
         assert "module sc_halton16_source" in code
@@ -24,11 +31,13 @@ class TestHalton16Emitter:
         assert "reversed" in code
 
     def test_has_bit_reversal_wiring(self) -> None:
+        """The Halton module wires all 16 reversed bits."""
         code = Halton16Emitter().generate()
         # Should have 16 assign statements for bit-reversal
         assert code.count("assign reversed[") == 16
 
     def test_custom_module_name(self) -> None:
+        """The Halton emitter uses a custom module name."""
         emitter = Halton16Emitter(module_name="custom_halton")
         code = emitter.generate()
         assert "module custom_halton" in code
@@ -37,7 +46,8 @@ class TestHalton16Emitter:
         not shutil.which("iverilog"),
         reason="Icarus Verilog not installed",
     )
-    def test_compiles_with_iverilog(self, tmp_path) -> None:
+    def test_compiles_with_iverilog(self, tmp_path: Path) -> None:
+        """The Halton module compiles with Icarus Verilog."""
         code = Halton16Emitter().generate()
         vfile = tmp_path / "halton.v"
         vfile.write_text(code)

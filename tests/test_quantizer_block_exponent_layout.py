@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    BlockFloatingMode,
+)
 
 
 class TestBlockExponentLayout:
     """Validate explicit block-exponent metadata for BFP compiler surfaces."""
 
-    def test_block_exponent_layout_computes_partial_tail(self):
+    def test_block_exponent_layout_computes_partial_tail(self) -> None:
+        """The exponent layout counts a partial tail block."""
         mode = BlockFloatingMode.from_aliases("BFP16E3X32")
         layout = mode.block_exponent_layout(65)
 
@@ -31,7 +36,8 @@ class TestBlockExponentLayout:
             "exponent_index_formula": "parameter_index // block_size",
         }
 
-    def test_block_exponent_layout_rejects_bad_counts_and_vectors(self):
+    def test_block_exponent_layout_rejects_bad_counts_and_vectors(self) -> None:
+        """Negative, non-integer and mismatched exponent counts are rejected."""
         mode = BlockFloatingMode.from_aliases("BFP16E3X32")
 
         with pytest.raises(ValueError, match="non-negative"):

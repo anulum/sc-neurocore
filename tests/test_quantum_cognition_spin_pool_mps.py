@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.quantum_cognition_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
 
 
 class TestSpinPoolMPS:
     """Tests for the Matrix Product States spin pool emulator."""
 
     def test_init_defaults(self) -> None:
+        """A default spin pool has eight sites and bond dimension 16."""
         pool = SpinPoolMPS()
         assert pool.n_sites == 8
         assert pool.bond_dim == 16
@@ -24,6 +29,7 @@ class TestSpinPoolMPS:
         assert np.isclose(np.sum(pool.entanglement_map), 1.0)
 
     def test_init_custom(self) -> None:
+        """A custom spin pool keeps its parameters."""
         pool = SpinPoolMPS(n_sites=4, bond_dim=8, correlation_length=3.0, update_rate=0.2)
         assert pool.n_sites == 4
         assert pool.bond_dim == 8
@@ -31,6 +37,7 @@ class TestSpinPoolMPS:
         assert pool.update_rate == 0.2
 
     def test_init_validation(self) -> None:
+        """Bad site counts, bond dimensions and correlation lengths are rejected."""
         with pytest.raises(ValueError, match="n_sites"):
             SpinPoolMPS(n_sites=0)
         with pytest.raises(ValueError, match="bond_dim"):
@@ -43,6 +50,7 @@ class TestSpinPoolMPS:
             SpinPoolMPS(update_rate=1.5)
 
     def test_apply_measurement_updates_map(self) -> None:
+        """A measurement updates the normalised entanglement map."""
         pool = SpinPoolMPS(n_sites=8)
         initial_map = pool.entanglement_map.copy()
         pool.apply_measurement(3, 1.0)
@@ -52,6 +60,7 @@ class TestSpinPoolMPS:
         assert pool._measurement_count == 1
 
     def test_measurement_site_bounds(self) -> None:
+        """A site out of range or a bad intensity is rejected."""
         pool = SpinPoolMPS(n_sites=4)
         with pytest.raises(IndexError, match="site_idx"):
             pool.apply_measurement(-1)
@@ -61,17 +70,20 @@ class TestSpinPoolMPS:
             pool.apply_measurement(0, intensity=-0.5)
 
     def test_atp_efficiency_range(self) -> None:
+        """Every site has an ATP efficiency in the unit interval."""
         pool = SpinPoolMPS(n_sites=8)
         for i in range(8):
             eff = pool.get_local_atp_efficiency(i)
             assert 0.0 <= eff <= 1.0, f"Efficiency {eff} out of range at site {i}"
 
     def test_atp_efficiency_site_bounds(self) -> None:
+        """An ATP query for a site out of range is rejected."""
         pool = SpinPoolMPS(n_sites=4)
         with pytest.raises(IndexError, match="site_idx"):
             pool.get_local_atp_efficiency(4)
 
     def test_repeated_measurements_concentrate_entanglement(self) -> None:
+        """Repeated measurements concentrate entanglement on the measured site."""
         pool = SpinPoolMPS(n_sites=8)
         for _ in range(50):
             pool.apply_measurement(0, 1.0)
@@ -79,6 +91,7 @@ class TestSpinPoolMPS:
         assert pool.entanglement_map[0] > pool.entanglement_map[7]
 
     def test_get_status(self) -> None:
+        """The status reports the sites and measurement count."""
         pool = SpinPoolMPS(n_sites=4)
         pool.apply_measurement(1)
         status = pool.get_status()
@@ -88,6 +101,7 @@ class TestSpinPoolMPS:
         assert status["coherence_status"] == "stable"
 
     def test_get_set_state_roundtrip(self) -> None:
+        """The pool state round-trips through get and set."""
         pool = SpinPoolMPS(n_sites=4)
         pool.apply_measurement(2, 0.5)
         state = pool.get_state()
@@ -96,6 +110,7 @@ class TestSpinPoolMPS:
         np.testing.assert_array_almost_equal(pool.entanglement_map, pool2.entanglement_map)
 
     def test_reset(self) -> None:
+        """A reset clears the measurements and flattens the map."""
         pool = SpinPoolMPS(n_sites=4)
         pool.apply_measurement(0)
         pool.apply_measurement(1)
@@ -104,6 +119,7 @@ class TestSpinPoolMPS:
         assert np.allclose(pool.entanglement_map, 0.25)
 
     def test_to_scpn_payload(self) -> None:
+        """The SCPN payload carries the spin pool state."""
         pool = SpinPoolMPS(n_sites=4)
         payload = pool.to_scpn_payload()
         assert "quantum_cognition_spin_pool" in payload
@@ -113,6 +129,7 @@ class TestSpinPoolMPS:
         assert len(inner["atp_efficiencies"]) == 4
 
     def test_repr(self) -> None:
+        """The representation names the pool and its sites."""
         pool = SpinPoolMPS(n_sites=4)
         r = repr(pool)
         assert "SpinPoolMPS" in r

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.reservoir_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.reservoir import (
+    AutoCriticalReservoir,
+)
 
 
 class TestReadout:
-    def test_fit_and_predict_shape(self):
+    """The trained linear readout of the reservoir."""
+
+    def test_fit_and_predict_shape(self) -> None:
+        """Predictions have one row per sample."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, n_outputs=1, seed=0)
         inputs = np.random.randn(100, 1)
         states = res.run(inputs)
@@ -23,7 +29,8 @@ class TestReadout:
         preds = res.predict(states)
         assert preds.shape == (100, 1)
 
-    def test_train_and_predict_pipeline(self):
+    def test_train_and_predict_pipeline(self) -> None:
+        """Training then predicting gives finite outputs."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, n_outputs=1, seed=0)
         train_in = np.random.randn(80, 1)
         train_tgt = np.sin(np.arange(80)).reshape(-1, 1)
@@ -32,7 +39,8 @@ class TestReadout:
         assert preds.shape == (20, 1)
         assert np.all(np.isfinite(preds))
 
-    def test_readout_shapes_with_multiple_outputs(self):
+    def test_readout_shapes_with_multiple_outputs(self) -> None:
+        """The readout handles several outputs."""
         res = AutoCriticalReservoir(n_inputs=2, n_neurons=50, n_outputs=5, seed=0)
         states = np.random.randn(40, 50)
         targets = np.random.randn(40, 5)

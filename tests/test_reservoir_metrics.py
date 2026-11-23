@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.reservoir_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.reservoir import (
+    AutoCriticalReservoir,
+    ReservoirMetrics,
+)
 
 
 class TestMetrics:
-    def test_metrics_returns_all_fields(self):
+    """The reservoir health metrics."""
+
+    def test_metrics_returns_all_fields(self) -> None:
+        """The metrics report firing and criticality in range."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, seed=0)
         inputs = np.random.randn(30, 1)
         m = res.metrics(inputs)
@@ -24,7 +31,8 @@ class TestMetrics:
         assert 0.0 <= m.kernel_quality <= 1.0
         assert m.spectral_radius > 0
 
-    def test_metrics_summary_string(self):
+    def test_metrics_summary_string(self) -> None:
+        """The summary string prints the firing and spectral radius."""
         m = ReservoirMetrics(
             firing_fraction=0.48,
             criticality_error=0.02,

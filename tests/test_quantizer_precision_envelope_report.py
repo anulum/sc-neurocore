@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+from typing import Any, cast
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    PrecisionEnvelopeReport,
+    Q16_16,
+)
+from sc_neurocore.compiler.static_analysis import (
+    prove_fixed_point_envelope,
+)
 
 
 class TestPrecisionEnvelopeReport:
     """Validate precision envelope invariants for predeployment range gates."""
 
-    def test_manifest_distinguishes_observed_and_conservative_safety(self):
+    def test_manifest_distinguishes_observed_and_conservative_safety(self) -> None:
+        """The manifest keeps observed and conservative overflow safety apart."""
         report = PrecisionEnvelopeReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([1024, -512], dtype=np.int64),
@@ -42,7 +52,7 @@ class TestPrecisionEnvelopeReport:
         assert report.manifest()["conservative_overflow_free"] is True
         assert report.manifest()["proof_kind"] == "signed_symmetric_fixed_point_width"
 
-    def test_envelope_manifest_reuses_static_analysis_width_proof(self):
+    def test_envelope_manifest_reuses_static_analysis_width_proof(self) -> None:
         """Quantizer envelope proof fields must match the static-analysis proof."""
         report = PrecisionEnvelopeReport(
             operation="dense_mixed_qformat",
@@ -68,7 +78,8 @@ class TestPrecisionEnvelopeReport:
         ):
             assert manifest[key] == proof_manifest[key]
 
-    def test_manifest_distinguishes_underflow_from_overflow(self):
+    def test_manifest_distinguishes_underflow_from_overflow(self) -> None:
+        """The manifest keeps underflow apart from overflow."""
         report = PrecisionEnvelopeReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([0], dtype=np.int64),
@@ -82,7 +93,8 @@ class TestPrecisionEnvelopeReport:
         assert report.observed_underflow_free is False
         assert report.manifest()["underflow_count"] == 1
 
-    def test_conservative_envelope_can_reject_cancelling_outputs(self):
+    def test_conservative_envelope_can_reject_cancelling_outputs(self) -> None:
+        """The conservative envelope can reject outputs whose terms cancel."""
         report = PrecisionEnvelopeReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([0], dtype=np.int64),
@@ -100,7 +112,8 @@ class TestPrecisionEnvelopeReport:
         assert report.saturation_required is True
         assert report.static_overflow_proven_safe is False
 
-    def test_rejects_ambiguous_envelope_shapes_and_negative_bounds(self):
+    def test_rejects_ambiguous_envelope_shapes_and_negative_bounds(self) -> None:
+        """Mismatched shapes and negative bounds are rejected."""
         with pytest.raises(ValueError, match="identical shape"):
             PrecisionEnvelopeReport(
                 operation="dense_mixed_qformat",
@@ -135,7 +148,8 @@ class TestPrecisionEnvelopeReport:
                 output_fmt=Q16_16,
             )
 
-    def test_rejects_blank_operation_wrong_format_and_non_vector_arrays(self):
+    def test_rejects_blank_operation_wrong_format_and_non_vector_arrays(self) -> None:
+        """A blank operation, a wrong format and arrays that are not vectors are rejected."""
         with pytest.raises(ValueError, match="non-empty string"):
             PrecisionEnvelopeReport(
                 operation="",
@@ -150,7 +164,7 @@ class TestPrecisionEnvelopeReport:
                 output_codes=np.array([0], dtype=np.int64),
                 overflow_mask=np.array([False], dtype=bool),
                 abs_bound_codes=np.array([0], dtype=np.int64),
-                output_fmt="Q16.16",
+                output_fmt=cast(Any, "Q16.16"),
             )
         with pytest.raises(TypeError, match="output_codes must contain integer"):
             PrecisionEnvelopeReport(
@@ -202,7 +216,8 @@ class TestPrecisionEnvelopeReport:
                 output_fmt=Q16_16,
             )
 
-    def test_empty_envelope_reports_zero_extents_and_zero_bound_proof(self):
+    def test_empty_envelope_reports_zero_extents_and_zero_bound_proof(self) -> None:
+        """An empty envelope reports zero extents and a zero bound."""
         report = PrecisionEnvelopeReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([], dtype=np.int64),

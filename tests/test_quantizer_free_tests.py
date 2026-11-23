@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compiler.quantizer import (
+    compile_dense_block_floating,
+    compile_dense_mixed_precision,
+    QFormatMixed,
+)
 
 
 def test_block_floating_benchmark_contract_matches_rust_envelope() -> None:
@@ -48,12 +53,6 @@ def test_block_floating_benchmark_contract_matches_rust_envelope() -> None:
 
 def test_mixed_dense_benchmark_contract_matches_rust_envelope() -> None:
     """Canonical Q8.8/Q16.16 benchmark contract matches the Rust envelope."""
-
-    from sc_neurocore.compiler.quantizer import (
-        QFormatMixed,
-        compile_dense_mixed_precision,
-    )
-
     n_inputs = 64
     n_outputs = 32
     weights = np.array(

@@ -10,36 +10,46 @@
 
 from __future__ import annotations
 
-from tests.reservoir_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.reservoir import (
+    AutoCriticalReservoir,
+)
 
 
 class TestReservoirDynamics:
-    def test_step_output_shape(self):
+    """Running the spiking reservoir."""
+
+    def test_step_output_shape(self) -> None:
+        """One step gives a binary spike per neuron."""
         res = AutoCriticalReservoir(n_inputs=3, n_neurons=50, seed=0)
         out = res.step(np.array([1.0, 0.0, -1.0]))
         assert out.shape == (50,)
         assert set(np.unique(out)).issubset({0.0, 1.0})
 
-    def test_run_output_shape(self):
+    def test_run_output_shape(self) -> None:
+        """A run gives one state row per time step."""
         res = AutoCriticalReservoir(n_inputs=2, n_neurons=50, seed=0)
         inputs = np.random.randn(20, 2)
         states = res.run(inputs)
         assert states.shape == (20, 50)
 
-    def test_reset_clears_state(self):
+    def test_reset_clears_state(self) -> None:
+        """A reset clears potentials and spikes."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=20, seed=0)
         res.step(np.array([5.0]))
         res.reset()
         assert np.all(res._v == 0)
         assert np.all(res._spikes == 0)
 
-    def test_run_produces_spikes(self):
+    def test_run_produces_spikes(self) -> None:
+        """A run produces spikes."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=100, seed=0)
         inputs = np.ones((50, 1)) * 2.0
         states = res.run(inputs)
         assert states.sum() > 0
 
-    def test_different_inputs_different_states(self):
+    def test_different_inputs_different_states(self) -> None:
+        """Different inputs give different states."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, seed=0)
         s1 = res.run(np.ones((10, 1)) * 2.0)
         s2 = res.run(np.ones((10, 1)) * -2.0)

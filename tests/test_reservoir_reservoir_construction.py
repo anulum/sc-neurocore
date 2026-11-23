@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.reservoir_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.reservoir import (
+    AutoCriticalReservoir,
+)
 
 
 class TestReservoirConstruction:
-    def test_default_construction(self):
+    """Building the spiking reservoir."""
+
+    def test_default_construction(self) -> None:
+        """The default reservoir has the requested sizes."""
         res = AutoCriticalReservoir(n_inputs=2, n_neurons=50, seed=0)
         assert res.n_neurons == 50
         assert res.n_inputs == 2
@@ -22,16 +28,19 @@ class TestReservoirConstruction:
         assert res.W_in.shape == (50, 2)
         assert res.W_out.shape == (10, 50)
 
-    def test_no_self_connections(self):
+    def test_no_self_connections(self) -> None:
+        """The reservoir has no self-connections."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=20, seed=0)
         np.testing.assert_array_equal(np.diag(res.W_res), 0.0)
 
-    def test_sparsity(self):
+    def test_sparsity(self) -> None:
+        """About one tenth of the recurrent weights are non-zero."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=100, connectivity=0.1, seed=0)
         nonzero_frac = np.count_nonzero(res.W_res) / (100 * 100)
         assert 0.05 < nonzero_frac < 0.15
 
-    def test_critical_weight_formula(self):
+    def test_critical_weight_formula(self) -> None:
+        """The critical weight follows its formula."""
         res = AutoCriticalReservoir(
             n_inputs=1,
             n_neurons=100,
@@ -43,13 +52,15 @@ class TestReservoirConstruction:
         expected = 1.0 / (2.0 * 0.1 * 100 * 0.1)
         assert abs(res.w_critical - expected) < 1e-10
 
-    def test_spectral_radius_finite(self):
+    def test_spectral_radius_finite(self) -> None:
+        """The spectral radius is finite and positive."""
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=30, seed=0)
         sr = res.spectral_radius
         assert np.isfinite(sr)
         assert sr > 0
 
-    def test_deterministic_seed(self):
+    def test_deterministic_seed(self) -> None:
+        """The same seed gives the same weights."""
         a = AutoCriticalReservoir(n_inputs=2, n_neurons=30, seed=99)
         b = AutoCriticalReservoir(n_inputs=2, n_neurons=30, seed=99)
         np.testing.assert_array_equal(a.W_res, b.W_res)

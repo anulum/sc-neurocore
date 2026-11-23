@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.resilience_support import *  # noqa: F403
+from sc_neurocore.resilience.fault_suite import (
+    FaultResult,
+    FaultType,
+)
 
 
 class TestFaultResult:
-    def test_degradation(self):
+    """The result of one fault run."""
+
+    def test_degradation(self) -> None:
+        """Degradation is the accuracy lost to the fault."""
         r = FaultResult(
             fault_type=FaultType.STUCK_AT_ZERO,
             fault_rate=0.1,

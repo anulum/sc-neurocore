@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.residual_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.residual import (
+    MembraneShortcutBlock,
+)
 
 
 class TestMembraneShortcutBlock:
+    """The membrane-shortcut residual block."""
+
     def test_forward(self) -> None:
+        """The forward pass keeps the width."""
         b = MembraneShortcutBlock(n_features=8)
         assert b.forward(np.random.rand(8)).shape == (8,)
 
     def test_reset(self) -> None:
+        """A reset clears the membrane potential."""
         b = MembraneShortcutBlock(n_features=4)
         b.forward(np.ones(4))
         b.reset()

@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    QFormat,
+)
 
 
 class TestQFormat:
-    def test_parse_q88(self):
+    """The fixed-point Q format description."""
+
+    def test_parse_q88(self) -> None:
+        """Q8.8 parses to 8 integer and 8 fraction bits."""
         q = QFormat.from_string("Q8.8")
         assert q.integer_bits == 8
         assert q.fraction_bits == 8
         assert q.total_bits == 16
         assert q.scale == 256
 
-    def test_parse_q4_12(self):
+    def test_parse_q4_12(self) -> None:
+        """Q4.12 parses to 16 bits with a scale of 4096."""
         q = QFormat.from_string("Q4.12")
         assert q.total_bits == 16
         assert q.scale == 4096
 
-    def test_range_q88(self):
+    def test_range_q88(self) -> None:
+        """Q8.8 spans -128 to just under 128."""
         q = QFormat.from_string("Q8.8")
         assert q.min_val == -128.0
         assert q.max_val == pytest.approx(127.99609375)
@@ -34,11 +42,13 @@ class TestQFormat:
         assert q.max_value == q.max_val
         assert q.q_label == "Q8.8"
 
-    def test_invalid_format_raises(self):
+    def test_invalid_format_raises(self) -> None:
+        """A malformed format string is rejected."""
         with pytest.raises(ValueError, match="Expected format"):
             QFormat.from_string("float32")
 
-    def test_invalid_bit_contracts_raise(self):
+    def test_invalid_bit_contracts_raise(self) -> None:
+        """Impossible bit counts are rejected."""
         with pytest.raises(ValueError, match="sign bit"):
             QFormat(0, 8)
         with pytest.raises(ValueError, match="non-negative"):

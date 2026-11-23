@@ -10,13 +10,29 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from hypothesis import (
+    given,
+    settings,
+    strategies as st,
+)
+from sc_neurocore.compiler.quantizer import (
+    dequantize,
+    dequantize_weights,
+    Q16_16,
+    Q8_8,
+    QFormat,
+    QFormatMixed,
+    quantize_weights,
+)
 
 
 class TestQFormatMixed:
     """Validate the Q8.8-weight/Q16.16-accumulator contract."""
 
-    def test_default_contract_metadata(self):
+    def test_default_contract_metadata(self) -> None:
+        """The default mixed format pairs Q8.8 weights with a Q16.16 accumulator."""
         fmt = QFormatMixed()
         assert fmt.weight_fmt == Q8_8
         assert fmt.accum_fmt == Q16_16
@@ -32,21 +48,25 @@ class TestQFormatMixed:
             "rounding": "nearest",
         }
 
-    def test_rejects_accumulator_that_cannot_hold_weight_domain(self):
+    def test_rejects_accumulator_that_cannot_hold_weight_domain(self) -> None:
+        """An accumulator too narrow for the weight range is rejected."""
         with pytest.raises(ValueError, match="dynamic range"):
             QFormatMixed(weight_fmt=Q8_8, accum_fmt=QFormat(4, 12))
 
-    def test_rejects_accumulator_with_less_fractional_precision(self):
+    def test_rejects_accumulator_with_less_fractional_precision(self) -> None:
+        """An accumulator with fewer fraction bits than the weights is rejected."""
         with pytest.raises(ValueError, match="fractional precision"):
             QFormatMixed(weight_fmt=QFormat(8, 12), accum_fmt=QFormat(16, 8))
 
-    def test_fixed_qformat_object_matches_string_quantisation(self):
+    def test_fixed_qformat_object_matches_string_quantisation(self) -> None:
+        """A QFormat object quantises exactly like its string."""
         weights = np.array([-1.25, -0.5, 0.0, 0.5, 1.25], dtype=np.float64)
         by_object = quantize_weights(weights, fmt=Q8_8)
         by_string = quantize_weights(weights, fmt="Q8.8")
         np.testing.assert_array_equal(by_object, by_string)
 
-    def test_mixed_quantisation_uses_full_tensor_dynamic_range(self):
+    def test_mixed_quantisation_uses_full_tensor_dynamic_range(self) -> None:
+        """Mixed quantisation uses the full code range of the tensor."""
         weights = np.array([0.0, 0.25, -0.5, 1.0], dtype=np.float64)
         fmt = QFormatMixed()
         quantised, tensor_scale = quantize_weights(weights, fmt=fmt)
@@ -57,7 +77,8 @@ class TestQFormatMixed:
         restored = dequantize_weights(quantised, fmt=fmt, scale=tensor_scale)
         np.testing.assert_allclose(restored, weights, atol=0.5 / (Q8_8.scale * tensor_scale))
 
-    def test_mixed_without_tensor_scale_uses_canonical_q88_codes(self):
+    def test_mixed_without_tensor_scale_uses_canonical_q88_codes(self) -> None:
+        """Without a tensor scale the mixed format gives canonical Q8.8 codes."""
         weights = np.array([0.5, -0.5, 1.25], dtype=np.float64)
         fmt = QFormatMixed(scale_per_tensor=False)
         quantised, tensor_scale = quantize_weights(weights, fmt=fmt)
@@ -67,7 +88,8 @@ class TestQFormatMixed:
         restored = dequantize(quantised, fmt=fmt, scale=tensor_scale)
         np.testing.assert_allclose(restored, weights, atol=1 / Q8_8.scale)
 
-    def test_zero_tensor_round_trips_with_unit_scale(self):
+    def test_zero_tensor_round_trips_with_unit_scale(self) -> None:
+        """A zero tensor round-trips with a unit scale."""
         weights = np.zeros((2, 3), dtype=np.float64)
         fmt = QFormatMixed()
         quantised, tensor_scale = quantize_weights(weights, fmt=fmt)
@@ -78,11 +100,13 @@ class TestQFormatMixed:
             dequantize_weights(quantised, fmt=fmt, scale=tensor_scale), weights
         )
 
-    def test_mixed_quantisation_rejects_non_finite_weights(self):
+    def test_mixed_quantisation_rejects_non_finite_weights(self) -> None:
+        """Mixed quantisation rejects non-finite weights."""
         with pytest.raises(ValueError, match="finite values"):
             quantize_weights(np.array([0.0, np.inf]), fmt=QFormatMixed())
 
-    def test_dequantise_rejects_invalid_scale(self):
+    def test_dequantise_rejects_invalid_scale(self) -> None:
+        """Dequantisation rejects a scale that is not finite and positive."""
         with pytest.raises(ValueError, match="finite and positive"):
             dequantize_weights(np.array([1]), fmt=QFormatMixed(), scale=0.0)
 
@@ -100,7 +124,8 @@ class TestQFormatMixed:
         )
     )
     @settings(max_examples=50, deadline=None)
-    def test_mixed_per_tensor_scale_round_trip_is_bounded(self, values):
+    def test_mixed_per_tensor_scale_round_trip_is_bounded(self, values: list[float]) -> None:
+        """Any finite tensor round-trips within the per-tensor bound."""
         weights = np.array(values, dtype=np.float64)
         fmt = QFormatMixed()
         quantised, tensor_scale = quantize_weights(weights, fmt=fmt)

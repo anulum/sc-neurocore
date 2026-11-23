@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compiler.quantizer import (
+    quantization_error,
+)
 
 
 class TestQuantizationError:
-    def test_error_stats(self):
+    """The quantisation error statistics."""
+
+    def test_error_stats(self) -> None:
+        """The Q8.8 error stays below one step."""
         w = np.random.randn(100)
         stats = quantization_error(w, fmt="Q8.8")
         assert stats["max_abs_error"] < 1 / 256 + 1e-9
@@ -22,13 +28,15 @@ class TestQuantizationError:
         assert stats["rmse"] > 0
         assert stats["snr_db"] > 30  # good SNR for Q8.8
 
-    def test_higher_precision_lower_error(self):
+    def test_higher_precision_lower_error(self) -> None:
+        """Q4.12 has a lower error than Q8.8."""
         w = np.random.randn(100)
         e88 = quantization_error(w, fmt="Q8.8")
         e412 = quantization_error(w, fmt="Q4.12")
         assert e412["rmse"] < e88["rmse"]
 
-    def test_q16_16_dominates_q8_8(self):
+    def test_q16_16_dominates_q8_8(self) -> None:
+        """Q16.16 beats Q8.8 on every error statistic."""
         w = np.random.RandomState(0).normal(size=1000)
         e88 = quantization_error(w, fmt="Q8.8")
         e1616 = quantization_error(w, fmt="Q16.16")

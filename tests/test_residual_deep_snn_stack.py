@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.residual_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.residual import (
+    DeepSNNStack,
+)
 
 
 class TestDeepSNNStack:
+    """Deep residual spiking network stacks."""
+
     def test_ms_stack(self) -> None:
+        """A membrane-shortcut stack keeps the width."""
         s = DeepSNNStack(n_features=8, n_blocks=5, block_type="ms")
         assert s.depth == 10
         assert s.forward(np.random.rand(8)).shape == (8,)
 
     def test_sew_stack(self) -> None:
+        """A SEW stack keeps the width and block count."""
         s = DeepSNNStack(n_features=8, n_blocks=3, block_type="sew")
         assert s.forward(np.random.rand(8)).shape == (8,)
         assert s.n_blocks == 3
 
     def test_deep_50(self) -> None:
+        """A 50-block stack stays finite."""
         s = DeepSNNStack(n_features=16, n_blocks=50)
         out = s.forward(np.random.rand(16))
         assert out.shape == (16,) and np.all(np.isfinite(out))

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5672
+    "test_files": 5666
   },
   "documentation": {
     "public_pages": [
@@ -3730,13 +3730,7 @@
       "tests/qat_torch_support.py",
       "tests/qc_e2e_support.py",
       "tests/quadratic_if_backends_support.py",
-      "tests/quantizer_support.py",
-      "tests/quantum_cognition_support.py",
-      "tests/quantum_stabilisation_support.py",
-      "tests/quasirandom_emitter_support.py",
       "tests/reload_guard.py",
-      "tests/reservoir_support.py",
-      "tests/residual_support.py",
       "tests/resilience_support.py",
       "tests/resonate_and_fire_accel_dispatch_support.py",
       "tests/rulkov_map_backends_support.py",

@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from tests.quantum_cognition_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.quantum_cognition.bridge_adapter import (
+    FisherPosnerQuantumBridge,
+    HAS_PENNYLANE,
+)
 
 
 class TestFisherPosnerQuantumBridge:
     """Tests for the quantum bridge adapter."""
 
     def test_init_emulated(self) -> None:
+        """The emulated bridge has no device."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         assert bridge.n_qubits == 4
         assert bridge.backend == "emulated"
         assert bridge.dev is None
 
     def test_init_validation(self) -> None:
+        """A qubit count out of range is rejected."""
         with pytest.raises(ValueError, match="n_qubits"):
             FisherPosnerQuantumBridge(0)
 
     def test_sync_emulated(self) -> None:
+        """Emulated synchronisation gives one phase per qubit."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         result = bridge.execute_non_local_sync([(0, 1), (2, 3)])
         assert result.shape == (4,)
@@ -37,22 +45,26 @@ class TestFisherPosnerQuantumBridge:
         assert result[3] == 0.0
 
     def test_sync_no_pairs(self) -> None:
+        """Without entangled pairs the phases stay at one."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         result = bridge.execute_non_local_sync([])
         assert result.shape == (4,)
         np.testing.assert_array_equal(result, np.ones(4))
 
     def test_optimize_phases_emulated_returns_none(self) -> None:
+        """Phase optimisation in emulation returns None."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         result = bridge.optimize_phases(0.5)
         assert result is None
 
     def test_orchestrator_bias_validation(self) -> None:
+        """Global phases of the wrong length are rejected."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         with pytest.raises(ValueError, match="global_phases"):
             bridge.apply_orchestrator_bias(np.zeros(3), 0.5)
 
     def test_qpu_artifact_metadata(self) -> None:
+        """The QPU artifact metadata names the bridge and its tier."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         meta = bridge.to_qpu_artifact_metadata()
         assert meta["bridge_type"] == "FisherPosnerQuantumBridge"
@@ -60,18 +72,21 @@ class TestFisherPosnerQuantumBridge:
         assert meta["tier"] == "experimental"
 
     def test_repr(self) -> None:
+        """The representation names the bridge."""
         bridge = FisherPosnerQuantumBridge(4, backend="emulated")
         r = repr(bridge)
         assert "FisherPosnerQuantumBridge" in r
 
     @pytest.mark.skipif(not HAS_PENNYLANE, reason="PennyLane not installed")
     def test_sync_pennylane(self) -> None:
+        """PennyLane synchronisation gives one phase per qubit."""
         bridge = FisherPosnerQuantumBridge(4, backend="pennylane")
         result = bridge.execute_non_local_sync([(0, 1)])
         assert result.shape == (4,)
 
     @pytest.mark.skipif(not HAS_PENNYLANE, reason="PennyLane not installed")
     def test_optimize_phases_pennylane(self) -> None:
+        """PennyLane phase optimisation returns one phase per qubit."""
         bridge = FisherPosnerQuantumBridge(4, backend="pennylane")
         result = bridge.optimize_phases(0.5, n_steps=3)
         assert result is not None

@@ -10,30 +10,40 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    BlockFloatingMode,
+    dequantize_block_floating,
+    quantize_block_floating,
+)
 
 
 class TestBlockFloatingQuantize:
     """Validate block-floating quantization contracts."""
 
-    def test_quantize_block_floating_roundtrip(self):
+    def test_quantize_block_floating_roundtrip(self) -> None:
+        """Block-floating quantisation round-trips within tolerance."""
         w = np.array([0.0, 0.25, -0.5, 0.75, -1.0, 1.0], dtype=np.float64)
         q, exponents = quantize_block_floating(w, fmt="BFP12E4X4", block_size=4, clip=True)
         recovered = dequantize_block_floating(q, exponents, fmt="BFP12E4X4")
         np.testing.assert_allclose(recovered, w, rtol=0.0, atol=0.02)
 
-    def test_block_floating_exponent_range_matches_encoded_codes(self):
+    def test_block_floating_exponent_range_matches_encoded_codes(self) -> None:
+        """The exponent range matches the codes the mode can encode."""
         mode = BlockFloatingMode.from_aliases("BFP8E2X2")
         assert mode.min_exponent == -1
         assert mode.max_exponent == 2
         assert mode.metadata["exponent_max"] == 2
 
-    def test_quantize_block_floating_block_size_conflict(self):
+    def test_quantize_block_floating_block_size_conflict(self) -> None:
+        """Two different block sizes are reported as a conflict."""
         w = np.array([1.0, 0.5, -0.25])
         with pytest.raises(ValueError, match="Block size conflict"):
             quantize_block_floating(w, fmt="BFP12E4X8", block_size=4)
 
-    def test_quantize_block_floating_overflow_boundary_is_finite(self):
+    def test_quantize_block_floating_overflow_boundary_is_finite(self) -> None:
+        """Values at the overflow boundary stay finite and inside the mantissa range."""
         fmt = "BFP8E2X2"
         mode = BlockFloatingMode.from_aliases(fmt)
         w = np.array([0.0, 7.0, -7.0, 112.0, -112.0, 120.0, -120.0], dtype=np.float64)

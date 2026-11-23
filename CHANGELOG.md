@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 43 top-level test modules of the quantizer, quantum cognition,
+  quantum stabilisation, quasi-random emitter, reservoir, residual,
+  resilience and SymbiYosys runner suites import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy. One helper support gains types and a module
+  docstring, and the support modules left without an importer are
+  deleted.
+
 - The 62 top-level test modules of the physics, planner, platform
   profile, power estimator, predictive spike codec, privacy, platform
   profiler, PYNQ driver, quadratic integrate-and-fire backend and

@@ -10,11 +10,14 @@
 
 from __future__ import annotations
 
-from tests.quantum_stabilisation_support import *  # noqa: F403
+import numpy as np
 
 
 class TestHybridPipeline:
-    def test_circuit_returns_scalar(self):
+    """The hybrid quantum-classical pipeline."""
+
+    def test_circuit_returns_scalar(self) -> None:
+        """The circuit returns a scalar expectation in [-1, 1]."""
         from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
 
         pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)
@@ -23,14 +26,16 @@ class TestHybridPipeline:
         assert isinstance(val, float)
         assert -1.0 <= val <= 1.0
 
-    def test_vqe_converges(self):
+    def test_vqe_converges(self) -> None:
+        """The final VQE energy is at most 0.5 above the first."""
         from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
 
         pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)
         history, params = pipe.train(n_steps=30, lr=0.05)
         assert history[-1] <= history[0] + 0.5
 
-    def test_evaluate(self):
+    def test_evaluate(self) -> None:
+        """Evaluation returns a float."""
         from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
 
         pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)

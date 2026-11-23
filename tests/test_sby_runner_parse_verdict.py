@@ -10,17 +10,22 @@
 
 from __future__ import annotations
 
-from tests.sby_runner_support import *  # noqa: F403
+from sc_neurocore.compiler._sby_runner import (
+    parse_verdict,
+)
 
 
 class TestParseVerdict:
     """Verdict extraction from ``sby`` output."""
 
     def test_picks_last_done_line(self) -> None:
+        """The parser takes the last DONE line."""
         assert parse_verdict("DONE (ERROR, rc=16)\nDONE (PASS, rc=0)\n") == ("PASS", 0)
 
     def test_unknown_when_absent(self) -> None:
+        """Without a DONE line the verdict is UNKNOWN."""
         assert parse_verdict("no summary here") == ("UNKNOWN", -1)
 
     def test_fail_verdict_with_code(self) -> None:
+        """A FAIL verdict keeps its return code."""
         assert parse_verdict("DONE (FAIL, rc=2)") == ("FAIL", 2)

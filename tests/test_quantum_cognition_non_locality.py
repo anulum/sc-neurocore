@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.quantum_cognition_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.fisher_posner import (
+    HybridFisherPosnerLIF,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinCouplingTensor,
+    SpinPoolMPS,
+)
 
 
 class TestNonLocality:

@@ -10,41 +10,52 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+from typing import Any, cast
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    BlockFloatingMode,
+    parse_precision_format,
+)
 
 
 class TestPrecisionFormatParser:
     """Test format parsing for fixed and block-floating modes."""
 
-    def test_parse_block_floating_alias(self):
+    def test_parse_block_floating_alias(self) -> None:
+        """The block-floating alias parses to its mantissa and exponent bits."""
         fmt = parse_precision_format("BFP16E3X32")
         assert isinstance(fmt, BlockFloatingMode)
         assert fmt.mantissa_bits == 16
         assert fmt.exponent_bits == 3
         assert fmt.block_size == 32
 
-    def test_parse_block_floating_flexible_alias(self):
+    def test_parse_block_floating_flexible_alias(self) -> None:
+        """The flexible block-floating alias parses the same way."""
         fmt = parse_precision_format("bfp16_e3")
         assert isinstance(fmt, BlockFloatingMode)
         assert fmt.mantissa_bits == 16
         assert fmt.exponent_bits == 3
 
-    def test_parse_block_floating_dash_alias(self):
+    def test_parse_block_floating_dash_alias(self) -> None:
+        """The dashed block-floating alias parses its block size."""
         fmt = parse_precision_format("BFP16-3x32")
         assert isinstance(fmt, BlockFloatingMode)
         assert fmt.block_size == 32
 
-    def test_parse_rejects_non_string_format(self):
+    def test_parse_rejects_non_string_format(self) -> None:
+        """A format that is not a string is rejected."""
         with pytest.raises(TypeError, match="precision format string"):
-            parse_precision_format(123)  # type: ignore[arg-type]
+            parse_precision_format(cast(Any, 123))
 
-    def test_precision_label_appends_block_size_when_source_omits_it(self):
+    def test_precision_label_appends_block_size_when_source_omits_it(self) -> None:
+        """The precision label adds the block size only when the source lacks it."""
         # When the originating string lacks the explicit `X<block_size>` suffix
         # the telemetry label re-attaches it so block-floating modes stay
         # unambiguous.
         from sc_neurocore.compiler.manifest_gen import _precision_label
 
         parsed = parse_precision_format("BFP16E3X32")
+        assert isinstance(parsed, BlockFloatingMode)
         label = _precision_label(parsed, source="BFP16E3")
         assert label.endswith(f"X{parsed.block_size}")
         # The already-suffixed source is returned verbatim.

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.residual_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.residual import (
+    SEWBlock,
+)
 
 
 class TestSEWBlock:
+    """The spike-element-wise residual block."""
+
     def test_forward(self) -> None:
+        """The forward pass keeps the width and stays binary."""
         b = SEWBlock(n_features=8)
         out = b.forward(np.random.rand(8))
         assert out.shape == (8,) and out.max() <= 1.0

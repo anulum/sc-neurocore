@@ -10,34 +10,37 @@
 
 from __future__ import annotations
 
-from tests.sby_runner_support import *  # noqa: F403
+import shutil
+import pytest
+from sc_neurocore.compiler._sby_runner import (
+    formal_tools_available,
+)
 
 
 class TestFormalToolsAvailable:
     """The toolchain probe."""
 
     def test_returns_bool(self) -> None:
+        """The toolchain probe returns a boolean."""
         assert isinstance(formal_tools_available(), bool)
 
     def test_true_when_all_present(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(_sby_runner.shutil, "which", lambda name: "/usr/bin/x")
+        """The probe is true when every tool is present."""
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/x")
         assert formal_tools_available("z3") is True
 
     def test_false_when_sby_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            _sby_runner.shutil, "which", lambda name: None if name == "sby" else "/usr/bin/x"
-        )
+        """The probe is false without sby."""
+        monkeypatch.setattr(shutil, "which", lambda name: None if name == "sby" else "/usr/bin/x")
         assert formal_tools_available() is False
 
     def test_false_when_yosys_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            _sby_runner.shutil, "which", lambda name: None if name == "yosys" else "/usr/bin/x"
-        )
+        """The probe is false without Yosys."""
+        monkeypatch.setattr(shutil, "which", lambda name: None if name == "yosys" else "/usr/bin/x")
         assert formal_tools_available() is False
 
     def test_false_when_solver_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            _sby_runner.shutil, "which", lambda name: None if name == "z3" else "/usr/bin/x"
-        )
+        """The probe is false without the named solver."""
+        monkeypatch.setattr(shutil, "which", lambda name: None if name == "z3" else "/usr/bin/x")
         assert formal_tools_available("z3") is False
         assert formal_tools_available("boolector") is True

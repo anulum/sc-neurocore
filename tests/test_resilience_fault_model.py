@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.resilience_support import *  # noqa: F403
+from sc_neurocore.resilience import (
+    FaultModel,
+)
+from sc_neurocore.resilience.fault_suite import (
+    FaultType,
+)
 
 
 class TestFaultModel:
-    def test_fields(self):
+    """The fault model description."""
+
+    def test_fields(self) -> None:
+        """A fault model keeps its rate and has no layer by default."""
         fm = FaultModel(fault_type=FaultType.STUCK_AT_ZERO, rate=0.1)
         assert fm.rate == 0.1
         assert fm.layer_index is None
 
-    def test_all_fault_types_exist(self):
+    def test_all_fault_types_exist(self) -> None:
+        """Every expected fault type exists."""
         expected = {
             "stuck_at_0",
             "stuck_at_1",

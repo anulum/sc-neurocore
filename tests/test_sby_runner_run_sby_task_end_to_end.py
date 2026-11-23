@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.sby_runner_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler._sby_runner import (
+    run_sby_task,
+)
+from tests.sby_runner_support import (
+    _needs_formal,
+)
 
 
 @_needs_formal
@@ -18,6 +26,7 @@ class TestRunSbyTaskEndToEnd:
     """A real ``sby`` task with the toolchain present."""
 
     def test_trivial_true_assertion_passes(self, tmp_path: Path) -> None:
+        """A trivially true assertion passes a real sby run."""
         (tmp_path / "m.v").write_text(
             "module m(input wire clk);\n"
             "  reg [3:0] c = 0;\n"

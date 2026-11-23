@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3381
+expected_file_count = 3424
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -13568,3 +13568,175 @@ rationale = "Exercise SC-NeuroCore: quantisation pipeline quantize weights."
 [[file]]
 path = "tests/test_quantisation_pipeline_sc_probability_mapping.py"
 rationale = "Exercise SC-NeuroCore: quantisation pipeline sc probability mapping."
+
+[[file]]
+path = "tests/resilience_support.py"
+rationale = "Provide the deterministic weight evaluator shared by the fault resilience suites."
+
+[[file]]
+path = "tests/test_quantizer_block_exponent_layout.py"
+rationale = "Exercise SC-NeuroCore: quantizer block exponent layout."
+
+[[file]]
+path = "tests/test_quantizer_block_floating_quantize.py"
+rationale = "Exercise SC-NeuroCore: quantizer block floating quantize."
+
+[[file]]
+path = "tests/test_quantizer_compiled_block_floating_dense.py"
+rationale = "Exercise SC-NeuroCore: quantizer compiled block floating dense."
+
+[[file]]
+path = "tests/test_quantizer_compiled_mixed_dense.py"
+rationale = "Exercise SC-NeuroCore: quantizer compiled mixed dense."
+
+[[file]]
+path = "tests/test_quantizer_free_tests.py"
+rationale = "Exercise SC-NeuroCore: quantizer free tests."
+
+[[file]]
+path = "tests/test_quantizer_mixed_dense_edge_branches.py"
+rationale = "Exercise SC-NeuroCore: quantizer mixed dense edge branches."
+
+[[file]]
+path = "tests/test_quantizer_precision_envelope_report.py"
+rationale = "Exercise SC-NeuroCore: quantizer precision envelope report."
+
+[[file]]
+path = "tests/test_quantizer_precision_format_parser.py"
+rationale = "Exercise SC-NeuroCore: quantizer precision format parser."
+
+[[file]]
+path = "tests/test_quantizer_precision_metadata.py"
+rationale = "Exercise SC-NeuroCore: quantizer precision metadata."
+
+[[file]]
+path = "tests/test_quantizer_precision_trap_report.py"
+rationale = "Exercise SC-NeuroCore: quantizer precision trap report."
+
+[[file]]
+path = "tests/test_quantizer_q_format.py"
+rationale = "Exercise SC-NeuroCore: quantizer q format."
+
+[[file]]
+path = "tests/test_quantizer_q_format_mixed.py"
+rationale = "Exercise SC-NeuroCore: quantizer q format mixed."
+
+[[file]]
+path = "tests/test_quantizer_quantization_error.py"
+rationale = "Exercise SC-NeuroCore: quantizer quantization error."
+
+[[file]]
+path = "tests/test_quantizer_quantize_weights.py"
+rationale = "Exercise SC-NeuroCore: quantizer quantize weights."
+
+[[file]]
+path = "tests/test_quantizer_sc_probabilities.py"
+rationale = "Exercise SC-NeuroCore: quantizer sc probabilities."
+
+[[file]]
+path = "tests/test_quantum_cognition_fisher_posner_quantum_bridge.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition fisher posner quantum bridge."
+
+[[file]]
+path = "tests/test_quantum_cognition_hybrid_fisher_posner_lif.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition hybrid fisher posner lif."
+
+[[file]]
+path = "tests/test_quantum_cognition_non_locality.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition non locality."
+
+[[file]]
+path = "tests/test_quantum_cognition_package_import.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition package import."
+
+[[file]]
+path = "tests/test_quantum_cognition_quantum_studio_hook.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition quantum studio hook."
+
+[[file]]
+path = "tests/test_quantum_cognition_spin_pool_mps.py"
+rationale = "Exercise SC-NeuroCore: quantum cognition spin pool mps."
+
+[[file]]
+path = "tests/test_quantum_stabilisation_heron_noise_model.py"
+rationale = "Exercise SC-NeuroCore: quantum stabilisation heron noise model."
+
+[[file]]
+path = "tests/test_quantum_stabilisation_hybrid_pipeline.py"
+rationale = "Exercise SC-NeuroCore: quantum stabilisation hybrid pipeline."
+
+[[file]]
+path = "tests/test_quantum_stabilisation_parameter_shift.py"
+rationale = "Exercise SC-NeuroCore: quantum stabilisation parameter shift."
+
+[[file]]
+path = "tests/test_quasirandom_emitter_halton16_emitter.py"
+rationale = "Exercise SC-NeuroCore: quasirandom emitter halton16 emitter."
+
+[[file]]
+path = "tests/test_quasirandom_emitter_quasi_random_emitter.py"
+rationale = "Exercise SC-NeuroCore: quasirandom emitter quasi random emitter."
+
+[[file]]
+path = "tests/test_quasirandom_emitter_sobol16_emitter.py"
+rationale = "Exercise SC-NeuroCore: quasirandom emitter sobol16 emitter."
+
+[[file]]
+path = "tests/test_reservoir_metrics.py"
+rationale = "Exercise SC-NeuroCore: reservoir metrics."
+
+[[file]]
+path = "tests/test_reservoir_readout.py"
+rationale = "Exercise SC-NeuroCore: reservoir readout."
+
+[[file]]
+path = "tests/test_reservoir_reservoir_construction.py"
+rationale = "Exercise SC-NeuroCore: reservoir reservoir construction."
+
+[[file]]
+path = "tests/test_reservoir_reservoir_dynamics.py"
+rationale = "Exercise SC-NeuroCore: reservoir reservoir dynamics."
+
+[[file]]
+path = "tests/test_residual_deep_snn_stack.py"
+rationale = "Exercise SC-NeuroCore: residual deep snn stack."
+
+[[file]]
+path = "tests/test_residual_membrane_shortcut_block.py"
+rationale = "Exercise SC-NeuroCore: residual membrane shortcut block."
+
+[[file]]
+path = "tests/test_residual_sew_block.py"
+rationale = "Exercise SC-NeuroCore: residual sew block."
+
+[[file]]
+path = "tests/test_resilience_fault_model.py"
+rationale = "Exercise SC-NeuroCore: resilience fault model."
+
+[[file]]
+path = "tests/test_resilience_fault_resilience_suite.py"
+rationale = "Exercise SC-NeuroCore: resilience fault resilience suite."
+
+[[file]]
+path = "tests/test_resilience_fault_result.py"
+rationale = "Exercise SC-NeuroCore: resilience fault result."
+
+[[file]]
+path = "tests/test_sby_runner_formal_tools_available.py"
+rationale = "Exercise SC-NeuroCore: sby runner formal tools available."
+
+[[file]]
+path = "tests/test_sby_runner_is_inconclusive.py"
+rationale = "Exercise SC-NeuroCore: sby runner is inconclusive."
+
+[[file]]
+path = "tests/test_sby_runner_parse_verdict.py"
+rationale = "Exercise SC-NeuroCore: sby runner parse verdict."
+
+[[file]]
+path = "tests/test_sby_runner_raise_for_incomplete.py"
+rationale = "Exercise SC-NeuroCore: sby runner raise for incomplete."
+
+[[file]]
+path = "tests/test_sby_runner_run_sby_task_end_to_end.py"
+rationale = "Exercise SC-NeuroCore: sby runner run sby task end to end."

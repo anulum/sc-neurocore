@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    compile_dense_block_floating,
+    Q16_16,
+    quantize_weights,
+)
 
 
 class TestCompiledBlockFloatingDense:
     """Validate dense block-floating weights with fixed-point inputs."""
 
-    def test_block_floating_dense_matches_reconstructed_matrix_dot(self):
+    def test_block_floating_dense_matches_reconstructed_matrix_dot(self) -> None:
+        """The compiled dense layer matches the reconstructed matrix product."""
         weights = np.array([[0.5, -0.25], [1.25, 0.125]], dtype=np.float64)
         inputs = np.array([0.5, -0.25], dtype=np.float64)
         compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
@@ -27,7 +34,9 @@ class TestCompiledBlockFloatingDense:
         assert compiled.manifest()["block_exponent_count"] == 2
         assert compiled.manifest()["block_exponent_layout"]["last_block_size"] == 2
 
-        q_inputs = quantize_weights(inputs, fmt=Q16_16).astype(np.float64) / Q16_16.scale
+        q_codes = quantize_weights(inputs, fmt=Q16_16)
+        assert isinstance(q_codes, np.ndarray)
+        q_inputs = q_codes.astype(np.float64) / Q16_16.scale
         expected = compiled.reconstructed_weights @ q_inputs
         np.testing.assert_allclose(compiled.forward_float(inputs), expected, rtol=0.0, atol=1e-12)
 
@@ -36,7 +45,8 @@ class TestCompiledBlockFloatingDense:
         assert envelope.conservative_overflow_free is True
         assert envelope.max_abs_bound_code == 43008
 
-    def test_block_floating_dense_seeded_exponent_edges_match_reference(self):
+    def test_block_floating_dense_seeded_exponent_edges_match_reference(self) -> None:
+        """Extreme block exponents still match the reference product."""
         weights = np.array(
             [
                 [0.125, -0.25, 1_000_000.0, -1_000_000.0],
@@ -50,7 +60,9 @@ class TestCompiledBlockFloatingDense:
         assert compiled.exponents.tolist() == [0, 7, 0, 7]
         assert compiled.manifest()["exponent_code_range"] == [0, 7]
 
-        q_inputs = quantize_weights(inputs, fmt=Q16_16).astype(np.float64) / Q16_16.scale
+        q_codes = quantize_weights(inputs, fmt=Q16_16)
+        assert isinstance(q_codes, np.ndarray)
+        q_inputs = q_codes.astype(np.float64) / Q16_16.scale
         reference = compiled.reconstructed_weights @ q_inputs
         np.testing.assert_allclose(compiled.forward_float(inputs), reference, rtol=0.0, atol=0.0)
 
@@ -65,7 +77,8 @@ class TestCompiledBlockFloatingDense:
         assert envelope.max_abs_bound_code == 1_069_024
         assert envelope.min_headroom_code == 2_146_414_623
 
-    def test_block_floating_dense_max_exponent_edge_saturates_and_reports_trap(self):
+    def test_block_floating_dense_max_exponent_edge_saturates_and_reports_trap(self) -> None:
+        """The largest exponent saturates the output and reports an overflow trap."""
         weights = np.array([[1_000_000.0, 1_000_000.0]], dtype=np.float64)
         inputs = np.array([32767.0, 32767.0], dtype=np.float64)
         compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
@@ -87,7 +100,8 @@ class TestCompiledBlockFloatingDense:
         assert envelope.conservative_overflow_free is False
         assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
-    def test_block_floating_dense_saturates_outputs(self):
+    def test_block_floating_dense_saturates_outputs(self) -> None:
+        """An overflowing output saturates and is reported."""
         weights = np.array([[8192.0, 8192.0]], dtype=np.float64)
         inputs = np.array([32767.0, 32767.0], dtype=np.float64)
         compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
@@ -108,7 +122,8 @@ class TestCompiledBlockFloatingDense:
         assert envelope.conservative_overflow_free is False
         assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
-    def test_block_floating_dense_reports_sub_lsb_underflow(self):
+    def test_block_floating_dense_reports_sub_lsb_underflow(self) -> None:
+        """An output below one LSB is reported as underflow."""
         weights = np.array([[0.125]], dtype=np.float64)
         inputs = np.array([1 / Q16_16.scale], dtype=np.float64)
         compiled = compile_dense_block_floating(weights, fmt="BFP16E3X1")
@@ -126,7 +141,8 @@ class TestCompiledBlockFloatingDense:
         assert envelope.observed_overflow_free is True
         assert envelope.observed_underflow_free is False
 
-    def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self):
+    def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self) -> None:
+        """Shapes that are not dense, wrong lengths and non-finite inputs are rejected."""
         with pytest.raises(ValueError, match="2-D dense"):
             compile_dense_block_floating(np.array([0.5, -0.25]))
         compiled = compile_dense_block_floating(np.array([[0.5, -0.25]], dtype=np.float64))

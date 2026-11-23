@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.quasirandom_emitter_support import *  # noqa: F403
+from sc_neurocore.hdl_gen.sobol16_emitter import (
+    Sobol16Emitter,
+)
 
 
 class TestSobol16Emitter:
     """Test Sobol-16 RTL generation."""
 
     def test_generates_valid_verilog(self) -> None:
+        """The Sobol emitter writes a complete Verilog module."""
         emitter = Sobol16Emitter()
         code = emitter.generate()
         assert "module sc_sobol16_source" in code
@@ -24,11 +27,13 @@ class TestSobol16Emitter:
         assert "casez" in code
 
     def test_custom_module_name(self) -> None:
+        """The Sobol emitter uses a custom module name."""
         emitter = Sobol16Emitter(module_name="my_sobol")
         code = emitter.generate()
         assert "module my_sobol" in code
 
     def test_seed_affects_first_sample(self) -> None:
+        """Different seeds give different modules."""
         e1 = Sobol16Emitter(seed=0)
         e2 = Sobol16Emitter(seed=42)
         assert e1.generate() != e2.generate()

@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+from typing import Any, cast
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    PrecisionTrapReport,
+    Q16_16,
+)
 
 
 class TestPrecisionTrapReport:
     """Validate precision trap report invariants for fixed-point deployment telemetry."""
 
-    def test_manifest_counts_overflow_and_saturation_side(self):
+    def test_manifest_counts_overflow_and_saturation_side(self) -> None:
+        """The manifest counts overflows and their saturation side."""
         report = PrecisionTrapReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([0, (1 << 31) - 1, -(1 << 31)], dtype=np.int64),
@@ -40,7 +47,8 @@ class TestPrecisionTrapReport:
             "has_underflow": False,
         }
 
-    def test_manifest_counts_sub_lsb_underflow(self):
+    def test_manifest_counts_sub_lsb_underflow(self) -> None:
+        """The manifest counts sub-LSB underflow."""
         report = PrecisionTrapReport(
             operation="dense_mixed_qformat",
             output_codes=np.array([0, 1], dtype=np.int64),
@@ -53,7 +61,8 @@ class TestPrecisionTrapReport:
         assert report.has_underflow is True
         assert report.manifest()["underflow_count"] == 1
 
-    def test_rejects_ambiguous_trap_shapes_and_out_of_range_codes(self):
+    def test_rejects_ambiguous_trap_shapes_and_out_of_range_codes(self) -> None:
+        """Mismatched shapes and codes out of range are rejected."""
         with pytest.raises(ValueError, match="identical shape"):
             PrecisionTrapReport(
                 operation="dense_mixed_qformat",
@@ -84,7 +93,8 @@ class TestPrecisionTrapReport:
                 output_fmt=Q16_16,
             )
 
-    def test_rejects_blank_operation_wrong_format_and_non_vector_masks(self):
+    def test_rejects_blank_operation_wrong_format_and_non_vector_masks(self) -> None:
+        """A blank operation, a wrong format and masks that are not vectors are rejected."""
         with pytest.raises(ValueError, match="non-empty string"):
             PrecisionTrapReport(
                 operation="",
@@ -97,7 +107,7 @@ class TestPrecisionTrapReport:
                 operation="dense_mixed_qformat",
                 output_codes=np.array([0], dtype=np.int64),
                 overflow_mask=np.array([False], dtype=bool),
-                output_fmt="Q16.16",
+                output_fmt=cast(Any, "Q16.16"),
             )
         with pytest.raises(ValueError, match="output_codes must be a 1-D vector"):
             PrecisionTrapReport(

@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.quantum_cognition_support import *  # noqa: F403
-
 
 class TestPackageImport:
     """Verify the package-level imports work correctly."""
 
     def test_import_all(self) -> None:
+        """The package exports its three public classes."""
         from sc_neurocore.quantum_cognition import (
             SpinPoolMPS,
             HybridFisherPosnerLIF,
@@ -30,6 +29,7 @@ class TestPackageImport:
         assert QuantumStudioHook is not None
 
     def test_tier_label(self) -> None:
+        """The package is labelled experimental."""
         from sc_neurocore import quantum_cognition
 
         assert quantum_cognition.__tier__ == "experimental"

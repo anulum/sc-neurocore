@@ -10,29 +10,40 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compiler.quantizer import (
+    q_weights_to_sc_probabilities,
+    quantize_weights,
+)
 
 
 class TestSCProbabilities:
     """Numerical safety of SC probability conversion."""
 
-    def test_zero_maps_to_half(self):
+    def test_zero_maps_to_half(self) -> None:
+        """A zero weight maps to the SC probability one half."""
         q = quantize_weights(np.array([0.0]), fmt="Q8.8")
+        assert isinstance(q, np.ndarray)
         p = q_weights_to_sc_probabilities(q, fmt="Q8.8")
         np.testing.assert_allclose(p[0], 0.5, atol=0.001)
 
-    def test_range_zero_one(self):
+    def test_range_zero_one(self) -> None:
+        """Every SC probability lies in the unit interval."""
         w = np.linspace(-10, 10, 100)
         q = quantize_weights(w, fmt="Q8.8")
+        assert isinstance(q, np.ndarray)
         p = q_weights_to_sc_probabilities(q, fmt="Q8.8")
         assert np.all(p >= 0.0)
         assert np.all(p <= 1.0)
 
-    def test_sc_probabilities_are_finite_for_finite_inputs(self):
+    def test_sc_probabilities_are_finite_for_finite_inputs(self) -> None:
+        """Finite inputs give finite SC probabilities."""
         w = np.array([0.0, -200.0, 200.0, 1.5, -1.5], dtype=np.float64)
         q88 = quantize_weights(w, fmt="Q8.8", clip=True)
+        assert isinstance(q88, np.ndarray)
         p88 = q_weights_to_sc_probabilities(q88, fmt="Q8.8")
         q16 = quantize_weights(w, fmt="Q16.16", clip=True)
+        assert isinstance(q16, np.ndarray)
         p16 = q_weights_to_sc_probabilities(q16, fmt="Q16.16")
 
         assert np.all(np.isfinite(p88))

@@ -10,18 +10,22 @@
 
 from __future__ import annotations
 
-from tests.quantum_stabilisation_support import *  # noqa: F403
+import numpy as np
 
 
 class TestHeronNoiseModel:
-    def test_default_params(self):
+    """The Heron device noise model."""
+
+    def test_default_params(self) -> None:
+        """The default parameters match the Heron device."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseParams
 
         p = HeronR2NoiseParams()
         assert p.cx_error == 0.005
         assert p.t1_us == 300.0
 
-    def test_depolarizing_preserves_trace(self):
+    def test_depolarizing_preserves_trace(self) -> None:
+        """The depolarising channel preserves the trace."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
@@ -29,7 +33,8 @@ class TestHeronNoiseModel:
         total = sum(K.conj().T @ K for K in kraus)
         np.testing.assert_allclose(total, np.eye(2), atol=1e-12)
 
-    def test_amplitude_damping_kraus(self):
+    def test_amplitude_damping_kraus(self) -> None:
+        """The amplitude-damping Kraus operators are complete."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
@@ -37,7 +42,8 @@ class TestHeronNoiseModel:
         total = sum(K.conj().T @ K for K in kraus)
         np.testing.assert_allclose(total, np.eye(2), atol=1e-12)
 
-    def test_phase_damping_kraus(self):
+    def test_phase_damping_kraus(self) -> None:
+        """The phase-damping Kraus operators are complete."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
@@ -45,7 +51,8 @@ class TestHeronNoiseModel:
         total = sum(K.conj().T @ K for K in kraus)
         np.testing.assert_allclose(total, np.eye(2), atol=1e-12)
 
-    def test_noise_increases_error(self):
+    def test_noise_increases_error(self) -> None:
+        """Noise lowers the purity of a pure state."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
@@ -55,14 +62,16 @@ class TestHeronNoiseModel:
         purity = np.real(np.trace(noisy @ noisy))
         assert purity < 1.0
 
-    def test_gate_fidelities(self):
+    def test_gate_fidelities(self) -> None:
+        """One- and two-qubit gate fidelities stay high."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
         assert model.gate_fidelity_1q() > 0.999
         assert model.gate_fidelity_2q() > 0.99
 
-    def test_readout_noise_0(self):
+    def test_readout_noise_0(self) -> None:
+        """Readout of state 0 gives mostly zeros."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()
@@ -70,7 +79,8 @@ class TestHeronNoiseModel:
         assert 0 in results  # most should stay 0
         assert all(r in (0, 1) for r in results)
 
-    def test_readout_noise_1(self):
+    def test_readout_noise_1(self) -> None:
+        """Readout of state 1 gives some ones."""
         from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
 
         model = HeronR2NoiseModel()

@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.quantizer_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    compile_dense_mixed_precision,
+    Q16_16,
+    Q8_8,
+    QFormatMixed,
+)
 
 
 class TestCompiledMixedDense:
     """Validate the bit-true dense Q8.8-weight/Q16.16-accumulator contract."""
 
-    def test_canonical_q88_q1616_integer_mac_matches_manual_codes(self):
+    def test_canonical_q88_q1616_integer_mac_matches_manual_codes(self) -> None:
+        """The canonical Q8.8 by Q16.16 integer MAC matches hand-computed codes."""
         weights = np.array([[0.5, -0.25], [1.0, 0.125]], dtype=np.float64)
         inputs = np.array([0.5, -0.25], dtype=np.float64)
         compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
@@ -44,7 +52,8 @@ class TestCompiledMixedDense:
         assert envelope.required_integer_bits == 1
         assert envelope.width_headroom_bits == 15
 
-    def test_default_scaled_contract_tracks_float_dense_result(self):
+    def test_default_scaled_contract_tracks_float_dense_result(self) -> None:
+        """The default scaled contract tracks the floating-point dense result."""
         weights = np.array([[0.375, -0.125, 0.0625], [-0.5, 0.25, 0.125]], dtype=np.float64)
         inputs = np.array([0.5, -0.25, 0.125], dtype=np.float64)
         compiled = compile_dense_mixed_precision(weights)
@@ -52,7 +61,8 @@ class TestCompiledMixedDense:
         assert compiled.tensor_scale > 1.0
         np.testing.assert_allclose(compiled.forward_float(inputs), weights @ inputs, atol=2e-4)
 
-    def test_canonical_contract_saturates_and_reports_accumulator_overflow(self):
+    def test_canonical_contract_saturates_and_reports_accumulator_overflow(self) -> None:
+        """The canonical contract saturates and reports accumulator overflow."""
         weights = np.array([[127.0, 127.0]], dtype=np.float64)
         inputs = np.array([20_000.0, 20_000.0], dtype=np.float64)
         compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
@@ -73,7 +83,8 @@ class TestCompiledMixedDense:
         assert envelope.conservative_overflow_free is False
         assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
-    def test_canonical_contract_reports_sub_lsb_underflow(self):
+    def test_canonical_contract_reports_sub_lsb_underflow(self) -> None:
+        """The canonical contract reports sub-LSB underflow."""
         weights = np.array([[1 / Q8_8.scale]], dtype=np.float64)
         inputs = np.array([1 / Q16_16.scale], dtype=np.float64)
         compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
@@ -92,14 +103,16 @@ class TestCompiledMixedDense:
         assert envelope.observed_overflow_free is True
         assert envelope.observed_underflow_free is False
 
-    def test_negative_raw_products_use_hardware_arithmetic_shift(self):
+    def test_negative_raw_products_use_hardware_arithmetic_shift(self) -> None:
+        """Negative raw products use the hardware arithmetic shift."""
         weights = np.array([[0.5]], dtype=np.float64)
         inputs = np.array([-1 / Q16_16.scale], dtype=np.float64)
         compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
 
         assert int(compiled.forward_accumulator_codes(inputs)[0]) == -1
 
-    def test_rejects_non_dense_or_non_finite_inputs_before_accumulation(self):
+    def test_rejects_non_dense_or_non_finite_inputs_before_accumulation(self) -> None:
+        """Inputs that are not dense or not finite are rejected before accumulation."""
         with pytest.raises(ValueError, match="2-D dense"):
             compile_dense_mixed_precision(np.array([0.5, -0.25]))
         compiled = compile_dense_mixed_precision(np.array([[0.5, -0.25]], dtype=np.float64))

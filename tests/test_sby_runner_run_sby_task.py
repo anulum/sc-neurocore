@@ -10,9 +10,23 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest.mock import MagicMock, call
 
-from tests.sby_runner_support import *  # noqa: F403
+import pytest
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler import (
+    _sby_runner,
+)
+from sc_neurocore.compiler._sby_runner import (
+    run_sby_task,
+)
+from tests.sby_runner_support import (
+    _FakeProc,
+)
 
 
 class TestRunSbyTask:
@@ -85,7 +99,7 @@ class TestRunSbyTask:
         monkeypatch.setattr(
             _sby_runner,
             "_run_sby_process",
-            lambda *a, **k: _FakeProc(None, 1),  # type: ignore[arg-type]
+            lambda *a, **k: _FakeProc(cast(Any, None), 1),
         )
         run = run_sby_task(tmp_path, "x.sby", timeout_s=5.0)
         assert run.verdict == "UNKNOWN"
