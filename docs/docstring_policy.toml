@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2342
+expected_file_count = 2349
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9412,3 +9412,31 @@ rationale = "Keep the Mojo ISA pin tests documented, with neutral sample tool pa
 [[file]]
 path = "tests/test_public_tree_workstation_paths.py"
 rationale = "Refuse workstation, monorepo and private-record paths in tracked files, with reasoned exceptions."
+
+[[file]]
+path = "tools/ci_workflow_inventory.py"
+rationale = "Read CI jobs by name from whichever CI workflow declares them, refusing ambiguity."
+
+[[file]]
+path = "tests/test_tools/test_ci_workflow_inventory.py"
+rationale = "Keep the CI job reader's lookups, ordering and refusals tested."
+
+[[file]]
+path = "tests/test_amari_field_backends.py"
+rationale = "Keep the Amari field backend parity and CI build contracts documented."
+
+[[file]]
+path = "tests/test_benchmark_toolchain_probe.py"
+rationale = "Keep the benchmark toolchain probes bound to the declared toolchain pins."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_pop_native_abi.py"
+rationale = "Keep the Ermentrout-Kopell population native ABI contracts documented."
+
+[[file]]
+path = "tests/test_native/test_learning_bridge_architecture.py"
+rationale = "Keep the divided autonomous-learning bridge facade and its CI coverage documented."
+
+[[file]]
+path = "tests/test_native_lane_requirement_gate.py"
+rationale = "Keep the native-lane requirement gate and its CI environment documented."

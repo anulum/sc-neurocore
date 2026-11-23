@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 
 import pytest
+from tools.ci_workflow_inventory import ci_job_text
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -57,7 +58,7 @@ def test_strict_mypy_policy_is_global_and_ci_gated() -> None:
     """Keep the repository-wide strict Mypy gate aligned with the broadcast."""
     pyproject = _read("pyproject.toml")
     mypy_section = _toml_section(pyproject, "[tool.mypy]")
-    ci_workflow = _read(".github/workflows/ci.yml")
+    ci_workflow = ci_job_text("lint")
     preflight = _read("tools/preflight.py")
 
     assert re.search(r"^strict = true$", mypy_section, flags=re.MULTILINE)
@@ -95,7 +96,7 @@ def test_numpy_docstring_policy_is_scoped_and_enforced() -> None:
         assert required_argument in policy_test
     assert 'lint.pydocstyle.convention = "numpy"' in policy_test
     assert '"tools.docstring_policy_guard"' in policy_test
-    assert "python -m tools.docstring_policy_guard" in _read(".github/workflows/ci.yml")
+    assert "python -m tools.docstring_policy_guard" in ci_job_text("lint")
     hook = _read(".pre-commit-config.yaml")
     assert "id: docstring-policy-scope" in hook
     assert "entry: python -m tools.docstring_policy_guard" in hook

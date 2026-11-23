@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 
 from tools.crate_format_check import crate_manifests, main, unformatted_crates
 from tools.preflight import GATE_GUARDS, GATES, gate_applies
+from tools.ci_workflow_inventory import ci_job
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -88,7 +88,6 @@ def test_the_preflight_and_the_ci_job_run_the_same_crate_gate() -> None:
     assert gate_applies("cargo-fmt-crates", ["crates/core_engine/src/bitstream.rs"])
     assert gate_applies("cargo-fmt-crates", ["tools/crate_format_check.py"])
     assert not gate_applies("cargo-fmt-crates", ["engine/src/lib.rs", "README.md"])
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["rust-documentation"]["steps"]
+    steps = ci_job("rust-documentation")["steps"]
     runs = [step.get("run", "") for step in steps]
     assert "python tools/crate_format_check.py" in [run.strip() for run in runs]

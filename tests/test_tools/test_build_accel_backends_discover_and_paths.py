@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_tools.build_accel_backends_support import MOD, _make_tree, _repo_root
+from tests.test_tools.build_accel_backends_support import MOD, _make_tree
+from tools.ci_workflow_inventory import ci_job_text
 
 
 def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None:
@@ -112,7 +113,7 @@ def test_model57_self_contained_backend_is_discovered(language: str, source_name
 
 def test_model57_backends_are_required_by_ci() -> None:
     """Require the Benda-Herz and stochastic-adaptation backends in CI builds."""
-    workflow = (_repo_root() / ".github" / "workflows" / "ci.yml").read_text()
+    workflow = ci_job_text("test")
     required_line = next(
         line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")
     )

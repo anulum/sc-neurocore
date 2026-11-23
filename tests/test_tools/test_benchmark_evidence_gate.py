@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tools.ci_workflow_inventory import ci_job
 
 
 def _load_tool() -> Any:
@@ -769,11 +770,8 @@ def _ci_gate_step() -> dict[str, Any]:
     dict
         The step as the workflow states it.
     """
-    import yaml
-
     root = Path(__file__).resolve().parents[2]
-    workflow = yaml.safe_load((root / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["lint"]["steps"]
+    steps = ci_job("lint")["steps"]
     return next(step for step in steps if step.get("name") == "Historical benchmark evidence")
 
 

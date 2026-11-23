@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
-import yaml
+from tools.ci_workflow_inventory import ci_job
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,12 +25,7 @@ JULIA_VERSION = "1.11.9"
 
 def _test_steps() -> list[dict[str, Any]]:
     """Return the parsed production test-matrix steps."""
-    workflow_path = ROOT / ".github" / "workflows" / "ci.yml"
-    workflow = cast(
-        dict[str, Any],
-        yaml.safe_load(workflow_path.read_text(encoding="utf-8")),
-    )
-    return cast(list[dict[str, Any]], workflow["jobs"]["test"]["steps"])
+    return cast(list[dict[str, Any]], ci_job("test")["steps"])
 
 
 def _step_index(steps: list[dict[str, Any]], *, name: str) -> int:

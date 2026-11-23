@@ -1251,6 +1251,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- Tests that hold a contract about a CI job read it through
+  `tools/ci_workflow_inventory.py`, which finds the job, its workflow's text
+  and its workflow-level environment in whichever CI workflow declares it, and
+  refuses a job declared twice. Thirty test files no longer open
+  `.github/workflows/ci.yml` themselves, so the workflow can be divided by
+  responsibility without rewriting each contract. Contracts on the
+  workflow-level `SC_NEUROCORE_REQUIRE_*` flags now require them in every CI
+  workflow, since a called workflow does not inherit its caller's
+  environment.
+
 - The engine takes z3 0.23 (from 0.22); z3-sys and its bundled solver stay
   at 0.14.2. The fuzz workspace's lock follows the engine to z3 0.23 and
   gains the zstd, flate2 and libz-sys packages the engine has needed since

@@ -11,7 +11,7 @@
 from pathlib import Path
 import subprocess
 
-import yaml
+from tools.ci_workflow_inventory import ci_job
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,8 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_ci_setup_go_caches_tracked_backend_manifests() -> None:
     """The Go cache keys on the tracked module manifests the backends build from."""
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     setup_go = next(step for step in steps if step.get("uses", "").startswith("actions/setup-go@"))
     dependency_paths = setup_go["with"]["cache-dependency-path"].splitlines()
 
@@ -34,9 +33,7 @@ def test_ci_setup_go_caches_tracked_backend_manifests() -> None:
 
 def test_ci_builds_rk4_neuron_parity_backends() -> None:
     """The RK4 parity backends are built for Go and Mojo, through the explicit loop."""
-    workflow_path = ROOT / ".github/workflows/ci.yml"
-    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     build_step = next(
         step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
     )
@@ -72,8 +69,7 @@ def _assert_go_builds_out_of_tree(run_text: str) -> None:
 
 def test_ci_builds_go_libraries_out_of_the_source_tree() -> None:
     """No CI build writes cgo's header over the committed one beside a source."""
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     build_step = next(
         step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
     )
@@ -88,8 +84,7 @@ def test_ci_builds_go_libraries_out_of_the_source_tree() -> None:
 
 def test_ci_builds_both_wilson_hr_runtime_identities() -> None:
     """Both Wilson runtime identities, cortical and resetting SC, are built for Go and Mojo."""
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     build_step = next(
         step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
     )
@@ -108,8 +103,7 @@ def test_ci_builds_both_wilson_hr_runtime_identities() -> None:
 
 def test_ci_requires_both_rulkov_event_identities() -> None:
     """CI must execute every compiled lane for both Rulkov event contracts."""
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     build_step = next(
         step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
     )

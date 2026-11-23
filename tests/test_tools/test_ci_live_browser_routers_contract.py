@@ -23,10 +23,10 @@ import re
 from pathlib import Path
 from typing import Any, cast
 
-import yaml
 
 from sc_neurocore.studio.synthesis_profiles import synthesis_target_profiles
 from tools.toolchain_manifest import MANIFEST, load_manifest
+from tools.ci_workflow_inventory import ci_job
 
 ROOT = Path(__file__).resolve().parents[2]
 E2E = ROOT / "studio" / "frontend" / "e2e"
@@ -40,11 +40,7 @@ TARGET_CHOICE = re.compile(r'selectOption\("([a-z0-9]+)"\)')
 
 def _test_steps() -> list[dict[str, Any]]:
     """Return the parsed steps of the hosted test job."""
-    workflow = cast(
-        dict[str, Any],
-        yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")),
-    )
-    return cast(list[dict[str, Any]], workflow["jobs"]["test"]["steps"])
+    return cast(list[dict[str, Any]], ci_job("test")["steps"])
 
 
 def _live_step(steps: list[dict[str, Any]]) -> int:

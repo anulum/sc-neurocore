@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, NamedTuple, cast
 
-import yaml
+from tools.ci_workflow_inventory import ci_job
 
 
 class OptionalCiLane(NamedTuple):
@@ -56,12 +56,6 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _load_ci_workflow() -> dict[str, Any]:
-    """Load the main CI workflow through the YAML parser used by tests."""
-    workflow_path = _repo_root() / ".github" / "workflows" / "ci.yml"
-    return cast(dict[str, Any], yaml.safe_load(workflow_path.read_text(encoding="utf-8")))
-
-
 def _job_run_text(job: dict[str, Any]) -> str:
     """Return all shell snippets from a GitHub Actions job."""
     return "\n".join(
@@ -71,16 +65,14 @@ def _job_run_text(job: dict[str, Any]) -> str:
 
 def _optional_matrix_rows() -> dict[str, dict[str, str]]:
     """Return the optional-extra CI matrix rows keyed by lane name."""
-    workflow = _load_ci_workflow()
-    job = cast(dict[str, Any], workflow["jobs"]["test-optional-extras"])
+    job = ci_job("test-optional-extras")
     include = cast(list[dict[str, str]], job["strategy"]["matrix"]["include"])
     return {row["name"]: row for row in include}
 
 
 def test_optics_extra_ci_job_installs_profile_and_runs_selector() -> None:
     """Ensure the gdsfactory-gated optics path has explicit CI coverage."""
-    workflow = _load_ci_workflow()
-    job = cast(dict[str, Any], workflow["jobs"]["test-optics-extra"])
+    job = ci_job("test-optics-extra")
     run_text = _job_run_text(job)
 
     assert job["runs-on"] == "ubuntu-24.04"
@@ -92,8 +84,7 @@ def test_optics_extra_ci_job_installs_profile_and_runs_selector() -> None:
 
 def test_optional_extra_ci_matrix_runs_import_skipped_selectors() -> None:
     """Ensure import-skipped optional surfaces have explicit CI lanes."""
-    workflow = _load_ci_workflow()
-    job = cast(dict[str, Any], workflow["jobs"]["test-optional-extras"])
+    job = ci_job("test-optional-extras")
     run_text = _job_run_text(job)
     rows = _optional_matrix_rows()
 

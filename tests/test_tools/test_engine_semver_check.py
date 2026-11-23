@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 
 from tools import engine_semver_check
+from tools.ci_workflow_inventory import ci_job
 from tools.engine_semver_check import (
     ENGINE_MANIFEST,
     UNCHECKED_FEATURE_NOTE,
@@ -224,8 +224,7 @@ def test_no_baseline_or_no_tool_fails_rather_than_passing_unchecked(
 
 def test_the_ci_job_installs_the_pinned_tool_and_runs_the_gate() -> None:
     """CI installs cargo-semver-checks at a fixed version with its lock file, then runs this gate."""
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    runs = [step.get("run", "").strip() for step in workflow["jobs"]["engine-semver"]["steps"]]
+    runs = [step.get("run", "").strip() for step in ci_job("engine-semver")["steps"]]
     install = "cargo install cargo-semver-checks --version 0.51.0 --locked"
     assert install in runs and "python tools/engine_semver_check.py" in runs
     assert runs.index(install) < runs.index("python tools/engine_semver_check.py")

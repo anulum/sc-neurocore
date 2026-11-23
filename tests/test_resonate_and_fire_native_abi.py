@@ -23,6 +23,7 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel import resonate_and_fire as public_backend
+from tools.ci_workflow_inventory import ci_job_text
 
 _ROOT = Path(__file__).resolve().parents[1]
 _BACKENDS = ("go", "mojo")
@@ -411,7 +412,7 @@ def test_real_builder_discovers_model40_for_both_native_languages() -> None:
 
 def test_ci_requires_model40_for_both_native_builds() -> None:
     """The CI workflow requires the resonate-and-fire model in both native builds."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     required_line = next(
         line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")
     )

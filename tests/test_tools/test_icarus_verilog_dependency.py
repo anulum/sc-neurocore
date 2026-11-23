@@ -14,13 +14,12 @@ import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
-import yaml
 
 from tools import check_icarus_verilog
 from tools.toolchain_manifest import MANIFEST, load_manifest
+from tools.ci_workflow_inventory import ci_job
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -35,15 +34,6 @@ def _completed(
         stdout=output,
         stderr="",
     )
-
-
-def _load_ci_workflow() -> dict[str, Any]:
-    """Load the live CI workflow from the repository."""
-    workflow_path = REPO_ROOT / ".github" / "workflows" / "ci.yml"
-    assert workflow_path.exists()
-    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
-    assert isinstance(workflow, dict)
-    return cast(dict[str, Any], workflow)
 
 
 def test_parse_iverilog_major_reads_stable_version() -> None:
@@ -188,8 +178,7 @@ def test_main_reports_failures(
 
 def test_ci_workflow_checks_icarus_verilog_after_install() -> None:
     """CI installs the manifest's pinned simulators and checks Icarus before the package tests."""
-    workflow = _load_ci_workflow()
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = ci_job("test")["steps"]
     step_names = [step.get("name", "") for step in steps]
 
     install_index = step_names.index("Install HDL simulator")
@@ -209,7 +198,7 @@ def test_ci_workflow_checks_icarus_verilog_after_install() -> None:
         ]
     )
     assert f"apt-get install -y -qq {pinned}" in install_run
-    assert "hdl-toolchain" in workflow["jobs"]["test"]["needs"]
+    assert "hdl-toolchain" in ci_job("test")["needs"]
     assert "python tools/check_icarus_verilog.py --minimum-major 12" in verify_run
     assert install_index < verify_index < package_index
 

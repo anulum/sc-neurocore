@@ -39,6 +39,7 @@ from sc_neurocore.neurons.readiness import (
     lane_source_problems,
     verify_model,
 )
+from tools.ci_workflow_inventory import ci_jobs_text
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DESCRIPTOR = "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml"
@@ -378,7 +379,7 @@ def _engine_wheel_cache_patterns() -> list[str]:
     the software-adapter job. Both must name the same build inputs, so neither can be reused
     after a source the other would rebuild for.
     """
-    workflow = (_REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_jobs_text("test-engine-wheels", "gpu-software-adapter-refusal")
     keys = [
         line
         for line in workflow.splitlines()

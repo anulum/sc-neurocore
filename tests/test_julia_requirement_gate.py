@@ -35,12 +35,12 @@ import subprocess
 import sys
 
 import pytest
-import yaml
 
 from tests.julia_requirement import (
     JULIA_BRIDGE_MODULE,
     require_julia,
 )
+from tools.ci_workflow_inventory import ci_workflow_envs
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -118,8 +118,9 @@ def test_require_julia_hard_fails_when_ci_requires_the_bridge(
 
 def test_hosted_ci_exports_the_julia_requirement_at_workflow_level() -> None:
     """The main CI workflow requires Julia for every job through its top-level env."""
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    assert workflow["env"]["SC_NEUROCORE_REQUIRE_JULIA"] == "1"
+    envs = ci_workflow_envs()
+    assert envs
+    assert all(env.get("SC_NEUROCORE_REQUIRE_JULIA") == "1" for env in envs.values())
 
 
 def _unconditional_gate_line(tree: ast.Module) -> int | None:

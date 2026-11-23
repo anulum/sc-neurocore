@@ -23,7 +23,6 @@ that skipped unconditionally would turn a broken CI build into a green wall.
 from __future__ import annotations
 
 import importlib
-from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 
@@ -36,8 +35,7 @@ from tests.native_lane_requirement import (
     lane_is_built,
     require_native_lane,
 )
-
-CI_WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+from tools.ci_workflow_inventory import ci_workflow_envs
 
 
 def _accel(available: Any) -> ModuleType:
@@ -46,6 +44,8 @@ def _accel(available: Any) -> ModuleType:
 
 
 class TestLaneIsBuilt:
+    """The built-lane predicate reads the accelerator's own availability check."""
+
     def test_it_asks_the_module_s_own_predicate(self) -> None:
         """The gate must not answer differently from the dispatch under test."""
         asked: list[str] = []
@@ -76,6 +76,8 @@ class TestLaneIsBuilt:
 
 
 class TestRequireNativeLane:
+    """Requiring a lane fails loudly when it is not built, instead of skipping."""
+
     def test_an_absent_lane_skips_with_the_subject_named(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -97,7 +99,7 @@ class TestRequireNativeLane:
     def test_a_required_lane_that_is_absent_is_a_hard_error(
         self, lane: str, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """This is what stops the gate turning a broken CI build into skips."""
+        """Stop the gate from turning a broken CI build into skips."""
         monkeypatch.setenv(f"SC_NEUROCORE_REQUIRE_{lane.upper()}", "1")
         with pytest.raises(RuntimeError, match=f"the {lane} lane is required here"):
             require_native_lane(_accel(lambda name: False), lane, subject="probe")
@@ -120,20 +122,28 @@ class TestRequireNativeLane:
 
 
 class TestCIRequiresEveryGatedLane:
+    """CI requires every gated native lane, the engine and the Julia bridge."""
+
     def test_the_workflow_requires_each_gated_lane(self) -> None:
         """A gate CI does not require is a gate that can hide a broken build."""
-        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+        envs = ci_workflow_envs()
+        assert envs
         for lane in GATED_LANES:
-            assert f'SC_NEUROCORE_REQUIRE_{lane.upper()}: "1"' in workflow
+            assert all(
+                env.get(f"SC_NEUROCORE_REQUIRE_{lane.upper()}") == "1" for env in envs.values()
+            )
 
     def test_the_workflow_still_requires_the_engine_and_the_bridge(self) -> None:
         """The two gates that came before must not be lost while adding these."""
-        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
-        assert 'SC_NEUROCORE_REQUIRE_ENGINE: "1"' in workflow
-        assert 'SC_NEUROCORE_REQUIRE_JULIA: "1"' in workflow
+        envs = ci_workflow_envs()
+        assert envs
+        for name in ("SC_NEUROCORE_REQUIRE_ENGINE", "SC_NEUROCORE_REQUIRE_JULIA"):
+            assert all(env.get(name) == "1" for env in envs.values())
 
 
 class TestTheFixtureReachesTheSuites:
+    """The conftest fixture finds each backend suite's accelerator module."""
+
     def test_a_backend_parametrised_suite_exposes_its_accelerator_module(self) -> None:
         """The conftest fixture finds the module by that name; keep it findable."""
         suite = importlib.import_module("tests.test_brunel_wang_backends")

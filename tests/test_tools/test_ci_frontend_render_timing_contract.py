@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 from typing import Any, cast
 
-import yaml
+from tools.ci_workflow_inventory import ci_job
 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "studio" / "frontend"
@@ -32,11 +32,7 @@ ARTEFACT = "${{ runner.temp }}/render-timing/render-timing.json"
 
 def _frontend_steps() -> list[dict[str, Any]]:
     """Return the parsed steps of the hosted frontend job."""
-    workflow = cast(
-        dict[str, Any],
-        yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")),
-    )
-    return cast(list[dict[str, Any]], workflow["jobs"]["frontend"]["steps"])
+    return cast(list[dict[str, Any]], ci_job("frontend")["steps"])
 
 
 def _step_index(steps: list[dict[str, Any]], name: str) -> int:

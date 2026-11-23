@@ -18,6 +18,7 @@ import pickle
 
 import sc_neurocore.bioware as package
 from sc_neurocore.bioware import bioware as historical
+from tools.ci_workflow_inventory import ci_job_text
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -26,7 +27,6 @@ TEST_DIR = REPO_ROOT / "tests/test_bioware"
 BENCHMARK_PATH = REPO_ROOT / "benchmarks/bench_bioware.py"
 PROBE_PATH = REPO_ROOT / "benchmarks/_bioware_probe.py"
 RESULT_PATH = REPO_ROOT / "benchmarks/results/bench_bioware.json"
-CI_WORKFLOW_PATH = REPO_ROOT / ".github/workflows/ci.yml"
 RESPONSIBILITY_MODULES = {
     path.stem for path in SOURCE_DIR.glob("bioware_*.py") if path.stem != "bioware"
 }
@@ -165,7 +165,7 @@ def test_benchmark_evidence_is_source_bound_and_byte_identical() -> None:
 
 def test_ci_enforces_exact_bioware_coverage_on_python_312() -> None:
     """Keep the Bioware branch gate exact and independent of global omits."""
-    workflow = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     step = workflow.split("- name: Bioware exact coverage", maxsplit=1)[1].split(
         "- name: Upload test results", maxsplit=1
     )[0]

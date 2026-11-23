@@ -23,21 +23,18 @@ so a record cannot quietly name the wrong one again.
 from __future__ import annotations
 
 import re
+import tomllib
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
 
 from benchmarks import bench_brunel_wang, bench_compte_wm
 from benchmarks import _non_resetting_lif_benchmark as shared
+from tools.ci_workflow_inventory import ci_job_text, ci_jobs_text
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-CI_WORKFLOW = REPOSITORY / ".github" / "workflows" / "ci.yml"
 GO_MOD = REPOSITORY / "src" / "sc_neurocore" / "accel" / "go" / "go.mod"
 PIXI_MANIFEST = REPOSITORY / "src" / "sc_neurocore" / "accel" / "mojo" / "pixi.toml"
 
@@ -62,6 +59,8 @@ def _pinned_mojo_version() -> str:
 
 
 class TestTheProbesPointAtTheDeclaredToolchain:
+    """Each probe names the toolchain the repository declares."""
+
     @pytest.mark.parametrize("module", PROBES, ids=lambda m: m.__name__)
     def test_the_go_probe_asks_inside_the_accelerator_module(self, module: ModuleType) -> None:
         """At the repository root the answer is the installed Go, not the build's."""
@@ -80,19 +79,23 @@ class TestTheProbesPointAtTheDeclaredToolchain:
 
 
 class TestTheDeclaredToolchainMatchesHostedCI:
+    """The declared toolchain is the one hosted CI installs."""
+
     def test_the_go_module_pin_is_the_one_ci_installs(self) -> None:
         """A record is only comparable with CI if both name one compiler."""
-        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+        workflow = ci_jobs_text("lint", "test", "native-go-windows-refusal")
         assert f'go-version: "{_declared_go_version()}"' in workflow
 
     def test_the_mojo_pin_is_the_manifest_ci_uses(self) -> None:
         """CI exposes mojo through this manifest; the probe must use the same."""
-        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+        workflow = ci_job_text("test")
         assert "src/sc_neurocore/accel/mojo/pixi.toml" in workflow
         assert _pinned_mojo_version()
 
 
 class TestTheProbesAnswerWithTheDeclaredVersions:
+    """On a host with the tools, each probe reports the declared version."""
+
     def test_go_reports_the_version_the_module_requires(self) -> None:
         """The measurement this unit exists for: root said 1.24.0, module says 1.26.7."""
         reported = shared._version(shared._toolchain_command("go", "version"), cwd=shared.GO_MODULE)

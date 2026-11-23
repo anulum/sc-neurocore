@@ -11,14 +11,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tools.ci_workflow_inventory import ci_job, ci_job_text
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW = ROOT / ".github/workflows/ci.yml"
 
 
 def test_ci_enforces_exact_neuron_graph_coverage_on_python_312() -> None:
     """Keep the focused NIR graph gate exact and isolated from global omits."""
-    workflow = WORKFLOW.read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     step = workflow.split("- name: NIR graph exact coverage", maxsplit=1)[1].split(
         "- name: Upload test results", maxsplit=1
     )[0]
@@ -35,12 +35,9 @@ def test_ci_enforces_exact_neuron_graph_coverage_on_python_312() -> None:
 
 def test_framework_profiles_require_installed_real_boundaries_and_no_skips() -> None:
     """Keep the required profiles pinned, installed and independently qualified."""
-    import yaml
-
-    workflow = yaml.safe_load(WORKFLOW.read_text())
-    job = workflow["jobs"]["test-nir-interoperability"]
+    job = ci_job("test-nir-interoperability")
     assert job["strategy"]["matrix"]["profile"] == ["snntorch", "sinabs"]
-    assert "test-nir-interoperability" in workflow["jobs"]["build"]["needs"]
+    assert "test-nir-interoperability" in ci_job("build")["needs"]
     commands = "\n".join(step.get("run", "") for step in job["steps"])
     assert "--require-hashes --only-binary :all:" in commands
     assert "python -m installer dist/sc_neurocore-*.whl" in commands

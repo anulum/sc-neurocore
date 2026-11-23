@@ -14,7 +14,7 @@ from pathlib import Path
 import tomllib
 from typing import cast
 
-import yaml
+from tools.ci_workflow_inventory import ci_jobs
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,9 +27,7 @@ def mapping(value: object) -> dict[str, object]:
 
 def read_jobs() -> dict[str, object]:
     """Read actual workflow jobs without interpreting YAML's event key as a job field."""
-    workflow: object = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
-    assert isinstance(workflow, dict)
-    return mapping(workflow["jobs"])
+    return mapping({name: job.body for name, job in ci_jobs().items()})
 
 
 def read_test_job() -> dict[str, object]:

@@ -31,6 +31,7 @@ from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from tests.julia_requirement import require_julia
+from tools.ci_workflow_inventory import ci_job_text
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +64,7 @@ def test_exact_runtime_parity(backend: str) -> None:
 
 def test_ci_builds_the_required_go_and_mojo_libraries() -> None:
     """Keep both strict runtime loaders enrolled in the aggregate CI build."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     assert "go/neurons/cazelles_map" in workflow
     assert (
         "go_cshared src/sc_neurocore/accel/go/neurons/cazelles_map libcazelles.so cazelles_map.go"

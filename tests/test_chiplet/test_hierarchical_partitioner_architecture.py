@@ -21,6 +21,7 @@ from sc_neurocore.chiplet import hierarchical_graph
 from sc_neurocore.chiplet import hierarchical_metrics
 from sc_neurocore.chiplet import hierarchical_partitioner as facade
 from sc_neurocore.chiplet import hierarchical_reporting
+from tools.ci_workflow_inventory import ci_job_text
 
 
 REPO_ROOT = Path(__file__).parents[2]
@@ -211,7 +212,7 @@ def test_false_mirrors_are_absent_and_real_kernels_remain() -> None:
 
 def test_ci_enforces_exact_hierarchical_partitioner_coverage() -> None:
     """Python 3.12 CI pins line and branch coverage for the full split."""
-    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     assert "Hierarchical partitioner exact coverage" in workflow
     assert "COVERAGE_FILE=.coverage-hierarchical-partitioner" in workflow
     assert "--include='src/sc_neurocore/chiplet/hierarchical*.py'" in workflow

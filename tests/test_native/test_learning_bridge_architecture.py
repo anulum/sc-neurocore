@@ -20,11 +20,13 @@ from sc_neurocore._native import learning_bridge as bridge
 from sc_neurocore._native import learning_factory, learning_runtime
 
 from test_learning_bridge_support import FakeLearningLib
+from tools.ci_workflow_inventory import ci_job_text
 
 pytest_plugins = ("test_learning_bridge_support",)
 
 
 def test_facade_preserves_historical_public_identity() -> None:
+    """The facade keeps the historical public names as the same objects."""
     public_types = [
         bridge.OnlineO1SnapshotFFI,
         bridge.RustOnlineO1Synapse,
@@ -44,6 +46,7 @@ def test_facade_preserves_historical_public_identity() -> None:
 def test_facade_runtime_diagnostics_are_read_only_views(
     fake_learning_lib: FakeLearningLib,
 ) -> None:
+    """The facade's runtime diagnostics are read-only views of the runtime."""
     assert bridge._lib is fake_learning_lib
     assert bridge._HAS_LEARNING is True
     bridge.set_deterministic_mode(12)
@@ -54,6 +57,7 @@ def test_facade_runtime_diagnostics_are_read_only_views(
 
 
 def test_factory_selects_all_backends(fake_learning_lib: FakeLearningLib) -> None:
+    """The factory builds each supported backend."""
     rust = learning_factory.create_plasticity_layer(3, backend="RuSt")
     wgpu = learning_factory.create_plasticity_layer(3, backend="RUST-WGPU")
     assert isinstance(rust, bridge.RustRuleLayer)
@@ -65,6 +69,7 @@ def test_factory_selects_all_backends(fake_learning_lib: FakeLearningLib) -> Non
 
 
 def test_factory_rejects_invalid_backend(fake_learning_lib: FakeLearningLib) -> None:
+    """The factory refuses an unknown backend name."""
     del fake_learning_lib
     with pytest.raises(TypeError, match="string"):
         learning_factory.create_plasticity_layer(3, backend=1)  # type: ignore[arg-type]
@@ -75,6 +80,7 @@ def test_factory_rejects_invalid_backend(fake_learning_lib: FakeLearningLib) -> 
 def test_factory_reports_missing_torch_without_disabling_rust(
     monkeypatch: pytest.MonkeyPatch, fake_learning_lib: FakeLearningLib
 ) -> None:
+    """A missing torch is reported without disabling the Rust backend."""
     key = "sc_neurocore._native.learning_torch"
     monkeypatch.setitem(sys.modules, key, None)
     with pytest.raises(ImportError, match="torch' extra"):
@@ -86,6 +92,7 @@ def test_factory_reports_missing_torch_without_disabling_rust(
 
 
 def test_split_modules_remain_bounded_and_licensed() -> None:
+    """Each divided bridge module has at most 300 lines, the licence header and a docstring."""
     native_dir = Path(bridge.__file__).parent
     paths = sorted(native_dir.glob("learning_*.py"))
     assert paths
@@ -97,12 +104,14 @@ def test_split_modules_remain_bounded_and_licensed() -> None:
 
 
 def test_facade_is_thin_relative_to_historical_monolith() -> None:
+    """The facade stays a thin re-export of the divided modules."""
     facade_lines = Path(bridge.__file__).read_text(encoding="utf-8").splitlines()
     assert len(facade_lines) < 120
     assert not any(line.startswith("class Rust") for line in facade_lines)
 
 
 def test_facade_private_loader_aliases_runtime() -> None:
+    """The facade's private loader is the runtime's own loader."""
     assert bridge._get_lib is learning_runtime._get_lib
     assert bridge._load_native_library is learning_runtime._load_native_library
 
@@ -122,7 +131,7 @@ def test_facade_imports_without_optional_torch(monkeypatch: pytest.MonkeyPatch) 
 def test_ci_enforces_exact_learning_bridge_coverage() -> None:
     """Python 3.12 CI keeps the modular native bridge at exact branch coverage."""
     root = Path(bridge.__file__).resolve().parents[3]
-    workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     assert "Autonomous-learning bridge exact coverage" in workflow
     assert "COVERAGE_FILE=.coverage-learning" in workflow
     assert "--include='src/sc_neurocore/_native/learning*.py'" in workflow

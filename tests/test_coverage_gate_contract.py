@@ -18,6 +18,13 @@ from typing import Any
 import tomllib
 
 import pytest
+from tools.ci_workflow_inventory import (
+    ci_job,
+    ci_job_text,
+    ci_job_workflow_env,
+    ci_jobs,
+    ci_workflow_files,
+)
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -59,10 +66,7 @@ def test_python_coverage_keeps_isolated_workers_and_watchdog_exits() -> None:
 
 def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
     """The aggregate cannot pass without the actual Windows test job and its data."""
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    native = workflow["jobs"]["shd-non-linux-refusal"]
+    native = ci_job("shd-non-linux-refusal")
     assert native["runs-on"] == "windows-2025-vs2026"
     assert any(
         "tests/test_accel_shd_platform.py" in step.get("run", "") for step in native["steps"]
@@ -74,8 +78,8 @@ def test_primary_coverage_requires_native_windows_refusal_evidence() -> None:
     )
     assert upload["with"]["if-no-files-found"] == "error"
     assert upload["with"]["include-hidden-files"] is True
-    assert "shd-non-linux-refusal" in workflow["jobs"]["test"]["needs"]
-    union = workflow["jobs"]["coverage-union"]
+    assert "shd-non-linux-refusal" in ci_job("test")["needs"]
+    union = ci_job("coverage-union")
     assert "shd-non-linux-refusal" in union["needs"]
     download = next(
         step
@@ -98,10 +102,7 @@ def test_the_union_is_shown_on_every_run_and_excepts_only_registered_gpu_lines()
     every step it needs runs unless the run is cancelled. The 100 % gate becomes the exception
     gate, and the software-adapter job that feeds it builds the engine with its gpu feature.
     """
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    union = workflow["jobs"]["coverage-union"]
+    union = ci_job("coverage-union")
     assert "gpu-software-adapter-refusal" in union["needs"]
     steps = union["steps"]
     first_needed = next(index for index, step in enumerate(steps) if "uses" in step)
@@ -118,7 +119,7 @@ def test_the_union_is_shown_on_every_run_and_excepts_only_registered_gpu_lines()
         if step.get("with", {}).get("name") == "gpu-software-adapter-coverage"
     )
     assert retrieve["with"]["path"] == gate["env"]["SCN_EXTRA_COVERAGE_DIR"]
-    job = workflow["jobs"]["gpu-software-adapter-refusal"]
+    job = ci_job("gpu-software-adapter-refusal")
     runs = "\n".join(str(step.get("run", "")) for step in job["steps"])
     assert "maturin build --release --locked --features gpu" in runs
     assert "mesa-vulkan-drivers=25.2.8-0ubuntu0.24.04.4" in runs
@@ -143,10 +144,7 @@ def test_the_union_requires_the_success_of_every_job_it_needs() -> None:
     The union runs after failed legs, and some legs upload their coverage even when they fail,
     so a needed job whose result nobody checks could fail while the required check passes.
     """
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    union = workflow["jobs"]["coverage-union"]
+    union = ci_job("coverage-union")
     required: set[str] = set()
     for step in union["steps"]:
         run = str(step.get("run", ""))
@@ -160,15 +158,13 @@ def test_the_union_requires_the_success_of_every_job_it_needs() -> None:
 def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     """Makefile and primary hosted CI must not weaken the canonical threshold."""
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)
-    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100, 100, 100)
+    hosted = tuple(value for path in ci_workflow_files() for value in _cov_thresholds(path))
+    assert hosted == (100, 100, 100)
 
 
 def test_qualified_nir_inference_closes_all_new_interoperability_modules() -> None:
     """Measure installed framework code without inheriting the global NIR omission."""
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    job = workflow["jobs"]["test-nir-interoperability"]
+    job = ci_job("test-nir-interoperability")
     step = next(
         item
         for item in job["steps"]
@@ -184,8 +180,7 @@ def test_qualified_nir_inference_closes_all_new_interoperability_modules() -> No
 
 def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     """Run every matrix leg in bounded batches without weakening coverage."""
-    workflow_path = _ROOT / ".github/workflows/ci.yml"
-    workflow_text = workflow_path.read_text(encoding="utf-8")
+    workflow_text = ci_job_text("test")
     start = workflow_text.index("- name: Test + coverage")
     end = workflow_text.index("\n      - name:", start + 1)
     step = workflow_text[start:end]
@@ -197,15 +192,8 @@ def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
     assert "--cov-fail-under" not in step
     assert "pytest -n auto" not in step
 
-    try:
-        import yaml
-    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
-        import pytest
-
-        pytest.skip("PyYAML is not installed")
-    workflow = yaml.safe_load(workflow_text)
     # Every leg stays below the hosted runner's six-hour limit; coverage shards have five.
-    assert workflow["jobs"]["test"]["timeout-minutes"] == "${{ matrix.coverage && 300 || 240 }}"
+    assert ci_job("test")["timeout-minutes"] == "${{ matrix.coverage && 300 || 240 }}"
 
 
 def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
@@ -214,20 +202,13 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     A skipped union job would report success to branch protection, so it must run
     after any outcome and refuse unless every shard published its data.
     """
-    try:
-        import yaml
-    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
-        import pytest
-
-        pytest.skip("PyYAML is not installed")
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    test = workflow["jobs"]["test"]
+    test = ci_job("test")
     matrix = test["strategy"]["matrix"]
     include = matrix["include"]
     assert matrix["python-minor"] == ["3.11", "3.12", "3.13", "3.14"]
     assert matrix["shard-index"] == list(range(1, 9))
     count = len(matrix["shard-index"])
-    assert int(workflow["env"]["SCN_CI_SHARD_COUNT"]) == count
+    assert int(ci_job_workflow_env("test")["SCN_CI_SHARD_COUNT"]) == count
     coverage = [leg for leg in include if leg.get("coverage") is True]
     assert coverage == [{"python-minor": "3.12", "python-version": "3.12.16", "coverage": True}]
     assert "matrix.shard-index" in test["name"]
@@ -240,7 +221,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert preserve["with"]["include-hidden-files"] is True
     assert preserve["with"]["if-no-files-found"] == "error"
 
-    union = workflow["jobs"]["coverage-union"]
+    union = ci_job("coverage-union")
     assert union["name"] == "test (3.12)"
     assert union["if"] == "${{ !cancelled() }}"
     assert "test" in union["needs"]
@@ -253,7 +234,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
     assert '--combine-from="$RUNNER_TEMP/coverage-shards"' in gate["run"]
     assert '--expect-shards="$SCN_CI_SHARD_COUNT"' in gate["run"]
     assert "--cov-fail-under=100" in gate["run"]
-    assert "coverage-union" in workflow["jobs"]["build"]["needs"]
+    assert "coverage-union" in ci_job("build")["needs"]
     readiness = union["steps"][0]
     assert readiness["env"] == {
         "TEST_RESULT": "${{ needs.test.result }}",
@@ -265,7 +246,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
         'test "$TEST_RESULT" = success && test "$WINDOWS_RESULT" = success '
         '&& test "$RECORDER_RESULT" = success && test "$GPU_REFUSAL_RESULT" = success'
     )
-    compatibility = workflow["jobs"]["compatibility-union"]
+    compatibility = ci_job("compatibility-union")
     assert compatibility["name"] == "test (${{ matrix.python-minor }})"
     assert compatibility["needs"] == ["test"]
     assert compatibility["if"] == "${{ !cancelled() }}"
@@ -276,10 +257,7 @@ def test_sharded_coverage_is_gated_once_on_the_complete_union() -> None:
 
 def test_hosted_shards_share_current_abi_wheels_and_one_timing_snapshot() -> None:
     """Every shard consumes its ABI's current artifact and the same run's scheduling hints."""
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    jobs = workflow["jobs"]
+    jobs = {name: job.body for name, job in ci_jobs().items()}
     test = jobs["test"]
     builders = jobs["test-engine-wheels"]
     assert builders["strategy"]["matrix"]["python-version"] == [
@@ -351,7 +329,7 @@ def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> No
 
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
     """Both preserved map identities need branch and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index(
         "- name: Nagumo-Sato and SC adaptive-map exact coverage and backend parity"
     )
@@ -373,7 +351,7 @@ def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
 
 def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted channel model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: Ih exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -388,7 +366,7 @@ def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted INaP model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: PersistentNa exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -403,7 +381,7 @@ def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_nmda_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted NMDA channel model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: NMDA exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -418,7 +396,7 @@ def test_nmda_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_sk_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted SK channel model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: SK exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -433,7 +411,7 @@ def test_sk_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted T-type model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: TTypeCa exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -448,7 +426,7 @@ def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted GLM model needs an explicit branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: GLM exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -463,7 +441,7 @@ def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The omitted two-compartment model needs a branch gate and backend custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: MainenSejnowski exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -478,7 +456,7 @@ def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The TC-LIF family (canonical + both SC identities) needs branch custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: TwoCompartmentLIF exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -495,7 +473,7 @@ def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
     """The sliding PSN family (canonical + SC identity) needs branch custody."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: ParallelSpiking exact coverage and backend parity")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -511,7 +489,7 @@ def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
 
 def test_hdc_exact_coverage_is_hosted() -> None:
     """The rebuilt HDC surface needs an explicit branch gate."""
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = ci_job_text("test")
     start = workflow.index("- name: HDC exact coverage")
     end = workflow.index("\n      - name:", start + 1)
     step = workflow[start:end]
@@ -530,14 +508,7 @@ def test_exactly_one_primary_matrix_leg_carries_native_desktop_admission() -> No
     Native desktop and browser admission run once. Other focused gates are
     distributed among the four coverage shards, without changing their commands.
     """
-    try:
-        import yaml
-    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
-        import pytest
-
-        pytest.skip("PyYAML is not installed")
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
-    include = workflow["jobs"]["test"]["strategy"]["matrix"]["include"]
+    include = ci_job("test")["strategy"]["matrix"]["include"]
     primary_legs = [leg for leg in include if leg.get("primary") is True]
     assert len(primary_legs) == 1, (
         "the test matrix must declare exactly one primary leg; "
@@ -550,12 +521,11 @@ def test_recorder_branch_floor_is_a_required_primary_dependency() -> None:
     """Keep native recorder inputs and the unchanged production floor mandatory."""
     import yaml
 
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    recorder = workflow["jobs"]["recorder-coverage"]
+    recorder = ci_job("recorder-coverage")
     assert recorder["needs"] == ["test", "shd-non-linux-refusal"]
     assert recorder["if"] == "${{ !cancelled() }}"
     assert recorder["uses"] == "./.github/workflows/recorder-coverage.yml"
-    assert "recorder-coverage" in workflow["jobs"]["coverage-union"]["needs"]
+    assert "recorder-coverage" in ci_job("coverage-union")["needs"]
     reusable = yaml.safe_load((_ROOT / recorder["uses"]).read_text())
     job = reusable["jobs"]["recorder-coverage"]
     assert job["env"]["RECORDER_COVERAGE_FLOOR"] == "98.417721518987"
@@ -938,12 +908,9 @@ def test_every_recorder_importing_test_feeds_the_linux_recorder_data() -> None:
     listed covers its lines in the ordinary shards alone; the floor then
     refuses those lines as uncovered portable statements after the push.
     """
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
     producer = [
         step
-        for step in workflow["jobs"]["test"]["steps"]
+        for step in ci_job("test")["steps"]
         if step.get("name") == "Recorder execution and publication branch coverage"
     ]
     assert len(producer) == 1
@@ -976,10 +943,7 @@ def test_recorder_result_controls_the_actual_primary_union_shell(
     import os
     import subprocess
 
-    import yaml
-
-    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text())
-    guard = workflow["jobs"]["coverage-union"]["steps"][0]
+    guard = ci_job("coverage-union")["steps"][0]
     environment = dict(os.environ)
     environment.update(
         TEST_RESULT="success",

@@ -18,6 +18,7 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel import amari_field as backends
+from tools.ci_workflow_inventory import ci_job_text
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIMES = ("python", "rust", "julia", "go", "mojo")
@@ -31,6 +32,7 @@ def _drive(steps: int) -> npt.NDArray[np.float64]:
 
 @pytest.mark.parametrize("backend", RUNTIMES)
 def test_complete_vector_contract_matches_python(backend: str) -> None:
+    """Each native backend's states match the Python reference within its parity bound."""
     expected = backends.simulate_amari_field(STATE, currents=_drive(128), backend="python")
     actual = backends.simulate_amari_field(STATE, currents=_drive(128), backend=backend)
     np.testing.assert_allclose(
@@ -47,6 +49,7 @@ def test_complete_vector_contract_matches_python(backend: str) -> None:
 
 @pytest.mark.parametrize("backend", RUNTIMES)
 def test_empty_batch_preserves_complete_initial_state(backend: str) -> None:
+    """An empty drive batch returns no states and keeps the complete initial state."""
     result = backends.simulate_amari_field(
         STATE, currents=np.empty((0, 8), dtype=np.float64), backend=backend
     )
@@ -56,6 +59,7 @@ def test_empty_batch_preserves_complete_initial_state(backend: str) -> None:
 
 
 def test_scalar_drive_is_broadcast_across_the_field() -> None:
+    """A scalar drive per step equals the same value applied to every field element."""
     scalar = backends.simulate_amari_field(STATE, currents=[0.1, -0.1], backend="python")
     vector = backends.simulate_amari_field(
         STATE, currents=np.asarray([[0.1] * 8, [-0.1] * 8]), backend="python"
@@ -65,6 +69,7 @@ def test_scalar_drive_is_broadcast_across_the_field() -> None:
 
 
 def test_nonfinite_input_is_rejected_before_native_dispatch() -> None:
+    """A non-finite drive is refused before any native backend runs."""
     drive = _drive(2)
     drive[1, 4] = np.nan
     with pytest.raises(ValueError, match="finite"):
@@ -72,7 +77,8 @@ def test_nonfinite_input_is_rejected_before_native_dispatch() -> None:
 
 
 def test_ci_builds_self_contained_go_and_mojo_libraries() -> None:
-    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    """CI builds the Amari field's Go and Mojo libraries in the native build loop."""
+    workflow = ci_job_text("test")
     build_loop = next(
         line for line in workflow.splitlines() if "for model in" in line and "wilson_cowan" in line
     )
@@ -80,6 +86,7 @@ def test_ci_builds_self_contained_go_and_mojo_libraries() -> None:
 
 
 def test_standalone_rust_safety_matches_python(tmp_path: Path) -> None:
+    """The standalone Rust safety source traces the same field as Python."""
     source = ROOT / "src/sc_neurocore/accel/rust/safety/amari_field.rs"
     program = tmp_path / "amari_trace.rs"
     binary = tmp_path / "amari_trace"

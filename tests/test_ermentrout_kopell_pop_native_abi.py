@@ -23,6 +23,7 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel import ermentrout_kopell_pop as public_backend
+from tools.ci_workflow_inventory import ci_job_text
 
 _ROOT = Path(__file__).resolve().parents[1]
 _BACKENDS = ("go", "mojo")
@@ -129,6 +130,7 @@ def test_every_identical_active_region_pair_is_rejected_without_writes(
     left: str,
     right: str,
 ) -> None:
+    """Two output regions at the same address are refused, and nothing is written."""
     offsets = _default_offsets()
     offsets[right] = offsets[left]
     arena, pointers = _arena_pointers(offsets)
@@ -145,6 +147,7 @@ def test_every_multielement_region_rejects_partial_overlap_without_writes(
     left: str,
     right: str,
 ) -> None:
+    """Partly overlapping output regions are refused, and nothing is written."""
     offsets = _default_offsets()
     if _REGION_LENGTHS[left] > 1:
         offsets[right] = offsets[left] + 1
@@ -159,6 +162,7 @@ def test_every_multielement_region_rejects_partial_overlap_without_writes(
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_adjacent_regions_are_accepted(backend: str) -> None:
+    """Output regions that touch but do not overlap are accepted."""
     offsets = {
         "ext_input": 0,
         "r_trace": 2,
@@ -182,6 +186,7 @@ def test_null_required_pointer_returns_status_one_without_writes(
     backend: str,
     missing_pointer: str,
 ) -> None:
+    """A null required pointer returns status 1 and writes nothing."""
     buffers = _separate_buffers(np.asarray([1.25, 1.5]))
     pointers = _pointers(buffers)
     pointers[missing_pointer] = 0
@@ -193,6 +198,7 @@ def test_null_required_pointer_returns_status_one_without_writes(
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_negative_step_count_returns_status_one_without_writes(backend: str) -> None:
+    """A negative step count returns status 1 and writes nothing."""
     buffers = _separate_buffers(np.asarray([1.25, 1.5]))
     before = _output_snapshot(buffers)
 
@@ -202,6 +208,7 @@ def test_negative_step_count_returns_status_one_without_writes(backend: str) -> 
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_empty_batch_accepts_only_distinct_final_receipts(backend: str) -> None:
+    """An empty batch needs only distinct final-state buffers."""
     r_final = np.full(1, _SENTINEL, dtype=np.float64)
     v_final = np.full(1, _SENTINEL, dtype=np.float64)
     pointers = {
@@ -238,6 +245,7 @@ def test_numerical_statuses_leave_every_output_unchanged(
     configuration: tuple[float, ...],
     drive: npt.NDArray[np.float64],
 ) -> None:
+    """A numerical refusal status leaves every output buffer as it was."""
     buffers = _separate_buffers(drive)
     before = _output_snapshot(buffers)
 
@@ -248,6 +256,7 @@ def test_numerical_statuses_leave_every_output_unchanged(
 
 
 def test_go_header_uses_signed_32_bit_count_and_status() -> None:
+    """The Go header declares the step count and the status as signed 32-bit integers."""
     header = (
         _ROOT / "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.h"
     ).read_text(encoding="utf-8")
@@ -259,6 +268,7 @@ def test_go_header_uses_signed_32_bit_count_and_status() -> None:
 
 
 def test_mojo_llvm_uses_signed_32_bit_count_and_status(tmp_path: Path, pixi_cli: str) -> None:
+    """The Mojo build's LLVM IR takes and returns signed 32-bit count and status."""
     manifest = _ROOT / "src/sc_neurocore/accel/mojo/pixi.toml"
     source = _ROOT / "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/ermentrout_kopell_pop.mojo"
     llvm_path = tmp_path / "ermentrout_kopell_pop.ll"
@@ -302,6 +312,7 @@ def _load_builder() -> Any:
 
 
 def test_real_builder_discovers_model39_for_both_native_languages() -> None:
+    """The real builder finds the model's Go and Mojo targets and their library names."""
     builder = _load_builder()
     for language in _BACKENDS:
         targets = {target.name: target for target in builder.discover_targets(language)}
@@ -310,7 +321,8 @@ def test_real_builder_discovers_model39_for_both_native_languages() -> None:
 
 
 def test_ci_requires_model39_for_both_native_builds() -> None:
-    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    """CI requires the model in both native builds."""
+    workflow = ci_job_text("test")
     required_line = next(
         line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")
     )
