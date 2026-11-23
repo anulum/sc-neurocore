@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2369
+expected_file_count = 2372
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9520,3 +9520,15 @@ rationale = "Keep the contrastive SSL lane facades' refusal paths tested."
 [[file]]
 path = "tests/test_contrastive_ssl_mojo_parity.py"
 rationale = "Keep the Mojo contrastive SSL parity bounds tested."
+
+[[file]]
+path = "tests/test_cosim_support_architecture_ownership_biophysical.py"
+rationale = "Pin exact definition ownership for the biophysical co-simulation references."
+
+[[file]]
+path = "tests/test_cosim_support_architecture_ownership_if_and_rate.py"
+rationale = "Pin exact definition ownership for the integrate-and-fire and rate references."
+
+[[file]]
+path = "tests/test_cosim_support_architecture_ownership_map_special.py"
+rationale = "Pin exact definition ownership for the map and special-model references."

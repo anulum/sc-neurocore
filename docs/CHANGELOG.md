@@ -1268,6 +1268,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The three co-simulation ownership test modules import their names
+  explicitly instead of through a suppressed star import, so ruff checks
+  them without a `noqa: F403`. They gain docstrings and are enrolled in
+  the docstring policy.
+
 - The ASIC-flow architecture test no longer caps the package modules at
   350 lines or its focused tests at 250. In its place,
   `test_each_module_is_declared_and_defines_exactly_what_it_owns`

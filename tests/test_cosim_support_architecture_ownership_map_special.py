@@ -6,12 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (ownership_map_special) from former test_cosim_support_architecture.py
 
+"""Pin exact definition ownership for the map and special-model references."""
+
 from __future__ import annotations
 
-from tests.cosim_support_architecture_support import *  # noqa: F403
+import ast
+from pathlib import Path
+
+from tests import (
+    cosim_reference_dpi_neuron,
+    cosim_reference_exponential_relaxation,
+    cosim_reference_ibarz_tanaka,
+    cosim_reference_rulkov_map,
+    cosim_support,
+)
+from tests.cosim_support_architecture_support import (
+    _DPI_NEURON_NAMES,
+    _EXPONENTIAL_RELAXATION_NAMES,
+    _IBARZ_TANAKA_NAMES,
+    _RULKOV_MAP_NAMES,
+)
 
 
 def test_ibarz_tanaka_has_exact_definition_ownership() -> None:
+    """The Ibarz–Tanaka reference defines exactly its functions; the facade none."""
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
     assert facade_functions.isdisjoint(_IBARZ_TANAKA_NAMES)
@@ -22,6 +40,7 @@ def test_ibarz_tanaka_has_exact_definition_ownership() -> None:
 
 
 def test_dpi_neuron_has_exact_definition_ownership() -> None:
+    """The DPI neuron reference defines exactly its functions; the facade none."""
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
     assert facade_functions.isdisjoint(_DPI_NEURON_NAMES)
@@ -32,6 +51,7 @@ def test_dpi_neuron_has_exact_definition_ownership() -> None:
 
 
 def test_exponential_relaxation_has_exact_definition_ownership() -> None:
+    """The exponential-relaxation reference defines exactly its functions; the facade none."""
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
     assert facade_functions.isdisjoint(_EXPONENTIAL_RELAXATION_NAMES)
@@ -44,6 +64,7 @@ def test_exponential_relaxation_has_exact_definition_ownership() -> None:
 
 
 def test_rulkov_map_has_exact_definition_ownership() -> None:
+    """The Rulkov map reference defines exactly its functions; the facade none."""
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
     assert facade_functions.isdisjoint(_RULKOV_MAP_NAMES)
