@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5761
+    "test_files": 5760
   },
   "documentation": {
     "public_pages": [
@@ -5616,7 +5616,6 @@
       "tests/test_hdc_python_bit_stream_tensor_memory.py",
       "tests/test_hdc_python_hdc_vector.py",
       "tests/test_hdl_axis_interface.py",
-      "tests/test_hdl_gen/kuramoto_rtl_support.py",
       "tests/test_hdl_gen/stochastic_source_emitters_support.py",
       "tests/test_hdl_gen/test_async_emitter.py",
       "tests/test_hdl_gen/test_ident.py",

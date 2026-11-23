@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (error_report) from former test_kuramoto_rtl.py
 
+"""The Kuramoto RTL fixed-point error report and its committed copy."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
+import json
+import subprocess
+import sys
+from pathlib import (
+    Path,
+)
+from sc_neurocore.hdl_gen import (
+    KuramotoEmitter,
+)
 
 
 def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path: Path) -> None:
+    """The error-report command writes its fixed-point gate report."""
     output = tmp_path / "kuramoto_rtl_fixed_point_error.json"
 
     result = subprocess.run(
@@ -69,6 +80,7 @@ def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path: Path)
 
 
 def test_committed_kuramoto_rtl_error_report_matches_reference() -> None:
+    """The committed error report passes every case in its known phase regimes."""
     report_path = Path("benchmarks/results/kuramoto_rtl_fixed_point_error.json")
 
     payload = json.loads(report_path.read_text(encoding="utf-8"))

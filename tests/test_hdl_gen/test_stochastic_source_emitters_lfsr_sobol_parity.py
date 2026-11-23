@@ -6,12 +6,35 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (lfsr_sobol_parity) from former test_stochastic_source_emitters.py
 
+"""Parity of the emitted LFSR and Sobol sources with their software models."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.stochastic_source_emitters_support import *  # noqa: F403
+from pathlib import Path
+
+from sc_neurocore.edge.lfsr import (
+    Lfsr16,
+)
+from sc_neurocore.edge.sobol import (
+    SobolGenerator,
+)
+from sc_neurocore.hdl_gen import (
+    Lfsr16Emitter,
+    Sobol16Emitter,
+)
+from tests.test_hdl_gen.stochastic_source_emitters_support import (
+    _lfsr16_step,
+    _lfsr_testbench,
+    _pack_sample_bits,
+    _RTL_SAMPLE_COUNT,
+    _simulate_source,
+    _sobol16_step,
+    _sobol_testbench,
+)
 
 
-def test_lfsr16_emitter_generates_software_parity_module():
+def test_lfsr16_emitter_generates_software_parity_module() -> None:
+    """The LFSR emitter writes the taps, shift and comparison of the software encoder."""
     verilog = Lfsr16Emitter(module_name="lfsr16_source", seed=0xBEEF).generate()
 
     assert "module lfsr16_source" in verilog
@@ -22,7 +45,8 @@ def test_lfsr16_emitter_generates_software_parity_module():
     assert "16'hBEEF" in verilog
 
 
-def test_lfsr16_reference_formula_matches_python_encoder():
+def test_lfsr16_reference_formula_matches_python_encoder() -> None:
+    """The reference LFSR step follows the Python encoder for 128 steps."""
     lfsr = Lfsr16(seed=0xACE1)
     state = 0xACE1
 
@@ -31,7 +55,8 @@ def test_lfsr16_reference_formula_matches_python_encoder():
         assert lfsr.step() == state
 
 
-def test_sobol16_emitter_generates_direction_table_and_software_parity_module():
+def test_sobol16_emitter_generates_direction_table_and_software_parity_module() -> None:
+    """The Sobol emitter writes its direction table, update and comparison."""
     verilog = Sobol16Emitter(module_name="sobol16_source", seed=0x1234).generate()
 
     assert "module sobol16_source" in verilog
@@ -43,7 +68,8 @@ def test_sobol16_emitter_generates_direction_table_and_software_parity_module():
     assert "16'h1234" in verilog
 
 
-def test_sobol16_reference_formula_matches_python_generator():
+def test_sobol16_reference_formula_matches_python_generator() -> None:
+    """The reference Sobol step follows the Python generator for 128 steps."""
     sobol = SobolGenerator(seed=0x0000)
     value = 0x0000
     index = 0
@@ -53,7 +79,8 @@ def test_sobol16_reference_formula_matches_python_generator():
         assert sobol.step() == value
 
 
-def test_lfsr16_emitted_rtl_matches_reference_sequence(tmp_path):
+def test_lfsr16_emitted_rtl_matches_reference_sequence(tmp_path: Path) -> None:
+    """Simulated LFSR RTL gives the reference states, bits and packed words."""
     seed = 0xBEEF
     threshold = 0x8000
     verilog = Lfsr16Emitter(module_name="lfsr16_parity", seed=seed).generate()
@@ -69,7 +96,8 @@ def test_lfsr16_emitted_rtl_matches_reference_sequence(tmp_path):
     assert _pack_sample_bits(samples, 32) == Lfsr16(seed=seed).encode(threshold, _RTL_SAMPLE_COUNT)
 
 
-def test_sobol16_emitted_rtl_matches_reference_sequence(tmp_path):
+def test_sobol16_emitted_rtl_matches_reference_sequence(tmp_path: Path) -> None:
+    """Simulated Sobol RTL gives the reference values, bits and packed words."""
     seed = 0x0042
     threshold = 0x4000
     verilog = Sobol16Emitter(module_name="sobol16_parity", seed=seed).generate()

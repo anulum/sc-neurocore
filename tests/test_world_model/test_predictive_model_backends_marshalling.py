@@ -6,12 +6,33 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (marshalling) from former test_predictive_model_backends.py
 
+"""Marshalling between the Kalman filter and each native backend."""
+
 from __future__ import annotations
 
-from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
+import ctypes
+import numpy as np
+import pytest
+from sc_neurocore.world_model import (
+    _lgssm_backends as backends,
+)
+from tests.test_world_model.predictive_model_backends_support import (
+    _DoublePointer,
+    _inputs,
+    _model,
+    _native_mapping,
+    _write_c_outputs,
+)
+from types import (
+    SimpleNamespace,
+)
+from typing import (
+    cast,
+)
 
 
 def test_rust_marshalling_returns_validated_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Rust marshalling passes flat inputs and validates the returned result."""
     captured: dict[str, object] = {}
 
     def rust_filter(**kwargs: object) -> object:
@@ -33,6 +54,7 @@ def test_rust_marshalling_returns_validated_result(monkeypatch: pytest.MonkeyPat
 def test_rust_marshalling_rejects_non_numeric_likelihood(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A non-numeric log-likelihood from Rust is refused."""
     mapping = _native_mapping()
     mapping["log_likelihood"] = object()
     monkeypatch.setattr(backends, "_rust_kalman_filter", lambda **_kwargs: mapping)
@@ -44,6 +66,7 @@ def test_rust_marshalling_rejects_non_numeric_likelihood(
 def test_rust_marshalling_rejects_out_of_range_numeric_payloads(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An out-of-range log-likelihood from Rust is refused."""
     mapping = _native_mapping()
     mapping["log_likelihood"] = 10**10_000
     monkeypatch.setattr(backends, "_rust_kalman_filter", lambda **_kwargs: mapping)
@@ -83,6 +106,7 @@ def test_rust_marshalling_rejects_malformed_payloads(
     monkeypatch: pytest.MonkeyPatch,
     malformed_result: object,
 ) -> None:
+    """A malformed Rust result is refused."""
     monkeypatch.setattr(
         backends,
         "_rust_kalman_filter",
@@ -94,6 +118,7 @@ def test_rust_marshalling_rejects_malformed_payloads(
 
 
 def test_julia_marshalling_reads_named_result_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Julia marshalling reads the named fields of the filter result."""
     mapping = _native_mapping()
     result_object = SimpleNamespace(
         means=mapping["means"],
@@ -117,6 +142,8 @@ def test_julia_marshalling_reads_named_result_fields(monkeypatch: pytest.MonkeyP
 def test_julia_marshalling_rejects_incomplete_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An incomplete Julia filter result is refused."""
+
     class JuliaModule:
         @staticmethod
         def kalman_filter(*_args: object) -> object:
@@ -129,6 +156,8 @@ def test_julia_marshalling_rejects_incomplete_result(
 
 
 def test_mojo_raw_address_marshalling(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mojo marshalling writes the outputs through raw addresses."""
+
     class MojoLibrary:
         @staticmethod
         def kalman_filter_c(*args: object) -> None:
@@ -143,6 +172,8 @@ def test_mojo_raw_address_marshalling(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_go_pointer_marshalling(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Go marshalling writes the outputs through typed pointers."""
+
     class GoLibrary:
         @staticmethod
         def kalman_filter_c(*args: object) -> None:

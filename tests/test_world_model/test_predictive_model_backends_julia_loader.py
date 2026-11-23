@@ -6,15 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (julia_loader) from former test_predictive_model_backends.py
 
+"""Julia module loading for the predictive-model backends."""
+
 from __future__ import annotations
 
-from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
+import importlib
+import importlib.util
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.world_model import (
+    _lgssm_backends as backends,
+)
+from types import (
+    SimpleNamespace,
+)
 
 
 def test_julia_loader_handles_cache_dependency_file_and_module_failures(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    """The Julia loader uses its cache and fails closed on each missing piece."""
     monkeypatch.setattr(backends, "_julia_module", object())
     monkeypatch.setattr(backends, "_HAS_JULIA_LGSSM", False)
     assert backends._ensure_julia_loaded() is True
@@ -52,6 +66,7 @@ def test_julia_loader_includes_module_and_caches_export(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    """The Julia loader includes the module file and caches its export."""
     loaded_module = object()
 
     class Main:

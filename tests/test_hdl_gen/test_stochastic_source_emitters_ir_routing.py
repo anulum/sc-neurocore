@@ -6,12 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (ir_routing) from former test_stochastic_source_emitters.py
 
+"""Stochastic source emission routed from an IR."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.stochastic_source_emitters_support import *  # noqa: F403
+import pytest
+from sc_neurocore.hdl_gen import (
+    emit_sources_from_ir,
+    VerilogGenerator,
+)
+from types import (
+    SimpleNamespace,
+)
 
 
-def test_verilog_generator_exposes_stochastic_source_helpers():
+def test_verilog_generator_exposes_stochastic_source_helpers() -> None:
+    """The Verilog generator emits LFSR and Sobol source modules with their seeds."""
     generator = VerilogGenerator()
 
     lfsr_verilog = generator.emit_lfsr16_source(seed=0xACE1)
@@ -22,7 +32,8 @@ def test_verilog_generator_exposes_stochastic_source_helpers():
     assert "16'h0042" in sobol_verilog
 
 
-def test_emit_sources_from_ir_accepts_mapping_nodes():
+def test_emit_sources_from_ir_accepts_mapping_nodes() -> None:
+    """Stochastic sources are emitted from mapping nodes of an IR."""
     verilog = emit_sources_from_ir(
         {
             "nodes": [
@@ -49,7 +60,8 @@ def test_emit_sources_from_ir_accepts_mapping_nodes():
     assert "dense0" not in verilog
 
 
-def test_verilog_generator_routes_stochastic_sources_from_ir():
+def test_verilog_generator_routes_stochastic_sources_from_ir() -> None:
+    """The generator emits a source from an IR whose nodes are keyed by name."""
     generator = VerilogGenerator()
 
     verilog = generator.emit_sources_from_ir(
@@ -68,7 +80,8 @@ def test_verilog_generator_routes_stochastic_sources_from_ir():
     assert "16'hACE1" in verilog
 
 
-def test_emit_sources_from_ir_accepts_object_nodes():
+def test_emit_sources_from_ir_accepts_object_nodes() -> None:
+    """Stochastic sources are emitted from object nodes of an IR."""
     node = SimpleNamespace(
         module_name="object_sobol",
         node_type="StochasticSource",
@@ -81,7 +94,8 @@ def test_emit_sources_from_ir_accepts_object_nodes():
     assert "16'h0017" in verilog
 
 
-def test_emit_sources_from_ir_rejects_unknown_explicit_source_kind():
+def test_emit_sources_from_ir_rejects_unknown_explicit_source_kind() -> None:
+    """An unknown stochastic source type is refused."""
     with pytest.raises(ValueError, match="unsupported stochastic source type"):
         emit_sources_from_ir(
             {
@@ -95,7 +109,8 @@ def test_emit_sources_from_ir_rejects_unknown_explicit_source_kind():
         )
 
 
-def test_emit_sources_from_ir_rejects_duplicate_module_names():
+def test_emit_sources_from_ir_rejects_duplicate_module_names() -> None:
+    """Two sources with the same module name are refused."""
     with pytest.raises(ValueError, match="duplicate stochastic source module name"):
         emit_sources_from_ir(
             {

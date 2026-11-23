@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2505
+expected_file_count = 2518
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10064,3 +10064,55 @@ rationale = "Exercise the stochastic doctor suite: diagnostics scc."
 [[file]]
 path = "tests/test_stochastic_doctor/test_diagnostics_stochastic_doctor.py"
 rationale = "Exercise the stochastic doctor suite: diagnostics stochastic doctor."
+
+[[file]]
+path = "tests/test_hdl_gen/test_kuramoto_rtl_emitter_config.py"
+rationale = "Exercise the hdl gen suite: kuramoto rtl emitter config."
+
+[[file]]
+path = "tests/test_hdl_gen/test_kuramoto_rtl_error_report.py"
+rationale = "Exercise the hdl gen suite: kuramoto rtl error report."
+
+[[file]]
+path = "tests/test_hdl_gen/test_kuramoto_rtl_fixed_point_reference.py"
+rationale = "Exercise the hdl gen suite: kuramoto rtl fixed point reference."
+
+[[file]]
+path = "tests/test_hdl_gen/test_kuramoto_rtl_hdl_compile.py"
+rationale = "Exercise the hdl gen suite: kuramoto rtl hdl compile."
+
+[[file]]
+path = "tests/test_hdl_gen/test_stochastic_source_emitters_ir_routing.py"
+rationale = "Exercise the hdl gen suite: stochastic source emitters ir routing."
+
+[[file]]
+path = "tests/test_hdl_gen/test_stochastic_source_emitters_lfsr_sobol_parity.py"
+rationale = "Exercise the hdl gen suite: stochastic source emitters lfsr sobol parity."
+
+[[file]]
+path = "tests/test_hdl_gen/test_stochastic_source_emitters_seed_and_rejects.py"
+rationale = "Exercise the hdl gen suite: stochastic source emitters seed and rejects."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_c_abi_loader.py"
+rationale = "Exercise the world model suite: predictive model backends c abi loader."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_julia_loader.py"
+rationale = "Exercise the world model suite: predictive model backends julia loader."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_marshalling.py"
+rationale = "Exercise the world model suite: predictive model backends marshalling."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_native_runners.py"
+rationale = "Exercise the world model suite: predictive model backends native runners."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_probe_and_resolve.py"
+rationale = "Exercise the world model suite: predictive model backends probe and resolve."
+
+[[file]]
+path = "tests/test_world_model/test_predictive_model_backends_rust_loader.py"
+rationale = "Exercise the world model suite: predictive model backends rust loader."

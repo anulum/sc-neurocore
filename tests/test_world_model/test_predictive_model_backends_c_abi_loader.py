@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (c_abi_loader) from former test_predictive_model_backends.py
 
+"""C-ABI library loading for the predictive-model backends."""
+
 from __future__ import annotations
 
-from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
+import ctypes
+import pytest
+from collections.abc import (
+    Callable,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.world_model import (
+    _lgssm_backends as backends,
+)
+from types import (
+    SimpleNamespace,
+)
+from typing import (
+    cast,
+)
 
 
 @pytest.mark.parametrize(
@@ -24,6 +42,7 @@ def test_c_abi_loader_handles_cache_missing_file_and_load_error(
     backend_name: str,
     relative_path: Path,
 ) -> None:
+    """The C-ABI loader uses its cache and fails closed on a missing or broken library."""
     ensure = cast(Callable[[], bool], getattr(backends, f"_ensure_{backend_name}_loaded"))
     library_attr = f"_{backend_name}_lib"
     flag_attr = f"_HAS_{backend_name.upper()}_LGSSM"
@@ -63,6 +82,7 @@ def test_c_abi_loader_requires_symbol_and_configures_signature(
     relative_path: Path,
     argument_count: int,
 ) -> None:
+    """The C-ABI loader needs the filter symbol and sets its argument types."""
     ensure = cast(Callable[[], bool], getattr(backends, f"_ensure_{backend_name}_loaded"))
     library_attr = f"_{backend_name}_lib"
     flag_attr = f"_HAS_{backend_name.upper()}_LGSSM"

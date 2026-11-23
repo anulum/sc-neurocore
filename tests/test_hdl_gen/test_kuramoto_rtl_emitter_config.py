@@ -6,12 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (emitter_config) from former test_kuramoto_rtl.py
 
+"""Ports, helpers and configuration checks of the Kuramoto RTL emitter."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
+import pytest
+from sc_neurocore.hdl_gen import (
+    KuramotoEmitter,
+)
+from typing import (
+    Any,
+)
 
 
 def test_kuramoto_emitter_has_expected_ports_and_helpers() -> None:
+    """The emitted Kuramoto module has its ports, sine table, phase differences and phase bus."""
     emitter = KuramotoEmitter(
         module_name="kuramoto_top",
         n_oscillators=3,
@@ -28,16 +37,13 @@ def test_kuramoto_emitter_has_expected_ports_and_helpers() -> None:
 
 
 def test_kuramoto_emitter_rejects_configuration_mismatch() -> None:
-    try:
+    """An omega list shorter than the oscillator count is refused."""
+    with pytest.raises(ValueError, match="omegas length must equal n_oscillators"):
         KuramotoEmitter(
             n_oscillators=3,
             omegas=[1.0, 1.1],
             initial_phases=[0.0, 0.1, 0.2],
         )
-    except ValueError as exc:
-        assert "omegas length must equal n_oscillators" in str(exc)
-    else:  # pragma: no cover - defensive assertion
-        raise AssertionError("Expected ValueError for omega length mismatch")
 
 
 @pytest.mark.parametrize(
@@ -58,6 +64,7 @@ def test_kuramoto_emitter_rejects_configuration_mismatch() -> None:
 def test_kuramoto_emitter_rejects_invalid_structural_configuration(
     kwargs: dict[str, Any], message: str
 ) -> None:
+    """Each invalid structural setting is refused with its message."""
     with pytest.raises(ValueError, match=message):
         KuramotoEmitter(**kwargs)
 
@@ -78,6 +85,7 @@ def test_kuramoto_emitter_rejects_invalid_structural_configuration(
 def test_kuramoto_emitter_rejects_invalid_numerical_configuration(
     kwargs: dict[str, Any], message: str
 ) -> None:
+    """Each invalid numerical setting is refused with its message."""
     base_kwargs: dict[str, Any] = {
         "n_oscillators": 2,
         "omegas": [1.0, 1.1],
@@ -90,10 +98,12 @@ def test_kuramoto_emitter_rejects_invalid_numerical_configuration(
 
 
 def test_kuramoto_emitter_rejects_fixed_point_format_that_cannot_hold_phase_modulus() -> None:
+    """A fixed-point format that cannot hold two pi is refused."""
     with pytest.raises(ValueError, match="fixed-point format cannot represent 2pi"):
         KuramotoEmitter(data_width=16, fraction=15)
 
 
 def test_kuramoto_emitter_rejects_configuration_that_requires_multi_wrap_step() -> None:
+    """A step that would advance a phase by two pi or more is refused."""
     with pytest.raises(ValueError, match="single-step phase advance must stay below 2pi"):
         KuramotoEmitter(n_oscillators=1, omegas=[100.0], dt=0.1)

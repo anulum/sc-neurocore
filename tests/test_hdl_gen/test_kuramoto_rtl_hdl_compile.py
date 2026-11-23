@@ -6,12 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (hdl_compile) from former test_kuramoto_rtl.py
 
+"""Compilation of the emitted Kuramoto RTL."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
+import shutil
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.hdl_gen import (
+    KuramotoEmitter,
+)
+from sc_neurocore.hdl_gen.verilog_generator import (
+    VerilogGenerator,
+)
 
 
 def test_verilog_generator_can_emit_kuramoto_phase() -> None:
+    """The Verilog generator emits a Kuramoto phase module with its oscillators."""
     gen = VerilogGenerator(module_name="kuramoto_wrap")
     code = gen.emit_kuramoto_phase(
         n_oscillators=2,
@@ -25,6 +38,7 @@ def test_verilog_generator_can_emit_kuramoto_phase() -> None:
 
 
 def test_kuramoto_emitter_smoke_compiles_with_iverilog(tmp_path: Path) -> None:
+    """A four-oscillator Kuramoto module compiles with Icarus Verilog."""
     iverilog = shutil.which("iverilog")
     if iverilog is None:
         raise AssertionError("iverilog must be available for HDL smoke tests")
@@ -50,6 +64,7 @@ def test_kuramoto_emitter_smoke_compiles_with_iverilog(tmp_path: Path) -> None:
 
 
 def test_kuramoto_emitter_large_lut_compiles_without_index_truncation(tmp_path: Path) -> None:
+    """A 512-entry sine table compiles without truncating its index."""
     iverilog = shutil.which("iverilog")
     if iverilog is None:
         raise AssertionError("iverilog must be available for HDL smoke tests")

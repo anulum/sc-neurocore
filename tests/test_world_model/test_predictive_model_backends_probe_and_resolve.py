@@ -6,14 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (probe_and_resolve) from former test_predictive_model_backends.py
 
+"""Probing and resolving the predictive-model backends."""
+
 from __future__ import annotations
 
-from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
+import pytest
+from sc_neurocore.world_model import (
+    _lgssm_backends as backends,
+)
 
 
 def test_probe_and_resolve_backend_follow_fastest_first_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Probing and automatic resolution follow the fastest-first backend order."""
     availability = {"mojo": False, "rust": False, "julia": True, "go": True}
     monkeypatch.setattr(backends, "_ensure_mojo_loaded", lambda: availability["mojo"])
     monkeypatch.setattr(backends, "_ensure_rust_loaded", lambda: availability["rust"])
@@ -34,6 +40,7 @@ def test_probe_and_resolve_backend_follow_fastest_first_order(
 
 
 def test_auto_resolution_reaches_python_floor(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Automatic resolution falls back to Python when nothing else is available."""
     monkeypatch.setattr(
         backends,
         "probe_backend",
@@ -45,6 +52,7 @@ def test_auto_resolution_reaches_python_floor(monkeypatch: pytest.MonkeyPatch) -
 def test_auto_resolution_fails_closed_if_even_python_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Automatic resolution fails closed when no backend is available."""
     monkeypatch.setattr(
         backends,
         "probe_backend",

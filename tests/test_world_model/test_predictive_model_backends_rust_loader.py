@@ -6,17 +6,33 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rust_loader) from former test_predictive_model_backends.py
 
+"""Rust filter loading for the predictive-model backends."""
+
 from __future__ import annotations
 
-from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
+import importlib
+import importlib.util
+import pytest
+from sc_neurocore.world_model import (
+    _lgssm_backends as backends,
+)
+from tests.test_world_model.predictive_model_backends_support import (
+    _native_mapping,
+)
+from types import (
+    SimpleNamespace,
+)
 
 
 def test_missing_rust_filter_raises() -> None:
+    """The placeholder for a missing Rust filter raises."""
     with pytest.raises(RuntimeError, match="not available"):
         backends._missing_rust_kalman_filter()
 
 
 def test_rust_loader_prefers_world_model_submodule(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Rust loader takes the filter from the world-model submodule first."""
+
     def sentinel(**_kwargs: object) -> object:
         return _native_mapping()
 
@@ -29,6 +45,8 @@ def test_rust_loader_prefers_world_model_submodule(monkeypatch: pytest.MonkeyPat
 
 
 def test_rust_loader_uses_root_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the submodule the Rust loader falls back to the root export."""
+
     def sentinel(**_kwargs: object) -> object:
         return _native_mapping()
 
@@ -44,6 +62,7 @@ def test_rust_loader_uses_root_fallback(monkeypatch: pytest.MonkeyPatch) -> None
 def test_rust_loader_rejects_missing_and_non_callable_exports(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The Rust loader refuses a missing or non-callable export."""
     monkeypatch.setattr(
         importlib,
         "import_module",
@@ -64,6 +83,7 @@ def test_rust_loader_rejects_missing_and_non_callable_exports(
 def test_module_initialisation_survives_missing_rust(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The backends module imports cleanly without the Rust engine."""
     real_import_module = importlib.import_module
 
     def import_module_without_rust(
@@ -87,6 +107,8 @@ def test_module_initialisation_survives_missing_rust(
 def test_ensure_rust_loaded_caches_success_and_reports_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The Rust probe caches a loaded filter and reports a failed load."""
+
     def sentinel(**_kwargs: object) -> object:
         return _native_mapping()
 

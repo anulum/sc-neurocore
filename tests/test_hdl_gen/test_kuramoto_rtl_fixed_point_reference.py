@@ -6,12 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (fixed_point_reference) from former test_kuramoto_rtl.py
 
+"""Fixed-point reference steps of the Kuramoto RTL emitter and their simulation."""
+
 from __future__ import annotations
 
-from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
+import math
+import pytest
+import shutil
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.hdl_gen import (
+    KuramotoEmitter,
+)
+from typing import (
+    cast,
+)
 
 
 def test_kuramoto_emitter_fixed_point_reference_matches_known_coupled_step() -> None:
+    """The fixed-point step of two coupled oscillators gives the known phases."""
     emitter = KuramotoEmitter(
         n_oscillators=2,
         omegas=[0.0, 0.0],
@@ -43,6 +58,7 @@ def test_kuramoto_emitter_fixed_point_reference_matches_known_coupled_step() -> 
 def test_kuramoto_emitter_fixed_point_step_rejects_noncanonical_phase_state(
     phase_state: list[object], message: str
 ) -> None:
+    """A fixed-point step refuses a phase state that is not canonical."""
     emitter = KuramotoEmitter(n_oscillators=2, fraction=16)
 
     with pytest.raises(ValueError, match=message):
@@ -65,6 +81,7 @@ def test_kuramoto_emitter_fixed_point_step_rejects_noncanonical_phase_state(
 def test_kuramoto_emitter_fixed_state_to_float_rejects_noncanonical_phase_state(
     phase_state: list[object], message: str
 ) -> None:
+    """Converting a non-canonical fixed-point phase state to floats is refused."""
     emitter = KuramotoEmitter(n_oscillators=2, fraction=16)
 
     with pytest.raises(ValueError, match=message):
@@ -72,6 +89,7 @@ def test_kuramoto_emitter_fixed_state_to_float_rejects_noncanonical_phase_state(
 
 
 def test_kuramoto_emitter_characterises_fixed_point_error_against_float_reference() -> None:
+    """The error summary compares the fixed-point steps with the float reference."""
     emitter = KuramotoEmitter(
         n_oscillators=4,
         omegas=[0.88, 0.96, 1.04, 1.12],
@@ -93,6 +111,7 @@ def test_kuramoto_emitter_characterises_fixed_point_error_against_float_referenc
 
 
 def test_kuramoto_emitter_fixed_point_error_summary_requires_positive_steps() -> None:
+    """An error summary over zero steps is refused."""
     emitter = KuramotoEmitter()
 
     with pytest.raises(ValueError, match="steps must be >= 1"):
@@ -100,6 +119,7 @@ def test_kuramoto_emitter_fixed_point_error_summary_requires_positive_steps() ->
 
 
 def test_kuramoto_emitter_hdl_matches_no_coupling_fixed_point_step(tmp_path: Path) -> None:
+    """Simulated RTL of one uncoupled oscillator matches the fixed-point step."""
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     if iverilog is None or vvp is None:
@@ -192,6 +212,7 @@ endmodule
 def test_kuramoto_emitter_hdl_matches_coupled_two_oscillator_fixed_point_step(
     tmp_path: Path,
 ) -> None:
+    """Simulated RTL of two coupled oscillators matches the fixed-point step."""
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     if iverilog is None or vvp is None:

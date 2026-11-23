@@ -1307,6 +1307,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 13 HDL-generation and world-model test modules
+  (`tests/test_hdl_gen`, `tests/test_world_model`) import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing module and test docstrings and type annotations and are
+  enrolled in the docstring policy. The Kuramoto configuration test
+  checks its refusal with `pytest.raises` instead of an excluded
+  branch, and the Kuramoto RTL support module, left without an
+  importer, is deleted.
+
 - The 19 star-import test modules of five small suites
   (`tests/test_analog_bridge`, `test_integration`, `test_interfaces`,
   `test_learning`, `test_stochastic_doctor`) import their names
