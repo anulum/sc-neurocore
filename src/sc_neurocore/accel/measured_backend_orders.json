@@ -1,22 +1,5 @@
 {
-  "entries": [
-    {
-      "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-      "currency": "current",
-      "isa_level": "unrecorded",
-      "kernel": "alpha_exact_flow_batch",
-      "order": [
-        "mojo",
-        "rust",
-        "julia",
-        "go",
-        "python"
-      ],
-      "record": "bench_alpha.json",
-      "record_sha256": "0290b655341dd5af5431b387472e4fd2bad1f8e4cd08a0a4f12a65f8218e6371",
-      "source_digests": {}
-    }
-  ],
+  "entries": [],
   "left_out": [
     {
       "reason": "shape",
@@ -37,6 +20,10 @@
     {
       "reason": "shape",
       "record": "bench_aihara_map.json"
+    },
+    {
+      "reason": "outdated",
+      "record": "bench_alpha.json"
     },
     {
       "reason": "shape",

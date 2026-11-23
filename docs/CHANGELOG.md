@@ -1287,6 +1287,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The engine monolith guard is replaced by a rule for where Python
+  bindings live. `tools/engine_bindings_location.py --check` refuses any
+  `#[pyfunction]` in a tracked `engine/src` Rust file outside a binding
+  module (a `bindings` directory or a `bindings.rs` file), for every
+  engine file rather than a fixed list. The DOWN-only line ceilings,
+  `tools/engine_monolith_ceiling.toml` and their tests are removed; files
+  are divided by responsibility, not by size. The CI step and the
+  pre-commit hook run the new rule.
+
 - The RK4 neuron simulator's Python binding, `py_rk4_neuron_simulate`
   and its trace helpers, moved out of `engine/src/rk4_neurons.rs` into its
   binding module `engine/src/rk4_neurons/bindings.rs`, which the extension

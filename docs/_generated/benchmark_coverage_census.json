@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 26,
-    "outdated": 129,
+    "current": 25,
+    "outdated": 130,
     "reviewed": 0,
     "unbound": 175
   },
@@ -13,8 +13,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 2,
-    "outdated": 84,
+    "current": 1,
+    "outdated": 85,
     "reviewed": 0,
     "unbound": 1
   },
@@ -111,7 +111,10 @@
       "records": [
         {
           "attribution": "bound_script",
-          "currency": "current",
+          "changed": [
+            ".github/workflows/ci.yml"
+          ],
+          "currency": "outdated",
           "name": "bench_alpha.json",
           "script": "bench_model_alpha.py"
         }

@@ -64,12 +64,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.github/(workflows|actions)/|tools/(toolchain_manifest\.(py|toml)|rust_toolchain_pin\.py|security_scan/run_cargo_fuzz_scanners\.py)$|engine/rust-toolchain\.toml$|src/.*/(go\.mod|pixi\.toml)$|requirements-dev\.txt$)'
-      - id: engine-monolith-no-growth
-        name: engine monolith no-growth guard
-        entry: python tools/engine_monolith_guard.py --check
+      - id: engine-bindings-location
+        name: engine bindings location
+        entry: python tools/engine_bindings_location.py --check
         language: system
         pass_filenames: false
-        files: '^(\.pre-commit-config\.yaml|engine/src/.*\.rs|tools/(engine_monolith_guard\.py|engine_monolith_ceiling\.toml))$'
+        files: '^(\.pre-commit-config\.yaml|engine/src/.*\.rs|tools/engine_bindings_location\.py)$'
       - id: runtime-state-transport-ratchet
         name: runtime state transport ratchet
         entry: python tools/runtime_state_conformance.py --check-ceiling

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2376
+expected_file_count = 2378
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9548,3 +9548,11 @@ rationale = "Pin time-to-solution formulas, solver comparison and their input re
 [[file]]
 path = "tests/test_bench_quantum_annealing_modularisation.py"
 rationale = "Exercise the annealing modularisation benchmark through its real command line."
+
+[[file]]
+path = "tools/engine_bindings_location.py"
+rationale = "Document the engine binding-location rule, its git listing and its exit codes."
+
+[[file]]
+path = "tests/test_tools/test_engine_bindings_location.py"
+rationale = "Exercise the binding-location rule on the live tree and planted repositories."

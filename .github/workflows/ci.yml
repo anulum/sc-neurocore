@@ -121,8 +121,8 @@ jobs:
             exit 1
           fi
 
-      - name: Engine monolith no-growth guard
-        run: python tools/engine_monolith_guard.py --check
+      - name: Engine bindings location
+        run: python tools/engine_bindings_location.py --check
 
       - name: Split import gate (report mode)
         # Reports imports that cross the planned SC-NC destinations against their order
