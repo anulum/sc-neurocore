@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tvm_lowering_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.tvm_lowering import (
+    RelayFunction,
+)
 
 
 class TestRelayFunction(unittest.TestCase):
-    def test_to_relay_text(self):
+    """Text form of Relay functions."""
+
+    def test_to_relay_text(self) -> None:
+        """A Relay function prints its name and body."""
         func = RelayFunction(
             name="test_fn",
             params=[("x", "(128,), dtype=bool")],

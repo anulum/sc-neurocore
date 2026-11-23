@@ -1314,6 +1314,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 11 compiler-export, ONNX-export and TVM-lowering test modules
+  (`tests/test_export`) import their names explicitly instead of
+  through a suppressed star import, gain their missing test docstrings
+  and type annotations and are enrolled in the docstring policy. The
+  TVM lowering support module's mock nodes and graphs are typed and
+  documented like the ONNX export support's.
+
 - The eight photonic crosstalk and FDTD test modules
   (`tests/test_optics`) import their names explicitly instead of
   through a suppressed star import, gain their missing test docstrings

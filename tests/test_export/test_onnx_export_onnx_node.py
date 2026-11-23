@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from onnx_export_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.onnx_export import (
+    ONNXNode,
+    SCPN_DOMAIN,
+)
 
 
 class TestONNXNode(unittest.TestCase):
+    """Dictionary form of ONNX nodes."""
+
     def test_to_dict_no_attrs(self) -> None:
+        """A node without attributes has no attribute entry."""
         n = ONNXNode("ScAnd", SCPN_DOMAIN, ["a", "b"], ["c"], "and_1")
         d = n.to_dict()
         self.assertEqual(d["op_type"], "ScAnd")
         self.assertNotIn("attribute", d)
 
     def test_to_dict_with_attrs(self) -> None:
+        """A node with two attributes lists both."""
         n = ONNXNode(
             "LifNeuron",
             SCPN_DOMAIN,

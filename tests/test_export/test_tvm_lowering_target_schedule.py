@@ -10,25 +10,35 @@
 
 from __future__ import annotations
 
-from tvm_lowering_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.tvm_lowering import (
+    TargetDevice,
+    TargetSchedule,
+)
 
 
 class TestTargetSchedule(unittest.TestCase):
-    def test_cpu_defaults(self):
+    """Device schedules for TVM lowering."""
+
+    def test_cpu_defaults(self) -> None:
+        """The CPU schedule targets the CPU at optimisation level three."""
         s = TargetSchedule.for_cpu()
         self.assertEqual(s.device, TargetDevice.CPU)
         self.assertEqual(s.opt_level, 3)
 
-    def test_gpu_schedule(self):
+    def test_gpu_schedule(self) -> None:
+        """The GPU schedule targets CUDA with warp-level popcount."""
         s = TargetSchedule.for_gpu()
         self.assertEqual(s.device, TargetDevice.CUDA)
         self.assertIn("warp_level_popcount", s.sc_specific)
 
-    def test_fpga_xilinx(self):
+    def test_fpga_xilinx(self) -> None:
+        """The Xilinx schedule targets its FPGA with bitstream packing."""
         s = TargetSchedule.for_fpga("xilinx")
         self.assertEqual(s.device, TargetDevice.FPGA_XILINX)
         self.assertTrue(s.sc_specific["bitstream_packing"])
 
-    def test_fpga_intel(self):
+    def test_fpga_intel(self) -> None:
+        """The Intel schedule targets its FPGA."""
         s = TargetSchedule.for_fpga("intel")
         self.assertEqual(s.device, TargetDevice.FPGA_INTEL)

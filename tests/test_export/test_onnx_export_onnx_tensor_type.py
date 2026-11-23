@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from onnx_export_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.onnx_export import (
+    ONNXTensorType,
+)
 
 
 class TestONNXTensorType(unittest.TestCase):
+    """Dictionary form of ONNX tensor types."""
+
     def test_to_dict(self) -> None:
+        """A two-dimensional tensor type lists its element type and two dimensions."""
         tt = ONNXTensorType(elem_type=9, shape=(128, 1024))
         d = tt.to_dict()
         self.assertEqual(d["elem_type"], 9)
         self.assertEqual(len(d["shape"]["dim"]), 2)
 
     def test_scalar_shape(self) -> None:
+        """A one-element shape lists one dimension of size one."""
         tt = ONNXTensorType(elem_type=1, shape=(1,))
         d = tt.to_dict()
         self.assertEqual(d["shape"]["dim"][0]["dim_value"], 1)

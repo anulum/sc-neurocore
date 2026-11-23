@@ -10,22 +10,28 @@
 
 from __future__ import annotations
 
-from compiler_export_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.compiler_export import (
+    CompilerExporter,
+)
 
 
 class TestMlirTypeFormatting(unittest.TestCase):
     """Verify MLIR type rendering for scalar and tensor shapes."""
 
     def test_scalar_shapes_use_the_bare_element_type(self) -> None:
+        """Empty and one-element shapes format as the bare element type."""
         exporter = CompilerExporter()
         self.assertEqual(exporter._format_mlir_type((), "i1"), "i1")
         self.assertEqual(exporter._format_mlir_type((1,), "i8"), "i8")
 
     def test_multidimensional_shapes_use_a_tensor_type(self) -> None:
+        """A two-dimensional shape formats as a tensor type."""
         exporter = CompilerExporter()
         self.assertEqual(exporter._format_mlir_type((2, 3), "i1"), "tensor<2x3xi1>")
 
     def test_non_positive_tensor_dimension_fails_closed(self) -> None:
+        """A zero dimension is refused."""
         exporter = CompilerExporter()
         with self.assertRaisesRegex(ValueError, "positive"):
             exporter._format_mlir_type((0,), "i1")

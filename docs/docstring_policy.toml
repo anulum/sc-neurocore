@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2564
+expected_file_count = 2576
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10300,3 +10300,51 @@ rationale = "Exercise the optics suite: fdtd fdtd solver1 d."
 [[file]]
 path = "tests/test_optics/test_fdtd_meep_adapter_contract.py"
 rationale = "Exercise the optics suite: fdtd meep adapter contract."
+
+[[file]]
+path = "tests/test_export/test_compiler_export_mlir_export.py"
+rationale = "Exercise the export suite: compiler export mlir export."
+
+[[file]]
+path = "tests/test_export/test_compiler_export_mlir_type_formatting.py"
+rationale = "Exercise the export suite: compiler export mlir type formatting."
+
+[[file]]
+path = "tests/test_export/test_compiler_export_shape_inference.py"
+rationale = "Exercise the export suite: compiler export shape inference."
+
+[[file]]
+path = "tests/test_export/test_compiler_export_ssa_environment.py"
+rationale = "Exercise the export suite: compiler export ssa environment."
+
+[[file]]
+path = "tests/test_export/test_compiler_export_topological_sort.py"
+rationale = "Exercise the export suite: compiler export topological sort."
+
+[[file]]
+path = "tests/test_export/test_onnx_export_onnx_exporter.py"
+rationale = "Exercise the export suite: onnx export onnx exporter."
+
+[[file]]
+path = "tests/test_export/test_onnx_export_onnx_node.py"
+rationale = "Exercise the export suite: onnx export onnx node."
+
+[[file]]
+path = "tests/test_export/test_onnx_export_onnx_tensor_type.py"
+rationale = "Exercise the export suite: onnx export onnx tensor type."
+
+[[file]]
+path = "tests/test_export/test_tvm_lowering_relay_function.py"
+rationale = "Exercise the export suite: tvm lowering relay function."
+
+[[file]]
+path = "tests/test_export/test_tvm_lowering_target_schedule.py"
+rationale = "Exercise the export suite: tvm lowering target schedule."
+
+[[file]]
+path = "tests/test_export/test_tvm_lowering_tvm_lowering.py"
+rationale = "Exercise the export suite: tvm lowering tvm lowering."
+
+[[file]]
+path = "tests/test_export/tvm_lowering_support.py"
+rationale = "Support the TVM lowering tests with typed mock SC-IR nodes and graphs."

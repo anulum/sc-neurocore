@@ -10,31 +10,41 @@
 
 from __future__ import annotations
 
-from compiler_export_support import *  # noqa: F403
+import unittest
+from compiler_export_support import (
+    MockNode,
+)
+from sc_neurocore.export.compiler_export import (
+    ShapeInference,
+)
 
 
 class TestShapeInference(unittest.TestCase):
     """Verify shape propagation for supported SC-IR node types."""
 
     def test_and_preserves_shape(self) -> None:
+        """An AND output keeps its inputs' shape."""
         si = ShapeInference({"a": (128, 1024), "b": (128, 1024)})
         node = MockNode("SC_AND", "m0", ("a", "b"), "out")
         si.infer(node)
         self.assertEqual(si.shapes["out"], (128, 1024))
 
     def test_popcount_reduces_last_dim(self) -> None:
+        """A popcount output reduces the last dimension to one."""
         si = ShapeInference({"a": (128, 1024)})
         node = MockNode("SC_POPCOUNT", "p0", ("a",), "out")
         si.infer(node)
         self.assertEqual(si.shapes["out"], (128, 1))
 
     def test_lif_preserves_shape(self) -> None:
+        """A LIF output keeps its input's shape."""
         si = ShapeInference({"a": (64, 512)})
         node = MockNode("LIF_MEMBRANE", "n0", ("a",), "out")
         si.infer(node)
         self.assertEqual(si.shapes["out"], (64, 512))
 
     def test_missing_input_shape_fails_closed(self) -> None:
+        """An input without a known shape is refused."""
         si = ShapeInference({"a": (64,)})
         node = MockNode("SC_AND", "m0", ("a", "missing"), "out")
         with self.assertRaisesRegex(ValueError, "Missing input shape"):

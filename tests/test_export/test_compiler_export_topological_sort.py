@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from compiler_export_support import *  # noqa: F403
+import unittest
+from compiler_export_support import (
+    MockNode,
+)
+from sc_neurocore.export.compiler_export import (
+    CompilerExporter,
+)
 
 
 class TestTopologicalSort(unittest.TestCase):
     """Verify graph ordering rejects malformed dataflow contracts."""
 
     def test_forward_order(self) -> None:
+        """Nodes listed in dependency order keep it."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("SC_AND", "m1", ("a", "b"), "c"),
@@ -26,6 +33,7 @@ class TestTopologicalSort(unittest.TestCase):
         self.assertEqual([n.id for n in sorted_nodes], ["m1", "n1"])
 
     def test_reverse_input_order(self) -> None:
+        """Nodes listed against dependency order are reordered."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("LIF_MEMBRANE", "n1", ("c",), "d"),
@@ -35,6 +43,7 @@ class TestTopologicalSort(unittest.TestCase):
         self.assertEqual([n.id for n in sorted_nodes], ["m1", "n1"])
 
     def test_cycle_detection(self) -> None:
+        """A dependency cycle is refused."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("SC_AND", "m1", ("d",), "c"),
@@ -44,6 +53,7 @@ class TestTopologicalSort(unittest.TestCase):
             exporter._topological_sort(nodes)
 
     def test_duplicate_node_ids_fail_closed(self) -> None:
+        """Two nodes with one id are refused."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("SC_AND", "m1", ("a", "b"), "c"),
@@ -53,6 +63,7 @@ class TestTopologicalSort(unittest.TestCase):
             exporter._topological_sort(nodes)
 
     def test_duplicate_outputs_fail_closed(self) -> None:
+        """Two nodes with one output edge are refused."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("SC_AND", "m1", ("a", "b"), "c"),
@@ -62,6 +73,7 @@ class TestTopologicalSort(unittest.TestCase):
             exporter._topological_sort(nodes)
 
     def test_independent_nodes(self) -> None:
+        """Independent nodes are both kept."""
         exporter = CompilerExporter()
         nodes = (
             MockNode("SC_AND", "m1", ("a", "b"), "c"),

@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from compiler_export_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.compiler_export import (
+    SSAEnvironment,
+)
 
 
 class TestSSAEnvironment(unittest.TestCase):
     """Verify SSA register allocation and external input lookup."""
 
     def test_allocate_sequential(self) -> None:
+        """Allocations take consecutive SSA names."""
         ssa = SSAEnvironment()
         r0 = ssa.allocate("a")
         r1 = ssa.allocate("b")
@@ -24,10 +28,12 @@ class TestSSAEnvironment(unittest.TestCase):
         self.assertEqual(r1, "%1")
 
     def test_get_allocated(self) -> None:
+        """An allocated name returns its SSA register."""
         ssa = SSAEnvironment()
         ssa.allocate("x")
         self.assertEqual(ssa.get("x"), "%0")
 
     def test_get_unallocated_returns_global(self) -> None:
+        """An unallocated name returns its global reference."""
         ssa = SSAEnvironment()
         self.assertEqual(ssa.get("input_a"), "%input_a")

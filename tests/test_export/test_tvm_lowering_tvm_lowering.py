@@ -10,29 +10,44 @@
 
 from __future__ import annotations
 
-from tvm_lowering_support import *  # noqa: F403
+import unittest
+from sc_neurocore.export.tvm_lowering import (
+    TargetSchedule,
+    TVMLowering,
+)
+from tvm_lowering_support import (
+    MockGraph,
+    MockNode,
+    simple_graph,
+)
 
 
 class TestTVMLowering(unittest.TestCase):
-    def test_lower_produces_relay_text(self):
+    """Lowering SC-IR graphs to Relay text."""
+
+    def test_lower_produces_relay_text(self) -> None:
+        """Lowering the sample graph gives a Relay forward function."""
         lowering = TVMLowering()
         relay_text = lowering.lower(
             simple_graph(), {"input_a": (128, 1024), "input_b": (128, 1024)}
         )
         self.assertIn("def @sc_forward", relay_text)
 
-    def test_contains_and_op(self):
+    def test_contains_and_op(self) -> None:
+        """An AND node lowers to a bitwise AND."""
         lowering = TVMLowering()
         relay_text = lowering.lower(simple_graph(), {"input_a": (128,), "input_b": (128,)})
         self.assertIn("bitwise_and", relay_text)
 
-    def test_contains_lif_op(self):
+    def test_contains_lif_op(self) -> None:
+        """A LIF node lowers to the SCPN LIF call with its threshold."""
         lowering = TVMLowering()
         relay_text = lowering.lower(simple_graph(), {"input_a": (128,), "input_b": (128,)})
         self.assertIn("@scpn.lif", relay_text)
         self.assertIn("threshold=0.75", relay_text)
 
-    def test_unknown_node_type_lowers_to_passthrough(self):
+    def test_unknown_node_type_lowers_to_passthrough(self) -> None:
+        """An unsupported node lowers to a passthrough."""
         # A node whose type matches none of the SC primitives is emitted as a
         # scalar-shaped passthrough binding rather than dropped.
         lowering = TVMLowering()
@@ -40,19 +55,22 @@ class TestTVMLowering(unittest.TestCase):
         relay_text = lowering.lower(graph, {"input_a": (128,)})
         self.assertIn("passthrough", relay_text)
 
-    def test_target_header(self):
+    def test_target_header(self) -> None:
+        """The GPU schedule names CUDA in the header."""
         schedule = TargetSchedule.for_gpu()
         lowering = TVMLowering(schedule)
         relay_text = lowering.lower(simple_graph(), {"input_a": (128,), "input_b": (128,)})
         self.assertIn("// Target: cuda", relay_text)
 
-    def test_fpga_sc_config_in_header(self):
+    def test_fpga_sc_config_in_header(self) -> None:
+        """The Xilinx schedule puts bitstream packing in the header."""
         schedule = TargetSchedule.for_fpga("xilinx")
         lowering = TVMLowering(schedule)
         relay_text = lowering.lower(simple_graph(), {"input_a": (128,), "input_b": (128,)})
         self.assertIn("bitstream_packing", relay_text)
 
-    def test_popcount_lowering(self):
+    def test_popcount_lowering(self) -> None:
+        """A popcount node lowers to an int32 sum of casts."""
         graph = MockGraph(
             [
                 MockNode("SC_POPCOUNT", "pc1", ["input_a"], "count_out"),
@@ -63,7 +81,8 @@ class TestTVMLowering(unittest.TestCase):
         self.assertIn("sum(cast(", relay_text)
         self.assertIn("int32", relay_text)
 
-    def test_mux_lowering(self):
+    def test_mux_lowering(self) -> None:
+        """A multiplexer node lowers to a where call."""
         graph = MockGraph(
             [
                 MockNode("SC_MUX", "mx1", ["sel", "a", "b"], "mux_out"),
@@ -73,14 +92,16 @@ class TestTVMLowering(unittest.TestCase):
         relay_text = lowering.lower(graph, {"sel": (128,), "a": (128,), "b": (128,)})
         self.assertIn("where(", relay_text)
 
-    def test_custom_function_name(self):
+    def test_custom_function_name(self) -> None:
+        """A custom function name names the Relay function."""
         lowering = TVMLowering()
         relay_text = lowering.lower(
             simple_graph(), {"input_a": (128,), "input_b": (128,)}, func_name="my_network"
         )
         self.assertIn("def @my_network", relay_text)
 
-    def test_build_script(self):
+    def test_build_script(self) -> None:
+        """The GPU build script imports TVM and targets CUDA."""
         lowering = TVMLowering(TargetSchedule.for_gpu())
         relay_text = "def @main(%x: Tensor[(1), dtype=bool]) -> Tensor[(1), dtype=bool] {\n  %x\n}"
         script = lowering.emit_build_script(relay_text)
@@ -93,7 +114,8 @@ class TestTVMLowering(unittest.TestCase):
         self.assertIn("lib.export_library(output_path)", script)
         self.assertNotIn("stub", script.lower())
 
-    def test_empty_graph(self):
+    def test_empty_graph(self) -> None:
+        """An empty graph still lowers to a forward function."""
         graph = MockGraph([])
         lowering = TVMLowering()
         relay_text = lowering.lower(graph, {"input_a": (128,)})
