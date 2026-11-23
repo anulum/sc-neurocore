@@ -64,12 +64,12 @@ weights and 32-bucket time wheels in block RAM plus delay tables in `RAMD64E`
 LUTRAM) on `xc7z020clg400-1` (`100 MHz` target constraint):
 
 - **Synthesised (`hdl/reports/vivado_sc_shd_event_axi_synth_util_xc7z020_100mhz.rpt`):**
-  `12,974` LUT (`24.39%`), `14,073` FF (`13.23%`), `21` Block RAM Tiles
-  (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSP, `WNS -6.887 ns`, `WHS +0.173 ns`.
+  `12,549` LUT (`23.59%`), `14,068` FF (`13.22%`), `21` Block RAM Tiles
+  (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSP, `WNS -7.842 ns`, `WHS +0.173 ns`.
 - **Placed and routed (`hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt`, `hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt`, `hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt`):**
-  `12,957` LUT (`24.36%`), `14,082` FF (`13.23%`), `21` Block RAM Tiles
-  (`15.00%`), `0` DSP, setup `WNS -3.343 ns` at `100 MHz` (`13.343 ns` implied
-  minimum period: `74.95 MHz` `Fmax` and `+6.657 ns` setup slack at `50 MHz`,
+  `12,605` LUT (`23.69%`), `14,075` FF (`13.23%`), `21` Block RAM Tiles
+  (`15.00%`), `0` DSP, setup `WNS -4.901 ns` at `100 MHz` (`14.901 ns` implied
+  minimum period: `67.11 MHz` `Fmax` and `+5.099 ns` setup slack at `50 MHz`,
   estimated from the 100 MHz run's WNS (not a run at that frequency); hold not
   closed out of context); routed DRC: `0` errors, `44` warnings, including `RAMB`
   async-control checks (`REQP-1839` ×20, `REQP-1840` ×20 at rule cap:

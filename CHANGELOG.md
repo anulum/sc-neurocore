@@ -282,10 +282,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   constraints (`hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc`) for
   `sc_shd_event_axi` (`P=8`, full trained SHD weights and 32-bucket time wheels
   in `21` XC7Z020 Block RAM Tiles plus delay tables in `40` `RAMD64E` LUTRAMs:
-  synthesised `12,974` LUT / `14,073` FF / `0` DSP, routed `12,957` LUT /
-  `14,082` FF / `0` DSP / setup `WNS -3.343 ns` at `100 MHz`, with `74.95 MHz`
+  synthesised `12,549` LUT / `14,068` FF / `0` DSP, routed `12,605` LUT /
+  `14,075` FF / `0` DSP / setup `WNS -4.901 ns` at `100 MHz`, with `67.11 MHz`
   `Fmax` estimated from the 100 MHz run's WNS and hold not closed out of context
-  (`WHS -0.689 ns`), plus routed DRC `0` errors / `44` warnings including `RAMB`
+  (`WHS -0.852 ns`), plus routed DRC `0` errors / `44` warnings including `RAMB`
   async-control checks), bound to public documentation by
   `tests/test_hardware_number_provenance.py`, alongside Git-tracked source
   enumeration in `tests/test_shd_event_core.py`.
@@ -545,6 +545,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   steps, the arrays it returns and its errors.
 
 ### Fixed
+
+- The integrity-checked loader of `sc_shd_event_axi` seals a network only
+  after exactly `LOAD_WORDS` committed words (`4,940` for `P=8`) with a
+  matching CRC-32. It had sealed any non-empty stream whose CRC matched, so
+  a partial reload after a reset, or a driver given a larger `lanes` than
+  the bitstream's `P`, sealed over tables the stream never wrote.
+  `LOAD_STATUS` bit 4 (`count_short`) reports a seal refused for the count,
+  and `load_network` raises on it. The testbench covers both refusals and a
+  partial reload, and the formal proof asserts that a seal or start follows
+  a complete load, with a cover of the refused case; the formal inventory
+  the pages state grows to `591` statements (`403` assert, `55` cover).
+  The Vivado reports are
+  re-measured, and the published figures follow them: routed `12,605` LUT /
+  `14,075` FF (were `12,957` / `14,082`), setup `WNS -4.901 ns` at
+  `100 MHz` (was `-3.343 ns`), so the `Fmax` estimated from it falls from
+  `74.95` to `67.11 MHz`. The critical path stays inside the core
+  (`20` logic levels, was `17`); the base design rebuilt with the same
+  tool gives the committed figures again.
 
 - The version surface audit reads the package root's syntax tree instead of
   its lines. The root must bind `__version__` exactly once, at the top

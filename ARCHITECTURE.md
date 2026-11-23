@@ -239,8 +239,8 @@ LUTRAM:
 
 | Stage (`100 MHz` OOC constraint) | Slice LUTs (`53,200`) | Flip-Flops (`106,400`) | Block RAM Tiles (`140`) | DSP48 (`220`) | Setup `WNS` (`10.0 ns`) | Estimated `Fmax` from `100 MHz` `WNS` |
 |---|---:|---:|---:|---:|---:|---:|
-| Synthesised | 12,974 (24.39%) | 14,073 (13.23%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -6.887 ns | — |
-| Placed and routed | 12,957 (24.36%) | 14,082 (13.23%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -3.343 ns | 74.95 MHz (`13.343 ns`) |
+| Synthesised | 12,549 (23.59%) | 14,068 (13.22%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -7.842 ns | — |
+| Placed and routed | 12,605 (23.69%) | 14,075 (13.23%) | 21 (`19 RAMB36E1 + 4 RAMB18E1`, 15.00%) | 0 (0.00%) | -4.901 ns | 67.11 MHz (`14.901 ns`) |
 
 Source artefacts: `hdl/reports/vivado_sc_shd_event_axi_synth_util_xc7z020_100mhz.rpt`,
 `hdl/reports/vivado_sc_shd_event_axi_synth_hier_util_xc7z020_100mhz.rpt`,
@@ -253,23 +253,24 @@ reproducible via `hdl/pynq/synth_shd_event_xc7z020.tcl` and
 `hdl/constraints/sc_shd_event_axi_ooc_100mhz.xdc` (Vivado v2025.2, out-of-context
 mode on `xc7z020clg400-1`).
 
-In the routed hierarchy (`5,814 / 13,300` slices = `43.71%`, `12,917` logic
-LUTs + `40` `RAMD64E` LUTRAMs), the AXI4-Lite wrapper and loader use `439`
-LUTs and `906` flip-flops, while `u_core` (`sc_shd_event_p`) uses `12,520`
+In the routed hierarchy (`5,642 / 13,300` slices = `42.42%`, `12,565` logic
+LUTs + `40` `RAMD64E` LUTRAMs), the AXI4-Lite wrapper and loader use `231`
+LUTs and `899` flip-flops, while `u_core` (`sc_shd_event_p`) uses `12,375`
 LUTs, `13,176` flip-flops, `19` `RAMB36E1` (`q1=9`, `q2=8`, `q3=2`), and `4`
-`RAMB18E1` (`w1=2`, `w2=2`). The routed critical path (`u_core/pend1_reg[90]/C`
-through `d1` `RAMD64E` delay lookup and `CARRY4` address arithmetic to
-`u_core/w1/bk[1].col[0].ram_reg/ENBWREN`, `17` logic levels, `12.917 ns` data
-path) misses the `100 MHz` (`10.000 ns`) constraint by `-3.343 ns` (`13.343 ns`
-implied minimum period: `74.95 MHz` `Fmax` and `+6.657 ns` setup slack at
-`50 MHz` / `20.0 ns`, estimated from the 100 MHz run's WNS (not a run at that
-frequency); hold not closed out of context). Synthesised hold slack is `+0.173 ns` (`0` violations); routed `WHS` is
-`-0.689 ns` (`241 / 38,859` intra-clock endpoints, `THS = -91.934 ns`), whose
-reported worst path is input port `S_AXI_WDATA[0]` to `load_wdata_lo_reg_reg[0]/D`
-(`0.500 + 0.924 - (1.660 + 0.035 + 0.418) = -0.689 ns` under
-`HD.CLK_SRC BUFGCTRL_X0Y0`'s `1.660 ns` destination `BUFG` delay and an ideal
+`RAMB18E1` (`w1=2`, `w2=2`). The routed critical path (`u_core/pend1_reg[115]/C`
+through `d1` `RAMD64E` delay lookup, the `w1` bucket-count select and `CARRY4`
+address arithmetic to `u_core/w1/bk[0].col[0].ram_reg/ENARDEN`, `20` logic
+levels, `14.360 ns` data path) misses the `100 MHz` (`10.000 ns`) constraint by
+`-4.901 ns` (`14.901 ns` implied minimum period: `67.11 MHz` `Fmax` and
+`+5.099 ns` setup slack at `50 MHz` / `20.0 ns`, estimated from the 100 MHz
+run's WNS (not a run at that frequency); hold not closed out of context).
+Synthesised hold slack is `+0.173 ns` (`0` violations); routed `WHS` is
+`-0.852 ns` (`313 / 38,931` intra-clock endpoints, `THS = -122.478 ns`), whose
+reported worst path is input port `S_AXI_ARADDR[2]` to `axi_araddr_reg[2]/D`
+(`0.500 + 0.924 - (1.823 + 0.035 + 0.418) = -0.852 ns` under
+`HD.CLK_SRC BUFGCTRL_X0Y0`'s `1.823 ns` destination `BUFG` delay and an ideal
 `0.000 ns` source-clock `set_input_delay -min 0.5` on unrouted OOC ports; the
-summary report does not break the remaining `240` hold endpoints down). Routed
+summary report does not break the remaining `312` hold endpoints down). Routed
 DRC (`hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt`)
 records `0` errors and `44` warnings (`CHECK-3` ×2, `REQP-1839` ×20, and
 `REQP-1840` ×20 at their 20-violation rule limit where asynchronously reset

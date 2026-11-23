@@ -9,7 +9,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Thu Nov 19 09:24:11 2026
+| Date         : Mon Nov 23 03:10:18 2026
 | Host         : build-host (64-bit Ubuntu 24.04.5 LTS)
 | Command      : report_drc -file hdl/reports/vivado_sc_shd_event_axi_routed_drc_xc7z020_100mhz.rpt
 | Design       : sc_shd_event_axi
@@ -57,7 +57,7 @@ Related violations: <none>
 
 REQP-1839#1 Warning
 RAMB36 async control check  
-The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[11] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_5) which is driven by a register (u_core/busy_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[11] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_5) which is driven by a register (u_core/k_reg[2]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1839#2 Warning
@@ -87,12 +87,12 @@ Related violations: <none>
 
 REQP-1839#7 Warning
 RAMB36 async control check  
-The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[12] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_4) which is driven by a register (u_core/k_reg[0]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[12] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_4) which is driven by a register (u_core/k_reg[0]_rep) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1839#8 Warning
 RAMB36 async control check  
-The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[12] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_4) which is driven by a register (u_core/k_reg[1]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[12] (net: u_core/q2/bk[0].col[0].ram_reg_i_3__1_n_4) which is driven by a register (u_core/k_reg[1]_rep) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1839#9 Warning
@@ -127,12 +127,12 @@ Related violations: <none>
 
 REQP-1839#15 Warning
 RAMB36 async control check  
-The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/q2/bk[0].col[0].ram_reg_i_2__0_n_7) which is driven by a register (u_core/k_reg[0]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/q2/bk[0].col[0].ram_reg_i_2__0_n_7) which is driven by a register (u_core/k_reg[0]_rep) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1839#16 Warning
 RAMB36 async control check  
-The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/q2/bk[0].col[0].ram_reg_i_2__0_n_7) which is driven by a register (u_core/k_reg[1]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB36E1 u_core/q2/bk[2].col[0].ram_reg has an input control pin u_core/q2/bk[2].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/q2/bk[0].col[0].ram_reg_i_2__0_n_7) which is driven by a register (u_core/k_reg[1]_rep) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1839#17 Warning
@@ -157,102 +157,102 @@ Related violations: <none>
 
 REQP-1840#1 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[50]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[10][1]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#2 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[51]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[10][2]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#3 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[52]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[10][3]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#4 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[53]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[10][4]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#5 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[54]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[10][5]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#6 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[55]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[11][1]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#7 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[56]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[11][2]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#8 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[57]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[11][3]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#9 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[58]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[11][4]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#10 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[59]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[11][5]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#11 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[60]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[12][1]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#12 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[61]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[12][2]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#13 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[62]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[12][3]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#14 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[63]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[12][4]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#15 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[64]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[12][5]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#16 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[65]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[13][2]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#17 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[66]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[13][3]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#18 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[67]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[13][4]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#19 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[68]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/cnt1_reg[13][5]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 REQP-1840#20 Warning
 RAMB18 async control check  
-The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[69]) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+The RAMB18E1 u_core/w1/bk[0].col[0].ram_reg has an input control pin u_core/w1/bk[0].col[0].ram_reg/ADDRARDADDR[13] (net: u_core/w1/bk[0].col[0].ram_reg_i_3__0_n_7) which is driven by a register (u_core/pend1_reg[129]_replica) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
 Related violations: <none>
 
 RTSTAT-10#1 Warning

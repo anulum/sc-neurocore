@@ -219,14 +219,15 @@ Heidelberg Digits (SHD) speech classification targeting Zynq XC7Z020
   check only, not authentication), bit-exact against `tools/shd_int_reference.py`
   in Icarus Verilog and Verilator; `hdl/formal/sc_shd_event_axi.sby` proves the
   wrapper's control invariants (core state range, absence of core error, reset
-  values of `sealed`, `LOAD_COUNT`, `LOAD_CRC32`, and `start`, and absence of
+  values of `sealed`, `LOAD_COUNT`, `LOAD_CRC32`, and `start`, a seal or start
+  only after the full load word count with a matching CRC, and absence of
   unrequested write responses or load strobes) by `k`-induction at depth `6`.
 - **Vivado v2025.2 XC7Z020 out-of-context synthesis and routing (including the BRAM/LUTRAM that hold the loaded weights and delays):**
-  synthesised `12,974` LUT (`24.39%`), `14,073` FF (`13.23%`), `21` BRAM tiles
-  (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSP; placed-and-routed `12,957`
-  LUT (`24.36%`), `14,082` FF (`13.23%`), `21` BRAM tiles (`15.00%`), `0` DSP,
-  setup `WNS -3.343 ns` against a `100 MHz` (`10.000 ns`) constraint (`74.95 MHz`
-  `Fmax` and `+6.657 ns` setup slack at `50 MHz`, estimated from the 100 MHz
+  synthesised `12,549` LUT (`23.59%`), `14,068` FF (`13.22%`), `21` BRAM tiles
+  (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSP; placed-and-routed `12,605`
+  LUT (`23.69%`), `14,075` FF (`13.23%`), `21` BRAM tiles (`15.00%`), `0` DSP,
+  setup `WNS -4.901 ns` against a `100 MHz` (`10.000 ns`) constraint (`67.11 MHz`
+  `Fmax` and `+5.099 ns` setup slack at `50 MHz`, estimated from the 100 MHz
   run's WNS (not a run at that frequency); hold not closed out of context), and
   routed DRC `0` errors, `44` warnings (including `RAMB` async-control checks
   `REQP-1839` ×20 / `REQP-1840` ×20 not analysed by static timing).

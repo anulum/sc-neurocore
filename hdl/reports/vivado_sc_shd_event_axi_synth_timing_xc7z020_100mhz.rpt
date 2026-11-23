@@ -9,7 +9,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Thu Nov 19 09:09:14 2026
+| Date         : Mon Nov 23 03:06:40 2026
 | Host         : build-host (64-bit Ubuntu 24.04.5 LTS)
 | Command      : report_timing_summary -file hdl/reports/vivado_sc_shd_event_axi_synth_timing_xc7z020_100mhz.rpt
 | Design       : sc_shd_event_axi
@@ -146,7 +146,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
     -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-     -6.887    -4062.722                   1126                41083        0.173        0.000                      0                41083        3.750        0.000                       0                 14159  
+     -7.842    -4611.365                   1241                41166        0.173        0.000                      0                41166        3.750        0.000                       0                 14154  
 
 
 Timing constraints are not met.
@@ -169,7 +169,7 @@ clk    {0.000 5.000}      10.000          100.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
 -----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-clk                -6.887    -4062.722                   1126                38843        0.173        0.000                      0                38843        3.750        0.000                       0                 14159  
+clk                -7.842    -4611.365                   1241                38924        0.173        0.000                      0                38924        3.750        0.000                       0                 14154  
 
 
 ------------------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS
 
 Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
 ----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
-**async_default**  clk                clk                      6.557        0.000                      0                 2240        0.941        0.000                      0                 2240  
+**async_default**  clk                clk                      6.557        0.000                      0                 2242        0.941        0.000                      0                 2242  
 
 
 ------------------------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ Path Group         From Clock         To Clock               WNS(ns)      TNS(ns
 From Clock:  clk
   To Clock:  clk
 
-Setup :         1126  Failing Endpoints,  Worst Slack       -6.887ns,  Total Violation    -4062.722ns
+Setup :         1241  Failing Endpoints,  Worst Slack       -7.842ns,  Total Violation    -4611.365ns
 Hold  :            0  Failing Endpoints,  Worst Slack        0.173ns,  Total Violation        0.000ns
 PW    :            0  Failing Endpoints,  Worst Slack        3.750ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
@@ -209,16 +209,16 @@ PW    :            0  Failing Endpoints,  Worst Slack        3.750ns,  Total Vio
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (VIOLATED) :        -6.887ns  (required time - arrival time)
-  Source:                 u_core/pend_reg[2]/C
+Slack (VIOLATED) :        -7.842ns  (required time - arrival time)
+  Source:                 u_core/pend_reg[23]/C
                             (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
-  Destination:            u_core/w2/bk[0].col[0].ram_reg/ENARDEN
+  Destination:            u_core/w2/bk[0].col[0].ram_reg/ENBWREN
                             (rising edge-triggered cell RAMB18E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
   Path Group:             clk
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
-  Data Path Delay:        16.360ns  (logic 4.356ns (26.626%)  route 12.004ns (73.374%))
-  Logic Levels:           17  (CARRY4=3 LUT1=1 LUT2=1 LUT3=1 LUT5=1 LUT6=9 RAMD64E=1)
+  Data Path Delay:        17.315ns  (logic 3.847ns (22.218%)  route 13.468ns (77.782%))
+  Logic Levels:           21  (CARRY4=3 LUT2=2 LUT3=3 LUT4=2 LUT5=1 LUT6=9 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -233,65 +233,73 @@ Slack (VIOLATED) :        -6.887ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk rise edge)        0.000     0.000 r  
                                                       0.000     0.000 r  S_AXI_ACLK (IN)
-                         net (fo=14158, unset)        0.973     0.973    u_core/S_AXI_ACLK
-                         FDCE                                         r  u_core/pend_reg[2]/C
+                         net (fo=14153, unset)        0.973     0.973    u_core/S_AXI_ACLK
+                         FDCE                                         r  u_core/pend_reg[23]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.518     1.491 f  u_core/pend_reg[2]/Q
-                         net (fo=6, unplaced)         0.997     2.488    u_core/w2/bk[0].col[0].bypass_r_reg[3]_4
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.783 f  u_core/w2/bk[0].col[0].ram_reg_i_33__0/O
-                         net (fo=7, unplaced)         0.937     3.720    u_core/q3/bk[1].col[0].ram_reg_2
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.844 f  u_core/q3/bk[0].col[0].ram_reg_i_39__0/O
-                         net (fo=7, unplaced)         0.484     4.328    u_core/q3/pend_reg[1]
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.452 f  u_core/q3/bk[0].col[0].ram_reg_i_134__0/O
-                         net (fo=2, unplaced)         0.913     5.365    u_core/q3/bk[0].col[0].ram_reg_i_134__0_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.489 r  u_core/q3/bk[0].col[0].ram_reg_i_143__0/O
-                         net (fo=1, unplaced)         0.449     5.938    u_core/q3/bk[0].col[0].ram_reg_i_143__0_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     6.062 f  u_core/q3/bk[0].col[0].ram_reg_i_81__0/O
-                         net (fo=1, unplaced)         0.449     6.511    u_core/q3/bk[0].col[0].ram_reg_i_81__0_n_0
-                         LUT6 (Prop_lut6_I2_O)        0.124     6.635 f  u_core/q3/bk[0].col[0].ram_reg_i_36__0/O
-                         net (fo=6, unplaced)         0.481     7.116    u_core/w2/bk[0].col[0].bypass_r_reg[1]_0
-                         LUT1 (Prop_lut1_I0_O)        0.124     7.240 r  u_core/w2/bk[0].col[0].ram_reg_i_11__2/O
-                         net (fo=16, unplaced)        1.165     8.405    u_core/d2_reg_0_63_0_2/ADDRA1
-                         RAMD64E (Prop_ramd64e_RADR1_O)
-                                                      0.124     8.529 r  u_core/d2_reg_0_63_0_2/RAMA/O
-                         net (fo=2, unplaced)         1.122     9.651    u_core/w2/cnt2[11][5]_i_4_1
-                         LUT6 (Prop_lut6_I5_O)        0.124     9.775 r  u_core/w2/bk[0].col[0].ram_reg_i_101/O
-                         net (fo=3, unplaced)         0.467    10.242    u_core/w2/b20[0]
-                         LUT6 (Prop_lut6_I3_O)        0.124    10.366 r  u_core/w2/cnt2[0][5]_i_36/O
-                         net (fo=2, unplaced)         0.913    11.279    u_core/w2/cnt2[0][5]_i_36_n_0
-                         LUT6 (Prop_lut6_I2_O)        0.124    11.403 r  u_core/w2/cnt2[0][5]_i_15/O
-                         net (fo=17, unplaced)        0.475    11.878    u_core/w2/t_reg[2]_5
-                         LUT3 (Prop_lut3_I2_O)        0.124    12.002 r  u_core/w2/bk[0].col[0].ram_reg_i_99__2/O
-                         net (fo=4, unplaced)         1.135    13.137    u_core/w2/bk[0].col[0].ram_reg_i_99__2_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.124    13.261 r  u_core/w2/bk[0].col[0].ram_reg_i_51__2/O
-                         net (fo=1, unplaced)         0.000    13.261    u_core/w2/bk[0].col[0].ram_reg_i_51__2_n_0
-                         CARRY4 (Prop_carry4_S[1]_CO[3])
-                                                      0.533    13.794 r  u_core/w2/bk[0].col[0].ram_reg_i_15__1/CO[3]
-                         net (fo=1, unplaced)         0.009    13.803    u_core/w2/bk[0].col[0].ram_reg_i_15__1_n_0
-                         CARRY4 (Prop_carry4_CI_O[1])
-                                                      0.337    14.140 r  u_core/w2/bk[0].col[0].ram_reg_i_14__1/O[1]
-                         net (fo=1, unplaced)         0.715    14.855    u_core/w2/bk[0].col[0].ram_reg_i_14__1_n_6
-                         CARRY4 (Prop_carry4_S[1]_O[2])
-                                                      0.884    15.739 f  u_core/w2/bk[0].col[0].ram_reg_i_3__3/O[2]
-                         net (fo=9, unplaced)         0.493    16.232    u_core/w2/O[0]
-                         LUT2 (Prop_lut2_I1_O)        0.301    16.533 r  u_core/w2/bk[0].col[0].ram_reg_i_1__2/O
-                         net (fo=1, unplaced)         0.800    17.333    u_core/w2/bk[0].col[0].ram_reg_i_1__2_n_0
-                         RAMB18E1                                     r  u_core/w2/bk[0].col[0].ram_reg/ENARDEN
+                         FDCE (Prop_fdce_C_Q)         0.518     1.491 r  u_core/pend_reg[23]/Q
+                         net (fo=6, unplaced)         0.773     2.264    u_core/w2/bk[0].col[0].ram_reg_i_170_2
+                         LUT4 (Prop_lut4_I1_O)        0.295     2.559 r  u_core/w2/bk[0].col[0].ram_reg_i_112__0/O
+                         net (fo=2, unplaced)         0.913     3.472    u_core/w2/bk[0].col[0].ram_reg_i_112__0_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.124     3.596 r  u_core/w2/bk[0].col[0].ram_reg_i_64/O
+                         net (fo=4, unplaced)         0.473     4.069    u_core/w2/pend_reg[29]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.193 f  u_core/w2/bk[0].col[0].ram_reg_i_41__0/O
+                         net (fo=3, unplaced)         0.467     4.660    u_core/w2/bk[0].col[0].ram_reg_i_41__0_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.124     4.784 f  u_core/w2/bk[0].col[0].ram_reg_i_100/O
+                         net (fo=2, unplaced)         0.460     5.244    u_core/w2/bk[0].col[0].ram_reg_i_100_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124     5.368 r  u_core/w2/bk[0].col[0].ram_reg_i_170/O
+                         net (fo=1, unplaced)         0.449     5.817    u_core/w2/bk[0].col[0].ram_reg_i_170_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124     5.941 r  u_core/w2/bk[0].col[0].ram_reg_i_108/O
+                         net (fo=1, unplaced)         0.419     6.360    u_core/w2/bk[0].col[0].ram_reg_i_108_n_0
+                         LUT4 (Prop_lut4_I3_O)        0.124     6.484 f  u_core/w2/bk[0].col[0].ram_reg_i_45__1/O
+                         net (fo=65, unplaced)        0.538     7.022    u_core/w2/pend_reg[8]_0
+                         LUT2 (Prop_lut2_I1_O)        0.124     7.146 r  u_core/w2/bk[0].col[0].ram_reg_i_12__3/O
+                         net (fo=83, unplaced)        1.059     8.205    u_core/d2_reg_0_63_0_2/ADDRC0
+                         RAMD64E (Prop_ramd64e_RADR0_O)
+                                                      0.124     8.329 r  u_core/d2_reg_0_63_0_2/RAMC/O
+                         net (fo=2, unplaced)         1.122     9.451    u_core/w2/cnt2[0][5]_i_12_0
+                         LUT6 (Prop_lut6_I5_O)        0.124     9.575 r  u_core/w2/cnt2[0][5]_i_29/O
+                         net (fo=3, unplaced)         0.920    10.495    u_core/w2/b20[2]
+                         LUT6 (Prop_lut6_I0_O)        0.124    10.619 r  u_core/w2/cnt2[0][5]_i_13/O
+                         net (fo=17, unplaced)        0.958    11.577    u_core/w2/t_reg[0]_rep_1
+                         LUT6 (Prop_lut6_I3_O)        0.124    11.701 f  u_core/w2/cnt2[0][5]_i_30/O
+                         net (fo=1, unplaced)         0.665    12.366    u_core/w2/cnt2[0][5]_i_30_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124    12.490 r  u_core/w2/cnt2[0][5]_i_15/O
+                         net (fo=1, unplaced)         0.902    13.392    u_core/w2/cnt2[0][5]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.124    13.516 r  u_core/w2/cnt2[0][5]_i_8/O
+                         net (fo=7, unplaced)         0.454    13.970    u_core/w2/t_reg[4]
+                         LUT3 (Prop_lut3_I2_O)        0.124    14.094 r  u_core/w2/bk[0].col[0].ram_reg_i_19__1/O
+                         net (fo=2, unplaced)         1.122    15.216    u_core/w2/bk[0].col[0].ram_reg_i_19__1_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124    15.340 r  u_core/w2/bk[0].col[0].ram_reg_i_23__0/O
+                         net (fo=1, unplaced)         0.000    15.340    u_core/w2/bk[0].col[0].ram_reg_i_23__0_n_0
+                         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.376    15.716 r  u_core/w2/bk[0].col[0].ram_reg_i_5__2/CO[3]
+                         net (fo=1, unplaced)         0.009    15.725    u_core/w2/bk[0].col[0].ram_reg_i_5__2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    15.842 r  u_core/w2/bk[0].col[0].ram_reg_i_4__2/CO[3]
+                         net (fo=1, unplaced)         0.000    15.842    u_core/w2/bk[0].col[0].ram_reg_i_4__2_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256    16.098 f  u_core/w2/bk[0].col[0].ram_reg_i_3__3/O[2]
+                         net (fo=11, unplaced)        0.498    16.596    u_core/w2/O[0]
+                         LUT6 (Prop_lut6_I5_O)        0.301    16.897 r  u_core/w2/bk[0].col[0].ram_reg_i_14__3/O
+                         net (fo=3, unplaced)         0.467    17.364    u_core/w2/state_reg[1]_rep__0
+                         LUT3 (Prop_lut3_I0_O)        0.124    17.488 r  u_core/w2/bk[0].col[0].ram_reg_i_2__2/O
+                         net (fo=1, unplaced)         0.800    18.288    u_core/w2/bk[0].col[0].sel_r_bram
+                         RAMB18E1                                     r  u_core/w2/bk[0].col[0].ram_reg/ENBWREN
   -------------------------------------------------------------------    -------------------
 
                          (clock clk rise edge)       10.000    10.000 r  
                                                       0.000    10.000 r  S_AXI_ACLK (IN)
-                         net (fo=14158, unset)        0.924    10.924    u_core/w2/S_AXI_ACLK
-                         RAMB18E1                                     r  u_core/w2/bk[0].col[0].ram_reg/CLKARDCLK
+                         net (fo=14153, unset)        0.924    10.924    u_core/w2/S_AXI_ACLK
+                         RAMB18E1                                     r  u_core/w2/bk[0].col[0].ram_reg/CLKBWRCLK
                          clock pessimism              0.000    10.924    
                          clock uncertainty           -0.035    10.889    
-                         RAMB18E1 (Setup_ramb18e1_CLKARDCLK_ENARDEN)
+                         RAMB18E1 (Setup_ramb18e1_CLKBWRCLK_ENBWREN)
                                                      -0.443    10.446    u_core/w2/bk[0].col[0].ram_reg
   -------------------------------------------------------------------
                          required time                         10.446    
-                         arrival time                         -17.333    
+                         arrival time                         -18.288    
   -------------------------------------------------------------------
-                         slack                                 -6.887    
+                         slack                                 -7.842    
 
 
 
@@ -331,7 +339,7 @@ Slack (MET) :             0.173ns  (arrival time - required time)
 
                          (clock clk rise edge)        0.000     0.000 r  
                                                       0.000     0.000 r  S_AXI_ACLK (IN)
-                         net (fo=14158, unset)        0.973     0.973    S_AXI_ACLK
+                         net (fo=14153, unset)        0.973     0.973    S_AXI_ACLK
                          FDRE                                         r  axi_araddr_reg[2]/C
                          clock pessimism              0.000     0.973    
                          clock uncertainty            0.035     1.008    
@@ -398,15 +406,15 @@ Slack (MET) :             6.557ns  (required time - arrival time)
                          (clock clk rise edge)        0.000     0.000 r  
                          input delay                  2.000     2.000    
                                                       0.000     2.000 r  S_AXI_ARESETN (IN)
-                         net (fo=26, unset)           0.973     2.973    u_core/S_AXI_ARESETN
+                         net (fo=10, unset)           0.973     2.973    u_core/S_AXI_ARESETN
                          LUT1 (Prop_lut1_I0_O)        0.124     3.097 f  u_core/axi_awready_i_1/O
-                         net (fo=3101, unplaced)      0.916     4.013    u_core/S_AXI_ARESETN_13
+                         net (fo=3103, unplaced)      0.916     4.013    u_core/S_AXI_ARESETN_4
                          FDCE                                         f  u_core/busy_reg/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock clk rise edge)       10.000    10.000 r  
                                                       0.000    10.000 r  S_AXI_ACLK (IN)
-                         net (fo=14158, unset)        0.924    10.924    u_core/S_AXI_ACLK
+                         net (fo=14153, unset)        0.924    10.924    u_core/S_AXI_ACLK
                          FDCE                                         r  u_core/busy_reg/C
                          clock pessimism              0.000    10.924    
                          clock uncertainty           -0.035    10.889    
@@ -449,15 +457,15 @@ Slack (MET) :             0.941ns  (arrival time - required time)
                          (clock clk rise edge)        0.000     0.000 r  
                          input delay                  0.500     0.500    
                                                       0.000     0.500 r  S_AXI_ARESETN (IN)
-                         net (fo=26, unset)           0.410     0.910    u_core/S_AXI_ARESETN
+                         net (fo=10, unset)           0.410     0.910    u_core/S_AXI_ARESETN
                          LUT1 (Prop_lut1_I0_O)        0.045     0.955 f  u_core/axi_awready_i_1/O
-                         net (fo=3101, unplaced)      0.386     1.341    u_core/S_AXI_ARESETN_13
+                         net (fo=3103, unplaced)      0.386     1.341    u_core/S_AXI_ARESETN_4
                          FDCE                                         f  u_core/busy_reg/CLR
   -------------------------------------------------------------------    -------------------
 
                          (clock clk rise edge)        0.000     0.000 r  
                                                       0.000     0.000 r  S_AXI_ACLK (IN)
-                         net (fo=14158, unset)        0.432     0.432    u_core/S_AXI_ACLK
+                         net (fo=14153, unset)        0.432     0.432    u_core/S_AXI_ACLK
                          FDCE                                         r  u_core/busy_reg/C
                          clock pessimism              0.000     0.432    
                          clock uncertainty            0.035     0.467    

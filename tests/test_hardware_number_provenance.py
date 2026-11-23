@@ -167,7 +167,7 @@ def test_a_qualified_section_quotes_only_the_reported_figures() -> None:
 
 
 def _signed_slack(report: str, label: str) -> str:
-    """Return the signed slack string (e.g. ``'-3.343'``) for ``Setup`` or ``Hold``."""
+    """Return the signed slack string (e.g. ``'-4.901'``) for ``Setup`` or ``Hold``."""
     match = re.search(
         rf"^{re.escape(label)}\s*:\s*\d+\s+Failing Endpoints,\s+Worst Slack\s+([-0-9.]+)ns",
         report,
@@ -218,11 +218,11 @@ def test_event_shd_reports_and_public_figures_match_verbatim() -> None:
 
     routed_hier = _EVENT_ROUTED_HIER.read_text(encoding="utf-8")
     assert re.search(
-        r"\|\s*\(sc_shd_event_axi\)\s*\|\s*\(top\)\s*\|\s*439\s*\|\s*439\s*\|\s*0\s*\|\s*0\s*\|\s*906\s*\|",
+        r"\|\s*\(sc_shd_event_axi\)\s*\|\s*\(top\)\s*\|\s*231\s*\|\s*231\s*\|\s*0\s*\|\s*0\s*\|\s*899\s*\|",
         routed_hier,
     )
     assert re.search(
-        r"\|\s*u_core\s*\|\s*sc_shd_event_p\s*\|\s*12520\s*\|\s*12480\s*\|\s*40\s*\|\s*0\s*\|\s*13176\s*\|\s*19\s*\|\s*4\s*\|",
+        r"\|\s*u_core\s*\|\s*sc_shd_event_p\s*\|\s*12375\s*\|\s*12335\s*\|\s*40\s*\|\s*0\s*\|\s*13176\s*\|\s*19\s*\|\s*4\s*\|",
         routed_hier,
     )
 

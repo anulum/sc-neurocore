@@ -157,8 +157,8 @@ inputs is what the SymbiYosys proofs below do for the generated RTL.
 
 ## Integration with FPGA Formal Verification
 
-SC-NeuroCore also provides 92 SymbiYosys proof jobs and 589 formal statements
-(402 assert, 133 assume, 54 cover) for RTL-level verification of generated
+SC-NeuroCore also provides 92 SymbiYosys proof jobs and 591 formal statements
+(403 assert, 133 assume, 55 cover) for RTL-level verification of generated
 Verilog.
 The temporal properties here verify the *algorithm*; SymbiYosys verifies
 the *hardware implementation*.

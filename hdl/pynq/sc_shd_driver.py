@@ -104,6 +104,7 @@ LOAD_STATUS_SEALED = 1 << 0
 LOAD_STATUS_CRC_MISMATCH = 1 << 1
 LOAD_STATUS_REFUSED_BUSY = 1 << 2
 LOAD_STATUS_REFUSED_RANGE = 1 << 3
+LOAD_STATUS_COUNT_SHORT = 1 << 4
 
 # Architectural dimensions and bounds matching sc_shd_event_p / sc_shd_event_axi
 N_INPUT = 140
@@ -167,9 +168,8 @@ def encode_load_target(
         Parallel lane count in ``(1, 2, 4, 8)``; **must equal** the synthesised
         bitstream's ``P`` parameter (``8`` for the default build). A smaller
         ``lanes`` overruns the memory bounds and is refused by ``refused_range``,
-        whereas a larger ``lanes`` sends fewer words in the wrong group layout
-        while ``LOAD_COUNT`` and ``LOAD_CRC32`` still match the sent stream, so
-        it cannot be detected from the bus and loads the wrong weights.
+        whereas a larger ``lanes`` sends fewer words than the bitstream's complete
+        load, so the seal is refused with ``count_short``.
 
     Returns
     -------
@@ -319,9 +319,8 @@ def pack_shd_int_network(
         Parallel lane count in ``(1, 2, 4, 8)``; **must equal** the synthesised
         bitstream's ``P`` parameter (``8`` for the default build). A smaller
         ``lanes`` overruns the memory bounds and is refused by ``refused_range``,
-        whereas a larger ``lanes`` sends fewer words in the wrong group layout
-        while ``LOAD_COUNT`` and ``LOAD_CRC32`` still match the sent stream, so
-        it cannot be detected from the bus and loads the wrong weights.
+        whereas a larger ``lanes`` sends fewer words than the bitstream's complete
+        load, so the seal is refused with ``count_short``.
 
     Returns
     -------
@@ -477,8 +476,8 @@ class SHDAccelerator:
             Parallel lane count in ``(1, 2, 4, 8)``; **must equal** the
             synthesised bitstream's ``P`` parameter (``8`` for the default
             build). A smaller value is refused by ``LOAD_STATUS.refused_range``,
-            whereas a larger value sends fewer words in the wrong group layout
-            and seals with the wrong weights because no bus register exposes ``P``.
+            whereas a larger value sends fewer words than the bitstream's
+            complete load, so the seal is refused with ``LOAD_STATUS.count_short``.
         auto_increment : bool, default True
             Use ``LOAD_CTRL.auto_increment`` when ``True``, or write
             ``LOAD_TARGET`` explicitly before each word when ``False``.
@@ -493,7 +492,8 @@ class SHDAccelerator:
         SHDDriverError
             If the core is busy, an out-of-range target is refused, ``LOAD_COUNT``
             or ``LOAD_CRC32`` disagrees, or ``LOAD_STATUS`` reports
-            ``crc_mismatch``, ``refused_busy``, ``refused_range``, or unsealed.
+            ``crc_mismatch``, ``refused_busy``, ``refused_range``, ``count_short``
+            (the bitstream seals only a complete network load), or unsealed.
         """
         entries = pack_shd_int_network(network, delays=delays, lanes=lanes)
         expected_crc = compute_load_crc32([w for _sel, _addr, _grp, w in entries])
@@ -523,6 +523,12 @@ class SHDAccelerator:
             raise SHDDriverError(
                 f"integrity-checked load refused out-of-range LOAD_TARGET "
                 f"(LOAD_STATUS=0x{load_status:08x})",
+                status=load_status,
+            )
+        if load_status & LOAD_STATUS_COUNT_SHORT:
+            raise SHDDriverError(
+                f"integrity-checked load refused to seal an incomplete network: "
+                f"{len(entries)} words sent (LOAD_STATUS=0x{load_status:08x})",
                 status=load_status,
             )
         if (load_status & LOAD_STATUS_CRC_MISMATCH) or not (load_status & LOAD_STATUS_SEALED):

@@ -56,6 +56,9 @@ EVENT_AXI_RTL = REPO_ROOT / "hdl" / "shd_event" / "sc_shd_event_axi.v"
 LEGACY_AXI_RTL = REPO_ROOT / "hdl" / "sc_shd_axi_wrapper.v"
 XILINX_FILELIST = REPO_ROOT / "hdl" / "shd_event" / "xilinx_7series.f"
 FIXTURE_NETWORK = REPO_ROOT / "hdl" / "fixtures" / "shd_int_network.json"
+# Words of a complete P = 8 load (the wrapper's LOAD_WORDS): inputs and hidden rows per group,
+# the output passes, and the two delay tables.
+EVENT_LOAD_WORDS = 140 * (128 // 8) + 128 * (128 // 8) + 128 * ((20 + 8 - 1) // 8) + 140 + 128
 
 
 def _load_driver_module() -> ModuleType:
@@ -275,7 +278,9 @@ class EventAxiBusModel:
                 self.refused_range = False
             else:
                 assert (u32 & drv.LOAD_CTRL_SEAL) != 0
-                assert self.load_count > 0 and self.load_crc32 == self.expected_crc32
+                assert (
+                    self.load_count == EVENT_LOAD_WORDS and self.load_crc32 == self.expected_crc32
+                )
                 self.sealed = True
                 self.crc_mismatch = False
         elif offset == drv.REG_LOAD_TARGET:
@@ -372,7 +377,11 @@ def test_register_constants_and_bitmasks_match_rtl() -> None:
         "{25'd0, commit_refused, core_overflow, core_error,\n"
         "                                         status_frame_ready, done_sticky, wrapper_busy, 1'b0}"
     ) in axi_text
-    assert "{28'd0, refused_range, refused_busy, crc_mismatch, sealed}" in axi_text
+    assert (
+        "{27'd0, count_short, refused_range, refused_busy,\n"
+        "                                         crc_mismatch, sealed}"
+    ) in axi_text
+    assert "(load_count == LOAD_WORDS) &&" in axi_text
     assert drv.CTRL_START == 0x01
     assert drv.CTRL_BUSY == 0x02
     assert drv.CTRL_DONE == 0x04
@@ -387,6 +396,7 @@ def test_register_constants_and_bitmasks_match_rtl() -> None:
     assert drv.LOAD_STATUS_CRC_MISMATCH == 0x02
     assert drv.LOAD_STATUS_REFUSED_BUSY == 0x04
     assert drv.LOAD_STATUS_REFUSED_RANGE == 0x08
+    assert drv.LOAD_STATUS_COUNT_SHORT == 0x10
 
 
 def test_pack_network_and_crc32_across_all_input_forms() -> None:
@@ -597,6 +607,11 @@ def test_validation_and_unsealed_or_abort_refusals(tmp_path: Path) -> None:
     with pytest.raises(drv.SHDDriverError, match="out-of-range LOAD_TARGET") as exc_rng:
         drv.SHDAccelerator(range_loader).load_network(small_w, small_d, lanes=8)
     assert exc_rng.value.status == drv.LOAD_STATUS_REFUSED_RANGE
+
+    short_loader = ScriptedBus({drv.REG_LOAD_STATUS: drv.LOAD_STATUS_COUNT_SHORT})
+    with pytest.raises(drv.SHDDriverError, match="incomplete network") as exc_short:
+        drv.SHDAccelerator(short_loader).load_network(small_w, small_d, lanes=8)
+    assert exc_short.value.status == drv.LOAD_STATUS_COUNT_SHORT
 
     mismatch_loader = ScriptedBus({drv.REG_LOAD_STATUS: drv.LOAD_STATUS_CRC_MISMATCH})
     with pytest.raises(drv.SHDDriverError, match="failed to seal") as exc_seal:

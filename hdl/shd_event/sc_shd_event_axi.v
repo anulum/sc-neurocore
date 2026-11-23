@@ -25,6 +25,7 @@
 //   0x02C..0x03C -    RESERVED          Reads 0; writes refused with SLVERR
 //   0x040..0x08C R    OUT_V_0..19       Signed 32-bit class accumulators (20 words)
 //   0x090        R/W  LOAD_CTRL         W: [0]=clear, [1]=auto_increment, [2]=seal; R: [1]
+//                                       (seal needs LOAD_COUNT == LOAD_WORDS and a matching CRC)
 //   0x094        R/W  LOAD_TARGET       [2:0]=load_sel, [9:3]=load_grp, [17:10]=load_addr
 //   0x098        R/W  LOAD_WDATA_LO     Low 32 bits of 64-bit group word
 //   0x09C        R/W  LOAD_WDATA_HI     High 32 bits; write commits 64-bit word when idle and
@@ -33,13 +34,16 @@
 //   0x0A4        R    LOAD_CRC32        Reflected IEEE CRC-32 (0xEDB88320, LE bytes) over words
 //   0x0A8        R/W  EXPECTED_CRC32    Expected CRC-32 written by host before seal
 //   0x0AC        R    LOAD_STATUS       [0]=sealed, [1]=crc_mismatch, [2]=refused_busy,
-//                                       [3]=refused_range (sticky until LOAD_CTRL.clear)
+//                                       [3]=refused_range (sticky until LOAD_CTRL.clear),
+//                                       [4]=count_short (last seal refused: LOAD_COUNT != LOAD_WORDS)
 //   0x0B0..0x0B4 -    RESERVED          Reads 0; writes refused with SLVERR
 //   0x0B8..0x0FC W    FRAME_COUNT_0..17 Write-only (reads 0); 140 4-bit channel counts
 //                                       (FRAME_COUNT_17[31:16] == 0 enforced via SLVERR)
 //
 // Integrity-checked load note:
 //   CRC-32 detects accidental transfer corruption; it does not authenticate the network.
+//   A seal also needs exactly LOAD_WORDS committed words (4,940 for P = 8), so a partial reload
+//   after a reset cannot seal over entries the reset left unwritten or corrupted.
 //   Out-of-range LOAD_TARGET commits are refused with SLVERR before reaching sc_shd_event_p.
 //   Core rst_n is driven solely by S_AXI_ARESETN so per-sample start preserves loaded RAM
 //   and delay tables, while S_AXI_ARESETN clears sealed and requires reloading after reset.
@@ -58,7 +62,11 @@ module sc_shd_event_axi #(
     parameter integer CAP1               = 62,
     parameter integer CAP2               = 39,
     parameter integer WSHAPE             = 6,
-    parameter integer QSHAPE             = 12
+    parameter integer QSHAPE             = 12,
+    // Words of one complete network load: the weights of inputs and hidden rows per group,
+    // the output passes, and the two delay tables. Override only to scale a formal proof.
+    parameter integer LOAD_WORDS         = (128 / P) * 140 + (128 / P) * 128 +
+                                           ((20 + P - 1) / P) * 128 + 140 + 128
 )(
     input  wire                              S_AXI_ACLK,
     input  wire                              S_AXI_ARESETN,
@@ -272,6 +280,7 @@ module sc_shd_event_axi #(
     reg [31:0]           expected_crc32;
     reg                  sealed;
     reg                  crc_mismatch;
+    reg                  count_short;
     reg                  refused_busy;
     reg                  refused_range;
 
@@ -406,6 +415,7 @@ module sc_shd_event_axi #(
             expected_crc32    <= 32'd0;
             sealed            <= 1'b0;
             crc_mismatch      <= 1'b0;
+            count_short       <= 1'b0;
             refused_busy      <= 1'b0;
             refused_range     <= 1'b0;
         end else begin
@@ -464,16 +474,14 @@ module sc_shd_event_axi #(
                             crc_state     <= 32'hFFFF_FFFF;
                             sealed        <= 1'b0;
                             crc_mismatch  <= 1'b0;
+                            count_short   <= 1'b0;
                             refused_busy  <= 1'b0;
                             refused_range <= 1'b0;
                         end else if (S_AXI_WSTRB[0] && S_AXI_WDATA[2]) begin
-                            if ((load_count != 32'd0) && (load_crc32 == expected_crc32)) begin
-                                sealed       <= 1'b1;
-                                crc_mismatch <= 1'b0;
-                            end else begin
-                                sealed       <= 1'b0;
-                                crc_mismatch <= 1'b1;
-                            end
+                            sealed       <= (load_count == LOAD_WORDS) &&
+                                            (load_crc32 == expected_crc32);
+                            crc_mismatch <= (load_crc32 != expected_crc32);
+                            count_short  <= (load_count != LOAD_WORDS);
                         end else begin
                             sealed <= 1'b0;
                         end
@@ -572,7 +580,8 @@ module sc_shd_event_axi #(
                     6'h28: axi_rdata <= load_count;
                     6'h29: axi_rdata <= load_crc32;
                     6'h2A: axi_rdata <= expected_crc32;
-                    6'h2B: axi_rdata <= {28'd0, refused_range, refused_busy, crc_mismatch, sealed};
+                    6'h2B: axi_rdata <= {27'd0, count_short, refused_range, refused_busy,
+                                         crc_mismatch, sealed};
                     default: begin
                         if ((rd_word >= 6'h10) && (rd_word <= 6'h23))
                             axi_rdata <= core_out_packed[32*(rd_word - 6'h10) +: 32];

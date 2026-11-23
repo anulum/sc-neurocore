@@ -140,23 +140,23 @@ group's earlier design study as Golden Reference #0, it computes the exact same
   `V2_WIDTH=17`, `CAP1=62`, `CAP2=39`, `WSHAPE=6`, `QSHAPE=12`) on
   `xc7z020clg400-1` at a `100 MHz` (`10.000 ns`) target:
   - **Synthesised (`vivado_sc_shd_event_axi_synth_{util,hier_util,timing}_xc7z020_100mhz.rpt`):**
-    `12,974 / 53,200` LUTs (`24.39%`: `12,934` logic + `40` `RAMD64E`),
-    `14,073 / 106,400` FFs (`13.23%`), `21 / 140` Block RAM Tiles
-    (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSPs, `WNS = -6.887 ns`,
+    `12,549 / 53,200` LUTs (`23.59%`: `12,509` logic + `40` `RAMD64E`),
+    `14,068 / 106,400` FFs (`13.22%`), `21 / 140` Block RAM Tiles
+    (`19 RAMB36E1 + 4 RAMB18E1`, `15.00%`), `0` DSPs, `WNS = -7.842 ns`,
     `WHS = +0.173 ns` (`0` hold misses, `0` `check_timing` warnings).
   - **Placed and routed (`vivado_sc_shd_event_axi_routed_{util,hier_util,timing,drc}_xc7z020_100mhz.rpt`):**
-    `12,957 / 53,200` LUTs (`24.36%`: wrapper `439`, `u_core` `12,520`),
-    `14,082 / 106,400` FFs (`13.23%`: wrapper `906`, `u_core` `13,176`),
-    `5,814 / 13,300` slices (`43.71%`), `21 / 140` Block RAM Tiles
+    `12,605 / 53,200` LUTs (`23.69%`: wrapper `231`, `u_core` `12,375`),
+    `14,075 / 106,400` FFs (`13.23%`: wrapper `899`, `u_core` `13,176`),
+    `5,642 / 13,300` slices (`42.42%`), `21 / 140` Block RAM Tiles
     (`q1=9 RAMB36E1`, `q2=8 RAMB36E1`, `q3=2 RAMB36E1`, `w1=2 RAMB18E1`,
-    `w2=2 RAMB18E1`), `0` DSPs, and setup `WNS = -3.343 ns` (`13.343 ns` implied
-    minimum period: `74.95 MHz` `Fmax` and `+6.657 ns` setup slack at `50 MHz`,
+    `w2=2 RAMB18E1`), `0` DSPs, and setup `WNS = -4.901 ns` (`14.901 ns` implied
+    minimum period: `67.11 MHz` `Fmax` and `+5.099 ns` setup slack at `50 MHz`,
     estimated from the 100 MHz run's WNS (not a run at that frequency); hold not
-    closed out of context; routed `WHS = -0.689 ns` across `241` failing hold
-    endpoints has worst path `S_AXI_WDATA[0]` -> `load_wdata_lo_reg_reg[0]/D`,
-    where `0.500 + 0.924 - (1.660 + 0.035 + 0.418) = -0.689 ns` under
+    closed out of context; routed `WHS = -0.852 ns` across `313` failing hold
+    endpoints has worst path `S_AXI_ARADDR[2]` -> `axi_araddr_reg[2]/D`,
+    where `0.500 + 0.924 - (1.823 + 0.035 + 0.418) = -0.852 ns` under
     `HD.CLK_SRC BUFGCTRL_X0Y0` and `set_input_delay -min 0.5`, and the summary
-    report does not break the other `240` endpoints down). Routed DRC reports
+    report does not break the other `312` endpoints down). Routed DRC reports
     `0` errors and `44` warnings (`CHECK-3` ×2, `REQP-1839` ×20, and `REQP-1840`
     ×20 at their 20-violation cap where asynchronously reset registers drive
     `RAMB36E1`/`RAMB18E1` address and enable pins — not analysed by static
@@ -184,7 +184,7 @@ group's earlier design study as Golden Reference #0, it computes the exact same
   accidental corruption without claiming authentication and validates per-selector
   `LOAD_TARGET` bounds before bus writes; `lanes` must equal the synthesised bitstream's `P`
   parameter — `8` on the default build — since a smaller value triggers `refused_range` while
-  a larger value sends fewer words in the wrong layout and cannot be detected from the bus)
+  a larger value sends fewer words than a complete load, so the seal is refused with `count_short`)
   plus bounded-poll event-mode inference (`run_event`, `classify_event`, and
   `classify(..., mode="event")`) routing boolean rasters to `SPIKE_IN_0..4` and `0..15`
   integer rasters to `FRAME_COUNT_0..17` with zero tail padding and zero writes to reserved
@@ -208,6 +208,6 @@ group's earlier design study as Golden Reference #0, it computes the exact same
 | `0xA0` | R | `LOAD_COUNT` | Committed 64-bit group words since `LOAD_CTRL.clear` |
 | `0xA4` | R | `LOAD_CRC32` | Reflected IEEE CRC-32 (`0xEDB88320`, little-endian bytes) over committed words (integrity check only, not authentication) |
 | `0xA8` | R/W | `EXPECTED_CRC32` | Expected 32-bit CRC written before `LOAD_CTRL.seal` |
-| `0xAC` | R | `LOAD_STATUS` | `[0]=sealed`, `[1]=crc_mismatch`, `[2]=refused_busy`, `[3]=refused_range` (sticky until `LOAD_CTRL.clear`) |
+| `0xAC` | R | `LOAD_STATUS` | `[0]=sealed`, `[1]=crc_mismatch`, `[2]=refused_busy`, `[3]=refused_range` (sticky until `LOAD_CTRL.clear`), `[4]=count_short` (the last seal was refused because `LOAD_COUNT` was not the full network's 4,940 words for `P = 8`) |
 | `0xB0..0xB4` | — | `RESERVED` | Read `0`; writes refused with `SLVERR` |
 | `0xB8..0xFC` | W | `FRAME_COUNT_0..17` | Write-only (read `0`); 140 4-bit channel counts (`FRAME_COUNT_17[31:16] == 0` enforced via `SLVERR`) |

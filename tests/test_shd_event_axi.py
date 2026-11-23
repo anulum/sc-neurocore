@@ -159,6 +159,15 @@ def test_formal_sby_and_harness_structure() -> None:
     for rel in files_block:
         assert (SBY_FILE.parent / rel.strip()).is_file()
 
+    # The proof scales the complete-load word count down; the harness asserts the same value.
+    chparam = re.search(r"chparam [^\n]*-set LOAD_WORDS (\d+) sc_shd_event_axi", sby_text)
+    harness = re.search(
+        r"localparam \[31:0\] F_LOAD_WORDS = 32'd(\d+);", FORMAL_V.read_text("utf-8")
+    )
+    assert chparam is not None and harness is not None
+    assert chparam.group(1) == harness.group(1)
+    assert "assert(f_load_count == F_LOAD_WORDS);" in FORMAL_V.read_text(encoding="utf-8")
+
 
 @pytest.mark.parametrize("target", ["generic", "xilinx_7series"])
 @pytest.mark.parametrize("use_verilator", [False, True])

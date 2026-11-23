@@ -132,8 +132,8 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-92 SymbiYosys proof jobs and 589 formal statements (402 assert, 133 assume,
-54 cover) across the HDL formal tree and inline top-wrapper properties.
+92 SymbiYosys proof jobs and 591 formal statements (403 assert, 133 assume,
+55 cover) across the HDL formal tree and inline top-wrapper properties.
 
 ### Prerequisites for physical deployment
 

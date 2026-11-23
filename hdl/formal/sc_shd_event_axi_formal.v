@@ -33,11 +33,15 @@ module sc_shd_event_axi_formal (
     wire        S_AXI_RVALID;
 
     wire [3:0]   f_core_state;
+    // LOAD_WORDS of the wrapper under proof; sc_shd_event_axi.sby sets the same value by chparam.
+    localparam [31:0] F_LOAD_WORDS = 32'd2;
+
     wire         f_core_busy;
     wire         f_core_error;
     wire         f_core_frame_ready;
     wire         f_sealed;
     wire         f_crc_mismatch;
+    wire         f_count_short;
     wire         f_refused_busy;
     wire         f_refused_range;
     wire         f_commit_refused;
@@ -90,6 +94,7 @@ module sc_shd_event_axi_formal (
         .S_AXI_RREADY    (S_AXI_RREADY),
         .sealed          (f_sealed),
         .crc_mismatch    (f_crc_mismatch),
+        .count_short     (f_count_short),
         .refused_busy    (f_refused_busy),
         .refused_range   (f_refused_range),
         .commit_refused  (f_commit_refused),
@@ -164,6 +169,7 @@ module sc_shd_event_axi_formal (
     always @(posedge clk) begin
         if (past_valid && !$past(rst_n)) begin
             assert(!f_sealed);
+            assert(!f_count_short);
             assert(f_load_count == 32'd0);
             assert(f_load_crc32 == 32'd0);
             assert(!f_start_r);
@@ -180,10 +186,11 @@ module sc_shd_event_axi_formal (
         end
     end
 
-    // 2. Seal invariant: sealed implies load_count > 0 and load_crc32 == expected_crc32.
+    // 2. Seal invariant: sealed implies a complete load (load_count == LOAD_WORDS, set to
+    //    F_LOAD_WORDS by chparam in sc_shd_event_axi.sby) and load_crc32 == expected_crc32.
     always @(posedge clk) begin
         if (rst_n && f_sealed) begin
-            assert(f_load_count > 32'd0);
+            assert(f_load_count == F_LOAD_WORDS);
             assert(f_load_crc32 == f_expected_crc32);
         end
     end
@@ -195,7 +202,7 @@ module sc_shd_event_axi_formal (
     always @(posedge clk) begin
         if (rst_n && f_start_r) begin
             assert(f_sealed);
-            assert(f_load_count > 32'd0);
+            assert(f_load_count == F_LOAD_WORDS);
             assert(f_load_crc32 == f_expected_crc32);
             assert(f_core_t_orig >= 16'd1);
             assert(f_core_t_orig <= 16'd1024);
@@ -297,6 +304,7 @@ module sc_shd_event_axi_formal (
         if (past_valid && rst_n) begin
             cover(f_sealed && f_frame_valid_r && f_core_frame_ready);
             cover(f_crc_mismatch && !f_sealed);
+            cover(f_count_short && !f_sealed && (f_load_crc32 == f_expected_crc32));
             cover(f_refused_busy && S_AXI_BVALID && (S_AXI_BRESP == 2'b10));
             cover(f_refused_range && S_AXI_BVALID && (S_AXI_BRESP == 2'b10));
             cover(f_commit_refused && S_AXI_BVALID && (S_AXI_BRESP == 2'b10));

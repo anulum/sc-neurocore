@@ -9,7 +9,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Thu Nov 19 09:08:44 2026
+| Date         : Mon Nov 23 03:06:28 2026
 | Host         : build-host (64-bit Ubuntu 24.04.5 LTS)
 | Command      : report_utilization -hierarchical -file hdl/reports/vivado_sc_shd_event_axi_synth_hier_util_xc7z020_100mhz.rpt
 | Design       : sc_shd_event_axi
@@ -30,16 +30,16 @@ Table of Contents
 +----------------------+------------------------+------------+------------+---------+------+-------+--------+--------+------------+
 |       Instance       |         Module         | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
 +----------------------+------------------------+------------+------------+---------+------+-------+--------+--------+------------+
-| sc_shd_event_axi     |                  (top) |      12974 |      12934 |      40 |    0 | 14073 |     19 |      4 |          0 |
-|   (sc_shd_event_axi) |                  (top) |        387 |        387 |       0 |    0 |   906 |      0 |      0 |          0 |
-|   u_core             |         sc_shd_event_p |      12587 |      12547 |      40 |    0 | 13167 |     19 |      4 |          0 |
-|     (u_core)         |         sc_shd_event_p |       4401 |       4361 |      40 |    0 |  3897 |      0 |      0 |          0 |
-|     lanes            |               sc_lanes |       4663 |       4663 |       0 |    0 |  7968 |      0 |      0 |          0 |
-|     q1               | sc_mem__parameterized1 |       1081 |       1081 |       0 |    0 |   590 |      9 |      0 |          0 |
-|     q2               | sc_mem__parameterized2 |        532 |        532 |       0 |    0 |   523 |      8 |      0 |          0 |
-|     q3               | sc_mem__parameterized3 |        909 |        909 |       0 |    0 |   145 |      2 |      0 |          0 |
-|     w1               |                 sc_mem |        685 |        685 |       0 |    0 |    27 |      0 |      2 |          0 |
-|     w2               | sc_mem__parameterized0 |        316 |        316 |       0 |    0 |    17 |      0 |      2 |          0 |
+| sc_shd_event_axi     |                  (top) |      12549 |      12509 |      40 |    0 | 14068 |     19 |      4 |          0 |
+|   (sc_shd_event_axi) |                  (top) |        234 |        234 |       0 |    0 |   899 |      0 |      0 |          0 |
+|   u_core             |         sc_shd_event_p |      12315 |      12275 |      40 |    0 | 13169 |     19 |      4 |          0 |
+|     (u_core)         |         sc_shd_event_p |       4115 |       4075 |      40 |    0 |  3899 |      0 |      0 |          0 |
+|     lanes            |               sc_lanes |       4735 |       4735 |       0 |    0 |  7968 |      0 |      0 |          0 |
+|     q1               | sc_mem__parameterized1 |       1074 |       1074 |       0 |    0 |   590 |      9 |      0 |          0 |
+|     q2               | sc_mem__parameterized2 |        537 |        537 |       0 |    0 |   523 |      8 |      0 |          0 |
+|     q3               | sc_mem__parameterized3 |        847 |        847 |       0 |    0 |   145 |      2 |      0 |          0 |
+|     w1               |                 sc_mem |        646 |        646 |       0 |    0 |    27 |      0 |      2 |          0 |
+|     w2               | sc_mem__parameterized0 |        361 |        361 |       0 |    0 |    17 |      0 |      2 |          0 |
 +----------------------+------------------------+------------+------------+---------+------+-------+--------+--------+------------+
 
 

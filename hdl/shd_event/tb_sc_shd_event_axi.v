@@ -343,6 +343,7 @@ module tb_sc_shd_event_axi;
     task run_negative_suite;
         reg [31:0] one_word_crc;
         reg [4:0]  saved_d2_0;
+        reg [1023:0] partial_shift;
         begin
             // 1. Reset defaults
             axi_read(ADDR_T_ORIG, rd_val);
@@ -359,13 +360,14 @@ module tb_sc_shd_event_axi;
             axi_read(ADDR_CTRL, rd_val);
             if (rd_val[1] !== 1'b0) $fatal(1, "Core started while unsealed");
 
-            // 3. Seal on empty loader (count == 0) -> crc_mismatch=1, sealed=0
+            // 3. Seal on empty loader (count == 0, CRC of nothing == 0) -> count_short=1, sealed=0
             axi_write_ok(ADDR_EXPECTED_CRC32, 32'd0);
             axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0004);
             axi_read(ADDR_LOAD_STATUS, rd_val);
-            if (rd_val !== 32'h0000_0002) $fatal(1, "Empty seal status != 2: 0x%08x", rd_val);
+            if (rd_val !== 32'h0000_0010) $fatal(1, "Empty seal status != 0x10: 0x%08x", rd_val);
 
-            // 4. Commit 1 word, wrong CRC -> crc_mismatch=1, sealed=0; matching CRC -> sealed=1
+            // 4. Commit 1 word: wrong CRC -> crc_mismatch=1 and count_short=1; matching CRC ->
+            //    count_short=1 only. A seal needs the full network's word count, so neither seals.
             axi_write_ext(ADDR_LOAD_CTRL, 32'h0000_0001, 4'hF, 2, 2, RESP_OKAY);
             axi_write_ext(ADDR_LOAD_TARGET, 32'd0, 4'hF, -2, 1, RESP_OKAY);
             axi_write_ok(ADDR_LOAD_WDATA_LO, 32'h89AB_CDEF);
@@ -375,15 +377,17 @@ module tb_sc_shd_event_axi;
             axi_write_ok(ADDR_EXPECTED_CRC32, one_word_crc ^ 32'h0000_0001);
             axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0004);
             axi_read(ADDR_LOAD_STATUS, rd_val);
-            if (rd_val !== 32'h0000_0002) $fatal(1, "Bad-CRC seal status != 2: 0x%08x", rd_val);
+            if (rd_val !== 32'h0000_0012) $fatal(1, "Bad-CRC seal status != 0x12: 0x%08x", rd_val);
             axi_write_err(ADDR_CTRL, 32'd1);
 
             axi_write_ok(ADDR_EXPECTED_CRC32, one_word_crc);
             axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0004);
             axi_read(ADDR_LOAD_STATUS, rd_val);
-            if (rd_val !== 32'h0000_0001) $fatal(1, "Valid seal status != 1: 0x%08x", rd_val);
+            if (rd_val !== 32'h0000_0010) $fatal(1, "Short seal status != 0x10: 0x%08x", rd_val);
+            axi_write_err(ADDR_CTRL, 32'd1);
 
-            // 5. Every idle loader write after seal clears sealed:
+            // 5. Every idle loader write after seal clears sealed (from a full, sealed network):
+            load_and_seal_network(1);
             axi_write_ok(ADDR_LOAD_TARGET, 32'd4);
             axi_read(ADDR_LOAD_STATUS, rd_val);
             if (rd_val[0] !== 1'b0) $fatal(1, "LOAD_TARGET write did not clear sealed");
@@ -395,7 +399,9 @@ module tb_sc_shd_event_axi;
             if (rd_val[0] !== 1'b0) $fatal(1, "LOAD_WDATA_LO write did not clear sealed");
 
             axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0004);
-            axi_write_ok(ADDR_EXPECTED_CRC32, one_word_crc);
+            axi_read(ADDR_LOAD_STATUS, rd_val);
+            if (rd_val !== 32'h0000_0001) $fatal(1, "Full network did not reseal: 0x%08x", rd_val);
+            axi_write_ok(ADDR_EXPECTED_CRC32, exp_crc[0]);
             axi_read(ADDR_LOAD_STATUS, rd_val);
             if (rd_val[0] !== 1'b0) $fatal(1, "EXPECTED_CRC32 write did not clear sealed");
 
@@ -571,6 +577,25 @@ module tb_sc_shd_event_axi;
             @(posedge clk);
             axi_read(ADDR_LOAD_STATUS, rd_val);
             if (rd_val !== 32'd0) $fatal(1, "ARESETN did not clear LOAD_STATUS");
+            axi_write_err(ADDR_CTRL, 32'd1);
+
+            // 11. A partial reload after a reset does not seal, even with a matching CRC: the
+            //     first table only (q1, 140 x 128/P words), sealed against its own CRC.
+            axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0003);
+            axi_write_ok(ADDR_LOAD_TARGET, 32'd0);
+            for (r = 0; r < 140; r = r + 1) begin
+                for (gq = 0; gq < 128 / P; gq = gq + 1) begin
+                    partial_shift = q1[r] >> (gq * 8 * P);
+                    push_word_auto(partial_shift[63:0]);
+                end
+            end
+            axi_read(ADDR_LOAD_COUNT, rd_val);
+            if (rd_val !== 140 * (128 / P)) $fatal(1, "Partial LOAD_COUNT != %0d: %0d", 140 * (128 / P), rd_val);
+            axi_read(ADDR_LOAD_CRC32, rd_val);
+            axi_write_ok(ADDR_EXPECTED_CRC32, rd_val);
+            axi_write_ok(ADDR_LOAD_CTRL, 32'h0000_0006);
+            axi_read(ADDR_LOAD_STATUS, rd_val);
+            if (rd_val !== 32'h0000_0010) $fatal(1, "Partial reload sealed or flagged CRC: 0x%08x", rd_val);
             axi_write_err(ADDR_CTRL, 32'd1);
         end
     endtask

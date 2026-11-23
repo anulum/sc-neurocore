@@ -96,10 +96,10 @@ wheels in `21` Block RAM Tiles plus delay tables in `RAMD64E` LUTRAM) is
 synthesised and routed out-of-context against a `100 MHz` (`10.000 ns`) target
 (`hdl/reports/vivado_sc_shd_event_axi_routed_util_xc7z020_100mhz.rpt`,
 `hdl/reports/vivado_sc_shd_event_axi_routed_timing_xc7z020_100mhz.rpt`). Routed
-setup `WNS` is `-3.343 ns` (`13.343 ns` implied minimum period: `74.95 MHz`
-`Fmax` and `+6.657 ns` setup slack at `50 MHz`, estimated from the 100 MHz
+setup `WNS` is `-4.901 ns` (`14.901 ns` implied minimum period: `67.11 MHz`
+`Fmax` and `+5.099 ns` setup slack at `50 MHz`, estimated from the 100 MHz
 run's WNS (not a run at that frequency); hold not closed out of context, with
-routed `WHS = -0.689 ns`, and `100 MHz` setup not closed without datapath
+routed `WHS = -0.852 ns`, and `100 MHz` setup not closed without datapath
 pipelining).
 
 No other clock, device or design has a committed timing report, and no design
