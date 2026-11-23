@@ -10,28 +10,38 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.model_zoo.model_zoo import (
+    IzhikevichPlugin,
+    NeuronState,
+)
 
 
 class TestIzhikevichPlugin:
-    def test_meta_name(self):
+    """Metadata, state, spiking and reset of the Izhikevich plugin."""
+
+    def test_meta_name(self) -> None:
+        """The Izhikevich plugin is named Izhikevich."""
         plugin = IzhikevichPlugin()
         assert plugin.meta().name == "Izhikevich"
 
-    def test_state_variables(self):
+    def test_state_variables(self) -> None:
+        """The state holds the voltage and the recovery variable."""
         plugin = IzhikevichPlugin()
         state = plugin.default_state()
         assert "V" in state.as_dict()
         assert "u" in state.as_dict()
 
-    def test_suprathreshold_spikes(self):
+    def test_suprathreshold_spikes(self) -> None:
+        """A constant suprathreshold current produces spikes."""
         plugin = IzhikevichPlugin()
         params = plugin.default_params()
         current = np.ones(10000) * 10.0
         _, spikes = plugin.simulate(current, dt=0.0001, params=params)
         assert len(spikes) > 0
 
-    def test_reset_applies_d(self):
+    def test_reset_applies_d(self) -> None:
+        """A reset sets the voltage to c and the recovery variable to d."""
         plugin = IzhikevichPlugin()
         params = plugin.default_params()
         state = NeuronState({"V": 35.0, "u": 0.0})

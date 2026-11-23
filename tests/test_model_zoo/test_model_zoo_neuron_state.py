@@ -10,23 +10,30 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+from sc_neurocore.model_zoo.model_zoo import (
+    NeuronState,
+)
 
 
 class TestNeuronState:
-    def test_get_set(self):
+    """Access, copying and conversion of a neuron state."""
+
+    def test_get_set(self) -> None:
+        """A state variable can be read and written by name."""
         s = NeuronState({"V": -65.0})
         assert s["V"] == -65.0
         s["V"] = -50.0
         assert s["V"] == -50.0
 
-    def test_copy_independent(self):
+    def test_copy_independent(self) -> None:
+        """Changing a copy leaves the original state unchanged."""
         s = NeuronState({"V": -65.0})
         c = s.copy()
         c["V"] = 0.0
         assert s["V"] == -65.0
 
-    def test_as_dict(self):
+    def test_as_dict(self) -> None:
+        """The state converts to a dictionary of its variables."""
         s = NeuronState({"V": -65.0, "u": -14.0})
         d = s.as_dict()
         assert d == {"V": -65.0, "u": -14.0}

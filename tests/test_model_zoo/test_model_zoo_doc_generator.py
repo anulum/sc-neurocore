@@ -10,31 +10,42 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+from sc_neurocore.model_zoo.model_zoo import (
+    DocGenerator,
+    IzhikevichPlugin,
+    LIFPlugin,
+    PluginRegistry,
+)
 
 
 class TestDocGenerator:
-    def test_generates_markdown(self):
+    """Markdown documentation generated for model plugins."""
+
+    def test_generates_markdown(self) -> None:
+        """A plugin page has its title, parameters and default values."""
         doc = DocGenerator()
         md = doc.generate(LIFPlugin())
         assert md.startswith("# LIF")
         assert "## Parameters" in md
         assert "## Default Values" in md
 
-    def test_references_section(self):
+    def test_references_section(self) -> None:
+        """The LIF page lists its references, Lapicque among them."""
         doc = DocGenerator()
         md = doc.generate(LIFPlugin())
         assert "## References" in md
         assert "Lapicque" in md
 
-    def test_state_variables_listed(self):
+    def test_state_variables_listed(self) -> None:
+        """The Izhikevich page lists its state variables."""
         doc = DocGenerator()
         md = doc.generate(IzhikevichPlugin())
         assert "## State Variables" in md
         assert "`V`" in md
         assert "`u`" in md
 
-    def test_index_generation(self):
+    def test_index_generation(self) -> None:
+        """The model-zoo index names every built-in model."""
         reg = PluginRegistry.with_builtins()
         doc = DocGenerator()
         index = doc.generate_index(reg)
@@ -44,7 +55,8 @@ class TestDocGenerator:
         assert "AdEx" in index
         assert "Hodgkin-Huxley" in index
 
-    def test_default_values_table(self):
+    def test_default_values_table(self) -> None:
+        """The LIF page shows the membrane time-constant default."""
         doc = DocGenerator()
         md = doc.generate(LIFPlugin())
         assert "0.02" in md  # tau_m default

@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from fault_injection_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
-def test_sweep_ber_rejects_non_fault_model():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_sweep_ber_rejects_non_fault_model() -> None:
+    """A sweep refuses a fault model given as text."""
     bench = ResilienceBenchmark(seed=0)
     with pytest.raises(ValueError, match="fault_model must be a FaultModel"):
-        bench.sweep_ber(fault_model="bit_flip", ber_range=[0.1])  # type: ignore[arg-type]
+        bench.sweep_ber(fault_model=cast(Any, "bit_flip"), ber_range=[0.1])
 
 
-def test_sweep_ber_rejects_non_numeric_entry():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_sweep_ber_rejects_non_numeric_entry() -> None:
+    """A sweep refuses a text entry in its rate range."""
     bench = ResilienceBenchmark(seed=0)
     with pytest.raises(ValueError, match="ber_range entries must be"):
-        bench.sweep_ber(fault_model=FaultModel.BIT_FLIP, ber_range=["x"])  # type: ignore[list-item]
+        bench.sweep_ber(fault_model=FaultModel.BIT_FLIP, ber_range=cast(Any, ["x"]))

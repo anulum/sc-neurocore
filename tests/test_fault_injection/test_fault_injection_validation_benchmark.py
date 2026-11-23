@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-from fault_injection_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
-def test_generate_bitstream_rejects_non_numeric_probability():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_generate_bitstream_rejects_non_numeric_probability() -> None:
+    """Generating a bitstream refuses a text probability."""
     bench = ResilienceBenchmark(seed=0)
     with pytest.raises(ValueError, match="probability must be"):
-        bench._generate_bitstream(8, "x")  # type: ignore[arg-type]
+        bench._generate_bitstream(8, cast(Any, "x"))
 
 
-def test_run_rejects_non_numeric_probability():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_run_rejects_non_numeric_probability() -> None:
+    """A benchmark run refuses a text probability."""
     bench = ResilienceBenchmark(seed=0)
     with pytest.raises(ValueError, match="probability must be"):
-        bench.run(fault_model=FaultModel.BIT_FLIP, ber=0.1, probability="x")  # type: ignore[arg-type]
+        bench.run(fault_model=FaultModel.BIT_FLIP, ber=0.1, probability=cast(Any, "x"))
 
 
-def test_run_rejects_non_numeric_ber():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_run_rejects_non_numeric_ber() -> None:
+    """A benchmark run refuses a text bit-error rate."""
     bench = ResilienceBenchmark(seed=0)
     with pytest.raises(ValueError, match="ber must be"):
-        bench.run(fault_model=FaultModel.BIT_FLIP, ber="x")  # type: ignore[arg-type]
+        bench.run(fault_model=FaultModel.BIT_FLIP, ber=cast(Any, "x"))

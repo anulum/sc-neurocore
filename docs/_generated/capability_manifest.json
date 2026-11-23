@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5761
+    "test_files": 5760
   },
   "documentation": {
     "public_pages": [
@@ -6820,7 +6820,6 @@
       "tests/test_model_yamada_yamada_pipeline.py",
       "tests/test_model_yamada_yamada_slow_dynamics.py",
       "tests/test_model_yamada_yamada_validation.py",
-      "tests/test_model_zoo/model_zoo_support.py",
       "tests/test_model_zoo/test_model_zoo_ad_ex_plugin.py",
       "tests/test_model_zoo/test_model_zoo_doc_generator.py",
       "tests/test_model_zoo/test_model_zoo_hodgkin_huxley_plugin.py",

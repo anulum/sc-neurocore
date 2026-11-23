@@ -1314,6 +1314,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 16 fault-injection and model-zoo test modules
+  (`tests/test_fault_injection`, `tests/test_model_zoo`) import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing test docstrings and type annotations and are enrolled
+  in the docstring policy. The fault-injection validation tests pass
+  their deliberately wrong arguments through `cast` instead of under
+  type suppressions, and the model-zoo support module, left without an
+  importer, is deleted.
+
 - The 13 HDL-generation and world-model test modules
   (`tests/test_hdl_gen`, `tests/test_world_model`) import their names
   explicitly instead of through a suppressed star import, gain their

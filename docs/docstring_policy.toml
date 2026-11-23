@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2519
+expected_file_count = 2535
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10120,3 +10120,67 @@ rationale = "Exercise the world model suite: predictive model backends rust load
 [[file]]
 path = "tests/test_tools/test_docstring_policy_guard_deletion_native.py"
 rationale = "Bind the scope guard's deletion rule: a staged deletion takes its row, while a kept file, a working-tree-only deletion, a kept row of a deleted file, an over-lowered count and an unenrolled rename target are refused."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_fault_injection_result.py"
+rationale = "Exercise the fault injection suite: fault injection fault injection result."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_fault_injector.py"
+rationale = "Exercise the fault injection suite: fault injection fault injector."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_radiation_profiles.py"
+rationale = "Exercise the fault injection suite: fault injection radiation profiles."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_resilience_benchmark.py"
+rationale = "Exercise the fault injection suite: fault injection resilience benchmark."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_validation_benchmark.py"
+rationale = "Exercise the fault injection suite: fault injection validation benchmark."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_validation_injector.py"
+rationale = "Exercise the fault injection suite: fault injection validation injector."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_validation_models.py"
+rationale = "Exercise the fault injection suite: fault injection validation models."
+
+[[file]]
+path = "tests/test_fault_injection/test_fault_injection_validation_sweep.py"
+rationale = "Exercise the fault injection suite: fault injection validation sweep."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_ad_ex_plugin.py"
+rationale = "Exercise the model zoo suite: model zoo ad ex plugin."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_doc_generator.py"
+rationale = "Exercise the model zoo suite: model zoo doc generator."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_hodgkin_huxley_plugin.py"
+rationale = "Exercise the model zoo suite: model zoo hodgkin huxley plugin."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_izhikevich_plugin.py"
+rationale = "Exercise the model zoo suite: model zoo izhikevich plugin."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_lif_plugin.py"
+rationale = "Exercise the model zoo suite: model zoo lif plugin."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_neuron_state.py"
+rationale = "Exercise the model zoo suite: model zoo neuron state."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_plugin_registry.py"
+rationale = "Exercise the model zoo suite: model zoo plugin registry."
+
+[[file]]
+path = "tests/test_model_zoo/test_model_zoo_verilog_generator.py"
+rationale = "Exercise the model zoo suite: model zoo verilog generator."

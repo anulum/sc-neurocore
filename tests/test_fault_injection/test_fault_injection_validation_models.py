@@ -10,34 +10,49 @@
 
 from __future__ import annotations
 
-from fault_injection_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from fault_injection_support import (
+    _VALID_REPORT,
+)
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjectionResult,
+    RadiationProfile,
+    ResilienceReport,
+)
 
 
-def test_radiation_profile_rejects_non_numeric_ber():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_radiation_profile_rejects_non_numeric_ber() -> None:
+    """A radiation profile refuses a text bit-error rate."""
     with pytest.raises(ValueError, match="ber must be"):
-        RadiationProfile(name="bad", ber="high")  # type: ignore[arg-type]
+        RadiationProfile(name="bad", ber=cast(Any, "high"))
 
 
-def test_fault_injection_result_rejects_non_integer_field():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_fault_injection_result_rejects_non_integer_field() -> None:
+    """A fault-injection result refuses a popcount that is not an integer."""
     with pytest.raises(ValueError, match="must be an integer"):
         FaultInjectionResult(
-            original_popcount="x",  # type: ignore[arg-type]
+            original_popcount=cast(Any, "x"),
             corrupted_popcount=0,
             bits_flipped=0,
             bitstream_length=10,
         )
 
 
-def test_resilience_report_rejects_empty_fault_model():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_resilience_report_rejects_empty_fault_model() -> None:
+    """A resilience report refuses a blank fault-model name."""
     with pytest.raises(ValueError, match="fault_model must be a non-empty string"):
-        ResilienceReport(**{**_VALID_REPORT, "fault_model": "   "})
+        ResilienceReport(**cast(dict[str, Any], {**_VALID_REPORT, "fault_model": "   "}))
 
 
-def test_resilience_report_rejects_non_numeric_field():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_resilience_report_rejects_non_numeric_field() -> None:
+    """A resilience report refuses a text bit-error rate."""
     with pytest.raises(ValueError, match="ber must be numeric"):
-        ResilienceReport(**{**_VALID_REPORT, "ber": "x"})
+        ResilienceReport(**cast(dict[str, Any], {**_VALID_REPORT, "ber": "x"}))
 
 
-def test_resilience_report_rejects_non_finite_field():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_resilience_report_rejects_non_finite_field() -> None:
+    """A resilience report refuses an infinite mean error."""
     with pytest.raises(ValueError, match="mean_error must be finite"):
-        ResilienceReport(**{**_VALID_REPORT, "mean_error": float("inf")})
+        ResilienceReport(**cast(dict[str, Any], {**_VALID_REPORT, "mean_error": float("inf")}))

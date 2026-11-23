@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from fault_injection_support import *  # noqa: F403
+import unittest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjectionResult,
+)
 
 
 class TestFaultInjectionResult(unittest.TestCase):
-    def test_probability_calculation(self):
+    """Probabilities and error of one fault-injection result."""
+
+    def test_probability_calculation(self) -> None:
+        """Popcounts over the length give the original and corrupted probabilities and their error."""
         r = FaultInjectionResult(
             original_popcount=500,
             corrupted_popcount=480,
@@ -25,7 +31,8 @@ class TestFaultInjectionResult(unittest.TestCase):
         self.assertAlmostEqual(r.probability_corrupted, 0.48)
         self.assertAlmostEqual(r.absolute_error, 0.02)
 
-    def test_zero_length_safety(self):
+    def test_zero_length_safety(self) -> None:
+        """A zero-length result reports zero probability and zero error."""
         r = FaultInjectionResult(0, 0, 0, 0)
         self.assertEqual(r.probability_original, 0.0)
         self.assertEqual(r.absolute_error, 0.0)

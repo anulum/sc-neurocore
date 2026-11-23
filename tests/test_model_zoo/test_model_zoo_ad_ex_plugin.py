@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+from sc_neurocore.model_zoo.model_zoo import (
+    AdExPlugin,
+    NeuronState,
+)
 
 
 class TestAdExPlugin:
-    def test_meta_name(self):
+    """Metadata, state and reset of the AdEx plugin."""
+
+    def test_meta_name(self) -> None:
+        """The AdEx plugin is named AdEx."""
         plugin = AdExPlugin()
         assert plugin.meta().name == "AdEx"
 
-    def test_state_has_adaptation(self):
+    def test_state_has_adaptation(self) -> None:
+        """The AdEx state holds the adaptation variable."""
         state = AdExPlugin().default_state()
         assert "w" in state.as_dict()
 
-    def test_reset_increments_w(self):
+    def test_reset_increments_w(self) -> None:
+        """A reset adds the jump b to the adaptation variable."""
         plugin = AdExPlugin()
         params = plugin.default_params()
         state = NeuronState({"V": 25.0, "w": 1.0})

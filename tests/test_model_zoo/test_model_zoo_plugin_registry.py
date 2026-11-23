@@ -10,34 +10,44 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+from sc_neurocore.model_zoo.model_zoo import (
+    LIFPlugin,
+    PluginRegistry,
+)
 
 
 class TestPluginRegistry:
-    def test_register_and_get(self):
+    """Registering, listing and looking up model plugins."""
+
+    def test_register_and_get(self) -> None:
+        """A registered plugin can be found and fetched by name."""
         reg = PluginRegistry()
         reg.register(LIFPlugin())
         assert "LIF" in reg
         assert reg.get("LIF") is not None
 
-    def test_list_plugins_sorted(self):
+    def test_list_plugins_sorted(self) -> None:
+        """The built-in registry lists its four plugins in sorted order."""
         reg = PluginRegistry.with_builtins()
         names = reg.list_plugins()
         assert names == sorted(names)
         assert len(names) == 4
 
-    def test_builtins_all_present(self):
+    def test_builtins_all_present(self) -> None:
+        """The built-in registry holds every built-in model."""
         reg = PluginRegistry.with_builtins()
         assert "LIF" in reg
         assert "Izhikevich" in reg
         assert "AdEx" in reg
         assert "Hodgkin-Huxley" in reg
 
-    def test_get_missing_returns_none(self):
+    def test_get_missing_returns_none(self) -> None:
+        """Fetching an unknown plugin returns None."""
         reg = PluginRegistry()
         assert reg.get("nonexistent") is None
 
-    def test_len(self):
+    def test_len(self) -> None:
+        """The registry length counts its plugins."""
         reg = PluginRegistry()
         assert len(reg) == 0
         reg.register(LIFPlugin())

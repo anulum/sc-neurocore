@@ -10,50 +10,66 @@
 
 from __future__ import annotations
 
-from model_zoo_support import *  # noqa: F403
+from sc_neurocore.model_zoo.model_zoo import (
+    AdExPlugin,
+    HodgkinHuxleyPlugin,
+    IzhikevichPlugin,
+    LIFPlugin,
+    VerilogGenerator,
+)
 
 
 class TestVerilogGenerator:
-    def test_generates_valid_module(self):
+    """SystemVerilog modules generated for model plugins."""
+
+    def test_generates_valid_module(self) -> None:
+        """The LIF plugin generates a complete named module."""
         gen = VerilogGenerator()
         sv = gen.generate(LIFPlugin())
         assert "module sc_neuron_lif" in sv
         assert "endmodule" in sv
 
-    def test_contains_spdx_header(self):
+    def test_contains_spdx_header(self) -> None:
+        """Generated modules carry the SPDX licence header."""
         gen = VerilogGenerator()
         sv = gen.generate(LIFPlugin())
         assert "SPDX-License-Identifier" in sv
         assert "AGPL-3.0-or-later" in sv
 
-    def test_ports_include_spike(self):
+    def test_ports_include_spike(self) -> None:
+        """The generated module has a spike output."""
         gen = VerilogGenerator()
         sv = gen.generate(LIFPlugin())
         assert "o_spike" in sv
 
-    def test_ports_include_state(self):
+    def test_ports_include_state(self) -> None:
+        """The Izhikevich module has an output per state variable."""
         gen = VerilogGenerator()
         sv = gen.generate(IzhikevichPlugin())
         assert "o_V" in sv
         assert "o_u" in sv
 
-    def test_parameters_present(self):
+    def test_parameters_present(self) -> None:
+        """The LIF module declares its parameters."""
         gen = VerilogGenerator()
         sv = gen.generate(LIFPlugin())
         assert "TAU_M" in sv or "V_REST" in sv
 
-    def test_hh_generates_four_outputs(self):
+    def test_hh_generates_four_outputs(self) -> None:
+        """The Hodgkin-Huxley module has its four state outputs."""
         gen = VerilogGenerator()
         sv = gen.generate(HodgkinHuxleyPlugin())
         for var in ("o_V", "o_m", "o_h", "o_n"):
             assert var in sv
 
-    def test_bit_width_configurable(self):
+    def test_bit_width_configurable(self) -> None:
+        """A 32-bit generator emits 32-bit ports."""
         gen = VerilogGenerator(bit_width=32, frac_bits=16)
         sv = gen.generate(LIFPlugin())
         assert "[31:0]" in sv
 
-    def test_all_builtins_generate(self):
+    def test_all_builtins_generate(self) -> None:
+        """Every built-in plugin generates a complete module."""
         gen = VerilogGenerator()
         for cls in (LIFPlugin, IzhikevichPlugin, AdExPlugin, HodgkinHuxleyPlugin):
             sv = gen.generate(cls())

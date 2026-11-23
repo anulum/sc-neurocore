@@ -10,22 +10,35 @@
 
 from __future__ import annotations
 
-from fault_injection_support import *  # noqa: F403
+from typing import Any, cast
+
+import numpy as np
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjector,
+    FaultModel,
+)
+from unittest.mock import (
+    MagicMock,
+)
 
 
-def test_inject_rejects_non_numeric_ber():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_inject_rejects_non_numeric_ber() -> None:
+    """Injection refuses a text bit-error rate."""
     inj = FaultInjector(seed=0)
     with pytest.raises(ValueError, match="ber must be"):
-        inj.inject(np.array([0, 1], dtype=np.uint8), FaultModel.BIT_FLIP, "x")  # type: ignore[arg-type]
+        inj.inject(np.array([0, 1], dtype=np.uint8), FaultModel.BIT_FLIP, cast(Any, "x"))
 
 
-def test_inject_gaussian_requires_numeric_bitstream():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_inject_gaussian_requires_numeric_bitstream() -> None:
+    """Gaussian noise refuses a bitstream of text values."""
     inj = FaultInjector(seed=0)
     with pytest.raises(ValueError, match="gaussian_noise requires numeric"):
         inj.inject(np.array(["a", "b"]), FaultModel.GAUSSIAN_NOISE, 0.1)
 
 
-def test_inject_unsupported_fault_model_raises():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_inject_unsupported_fault_model_raises() -> None:
+    """A fault model matching no handled member is refused."""
     # A FaultModel-typed object that matches none of the handled members reaches
     # the exhaustiveness guard (defended for forward compatibility / typing).
     inj = FaultInjector(seed=0)
@@ -34,13 +47,15 @@ def test_inject_unsupported_fault_model_raises():  # type: ignore[no-untyped-def
         inj.inject(np.array([0, 1], dtype=np.uint8), bogus, 0.5)
 
 
-def test_inject_at_positions_rejects_non_array():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_inject_at_positions_rejects_non_array() -> None:
+    """Positional injection refuses a list instead of an array."""
     inj = FaultInjector(seed=0)
     with pytest.raises(ValueError, match="must be a numpy.ndarray"):
-        inj.inject_at_positions([0, 1, 0], [1])  # type: ignore[arg-type]
+        inj.inject_at_positions(cast(Any, [0, 1, 0]), [1])
 
 
-def test_inject_at_positions_rejects_non_1d():  # type: ignore[no-untyped-def]  # Preserved legacy test AST
+def test_inject_at_positions_rejects_non_1d() -> None:
+    """Positional injection refuses a two-dimensional array."""
     inj = FaultInjector(seed=0)
     with pytest.raises(ValueError, match="must be a 1-D array"):
         inj.inject_at_positions(np.zeros((2, 2), dtype=np.uint8), [0])
