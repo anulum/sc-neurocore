@@ -56,52 +56,173 @@ JOBS_SOURCE_PATHS = tuple(
     for module_name in (JOBS_FACADE, *JOBS_IMPLEMENTATION_MODULES)
 )
 JOBS_SOURCE_PATHS = tuple(path.with_suffix(".py") for path in JOBS_SOURCE_PATHS)
-JOBS_TEST_PATHS = tuple(
-    REPO_ROOT / "tests" / filename
-    for filename in (
-        "test_studio_jobs.py",
-        "test_studio_jobs_architecture.py",
-        "test_studio_jobs_artifacts.py",
-        "test_studio_jobs_cancel_race.py",
-        "test_studio_jobs_context.py",
-        "test_studio_jobs_thread.py",
-        "test_studio_jobs_process.py",
-        "test_studio_jobs_process_seeds.py",
-        "test_studio_jobs_process_control.py",
-        "test_studio_jobs_process_failures.py",
-        "test_studio_jobs_routes.py",
-        "test_studio_jobs_admission.py",
-        "test_studio_jobs_capacity_custody.py",
-        "test_studio_jobs_capacity_recovery.py",
-        "test_studio_jobs_orphan_lifetime.py",
-        "test_studio_jobs_admission_startup.py",
-        "test_studio_jobs_shared_admission.py",
-        "test_studio_jobs_shared_queue.py",
-        "test_studio_jobs_worker_registration.py",
-        "test_studio_jobs_guard_cleanup.py",
-        "test_studio_jobs_worker_recovery.py",
-        "test_studio_jobs_purge_recovery.py",
-        "test_studio_jobs_purge_retry.py",
-        "test_studio_jobs_purge_moves.py",
-        "test_studio_jobs_purge_source_identity.py",
-        "test_studio_jobs_purge_durability.py",
-        "test_studio_jobs_purge_migration.py",
-        "test_studio_jobs_purge_commit.py",
-        "test_studio_jobs_purge_conflicts.py",
-        "test_studio_jobs_admission_migration.py",
-        "test_studio_jobs_admission_transactions.py",
-        "test_studio_jobs_ledger.py",
-        "test_studio_jobs_ledger_artifacts.py",
-        "test_studio_jobs_ledger_state.py",
-        "test_studio_jobs_peer_cancellation.py",
-        "test_studio_jobs_supervisor_recovery.py",
-        "test_studio_jobs_ledger_reads.py",
-        "test_studio_jobs_ledger_ordering.py",
-        "test_studio_jobs_ledger_recovery.py",
-        "test_studio_jobs_reaping.py",
-        "test_studio_jobs_restart_recovery.py",
-    )
-)
+# Top-level classes and functions each module owns. A name is defined in one
+# module only, and the facade re-exports without defining anything.
+JOBS_OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
+    JOBS_FACADE: (),
+    f"{JOBS_PACKAGE}.jobs_worker_registration": (
+        "start_worker_registration",
+        "await_worker_registration",
+    ),
+    f"{JOBS_PACKAGE}.jobs_process_state": (
+        "process_exited",
+        "group_survivors",
+        "group_is_gone",
+    ),
+    f"{JOBS_PACKAGE}.jobs_purge_paths": (
+        "sync_directory",
+        "move_without_replace",
+    ),
+    f"{JOBS_PACKAGE}.jobs_worker_guard": (
+        "_await_ready",
+        "arm_worker_guard",
+        "_stop_group",
+        "main",
+    ),
+    f"{JOBS_PACKAGE}.jobs_purge_recovery": (
+        "PurgeCustody",
+        "_matches",
+        "_clear_directory",
+        "_remove_owned_directory",
+        "_recover_phase",
+        "recover_purges",
+    ),
+    f"{JOBS_PACKAGE}.jobs_purge": (
+        "_forget_purged_job",
+        "purge_terminal_job",
+    ),
+    f"{JOBS_PACKAGE}.jobs_worker_recovery": ("worker_group_stopped",),
+    f"{JOBS_PACKAGE}.jobs_worker_custody": ("register_worker",),
+    f"{JOBS_PACKAGE}.jobs_admission_recovery": ("recover_stopped_reservations",),
+    f"{JOBS_PACKAGE}.jobs_ledger_creation": ("create_job",),
+    f"{JOBS_PACKAGE}.jobs_admission_schema": (
+        "migrate_purge_journal",
+        "migrate_purge_phases",
+        "migrate_worker_custody",
+        "migrate_admission",
+        "migrate_storage_admission_replay",
+    ),
+    f"{JOBS_PACKAGE}.jobs_shared_admission": ("SharedJobAdmission",),
+    f"{JOBS_PACKAGE}.jobs_process_results": (
+        "_ProcessWorkerResult",
+        "_load_process_result",
+        "_load_process_artifacts",
+        "_parse_process_result",
+        "_parse_process_artifacts",
+    ),
+    f"{JOBS_PACKAGE}.jobs_admission": (
+        "StudioJobQueueFull",
+        "AdmissionSnapshot",
+        "StudioJobAdmission",
+    ),
+    f"{JOBS_PACKAGE}.jobs_context": ("StudioJobContext",),
+    f"{JOBS_PACKAGE}.jobs_ledger": ("StudioJobLedger",),
+    f"{JOBS_PACKAGE}.jobs_ledger_reads": (
+        "read_pending_purge_count",
+        "read_purge_snapshot",
+        "read_record",
+        "read_records",
+        "read_transitions",
+        "read_live_rows",
+    ),
+    f"{JOBS_PACKAGE}.jobs_ledger_recovery": (
+        "StudioJobReconciliation",
+        "_expired",
+        "reconcile_ledger",
+    ),
+    f"{JOBS_PACKAGE}.jobs_ledger_schema": (
+        "StudioJobSubmission",
+        "migrate",
+        "migrate_training_event_data",
+    ),
+    f"{JOBS_PACKAGE}.jobs_ledger_rows": (
+        "StudioJobLedgerCorrupt",
+        "json_or_none",
+        "artifacts_from_json",
+        "artifacts_to_json",
+        "record_from_row",
+        "training_config_from_json",
+        "_validated_training_config",
+    ),
+    f"{JOBS_PACKAGE}.jobs_ledger_supervisor": (
+        "supervisor_identity",
+        "_process_start_token",
+        "supervisor_is_alive",
+    ),
+    f"{JOBS_PACKAGE}.jobs_ledger_writes": (
+        "transition_job",
+        "heartbeat_job",
+        "require_purgeable",
+        "delete_job",
+    ),
+    f"{JOBS_PACKAGE}.jobs_manager": ("StudioJobManager",),
+    f"{JOBS_PACKAGE}.jobs_manager_access": (
+        "_cancel_job",
+        "_wait_for_job",
+        "_get_job_record",
+        "_list_job_records",
+        "_list_job_snapshot",
+        "_purge_terminal_job",
+        "_commit_supervised_update",
+        "_read_declared_artifact",
+        "_read_live_artifact",
+        "_job_manager_status",
+    ),
+    f"{JOBS_PACKAGE}.jobs_manager_custody": ("StudioJobCustody",),
+    f"{JOBS_PACKAGE}.jobs_manager_process": (
+        "_submit_process_job",
+        "_send_process_control_command",
+        "_write_seed_inputs",
+    ),
+    f"{JOBS_PACKAGE}.jobs_manager_state": ("_StudioJobManagerState",),
+    f"{JOBS_PACKAGE}.jobs_manager_supervision": ("StudioJobSupervision",),
+    f"{JOBS_PACKAGE}.jobs_manager_thread": (
+        "_submit_thread_job",
+        "_run_thread_supervised",
+    ),
+    f"{JOBS_PACKAGE}.jobs_models": (
+        "StudioJobRejected",
+        "StudioJobRefused",
+        "StudioJobConflict",
+        "StudioJobCancelled",
+        "StudioJobArtifactUnavailable",
+        "StudioJobArtifactRefused",
+        "StudioJobArtifact",
+        "StudioJobRecord",
+        "StudioJobResourceProfile",
+        "StudioJobStatusSnapshot",
+        "StudioJobListSnapshot",
+        "StudioJobArtifactPayload",
+        "StudioJobPurgeRecord",
+        "StudioJobPurgeSnapshot",
+    ),
+    f"{JOBS_PACKAGE}.jobs_paths": (
+        "_find_artifact",
+        "_normalize_artifact_lookup_path",
+        "_resolve_job_directory",
+        "_resolve_confined_nested_child",
+        "_relative_path_candidate",
+        "_is_confined_path",
+        "_resolve_confined_child",
+    ),
+    f"{JOBS_PACKAGE}.jobs_process_protocol": (
+        "_process_worker_environment",
+        "_validate_process_task_path",
+        "_json_payload",
+        "_terminate_process",
+        "_unreaped_error",
+        "_run_process_supervised",
+    ),
+    f"{JOBS_PACKAGE}.jobs_reaper": (
+        "ReapReport",
+        "process_group_of",
+        "_signal_group",
+        "_wait_for_group",
+        "reap_process_group",
+        "_collect",
+        "_terminate_direct_child",
+    ),
+}
 EXPECTED_JOBS_EXPORTS = (
     "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
@@ -126,7 +247,6 @@ EXPECTED_JOBS_EXPORTS = (
 
 def implementation_import_graph() -> dict[str, set[str]]:
     """Return direct imports between focused Studio jobs implementation modules."""
-
     graph: dict[str, set[str]] = {module_name: set() for module_name in JOBS_IMPLEMENTATION_MODULES}
     for module_name, path in zip(JOBS_IMPLEMENTATION_MODULES, JOBS_SOURCE_PATHS[1:]):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -151,7 +271,6 @@ def implementation_import_graph() -> dict[str, set[str]]:
 
 def assert_acyclic(graph: dict[str, set[str]]) -> None:
     """Assert that a direct-import graph admits a complete topological order."""
-
     remaining = {node: set(dependencies) for node, dependencies in graph.items()}
     while remaining:
         roots = {
@@ -170,7 +289,7 @@ __all__ = [
     "JOBS_FACADE",
     "JOBS_IMPLEMENTATION_MODULES",
     "JOBS_SOURCE_PATHS",
-    "JOBS_TEST_PATHS",
+    "JOBS_OWNED_DEFINITIONS",
     "EXPECTED_JOBS_EXPORTS",
     "implementation_import_graph",
     "assert_acyclic",

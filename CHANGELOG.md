@@ -1251,6 +1251,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The Studio jobs architecture test no longer caps the jobs modules and
+  their focused tests at 300 lines. In its place,
+  `test_studio_jobs_modules_own_exactly_their_declared_definitions` holds
+  each of the 34 modules to its declared top-level classes and functions,
+  with no name defined twice and none in the facade. The unused
+  `JOBS_TEST_PATHS` list is removed from the test support module.
+
 - The photonic emitter architecture test no longer caps the private modules
   at 350 lines or the facade at 100. It keeps its contract, renamed
   `test_responsibility_modules_have_one_way_imports_and_a_definition_free_facade`:

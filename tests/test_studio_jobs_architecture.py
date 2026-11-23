@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib
 import pickle
 from pathlib import Path
@@ -21,8 +22,8 @@ from tests.studio_jobs_support import (
     EXPECTED_JOBS_EXPORTS,
     JOBS_FACADE,
     JOBS_IMPLEMENTATION_MODULES,
+    JOBS_OWNED_DEFINITIONS,
     JOBS_SOURCE_PATHS,
-    JOBS_TEST_PATHS,
     assert_acyclic,
     implementation_import_graph,
 )
@@ -42,7 +43,6 @@ PUBLIC_MODEL_NAMES = (
 
 def test_studio_jobs_facade_preserves_exact_public_contract() -> None:
     """Keep exported names, object identity, and historical modules stable."""
-
     assert tuple(jobs.__all__) == EXPECTED_JOBS_EXPORTS
     models = importlib.import_module(f"{jobs.__package__}.jobs_models")
     for name in PUBLIC_MODEL_NAMES:
@@ -59,7 +59,6 @@ def test_studio_jobs_facade_preserves_exact_public_contract() -> None:
 
 def test_studio_jobs_public_records_pickle_through_historical_facade() -> None:
     """Preserve serialized references created before implementation extraction."""
-
     artifact = jobs.StudioJobArtifact(relative_path="result.bin", size_bytes=2, sha256="ab")
     record = jobs.StudioJobRecord(
         job_id="sj_0000000000000000",
@@ -80,20 +79,28 @@ def test_studio_jobs_public_records_pickle_through_historical_facade() -> None:
 
 def test_studio_jobs_implementation_graph_is_acyclic_and_facade_independent() -> None:
     """Keep implementation imports one-way and independent of the facade."""
-
     graph = implementation_import_graph()
     assert set(graph) == set(JOBS_IMPLEMENTATION_MODULES)
     assert all(JOBS_FACADE not in dependencies for dependencies in graph.values())
     assert_acyclic(graph)
 
 
-def test_studio_jobs_files_remain_below_godfile_threshold() -> None:
-    """Prevent source and focused tests from regrowing beyond 300 lines."""
-
-    for path in (*JOBS_SOURCE_PATHS, *JOBS_TEST_PATHS):
-        assert path.is_file(), path
-        line_count = len(path.read_text(encoding="utf-8").splitlines())
-        assert line_count <= 300, f"{path.name}: {line_count} lines"
+def test_studio_jobs_modules_own_exactly_their_declared_definitions() -> None:
+    """Each module defines its declared names, none twice, and the facade defines none."""
+    modules = (JOBS_FACADE, *JOBS_IMPLEMENTATION_MODULES)
+    assert set(JOBS_OWNED_DEFINITIONS) == set(modules)
+    owners: dict[str, str] = {}
+    for module_name, path in zip(modules, JOBS_SOURCE_PATHS, strict=True):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        defined = [
+            node.name
+            for node in tree.body
+            if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+        ]
+        assert sorted(defined) == sorted(JOBS_OWNED_DEFINITIONS[module_name]), module_name
+        for name in defined:
+            owner = owners.setdefault(name, module_name)
+            assert owner == module_name, f"{name} is defined in {owner} and {module_name}"
 
 
 def test_jobs_coverage_gate_matches_the_measured_contract() -> None:
