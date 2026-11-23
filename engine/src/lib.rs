@@ -175,7 +175,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     #[cfg(feature = "z3")]
     m.add_class::<supervisor::PySpikingControllerPool>()?;
     ei_network_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
+    rk4_neurons::bindings::register(m)?;
     cordiv_binding::register(m)?;
     codecs::register(m)?;
     raster_stream::bindings::register(m)?;

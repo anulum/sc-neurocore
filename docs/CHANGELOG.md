@@ -1287,6 +1287,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The RK4 neuron simulator's Python binding, `py_rk4_neuron_simulate`
+  and its trace helpers, moved out of `engine/src/rk4_neurons.rs` into its
+  binding module `engine/src/rk4_neurons/bindings.rs`, which the extension
+  registers as before. The model file now holds only the integrators.
+  Behaviour and the Python name are unchanged.
+
 - The three co-simulation ownership test modules import their names
   explicitly instead of through a suppressed star import, so ruff checks
   them without a `noqa: F403`. They gain docstrings and are enrolled in
