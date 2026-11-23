@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_reporting_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    GhostCellManager,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    make_chain_graph as _make_chain_graph,
+)
 
 
 class TestGhostCellManager:
+    """Ghost-cell halos across partition boundaries."""
+
     def test_compute_halos(self) -> None:
+        """Each half of a bisected chain holds the other half's boundary vertex."""
         g = _make_chain_graph(6)
         parts = [[0, 1, 2], [3, 4, 5]]
         halos = GhostCellManager.compute_halos(g, parts)
@@ -24,6 +32,7 @@ class TestGhostCellManager:
         assert 2 in halos[1]
 
     def test_halo_sizes(self) -> None:
+        """Both halves of a bisected chain have a halo."""
         g = _make_chain_graph(6)
         parts = [[0, 1, 2], [3, 4, 5]]
         sizes = GhostCellManager.halo_sizes(g, parts)
@@ -31,6 +40,7 @@ class TestGhostCellManager:
         assert sizes[1] >= 1
 
     def test_no_halos_single_partition(self) -> None:
+        """A single partition has an empty halo."""
         g = _make_chain_graph(4)
         parts = [list(range(4))]
         sizes = GhostCellManager.halo_sizes(g, parts)

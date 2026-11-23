@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5768
+    "test_files": 5766
   },
   "documentation": {
     "public_pages": [
@@ -4532,8 +4532,6 @@
       "tests/test_chip_compiler_weight_quantisation.py",
       "tests/test_chiplet/chiplet_gen_edge_cases_support.py",
       "tests/test_chiplet/hierarchical_partitioner_core_support.py",
-      "tests/test_chiplet/hierarchical_partitioner_graph_support.py",
-      "tests/test_chiplet/hierarchical_partitioner_reporting_support.py",
       "tests/test_chiplet/hierarchical_partitioner_support.py",
       "tests/test_chiplet/test_chiplet_architecture.py",
       "tests/test_chiplet/test_chiplet_gen_edge_cases_adaptive_route_congestion_fallback.py",

@@ -10,14 +10,25 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet import (
+    CorrelationAwareGraph,
+    CorrelationEdge,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestEdgeCacheLifecycle:
-    """The cache should be built once and reused, but rebuild after
-    a manual edges-list mutation."""
+    """Building, reusing and rebuilding the edge cache.
+
+    The cache should be built once and reused, but rebuild after
+    a manual edges-list mutation.
+    """
 
     def test_cache_built_once(self) -> None:
+        """The first lookup builds the edge cache and the next one reuses it."""
         g = _build_graph(20, seed=3)
         # First call builds the cache
         _ = g.edge_scc(0, 1)
@@ -29,6 +40,7 @@ class TestEdgeCacheLifecycle:
         assert cache2 is cache1
 
     def test_cache_rebuilds_after_edge_append(self) -> None:
+        """Appending an edge makes the next lookup rebuild the cache with it."""
         # Use a clean 4-vertex graph with no duplicate or symmetric
         # edges so the cache size equals len(edges) by construction.
         g = CorrelationAwareGraph(

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_reporting_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    BoundarySyncConfig,
+    BoundarySyncProtocol,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    make_chain_graph as _make_chain_graph,
+)
 
 
 class TestBoundarySyncProtocol:
+    """Boundary buffers and the SCC budget of the sync protocol."""
+
     def test_init_buffers(self) -> None:
+        """Initialising buffers for a bisected chain creates at least one."""
         g = _make_chain_graph(6, scc=0.2)
         parts = [[0, 1, 2], [3, 4, 5]]
         seeds = [0xACE1, 0xBEEF]
@@ -24,6 +33,7 @@ class TestBoundarySyncProtocol:
         assert sync.num_buffers == count
 
     def test_scc_budget_no_violations(self) -> None:
+        """Boundary SCC under the budget reports no violation."""
         g = _make_chain_graph(6, scc=0.05)
         parts = [[0, 1, 2], [3, 4, 5]]
         sync = BoundarySyncProtocol(BoundarySyncConfig(max_boundary_scc_budget=0.1))
@@ -31,6 +41,7 @@ class TestBoundarySyncProtocol:
         assert violations == []
 
     def test_scc_budget_with_violations(self) -> None:
+        """Boundary SCC over the budget reports a violation."""
         g = _make_chain_graph(6, scc=0.5)
         parts = [[0, 1, 2], [3, 4, 5]]
         sync = BoundarySyncProtocol(BoundarySyncConfig(max_boundary_scc_budget=0.1))
@@ -38,6 +49,7 @@ class TestBoundarySyncProtocol:
         assert len(violations) >= 1
 
     def test_buffer_seed_nonzero(self) -> None:
+        """Equal partition seeds still give boundary buffers a nonzero seed."""
         g = _make_chain_graph(4, scc=0.1)
         parts = [[0, 1], [2, 3]]
         seeds = [0x0001, 0x0001]  # same seed → XOR = 0 → forced to 1

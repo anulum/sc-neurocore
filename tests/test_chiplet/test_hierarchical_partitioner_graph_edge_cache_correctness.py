@@ -10,14 +10,25 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet import (
+    CorrelationAwareGraph,
+    CorrelationEdge,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestEdgeCacheCorrectness:
-    """The cached lookup must agree with a linear scan, on every edge
-    AND on absent vertex pairs."""
+    """Cached edge lookups agree with a linear scan.
+
+    The cached lookup must agree with a linear scan, on every edge
+    AND on absent vertex pairs.
+    """
 
     def test_edge_scc_matches_linear_scan(self) -> None:
+        """The cached SCC lookup returns every edge's weight in both directions."""
         g = _build_graph(50, avg_degree=6, seed=7)
         for e in g.edges:
             # Symmetric lookup: both (u, v) and (v, u) return scc_weight.
@@ -25,12 +36,14 @@ class TestEdgeCacheCorrectness:
             assert g.edge_scc(e.v, e.u) == pytest.approx(e.scc_weight)
 
     def test_edge_weight_matches_linear_scan(self) -> None:
+        """The cached connection lookup returns every edge's weight in both directions."""
         g = _build_graph(50, avg_degree=6, seed=7)
         for e in g.edges:
             assert g.edge_weight(e.u, e.v) == pytest.approx(e.conn_weight)
             assert g.edge_weight(e.v, e.u) == pytest.approx(e.conn_weight)
 
     def test_absent_pair_returns_zero(self) -> None:
+        """An absent vertex pair returns zero while a present edge keeps its weights."""
         g = CorrelationAwareGraph(
             num_vertices=10,
             edges=[

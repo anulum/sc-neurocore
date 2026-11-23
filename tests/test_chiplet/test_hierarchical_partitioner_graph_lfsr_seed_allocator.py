@@ -10,22 +10,29 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    LFSRSeedAllocator,
+)
 
 
 class TestLFSRSeedAllocator:
+    """Seeds handed out by the LFSR seed allocator."""
+
     def test_allocate_unique_seeds(self) -> None:
+        """Eight allocated seeds are all different."""
         alloc = LFSRSeedAllocator()
         seeds = alloc.allocate(8)
         assert len(seeds) == 8
         assert alloc.verify_uniqueness(seeds)
 
     def test_no_zero_seeds(self) -> None:
+        """No seed among a hundred allocated seeds is zero."""
         alloc = LFSRSeedAllocator()
         seeds = alloc.allocate(100)
         assert 0 not in seeds
 
     def test_single_partition(self) -> None:
+        """A single allocated seed is not zero."""
         alloc = LFSRSeedAllocator()
         seeds = alloc.allocate(1)
         assert len(seeds) == 1

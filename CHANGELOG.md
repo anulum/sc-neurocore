@@ -1302,6 +1302,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 13 hierarchical-partitioner graph and reporting test modules
+  (`tests/test_chiplet/test_hierarchical_partitioner_*`) import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing test docstrings and are enrolled in the docstring
+  policy. The graph and reporting support modules, which no test
+  imports any more, are deleted.
+
 - The 15 hierarchical-partitioner core, backend, runtime-cache and
   metrics test modules (`tests/test_chiplet/test_hierarchical_partitioner_*`)
   import their names explicitly instead of through a suppressed star

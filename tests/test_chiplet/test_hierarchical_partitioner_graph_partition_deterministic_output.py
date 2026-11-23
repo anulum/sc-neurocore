@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestPartitionDeterministicOutput:
-    """The perf fix must NOT change algorithm output — the partitioner
-    is deterministic for a fixed graph + seed."""
+    """Partition output pinned against its baseline.
+
+    The perf fix must NOT change algorithm output — the partitioner
+    is deterministic for a fixed graph + seed.
+    """
 
     def test_partitions_canonical_match_baseline(self) -> None:
+        """Partition sizes for 50, 100 and 200 vertices equal their pinned baseline."""
         # The baseline values were captured before the perf fix and
         # pinned here so any future algorithmic drift is loud.
         baseline_sizes = {50: [1, 1, 1, 47], 100: [1, 1, 1, 97], 200: [1, 1, 1, 197]}

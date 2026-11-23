@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.chiplet import (
+    calculate_boundary_scc,
+    calculate_edge_cut,
+    CorrelationAwareGraph,
+    CorrelationEdge,
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    make_biclique as _make_biclique,
+    make_chain_graph as _make_chain_graph,
+)
 
 
 class TestHierarchicalPartitioner:
+    """Partitioning chains, bicliques and random graphs."""
+
     def test_single_partition(self) -> None:
+        """One partition holds all ten vertices of a chain."""
         g = _make_chain_graph(10)
         hp = HierarchicalPartitioner(num_partitions=1)
         parts, seeds = hp.partition(g)
@@ -22,6 +36,7 @@ class TestHierarchicalPartitioner:
         assert len(parts[0]) == 10
 
     def test_two_partition_chain(self) -> None:
+        """Two partitions of a chain keep all twenty vertices and get two seeds."""
         g = _make_chain_graph(20)
         hp = HierarchicalPartitioner(num_partitions=2, seed=42)
         parts, seeds = hp.partition(g)
@@ -30,6 +45,7 @@ class TestHierarchicalPartitioner:
         assert len(seeds) == 2
 
     def test_four_partitions(self) -> None:
+        """Four partitions of a chain keep all forty vertices and get four seeds."""
         g = _make_chain_graph(40)
         hp = HierarchicalPartitioner(num_partitions=4, seed=42)
         parts, seeds = hp.partition(g)
@@ -38,6 +54,7 @@ class TestHierarchicalPartitioner:
         assert len(seeds) == 4
 
     def test_biclique_preserves_vertices(self) -> None:
+        """Bisecting a biclique keeps every one of its twenty vertices."""
         g = _make_biclique(10, 10)
         hp = HierarchicalPartitioner(num_partitions=2, seed=42)
         parts, _ = hp.partition(g)
@@ -45,12 +62,14 @@ class TestHierarchicalPartitioner:
         assert all_vertices == list(range(20))
 
     def test_tiny_graph(self) -> None:
+        """Two partitions of a two-vertex graph keep both vertices."""
         g = CorrelationAwareGraph(num_vertices=2, edges=[CorrelationEdge(0, 1)])
         hp = HierarchicalPartitioner(num_partitions=2)
         parts, seeds = hp.partition(g)
         assert sum(len(p) for p in parts) == 2
 
     def test_edge_cut_computed(self) -> None:
+        """Bisecting a chain cuts at least one edge."""
         g = _make_chain_graph(10)
         hp = HierarchicalPartitioner(num_partitions=2, seed=42)
         parts, _ = hp.partition(g)
@@ -58,6 +77,7 @@ class TestHierarchicalPartitioner:
         assert cut >= 1
 
     def test_boundary_scc(self) -> None:
+        """The boundary SCC of a bisected chain is not negative."""
         g = _make_chain_graph(10, scc=0.5)
         hp = HierarchicalPartitioner(num_partitions=2, seed=42)
         parts, _ = hp.partition(g)
@@ -65,6 +85,7 @@ class TestHierarchicalPartitioner:
         assert bscc >= 0.0
 
     def test_correlation_penalty_influences_cut(self) -> None:
+        """With and without a correlation penalty, a chain splits into two partitions."""
         g = _make_chain_graph(20, scc=0.9)
         hp_no_penalty = HierarchicalPartitioner(num_partitions=2, correlation_penalty=0.0, seed=42)
         hp_penalty = HierarchicalPartitioner(num_partitions=2, correlation_penalty=5.0, seed=42)
@@ -74,12 +95,14 @@ class TestHierarchicalPartitioner:
         assert len(parts_p) == 2
 
     def test_seeds_unique_across_partitions(self) -> None:
+        """Eight partitions get eight different seeds."""
         g = _make_chain_graph(100)
         hp = HierarchicalPartitioner(num_partitions=8, seed=42)
         parts, seeds = hp.partition(g)
         assert len(set(seeds)) == len(seeds)
 
     def test_large_graph(self) -> None:
+        """Four partitions of a 500-vertex random graph keep every vertex."""
         n = 500
         rng = np.random.default_rng(42)
         edges = []

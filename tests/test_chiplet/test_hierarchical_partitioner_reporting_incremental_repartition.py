@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_reporting_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    calculate_edge_cut,
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    make_chain_graph as _make_chain_graph,
+)
 
 
 class TestIncrementalRepartition:
+    """Incremental repartitioning by bounded vertex moves."""
+
     def test_repartition_no_improvement(self) -> None:
+        """Repartitioning a well-cut chain keeps all four vertices."""
         g = _make_chain_graph(4)
         parts = [[0, 1], [2, 3]]
         hp = HierarchicalPartitioner(num_partitions=2)
@@ -22,6 +31,7 @@ class TestIncrementalRepartition:
         assert sum(len(p) for p in new_parts) == 4
 
     def test_repartition_improves_cut(self) -> None:
+        """Repartitioning an interleaved split does not raise the edge cut."""
         g = _make_chain_graph(10, scc=0.5)
         parts = [[0, 2, 4, 6, 8], [1, 3, 5, 7, 9]]  # interleaved = bad
         hp = HierarchicalPartitioner(num_partitions=2, correlation_penalty=2.0)
@@ -31,6 +41,7 @@ class TestIncrementalRepartition:
         assert new_cut <= old_cut  # should not get worse
 
     def test_zero_move_budget_returns_without_search(self) -> None:
+        """A zero move budget returns the partitions unchanged with no move."""
         graph = _make_chain_graph(4)
         partitions = [[0, 1], [2, 3]]
         partitioner = HierarchicalPartitioner(num_partitions=2)

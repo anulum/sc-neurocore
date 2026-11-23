@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_graph_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet import (
+    CorrelationAwareGraph,
+    CorrelationEdge,
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestPerPartitionCostMatchesBoundaryCost:
-    """The new vector API `_per_partition_cost(v, P)` must agree
+    """The vector partition cost agrees with the per-target cost.
+
+    The new vector API `_per_partition_cost(v, P)` must agree
     with calling the legacy single-target `_boundary_cost(v, p)` for
     every p in 0..P. Otherwise the KL refine algorithm changes
-    behaviour and the perf "win" is actually a regression."""
+    behaviour and the perf "win" is actually a regression.
+    """
 
     def test_vector_matches_per_target_calls(self) -> None:
+        """Every entry of the cost vector equals the single-target cost."""
         # Build a small graph with realistic structure.
         g = _build_graph(20, avg_degree=5, seed=11)
         adj = g.adjacency()
@@ -40,6 +52,7 @@ class TestPerPartitionCostMatchesBoundaryCost:
                 )
 
     def test_unassigned_neighbour_is_excluded_from_partition_weight(self) -> None:
+        """A neighbour without a partition adds nothing to the partition weight."""
         graph = CorrelationAwareGraph(
             num_vertices=2,
             edges=[CorrelationEdge(0, 1, scc_weight=0.25)],
