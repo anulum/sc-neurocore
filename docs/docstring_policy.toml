@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2869
+expected_file_count = 2903
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11520,3 +11520,139 @@ rationale = "Exercise the bridges: quantum annealing solvers backends optional i
 [[file]]
 path = "tests/test_bridges/test_quantum_annealing_solvers_backends_python_solver.py"
 rationale = "Exercise the bridges: quantum annealing solvers backends python solver."
+
+[[file]]
+path = "tests/test_debug/photonic_emitter_support.py"
+rationale = "Provide the graph stand-ins shared by the photonic emitter tests."
+
+[[file]]
+path = "tests/test_debug/test_photonic_emitter_netlist_emission.py"
+rationale = "Exercise the debug tools: photonic emitter netlist emission."
+
+[[file]]
+path = "tests/test_debug/test_photonic_emitter_topological_sort.py"
+rationale = "Exercise the debug tools: photonic emitter topological sort."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_activity_monitor.py"
+rationale = "Exercise the debug tools: sc runtime activity monitor."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_adaptation_policy.py"
+rationale = "Exercise the debug tools: sc runtime adaptation policy."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_classify_activity.py"
+rationale = "Exercise the debug tools: sc runtime classify activity."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_hamming_ecc.py"
+rationale = "Exercise the debug tools: sc runtime hamming ecc."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_runtime_config.py"
+rationale = "Exercise the debug tools: sc runtime runtime config."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_runtime_report.py"
+rationale = "Exercise the debug tools: sc runtime runtime report."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_sc_runtime_engine.py"
+rationale = "Exercise the debug tools: sc runtime sc runtime engine."
+
+[[file]]
+path = "tests/test_debug/test_sc_runtime_secded.py"
+rationale = "Exercise the debug tools: sc runtime secded."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_analysis_window.py"
+rationale = "Exercise the debug tools: sc scope analysis window."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_bitstream_sample.py"
+rationale = "Exercise the debug tools: sc scope bitstream sample."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_layer_error_budget.py"
+rationale = "Exercise the debug tools: sc scope layer error budget."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_live_analyzer.py"
+rationale = "Exercise the debug tools: sc scope live analyzer."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_scc.py"
+rationale = "Exercise the debug tools: sc scope scc."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_scope_renderer.py"
+rationale = "Exercise the debug tools: sc scope scope renderer."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_scope_session.py"
+rationale = "Exercise the debug tools: sc scope scope session."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_transport.py"
+rationale = "Exercise the debug tools: sc scope transport."
+
+[[file]]
+path = "tests/test_debug/test_sc_scope_trigger_engine.py"
+rationale = "Exercise the debug tools: sc scope trigger engine."
+
+[[file]]
+path = "tests/test_debug/test_wave4_aer_router.py"
+rationale = "Exercise the debug tools: wave4 aer router."
+
+[[file]]
+path = "tests/test_debug/test_wave4_correlation_window.py"
+rationale = "Exercise the debug tools: wave4 correlation window."
+
+[[file]]
+path = "tests/test_debug/test_wave4_error_budget.py"
+rationale = "Exercise the debug tools: wave4 error budget."
+
+[[file]]
+path = "tests/test_debug/test_wave4_event_filter.py"
+rationale = "Exercise the debug tools: wave4 event filter."
+
+[[file]]
+path = "tests/test_debug/test_wave4_export.py"
+rationale = "Exercise the debug tools: wave4 export."
+
+[[file]]
+path = "tests/test_debug/test_wave4_health_check.py"
+rationale = "Exercise the debug tools: wave4 health check."
+
+[[file]]
+path = "tests/test_debug/test_wave4_hil_client_branch_coverage.py"
+rationale = "Exercise the debug tools: wave4 hil client branch coverage."
+
+[[file]]
+path = "tests/test_debug/test_wave4_layer_aggregator.py"
+rationale = "Exercise the debug tools: wave4 layer aggregator."
+
+[[file]]
+path = "tests/test_debug/test_wave4_precision_tracker.py"
+rationale = "Exercise the debug tools: wave4 precision tracker."
+
+[[file]]
+path = "tests/test_debug/test_wave4_rate_limiter.py"
+rationale = "Exercise the debug tools: wave4 rate limiter."
+
+[[file]]
+path = "tests/test_debug/test_wave4_sc_doctor.py"
+rationale = "Exercise the debug tools: wave4 sc doctor."
+
+[[file]]
+path = "tests/test_debug/test_wave4_spike_packet.py"
+rationale = "Exercise the debug tools: wave4 spike packet."
+
+[[file]]
+path = "tests/test_debug/test_wave4_spike_ring_buffer.py"
+rationale = "Exercise the debug tools: wave4 spike ring buffer."
+
+[[file]]
+path = "tests/test_debug/test_wave4_trigger.py"
+rationale = "Exercise the debug tools: wave4 trigger."

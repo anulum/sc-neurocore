@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.debug.hil_client import (
+    SpikeEvent,
+    SpikeRingBuffer,
+)
 
 
 class TestSpikeRingBuffer:
-    def test_push_and_snapshot(self):
+    """The fixed-size spike ring buffer."""
+
+    def test_push_and_snapshot(self) -> None:
+        """Pushed spikes appear in order."""
         rb = SpikeRingBuffer(4)
         for i in range(3):
             rb.push(SpikeEvent(sequence=i))
@@ -22,7 +28,8 @@ class TestSpikeRingBuffer:
         assert len(snap) == 3
         assert snap[0].sequence == 0
 
-    def test_overwrite_on_full(self):
+    def test_overwrite_on_full(self) -> None:
+        """A full buffer overwrites its oldest spikes."""
         rb = SpikeRingBuffer(2)
         for i in range(5):
             rb.push(SpikeEvent(sequence=i))
@@ -30,7 +37,8 @@ class TestSpikeRingBuffer:
         assert len(snap) == 2
         assert snap[-1].sequence == 4
 
-    def test_snapshot_limit(self):
+    def test_snapshot_limit(self) -> None:
+        """A snapshot returns at most the requested count."""
         rb = SpikeRingBuffer(100)
         for i in range(50):
             rb.push(SpikeEvent(sequence=i))

@@ -10,34 +10,45 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.bridges.aer_router import (
+    AERRouter,
+    SpikePacket,
+)
 
 
 class TestAERRouter:
-    def test_register(self):
+    """Routing address-event spikes to endpoints."""
+
+    def test_register(self) -> None:
+        """A registered route is counted."""
         r = AERRouter()
         r.register_route(100, "127.0.0.1:9001")
         assert r.route_count == 1
 
-    def test_unregister(self):
+    def test_unregister(self) -> None:
+        """An unregistered route is removed."""
         r = AERRouter()
         r.register_route(100, "127.0.0.1:9001")
         r.unregister_route(100)
         assert r.route_count == 0
 
-    def test_dispatch_unregistered(self):
+    def test_dispatch_unregistered(self) -> None:
+        """A spike for an unknown target is not sent."""
         r = AERRouter()
         assert not r.dispatch_spike(SpikePacket(target_id=999))
 
-    def test_dispatch_increments_stats(self):
+    def test_dispatch_increments_stats(self) -> None:
+        """A dispatched spike is counted per route."""
         r = AERRouter()
         r.register_route(100, "127.0.0.1:9001")
         r.dispatch_spike(SpikePacket(target_id=100, sequence=1))
         assert r.total_sent == 1
         s = r.get_stats(100)
+        assert s is not None
         assert s.dispatched == 1
 
-    def test_ack_clears_pending(self):
+    def test_ack_clears_pending(self) -> None:
+        """An acknowledgement clears the pending spike."""
         r = AERRouter()
         r.register_route(100, "127.0.0.1:9001")
         r.dispatch_spike(SpikePacket(target_id=100, sequence=42))
@@ -45,7 +56,8 @@ class TestAERRouter:
         r.ack_received(42)
         assert r.pending_count == 0
 
-    def test_multi_route(self):
+    def test_multi_route(self) -> None:
+        """Spikes reach each of three routes."""
         r = AERRouter()
         for nid, port in [(10, 9001), (20, 9002), (30, 9003)]:
             r.register_route(nid, f"127.0.0.1:{port}")

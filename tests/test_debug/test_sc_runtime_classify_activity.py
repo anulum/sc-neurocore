@@ -10,27 +10,39 @@
 
 from __future__ import annotations
 
-from sc_runtime_support import *  # noqa: F403
+from sc_neurocore.control.sc_runtime import (
+    ActivityZone,
+    classify_activity,
+)
 
 
 class TestClassifyActivity:
-    def test_idle(self):
+    """Classifying density into activity zones."""
+
+    def test_idle(self) -> None:
+        """A density of 0.005 is idle."""
         assert classify_activity(0.005) == ActivityZone.IDLE
 
-    def test_low(self):
+    def test_low(self) -> None:
+        """A density of 0.03 is low."""
         assert classify_activity(0.03) == ActivityZone.LOW
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """A density of 0.3 is normal."""
         assert classify_activity(0.3) == ActivityZone.NORMAL
 
-    def test_high(self):
+    def test_high(self) -> None:
+        """A density of 0.8 is high."""
         assert classify_activity(0.8) == ActivityZone.HIGH
 
-    def test_burst(self):
+    def test_burst(self) -> None:
+        """A density of 0.99 is a burst."""
         assert classify_activity(0.99) == ActivityZone.BURST
 
-    def test_boundary_idle_low(self):
+    def test_boundary_idle_low(self) -> None:
+        """A density of exactly 0.01 is low."""
         assert classify_activity(0.01) == ActivityZone.LOW
 
-    def test_boundary_low_normal(self):
+    def test_boundary_low_normal(self) -> None:
+        """A density of exactly 0.05 is normal."""
         assert classify_activity(0.05) == ActivityZone.NORMAL

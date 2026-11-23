@@ -10,24 +10,34 @@
 
 from __future__ import annotations
 
-from sc_scope_support import *  # noqa: F403
+from sc_neurocore.debug.sc_scope import (
+    LiveAnalyzer,
+    ScopeSession,
+    TransportBackend,
+    TransportConfig,
+    TransportType,
+)
 
 
 class TestScopeSession:
-    def _make_session(self, num_layers=2):
+    """A capture session of the bitstream scope."""
+
+    def _make_session(self, num_layers: int = 2) -> ScopeSession:
         cfg = TransportConfig(TransportType.SIMULATED)
         tb = TransportBackend(cfg)
         la = LiveAnalyzer(num_layers=num_layers)
         return ScopeSession(transport=tb, analyzer=la)
 
-    def test_start_stop(self):
+    def test_start_stop(self) -> None:
+        """Start and stop switch the running state."""
         s = self._make_session()
         assert s.start() is True
         assert s.is_running is True
         s.stop()
         assert s.is_running is False
 
-    def test_capture_one(self):
+    def test_capture_one(self) -> None:
+        """One capture returns a sample for layer 0."""
         s = self._make_session()
         s.start()
         sample = s.capture_one(layer_id=0, num_words=8)
@@ -36,7 +46,8 @@ class TestScopeSession:
         assert s.sample_count == 1
         s.stop()
 
-    def test_capture_sweep(self):
+    def test_capture_sweep(self) -> None:
+        """A sweep captures one sample per layer."""
         s = self._make_session(num_layers=3)
         s.start()
         samples = s.capture_sweep(num_layers=3)
@@ -44,7 +55,8 @@ class TestScopeSession:
         assert s.sample_count == 3
         s.stop()
 
-    def test_error_budget_integration(self):
+    def test_error_budget_integration(self) -> None:
+        """Captures are checked against the layer budget."""
         s = self._make_session()
         s.add_error_budget(0, expected_density=0.3, tol=0.5)
         s.start()
@@ -54,7 +66,8 @@ class TestScopeSession:
         assert len(s.error_budgets[0].history) == 10
         s.stop()
 
-    def test_status(self):
+    def test_status(self) -> None:
+        """The status reports running, samples and bytes."""
         s = self._make_session()
         s.start()
         s.capture_one()
@@ -64,6 +77,7 @@ class TestScopeSession:
         assert st["bytes_received"] > 0
         s.stop()
 
-    def test_capture_without_start(self):
+    def test_capture_without_start(self) -> None:
+        """A stopped session captures nothing."""
         s = self._make_session()
         assert s.capture_one() is None

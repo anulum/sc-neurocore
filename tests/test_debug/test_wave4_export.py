@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.debug.hil_client import (
+    export_csv,
+    export_json,
+    SpikeEvent,
+)
 
 
 class TestExport:
-    def test_csv(self):
+    """Exporting spike events."""
+
+    def test_csv(self) -> None:
+        """The CSV export has a header and the layer."""
         events = [SpikeEvent(timestamp=1, layer_id="L0", precision=0.95)]
         csv_str = export_csv(events)
         assert "timestamp" in csv_str
         assert "L0" in csv_str
 
-    def test_json(self):
+    def test_json(self) -> None:
+        """The JSON export lists the event with its layer."""
         events = [SpikeEvent(timestamp=1, layer_id="L0")]
         j = export_json(events)
         data = __import__("json").loads(j)

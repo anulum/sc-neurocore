@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.bridges.aer_router import (
+    PACKET_SIZE,
+    SpikePacket,
+)
 
 
 class TestSpikePacket:
-    def test_encode_decode(self):
+    """Encoding spike packets."""
+
+    def test_encode_decode(self) -> None:
+        """A packet decodes back with its ids."""
         p = SpikePacket(source_id=100, target_id=200, timestamp=12345, spike_len=64, sequence=42)
         data = p.encode()
         assert len(data) == PACKET_SIZE

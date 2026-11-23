@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from sc_scope_support import *  # noqa: F403
+from sc_neurocore.debug.sc_scope import (
+    LiveAnalyzer,
+)
+from sc_scope_support import (
+    _sample,
+)
 
 
 class TestLiveAnalyzer:
-    def test_ingest(self):
+    """Live per-layer analysis of samples."""
+
+    def test_ingest(self) -> None:
+        """Ingested samples are counted."""
         la = LiveAnalyzer(num_layers=2)
         la.ingest(_sample(layer=0))
         la.ingest(_sample(layer=1))
         assert la.total_samples == 2
 
-    def test_layer_stats(self):
+    def test_layer_stats(self) -> None:
+        """A layer reports its mean density and sample count."""
         la = LiveAnalyzer(num_layers=1)
         for _ in range(10):
             la.ingest(_sample(layer=0, density=0.5))
@@ -28,13 +37,15 @@ class TestLiveAnalyzer:
         assert "mean_density" in stats
         assert stats["sample_count"] == 10
 
-    def test_all_stats(self):
+    def test_all_stats(self) -> None:
+        """Statistics are reported for every layer."""
         la = LiveAnalyzer(num_layers=3)
         for lid in range(3):
             la.ingest(_sample(layer=lid))
         all_s = la.all_stats()
         assert len(all_s) == 3
 
-    def test_unknown_layer(self):
+    def test_unknown_layer(self) -> None:
+        """An unknown layer has no statistics."""
         la = LiveAnalyzer(num_layers=1)
         assert la.layer_stats(99) == {}

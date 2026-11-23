@@ -14,11 +14,21 @@ import sys
 from pathlib import Path as _Path
 
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from photonic_emitter_support import *  # noqa: F403
+import unittest
+from photonic_emitter_support import (
+    MockGraph,
+    MockNode,
+)
+from sc_neurocore.optics.photonic_emitter import (
+    PhotonicEmitter,
+)
 
 
 class TestNetlistEmission(unittest.TestCase):
-    def test_basic_netlist(self):
+    """Emitting a Lumerical netlist from a graph."""
+
+    def test_basic_netlist(self) -> None:
+        """Gates become a modulator and a cavity named by id."""
         emitter = PhotonicEmitter()
         nodes = [
             MockNode("SC_AND", "m1", ["laser_a", "laser_b"], "bus_1"),
@@ -30,26 +40,30 @@ class TestNetlistEmission(unittest.TestCase):
         self.assertIn("m1", netlist)
         self.assertIn("n1", netlist)
 
-    def test_pdk_in_header(self):
+    def test_pdk_in_header(self) -> None:
+        """The netlist header names the photonic PDK."""
         emitter = PhotonicEmitter(target_pdk="imec_si_ph_v2")
         nodes = [MockNode("SC_AND", "m1", ["a", "b"], "c")]
         netlist = emitter.emit_lumerical_netlist(MockGraph(nodes))
         self.assertIn("imec_si_ph_v2", netlist)
 
-    def test_and_gate_connections(self):
+    def test_and_gate_connections(self) -> None:
+        """The AND gate's inputs are wired by name."""
         emitter = PhotonicEmitter()
         nodes = [MockNode("SC_AND", "m1", ["input_a", "input_b"], "out")]
         netlist = emitter.emit_lumerical_netlist(MockGraph(nodes))
         self.assertIn("CONNECT m1:in1 input_a", netlist)
         self.assertIn("CONNECT m1:in2 input_b", netlist)
 
-    def test_lif_threshold(self):
+    def test_lif_threshold(self) -> None:
+        """A LIF node becomes a cavity with Q factor 15000."""
         emitter = PhotonicEmitter()
         nodes = [MockNode("LIF_MEMBRANE", "n1", ["in"], "out")]
         netlist = emitter.emit_lumerical_netlist(MockGraph(nodes))
         self.assertIn("Q_factor 15000", netlist)
 
-    def test_empty_graph(self):
+    def test_empty_graph(self) -> None:
+        """An empty graph still emits the SC-NeuroCore header."""
         emitter = PhotonicEmitter()
         netlist = emitter.emit_lumerical_netlist(MockGraph([]))
         self.assertIn("SC-NeuroCore", netlist)

@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from sc_runtime_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.control.sc_runtime import (
+    HammingECC,
+)
 
 
 class TestHammingECC:
-    def test_roundtrip_all_patterns(self):
+    """Hamming(7,4) error correction."""
+
+    def test_roundtrip_all_patterns(self) -> None:
+        """Every 4-bit pattern decodes back unchanged."""
         ecc = HammingECC()
         for data in range(16):
             encoded = ecc.encode(data)
             decoded = ecc.decode(encoded)
             assert decoded == data, f"Roundtrip failed for {data}"
 
-    def test_single_bit_correction(self):
+    def test_single_bit_correction(self) -> None:
+        """Any single flipped bit is corrected."""
         ecc = HammingECC()
         data = 0b1011
         encoded = ecc.encode(data)
@@ -30,19 +37,22 @@ class TestHammingECC:
             recovered = ecc.decode(corrupted)
             assert recovered == data, f"Failed to correct bit {bit}"
 
-    def test_encoded_fits_7_bits(self):
+    def test_encoded_fits_7_bits(self) -> None:
+        """Every codeword fits in 7 bits."""
         ecc = HammingECC()
         for data in range(16):
             assert ecc.encode(data) < 128
 
-    def test_bitstream_roundtrip(self):
+    def test_bitstream_roundtrip(self) -> None:
+        """A protected bitstream decodes back unchanged."""
         ecc = HammingECC()
         bs = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)
         decoded = ecc.decode_bitstream(encoded)
         np.testing.assert_array_equal(decoded[: len(bs)], bs)
 
-    def test_bitstream_ecc_detects_corruption(self):
+    def test_bitstream_ecc_detects_corruption(self) -> None:
+        """A corrupted protected bitstream decodes back unchanged."""
         ecc = HammingECC()
         bs = np.array([1, 1, 0, 0, 1, 0, 1, 1], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)

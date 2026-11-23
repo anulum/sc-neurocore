@@ -10,21 +10,30 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.debug.hil_client import (
+    EventFilter,
+    filter_events,
+    SpikeEvent,
+)
 
 
 class TestEventFilter:
-    def test_layer_filter(self):
+    """Filtering spike events."""
+
+    def test_layer_filter(self) -> None:
+        """Only events from the chosen layer match."""
         f = EventFilter(layer_id="L1")
         assert f.match(SpikeEvent(layer_id="L1"))
         assert not f.match(SpikeEvent(layer_id="L2"))
 
-    def test_neuron_range(self):
+    def test_neuron_range(self) -> None:
+        """Only events in the neuron range match."""
         f = EventFilter(has_neuron=True, min_neuron=10, max_neuron=20)
         assert f.match(SpikeEvent(neuron_id=15))
         assert not f.match(SpikeEvent(neuron_id=25))
 
-    def test_filter_events(self):
+    def test_filter_events(self) -> None:
+        """Filtering a list keeps the matching event."""
         events = [SpikeEvent(layer_id="L0"), SpikeEvent(layer_id="L1")]
         result = filter_events(events, EventFilter(layer_id="L1"))
         assert len(result) == 1

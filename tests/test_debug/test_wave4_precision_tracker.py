@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+import pytest
+from sc_neurocore.debug.hil_client import (
+    PrecisionTracker,
+)
 
 
 class TestPrecisionTracker:
-    def test_ema(self):
+    """The moving average of spike precision."""
+
+    def test_ema(self) -> None:
+        """The average starts at the first value and then moves."""
         pt = PrecisionTracker(alpha=0.5)
         pt.update(1.0)
         assert pt.ema == 1.0

@@ -6,20 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_photonic_emitter.py
 
+"""Graph stand-ins shared by the photonic emitter tests."""
+
 from __future__ import annotations
 
-"""Tests for the photonic emitter module."""
 import unittest
 from sc_neurocore.optics.photonic_emitter import PhotonicEmitter
 
 
 class MockNode:
-    def __init__(self, t, i, ins, out):
+    """A graph node with a type, an id, input wires and an output wire."""
+
+    def __init__(self, t: str, i: str, ins: list[str], out: str) -> None:
         self.type, self.id, self.inputs, self.output = t, i, ins, out
 
 
 class MockGraph:
-    def __init__(self, nodes):
+    """A graph that holds only its list of nodes."""
+
+    def __init__(self, nodes: list[MockNode]) -> None:
         self.nodes = nodes
 
 

@@ -10,20 +10,29 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.debug.hil_client import (
+    SpikeEvent,
+    TriggerCondition,
+    TriggerLog,
+)
 
 
 class TestTrigger:
-    def test_armed_trigger(self):
+    """Correlation triggers and their log."""
+
+    def test_armed_trigger(self) -> None:
+        """An armed trigger fires above its level only."""
         tc = TriggerCondition(min_correlation=0.5, armed=True)
         assert tc.evaluate(SpikeEvent(correlation=0.6))
         assert not tc.evaluate(SpikeEvent(correlation=0.3))
 
-    def test_disarmed(self):
+    def test_disarmed(self) -> None:
+        """A disarmed trigger never fires."""
         tc = TriggerCondition(min_correlation=0.5, armed=False)
         assert not tc.evaluate(SpikeEvent(correlation=0.9))
 
-    def test_trigger_log(self):
+    def test_trigger_log(self) -> None:
+        """The trigger log counts its two entries."""
         tl = TriggerLog()
         tl.fire(SpikeEvent(sequence=1))
         tl.fire(SpikeEvent(sequence=2))

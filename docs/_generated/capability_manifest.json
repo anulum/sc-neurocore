@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5738
+    "test_files": 5736
   },
   "documentation": {
     "public_pages": [
@@ -4872,7 +4872,6 @@
       "tests/test_dcls_tent_kernel_single_forward.py",
       "tests/test_dcls_tent_kernel_tent_gate.py",
       "tests/test_debug/photonic_emitter_support.py",
-      "tests/test_debug/sc_runtime_support.py",
       "tests/test_debug/sc_scope_edges_support.py",
       "tests/test_debug/sc_scope_support.py",
       "tests/test_debug/test_hil_client_input_contract.py",
@@ -4914,7 +4913,6 @@
       "tests/test_debug/test_wave4_spike_packet.py",
       "tests/test_debug/test_wave4_spike_ring_buffer.py",
       "tests/test_debug/test_wave4_trigger.py",
-      "tests/test_debug/wave4_support.py",
       "tests/test_debug_toolkit_causal_chain.py",
       "tests/test_debug_toolkit_execution_trace.py",
       "tests/test_debug_toolkit_find_divergence.py",

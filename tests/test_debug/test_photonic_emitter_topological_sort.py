@@ -14,11 +14,20 @@ import sys
 from pathlib import Path as _Path
 
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from photonic_emitter_support import *  # noqa: F403
+import unittest
+from photonic_emitter_support import (
+    MockNode,
+)
+from sc_neurocore.optics.photonic_emitter import (
+    PhotonicEmitter,
+)
 
 
 class TestTopologicalSort(unittest.TestCase):
-    def test_forward_order(self):
+    """Ordering photonic graph nodes by their wires."""
+
+    def test_forward_order(self) -> None:
+        """Nodes already in order keep their order."""
         emitter = PhotonicEmitter()
         nodes = [
             MockNode("SC_AND", "m1", ["a", "b"], "c"),
@@ -27,7 +36,8 @@ class TestTopologicalSort(unittest.TestCase):
         sorted_nodes = emitter._topological_sort(nodes)
         self.assertEqual([n.id for n in sorted_nodes], ["m1", "n1"])
 
-    def test_reverse_order(self):
+    def test_reverse_order(self) -> None:
+        """Nodes listed backwards are put in wire order."""
         emitter = PhotonicEmitter()
         nodes = [
             MockNode("LIF_MEMBRANE", "n1", ["c"], "d"),

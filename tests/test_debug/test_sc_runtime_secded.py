@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from sc_runtime_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.control.sc_runtime import (
+    SECDEC_ECC,
+)
 
 
 class TestSECDED:
-    def test_roundtrip_all_patterns(self):
+    """SECDED(8,4) error correction."""
+
+    def test_roundtrip_all_patterns(self) -> None:
+        """Every 4-bit pattern decodes back with no error."""
         ecc = SECDEC_ECC()
         for data in range(16):
             encoded = ecc.encode(data)
@@ -22,12 +28,14 @@ class TestSECDED:
             assert decoded == data
             assert not uncorrectable
 
-    def test_encoded_fits_8_bits(self):
+    def test_encoded_fits_8_bits(self) -> None:
+        """Every codeword fits in 8 bits."""
         ecc = SECDEC_ECC()
         for data in range(16):
             assert ecc.encode(data) < 256
 
-    def test_single_bit_correction(self):
+    def test_single_bit_correction(self) -> None:
+        """Any single flipped bit is corrected."""
         ecc = SECDEC_ECC()
         for data in range(16):
             encoded = ecc.encode(data)
@@ -37,7 +45,8 @@ class TestSECDED:
                 assert decoded == data, f"Failed 1-bit correction for data={data}, bit={bit}"
                 assert not uncorrectable
 
-    def test_double_bit_detection(self):
+    def test_double_bit_detection(self) -> None:
+        """Two flipped bits are detected as uncorrectable."""
         ecc = SECDEC_ECC()
         data = 0b1010
         encoded = ecc.encode(data)
@@ -46,7 +55,8 @@ class TestSECDED:
         _, uncorrectable = ecc.decode(corrupted)
         assert uncorrectable
 
-    def test_bitstream_roundtrip(self):
+    def test_bitstream_roundtrip(self) -> None:
+        """A protected bitstream decodes back with no error."""
         ecc = SECDEC_ECC()
         bs = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)
@@ -54,7 +64,8 @@ class TestSECDED:
         np.testing.assert_array_equal(decoded[: len(bs)], bs)
         assert n_unc == 0
 
-    def test_bitstream_single_bit_correction(self):
+    def test_bitstream_single_bit_correction(self) -> None:
+        """A single error in a bitstream is corrected."""
         ecc = SECDEC_ECC()
         bs = np.array([1, 1, 0, 1, 0, 1, 0, 0], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)
@@ -63,7 +74,8 @@ class TestSECDED:
         np.testing.assert_array_equal(decoded[: len(bs)], bs)
         assert n_unc == 0
 
-    def test_bitstream_double_bit_detected(self):
+    def test_bitstream_double_bit_detected(self) -> None:
+        """A double error in a bitstream is detected."""
         ecc = SECDEC_ECC()
         bs = np.array([1, 0, 1, 0], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)
@@ -72,7 +84,8 @@ class TestSECDED:
         _, n_unc = ecc.decode_bitstream(encoded)
         assert n_unc > 0
 
-    def test_secded_8_bit_encoding(self):
+    def test_secded_8_bit_encoding(self) -> None:
+        """Four data bits encode to eight."""
         ecc = SECDEC_ECC()
         bs = np.array([1, 0, 1, 1], dtype=np.uint8)
         encoded = ecc.encode_bitstream(bs)

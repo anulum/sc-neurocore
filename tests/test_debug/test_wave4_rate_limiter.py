@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+from sc_neurocore.debug.hil_client import (
+    RateLimiter,
+)
 
 
 class TestRateLimiter:
-    def test_allow(self):
+    """The token-bucket rate limiter."""
+
+    def test_allow(self) -> None:
+        """A full bucket allows its burst."""
         rl = RateLimiter(3)
         assert rl.allow()
         assert rl.allow()
         assert rl.allow()
         assert not rl.allow()
 
-    def test_refill(self):
+    def test_refill(self) -> None:
+        """An empty bucket refuses until it refills."""
         rl = RateLimiter(2)
         rl.allow()
         rl.allow()

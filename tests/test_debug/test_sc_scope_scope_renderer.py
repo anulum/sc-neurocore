@@ -10,31 +10,45 @@
 
 from __future__ import annotations
 
-from sc_scope_support import *  # noqa: F403
+from sc_neurocore.debug.sc_scope import (
+    LiveAnalyzer,
+    ScopeRenderer,
+    ScopeSession,
+    TransportBackend,
+    TransportConfig,
+    TransportType,
+)
 
 
 class TestScopeRenderer:
-    def test_density_bar(self):
+    """Rendering the scope as text."""
+
+    def test_density_bar(self) -> None:
+        """A half-density bar shows filled and empty cells."""
         bar = ScopeRenderer.render_density_bar(0.5)
         assert "█" in bar
         assert "░" in bar
         assert "0.500" in bar
 
-    def test_density_bar_empty(self):
+    def test_density_bar_empty(self) -> None:
+        """A zero-density bar is all empty cells."""
         bar = ScopeRenderer.render_density_bar(0.0)
         assert "░" in bar
 
-    def test_density_bar_full(self):
+    def test_density_bar_full(self) -> None:
+        """A full-density bar shows filled cells."""
         bar = ScopeRenderer.render_density_bar(1.0)
         assert "█" in bar
 
-    def test_layer_summary(self):
+    def test_layer_summary(self) -> None:
+        """A layer line shows the layer and its effective bits."""
         stats = {"mean_density": 0.5, "mean_effective_bits": 128.0, "sample_count": 10}
         line = ScopeRenderer.render_layer_summary(0, stats)
         assert "L0" in line
         assert "eff=" in line
 
-    def test_render_session(self):
+    def test_render_session(self) -> None:
+        """A live session renders its title and layers."""
         cfg = TransportConfig(TransportType.SIMULATED)
         tb = TransportBackend(cfg)
         la = LiveAnalyzer(num_layers=2)

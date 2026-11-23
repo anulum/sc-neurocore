@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 33 debug and runtime test modules that star-imported a support
+  module (`tests/test_debug`) import their names explicitly instead,
+  gain their missing test docstrings and type annotations and are
+  enrolled in the docstring policy. The photonic-emitter graph
+  stand-ins gain types and docstrings, and the runtime and wave-4
+  supports, left without an importer, are deleted.
+
 - The 42 bridge test modules that star-imported a support module
   (`tests/test_bridges`: DNA mapper, photonic NoC and annealing
   backends) import their names explicitly instead, gain their missing

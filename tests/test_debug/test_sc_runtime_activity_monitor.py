@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from sc_runtime_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.control.sc_runtime import (
+    ActivityMonitor,
+    ActivityZone,
+)
 
 
 class TestActivityMonitor:
-    def test_observe_returns_metrics(self):
+    """Monitoring bitstream density and correlation."""
+
+    def test_observe_returns_metrics(self) -> None:
+        """An observation reports density, SCC and its average."""
         mon = ActivityMonitor()
         bs = np.ones(100, dtype=np.uint8)
         m = mon.observe(bs)
@@ -23,24 +31,28 @@ class TestActivityMonitor:
         assert "ema_scc" in m
         assert "activity_zone" in m
 
-    def test_density_all_ones(self):
+    def test_density_all_ones(self) -> None:
+        """An all-ones stream has density 1."""
         mon = ActivityMonitor()
         m = mon.observe(np.ones(100, dtype=np.uint8))
         assert m["density"] == 1.0
 
-    def test_density_all_zeros(self):
+    def test_density_all_zeros(self) -> None:
+        """An all-zeros stream has density 0."""
         mon = ActivityMonitor()
         m = mon.observe(np.zeros(100, dtype=np.uint8))
         assert m["density"] == 0.0
 
-    def test_scc_with_reference(self):
+    def test_scc_with_reference(self) -> None:
+        """A stream compared with itself has an SCC of 1."""
         mon = ActivityMonitor()
         a = np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8)
         b = np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8)
         m = mon.observe(a, reference=b)
         assert m["scc"] == pytest.approx(1.0)
 
-    def test_drift_detection(self):
+    def test_drift_detection(self) -> None:
+        """A sustained correlation is reported as drift."""
         mon = ActivityMonitor(drift_threshold=0.2)
         a = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
         b = a.copy()
@@ -48,30 +60,35 @@ class TestActivityMonitor:
             m = mon.observe(a, reference=b)
         assert m["drift_detected"] is True
 
-    def test_mean_density_accumulates(self):
+    def test_mean_density_accumulates(self) -> None:
+        """The mean density averages the observed streams."""
         mon = ActivityMonitor()
         for _ in range(10):
             mon.observe(np.ones(100, dtype=np.uint8))
         assert mon.mean_density == pytest.approx(1.0)
 
-    def test_activity_zone_tracking(self):
+    def test_activity_zone_tracking(self) -> None:
+        """An all-zero stream puts the monitor in the idle zone."""
         mon = ActivityMonitor()
         mon.observe(np.zeros(100, dtype=np.uint8))
         assert mon.current_zone == ActivityZone.IDLE
 
-    def test_activity_zone_burst(self):
+    def test_activity_zone_burst(self) -> None:
+        """Saturated streams put the monitor in the burst zone."""
         mon = ActivityMonitor()
         mon.observe(np.ones(100, dtype=np.uint8))
         assert mon.current_zone == ActivityZone.BURST
 
-    def test_scc_zero_streams_hit_numerator_floor(self):
+    def test_scc_zero_streams_hit_numerator_floor(self) -> None:
+        """All-zero streams give an SCC of 0."""
         # All-zero stream and reference give pa=pb=p_and=0, so the numerator
         # collapses to the |num|<eps floor and the coefficient is 0.
         mon = ActivityMonitor()
         m = mon.observe(np.zeros(8, dtype=np.uint8), reference=np.zeros(8, dtype=np.uint8))
         assert m["scc"] == 0.0
 
-    def test_compute_scc_degenerate_denominator_returns_zero(self):
+    def test_compute_scc_degenerate_denominator_returns_zero(self) -> None:
+        """A zero denominator gives an SCC of 0."""
         # A non-binary input breaks the bitstream invariant p_and<=min(pa,pb):
         # for [1.5,0.5] (pa=1.0) the denominator min(pa,pb)-pa*pb is exactly 0
         # while the numerator stays positive, exercising the |denom|<eps floor.
@@ -79,13 +96,15 @@ class TestActivityMonitor:
         degenerate = np.array([1.5, 0.5], dtype=np.float64)
         assert mon._compute_scc(degenerate, degenerate) == 0.0
 
-    def test_mean_scc_within_bounds(self):
+    def test_mean_scc_within_bounds(self) -> None:
+        """The mean SCC stays within -1 and 1."""
         mon = ActivityMonitor()
         a = np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8)
         mon.observe(a, reference=a)
         assert -1.0 <= mon.mean_scc <= 1.0
 
-    def test_drift_active_property(self):
+    def test_drift_active_property(self) -> None:
+        """The drift flag reports an active drift."""
         mon = ActivityMonitor(drift_threshold=0.2)
         a = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
         for _ in range(50):

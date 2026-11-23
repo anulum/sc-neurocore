@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+import pytest
+from sc_neurocore.debug.hil_client import (
+    check_health,
+)
 
 
 class TestHealthCheck:
-    def test_healthy(self):
+    """The debugger's health report."""
+
+    def test_healthy(self) -> None:
+        """A light load is healthy at 10 events per second."""
         h = check_health(100, 10, 50, 1000)
         assert h.status == "healthy"
         assert h.events_per_sec == pytest.approx(10.0)
 
-    def test_buffer_pressure(self):
+    def test_buffer_pressure(self) -> None:
+        """A nearly full buffer reports buffer pressure."""
         h = check_health(100, 10, 999, 1000)
         assert h.status == "buffer_pressure"

@@ -10,29 +10,40 @@
 
 from __future__ import annotations
 
-from sc_scope_support import *  # noqa: F403
+from sc_neurocore.debug.sc_scope import (
+    AnalysisWindow,
+)
+from sc_scope_support import (
+    _sample,
+)
 
 
 class TestAnalysisWindow:
-    def test_push_and_count(self):
+    """The sliding window over scope samples."""
+
+    def test_push_and_count(self) -> None:
+        """Five pushed samples are counted."""
         w = AnalysisWindow(window_size=10)
         for i in range(5):
             w.push(_sample(density=0.5))
         assert w.count == 5
 
-    def test_window_overflow(self):
+    def test_window_overflow(self) -> None:
+        """The window keeps only its last four samples."""
         w = AnalysisWindow(window_size=4)
         for i in range(10):
             w.push(_sample(density=0.5))
         assert w.count == 4
 
-    def test_mean_density(self):
+    def test_mean_density(self) -> None:
+        """Full-density samples have a mean density of 1."""
         w = AnalysisWindow(window_size=100)
         for _ in range(20):
             w.push(_sample(density=1.0))
         assert abs(w.mean_density - 1.0) < 0.01
 
-    def test_std_density(self):
+    def test_std_density(self) -> None:
+        """Equal samples have almost no density spread."""
         w = AnalysisWindow(window_size=100)
         for _ in range(20):
             w.push(_sample(density=0.5))

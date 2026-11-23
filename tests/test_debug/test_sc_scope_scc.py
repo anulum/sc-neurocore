@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from sc_scope_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.debug.sc_scope import (
+    compute_scc,
+)
 
 
 class TestSCC:
-    def test_identical_bitstreams(self):
+    """The stochastic cross-correlation of two streams."""
+
+    def test_identical_bitstreams(self) -> None:
+        """Identical streams have an SCC of 1."""
         words = np.array([0xAAAA_AAAA] * 4, dtype=np.uint32)
         scc = compute_scc(words, words)
         assert abs(scc - 1.0) < 0.01
 
-    def test_empty_bitstreams(self):
+    def test_empty_bitstreams(self) -> None:
+        """Empty streams have an SCC of 0."""
         scc = compute_scc(np.array([], dtype=np.uint32), np.array([], dtype=np.uint32))
         assert scc == 0.0
 
-    def test_scc_range(self):
+    def test_scc_range(self) -> None:
+        """The SCC lies between -1 and 1."""
         rng = np.random.default_rng(42)
         a = rng.integers(0, 0xFFFF_FFFF, size=16, dtype=np.uint32)
         b = rng.integers(0, 0xFFFF_FFFF, size=16, dtype=np.uint32)

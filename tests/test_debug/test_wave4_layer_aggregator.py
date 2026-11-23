@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+import pytest
+from sc_neurocore.debug.hil_client import (
+    LayerAggregator,
+    SpikeEvent,
+)
 
 
 class TestLayerAggregator:
-    def test_record_and_get(self):
+    """Aggregating spike statistics per layer."""
+
+    def test_record_and_get(self) -> None:
+        """Recorded events give a count and mean correlation."""
         la = LayerAggregator()
         la.record(SpikeEvent(layer_id="L0", correlation=0.1, precision=0.95))
         la.record(SpikeEvent(layer_id="L0", correlation=0.3, precision=0.85))
@@ -23,6 +30,7 @@ class TestLayerAggregator:
         assert ls["event_count"] == 2
         assert la.mean_correlation(ls) == pytest.approx(0.2)
 
-    def test_missing_layer(self):
+    def test_missing_layer(self) -> None:
+        """An unknown layer has no statistics."""
         la = LayerAggregator()
         assert la.get("missing") is None

@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from wave4_support import *  # noqa: F403
+import pytest
+from sc_neurocore.debug.hil_client import (
+    CorrelationWindow,
+    LayerAggregator,
+    RateLimiter,
+    SpikeEvent,
+    SpikeRingBuffer,
+    TriggerCondition,
+)
 
 
 class TestHilClientBranchCoverage:
     """Edge and accessor branches across the HIL telemetry components."""
 
-    def test_ring_buffer_head_and_capacity_accessors(self):
+    def test_ring_buffer_head_and_capacity_accessors(self) -> None:
+        """The ring buffer reports its capacity and moving head."""
         rb = SpikeRingBuffer(capacity=4)
         assert rb.capacity == 4
         assert rb.head == 0
@@ -24,7 +33,8 @@ class TestHilClientBranchCoverage:
         rb.push(SpikeEvent(timestamp=2))
         assert rb.head == 2
 
-    def test_layer_aggregator_all_returns_independent_copies(self):
+    def test_layer_aggregator_all_returns_independent_copies(self) -> None:
+        """The aggregator hands out copies, not its own records."""
         agg = LayerAggregator()
         agg.record(SpikeEvent(layer_id="L1", correlation=0.3, precision=0.9))
         snapshot = agg.all()
@@ -33,26 +43,31 @@ class TestHilClientBranchCoverage:
         snapshot["L1"]["event_count"] = 999
         assert agg.all()["L1"]["event_count"] == 1
 
-    def test_layer_aggregator_means_handle_zero_event_count(self):
+    def test_layer_aggregator_means_handle_zero_event_count(self) -> None:
+        """An empty layer has mean correlation and precision 0."""
         empty = {"event_count": 0, "sum_correlation": 0.0, "sum_precision": 0.0}
         assert LayerAggregator.mean_correlation(empty) == 0.0
         assert LayerAggregator.mean_precision(empty) == 0.0
 
-    def test_layer_aggregator_mean_precision_divides_when_populated(self):
+    def test_layer_aggregator_mean_precision_divides_when_populated(self) -> None:
+        """A populated layer averages its precision."""
         ls = {"event_count": 2, "sum_correlation": 1.0, "sum_precision": 1.4}
         assert LayerAggregator.mean_precision(ls) == pytest.approx(0.7)
 
-    def test_correlation_window_mean_and_max_empty_return_zero(self):
+    def test_correlation_window_mean_and_max_empty_return_zero(self) -> None:
+        """An empty window has mean and maximum 0."""
         win = CorrelationWindow(size=8)
         assert win.mean() == 0.0
         assert win.max() == 0.0
 
-    def test_trigger_condition_layer_mismatch_does_not_fire(self):
+    def test_trigger_condition_layer_mismatch_does_not_fire(self) -> None:
+        """A trigger for one layer ignores another layer."""
         trig = TriggerCondition(min_correlation=0.5, layer_id="L1")
         # Event belongs to a different layer → trigger must not fire.
         assert trig.evaluate(SpikeEvent(layer_id="L2", correlation=0.9)) is False
 
-    def test_rate_limiter_available_reflects_remaining_tokens(self):
+    def test_rate_limiter_available_reflects_remaining_tokens(self) -> None:
+        """The limiter reports its remaining tokens."""
         rl = RateLimiter(capacity=2)
         assert rl.available == 2
         rl.allow()
