@@ -1251,6 +1251,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The photonic crosstalk lane test no longer caps each lane source at 350
+  lines. It keeps what it is for, renamed
+  `test_polyglot_sources_are_real_numeric_kernels`: no lane source may carry
+  a transcript or no-op marker.
+
 - The neuron-module architecture tests no longer cap file lengths: the Rust
   map models and per-model contract tests at 300 lines, and the Aihara,
   adaptive-threshold and shared-runtime Julia files at 500, 150, 200 and 100.

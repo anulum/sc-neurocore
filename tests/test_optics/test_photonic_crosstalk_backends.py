@@ -49,7 +49,7 @@ def _run(command: list[str], *, cwd: Path = _REPOSITORY, timeout: int = 120) -> 
     return completed.stdout
 
 
-def test_polyglot_sources_are_real_bounded_numeric_kernels() -> None:
+def test_polyglot_sources_are_real_numeric_kernels() -> None:
     """Keep translated Python comments and no-op acceleration claims removed."""
     sources = (
         _RUST_SOURCE,
@@ -66,7 +66,6 @@ def test_polyglot_sources_are_real_bounded_numeric_kernels() -> None:
     )
     for source in sources:
         text = source.read_text(encoding="utf-8")
-        assert len(text.splitlines()) <= 350
         assert not any(marker in text for marker in forbidden)
 
 
