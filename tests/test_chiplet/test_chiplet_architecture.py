@@ -24,7 +24,7 @@ REPO_ROOT = Path(__file__).parents[2]
 
 
 def test_facade_defines_no_new_public_behaviour() -> None:
-    """The ``chiplet_gen`` facade only re-exports: no definitions, 36 names, at most 150 lines."""
+    """The ``chiplet_gen`` facade only re-exports: no definitions and its 36 names."""
     facade = PACKAGE_ROOT / "chiplet_gen.py"
     facade_lines = facade.read_text(encoding="utf-8").splitlines()
     tree = ast.parse("\n".join(facade_lines))
@@ -35,11 +35,34 @@ def test_facade_defines_no_new_public_behaviour() -> None:
     ]
     assert definitions == []
     assert len(chiplet_gen.__all__) == 36
-    assert len(facade_lines) <= 150
+
+
+# The private helpers the RTL emission is divided into, with the top-level definitions each owns.
+PRIVATE_OWNED_DEFINITIONS: dict[str, frozenset[str]] = {
+    "_sv": frozenset({"_require_sv_identifier", "sv_signed"}),
+    "_rtl_die": frozenset({"_arbiter", "_route_inits", "emit_die_wrapper"}),
+    "_rtl_links": frozenset({"_cycles", "bridge_timing", "emit_bridge", "emit_routing_table"}),
+    "_rtl_top": frozenset({"die_clock", "die_reset", "emit_constraints", "emit_top"}),
+}
+
+# Concerns a chiplet test file may cover: one responsibility module each, plus the
+# package-wide edge cases of the facade and the public API.
+TEST_CONCERNS = (
+    "topology",
+    "routing",
+    "thermal",
+    "rtl",
+    "link_protocols",
+    "power",
+    "partition",
+    "gen_edge_cases",
+    "public_api",
+    "architecture",
+)
 
 
 def test_responsibility_modules_partition_the_legacy_surface() -> None:
-    """Each public chiplet symbol has exactly one owning module, within its size ceiling."""
+    """Each public chiplet symbol has exactly one owning module, and each private helper its own names."""
     modules = (topology, routing, thermal, rtl, link_protocols, power, partition)
     owners: dict[str, str] = {}
     for module in modules:
@@ -48,18 +71,23 @@ def test_responsibility_modules_partition_the_legacy_surface() -> None:
                 f"{symbol} owned by both {owners[symbol]} and {module.__name__}"
             )
             owners[symbol] = module.__name__
-        module_path = PACKAGE_ROOT / f"{module.__name__.rsplit('.', maxsplit=1)[-1]}.py"
-        assert len(module_path.read_text(encoding="utf-8").splitlines()) <= 500
     assert set(owners) == set(chiplet_gen.__all__)
-    assert len((PACKAGE_ROOT / "_sv.py").read_text(encoding="utf-8").splitlines()) <= 100
-    for emitter in ("_rtl_die", "_rtl_links", "_rtl_top"):
-        source = (PACKAGE_ROOT / f"{emitter}.py").read_text(encoding="utf-8").splitlines()
-        assert len(source) <= 300, emitter
-        assert all(len(line) <= 100 for line in source), emitter
-    assert all(
-        len(path.read_text(encoding="utf-8").splitlines()) <= 500
-        for path in Path(__file__).parent.glob("test_chiplet_*.py")
-    )
+    kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+    for name, declared in PRIVATE_OWNED_DEFINITIONS.items():
+        source = (PACKAGE_ROOT / f"{name}.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        assert {node.name for node in tree.body if isinstance(node, kinds)} == declared, name
+        if name != "_sv":
+            assert all(len(line) <= 100 for line in source.splitlines()), name
+
+
+def test_each_chiplet_test_file_covers_one_concern() -> None:
+    """Every ``test_chiplet_*`` file names the module or package-wide concern it tests."""
+    for path in Path(__file__).parent.glob("test_chiplet_*.py"):
+        stem = path.stem.removeprefix("test_chiplet_")
+        assert any(
+            stem == concern or stem.startswith(f"{concern}_") for concern in TEST_CONCERNS
+        ), path.name
 
 
 def test_focused_import_graph_is_acyclic() -> None:

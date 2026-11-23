@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The chiplet architecture tests no longer cap line counts: 150 for the
+  facade, 500 per responsibility module and test file, 100 for `_sv` and 300
+  for each RTL emitter. They keep the existing ownership of every public
+  symbol and the fixed import graph, and now also hold:
+  - each private RTL helper to the top-level names of its declared concern;
+  - every `test_chiplet_*` file to the concern it covers.
+  The emitters' 100-character line width, a formatting rule, is kept.
+
 - The DNA mapper's architecture tests no longer cap line counts (250 for the
   facade, 650 per responsibility module). They now hold what the caps stood
   for:
