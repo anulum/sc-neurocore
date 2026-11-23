@@ -10,15 +10,19 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from encoder_equiv_support import *  # noqa: F403
+from tests.equivalence.encoder_equiv_support import (
+    _lfsr_step,
+)
+from sc_neurocore_engine import (
+    Lfsr16,
+)
 
 
 class TestLFSRBlueprintSemantics:
-    def test_full_cycle_matches_blueprint_formula(self):
+    """Hold the engine LFSR to the blueprint's step formula."""
+
+    def test_full_cycle_matches_blueprint_formula(self) -> None:
+        """Over its full 65,535-step cycle the engine LFSR matches the blueprint step."""
         reg = 0xACE1
         v3 = Lfsr16(seed=reg)
 
@@ -26,7 +30,8 @@ class TestLFSRBlueprintSemantics:
             reg = _lfsr_step(reg)
             assert v3.step() == reg, f"LFSR divergence at step {i}"
 
-    def test_multiple_seeds(self):
+    def test_multiple_seeds(self) -> None:
+        """From four seeds the engine LFSR matches the blueprint step for 1,000 steps."""
         for seed in [0xACE1, 0xBEEF, 0xACE1 + 7, 0xBEEF + 13]:
             reg = seed
             v3 = Lfsr16(seed=seed)

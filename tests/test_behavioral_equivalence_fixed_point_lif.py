@@ -10,19 +10,22 @@
 
 from __future__ import annotations
 
-from tests.behavioral_equivalence_support import *  # noqa: F403
+from sc_neurocore.neurons.fixed_point_lif import (
+    FixedPointLIFNeuron,
+)
 
 
 class TestFixedPointLIF:
     """Bit-true verification of sc_lif_neuron.v dynamics."""
 
-    def test_rest_with_no_input(self):
+    def test_rest_with_no_input(self) -> None:
+        """With no input the membrane stays at rest and does not spike."""
         neuron = FixedPointLIFNeuron()
         spike, v = neuron.step(leak_k=10, gain_k=256, I_t=0, noise_in=0)
         assert spike == 0
         assert v == 0  # v_rest=0, no input -> stays at rest
 
-    def test_integration(self):
+    def test_integration(self) -> None:
         """Constant small input should integrate membrane potential."""
         neuron = FixedPointLIFNeuron()
         # I_t=10, gain_k=256 (1.0): dv_in = 10*256 >> 8 = 10
@@ -30,7 +33,7 @@ class TestFixedPointLIF:
         assert v == 10
         assert spike == 0
 
-    def test_leak(self):
+    def test_leak(self) -> None:
         """Membrane should leak toward v_rest when no input applied."""
         neuron = FixedPointLIFNeuron()
         neuron.v = 100
@@ -39,7 +42,7 @@ class TestFixedPointLIF:
         assert v == 96  # 100 - 4
         assert spike == 0
 
-    def test_spike_and_reset(self):
+    def test_spike_and_reset(self) -> None:
         """Large input should cause spike and reset to v_reset."""
         neuron = FixedPointLIFNeuron()
         neuron.v = 250  # Close to threshold (256)
@@ -48,7 +51,7 @@ class TestFixedPointLIF:
         assert spike == 1
         assert v == 0  # v_reset
 
-    def test_refractory_period(self):
+    def test_refractory_period(self) -> None:
         """After spike, neuron should be in refractory for N cycles."""
         neuron = FixedPointLIFNeuron(refractory_period=3)
         neuron.v = 255
@@ -67,13 +70,13 @@ class TestFixedPointLIF:
         # Now out of refractory, should integrate
         assert v == 10
 
-    def test_noise_injection(self):
+    def test_noise_injection(self) -> None:
         """Noise should affect membrane potential."""
         neuron = FixedPointLIFNeuron()
         spike, v = neuron.step(leak_k=0, gain_k=256, I_t=0, noise_in=50)
         assert v == 50
 
-    def test_overflow_wrapping(self):
+    def test_overflow_wrapping(self) -> None:
         """Bit-width masking should handle overflow correctly."""
         neuron = FixedPointLIFNeuron(v_threshold=32000)
         neuron.v = 32000
@@ -83,7 +86,8 @@ class TestFixedPointLIF:
         # But 32200 in 16-bit signed is 32200 (still positive, < 32768)
         assert v == 32200 or spike == 1  # Either integrated or spiked
 
-    def test_reset_method(self):
+    def test_reset_method(self) -> None:
+        """reset() returns the membrane and the refractory counter to rest."""
         neuron = FixedPointLIFNeuron()
         neuron.v = 100
         neuron.refractory_counter = 5
@@ -91,7 +95,7 @@ class TestFixedPointLIF:
         assert neuron.v == 0
         assert neuron.refractory_counter == 0
 
-    def test_multi_step_convergence(self):
+    def test_multi_step_convergence(self) -> None:
         """With constant input, neuron should eventually spike."""
         neuron = FixedPointLIFNeuron(refractory_period=0)
         spike_count = 0

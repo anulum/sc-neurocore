@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2398
+expected_file_count = 2412
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9636,3 +9636,59 @@ rationale = "Exercise the quantum-cognition end-to-end case rust compilation."
 [[file]]
 path = "tests/test_qc_e2e_studio_hook_integration.py"
 rationale = "Exercise the quantum-cognition end-to-end case studio hook integration."
+
+[[file]]
+path = "tests/equivalence/test_encoder_equiv_encoder_blueprint_semantics.py"
+rationale = "Exercise the encoder equivalence case encoder blueprint semantics."
+
+[[file]]
+path = "tests/equivalence/test_encoder_equiv_lfsr_blueprint_semantics.py"
+rationale = "Exercise the encoder equivalence case lfsr blueprint semantics."
+
+[[file]]
+path = "tests/test_behavioral_equivalence_bitstream_encoder.py"
+rationale = "Exercise the behavioural equivalence case bitstream encoder."
+
+[[file]]
+path = "tests/test_behavioral_equivalence_fixed_point_lif.py"
+rationale = "Exercise the behavioural equivalence case fixed point lif."
+
+[[file]]
+path = "tests/test_behavioral_equivalence_lfsr.py"
+rationale = "Exercise the behavioural equivalence case lfsr."
+
+[[file]]
+path = "tests/test_behavioral_equivalence_mask.py"
+rationale = "Exercise the behavioural equivalence case mask."
+
+[[file]]
+path = "tests/test_equivalence_check_equivalence_proof.py"
+rationale = "Exercise the formal equivalence check case equivalence proof."
+
+[[file]]
+path = "tests/test_equivalence_check_formal_tools_available.py"
+rationale = "Exercise the formal equivalence check case formal tools available."
+
+[[file]]
+path = "tests/test_equivalence_check_sby_generation.py"
+rationale = "Exercise the formal equivalence check case sby generation."
+
+[[file]]
+path = "tests/test_equivalence_check_verdict_mapping.py"
+rationale = "Exercise the formal equivalence check case verdict mapping."
+
+[[file]]
+path = "tests/test_equivalence_miter_build_equivalence_miter.py"
+rationale = "Exercise the equivalence miter case build equivalence miter."
+
+[[file]]
+path = "tests/test_equivalence_miter_header_errors.py"
+rationale = "Exercise the equivalence miter case header errors."
+
+[[file]]
+path = "tests/test_equivalence_miter_parse_module_interface.py"
+rationale = "Exercise the equivalence miter case parse module interface."
+
+[[file]]
+path = "tests/test_equivalence_miter_width_evaluator.py"
+rationale = "Exercise the equivalence miter case width evaluator."

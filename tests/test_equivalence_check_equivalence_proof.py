@@ -10,7 +10,26 @@
 
 from __future__ import annotations
 
-from tests.equivalence_check_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.equivalence_check import (
+    EquivalenceResult,
+    prove_equivalence,
+)
+from tests.equivalence_check_support import (
+    _IZH_DUT,
+    _IZH_REF,
+    _needs_formal,
+    _QIF_DUT,
+    _QIF_REF,
+    _REPO_ROOT,
+    _TINY_DUT,
+    _TINY_PORTS,
+    _TINY_REF,
+    _TINY_REF_BAD,
+)
 
 
 @_needs_formal
@@ -18,6 +37,7 @@ class TestEquivalenceProof:
     """End-to-end machine-checked proofs (require the formal toolchain)."""
 
     def test_equivalent_modules_are_proven(self, tmp_path: Path) -> None:
+        """Two equivalent modules are proven equal by the formal check."""
         result = prove_equivalence(
             _TINY_DUT,
             _TINY_REF,
@@ -34,6 +54,7 @@ class TestEquivalenceProof:
         assert result.counterexample is None
 
     def test_inequivalent_modules_are_disproved(self, tmp_path: Path) -> None:
+        """A module that differs from the reference is disproved."""
         result = prove_equivalence(
             _TINY_DUT,
             _TINY_REF_BAD,
@@ -51,6 +72,7 @@ class TestEquivalenceProof:
         assert Path(result.trace_path).exists()
 
     def test_malformed_verilog_raises(self, tmp_path: Path) -> None:
+        """Verilog the checker cannot read raises instead of returning a verdict."""
         with pytest.raises(RuntimeError, match="did not complete"):
             prove_equivalence(
                 "module tiny_dut; this is not verilog",

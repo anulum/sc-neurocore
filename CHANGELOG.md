@@ -1287,6 +1287,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 15 equivalence test modules (`tests/equivalence/test_encoder_equiv_*`,
+  `tests/test_behavioral_equivalence_*`, `tests/test_equivalence_check_*`
+  and `tests/test_equivalence_miter_*`) import their names explicitly
+  instead of through a suppressed star import, and the encoder modules
+  import their support module as a package instead of through a
+  `sys.path` entry. They gain the missing test docstrings and return
+  annotations and are enrolled in the docstring policy.
+
 - The 20 end-to-end test modules (`tests/e2e/test_e2e_pipeline_*` and
   `tests/test_qc_e2e_*`) import their names explicitly instead of
   through a suppressed star import, so ruff checks them without a

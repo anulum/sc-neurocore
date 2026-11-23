@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.equivalence_miter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equivalence_miter import (
+    MiterPort,
+    parse_module_interface,
+)
+from tests.equivalence_miter_support import (
+    _LIF_REFERENCE,
+)
 
 
 class TestParseModuleInterface:
     """Parsing the ANSI port interface, resolving parameter-dependent widths."""
 
     def test_parses_directions_widths_and_signedness(self) -> None:
+        """Each port is read with its direction, width and signedness."""
         ports = parse_module_interface(
             _LIF_REFERENCE, "sc_lif_reference", params={"DATA_WIDTH": 16}
         )
@@ -29,6 +37,7 @@ class TestParseModuleInterface:
         assert by_name["v_out"] == MiterPort("v_out", 16, True, "output")
 
     def test_declaration_order_is_preserved(self) -> None:
+        """Ports come back in declaration order."""
         ports = parse_module_interface(
             _LIF_REFERENCE, "sc_lif_reference", params={"DATA_WIDTH": 16}
         )
@@ -42,22 +51,27 @@ class TestParseModuleInterface:
         ]
 
     def test_width_expression_uses_parameter_value(self) -> None:
+        """A width expression uses the given parameter value."""
         ports = parse_module_interface(_LIF_REFERENCE, "sc_lif_reference", params={"DATA_WIDTH": 8})
         assert {p.name: p.width for p in ports}["v_out"] == 8
 
     def test_missing_module_raises(self) -> None:
+        """Asking for a module that is not in the source raises."""
         with pytest.raises(ValueError, match="not found"):
             parse_module_interface(_LIF_REFERENCE, "no_such_module")
 
     def test_unknown_width_parameter_raises(self) -> None:
+        """A width that names an unset parameter raises."""
         with pytest.raises(ValueError, match="unknown parameter"):
             parse_module_interface(_LIF_REFERENCE, "sc_lif_reference")
 
     def test_module_without_ports_raises(self) -> None:
+        """A module with no ports raises."""
         with pytest.raises(ValueError, match="no ports|port list"):
             parse_module_interface("module empty(); endmodule", "empty")
 
     def test_shift_and_arithmetic_in_width(self) -> None:
+        """Arithmetic and shifts in a port range evaluate to the right widths."""
         src = "module m(input wire [ (2*4) - 1 : 0 ] a, output wire [1<<3:0] b); endmodule"
         ports = parse_module_interface(src, "m")
         widths = {p.name: p.width for p in ports}

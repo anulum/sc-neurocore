@@ -10,15 +10,18 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from encoder_equiv_support import *  # noqa: F403
+from tests.equivalence.encoder_equiv_support import (
+    _lfsr_step,
+)
+from sc_neurocore_engine import (
+    BitstreamEncoder,
+)
 
 
 class TestEncoderBlueprintSemantics:
-    def test_compare_before_advance_order(self):
+    """Hold the engine bitstream encoder to the blueprint's compare-then-advance order."""
+
+    def test_compare_before_advance_order(self) -> None:
         """Encoder reads LFSR state, compares, then advances (Verilog RTL match)."""
         encoder = BitstreamEncoder(data_width=16, seed=0xACE1)
         x_value = 0xACE1

@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.behavioral_equivalence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.fixed_point_lif import (
+    FixedPointLFSR,
+)
 
 
 class TestLFSR:
     """Verify LFSR matches Verilog sc_bitstream_encoder polynomial."""
 
-    def test_default_seed(self):
+    def test_default_seed(self) -> None:
+        """The register starts at the seed it was given."""
         lfsr = FixedPointLFSR(seed=0xACE1)
         assert lfsr.reg == 0xACE1
 
-    def test_first_step(self):
-        """
+    def test_first_step(self) -> None:
+        """Step 0xACE1 once to 0x59C3: taps 15, 13, 12 and 10 feed back a one.
+
         0xACE1 = 1010 1100 1110 0001
         Taps: bit15=1, bit13=1, bit12=0, bit10=1 -> feedback = 1^1^0^1 = 1
         Shift left: 0101 1001 1100 0010 = 0x59C2
@@ -31,7 +36,7 @@ class TestLFSR:
         result = lfsr.step()
         assert result == 0x59C3, f"Expected 0x59C3, got {hex(result)}"
 
-    def test_maximal_length(self):
+    def test_maximal_length(self) -> None:
         """A 16-bit maximal-length LFSR should have period 2^16-1 = 65535."""
         lfsr = FixedPointLFSR(seed=0xACE1)
         initial = lfsr.reg
@@ -39,18 +44,19 @@ class TestLFSR:
             lfsr.step()
         assert lfsr.reg == initial, "LFSR did not return to initial state after 2^16-1 steps"
 
-    def test_no_zero_state(self):
+    def test_no_zero_state(self) -> None:
         """LFSR should never reach all-zeros during full period."""
         lfsr = FixedPointLFSR(seed=0xACE1)
         for _ in range(65535):
             lfsr.step()
             assert lfsr.reg != 0, "LFSR reached zero state"
 
-    def test_zero_seed_raises(self):
+    def test_zero_seed_raises(self) -> None:
+        """A zero seed, which would lock the LFSR, is refused."""
         with pytest.raises(ValueError):
             FixedPointLFSR(seed=0)
 
-    def test_different_seeds_produce_different_sequences(self):
+    def test_different_seeds_produce_different_sequences(self) -> None:
         """Two LFSRs with different seeds must produce different bitstreams."""
         lfsr_a = FixedPointLFSR(seed=0xACE1)
         lfsr_b = FixedPointLFSR(seed=0xBEEF)

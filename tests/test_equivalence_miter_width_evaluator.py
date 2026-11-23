@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.equivalence_miter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equivalence_miter import (
+    _eval_width_expr,
+)
 
 
 class TestWidthEvaluator:
@@ -31,16 +34,20 @@ class TestWidthEvaluator:
         ],
     )
     def test_operators(self, expr: str, params: dict[str, int], expected: int) -> None:
+        """Each supported operator evaluates as Verilog evaluates it."""
         assert _eval_width_expr(expr, params) == expected
 
     def test_non_integer_literal_rejected(self) -> None:
+        """A non-integer literal is refused."""
         with pytest.raises(ValueError, match="non-integer literal"):
             _eval_width_expr("1.5", {})
 
     def test_unknown_name_rejected(self) -> None:
+        """A name that is not a given parameter is refused."""
         with pytest.raises(ValueError, match="unknown parameter"):
             _eval_width_expr("MISSING", {})
 
     def test_unsupported_operator_rejected(self) -> None:
+        """An operator outside the supported set is refused."""
         with pytest.raises(ValueError, match="unsupported width expression"):
             _eval_width_expr("2 ** 3", {})

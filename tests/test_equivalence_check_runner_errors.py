@@ -10,7 +10,21 @@
 
 from __future__ import annotations
 
-from tests.equivalence_check_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler import (
+    _sby_runner,
+)
+from sc_neurocore.compiler.equivalence_check import (
+    prove_equivalence,
+)
+from tests.equivalence_check_support import (
+    _TINY_DUT,
+    _TINY_PORTS,
+    _TINY_REF,
+)
 
 
 class TestRunnerErrors:

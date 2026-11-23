@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.equivalence_check_support import *  # noqa: F403
+from sc_neurocore.compiler import (
+    equivalence_check,
+)
 
 
 class TestSbyGeneration:
     """The generated .sby script (no run required)."""
 
     def test_sby_reads_all_sources_and_sets_mode_depth(self) -> None:
+        """The generated sby file reads every source and sets the mode and depth."""
         sby = equivalence_check._generate_sby(
             "equiv_miter",
             ["equiv_miter.v", "tiny_ref.v", "tiny_dut.v"],
@@ -31,8 +34,10 @@ class TestSbyGeneration:
         assert "prep -top equiv_miter" in sby
 
     def test_verdict_parsing_picks_last_done_line(self) -> None:
+        """The verdict comes from the last DONE line of the solver output."""
         stdout = "DONE (ERROR, rc=16)\nDONE (PASS, rc=0)\n"
         assert equivalence_check._parse_verdict(stdout) == ("PASS", 0)
 
     def test_verdict_parsing_unknown_when_absent(self) -> None:
+        """Output without a DONE line gives the UNKNOWN verdict."""
         assert equivalence_check._parse_verdict("no summary here") == ("UNKNOWN", -1)

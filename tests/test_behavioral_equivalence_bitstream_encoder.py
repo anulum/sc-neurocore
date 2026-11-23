@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.behavioral_equivalence_support import *  # noqa: F403
+from sc_neurocore.neurons.fixed_point_lif import (
+    FixedPointBitstreamEncoder,
+)
 
 
 class TestBitstreamEncoder:
     """Verify decorrelation between parallel encoder instances."""
 
-    def test_same_seed_same_output(self):
+    def test_same_seed_same_output(self) -> None:
+        """Two encoders with the same seed emit the same 256-bit stream."""
         enc_a = FixedPointBitstreamEncoder(seed_init=0xACE1)
         enc_b = FixedPointBitstreamEncoder(seed_init=0xACE1)
 
@@ -25,7 +28,7 @@ class TestBitstreamEncoder:
 
         assert bits_a == bits_b
 
-    def test_different_seeds_decorrelate(self):
+    def test_different_seeds_decorrelate(self) -> None:
         """Encoders with different SEED_INIT must produce different bitstreams."""
         # These match the HDL fix: input encoders use 0xACE1 + i*7
         enc_0 = FixedPointBitstreamEncoder(seed_init=0xACE1 + 0 * 7)
@@ -37,7 +40,7 @@ class TestBitstreamEncoder:
 
         assert bits_0 != bits_1, "Same x_value with different seeds should decorrelate"
 
-    def test_weight_encoder_decorrelation(self):
+    def test_weight_encoder_decorrelation(self) -> None:
         """Weight encoders (0xBEEF base) must differ from input encoders (0xACE1 base)."""
         enc_input = FixedPointBitstreamEncoder(seed_init=0xACE1)
         enc_weight = FixedPointBitstreamEncoder(seed_init=0xBEEF)
@@ -48,7 +51,7 @@ class TestBitstreamEncoder:
 
         assert bits_in != bits_wt
 
-    def test_probability_convergence(self):
+    def test_probability_convergence(self) -> None:
         """Over many samples, proportion of 1s should converge to x_value/65535."""
         enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
         x_val = 32768  # ~0.5
@@ -57,12 +60,13 @@ class TestBitstreamEncoder:
         p_hat = ones / length
         assert abs(p_hat - 0.5) < 0.05, f"Expected ~0.5, got {p_hat:.3f}"
 
-    def test_zero_input_no_ones(self):
+    def test_zero_input_no_ones(self) -> None:
+        """A zero probability word never emits a one."""
         enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
         bits = [enc.step(0) for _ in range(1000)]
         assert sum(bits) == 0
 
-    def test_max_input_all_ones(self):
+    def test_max_input_all_ones(self) -> None:
         """x_value = 2^16 - 1 should produce all 1s (LFSR < 65535 always true)."""
         enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
         bits = [enc.step(65535) for _ in range(1000)]

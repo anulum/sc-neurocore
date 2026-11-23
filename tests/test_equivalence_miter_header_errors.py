@@ -10,29 +10,37 @@
 
 from __future__ import annotations
 
-from tests.equivalence_miter_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equivalence_miter import (
+    parse_module_interface,
+)
 
 
 class TestHeaderErrors:
     """Defensive parsing paths in the module-header locator."""
 
     def test_malformed_parameter_block(self) -> None:
+        """An unfinished parameter block is refused."""
         with pytest.raises(ValueError, match="malformed parameter block"):
             parse_module_interface("module m #", "m")
 
     def test_no_port_list_at_all(self) -> None:
+        """A module header without a port list is refused."""
         with pytest.raises(ValueError, match="port list .* not found"):
             parse_module_interface("module m; endmodule", "m")
 
     def test_unterminated_port_list(self) -> None:
+        """A port list without its closing parenthesis is refused."""
         with pytest.raises(ValueError, match="unterminated port list"):
             parse_module_interface("module m ( input wire a", "m")
 
     def test_non_positive_width_rejected(self) -> None:
+        """A port range that gives no positive width is refused."""
         with pytest.raises(ValueError, match="non-positive width"):
             parse_module_interface("module m(input wire [0:5] a); endmodule", "m")
 
     def test_parameter_block_before_ports_is_skipped(self) -> None:
+        """A parameter block before the ports is skipped and its values used for widths."""
         src = "module m #(parameter W = 4)(input wire [W-1:0] a, output wire b); endmodule"
         ports = parse_module_interface(src, "m", params={"W": 4})
         assert {p.name: p.width for p in ports} == {"a": 4, "b": 1}

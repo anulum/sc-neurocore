@@ -10,7 +10,22 @@
 
 from __future__ import annotations
 
-from tests.equivalence_check_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler import (
+    equivalence_check,
+)
+from sc_neurocore.compiler.equivalence_check import (
+    prove_equivalence,
+)
+from tests.equivalence_check_support import (
+    _TINY_DUT,
+    _TINY_PORTS,
+    _TINY_REF,
+    _TINY_REF_BAD,
+)
 
 
 class TestVerdictMapping:
@@ -21,6 +36,7 @@ class TestVerdictMapping:
         monkeypatch.setattr(equivalence_check, "run_sby_task", lambda *a, **k: run)
 
     def test_pass_maps_to_proven(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        """A PASS run maps to a proven result with its summary."""
         from sc_neurocore.compiler._sby_runner import SbyRun
 
         self._patch(
@@ -39,6 +55,7 @@ class TestVerdictMapping:
         assert result.summary == ["summary: ok"]
 
     def test_fail_maps_to_disproven(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        """A FAIL run maps to a disproved result with its counterexample."""
         from sc_neurocore.compiler._sby_runner import SbyRun
 
         self._patch(
@@ -66,6 +83,7 @@ class TestVerdictMapping:
     def test_fail_without_counterexample_gets_default(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A FAIL run without a trace still gets a default counterexample note."""
         from sc_neurocore.compiler._sby_runner import SbyRun
 
         self._patch(monkeypatch, SbyRun(verdict="FAIL", rc=2, returncode=2))
@@ -82,6 +100,7 @@ class TestVerdictMapping:
     def test_incomplete_verdict_raises(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """An ERROR run raises rather than reporting a verdict."""
         from sc_neurocore.compiler._sby_runner import SbyRun
 
         self._patch(monkeypatch, SbyRun(verdict="ERROR", rc=16, returncode=16, stdout="boom"))
@@ -98,6 +117,7 @@ class TestVerdictMapping:
     def test_inconclusive_kinduction_maps_to_unproven(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """An UNKNOWN k-induction run maps to an unproven result."""
         from sc_neurocore.compiler._sby_runner import SbyRun
 
         self._patch(monkeypatch, SbyRun(verdict="UNKNOWN", rc=4, returncode=4))
