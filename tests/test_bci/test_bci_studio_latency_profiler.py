@@ -10,27 +10,36 @@
 
 from __future__ import annotations
 
-from bci_studio_support import *  # noqa: F403
+import unittest
+from sc_neurocore.bci_studio.bci_studio import (
+    LatencyProfiler,
+)
 
 
 class TestLatencyProfiler(unittest.TestCase):
-    def test_empty_profiler(self):
+    """Mean, budget and percentiles of the latency profiler."""
+
+    def test_empty_profiler(self) -> None:
+        """An empty profiler has a mean of zero."""
         p = LatencyProfiler()
         self.assertEqual(p.mean, 0.0)
 
-    def test_budget_met(self):
+    def test_budget_met(self) -> None:
+        """Half-millisecond samples meet the latency budget."""
         p = LatencyProfiler()
         for _ in range(100):
             p.record(0.5)
         self.assertTrue(p.budget_met)
 
-    def test_budget_exceeded(self):
+    def test_budget_exceeded(self) -> None:
+        """Fifteen-millisecond samples exceed the latency budget."""
         p = LatencyProfiler()
         for _ in range(100):
             p.record(15.0)
         self.assertFalse(p.budget_met)
 
-    def test_percentiles(self):
+    def test_percentiles(self) -> None:
+        """The 99th percentile exceeds the 95th, which exceeds the median."""
         p = LatencyProfiler()
         for i in range(100):
             p.record(float(i))

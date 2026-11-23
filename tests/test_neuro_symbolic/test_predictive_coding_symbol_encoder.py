@@ -10,37 +10,47 @@
 
 from __future__ import annotations
 
-from predictive_coding_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neuro_symbolic.predictive_coding import (
+    SymbolEncoder,
+)
 
 
 class TestSymbolEncoder:
-    def test_deterministic(self):
+    """Symbol and sequence encoding into hypervectors."""
+
+    def test_deterministic(self) -> None:
+        """Two encoders with the same seed encode a symbol alike."""
         enc1 = SymbolEncoder(42)
         enc2 = SymbolEncoder(42)
         a = enc1.encode("hello")
         b = enc2.encode("hello")
         assert np.array_equal(a.data, b.data)
 
-    def test_different_symbols_orthogonal(self):
+    def test_different_symbols_orthogonal(self) -> None:
+        """Different symbols encode to nearly orthogonal vectors."""
         enc = SymbolEncoder(42)
         a = enc.encode("cat")
         b = enc.encode("dog")
         assert abs(a.similarity(b)) < 0.15
 
-    def test_vocabulary_size(self):
+    def test_vocabulary_size(self) -> None:
+        """The vocabulary counts each distinct symbol once."""
         enc = SymbolEncoder(42)
         enc.encode("a")
         enc.encode("b")
         enc.encode("a")
         assert enc.vocabulary_size == 2
 
-    def test_sequence_order_matters(self):
+    def test_sequence_order_matters(self) -> None:
+        """Reversing a sequence gives a nearly orthogonal encoding."""
         enc = SymbolEncoder(42)
         ab = enc.encode_sequence(["A", "B"])
         ba = enc.encode_sequence(["B", "A"])
         assert abs(ab.similarity(ba)) < 0.2
 
-    def test_sequence_single_symbol(self):
+    def test_sequence_single_symbol(self) -> None:
+        """A one-symbol sequence encodes as the symbol itself."""
         enc = SymbolEncoder(42)
         single = enc.encode("X")
         seq = enc.encode_sequence(["X"])

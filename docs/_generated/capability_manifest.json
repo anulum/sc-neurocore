@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5760
+    "test_files": 5758
   },
   "documentation": {
     "public_pages": [
@@ -4140,7 +4140,6 @@
       "tests/test_backend_selection_order.py",
       "tests/test_backend_selection_results.py",
       "tests/test_backend_speed_table.py",
-      "tests/test_bci/bci_studio_support.py",
       "tests/test_bci/test_bci_primitives.py",
       "tests/test_bci/test_bci_studio_bci_studio.py",
       "tests/test_bci/test_bci_studio_fpga_feedback_controller.py",
@@ -6961,7 +6960,6 @@
       "tests/test_neural_decoders_scaled_dot_product_attention.py",
       "tests/test_neural_decoders_sinusoidal_position_encode.py",
       "tests/test_neural_decoders_tokenise_spikes.py",
-      "tests/test_neuro_symbolic/predictive_coding_support.py",
       "tests/test_neuro_symbolic/test_agent.py",
       "tests/test_neuro_symbolic/test_predictive_coding_hypervector.py",
       "tests/test_neuro_symbolic/test_predictive_coding_predictive_coding_edge_branches.py",

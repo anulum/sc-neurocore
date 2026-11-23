@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from predictive_coding_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neuro_symbolic.predictive_coding import (
+    PredictiveCodingLayer,
+)
 
 
 class TestPredictiveCodingLayer:
-    def test_predict_shape(self):
+    """Prediction, error and learning of a predictive-coding layer."""
+
+    def test_predict_shape(self) -> None:
+        """A prediction has the input dimension."""
         layer = PredictiveCodingLayer(input_dim=16, hidden_dim=8)
         pred = layer.predict()
         assert pred.shape == (16,)
 
-    def test_error_shape(self):
+    def test_error_shape(self) -> None:
+        """A prediction error has the input dimension."""
         layer = PredictiveCodingLayer(input_dim=16, hidden_dim=8)
         obs = np.random.default_rng(0).normal(0, 0.5, 16).astype(np.float32)
         error = layer.compute_error(obs)
         assert error.shape == (16,)
 
-    def test_update_reduces_error(self):
+    def test_update_reduces_error(self) -> None:
+        """Two hundred updates leave a smaller error than the first one."""
         rng = np.random.default_rng(42)
         layer = PredictiveCodingLayer(input_dim=8, hidden_dim=4, lr=0.05, seed=42)
         target = rng.normal(0, 0.3, 8).astype(np.float32)
@@ -35,14 +43,16 @@ class TestPredictiveCodingLayer:
             errors.append(mae)
         assert errors[-1] < errors[0], "error should decrease over iterations"
 
-    def test_convergence_flag(self):
+    def test_convergence_flag(self) -> None:
+        """Training on a fixed target converges or reaches a small error."""
         layer = PredictiveCodingLayer(input_dim=4, hidden_dim=2, lr=0.05, seed=0)
         target = np.array([0.1, -0.1, 0.2, -0.2], dtype=np.float32)
         for _ in range(500):
             layer.update(target)
         assert layer.converged or layer.mean_recent_error < 0.1
 
-    def test_precision_scaling(self):
+    def test_precision_scaling(self) -> None:
+        """Higher precision amplifies the prediction error."""
         obs = np.ones(4, dtype=np.float32) * 0.5
         low = PredictiveCodingLayer(4, 2, precision=0.1, seed=0)
         high = PredictiveCodingLayer(4, 2, precision=10.0, seed=0)

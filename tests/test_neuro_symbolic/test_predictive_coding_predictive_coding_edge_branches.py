@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from predictive_coding_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neuro_symbolic.predictive_coding import (
+    Hypervector,
+    PredictiveCodingLayer,
+    SymbolEncoder,
+)
 
 
 class TestPredictiveCodingEdgeBranches:
-    """Cover the no-op permutation, the empty-collection guards, and the
-    error-history accessors before any prediction error is recorded."""
+    """Edge branches of hypervectors and predictive-coding layers.
+
+    Cover the no-op permutation, the empty-collection guards, and the
+    error-history accessors before any prediction error is recorded.
+    """
 
     def test_permute_by_multiple_of_length_returns_identity_copy(self) -> None:
-        """A rotation that is a whole multiple of the dimension is the identity,
-        so it returns an independent copy rather than rolling the bits."""
+        """A whole-dimension rotation returns an identical, independent copy.
+
+        A rotation that is a whole multiple of the dimension is the identity,
+        so it returns an independent copy rather than rolling the bits.
+        """
         hv = Hypervector.random(0x1234)
         rotated = hv.permute(0)
         assert np.array_equal(rotated.data, hv.data)
@@ -38,15 +50,21 @@ class TestPredictiveCodingEdgeBranches:
             encoder.encode_sequence([])
 
     def test_error_accessors_on_fresh_layer(self) -> None:
-        """Before any error is recorded, the recent-error mean is zero and the
-        layer is not yet considered converged."""
+        """A fresh layer reports zero recent error and no convergence.
+
+        Before any error is recorded, the recent-error mean is zero and the
+        layer is not yet considered converged.
+        """
         layer = PredictiveCodingLayer(input_dim=4, hidden_dim=3, seed=1)
         assert layer.mean_recent_error == 0.0
         assert layer.converged is False
 
     def test_mean_recent_error_after_a_few_updates(self) -> None:
-        """With a populated but short history the mean is the recorded error and
-        convergence still reports False (fewer than ten samples)."""
+        """A short error history gives its mean and no convergence yet.
+
+        With a populated but short history the mean is the recorded error and
+        convergence still reports False (fewer than ten samples).
+        """
         layer = PredictiveCodingLayer(input_dim=4, hidden_dim=3, seed=1)
         observation = np.ones(4, dtype=np.float32)
         for _ in range(3):

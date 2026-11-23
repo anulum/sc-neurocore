@@ -10,31 +10,39 @@
 
 from __future__ import annotations
 
-from predictive_coding_support import *  # noqa: F403
+from sc_neurocore.neuro_symbolic.predictive_coding import (
+    ReasoningTrace,
+)
 
 
 class TestReasoningTrace:
-    def test_empty_trace(self):
+    """Steps, confidence and completion of a reasoning trace."""
+
+    def test_empty_trace(self) -> None:
+        """An empty trace has no steps, zero confidence and is incomplete."""
         trace = ReasoningTrace()
         assert trace.length == 0
         assert trace.mean_confidence == 0.0
         assert not trace.is_complete
 
-    def test_add_steps(self):
+    def test_add_steps(self) -> None:
+        """Two steps give a length of two and their mean confidence."""
         trace = ReasoningTrace()
         trace.add("cat", "match", 0.8, 0.9)
         trace.add("dog", "match", 0.3, 0.4)
         assert trace.length == 2
         assert abs(trace.mean_confidence - 0.65) < 0.01
 
-    def test_finalize_marks_complete(self):
+    def test_finalize_marks_complete(self) -> None:
+        """Finalising a trace marks it complete with an end time."""
         trace = ReasoningTrace(start_ns=1)
         trace.add("x", "op", 0.5, 0.5)
         trace.finalize()
         assert trace.is_complete
         assert trace.end_ns > 0
 
-    def test_to_dict_structure(self):
+    def test_to_dict_structure(self) -> None:
+        """A finalised trace converts to a dictionary of its steps, length and completion."""
         trace = ReasoningTrace(start_ns=1)
         trace.add("sym", "op", 0.7, 0.8)
         trace.finalize()

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2535
+expected_file_count = 2546
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10184,3 +10184,47 @@ rationale = "Exercise the model zoo suite: model zoo plugin registry."
 [[file]]
 path = "tests/test_model_zoo/test_model_zoo_verilog_generator.py"
 rationale = "Exercise the model zoo suite: model zoo verilog generator."
+
+[[file]]
+path = "tests/test_bci/test_bci_studio_bci_studio.py"
+rationale = "Exercise the bci suite: bci studio bci studio."
+
+[[file]]
+path = "tests/test_bci/test_bci_studio_fpga_feedback_controller.py"
+rationale = "Exercise the bci suite: bci studio fpga feedback controller."
+
+[[file]]
+path = "tests/test_bci/test_bci_studio_latency_profiler.py"
+rationale = "Exercise the bci suite: bci studio latency profiler."
+
+[[file]]
+path = "tests/test_bci/test_bci_studio_online_learner.py"
+rationale = "Exercise the bci suite: bci studio online learner."
+
+[[file]]
+path = "tests/test_bci/test_bci_studio_spike_codec.py"
+rationale = "Exercise the bci suite: bci studio spike codec."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_hypervector.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding hypervector."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_predictive_coding_edge_branches.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding predictive coding edge branches."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_predictive_coding_layer.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding predictive coding layer."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_reasoning_trace.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding reasoning trace."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_symbol_encoder.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding symbol encoder."
+
+[[file]]
+path = "tests/test_neuro_symbolic/test_predictive_coding_verifiable_inference.py"
+rationale = "Exercise the neuro symbolic suite: predictive coding verifiable inference."
