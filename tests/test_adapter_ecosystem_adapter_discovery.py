@@ -10,11 +10,30 @@
 
 from __future__ import annotations
 
-from tests.adapter_ecosystem_support import *  # noqa: F403
+import importlib
+import numpy as np
+import pytest
+import sys
+from pathlib import (
+    Path,
+)
+from tests.adapter_ecosystem_support import (
+    _pyproject_adapter_entry_points,
+    _resolve_entry_point_target,
+)
+from textwrap import (
+    dedent,
+)
+from typing import (
+    cast,
+)
 
 
 class TestAdapterDiscovery:
+    """Discovery of adapters through package entry points."""
+
     def test_first_party_entry_points_declared_in_pyproject(self) -> None:
+        """The first-party adapters are declared in pyproject and resolve to package classes."""
         from sc_neurocore.utils.adapter_discovery import (
             ADAPTER_ENTRY_POINT_GROUP,
             FIRST_PARTY_ADAPTERS,
@@ -29,6 +48,7 @@ class TestAdapterDiscovery:
             )
 
     def test_discover_registers_first_party_importers(self) -> None:
+        """Discovery registers every first-party importer."""
         from sc_neurocore.utils.adapter_discovery import FIRST_PARTY_ADAPTERS, discover_adapters
         from sc_neurocore.utils.registry import registry
 
@@ -48,6 +68,7 @@ class TestAdapterDiscovery:
             importlib.import_module("sc_neurocore.adapters.holonomic")
 
     def test_discovery_keeps_holonomic_lazy_registry_available(self) -> None:
+        """Discovery keeps the lazy holonomic adapters registered."""
         from sc_neurocore.utils.adapter_discovery import discover_adapters
         from sc_neurocore.utils.registry import registry
 
@@ -69,6 +90,7 @@ class TestAdapterDiscovery:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Malformed and non-class targets are skipped."""
         from sc_neurocore.utils import adapter_discovery
 
         monkeypatch.setitem(adapter_discovery.FIRST_PARTY_ADAPTERS, "bad_format", "missing_colon")
@@ -84,6 +106,7 @@ class TestAdapterDiscovery:
         assert "not_class" not in discovered
 
     def test_first_party_importer_classes_delegate_to_real_adapters(self, tmp_path: Path) -> None:
+        """The first-party importer classes delegate to the real adapters."""
         h5py = pytest.importorskip("h5py")
         from sc_neurocore.adapters.importers import (
             NeuroMLImporter,
@@ -136,18 +159,21 @@ class TestAdapterDiscovery:
         np.testing.assert_allclose(probabilities, np.array([0.02, 0.01]))
 
     def test_adapter_package_exports_discovery_api(self) -> None:
+        """The adapters package exports the discovery function."""
         import sc_neurocore.adapters as adapters
         from sc_neurocore.utils.adapter_discovery import discover_adapters
 
         assert adapters.discover_adapters is discover_adapters
 
     def test_discover_returns_dict(self) -> None:
+        """Discovery returns a dictionary."""
         from sc_neurocore.utils.adapter_discovery import discover_adapters
 
         result = discover_adapters()
         assert isinstance(result, dict)
 
     def test_discover_with_mock_entry_point(self) -> None:
+        """Discovery accepts a mocked entry point."""
         from unittest.mock import MagicMock, patch
 
         from sc_neurocore.utils.adapter_discovery import discover_adapters
@@ -164,6 +190,7 @@ class TestAdapterDiscovery:
         assert isinstance(result, dict)
 
     def test_discover_handles_load_error(self) -> None:
+        """An entry point that fails to load is skipped."""
         from unittest.mock import MagicMock, patch
 
         from sc_neurocore.utils.adapter_discovery import discover_adapters
@@ -180,6 +207,7 @@ class TestAdapterDiscovery:
         assert "BadAdapter" not in result
 
     def test_discover_handles_non_class_entry_point(self) -> None:
+        """An entry point that is no class is skipped."""
         from unittest.mock import MagicMock, patch
 
         from sc_neurocore.utils.adapter_discovery import discover_adapters
@@ -196,6 +224,7 @@ class TestAdapterDiscovery:
         assert result == {}
 
     def test_discover_handles_old_selectable_api(self) -> None:
+        """Discovery works with the older selectable entry-point API."""
         from unittest.mock import patch
 
         from sc_neurocore.utils.adapter_discovery import discover_adapters
@@ -223,6 +252,7 @@ class TestAdapterDiscovery:
         assert call_count == 2
 
     def test_discover_handles_old_api(self) -> None:
+        """Discovery works with the oldest entry-point API."""
         from unittest.mock import patch
 
         from sc_neurocore.utils.adapter_discovery import discover_adapters

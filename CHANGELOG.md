@@ -1320,6 +1320,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The two top-level adapter-ecosystem test modules import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and are enrolled in the docstring policy.
+
 - The 67 top-level test modules of the SpikeInterface adapter,
   Spikformer, static analysis, stochastic core property, streaming
   spike codec, symbolic, STDP synapse, synthesis conjecture, temporal

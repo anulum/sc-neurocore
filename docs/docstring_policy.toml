@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3491
+expected_file_count = 3493
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14008,3 +14008,11 @@ rationale = "Exercise SC-NeuroCore: topology sheaf consistency defect."
 [[file]]
 path = "tests/test_topology_winding_number.py"
 rationale = "Exercise SC-NeuroCore: topology winding number."
+
+[[file]]
+path = "tests/test_adapter_ecosystem_adapter_discovery.py"
+rationale = "Exercise SC-NeuroCore: adapter ecosystem adapter discovery."
+
+[[file]]
+path = "tests/test_adapter_ecosystem_registry_wiring.py"
+rationale = "Exercise SC-NeuroCore: adapter ecosystem registry wiring."

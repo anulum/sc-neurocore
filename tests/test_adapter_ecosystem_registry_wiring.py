@@ -10,21 +10,25 @@
 
 from __future__ import annotations
 
-from tests.adapter_ecosystem_support import *  # noqa: F403
+import pytest
 
 
 class TestRegistryWiring:
+    """Registration of the holonomic adapters."""
+
     @pytest.fixture(autouse=True)
     def _ensure_registered(self) -> None:
         pass  # triggers registration
 
     def test_all_16_adapters_registered(self) -> None:
+        """All 16 layer adapters are registered."""
         from sc_neurocore.utils.registry import registry
 
         adapters = registry.list("adapter")
         assert len(adapters) >= 16
 
     def test_create_adapter_factory(self) -> None:
+        """The factory builds an adapter for every layer."""
         from sc_neurocore.adapters.holonomic import create_adapter
 
         for i in range(1, 17):
@@ -32,6 +36,7 @@ class TestRegistryWiring:
             assert adapter is not None
 
     def test_create_adapter_invalid_layer(self) -> None:
+        """Layer numbers outside 1 to 16 are rejected."""
         from sc_neurocore.adapters.holonomic import create_adapter
 
         with pytest.raises(ValueError):
@@ -40,6 +45,7 @@ class TestRegistryWiring:
             create_adapter(17)
 
     def test_registry_list(self) -> None:
+        """The registry lists the first and last layer adapters."""
         from sc_neurocore.utils.registry import registry
 
         names = registry.list("adapter")
