@@ -5,7 +5,6 @@
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
 <!-- SC-NeuroCore — Universal stochastic computing framework -->
-<!-- © 1998–2026 Miroslav Šotek. All rights reserved. -->
 
 # SC-NeuroCore
 

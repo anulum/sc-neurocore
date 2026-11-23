@@ -446,6 +446,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The copyright notices state the project's two dates, concepts from 1996
+  and code from 2020, instead of a third range starting in 1998. This
+  covers COPYRIGHT, the NOTICE files, CONTRIBUTING, the README, the REUSE
+  annotations and binary-artefact sidecars, the documentation site footer,
+  the Sphinx configuration, examples, notebooks and reports. Where a file
+  already carried both standard lines, the extra line is removed. The three
+  Python files this touches, the Sphinx configuration and two examples, join
+  the docstring policy with the docstrings it requires.
+
 - `sc_neurocore.safety_cert.evidence_packet` held two responsibilities: the
   packet's format, manifest and verification, and running the external
   toolchains it records. The runners and their provenance (`run_formal_job`

@@ -28,7 +28,10 @@ path = [
   "COPYRIGHT",
   "Makefile",
 ]
-SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
+SPDX-FileCopyrightText = [
+  "1996-2026 Miroslav Šotek <protoscience@anulum.li> (concepts)",
+  "2020-2026 Miroslav Šotek <protoscience@anulum.li> (code)",
+]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
@@ -64,7 +67,10 @@ path = [
   "*.svg",
   "*.jpg",
 ]
-SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
+SPDX-FileCopyrightText = [
+  "1996-2026 Miroslav Šotek <protoscience@anulum.li> (concepts)",
+  "2020-2026 Miroslav Šotek <protoscience@anulum.li> (code)",
+]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
@@ -97,7 +103,10 @@ path = [
   "tools/test_gen_vmin_lif_lut_verilog_header.py",
 ]
 precedence = "override"
-SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
+SPDX-FileCopyrightText = [
+  "1996-2026 Miroslav Šotek <protoscience@anulum.li> (concepts)",
+  "2020-2026 Miroslav Šotek <protoscience@anulum.li> (code)",
+]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 # NIR graphs published with the NIR paper, vendored unchanged as an

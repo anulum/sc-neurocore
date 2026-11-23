@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2330
+expected_file_count = 2333
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9364,3 +9364,15 @@ rationale = "Hold the declared acceleration entry points and mirror patterns to 
 [[file]]
 path = "tests/test_evo_substrate/test_architecture.py"
 rationale = "Hold the evolution substrate's module split, facade and benchmark-bound polyglot sources."
+
+[[file]]
+path = "docs/sphinx/source/conf.py"
+rationale = "Keep the Sphinx build configuration and its copyright statement documented."
+
+[[file]]
+path = "examples/08_hdc_symbolic_query.py"
+rationale = "Document the hyperdimensional symbolic query example and its public helpers."
+
+[[file]]
+path = "examples/09_safety_critical_logic.py"
+rationale = "Document the fault-tolerant stochastic logic example and its public helpers."

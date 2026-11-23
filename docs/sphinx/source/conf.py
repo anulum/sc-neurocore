@@ -8,6 +8,8 @@
 
 # SC-NeuroCore Sphinx configuration
 
+"""Sphinx build configuration for the SC-NeuroCore API documentation."""
+
 import os
 import sys
 
@@ -16,7 +18,7 @@ sys.path.insert(0, os.path.abspath("../../../src"))
 from sc_neurocore import __version__
 
 project = "SC-NeuroCore"
-copyright = "1998-2026, Miroslav Sotek"
+copyright = "1996-2026 (concepts), 2020-2026 (code), Miroslav Sotek"
 author = "Miroslav Sotek"
 release = __version__
 version = ".".join(release.split(".")[:2])

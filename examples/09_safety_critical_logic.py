@@ -7,7 +7,6 @@
 # SC-NeuroCore — Fault-Tolerant Binary Streams Demo — Safety-Critical Logic
 
 #!/usr/bin/env python3
-# © 1998–2026 Miroslav Šotek. All rights reserved.
 # Contact: www.anulum.li | protoscience@anulum.li
 # Commercial Licensing: Available
 
@@ -104,6 +103,7 @@ def stochastic_not(a: BitStreamTensor) -> BitStreamTensor:
 
 
 def main():
+    """Run the redundant-bitstream logic demo under random bit flips and print the results."""
     LENGTH = 1024  # Redundancy factor: 1024 bits per Boolean
     ERROR_RATE = 0.05  # 5% random bit-flip rate
 

@@ -6,7 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-// © 1998–2026 Miroslav Šotek. All rights reserved.
 
 //! Integration tests for HDC / VSA operations on BitStreamTensor.
 

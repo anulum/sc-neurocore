@@ -7,11 +7,10 @@
 # SC-NeuroCore — HDC Symbolic Query Demo — "Capital of France?"
 
 #!/usr/bin/env python3
-# © 1998–2026 Miroslav Šotek. All rights reserved.
 # Contact: www.anulum.li | protoscience@anulum.li
 # Commercial Licensing: Available
 
-"""HDC Symbolic Query Demo — "Capital of France?"
+"""HDC Symbolic Query Demo: "Capital of France?".
 
 Demonstrates the Hyper-Dimensional Computing (HDC/VSA) kernel
 backed by SC-NeuroCore's SIMD-accelerated BitStreamTensor.
@@ -38,6 +37,7 @@ DIM = 10_000  # 10,000-bit hypervectors
 
 
 def main():
+    """Encode a country record, query it for the capital and print the nearest atom."""
     print(f"SC-NeuroCore HDC Symbolic Query Demo (D={DIM})")
     print("=" * 55)
 
