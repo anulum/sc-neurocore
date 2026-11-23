@@ -50,6 +50,15 @@ _OWNERSHIP = {
     "change_impact": {"ChangeImpactTracker", "ChangeRecord"},
     "evidence": {"EvidenceBag", "EvidenceItem"},
 }
+# Module-private helpers each domain module defines beside its owned classes.
+_PRIVATE_DEFINITIONS = {
+    "certification": {
+        "_markdown_cell",
+        "_normalise_generated_at",
+        "_utc_now_iso",
+        "_write_bytes",
+    },
+}
 _EXPECTED_IMPORTS = {
     "standards": set(),
     "traceability": {"standards"},
@@ -73,6 +82,16 @@ _EXPECTED_IMPORTS = {
 
 def _module(name: str) -> ModuleType:
     return importlib.import_module(_MODULE_PREFIX + name)
+
+
+def _top_level_definitions(name: str) -> set[str]:
+    """Return the top-level class and function names one module defines."""
+    tree = ast.parse((_PACKAGE_ROOT / f"{name}.py").read_text(encoding="utf-8"))
+    return {
+        node.name
+        for node in tree.body
+        if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+    }
 
 
 def _internal_imports(name: str) -> set[str]:
@@ -131,16 +150,12 @@ def test_responsibility_import_graph_is_exact_and_acyclic() -> None:
         }
 
 
-def test_no_refactored_module_or_test_is_a_godfile() -> None:
-    """The refactor must not move either GodFile into another oversized file."""
-    assert len((_PACKAGE_ROOT / "safety_cert.py").read_text(encoding="utf-8").splitlines()) <= 120
-    for module_name in _OWNERSHIP:
-        line_count = len(
-            (_PACKAGE_ROOT / f"{module_name}.py").read_text(encoding="utf-8").splitlines()
-        )
-        assert line_count <= 600, (module_name, line_count)
-    for test_path in Path(__file__).parent.glob("test_*.py"):
-        assert len(test_path.read_text(encoding="utf-8").splitlines()) <= 500, test_path.name
+def test_each_module_defines_exactly_its_owned_classes_and_the_facade_none() -> None:
+    """Domain modules define only their owned classes and declared helpers; the facade nothing."""
+    assert _top_level_definitions("safety_cert") == set()
+    for module_name, symbols in _OWNERSHIP.items():
+        expected = symbols | _PRIVATE_DEFINITIONS.get(module_name, set())
+        assert _top_level_definitions(module_name) == expected, module_name
 
 
 def test_false_certification_mirrors_are_absent_but_monitor_chain_remains() -> None:

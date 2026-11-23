@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The safety-certification architecture test no longer caps the
+  compatibility module at 120 lines, the ten domain modules at 600 or
+  the safety-certification tests at 500. In its place,
+  `test_each_module_defines_exactly_its_owned_classes_and_the_facade_none`
+  holds each domain module to its owned classes and declared private
+  helpers and the compatibility module to no definitions, where the
+  ownership test before checked object identity only.
+
 - The hardware neuron-graph architecture test no longer caps the
   neuron-graph modules at 330 lines, the NIR bridge tests at 300 or the
   graph benchmark and its probe at 380 and 240. In its place,
