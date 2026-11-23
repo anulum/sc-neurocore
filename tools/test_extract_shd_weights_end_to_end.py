@@ -12,13 +12,11 @@ from __future__ import annotations
 
 import os
 import pytest
-from extract_shd_weights import (
-    extract,
-    SHD_LAYERS,
-)
 from extract_shd_weights_support import (
     _sha256,
     CKPT,
+    extract,
+    SHD_LAYERS,
 )
 from pathlib import (
     Path,

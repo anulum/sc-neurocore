@@ -10,12 +10,10 @@
 
 from __future__ import annotations
 
-from extract_shd_weights import (
-    write_delays_hex,
-    write_int8_hex,
-)
 from extract_shd_weights_support import (
     torch,
+    write_delays_hex,
+    write_int8_hex,
 )
 from pathlib import (
     Path,

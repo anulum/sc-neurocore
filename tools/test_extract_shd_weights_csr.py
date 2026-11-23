@@ -11,10 +11,8 @@
 from __future__ import annotations
 
 import pytest
-from extract_shd_weights import (
-    to_csr,
-)
 from extract_shd_weights_support import (
+    to_csr,
     torch,
 )
 

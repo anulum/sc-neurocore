@@ -11,11 +11,9 @@
 from __future__ import annotations
 
 import pytest
-from extract_shd_weights import (
-    extract,
-)
 from extract_shd_weights_support import (
     _sha256,
+    extract,
     torch,
 )
 from pathlib import (

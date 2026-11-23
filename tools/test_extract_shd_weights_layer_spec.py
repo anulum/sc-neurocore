@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from extract_shd_weights import (
+from extract_shd_weights_support import (
     SHD_LAYERS,
 )
 

@@ -11,10 +11,8 @@
 from __future__ import annotations
 
 import pytest
-from extract_shd_weights import (
-    quantise_per_tensor_symmetric,
-)
 from extract_shd_weights_support import (
+    quantise_per_tensor_symmetric,
     torch,
 )
 

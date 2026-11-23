@@ -599,6 +599,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The six SHD weight-extraction tool test modules skip again without
+  the torch extra. Since they import their names explicitly, they took
+  them straight from the tool, which exits without torch, before their
+  support module's torch skip could run; they now take them from the
+  support module, so the skip runs first.
+
 - The quantum-cognition Rust compilation test builds its test binaries
   in the test's own temporary directory instead of fixed names in the
   shared `/tmp`, so concurrent runs cannot collide or run each other's
