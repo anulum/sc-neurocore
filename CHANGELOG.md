@@ -1302,6 +1302,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `engine/tests/test_hdc.rs` regains the layout rustfmt requires: the
+  header edit had left two blank lines before its module comment, which
+  the engine's `cargo fmt --check` step refuses.
+
 - The 17 chiplet generator, routing and topology test modules
   (`tests/test_chiplet/test_chiplet_*`) import their names explicitly
   instead of through a suppressed star import, gain their missing test

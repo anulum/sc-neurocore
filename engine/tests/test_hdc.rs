@@ -6,7 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-
 //! Integration tests for HDC / VSA operations on BitStreamTensor.
 
 use sc_neurocore_engine::bitstream::{pack, unpack, BitStreamTensor};
