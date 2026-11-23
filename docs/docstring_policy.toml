@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2356
+expected_file_count = 2357
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9468,3 +9468,7 @@ rationale = "Pin the co-simulation facade's re-exports, its import-only body and
 [[file]]
 path = "tests/test_bridges/test_quantum_annealing_decomposition_architecture.py"
 rationale = "Pin annealing decomposition, the facade surface, the module DAG and definition ownership."
+
+[[file]]
+path = "tests/test_hypervisor/test_audit.py"
+rationale = "Verify bounded audit behaviour and that the audit module owns its classes."

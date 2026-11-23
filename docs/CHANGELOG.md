@@ -1251,6 +1251,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The hypervisor compliance-audit test no longer caps the audit module
+  at 80 lines or the historical `hypervisor` module at 850. Its ownership
+  check stays: the audit module defines exactly its three classes and
+  the historical module none of them. The test file gains docstrings and
+  is enrolled in the docstring policy.
+
 - The quantum-annealing architecture test no longer caps the facade at
   120 lines, the responsibility modules at 400 or the focused tests at
   500. In its place,
