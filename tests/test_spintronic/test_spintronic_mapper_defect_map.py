@@ -10,28 +10,36 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    DefectMap,
+)
 
 
 class TestDefectMap:
-    def test_add_and_count(self):
+    """Recording and remapping defective cells."""
+
+    def test_add_and_count(self) -> None:
+        """An added defect is counted and reported defective."""
         dm = DefectMap()
         dm.add_defect(0, 3, "stuck_p")
         assert dm.defect_count == 1
         assert dm.is_defective(0, 3)
 
-    def test_remap(self):
+    def test_remap(self) -> None:
+        """A remapped defect resolves to its spare address."""
         dm = DefectMap()
         dm.add_defect(0, 3, "stuck_p")
         dm.add_remap((0, 3), (7, 0))
         assert dm.effective_address(0, 3) == (7, 0)
 
-    def test_defect_rate(self):
+    def test_defect_rate(self) -> None:
+        """One defect in 100 cells is a rate of 0.01."""
         dm = DefectMap()
         dm.add_defect(0, 0, "open")
         assert dm.defect_rate(100) == 0.01
 
-    def test_defect_rate_zero_cells(self):
+    def test_defect_rate_zero_cells(self) -> None:
+        """An array of zero cells has a defect rate of 0."""
         dm = DefectMap()
         dm.add_defect(0, 0, "open")
         assert dm.defect_rate(0) == 0.0

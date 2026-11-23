@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestThermalStability:
-    def test_thermal_stability_positive(self):
+    """The thermal stability factor of a device."""
+
+    def test_thermal_stability_positive(self) -> None:
+        """The thermal stability is positive."""
         for tech in SpintronicTech:
             cfg = SpintronicDeviceConfig.from_tech(tech)
             assert cfg.thermal_stability > 0
 
-    def test_larger_device_more_stable(self):
+    def test_larger_device_more_stable(self) -> None:
+        """A larger device is more thermally stable."""
         small = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         import copy
 
@@ -28,7 +35,8 @@ class TestThermalStability:
         large.length_nm *= 2
         assert large.thermal_stability > small.thermal_stability
 
-    def test_sot_adequate_retention(self):
+    def test_sot_adequate_retention(self) -> None:
+        """SOT-MRAM has a thermal stability above 1."""
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         # Δ > 1 is basic sanity; real devices need > 40
         assert cfg.thermal_stability > 1.0

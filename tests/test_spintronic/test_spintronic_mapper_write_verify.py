@@ -10,25 +10,39 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from typing import cast
+
+import numpy as np
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicCell,
+    SpintronicDeviceConfig,
+    SpintronicTech,
+    write_verify,
+)
 
 
 class TestWriteVerify:
-    def test_success(self):
+    """Write-and-verify programming of a cell."""
+
+    def test_success(self) -> None:
+        """A quiet write succeeds within an error of 4."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev)
         result = write_verify(cell, 200)
         assert result.success
         assert result.error <= 4
 
-    def test_with_noise(self):
+    def test_with_noise(self) -> None:
+        """A noisy write takes at least one attempt."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev)
         rng = np.random.default_rng(42)
         result = write_verify(cell, 200, rng=rng)
         assert result.attempts >= 1
 
-    def test_exhausts_attempts_when_noise_never_settles(self):
+    def test_exhausts_attempts_when_noise_never_settles(self) -> None:
+        """Noise that never settles fails after max_attempts."""
+
         # A noise source that always overshoots the tolerance forces every
         # attempt to miss, so the loop reports failure after max_attempts.
         class _AlwaysFarNoise:
@@ -37,6 +51,8 @@ class TestWriteVerify:
 
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev)
-        result = write_verify(cell, 200, max_attempts=3, rng=_AlwaysFarNoise())
+        result = write_verify(
+            cell, 200, max_attempts=3, rng=cast(np.random.Generator, _AlwaysFarNoise())
+        )
         assert result.success is False
         assert result.attempts == 3

@@ -10,18 +10,27 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicDeviceConfig,
+    SpintronicTech,
+    VariabilityModel,
+)
 
 
 class TestVariabilityModel:
-    def test_apply(self):
+    """Process variability applied to a device."""
+
+    def test_apply(self) -> None:
+        """Variability changes the width or the length."""
         rng = np.random.default_rng(42)
         base = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         var = VariabilityModel()
         varied = var.apply(base, rng)
         assert varied.width_nm != base.width_nm or varied.length_nm != base.length_nm
 
-    def test_apply_clamps(self):
+    def test_apply_clamps(self) -> None:
+        """Varied width and damping stay above their floors."""
         rng = np.random.default_rng(42)
         base = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         var = VariabilityModel(width_sigma_pct=500)
@@ -29,7 +38,8 @@ class TestVariabilityModel:
         assert varied.width_nm >= 10.0
         assert varied.material.damping_alpha >= 0.001
 
-    def test_zero_variability(self):
+    def test_zero_variability(self) -> None:
+        """Zero variability leaves the width unchanged."""
         rng = np.random.default_rng(42)
         var = VariabilityModel(
             width_sigma_pct=0,

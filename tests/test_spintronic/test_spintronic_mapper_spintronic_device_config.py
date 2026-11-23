@@ -10,25 +10,37 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from typing import Any
+
+import pytest
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestSpintronicDeviceConfig:
-    def test_all_techs(self):
+    """Device configurations for each technology."""
+
+    def test_all_techs(self) -> None:
+        """Every technology has a positive width and current."""
         for tech in SpintronicTech:
             cfg = SpintronicDeviceConfig.from_tech(tech)
             assert cfg.width_nm > 0
             assert cfg.switching_current_ua > 0
 
-    def test_area(self):
+    def test_area(self) -> None:
+        """The device area is its width times its length."""
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         assert cfg.area_nm2 == cfg.width_nm * cfg.length_nm
 
-    def test_switching_energy(self):
+    def test_switching_energy(self) -> None:
+        """The switching energy is positive."""
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         assert cfg.switching_energy_fj > 0
 
-    def test_switching_energy_uses_device_write_resistance(self):
+    def test_switching_energy_uses_device_write_resistance(self) -> None:
+        """Four times the write resistance gives four times the energy."""
         low_r = SpintronicDeviceConfig(
             switching_current_ua=40.0,
             switching_time_ns=2.0,
@@ -41,11 +53,13 @@ class TestSpintronicDeviceConfig:
         )
         assert high_r.switching_energy_fj == 4.0 * low_r.switching_energy_fj
 
-    def test_skyrmion_has_dmi(self):
+    def test_skyrmion_has_dmi(self) -> None:
+        """The skyrmion technology's material carries DMI."""
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SKYRMION)
         assert cfg.material.dmi_strength_j_m2 > 0
 
-    def test_sot_faster_than_stt(self):
+    def test_sot_faster_than_stt(self) -> None:
+        """SOT-MRAM switches faster than STT-MRAM."""
         sot = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         stt = SpintronicDeviceConfig.from_tech(SpintronicTech.STT_MTJ)
         assert sot.switching_time_ns < stt.switching_time_ns
@@ -63,6 +77,7 @@ class TestSpintronicDeviceConfig:
             ({"tmr_ratio": -0.1}, "tmr_ratio must be non-negative"),
         ],
     )
-    def test_rejects_each_invalid_field(self, kwargs: dict[str, float], match: str) -> None:
+    def test_rejects_each_invalid_field(self, kwargs: dict[str, Any], match: str) -> None:
+        """Each out-of-range field is rejected by name."""
         with pytest.raises(ValueError, match=match):
             SpintronicDeviceConfig(**kwargs)

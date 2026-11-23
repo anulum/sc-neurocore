@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestEndurance:
-    def test_endurance_positive(self):
+    """Write endurance of the device technologies."""
+
+    def test_endurance_positive(self) -> None:
+        """Every technology has a positive endurance."""
         for tech in SpintronicTech:
             cfg = SpintronicDeviceConfig.from_tech(tech)
             assert cfg.endurance_cycles > 0
 
-    def test_sot_higher_than_stt(self):
+    def test_sot_higher_than_stt(self) -> None:
+        """SOT-MRAM endures at least as many cycles as STT-MRAM."""
         sot = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         stt = SpintronicDeviceConfig.from_tech(SpintronicTech.STT_MTJ)
         assert sot.endurance_cycles >= stt.endurance_cycles

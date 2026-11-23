@@ -10,30 +10,40 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicCell,
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestSpintronicCell:
-    def test_resistance_p(self):
+    """Resistance of a single spintronic cell."""
+
+    def test_resistance_p(self) -> None:
+        """A parallel cell has the device's parallel resistance."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev, state=0)
         r_p = cell.resistance_ohm
         assert r_p == dev.parallel_resistance_ohm
 
-    def test_resistance_ap(self):
+    def test_resistance_ap(self) -> None:
+        """An antiparallel cell exceeds 5000 ohm."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev, state=1)
         r_ap = cell.resistance_ohm
         assert r_ap > 5000.0
 
-    def test_tmr_ratio(self):
+    def test_tmr_ratio(self) -> None:
+        """The cell's resistances give the device TMR ratio."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         p = SpintronicCell(0, 0, dev, state=0)
         ap = SpintronicCell(0, 0, dev, state=1)
         ratio = (ap.resistance_ohm - p.resistance_ohm) / p.resistance_ohm
         assert abs(ratio - dev.tmr_ratio) < 0.01
 
-    def test_resistance_uses_device_parallel_resistance(self):
+    def test_resistance_uses_device_parallel_resistance(self) -> None:
+        """Both states scale from the device's parallel resistance."""
         dev = SpintronicDeviceConfig(
             parallel_resistance_ohm=7_500.0,
             tmr_ratio=2.0,

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicTech,
+    SpintronicVerilogGenerator,
+)
 
 
 class TestSpintronicVerilogGenerator:
-    def test_generate(self):
+    """Generating Verilog for a spintronic array."""
+
+    def test_generate(self) -> None:
+        """The module carries the array's rows and columns."""
         v = SpintronicVerilogGenerator.generate(
             "sc_spin_array",
             8,
@@ -25,7 +31,8 @@ class TestSpintronicVerilogGenerator:
         assert "ROWS = 8" in v
         assert "COLS = 16" in v
 
-    def test_has_programming_interface(self):
+    def test_has_programming_interface(self) -> None:
+        """The module exposes its weight programming ports."""
         v = SpintronicVerilogGenerator.generate(
             "test",
             4,

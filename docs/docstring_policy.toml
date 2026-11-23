@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2750
+expected_file_count = 2772
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11044,3 +11044,91 @@ rationale = "Exercise the surrogate-gradient training stack: utils reset states.
 [[file]]
 path = "tests/test_training/test_utils_spike_monitor.py"
 rationale = "Exercise the surrogate-gradient training stack: utils spike monitor."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_aging_model.py"
+rationale = "Exercise the spintronic mapper: aging model."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_defect_map.py"
+rationale = "Exercise the spintronic mapper: defect map."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_endurance.py"
+rationale = "Exercise the spintronic mapper: endurance."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_material_params.py"
+rationale = "Exercise the spintronic mapper: material params."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_mlc_config.py"
+rationale = "Exercise the spintronic mapper: mlc config."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_mu_max3_parser.py"
+rationale = "Exercise the spintronic mapper: mu max3 parser."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_mu_max3_script_generator.py"
+rationale = "Exercise the spintronic mapper: mu max3 script generator."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_power_breakdown.py"
+rationale = "Exercise the spintronic mapper: power breakdown."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_racetrack_shift_register.py"
+rationale = "Exercise the spintronic mapper: racetrack shift register."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_radiation_model.py"
+rationale = "Exercise the spintronic mapper: radiation model."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_read_disturb.py"
+rationale = "Exercise the spintronic mapper: read disturb."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_retention_failure.py"
+rationale = "Exercise the spintronic mapper: retention failure."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_skyrmion_hall.py"
+rationale = "Exercise the spintronic mapper: skyrmion hall."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_spintronic_array.py"
+rationale = "Exercise the spintronic mapper: spintronic array."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_spintronic_cell.py"
+rationale = "Exercise the spintronic mapper: spintronic cell."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_spintronic_device_config.py"
+rationale = "Exercise the spintronic mapper: spintronic device config."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_spintronic_mapper.py"
+rationale = "Exercise the spintronic mapper: spintronic mapper."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_spintronic_verilog_generator.py"
+rationale = "Exercise the spintronic mapper: spintronic verilog generator."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_temp_switching.py"
+rationale = "Exercise the spintronic mapper: temp switching."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_thermal_stability.py"
+rationale = "Exercise the spintronic mapper: thermal stability."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_variability_model.py"
+rationale = "Exercise the spintronic mapper: variability model."
+
+[[file]]
+path = "tests/test_spintronic/test_spintronic_mapper_write_verify.py"
+rationale = "Exercise the spintronic mapper: write verify."

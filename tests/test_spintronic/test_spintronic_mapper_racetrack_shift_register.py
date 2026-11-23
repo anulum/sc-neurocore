@@ -10,37 +10,51 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spintronic.spintronic_mapper import (
+    RacetrackShiftRegister,
+)
 
 
 class TestRacetrackShiftRegister:
-    def test_load_and_shift(self):
+    """Shifting bits along a racetrack register."""
+
+    def test_load_and_shift(self) -> None:
+        """A right shift moves each bit up and shifts in a zero."""
         rt = RacetrackShiftRegister(n_positions=8)
         rt.load(np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.int8))
         rt.shift_right()
+        assert rt.bits is not None
         assert rt.bits[0] == 0  # shifted in zero
         assert rt.bits[1] == 1  # original bit[0]
 
-    def test_shift_left(self):
+    def test_shift_left(self) -> None:
+        """A left shift moves each bit down and shifts in a zero."""
         rt = RacetrackShiftRegister(n_positions=4)
         rt.load(np.array([1, 0, 1, 0], dtype=np.int8))
         rt.shift_left()
+        assert rt.bits is not None
         assert rt.bits[-1] == 0
         assert rt.bits[0] == 0  # original bit[1]
 
-    def test_shift_energy(self):
+    def test_shift_energy(self) -> None:
+        """Each shift costs a positive energy."""
         rt = RacetrackShiftRegister(n_positions=8)
         assert rt.shift_energy_fj > 0
 
-    def test_shift_right_injects_error_under_rng(self):
+    def test_shift_right_injects_error_under_rng(self) -> None:
+        """A certain error rate flips one bit on a right shift."""
         # With a certain shift-error rate, the rng-driven bit flip path is taken.
         rt = RacetrackShiftRegister(n_positions=8, shift_error_rate=1.0)
         rt.load(np.zeros(8, dtype=np.int8))
         rt.shift_right(rng=np.random.default_rng(0))
+        assert rt.bits is not None
         assert int(rt.bits.sum()) == 1  # the single injected flip
 
-    def test_shift_left_injects_error_under_rng(self):
+    def test_shift_left_injects_error_under_rng(self) -> None:
+        """A certain error rate flips one bit on a left shift."""
         rt = RacetrackShiftRegister(n_positions=8, shift_error_rate=1.0)
         rt.load(np.zeros(8, dtype=np.int8))
         rt.shift_left(rng=np.random.default_rng(0))
+        assert rt.bits is not None
         assert int(rt.bits.sum()) == 1

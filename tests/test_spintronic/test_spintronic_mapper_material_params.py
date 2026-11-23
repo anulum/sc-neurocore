@@ -10,19 +10,26 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    MaterialParams,
+)
 
 
 class TestMaterialParams:
-    def test_cofeb_mgo(self):
+    """The preset magnetic material stacks."""
+
+    def test_cofeb_mgo(self) -> None:
+        """CoFeB/MgO has positive magnetisation and damping."""
         m = MaterialParams.cofeb_mgo()
         assert m.saturation_magnetisation_a_m > 0
         assert m.damping_alpha > 0
 
-    def test_pt_co(self):
+    def test_pt_co(self) -> None:
+        """Pt/Co carries the DMI a skyrmion host needs."""
         m = MaterialParams.pt_co_multilayer()
         assert m.dmi_strength_j_m2 > 0  # skyrmion host requires DMI
 
-    def test_w_cofeb(self):
+    def test_w_cofeb(self) -> None:
+        """W/CoFeB has a positive saturation magnetisation."""
         m = MaterialParams.w_cofeb()
         assert m.saturation_magnetisation_a_m > 0

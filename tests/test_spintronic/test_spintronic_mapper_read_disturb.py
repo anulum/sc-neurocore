@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestReadDisturb:
-    def test_read_disturb_low(self):
+    """The probability that a read flips a cell."""
+
+    def test_read_disturb_low(self) -> None:
+        """The read-disturb probability is below 1."""
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         assert cfg.read_disturb_probability < 1.0
 
-    def test_read_disturb_nonnegative(self):
+    def test_read_disturb_nonnegative(self) -> None:
+        """The read-disturb probability is not negative."""
         for tech in SpintronicTech:
             cfg = SpintronicDeviceConfig.from_tech(tech)
             assert cfg.read_disturb_probability >= 0.0

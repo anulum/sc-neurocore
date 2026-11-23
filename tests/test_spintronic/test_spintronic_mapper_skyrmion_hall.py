@@ -10,20 +10,27 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SkyrmionHallCorrector,
+)
 
 
 class TestSkyrmionHall:
-    def test_hall_angle(self):
+    """Correcting the skyrmion Hall drift."""
+
+    def test_hall_angle(self) -> None:
+        """The skyrmion Hall angle is positive."""
         shc = SkyrmionHallCorrector()
         assert shc.hall_angle_deg > 0
 
-    def test_corrected_position(self):
+    def test_corrected_position(self) -> None:
+        """Correction keeps x and clamps y to the track width."""
         shc = SkyrmionHallCorrector()
         x, y = shc.corrected_position(100.0, 50.0)
         assert x == 100.0
         assert abs(y) <= 25.0  # clamped to track width
 
-    def test_needs_confinement(self):
+    def test_needs_confinement(self) -> None:
+        """The confinement flag is a boolean; its value is not checked."""
         shc = SkyrmionHallCorrector()
         assert isinstance(shc.needs_confinement, bool)

@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    retention_failure_probability,
+)
 
 
 class TestRetentionFailure:
-    def test_high_stability_no_fail(self):
+    """Retention failure over a storage time."""
+
+    def test_high_stability_no_fail(self) -> None:
+        """A thermal stability above 100 never fails retention."""
         assert retention_failure_probability(101.0, 3.15e8) == 0.0  # Δ>100 → 0
 
-    def test_low_stability_fails(self):
+    def test_low_stability_fails(self) -> None:
+        """A low thermal stability has a positive failure chance."""
         p = retention_failure_probability(10.0, 1.0)
         assert p > 0.0

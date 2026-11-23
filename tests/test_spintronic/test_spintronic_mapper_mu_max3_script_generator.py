@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+from sc_neurocore.spintronic.spintronic_mapper import (
+    MuMax3ScriptGenerator,
+    SpintronicDeviceConfig,
+    SpintronicTech,
+)
 
 
 class TestMuMax3ScriptGenerator:
-    def test_switching_script(self):
+    """Generating MuMax3 simulation scripts."""
+
+    def test_switching_script(self) -> None:
+        """The switching script sets the material and runs."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         script = MuMax3ScriptGenerator.generate_switching(dev)
         assert "Msat" in script
         assert "Aex" in script
         assert "Run(" in script
 
-    def test_skyrmion_script(self):
+    def test_skyrmion_script(self) -> None:
+        """The skyrmion script places a skyrmion, relaxes and sets DMI."""
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SKYRMION)
         script = MuMax3ScriptGenerator.generate_skyrmion(dev)
         assert "Skyrmion" in script

@@ -10,19 +10,28 @@
 
 from __future__ import annotations
 
-from spintronic_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spintronic.spintronic_mapper import (
+    SpintronicArray,
+    VariabilityModel,
+)
 
 
 class TestSpintronicArray:
-    def test_creation(self):
+    """Programming and reading a spintronic array."""
+
+    def test_creation(self) -> None:
+        """A 4 by 8 array holds 32 cells."""
         arr = SpintronicArray(4, 8)
         assert arr.total_cells == 32
 
-    def test_total_area(self):
+    def test_total_area(self) -> None:
+        """The array has a positive total area."""
         arr = SpintronicArray(4, 4)
         assert arr.total_area_um2 > 0
 
-    def test_program_and_read(self):
+    def test_program_and_read(self) -> None:
+        """Weights read back exactly as programmed."""
         arr = SpintronicArray(
             2,
             3,
@@ -40,7 +49,8 @@ class TestSpintronicArray:
         rb = arr.read_weights()
         np.testing.assert_array_equal(rb, w)
 
-    def test_state_from_weight(self):
+    def test_state_from_weight(self) -> None:
+        """Weights below 128 store parallel, above antiparallel."""
         arr = SpintronicArray(
             1,
             2,
