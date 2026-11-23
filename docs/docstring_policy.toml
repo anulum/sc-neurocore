@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2358
+expected_file_count = 2359
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9476,3 +9476,7 @@ rationale = "Verify bounded audit behaviour and that the audit module owns its c
 [[file]]
 path = "tests/test_hypervisor/test_scheduler.py"
 rationale = "Verify scheduling policies and that the scheduler module owns its classes."
+
+[[file]]
+path = "tests/test_hypervisor/test_tenant.py"
+rationale = "Verify tenant defaults, checkpoint integrity and that the tenant module owns its classes."

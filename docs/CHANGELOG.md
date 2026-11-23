@@ -1251,6 +1251,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The hypervisor tenant test no longer caps the tenant module at 90
+  lines or the historical `hypervisor` module at 785. Its ownership
+  check stays: the tenant module defines exactly its four classes and
+  the historical module none of them. The test file gains docstrings
+  and is enrolled in the docstring policy.
+
 - The hypervisor scheduler test no longer caps the scheduler module at
   125 lines or the historical `hypervisor` module at 689. Its ownership
   check stays: the scheduler module defines exactly its three classes

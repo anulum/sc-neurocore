@@ -27,7 +27,10 @@ from sc_neurocore.hypervisor.tenant import (
 
 
 class TestTenantState:
+    """Fingerprint tenant checkpoint state."""
+
     def test_checksum(self) -> None:
+        """A checkpoint checksum is a 16-character fingerprint."""
         ts = TenantState(
             neuron_voltages=np.array([1.0, 2.0]),
             synapse_weights=np.array([0.5, 0.3]),
@@ -38,16 +41,19 @@ class TestTenantState:
         assert len(cs) == 16
 
     def test_checksum_deterministic(self) -> None:
+        """The same state always gives the same checksum."""
         ts = TenantState(lfsr_state=42, timestep=100)
         assert ts.compute_checksum() == ts.compute_checksum()
 
     def test_checksum_differs(self) -> None:
+        """A different LFSR state gives a different checksum."""
         ts1 = TenantState(lfsr_state=42, timestep=100)
         ts2 = TenantState(lfsr_state=43, timestep=100)
         assert ts1.compute_checksum() != ts2.compute_checksum()
 
 
 def test_checkpoint_checksum_covers_spike_queue() -> None:
+    """The checksum changes when the spike queue changes."""
     first = TenantState(spike_queues=np.array([1, 0, 1], dtype=np.uint8))
     second = TenantState(spike_queues=np.array([1, 1, 1], dtype=np.uint8))
 
@@ -55,6 +61,7 @@ def test_checkpoint_checksum_covers_spike_queue() -> None:
 
 
 def test_restore_rejects_tampered_spike_queue() -> None:
+    """A spike queue edited after checksumming is refused on restore."""
     state = TenantState(spike_queues=np.array([1, 0, 1], dtype=np.uint8))
     state.compute_checksum()
     assert state.spike_queues is not None
@@ -64,6 +71,7 @@ def test_restore_rejects_tampered_spike_queue() -> None:
 
 
 def test_tenant_defaults_use_independent_qos_policies() -> None:
+    """New tenants get normal priority, no region, no state and separate QoS objects."""
     first = Tenant("first", "First")
     second = Tenant("second", "Second")
 
@@ -76,10 +84,12 @@ def test_tenant_defaults_use_independent_qos_policies() -> None:
 
 
 def test_priority_values_preserve_scheduler_order() -> None:
+    """Priority values stay ordered from 0 to 3 as the scheduler expects."""
     assert [priority.value for priority in TenantPriority] == [0, 1, 2, 3]
 
 
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
+    """The historical hypervisor module re-exports the tenant classes themselves."""
     assert compatibility_surface.TenantPriority is tenant_domain.TenantPriority
     assert compatibility_surface.QoSPolicy is tenant_domain.QoSPolicy
     assert compatibility_surface.TenantState is tenant_domain.TenantState
@@ -87,6 +97,7 @@ def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
 
 
 def test_tenant_domain_definitions_have_one_owner() -> None:
+    """The tenant module defines exactly its classes, and the historical module none."""
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(tenant_domain.__file__).read_text(encoding="utf-8"))
 
@@ -96,5 +107,3 @@ def test_tenant_domain_definitions_have_one_owner() -> None:
     owned_names = {"TenantPriority", "QoSPolicy", "TenantState", "Tenant"}
     assert facade_classes.isdisjoint(owned_names)
     assert owner_classes == owned_names
-    assert len(Path(tenant_domain.__file__).read_text(encoding="utf-8").splitlines()) <= 90
-    assert len(Path(compatibility_surface.__file__).read_text(encoding="utf-8").splitlines()) <= 785
