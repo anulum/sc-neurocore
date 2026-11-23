@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletDie,
+    ChipletTopology,
+    simulate_thermal,
+)
+from sc_neurocore.chiplet.chiplet_gen import (
+    DieThermal,
+)
 
 
 class TestSimulateThermalCustomDieState:
+    """Thermal simulation with caller-supplied die state."""
+
     def test_uses_provided_die_state_dict(self) -> None:
+        """A supplied thermal state for a die is used instead of the default."""
         topo = ChipletTopology()
         topo.add_die(ChipletDie(die_id=0))
         topo.add_die(ChipletDie(die_id=1))

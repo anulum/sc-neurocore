@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletDie,
+    ChipletTopology,
+    InterposerLink,
+    InterposerTech,
+    simulate_thermal,
+)
 
 
 class TestThermalConductanceMissingDie:
+    """Thermal conductance for links that name an unknown die."""
+
     def test_simulate_thermal_skips_link_with_missing_die(self) -> None:
+        """A link to an unknown die adds no conductance and the simulation completes."""
         # Dies 0 and 1; link references die 99.
         topo = ChipletTopology()
         topo.add_die(ChipletDie(die_id=0))

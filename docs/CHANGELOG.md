@@ -1287,6 +1287,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 17 chiplet generator, routing and topology test modules
+  (`tests/test_chiplet/test_chiplet_*`) import their names explicitly
+  instead of through a suppressed star import, gain their missing test
+  docstrings and are enrolled in the docstring policy. The routing and
+  topology support modules, which no test imports any more, are
+  deleted.
+
 - The nine vmin LIF LUT generator test modules
   (`tools/test_gen_vmin_lif_lut_*`) import their names explicitly
   instead of through a suppressed star import, gain their missing test

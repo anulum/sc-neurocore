@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2427
+expected_file_count = 2444
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9752,3 +9752,71 @@ rationale = "Exercise the vmin LIF softplus LUT generator: verilog header."
 [[file]]
 path = "tools/test_gen_vmin_lif_lut_vmin_lif_single_step.py"
 rationale = "Exercise the vmin LIF softplus LUT generator: vmin lif single step."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_adaptive_route_congestion_fallback.py"
+rationale = "Exercise the chiplet generator edge case: adaptive route congestion fallback."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_bandwidth_aware_route.py"
+rationale = "Exercise the chiplet generator edge case: bandwidth aware route."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_cdc_configs_missing_die.py"
+rationale = "Exercise the chiplet generator edge case: cdc configs missing die."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_clock_domain_crossing_zero.py"
+rationale = "Exercise the chiplet generator edge case: clock domain crossing zero."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_lfsr_seed_clamp.py"
+rationale = "Exercise the chiplet generator edge case: lfsr seed clamp."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_partition_assignment_cross_die_skip.py"
+rationale = "Exercise the chiplet generator edge case: partition assignment cross die skip."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_power_domain_validation.py"
+rationale = "Exercise the chiplet generator edge case: power domain validation."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_simulate_thermal_custom_die_state.py"
+rationale = "Exercise the chiplet generator edge case: simulate thermal custom die state."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_gen_edge_cases_thermal_conductance_missing_die.py"
+rationale = "Exercise the chiplet generator edge case: thermal conductance missing die."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_routing_energy_and_congestion.py"
+rationale = "Exercise the chiplet routing: energy and congestion."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_routing_free_tests.py"
+rationale = "Exercise the chiplet routing: free tests."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_routing_path_selection.py"
+rationale = "Exercise the chiplet routing: path selection."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_routing_timing.py"
+rationale = "Exercise the chiplet routing: timing."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_topology_chiplet_die.py"
+rationale = "Exercise the chiplet topology: chiplet die."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_topology_interposer_link.py"
+rationale = "Exercise the chiplet topology: interposer link."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_topology_planar_topologies.py"
+rationale = "Exercise the chiplet topology: planar topologies."
+
+[[file]]
+path = "tests/test_chiplet/test_chiplet_topology_vertical_stacking.py"
+rationale = "Exercise the chiplet topology: vertical stacking."

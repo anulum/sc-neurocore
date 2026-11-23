@@ -10,13 +10,24 @@
 
 from __future__ import annotations
 
-from chiplet_routing_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet import (
+    adaptive_route,
+    bandwidth_aware_route,
+    ChipletDie,
+    ChipletTopology,
+    CongestionReport,
+    find_disjoint_paths,
+    InterposerTech,
+    make_torus,
+)
 
 
 class TestPathSelection:
     """Disjoint, congestion-aware, and bandwidth-aware route selection."""
 
     def test_disjoint_path_contracts(self) -> None:
+        """Disjoint paths start and end at the requested dies and share no link."""
         topology = make_torus(2, 2)
         assert find_disjoint_paths(topology, 0, 0) == [[0]]
         paths = find_disjoint_paths(topology, 0, 3, max_paths=2)
@@ -27,6 +38,7 @@ class TestPathSelection:
             assert first.isdisjoint(second)
 
     def test_unreachable_and_zero_limit(self) -> None:
+        """An unreachable die or a zero path limit gives no paths; a negative limit is refused."""
         topology = ChipletTopology(dies=[ChipletDie(0), ChipletDie(1)])
         assert find_disjoint_paths(topology, 0, 1) == []
         assert find_disjoint_paths(ChipletTopology.ring(2), 0, 1, max_paths=0) == []
@@ -34,6 +46,7 @@ class TestPathSelection:
             find_disjoint_paths(ChipletTopology.ring(2), 0, 1, max_paths=-1)
 
     def test_adaptive_route_avoids_then_falls_back(self) -> None:
+        """Adaptive routing avoids a congested link and falls back when it must."""
         topology = make_torus(2, 3)
         path = adaptive_route(
             topology,
@@ -53,6 +66,7 @@ class TestPathSelection:
         assert fallback == [0, 1]
 
     def test_bandwidth_route_success_failure_and_validation(self) -> None:
+        """Bandwidth-aware routing succeeds, fails above the link bandwidth and validates input."""
         topology = ChipletTopology.ring(3, InterposerTech.COWOS)
         assert bandwidth_aware_route(topology, 0, 0, 100.0) == [0]
         assert bandwidth_aware_route(topology, 0, 1, 50.0) == [0, 1]

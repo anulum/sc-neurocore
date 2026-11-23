@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from chiplet_topology_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.chiplet import (
+    ChipletDie,
+)
 
 
 class TestChipletDie:
     """Die timing, seed, and width contracts."""
 
     def test_defaults_and_clock_period(self) -> None:
+        """A die has 128 neurons by default and its clock period follows its frequency."""
         die = ChipletDie(die_id=0, clock_mhz=100.0)
         assert die.clock_period_ns == 10.0
         assert die.n_neurons == 128
 
     def test_custom_seed_is_preserved(self) -> None:
+        """A die keeps the LFSR seed it is given."""
         assert ChipletDie(die_id=5, lfsr_seed=0xBEEF).lfsr_seed == 0xBEEF
 
     @pytest.mark.parametrize(
@@ -34,5 +42,6 @@ class TestChipletDie:
         ],
     )
     def test_invalid_die_contracts_fail(self, constructor: Callable[[], object]) -> None:
+        """A negative id, zero clock, zero seed or zero neurons is refused."""
         with pytest.raises(ValueError):
             constructor()

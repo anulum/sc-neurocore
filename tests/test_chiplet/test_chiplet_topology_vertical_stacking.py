@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from chiplet_topology_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet import (
+    add_3d_stack,
+    ChipletDie,
+    ChipletTopology,
+    simulate_timing,
+    StackingType,
+    TSVLink,
+)
 
 
 class TestVerticalStacking:
     """TSV metadata and reciprocal topology insertion."""
 
     def test_tsv_unit_conversions(self) -> None:
+        """A TSV link converts picoseconds to nanoseconds and derives its bandwidth."""
         link = TSVLink(src_die=0, dst_die=1, tsv_count=1024, latency_ps=50.0)
         assert link.latency_ns == 0.05
         assert link.bandwidth_gbps > 100
@@ -28,6 +37,7 @@ class TestVerticalStacking:
     def test_stack_adds_reciprocal_links(
         self, stacking: StackingType, minimum_bandwidth: float
     ) -> None:
+        """Stacking two dies adds a link each way with at least the stacking type's bandwidth."""
         topology = ChipletTopology(dies=[ChipletDie(0), ChipletDie(1)])
         link = add_3d_stack(topology, 0, 1, stacking)
         assert len(topology.links) == 2

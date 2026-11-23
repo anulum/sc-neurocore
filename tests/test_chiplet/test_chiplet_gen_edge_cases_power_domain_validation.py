@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+import pytest
+from sc_neurocore.chiplet.chiplet_gen import (
+    PowerDomain,
+)
 
 
 class TestPowerDomainValidation:
+    """Validate power-domain membership."""
+
     def test_duplicate_die_ids_are_rejected(self) -> None:
+        """A power domain listing one die twice is refused."""
         with pytest.raises(ValueError, match="duplicates"):
             PowerDomain(domain_id=0, die_ids=[1, 1], voltage_mv=800)

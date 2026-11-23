@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletDie,
+    ChipletTopology,
+    InterposerLink,
+    InterposerTech,
+)
+from sc_neurocore.chiplet.chiplet_gen import (
+    adaptive_route,
+    CongestionReport,
+)
 
 
 class TestAdaptiveRouteCongestionFallback:
+    """Adaptive routing when every route is congested."""
+
     def test_falls_back_when_all_routes_congested(self) -> None:
+        """With every link over the threshold, adaptive routing still returns a path."""
         # 3-die ring 0–1–2–0, every link saturated → primary BFS fails,
         # fallback (line 1155) ignores congestion and finds a path.
         topo = ChipletTopology()

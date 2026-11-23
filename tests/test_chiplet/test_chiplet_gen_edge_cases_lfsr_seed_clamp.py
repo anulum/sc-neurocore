@@ -10,29 +10,42 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from chiplet_gen_edge_cases_support import (
+    SEED_ZERO_DIE_ID,
+)
+from sc_neurocore.chiplet import (
+    ChipletTopology,
+    make_torus,
+)
 
 
 class TestLfsrSeedClamp:
-    """The four `if seed == 0: seed = 1` guards in mesh_2d / ring /
-    star / make_torus topology factories trigger when die_id=3793
-    (and 3793 mod 65536 multiples). Pin each path."""
+    """Pin the seed-zero clamp in each topology factory.
+
+    The four `if seed == 0: seed = 1` guards in the mesh_2d, ring, star and
+    make_torus factories trigger when die_id is 3793 (and 3793 plus multiples
+    of 65536).
+    """
 
     def test_mesh_2d_hits_seed_zero(self) -> None:
+        """A 60 by 64 mesh reaches the seed-zero die and clamps its seed to one."""
         # 60×64 mesh has die ids 0..3839, including 3793.
         topo = ChipletTopology.mesh_2d(rows=60, cols=64)
         target = next(d for d in topo.dies if d.die_id == SEED_ZERO_DIE_ID)
         assert target.lfsr_seed == 1
 
     def test_ring_hits_seed_zero(self) -> None:
+        """A ring large enough to reach the seed-zero die clamps its seed to one."""
         topo = ChipletTopology.ring(n_dies=SEED_ZERO_DIE_ID + 1)
         assert topo.dies[SEED_ZERO_DIE_ID].lfsr_seed == 1
 
     def test_star_hits_seed_zero(self) -> None:
+        """A star large enough to reach the seed-zero die clamps its seed to one."""
         topo = ChipletTopology.star(n_dies=SEED_ZERO_DIE_ID + 1)
         assert topo.dies[SEED_ZERO_DIE_ID].lfsr_seed == 1
 
     def test_make_torus_hits_seed_zero(self) -> None:
+        """A 64 by 60 torus reaches the seed-zero die and clamps its seed to one."""
         # 64x60 torus includes die_id=3793.
         topo = make_torus(rows=64, cols=60)
         target = next(d for d in topo.dies if d.die_id == SEED_ZERO_DIE_ID)

@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from chiplet_routing_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletTopology,
+    compute_decorrelation_seeds,
+    RoutingTable,
+)
 
 
 def test_routing_table_queries() -> None:
+    """A routing table counts its entries and lists routes and dies by target."""
     table = RoutingTable(die_id=0)
     table.add_route(10, 1, 20)
     table.add_route(11, 2, 30)
@@ -24,6 +29,7 @@ def test_routing_table_queries() -> None:
 
 
 def test_decorrelation_seeds_are_unique_nonzero_and_bounded() -> None:
+    """Per-die decorrelation seeds are unique, non-zero and within 16 bits."""
     seeds = compute_decorrelation_seeds(ChipletTopology.mesh_2d(4, 4))
     assert len(set(seeds.values())) == len(seeds)
     assert all(1 <= seed <= 65535 for seed in seeds.values())

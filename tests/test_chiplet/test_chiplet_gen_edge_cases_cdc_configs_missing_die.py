@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletDie,
+    ChipletTopology,
+    InterposerLink,
+    InterposerTech,
+)
+from sc_neurocore.chiplet.chiplet_gen import (
+    compute_cdc_configs,
+)
 
 
 class TestCdcConfigsMissingDie:
+    """Clock-domain configurations for links that name an unknown die."""
+
     def test_continues_when_link_references_unknown_die(self) -> None:
+        """A link to an unknown die is skipped and the other links still get configurations."""
         # Topology has dies 0, 1; link references die 99 (missing).
         topo = ChipletTopology()
         topo.add_die(ChipletDie(die_id=0, clock_mhz=100.0))

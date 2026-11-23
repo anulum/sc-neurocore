@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from chiplet_topology_support import *  # noqa: F403
+import math
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.chiplet import (
+    InterposerLink,
+    InterposerTech,
+)
 
 
 class TestInterposerLink:
@@ -18,18 +26,21 @@ class TestInterposerLink:
 
     @pytest.mark.parametrize("technology", list(InterposerTech))
     def test_all_presets_are_physical(self, technology: InterposerTech) -> None:
+        """Every interposer preset has non-negative latency, positive bandwidth and a valid error rate."""
         link = InterposerLink.from_tech(0, 1, technology)
         assert link.latency_ns >= 0
         assert link.bandwidth_gbps > 0
         assert 0 <= link.bit_error_rate <= 1
 
     def test_cowos_is_faster_than_organic(self) -> None:
+        """CoWoS has lower latency and higher bandwidth than an organic substrate."""
         cowos = InterposerLink.from_tech(0, 1, InterposerTech.COWOS)
         organic = InterposerLink.from_tech(0, 1, InterposerTech.ORGANIC)
         assert cowos.latency_ns < organic.latency_ns
         assert cowos.bandwidth_gbps > organic.bandwidth_gbps
 
     def test_latency_and_jitter_determine_cycle_and_fifo_bounds(self) -> None:
+        """Latency and jitter set the link's cycle count and FIFO depth."""
         link = InterposerLink(src_die=0, dst_die=1, latency_ns=10.0, jitter_ns=5.0)
         assert link.latency_cycles == 2
         assert link.fifo_depth_log2 >= 3
@@ -52,5 +63,6 @@ class TestInterposerLink:
     def test_invalid_link_contracts_fail(
         self, constructor: Callable[[], object], message: str
     ) -> None:
+        """Each invalid link field is refused with a message naming it."""
         with pytest.raises(ValueError, match=message):
             constructor()

@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet.chiplet_gen import (
+    PartitionAssignment,
+)
 
 
 class TestPartitionAssignmentCrossDieSkip:
+    """Cross-die connectivity when a neuron has no die."""
+
     def test_connectivity_with_unmapped_neuron_skipped(self) -> None:
+        """Connections from an unmapped neuron and within one die add no cross-die traffic."""
         # Dies 0+1, neurons 0/1 → die 0; neurons 2/3 → die 1.
         pa = PartitionAssignment(die_assignments={0: [0, 1], 1: [2, 3]})
         connectivity: list[tuple[int, int, int]] = [

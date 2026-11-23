@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from chiplet_gen_edge_cases_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    ChipletDie,
+    ChipletTopology,
+    InterposerLink,
+    InterposerTech,
+)
+from sc_neurocore.chiplet.chiplet_gen import (
+    bandwidth_aware_route,
+)
 
 
 class TestBandwidthAwareRoute:
+    """Bandwidth-aware routing through the breadth-first search's edge paths."""
+
     def test_visited_skip_and_queue_extension(self) -> None:
+        """The search skips visited dies and extends its queue through a mesh of links."""
         # 4-die mesh 0↔1↔2↔3 + 1↔3 short-cut, all links 50 Gbps.
         topo = ChipletTopology()
         for i in range(4):
@@ -36,6 +47,7 @@ class TestBandwidthAwareRoute:
         assert path[0] == 0 and path[-1] == 3
 
     def test_returns_none_when_bandwidth_insufficient(self) -> None:
+        """No path is returned when no link carries the required bandwidth."""
         topo = ChipletTopology()
         for i in range(2):
             topo.add_die(ChipletDie(die_id=i))
