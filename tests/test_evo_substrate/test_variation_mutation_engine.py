@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.variation_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.variation import (
+    MutationConfig,
+    MutationEngine,
+    MutationType,
+)
 
 
 class TestMutationEngine:
+    """Mutating genomes point by point and structurally."""
+
     def test_point_mutation(self) -> None:
+        """A point mutation gives a next-generation child of its parent."""
         me = MutationEngine(
             MutationConfig(point_rate=1.0, structural_rate=0, duplication_rate=0, swap_rate=0)
         )
@@ -26,6 +36,7 @@ class TestMutationEngine:
         assert child.generation == g.generation + 1
 
     def test_structural_mutation(self) -> None:
+        """A structural mutation is reported as structural."""
         me = MutationEngine(MutationConfig(structural_rate=1.0), rng_seed=0)
         g = Genome()
         g.compute_id()
@@ -33,6 +44,7 @@ class TestMutationEngine:
         assert mt == MutationType.STRUCTURAL
 
     def test_child_has_new_id(self) -> None:
+        """A mutated child gets an id."""
         me = MutationEngine()
         g = Genome()
         g.compute_id()
@@ -40,6 +52,7 @@ class TestMutationEngine:
         assert child.genome_id != ""
 
     def test_child_identity_reset(self) -> None:
+        """A mutated child starts with no deep identity."""
         me = MutationEngine()
         g = Genome()
         g.identity_deep = 0.99
@@ -48,6 +61,7 @@ class TestMutationEngine:
         assert child.identity_deep == 0.0
 
     def test_neuron_bounds_preserved(self) -> None:
+        """Repeated mutation keeps parameters above their floors."""
         me = MutationEngine(MutationConfig(point_rate=1.0, point_sigma=10.0), rng_seed=42)
         g = Genome()
         g.compute_id()
@@ -58,6 +72,7 @@ class TestMutationEngine:
         assert g.topology.num_neurons >= 2
 
     def test_duplication_mutation_expands_layers_and_neuron_budget(self) -> None:
+        """Duplication adds a layer and its neurons."""
         me = MutationEngine(
             MutationConfig(
                 point_rate=0.0,
@@ -80,6 +95,7 @@ class TestMutationEngine:
         assert child.parent_id == g.genome_id
 
     def test_swap_mutation_exchanges_fast_and_work_time_constants(self) -> None:
+        """A swap exchanges the fast and work time constants."""
         me = MutationEngine(
             MutationConfig(
                 point_rate=0.0,

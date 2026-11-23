@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.fitness_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.fitness import (
+    HWFitnessCollector,
+    HWFitnessReport,
+)
 
 
 class TestHWFitness:
+    """Hardware fitness reports."""
+
     def test_report(self) -> None:
+        """A hardware report has a positive composite."""
         r = HWFitnessReport("test_id", fpga_accuracy=0.9, fmax_mhz=200.0)
         assert r.hw_composite > 0
 
     def test_collector(self) -> None:
+        """The collector finds a stored report and not a missing one."""
         col = HWFitnessCollector()
         col.submit(HWFitnessReport("g1", fpga_accuracy=0.8))
         assert col.total_reports == 1

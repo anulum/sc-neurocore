@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5736
+    "test_files": 5727
   },
   "documentation": {
     "public_pages": [
@@ -5174,15 +5174,7 @@
       "tests/test_evidence_references.py",
       "tests/test_evidence_toolchain_division.py",
       "tests/test_evo_substrate/__init__.py",
-      "tests/test_evo_substrate/ecology_support.py",
-      "tests/test_evo_substrate/fitness_support.py",
-      "tests/test_evo_substrate/genome_support.py",
       "tests/test_evo_substrate/multilang_parity_support.py",
-      "tests/test_evo_substrate/replication_support.py",
-      "tests/test_evo_substrate/safety_support.py",
-      "tests/test_evo_substrate/selection_support.py",
-      "tests/test_evo_substrate/speciation_support.py",
-      "tests/test_evo_substrate/statistics_support.py",
       "tests/test_evo_substrate/test_architecture.py",
       "tests/test_evo_substrate/test_deployment.py",
       "tests/test_evo_substrate/test_development.py",
@@ -5226,7 +5218,6 @@
       "tests/test_evo_substrate/test_tournament_selector_contracts.py",
       "tests/test_evo_substrate/test_variation_crossover.py",
       "tests/test_evo_substrate/test_variation_mutation_engine.py",
-      "tests/test_evo_substrate/variation_support.py",
       "tests/test_evolution_engine_binding_runtime.py",
       "tests/test_exact_numeric_diagnostics.py",
       "tests/test_exact_randn.py",

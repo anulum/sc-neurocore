@@ -10,27 +10,39 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.selection_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.selection import (
+    BloatPenalizer,
+    compute_bloat,
+)
 
 
 class TestBloatControl:
+    """Measuring and penalising genome bloat."""
+
     def test_compute_bloat(self) -> None:
+        """A genome has parameters and a bloat score."""
         g = Genome()
         bm = compute_bloat(g)
         assert bm.total_params > 0
         assert bm.bloat_score > 0
 
     def test_penalizer_no_penalty(self) -> None:
+        """A lean genome keeps its fitness."""
         bp = BloatPenalizer(threshold=100.0)
         g = Genome()
         assert bp.penalize(0.9, g) == 0.9
 
     def test_penalizer_reduces(self) -> None:
+        """A bloated genome loses fitness."""
         bp = BloatPenalizer(threshold=0.01)
         g = Genome()
         assert bp.penalize(0.9, g) < 0.9
 
     def test_bloat_metrics_marks_large_genome_bloated(self) -> None:
+        """A large genome is marked bloated."""
         g = Genome()
         g.topology.num_neurons = 512
         g.topology.num_layers = 8

@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.speciation_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.speciation import (
+    shared_fitness,
+)
 
 
 class TestFitnessSharing:
+    """Fitness sharing within a niche."""
+
     def test_shared_fitness_reduces(self) -> None:
+        """Five clones share their fitness below 0.8."""
         pop = []
         for _ in range(5):
             g = Genome()
@@ -24,6 +38,7 @@ class TestFitnessSharing:
         assert sf < 0.8  # shared among 5 clones
 
     def test_unique_keeps_full(self) -> None:
+        """A unique organism keeps more than half its fitness."""
         g1 = Genome()
         g1.topology.num_neurons = 4
         g1.compute_id()
@@ -36,4 +51,5 @@ class TestFitnessSharing:
         assert sf > 0.5  # only shares with itself
 
     def test_unevaluated_organism_has_zero_shared_fitness(self) -> None:
+        """An unevaluated organism has no shared fitness."""
         assert shared_fitness(Organism(genome=Genome()), [Organism(genome=Genome())]) == 0.0

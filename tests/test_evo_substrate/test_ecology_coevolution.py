@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.ecology_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.ecology import (
+    CoevolutionArena,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
 
 
 class TestCoevolution:
+    """Organisms interacting in a coevolution arena."""
+
     def test_arena(self) -> None:
+        """Two added organisms are counted in the arena."""
         arena = CoevolutionArena()
         g1 = Genome()
         g1.topology.num_neurons = 32
@@ -27,6 +38,7 @@ class TestCoevolution:
         assert arena.total_organisms == 2
 
     def test_interactions(self) -> None:
+        """Two organisms give two interaction results."""
         arena = CoevolutionArena()
         g1 = Genome()
         g1.topology.num_neurons = 32

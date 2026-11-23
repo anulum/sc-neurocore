@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.replication_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.replication import (
+    ReplicationEngine,
+)
 
 
 class TestElitism:
+    """Keeping the best organism through selection."""
+
     def test_best_survives_cull(self) -> None:
+        """The best organism survives a cull."""
         re = ReplicationEngine(max_population=20, elitism=1)
         for i in range(10):
             g = Genome()
@@ -28,6 +36,7 @@ class TestElitism:
         assert best_id in remaining_ids
 
     def test_diversity_in_evolve_result(self) -> None:
+        """A generation reports its diversity."""
         re = ReplicationEngine(max_population=8)
         for _ in range(4):
             re.seed(Genome())

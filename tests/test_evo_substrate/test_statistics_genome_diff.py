@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.statistics_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.statistics import (
+    genome_diff,
+)
 
 
 class TestGenomeDiff:
+    """Differences between two genomes."""
+
     def test_identical(self) -> None:
+        """Identical genomes have no difference."""
         g = Genome()
         d = genome_diff(g, g)
         assert d.is_identical
         assert d.neuron_delta == 0
 
     def test_different(self) -> None:
+        """The neuron difference of 48 is reported."""
         a = Genome()
         b = Genome()
         b.topology.num_neurons = 64

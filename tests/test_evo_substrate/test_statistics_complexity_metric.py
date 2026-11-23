@@ -10,15 +10,28 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.statistics_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.statistics import (
+    ComplexityTracker,
+    genome_complexity,
+)
 
 
 class TestComplexityMetric:
+    """Genome complexity and its trajectory."""
+
     def test_complexity_positive(self) -> None:
+        """A genome has positive complexity."""
         g = Genome()
         assert genome_complexity(g) > 0
 
     def test_bigger_is_more_complex(self) -> None:
+        """A bigger genome is more complex."""
         small = Genome()
         small.topology.num_neurons = 4
         big = Genome()
@@ -27,6 +40,7 @@ class TestComplexityMetric:
         assert genome_complexity(big) > genome_complexity(small)
 
     def test_tracker(self) -> None:
+        """The tracker records one mean per generation."""
         ct = ComplexityTracker()
         pop = [Organism(genome=Genome()) for _ in range(5)]
         ct.record(0, pop)
@@ -34,11 +48,13 @@ class TestComplexityMetric:
         assert len(ct.mean_trajectory) == 2
 
     def test_tracker_ignores_empty_population(self) -> None:
+        """An empty population is not recorded."""
         ct = ComplexityTracker()
         ct.record(0, [])
         assert ct.mean_trajectory == []
 
     def test_tracker_requires_three_records_before_complexifying(self) -> None:
+        """Complexification needs three records."""
         ct = ComplexityTracker()
         low = Genome()
         low.topology.num_neurons = 4

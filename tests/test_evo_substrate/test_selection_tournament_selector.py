@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.selection_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.selection import (
+    TournamentSelector,
+)
 
 
 class TestTournamentSelector:
+    """Tournament selection of parents."""
+
     def test_select(self) -> None:
+        """A tournament returns a winner."""
         ts = TournamentSelector(tournament_size=2)
         pop = []
         for i in range(5):
@@ -28,6 +43,7 @@ class TestTournamentSelector:
         assert winner is not None
 
     def test_select_n(self) -> None:
+        """Selecting four returns four organisms."""
         ts = TournamentSelector(tournament_size=3)
         pop = []
         for i in range(10):

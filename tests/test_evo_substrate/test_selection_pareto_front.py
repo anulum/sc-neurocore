@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.selection_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.selection import (
+    ParetoFront,
+)
 
 
 class TestParetoFront:
+    """The Pareto front of organisms."""
+
     def test_add_non_dominated(self) -> None:
+        """A non-dominated organism joins the front."""
         pf = ParetoFront()
         g = Genome()
         g.compute_id()
@@ -26,6 +40,7 @@ class TestParetoFront:
         assert pf.size == 1
 
     def test_dominated_rejected(self) -> None:
+        """A dominated organism is rejected."""
         pf = ParetoFront()
         g1 = Genome()
         g1.compute_id()
@@ -44,6 +59,7 @@ class TestParetoFront:
         assert not pf.update(org2)
 
     def test_unevaluated_organism_is_not_added(self) -> None:
+        """An unevaluated organism is not added."""
         pf = ParetoFront()
         assert pf.update(Organism(genome=Genome())) is False
         assert pf.size == 0

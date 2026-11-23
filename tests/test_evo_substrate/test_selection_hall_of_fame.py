@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.selection_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.selection import (
+    HallOfFame,
+)
 
 
 class TestHallOfFame:
+    """The hall of fame of best organisms."""
+
     def test_update(self) -> None:
+        """An evaluated organism enters with its fitness."""
         hof = HallOfFame(max_size=3)
         g = Genome()
         g.compute_id()
@@ -23,6 +37,7 @@ class TestHallOfFame:
         assert hof.best_fitness == 0.8
 
     def test_max_size(self) -> None:
+        """The hall of fame keeps at most its size."""
         hof = HallOfFame(max_size=2)
         for i in range(5):
             g = Genome()
@@ -33,6 +48,7 @@ class TestHallOfFame:
         assert hof.size == 2
 
     def test_update_rejects_unevaluated_organism(self) -> None:
+        """An unevaluated organism is not admitted."""
         hof = HallOfFame()
         assert hof.update(Organism(genome=Genome())) is False
         assert hof.size == 0

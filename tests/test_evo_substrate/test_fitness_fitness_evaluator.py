@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.fitness_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessEvaluator,
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
 
 
 class TestFitnessEvaluator:
+    """Evaluating organism fitness."""
+
     def test_evaluate(self) -> None:
+        """Evaluation keeps the accuracy and gives a positive composite."""
         ev = FitnessEvaluator()
         g = Genome()
         g.compute_id()
@@ -23,6 +32,7 @@ class TestFitnessEvaluator:
         assert result.composite > 0
 
     def test_energy_penalty(self) -> None:
+        """A smaller network scores better on energy."""
         ev = FitnessEvaluator()
         small = Genome()
         small.topology.num_neurons = 16
@@ -37,6 +47,7 @@ class TestFitnessEvaluator:
         assert r_small.energy_score > r_big.energy_score
 
     def test_composite_weights(self) -> None:
+        """Weighting a perfect accuracy alone gives a composite of 1."""
         r = FitnessResult("test", accuracy=1.0, energy_score=0.0, latency_score=0.0)
         c = r.compute_composite(w_acc=1.0, w_energy=0.0, w_latency=0.0)
         assert c == 1.0

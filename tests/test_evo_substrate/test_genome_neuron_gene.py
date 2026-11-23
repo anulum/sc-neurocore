@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.genome_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.genome import (
+    NeuronGene,
+)
 
 
 class TestNeuronGene:
+    """The neuron gene of a genome."""
+
     def test_from_vector_clamps(self) -> None:
+        """Decoded neuron constants are clamped to their floors."""
         v = np.zeros(8)
         ng = NeuronGene.from_vector(v)
         assert ng.tau_fast >= 0.5

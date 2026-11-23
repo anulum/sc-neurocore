@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.safety_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.safety import (
+    FormalSafetyGuard,
+    SafetyBounds,
+)
 
 
 class TestFormalSafetyGuard:
+    """The formal safety guard on genomes."""
+
     def test_passes_valid(self) -> None:
+        """A valid genome passes with no violation."""
         guard = FormalSafetyGuard()
         g = Genome()
         g.compute_id()
@@ -23,6 +32,7 @@ class TestFormalSafetyGuard:
         assert result.violations == []
 
     def test_rejects_invalid(self) -> None:
+        """Too many neurons fail the guard and are counted."""
         guard = FormalSafetyGuard(SafetyBounds(max_neurons=10))
         g = Genome()  # 16 neurons > 10
         g.compute_id()
@@ -32,6 +42,7 @@ class TestFormalSafetyGuard:
         assert guard.rejected == 1
 
     def test_rejection_rate(self) -> None:
+        """One rejection in two checks is a rate of 0.5."""
         guard = FormalSafetyGuard(SafetyBounds(max_neurons=10))
         g = Genome()
         g.compute_id()
@@ -43,6 +54,7 @@ class TestFormalSafetyGuard:
         assert guard.rejection_rate == 0.5
 
     def test_rejects_connectivity_and_bitstream_violations(self) -> None:
+        """Connectivity and bitstream violations fail the guard."""
         guard = FormalSafetyGuard(SafetyBounds(max_connectivity=0.2, max_bitstream=64))
         g = Genome()
         g.topology.connectivity = 0.8

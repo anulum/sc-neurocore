@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 29 evolutionary-substrate test modules that star-imported a
+  support module (`tests/test_evo_substrate`) import their names
+  explicitly instead, gain their missing test docstrings and are
+  enrolled in the docstring policy. Their nine support modules, left
+  without an importer, are deleted.
+
 - The 33 debug and runtime test modules that star-imported a support
   module (`tests/test_debug`) import their names explicitly instead,
   gain their missing test docstrings and type annotations and are

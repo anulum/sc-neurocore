@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.safety_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.safety import (
+    SafetyBounds,
+)
 
 
 class TestSafetyBounds:
+    """The safety bounds on genome parameters."""
+
     def test_clamp(self) -> None:
+        """Clamping caps the neuron count at 64."""
         sb = SafetyBounds(max_neurons=64)
         g = Genome()
         g.topology.num_neurons = 999
@@ -22,11 +30,13 @@ class TestSafetyBounds:
         assert g.topology.num_neurons == 64
 
     def test_within_bounds(self) -> None:
+        """A default genome is within bounds."""
         sb = SafetyBounds()
         g = Genome()
         assert sb.is_within_bounds(g)
 
     def test_out_of_bounds(self) -> None:
+        """An oversized genome is out of bounds."""
         sb = SafetyBounds(max_neurons=10)
         g = Genome()
         g.topology.num_neurons = 100

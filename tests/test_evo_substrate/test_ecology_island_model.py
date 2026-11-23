@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.ecology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.ecology import (
+    IslandModel,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
 
 
 class TestIslandModel:
+    """Migration between population islands."""
+
     def test_add_organism(self) -> None:
+        """An added organism is counted."""
         im = IslandModel(num_islands=3)
         g = Genome()
         g.compute_id()
@@ -22,6 +34,7 @@ class TestIslandModel:
         assert im.total_population == 1
 
     def test_migrate(self) -> None:
+        """Migration adds at least one migrant."""
         im = IslandModel(num_islands=2, migration_rate=1.0)
         g = Genome()
         g.compute_id()
@@ -31,6 +44,7 @@ class TestIslandModel:
         assert im.total_population >= 2  # original + migrant
 
     def test_single_island_migration_is_noop(self) -> None:
+        """A single island has nowhere to migrate."""
         im = IslandModel(num_islands=1, migration_rate=1.0)
         g = Genome()
         g.compute_id()
@@ -40,6 +54,7 @@ class TestIslandModel:
         assert im.total_migrations == 0
 
     def test_zero_rate_skips_every_migration_attempt(self) -> None:
+        """A migration rate of 0 moves no one."""
         im = IslandModel(num_islands=2, migration_rate=0.0)
         im.add_organism(0, Organism(genome=Genome()))
 
@@ -47,6 +62,7 @@ class TestIslandModel:
         assert im.total_population == 1
 
     def test_selected_empty_islands_produce_no_migrants(self) -> None:
+        """Empty islands produce no migrants."""
         im = IslandModel(num_islands=2, migration_rate=1.0)
 
         assert im.migrate(np.random.default_rng(42)) == 0

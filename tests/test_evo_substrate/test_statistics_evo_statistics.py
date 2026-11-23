@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.statistics_support import *  # noqa: F403
+import pytest
+from sc_neurocore.evo_substrate.statistics import (
+    EvoStatisticsTracker,
+    GenerationStats,
+)
 
 
 class TestEvoStatistics:
+    """Statistics over generations."""
+
     def test_record(self) -> None:
+        """Two recorded generations are counted."""
         est = EvoStatisticsTracker()
         est.record(GenerationStats(1, 10, 0.7, 0.5, 0.3))
         est.record(GenerationStats(2, 12, 0.8, 0.6, 0.25))
         assert est.generations_tracked == 2
 
     def test_trajectory(self) -> None:
+        """The fitness trajectory gives an improvement of 0.3."""
         est = EvoStatisticsTracker()
         est.record(GenerationStats(1, 10, 0.5, 0.3, 0.2))
         est.record(GenerationStats(2, 10, 0.8, 0.5, 0.3))
@@ -28,6 +36,7 @@ class TestEvoStatistics:
         assert est.improvement_rate() == pytest.approx(0.3)
 
     def test_single_record_has_diversity_trajectory_and_zero_improvement(self) -> None:
+        """One record has diversity and no improvement."""
         est = EvoStatisticsTracker()
         est.record(GenerationStats(1, 10, 0.5, 0.3, 0.2))
 

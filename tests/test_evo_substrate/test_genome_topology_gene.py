@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.genome_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.genome import (
+    TopologyGene,
+)
 
 
 class TestTopologyGene:
+    """The topology gene of a genome."""
+
     def test_from_vector_clamps(self) -> None:
+        """Decoded sizes and connectivity are clamped to their floors."""
         v = np.array([0.0, 0.0, -1.0, -1.0, 0.0])
         tg = TopologyGene.from_vector(v)
         assert tg.num_neurons >= 2

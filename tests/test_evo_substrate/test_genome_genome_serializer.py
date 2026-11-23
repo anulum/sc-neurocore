@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.genome_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+    GenomeSerializer,
+)
 
 
 class TestGenomeSerializer:
+    """Serialising genomes."""
+
     def test_roundtrip(self) -> None:
+        """A genome survives serialisation with its id and vector."""
         g = Genome()
         g.compute_id()
         d = GenomeSerializer.to_dict(g)
@@ -23,6 +30,7 @@ class TestGenomeSerializer:
         np.testing.assert_array_almost_equal(g2.to_vector(), g.to_vector(), decimal=4)
 
     def test_dict_keys(self) -> None:
+        """The serialised genome holds its vector and id."""
         g = Genome()
         g.compute_id()
         d = GenomeSerializer.to_dict(g)

@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.ecology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.ecology import (
+    NoveltyArchive,
+)
 
 
 class TestNoveltyArchive:
+    """The archive of novel behaviours."""
+
     def test_empty_archive_high_score(self) -> None:
+        """An empty archive scores any behaviour as novel."""
         na = NoveltyArchive()
         assert na.novelty_score(np.array([1.0, 2.0])) == 1.0
 
     def test_add_novel(self) -> None:
+        """A novel behaviour is archived."""
         na = NoveltyArchive(threshold=0.01)
         assert na.maybe_add(np.array([1.0, 0.0]))
         assert na.size == 1
 
     def test_add_duplicate_rejected(self) -> None:
+        """An identical behaviour is not archived again."""
         na = NoveltyArchive(threshold=0.5)
         na.maybe_add(np.array([1.0, 0.0]))
         assert not na.maybe_add(np.array([1.0, 0.0]))  # identical

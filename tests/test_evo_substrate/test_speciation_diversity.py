@@ -10,15 +10,27 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.speciation_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.speciation import (
+    population_diversity,
+)
 
 
 class TestDiversity:
+    """Population diversity."""
+
     def test_clones_zero_diversity(self) -> None:
+        """A population of clones has no diversity."""
         orgs = [Organism(genome=Genome()) for _ in range(5)]
         assert population_diversity(orgs) == 0.0
 
     def test_varied_population_positive_diversity(self) -> None:
+        """A varied population has positive diversity."""
         orgs = []
         for i in range(5):
             g = Genome()
@@ -27,4 +39,5 @@ class TestDiversity:
         assert population_diversity(orgs) > 0.0
 
     def test_single_organism_zero(self) -> None:
+        """A single organism has no diversity."""
         assert population_diversity([Organism(genome=Genome())]) == 0.0

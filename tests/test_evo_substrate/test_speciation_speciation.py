@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.speciation_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore.evo_substrate.speciation as speciation_mod
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.speciation import (
+    assign_species,
+    genomic_distance,
+)
 
 
 class TestSpeciation:
+    """Grouping genomes into species."""
+
     def test_identical_genomes_same_species(self) -> None:
+        """Identical genomes form one species."""
         orgs = [Organism(genome=Genome()) for _ in range(5)]
         for o in orgs:
             o.genome.compute_id()
@@ -22,6 +37,7 @@ class TestSpeciation:
         assert len(species) == 1
 
     def test_different_genomes_separate_species(self) -> None:
+        """Different genomes form at least two species."""
         orgs = []
         for i in range(3):
             g = Genome()
@@ -33,10 +49,12 @@ class TestSpeciation:
         assert len(species) >= 2
 
     def test_genomic_distance_self(self) -> None:
+        """A genome is at distance 0 from itself."""
         g = Genome()
         assert genomic_distance(g, g) == 0.0
 
     def test_genomic_distance_symmetric(self) -> None:
+        """The genomic distance is symmetric."""
         a = Genome()
         b = Genome()
         b.topology.num_neurons = 100
@@ -46,6 +64,7 @@ class TestSpeciation:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """The NumPy fallback matches the reference distance."""
         monkeypatch.setattr(speciation_mod, "_HAS_RUST_EVO", False)
         a = Genome()
         b = Genome()

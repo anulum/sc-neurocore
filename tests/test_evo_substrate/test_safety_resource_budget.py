@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.safety_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.safety import (
+    ResourceBudget,
+)
 
 
 class TestResourceBudget:
+    """The hardware resource budget."""
+
     def test_within_budget(self) -> None:
+        """A small genome is within budget."""
         rb = ResourceBudget(max_neurons=1024)
         g = Genome()
         ok, violations = rb.check(g)
@@ -22,6 +30,7 @@ class TestResourceBudget:
         assert violations == []
 
     def test_exceeds_budget(self) -> None:
+        """A large genome exceeds the budget."""
         rb = ResourceBudget(max_neurons=8)
         g = Genome()  # default 16 neurons
         ok, violations = rb.check(g)
@@ -29,6 +38,7 @@ class TestResourceBudget:
         assert len(violations) > 0
 
     def test_exceeds_area_budget(self) -> None:
+        """An oversized area is reported as an area violation."""
         rb = ResourceBudget(max_neurons=1024, max_area_um2=100.0)
         g = Genome()
         g.topology.num_neurons = 32

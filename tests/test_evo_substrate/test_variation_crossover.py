@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.variation_support import *  # noqa: F403
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.variation import (
+    CrossoverEngine,
+)
 
 
 class TestCrossover:
+    """Crossing two genomes."""
+
     def test_crossover_produces_child(self) -> None:
+        """Crossover gives a next-generation child with an id."""
         cx = CrossoverEngine(rng_seed=42)
         a = Genome()
         a.compute_id()
@@ -26,6 +34,7 @@ class TestCrossover:
         assert child.generation == 1
 
     def test_crossover_parent_id_format(self) -> None:
+        """The child's parent id joins both parents."""
         cx = CrossoverEngine()
         a = Genome()
         a.compute_id()
@@ -35,6 +44,7 @@ class TestCrossover:
         assert "x" in child.parent_id
 
     def test_crossover_mixes_genes(self) -> None:
+        """The child takes each gene from one parent."""
         cx = CrossoverEngine(rng_seed=7)
         a = Genome()
         a.neuron.tau_fast = 1.0

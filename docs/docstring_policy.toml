@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2903
+expected_file_count = 2932
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11656,3 +11656,119 @@ rationale = "Exercise the debug tools: wave4 spike ring buffer."
 [[file]]
 path = "tests/test_debug/test_wave4_trigger.py"
 rationale = "Exercise the debug tools: wave4 trigger."
+
+[[file]]
+path = "tests/test_evo_substrate/test_ecology_coevolution.py"
+rationale = "Exercise the evolutionary substrate: ecology coevolution."
+
+[[file]]
+path = "tests/test_evo_substrate/test_ecology_extinction_detector.py"
+rationale = "Exercise the evolutionary substrate: ecology extinction detector."
+
+[[file]]
+path = "tests/test_evo_substrate/test_ecology_island_model.py"
+rationale = "Exercise the evolutionary substrate: ecology island model."
+
+[[file]]
+path = "tests/test_evo_substrate/test_ecology_novelty_archive.py"
+rationale = "Exercise the evolutionary substrate: ecology novelty archive."
+
+[[file]]
+path = "tests/test_evo_substrate/test_fitness_fitness_evaluator.py"
+rationale = "Exercise the evolutionary substrate: fitness fitness evaluator."
+
+[[file]]
+path = "tests/test_evo_substrate/test_fitness_hw_fitness.py"
+rationale = "Exercise the evolutionary substrate: fitness hw fitness."
+
+[[file]]
+path = "tests/test_evo_substrate/test_genome_genome.py"
+rationale = "Exercise the evolutionary substrate: genome genome."
+
+[[file]]
+path = "tests/test_evo_substrate/test_genome_genome_serializer.py"
+rationale = "Exercise the evolutionary substrate: genome genome serializer."
+
+[[file]]
+path = "tests/test_evo_substrate/test_genome_neuron_gene.py"
+rationale = "Exercise the evolutionary substrate: genome neuron gene."
+
+[[file]]
+path = "tests/test_evo_substrate/test_genome_plasticity_gene.py"
+rationale = "Exercise the evolutionary substrate: genome plasticity gene."
+
+[[file]]
+path = "tests/test_evo_substrate/test_genome_topology_gene.py"
+rationale = "Exercise the evolutionary substrate: genome topology gene."
+
+[[file]]
+path = "tests/test_evo_substrate/test_replication_elitism.py"
+rationale = "Exercise the evolutionary substrate: replication elitism."
+
+[[file]]
+path = "tests/test_evo_substrate/test_replication_replication_engine.py"
+rationale = "Exercise the evolutionary substrate: replication replication engine."
+
+[[file]]
+path = "tests/test_evo_substrate/test_safety_formal_safety_guard.py"
+rationale = "Exercise the evolutionary substrate: safety formal safety guard."
+
+[[file]]
+path = "tests/test_evo_substrate/test_safety_resource_budget.py"
+rationale = "Exercise the evolutionary substrate: safety resource budget."
+
+[[file]]
+path = "tests/test_evo_substrate/test_safety_safety_bounds.py"
+rationale = "Exercise the evolutionary substrate: safety safety bounds."
+
+[[file]]
+path = "tests/test_evo_substrate/test_selection_age_regulator.py"
+rationale = "Exercise the evolutionary substrate: selection age regulator."
+
+[[file]]
+path = "tests/test_evo_substrate/test_selection_bloat_control.py"
+rationale = "Exercise the evolutionary substrate: selection bloat control."
+
+[[file]]
+path = "tests/test_evo_substrate/test_selection_hall_of_fame.py"
+rationale = "Exercise the evolutionary substrate: selection hall of fame."
+
+[[file]]
+path = "tests/test_evo_substrate/test_selection_pareto_front.py"
+rationale = "Exercise the evolutionary substrate: selection pareto front."
+
+[[file]]
+path = "tests/test_evo_substrate/test_selection_tournament_selector.py"
+rationale = "Exercise the evolutionary substrate: selection tournament selector."
+
+[[file]]
+path = "tests/test_evo_substrate/test_speciation_diversity.py"
+rationale = "Exercise the evolutionary substrate: speciation diversity."
+
+[[file]]
+path = "tests/test_evo_substrate/test_speciation_fitness_sharing.py"
+rationale = "Exercise the evolutionary substrate: speciation fitness sharing."
+
+[[file]]
+path = "tests/test_evo_substrate/test_speciation_speciation.py"
+rationale = "Exercise the evolutionary substrate: speciation speciation."
+
+[[file]]
+path = "tests/test_evo_substrate/test_statistics_complexity_metric.py"
+rationale = "Exercise the evolutionary substrate: statistics complexity metric."
+
+[[file]]
+path = "tests/test_evo_substrate/test_statistics_evo_statistics.py"
+rationale = "Exercise the evolutionary substrate: statistics evo statistics."
+
+[[file]]
+path = "tests/test_evo_substrate/test_statistics_genome_diff.py"
+rationale = "Exercise the evolutionary substrate: statistics genome diff."
+
+[[file]]
+path = "tests/test_evo_substrate/test_variation_crossover.py"
+rationale = "Exercise the evolutionary substrate: variation crossover."
+
+[[file]]
+path = "tests/test_evo_substrate/test_variation_mutation_engine.py"
+rationale = "Exercise the evolutionary substrate: variation mutation engine."

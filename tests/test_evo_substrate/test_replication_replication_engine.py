@@ -10,14 +10,53 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.replication_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore.evo_substrate.evo_substrate as evo_mod
+from sc_neurocore.evo_substrate.ecology import (
+    ExtinctionDetector,
+)
+from sc_neurocore.evo_substrate.fitness import (
+    FitnessResult,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
+from sc_neurocore.evo_substrate.replication import (
+    ReplicationEngine,
+)
+from sc_neurocore.evo_substrate.safety import (
+    FormalSafetyGuard,
+    SafetyBounds,
+)
+from sc_neurocore.fault_injection import (
+    DegradationPlan,
+    FaultModel,
+)
+from sc_neurocore.fault_injection.resilience_policy import (
+    SeededFaultObservation,
+)
+from sc_neurocore.stochastic_doctor.diagnostics import (
+    AuditSeverity,
+    BitstreamAuditReport,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestReplicationEngine:
+    """The replication and selection engine."""
+
     def _metrics_fn(self, genome: Genome) -> dict[str, float]:
         return {"accuracy": 0.5 + 0.01 * genome.topology.num_neurons}
 
     def test_seed(self) -> None:
+        """Seeding adds one organism with a genome id."""
         re = ReplicationEngine()
         g = Genome()
         org = re.seed(g)
@@ -25,6 +64,7 @@ class TestReplicationEngine:
         assert org.genome.genome_id != ""
 
     def test_replicate(self) -> None:
+        """A child records its parent and is counted."""
         re = ReplicationEngine()
         parent = re.seed(Genome())
         child = re.replicate(parent)
@@ -33,6 +73,7 @@ class TestReplicationEngine:
         assert re.total_replications == 1
 
     def test_non_industrial_replicate_bypasses_formal_safety(self) -> None:
+        """Outside industrial mode the safety guard is not consulted."""
         re = ReplicationEngine(industrial_mode=False)
         re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
         parent = re.seed(Genome())
@@ -43,6 +84,7 @@ class TestReplicationEngine:
         assert re.safety_guard.checked == 0
 
     def test_replication_never_exceeds_population_capacity(self) -> None:
+        """Replication never grows past the population capacity."""
         mutation_engine = ReplicationEngine(max_population=1)
         mutation_parent = mutation_engine.seed(Genome())
         mutation_child = mutation_engine.replicate(mutation_parent)
@@ -58,12 +100,14 @@ class TestReplicationEngine:
         assert len(crossover_engine.population) == 2
 
     def test_evaluate_all(self) -> None:
+        """Evaluation gives every organism a fitness."""
         re = ReplicationEngine()
         re.seed(Genome())
         re.evaluate_all(self._metrics_fn)
         assert re.population[0].fitness is not None
 
     def test_evaluate_all_ignores_dead_organisms(self) -> None:
+        """Dead organisms are not evaluated."""
         re = ReplicationEngine()
         organism = re.seed(Genome())
         organism.alive = False
@@ -74,6 +118,7 @@ class TestReplicationEngine:
         assert re.hall_of_fame.size == 0
 
     def test_select_and_cull(self) -> None:
+        """Culled organisms go to the graveyard."""
         re = ReplicationEngine(max_population=20)
         for i in range(10):
             g = Genome()
@@ -85,6 +130,7 @@ class TestReplicationEngine:
         assert len(re.graveyard) == killed
 
     def test_evolve_generation(self) -> None:
+        """A generation reports its number, size and best fitness."""
         re = ReplicationEngine(max_population=8)
         for _ in range(4):
             re.seed(Genome())
@@ -94,12 +140,14 @@ class TestReplicationEngine:
         assert result["best_fitness"] > 0
 
     def test_best_organism(self) -> None:
+        """The engine reports its best organism."""
         re = ReplicationEngine()
         re.seed(Genome())
         re.evaluate_all(self._metrics_fn)
         assert re.best_organism is not None
 
     def test_mean_fitness(self) -> None:
+        """The engine reports a positive mean fitness."""
         re = ReplicationEngine()
         for _ in range(4):
             re.seed(Genome())
@@ -107,6 +155,7 @@ class TestReplicationEngine:
         assert re.mean_fitness > 0
 
     def test_industrial_replicate_rejects_child_outside_safety_bounds(self) -> None:
+        """In industrial mode an unsafe child is rejected."""
         re = ReplicationEngine()
         re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
         parent_genome = Genome()
@@ -120,6 +169,7 @@ class TestReplicationEngine:
         assert re.safety_guard.rejected == 1
 
     def test_replicate_crossover_records_child_lineage_when_safety_passes(self) -> None:
+        """A safe crossover child records both parents."""
         re = ReplicationEngine(max_population=4)
         parent_a = re.seed(Genome())
         parent_b_genome = Genome()
@@ -136,6 +186,7 @@ class TestReplicationEngine:
         assert len(re.population) == 3
 
     def test_industrial_replicate_crossover_rejects_child_outside_safety_bounds(self) -> None:
+        """In industrial mode an unsafe crossover child is rejected."""
         re = ReplicationEngine()
         re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
         parent_a = re.seed(Genome())
@@ -148,6 +199,8 @@ class TestReplicationEngine:
         assert re.safety_guard.rejected == 1
 
     def test_runtime_fault_replay_plan_applies_replay_penalty(self) -> None:
+        """A fault replay plan sets the composite fitness to 0.5."""
+
         class ReplayPolicy:
             def evaluate(
                 self,
@@ -203,6 +256,7 @@ class TestReplicationEngine:
         assert org.runtime_fault_checks == [check]
 
     def test_industrial_select_and_cull_applies_extinction_event(self) -> None:
+        """In industrial mode stagnation triggers an extinction event."""
         re = ReplicationEngine(max_population=8)
         re.extinction_detector = ExtinctionDetector(stagnation_gens=1, kill_fraction=0.5)
         for _ in range(4):
@@ -216,6 +270,8 @@ class TestReplicationEngine:
         assert re.extinction_detector.extinction_count == 1
 
     def test_non_industrial_generation_crosses_survivors_when_roll_is_low(self) -> None:
+        """A low roll breeds a crossover child."""
+
         class AlwaysCrossoverRng:
             def random(self) -> float:
                 return 0.0
@@ -235,6 +291,8 @@ class TestReplicationEngine:
         assert any("x" in org.genome.parent_id for org in re.population)
 
     def test_industrial_generation_continues_when_tournament_returns_no_parent(self) -> None:
+        """A generation continues when no parent is selected."""
+
         class NoParentTournament:
             def select(
                 self,
@@ -254,6 +312,7 @@ class TestReplicationEngine:
         assert result["population_size"] == 2
 
     def test_generation_counts_no_child_when_formal_safety_rejects(self) -> None:
+        """A rejected child is not counted."""
         re = ReplicationEngine(max_population=3)
         re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
         re.seed(Genome())

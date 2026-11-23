@@ -10,22 +10,36 @@
 
 from __future__ import annotations
 
-from tests.test_evo_substrate.ecology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.evo_substrate.ecology import (
+    ExtinctionDetector,
+)
+from sc_neurocore.evo_substrate.genome import (
+    Genome,
+)
+from sc_neurocore.evo_substrate.organism import (
+    Organism,
+)
 
 
 class TestExtinctionDetector:
+    """Detecting and applying extinction events."""
+
     def test_no_extinction_early(self) -> None:
+        """An early check never triggers extinction."""
         ed = ExtinctionDetector(stagnation_gens=5)
         for i in range(3):
             assert ed.check(0.5) is False
 
     def test_detects_stagnation(self) -> None:
+        """Stagnant fitness triggers an extinction."""
         ed = ExtinctionDetector(stagnation_gens=5)
         for _ in range(10):
             ed.check(0.5)  # all same fitness
         assert ed.extinction_count > 0
 
     def test_apply_kills(self) -> None:
+        """An extinction event kills five organisms."""
         ed = ExtinctionDetector(kill_fraction=0.5)
         pop = [Organism(genome=Genome()) for _ in range(10)]
         rng = np.random.default_rng(42)
@@ -33,6 +47,7 @@ class TestExtinctionDetector:
         assert killed == 5
 
     def test_improving_history_does_not_trigger_extinction(self) -> None:
+        """Rising fitness never triggers extinction."""
         ed = ExtinctionDetector(stagnation_gens=3)
 
         assert ed.check(0.1) is False
