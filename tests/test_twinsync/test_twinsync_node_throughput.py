@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    TimeWarpEngine,
+    TwinEvent,
+)
 
 
 class TestNodeThroughput:
-    def test_throughput_initial(self):
+    """Processed-event counts per node."""
+
+    def test_throughput_initial(self) -> None:
+        """Every node starts with zero processed events."""
         eng = TimeWarpEngine(3)
         tp = eng.node_throughput()
         assert all(v == 0 for v in tp.values())
 
-    def test_throughput_after_events(self):
+    def test_throughput_after_events(self) -> None:
+        """Each node counts only the events it processed."""
         eng = TimeWarpEngine(2)
         for t in range(5):
             eng.inject_event(TwinEvent(t * 100, target_node=0, lamport_ts=t))

@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    DriftAutoCorrector,
+)
 
 
 class TestDriftAutoCorrector:
-    def test_no_correction_within_tolerance(self):
+    """Correcting clock drift between twin and hardware."""
+
+    def test_no_correction_within_tolerance(self) -> None:
+        """A drift within tolerance is not corrected."""
         dac = DriftAutoCorrector(max_drift_ns=5000)
         assert dac.check_and_correct(1000, 999) is None
 
-    def test_correction_on_large_drift(self):
+    def test_correction_on_large_drift(self) -> None:
+        """A large drift is corrected and counted."""
         dac = DriftAutoCorrector(max_drift_ns=5000)
         dc = dac.check_and_correct(100000, 1000)
         assert dc is not None

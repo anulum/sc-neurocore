@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2772
+expected_file_count = 2792
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11132,3 +11132,83 @@ rationale = "Exercise the spintronic mapper: variability model."
 [[file]]
 path = "tests/test_spintronic/test_spintronic_mapper_write_verify.py"
 rationale = "Exercise the spintronic mapper: write verify."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_adaptive_checkpoint_interval.py"
+rationale = "Exercise the twin synchronisation: adaptive checkpoint interval."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_backpressure.py"
+rationale = "Exercise the twin synchronisation: backpressure."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_checkpoint.py"
+rationale = "Exercise the twin synchronisation: checkpoint."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_checkpoint_audit_chain.py"
+rationale = "Exercise the twin synchronisation: checkpoint audit chain."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_checkpoint_manager.py"
+rationale = "Exercise the twin synchronisation: checkpoint manager."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_delta_checkpoint.py"
+rationale = "Exercise the twin synchronisation: delta checkpoint."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_divergence_metric.py"
+rationale = "Exercise the twin synchronisation: divergence metric."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_drift_auto_corrector.py"
+rationale = "Exercise the twin synchronisation: drift auto corrector."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_lamport_clock.py"
+rationale = "Exercise the twin synchronisation: lamport clock."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_mpi_topology.py"
+rationale = "Exercise the twin synchronisation: mpi topology."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_node_throughput.py"
+rationale = "Exercise the twin synchronisation: node throughput."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_null_message_optimizer.py"
+rationale = "Exercise the twin synchronisation: null message optimizer."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_replay_verifier.py"
+rationale = "Exercise the twin synchronisation: replay verifier."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_session_snapshot.py"
+rationale = "Exercise the twin synchronisation: session snapshot."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_starvation.py"
+rationale = "Exercise the twin synchronisation: starvation."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_sync_barrier.py"
+rationale = "Exercise the twin synchronisation: sync barrier."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_time_warp_engine.py"
+rationale = "Exercise the twin synchronisation: time warp engine."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_twin_federation.py"
+rationale = "Exercise the twin synchronisation: twin federation."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_twin_session.py"
+rationale = "Exercise the twin synchronisation: twin session."
+
+[[file]]
+path = "tests/test_twinsync/test_twinsync_vector_clock.py"
+rationale = "Exercise the twin synchronisation: vector clock."

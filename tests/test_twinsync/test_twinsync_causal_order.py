@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    TimeWarpEngine,
+    TwinEvent,
+)
 
 
 class TestCausalOrder:
     """The processed log of each node stays in virtual-time order, and the verifier finds where it does not."""
 
-    def test_ordered_events_no_violations(self):
+    def test_ordered_events_no_violations(self) -> None:
         """Events processed in time order leave no violation."""
         eng = TimeWarpEngine(1)
         for t in [100, 200, 300]:
@@ -25,12 +28,12 @@ class TestCausalOrder:
             eng.process_next()
         assert eng.verify_causal_order() == []
 
-    def test_empty_no_violations(self):
+    def test_empty_no_violations(self) -> None:
         """An empty log has no violation."""
         eng = TimeWarpEngine(1)
         assert eng.verify_causal_order() == []
 
-    def test_straggler_rollback_keeps_the_log_in_causal_order(self):
+    def test_straggler_rollback_keeps_the_log_in_causal_order(self) -> None:
         """A straggler rolls the node back; the later event leaves the log and runs again after it."""
         eng = TimeWarpEngine(1)
         eng.inject_event(TwinEvent(200, target_node=0, lamport_ts=1))
@@ -42,7 +45,7 @@ class TestCausalOrder:
         assert [e.virtual_time_ns for e in eng.processed] == [100, 200]
         assert eng.verify_causal_order() == []
 
-    def test_a_log_out_of_causal_order_is_flagged(self):
+    def test_a_log_out_of_causal_order_is_flagged(self) -> None:
         """The verifier flags neighbouring events of one node that run backwards in time."""
         eng = TimeWarpEngine(1)
         eng.processed = [TwinEvent(200, target_node=0), TwinEvent(100, target_node=0)]

@@ -10,40 +10,50 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    TwinSession,
+)
 
 
 class TestTwinSession:
-    def test_create(self):
+    """Running a digital-twin session."""
+
+    def test_create(self) -> None:
+        """A new session has its nodes and is not running."""
         ts = TwinSession(4)
         assert ts.num_nodes == 4
         assert ts.running is False
 
-    def test_start_stop(self):
+    def test_start_stop(self) -> None:
+        """Start and stop switch the running flag."""
         ts = TwinSession(2)
         ts.start()
         assert ts.running is True
         ts.stop()
         assert ts.running is False
 
-    def test_inject_physical(self):
+    def test_inject_physical(self) -> None:
+        """An injected physical event is counted."""
         ts = TwinSession(2)
         ts.inject_physical_event(1000, neuron_id=42, target_node=0)
         assert ts.physical_events_in == 1
 
-    def test_advance(self):
+    def test_advance(self) -> None:
+        """Advancing processes the two injected events."""
         ts = TwinSession(2)
         ts.inject_physical_event(100, neuron_id=0, target_node=0)
         ts.inject_physical_event(200, neuron_id=1, target_node=1)
         processed = ts.advance(5)
         assert processed == 2
 
-    def test_divergence_update(self):
+    def test_divergence_update(self) -> None:
+        """Different spike rates give a positive divergence."""
         ts = TwinSession(1)
         dm = ts.update_divergence(10.0, 8.0, 0.5)
         assert dm.spike_rate_divergence > 0
 
-    def test_status(self):
+    def test_status(self) -> None:
+        """A running session reports its engine and optimistic mode."""
         ts = TwinSession(2)
         ts.start()
         st = ts.status()

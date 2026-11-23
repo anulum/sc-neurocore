@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.digital_twin.twinsync import (
+    Checkpoint,
+)
 
 
 class TestCheckpoint:
-    def test_checksum(self):
+    """Checksums of a node checkpoint."""
+
+    def test_checksum(self) -> None:
+        """The checksum is 16 characters long."""
         cp = Checkpoint(0, 1000, 0, neuron_state=np.array([1.0, 2.0]))
         cs = cp.compute_checksum()
         assert len(cs) == 16
 
-    def test_checksum_deterministic(self):
+    def test_checksum_deterministic(self) -> None:
+        """The same checkpoint gives the same checksum twice."""
         cp = Checkpoint(0, 1000, 0, lfsr_state=42)
         assert cp.compute_checksum() == cp.compute_checksum()

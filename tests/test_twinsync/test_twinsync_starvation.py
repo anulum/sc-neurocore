@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    TimeWarpEngine,
+    TwinEvent,
+)
 
 
 class TestStarvation:
-    def test_no_starvation_initially(self):
+    """Detecting nodes that lag the global virtual time."""
+
+    def test_no_starvation_initially(self) -> None:
+        """A new engine reports no starved node."""
         eng = TimeWarpEngine(4)
         assert eng.detect_starvation() == []
 
-    def test_detects_lagging_node(self):
+    def test_detects_lagging_node(self) -> None:
+        """Nodes level with the GVT report no starvation; nothing more is checked."""
         eng = TimeWarpEngine(2)
         # Advance node 0 far ahead
         eng.inject_event(TwinEvent(50000, target_node=0, lamport_ts=1))

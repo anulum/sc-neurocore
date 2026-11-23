@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 21 twin-synchronisation test modules (`tests/test_twinsync`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and type annotations and
+  are enrolled in the docstring policy. Their support module, left
+  without an importer, is deleted.
+
 - The 22 spintronic-mapper test modules (`tests/test_spintronic`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and type annotations and

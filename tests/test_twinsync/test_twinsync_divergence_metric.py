@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    DivergenceMetric,
+)
 
 
 class TestDivergenceMetric:
-    def test_zero_divergence(self):
+    """Divergence between the twin and the hardware."""
+
+    def test_zero_divergence(self) -> None:
+        """Matching twin and hardware are within tolerance."""
         dm = DivergenceMetric()
         assert dm.total_divergence == 0.0
         assert dm.within_tolerance is True
 
-    def test_high_divergence(self):
+    def test_high_divergence(self) -> None:
+        """Large differences exceed the tolerance."""
         dm = DivergenceMetric(
             spike_rate_divergence=2.0,
             timing_offset_ns=10_000_000,

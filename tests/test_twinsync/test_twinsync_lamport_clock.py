@@ -10,31 +10,40 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    LamportClock,
+)
 
 
 class TestLamportClock:
-    def test_initial(self):
+    """Lamport logical clock ordering."""
+
+    def test_initial(self) -> None:
+        """A new Lamport clock reads 0."""
         lc = LamportClock()
         assert lc.time == 0
 
-    def test_tick(self):
+    def test_tick(self) -> None:
+        """Each tick advances the clock by one."""
         lc = LamportClock()
         assert lc.tick() == 1
         assert lc.tick() == 2
 
-    def test_send(self):
+    def test_send(self) -> None:
+        """Sending from a fresh clock stamps time 1."""
         lc = LamportClock()
         ts = lc.send()
         assert ts == 1
 
-    def test_receive(self):
+    def test_receive(self) -> None:
+        """Receiving takes the maximum of both times plus one."""
         lc = LamportClock()
         lc.tick()  # local = 1
         lc.receive(5)  # max(1,5)+1 = 6
         assert lc.time == 6
 
-    def test_receive_behind(self):
+    def test_receive_behind(self) -> None:
+        """Receiving an older time still advances by one."""
         lc = LamportClock()
         for _ in range(10):
             lc.tick()

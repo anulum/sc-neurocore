@@ -10,29 +10,38 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.digital_twin.twinsync import (
+    DeltaCheckpoint,
+)
 
 
 class TestDeltaCheckpoint:
-    def test_compute_delta(self):
+    """Checkpoints that store only the changed state."""
+
+    def test_compute_delta(self) -> None:
+        """Two changed values give two changes and a size."""
         base = np.array([1.0, 2.0, 3.0, 4.0])
         new = np.array([1.0, 9.0, 3.0, 7.0])
         dc = DeltaCheckpoint.compute_delta(base, new, 0, 1, 1000, 0)
         assert dc.num_changes == 2
         assert dc.size_bytes > 0
 
-    def test_no_changes(self):
+    def test_no_changes(self) -> None:
+        """Identical states give no changes."""
         state = np.array([1.0, 2.0, 3.0])
         dc = DeltaCheckpoint.compute_delta(state, state.copy(), 0, 1, 0, 0)
         assert dc.num_changes == 0
 
-    def test_compression_ratio_zero_for_empty_delta(self):
+    def test_compression_ratio_zero_for_empty_delta(self) -> None:
+        """An empty delta has size 0 and a ratio of 0."""
         state = np.array([1.0, 2.0, 3.0])
         dc = DeltaCheckpoint.compute_delta(state, state.copy(), 0, 1, 0, 0)
         assert dc.size_bytes == 0
         assert dc.compression_ratio == 0.0
 
-    def test_compression_ratio_nonzero_delta(self):
+    def test_compression_ratio_nonzero_delta(self) -> None:
+        """A non-empty delta has a positive size and a ratio of 1."""
         base = np.array([1.0, 2.0])
         new = np.array([1.0, 9.0])
         dc = DeltaCheckpoint.compute_delta(base, new, 0, 1, 0, 0)

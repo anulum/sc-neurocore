@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    MPIRankMapping,
+    MPITopology,
+)
 
 
 class TestMPITopology:
-    def test_add_and_lookup(self):
+    """The mapping of neurons onto MPI ranks."""
+
+    def test_add_and_lookup(self) -> None:
+        """Two added ranks are counted with their neurons."""
         topo = MPITopology()
         topo.add_rank(MPIRankMapping(0, "node0", neuron_range=(0, 100_000_000)))
         topo.add_rank(MPIRankMapping(1, "node0", neuron_range=(100_000_000, 200_000_000)))
         assert topo.num_ranks == 2
         assert topo.total_neurons == 200_000_000
 
-    def test_rank_for_neuron(self):
+    def test_rank_for_neuron(self) -> None:
+        """A neuron resolves to its rank, or None when unowned."""
         topo = MPITopology()
         topo.add_rank(MPIRankMapping(0, "n0", neuron_range=(0, 1000)))
         topo.add_rank(MPIRankMapping(1, "n1", neuron_range=(1000, 2000)))
@@ -29,7 +36,8 @@ class TestMPITopology:
         assert topo.rank_for_neuron(1500) == 1
         assert topo.rank_for_neuron(9999) is None
 
-    def test_co_located(self):
+    def test_co_located(self) -> None:
+        """Ranks on the same host are listed as co-located."""
         topo = MPITopology()
         topo.add_rank(MPIRankMapping(0, "host_a", neuron_range=(0, 100)))
         topo.add_rank(MPIRankMapping(1, "host_a", neuron_range=(100, 200)))

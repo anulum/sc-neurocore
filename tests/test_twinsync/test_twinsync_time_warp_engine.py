@@ -10,32 +10,45 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.digital_twin.twinsync import (
+    EventType,
+    TimeWarpEngine,
+    TwinEvent,
+)
 
 
 class TestTimeWarpEngine:
-    def test_create(self):
+    """The optimistic Time Warp simulation engine."""
+
+    def test_create(self) -> None:
+        """An engine for four nodes holds four nodes."""
         eng = TimeWarpEngine(4)
         assert len(eng.nodes) == 4
 
-    def test_inject_and_process(self):
+    def test_inject_and_process(self) -> None:
+        """An injected event is processed at its time."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(100, event_type=EventType.SPIKE, target_node=0))
         ev = eng.process_next()
         assert ev is not None
         assert ev.virtual_time_ns == 100
 
-    def test_ordering(self):
+    def test_ordering(self) -> None:
+        """Events are processed in virtual-time order."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(300, target_node=0))
         eng.inject_event(TwinEvent(100, target_node=0))
         eng.inject_event(TwinEvent(200, target_node=0))
         ev1 = eng.process_next()
         ev2 = eng.process_next()
+        assert ev1 is not None
+        assert ev2 is not None
         assert ev1.virtual_time_ns == 100
         assert ev2.virtual_time_ns == 200
 
-    def test_rollback_on_straggler(self):
+    def test_rollback_on_straggler(self) -> None:
+        """A straggler event causes a rollback."""
         eng = TimeWarpEngine(2, checkpoint_interval_ns=1)
         # Process forward
         eng.inject_event(TwinEvent(200, target_node=0, lamport_ts=1))
@@ -45,7 +58,8 @@ class TestTimeWarpEngine:
         eng.process_next()
         assert eng.total_rollbacks > 0
 
-    def test_identity_preserved_across_rollback(self):
+    def test_identity_preserved_across_rollback(self) -> None:
+        """A rollback keeps the node's deep identity value."""
         eng = TimeWarpEngine(1, checkpoint_interval_ns=1)
         eng.nodes[0].identity_deep = 0.42
         eng.inject_event(TwinEvent(200, target_node=0, lamport_ts=1))
@@ -54,7 +68,8 @@ class TestTimeWarpEngine:
         eng.process_next()
         assert eng.nodes[0].identity_deep == 0.42
 
-    def test_gvt(self):
+    def test_gvt(self) -> None:
+        """The global virtual time is not negative; its value is not checked."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(100, target_node=0))
         eng.inject_event(TwinEvent(200, target_node=1))
@@ -63,7 +78,8 @@ class TestTimeWarpEngine:
         gvt = eng.compute_gvt()
         assert gvt >= 0
 
-    def test_fossil_collect(self):
+    def test_fossil_collect(self) -> None:
+        """Fossil collection runs; its removed count is not checked."""
         eng = TimeWarpEngine(1, checkpoint_interval_ns=1)
         for t in range(10):
             eng.inject_event(TwinEvent(t * 100, target_node=0, lamport_ts=t))
@@ -71,13 +87,15 @@ class TestTimeWarpEngine:
         removed = eng.fossil_collect()
         assert removed >= 0
 
-    def test_status(self):
+    def test_status(self) -> None:
+        """The status names the node count and the GVT."""
         eng = TimeWarpEngine(2)
         st = eng.status()
         assert "num_nodes" in st
         assert "gvt_ns" in st
 
-    def test_process_cancelled_event_short_circuits(self):
+    def test_process_cancelled_event_short_circuits(self) -> None:
+        """A cancelled event is returned without reaching its node."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(100, target_node=0, cancelled=True))
         ev = eng.process_next()
@@ -85,20 +103,25 @@ class TestTimeWarpEngine:
         assert ev.cancelled is True
         assert eng.nodes[0].processed_events == 0  # not applied to the node
 
-    def test_process_event_for_unknown_target(self):
+    def test_process_event_for_unknown_target(self) -> None:
+        """An event for an unknown node is still returned."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(100, target_node=99))
         ev = eng.process_next()
         assert ev is not None
         assert ev.target_node == 99
 
-    def test_process_event_merges_vector_clock(self):
+    def test_process_event_merges_vector_clock(self) -> None:
+        """Processing merges the event's vector clock into the node."""
         eng = TimeWarpEngine(2)
         eng.inject_event(TwinEvent(100, target_node=0, vector_ts=np.array([3, 0])))
         eng.process_next()
-        assert eng.nodes[0].vector_clock.clock[0] >= 3
+        vector_clock = eng.nodes[0].vector_clock
+        assert vector_clock is not None
+        assert vector_clock.clock[0] >= 3
 
-    def test_rollback_restores_earlier_checkpoint(self):
+    def test_rollback_restores_earlier_checkpoint(self) -> None:
+        """A straggler rolls the node back and leaves it at its time."""
         # A straggler with a checkpoint at or before its time rolls the node
         # back to that checkpoint (restoring lamport/vector state) before
         # re-advancing, rather than falling back to the bare target time.

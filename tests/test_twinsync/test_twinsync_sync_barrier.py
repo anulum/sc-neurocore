@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    EventType,
+    TimeWarpEngine,
+)
 
 
 class TestSyncBarrier:
-    def test_barrier_injects_to_all_nodes(self):
+    """Synchronisation barriers across all nodes."""
+
+    def test_barrier_injects_to_all_nodes(self) -> None:
+        """A barrier puts one event in the queue per node."""
         eng = TimeWarpEngine(4)
         eng.inject_sync_barrier(5000)
         assert len(eng.event_queue) == 4
 
-    def test_barrier_processed(self):
+    def test_barrier_processed(self) -> None:
+        """Processed barrier events carry the barrier type."""
         eng = TimeWarpEngine(2)
         eng.inject_sync_barrier(1000)
         eng.process_next()
@@ -28,7 +35,8 @@ class TestSyncBarrier:
         for ev in eng.processed:
             assert ev.event_type == EventType.SYNC_BARRIER
 
-    def test_barrier_advances_lvt(self):
+    def test_barrier_advances_lvt(self) -> None:
+        """A processed barrier moves each node to its time."""
         eng = TimeWarpEngine(2)
         eng.inject_sync_barrier(5000)
         eng.process_next()

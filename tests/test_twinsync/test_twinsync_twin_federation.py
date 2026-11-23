@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    TwinFederation,
+    TwinSession,
+)
 
 
 class TestTwinFederation:
-    def test_register(self):
+    """A federation of several twin sessions."""
+
+    def test_register(self) -> None:
+        """Two registered twins are counted."""
         fed = TwinFederation()
         fed.register("subject_a", TwinSession(2))
         fed.register("subject_b", TwinSession(4))
         assert fed.twin_count == 2
 
-    def test_advance_all(self):
+    def test_advance_all(self) -> None:
+        """Advancing the federation processes events in every twin."""
         fed = TwinFederation()
         s1 = TwinSession(1)
         s1.inject_physical_event(100, 0)
@@ -32,20 +39,24 @@ class TestTwinFederation:
         assert results["a"] >= 1
         assert results["b"] >= 1
 
-    def test_global_gvt(self):
+    def test_global_gvt(self) -> None:
+        """One fresh twin gives a global GVT of 0."""
         fed = TwinFederation()
         fed.register("a", TwinSession(1))
         assert fed.global_gvt() == 0
 
-    def test_global_gvt_empty_federation(self):
+    def test_global_gvt_empty_federation(self) -> None:
+        """An empty federation has a global GVT of 0."""
         fed = TwinFederation()
         assert fed.global_gvt() == 0
 
-    def test_total_divergence_empty_federation(self):
+    def test_total_divergence_empty_federation(self) -> None:
+        """An empty federation has a total divergence of 0."""
         fed = TwinFederation()
         assert fed.total_divergence() == 0.0
 
-    def test_total_divergence_sums_registered_twins(self):
+    def test_total_divergence_sums_registered_twins(self) -> None:
+        """Two fresh twins sum to a total divergence of 0."""
         fed = TwinFederation()
         fed.register("a", TwinSession(1))
         fed.register("b", TwinSession(1))

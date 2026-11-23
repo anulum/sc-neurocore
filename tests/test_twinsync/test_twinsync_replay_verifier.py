@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    Checkpoint,
+    ReplayVerifier,
+)
 
 
 class TestReplayVerifier:
-    def test_deterministic(self):
+    """Comparing two replays of the same run."""
+
+    def test_deterministic(self) -> None:
+        """Identical replays are deterministic with no divergence."""
         rv = ReplayVerifier()
         cp = Checkpoint(0, 100, 0, lfsr_state=42)
         cp.compute_checksum()
@@ -23,7 +29,8 @@ class TestReplayVerifier:
         assert rv.is_deterministic
         assert rv.first_divergence_index is None
 
-    def test_non_deterministic(self):
+    def test_non_deterministic(self) -> None:
+        """Replays that differ first diverge at index 0."""
         rv = ReplayVerifier()
         cp_a = Checkpoint(0, 100, 0, lfsr_state=42)
         cp_a.compute_checksum()
@@ -34,11 +41,13 @@ class TestReplayVerifier:
         assert not rv.is_deterministic
         assert rv.first_divergence_index == 0
 
-    def test_empty(self):
+    def test_empty(self) -> None:
+        """Empty replays are not reported deterministic."""
         rv = ReplayVerifier()
         assert not rv.is_deterministic
 
-    def test_compared_count_is_shorter_run_length(self):
+    def test_compared_count_is_shorter_run_length(self) -> None:
+        """Only as many events as the shorter run are compared."""
         rv = ReplayVerifier()
         cp = Checkpoint(0, 100, 0, lfsr_state=1)
         cp.compute_checksum()

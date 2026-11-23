@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    SessionSnapshot,
+    TwinSession,
+)
 
 
 class TestSessionSnapshot:
-    def test_from_session(self):
+    """Snapshots of a twin session."""
+
+    def test_from_session(self) -> None:
+        """A snapshot records the node and event counts."""
         ts = TwinSession(2)
         ts.inject_physical_event(100, 0)
         ts.advance(1)
@@ -22,7 +28,8 @@ class TestSessionSnapshot:
         assert snap.num_nodes == 2
         assert snap.physical_events_in == 1
 
-    def test_to_dict(self):
+    def test_to_dict(self) -> None:
+        """The snapshot dictionary names the time and node clocks."""
         ts = TwinSession(2)
         snap = SessionSnapshot.from_session(ts)
         d = snap.to_dict()

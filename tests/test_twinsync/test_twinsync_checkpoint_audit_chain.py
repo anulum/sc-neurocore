@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from twinsync_support import *  # noqa: F403
+from sc_neurocore.digital_twin.twinsync import (
+    Checkpoint,
+    CheckpointAuditChain,
+)
 
 
 class TestCheckpointAuditChain:
-    def test_append_and_verify(self):
+    """The hash chain over saved checkpoints."""
+
+    def test_append_and_verify(self) -> None:
+        """Five appended checkpoints form a chain that verifies."""
         chain = CheckpointAuditChain()
         for i in range(5):
             cp = Checkpoint(i, i * 100, 0, lfsr_state=i)
@@ -23,7 +29,8 @@ class TestCheckpointAuditChain:
         assert chain.length == 5
         assert chain.verify() is True
 
-    def test_tamper_detected(self):
+    def test_tamper_detected(self) -> None:
+        """A tampered checksum fails verification."""
         chain = CheckpointAuditChain()
         cp = Checkpoint(0, 0, 0)
         cp.compute_checksum()
