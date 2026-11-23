@@ -6195,6 +6195,95 @@ Encode unit-interval SC values as binary, unary, or one-hot qubits.
 
 ---
 
+## Module `bridges.annealing_validation`
+
+### Function `finite_real(name, value)`
+Return a real, non-boolean, finite scalar as a float.
+
+Parameters
+----------
+name : str
+    Field name used in the refusal message.
+value : object
+    Candidate scalar.
+
+Returns
+-------
+float
+    The value converted to a finite float.
+
+Raises
+------
+ValueError
+    "``name`` must be a real number" for a boolean or a non-real value, and
+    "``name`` must be finite" for a value whose float is infinite or NaN,
+    including an integer too large for a float.
+
+### Function `positive_real(name, value)`
+Return a finite real scalar that is greater than zero.
+
+Parameters
+----------
+name : str
+    Field name used in the refusal message.
+value : object
+    Candidate scalar.
+
+Returns
+-------
+float
+    The value converted to a positive finite float.
+
+Raises
+------
+ValueError
+    The refusals of :func:`finite_real`, and "``name`` must be greater than
+    zero" for zero or a negative value.
+
+### Function `positive_int(name, value)`
+Return a non-boolean integer that is greater than zero.
+
+Parameters
+----------
+name : str
+    Field name used in the refusal message.
+value : object
+    Candidate integer, Python or NumPy.
+
+Returns
+-------
+int
+    The value as a Python integer.
+
+Raises
+------
+ValueError
+    "``name`` must be a positive integer" for a boolean, a non-integer, zero
+    or a negative value.
+
+### Function `non_negative_index(name, value)`
+Return a non-boolean integer that is zero or greater.
+
+Parameters
+----------
+name : str
+    Field name used in the refusal message.
+value : object
+    Candidate index, Python or NumPy.
+
+Returns
+-------
+int
+    The value as a Python integer.
+
+Raises
+------
+ValueError
+    "``name`` must be a non-negative integer" for a boolean, a non-integer or
+    a negative value.
+
+---
+
 ## Module `bridges.dna_analysis`
 
 ### Class `CrossHybridizationChecker`

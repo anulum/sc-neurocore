@@ -10,34 +10,18 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
 
 from sc_neurocore.bridges.annealing_models import IsingModel
-
-
-def _finite(name: str, value: float) -> float:
-    """Return a finite float."""
-    numeric = float(value)
-    if not math.isfinite(numeric):
-        raise ValueError(f"{name} must be finite")
-    return numeric
-
-
-def _positive_duration(name: str, value: float) -> float:
-    """Return a finite positive duration."""
-    duration = _finite(name, value)
-    if duration <= 0.0:
-        raise ValueError(f"{name} must be greater than zero")
-    return duration
+from sc_neurocore.bridges.annealing_validation import finite_real, positive_real
 
 
 def _anneal_fraction(name: str, value: float) -> float:
     """Return an anneal fraction in the closed unit interval."""
-    fraction = _finite(name, value)
+    fraction = finite_real(name, value)
     if not 0.0 <= fraction <= 1.0:
         raise ValueError(f"{name} must be between zero and one")
     return fraction
@@ -52,7 +36,7 @@ class AnnealingSchedule:
 
     def linear(self, duration_us: float = 20.0) -> AnnealingSchedule:
         """Configure a standard linear anneal from zero to one."""
-        duration = _positive_duration("duration_us", duration_us)
+        duration = positive_real("duration_us", duration_us)
         self._points = [(0.0, 0.0), (duration, 1.0)]
         return self
 
@@ -64,9 +48,9 @@ class AnnealingSchedule:
         quench_time_us: float = 1.0,
     ) -> AnnealingSchedule:
         """Ramp, hold at an intermediate fraction, then quench."""
-        ramp = _positive_duration("ramp_time_us", ramp_time_us)
-        pause = _positive_duration("pause_duration_us", pause_duration_us)
-        quench = _positive_duration("quench_time_us", quench_time_us)
+        ramp = positive_real("ramp_time_us", ramp_time_us)
+        pause = positive_real("pause_duration_us", pause_duration_us)
+        quench = positive_real("quench_time_us", quench_time_us)
         fraction = _anneal_fraction("pause_at_s", pause_at_s)
         if fraction in {0.0, 1.0}:
             raise ValueError("pause_at_s must be strictly between zero and one")
@@ -91,9 +75,9 @@ class AnnealingSchedule:
         reverse_to = _anneal_fraction("reverse_to_s", reverse_to_s)
         if reverse_to >= initial:
             raise ValueError("reverse_to_s must be smaller than initial_s")
-        ramp = _positive_duration("ramp_time_us", ramp_time_us)
-        hold = _positive_duration("hold_time_us", hold_time_us)
-        forward = _positive_duration("forward_time_us", forward_time_us)
+        ramp = positive_real("ramp_time_us", ramp_time_us)
+        hold = positive_real("hold_time_us", hold_time_us)
+        forward = positive_real("forward_time_us", forward_time_us)
         self._points = [
             (0.0, initial),
             (ramp, reverse_to),
@@ -193,7 +177,7 @@ class SCPrecisionEncoder:
 
     def encode(self, sc_value: float) -> dict[int, int]:
         """Encode one finite SC value after clipping it to ``[0, 1]``."""
-        value = _finite("sc_value", sc_value)
+        value = finite_real("sc_value", sc_value)
         clipped = max(0.0, min(1.0, value))
         if self._encoding == "binary":
             level = int(round(clipped * (2**self._n_bits - 1)))

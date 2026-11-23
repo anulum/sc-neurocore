@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2372
+expected_file_count = 2376
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9532,3 +9532,19 @@ rationale = "Pin exact definition ownership for the integrate-and-fire and rate 
 [[file]]
 path = "tests/test_cosim_support_architecture_ownership_map_special.py"
 rationale = "Pin exact definition ownership for the map and special-model references."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_validation.py"
+rationale = "Document the shared annealing input-scalar checks and their refusal wording."
+
+[[file]]
+path = "tests/test_bridges/test_annealing_validation.py"
+rationale = "Hold every annealing input check to one admission table and one wording."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_time_to_solution.py"
+rationale = "Pin time-to-solution formulas, solver comparison and their input refusals."
+
+[[file]]
+path = "tests/test_bench_quantum_annealing_modularisation.py"
+rationale = "Exercise the annealing modularisation benchmark through its real command line."

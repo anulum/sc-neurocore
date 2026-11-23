@@ -10,13 +10,13 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Literal, cast
 
 from sc_neurocore.bridges import annealing_backends as backends
+from sc_neurocore.bridges.annealing_validation import finite_real, non_negative_index
 
 
 BackendChoice = Literal["auto", "python", "rust"]
@@ -27,21 +27,6 @@ def validate_backend_choice(backend: str) -> BackendChoice:
     if backend not in {"auto", "python", "rust"}:
         raise ValueError("backend must be 'auto', 'python', or 'rust'")
     return cast(BackendChoice, backend)
-
-
-def _require_finite(name: str, value: float) -> float:
-    """Return a finite float or raise a field-specific error."""
-    numeric = float(value)
-    if not math.isfinite(numeric):
-        raise ValueError(f"{name} must be finite")
-    return numeric
-
-
-def _require_index(name: str, value: object) -> int:
-    """Return a non-negative integer index."""
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"{name} must be a non-negative integer")
-    return value
 
 
 class ProblemType(Enum):
@@ -61,10 +46,10 @@ class QubitSpec:
 
     def __post_init__(self) -> None:
         """Validate the qubit index, label, and bias."""
-        self.index = _require_index("index", self.index)
+        self.index = non_negative_index("index", self.index)
         if not isinstance(self.label, str) or not self.label.strip():
             raise ValueError("label must be a non-empty string")
-        self.bias = _require_finite("bias", self.bias)
+        self.bias = finite_real("bias", self.bias)
 
 
 @dataclass
@@ -77,13 +62,13 @@ class CouplerSpec:
 
     def __post_init__(self) -> None:
         """Validate distinct endpoints and a finite strength."""
-        self.qubit_a = _require_index("qubit_a", self.qubit_a)
-        self.qubit_b = _require_index("qubit_b", self.qubit_b)
+        self.qubit_a = non_negative_index("qubit_a", self.qubit_a)
+        self.qubit_b = non_negative_index("qubit_b", self.qubit_b)
         if self.qubit_a == self.qubit_b:
             raise ValueError("coupler endpoints must be distinct")
         if self.qubit_a > self.qubit_b:
             self.qubit_a, self.qubit_b = self.qubit_b, self.qubit_a
-        self.strength = _require_finite("strength", self.strength)
+        self.strength = finite_real("strength", self.strength)
 
 
 @dataclass
@@ -102,26 +87,26 @@ class IsingModel:
         normalized_h: dict[int, float] = {}
         highest_index = -1
         for raw_index, raw_bias in self.h.items():
-            index = _require_index("h index", raw_index)
-            normalized_h[index] = _require_finite(f"h[{index}]", raw_bias)
+            index = non_negative_index("h index", raw_index)
+            normalized_h[index] = finite_real(f"h[{index}]", raw_bias)
             highest_index = max(highest_index, index)
 
         normalized_j: dict[tuple[int, int], float] = {}
         for raw_pair, raw_strength in self.J.items():
             if not isinstance(raw_pair, tuple) or len(raw_pair) != 2:
                 raise ValueError("J keys must be two-index tuples")
-            first = _require_index("J endpoint", raw_pair[0])
-            second = _require_index("J endpoint", raw_pair[1])
+            first = non_negative_index("J endpoint", raw_pair[0])
+            second = non_negative_index("J endpoint", raw_pair[1])
             if first == second:
                 raise ValueError("Ising couplings must connect distinct qubits")
             pair = (min(first, second), max(first, second))
-            strength = _require_finite(f"J[{pair}]", raw_strength)
+            strength = finite_real(f"J[{pair}]", raw_strength)
             normalized_j[pair] = normalized_j.get(pair, 0.0) + strength
             highest_index = max(highest_index, *pair)
 
         normalized_labels: dict[int, str] = {}
         for raw_index, label in self.qubit_labels.items():
-            index = _require_index("qubit label index", raw_index)
+            index = non_negative_index("qubit label index", raw_index)
             if not isinstance(label, str) or not label.strip():
                 raise ValueError("qubit labels must be non-empty strings")
             normalized_labels[index] = label
@@ -143,7 +128,7 @@ class IsingModel:
         self.h = normalized_h
         self.J = {pair: value for pair, value in normalized_j.items() if value != 0.0}
         self.qubit_labels = normalized_labels
-        self.offset = _require_finite("offset", self.offset)
+        self.offset = finite_real("offset", self.offset)
 
     def energy(
         self,
@@ -159,7 +144,7 @@ class IsingModel:
         """
         selected = validate_backend_choice(backend)
         for index, spin in spins.items():
-            _require_index("spin index", index)
+            non_negative_index("spin index", index)
             if spin not in {-1, 1}:
                 raise ValueError("spin values must be -1 or +1")
 
@@ -207,16 +192,16 @@ class QUBOModel:
         for raw_pair, raw_value in self.Q.items():
             if not isinstance(raw_pair, tuple) or len(raw_pair) != 2:
                 raise ValueError("Q keys must be two-index tuples")
-            first = _require_index("Q index", raw_pair[0])
-            second = _require_index("Q index", raw_pair[1])
+            first = non_negative_index("Q index", raw_pair[0])
+            second = non_negative_index("Q index", raw_pair[1])
             pair = (min(first, second), max(first, second))
-            value = _require_finite(f"Q[{pair}]", raw_value)
+            value = finite_real(f"Q[{pair}]", raw_value)
             normalized_q[pair] = normalized_q.get(pair, 0.0) + value
             highest_index = max(highest_index, *pair)
 
         normalized_labels: dict[int, str] = {}
         for raw_index, label in self.qubit_labels.items():
-            index = _require_index("qubit label index", raw_index)
+            index = non_negative_index("qubit label index", raw_index)
             if not isinstance(label, str) or not label.strip():
                 raise ValueError("qubit labels must be non-empty strings")
             normalized_labels[index] = label
@@ -237,12 +222,12 @@ class QUBOModel:
 
         self.Q = {pair: value for pair, value in normalized_q.items() if value != 0.0}
         self.qubit_labels = normalized_labels
-        self.offset = _require_finite("offset", self.offset)
+        self.offset = finite_real("offset", self.offset)
 
     def energy(self, bits: Mapping[int, int]) -> float:
         """Compute QUBO energy for a partial binary assignment."""
         for index, bit in bits.items():
-            _require_index("bit index", index)
+            non_negative_index("bit index", index)
             if bit not in {0, 1}:
                 raise ValueError("bit values must be 0 or 1")
         energy = self.offset

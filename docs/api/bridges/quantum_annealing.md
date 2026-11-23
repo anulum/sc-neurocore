@@ -17,21 +17,22 @@ quantum-circuit modules in `sc_neurocore.quantum`.
 ## Architecture
 
 The former 1,910-line implementation is now a 98-line compatibility façade and
-nine responsibility modules. Historical imports and pickle identities remain
+ten responsibility modules. Historical imports and pickle identities remain
 at `sc_neurocore.bridges.quantum_annealing`.
 
-| Module | Responsibility | Lines |
-|---|---|---:|
-| `quantum_annealing.py` | Stable exports, optional-backend observables, pickle identity | 98 |
-| `annealing_backends.py` | Optional native, `dimod`, and D-Wave adapters | 139 |
-| `annealing_models.py` | Validated Ising/QUBO value objects and backend selection | 276 |
-| `annealing_compilers.py` | SC adjacency, bitstream, and pruning compilers | 235 |
-| `annealing_solvers.py` | Python/native simulated annealing and D-Wave adapter | 267 |
-| `annealing_analysis.py` | Landscape, embedding, sample, and TTS analysis | 317 |
-| `annealing_hardware.py` | Hardware-capacity estimates and chain resolution | 203 |
-| `annealing_transforms.py` | Schedules, gauges, and SC precision encodings | 245 |
-| `annealing_io.py` | Deterministic export and text visualisation | 118 |
-| `annealing_decomposition.py` | Overlapping partitioning and reconstruction | 173 |
+| Module | Responsibility |
+|---|---|
+| `quantum_annealing.py` | Stable exports, optional-backend observables, pickle identity |
+| `annealing_backends.py` | Optional native, `dimod`, and D-Wave adapters |
+| `annealing_models.py` | Validated Ising/QUBO value objects and backend selection |
+| `annealing_compilers.py` | SC adjacency, bitstream, and pruning compilers |
+| `annealing_solvers.py` | Python/native simulated annealing and D-Wave adapter |
+| `annealing_analysis.py` | Landscape, embedding, sample, and TTS analysis |
+| `annealing_hardware.py` | Hardware-capacity estimates and chain resolution |
+| `annealing_transforms.py` | Schedules, gauges, and SC precision encodings |
+| `annealing_io.py` | Deterministic export and text visualisation |
+| `annealing_decomposition.py` | Overlapping partitioning and reconstruction |
+| `annealing_validation.py` | Input-scalar validation for the models, compilers, solvers, analysis, transforms and decomposition |
 
 The responsibility graph is acyclic. No responsibility module imports the
 façade, and an architecture test enforces the dependency direction and size

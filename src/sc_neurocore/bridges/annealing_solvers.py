@@ -23,26 +23,12 @@ from sc_neurocore.bridges.annealing_models import (
     QUBOModel,
     validate_backend_choice,
 )
+from sc_neurocore.bridges.annealing_validation import positive_int, positive_real
 
 
 _DEFAULT_CHAIN_STRENGTH = 2.0
 _DEFAULT_NUM_READS = 1000
 _DEFAULT_ANNEALING_TIME_US = 20.0
-
-
-def _positive_int(name: str, value: int) -> int:
-    """Return a positive integer or raise a field-specific error."""
-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{name} must be a positive integer")
-    return value
-
-
-def _positive_float(name: str, value: float) -> float:
-    """Return a finite positive float."""
-    numeric = float(value)
-    if not math.isfinite(numeric) or numeric <= 0.0:
-        raise ValueError(f"{name} must be finite and greater than zero")
-    return numeric
 
 
 def _finite_float(name: str, value: object) -> float:
@@ -78,9 +64,9 @@ class SimulatedAnnealer:
         backend: BackendChoice = "auto",
     ) -> None:
         """Configure a deterministic annealer."""
-        self._n_sweeps = _positive_int("n_sweeps", n_sweeps)
-        self._beta_start = _positive_float("beta_start", beta_start)
-        self._beta_end = _positive_float("beta_end", beta_end)
+        self._n_sweeps = positive_int("n_sweeps", n_sweeps)
+        self._beta_start = positive_real("beta_start", beta_start)
+        self._beta_end = positive_real("beta_end", beta_end)
         if self._beta_end < self._beta_start:
             raise ValueError("beta_end must be greater than or equal to beta_start")
         if isinstance(seed, bool) or not isinstance(seed, int):
@@ -95,7 +81,7 @@ class SimulatedAnnealer:
             raise ValueError("model must be an IsingModel")
         if model.n_qubits <= 0:
             raise ValueError("model must contain at least one qubit")
-        reads = _positive_int("num_reads", num_reads)
+        reads = positive_int("num_reads", num_reads)
         use_rust = self._backend == "rust" or (
             self._backend == "auto" and backends.HAS_RUST_QA and model.n_qubits > 10
         )
@@ -222,9 +208,9 @@ class DWaveInterface:
         annealing_time_us: float = _DEFAULT_ANNEALING_TIME_US,
     ) -> None:
         """Configure QPU sampling parameters."""
-        self._chain_strength = _positive_float("chain_strength", chain_strength)
-        self._num_reads = _positive_int("num_reads", num_reads)
-        self._annealing_time_us = _positive_float("annealing_time_us", annealing_time_us)
+        self._chain_strength = positive_real("chain_strength", chain_strength)
+        self._num_reads = positive_int("num_reads", num_reads)
+        self._annealing_time_us = positive_real("annealing_time_us", annealing_time_us)
 
     @property
     def available(self) -> bool:

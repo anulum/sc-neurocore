@@ -10,26 +10,16 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
 
 from sc_neurocore.bridges.annealing_models import IsingModel, QUBOModel
+from sc_neurocore.bridges.annealing_validation import finite_real, positive_real
 
 
 _ZERO_TOLERANCE = 1e-12
-
-
-def _finite_scalar(name: str, value: float, *, positive: bool = False) -> float:
-    """Validate a finite scalar and optionally require positivity."""
-    numeric = float(value)
-    if not math.isfinite(numeric):
-        raise ValueError(f"{name} must be finite")
-    if positive and numeric <= 0.0:
-        raise ValueError(f"{name} must be greater than zero")
-    return numeric
 
 
 def _square_matrix(name: str, value: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -65,8 +55,8 @@ class SCToIsing:
         field_scale: float = 0.1,
     ) -> None:
         """Configure finite coupling and local-field scales."""
-        self._coupling_scale = _finite_scalar("coupling_scale", coupling_scale)
-        self._field_scale = _finite_scalar("field_scale", field_scale)
+        self._coupling_scale = finite_real("coupling_scale", coupling_scale)
+        self._field_scale = finite_real("field_scale", field_scale)
 
     def compile(
         self,
@@ -117,7 +107,7 @@ class SCToQUBO:
 
     def __init__(self, penalty: float = 2.0) -> None:
         """Configure a positive constraint penalty."""
-        self._penalty = _finite_scalar("penalty", penalty, positive=True)
+        self._penalty = positive_real("penalty", penalty)
 
     def compile(
         self,
@@ -153,7 +143,7 @@ class SCBitstreamQUBO:
 
     def __init__(self, penalty: float = 5.0) -> None:
         """Configure a positive constraint penalty."""
-        self._penalty = _finite_scalar("penalty", penalty, positive=True)
+        self._penalty = positive_real("penalty", penalty)
 
     def weight_optimization(
         self,

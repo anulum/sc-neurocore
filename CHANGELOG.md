@@ -463,6 +463,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The quantum-annealing bridge validates its user-supplied scalars in one
+  module, `sc_neurocore.bridges.annealing_validation`, instead of six
+  private copies. Behaviour changes:
+  - Booleans and strings are refused for every real-valued input. Model
+    biases, couplings, QUBO entries and offsets, compiler scales and
+    penalties, solver temperatures, chain strength and anneal time, and
+    schedule durations and encoder values used to accept `True` as 1.0
+    and `"1.5"` as 1.5.
+  - NumPy integer and float scalars and `Fraction` are accepted wherever
+    a real number is expected, and NumPy integers wherever an integer
+    count or index is expected. The analysis inputs, counts and indices
+    refused them before.
+  - A refused type reads "<name> must be a real number" instead of
+    "<name> must be numeric"; non-finite values still read "must be
+    finite", and an integer too large for a float is reported as not
+    finite.
+- The quantum-annealing API page lists the new module and describes each
+  module by its responsibility rather than its line count.
+
 - Models can resolve their simulator from the installed package instead of
   importing their executor. `sc_neurocore.core.backends.resolve_simulator`
   reads the `sc_neurocore.simulators` entry points, and the alpha model is the

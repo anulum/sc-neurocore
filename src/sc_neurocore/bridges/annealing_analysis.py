@@ -22,16 +22,7 @@ from sc_neurocore.bridges.annealing_models import (
     IsingModel,
     validate_backend_choice,
 )
-
-
-def _finite(name: str, value: object) -> float:
-    """Return a finite numeric value."""
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{name} must be numeric")
-    numeric = float(value)
-    if not math.isfinite(numeric):
-        raise ValueError(f"{name} must be finite")
-    return numeric
+from sc_neurocore.bridges.annealing_validation import finite_real
 
 
 def _validated_sample(sample: Mapping[int, int], *, spins_only: bool = True) -> dict[int, int]:
@@ -113,7 +104,7 @@ class EnergyLandscape:
                 model.offset,
             )
             energies = [
-                _finite(f"energies[{index}]", value) for index, value in enumerate(raw_energies)
+                finite_real(f"energies[{index}]", value) for index, value in enumerate(raw_energies)
             ]
             if len(energies) != len(normalized_samples):
                 raise RuntimeError("native batch backend returned the wrong energy count")
@@ -191,13 +182,13 @@ class SampleAggregator:
             raise ValueError("samples and energies must have equal lengths")
         if not samples:
             return {"unique_samples": 0, "best": {}, "histogram": {}}
-        thermal = _finite("temperature", temperature)
+        thermal = finite_real("temperature", temperature)
         if thermal <= 0.0:
             raise ValueError("temperature must be greater than zero")
 
         normalized_samples = [_validated_sample(sample, spins_only=False) for sample in samples]
         normalized_energies = [
-            _finite(f"energies[{index}]", value) for index, value in enumerate(energies)
+            finite_real(f"energies[{index}]", value) for index, value in enumerate(energies)
         ]
         paired = sorted(zip(normalized_energies, normalized_samples), key=lambda item: item[0])
         best_energy, best_sample = paired[0]
@@ -236,9 +227,9 @@ class TTSAnalyzer:
         p_target: float = 0.99,
     ) -> dict[str, float]:
         """Compute the standard cumulative-success TTS metric."""
-        success = _finite("p_success", p_success)
-        target = _finite("p_target", p_target)
-        anneal_time = _finite("t_anneal_us", t_anneal_us)
+        success = finite_real("p_success", p_success)
+        target = finite_real("p_target", p_target)
+        anneal_time = finite_real("t_anneal_us", t_anneal_us)
         if not 0.0 <= success <= 1.0:
             raise ValueError("p_success must be between zero and one")
         if not 0.0 < target < 1.0:
@@ -283,12 +274,12 @@ class TTSAnalyzer:
         """Estimate single-run success from observed energies."""
         if isinstance(energies, (str, bytes)):
             raise ValueError("energies must be a sequence")
-        ground = _finite("ground_state_energy", ground_state_energy)
-        threshold = _finite("tolerance", tolerance)
+        ground = finite_real("ground_state_energy", ground_state_energy)
+        threshold = finite_real("tolerance", tolerance)
         if threshold <= 0.0:
             raise ValueError("tolerance must be greater than zero")
         normalized = [
-            _finite(f"energies[{index}]", energy) for index, energy in enumerate(energies)
+            finite_real(f"energies[{index}]", energy) for index, energy in enumerate(energies)
         ]
         ground_count = sum(1 for energy in normalized if abs(energy - ground) < threshold)
         success = ground_count / len(normalized) if normalized else 0.0
@@ -311,7 +302,7 @@ class TTSAnalyzer:
             comparison[name] = self.from_samples(
                 raw_energies,
                 ground_state_energy,
-                t_anneal_us=_finite("t_anneal_us", data.get("t_anneal_us", 20.0)),
+                t_anneal_us=finite_real("t_anneal_us", data.get("t_anneal_us", 20.0)),
                 tolerance=tolerance,
             )
         return comparison

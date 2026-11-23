@@ -47,6 +47,7 @@ _RESPONSIBILITY_MODULES = (
     "annealing_transforms",
     "annealing_io",
     "annealing_decomposition",
+    "annealing_validation",
 )
 # Top-level classes and functions each module defines. Public names have one
 # owner; the compatibility facade defines none.
@@ -61,8 +62,6 @@ _OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
     ),
     "annealing_models": (
         "validate_backend_choice",
-        "_require_finite",
-        "_require_index",
         "ProblemType",
         "QubitSpec",
         "CouplerSpec",
@@ -70,7 +69,6 @@ _OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
         "QUBOModel",
     ),
     "annealing_compilers": (
-        "_finite_scalar",
         "_square_matrix",
         "_labels",
         "SCToIsing",
@@ -78,15 +76,12 @@ _OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
         "SCBitstreamQUBO",
     ),
     "annealing_solvers": (
-        "_positive_int",
-        "_positive_float",
         "_finite_float",
         "_spin_sequence",
         "SimulatedAnnealer",
         "DWaveInterface",
     ),
     "annealing_analysis": (
-        "_finite",
         "_validated_sample",
         "EnergyLandscape",
         "EmbeddingAnalyzer",
@@ -100,8 +95,6 @@ _OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
         "ChainBreakResolver",
     ),
     "annealing_transforms": (
-        "_finite",
-        "_positive_duration",
         "_anneal_fraction",
         "AnnealingSchedule",
         "GaugeTransform",
@@ -115,9 +108,13 @@ _OWNED_DEFINITIONS: dict[str, tuple[str, ...]] = {
         "export_bqm",
         "visualize_ising",
     ),
-    "annealing_decomposition": (
-        "_positive_int",
-        "ProblemDecomposer",
+    "annealing_decomposition": ("ProblemDecomposer",),
+    "annealing_validation": (
+        "_is_boolean",
+        "finite_real",
+        "positive_real",
+        "positive_int",
+        "non_negative_index",
     ),
 }
 

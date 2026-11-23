@@ -15,13 +15,7 @@ from typing import Any
 
 from sc_neurocore.bridges.annealing_models import IsingModel
 from sc_neurocore.bridges.annealing_solvers import SimulatedAnnealer
-
-
-def _positive_int(name: str, value: int) -> int:
-    """Return a positive integer."""
-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{name} must be a positive integer")
-    return value
+from sc_neurocore.bridges.annealing_validation import positive_int
 
 
 class ProblemDecomposer:
@@ -34,13 +28,13 @@ class ProblemDecomposer:
         n_iterations: int = 10,
     ) -> None:
         """Configure maximum size, real overlap, and merge iterations."""
-        self._max_size = _positive_int("max_subproblem_size", max_subproblem_size)
+        self._max_size = positive_int("max_subproblem_size", max_subproblem_size)
         if isinstance(overlap, bool) or not isinstance(overlap, int) or overlap < 0:
             raise ValueError("overlap must be a non-negative integer")
         if overlap >= self._max_size:
             raise ValueError("overlap must be smaller than max_subproblem_size")
         self._overlap = overlap
-        self._n_iterations = _positive_int("n_iterations", n_iterations)
+        self._n_iterations = positive_int("n_iterations", n_iterations)
 
     def _partition_indices(self, model: IsingModel) -> list[list[int]]:
         """Return deterministic graph-aware partitions in global indices."""

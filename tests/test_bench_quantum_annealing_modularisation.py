@@ -83,12 +83,12 @@ def test_modularisation_benchmark_writes_path_free_comparison(tmp_path: Path) ->
     variants = payload["variants"]
     assert isinstance(variants, list)
     assert len(variants) == 2
+    live_digest, live_count = _current_source_digest()
     for variant in variants:
         assert isinstance(variant, dict)
         assert variant["local_path_recorded"] is False
         assert isinstance(variant["quantum_annealing_source_sha256"], str)
-        assert variant["quantum_annealing_source_file_count"] == 10
-    live_digest, live_count = _current_source_digest()
+        assert variant["quantum_annealing_source_file_count"] == live_count
     assert variants[1]["quantum_annealing_source_sha256"] == live_digest
     assert variants[1]["quantum_annealing_source_file_count"] == live_count
     results = payload["results"]

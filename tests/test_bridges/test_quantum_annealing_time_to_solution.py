@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — quantum-annealing time-to-solution contracts
 
+"""Pin time-to-solution formulas, solver comparison and their input refusals."""
+
 from __future__ import annotations
 
 import math
@@ -67,7 +69,7 @@ def test_tts_from_samples_and_comparison() -> None:
             lambda: TTSAnalyzer().compare_solvers(
                 {"x": {"energies": [], "t_anneal_us": True}}, 0.0
             ),
-            "numeric",
+            "must be a real number",
         ),
     ],
 )
