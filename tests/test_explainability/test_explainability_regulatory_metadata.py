@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+from sc_neurocore.explainability.explainability import (
+    ExplainabilityEngine,
+    RegulatoryMetadata,
+)
 
 
 class TestRegulatoryMetadata:
-    def test_default_fields(self):
+    """Regulatory metadata attached to verification."""
+
+    def test_default_fields(self) -> None:
+        """New metadata is Class II and pending review."""
         rm = RegulatoryMetadata()
         assert rm.device_class == "Class II"
         assert rm.review_status == "pending"
 
-    def test_verify_with_regulatory(self):
+    def test_verify_with_regulatory(self) -> None:
+        """Verification carries the given regulatory class."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20)
         reg = RegulatoryMetadata(

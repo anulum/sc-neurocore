@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    ExplanationDiff,
+    SpikeDecisionTree,
+)
 
 
 class TestExplanationDiff:
-    def test_identical_nodes_no_diffs(self):
+    """Differences between two decision explanations."""
+
+    def test_identical_nodes_no_diffs(self) -> None:
+        """Identical nodes have no differences."""
         tree = SpikeDecisionTree()
         bs = np.ones(8, dtype=np.uint8)
         a = tree.add_decision("n0", bs, threshold=4)
@@ -23,7 +30,8 @@ class TestExplanationDiff:
         diffs = ExplanationDiff.diff(a, b)
         assert diffs == []
 
-    def test_different_thresholds(self):
+    def test_different_thresholds(self) -> None:
+        """Different neurons and thresholds are reported."""
         tree = SpikeDecisionTree()
         bs = np.ones(8, dtype=np.uint8)
         a = tree.add_decision("n0", bs, threshold=4)
@@ -33,7 +41,8 @@ class TestExplanationDiff:
         assert "neuron_id" in fields_changed
         assert "threshold" in fields_changed
 
-    def test_different_decisions(self):
+    def test_different_decisions(self) -> None:
+        """Different decisions are reported."""
         tree = SpikeDecisionTree()
         a = tree.add_decision("n0", np.ones(8, dtype=np.uint8), threshold=4)
         b = tree.add_decision("n1", np.zeros(8, dtype=np.uint8), threshold=4)

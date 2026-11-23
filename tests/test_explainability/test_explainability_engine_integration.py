@@ -10,32 +10,47 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import pytest
+
+from sc_neurocore.bridges.local_llm import (
+    LocalLLMBridge,
+    LocalLLMConfig,
+    LocalLLMProvider,
+)
+from sc_neurocore.explainability.explainability import (
+    ExplainabilityEngine,
+)
 
 
 class TestEngineIntegration:
-    def test_temporal_tracking(self):
+    """The explainability engine's integrated trackers."""
+
+    def test_temporal_tracking(self) -> None:
+        """The engine records each timestep."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20, timestep=0)
         engine.explain_spike("n1", 32768, 64, 20, timestep=1)
         assert engine.temporal.num_timesteps == 2
 
-    def test_multi_layer_tracking(self):
+    def test_multi_layer_tracking(self) -> None:
+        """The engine records each layer."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20, layer_id="L1")
         engine.explain_spike("n1", 32768, 64, 20, layer_id="L2")
         assert len(engine.multi_layer.layer_ids) == 2
 
-    def test_symbolic_path_tracking(self):
+    def test_symbolic_path_tracking(self) -> None:
+        """The engine records the symbolic path."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20)
         assert engine.symbolic.length == 1
 
-    def test_explain_spike_with_local_llm(self, monkeypatch):
+    def test_explain_spike_with_local_llm(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A local model rewrites the base explanation of a spike."""
         engine = ExplainabilityEngine(seed=0xACE1)
         bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.CHAT_COMPLETIONS))
 
-        def fake_chat(user_prompt: str, **_kwargs):
+        def fake_chat(user_prompt: str, **_kwargs: object) -> object:
             assert "Base explanation:" in user_prompt
 
             class _Resp:
@@ -56,7 +71,8 @@ class TestEngineIntegration:
         lst = engine.symbolic.to_list()
         assert "popcount" in lst[0]["reason"]
 
-    def test_to_dict_has_all_fields(self):
+    def test_to_dict_has_all_fields(self) -> None:
+        """A decision node exports its SCC influence, margin and confidence."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike(
             "n0", 32768, 64, 20, scc=0.2, layer_id="L1", timestep=3, contributing_neurons=["src0"]

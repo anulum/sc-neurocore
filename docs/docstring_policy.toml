@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2680
+expected_file_count = 2697
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10764,3 +10764,71 @@ rationale = "Exercise the edge deployment suite: tinysc ports weight network int
 [[file]]
 path = "tests/test_edge/test_tinysc_ports_weights.py"
 rationale = "Exercise the edge deployment suite: tinysc ports weights."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_causal_attribution.py"
+rationale = "Exercise the explainability engine: causal attribution."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_decision_margin.py"
+rationale = "Exercise the explainability engine: decision margin."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_engine_integration.py"
+rationale = "Exercise the explainability engine: engine integration."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_explainability_engine.py"
+rationale = "Exercise the explainability engine: explainability engine."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_explanation_diff.py"
+rationale = "Exercise the explainability engine: explanation diff."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_formal_property_link.py"
+rationale = "Exercise the explainability engine: formal property link."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_lfsr_replay.py"
+rationale = "Exercise the explainability engine: lfsr replay."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_multi_layer_trace.py"
+rationale = "Exercise the explainability engine: multi layer trace."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_natural_language_explainer.py"
+rationale = "Exercise the explainability engine: natural language explainer."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_provenance_trace.py"
+rationale = "Exercise the explainability engine: provenance trace."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_regulatory_metadata.py"
+rationale = "Exercise the explainability engine: regulatory metadata."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_scc_influence.py"
+rationale = "Exercise the explainability engine: scc influence."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_sensitivity_analyzer.py"
+rationale = "Exercise the explainability engine: sensitivity analyzer."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_spike_decision_tree.py"
+rationale = "Exercise the explainability engine: spike decision tree."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_symbolic_path.py"
+rationale = "Exercise the explainability engine: symbolic path."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_temporal_window.py"
+rationale = "Exercise the explainability engine: temporal window."
+
+[[file]]
+path = "tests/test_explainability/test_explainability_tree_navigation.py"
+rationale = "Exercise the explainability engine: tree navigation."

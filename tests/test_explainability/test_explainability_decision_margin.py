@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    SpikeDecision,
+    SpikeDecisionTree,
+)
 
 
 class TestDecisionMargin:
-    def test_spike_margin_positive(self):
+    """Margins and confidence of spike decisions."""
+
+    def test_spike_margin_positive(self) -> None:
+        """A spike has a positive margin and confidence."""
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         node = tree.add_decision("n0", bs, threshold=80)
@@ -22,7 +29,8 @@ class TestDecisionMargin:
         assert m.margin == 20
         assert m.confidence > 0
 
-    def test_no_spike_margin_negative(self):
+    def test_no_spike_margin_negative(self) -> None:
+        """A silent neuron has a negative margin and positive confidence."""
         tree = SpikeDecisionTree()
         bs = np.zeros(100, dtype=np.uint8)
         bs[:30] = 1
@@ -31,7 +39,8 @@ class TestDecisionMargin:
         assert m.margin == -20
         assert m.confidence > 0
 
-    def test_exact_threshold(self):
+    def test_exact_threshold(self) -> None:
+        """A popcount at threshold spikes with a zero margin."""
         tree = SpikeDecisionTree()
         bs = np.zeros(100, dtype=np.uint8)
         bs[:50] = 1

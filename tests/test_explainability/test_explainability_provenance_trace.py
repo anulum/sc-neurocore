@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    ProvenanceTrace,
+)
 
 
 class TestProvenanceTrace:
-    def test_add_step(self):
+    """Hash-chained provenance steps."""
+
+    def test_add_step(self) -> None:
+        """Adding a step counts it."""
         trace = ProvenanceTrace()
         trace.add_step("input", "test data")
         assert trace.num_steps == 1
 
-    def test_finalize(self):
+    def test_finalize(self) -> None:
+        """Finalising completes the trace."""
         trace = ProvenanceTrace()
         trace.add_step("input", "data")
         assert not trace.is_complete
         trace.finalize()
         assert trace.is_complete
 
-    def test_chain_hash_deterministic(self):
+    def test_chain_hash_deterministic(self) -> None:
+        """The same steps give the same chain hash."""
         t1 = ProvenanceTrace()
         t1.add_step("input", "data")
         t1.add_step("encode", "encoded")
@@ -38,7 +46,8 @@ class TestProvenanceTrace:
         h2 = t2.chain_hash
         assert h1 == h2
 
-    def test_chain_hash_changes_on_tamper(self):
+    def test_chain_hash_changes_on_tamper(self) -> None:
+        """A tampered step changes the chain hash."""
         t1 = ProvenanceTrace()
         t1.add_step("input", "data")
         h1 = t1.chain_hash
@@ -48,7 +57,8 @@ class TestProvenanceTrace:
         h2 = t2.chain_hash
         assert h1 != h2
 
-    def test_to_list(self):
+    def test_to_list(self) -> None:
+        """Steps export with their stage and metadata."""
         trace = ProvenanceTrace()
         trace.add_step("input", "data", metadata={"key": "value"})
         lst = trace.to_list()
@@ -56,7 +66,8 @@ class TestProvenanceTrace:
         assert lst[0]["stage"] == "input"
         assert lst[0]["metadata"]["key"] == "value"
 
-    def test_data_hash_from_array(self):
+    def test_data_hash_from_array(self) -> None:
+        """An array step gets a short data hash."""
         trace = ProvenanceTrace()
         data = np.array([1, 0, 1], dtype=np.uint8)
         step = trace.add_step("encode", "bits", data=data)

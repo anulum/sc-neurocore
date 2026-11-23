@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 17 explainability test modules (`tests/test_explainability`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and type annotations and
+  are enrolled in the docstring policy. Their support module, left
+  without an importer, is deleted.
+
 - The 16 edge-deployment and tiny-SC-port test modules (`tests/test_edge`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and type annotations and

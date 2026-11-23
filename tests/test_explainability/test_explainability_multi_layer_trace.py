@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    MultiLayerTrace,
+    SpikeDecisionTree,
+)
 
 
 class TestMultiLayerTrace:
-    def test_add_and_layers(self):
+    """Spike traces across network layers."""
+
+    def test_add_and_layers(self) -> None:
+        """Added layers are listed."""
         mlt = MultiLayerTrace()
         tree = SpikeDecisionTree()
         n0 = tree.add_decision("n0", np.ones(8, dtype=np.uint8), 4, layer_id="L1")
@@ -24,7 +31,8 @@ class TestMultiLayerTrace:
         assert "L1" in mlt.layer_ids
         assert "L2" in mlt.layer_ids
 
-    def test_spikes_at_layer(self):
+    def test_spikes_at_layer(self) -> None:
+        """A layer reports its spikes and spike rate."""
         mlt = MultiLayerTrace()
         tree = SpikeDecisionTree()
         n0 = tree.add_decision("n0", np.ones(8, dtype=np.uint8), 4, layer_id="L1")
@@ -34,7 +42,8 @@ class TestMultiLayerTrace:
         assert mlt.spikes_at_layer("L1") == 1
         assert mlt.spike_rate_at_layer("L1") == 0.5
 
-    def test_propagation_path(self):
+    def test_propagation_path(self) -> None:
+        """The propagation path lists each layer with its rate."""
         mlt = MultiLayerTrace()
         tree = SpikeDecisionTree()
         for lid in ["L1", "L2", "L3"]:

@@ -10,11 +10,28 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import pytest
+
+import numpy as np
+from sc_neurocore.bridges.local_llm import (
+    LocalLLMBridge,
+    LocalLLMConfig,
+    LocalLLMProvider,
+)
+from sc_neurocore.explainability.explainability import (
+    CausalAttribution,
+    NaturalLanguageExplainer,
+    SensitivityResult,
+    SpikeDecision,
+    SpikeDecisionTree,
+)
 
 
 class TestNaturalLanguageExplainer:
-    def test_explain_spike(self):
+    """Plain-language explanations of spike decisions."""
+
+    def test_explain_spike(self) -> None:
+        """A spike is explained with the neuron and its SCC."""
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         node = tree.add_decision(
@@ -26,20 +43,23 @@ class TestNaturalLanguageExplainer:
         assert "SCC" in text
         assert "in_a" in text
 
-    def test_explain_no_spike(self):
+    def test_explain_no_spike(self) -> None:
+        """A silent neuron is explained as not firing."""
         tree = SpikeDecisionTree()
         bs = np.zeros(100, dtype=np.uint8)
         node = tree.add_decision("n0", bs, threshold=50)
         text = NaturalLanguageExplainer.explain_node(node)
         assert "NOT" in text
 
-    def test_explain_attribution(self):
+    def test_explain_attribution(self) -> None:
+        """An attribution names the output and its contributor."""
         attr = CausalAttribution("out", {"a": 80.0, "b": 20.0}, 100.0)
         text = NaturalLanguageExplainer.explain_attribution(attr)
         assert "out" in text
         assert "a" in text
 
-    def test_explain_sensitivity_robust(self):
+    def test_explain_sensitivity_robust(self) -> None:
+        """A decision no perturbation flips is called robust."""
         results = [
             SensitivityResult("n0", 50, 49, SpikeDecision.SPIKE, SpikeDecision.SPIKE, False),
             SensitivityResult("n0", 50, 51, SpikeDecision.SPIKE, SpikeDecision.SPIKE, False),
@@ -47,20 +67,22 @@ class TestNaturalLanguageExplainer:
         text = NaturalLanguageExplainer.explain_sensitivity(results)
         assert "robust" in text
 
-    def test_explain_sensitivity_flip(self):
+    def test_explain_sensitivity_flip(self) -> None:
+        """A decision a perturbation flips is called out."""
         results = [
             SensitivityResult("n0", 50, 51, SpikeDecision.SPIKE, SpikeDecision.NO_SPIKE, True),
         ]
         text = NaturalLanguageExplainer.explain_sensitivity(results)
         assert "flip" in text
 
-    def test_explain_node_with_local_llm(self, monkeypatch):
+    def test_explain_node_with_local_llm(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A local model rewrites a node's base explanation."""
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         node = tree.add_decision("n0", bs, threshold=50)
         bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.CHAT_COMPLETIONS))
 
-        def fake_chat(user_prompt: str, **_kwargs):
+        def fake_chat(user_prompt: str, **_kwargs: object) -> object:
             assert "Base explanation:" in user_prompt
 
             class _Resp:

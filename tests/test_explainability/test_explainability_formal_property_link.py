@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+from sc_neurocore.explainability.explainability import (
+    ExplainabilityEngine,
+    FormalPropertyLink,
+)
 
 
 class TestFormalPropertyLink:
-    def test_default_fields(self):
+    """Formal properties linked to explanations."""
+
+    def test_default_fields(self) -> None:
+        """A new property is unverified and uses SymbiYosys."""
         fp = FormalPropertyLink(property_name="no_metastability")
         assert fp.status == "unverified"
         assert fp.engine == "sby"
 
-    def test_verify_with_formal_props(self):
+    def test_verify_with_formal_props(self) -> None:
+        """Verification carries its formal properties and their status."""
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20)
         props = [

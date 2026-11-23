@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+from sc_neurocore.explainability.explainability import (
+    SpikeDecision,
+    SymbolicPath,
+)
 
 
 class TestSymbolicPath:
-    def test_add_and_length(self):
+    """The symbolic path of decisions."""
+
+    def test_add_and_length(self) -> None:
+        """Added steps are counted."""
         sp = SymbolicPath()
         sp.add("n0", SpikeDecision.SPIKE, "popcount(60) >= threshold(50)")
         sp.add("n1", SpikeDecision.NO_SPIKE, "popcount(30) < threshold(50)")
         assert sp.length == 2
 
-    def test_to_list(self):
+    def test_to_list(self) -> None:
+        """Steps export with their neuron, decision and reason."""
         sp = SymbolicPath()
         sp.add("n0", SpikeDecision.SPIKE, "popcount(60) >= threshold(50)")
         lst = sp.to_list()

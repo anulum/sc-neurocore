@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    SpikeDecisionTree,
+    TemporalWindow,
+)
 
 
 class TestTemporalWindow:
-    def test_add_and_query(self):
+    """Spike rates over timesteps."""
+
+    def test_add_and_query(self) -> None:
+        """Each timestep reports its spike rate."""
         tw = TemporalWindow()
         tree = SpikeDecisionTree()
         n0 = tree.add_decision("n0", np.ones(8, dtype=np.uint8), 4, timestep=0)
@@ -25,7 +32,8 @@ class TestTemporalWindow:
         assert tw.spike_rate_at(0) == 1.0
         assert tw.spike_rate_at(1) == 0.0
 
-    def test_peak_timestep(self):
+    def test_peak_timestep(self) -> None:
+        """The peak timestep has the highest rate."""
         tw = TemporalWindow()
         tree = SpikeDecisionTree()
         for t in range(3):
@@ -35,7 +43,8 @@ class TestTemporalWindow:
                 tw.add(n)
         assert tw.peak_timestep() == 1
 
-    def test_active_timesteps(self):
+    def test_active_timesteps(self) -> None:
+        """Active timesteps are listed in order."""
         tw = TemporalWindow()
         tree = SpikeDecisionTree()
         for t in [0, 5, 10]:
@@ -43,6 +52,7 @@ class TestTemporalWindow:
             tw.add(n)
         assert tw.active_timesteps() == [0, 5, 10]
 
-    def test_empty_timestep_rate_zero(self):
+    def test_empty_timestep_rate_zero(self) -> None:
+        """An empty timestep has a zero rate."""
         tw = TemporalWindow()
         assert tw.spike_rate_at(999) == 0.0

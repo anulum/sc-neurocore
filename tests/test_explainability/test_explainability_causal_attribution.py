@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from explainability_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explainability.explainability import (
+    CausalAttributor,
+    ExplainabilityEngine,
+    SpikeDecisionTree,
+)
 
 
 class TestCausalAttribution:
-    def test_basic_attribution(self):
+    """Causal attribution of a neuron's output to its inputs."""
+
+    def test_basic_attribution(self) -> None:
+        """The only active input gets the whole attribution."""
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         target = tree.add_decision("out", bs, threshold=50)
@@ -28,7 +36,8 @@ class TestCausalAttribution:
         assert attr.attributions["in1"] == 0.0
         assert attr.total_contribution == 100.0
 
-    def test_weighted_attribution(self):
+    def test_weighted_attribution(self) -> None:
+        """Weights shift the attribution to the weighted input."""
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         target = tree.add_decision("out", bs, threshold=50)
@@ -37,7 +46,8 @@ class TestCausalAttribution:
         attr = CausalAttributor.attribute(target, inputs, weights)
         assert attr.attributions["in0"] == 100.0
 
-    def test_top_contributors_sorted(self):
+    def test_top_contributors_sorted(self) -> None:
+        """Top contributors are sorted by contribution."""
         tree = SpikeDecisionTree()
         target = tree.add_decision("out", np.ones(8, dtype=np.uint8), 4)
         inputs = {
@@ -50,7 +60,8 @@ class TestCausalAttribution:
         assert top[0][0] == "a"
         assert top[0][1] > top[1][1]
 
-    def test_engine_attribute(self):
+    def test_engine_attribute(self) -> None:
+        """The engine attributes a positive total contribution."""
         engine = ExplainabilityEngine(seed=0xACE1)
         node = engine.explain_spike("n0", 32768, 64, 20)
         inputs = {"src0": np.ones(64, dtype=np.uint8)}
