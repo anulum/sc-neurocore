@@ -592,6 +592,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The quantum-cognition Rust compilation test builds its test binaries
+  in the test's own temporary directory instead of fixed names in the
+  shared `/tmp`, so concurrent runs cannot collide or run each other's
+  binary.
+
 - The notebooks `06_network_engine` and `07_identity_substrate` held
   their header and some text as CP1250 mojibake, so they still showed a
   `1998–2026` copyright line and broken dashes and arrows. Their text is
