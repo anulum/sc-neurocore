@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    bitstream_probability,
+    CommitmentScheme,
+    FederatedAggregator,
+    lfsr_encode,
+)
 
 
 class TestFederatedAggregator:
-    def test_majority_vote(self):
+    """Aggregating client bitstreams on the server."""
+
+    def test_majority_vote(self) -> None:
+        """Aggregated bits follow the clients' majority."""
         agg = FederatedAggregator(num_clients=3, bitstream_length=8)
         bs1 = [np.array([1, 1, 1, 0, 0, 0, 1, 0], dtype=np.uint8)]
         bs2 = [np.array([1, 1, 0, 0, 0, 1, 1, 0], dtype=np.uint8)]
@@ -23,7 +32,8 @@ class TestFederatedAggregator:
         assert result[0][0] == 1
         assert result[0][3] == 0
 
-    def test_aggregation_preserves_probability(self):
+    def test_aggregation_preserves_probability(self) -> None:
+        """Aggregating streams of 0.5 stays near 0.5."""
         rng = np.random.default_rng(42)
         agg = FederatedAggregator(num_clients=5, bitstream_length=1024)
         client_bs = []
@@ -34,7 +44,8 @@ class TestFederatedAggregator:
         p = bitstream_probability(result[0])
         assert abs(p - 0.5) < 0.1
 
-    def test_weighted_aggregation(self):
+    def test_weighted_aggregation(self) -> None:
+        """A heavily weighted client dominates the result."""
         agg = FederatedAggregator(num_clients=2, bitstream_length=8)
         bs1 = [np.ones(8, dtype=np.uint8)]  # all 1s
         bs2 = [np.zeros(8, dtype=np.uint8)]  # all 0s
@@ -42,7 +53,8 @@ class TestFederatedAggregator:
         result = agg.aggregate_bitstreams([bs1, bs2], weights=[0.9, 0.1])
         assert np.sum(result[0]) == 8  # client 0 dominates
 
-    def test_uniform_vs_weighted(self):
+    def test_uniform_vs_weighted(self) -> None:
+        """Uniform voting gives zeros; a heavy weight gives one client's ones."""
         agg = FederatedAggregator(num_clients=3, bitstream_length=8)
         bs1 = [np.ones(8, dtype=np.uint8)]
         bs2 = [np.zeros(8, dtype=np.uint8)]
@@ -54,7 +66,8 @@ class TestFederatedAggregator:
         weighted = agg.aggregate_bitstreams([bs1, bs2, bs3], weights=[0.8, 0.1, 0.1])
         assert np.sum(weighted[0]) == 8
 
-    def test_outlier_detection_normal(self):
+    def test_outlier_detection_normal(self) -> None:
+        """Similar clients raise no outlier."""
         agg = FederatedAggregator(num_clients=3, bitstream_length=128)
         rng = np.random.default_rng(42)
         similar = [
@@ -65,7 +78,8 @@ class TestFederatedAggregator:
         outliers = agg.detect_outliers(similar, threshold=0.1)
         assert not any(outliers)
 
-    def test_outlier_detection_catches_adversary(self):
+    def test_outlier_detection_catches_adversary(self) -> None:
+        """An opposing client is flagged as an outlier."""
         agg = FederatedAggregator(num_clients=3, bitstream_length=128)
         normal = lfsr_encode(0.5, 0xACE1, 128)
         adversary = np.ones(128, dtype=np.uint8)
@@ -75,12 +89,14 @@ class TestFederatedAggregator:
         )
         assert outliers[2] is True  # adversary flagged
 
-    def test_single_client_no_outlier(self):
+    def test_single_client_no_outlier(self) -> None:
+        """A lone client is never an outlier."""
         agg = FederatedAggregator(num_clients=1)
         outliers = agg.detect_outliers([[np.ones(10, dtype=np.uint8)]])
         assert outliers == [False]
 
-    def test_outlier_detection_zero_norm_client(self):
+    def test_outlier_detection_zero_norm_client(self) -> None:
+        """An all-zero update is flagged as an outlier."""
         # A client whose update is all zeros has zero norm, so its cosine
         # similarity is undefined and defined as 0 rather than dividing by zero;
         # below any positive threshold it is flagged as an outlier.
@@ -90,7 +106,8 @@ class TestFederatedAggregator:
         outliers = agg.detect_outliers([empty, active], threshold=0.1)
         assert outliers[0] is True
 
-    def test_verify_commitments_matches_and_rejects(self):
+    def test_verify_commitments_matches_and_rejects(self) -> None:
+        """A matching commitment verifies and a wrong one fails."""
         agg = FederatedAggregator(num_clients=2, bitstream_length=4)
         bs_a = [np.array([1, 0, 1, 1], dtype=np.uint8)]
         bs_b = [np.array([0, 1, 0, 0], dtype=np.uint8)]

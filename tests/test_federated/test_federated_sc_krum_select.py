@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    krum_select,
+)
 
 
 class TestKrumSelect:
-    def test_selects_central(self):
+    """Byzantine-robust Krum selection."""
+
+    def test_selects_central(self) -> None:
+        """Krum picks one of the two close vectors, not the outlier."""
         vecs = [
             np.array([0.0, 0.0]),
             np.array([0.1, 0.1]),
@@ -23,7 +29,8 @@ class TestKrumSelect:
         idx = krum_select(vecs, num_byzantine=1)
         assert idx in [0, 1]
 
-    def test_single_byzantine(self):
+    def test_single_byzantine(self) -> None:
+        """Krum picks an honest vector over the Byzantine one."""
         honest = [
             np.array([1.0, 1.0]) + np.random.default_rng(i).standard_normal(2) * 0.1
             for i in range(5)

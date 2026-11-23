@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2792
+expected_file_count = 2814
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11212,3 +11212,91 @@ rationale = "Exercise the twin synchronisation: twin session."
 [[file]]
 path = "tests/test_twinsync/test_twinsync_vector_clock.py"
 rationale = "Exercise the twin synchronisation: vector clock."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_adaptive_epsilon_scheduler.py"
+rationale = "Exercise the federated stochastic computing: adaptive epsilon scheduler."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_audit_log.py"
+rationale = "Exercise the federated stochastic computing: audit log."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_commitment_scheme.py"
+rationale = "Exercise the federated stochastic computing: commitment scheme."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_convergence_tracker.py"
+rationale = "Exercise the federated stochastic computing: convergence tracker."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_dp_certificate.py"
+rationale = "Exercise the federated stochastic computing: dp certificate."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_dp_mechanism.py"
+rationale = "Exercise the federated stochastic computing: dp mechanism."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_error_feedback.py"
+rationale = "Exercise the federated stochastic computing: error feedback."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_fed_prox.py"
+rationale = "Exercise the federated stochastic computing: fed prox."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_federated_aggregator.py"
+rationale = "Exercise the federated stochastic computing: federated aggregator."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_federated_client.py"
+rationale = "Exercise the federated stochastic computing: federated client."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_federated_round.py"
+rationale = "Exercise the federated stochastic computing: federated round."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_gradient_clipping.py"
+rationale = "Exercise the federated stochastic computing: gradient clipping."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_krum_select.py"
+rationale = "Exercise the federated stochastic computing: krum select."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_lfsr_encoder.py"
+rationale = "Exercise the federated stochastic computing: lfsr encoder."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_poisson_subsampling.py"
+rationale = "Exercise the federated stochastic computing: poisson subsampling."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_privacy_accountant.py"
+rationale = "Exercise the federated stochastic computing: privacy accountant."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_privacy_amplification.py"
+rationale = "Exercise the federated stochastic computing: privacy amplification."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_sc_gradient_encoder.py"
+rationale = "Exercise the federated stochastic computing: sc gradient encoder."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_secret_sharing.py"
+rationale = "Exercise the federated stochastic computing: secret sharing."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_sparsify_top_k.py"
+rationale = "Exercise the federated stochastic computing: sparsify top k."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_stochastic_quantize.py"
+rationale = "Exercise the federated stochastic computing: stochastic quantize."
+
+[[file]]
+path = "tests/test_federated/test_federated_sc_trimmed_mean.py"
+rationale = "Exercise the federated stochastic computing: trimmed mean."

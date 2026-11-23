@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    bitstream_probability,
+    lfsr_encode,
+    SecretShare,
+)
 
 
 class TestSecretSharing:
-    def test_split_and_reconstruct(self):
+    """XOR secret sharing of bitstreams."""
+
+    def test_split_and_reconstruct(self) -> None:
+        """Three shares reconstruct the original stream."""
         ss = SecretShare(num_parties=3)
         rng = np.random.default_rng(42)
         bs = lfsr_encode(0.5, 0xACE1, 128)
@@ -23,7 +31,8 @@ class TestSecretSharing:
         reconstructed = SecretShare.reconstruct(shares)
         assert np.array_equal(bs, reconstructed)
 
-    def test_individual_shares_random(self):
+    def test_individual_shares_random(self) -> None:
+        """Splitting runs; the assertion ends in or True and cannot fail."""
         ss = SecretShare(num_parties=3)
         rng = np.random.default_rng(42)
         bs = lfsr_encode(0.7, 0xACE1, 256)
@@ -32,14 +41,16 @@ class TestSecretSharing:
             p = bitstream_probability(share)
             assert abs(p - 0.7) > 0.01 or True
 
-    def test_verify_reconstruction(self):
+    def test_verify_reconstruction(self) -> None:
+        """The shares verify as reconstructing the stream."""
         ss = SecretShare(num_parties=5)
         rng = np.random.default_rng(42)
         bs = lfsr_encode(0.3, 0xACE1, 64)
         shares = ss.split(bs, rng)
         assert SecretShare.verify_reconstruction(bs, shares)
 
-    def test_two_party(self):
+    def test_two_party(self) -> None:
+        """Two shares reconstruct the original stream."""
         ss = SecretShare(num_parties=2)
         rng = np.random.default_rng(42)
         bs = np.array([1, 0, 1, 1, 0], dtype=np.uint8)

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    fedprox_gradient,
+)
 
 
 class TestFedProx:
-    def test_proximal_no_drift(self):
+    """The FedProx proximal gradient term."""
+
+    def test_proximal_no_drift(self) -> None:
+        """Equal local and global weights leave the gradient unchanged."""
         g = np.array([0.5, 0.3])
         w = np.array([1.0, 1.0])
         result = fedprox_gradient(g, w, w, mu=0.1)
         np.testing.assert_array_almost_equal(result, g)
 
-    def test_proximal_with_drift(self):
+    def test_proximal_with_drift(self) -> None:
+        """Drift adds mu times the weight difference."""
         g = np.array([0.5, 0.3])
         w_local = np.array([2.0, 2.0])
         w_global = np.array([1.0, 1.0])

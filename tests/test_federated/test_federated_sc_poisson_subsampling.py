@@ -10,25 +10,35 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    FederatedClient,
+    poisson_subsample,
+    SCGradientEncoder,
+)
 
 
 class TestPoissonSubsampling:
-    def test_always_returns_at_least_one(self):
+    """Poisson subsampling of clients."""
+
+    def test_always_returns_at_least_one(self) -> None:
+        """At least one client is always selected."""
         enc = SCGradientEncoder(bitstream_length=64)
         clients = [FederatedClient(client_id=i, encoder=enc) for i in range(5)]
         rng = np.random.default_rng(42)
         selected = poisson_subsample(clients, sampling_rate=0.01, rng=rng)
         assert len(selected) >= 1
 
-    def test_full_rate_selects_all(self):
+    def test_full_rate_selects_all(self) -> None:
+        """A rate of 1 selects every client."""
         enc = SCGradientEncoder(bitstream_length=64)
         clients = [FederatedClient(client_id=i, encoder=enc) for i in range(5)]
         rng = np.random.default_rng(42)
         selected = poisson_subsample(clients, sampling_rate=1.0, rng=rng)
         assert len(selected) == 5
 
-    def test_half_rate_reasonable(self):
+    def test_half_rate_reasonable(self) -> None:
+        """A rate of 0.5 selects between 20 and 80 of 100."""
         enc = SCGradientEncoder(bitstream_length=64)
         clients = [FederatedClient(client_id=i, encoder=enc) for i in range(100)]
         rng = np.random.default_rng(42)

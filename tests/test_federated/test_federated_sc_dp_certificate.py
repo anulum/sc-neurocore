@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+from sc_neurocore.federated.federated_sc import (
+    DPCertificate,
+    DPMechanism,
+    PrivacyAccountant,
+)
 
 
 class TestDPCertificate:
-    def test_from_accountant(self):
+    """Differential-privacy certificates for a run."""
+
+    def test_from_accountant(self) -> None:
+        """A certificate records the mechanism, rounds and delta."""
         acc = PrivacyAccountant(target_epsilon=10.0)
         dp = DPMechanism(epsilon=1.0)
         acc.consume_round(dp, 128)
@@ -23,7 +30,8 @@ class TestDPCertificate:
         assert cert.rounds == 1
         assert cert.delta == 1e-5
 
-    def test_to_dict(self):
+    def test_to_dict(self) -> None:
+        """The certificate dictionary names its mechanism and composition."""
         acc = PrivacyAccountant(target_epsilon=10.0)
         dp = DPMechanism(epsilon=1.0)
         acc.consume_round(dp, 128)
@@ -33,14 +41,16 @@ class TestDPCertificate:
         assert "compliant" in d
         assert d["composition_method"] == "renyi_dp"
 
-    def test_compliant_status(self):
+    def test_compliant_status(self) -> None:
+        """A run within its budget is compliant."""
         acc = PrivacyAccountant(target_epsilon=100.0)
         dp = DPMechanism(epsilon=1.0)
         acc.consume_round(dp, 64)
         cert = DPCertificate.from_accountant(acc, dp, 64)
         assert cert.is_compliant
 
-    def test_non_compliant_status(self):
+    def test_non_compliant_status(self) -> None:
+        """A run past a tiny budget is not compliant."""
         acc = PrivacyAccountant(target_epsilon=0.001)
         dp = DPMechanism(epsilon=1.0)
         for _ in range(100):

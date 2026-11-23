@@ -10,19 +10,30 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    AuditLog,
+    DPMechanism,
+    FederatedAggregator,
+    FederatedClient,
+    FederatedRound,
+    PrivacyAccountant,
+    SCGradientEncoder,
+)
 
 
 class TestFederatedRound:
+    """Running complete federated learning rounds."""
+
     def _make_round(
         self,
-        num_clients=3,
-        epsilon=10.0,
-        target_eps=1000.0,
-        clip_norm=0.0,
-        sampling_rate=1.0,
-        audit_log=None,
-    ):
+        num_clients: int = 3,
+        epsilon: float = 10.0,
+        target_eps: float = 1000.0,
+        clip_norm: float = 0.0,
+        sampling_rate: float = 1.0,
+        audit_log: AuditLog | None = None,
+    ) -> FederatedRound:
         enc = SCGradientEncoder(bitstream_length=128, dp=DPMechanism(epsilon=epsilon))
         clients = [FederatedClient(client_id=i, encoder=enc) for i in range(num_clients)]
         agg = FederatedAggregator(num_clients=num_clients, bitstream_length=128)
@@ -36,7 +47,8 @@ class TestFederatedRound:
             audit_log=audit_log,
         )
 
-    def test_single_round(self):
+    def test_single_round(self) -> None:
+        """One round returns an update per client."""
         rng = np.random.default_rng(42)
         fr = self._make_round()
         data = [rng.standard_normal((10, 3)) for _ in range(3)]
@@ -45,7 +57,8 @@ class TestFederatedRound:
         assert result is not None
         assert len(result) == 3
 
-    def test_multiple_rounds(self):
+    def test_multiple_rounds(self) -> None:
+        """Five rounds advance the round number to 5."""
         rng = np.random.default_rng(42)
         fr = self._make_round()
         for _ in range(5):
@@ -54,7 +67,8 @@ class TestFederatedRound:
             fr.run(data, labels)
         assert fr.round_number == 5
 
-    def test_budget_exhaustion_stops(self):
+    def test_budget_exhaustion_stops(self) -> None:
+        """An exhausted budget stops the round."""
         fr = self._make_round(target_eps=0.001)
         rng = np.random.default_rng(42)
         data = [rng.standard_normal((10, 3)) for _ in range(3)]
@@ -63,7 +77,8 @@ class TestFederatedRound:
         result = fr.run(data, labels)
         assert result is None
 
-    def test_status(self):
+    def test_status(self) -> None:
+        """The status names the round and the budget state."""
         fr = self._make_round()
         status = fr.status()
         assert "round" in status
@@ -73,7 +88,8 @@ class TestFederatedRound:
         assert "converged" in status
         assert "trend" in status
 
-    def test_convergence_tracking(self):
+    def test_convergence_tracking(self) -> None:
+        """A round records one gradient norm."""
         rng = np.random.default_rng(42)
         fr = self._make_round()
         data = [rng.standard_normal((10, 3)) for _ in range(3)]
@@ -81,7 +97,8 @@ class TestFederatedRound:
         fr.run(data, labels)
         assert len(fr.convergence.grad_norms) == 1
 
-    def test_gradient_clipping_active(self):
+    def test_gradient_clipping_active(self) -> None:
+        """A round with clipping completes."""
         rng = np.random.default_rng(42)
         fr = self._make_round(clip_norm=0.01)
         data = [rng.standard_normal((10, 3)) for _ in range(3)]
@@ -89,7 +106,8 @@ class TestFederatedRound:
         result = fr.run(data, labels)
         assert result is not None
 
-    def test_subsampling_round(self):
+    def test_subsampling_round(self) -> None:
+        """A round with subsampling completes."""
         rng = np.random.default_rng(42)
         fr = self._make_round(num_clients=10, sampling_rate=0.5)
         data = [rng.standard_normal((10, 3)) for _ in range(10)]
@@ -97,7 +115,8 @@ class TestFederatedRound:
         result = fr.run(data, labels)
         assert result is not None
 
-    def test_weighted_round(self):
+    def test_weighted_round(self) -> None:
+        """A weighted round returns an update per client."""
         rng = np.random.default_rng(42)
         fr = self._make_round(num_clients=3)
         data = [rng.standard_normal((10, 3)) for _ in range(3)]
@@ -106,7 +125,8 @@ class TestFederatedRound:
         assert result is not None
         assert len(result) == 3
 
-    def test_audit_log_integration(self):
+    def test_audit_log_integration(self) -> None:
+        """Two rounds are written to the audit log in order."""
         log = AuditLog()
         rng = np.random.default_rng(42)
         fr = self._make_round(audit_log=log)

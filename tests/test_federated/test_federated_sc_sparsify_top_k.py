@@ -10,29 +10,38 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    sparsify_topk,
+)
 
 
 class TestSparsifyTopK:
-    def test_top_k_selects_largest(self):
+    """Keeping the k largest gradient entries."""
+
+    def test_top_k_selects_largest(self) -> None:
+        """The mask keeps the two largest magnitudes."""
         g = np.array([0.1, -0.5, 0.3, -0.8, 0.2])
         sparse, mask = sparsify_topk(g, k=2)
         assert mask[1] == 1  # |-0.5| is 2nd largest
         assert mask[3] == 1  # |-0.8| is largest
         assert np.count_nonzero(mask) == 2
 
-    def test_sparse_preserves_values(self):
+    def test_sparse_preserves_values(self) -> None:
+        """Kept entries keep their values."""
         g = np.array([0.1, 0.5, 0.3])
         sparse, mask = sparsify_topk(g, k=1)
         idx = np.argmax(mask)
         assert sparse[idx] == g[idx]
 
-    def test_zero_entries(self):
+    def test_zero_entries(self) -> None:
+        """Only k entries remain non-zero."""
         g = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         sparse, mask = sparsify_topk(g, k=2)
         assert np.count_nonzero(sparse) == 2
 
-    def test_k_exceeds_length(self):
+    def test_k_exceeds_length(self) -> None:
+        """A k past the length keeps the whole gradient."""
         g = np.array([1.0, 2.0])
         sparse, mask = sparsify_topk(g, k=10)
         np.testing.assert_array_almost_equal(sparse, g)

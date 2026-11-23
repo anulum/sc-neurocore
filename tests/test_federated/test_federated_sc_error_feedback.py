@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    ErrorFeedback,
+)
 
 
 class TestErrorFeedback:
-    def test_initial_no_residual(self):
+    """Carrying the sparsification residual forward."""
+
+    def test_initial_no_residual(self) -> None:
+        """With no residual the gradient passes unchanged."""
         ef = ErrorFeedback()
         g = np.array([1.0, 2.0, 3.0])
         acc = ef.accumulate(g)
         np.testing.assert_array_almost_equal(acc, g)
 
-    def test_accumulates_residual(self):
+    def test_accumulates_residual(self) -> None:
+        """The dropped part of the last gradient is added back."""
         ef = ErrorFeedback()
         g1 = np.array([1.0, 2.0, 3.0])
         sparse = np.array([0.0, 2.0, 0.0])

@@ -10,21 +10,28 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+from sc_neurocore.federated.federated_sc import (
+    AuditLog,
+)
 
 
 class TestAuditLog:
-    def test_empty_log(self):
+    """The per-round privacy audit log."""
+
+    def test_empty_log(self) -> None:
+        """An empty log has no rounds and a maximum epsilon of 0."""
         log = AuditLog()
         assert log.total_rounds == 0
         assert log.max_epsilon == 0.0
 
-    def test_log_round(self):
+    def test_log_round(self) -> None:
+        """A logged round is counted."""
         log = AuditLog()
         log.log_round(round_number=1, num_active=5, epsilon_consumed=0.5, grad_norm=0.01)
         assert log.total_rounds == 1
 
-    def test_to_list(self):
+    def test_to_list(self) -> None:
+        """The log lists its rounds in order with their epsilon."""
         log = AuditLog()
         log.log_round(round_number=1, num_active=5, epsilon_consumed=0.5, grad_norm=0.01)
         log.log_round(round_number=2, num_active=3, epsilon_consumed=1.0, grad_norm=0.02)
@@ -33,7 +40,8 @@ class TestAuditLog:
         assert entries[0]["round"] == 1
         assert entries[1]["epsilon"] == 1.0
 
-    def test_max_epsilon(self):
+    def test_max_epsilon(self) -> None:
+        """The log reports the largest epsilon logged."""
         log = AuditLog()
         log.log_round(1, 5, 0.5, 0.01)
         log.log_round(2, 5, 1.5, 0.01)

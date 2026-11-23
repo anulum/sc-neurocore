@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+from sc_neurocore.federated.federated_sc import (
+    amplified_epsilon,
+)
 
 
 class TestPrivacyAmplification:
-    def test_full_sampling_no_amplification(self):
+    """Privacy amplification by subsampling."""
+
+    def test_full_sampling_no_amplification(self) -> None:
+        """Sampling everyone leaves epsilon unchanged."""
         assert amplified_epsilon(1.0, 1.0) == 1.0
 
-    def test_subsampling_reduces_epsilon(self):
+    def test_subsampling_reduces_epsilon(self) -> None:
+        """Subsampling lowers epsilon."""
         amp = amplified_epsilon(1.0, 0.1)
         assert amp < 1.0
 
-    def test_zero_sampling(self):
+    def test_zero_sampling(self) -> None:
+        """Sampling no one gives an epsilon of 0."""
         assert amplified_epsilon(1.0, 0.0) == 0.0
 
-    def test_monotonic_in_rate(self):
+    def test_monotonic_in_rate(self) -> None:
+        """Epsilon grows with the sampling rate."""
         a = amplified_epsilon(2.0, 0.1)
         b = amplified_epsilon(2.0, 0.5)
         c = amplified_epsilon(2.0, 1.0)

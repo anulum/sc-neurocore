@@ -10,31 +10,40 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+from sc_neurocore.federated.federated_sc import (
+    AdaptiveEpsilonScheduler,
+)
 
 
 class TestAdaptiveEpsilonScheduler:
-    def test_initial_epsilon(self):
+    """Scheduling the privacy budget per round."""
+
+    def test_initial_epsilon(self) -> None:
+        """The schedule starts at the base epsilon."""
         sched = AdaptiveEpsilonScheduler(base_epsilon=2.0)
         assert sched.current_epsilon == 2.0
 
-    def test_decay_on_convergence(self):
+    def test_decay_on_convergence(self) -> None:
+        """A converging step halves epsilon from 2 to 1."""
         sched = AdaptiveEpsilonScheduler(base_epsilon=2.0, decay_rate=0.5)
         eps = sched.step(converging=True)
         assert eps == 1.0
 
-    def test_increase_on_divergence(self):
+    def test_increase_on_divergence(self) -> None:
+        """A diverging step doubles epsilon from 0.5 to 1."""
         sched = AdaptiveEpsilonScheduler(base_epsilon=2.0, decay_rate=0.5)
         sched.current_epsilon = 0.5
         eps = sched.step(converging=False)
         assert eps == 1.0
 
-    def test_min_epsilon_floor(self):
+    def test_min_epsilon_floor(self) -> None:
+        """A steep decay stops at the minimum epsilon."""
         sched = AdaptiveEpsilonScheduler(base_epsilon=1.0, decay_rate=0.01, min_epsilon=0.5)
         eps = sched.step(converging=True)
         assert eps >= 0.5
 
-    def test_max_epsilon_cap(self):
+    def test_max_epsilon_cap(self) -> None:
+        """Growth stops at the base epsilon."""
         sched = AdaptiveEpsilonScheduler(base_epsilon=2.0, decay_rate=0.5)
         sched.current_epsilon = 1.5
         eps = sched.step(converging=False)

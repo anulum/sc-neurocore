@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    DPMechanism,
+    FederatedClient,
+    SCGradientEncoder,
+)
 
 
 class TestFederatedClient:
-    def test_local_train(self):
+    """Local training and encoding on a client."""
+
+    def test_local_train(self) -> None:
+        """Local training returns one gradient per parameter."""
         enc = SCGradientEncoder(bitstream_length=128, dp=DPMechanism(epsilon=2.0))
         client = FederatedClient(client_id=0, encoder=enc)
         data = np.random.default_rng(42).standard_normal((20, 5))
@@ -22,7 +30,8 @@ class TestFederatedClient:
         grads = client.local_train(data, labels)
         assert len(grads) == 5
 
-    def test_encode_gradients(self):
+    def test_encode_gradients(self) -> None:
+        """Encoding gives streams, a digest and the gradient range."""
         enc = SCGradientEncoder(bitstream_length=128, dp=DPMechanism(epsilon=2.0))
         client = FederatedClient(client_id=1, encoder=enc)
         grads = np.array([0.1, -0.2, 0.3])
@@ -31,7 +40,8 @@ class TestFederatedClient:
         assert len(commitment) == 64
         assert g_min <= g_max
 
-    def test_deterministic_by_client_id(self):
+    def test_deterministic_by_client_id(self) -> None:
+        """Two clients encode the same gradient differently."""
         enc = SCGradientEncoder(bitstream_length=128, dp=DPMechanism(epsilon=5.0))
         c1 = FederatedClient(client_id=0, encoder=enc)
         c2 = FederatedClient(client_id=1, encoder=enc)

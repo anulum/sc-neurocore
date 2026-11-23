@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from federated_sc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.federated.federated_sc import (
+    trimmed_mean,
+)
 
 
 class TestTrimmedMean:
-    def test_removes_extremes(self):
+    """The trimmed mean of client updates."""
+
+    def test_removes_extremes(self) -> None:
+        """Trimming removes the outlying updates."""
         vecs = [
             np.array([1.0, 1.0]),
             np.array([1.1, 0.9]),
@@ -26,12 +32,14 @@ class TestTrimmedMean:
         assert abs(result[0] - 1.0) < 0.2
         assert abs(result[1] - 1.0) < 0.2
 
-    def test_matches_mean_without_trimming(self):
+    def test_matches_mean_without_trimming(self) -> None:
+        """No trimming gives the plain mean."""
         vecs = [np.array([1.0, 2.0]), np.array([3.0, 4.0]), np.array([5.0, 6.0])]
         result = trimmed_mean(vecs, trim_fraction=0.0)
         np.testing.assert_array_almost_equal(result, np.array([3.0, 4.0]))
 
-    def test_over_trimming_falls_back_to_full_mean(self):
+    def test_over_trimming_falls_back_to_full_mean(self) -> None:
+        """Trimming too many falls back to the full mean."""
         # With two clients the minimum trim of one from each end removes every
         # row, so the aggregator falls back to the untrimmed mean rather than
         # averaging an empty slice.
