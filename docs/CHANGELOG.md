@@ -1251,6 +1251,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The Bioware architecture tests no longer cap line counts: 300 per source
+  and test file, 350 for the benchmark and 200 for its probe. They now hold
+  the responsibility the caps stood for:
+  - each responsibility module defines exactly the top-level names of its
+    declared concern, and no name is defined twice;
+  - every test and support file names the module whose concern it covers,
+    except the two package-wide ones.
+  The benchmark and probe caps are removed. The existing source-binding test
+  already holds them to their sources.
+
 - Tests that hold a contract about a CI job read it through
   `tools/ci_workflow_inventory.py`, which finds the job, its workflow's text
   and its workflow-level environment in whichever CI workflow declares it, and

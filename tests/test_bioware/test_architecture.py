@@ -111,21 +111,126 @@ def test_established_pickle_paths_remain_stable() -> None:
         assert pickle.loads(pickle.dumps(definition)) is definition
 
 
-def test_source_tests_and_benchmarks_remain_responsibility_sized() -> None:
-    """Sources, tests, the benchmark and its probe stay within their line ceilings."""
-    source_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in SOURCE_DIR.glob("*.py")
-    }
-    test_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in TEST_DIR.glob("*.py")
-    }
+# The concern of each responsibility module, as the top-level classes and functions it owns.
+# A new definition is placed by deciding which concern it belongs to, then listing it here.
+OWNED_DEFINITIONS: dict[str, frozenset[str]] = {
+    "bioware_acquisition.py": frozenset(
+        {
+            "ArtifactRejector",
+            "SpikeDetector",
+            "SpikeSorter",
+        }
+    ),
+    "bioware_analysis.py": frozenset(
+        {
+            "CultureHealth",
+            "LFPBand",
+            "LatencyBudget",
+            "NetworkBurst",
+            "detect_network_bursts",
+            "extract_lfp_power",
+        }
+    ),
+    "bioware_audit.py": frozenset(
+        {
+            "BioAuditEntry",
+            "BioAuditLog",
+        }
+    ),
+    "bioware_contracts.py": frozenset(
+        {
+            "AEREvent",
+            "BioHybridFrameResult",
+            "DetectedSpike",
+            "MEAConfig",
+            "MEALayout",
+            "OptogeneticPulse",
+            "StimProtocol",
+        }
+    ),
+    "bioware_encoding.py": frozenset(
+        {
+            "AERToSCConverter",
+            "MEAToAERTranscoder",
+            "SCToOptoEncoder",
+            "decode_bitstream_rate",
+        }
+    ),
+    "bioware_experiment.py": frozenset(
+        {
+            "MultiWellPlate",
+            "PharmModel",
+            "WellConfig",
+            "_clone_spike",
+            "_quantile_indices",
+        }
+    ),
+    "bioware_fitness.py": frozenset(
+        {
+            "_mea_response_latency_ms",
+            "mea_fitness_hook",
+        }
+    ),
+    "bioware_plasticity.py": frozenset(
+        {
+            "BCMPlasticity",
+            "BiologicalSTDP",
+            "HomeostaticPlasticity",
+        }
+    ),
+    "bioware_session.py": frozenset(
+        {
+            "BioHybridSession",
+        }
+    ),
+    "bioware_validation.py": frozenset(
+        {
+            "require_finite",
+            "require_nonnegative",
+            "require_nonnegative_int",
+            "require_positive",
+            "require_positive_int",
+            "validate_binary_bitstream",
+            "validate_voltage_matrix",
+        }
+    ),
+}
 
-    assert max(source_sizes.values()) <= 300, source_sizes
-    assert max(test_sizes.values()) <= 300, test_sizes
-    assert len(BENCHMARK_PATH.read_text(encoding="utf-8").splitlines()) <= 350
-    assert len(PROBE_PATH.read_text(encoding="utf-8").splitlines()) <= 200
+# Test files that cover the package as a whole rather than one responsibility module.
+CROSS_CUTTING_TESTS = frozenset({"test_architecture.py", "test_edge_cases.py"})
+
+
+def test_each_responsibility_module_owns_its_declared_concern() -> None:
+    """Each responsibility module defines exactly its declared names, and none is defined twice."""
+    paths = {path.name: path for path in SOURCE_DIR.glob("bioware_*.py")}
+    assert set(paths) == set(OWNED_DEFINITIONS)
+    owner: dict[str, str] = {}
+    for name, declared in OWNED_DEFINITIONS.items():
+        tree = _tree(paths[name])
+        kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+        defined = {node.name for node in tree.body if isinstance(node, kinds)}
+        assert defined == declared, name
+        for definition in declared:
+            assert definition not in owner, (
+                f"{definition} is defined in {owner.get(definition)} and {name}"
+            )
+            owner[definition] = name
+
+
+def test_each_test_file_belongs_to_one_responsibility_module() -> None:
+    """Every Bioware test and support file names the module whose concern it covers."""
+    concerns = sorted(
+        (name.removeprefix("bioware_").removesuffix(".py") for name in OWNED_DEFINITIONS),
+        key=len,
+        reverse=True,
+    )
+    for path in TEST_DIR.glob("*.py"):
+        if path.name == "__init__.py" or path.name in CROSS_CUTTING_TESTS:
+            continue
+        stem = path.stem.removeprefix("test_")
+        assert any(stem == concern or stem.startswith(f"{concern}_") for concern in concerns), (
+            path.name
+        )
 
 
 def test_benchmark_evidence_is_source_bound_and_byte_identical() -> None:
