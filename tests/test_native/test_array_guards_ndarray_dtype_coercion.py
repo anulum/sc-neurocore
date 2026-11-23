@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from array_guards_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore._native.array_guards import (
+    require_c_contiguous,
+)
 
 
 class TestNdarrayDtypeCoercion:
-    def test_wrong_dtype_triggers_astype(self):
+    """Dtype casting of contiguous arrays by the guard."""
+
+    def test_wrong_dtype_triggers_astype(self) -> None:
+        """A mismatched dtype is cast into a new contiguous array."""
         arr = np.arange(8, dtype=np.int64)
         out = require_c_contiguous(arr, "x", np.uint8)
         assert out is not arr, "dtype mismatch must cast"
@@ -22,13 +28,14 @@ class TestNdarrayDtypeCoercion:
         assert out.flags["C_CONTIGUOUS"]
         np.testing.assert_array_equal(out, np.arange(8, dtype=np.uint8))
 
-    def test_wrong_dtype_preserves_values(self):
+    def test_wrong_dtype_preserves_values(self) -> None:
+        """Casting keeps the array's values."""
         arr = np.array([1.0, 2.0, 3.0], dtype=np.float64)
         out = require_c_contiguous(arr, "x", np.float32)
         assert out.dtype == np.float32
         np.testing.assert_allclose(out, np.array([1.0, 2.0, 3.0], dtype=np.float32))
 
-    def test_dtype_alias_np_dtype_object(self):
+    def test_dtype_alias_np_dtype_object(self) -> None:
         """``dtype`` parameter accepts both np.generic subclasses and np.dtype instances."""
         arr = np.zeros(4, dtype=np.uint8)
         out_type = require_c_contiguous(arr, "x", np.uint8)

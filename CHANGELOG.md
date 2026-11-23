@@ -1314,6 +1314,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The ten native array-guard and core-engine-bridge test modules
+  (`tests/test_native`) import their names explicitly instead of
+  through a suppressed star import, gain their missing module and test
+  docstrings and type annotations and are enrolled in the docstring
+  policy. The array-guard support module, left without an importer, is
+  deleted.
+
 - The 11 BCI-studio and predictive-coding test modules
   (`tests/test_bci`, `tests/test_neuro_symbolic`) import their names
   explicitly instead of through a suppressed star import, gain their

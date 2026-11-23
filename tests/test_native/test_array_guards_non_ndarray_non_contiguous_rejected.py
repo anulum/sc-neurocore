@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from array_guards_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+import pytest
+from sc_neurocore._native.array_guards import (
+    require_c_contiguous,
+)
 
 
 class TestNonNdarrayNonContiguousRejected:
@@ -21,18 +27,22 @@ class TestNonNdarrayNonContiguousRejected:
     ``__array__`` that returns a strided view bypasses that guarantee.
     """
 
-    def test_array_protocol_non_contiguous_raises(self):
+    def test_array_protocol_non_contiguous_raises(self) -> None:
+        """A producer that returns a strided view is refused."""
+
         class NonContigProducer:
-            def __array__(self, dtype=None, copy=None):
+            def __array__(self, dtype: object = None, copy: object = None) -> np.ndarray[Any, Any]:
                 base = np.arange(20, dtype=np.uint8)
                 return base[::2]
 
         with pytest.raises(ValueError, match=r"must be C-contiguous"):
             require_c_contiguous(NonContigProducer(), "producer")
 
-    def test_array_protocol_unaligned_raises(self):
+    def test_array_protocol_unaligned_raises(self) -> None:
+        """A producer that returns an unaligned view is refused."""
+
         class UnalignedProducer:
-            def __array__(self, dtype=None, copy=None):
+            def __array__(self, dtype: object = None, copy: object = None) -> np.ndarray[Any, Any]:
                 raw = np.zeros(17, dtype=np.uint8)
                 return np.ndarray(shape=(4,), dtype=np.float32, buffer=raw.data, offset=1)
 

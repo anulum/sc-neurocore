@@ -10,35 +10,45 @@
 
 from __future__ import annotations
 
-from array_guards_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore._native.array_guards import (
+    require_c_contiguous,
+)
 
 
 class TestNonNdarrayConversion:
-    def test_python_list_converted_and_contiguous(self):
+    """Conversion of Python sequences into contiguous arrays."""
+
+    def test_python_list_converted_and_contiguous(self) -> None:
+        """A list becomes a contiguous array of the requested dtype."""
         out = require_c_contiguous([1, 2, 3, 4], "x", np.uint8)
         assert isinstance(out, np.ndarray)
         assert out.dtype == np.uint8
         assert out.flags["C_CONTIGUOUS"]
         np.testing.assert_array_equal(out, [1, 2, 3, 4])
 
-    def test_python_tuple_converted(self):
+    def test_python_tuple_converted(self) -> None:
+        """A tuple becomes an array of the requested dtype."""
         out = require_c_contiguous((10, 20, 30), "x", np.int32)
         assert isinstance(out, np.ndarray)
         assert out.dtype == np.int32
         np.testing.assert_array_equal(out, [10, 20, 30])
 
-    def test_nested_list_converted_2d(self):
+    def test_nested_list_converted_2d(self) -> None:
+        """A nested list becomes a contiguous matrix."""
         out = require_c_contiguous([[1, 2], [3, 4]], "mat", np.float32)
         assert out.shape == (2, 2)
         assert out.dtype == np.float32
         assert out.flags["C_CONTIGUOUS"]
 
-    def test_list_no_dtype_keeps_numpy_default(self):
+    def test_list_no_dtype_keeps_numpy_default(self) -> None:
+        """Without a requested dtype a list keeps NumPy's default dtype."""
         out = require_c_contiguous([1, 2, 3], "x")
         assert isinstance(out, np.ndarray)
         assert out.flags["C_CONTIGUOUS"]
 
-    def test_empty_list_converts_to_empty_array(self):
+    def test_empty_list_converts_to_empty_array(self) -> None:
+        """An empty list becomes an empty array of the requested dtype."""
         out = require_c_contiguous([], "empty", np.uint8)
         assert isinstance(out, np.ndarray)
         assert out.size == 0

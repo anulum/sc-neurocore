@@ -6,9 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (native_delegation) from former test_core_engine_bridge.py
 
+"""Delegation from the core-engine bridge to a loaded native library."""
+
 from __future__ import annotations
 
-from core_engine_bridge_support import *  # noqa: F403
+import ctypes as ct
+import numpy as np
+import pytest
+from core_engine_bridge_support import (
+    _FakeCoreLib,
+)
+from sc_neurocore._native import (
+    core_engine_bridge as ceb,
+)
+from typing import (
+    cast,
+)
 
 
 def test_native_paths_delegate_to_loaded_library() -> None:

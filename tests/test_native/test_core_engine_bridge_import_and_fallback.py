@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (import_and_fallback) from former test_core_engine_bridge.py
 
+"""Import failure and Python fallbacks of the core-engine bridge."""
+
 from __future__ import annotations
 
-from core_engine_bridge_support import *  # noqa: F403
+import ctypes as ct
+import numpy as np
+import pytest
+import runpy
+from core_engine_bridge_support import (
+    _FakeCoreLib,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore._native import (
+    core_engine_bridge as ceb,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 def test_import_time_oserror_keeps_python_fallback(monkeypatch: pytest.MonkeyPatch) -> None:

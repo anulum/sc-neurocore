@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from array_guards_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore._native.array_guards import (
+    require_c_contiguous,
+)
 
 
 class TestAlignmentEnforcement:
-    def test_unaligned_ndarray_raises(self):
-        """
+    """Alignment checks of the C-contiguity guard."""
+
+    def test_unaligned_ndarray_raises(self) -> None:
+        """An unaligned float view is refused.
+
         Construct a byte buffer with a deliberate 1-byte offset so the
         float32 view is not 4-byte aligned. NumPy uses `buffer=` with a
         carefully sized byte buffer to produce an unaligned view.

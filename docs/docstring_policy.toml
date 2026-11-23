@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2546
+expected_file_count = 2556
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10228,3 +10228,43 @@ rationale = "Exercise the neuro symbolic suite: predictive coding symbol encoder
 [[file]]
 path = "tests/test_neuro_symbolic/test_predictive_coding_verifiable_inference.py"
 rationale = "Exercise the neuro symbolic suite: predictive coding verifiable inference."
+
+[[file]]
+path = "tests/test_native/test_array_guards_alignment_enforcement.py"
+rationale = "Exercise the native suite: array guards alignment enforcement."
+
+[[file]]
+path = "tests/test_native/test_array_guards_integration_bytes.py"
+rationale = "Exercise the native suite: array guards integration bytes."
+
+[[file]]
+path = "tests/test_native/test_array_guards_ndarray_dtype_coercion.py"
+rationale = "Exercise the native suite: array guards ndarray dtype coercion."
+
+[[file]]
+path = "tests/test_native/test_array_guards_ndarray_happy_path.py"
+rationale = "Exercise the native suite: array guards ndarray happy path."
+
+[[file]]
+path = "tests/test_native/test_array_guards_ndarray_non_contiguous_rejected.py"
+rationale = "Exercise the native suite: array guards ndarray non contiguous rejected."
+
+[[file]]
+path = "tests/test_native/test_array_guards_non_ndarray_conversion.py"
+rationale = "Exercise the native suite: array guards non ndarray conversion."
+
+[[file]]
+path = "tests/test_native/test_array_guards_non_ndarray_non_contiguous_rejected.py"
+rationale = "Exercise the native suite: array guards non ndarray non contiguous rejected."
+
+[[file]]
+path = "tests/test_native/test_core_engine_bridge_import_and_fallback.py"
+rationale = "Exercise the native suite: core engine bridge import and fallback."
+
+[[file]]
+path = "tests/test_native/test_core_engine_bridge_native_delegation.py"
+rationale = "Exercise the native suite: core engine bridge native delegation."
+
+[[file]]
+path = "tests/test_native/test_core_engine_bridge_rejects.py"
+rationale = "Exercise the native suite: core engine bridge rejects."

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from array_guards_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore._native.array_guards import (
+    require_c_contiguous,
+)
 
 
 class TestNdarrayNonContiguousRejected:
-    def test_strided_slice_raises(self):
+    """Non-contiguous arrays the guard refuses."""
+
+    def test_strided_slice_raises(self) -> None:
+        """A strided slice is refused as not C-contiguous."""
         base = np.arange(20, dtype=np.uint8)
         view = base[::2]  # stride-2 view, not C-contiguous
         assert not view.flags["C_CONTIGUOUS"]
@@ -22,7 +29,8 @@ class TestNdarrayNonContiguousRejected:
         with pytest.raises(ValueError, match=r"x must be C-contiguous"):
             require_c_contiguous(view, "x", np.uint8)
 
-    def test_transposed_2d_raises(self):
+    def test_transposed_2d_raises(self) -> None:
+        """A transposed, Fortran-ordered matrix is refused."""
         base = np.zeros((4, 8), dtype=np.float32)
         transposed = base.T  # becomes F-contiguous, not C-contiguous
         assert not transposed.flags["C_CONTIGUOUS"]
@@ -31,7 +39,8 @@ class TestNdarrayNonContiguousRejected:
         with pytest.raises(ValueError, match=r"C-contiguous"):
             require_c_contiguous(transposed, "matrix")
 
-    def test_column_slice_2d_raises(self):
+    def test_column_slice_2d_raises(self) -> None:
+        """A column slice of a matrix is refused."""
         base = np.arange(32, dtype=np.int32).reshape(4, 8)
         col = base[:, 2]  # stride-skipping view
         assert not col.flags["C_CONTIGUOUS"]
@@ -39,14 +48,16 @@ class TestNdarrayNonContiguousRejected:
         with pytest.raises(ValueError):
             require_c_contiguous(col, "col")
 
-    def test_error_message_includes_hint(self):
+    def test_error_message_includes_hint(self) -> None:
+        """The refusal names the array and suggests ascontiguousarray."""
         view = np.arange(10, dtype=np.uint8)[::2]
         with pytest.raises(ValueError) as exc:
             require_c_contiguous(view, "bitstream")
         assert "bitstream" in str(exc.value)
         assert "np.ascontiguousarray" in str(exc.value)
 
-    def test_error_message_uses_given_name(self):
+    def test_error_message_uses_given_name(self) -> None:
+        """The refusal uses the name the caller gave."""
         view = np.arange(10, dtype=np.uint8)[::2]
         with pytest.raises(ValueError, match=r"custom_name"):
             require_c_contiguous(view, "custom_name")

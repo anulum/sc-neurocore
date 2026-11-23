@@ -6,9 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects) from former test_core_engine_bridge.py
 
+"""Contract refusals of the core-engine bridge."""
+
 from __future__ import annotations
 
-from core_engine_bridge_support import *  # noqa: F403
+import ctypes as ct
+import pytest
+from core_engine_bridge_support import (
+    _FakeCoreLib,
+)
+from sc_neurocore._native import (
+    core_engine_bridge as ceb,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 def test_lfsr_encode_bits_rejects_invalid_contract_values() -> None:
