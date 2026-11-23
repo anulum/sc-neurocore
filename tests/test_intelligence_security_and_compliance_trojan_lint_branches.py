@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestTrojanLintBranches:
-    """Cover the payload cross-reference accounting and the high-risk verdict
-    that the single-equation lint cases never reach."""
+    """Cover the trojan-lint branches the single-equation cases never reach.
 
-    def test_payload_cross_reference_counts_as_check(self):
+    These are the payload cross-reference accounting and the high-risk
+    verdict.
+    """
+
+    def test_payload_cross_reference_counts_as_check(self) -> None:
+        """A payload cross-reference counts as a check."""
         from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
         # "u" appears inside v's expression, so a payload cross-reference check
@@ -25,7 +27,8 @@ class TestTrojanLintBranches:
         r = lint_hardware_trojans({"v": "u + 1", "u": "2"})
         assert r.total_checks >= 3
 
-    def test_two_conditional_paths_are_high_risk(self):
+    def test_two_conditional_paths_are_high_risk(self) -> None:
+        """Two conditional paths are high risk."""
         from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
         r = lint_hardware_trojans({"a": "if x then 1", "b": "y ? 1 : 0"})

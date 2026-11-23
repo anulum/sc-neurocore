@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
-from tests.intelligence_drift_compensation_support import *  # noqa: F403
-
 
 class TestDriftCompensatorFallback:
-    """A non-positive drift rate has no tolerance horizon, so the refresh
-    interval falls back to the fixed ceiling instead of dividing by zero."""
+    """A non-positive drift rate has no tolerance horizon.
+
+    The refresh interval falls back to the fixed ceiling instead of dividing
+    by zero.
+    """
 
     def test_non_positive_drift_uses_fallback_refresh(self) -> None:
+        """A non-positive drift uses the fallback refresh."""
         from sc_neurocore.compiler.intelligence import generate_drift_compensator
 
         c = generate_drift_compensator("sc_lif", drift_rate_per_day=0.0)

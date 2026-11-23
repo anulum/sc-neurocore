@@ -10,13 +10,14 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
+import json
 
 
 class TestProvenanceChain:
     """Cryptographic audit trail."""
 
-    def test_chain_length(self):
+    def test_chain_length(self) -> None:
+        """The chain records three stages in order."""
         from sc_neurocore.compiler.intelligence import (
             generate_provenance_chain,
         )
@@ -30,7 +31,8 @@ class TestProvenanceChain:
         assert chain[1].stage == "compilation_config"
         assert chain[2].stage == "verilog_generation"
 
-    def test_hash_chain_linked(self):
+    def test_hash_chain_linked(self) -> None:
+        """Each stage's input hash is the previous output hash."""
         from sc_neurocore.compiler.intelligence import (
             generate_provenance_chain,
         )
@@ -42,7 +44,8 @@ class TestProvenanceChain:
         assert chain[0].output_hash == chain[1].input_hash
         assert chain[1].output_hash == chain[2].input_hash
 
-    def test_genesis(self):
+    def test_genesis(self) -> None:
+        """The chain starts from genesis."""
         from sc_neurocore.compiler.intelligence import (
             generate_provenance_chain,
         )
@@ -50,7 +53,8 @@ class TestProvenanceChain:
         chain = generate_provenance_chain("sc_lif", {"v": "a"})
         assert chain[0].input_hash == "genesis"
 
-    def test_json_format(self):
+    def test_json_format(self) -> None:
+        """The JSON form carries the chain."""
         from sc_neurocore.compiler.intelligence import (
             generate_provenance_chain,
             format_provenance_json,
@@ -62,7 +66,8 @@ class TestProvenanceChain:
         assert "sc_neurocore_provenance" in data
         assert len(data["sc_neurocore_provenance"]["chain"]) == 3
 
-    def test_deterministic_hashes(self):
+    def test_deterministic_hashes(self) -> None:
+        """The same inputs give the same hashes."""
         from sc_neurocore.compiler.intelligence import (
             generate_provenance_chain,
         )

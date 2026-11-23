@@ -10,17 +10,19 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestRegressionWatchdog:
-    def test_no_regression(self):
+    """Watching for metric regressions."""
+
+    def test_no_regression(self) -> None:
+        """An unchanged metric is no regression."""
         from sc_neurocore.compiler.intelligence import check_regression
 
         r = check_regression({"area": 100}, {"area": 102})
         assert r[0].regression is False
 
-    def test_regression(self):
+    def test_regression(self) -> None:
+        """A twenty percent rise is a regression."""
         from sc_neurocore.compiler.intelligence import check_regression
 
         r = check_regression({"area": 100}, {"area": 120})

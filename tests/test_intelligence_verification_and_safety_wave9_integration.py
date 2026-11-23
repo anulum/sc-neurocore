@@ -10,11 +10,14 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
+from pathlib import Path
 
 
 class TestWave9Integration:
-    def test_toml_to_report(self, tmp_path):
+    """Constraint and floorplan tools working together."""
+
+    def test_toml_to_report(self, tmp_path: Path) -> None:
+        """A TOML constraint file flows into the report."""
         from sc_neurocore.compiler.intelligence import (
             load_profiles_from_toml,
             generate_compilation_report,
@@ -33,7 +36,8 @@ class TestWave9Integration:
         md = generate_compilation_report("sc_lif", {"v": "a"}, "e2e_custom")
         assert "E2EVendor" in md
 
-    def test_cdc_then_floorplan(self):
+    def test_cdc_then_floorplan(self) -> None:
+        """Crossings and floorplanning run in turn."""
         from sc_neurocore.compiler.intelligence import (
             analyze_cdc,
             plan_multi_die_floorplan,

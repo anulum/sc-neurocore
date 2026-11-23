@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestUCIePartitioning:
     """Chiplet die-to-die neuron array partitioning."""
 
-    def test_basic_partition(self):
+    def test_basic_partition(self) -> None:
+        """A thousand neurons split over four tiles."""
         from sc_neurocore.compiler.intelligence import advise_ucie_partition
 
         p = advise_ucie_partition(1000, 0.1, tile_count=4)
@@ -24,7 +23,8 @@ class TestUCIePartitioning:
         assert p.neurons_per_tile == 250
         assert p.die_to_die_bandwidth_gbps >= 0
 
-    def test_partition_map_covers_all_neurons(self):
+    def test_partition_map_covers_all_neurons(self) -> None:
+        """The partition covers every neuron."""
         from sc_neurocore.compiler.intelligence import advise_ucie_partition
 
         p = advise_ucie_partition(100, 0.1, tile_count=4)
@@ -33,7 +33,8 @@ class TestUCIePartitioning:
             all_neurons.extend(ids)
         assert len(set(all_neurons)) == 100
 
-    def test_more_tiles_more_inter_traffic(self):
+    def test_more_tiles_more_inter_traffic(self) -> None:
+        """More tiles mean no less die-to-die traffic."""
         from sc_neurocore.compiler.intelligence import advise_ucie_partition
 
         p2 = advise_ucie_partition(1000, 0.1, tile_count=2)
@@ -41,14 +42,16 @@ class TestUCIePartitioning:
         # More tiles → more inter-tile fraction → more bandwidth
         assert p8.die_to_die_bandwidth_gbps >= p2.die_to_die_bandwidth_gbps
 
-    def test_latency_scales_with_tiles(self):
+    def test_latency_scales_with_tiles(self) -> None:
+        """More tiles add latency."""
         from sc_neurocore.compiler.intelligence import advise_ucie_partition
 
         p2 = advise_ucie_partition(100, 0.1, tile_count=2)
         p8 = advise_ucie_partition(100, 0.1, tile_count=8)
         assert p8.latency_penalty_ns > p2.latency_penalty_ns
 
-    def test_single_tile_no_overhead(self):
+    def test_single_tile_no_overhead(self) -> None:
+        """A single tile has no inter-tile cost."""
         from sc_neurocore.compiler.intelligence import advise_ucie_partition
 
         p = advise_ucie_partition(100, 0.1, tile_count=1)

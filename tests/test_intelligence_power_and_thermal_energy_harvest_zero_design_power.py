@@ -10,14 +10,20 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence import (
+    model_energy_harvest,
+)
 
 
 class TestEnergyHarvestZeroDesignPower:
-    """A non-positive design power has no ratio, so the harvester budget reports
-    a full duty cycle and saturated margin rather than dividing by zero."""
+    """A non-positive design power has no ratio.
 
-    def test_zero_design_power_assumes_full_duty(self):
+    The harvester budget reports a full duty cycle and saturated margin
+    rather than dividing by zero.
+    """
+
+    def test_zero_design_power_assumes_full_duty(self) -> None:
+        """Zero design power assumes a full duty cycle."""
         budget = model_energy_harvest(0.0, harvester_type="solar", environment="outdoor")
         assert budget.recommended_duty_cycle == 1.0
         assert budget.margin_pct == 100.0

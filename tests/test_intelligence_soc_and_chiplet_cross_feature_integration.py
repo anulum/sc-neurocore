@@ -10,13 +10,11 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestCrossFeatureIntegration:
     """End-to-end tests chaining multiple features together."""
 
-    def test_tmr_plus_checksum(self):
+    def test_tmr_plus_checksum(self) -> None:
         """TMR wrapper + model checksum embedding."""
         from sc_neurocore.compiler.intelligence import (
             generate_tmr_wrapper,
@@ -32,7 +30,7 @@ class TestCrossFeatureIntegration:
         assert "sc_lif_tmr" in result
         assert "MODEL_HASH" in result
 
-    def test_pipeline_plus_power_domain(self):
+    def test_pipeline_plus_power_domain(self) -> None:
         """Pipeline wrapper output feeds power-domain wrapper input."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
@@ -48,7 +46,7 @@ class TestCrossFeatureIntegration:
         assert "sc_lif_pipe" in pipe
         assert "sc_lif_pipe_pg" in pg
 
-    def test_mzi_then_noise(self):
+    def test_mzi_then_noise(self) -> None:
         """Encode weights for photonic, then inject noise for robustness."""
         from sc_neurocore.compiler.intelligence import (
             encode_mzi_weights,
@@ -62,7 +60,7 @@ class TestCrossFeatureIntegration:
         # Noisy encoding should differ from clean
         assert enc.phases_theta != enc_noisy.phases_theta
 
-    def test_quant_sweep_then_compare(self):
+    def test_quant_sweep_then_compare(self) -> None:
         """Sweep quantisation, then compare top 2 widths on 2 targets."""
         from sc_neurocore.compiler.intelligence import (
             auto_quantisation_sweep,
@@ -77,7 +75,7 @@ class TestCrossFeatureIntegration:
         assert sweep[0].data_width < sweep[1].data_width
         assert cmp[0].target != cmp[1].target
 
-    def test_full_compilation_pipeline(self):
+    def test_full_compilation_pipeline(self) -> None:
         """Full pipeline: compile → summary → checksum → encrypt."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,

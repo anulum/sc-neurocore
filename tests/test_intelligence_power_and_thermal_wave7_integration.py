@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
-
 
 class TestWave7Integration:
-    def test_classify_then_recommend(self):
+    """Power and thermal tools working together."""
+
+    def test_classify_then_recommend(self) -> None:
+        """A classified model gets recommendations."""
         from sc_neurocore.compiler.intelligence import (
             classify_model_complexity,
             recommend_target,
@@ -27,7 +28,8 @@ class TestWave7Integration:
         )
         assert len(recs) > 0
 
-    def test_recommend_then_risk(self):
+    def test_recommend_then_risk(self) -> None:
+        """A recommendation gets a risk score."""
         from sc_neurocore.compiler.intelligence import (
             recommend_target,
             score_supply_chain_risk,
@@ -37,7 +39,8 @@ class TestWave7Integration:
         risk = score_supply_chain_risk(recs[0].profile_name)
         assert risk.risk_score >= 0
 
-    def test_bittrue_then_thermal(self):
+    def test_bittrue_then_thermal(self) -> None:
+        """A bit-true kernel passes the thermal check."""
         from sc_neurocore.compiler.intelligence import (
             generate_bittrue_kernel,
             estimate_thermal_envelope,
@@ -48,7 +51,8 @@ class TestWave7Integration:
         t = estimate_thermal_envelope(power_mw=50)
         assert t.pass_fail == "PASS"
 
-    def test_cache_workflow(self):
+    def test_cache_workflow(self) -> None:
+        """The compilation cache stores and returns a kernel."""
         from sc_neurocore.compiler.intelligence import (
             CompilationCache,
             generate_bittrue_kernel,
@@ -60,4 +64,5 @@ class TestWave7Integration:
         code = generate_bittrue_kernel("sc_lif", eqs)
         cache.put(eqs, "artix7", 16, 8, {"code": code})
         hit = cache.get(eqs, "artix7")
+        assert hit is not None
         assert hit["code"] == code

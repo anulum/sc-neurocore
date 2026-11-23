@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
-
 
 class TestPowerIntent:
-    def test_upf_output(self):
+    """Generating UPF power intent."""
+
+    def test_upf_output(self) -> None:
+        """The UPF sets the scope, domains and isolation."""
         from sc_neurocore.compiler.intelligence import generate_power_intent
 
         upf = generate_power_intent("sc_lif")
@@ -22,7 +23,8 @@ class TestPowerIntent:
         assert "PD_NEURON_0" in upf
         assert "set_isolation" in upf
 
-    def test_num_domains(self):
+    def test_num_domains(self) -> None:
+        """The asked number of domains is declared."""
         from sc_neurocore.compiler.intelligence import generate_power_intent
 
         upf = generate_power_intent("sc_lif", num_domains=4)

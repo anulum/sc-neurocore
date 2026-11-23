@@ -10,17 +10,19 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestCDC:
-    def test_same_domain(self):
+    """Checking clock-domain crossings."""
+
+    def test_same_domain(self) -> None:
+        """A single domain is safe."""
         from sc_neurocore.compiler.intelligence import analyze_cdc
 
         r = analyze_cdc({"v": "a + b", "u": "c"})
         assert r.safe is True
 
-    def test_cross_domain(self):
+    def test_cross_domain(self) -> None:
+        """Crossings between domains are counted."""
         from sc_neurocore.compiler.intelligence import analyze_cdc
 
         r = analyze_cdc(

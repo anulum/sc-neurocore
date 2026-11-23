@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_digital_twin_support import *  # noqa: F403
-
 
 class TestSEUScrubber:
-    def test_leo(self):
+    """Planning SEU scrubbing."""
+
+    def test_leo(self) -> None:
+        """A LEO plan has an interval, frames and the hybrid strategy."""
         from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 
         s = schedule_seu_scrubbing(1_000_000, orbit_altitude_km=400)
@@ -22,7 +23,8 @@ class TestSEUScrubber:
         assert s.frames_per_cycle > 0
         assert s.strategy == "hybrid"
 
-    def test_higher_orbit(self):
+    def test_higher_orbit(self) -> None:
+        """A geostationary orbit scrubs more often than LEO."""
         from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 
         leo = schedule_seu_scrubbing(1_000_000, orbit_altitude_km=400)

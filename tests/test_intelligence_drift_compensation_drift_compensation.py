@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_drift_compensation_support import *  # noqa: F403
-
 
 class TestDriftCompensation:
     """Analog drift compensation controller."""
 
     def test_basic_compensator(self) -> None:
+        """The compensator emits a controller module and a refresh interval."""
         from sc_neurocore.compiler.intelligence import (
             generate_drift_compensator,
         )
@@ -28,6 +27,7 @@ class TestDriftCompensation:
         assert d.compensation_method == "periodic_refresh"
 
     def test_fast_drift(self) -> None:
+        """Fast drift shortens the refresh interval."""
         from sc_neurocore.compiler.intelligence import (
             generate_drift_compensator,
         )
@@ -41,6 +41,7 @@ class TestDriftCompensation:
         assert d.refresh_interval_ms < 10_000_000
 
     def test_verilog_contains_counter(self) -> None:
+        """The controller counts cycles to its refresh trigger."""
         from sc_neurocore.compiler.intelligence import (
             generate_drift_compensator,
         )

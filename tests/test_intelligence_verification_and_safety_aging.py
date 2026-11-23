@@ -10,31 +10,41 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    predict_aging,
+)
 
 
 class TestAging(unittest.TestCase):
-    def test_degradation_increases(self):
+    """Predicting transistor ageing."""
+
+    def test_degradation_increases(self) -> None:
+        """Ten years degrade more than five."""
         r5 = predict_aging(250.0, years=5.0, temperature_c=25.0)
         r10 = predict_aging(250.0, years=10.0, temperature_c=25.0)
         self.assertGreater(r10.degradation_pct, r5.degradation_pct)
         self.assertLess(r10.degraded_fmax_mhz, r5.degraded_fmax_mhz)
 
-    def test_high_temp_worse(self):
+    def test_high_temp_worse(self) -> None:
+        """A hotter part degrades more."""
         r_cool = predict_aging(250.0, temperature_c=25.0)
         r_hot = predict_aging(250.0, temperature_c=125.0)
         self.assertGreater(r_hot.degradation_pct, r_cool.degradation_pct)
 
-    def test_dominant_mechanism(self):
+    def test_dominant_mechanism(self) -> None:
+        """The dominant mechanism is NBTI or HCI."""
         r = predict_aging(250.0)
         self.assertIn(r.dominant_mechanism, ("NBTI", "HCI"))
 
-    def test_high_voltage_stress_can_make_hci_dominant(self):
+    def test_high_voltage_stress_can_make_hci_dominant(self) -> None:
+        """High voltage can make HCI dominant."""
         r = predict_aging(250.0, voltage_v=1.4, temperature_c=25.0, years=10.0)
         self.assertGreater(r.hci_degradation_pct, r.nbti_degradation_pct)
         self.assertEqual(r.dominant_mechanism, "HCI")
 
-    def test_predict_aging_rejects_invalid_inputs(self):
+    def test_predict_aging_rejects_invalid_inputs(self) -> None:
+        """Each invalid ageing input is rejected."""
         invalid_cases = [
             ({"initial_fmax_mhz": 0.0}, "initial_fmax_mhz"),
             ({"initial_fmax_mhz": 250.0, "voltage_v": 0.0}, "voltage_v"),

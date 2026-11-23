@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 73 top-level test modules of the compiler-intelligence suites
+  (digital twin, drift compensation, power and thermal, reporting,
+  security and compliance, SoC and chiplet, timescale partitioning,
+  verification and safety) and of the IR type checker import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing docstrings and type annotations and are enrolled in
+  the docstring policy. Nine support modules left without an importer
+  are deleted.
+
 - The 37 top-level test modules of the holonomic adapter-stack,
   homeostasis, hypothesis fuzz and identity suites import their names
   explicitly instead of through a suppressed star import, gain their

@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestPowerDomainWrapper:
     """Clock/power gating wrapper for edge deployment."""
 
-    def test_basic_structure(self):
+    def test_basic_structure(self) -> None:
+        """The wrapper is a power-gated module."""
         from sc_neurocore.compiler.intelligence import (
             generate_power_domain_wrapper,
         )
@@ -27,7 +26,8 @@ class TestPowerDomainWrapper:
         assert "power_down" in v
         assert "power_state" in v
 
-    def test_icg_cell(self):
+    def test_icg_cell(self) -> None:
+        """The wrapper gates its clock."""
         from sc_neurocore.compiler.intelligence import (
             generate_power_domain_wrapper,
         )
@@ -36,7 +36,8 @@ class TestPowerDomainWrapper:
         assert "gated_clk" in v
         assert "clk_enable" in v
 
-    def test_wakeup_counter(self):
+    def test_wakeup_counter(self) -> None:
+        """The wrapper counts wake-up cycles."""
         from sc_neurocore.compiler.intelligence import (
             generate_power_domain_wrapper,
         )
@@ -45,7 +46,8 @@ class TestPowerDomainWrapper:
         assert "wakeup_cnt" in v
         assert "active" in v
 
-    def test_state_retention(self):
+    def test_state_retention(self) -> None:
+        """The wrapper retains its state."""
         from sc_neurocore.compiler.intelligence import (
             generate_power_domain_wrapper,
         )
@@ -58,7 +60,8 @@ class TestPowerDomainWrapper:
         assert "u_out" in v
         assert "retain" in v.lower()
 
-    def test_always_on_domain(self):
+    def test_always_on_domain(self) -> None:
+        """The spike output is always on."""
         from sc_neurocore.compiler.intelligence import (
             generate_power_domain_wrapper,
         )

@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestBittrueKernel:
-    def test_c_kernel(self):
+    """Generating bit-true kernels."""
+
+    def test_c_kernel(self) -> None:
+        """The C kernel has its state and saturation."""
         from sc_neurocore.compiler.intelligence import (
             generate_bittrue_kernel,
         )
@@ -25,7 +26,8 @@ class TestBittrueKernel:
         assert "sat(" in code
         assert "fxmul(" in code
 
-    def test_rust_kernel(self):
+    def test_rust_kernel(self) -> None:
+        """The Rust kernel has its struct and saturation."""
         from sc_neurocore.compiler.intelligence import (
             generate_bittrue_kernel,
         )
@@ -39,7 +41,8 @@ class TestBittrueKernel:
         assert "fn sat" in code
         assert "clamp" in code
 
-    def test_multi_var(self):
+    def test_multi_var(self) -> None:
+        """Each state variable is declared."""
         from sc_neurocore.compiler.intelligence import (
             generate_bittrue_kernel,
         )

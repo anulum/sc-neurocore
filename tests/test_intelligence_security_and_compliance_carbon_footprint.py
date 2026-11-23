@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestCarbonFootprint:
-    def test_basic(self):
+    """Estimating the carbon footprint."""
+
+    def test_basic(self) -> None:
+        """Five years of use add to the manufacturing footprint."""
         from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
 
         c = estimate_carbon_footprint("artix7")
         assert c.manufacturing_kg_co2 > 0
         assert c.total_5yr_kg_co2 > c.manufacturing_kg_co2
 
-    def test_biological_low(self):
+    def test_biological_low(self) -> None:
+        """A biological substrate has a low footprint."""
         from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
 
         c = estimate_carbon_footprint("finalspark_neuroplatform")

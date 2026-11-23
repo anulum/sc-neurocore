@@ -10,13 +10,11 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
-
 
 class TestThermalConstraints:
     """Tests for thermal constraint generation."""
 
-    def test_basic_constraints(self):
+    def test_basic_constraints(self) -> None:
         """Thermal constraints include derated clock."""
         from sc_neurocore.compiler.intelligence import (
             thermal_analysis,
@@ -28,7 +26,7 @@ class TestThermalConstraints:
         assert "create_clock" in xdc
         assert "Derated frequency" in xdc
 
-    def test_hotspot_constraints(self):
+    def test_hotspot_constraints(self) -> None:
         """High hotspot risk adds DSP spreading."""
         from sc_neurocore.compiler.intelligence import (
             thermal_analysis,
@@ -39,7 +37,7 @@ class TestThermalConstraints:
         xdc = generate_thermal_constraints("sc_hh", t)
         assert "DSP spreading" in xdc
 
-    def test_unsafe_warning(self):
+    def test_unsafe_warning(self) -> None:
         """Unsafe temperature adds warning."""
         from sc_neurocore.compiler.intelligence import (
             thermal_analysis,

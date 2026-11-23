@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestIPObfuscation:
-    def test_basic(self):
+    """Obfuscating the design IP."""
+
+    def test_basic(self) -> None:
+        """Logic locking adds a 64-bit key and signals."""
         from sc_neurocore.compiler.intelligence import obfuscate_ip
 
         r = obfuscate_ip("sc_lif", {"v": "a + b"})
@@ -22,7 +23,8 @@ class TestIPObfuscation:
         assert "logic_locking" in r.techniques_applied
         assert r.obfuscated_signals > r.original_signals
 
-    def test_custom_key(self):
+    def test_custom_key(self) -> None:
+        """A custom key width is used."""
         from sc_neurocore.compiler.intelligence import obfuscate_ip
 
         r = obfuscate_ip("sc_lif", {"v": "a + b"}, key_length=128)

@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.ir_type_checker_support import *  # noqa: F403
+from sc_neurocore.compiler.ir_type_checker import (
+    check_ir_types,
+    IREdge,
+    IRNode,
+    SignalType,
+)
 
 
 class TestCheckIRTypes:
     """Coverage for IR graph validation and fail-closed diagnostics."""
 
     def test_valid_bitstream_graph(self) -> None:
+        """A valid bitstream graph has no error."""
         nodes = {
             "enc": IRNode("enc", "encoder", [], SignalType.BITSTREAM),
             "and": IRNode(
@@ -28,6 +34,7 @@ class TestCheckIRTypes:
         assert len(errors) == 0
 
     def test_rate_to_bitstream_error(self) -> None:
+        """A rate wired to a bitstream needs a converter."""
         nodes = {
             "input": IRNode("input", "input", [], SignalType.RATE),
             "and": IRNode("and", "and", [SignalType.BITSTREAM], SignalType.BITSTREAM),
@@ -39,6 +46,7 @@ class TestCheckIRTypes:
         assert "encoder/decoder" in errors[0].message
 
     def test_missing_source_node(self) -> None:
+        """A missing source node is reported."""
         nodes = {"b": IRNode("b", "and", [SignalType.BITSTREAM], SignalType.BITSTREAM)}
         edges = [IREdge("a", "b")]
         errors = check_ir_types(nodes, edges)
@@ -46,6 +54,7 @@ class TestCheckIRTypes:
         assert "not found" in errors[0].message
 
     def test_missing_destination_node(self) -> None:
+        """A missing destination node is reported."""
         nodes = {"a": IRNode("a", "enc", [], SignalType.BITSTREAM)}
         edges = [IREdge("a", "z")]
         errors = check_ir_types(nodes, edges)
@@ -53,6 +62,7 @@ class TestCheckIRTypes:
         assert "not found" in errors[0].message
 
     def test_port_out_of_range(self) -> None:
+        """A port past the range is reported."""
         nodes = {
             "a": IRNode("a", "enc", [], SignalType.BITSTREAM),
             "b": IRNode("b", "and", [SignalType.BITSTREAM], SignalType.BITSTREAM),
@@ -63,6 +73,7 @@ class TestCheckIRTypes:
         assert "out of range" in errors[0].message
 
     def test_negative_port_out_of_range(self) -> None:
+        """A negative port is reported."""
         nodes = {
             "a": IRNode("a", "enc", [], SignalType.BITSTREAM),
             "b": IRNode("b", "and", [SignalType.BITSTREAM], SignalType.BITSTREAM),
@@ -73,6 +84,7 @@ class TestCheckIRTypes:
         assert "out of range" in errors[0].message
 
     def test_multiple_errors(self) -> None:
+        """Two problems give two errors."""
         nodes = {
             "rate_in": IRNode("rate_in", "input", [], SignalType.RATE),
             "fixed_in": IRNode("fixed_in", "input", [], SignalType.FIXED),
@@ -91,10 +103,12 @@ class TestCheckIRTypes:
         assert len(errors) == 2
 
     def test_empty_graph_no_errors(self) -> None:
+        """An empty graph has no error."""
         errors = check_ir_types({}, [])
         assert len(errors) == 0
 
     def test_any_type_passes(self) -> None:
+        """The any type passes the check."""
         nodes = {
             "a": IRNode("a", "passthrough", [], SignalType.ANY),
             "b": IRNode("b", "sink", [SignalType.BITSTREAM], SignalType.BITSTREAM),

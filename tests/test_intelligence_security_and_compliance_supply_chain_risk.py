@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestSupplyChainRisk:
-    def test_low_risk(self):
+    """Assessing supply-chain risk."""
+
+    def test_low_risk(self) -> None:
+        """A common target is low risk under EAR99."""
         from sc_neurocore.compiler.intelligence import (
             score_supply_chain_risk,
         )
@@ -23,7 +24,8 @@ class TestSupplyChainRisk:
         assert r.risk_score < 50
         assert r.export_control == "EAR99"
 
-    def test_high_risk_biological(self):
+    def test_high_risk_biological(self) -> None:
+        """A biological target is high risk as emerging tech."""
         from sc_neurocore.compiler.intelligence import (
             score_supply_chain_risk,
         )
@@ -32,7 +34,8 @@ class TestSupplyChainRisk:
         assert r.risk_score >= 50
         assert "Emerging tech" in " ".join(r.risk_factors)
 
-    def test_alternatives_exist(self):
+    def test_alternatives_exist(self) -> None:
+        """Alternatives are suggested."""
         from sc_neurocore.compiler.intelligence import (
             score_supply_chain_risk,
         )
@@ -40,7 +43,7 @@ class TestSupplyChainRisk:
         r = score_supply_chain_risk("artix7")
         assert len(r.alternatives) > 0
 
-    def test_itar_for_radiation_hardened_fpga(self):
+    def test_itar_for_radiation_hardened_fpga(self) -> None:
         """A radiation-hardened FPGA part is flagged ITAR-controlled."""
         from sc_neurocore.compiler.intelligence import score_supply_chain_risk
 
@@ -48,7 +51,7 @@ class TestSupplyChainRisk:
         assert r.export_control == "ITAR"
         assert "ITAR" in " ".join(r.risk_factors)
 
-    def test_export_controlled_superconducting(self):
+    def test_export_controlled_superconducting(self) -> None:
         """A superconducting platform is flagged export-controlled emerging tech."""
         from sc_neurocore.compiler.intelligence import score_supply_chain_risk
 

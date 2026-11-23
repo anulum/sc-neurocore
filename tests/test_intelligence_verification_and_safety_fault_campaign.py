@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    run_fault_campaign,
+)
 
 
 class TestFaultCampaign(unittest.TestCase):
-    def test_basic(self):
+    """Running a fault-injection campaign."""
+
+    def test_basic(self) -> None:
+        """A thousand injections report silent corruptions."""
         r = run_fault_campaign({"v": "a", "u": "b"})
         self.assertEqual(r.total_injections, 1000)
         self.assertGreater(r.sdc_count, 0)
         self.assertGreater(r.sdc_rate, 0)
         self.assertLess(r.sdc_rate, 1.0)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same seed gives the same count."""
         r1 = run_fault_campaign({"v": "a"}, seed=123)
         r2 = run_fault_campaign({"v": "a"}, seed=123)
         self.assertEqual(r1.sdc_count, r2.sdc_count)

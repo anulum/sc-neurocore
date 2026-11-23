@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestModelComplexity:
-    def test_compute_bound(self):
+    """Classifying model complexity."""
+
+    def test_compute_bound(self) -> None:
+        """A heavy model is compute-bound and suits an FPGA."""
         from sc_neurocore.compiler.intelligence import (
             classify_model_complexity,
         )
@@ -23,7 +24,8 @@ class TestModelComplexity:
         assert m.classification == "compute_bound"
         assert m.recommended_paradigm == "fpga"
 
-    def test_simple_model(self):
+    def test_simple_model(self) -> None:
+        """A simple model counts one operation."""
         from sc_neurocore.compiler.intelligence import (
             classify_model_complexity,
         )
@@ -31,7 +33,8 @@ class TestModelComplexity:
         m = classify_model_complexity({"v": "a + b"})
         assert m.compute_ops == 1
 
-    def test_cross_refs(self):
+    def test_cross_refs(self) -> None:
+        """Cross references raise the communication ratio."""
         from sc_neurocore.compiler.intelligence import (
             classify_model_complexity,
         )

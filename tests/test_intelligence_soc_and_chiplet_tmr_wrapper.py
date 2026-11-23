@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestTMRWrapper:
     """Triple Modular Redundancy wrapper generation."""
 
-    def test_majority_voter_structure(self):
+    def test_majority_voter_structure(self) -> None:
+        """The TMR wrapper instantiates three copies."""
         from sc_neurocore.compiler.intelligence import generate_tmr_wrapper
 
         v = generate_tmr_wrapper("sc_lif", data_width=16)
@@ -27,14 +26,16 @@ class TestTMRWrapper:
         assert "inst_c" in v
         assert "seu_detected" in v
 
-    def test_median_voter(self):
+    def test_median_voter(self) -> None:
+        """A median voter is used for analogue state."""
         from sc_neurocore.compiler.intelligence import generate_tmr_wrapper
 
         v = generate_tmr_wrapper("sc_hh", data_width=32, voter="median")
         assert "Median" in v
         assert "sc_hh_tmr" in v
 
-    def test_multi_state_var(self):
+    def test_multi_state_var(self) -> None:
+        """Each state variable is voted."""
         from sc_neurocore.compiler.intelligence import generate_tmr_wrapper
 
         v = generate_tmr_wrapper("sc_izh", state_vars=["v", "u"])
@@ -43,14 +44,16 @@ class TestTMRWrapper:
         assert "v_a" in v
         assert "u_c" in v
 
-    def test_seu_detection_wires(self):
+    def test_seu_detection_wires(self) -> None:
+        """Mismatches between copies are detected."""
         from sc_neurocore.compiler.intelligence import generate_tmr_wrapper
 
         v = generate_tmr_wrapper("sc_lif")
         assert "(v_a != v_b)" in v
         assert "(spike_a != spike_b)" in v
 
-    def test_tmr_references_inner_module(self):
+    def test_tmr_references_inner_module(self) -> None:
+        """The copies instantiate the inner module."""
         from sc_neurocore.compiler.intelligence import generate_tmr_wrapper
 
         v = generate_tmr_wrapper("sc_custom_neuron")

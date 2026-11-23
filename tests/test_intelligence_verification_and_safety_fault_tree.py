@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestFaultTree:
-    def test_basic(self):
+    """Building a fault tree."""
+
+    def test_basic(self) -> None:
+        """The tree has its top event and basic events."""
         from sc_neurocore.compiler.intelligence import generate_fault_tree
 
         ft = generate_fault_tree("sc_lif", {"v": "a", "u": "b"})
@@ -22,7 +23,8 @@ class TestFaultTree:
         assert len(ft.basic_events) >= 6  # 2 vars * 2 + 2 common
         assert len(ft.mcs) == len(ft.basic_events)
 
-    def test_single_var(self):
+    def test_single_var(self) -> None:
+        """One variable gives four basic events."""
         from sc_neurocore.compiler.intelligence import generate_fault_tree
 
         ft = generate_fault_tree("sc_lif", {"v": "a"})

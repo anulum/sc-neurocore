@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestAutoTestbench:
-    def test_cocotb(self):
+    """Generating testbenches."""
+
+    def test_cocotb(self) -> None:
+        """A cocotb testbench has a reset test."""
         from sc_neurocore.compiler.intelligence import generate_testbench
 
         tb = generate_testbench("sc_lif", {"v": "a"})
         assert "import cocotb" in tb
         assert "test_sc_lif_reset" in tb
 
-    def test_uvm(self):
+    def test_uvm(self) -> None:
+        """A UVM testbench declares its test."""
         from sc_neurocore.compiler.intelligence import generate_testbench
 
         tb = generate_testbench("sc_lif", {"v": "a"}, framework="uvm")

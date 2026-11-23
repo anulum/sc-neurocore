@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestSBOM:
-    def test_basic(self):
+    """Generating a software bill of materials."""
+
+    def test_basic(self) -> None:
+        """The SBOM is CycloneDX with at least three components."""
         from sc_neurocore.compiler.intelligence import generate_sbom
 
         s = generate_sbom("sc_lif", "artix7")
         assert s.total_components >= 3
         assert s.format == "CycloneDX"
 
-    def test_with_deps(self):
+    def test_with_deps(self) -> None:
+        """Dependencies add components."""
         from sc_neurocore.compiler.intelligence import generate_sbom
 
         s = generate_sbom("sc_lif", "artix7", dependencies={"numpy": "1.26.0"})

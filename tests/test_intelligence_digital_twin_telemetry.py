@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.intelligence_digital_twin_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    ingest_telemetry,
+)
 
 
 class TestTelemetry(unittest.TestCase):
-    def test_healthy(self):
+    """Checking twin telemetry for drift."""
+
+    def test_healthy(self) -> None:
+        """Matching samples are healthy with no alert."""
         hw = [{"v": 1.0}, {"v": 1.01}]
         tw = [{"v": 1.0}, {"v": 1.01}]
         r = ingest_telemetry(hw, tw)
@@ -22,7 +28,8 @@ class TestTelemetry(unittest.TestCase):
         self.assertEqual(r.samples, 2)
         self.assertEqual(len(r.alerts), 0)
 
-    def test_drift_detected(self):
+    def test_drift_detected(self) -> None:
+        """Large drift raises an alert."""
         hw = [{"v": 1.0}, {"v": 2.0}]
         tw = [{"v": 1.0}, {"v": 1.0}]
         r = ingest_telemetry(hw, tw, drift_threshold=0.5)
@@ -30,7 +37,8 @@ class TestTelemetry(unittest.TestCase):
         self.assertGreater(len(r.alerts), 0)
         self.assertGreater(r.max_drift, 0.5)
 
-    def test_empty(self):
+    def test_empty(self) -> None:
+        """No samples are healthy."""
         r = ingest_telemetry([], [])
         self.assertTrue(r.healthy)
         self.assertEqual(r.samples, 0)

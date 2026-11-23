@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestPortability:
-    def test_simple_model(self):
+    """Scoring model portability."""
+
+    def test_simple_model(self) -> None:
+        """A simple model scores well on several profiles."""
         from sc_neurocore.compiler.intelligence import score_portability
 
         s = score_portability({"v": "a + b"})
         assert s.score > 50
         assert s.compatible_profiles > 0
 
-    def test_complex_model(self):
+    def test_complex_model(self) -> None:
+        """A complex model has blockers."""
         from sc_neurocore.compiler.intelligence import score_portability
 
         s = score_portability({"v": "a*b*c/d*e/f*g*h"})

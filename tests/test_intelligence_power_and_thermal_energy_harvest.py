@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    model_energy_harvest,
+)
 
 
 class TestEnergyHarvest(unittest.TestCase):
-    def test_solar_outdoor(self):
+    """Budgeting harvested energy."""
+
+    def test_solar_outdoor(self) -> None:
+        """Outdoor solar gives a positive margin."""
         r = model_energy_harvest(
             100.0, harvester_type="solar", environment="outdoor", harvester_area_cm2=1.0
         )
         self.assertTrue(r.energy_positive)
         self.assertGreater(r.margin_pct, 0)
 
-    def test_rf_indoor_insufficient(self):
+    def test_rf_indoor_insufficient(self) -> None:
+        """Indoor RF is not enough and lowers the duty cycle."""
         r = model_energy_harvest(100.0, harvester_type="rf", environment="indoor")
         self.assertFalse(r.energy_positive)
         self.assertLess(r.recommended_duty_cycle, 1.0)

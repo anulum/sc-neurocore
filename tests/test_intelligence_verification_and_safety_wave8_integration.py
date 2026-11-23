@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence import (
+    predict_reliability,
+)
 
 
 class TestWave8Integration:
-    def test_nir_to_stability(self):
+    """Safety tools working together."""
+
+    def test_nir_to_stability(self) -> None:
+        """An imported NIR model is stable."""
         from sc_neurocore.compiler.intelligence import (
             import_nir_graph,
             verify_ode_stability,
@@ -29,10 +34,10 @@ class TestWave8Integration:
         r = verify_ode_stability(g.equations, dt=0.1)
         assert r.stable is True
 
-    def test_carbon_vs_reliability(self):
+    def test_carbon_vs_reliability(self) -> None:
+        """Carbon and reliability are both reported."""
         from sc_neurocore.compiler.intelligence import (
             estimate_carbon_footprint,
-            predict_reliability,
         )
 
         c = estimate_carbon_footprint("artix7", power_mw=500)
@@ -40,7 +45,8 @@ class TestWave8Integration:
         assert c.total_5yr_kg_co2 > 0
         assert r.mttf_years > 0
 
-    def test_fault_tree_then_testbench(self):
+    def test_fault_tree_then_testbench(self) -> None:
+        """A fault tree leads to a testbench."""
         from sc_neurocore.compiler.intelligence import (
             generate_fault_tree,
             generate_testbench,

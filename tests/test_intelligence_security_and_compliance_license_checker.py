@@ -10,17 +10,19 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestLicenseChecker:
-    def test_compatible(self):
+    """Checking licence compatibility."""
+
+    def test_compatible(self) -> None:
+        """Compatible licences pass."""
         from sc_neurocore.compiler.intelligence import check_license_compliance
 
         r = check_license_compliance("AGPL-3.0", {"numpy": "BSD-3"})
         assert r.compatible is True
 
-    def test_conflict(self):
+    def test_conflict(self) -> None:
+        """A conflicting licence is reported."""
         from sc_neurocore.compiler.intelligence import check_license_compliance
 
         r = check_license_compliance("MIT", {"gpl_lib": "GPL-3.0"})

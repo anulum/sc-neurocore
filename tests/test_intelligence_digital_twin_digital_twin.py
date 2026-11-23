@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_digital_twin_support import *  # noqa: F403
-
 
 class TestDigitalTwin:
-    def test_basic(self):
+    """Generating a digital-twin model."""
+
+    def test_basic(self) -> None:
+        """The twin code defines its step and compare methods."""
         from sc_neurocore.compiler.intelligence import generate_digital_twin
 
         code = generate_digital_twin("sc_lif", {"v": "-(v)/tau"}, "artix7")

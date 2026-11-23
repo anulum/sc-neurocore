@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestFloorplanner:
-    def test_basic(self):
+    """Floorplanning blocks onto dies."""
+
+    def test_basic(self) -> None:
+        """Each block is assigned to a die."""
         from sc_neurocore.compiler.intelligence import plan_multi_die_floorplan
 
         r = plan_multi_die_floorplan(
@@ -24,7 +25,8 @@ class TestFloorplanner:
         assert len(r.die_assignment) == 3
         assert r.total_dies >= 1
 
-    def test_overflow(self):
+    def test_overflow(self) -> None:
+        """Overflow spills onto a second die."""
         from sc_neurocore.compiler.intelligence import plan_multi_die_floorplan
 
         r = plan_multi_die_floorplan(

@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestCXLCoherence:
     """CXL.mem Type-3 device mapping."""
 
-    def test_basic_mapping(self):
+    def test_basic_mapping(self) -> None:
+        """State and weights are mapped to CXL devices."""
         from sc_neurocore.compiler.intelligence import advise_cxl_mapping
 
         m = advise_cxl_mapping(10000, 1000000)
@@ -25,19 +24,22 @@ class TestCXLCoherence:
         assert len(m.weight_device_ids) >= 1
         assert m.total_capacity_gb > 0
 
-    def test_streaming_uses_cxl_mem(self):
+    def test_streaming_uses_cxl_mem(self) -> None:
+        """Streaming access uses CXL.mem."""
         from sc_neurocore.compiler.intelligence import advise_cxl_mapping
 
         m = advise_cxl_mapping(1000, 10000, access_pattern="streaming")
         assert m.coherence_protocol == "CXL.mem"
 
-    def test_random_uses_cxl_cache(self):
+    def test_random_uses_cxl_cache(self) -> None:
+        """Random access uses CXL.cache."""
         from sc_neurocore.compiler.intelligence import advise_cxl_mapping
 
         m = advise_cxl_mapping(1000, 10000, access_pattern="random")
         assert m.coherence_protocol == "CXL.cache"
 
-    def test_respects_device_limit(self):
+    def test_respects_device_limit(self) -> None:
+        """The device count stays within its limit."""
         from sc_neurocore.compiler.intelligence import advise_cxl_mapping
 
         m = advise_cxl_mapping(
@@ -47,7 +49,8 @@ class TestCXLCoherence:
         )
         assert m.device_count <= 4
 
-    def test_random_needs_more_bandwidth(self):
+    def test_random_needs_more_bandwidth(self) -> None:
+        """Random access needs more host bandwidth."""
         from sc_neurocore.compiler.intelligence import advise_cxl_mapping
 
         s = advise_cxl_mapping(10000, 1000000, access_pattern="streaming")

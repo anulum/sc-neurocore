@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_timescale_partitioner_support import *  # noqa: F403
-
 
 class TestTimescalePartitionerEdges:
     """Cover the op-count timescale heuristic and the empty-model short-circuit."""
 
     def test_op_heavy_equation_is_partitioned(self) -> None:
+        """A heavy equation is still partitioned."""
         from sc_neurocore.compiler.intelligence import partition_timescales
 
         # With no explicit time constants, the arithmetic ops in each expression
@@ -25,6 +24,7 @@ class TestTimescalePartitionerEdges:
         assert set(p.fast_equations) | set(p.slow_equations) == {"fast", "slow"}
 
     def test_empty_equations_returns_empty_partition(self) -> None:
+        """No equations give an empty partition."""
         from sc_neurocore.compiler.intelligence import partition_timescales
 
         p = partition_timescales({})

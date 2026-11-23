@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestComplianceMatrix:
     """Safety compliance matrix generation."""
 
-    def test_default_standards(self):
+    def test_default_standards(self) -> None:
+        """The matrix covers DO-254, IEC 61508 and ISO 26262."""
         from sc_neurocore.compiler.intelligence import (
             generate_compliance_matrix,
         )
@@ -27,7 +26,8 @@ class TestComplianceMatrix:
         assert "IEC 61508" in standards
         assert "ISO 26262" in standards
 
-    def test_all_covered(self):
+    def test_all_covered(self) -> None:
+        """With every feature all entries are covered."""
         from sc_neurocore.compiler.intelligence import (
             generate_compliance_matrix,
         )
@@ -42,7 +42,8 @@ class TestComplianceMatrix:
         covered = [e for e in entries if e.status == "covered"]
         assert len(covered) == len(entries)
 
-    def test_gaps_without_tmr(self):
+    def test_gaps_without_tmr(self) -> None:
+        """Without TMR there are gaps."""
         from sc_neurocore.compiler.intelligence import (
             generate_compliance_matrix,
         )
@@ -51,7 +52,8 @@ class TestComplianceMatrix:
         gaps = [e for e in entries if e.status == "gap"]
         assert len(gaps) > 0
 
-    def test_format_report(self):
+    def test_format_report(self) -> None:
+        """The report names its standards."""
         from sc_neurocore.compiler.intelligence import (
             generate_compliance_matrix,
             format_compliance_report,

@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    explore_pareto,
+)
 
 
 class TestPareto(unittest.TestCase):
-    def test_non_empty(self):
+    """The power and performance Pareto front."""
+
+    def test_non_empty(self) -> None:
+        """The front has points."""
         pts = explore_pareto({"v": "-(v)/tau + I"})
         self.assertGreater(len(pts), 0)
 
-    def test_non_dominated(self):
+    def test_non_dominated(self) -> None:
+        """No point on the front dominates another."""
         pts = explore_pareto({"v": "a", "u": "b"})
         for i, p in enumerate(pts):
             for j, q in enumerate(pts):
@@ -35,7 +42,8 @@ class TestPareto(unittest.TestCase):
                         f"Point {i} dominated by {j}",
                     )
 
-    def test_sorted_by_power(self):
+    def test_sorted_by_power(self) -> None:
+        """The front is sorted by power."""
         pts = explore_pareto({"v": "a"})
         powers = [p.power_mw for p in pts]
         self.assertEqual(powers, sorted(powers))

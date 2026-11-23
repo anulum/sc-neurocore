@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestSideChannelLint:
     """Side-channel leakage analysis."""
 
-    def test_clean_expression(self):
+    def test_clean_expression(self) -> None:
+        """A clean expression still reports its output."""
         from sc_neurocore.compiler.intelligence import (
             lint_side_channels,
         )
@@ -25,7 +24,8 @@ class TestSideChannelLint:
         # Should still have spike_out finding
         assert any(f.signal == "spike_out" for f in findings)
 
-    def test_division_flagged(self):
+    def test_division_flagged(self) -> None:
+        """A division is a medium side-channel risk."""
         from sc_neurocore.compiler.intelligence import (
             lint_side_channels,
         )
@@ -35,7 +35,8 @@ class TestSideChannelLint:
         assert len(div_findings) == 1
         assert div_findings[0].risk_level == "medium"
 
-    def test_branch_flagged(self):
+    def test_branch_flagged(self) -> None:
+        """A branch is flagged."""
         from sc_neurocore.compiler.intelligence import (
             lint_side_channels,
         )
@@ -44,7 +45,8 @@ class TestSideChannelLint:
         branch = [f for f in findings if f.risk_level == "high"]
         assert len(branch) >= 1
 
-    def test_multiply_flagged(self):
+    def test_multiply_flagged(self) -> None:
+        """A multiply is flagged."""
         from sc_neurocore.compiler.intelligence import (
             lint_side_channels,
         )

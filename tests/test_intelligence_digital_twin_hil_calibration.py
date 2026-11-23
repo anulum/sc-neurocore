@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.intelligence_digital_twin_support import *  # noqa: F403
+from typing import Any
+import pytest
 
 
 class TestHILCalibration:
-    def test_basic(self):
+    """Generating a hardware-in-the-loop calibration."""
+
+    def test_basic(self) -> None:
+        """A calibration sweeps both parameters with a full protocol."""
         from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
         r = generate_hil_calibration("sc_lif", {"v": "expr", "u": "expr"})
         assert r.num_parameters == 2
         assert len(r.protocol_steps) >= 5
 
-    def test_custom_ranges(self):
+    def test_custom_ranges(self) -> None:
+        """A custom sweep range is kept."""
         from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
         r = generate_hil_calibration(
@@ -31,7 +36,8 @@ class TestHILCalibration:
         )
         assert r.sweep_ranges["tau"] == (-1.0, 1.0)
 
-    def test_protocol_contains_design_matrix_and_acceptance_metadata(self):
+    def test_protocol_contains_design_matrix_and_acceptance_metadata(self) -> None:
+        """The protocol carries its design matrix and sample count."""
         from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
         r = generate_hil_calibration(
@@ -54,10 +60,11 @@ class TestHILCalibration:
         assert any("settle 16 cycles" in step for step in r.protocol_steps)
         assert any("weighted_least_squares" in step for step in r.protocol_steps)
 
-    def test_rejects_invalid_calibration_contract(self):
+    def test_rejects_invalid_calibration_contract(self) -> None:
+        """Each invalid calibration request is rejected."""
         from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
-        invalid_cases = [
+        invalid_cases: list[dict[str, Any]] = [
             dict(module_name="", equations={"v": "expr"}, parameters={"tau": (0.0, 1.0)}),
             dict(module_name="sc_lif", equations={}, parameters={"tau": (0.0, 1.0)}),
             dict(module_name="sc_lif", equations={"v": "expr"}, parameters={"tau": (1.0, 1.0)}),

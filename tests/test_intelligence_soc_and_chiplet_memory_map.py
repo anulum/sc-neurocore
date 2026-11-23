@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestMemoryMap:
-    def test_basic(self):
+    """Generating a memory map."""
+
+    def test_basic(self) -> None:
+        """The map has entries and an address decoder."""
         from sc_neurocore.compiler.intelligence import generate_memory_map
 
         m = generate_memory_map("sc_lif", {"v": "a", "u": "b"})
@@ -22,7 +23,8 @@ class TestMemoryMap:
         assert "addr_dec" in m.decoder_verilog
         assert len(m.entries) > 0
 
-    def test_base_address(self):
+    def test_base_address(self) -> None:
+        """A custom base address is used."""
         from sc_neurocore.compiler.intelligence import generate_memory_map
 
         m = generate_memory_map("sc_lif", {"v": "a"}, base_address=0x2000)

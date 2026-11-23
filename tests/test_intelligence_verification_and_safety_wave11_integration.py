@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    configure_approximation,
+    explore_pareto,
+    generate_dvfs_controller,
+    ingest_telemetry,
+    model_energy_harvest,
+    predict_aging,
+    protect_ip_pqc,
+    verify_timing_closure,
+)
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestWave11Integration(unittest.TestCase):
-    def test_full_pipeline(self):
+    """Verification tools working together."""
+
+    def test_full_pipeline(self) -> None:
         """End-to-end: profile → approx → aging → timing → telemetry."""
         p = get_profile("extropic_epu")
         eqs = {"v": "-(v)/tau + I"}
@@ -33,7 +48,7 @@ class TestWave11Integration(unittest.TestCase):
         tel = ingest_telemetry(hw, tw)
         self.assertTrue(tel.healthy)
 
-    def test_batteryless_pipeline(self):
+    def test_batteryless_pipeline(self) -> None:
         """Energy harvest → DVFS → Pareto → PQC."""
         harvest = model_energy_harvest(50.0, harvester_type="solar", environment="outdoor")
         self.assertTrue(harvest.energy_positive)

@@ -10,13 +10,11 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestBRAMArray:
     """Tests for BRAM-backed neuron array generation."""
 
-    def test_basic_array(self):
+    def test_basic_array(self) -> None:
         """Default array generates valid Verilog."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
 
@@ -26,21 +24,21 @@ class TestBRAMArray:
         assert "ram_style" in v
         assert "endmodule" in v
 
-    def test_custom_count(self):
+    def test_custom_count(self) -> None:
         """Custom neuron count."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
 
         v = generate_bram_array(neuron_count=256)
         assert "[0:255]" in v
 
-    def test_custom_module_name(self):
-        """Custom module name."""
+    def test_custom_module_name(self) -> None:
+        """A custom module name is used for the BRAM array."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
 
         v = generate_bram_array(module_name="my_array")
         assert "module my_array" in v
 
-    def test_spike_output(self):
+    def test_spike_output(self) -> None:
         """Array has spike output ports."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
 
@@ -49,7 +47,7 @@ class TestBRAMArray:
         assert "spike_neuron_id" in v
         assert "tick_done" in v
 
-    def test_current_based_lif_datapath_is_explicit(self):
+    def test_current_based_lif_datapath_is_explicit(self) -> None:
         """Array documents and emits the concrete LIF update it implements."""
         from sc_neurocore.compiler.intelligence import generate_bram_array
 

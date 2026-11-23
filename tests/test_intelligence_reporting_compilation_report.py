@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestCompilationReport:
-    def test_basic(self):
+    """The compilation report."""
+
+    def test_basic(self) -> None:
+        """The report names the target and carbon footprint."""
         from sc_neurocore.compiler.intelligence import generate_compilation_report
 
         md = generate_compilation_report("sc_lif", {"v": "a"}, "artix7")
@@ -22,7 +23,8 @@ class TestCompilationReport:
         assert "artix7" in md
         assert "Carbon" in md
 
-    def test_no_carbon(self):
+    def test_no_carbon(self) -> None:
+        """Without carbon data the section is left out."""
         from sc_neurocore.compiler.intelligence import generate_compilation_report
 
         md = generate_compilation_report(

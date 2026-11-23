@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
-from tests.intelligence_digital_twin_support import *  # noqa: F403
-
 
 class TestSeuScrubberFallback:
-    """No configuration bits means no expected upsets, so the scrub interval
-    falls back to the daily cadence rather than dividing by zero."""
+    """No configuration bits means no expected upsets.
 
-    def test_zero_config_bits_uses_daily_fallback_interval(self):
+    The scrub interval falls back to the daily cadence rather than dividing
+    by zero.
+    """
+
+    def test_zero_config_bits_uses_daily_fallback_interval(self) -> None:
+        """Without configuration bits the scrub is daily."""
         from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 
         s = schedule_seu_scrubbing(0, orbit_altitude_km=400)

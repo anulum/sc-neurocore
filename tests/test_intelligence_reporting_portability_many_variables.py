@@ -10,14 +10,15 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestPortabilityManyVariables:
-    """A model with more than four state variables raises the register-file
-    blocker that the single-variable portability cases never trigger."""
+    """A model with more than four state variables raises the register-file blocker.
 
-    def test_many_state_variables_flagged_as_blocker(self):
+    The single-variable portability cases never trigger it.
+    """
+
+    def test_many_state_variables_flagged_as_blocker(self) -> None:
+        """Many state variables are a blocker."""
         from sc_neurocore.compiler.intelligence import score_portability
 
         eqs = {f"v{i}": "a + b" for i in range(5)}

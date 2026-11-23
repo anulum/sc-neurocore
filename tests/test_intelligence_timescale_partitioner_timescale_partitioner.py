@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_timescale_partitioner_support import *  # noqa: F403
-
 
 class TestTimescalePartitioner:
     """Multi-timescale ODE partitioning."""
 
     def test_single_timescale(self) -> None:
+        """One equation is all fast."""
         from sc_neurocore.compiler.intelligence import (
             partition_timescales,
         )
@@ -26,6 +25,7 @@ class TestTimescalePartitioner:
         assert len(p.slow_equations) == 0
 
     def test_explicit_separation(self) -> None:
+        """Fast and slow equations are split with a clock divider."""
         from sc_neurocore.compiler.intelligence import (
             partition_timescales,
         )
@@ -39,6 +39,7 @@ class TestTimescalePartitioner:
         assert p.slow_clock_div >= 2
 
     def test_cdc_signals(self) -> None:
+        """Crossing signals are listed."""
         from sc_neurocore.compiler.intelligence import (
             partition_timescales,
         )
@@ -50,6 +51,7 @@ class TestTimescalePartitioner:
         assert "v" in p.cdc_signals
 
     def test_all_fast(self) -> None:
+        """Equal timescales leave no slow part."""
         from sc_neurocore.compiler.intelligence import (
             partition_timescales,
         )

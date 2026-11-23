@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestBitstreamEncryption:
     """AES-256 bitstream encryption for secure boot."""
 
-    def test_xilinx_encryption(self):
+    def test_xilinx_encryption(self) -> None:
+        """The Xilinx flow enables encryption with its key file."""
         from sc_neurocore.compiler.intelligence import (
             generate_bitstream_encryption,
         )
@@ -26,7 +25,8 @@ class TestBitstreamEncryption:
         assert "sc_lif.nky" in tcl
         assert "SECURITY_LEVEL" in tcl
 
-    def test_intel_encryption(self):
+    def test_intel_encryption(self) -> None:
+        """The Intel flow enables encryption and anti-tamper."""
         from sc_neurocore.compiler.intelligence import (
             generate_bitstream_encryption,
         )
@@ -36,7 +36,8 @@ class TestBitstreamEncryption:
         assert "ENABLE_CONFIGURATION_BITSTREAM_ENCRYPTION ON" in tcl
         assert "ANTI_TAMPER" in tcl
 
-    def test_key_source_efuse(self):
+    def test_key_source_efuse(self) -> None:
+        """An eFUSE key source is used."""
         from sc_neurocore.compiler.intelligence import (
             generate_bitstream_encryption,
         )
@@ -47,7 +48,8 @@ class TestBitstreamEncryption:
         )
         assert "EFUSE" in tcl
 
-    def test_key_source_bbram(self):
+    def test_key_source_bbram(self) -> None:
+        """A BBRAM key source is used."""
         from sc_neurocore.compiler.intelligence import (
             generate_bitstream_encryption,
         )
@@ -58,7 +60,8 @@ class TestBitstreamEncryption:
         )
         assert "BBRAM" in tcl
 
-    def test_module_name_in_output(self):
+    def test_module_name_in_output(self) -> None:
+        """The design name appears in the script."""
         from sc_neurocore.compiler.intelligence import (
             generate_bitstream_encryption,
         )

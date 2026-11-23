@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3189
+expected_file_count = 3262
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -12800,3 +12800,295 @@ rationale = "Exercise SC-NeuroCore: identity substrate substrate creation."
 [[file]]
 path = "tests/test_identity_substrate_trace_encoder.py"
 rationale = "Exercise SC-NeuroCore: identity substrate trace encoder."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_digital_twin.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin digital twin."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_hil_calibration.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin hil calibration."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_hil_calibration_contract_edges.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin hil calibration contract edges."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_seu_scrubber.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin seu scrubber."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_seu_scrubber_fallback.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin seu scrubber fallback."
+
+[[file]]
+path = "tests/test_intelligence_digital_twin_telemetry.py"
+rationale = "Exercise SC-NeuroCore: intelligence digital twin telemetry."
+
+[[file]]
+path = "tests/test_intelligence_drift_compensation_drift_compensation.py"
+rationale = "Exercise SC-NeuroCore: intelligence drift compensation drift compensation."
+
+[[file]]
+path = "tests/test_intelligence_drift_compensation_drift_compensator_fallback.py"
+rationale = "Exercise SC-NeuroCore: intelligence drift compensation drift compensator fallback."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_approximation.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal approximation."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_classify_model_complexity_branches.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal classify model complexity branches."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_dvfs.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal dvfs."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_energy_harvest.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal energy harvest."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_energy_harvest_zero_design_power.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal energy harvest zero design power."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_energy_scheduler.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal energy scheduler."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_power_fsm.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal power fsm."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_power_intent.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal power intent."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_thermal_analysis.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal thermal analysis."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_thermal_analysis_branches.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal thermal analysis branches."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_thermal_constraints.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal thermal constraints."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_thermal_envelope.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal thermal envelope."
+
+[[file]]
+path = "tests/test_intelligence_power_and_thermal_wave7_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence power and thermal wave7 integration."
+
+[[file]]
+path = "tests/test_intelligence_reporting_compilation_report.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting compilation report."
+
+[[file]]
+path = "tests/test_intelligence_reporting_compilation_summary.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting compilation summary."
+
+[[file]]
+path = "tests/test_intelligence_reporting_model_complexity.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting model complexity."
+
+[[file]]
+path = "tests/test_intelligence_reporting_multi_target_comparison.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting multi target comparison."
+
+[[file]]
+path = "tests/test_intelligence_reporting_pareto.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting pareto."
+
+[[file]]
+path = "tests/test_intelligence_reporting_portability.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting portability."
+
+[[file]]
+path = "tests/test_intelligence_reporting_portability_many_variables.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting portability many variables."
+
+[[file]]
+path = "tests/test_intelligence_reporting_provenance_chain.py"
+rationale = "Exercise SC-NeuroCore: intelligence reporting provenance chain."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_bitstream_encryption.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance bitstream encryption."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_carbon_footprint.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance carbon footprint."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_ip_obfuscation.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance ip obfuscation."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_license_checker.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance license checker."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_model_checksum.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance model checksum."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_pqc.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance pqc."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_sbom.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance sbom."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_side_channel_lint.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance side channel lint."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_supply_chain_risk.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance supply chain risk."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_trojan_lint.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance trojan lint."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_trojan_lint_branches.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance trojan lint branches."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_watermark.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance watermark."
+
+[[file]]
+path = "tests/test_intelligence_security_and_compliance_wave10_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence security and compliance wave10 integration."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_bram_array.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet bram array."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_cross_feature_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet cross feature integration."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_cxl_coherence.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet cxl coherence."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_floorplanner.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet floorplanner."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_memory_map.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet memory map."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_pim_layout.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet pim layout."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_pipeline_wrapper.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet pipeline wrapper."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_power_domain_wrapper.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet power domain wrapper."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_tmr_wrapper.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet tmr wrapper."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_uc_ie_mapper.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet uc ie mapper."
+
+[[file]]
+path = "tests/test_intelligence_soc_and_chiplet_uc_ie_partitioning.py"
+rationale = "Exercise SC-NeuroCore: intelligence soc and chiplet uc ie partitioning."
+
+[[file]]
+path = "tests/test_intelligence_timescale_partitioner_timescale_partitioner.py"
+rationale = "Exercise SC-NeuroCore: intelligence timescale partitioner timescale partitioner."
+
+[[file]]
+path = "tests/test_intelligence_timescale_partitioner_timescale_partitioner_edges.py"
+rationale = "Exercise SC-NeuroCore: intelligence timescale partitioner timescale partitioner edges."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_aging.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety aging."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_auto_testbench.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety auto testbench."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_bittrue_kernel.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety bittrue kernel."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_cdc.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety cdc."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_compliance_matrix.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety compliance matrix."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_fault_campaign.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety fault campaign."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_fault_tree.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety fault tree."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_formal_equivalence.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety formal equivalence."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_multi_die_and_regression_edges.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety multi die and regression edges."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_ode_stability.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety ode stability."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_regression_watchdog.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety regression watchdog."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_reliability.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety reliability."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_timing_closure.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety timing closure."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_wave11_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety wave11 integration."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_wave8_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety wave8 integration."
+
+[[file]]
+path = "tests/test_intelligence_verification_and_safety_wave9_integration.py"
+rationale = "Exercise SC-NeuroCore: intelligence verification and safety wave9 integration."
+
+[[file]]
+path = "tests/test_ir_type_checker_check_ir_types.py"
+rationale = "Exercise SC-NeuroCore: ir type checker check ir types."
+
+[[file]]
+path = "tests/test_ir_type_checker_types_compatible.py"
+rationale = "Exercise SC-NeuroCore: ir type checker types compatible."

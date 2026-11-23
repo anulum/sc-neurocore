@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestCompilationSummary:
     """End-to-end compilation summary generation."""
 
-    def test_summary_contains_sections(self):
+    def test_summary_contains_sections(self) -> None:
+        """The summary has module, equation and target sections."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )
@@ -34,7 +33,8 @@ class TestCompilationSummary:
         assert "### Pipeline Analysis" in s
         assert "### Applicable Features" in s
 
-    def test_fpga_features(self):
+    def test_fpga_features(self) -> None:
+        """An FPGA target lists TMR and encryption."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )
@@ -47,7 +47,8 @@ class TestCompilationSummary:
         assert "TMR wrapper" in s
         assert "Bitstream encryption" in s
 
-    def test_photonic_features(self):
+    def test_photonic_features(self) -> None:
+        """A photonic target lists MZI weight encoding."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )
@@ -59,7 +60,8 @@ class TestCompilationSummary:
         )
         assert "MZI weight encoding" in s
 
-    def test_neuromorphic_features(self):
+    def test_neuromorphic_features(self) -> None:
+        """A neuromorphic target lists on-chip learning."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )
@@ -71,7 +73,8 @@ class TestCompilationSummary:
         )
         assert "On-chip learning" in s
 
-    def test_in_memory_features(self):
+    def test_in_memory_features(self) -> None:
+        """An in-memory target lists the PIM planner."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )
@@ -83,7 +86,8 @@ class TestCompilationSummary:
         )
         assert "PIM layout planner" in s
 
-    def test_verilog_lines_shown(self):
+    def test_verilog_lines_shown(self) -> None:
+        """The summary counts the Verilog lines."""
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,
         )

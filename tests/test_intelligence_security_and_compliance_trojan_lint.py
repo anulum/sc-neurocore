@@ -10,17 +10,19 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestTrojanLint:
-    def test_clean(self):
+    """Linting for hardware trojans."""
+
+    def test_clean(self) -> None:
+        """A clean design is low risk."""
         from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
         r = lint_hardware_trojans({"v": "a + b", "u": "c - d"})
         assert r.risk_level == "LOW"
 
-    def test_conditional(self):
+    def test_conditional(self) -> None:
+        """A conditional trigger raises the risk."""
         from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
         r = lint_hardware_trojans({"v": "a if trigger else b"})

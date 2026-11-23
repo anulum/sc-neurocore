@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
-
 
 class TestClassifyModelComplexityBranches:
-    """Each compute-profile class is reached by its own op-density / coupling
-    signature, distinct from the default compute-bound fall-through."""
+    """Each compute-profile class is reached by its own signature.
 
-    def test_compute_bound_high_op_density(self):
+    The op-density and coupling signatures are distinct from the default
+    compute-bound fall-through.
+    """
+
+    def test_compute_bound_high_op_density(self) -> None:
+        """High op density is compute-bound and suits an FPGA."""
         from sc_neurocore.compiler.intelligence import classify_model_complexity
 
         # One variable carrying five arithmetic ops -> >4 ops/var -> compute_bound.
@@ -25,7 +27,8 @@ class TestClassifyModelComplexityBranches:
         assert m.classification == "compute_bound"
         assert m.recommended_paradigm == "fpga"
 
-    def test_memory_bound_many_low_op_variables(self):
+    def test_memory_bound_many_low_op_variables(self) -> None:
+        """Many light variables are memory-bound and suit in-memory compute."""
         from sc_neurocore.compiler.intelligence import classify_model_complexity
 
         # Five variables with one op each -> >4 vars and <=2 ops/var -> memory_bound.
@@ -34,7 +37,8 @@ class TestClassifyModelComplexityBranches:
         assert m.classification == "memory_bound"
         assert m.recommended_paradigm == "in_memory"
 
-    def test_comm_bound_high_cross_coupling(self):
+    def test_comm_bound_high_cross_coupling(self) -> None:
+        """Heavy coupling is communication-bound and suits a CGRA."""
         from sc_neurocore.compiler.intelligence import classify_model_complexity
 
         # Three mutually-referencing variables -> comm_ratio 2.0 -> comm_bound.

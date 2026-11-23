@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestPipelineWrapper:
     """Pipeline register insertion for high-frequency targets."""
 
-    def test_basic_pipeline(self):
+    def test_basic_pipeline(self) -> None:
+        """The wrapper is a pipelined module with valid signals."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
         )
@@ -32,7 +31,8 @@ class TestPipelineWrapper:
         assert "valid_out" in v
         assert "latency" in v
 
-    def test_pipeline_stages_in_output(self):
+    def test_pipeline_stages_in_output(self) -> None:
+        """Each pipeline stage is registered."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
         )
@@ -47,7 +47,8 @@ class TestPipelineWrapper:
         assert "I_pipe_2" in v
         assert "valid_pipe" in v
 
-    def test_auto_stages_from_target(self):
+    def test_auto_stages_from_target(self) -> None:
+        """Stages are chosen from the target."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
         )
@@ -60,7 +61,8 @@ class TestPipelineWrapper:
         assert "module sc_lif_pipe" in v
         assert "pipeline" in v.lower()
 
-    def test_output_register(self):
+    def test_output_register(self) -> None:
+        """The outputs are registered."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
         )
@@ -70,7 +72,8 @@ class TestPipelineWrapper:
         assert "spike_out" in v
         assert "v_reg" in v
 
-    def test_inner_module_instantiation(self):
+    def test_inner_module_instantiation(self) -> None:
+        """The wrapper instantiates the inner module."""
         from sc_neurocore.compiler.intelligence import (
             generate_pipeline_wrapper,
         )

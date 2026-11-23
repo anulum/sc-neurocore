@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestWave10Integration:
-    def test_from_constraints_to_report(self):
+    """Security tools working together."""
+
+    def test_from_constraints_to_report(self) -> None:
+        """Constraints flow through to a report, SBOM and watermark."""
         from sc_neurocore.compiler.platforms import HardwareProfile
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_report,
@@ -38,7 +39,8 @@ class TestWave10Integration:
         wm = embed_watermark("sc_lif", {"v": "a"})
         assert wm.verifiable
 
-    def test_space_pipeline(self):
+    def test_space_pipeline(self) -> None:
+        """A space pipeline lints, scrubs and obfuscates."""
         from sc_neurocore.compiler.intelligence import (
             lint_hardware_trojans,
             schedule_seu_scrubbing,

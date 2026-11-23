@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
-
 
 class TestPowerFSM:
-    def test_default(self):
+    """Generating a power-state machine."""
+
+    def test_default(self) -> None:
+        """The default machine has active and hibernate states."""
         from sc_neurocore.compiler.intelligence import generate_power_state_machine
 
         v = generate_power_state_machine("sc_lif")
@@ -22,7 +23,8 @@ class TestPowerFSM:
         assert "HIBERNATE" in v
         assert "power_fsm" in v
 
-    def test_custom_states(self):
+    def test_custom_states(self) -> None:
+        """Custom states are used."""
         from sc_neurocore.compiler.intelligence import generate_power_state_machine
 
         v = generate_power_state_machine("sc_lif", states=["ON", "OFF"])

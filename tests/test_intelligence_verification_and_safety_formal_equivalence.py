@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_verification_and_safety_support import *  # noqa: F403
-
 
 class TestFormalEquivalence:
     """Formal equivalence proof skeleton."""
 
-    def test_basic_sketch(self):
+    def test_basic_sketch(self) -> None:
+        """The proof sketch has steps and an assertion."""
         from sc_neurocore.compiler.intelligence import (
             generate_equivalence_sketch,
         )
@@ -30,7 +29,8 @@ class TestFormalEquivalence:
         assert len(s.assertions) == 1
         assert s.quantisation_bound > 0
 
-    def test_multi_equation(self):
+    def test_multi_equation(self) -> None:
+        """Each equation gets an assertion."""
         from sc_neurocore.compiler.intelligence import (
             generate_equivalence_sketch,
         )
@@ -42,7 +42,8 @@ class TestFormalEquivalence:
         assert len(s.assertions) == 2
         assert "CONCLUSION" in s.proof_steps[-1]
 
-    def test_sva_format(self):
+    def test_sva_format(self) -> None:
+        """Assertions are clocked SVA properties."""
         from sc_neurocore.compiler.intelligence import (
             generate_equivalence_sketch,
         )

@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
-
 
 class TestUCIeMapper:
-    def test_basic(self):
+    """Mapping cores onto UCIe lanes."""
+
+    def test_basic(self) -> None:
+        """Each core gets lanes and positive bandwidth."""
         from sc_neurocore.compiler.intelligence import map_ucie_protocol
 
         r = map_ucie_protocol({"core_a": 64, "core_b": 128})

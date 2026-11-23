@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_reporting_support import *  # noqa: F403
-
 
 class TestMultiTargetComparison:
     """Compile-once, compare-N-targets."""
 
-    def test_compare_three_targets(self):
+    def test_compare_three_targets(self) -> None:
+        """Three targets are compared in order."""
         from sc_neurocore.compiler.intelligence import compare_targets
 
         results = compare_targets(
@@ -27,7 +26,8 @@ class TestMultiTargetComparison:
         assert results[0].target == "artix7"
         assert results[1].target == "ice40"
 
-    def test_dsp_targets_have_dsps(self):
+    def test_dsp_targets_have_dsps(self) -> None:
+        """Only DSP targets estimate DSPs."""
         from sc_neurocore.compiler.intelligence import compare_targets
 
         results = compare_targets(
@@ -39,7 +39,8 @@ class TestMultiTargetComparison:
         assert artix.estimated_dsps > 0
         assert rad.estimated_dsps == 0
 
-    def test_format_report(self):
+    def test_format_report(self) -> None:
+        """The report names each target."""
         from sc_neurocore.compiler.intelligence import (
             compare_targets,
             format_comparison_report,
@@ -55,7 +56,8 @@ class TestMultiTargetComparison:
         assert "loihi2" in report
         assert "Pipeline" in report
 
-    def test_critical_path_consistent(self):
+    def test_critical_path_consistent(self) -> None:
+        """The critical path is the same on every target."""
         from sc_neurocore.compiler.intelligence import compare_targets
 
         results = compare_targets(

@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.intelligence_security_and_compliance_support import *  # noqa: F403
-
 
 class TestModelChecksum:
     """SHA-256 model checksum embedding."""
 
-    def test_checksum_embedded(self):
+    def test_checksum_embedded(self) -> None:
+        """The model hash is embedded in the module."""
         from sc_neurocore.compiler.intelligence import embed_model_checksum
 
         verilog = "// Test module\nmodule sc_lif (...);\nendmodule"
@@ -29,7 +28,8 @@ class TestModelChecksum:
         assert "MODEL_HASH" in result
         assert "256'h" in result
 
-    def test_checksum_deterministic(self):
+    def test_checksum_deterministic(self) -> None:
+        """The same inputs give the same hash."""
         from sc_neurocore.compiler.intelligence import embed_model_checksum
 
         v1 = embed_model_checksum(
@@ -43,21 +43,31 @@ class TestModelChecksum:
         # Same inputs → same hash
         import re
 
-        h1 = re.search(r"SHA-256: ([0-9a-f]+)", v1).group(1)
-        h2 = re.search(r"SHA-256: ([0-9a-f]+)", v2).group(1)
+        m_h1 = re.search(r"SHA-256: ([0-9a-f]+)", v1)
+        assert m_h1 is not None
+        h1 = m_h1.group(1)
+        m_h2 = re.search(r"SHA-256: ([0-9a-f]+)", v2)
+        assert m_h2 is not None
+        h2 = m_h2.group(1)
         assert h1 == h2
 
-    def test_different_equations_different_hash(self):
+    def test_different_equations_different_hash(self) -> None:
+        """Different equations give different hashes."""
         from sc_neurocore.compiler.intelligence import embed_model_checksum
         import re
 
         v1 = embed_model_checksum("module x; endmodule", equations={"v": "a+b"})
         v2 = embed_model_checksum("module x; endmodule", equations={"v": "a*b"})
-        h1 = re.search(r"SHA-256: ([0-9a-f]+)", v1).group(1)
-        h2 = re.search(r"SHA-256: ([0-9a-f]+)", v2).group(1)
+        m_h1 = re.search(r"SHA-256: ([0-9a-f]+)", v1)
+        assert m_h1 is not None
+        h1 = m_h1.group(1)
+        m_h2 = re.search(r"SHA-256: ([0-9a-f]+)", v2)
+        assert m_h2 is not None
+        h2 = m_h2.group(1)
         assert h1 != h2
 
-    def test_no_equations_still_works(self):
+    def test_no_equations_still_works(self) -> None:
+        """A module without equations still gets a hash."""
         from sc_neurocore.compiler.intelligence import embed_model_checksum
 
         result = embed_model_checksum("module y; endmodule")

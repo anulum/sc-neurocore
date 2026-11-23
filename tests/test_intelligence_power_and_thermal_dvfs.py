@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.intelligence_power_and_thermal_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.intelligence import (
+    generate_dvfs_controller,
+)
 
 
 class TestDVFS(unittest.TestCase):
-    def test_default(self):
+    """Generating a DVFS controller."""
+
+    def test_default(self) -> None:
+        """The default controller tracks the spike rate."""
         v = generate_dvfs_controller("sc_lif")
         self.assertIn("module sc_lif_dvfs_ctrl", v)
         self.assertIn("spike_rate", v)
         self.assertIn("OP_0", v)
         self.assertIn("endmodule", v)
 
-    def test_custom_points(self):
+    def test_custom_points(self) -> None:
+        """Custom operating points are used."""
         v = generate_dvfs_controller(
             "sc_hh",
             operating_points=[
