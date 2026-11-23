@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+import pytest
+from sc_neurocore.edge.telemetry import (
+    DeviceTelemetry,
+)
 
 
 class TestDeviceTelemetry:
-    def test_record(self):
+    """Per-layer telemetry of the tiny SC device."""
+
+    def test_record(self) -> None:
+        """Recording ticks counts ticks and spikes per device and layer."""
         dt = DeviceTelemetry()
         dt.record("L0", 5, 16)
         dt.record("L0", 3, 16)
@@ -23,14 +29,16 @@ class TestDeviceTelemetry:
         layer = dt.get_layer("L0")
         assert layer.tick_count == 2
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary totals spikes and names each layer."""
         dt = DeviceTelemetry()
         dt.record("L0", 10, 32)
         s = dt.summary()
         assert s["total_spikes"] == 10
         assert "L0" in s["layers"]
 
-    def test_layer_rate_and_zero_neuron_utilization_path(self):
+    def test_layer_rate_and_zero_neuron_utilization_path(self) -> None:
+        """A layer reports its spike rates and utilisation."""
         dt = DeviceTelemetry()
         dt.record("L0", 6, 0)  # should not push utilization sample
         dt.record("L0", 2, 10)  # should push one utilization sample (20%)
@@ -39,7 +47,8 @@ class TestDeviceTelemetry:
         assert layer.mean_spike_rate == pytest.approx(4.0)
         assert layer.mean_utilization == pytest.approx(20.0)
 
-    def test_get_layer_is_idempotent_and_initialises_zero_rates(self):
+    def test_get_layer_is_idempotent_and_initialises_zero_rates(self) -> None:
+        """Getting a layer twice returns the same one with zero rates."""
         dt = DeviceTelemetry()
         first = dt.get_layer("L-new")
         second = dt.get_layer("L-new")

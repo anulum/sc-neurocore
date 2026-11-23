@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+import pytest
+from sc_neurocore.edge.sc_network import (
+    SCLayer,
+)
 
 
 def test_sclayer_rejects_mismatched_weight_row_length() -> None:
+    """A weight row of the wrong length is refused."""
     # Right number of rows but a row whose word count does not match
     # words_per_input is rejected by the SCLayer weight validator.
     with pytest.raises(ValueError, match="each weight row must match words_per_input"):

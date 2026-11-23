@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+from sc_neurocore.edge.sc_network import (
+    SCLayer,
+    SCNetwork,
+)
+from sc_neurocore.edge.weights import (
+    deserialize_weights,
+    serialize_weights,
+)
 
 
 class TestWeightNetworkIntegration:
-    def test_export_import_roundtrip(self):
+    """Exporting and importing network weights."""
+
+    def test_export_import_roundtrip(self) -> None:
+        """A re-imported network gives the same result."""
         net = SCNetwork(bit_length=256)
         net.add_layer(SCLayer(n_inputs=4, n_outputs=2, threshold=1))
         r1 = net.run([0.9, 0.9, 0.9, 0.9])
@@ -25,7 +35,8 @@ class TestWeightNetworkIntegration:
         r2 = net2.run([0.9, 0.9, 0.9, 0.9])
         assert r1 == r2
 
-    def test_export_preserves_structure(self):
+    def test_export_preserves_structure(self) -> None:
+        """The export keeps each layer's input and output sizes."""
         net = SCNetwork(bit_length=512)
         net.add_layer(SCLayer(n_inputs=32, n_outputs=8, threshold=100))
         net.add_layer(SCLayer(n_inputs=8, n_outputs=2, threshold=50))

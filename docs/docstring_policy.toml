@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2664
+expected_file_count = 2680
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10700,3 +10700,67 @@ rationale = "Exercise the memristor mapper: verilog emitter."
 [[file]]
 path = "tests/test_memristor/test_memristor_mapper_write_verify_protocol.py"
 rationale = "Exercise the memristor mapper: write verify protocol."
+
+[[file]]
+path = "tests/test_edge/test_edge_deploy.py"
+rationale = "Exercise the edge deployment suite: edge deploy."
+
+[[file]]
+path = "tests/test_edge/test_edge_memory_footprint.py"
+rationale = "Exercise the edge deployment suite: edge memory footprint."
+
+[[file]]
+path = "tests/test_edge/test_edge_power_profile.py"
+rationale = "Exercise the edge deployment suite: edge power profile."
+
+[[file]]
+path = "tests/test_edge/test_edge_sobol_generator.py"
+rationale = "Exercise the edge deployment suite: edge sobol generator."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_cascade_semantics.py"
+rationale = "Exercise the edge deployment suite: tinysc ports cascade semantics."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_device_telemetry.py"
+rationale = "Exercise the edge deployment suite: tinysc ports device telemetry."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_end_to_end.py"
+rationale = "Exercise the edge deployment suite: tinysc ports end to end."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_free_tests.py"
+rationale = "Exercise the edge deployment suite: tinysc ports free tests."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_izhikevich_neuron.py"
+rationale = "Exercise the edge deployment suite: tinysc ports izhikevich neuron."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_lfsr16.py"
+rationale = "Exercise the edge deployment suite: tinysc ports lfsr16."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_lif_neuron.py"
+rationale = "Exercise the edge deployment suite: tinysc ports lif neuron."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_popcount.py"
+rationale = "Exercise the edge deployment suite: tinysc ports popcount."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_sc_network.py"
+rationale = "Exercise the edge deployment suite: tinysc ports sc network."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_telemetry_ring.py"
+rationale = "Exercise the edge deployment suite: tinysc ports telemetry ring."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_weight_network_integration.py"
+rationale = "Exercise the edge deployment suite: tinysc ports weight network integration."
+
+[[file]]
+path = "tests/test_edge/test_tinysc_ports_weights.py"
+rationale = "Exercise the edge deployment suite: tinysc ports weights."

@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+from sc_neurocore.edge.neuron import (
+    IzhikevichNeuron,
+)
 
 
 class TestIzhikevichNeuron:
-    def test_regular_spiking(self):
+    """The fixed-point Izhikevich neuron of the tiny SC port."""
+
+    def test_regular_spiking(self) -> None:
+        """Regular spiking sets its recovery rate."""
         n = IzhikevichNeuron.regular_spiking()
         assert n.a_q16 == 1311
 
-    def test_fast_spiking(self):
+    def test_fast_spiking(self) -> None:
+        """Fast spiking sets its recovery rate."""
         n = IzhikevichNeuron.fast_spiking()
         assert n.a_q16 == 6554
 
-    def test_modes_differ(self):
+    def test_modes_differ(self) -> None:
+        """Regular and fast spiking differ."""
         rs = IzhikevichNeuron.regular_spiking()
         fs = IzhikevichNeuron.fast_spiking()
         assert rs.a_q16 != fs.a_q16
 
-    def test_tick_without_strong_input_does_not_immediately_spike(self):
+    def test_tick_without_strong_input_does_not_immediately_spike(self) -> None:
+        """A weak input does not make the neuron spike at once."""
         n = IzhikevichNeuron.regular_spiking()
         spiked = n.tick(0)
         assert spiked is False

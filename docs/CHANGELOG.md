@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 16 edge-deployment and tiny-SC-port test modules (`tests/test_edge`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings and type annotations and
+  are enrolled in the docstring policy. Both support modules are left
+  without an importer and are deleted.
+
 - The 16 memristor-mapper test modules (`tests/test_memristor`) import
   their names explicitly instead of through a suppressed star import,
   gain their missing test docstrings and are enrolled in the docstring

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5752
+    "test_files": 5750
   },
   "documentation": {
     "public_pages": [
@@ -5006,7 +5006,6 @@
       "tests/test_dsl_to_verilog_i_verilog_simulation.py",
       "tests/test_dsl_to_verilog_testbench_generation.py",
       "tests/test_eda_toolchain_versions.py",
-      "tests/test_edge/edge_support.py",
       "tests/test_edge/test_aer_router_daemon.py",
       "tests/test_edge/test_edge_deploy.py",
       "tests/test_edge/test_edge_memory_footprint.py",
@@ -5030,7 +5029,6 @@
       "tests/test_edge/test_tinysc_ports_weight_network_integration.py",
       "tests/test_edge/test_tinysc_ports_weights.py",
       "tests/test_edge/test_web_deploy.py",
-      "tests/test_edge/tinysc_ports_support.py",
       "tests/test_edge_crossing_detection_edge_detection_cosim.py",
       "tests/test_edge_crossing_detection_edge_detection_emitter.py",
       "tests/test_edge_crossing_detection_edge_detection_runner.py",

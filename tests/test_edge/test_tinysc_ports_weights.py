@@ -10,24 +10,35 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+import pytest
+from sc_neurocore.edge.weights import (
+    deserialize_weights,
+    serialize_weights,
+    WEIGHT_MAGIC,
+    WeightHeader,
+)
 
 
 class TestWeights:
-    def test_header_roundtrip(self):
+    """The weight blob format of the tiny SC port."""
+
+    def test_header_roundtrip(self) -> None:
+        """A header reads back its magic and layer count."""
         h = WeightHeader(n_layers=3)
         data = h.to_bytes()
         h2 = WeightHeader.from_bytes(data)
         assert h2.magic == WEIGHT_MAGIC
         assert h2.n_layers == 3
 
-    def test_validate(self):
+    def test_validate(self) -> None:
+        """A header validates only with the right magic."""
         h = WeightHeader()
         assert h.validate()
         h.magic = 0xDEAD
         assert not h.validate()
 
-    def test_serialize_roundtrip(self):
+    def test_serialize_roundtrip(self) -> None:
+        """A serialised layer reads back its sizes."""
         weights = [
             (4, 2, 512, [[0xAAAA_AAAA], [0x5555_5555]]),
         ]
@@ -40,7 +51,8 @@ class TestWeights:
         assert rows[0] == [0xAAAA_AAAA]
         assert rows[1] == [0x5555_5555]
 
-    def test_multi_layer(self):
+    def test_multi_layer(self) -> None:
+        """Two serialised layers read back as two."""
         weights = [
             (32, 4, 256, [[0xFF] * 1 for _ in range(4)]),
             (4, 2, 128, [[0x0F] * 1 for _ in range(2)]),
@@ -49,7 +61,8 @@ class TestWeights:
         layers = deserialize_weights(blob)
         assert len(layers) == 2
 
-    def test_invalid_magic_raises(self):
+    def test_invalid_magic_raises(self) -> None:
+        """A blob with the wrong magic is refused."""
         data = b"\x00" * 16
         with pytest.raises(ValueError, match="Invalid weight blob"):
             deserialize_weights(data)

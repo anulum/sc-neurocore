@@ -10,34 +10,43 @@
 
 from __future__ import annotations
 
-from edge_support import *  # noqa: F403
+from sc_neurocore.edge import (
+    SobolGenerator,
+)
 
 
 class TestSobolGenerator:
-    def test_deterministic(self):
+    """The edge Sobol sequence generator."""
+
+    def test_deterministic(self) -> None:
+        """Two generators with one seed step alike."""
         a = SobolGenerator(seed=0)
         b = SobolGenerator(seed=0)
         for _ in range(100):
             assert a.step() == b.step()
 
-    def test_unique_values(self):
+    def test_unique_values(self) -> None:
+        """The sequence produces many distinct values."""
         s = SobolGenerator()
         values = {s.step() for _ in range(1000)}
         assert len(values) > 500
 
-    def test_encode_probability(self):
+    def test_encode_probability(self) -> None:
+        """Encoding one half gives about half ones."""
         s = SobolGenerator()
         bs = s.encode(32768, 10000)  # ~50% threshold
         popcount = sum(bin(int(w)).count("1") for w in bs)
         p = popcount / 10000
         assert abs(p - 0.5) < 0.05
 
-    def test_different_seeds(self):
+    def test_different_seeds(self) -> None:
+        """Different seeds step differently."""
         a = SobolGenerator(seed=0x1234)
         b = SobolGenerator(seed=0x5678)
         assert a.step() != b.step()
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset restarts the sequence."""
         s = SobolGenerator()
         first = [s.step() for _ in range(10)]
         s.reset()

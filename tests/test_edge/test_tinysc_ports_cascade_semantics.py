@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+from sc_neurocore.edge.sc_network import (
+    SCLayer,
+    SCNetwork,
+)
 
 
 class TestCascadeSemantics:
-    def test_two_layer_cascade_output_size(self):
+    """Layer cascades of the tiny SC network port."""
+
+    def test_two_layer_cascade_output_size(self) -> None:
+        """Two layers give the last layer's output size."""
         net = SCNetwork(bit_length=256)
         net.add_layer(SCLayer(n_inputs=4, n_outputs=4, threshold=1))
         net.add_layer(SCLayer(n_inputs=4, n_outputs=2, threshold=1))
         result = net.run([0.9, 0.9, 0.9, 0.9])
         assert len(result) == 2
 
-    def test_cascade_deterministic(self):
+    def test_cascade_deterministic(self) -> None:
+        """A cascade gives the same result twice."""
         net = SCNetwork(bit_length=256)
         net.add_layer(SCLayer(n_inputs=4, n_outputs=4, threshold=1))
         net.add_layer(SCLayer(n_inputs=4, n_outputs=2, threshold=1))
@@ -29,7 +36,8 @@ class TestCascadeSemantics:
         r2 = net.run([0.5, 0.5, 0.5, 0.5])
         assert r1 == r2
 
-    def test_three_layer_cascade(self):
+    def test_three_layer_cascade(self) -> None:
+        """Three layers give the last layer's output size."""
         net = SCNetwork(bit_length=256)
         net.add_layer(SCLayer(n_inputs=8, n_outputs=4, threshold=1))
         net.add_layer(SCLayer(n_inputs=4, n_outputs=4, threshold=1))

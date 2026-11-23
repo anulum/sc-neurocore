@@ -10,29 +10,37 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+from sc_neurocore.edge.telemetry import (
+    TelemetryRing,
+)
 
 
 class TestTelemetryRing:
-    def test_empty_ring_defaults(self):
+    """The telemetry ring buffer."""
+
+    def test_empty_ring_defaults(self) -> None:
+        """An empty ring has its capacity, no entries and a zero mean."""
         ring = TelemetryRing(0)
         assert ring.capacity == 1
         assert ring.count == 0
         assert ring.mean() == 0.0
         assert ring.last() == 0
 
-    def test_push_and_mean(self):
+    def test_push_and_mean(self) -> None:
+        """Pushed values give their mean."""
         ring = TelemetryRing(4)
         for v in [10, 20, 30, 40]:
             ring.push(v)
         assert ring.mean() == 25.0
 
-    def test_last(self):
+    def test_last(self) -> None:
+        """The ring returns its last value."""
         ring = TelemetryRing(4)
         ring.push(42)
         assert ring.last() == 42
 
-    def test_overflow(self):
+    def test_overflow(self) -> None:
+        """An overflowing ring keeps its capacity and the newest value."""
         ring = TelemetryRing(2)
         for v in [1, 2, 3, 4, 5]:
             ring.push(v)

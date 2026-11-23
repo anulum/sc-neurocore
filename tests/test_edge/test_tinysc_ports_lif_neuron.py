@@ -10,22 +10,32 @@
 
 from __future__ import annotations
 
-from tinysc_ports_support import *  # noqa: F403
+from sc_neurocore.edge.bitstream import (
+    MASK32,
+)
+from sc_neurocore.edge.neuron import (
+    LifNeuron,
+)
 
 
 class TestLifNeuron:
-    def test_quiescent(self):
+    """The integer LIF neuron of the tiny SC port."""
+
+    def test_quiescent(self) -> None:
+        """Without input the neuron stays at rest."""
         n = LifNeuron(threshold=100)
         assert not n.tick([0])
         assert n.membrane == 0
 
-    def test_excitation(self):
+    def test_excitation(self) -> None:
+        """Excitation makes the neuron spike."""
         n = LifNeuron(threshold=10, leak_shift=8)
         for _ in range(20):
             n.tick([MASK32])
         assert n.spike_count > 0
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset clears the membrane and the spike count."""
         n = LifNeuron()
         n.membrane = 999
         n.spike_count = 5
