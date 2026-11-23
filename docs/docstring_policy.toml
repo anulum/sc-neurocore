@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2349
+expected_file_count = 2350
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9440,3 +9440,7 @@ rationale = "Keep the divided autonomous-learning bridge facade and its CI cover
 [[file]]
 path = "tests/test_native_lane_requirement_gate.py"
 rationale = "Keep the native-lane requirement gate and its CI environment documented."
+
+[[file]]
+path = "tests/test_neuron_module_architecture.py"
+rationale = "Hold each neuron and synapse model to its dedicated implementation and test module."

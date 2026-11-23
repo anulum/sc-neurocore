@@ -31,20 +31,20 @@ _MODEL_CONTRACT_MODULES = {
 
 
 def test_aihara_rust_implementation_is_owned_by_its_module() -> None:
+    """The Aihara map struct lives in its own Rust file; the aggregate is gone."""
     dedicated = ROOT / "engine/src/neurons/aihara_map.rs"
     aggregate = ROOT / "engine/src/neurons/maps.rs"
     assert dedicated.is_file()
     assert "pub struct AiharaMapNeuron" in dedicated.read_text()
     assert not aggregate.exists()
-    assert sum(1 for _ in dedicated.open()) < 500
 
 
 def test_aihara_julia_facade_is_owned_by_its_module() -> None:
+    """The Aihara Julia facade is defined in its module, not the package init."""
     dedicated = ROOT / "src/sc_neurocore/accel/julia/neurons/aihara_map.py"
     package_init = ROOT / "src/sc_neurocore/accel/julia/neurons/__init__.py"
     assert "def simulate_aihara_map" in dedicated.read_text()
     assert "def simulate_aihara_map" not in package_init.read_text()
-    assert sum(1 for _ in dedicated.open()) < 150
 
 
 def test_rust_map_models_have_one_owned_module_each() -> None:
@@ -67,7 +67,6 @@ def test_rust_map_models_have_one_owned_module_each() -> None:
         definitions = re.findall(r"^pub struct (\w+MapNeuron)", source, re.MULTILINE)
         assert definitions == [model_name]
         assert "#[cfg(test)]" in source
-        assert len(source.splitlines()) < 300
 
 
 def test_kilinc_bhatt_rust_module_is_alias_only() -> None:
@@ -99,10 +98,10 @@ def test_neuron_and_synapse_contracts_are_module_specific() -> None:
         tree = ast.parse(source)
         classes = [node.name for node in tree.body if isinstance(node, ast.ClassDef)]
         assert classes == [expected_class]
-        assert len(source.splitlines()) < 300
 
 
 def test_adaptive_threshold_julia_facade_is_not_in_package_init() -> None:
+    """The package init re-exports the adaptive-threshold facade and defines none of it."""
     dedicated = ROOT / "src/sc_neurocore/accel/julia/neurons/adaptive_threshold_if.py"
     package_init = ROOT / "src/sc_neurocore/accel/julia/neurons/__init__.py"
     dedicated_text = dedicated.read_text()
@@ -111,10 +110,10 @@ def test_adaptive_threshold_julia_facade_is_not_in_package_init() -> None:
     assert "def simulate_adaptive_threshold_if" not in init_text
     assert "def _ensure_adaptive_threshold_if_loaded" not in init_text
     assert "simulate_adaptive_threshold_if as simulate_adaptive_threshold_if" in init_text
-    assert sum(1 for _ in dedicated.open()) < 200
 
 
 def test_alpha_julia_facade_is_not_in_package_init() -> None:
+    """The package init re-exports the alpha facade from its dedicated module."""
     from sc_neurocore.accel.julia import neurons
     from sc_neurocore.accel.julia.neurons import alpha
 
@@ -165,4 +164,3 @@ def test_julia_shared_runtime_is_owned_by_an_internal_module() -> None:
     assert "def is_julia_error" in runtime_text
     assert "from juliacall import Main" in runtime_text
     assert "from juliacall import Main" not in init_text
-    assert sum(1 for _ in runtime.open()) < 100

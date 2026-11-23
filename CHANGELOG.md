@@ -1251,6 +1251,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The neuron-module architecture tests no longer cap file lengths: the Rust
+  map models and per-model contract tests at 300 lines, and the Aihara,
+  adaptive-threshold and shared-runtime Julia files at 500, 150, 200 and 100.
+  Each test already holds its module's ownership: one struct per Rust map
+  file, one test class per contract file, and which module defines each
+  executor. That ownership is what remains.
+
 - The autonomous-learning bridge's architecture tests no longer cap file
   lengths (300 lines per module, 120 for the facade), following the owner's
   rule that files are divided by responsibility, never by size. They now
