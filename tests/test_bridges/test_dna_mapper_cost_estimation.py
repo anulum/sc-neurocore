@@ -10,23 +10,29 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    estimate_cost,
+)
 
 
 class TestCostEstimation:
     """Oligo synthesis cost estimation."""
 
     def test_cost_positive(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """A circuit has a positive cost and unique oligos."""
         cost = estimate_cost(simple_and_circuit)
         assert cost["total_cost_usd"] > 0
         assert cost["n_unique_oligos"] > 0
 
     def test_hplc_more_expensive(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """HPLC purification costs more than standard."""
         standard = estimate_cost(simple_and_circuit, purification="standard")
         hplc = estimate_cost(simple_and_circuit, purification="hplc")
         assert hplc["total_cost_usd"] > standard["total_cost_usd"]
 
     def test_cost_per_strand_present(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The estimate lists each strand's name and length."""
         cost = estimate_cost(simple_and_circuit)
         assert "strand_costs" in cost
         for sc in cost["strand_costs"]:

@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from photonic_noc_support import *  # noqa: F403
+import json
+import os
+from sc_neurocore.bridges.photonic_noc import (
+    export_photonic_json,
+    PhotonicCircuitDesign,
+    visualize_photonic,
+)
 
 
 class TestExportVisualization:
     """Export and visualization tests."""
 
     def test_export_json(self, simple_design: PhotonicCircuitDesign, tmp_path: str) -> None:
+        """The JSON export carries the nodes and waveguides."""
         path = os.path.join(tmp_path, "photonic.json")
         export_photonic_json(simple_design, path)
         with open(path) as f:
@@ -25,6 +32,7 @@ class TestExportVisualization:
         assert len(data["waveguides"]) > 0
 
     def test_visualize(self, simple_design: PhotonicCircuitDesign) -> None:
+        """The text view lists waveguides and MZI gates."""
         viz = visualize_photonic(simple_design)
         assert "Photonic NoC" in viz
         assert "Waveguides" in viz

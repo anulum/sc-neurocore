@@ -10,19 +10,23 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    GF4ErrorCorrection,
+)
 
 
 class TestGF4ErrorCorrection:
     """Reed-Solomon over GF(4) for DNA error correction."""
 
     def test_encode_increases_length(self) -> None:
+        """Encoding adds redundancy to the sequence."""
         ec = GF4ErrorCorrection(n_parity=4, block_size=12)
         original = "ACGTACGTACGT"
         encoded = ec.encode(original)
         assert len(encoded) > len(original)
 
     def test_round_trip_no_errors(self) -> None:
+        """An unchanged codeword decodes with no correction."""
         ec = GF4ErrorCorrection(n_parity=4, block_size=12)
         original = "ACGTACGTACGT"
         encoded = ec.encode(original)
@@ -31,6 +35,7 @@ class TestGF4ErrorCorrection:
         assert corrections == 0
 
     def test_detects_single_error(self) -> None:
+        """A single mutated base is reported as corrected."""
         ec = GF4ErrorCorrection(n_parity=4, block_size=12)
         original = "ACGTACGTACGT"
         encoded = ec.encode(original)
@@ -41,6 +46,7 @@ class TestGF4ErrorCorrection:
         assert corrections >= 1
 
     def test_multiple_blocks(self) -> None:
+        """Several blocks decode back with no correction."""
         ec = GF4ErrorCorrection(n_parity=4, block_size=12)
         original = "ACGTACGTACGT" * 5
         encoded = ec.encode(original)

@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    CrossHybridizationChecker,
+    DNACircuitDesign,
+)
 
 
 class TestCrossHybridization:
     """Cross-hybridization detection."""
 
     def test_returns_list(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The checker returns a list; its flags are not checked."""
         checker = CrossHybridizationChecker(max_complementary_run=8)
         flags = checker.check(simple_and_circuit)
         assert isinstance(flags, list)
 
     def test_flag_structure(self) -> None:
+        """Each flag names both strands and the complementary run."""
         checker = CrossHybridizationChecker(max_complementary_run=3)
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
@@ -37,5 +43,6 @@ class TestCrossHybridization:
             assert "severity" in flag
 
     def test_longest_common_substring(self) -> None:
+        """The longest common substring has length 4."""
         result = CrossHybridizationChecker._longest_common_substring("ABCDEF", "XBCDEY")
         assert result == 4

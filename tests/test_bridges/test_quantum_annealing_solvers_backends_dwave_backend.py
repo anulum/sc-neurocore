@@ -6,9 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (dwave_backend) from former test_quantum_annealing_solvers_backends.py
 
+"""Tests of the D-Wave annealing backend: configuration, fallback and QPU contract."""
+
 from __future__ import annotations
 
-from quantum_annealing_solvers_backends_support import *  # noqa: F403
+import pytest
+import types
+from sc_neurocore.bridges import (
+    annealing_backends as backends,
+)
+from sc_neurocore.bridges.quantum_annealing import (
+    DWaveInterface,
+    IsingModel,
+)
+from tests.test_bridges.quantum_annealing_test_helpers import (
+    simple_ising,
+    unsafe,
+)
 
 
 @pytest.mark.parametrize(

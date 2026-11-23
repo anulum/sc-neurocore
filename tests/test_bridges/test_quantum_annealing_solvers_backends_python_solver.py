@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (python_solver) from former test_quantum_annealing_solvers_backends.py
 
+"""Tests of the pure-Python simulated annealing solver and its argument checks."""
+
 from __future__ import annotations
 
-from quantum_annealing_solvers_backends_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.quantum_annealing import (
+    IsingModel,
+    QUBOModel,
+    SimulatedAnnealer,
+)
+from tests.test_bridges.quantum_annealing_test_helpers import (
+    simple_ising,
+    unsafe,
+)
 
 
 @pytest.mark.parametrize(

@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    DNACircuitDesign,
+    KineticSimulator,
+    visualize_circuit,
+    visualize_kinetics,
+)
 
 
 class TestVisualization:
     """Circuit and kinetics visualization."""
 
     def test_circuit_diagram(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The diagram lists the circuit, inputs and outputs."""
         diagram = visualize_circuit(simple_and_circuit)
         assert "Circuit:" in diagram
         assert "INPUTS:" in diagram
         assert "OUTPUTS:" in diagram
 
     def test_circuit_diagram_renders_vertical_connector_for_multi_gate_cascade(self) -> None:
+        """A cascade is drawn with a vertical connector."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[
@@ -39,6 +47,7 @@ class TestVisualization:
         assert "AND" in diagram
 
     def test_kinetics_sparkline(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The sparkline is drawn in nanomolar."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 200.0, "B": 200.0})
         chart = visualize_kinetics(result)

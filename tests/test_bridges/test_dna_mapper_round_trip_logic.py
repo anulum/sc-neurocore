@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    KineticSimulator,
+)
 
 
 class TestRoundTripLogic:
     """Verify that compiled circuits implement correct Boolean logic."""
 
     def test_and_truth_table(self) -> None:
+        """The AND circuit follows its truth table."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "AND", "inputs": ["A", "B"], "output": "C"}],
@@ -43,6 +47,7 @@ class TestRoundTripLogic:
         assert r[output_key][-1] > 50.0
 
     def test_or_truth_table(self) -> None:
+        """The OR circuit follows its truth table."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "OR", "inputs": ["A", "B"], "output": "C"}],
@@ -59,6 +64,7 @@ class TestRoundTripLogic:
         assert r[output_key][-1] > 50.0
 
     def test_not_truth_table(self) -> None:
+        """The NOT circuit follows its truth table."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "NOT", "inputs": ["A"], "output": "B"}],

@@ -10,25 +10,33 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    DNACircuitDesign,
+    DualRailEncoder,
+)
 
 
 class TestDualRailEncoder:
     """Dual-rail fault-tolerant encoding."""
 
     def test_doubles_gate_count(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """Dual-rail encoding doubles the gate count."""
         encoder = DualRailEncoder()
         compiler = BitstreamToDNA(seed=42)
         dual = encoder.encode(simple_and_circuit, compiler)
         assert dual.total_gates == simple_and_circuit.total_gates * 2
 
     def test_dual_rail_name(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The encoded design is named dual rail."""
         encoder = DualRailEncoder()
         compiler = BitstreamToDNA(seed=42)
         dual = encoder.encode(simple_and_circuit, compiler)
         assert "dual_rail" in dual.name
 
     def test_fault_detection_no_faults(self) -> None:
+        """Clean dual-rail outputs show no fault."""
         encoder = DualRailEncoder()
         result = {
             "time": np.array([0, 1]),
@@ -39,6 +47,7 @@ class TestDualRailEncoder:
         assert len(faults) == 0
 
     def test_fault_detection_stuck_high(self) -> None:
+        """Both rails high is reported as stuck high."""
         encoder = DualRailEncoder()
         result = {
             "time": np.array([0, 1]),
@@ -50,6 +59,7 @@ class TestDualRailEncoder:
         assert faults[0]["fault_type"] == "stuck_high"
 
     def test_fault_detection_ignores_incomplete_dual_rail_pair(self) -> None:
+        """A rail pair missing one side is not checked."""
         encoder = DualRailEncoder()
         result = {
             "time": np.array([0, 1]),

@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    KineticSimulator,
+)
 
 
 class TestRK4Integrator:
     """RK4 vs Euler integrator comparison."""
 
     def test_rk4_produces_output(self) -> None:
+        """RK4 drives the AND output above 50 nM."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "AND", "inputs": ["A", "B"], "output": "C"}],
@@ -28,6 +32,7 @@ class TestRK4Integrator:
         assert result["C"][-1] > 50.0
 
     def test_rk4_matches_euler_qualitatively(self) -> None:
+        """RK4 and Euler end within 30 nM."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "AND", "inputs": ["A", "B"], "output": "C"}],
@@ -41,6 +46,7 @@ class TestRK4Integrator:
         assert abs(r_euler["C"][-1] - r_rk4["C"][-1]) < 30.0
 
     def test_temperature_affects_rate(self) -> None:
+        """A warmer reaction reaches a higher output."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "AND", "inputs": ["A", "B"], "output": "C"}],

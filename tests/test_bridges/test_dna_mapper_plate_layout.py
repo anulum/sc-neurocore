@@ -10,19 +10,25 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    DNAStrand,
+    PlateLayout,
+)
 
 
 class TestPlateLayout:
     """96-well plate layout generation."""
 
     def test_layout_produces_plates(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The layout fills at least one plate."""
         pl = PlateLayout()
         result = pl.layout(simple_and_circuit)
         assert result["n_plates"] >= 1
         assert result["n_unique_oligos"] > 0
 
     def test_well_format(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """Wells are named by row letter and two digits."""
         pl = PlateLayout()
         result = pl.layout(simple_and_circuit)
         for plate in result["plates"]:
@@ -31,6 +37,7 @@ class TestPlateLayout:
                 assert entry["well"][0] in "ABCDEFGH"
 
     def test_csv_manifest(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The manifest is a CSV with a header and rows."""
         pl = PlateLayout()
         result = pl.layout(simple_and_circuit)
         csv = result["manifest_csv"]
@@ -39,6 +46,7 @@ class TestPlateLayout:
         assert len(lines) > 1
 
     def test_layout_splits_across_multiple_plates(self) -> None:
+        """Many oligos spill over three plates in well order."""
         design = DNACircuitDesign(
             name="multi_plate",
             input_strands=[

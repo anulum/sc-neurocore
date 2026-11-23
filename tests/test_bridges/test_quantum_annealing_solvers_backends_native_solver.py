@@ -6,9 +6,37 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (native_solver) from former test_quantum_annealing_solvers_backends.py
 
+"""Tests of the native annealing solver's result contract and seed forwarding."""
+
 from __future__ import annotations
 
-from quantum_annealing_solvers_backends_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Mapping,
+)
+from sc_neurocore.bridges import (
+    annealing_backends as backends,
+)
+from sc_neurocore.bridges.quantum_annealing import (
+    IsingModel,
+    SimulatedAnnealer,
+)
+from tests.test_bridges.quantum_annealing_test_helpers import (
+    simple_ising,
+    unsafe,
+)
+
+
+def _valid_native_result(size: int) -> dict[str, object]:
+    """Return a complete two-sample native result."""
+    first = [1 if index % 2 == 0 else -1 for index in range(size)]
+    second = [-spin for spin in first]
+    return {
+        "best_spins": first,
+        "best_energy": -3.0,
+        "energies": [-3.0, -2.0],
+        "samples": [first, second],
+    }
 
 
 def test_native_solver_contract_and_seed_forwarding(monkeypatch: pytest.MonkeyPatch) -> None:

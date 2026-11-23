@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    DNACircuitDesign,
+    DNAGate,
+    GateType,
+    TopologicalAnalyzer,
+)
 
 
 class TestTopologicalAnalysis:
     """Circuit topology analysis."""
 
     def test_depth_single_gate(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """A single gate has depth one and no feedback."""
         analyzer = TopologicalAnalyzer()
         result = analyzer.analyze(simple_and_circuit)
         assert result["depth"] >= 1
         assert result["has_feedback"] is False
 
     def test_depth_cascade(self) -> None:
+        """A cascade has depth two and four nodes."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[
@@ -38,6 +46,7 @@ class TestTopologicalAnalysis:
         assert result["n_nodes"] >= 4
 
     def test_fan_out_detected(self) -> None:
+        """An input feeding two gates has fan-out two."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[
@@ -51,11 +60,13 @@ class TestTopologicalAnalysis:
         assert result["fan_out"]["A"] >= 2
 
     def test_no_feedback_in_dag(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """An acyclic circuit has no cycles."""
         result = TopologicalAnalyzer().analyze(simple_and_circuit)
         assert result["has_feedback"] is False
         assert len(result["cycles"]) == 0
 
     def test_feedback_cycle_is_reported_from_remaining_nodes(self) -> None:
+        """A feedback loop is reported as a cycle."""
         design = DNACircuitDesign(
             name="cycle",
             gates=[

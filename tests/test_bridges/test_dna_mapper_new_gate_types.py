@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    DNACircuitDesign,
+    DNAGate,
+    GateType,
+    KineticSimulator,
+    StrandDisplacementCompiler,
+)
 
 
 class TestNewGateTypes:

@@ -6,9 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (optional_imports) from former test_quantum_annealing_solvers_backends.py
 
+"""Tests of the optional annealing backend imports and their fallbacks."""
+
 from __future__ import annotations
 
-from quantum_annealing_solvers_backends_support import *  # noqa: F403
+import builtins
+import importlib
+import pytest
+import sys
+import types
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
+from sc_neurocore.bridges import (
+    annealing_backends as backends,
+)
+from tests.test_bridges.quantum_annealing_test_helpers import (
+    unsafe,
+)
 
 
 def test_optional_import_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -10,35 +10,48 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+    CompilationMethod,
+    DNACircuitDesign,
+    DNAStrand,
+    GateType,
+)
 
 
 class TestBitstreamToDNA:
     """High-level circuit compilation."""
 
     def test_simple_and_compiles(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """An AND circuit compiles to one gate, two inputs and one output."""
         assert simple_and_circuit.total_gates == 1
         assert len(simple_and_circuit.input_strands) == 2
         assert len(simple_and_circuit.output_strands) == 1
 
     def test_nand_two_gates(self, nand_circuit: DNACircuitDesign) -> None:
+        """A NAND circuit compiles to an AND and a NOT gate."""
         assert nand_circuit.total_gates == 2
         types = [g.gate_type for g in nand_circuit.gates]
         assert GateType.AND in types
         assert GateType.NOT in types
 
     def test_total_strands_positive(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """A compiled circuit has strands."""
         assert simple_and_circuit.total_strands > 0
 
     def test_total_nucleotides_positive(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """A compiled circuit has nucleotides."""
         assert simple_and_circuit.total_nucleotides > 0
 
     def test_circuit_validation(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """Validation returns a list; its warnings are not checked."""
         warnings = simple_and_circuit.validate()
         # Warnings are acceptable; critical failures would raise
         assert isinstance(warnings, list)
 
     def test_design_validation_flags_gc_and_homopolymer_violations(self) -> None:
+        """Validation flags GC content and homopolymer runs."""
         design = DNACircuitDesign(
             input_strands=[
                 DNAStrand(name="at_rich", sequence="ATATATAT", role="signal"),
@@ -52,6 +65,7 @@ class TestBitstreamToDNA:
         assert any("homopolymer run" in warning for warning in warnings)
 
     def test_reproducible_compilation(self) -> None:
+        """The same seed compiles the same input strands."""
         c1 = BitstreamToDNA(seed=42)
         c2 = BitstreamToDNA(seed=42)
         gates = [{"type": "AND", "inputs": ["A", "B"], "output": "C"}]
@@ -60,6 +74,7 @@ class TestBitstreamToDNA:
         assert d1.input_strands[0].sequence == d2.input_strands[0].sequence
 
     def test_enzymatic_method(self) -> None:
+        """The enzymatic method compiles one enzymatic gate."""
         c = BitstreamToDNA(method="enzymatic", seed=42)
         design = c.compile_network(
             gates=[{"type": "NAND", "inputs": ["A", "B"], "output": "C"}],
@@ -70,6 +85,7 @@ class TestBitstreamToDNA:
         assert design.total_gates == 1
 
     def test_unsupported_gate_raises(self) -> None:
+        """An unsupported gate type is rejected."""
         c = BitstreamToDNA(method="displacement", seed=42)
         with pytest.raises(ValueError, match="Unsupported"):
             c.compile_network(
@@ -79,6 +95,7 @@ class TestBitstreamToDNA:
             )
 
     def test_multi_gate_cascade(self) -> None:
+        """A three-gate cascade keeps three gates and inputs."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[

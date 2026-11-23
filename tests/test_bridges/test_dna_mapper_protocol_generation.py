@@ -10,22 +10,28 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    generate_protocol,
+)
 
 
 class TestProtocolGeneration:
     """Wet-lab protocol generation."""
 
     def test_protocol_is_markdown(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The protocol is Markdown with materials and procedure."""
         protocol = generate_protocol(simple_and_circuit)
         assert protocol.startswith("# Wet-Lab Protocol")
         assert "## Materials" in protocol
         assert "## Procedure" in protocol
 
     def test_protocol_contains_strands(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The protocol names the circuit's strands."""
         protocol = generate_protocol(simple_and_circuit)
         assert "translator" in protocol or "signal" in protocol
 
     def test_protocol_custom_volume(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The protocol uses the requested volume."""
         protocol = generate_protocol(simple_and_circuit, volume_uL=100.0)
         assert "100.0" in protocol

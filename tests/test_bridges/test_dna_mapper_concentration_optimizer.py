@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    ConcentrationOptimizer,
+    DNACircuitDesign,
+)
 
 
 class TestConcentrationOptimizer:
     """Concentration optimization."""
 
     def test_optimizer_returns_result(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The optimiser reports its best and initial score and gain."""
         opt = ConcentrationOptimizer(n_evaluations=5, seed=42)
         truth_table = [
             {"inputs": {"A": 200.0, "B": 200.0}, "expected": {"C": "high"}},

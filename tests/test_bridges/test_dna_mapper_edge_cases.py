@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    BitstreamToDNA,
+)
 
 
 class TestEdgeCases:
     """Boundary conditions and unusual inputs."""
 
     def test_single_not_gate(self) -> None:
+        """A lone NOT gate compiles."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "NOT", "inputs": ["A"], "output": "B"}],
@@ -26,6 +29,7 @@ class TestEdgeCases:
         assert design.total_gates == 1
 
     def test_deep_cascade_10_gates(self) -> None:
+        """A ten-gate cascade compiles all ten gates."""
         c = BitstreamToDNA(seed=42)
         gates = []
         prev = "A"
@@ -37,6 +41,7 @@ class TestEdgeCases:
         assert design.total_gates == 10
 
     def test_threshold_zero(self) -> None:
+        """A threshold of 0 is kept."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "THRESHOLD", "inputs": ["A"], "output": "B", "threshold": 0.0}],
@@ -46,6 +51,7 @@ class TestEdgeCases:
         assert design.gates[0].threshold == 0.0
 
     def test_threshold_one(self) -> None:
+        """A threshold of 1 is kept."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "THRESHOLD", "inputs": ["A"], "output": "B", "threshold": 1.0}],
@@ -55,6 +61,7 @@ class TestEdgeCases:
         assert design.gates[0].threshold == 1.0
 
     def test_high_level_simulate_wrapper_returns_time_and_gate_trace(self) -> None:
+        """The simulate wrapper returns time and a rising output trace."""
         c = BitstreamToDNA(seed=42)
         design = c.compile_network(
             gates=[{"type": "BUFFER", "inputs": ["A"], "output": "B"}],

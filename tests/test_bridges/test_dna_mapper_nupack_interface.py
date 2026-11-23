@@ -10,18 +10,33 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore.bridges.dna_mapper as dna_mapper
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    DNAStrand,
+    NUPACKInterface,
+)
+from types import (
+    SimpleNamespace,
+)
+from typing import (
+    Any,
+)
 
 
 class TestNUPACKInterface:
     """Thermodynamic validation."""
 
     def test_mfe_returns_tuple(self, nupack_interface: NUPACKInterface) -> None:
+        """The MFE is an energy and a structure."""
         energy, structure = nupack_interface.compute_mfe("ACGTACGT")
         assert isinstance(energy, float)
         assert isinstance(structure, str)
 
     def test_pair_probabilities_shape(self, nupack_interface: NUPACKInterface) -> None:
+        """Pair probabilities form a square matrix per base."""
         seq = "ACGTACGT"
         probs = nupack_interface.compute_pair_probabilities(seq)
         assert probs.shape == (8, 8)
@@ -29,6 +44,7 @@ class TestNUPACKInterface:
     def test_fallback_predicts_intramolecular_pairing(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """The fallback finds a paired, negative-energy fold."""
         monkeypatch.setattr(dna_mapper, "_HAS_NUPACK", False)
         interface = NUPACKInterface()
         sequence = "GCGCAAAGCGC"
@@ -47,6 +63,7 @@ class TestNUPACKInterface:
     def test_fallback_rejects_invalid_bases_and_handles_empty_or_unpairable_sequences(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """The fallback rejects bad bases and handles empty sequences."""
         monkeypatch.setattr(dna_mapper, "_HAS_NUPACK", False)
         interface = NUPACKInterface()
 
@@ -58,6 +75,8 @@ class TestNUPACKInterface:
     def test_nupack_backend_path_uses_module_contract(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """With NUPACK present, its model results are used."""
+
         class FakeModel:
             def __init__(self, **kwargs: object) -> None:
                 self.kwargs = kwargs
@@ -90,6 +109,7 @@ class TestNUPACKInterface:
         nupack_interface: NUPACKInterface,
         simple_and_circuit: DNACircuitDesign,
     ) -> None:
+        """Design validation reports validity, strands and warnings."""
         report = nupack_interface.validate_design(simple_and_circuit)
         assert "valid" in report
         assert "strand_results" in report
@@ -97,6 +117,7 @@ class TestNUPACKInterface:
         assert isinstance(report["valid"], bool)
 
     def test_validate_design_marks_design_rule_warnings_invalid(self) -> None:
+        """Design-rule warnings make the design invalid."""
         design = DNACircuitDesign(
             name="invalid_rules",
             input_strands=[DNAStrand(name="poly_a", sequence="AAAAAAA", role="output")],

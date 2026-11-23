@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    KineticSimulator,
+)
 
 
 class TestKineticSimulator:
     """Simulation correctness and convergence."""
 
     def test_and_both_inputs_high(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """AND of two high inputs gives a high output."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 200.0, "B": 200.0}, duration_s=3600.0)
         assert "time" in result
@@ -26,6 +31,7 @@ class TestKineticSimulator:
         assert final > 50.0, f"AND(1,1) should produce high output, got {final}"
 
     def test_and_one_input_low(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """AND with one low input gives a low output."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 200.0, "B": 0.0}, duration_s=3600.0)
         output_key = simple_and_circuit.gates[0].output_name
@@ -33,11 +39,13 @@ class TestKineticSimulator:
         assert final < 50.0, f"AND(1,0) should produce low output, got {final}"
 
     def test_simulation_time_steps(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The simulation returns 200 time steps."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 100.0}, duration_s=100.0, dt=0.5)
         assert len(result["time"]) == 200
 
     def test_concentrations_non_negative(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """No concentration falls below 0."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 200.0, "B": 200.0})
         for key, trace in result.items():
@@ -46,6 +54,7 @@ class TestKineticSimulator:
             assert np.all(trace >= 0), f"Negative concentrations in {key}"
 
     def test_concentrations_bounded(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """No concentration exceeds 201 nM."""
         sim = KineticSimulator()
         result = sim.simulate(simple_and_circuit, {"A": 200.0, "B": 200.0})
         for key, trace in result.items():

@@ -10,19 +10,24 @@
 
 from __future__ import annotations
 
-from photonic_noc_support import *  # noqa: F403
+from sc_neurocore.bridges.photonic_noc import (
+    PhotonicCircuitDesign,
+    PowerBudgetAnalyzer,
+)
 
 
 class TestPowerBudgetAnalyzer:
     """Power budget analysis tests."""
 
     def test_analyze(self, simple_design: PhotonicCircuitDesign) -> None:
+        """The power budget covers paths and a worst margin."""
         pba = PowerBudgetAnalyzer()
         result = pba.analyze(simple_design)
         assert result["n_paths"] > 0
         assert "worst_margin_db" in result
 
     def test_all_paths_have_margin(self, simple_design: PhotonicCircuitDesign) -> None:
+        """Each path reports its margin and a verdict."""
         result = PowerBudgetAnalyzer().analyze(simple_design)
         for path in result["paths"]:
             assert "margin_db" in path

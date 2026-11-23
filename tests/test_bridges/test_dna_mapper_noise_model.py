@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    NoiseModel,
+)
 
 
 class TestNoiseModel:
     """Monte Carlo noise analysis."""
 
     def test_sensitivity_analysis_runs(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The sensitivity analysis runs its 10 trials."""
         nm = NoiseModel(n_trials=10, seed=42)
         report = nm.sensitivity_analysis(
             simple_and_circuit,
@@ -28,6 +32,7 @@ class TestNoiseModel:
         assert "outputs" in report
 
     def test_output_statistics(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """Each output reports its mean, deviation and variation."""
         nm = NoiseModel(n_trials=10, seed=42)
         report = nm.sensitivity_analysis(
             simple_and_circuit,

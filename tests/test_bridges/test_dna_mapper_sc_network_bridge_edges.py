@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.dna_mapper import (
+    GateType,
+    SCNetworkBridge,
+)
 
 
 class TestSCNetworkBridgeEdges:
     """Adjacency-to-gate inference boundary cases."""
 
     def test_from_adjacency_skips_non_input_nodes_without_sources(self) -> None:
+        """A sourceless non-input node compiles to no gate."""
         design = SCNetworkBridge(seed=42).from_adjacency(
             np.zeros((3, 3), dtype=float),
             input_indices=[0],
@@ -27,6 +32,7 @@ class TestSCNetworkBridgeEdges:
         assert design.total_gates == 0
 
     def test_from_adjacency_uses_or_for_two_source_inhibitory_mix(self) -> None:
+        """Two mixed sources compile to an OR gate."""
         adjacency = np.array(
             [
                 [0.0, 0.0, 1.0],

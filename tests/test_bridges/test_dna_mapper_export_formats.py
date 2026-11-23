@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import json
+from pathlib import (
+    Path,
+)
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    export_fasta,
+    export_genbank,
+    export_json,
+    export_nupack_input,
+)
 
 
 class TestExportFormats:
@@ -21,6 +31,7 @@ class TestExportFormats:
         simple_and_circuit: DNACircuitDesign,
         tmp_path: Path,
     ) -> None:
+        """The GenBank export has its LOCUS, ORIGIN and end marker."""
         path = str(tmp_path / "test.gb")
         export_genbank(simple_and_circuit, path)
         content = Path(path).read_text()
@@ -34,6 +45,7 @@ class TestExportFormats:
         simple_and_circuit: DNACircuitDesign,
         tmp_path: Path,
     ) -> None:
+        """The FASTA export has at least one header."""
         path = str(tmp_path / "test.fasta")
         export_fasta(simple_and_circuit, path)
         content = Path(path).read_text()
@@ -46,6 +58,7 @@ class TestExportFormats:
         simple_and_circuit: DNACircuitDesign,
         tmp_path: Path,
     ) -> None:
+        """The NUPACK export declares DNA and its strands."""
         path = str(tmp_path / "test.nupack")
         export_nupack_input(simple_and_circuit, path)
         content = Path(path).read_text()
@@ -57,6 +70,7 @@ class TestExportFormats:
         simple_and_circuit: DNACircuitDesign,
         tmp_path: Path,
     ) -> None:
+        """The JSON export carries the design's name and gates."""
         path = str(tmp_path / "test.json")
         export_json(simple_and_circuit, path)
         data = json.loads(Path(path).read_text())
@@ -70,6 +84,7 @@ class TestExportFormats:
         nand_circuit: DNACircuitDesign,
         tmp_path: Path,
     ) -> None:
+        """Exported gates carry their type, strands and sequences."""
         path = str(tmp_path / "nand.json")
         export_json(nand_circuit, path)
         data = json.loads(Path(path).read_text())

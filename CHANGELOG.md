@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 42 bridge test modules that star-imported a support module
+  (`tests/test_bridges`: DNA mapper, photonic NoC and annealing
+  backends) import their names explicitly instead, gain their missing
+  test docstrings and are enrolled in the docstring policy. The seven
+  fixtures the DNA-mapper and photonic supports handed out through the
+  star import move to `tests/test_bridges/conftest.py`, the one helper
+  of the annealing support moves to its only user, and the three
+  supports, left without an importer, are deleted.
+
 - The 13 ASIC-flow test modules that star-imported a support module
   (`tests/test_asic_flow`) import their names explicitly instead,
   gain their missing test docstrings and are enrolled in the docstring

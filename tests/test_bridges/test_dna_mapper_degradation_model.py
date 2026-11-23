@@ -10,23 +10,29 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DegradationModel,
+    DNACircuitDesign,
+)
 
 
 class TestDegradationModel:
     """Time-dependent DNA degradation."""
 
     def test_concentration_decreases(self) -> None:
+        """Concentration falls over time."""
         dm = DegradationModel(half_life_hr=24.0)
         remaining = dm.predict_concentration(200.0, 30, 24.0)
         assert remaining < 200.0
 
     def test_zero_time_no_degradation(self) -> None:
+        """No time passed leaves the concentration unchanged."""
         dm = DegradationModel()
         remaining = dm.predict_concentration(200.0, 30, 0.0)
         assert abs(remaining - 200.0) < 1e-6
 
     def test_design_analysis(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The design report lists strands and the minimum remaining."""
         dm = DegradationModel()
         report = dm.analyze_design(simple_and_circuit, time_hr=4.0)
         assert "min_remaining_pct" in report

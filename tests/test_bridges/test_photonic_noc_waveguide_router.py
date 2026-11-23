@@ -10,31 +10,39 @@
 
 from __future__ import annotations
 
-from photonic_noc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.photonic_noc import (
+    WaveguideRouter,
+    WaveguideSegment,
+)
 
 
 class TestWaveguideRouter:
     """Waveguide routing tests."""
 
     def test_route_produces_segments(self, simple_adjacency: np.ndarray) -> None:
+        """Routing produces waveguide segments."""
         router = WaveguideRouter()
         segments = router.route(simple_adjacency)
         assert len(segments) > 0
         assert all(isinstance(s, WaveguideSegment) for s in segments)
 
     def test_loss_positive(self, simple_adjacency: np.ndarray) -> None:
+        """Every segment has a non-negative loss."""
         router = WaveguideRouter()
         segments = router.route(simple_adjacency)
         for s in segments:
             assert s.loss_db >= 0
 
     def test_no_self_loops(self, simple_adjacency: np.ndarray) -> None:
+        """No segment returns to its own node."""
         router = WaveguideRouter()
         segments = router.route(simple_adjacency)
         for s in segments:
             assert s.source != s.target
 
     def test_custom_pitch(self) -> None:
+        """A wider pitch gives longer waveguides."""
         adj = np.array([[0.0, 1.0], [1.0, 0.0]])
         r1 = WaveguideRouter(pitch_um=100.0).route(adj)
         r2 = WaveguideRouter(pitch_um=500.0).route(adj)

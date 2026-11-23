@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    GateOptimizer,
+)
 
 
 class TestGateOptimizer:
     """Circuit-level gate optimization."""
 
     def test_no_change_normal_circuit(self) -> None:
+        """A clean circuit loses no gate."""
         opt = GateOptimizer()
         gates = [
             {"type": "AND", "inputs": ["A", "B"], "output": "C"},
@@ -26,6 +29,7 @@ class TestGateOptimizer:
         assert len(result["optimized_gates"]) == 1
 
     def test_removes_duplicate(self) -> None:
+        """A duplicate gate is removed."""
         opt = GateOptimizer()
         gates = [
             {"type": "AND", "inputs": ["A", "B"], "output": "C"},
@@ -35,6 +39,7 @@ class TestGateOptimizer:
         assert result["removed_count"] >= 1
 
     def test_identity_buffer_removal(self) -> None:
+        """Identity buffers and dead outputs are removed."""
         opt = GateOptimizer()
         gates = [
             {"type": "AND", "inputs": ["A", "B"], "output": "C"},

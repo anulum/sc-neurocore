@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    SCPrecisionAnalyzer,
+)
 
 
 class TestSCPrecisionAnalyzer:
     """Stochastic computing precision analysis."""
 
     def test_precision_fields(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The analysis reports positive effective bits per output."""
         analyzer = SCPrecisionAnalyzer()
         result = analyzer.analyze(simple_and_circuit, {"A": 200.0, "B": 200.0})
         assert "total_effective_bits" in result
@@ -24,6 +28,7 @@ class TestSCPrecisionAnalyzer:
         assert "outputs" in result
 
     def test_output_statistics(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """Each output reports its SNR, bits and resolution."""
         analyzer = SCPrecisionAnalyzer()
         result = analyzer.analyze(simple_and_circuit, {"A": 200.0, "B": 200.0})
         for key, stats in result["outputs"].items():
@@ -33,6 +38,7 @@ class TestSCPrecisionAnalyzer:
             assert "dynamic_range_db" in stats
 
     def test_empty_design_reports_zero_effective_bits(self) -> None:
+        """An empty design has no outputs and zero bits."""
         analyzer = SCPrecisionAnalyzer()
         result = analyzer.analyze(DNACircuitDesign(name="empty"), {})
 

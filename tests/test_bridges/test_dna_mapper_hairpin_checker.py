@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    DNACircuitDesign,
+    DNAStrand,
+    HairpinChecker,
+)
 
 
 class TestHairpinChecker:
     """Hairpin secondary structure detection."""
 
     def test_palindrome_detected(self) -> None:
+        """The check returns a list; its hairpins are not checked."""
         checker = HairpinChecker(min_stem_length=4, min_loop_length=3)
         # This sequence has a perfect hairpin: ACGT...loop...ACGT
         seq = "ACGTACGTTTTCGTACGT"
@@ -24,16 +29,19 @@ class TestHairpinChecker:
         assert isinstance(hairpins, list)
 
     def test_short_strand_no_hairpin(self) -> None:
+        """A short strand has no hairpin."""
         checker = HairpinChecker(min_stem_length=4)
         hairpins = checker.check_strand("ACGT")
         assert len(hairpins) == 0
 
     def test_check_design_returns_list(self, simple_and_circuit: DNACircuitDesign) -> None:
+        """The design check returns a list; its flags are not checked."""
         checker = HairpinChecker()
         flags = checker.check_design(simple_and_circuit)
         assert isinstance(flags, list)
 
     def test_check_design_flags_hairpin_strand(self) -> None:
+        """A hairpin strand is flagged by name."""
         checker = HairpinChecker(min_stem_length=4, min_loop_length=3)
         design = DNACircuitDesign(
             name="hairpin_design",
@@ -46,6 +54,7 @@ class TestHairpinChecker:
         assert flags[0]["strand_name"] == "hp"
 
     def test_flag_structure(self) -> None:
+        """Each hairpin gives its stem, loop and energy."""
         checker = HairpinChecker(min_stem_length=4, min_loop_length=3)
         seq = "GCGCGCGCAAAGCGCGCGC"
         hairpins = checker.check_strand(seq)

@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    EnzymaticGateCompiler,
+    GateType,
+)
 
 
 class TestEnzymaticGateCompiler:
     """Enzymatic gate compilation."""
 
     def test_nand_gate(self, enzymatic_compiler: EnzymaticGateCompiler) -> None:
+        """The NAND substrate carries the EcoRI and BamHI sites."""
         gate = enzymatic_compiler.compile_nand("A", "B", "C")
         assert gate.gate_type == GateType.NAND
         # Check enzyme sites in substrate
@@ -25,6 +29,7 @@ class TestEnzymaticGateCompiler:
         assert "GGATCC" in substrate  # BamHI
 
     def test_xor_gate(self, enzymatic_compiler: EnzymaticGateCompiler) -> None:
+        """The XOR gate uses at least three strands."""
         gate = enzymatic_compiler.compile_xor("A", "B", "C")
         assert gate.gate_type == GateType.XOR
         assert gate.strand_count >= 3

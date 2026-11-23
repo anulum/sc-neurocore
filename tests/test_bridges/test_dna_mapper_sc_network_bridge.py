@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.bridges.dna_mapper import (
+    GateType,
+    SCNetworkBridge,
+)
 
 
 class TestSCNetworkBridge:
     """SC network to DNA circuit bridge."""
 
     def test_simple_adjacency(self) -> None:
+        """An adjacency compiles to at least one gate."""
         adj = np.array(
             [
                 [0, 0, 1],
@@ -30,6 +35,7 @@ class TestSCNetworkBridge:
         assert design.total_gates >= 1
 
     def test_inhibitory_produces_not(self) -> None:
+        """An inhibitory edge compiles to a NOT gate."""
         adj = np.array(
             [
                 [0, -1],
@@ -42,6 +48,7 @@ class TestSCNetworkBridge:
         assert any(g.gate_type == GateType.NOT for g in design.gates)
 
     def test_multi_fan_in(self) -> None:
+        """A multi-input node compiles to chained gates."""
         adj = np.zeros((5, 5))
         adj[0, 4] = 1
         adj[1, 4] = 1

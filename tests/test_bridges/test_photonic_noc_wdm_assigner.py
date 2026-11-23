@@ -10,23 +10,29 @@
 
 from __future__ import annotations
 
-from photonic_noc_support import *  # noqa: F403
+import pytest
+from sc_neurocore.bridges.photonic_noc import (
+    WDMAssigner,
+)
 
 
 class TestWDMAssigner:
     """WDM channel assignment tests."""
 
     def test_assign_channels(self) -> None:
+        """Three signals get three channels."""
         assigner = WDMAssigner()
         channels = assigner.assign(["a", "b", "c"])
         assert len(channels) == 3
 
     def test_wavelength_spacing(self) -> None:
+        """Channels keep the set wavelength spacing."""
         assigner = WDMAssigner(channel_spacing_nm=0.8)
         channels = assigner.assign(["a", "b"])
         assert abs(channels[1].wavelength_nm - channels[0].wavelength_nm - 0.8) < 1e-10
 
     def test_signal_names(self) -> None:
+        """Channels keep their signal names in order."""
         channels = WDMAssigner().assign(["x", "y"])
         assert channels[0].signal_name == "x"
         assert channels[1].signal_name == "y"
@@ -34,29 +40,30 @@ class TestWDMAssigner:
     # --- max_channels cap (closes task #47) ---
 
     def test_default_max_channels_is_96(self) -> None:
+        """The default channel cap is 96."""
         a = WDMAssigner()
         assert a._max_channels == 96
 
     def test_assign_at_default_cap_succeeds(self) -> None:
+        """Exactly 96 signals fit under the default cap."""
         names = [f"sig{i}" for i in range(96)]
         channels = WDMAssigner().assign(names)
         assert len(channels) == 96
 
     def test_assign_above_default_cap_raises(self) -> None:
-        import pytest
-
+        """A 97th signal exceeds the default cap."""
         names = [f"sig{i}" for i in range(97)]
         with pytest.raises(ValueError, match="max_channels"):
             WDMAssigner().assign(names)
 
     def test_explicit_smaller_cap_raises(self) -> None:
-        import pytest
-
+        """A smaller explicit cap is enforced."""
         names = ["a", "b", "c"]
         with pytest.raises(ValueError, match="max_channels"):
             WDMAssigner(max_channels=2).assign(names)
 
     def test_max_channels_zero_disables_cap(self) -> None:
+        """A cap of 0 removes the limit."""
         names = [f"sig{i}" for i in range(200)]
         channels = WDMAssigner(max_channels=0).assign(names)
         assert len(channels) == 200

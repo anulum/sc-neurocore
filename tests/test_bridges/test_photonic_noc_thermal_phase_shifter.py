@@ -10,24 +10,31 @@
 
 from __future__ import annotations
 
-from photonic_noc_support import *  # noqa: F403
+import math
+from sc_neurocore.bridges.photonic_noc import (
+    PhotonicCircuitDesign,
+    ThermalPhaseShifter,
+)
 
 
 class TestThermalPhaseShifter:
     """Thermal tuning model tests."""
 
     def test_power_for_pi(self) -> None:
+        """A pi shift needs positive heater power."""
         tps = ThermalPhaseShifter()
         p = tps.power_for_phase(math.pi)
         assert p > 0
 
     def test_power_scales_with_phase(self) -> None:
+        """A larger phase shift needs more power."""
         tps = ThermalPhaseShifter()
         p1 = tps.power_for_phase(math.pi / 4)
         p2 = tps.power_for_phase(math.pi / 2)
         assert p2 > p1
 
     def test_analyze_design(self, simple_design: PhotonicCircuitDesign) -> None:
+        """The design analysis covers every MZI gate."""
         tps = ThermalPhaseShifter()
         result = tps.analyze_design(simple_design)
         assert result["total_power_mw"] > 0

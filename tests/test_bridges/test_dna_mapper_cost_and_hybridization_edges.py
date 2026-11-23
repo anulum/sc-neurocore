@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+from sc_neurocore.bridges.dna_mapper import (
+    CrossHybridizationChecker,
+    DNACircuitDesign,
+    DNAStrand,
+    estimate_cost,
+)
 
 
 class TestCostAndHybridizationEdges:
     """Boundary contracts for synthesis cost and strand interaction helpers."""
 
     def test_cross_hybridization_empty_substring_is_zero(self) -> None:
+        """An empty sequence shares no common substring."""
         assert CrossHybridizationChecker._longest_common_substring("", "ACGT") == 0
 
     def test_estimate_cost_counts_duplicate_sequences_once(self) -> None:
+        """Duplicate sequences are costed as one oligo."""
         design = DNACircuitDesign(
             name="duplicate_cost",
             input_strands=[

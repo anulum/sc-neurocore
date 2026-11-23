@@ -10,13 +10,23 @@
 
 from __future__ import annotations
 
-from dna_mapper_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.bridges.dna_mapper import (
+    SequenceDesigner,
+)
+from sc_neurocore.bridges.dna_types import (
+    _GC_TARGET_HIGH,
+    _GC_TARGET_LOW,
+    _MAX_HOMOPOLYMER,
+)
 
 
 class TestSequenceDesigner:
     """Sequence generation constraint satisfaction."""
 
     def test_gc_content_within_bounds(self, designer: SequenceDesigner) -> None:
+        """Designed sequences keep GC content in bounds."""
         for i in range(20):
             seq = designer.generate(30, f"test_gc_{i}")
             gc = sum(1 for c in seq if c in "GC") / len(seq)
@@ -25,6 +35,7 @@ class TestSequenceDesigner:
             )
 
     def test_no_excessive_homopolymer(self, designer: SequenceDesigner) -> None:
+        """Designed sequences avoid long homopolymer runs."""
         for i in range(20):
             seq = designer.generate(50, f"test_homo_{i}")
             max_run = 1
@@ -38,6 +49,7 @@ class TestSequenceDesigner:
             assert max_run <= _MAX_HOMOPOLYMER + 1, f"Sequence {i} has homopolymer run {max_run}"
 
     def test_deterministic_with_same_seed(self) -> None:
+        """The same seed designs the same sequence."""
         d1 = SequenceDesigner(seed=99)
         d2 = SequenceDesigner(seed=99)
         seq1 = d1.generate(20, "x")
@@ -45,6 +57,7 @@ class TestSequenceDesigner:
         assert seq1 == seq2
 
     def test_different_seeds_different_sequences(self) -> None:
+        """Different seeds design different sequences."""
         d1 = SequenceDesigner(seed=1)
         d2 = SequenceDesigner(seed=2)
         seq1 = d1.generate(20, "x")
@@ -52,6 +65,7 @@ class TestSequenceDesigner:
         assert seq1 != seq2
 
     def test_complement_is_watson_crick(self, designer: SequenceDesigner) -> None:
+        """The complement pairs each base Watson-Crick."""
         seq = designer.generate(20, "comp_test")
         comp = designer.generate_complement(seq)
         pairs = {"A": "T", "T": "A", "C": "G", "G": "C"}
@@ -61,14 +75,17 @@ class TestSequenceDesigner:
             assert actual == expected, f"Position {i}: {c} → {actual}, expected {expected}"
 
     def test_toehold_length(self, designer: SequenceDesigner) -> None:
+        """A toehold is six nucleotides long."""
         th = designer.generate_toehold("test")
         assert len(th) == 6
 
     def test_recognition_length(self, designer: SequenceDesigner) -> None:
+        """A recognition domain is fifteen nucleotides long."""
         rec = designer.generate_recognition("test")
         assert len(rec) == 15
 
     def test_orthogonality_low_overlap(self, designer: SequenceDesigner) -> None:
+        """Designed sequences overlap by less than 90 percent."""
         sequences = [designer.generate(20, f"ortho_{i}") for i in range(10)]
         for i in range(len(sequences)):
             for j in range(i + 1, len(sequences)):
@@ -79,6 +96,8 @@ class TestSequenceDesigner:
     def test_sequence_scoring_penalizes_adverse_homopolymer_rng(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A constant generator still yields its forced homopolymer."""
+
         class ConstantRng:
             def integers(self, low: int, high: int) -> int:
                 return low
@@ -93,6 +112,7 @@ class TestSequenceDesigner:
         assert seq == "AAAA"
 
     def test_sequence_generation_recovers_when_constraints_exhaust_weights(self) -> None:
+        """Exhausted weights still yield a valid sequence."""
         seq = SequenceDesigner(seed=42, max_homopolymer=0).generate(4, "zero_run_budget")
 
         assert len(seq) == 4

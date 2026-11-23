@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2827
+expected_file_count = 2869
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11352,3 +11352,171 @@ rationale = "Exercise the ASIC flow: signoff signoff generator."
 [[file]]
 path = "tests/test_asic_flow/test_signoff_signoff_summary.py"
 rationale = "Exercise the ASIC flow: signoff signoff summary."
+
+[[file]]
+path = "tests/test_bridges/conftest.py"
+rationale = "Provide the DNA-mapper and photonic NoC fixtures shared by the bridge tests."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_bitstream_to_dna.py"
+rationale = "Exercise the bridges: dna mapper bitstream to dna."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_concentration_optimizer.py"
+rationale = "Exercise the bridges: dna mapper concentration optimizer."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_cost_and_hybridization_edges.py"
+rationale = "Exercise the bridges: dna mapper cost and hybridization edges."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_cost_estimation.py"
+rationale = "Exercise the bridges: dna mapper cost estimation."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_cross_hybridization.py"
+rationale = "Exercise the bridges: dna mapper cross hybridization."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_degradation_model.py"
+rationale = "Exercise the bridges: dna mapper degradation model."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_dna_strand.py"
+rationale = "Exercise the bridges: dna mapper dna strand."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_dual_rail_encoder.py"
+rationale = "Exercise the bridges: dna mapper dual rail encoder."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_edge_cases.py"
+rationale = "Exercise the bridges: dna mapper edge cases."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_enzymatic_gate_compiler.py"
+rationale = "Exercise the bridges: dna mapper enzymatic gate compiler."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_export_formats.py"
+rationale = "Exercise the bridges: dna mapper export formats."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_gate_optimizer.py"
+rationale = "Exercise the bridges: dna mapper gate optimizer."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_gf4_error_correction.py"
+rationale = "Exercise the bridges: dna mapper gf4 error correction."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_hairpin_checker.py"
+rationale = "Exercise the bridges: dna mapper hairpin checker."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_kinetic_simulator.py"
+rationale = "Exercise the bridges: dna mapper kinetic simulator."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_noise_model.py"
+rationale = "Exercise the bridges: dna mapper noise model."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_nupack_interface.py"
+rationale = "Exercise the bridges: dna mapper nupack interface."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_plate_layout.py"
+rationale = "Exercise the bridges: dna mapper plate layout."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_protocol_generation.py"
+rationale = "Exercise the bridges: dna mapper protocol generation."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_rk4_integrator.py"
+rationale = "Exercise the bridges: dna mapper rk4 integrator."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_round_trip_logic.py"
+rationale = "Exercise the bridges: dna mapper round trip logic."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_sc_network_bridge.py"
+rationale = "Exercise the bridges: dna mapper sc network bridge."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_sc_network_bridge_edges.py"
+rationale = "Exercise the bridges: dna mapper sc network bridge edges."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_sc_precision_analyzer.py"
+rationale = "Exercise the bridges: dna mapper sc precision analyzer."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_sequence_designer.py"
+rationale = "Exercise the bridges: dna mapper sequence designer."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_strand_displacement_compiler.py"
+rationale = "Exercise the bridges: dna mapper strand displacement compiler."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_topological_analysis.py"
+rationale = "Exercise the bridges: dna mapper topological analysis."
+
+[[file]]
+path = "tests/test_bridges/test_dna_mapper_visualization.py"
+rationale = "Exercise the bridges: dna mapper visualization."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_crosstalk_analyzer.py"
+rationale = "Exercise the bridges: photonic noc crosstalk analyzer."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_data_types.py"
+rationale = "Exercise the bridges: photonic noc data types."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_export_visualization.py"
+rationale = "Exercise the bridges: photonic noc export visualization."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_mzi_compiler.py"
+rationale = "Exercise the bridges: photonic noc mzi compiler."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_power_budget_analyzer.py"
+rationale = "Exercise the bridges: photonic noc power budget analyzer."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_sc_to_photonic.py"
+rationale = "Exercise the bridges: photonic noc sc to photonic."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_thermal_phase_shifter.py"
+rationale = "Exercise the bridges: photonic noc thermal phase shifter."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_waveguide_router.py"
+rationale = "Exercise the bridges: photonic noc waveguide router."
+
+[[file]]
+path = "tests/test_bridges/test_photonic_noc_wdm_assigner.py"
+rationale = "Exercise the bridges: photonic noc wdm assigner."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_solvers_backends_dwave_backend.py"
+rationale = "Exercise the bridges: quantum annealing solvers backends dwave backend."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_solvers_backends_native_solver.py"
+rationale = "Exercise the bridges: quantum annealing solvers backends native solver."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_solvers_backends_optional_imports.py"
+rationale = "Exercise the bridges: quantum annealing solvers backends optional imports."
+
+[[file]]
+path = "tests/test_bridges/test_quantum_annealing_solvers_backends_python_solver.py"
+rationale = "Exercise the bridges: quantum annealing solvers backends python solver."
