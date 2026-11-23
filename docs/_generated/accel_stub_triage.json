@@ -1,9 +1,9 @@
 {
   "generator": "tools/accel_stub_triage.py",
   "counts": {
-    "originals": 339,
-    "compute": 338,
-    "compute_stubs": 608,
+    "originals": 338,
+    "compute": 337,
+    "compute_stubs": 607,
     "application": 0,
     "application_stubs": 0,
     "unclear": 1,
@@ -12,12 +12,12 @@
     "ambiguous_stubs_resolved": 2,
     "stubs_mojo": 309,
     "stubs_julia": 280,
-    "stubs_julia_parseable_unloaded": 21,
+    "stubs_julia_parseable_unloaded": 20,
     "unmapped_mojo": 0,
     "unmapped_julia": 133
   },
   "variant_a_only": {
-    "compute": 277,
+    "compute": 276,
     "application": 0,
     "unclear": 62,
     "application_modules": []
@@ -2221,34 +2221,6 @@
       "used": false
     },
     {
-      "module": "src/sc_neurocore/contrastive/ssl.py",
-      "class": "compute",
-      "decided_by": "rule",
-      "reason": null,
-      "markers": {
-        "app": [],
-        "numeric": [
-          "numpy calls"
-        ],
-        "operators": 9,
-        "basis": "a"
-      },
-      "stubs": [
-        {
-          "lane": "julia_parseable_unloaded",
-          "path": "src/sc_neurocore/accel/julia/contrastive/ssl.jl",
-          "rule": "header",
-          "verbatim_line_share": "4/121",
-          "loaders": [],
-          "named_by": [
-            "benchmarks/bench_contrastive_ssl.py"
-          ],
-          "declared": null
-        }
-      ],
-      "used": true
-    },
-    {
       "module": "src/sc_neurocore/control/controllers.py",
       "class": "compute",
       "decided_by": "rule",
@@ -2865,7 +2837,7 @@
           "lane": "julia",
           "path": "src/sc_neurocore/accel/julia/edge/bitstream.jl",
           "rule": "header",
-          "verbatim_line_share": "29/67",
+          "verbatim_line_share": "28/65",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -11431,7 +11403,6 @@
   ],
   "deletion_list": [],
   "compute_order": [
-    "src/sc_neurocore/contrastive/ssl.py",
     "src/sc_neurocore/_native/core_engine_bridge.py",
     "src/sc_neurocore/adapters/holonomic/_jax_compat.py",
     "src/sc_neurocore/adapters/holonomic/dna_storage.py",

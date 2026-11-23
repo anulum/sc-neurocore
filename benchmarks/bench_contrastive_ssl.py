@@ -15,7 +15,7 @@ from pathlib import Path
 import subprocess
 import sys
 from time import perf_counter
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -92,6 +92,90 @@ def _time_python(calls: int) -> dict[str, PythonTiming]:
     }
 
 
+class LaneTiming(TypedDict):
+    """Serialized timing and parity of one dispatcher lane on the shared fixture."""
+
+    available: bool
+    infonce_calls_per_second: float | None
+    csdp_step_calls_per_second: float | None
+    goodness_calls_per_second: float | None
+    loss_abs_diff_vs_python: float | None
+    csdp_max_abs_diff_vs_python: float | None
+
+
+def _time_lanes(calls: int) -> dict[str, LaneTiming]:
+    """Time every dispatcher lane on the same inputs and compare it with the Python lane."""
+    from sc_neurocore.accel import contrastive_ssl as dispatch
+
+    view_a, view_b = _fixture()
+    weights = np.array([[0.2, 0.4], [0.1, 0.3]], dtype=np.float64)
+    pos_pre = np.array([1.0, 0.5], dtype=np.float64)
+    pos_post = np.array([0.25, 1.0], dtype=np.float64)
+    neg_pre = np.array([0.0, 1.0], dtype=np.float64)
+    neg_post = np.array([0.5, 0.5], dtype=np.float64)
+
+    def step(backend: dispatch.Backend) -> NDArray[np.float64]:
+        after = dispatch.csdp_update(
+            weights, pos_pre, pos_post, positive=True, lr=0.1, decay=0.01, backend=backend
+        )
+        return dispatch.csdp_update(
+            after, neg_pre, neg_post, positive=False, lr=0.1, decay=0.01, backend=backend
+        )
+
+    reference_loss = dispatch.infonce_loss(view_a, view_b, backend="python")
+    reference_step = step("python")
+    lanes: dict[str, LaneTiming] = {}
+    for backend in dispatch.BACKENDS:
+        if not dispatch.backend_available(backend):
+            lanes[backend] = {
+                "available": False,
+                "infonce_calls_per_second": None,
+                "csdp_step_calls_per_second": None,
+                "goodness_calls_per_second": None,
+                "loss_abs_diff_vs_python": None,
+                "csdp_max_abs_diff_vs_python": None,
+            }
+            continue
+        lane = cast(dispatch.Backend, backend)
+        loss = dispatch.infonce_loss(view_a, view_b, backend=lane)
+        stepped = step(lane)
+        rates: list[float] = []
+        for kernel in (
+            lambda: dispatch.infonce_loss(view_a, view_b, backend=lane),
+            lambda: step(lane),
+            lambda: dispatch.goodness(view_a, backend=lane),
+        ):
+            start = perf_counter()
+            for _ in range(calls):
+                kernel()
+            rates.append(round(calls / (perf_counter() - start), 3))
+        lanes[backend] = {
+            "available": True,
+            "infonce_calls_per_second": rates[0],
+            "csdp_step_calls_per_second": rates[1],
+            "goodness_calls_per_second": rates[2],
+            "loss_abs_diff_vs_python": abs(loss - reference_loss),
+            "csdp_max_abs_diff_vs_python": float(np.max(np.abs(stepped - reference_step))),
+        }
+    return lanes
+
+
+def _host() -> dict[str, str]:
+    """Return the host facts the lane timings depend on, with the load when they were taken."""
+    import os
+    import platform
+
+    from sc_neurocore.accel.backend_selection import current_cpu
+
+    one, five, fifteen = os.getloadavg()
+    return {
+        "cpu": current_cpu(),
+        "python": platform.python_version(),
+        "machine": platform.machine(),
+        "load_average_1_5_15": f"{one:.2f} {five:.2f} {fifteen:.2f}",
+    }
+
+
 def _run_command(command: list[str]) -> CommandResult:
     start = perf_counter()
     completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
@@ -112,6 +196,8 @@ def main() -> int:
         "evidence_class": "local_regression_non_isolated",
         "production_benchmark_claim": False,
         "python": _time_python(calls=1000),
+        "host": _host(),
+        "dispatcher_lanes": _time_lanes(calls=1000),
         "rust_compile": _run_command(
             [
                 "rustc",

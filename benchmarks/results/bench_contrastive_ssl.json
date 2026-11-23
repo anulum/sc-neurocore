@@ -1,7 +1,39 @@
 {
   "benchmark_id": "contrastive-ssl-polyglot-local-validation",
+  "dispatcher_lanes": {
+    "julia": {
+      "available": true,
+      "csdp_max_abs_diff_vs_python": 0.0,
+      "csdp_step_calls_per_second": 11071.25,
+      "goodness_calls_per_second": 4053.938,
+      "infonce_calls_per_second": 10819.629,
+      "loss_abs_diff_vs_python": 0.0
+    },
+    "mojo": {
+      "available": true,
+      "csdp_max_abs_diff_vs_python": 0.0,
+      "csdp_step_calls_per_second": 30230.221,
+      "goodness_calls_per_second": 93664.119,
+      "infonce_calls_per_second": 11456.027,
+      "loss_abs_diff_vs_python": 5.1697091052460564e-11
+    },
+    "python": {
+      "available": true,
+      "csdp_max_abs_diff_vs_python": 0.0,
+      "csdp_step_calls_per_second": 24815.532,
+      "goodness_calls_per_second": 97229.617,
+      "infonce_calls_per_second": 18742.408,
+      "loss_abs_diff_vs_python": 0.0
+    }
+  },
   "evidence_class": "local_regression_non_isolated",
   "failed_checks": [],
+  "host": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "load_average_1_5_15": "6.61 6.58 5.66",
+    "machine": "x86_64",
+    "python": "3.12.16"
+  },
   "julia_validation": {
     "command": [
       "julia",
@@ -11,7 +43,7 @@
       "include(\"src/sc_neurocore/accel/julia/contrastive/ssl.jl\"); using .SslAccel; using LinearAlgebra; @assert validate_ssl(); loss = SpikeContrastiveLossState(0.5); view = Matrix{Float64}(I, 4, 4); @assert compute(loss, view, view) < compute(loss, view, view[[2,3,4,1], :])"
     ],
     "returncode": 0,
-    "seconds": 5.718295,
+    "seconds": 1.654968,
     "status": "pass"
   },
   "mojo_validation": {
@@ -20,20 +52,20 @@
       "src/sc_neurocore/accel/mojo/kernels/ssl.mojo"
     ],
     "returncode": 0,
-    "seconds": 1.370987,
+    "seconds": 0.878749,
     "status": "pass"
   },
   "production_benchmark_claim": false,
   "python": {
     "csdp_contrastive_step": {
       "calls": 1000,
-      "calls_per_second": 26799.118,
-      "seconds": 0.037315
+      "calls_per_second": 47018.991,
+      "seconds": 0.021268
     },
     "infonce_compute": {
       "calls": 1000,
-      "calls_per_second": 10117.413,
-      "seconds": 0.098839
+      "calls_per_second": 14561.756,
+      "seconds": 0.068673
     }
   },
   "rust_compile": {
@@ -46,7 +78,7 @@
       "/tmp/sc_neurocore_ssl_rust_tests"
     ],
     "returncode": 0,
-    "seconds": 1.68968,
+    "seconds": 0.190693,
     "status": "pass"
   },
   "rust_tests": {
@@ -54,7 +86,7 @@
       "/tmp/sc_neurocore_ssl_rust_tests"
     ],
     "returncode": 0,
-    "seconds": 0.002664,
+    "seconds": 0.001851,
     "status": "pass"
   },
   "status": "pass"

@@ -62,6 +62,32 @@ W = csdp.contrastive_step(
 )
 ```
 
+## Execution Lanes
+
+`sc_neurocore.accel.contrastive_ssl` runs the InfoNCE loss, one CSDP phase and
+the goodness score on a chosen lane: `backend="python"` (the original above and
+the floor), `"julia"` (`accel/julia/contrastive/ssl.jl`) or `"mojo"`
+(`accel/mojo/contrastive_ssl`). Every input is validated with the original's
+own checks before any lane runs, so all lanes refuse the same inputs.
+`backend="auto"` follows the measured order for kernel `contrastive_ssl` on the
+host; without a committed measurement it is Python alone.
+
+```python
+from sc_neurocore.accel import contrastive_ssl
+
+loss = contrastive_ssl.infonce_loss(view_a, view_b, temperature=0.5, backend="mojo")
+weights = contrastive_ssl.csdp_update(weights, pre, post, positive=True, backend="julia")
+```
+
+Parity bounds against Python, held by `tests/test_contrastive_ssl_julia_parity.py`
+and `tests/test_contrastive_ssl_mojo_parity.py`:
+
+| Kernel | Julia | Mojo |
+|--------|-------|------|
+| InfoNCE loss | relative `1e-9` | relative `1e-9` |
+| CSDP phase | exact | `4·eps·(abs(W) + lr·abs(post⊗pre) + decay·abs(W))` per element (fused multiply-adds) |
+| Goodness | relative `1e-12` | relative `1e-12` |
+
 ## Validation and Benchmark Evidence
 
 The public Python API is covered by the module-specific
@@ -70,16 +96,27 @@ The public Python API is covered by the module-specific
 | Surface | Scope | Local check |
 |---------|-------|-------------|
 | Python | Public InfoNCE and CSDP contracts, validation guards, deterministic algebra | `pytest tests/test_contrastive.py` |
-| Rust | Safety mirror for row-wise InfoNCE and CSDP matrix updates | `rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/ssl.rs` |
-| Julia | Row-wise InfoNCE and CSDP validation mirror | `julia --startup-file=no --history-file=no ... validate_ssl()` |
+| Julia lane | Dispatcher lane; InfoNCE, CSDP and goodness parity | `pytest tests/test_contrastive_ssl_julia_parity.py` |
+| Mojo lane | Dispatcher lane (C ABI); InfoNCE, CSDP and goodness parity | `pytest tests/test_contrastive_ssl_mojo_parity.py` |
+| Rust | Standalone safety mirror for row-wise InfoNCE and CSDP matrix updates; not a dispatcher lane | `rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/ssl.rs` |
+| Julia | Row-wise InfoNCE and CSDP validation of `ssl.jl` | `julia --startup-file=no --history-file=no ... validate_ssl()` |
 | Mojo | Standalone InfoNCE/CSDP validation kernel | `mojo src/sc_neurocore/accel/mojo/kernels/ssl.mojo` |
 
 `benchmarks/results/bench_contrastive_ssl.json` records the latest local,
-non-isolated evidence. The Python public API measured 1000 deterministic calls
-at 10117.413 InfoNCE calls/s and 26799.118 CSDP contrastive steps/s on the
-current workstation. Rust, Julia, and Mojo validation checks all passed in that
-same run. The artifact is a local regression record, not an isolated production
-benchmark claim.
+non-isolated evidence, taken on 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz (CPU 0, load average
+6.61 6.58 5.66). The Python public API measured 1000 deterministic calls
+at 14561.756 InfoNCE calls/s and 47018.991 CSDP contrastive steps/s.
+Through the dispatcher, on the same 32 × 64 views and 2 × 2 rule (calls/s):
+
+| Lane | InfoNCE | CSDP step (two phases) | Goodness |
+|------|--------:|-----------------------:|---------:|
+| julia | 10819.629 | 11071.250 | 4053.938 |
+| mojo | 11456.027 | 30230.221 | 93664.119 |
+| python | 18742.408 | 24815.532 | 97229.617 |
+
+Rust, Julia, and Mojo validation checks all passed in that same run. The
+artifact is a local regression record, not an isolated production benchmark
+claim; timings on a loaded workstation vary between runs.
 
 **Reference:** Ororbia 2024, Science Advances.
 
@@ -91,3 +128,13 @@ See [Tutorial 80: Contrastive SSL](../tutorials/80_contrastive.md).
       members:
         - SpikeContrastiveLoss
         - CSDPRule
+
+::: sc_neurocore.accel.contrastive_ssl
+    options:
+      show_root_heading: true
+      members:
+        - infonce_loss
+        - csdp_update
+        - goodness
+        - backend_available
+        - auto_backend

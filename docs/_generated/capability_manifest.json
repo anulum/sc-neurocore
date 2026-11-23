@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5771
+    "test_files": 5775
   },
   "documentation": {
     "public_pages": [
@@ -4685,6 +4685,10 @@
       "tests/test_continual_plasticity_config.py",
       "tests/test_contrastive_csdp_rule.py",
       "tests/test_contrastive_spike_contrastive_loss.py",
+      "tests/test_contrastive_ssl_backends.py",
+      "tests/test_contrastive_ssl_julia_parity.py",
+      "tests/test_contrastive_ssl_lane_facades.py",
+      "tests/test_contrastive_ssl_mojo_parity.py",
       "tests/test_control_spiking_kalman_filter.py",
       "tests/test_control_spiking_lqr.py",
       "tests/test_control_spiking_pid.py",

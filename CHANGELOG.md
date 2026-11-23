@@ -97,6 +97,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- `sc_neurocore.accel.contrastive_ssl` runs the contrastive SSL kernels (the
+  InfoNCE loss, one CSDP phase and the goodness score) on a chosen lane:
+  Python, the original and the floor; Julia (`accel/julia/contrastive/ssl.jl`,
+  now loaded through a facade); or a new Mojo C-ABI library
+  (`accel/mojo/contrastive_ssl`, built by `tools/build_accel_backends.py`).
+  Every input is validated with the original's checks before a lane runs.
+  `backend="auto"` follows the host's measured order, which is Python alone
+  until a measurement is committed. The parity tests state each lane's bound:
+  - the loss agrees within a relative `1e-9`;
+  - the Julia CSDP phases are exact;
+  - the Mojo CSDP phases are within four rounding steps of the operands;
+  - goodness agrees within a relative `1e-12`.
+  `ssl.jl` now accepts a zero-width weight matrix as the original does, and
+  adds in the original's order. The contrastive benchmark times every lane
+  through the dispatcher on its record host. The Julia lane inventory is
+  regenerated, which also records an earlier change to `edge/bitstream.jl`.
+
 - The coverage union of the main CI workflow runs on every run that is not
   cancelled, and the test shards keep their coverage data after a failure,
   so the union's verdict is visible even when a leg fails first. On every

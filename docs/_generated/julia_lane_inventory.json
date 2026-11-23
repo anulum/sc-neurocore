@@ -10,11 +10,11 @@
     "does_not_parse": 280,
     "authoritative_entrypoint": 5,
     "authoritative_entrypoint_does_not_parse": 0,
-    "loaded_by_python": 110,
+    "loaded_by_python": 111,
     "loaded_by_python_does_not_parse": 0,
     "declared_mirror": 65,
     "declared_mirror_does_not_parse": 42,
-    "undeclared": 392,
+    "undeclared": 391,
     "undeclared_does_not_parse": 238,
     "loaded_under_a_mirror_glob": 4,
     "transcription_rule_header": 226,
@@ -22,8 +22,8 @@
     "transcription_rule_ambiguous": 0,
     "transcription_rule_none": 0,
     "transcription_rule_not_a_transcript": 292,
-    "references": 225,
-    "references_resolved": 118,
+    "references": 226,
+    "references_resolved": 119,
     "references_named": 103,
     "references_missing": 0,
     "references_unresolved": 4
@@ -1402,13 +1402,15 @@
     },
     {
       "path": "src/sc_neurocore/accel/julia/contrastive/ssl.jl",
-      "sha256": "58f9cf36d77c7315cb7ca39b35ca8bf00f7285b73c6aa6636ef64a87f41be021",
+      "sha256": "fef2c8de1f997288d152216c8f441ccf52be91bb5592382e7cf767f576b5831f",
       "parses": true,
       "authoritative": false,
-      "loaded": false,
+      "loaded": true,
       "mirror": false,
-      "class": "undeclared",
-      "loaders": [],
+      "class": "loaded_by_python",
+      "loaders": [
+        "src/sc_neurocore/accel/julia/contrastive/ssl.py"
+      ],
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
@@ -1972,7 +1974,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/julia/edge/bitstream.jl",
-      "sha256": "5e50adc3ad325ca698e70c5756711d2daa515579e0079a27f66b05943e2bedfd",
+      "sha256": "ab0359c24cd2f68a1d43fd95d5028d5aef409c6cd551abac37e6f6011661dc28",
       "parses": false,
       "authoritative": false,
       "loaded": false,
@@ -1981,7 +1983,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/edge/bitstream.py",
       "transcription_rule": "header",
-      "verbatim_line_share": "29/67",
+      "verbatim_line_share": "28/65",
       "transcription_candidates": []
     },
     {
@@ -9145,6 +9147,12 @@
       "line": 42,
       "status": "resolved",
       "target": "src/sc_neurocore/accel/julia/adc_to_spike/adc_to_spike.jl"
+    },
+    {
+      "python": "src/sc_neurocore/accel/julia/contrastive/ssl.py",
+      "line": 25,
+      "status": "resolved",
+      "target": "src/sc_neurocore/accel/julia/contrastive/ssl.jl"
     },
     {
       "python": "src/sc_neurocore/accel/julia/event_recordings.py",

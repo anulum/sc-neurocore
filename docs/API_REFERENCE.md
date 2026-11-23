@@ -747,6 +747,108 @@ Run the complete configured Compte contract on one real backend.
 
 ---
 
+## Module `accel.contrastive_ssl`
+
+### Function `backend_available(backend)`
+Return whether one execution lane is ready on this host.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``julia`` or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the lane's runtime and its source or library load.
+
+### Function `auto_backend()`
+Return the first available lane in this host's measured order.
+
+Returns
+-------
+str
+    A lane name; ``python`` without a committed measurement for this host.
+
+### Function `infonce_loss(view_a, view_b, *, temperature, backend)`
+Return the mean InfoNCE loss of two spike-rate views.
+
+Parameters
+----------
+view_a, view_b : array_like of shape (batch, n_features)
+    Spike rates of two augmentations of the same inputs.
+temperature : float, default 0.5
+    Contrastive temperature; finite and positive.
+backend : {"auto", "python", "julia", "mojo"}, default "auto"
+    The execution lane.
+
+Returns
+-------
+float
+    The loss; ``0.0`` for a batch of fewer than two rows.
+
+Raises
+------
+ValueError
+    If an input is invalid, as :meth:`SpikeContrastiveLoss.compute` refuses
+    it, or ``backend`` is unknown.
+RuntimeError
+    If an explicitly named lane is not available.
+
+### Function `csdp_update(weights, pre_spikes, post_spikes, *, positive, lr, decay, backend)`
+Return one CSDP phase applied to ``weights``.
+
+Parameters
+----------
+weights : array_like of shape (n_post, n_pre)
+    Current synaptic weights; ``n_pre`` may be zero.
+pre_spikes, post_spikes : array_like of shape (n_pre,) and (n_post,)
+    Presynaptic and postsynaptic spike-rate vectors.
+positive : bool
+    ``True`` for the Hebbian phase (:meth:`CSDPRule.positive_update`),
+    ``False`` for the anti-Hebbian phase (:meth:`CSDPRule.negative_update`).
+lr, decay : float
+    Finite, non-negative rule parameters.
+backend : {"auto", "python", "julia", "mojo"}, default "auto"
+    The execution lane.
+
+Returns
+-------
+ndarray of shape (n_post, n_pre)
+    The updated weights, in a new array.
+
+Raises
+------
+ValueError
+    If an input is invalid, as :class:`CSDPRule` refuses it, or ``backend``
+    is unknown.
+RuntimeError
+    If an explicitly named lane is not available.
+
+### Function `goodness(activations, *, backend)`
+Return the goodness score (sum of squared activations).
+
+Parameters
+----------
+activations : array_like
+    Activations of any shape.
+backend : {"auto", "python", "julia", "mojo"}, default "auto"
+    The execution lane.
+
+Returns
+-------
+float
+    ``sum(activations**2)``.
+
+Raises
+------
+ValueError
+    If an activation is not finite, or ``backend`` is unknown.
+RuntimeError
+    If an explicitly named lane is not available.
+
+---
+
 ## Module `accel.dpi_neuron`
 
 ### Function `ensure_julia_loaded()`
@@ -1253,6 +1355,72 @@ packed_inputs : numpy.ndarray of shape (n_inputs, n_words), uint64
     Packed input bitstreams.
 outputs : numpy.ndarray of shape (n_neurons,)
     Output array receiving the accumulated MAC results.
+
+---
+
+## Module `accel.julia.contrastive.ssl`
+
+### Function `ensure_loaded()`
+Include ``ssl.jl`` on first use and return its ``SslAccel`` module.
+
+Returns
+-------
+Any
+    The Julia module object.
+
+Raises
+------
+ImportError
+    If juliacall is not installed.
+FileNotFoundError
+    If ``ssl.jl`` is missing.
+
+### Function `infonce_loss(view_a, view_b, temperature)`
+Return the Julia mean InfoNCE loss of two validated views.
+
+Parameters
+----------
+view_a, view_b : ndarray of shape (batch, features), float64
+    Finite views of the same shape.
+temperature : float
+    Finite, positive temperature.
+
+Returns
+-------
+float
+    The loss.
+
+### Function `csdp_update(weights, pre, post, lr, decay, *, positive)`
+Return one Julia CSDP phase applied to validated weights.
+
+Parameters
+----------
+weights : ndarray of shape (n_post, n_pre), float64
+    Finite weights.
+pre, post : ndarray of shape (n_pre,) and (n_post,), float64
+    Finite spike-rate vectors.
+lr, decay : float
+    Finite, non-negative rule parameters.
+positive : bool
+    ``True`` for the Hebbian phase, ``False`` for the anti-Hebbian phase.
+
+Returns
+-------
+ndarray of shape (n_post, n_pre)
+    The updated weights.
+
+### Function `goodness(values)`
+Return the Julia sum of squared validated activations.
+
+Parameters
+----------
+values : ndarray, float64
+    Finite activations of any shape.
+
+Returns
+-------
+float
+    ``sum(values**2)``.
 
 ---
 

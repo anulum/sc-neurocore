@@ -1,12 +1,12 @@
 {
   "generator": "tools/mojo_lane_inventory.py",
   "counts": {
-    "sources": 481,
+    "sources": 482,
     "comment_only": 4,
     "translated_stub": 309,
     "implementation_fn": 39,
-    "implementation_def": 129,
-    "built_by_builder": 50,
+    "implementation_def": 130,
+    "built_by_builder": 51,
     "implementation_fn_built_by_builder": 0,
     "translated_stub_declared_mirror": 309,
     "transcription_rule_header_source_of_truth": 0,
@@ -15,8 +15,8 @@
     "transcription_rule_stem_by_lines": 25,
     "transcription_rule_ambiguous": 2,
     "transcription_rule_none": 0,
-    "library_literals": 110,
-    "library_literals_attributed_to_mojo": 50,
+    "library_literals": 111,
+    "library_literals_attributed_to_mojo": 51,
     "models": 177,
     "models_selector": 23,
     "models_fixed_order": 10,
@@ -116,6 +116,19 @@
       "declared": null,
       "built_by_builder": false,
       "loaders": [],
+      "transcribed_module": null,
+      "transcription_rule": "not_a_transcript",
+      "verbatim_line_share": null,
+      "transcription_candidates": []
+    },
+    {
+      "path": "src/sc_neurocore/accel/mojo/contrastive_ssl/contrastive_ssl.mojo",
+      "class": "implementation_def",
+      "declared": null,
+      "built_by_builder": true,
+      "loaders": [
+        "src/sc_neurocore/accel/mojo/contrastive_ssl/__init__.py"
+      ],
       "transcribed_module": null,
       "transcription_rule": "not_a_transcript",
       "verbatim_line_share": null,
@@ -5648,6 +5661,11 @@
       "python": "src/sc_neurocore/accel/mojo/compte_wm/__init__.py",
       "library": "libcompte_wm.so",
       "builder_mojo_source": null
+    },
+    {
+      "python": "src/sc_neurocore/accel/mojo/contrastive_ssl/__init__.py",
+      "library": "libcontrastive_ssl.so",
+      "builder_mojo_source": "src/sc_neurocore/accel/mojo/contrastive_ssl/contrastive_ssl.mojo"
     },
     {
       "python": "src/sc_neurocore/accel/mojo/dcls_tent/__init__.py",

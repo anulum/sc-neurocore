@@ -71,7 +71,8 @@ function positive_update(
     post_spikes::AbstractVector{<:Real},
 )
     w, pre, post = _validated_update_inputs(weights, pre_spikes, post_spikes)
-    w .+ state.lr .* (post * transpose(pre)) .- state.decay .* w
+    # Same association as the Python original: W + (lr*outer - decay*W).
+    w .+ (state.lr .* (post * transpose(pre)) .- state.decay .* w)
 end
 
 function negative_update(
@@ -118,6 +119,13 @@ function _validated_matrix(values::AbstractMatrix{<:Real}, name::String)
     matrix
 end
 
+# Weights may have zero columns (no presynaptic inputs), as the Python original accepts.
+function _validated_weights(values::AbstractMatrix{<:Real})
+    matrix = Float64.(values)
+    all(isfinite, matrix) || throw(ArgumentError("weights must contain only finite values"))
+    matrix
+end
+
 function _validated_vector(values::AbstractVector{<:Real}, name::String)
     vector = Float64.(values)
     all(isfinite, vector) || throw(ArgumentError("$name must contain only finite values"))
@@ -129,7 +137,7 @@ function _validated_update_inputs(
     pre_spikes::AbstractVector{<:Real},
     post_spikes::AbstractVector{<:Real},
 )
-    w = _validated_matrix(weights, "weights")
+    w = _validated_weights(weights)
     pre = _validated_vector(pre_spikes, "pre_spikes")
     post = _validated_vector(post_spikes, "post_spikes")
     size(w) == (length(post), length(pre)) ||
