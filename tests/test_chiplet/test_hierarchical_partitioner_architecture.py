@@ -84,7 +84,6 @@ def test_facade_is_thin_and_defines_only_dynamic_diagnostics() -> None:
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
     ]
     assert definitions == ["__getattr__"]
-    assert len(lines) <= 120
     assert len(facade.__all__) == 21
     assert len(facade.__all__) == len(set(facade.__all__))
 
@@ -106,19 +105,124 @@ def test_public_responsibilities_have_one_owner() -> None:
     assert set(owners) == set(facade.__all__)
 
 
-def test_split_modules_and_tests_are_bounded_and_licensed() -> None:
-    """No responsibility module or owning test may regrow into a GodFile."""
+# The concern of each split module, as the top-level classes and functions it owns.
+# A new definition is placed by deciding which concern it belongs to, then listing it here.
+OWNED_DEFINITIONS: dict[str, frozenset[str]] = {
+    "hierarchical_backend_runtime": frozenset(
+        {
+            "_accel_path",
+            "_ensure_go_kl_refine_loaded",
+            "_ensure_julia_kl_refine_loaded",
+            "_ensure_mojo_kl_refine_loaded",
+        }
+    ),
+    "hierarchical_backends": frozenset(
+        {
+            "RefinementOwner",
+            "decode_part_map",
+            "dispatch_refine",
+            "encode_csr",
+            "refine_go",
+            "refine_julia",
+            "refine_mojo",
+            "refine_rust",
+        }
+    ),
+    "hierarchical_balancing": frozenset(
+        {
+            "CorrelationLoadBalancer",
+            "LoadMetrics",
+            "MigrationRecommendation",
+            "RankMapper",
+        }
+    ),
+    "hierarchical_bisection": frozenset(
+        {
+            "BisectionMixin",
+        }
+    ),
+    "hierarchical_boundary": frozenset(
+        {
+            "BoundarySyncConfig",
+            "BoundarySyncProtocol",
+            "GhostCellManager",
+        }
+    ),
+    "hierarchical_core": frozenset(
+        {
+            "HierarchicalPartitioner",
+        }
+    ),
+    "hierarchical_graph": frozenset(
+        {
+            "CSRGraph",
+            "CorrelationAwareGraph",
+            "CorrelationEdge",
+            "HierarchyLevel",
+            "LFSRSeedAllocator",
+        }
+    ),
+    "hierarchical_metrics": frozenset(
+        {
+            "_build_part_map",
+            "calculate_boundary_scc",
+            "calculate_comm_volume",
+            "calculate_edge_cut",
+            "calculate_imbalance_ratio",
+            "calculate_mean_boundary_scc",
+            "calculate_total_boundary_scc",
+        }
+    ),
+    "hierarchical_partitioner": frozenset(
+        {
+            "__getattr__",
+        }
+    ),
+    "hierarchical_refinement": frozenset(
+        {
+            "RefinementMixin",
+        }
+    ),
+    "hierarchical_reporting": frozenset(
+        {
+            "PartitionReport",
+            "build_partition_report",
+        }
+    ),
+}
+# The concerns a partitioner test file covers, as the first word after the common prefix.
+TEST_CONCERNS = frozenset(
+    {"architecture", "backends", "core", "dispatch", "graph", "metrics", "reporting", "runtime"}
+)
+
+
+def test_split_modules_own_their_concerns_and_are_licensed() -> None:
+    """Each split module defines exactly its declared names, none twice, under the licence header."""
+    assert set(OWNED_DEFINITIONS) == set(SPLIT_MODULES)
+    kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+    owner: dict[str, str] = {}
     for module_name in SPLIT_MODULES:
-        lines = (PACKAGE_ROOT / f"{module_name}.py").read_text(encoding="utf-8").splitlines()
-        assert len(lines) <= 300, f"{module_name}.py has {len(lines)} lines"
+        source = (PACKAGE_ROOT / f"{module_name}.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        defined = {node.name for node in tree.body if isinstance(node, kinds)}
+        assert defined == OWNED_DEFINITIONS[module_name], module_name
+        for definition in defined:
+            assert definition not in owner, (
+                f"{definition} is defined in {owner.get(definition)} and {module_name}"
+            )
+            owner[definition] = module_name
+        lines = source.splitlines()
         assert lines[0] == "# SPDX-License-Identifier: AGPL-3.0-or-later"
         assert any('"""' in line for line in lines[:20])
 
-    tests_root = Path(__file__).parent
-    tests = sorted(tests_root.glob("test_hierarchical_partitioner_*.py"))
+
+def test_each_partitioner_test_file_covers_one_concern() -> None:
+    """Every ``test_hierarchical_partitioner_*`` file names the concern it tests."""
+    tests = sorted(Path(__file__).parent.glob("test_hierarchical_partitioner_*.py"))
     assert tests
     for path in tests:
-        assert len(path.read_text(encoding="utf-8").splitlines()) <= 300
+        concern = path.stem.removeprefix("test_hierarchical_partitioner_").split("_", maxsplit=1)[0]
+        assert concern in TEST_CONCERNS, path.name
 
 
 def _chiplet_dependencies(module_name: str) -> set[str]:

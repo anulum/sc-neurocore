@@ -1251,6 +1251,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The hierarchical partitioner's architecture tests no longer cap line
+  counts (120 for the facade, 300 per split module and per test file). They
+  keep the facade's single `__getattr__`, one owner per public symbol and the
+  documented dependency graph. They now also hold:
+  - each split module to the top-level names of its declared concern;
+  - every `test_hierarchical_partitioner_*` file to the concern it covers.
+
 - The chiplet architecture tests no longer cap line counts: 150 for the
   facade, 500 per responsibility module and test file, 100 for `_sv` and 300
   for each RTL emitter. They keep the existing ownership of every public
