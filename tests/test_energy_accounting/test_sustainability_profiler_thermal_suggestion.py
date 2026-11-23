@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    FPGAResourceReport,
+    SustainabilityOptimizer,
+    ThermalModel,
+)
 
 
 class TestThermalSuggestion:
-    def test_thermal_violation_suggestion(self):
+    """Thermal suggestions from the optimizer."""
+
+    def test_thermal_violation_suggestion(self) -> None:
+        """A design over its thermal limit gets a thermal-violation suggestion."""
         fpga = FPGAResourceReport(
             luts=100000, ffs=50000, static_power_mw=2000, clock_mhz=500, voltage_v=1.2
         )

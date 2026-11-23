@@ -10,32 +10,44 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyHarvester,
+    HarvestProfile,
+)
 
 
 class TestHarvestProfile:
-    def test_default_peak_from_type(self):
+    """Power profiles of energy harvesters."""
+
+    def test_default_peak_from_type(self) -> None:
+        """A harvester type sets its default peak."""
         h = HarvestProfile(harvester=EnergyHarvester.SOLAR)
         assert h.peak_power_mw == 50.0
 
-    def test_average_power(self):
+    def test_average_power(self) -> None:
+        """The profile reports its average power."""
         h = HarvestProfile(harvester=EnergyHarvester.PIEZO, duty_cycle=0.5)
         assert h.average_power_mw == 0.25
 
-    def test_solar_night_zero(self):
+    def test_solar_night_zero(self) -> None:
+        """Solar harvests nothing at night."""
         h = HarvestProfile(harvester=EnergyHarvester.SOLAR)
         assert h.power_at(2.0) == 0.0
 
-    def test_solar_noon_peak(self):
+    def test_solar_noon_peak(self) -> None:
+        """Solar peaks at noon."""
         h = HarvestProfile(harvester=EnergyHarvester.SOLAR)
         noon = h.power_at(12.0)
         assert noon == pytest.approx(h.peak_power_mw)
 
-    def test_piezo_constant(self):
+    def test_piezo_constant(self) -> None:
+        """Piezoelectric harvest is constant through the day."""
         h = HarvestProfile(harvester=EnergyHarvester.PIEZO)
         assert h.power_at(0) == h.power_at(12)
 
-    def test_energy_over_duration(self):
+    def test_energy_over_duration(self) -> None:
+        """Energy over a duration is average power times time."""
         h = HarvestProfile(harvester=EnergyHarvester.RF)
         energy = h.energy_over(10.0)
         assert energy == pytest.approx(h.average_power_mw * 10.0)

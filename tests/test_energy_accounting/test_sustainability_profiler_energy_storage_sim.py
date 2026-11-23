@@ -10,41 +10,53 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyStorageSim,
+)
 
 
 class TestEnergyStorageSim:
-    def test_initial_soc(self):
+    """State of charge of simulated energy storage."""
+
+    def test_initial_soc(self) -> None:
+        """Storage starts half charged."""
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5)
         assert es.soc == 0.5
 
-    def test_charge_increases_soc(self):
+    def test_charge_increases_soc(self) -> None:
+        """Charging raises the state of charge."""
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5, self_discharge_rate=0.0)
         es.step(net_power_mw=5.0, dt_hours=1.0)
         assert es.soc > 0.5
 
-    def test_discharge_decreases_soc(self):
+    def test_discharge_decreases_soc(self) -> None:
+        """Discharging lowers the state of charge."""
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5, self_discharge_rate=0.0)
         es.step(net_power_mw=-5.0, dt_hours=1.0)
         assert es.soc < 0.5
 
-    def test_soc_clamped_at_1(self):
+    def test_soc_clamped_at_1(self) -> None:
+        """The state of charge never exceeds one."""
         es = EnergyStorageSim(capacity_mwh=1, initial_soc=0.9, self_discharge_rate=0.0)
         es.step(net_power_mw=100.0, dt_hours=1.0)
         assert es.soc <= 1.0
 
-    def test_soc_clamped_at_0(self):
+    def test_soc_clamped_at_0(self) -> None:
+        """The state of charge never drops below zero and then is depleted."""
         es = EnergyStorageSim(capacity_mwh=1, initial_soc=0.1, self_discharge_rate=0.0)
         es.step(net_power_mw=-100.0, dt_hours=1.0)
         assert es.soc >= 0.0
         assert es.is_depleted
 
-    def test_history_tracked(self):
+    def test_history_tracked(self) -> None:
+        """The history holds the start and each step."""
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5)
         es.step(1.0)
         es.step(-1.0)
         assert len(es.history) == 3  # initial + 2 steps
 
-    def test_energy_stored(self):
+    def test_energy_stored(self) -> None:
+        """Stored energy follows capacity and state of charge."""
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.8)
         assert es.energy_stored_mwh == pytest.approx(8.0)

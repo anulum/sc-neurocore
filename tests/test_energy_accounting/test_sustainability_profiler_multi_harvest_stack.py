@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyHarvester,
+    HarvestProfile,
+    MultiHarvestStack,
+)
 
 
 class TestMultiHarvestStack:
-    def test_add_and_count(self):
+    """Stacks of several energy harvesters."""
+
+    def test_add_and_count(self) -> None:
+        """Added sources are counted."""
         stack = MultiHarvestStack()
         stack.add(HarvestProfile(harvester=EnergyHarvester.SOLAR))
         stack.add(HarvestProfile(harvester=EnergyHarvester.PIEZO))
         assert stack.num_sources == 2
 
-    def test_combined_power(self):
+    def test_combined_power(self) -> None:
+        """The stack's average power sums its sources."""
         stack = MultiHarvestStack(
             [
                 HarvestProfile(harvester=EnergyHarvester.SOLAR, peak_power_mw=50, duty_cycle=0.5),
@@ -29,7 +38,8 @@ class TestMultiHarvestStack:
         )
         assert stack.average_power_mw == pytest.approx(25.5)
 
-    def test_power_at_sums(self):
+    def test_power_at_sums(self) -> None:
+        """The stack's power at an hour sums its sources."""
         stack = MultiHarvestStack(
             [
                 HarvestProfile(harvester=EnergyHarvester.PIEZO, peak_power_mw=1.0, duty_cycle=1.0),
@@ -38,7 +48,8 @@ class TestMultiHarvestStack:
         )
         assert stack.power_at(12.0) == pytest.approx(1.5)
 
-    def test_energy_over(self):
+    def test_energy_over(self) -> None:
+        """The stack's energy over a duration sums its sources."""
         stack = MultiHarvestStack(
             [
                 HarvestProfile(harvester=EnergyHarvester.PIEZO, peak_power_mw=1.0, duty_cycle=1.0),

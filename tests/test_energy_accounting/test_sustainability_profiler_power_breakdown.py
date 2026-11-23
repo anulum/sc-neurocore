@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    FPGAResourceReport,
+)
 
 
 class TestPowerBreakdown:
-    def test_breakdown_components(self):
+    """Per-resource breakdown of FPGA power."""
+
+    def test_breakdown_components(self) -> None:
+        """The breakdown lists LUT, flip-flop and BRAM power."""
         r = FPGAResourceReport(luts=10000, ffs=5000, bram_kb=10, dsp_slices=5)
         bd = r.power_breakdown()
         assert "lut_mw" in bd
@@ -23,13 +28,15 @@ class TestPowerBreakdown:
         assert "dsp_mw" in bd
         assert "static_mw" in bd
 
-    def test_breakdown_sums_to_total(self):
+    def test_breakdown_sums_to_total(self) -> None:
+        """The breakdown sums to the total power."""
         r = FPGAResourceReport(luts=10000, ffs=5000, bram_kb=10, dsp_slices=5, static_power_mw=50)
         bd = r.power_breakdown()
         total_from_bd = sum(bd.values())
         assert abs(total_from_bd - r.total_power_mw) < 0.001
 
-    def test_zero_resources_zero_dynamic(self):
+    def test_zero_resources_zero_dynamic(self) -> None:
+        """No resources leave only the static power."""
         r = FPGAResourceReport(luts=0, ffs=0, bram_kb=0, dsp_slices=0, static_power_mw=10)
         bd = r.power_breakdown()
         assert bd["lut_mw"] == 0.0

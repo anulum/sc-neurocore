@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    FPGAResourceReport,
+)
 
 
 class TestVivadoParser:
-    def test_from_vivado_dict(self):
+    """Reading Vivado utilisation reports."""
+
+    def test_from_vivado_dict(self) -> None:
+        """A Vivado report gives its LUTs, clock and toggle rate."""
         d = {
             "LUT": 50000,
             "FF": 30000,
@@ -30,7 +35,8 @@ class TestVivadoParser:
         assert r.clock_mhz == 150
         assert r.toggle_rate == 0.2
 
-    def test_from_vivado_dict_defaults(self):
+    def test_from_vivado_dict_defaults(self) -> None:
+        """Missing fields take their defaults."""
         r = FPGAResourceReport.from_vivado_dict({})
         assert r.luts == 0
         assert r.clock_mhz == 100.0

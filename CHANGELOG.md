@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 18 sustainability-profiler test modules
+  (`tests/test_energy_accounting`) import their names explicitly
+  instead of through a suppressed star import, gain their missing test
+  docstrings and return annotations and are enrolled in the docstring
+  policy. Their support module, left without an importer, is deleted.
+
 - The 17 explainability test modules (`tests/test_explainability`)
   import their names explicitly instead of through a suppressed star
   import, gain their missing test docstrings and type annotations and

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyHarvester,
+    EnergyStorageSim,
+    FPGAResourceReport,
+    HarvestProfile,
+    SustainabilityOptimizer,
+)
 
 
 class TestStorageSimulation:
-    def test_simulate_24h(self):
+    """A day of storage simulation."""
+
+    def test_simulate_24h(self) -> None:
+        """A day gives 24 hourly states of charge."""
         fpga = FPGAResourceReport(luts=1000, static_power_mw=1)
         harvest = HarvestProfile(harvester=EnergyHarvester.SOLAR, peak_power_mw=10)
         storage = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5, self_discharge_rate=0.0)

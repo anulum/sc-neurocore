@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyHarvester,
+    FPGAResourceReport,
+    HarvestProfile,
+    SustainabilityOptimizer,
+)
 
 
 class TestAdaptiveDutyCycle:
-    def test_profile_length(self):
+    """An hourly duty cycle adapted to harvested energy."""
+
+    def test_profile_length(self) -> None:
+        """The duty cycle covers 24 hours."""
         fpga = FPGAResourceReport(luts=10000, static_power_mw=50)
         harvest = HarvestProfile(harvester=EnergyHarvester.SOLAR)
         opt = SustainabilityOptimizer(fpga)
         timeline = opt.adaptive_duty_cycle_sim(harvest, hours=24)
         assert len(timeline) == 24
 
-    def test_night_reduces_active(self):
+    def test_night_reduces_active(self) -> None:
+        """At night the active fraction drops to one tenth."""
         fpga = FPGAResourceReport(luts=10000, static_power_mw=50)
         harvest = HarvestProfile(harvester=EnergyHarvester.SOLAR)
         opt = SustainabilityOptimizer(fpga)
@@ -29,7 +39,8 @@ class TestAdaptiveDutyCycle:
         # At night (hour 2), solar = 0 → active_fraction = min_active
         assert timeline[2]["active_fraction"] == pytest.approx(0.1)
 
-    def test_surplus_positive_at_noon(self):
+    def test_surplus_positive_at_noon(self) -> None:
+        """At noon the harvest leaves a surplus."""
         fpga = FPGAResourceReport(luts=100, static_power_mw=1)
         harvest = HarvestProfile(harvester=EnergyHarvester.SOLAR, peak_power_mw=100)
         opt = SustainabilityOptimizer(fpga)

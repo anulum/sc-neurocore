@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2697
+expected_file_count = 2715
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10832,3 +10832,75 @@ rationale = "Exercise the explainability engine: temporal window."
 [[file]]
 path = "tests/test_explainability/test_explainability_tree_navigation.py"
 rationale = "Exercise the explainability engine: tree navigation."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_adaptive_duty_cycle.py"
+rationale = "Exercise the sustainability profiler: adaptive duty cycle."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_carbon_model.py"
+rationale = "Exercise the sustainability profiler: carbon model."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_deployment_lifetime.py"
+rationale = "Exercise the sustainability profiler: deployment lifetime."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_dvfs.py"
+rationale = "Exercise the sustainability profiler: dvfs."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_embodied_carbon.py"
+rationale = "Exercise the sustainability profiler: embodied carbon."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_energy_efficiency.py"
+rationale = "Exercise the sustainability profiler: energy efficiency."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_energy_storage_sim.py"
+rationale = "Exercise the sustainability profiler: energy storage sim."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_fpga_resource_report.py"
+rationale = "Exercise the sustainability profiler: fpga resource report."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_harvest_profile.py"
+rationale = "Exercise the sustainability profiler: harvest profile."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_multi_harvest_analysis.py"
+rationale = "Exercise the sustainability profiler: multi harvest analysis."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_multi_harvest_stack.py"
+rationale = "Exercise the sustainability profiler: multi harvest stack."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_power_breakdown.py"
+rationale = "Exercise the sustainability profiler: power breakdown."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_storage_simulation.py"
+rationale = "Exercise the sustainability profiler: storage simulation."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_sustainability_edge_branches.py"
+rationale = "Exercise the sustainability profiler: sustainability edge branches."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_sustainability_optimizer.py"
+rationale = "Exercise the sustainability profiler: sustainability optimizer."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_thermal_model.py"
+rationale = "Exercise the sustainability profiler: thermal model."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_thermal_suggestion.py"
+rationale = "Exercise the sustainability profiler: thermal suggestion."
+
+[[file]]
+path = "tests/test_energy_accounting/test_sustainability_profiler_vivado_parser.py"
+rationale = "Exercise the sustainability profiler: vivado parser."

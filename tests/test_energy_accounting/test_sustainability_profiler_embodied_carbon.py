@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EmbodiedCarbon,
+)
 
 
 class TestEmbodiedCarbon:
-    def test_total_embodied(self):
+    """Embodied carbon of hardware."""
+
+    def test_total_embodied(self) -> None:
+        """The total is the sum of its parts."""
         ec = EmbodiedCarbon()
         assert ec.total_embodied_kg == 23.0  # 15+2+5+1
 
-    def test_amortised_annual(self):
+    def test_amortised_annual(self) -> None:
+        """The annual share spreads the total over the lifetime."""
         ec = EmbodiedCarbon(lifetime_years=5)
         assert ec.amortised_annual_kg == pytest.approx(23.0 / 5.0)
 
-    def test_zero_lifetime(self):
+    def test_zero_lifetime(self) -> None:
+        """A zero lifetime puts the whole total in one year."""
         ec = EmbodiedCarbon(lifetime_years=0)
         assert ec.amortised_annual_kg == ec.total_embodied_kg

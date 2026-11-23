@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    FPGAResourceReport,
+    SustainabilityOptimizer,
+)
 
 
 class TestEnergyEfficiency:
-    def test_metrics(self):
+    """Energy efficiency metrics."""
+
+    def test_metrics(self) -> None:
+        """Operations per joule and synaptic operations per milliwatt are positive."""
         fpga = FPGAResourceReport(luts=10000, static_power_mw=50)
         opt = SustainabilityOptimizer(fpga)
         eff = opt.energy_efficiency(ops_per_second=1e9)

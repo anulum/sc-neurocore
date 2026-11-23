@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    analyze_multi_harvest,
+    EnergyHarvester,
+    FPGAResourceReport,
+    HarvestProfile,
+    MultiHarvestStack,
+)
 
 
 class TestMultiHarvestAnalysis:
-    def test_stacked_net_zero(self):
+    """Net-zero analysis with stacked harvesters."""
+
+    def test_stacked_net_zero(self) -> None:
+        """Enough stacked harvest reaches net zero."""
         fpga = FPGAResourceReport(luts=10, static_power_mw=0.01)
         stack = MultiHarvestStack(
             [
@@ -25,7 +34,8 @@ class TestMultiHarvestAnalysis:
         report = analyze_multi_harvest(fpga, stack)
         assert report.net_zero_feasible
 
-    def test_stacked_deficit(self):
+    def test_stacked_deficit(self) -> None:
+        """Too little stacked harvest leaves a deficit."""
         fpga = FPGAResourceReport(luts=100000, static_power_mw=500)
         stack = MultiHarvestStack(
             [

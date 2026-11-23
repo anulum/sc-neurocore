@@ -10,20 +10,31 @@
 
 from __future__ import annotations
 
-from sustainability_profiler_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.sustainability_profiler import (
+    EnergyHarvester,
+    EnergyStorageSim,
+    FPGAResourceReport,
+    HarvestProfile,
+    SustainabilityOptimizer,
+)
 
 
 class TestSustainabilityEdgeBranches:
-    def test_storage_step_returns_soc_when_capacity_non_positive(self):
+    """Edge branches of the sustainability profiler."""
+
+    def test_storage_step_returns_soc_when_capacity_non_positive(self) -> None:
+        """Storage without capacity keeps its state of charge."""
         storage = EnergyStorageSim(capacity_mwh=0.0, initial_soc=0.5)
         assert storage.step(5.0) == storage.soc
 
-    def test_optimise_duty_cycle_defaults_when_total_power_non_positive(self):
+    def test_optimise_duty_cycle_defaults_when_total_power_non_positive(self) -> None:
+        """Without power draw the duty cycle stays fully active."""
         opt = SustainabilityOptimizer(FPGAResourceReport(luts=500000, static_power_mw=5000))
         cfg = opt._optimize_duty_cycle(0.0, 0.0)
         assert cfg.active_fraction == 1.0
 
-    def test_analyze_time_to_neutral_is_infinite_without_storage(self):
+    def test_analyze_time_to_neutral_is_infinite_without_storage(self) -> None:
+        """Without storage the time to neutral is infinite."""
         opt = SustainabilityOptimizer(FPGAResourceReport(luts=500000, static_power_mw=5000))
         harvest = HarvestProfile(
             harvester=EnergyHarvester.RF, peak_power_mw=10.0, storage_capacity_mwh=0.0
@@ -31,13 +42,15 @@ class TestSustainabilityEdgeBranches:
         report = opt.analyze(harvest=harvest)
         assert report.time_to_neutral_hours == float("inf")
 
-    def test_deployment_lifetime_is_zero_without_battery_under_deficit(self):
+    def test_deployment_lifetime_is_zero_without_battery_under_deficit(self) -> None:
+        """Without a battery a deficit gives no lifetime."""
         opt = SustainabilityOptimizer(FPGAResourceReport(luts=500000, static_power_mw=5000))
         harvest = HarvestProfile(harvester=EnergyHarvester.RF, peak_power_mw=10.0)
         result = opt.deployment_lifetime(harvest=harvest, battery_mwh=0.0)
         assert result["battery_life_hours"] == 0.0
 
-    def test_adaptive_duty_cycle_runs_full_active_for_zero_power_fabric(self):
+    def test_adaptive_duty_cycle_runs_full_active_for_zero_power_fabric(self) -> None:
+        """A fabric without power stays fully active all day."""
         opt = SustainabilityOptimizer(
             FPGAResourceReport(luts=0, ffs=0, bram_kb=0, dsp_slices=0, static_power_mw=0)
         )
