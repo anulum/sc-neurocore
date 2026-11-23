@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.constraints_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    LECGenerator,
+)
 
 
 class TestLECGenerator:
+    """Logic equivalence check scripts."""
+
     def test_generates_lec(self) -> None:
+        """The script builds and reports equivalence for the design."""
         design = DesignParams(top_module="sc_lif")
         script = LECGenerator.generate(design)
         assert "equiv_make" in script

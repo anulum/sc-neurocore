@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.decks_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    FloorplanGenerator,
+    PDKConfig,
+    PDKType,
+)
 
 
 class TestFloorplanGenerator:
+    """Floorplan deck generation."""
+
     def test_generates_tcl(self) -> None:
+        """The floorplan deck reads the LEF and initialises the floorplan."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         tcl = FloorplanGenerator.generate(pdk, design)
@@ -22,6 +30,7 @@ class TestFloorplanGenerator:
         assert "read_lef" in tcl
 
     def test_power_grid(self) -> None:
+        """The floorplan deck connects VDD and VSS."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams(power_nets=["VDD", "VSS"])
         tcl = FloorplanGenerator.generate(pdk, design)

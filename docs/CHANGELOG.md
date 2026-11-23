@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 13 ASIC-flow test modules that star-imported a support module
+  (`tests/test_asic_flow`) import their names explicitly instead,
+  gain their missing test docstrings and are enrolled in the docstring
+  policy. Their four support modules, left without an importer, are
+  deleted.
+
 - The 22 federated stochastic-computing test modules
   (`tests/test_federated`) import their names explicitly instead of
   through a suppressed star import, gain their missing test docstrings

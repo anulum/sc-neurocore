@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.pdk_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
+from sc_neurocore.asic_flow.asic_flow import (
+    OpenSourcePDKResolver,
+    PDKConfig,
+    PDKResolution,
+    PDKType,
+    ResolvedPDKFiles,
+)
 
 
 class TestOpenSourcePDKResolver:
+    """Resolving open-source PDK files on disk."""
+
     def test_resolves_sky130_manifest(self) -> None:
+        """The SKY130 manifest resolves its liberty and DRC deck."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root="/opt/pdk")
         assert isinstance(resolution, PDKResolution)
@@ -23,12 +35,14 @@ class TestOpenSourcePDKResolver:
         assert "sky130.lydrc" in resolution.files.drc_deck
 
     def test_resolves_gf180_manifest(self) -> None:
+        """The GF180 manifest resolves its tech LEF and LVS setup."""
         pdk = PDKConfig.from_pdk_type(PDKType.GF180MCU)
         resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root="/opt/pdk")
         assert resolution.pdk.tech_lef.endswith(".tlef")
         assert "gf180mcuD_setup.tcl" in resolution.files.lvs_setup
 
     def test_reports_missing_required_files(self) -> None:
+        """A missing liberty file makes synthesis unusable."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         resolution = OpenSourcePDKResolver.resolve(
             pdk, pdk_root="/definitely/missing/pdk", require_existing=True
@@ -37,6 +51,7 @@ class TestOpenSourcePDKResolver:
         assert "liberty_file" in resolution.missing_required
 
     def test_accepts_minimal_existing_synthesis_files(self, tmp_path: Path) -> None:
+        """The three synthesis files suffice for synthesis, not signoff."""
         root = tmp_path / "pdk"
         paths = [
             root / "sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",

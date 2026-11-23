@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5744
+    "test_files": 5740
   },
   "documentation": {
     "public_pages": [
@@ -4088,10 +4088,6 @@
       "tests/test_arcane_zenith/test_arcane_zenith_step_from_genome.py",
       "tests/test_arcane_zenith/test_arcane_zenith_symbolic_reasoning_log.py",
       "tests/test_asic_flow/__init__.py",
-      "tests/test_asic_flow/constraints_support.py",
-      "tests/test_asic_flow/decks_support.py",
-      "tests/test_asic_flow/pdk_support.py",
-      "tests/test_asic_flow/signoff_support.py",
       "tests/test_asic_flow/test_architecture.py",
       "tests/test_asic_flow/test_asic_flow_package_api.py",
       "tests/test_asic_flow/test_constraints_cdc_check_generator.py",

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.constraints_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    IOConstraintGenerator,
+    IOPin,
+)
 
 
 class TestIOConstraints:
+    """IO pin placement constraints."""
+
     def test_generate(self) -> None:
+        """The IO script places the clock and data pins."""
         pins = [IOPin("clk", "input", "N"), IOPin("data_out", "output", "S")]
         design = DesignParams()
         script = IOConstraintGenerator.generate(pins, design)
@@ -22,6 +29,7 @@ class TestIOConstraints:
         assert "data_out" in script
 
     def test_auto_assign(self) -> None:
+        """Five pins are spread over all four sides."""
         names = ["a", "b", "c", "d", "e"]
         pins = IOConstraintGenerator.auto_assign(names)
         assert len(pins) == 5

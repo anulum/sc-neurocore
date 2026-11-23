@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.decks_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    GDSIIExporter,
+    PDKConfig,
+    PDKType,
+)
 
 
 class TestGDSIIExporter:
+    """GDSII export scripts."""
+
     def test_open_source_export(self) -> None:
+        """The open-source export writes a GDS for the top module."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         script = GDSIIExporter.generate(pdk, design)
@@ -22,6 +30,7 @@ class TestGDSIIExporter:
         assert design.top_module in script
 
     def test_commercial_export(self) -> None:
+        """The commercial export defers to the vendor flow."""
         pdk = PDKConfig.from_pdk_type(PDKType.INTEL16)
         design = DesignParams()
         script = GDSIIExporter.generate(pdk, design)

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.signoff_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DRCViolation,
+    SignoffCheckResult,
+    SignoffSummary,
+)
 
 
 class TestSignoffSummary:
+    """The overall signoff summary."""
+
     def test_all_pass(self) -> None:
+        """Every passing check gives an overall pass."""
         s = SignoffSummary(
             timing=SignoffCheckResult("STA", True, ""),
             power=SignoffCheckResult("Power", True, ""),
@@ -24,6 +31,7 @@ class TestSignoffSummary:
         assert s.all_pass
 
     def test_drc_failure(self) -> None:
+        """A DRC failure fails the whole signoff."""
         s = SignoffSummary(
             timing=SignoffCheckResult("STA", True, ""),
             power=SignoffCheckResult("Power", True, ""),
@@ -35,6 +43,7 @@ class TestSignoffSummary:
         assert not s.all_pass
 
     def test_to_dict(self) -> None:
+        """The summary dictionary names timing and the overall result."""
         s = SignoffSummary(
             timing=SignoffCheckResult("STA", True, "ok"),
             power=SignoffCheckResult("Power", True, "ok"),

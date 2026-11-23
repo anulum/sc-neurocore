@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.constraints_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    IRDropGenerator,
+    PDKConfig,
+    PDKType,
+)
 
 
 class TestIRDropGenerator:
+    """IR-drop analysis scripts."""
+
     def test_generates_script(self) -> None:
+        """The script analyses the VDD grid at the given toggle rate."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         script = IRDropGenerator.generate(pdk, design, toggle_rate=0.15)

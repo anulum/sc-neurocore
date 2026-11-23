@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.decks_support import *  # noqa: F403
+from sc_neurocore.asic_flow.asic_flow import (
+    DesignParams,
+    PDKConfig,
+    PDKType,
+    SCASICOptimisationConfig,
+    SynthesisGenerator,
+)
 
 
 class TestSynthesisGenerator:
+    """Yosys synthesis deck generation."""
+
     def test_generates_tcl(self) -> None:
+        """The synthesis deck names the synthesis tool and top module."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         tcl = SynthesisGenerator.generate(pdk, design)
@@ -22,12 +31,14 @@ class TestSynthesisGenerator:
         assert design.top_module in tcl
 
     def test_includes_liberty(self) -> None:
+        """The synthesis deck reads the PDK's liberty file."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         tcl = SynthesisGenerator.generate(pdk, design)
         assert pdk.liberty_file in tcl
 
     def test_includes_rtl_files(self) -> None:
+        """The synthesis deck reads every RTL file."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams(rtl_files=["top.v", "neuron.v"])
         tcl = SynthesisGenerator.generate(pdk, design)
@@ -35,6 +46,7 @@ class TestSynthesisGenerator:
         assert "neuron.v" in tcl
 
     def test_clock_constraint(self) -> None:
+        """200 MHz with the 90 percent margin gives a 4500 ps clock."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams(target_frequency_mhz=200.0)
         tcl = SynthesisGenerator.generate(pdk, design)
@@ -42,6 +54,7 @@ class TestSynthesisGenerator:
         assert "4500" in tcl
 
     def test_sc_optimisation_passes_enabled(self) -> None:
+        """The SC optimisation passes are in the deck."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams()
         tcl = SynthesisGenerator.generate(pdk, design)
@@ -50,6 +63,7 @@ class TestSynthesisGenerator:
         assert "keep_hierarchy" in tcl
 
     def test_sc_optimisation_can_disable_counter_sharing(self) -> None:
+        """Counter sharing can be left out of the deck."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams(
             sc_optimisation=SCASICOptimisationConfig(share_stochastic_counters=False)

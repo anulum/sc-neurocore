@@ -10,22 +10,35 @@
 
 from __future__ import annotations
 
-from tests.test_asic_flow.pdk_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
+from sc_neurocore.asic_flow.asic_flow import (
+    PDKConfig,
+    PDKType,
+    validate_pdk,
+    validate_pdk_installation,
+)
 
 
 class TestPDKValidation:
+    """Validating PDK configurations."""
+
     def test_valid_sky130(self) -> None:
+        """The SKY130 preset validates."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         result = validate_pdk(pdk)
         assert result.valid
 
     def test_invalid_broken_pdk(self) -> None:
+        """A broken PDK fails with at least two errors."""
         pdk = PDKConfig(pdk_type=PDKType.SKY130, liberty_file="", lef_file="", voltage_v=0.0)
         result = validate_pdk(pdk)
         assert not result.valid
         assert len(result.errors) >= 2
 
     def test_custom_pdk_no_file_check(self) -> None:
+        """A custom PDK validates without checking files."""
         pdk = PDKConfig(
             pdk_type=PDKType.CUSTOM, liberty_file="", voltage_v=1.8, clock_period_ns=10.0
         )
@@ -33,12 +46,14 @@ class TestPDKValidation:
         assert result.valid
 
     def test_installation_check_reports_missing_pdk(self) -> None:
+        """A missing installation reports its liberty file."""
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         result = validate_pdk_installation(pdk, pdk_root="/definitely/missing/pdk")
         assert not result.valid
         assert any("liberty_file not found" in err for err in result.errors)
 
     def test_installation_check_can_require_signoff_files(self, tmp_path: Path) -> None:
+        """Synthesis files pass alone and fail when signoff is required."""
         root = tmp_path / "pdk"
         paths = [
             root / "sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
