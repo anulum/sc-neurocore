@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2351
+expected_file_count = 2352
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9448,3 +9448,7 @@ rationale = "Hold each neuron and synapse model to its dedicated implementation 
 [[file]]
 path = "tests/test_optics/test_photonic_crosstalk_backends.py"
 rationale = "Compile every photonic crosstalk lane and hold each to the Python contract."
+
+[[file]]
+path = "tests/test_optics/test_photonic_emitter_architecture.py"
+rationale = "Hold the photonic emitter's one-way module graph, empty facade and byte-exact outputs."

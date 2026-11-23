@@ -1251,6 +1251,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The photonic emitter architecture test no longer caps the private modules
+  at 350 lines or the facade at 100. It keeps its contract, renamed
+  `test_responsibility_modules_have_one_way_imports_and_a_definition_free_facade`:
+  each private module imports only its declared siblings, and the facade
+  defines no class or function.
+
 - The photonic crosstalk lane test no longer caps each lane source at 350
   lines. It keeps what it is for, renamed
   `test_polyglot_sources_are_real_numeric_kernels`: no lane source may carry
