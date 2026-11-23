@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FailureCategory,
+    FailureMode,
+    FMEDA,
+    ReliabilityMetrics,
+    SILLevel,
+)
+from typing import (
+    Any,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the failure analysis."""
+
     def test_fmeda_rejects_nonfinite_aggregate_total(self) -> None:
+        """A non-finite total failure rate is rejected."""
         fmeda = FMEDA()
         fmeda.add_failure_mode(FailureMode("F1", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
         fmeda.add_failure_mode(FailureMode("F2", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
@@ -22,6 +35,7 @@ class TestBoundaryContracts:
             _ = fmeda.total_failure_rate
 
     def test_fmeda_empty_and_zero_rate_paths_are_bounded(self) -> None:
+        """Empty and zero-rate analyses have an SFF of 0."""
         empty = FMEDA()
         assert empty.safe_failure_fraction == 0.0
         zero = FMEDA()
@@ -35,6 +49,7 @@ class TestBoundaryContracts:
             _ = detected_zero.diagnostic_coverage
 
     def test_fmeda_component_sff_rejects_nonfinite_component_total(self) -> None:
+        """A non-finite component total is rejected."""
         fmeda = FMEDA()
         fmeda.add_failure_mode(FailureMode("F1", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
         fmeda.add_failure_mode(FailureMode("F2", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
@@ -42,6 +57,7 @@ class TestBoundaryContracts:
             fmeda.sff_by_component()
 
     def test_fmeda_sil_threshold_boundaries(self, monkeypatch: Any) -> None:
+        """The SFF thresholds give SIL 4 and SIL 3."""
         sil4 = FMEDA()
         sil4.add_failure_mode(
             FailureMode("F1", "core", "desc", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.99)
@@ -76,6 +92,7 @@ class TestBoundaryContracts:
     def test_reliability_pfh_sil_thresholds(
         self, dangerous_undetected_fit: Any, expected: Any
     ) -> None:
+        """Each PFH threshold gives its SIL."""
         metrics = ReliabilityMetrics(
             total_fit=dangerous_undetected_fit, dangerous_undetected_fit=dangerous_undetected_fit
         )

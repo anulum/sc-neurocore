@@ -6,9 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (validation_rejects) from former test_package_materialisation.py
 
+"""Tests of the inputs the certification package generator and writer reject."""
+
 from __future__ import annotations
 
-from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.safety_cert import (
+    CertificationGenerator,
+    CertificationPackage,
+    ChecklistItem,
+    EvidenceItem,
+    SafetyManualGenerator,
+    SafetyStandard,
+    SILLevel,
+)
+from tests.test_safety_cert.package_materialisation_support import (
+    _GENERATED_AT,
+    _NETWORK_CONFIG,
+    _package,
+    _property,
+    _unsafe,
+)
 
 
 @pytest.mark.parametrize(

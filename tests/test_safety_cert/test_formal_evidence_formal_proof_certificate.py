@@ -10,10 +10,22 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FormalProofCertificate,
+    FormalProperty,
+)
+from tests.test_safety_cert.formal_evidence_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestFormalProofCertificate:
+    """The formal proof certificate."""
+
     def _props(self) -> list[FormalProperty]:
         return [
             FormalProperty("P1", "sc_lif_neuron", "No overflow", "assert", "proven"),
@@ -23,16 +35,19 @@ class TestFormalProofCertificate:
         ]
 
     def test_proven_count(self) -> None:
+        """Three proven properties are counted."""
         cert = FormalProofCertificate(properties=self._props())
         assert cert.proven_count == 3
 
     def test_proven_count_rejects_corrupted_internal_state(self) -> None:
+        """Corrupted internal state is rejected."""
         cert = FormalProofCertificate()
         cert.properties.append(_unsafe("bad"))
         with pytest.raises(ValueError, match="FormalProperty"):
             _ = cert.proven_count
 
     def test_proven_count_rejects_corrupted_property_status(self) -> None:
+        """A corrupted property status is rejected."""
         cert = FormalProofCertificate()
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.status = _unsafe("bad")
@@ -41,16 +56,19 @@ class TestFormalProofCertificate:
             _ = cert.proven_count
 
     def test_pass_rate(self) -> None:
+        """Three proven of four give a pass rate of 0.75."""
         cert = FormalProofCertificate(properties=self._props())
         assert abs(cert.pass_rate - 0.75) < 0.01
 
     def test_total_count_rejects_corrupted_internal_state(self) -> None:
+        """Corrupted internal state is rejected."""
         cert = FormalProofCertificate()
         cert.properties.append(_unsafe("bad"))
         with pytest.raises(ValueError, match="FormalProperty"):
             _ = cert.total_count
 
     def test_total_count_rejects_corrupted_property_id(self) -> None:
+        """A corrupted property id is rejected."""
         cert = FormalProofCertificate()
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
@@ -59,20 +77,24 @@ class TestFormalProofCertificate:
             _ = cert.total_count
 
     def test_compute_hash(self) -> None:
+        """The certificate hash has 32 characters."""
         cert = FormalProofCertificate(properties=self._props())
         h = cert.compute_hash()
         assert len(h) == 32
 
     def test_add_property_rejects_invalid_contract(self) -> None:
+        """A malformed property is rejected."""
         cert = FormalProofCertificate()
         with pytest.raises(ValueError, match="prop"):
             cert.add_property(_unsafe("bad"))
 
     def test_hash_deterministic(self) -> None:
+        """The same certificate hashes the same."""
         cert = FormalProofCertificate(properties=self._props())
         assert cert.compute_hash() == cert.compute_hash()
 
     def test_compute_hash_rejects_duplicate_property_ids(self) -> None:
+        """Duplicate property ids are rejected."""
         cert = FormalProofCertificate(
             properties=[
                 FormalProperty("P1", "m1", "d1", "assert", "proven"),
@@ -83,12 +105,14 @@ class TestFormalProofCertificate:
             cert.compute_hash()
 
     def test_compute_hash_rejects_corrupted_internal_state(self) -> None:
+        """Corrupted internal state is rejected."""
         cert = FormalProofCertificate()
         cert.properties.append(_unsafe("bad"))
         with pytest.raises(ValueError, match="FormalProperty"):
             cert.compute_hash()
 
     def test_compute_hash_rejects_corrupted_property_module(self) -> None:
+        """A corrupted property module is rejected."""
         cert = FormalProofCertificate()
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.module = _unsafe("")
@@ -97,18 +121,21 @@ class TestFormalProofCertificate:
             cert.compute_hash()
 
     def test_generate_report(self) -> None:
+        """The report names the certificate and its properties."""
         cert = FormalProofCertificate(properties=self._props())
         report = cert.generate_report()
         assert "Formal Proof Certificate" in report
         assert "P1" in report
 
     def test_generate_report_rejects_corrupted_internal_state(self) -> None:
+        """Corrupted internal state is rejected."""
         cert = FormalProofCertificate()
         cert.properties.append(_unsafe("bad"))
         with pytest.raises(ValueError, match="FormalProperty"):
             cert.generate_report()
 
     def test_generate_report_rejects_corrupted_property_fields(self) -> None:
+        """Corrupted property fields are rejected."""
         cert = FormalProofCertificate()
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
@@ -128,6 +155,7 @@ class TestFormalProofCertificate:
     def test_formal_proof_certificate_rejects_invalid_contracts(
         self, kwargs: Any, match: Any
     ) -> None:
+        """The certificate rejects each invalid field."""
         values = {
             "properties": self._props(),
             "generation_timestamp": "",
@@ -153,6 +181,7 @@ class TestFormalProofCertificate:
         ],
     )
     def test_formal_property_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """A property rejects each invalid field."""
         values = {
             "prop_id": "P1",
             "module": "sc_lif_neuron",

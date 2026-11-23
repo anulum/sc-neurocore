@@ -10,22 +10,38 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.compliance_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    IEC62304Assessment,
+    SILLevel,
+    SWClass,
+)
+from tests.test_safety_cert.compliance_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestIEC62304:
+    """IEC 62304 software safety classes."""
+
     def test_from_sil_1(self) -> None:
+        """SIL 1 maps to class A without unit testing."""
         a = IEC62304Assessment.from_sil(SILLevel.SIL_1)
         assert a.sw_class == SWClass.CLASS_A
         assert not a.requires_unit_testing
 
     def test_from_sil_3(self) -> None:
+        """SIL 3 maps to class C with unit testing."""
         a = IEC62304Assessment.from_sil(SILLevel.SIL_3)
         assert a.sw_class == SWClass.CLASS_C
         assert a.requires_unit_testing
         assert a.requires_architectural_design
 
     def test_class_b(self) -> None:
+        """Class B needs unit testing but no architectural design."""
         a = IEC62304Assessment(sw_class=SWClass.CLASS_B)
         assert a.requires_unit_testing
         assert not a.requires_architectural_design
@@ -40,6 +56,7 @@ class TestIEC62304:
         ],
     )
     def test_iec62304_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """The assessment rejects each invalid field."""
         values = {
             "sw_class": SWClass.CLASS_B,
             "hazard_description": "hazard",

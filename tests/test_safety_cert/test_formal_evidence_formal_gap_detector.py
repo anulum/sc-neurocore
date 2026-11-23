@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FormalProperty,
+    FormalPropertyGapDetector,
+    PropertyGap,
+)
+from tests.test_safety_cert.formal_evidence_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestFormalGapDetector:
+    """Finding modules without formal proofs."""
+
     def test_fully_covered(self) -> None:
+        """Proofs for every module leave no gap."""
         props = [
             FormalProperty("P1", "neuron", "d", "assert", "proven"),
             FormalProperty("P2", "neuron", "d", "cover", "proven"),
@@ -22,17 +36,20 @@ class TestFormalGapDetector:
         assert FormalPropertyGapDetector.is_fully_covered(props, ["neuron"])
 
     def test_missing_module(self) -> None:
+        """A module without proofs is a gap."""
         props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
         gaps = FormalPropertyGapDetector.detect(props, ["neuron", "encoder"])
         assert len(gaps) >= 1
         assert any(g.module == "encoder" for g in gaps)
 
     def test_detect_deduplicates_required_modules(self) -> None:
+        """A module required twice is one gap."""
         props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
         gaps = FormalPropertyGapDetector.detect(props, ["encoder", "encoder"])
         assert [g.module for g in gaps] == ["encoder"]
 
     def test_failed_property(self) -> None:
+        """A failed property leaves a gap."""
         props = [
             FormalProperty("P1", "neuron", "d", "assert", "failed"),
             FormalProperty("P2", "neuron", "d", "cover", "proven"),
@@ -42,6 +59,7 @@ class TestFormalGapDetector:
         assert gaps[0].proven_properties == 1
 
     def test_gap_coverage(self) -> None:
+        """One of two proven gives a coverage of 0.5."""
         gap = PropertyGap("m", 4, 2, [])
         assert gap.coverage == 0.5
 
@@ -58,28 +76,33 @@ class TestFormalGapDetector:
     def test_detect_rejects_invalid_contracts(
         self, properties: Any, required_modules: Any, match: Any
     ) -> None:
+        """Gap detection rejects each invalid argument."""
         with pytest.raises(ValueError, match=match):
             FormalPropertyGapDetector.detect(_unsafe(properties), _unsafe(required_modules))
 
     def test_detect_rejects_corrupted_property_type_state(self) -> None:
+        """A corrupted property type is rejected."""
         prop = FormalProperty("P1", "neuron", "d", "assert", "proven")
         prop.property_type = _unsafe("bad")
         with pytest.raises(ValueError, match="property_type"):
             FormalPropertyGapDetector.detect([prop], ["neuron"])
 
     def test_detect_rejects_corrupted_property_status_state(self) -> None:
+        """A corrupted property status is rejected."""
         prop = FormalProperty("P1", "neuron", "d", "assert", "proven")
         prop.status = _unsafe("bad")
         with pytest.raises(ValueError, match="statuses"):
             FormalPropertyGapDetector.detect([prop], ["neuron"])
 
     def test_detect_rejects_corrupted_property_module_state(self) -> None:
+        """A corrupted property module is rejected."""
         prop = FormalProperty("P1", "neuron", "d", "assert", "proven")
         prop.module = _unsafe("")
         with pytest.raises(ValueError, match="modules"):
             FormalPropertyGapDetector.detect([prop], ["neuron"])
 
     def test_detect_rejects_corrupted_property_id_state(self) -> None:
+        """A corrupted property id is rejected."""
         prop = FormalProperty("P1", "neuron", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
         with pytest.raises(ValueError, match="prop_id"):
@@ -97,6 +120,7 @@ class TestFormalGapDetector:
         ],
     )
     def test_property_gap_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """A gap record rejects each invalid field."""
         values = {
             "module": "neuron",
             "total_properties": 2,

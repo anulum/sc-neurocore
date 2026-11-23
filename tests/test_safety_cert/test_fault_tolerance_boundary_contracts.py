@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.fault_tolerance_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    CCFAnalysis,
+    HFTAssessment,
+    HFTLevel,
+    SILLevel,
+)
+from tests.test_safety_cert.fault_tolerance_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the fault tolerance checks."""
+
     def test_common_cause_default_defence_contracts(self, monkeypatch: Any) -> None:
+        """The default common-cause defences are checked."""
         original = CCFAnalysis.DEFAULT_DEFENCES
         monkeypatch.setattr(CCFAnalysis, "DEFAULT_DEFENCES", ["bad"])
         with pytest.raises(ValueError, match="DEFAULT_DEFENCES"):
@@ -39,4 +54,5 @@ class TestBoundaryContracts:
         ],
     )
     def test_hft_threshold_boundaries(self, sff: Any, target: Any, expected: Any) -> None:
+        """Each SFF threshold gives its fault tolerance."""
         assert HFTAssessment(sff=sff, target_sil=target).required_hft == expected

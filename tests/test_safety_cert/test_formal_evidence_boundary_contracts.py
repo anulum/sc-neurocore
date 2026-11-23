@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FormalProofCertificate,
+    FormalProperty,
+    ProofTestCoverage,
+    PropertyGap,
+    SILLevel,
+)
+from tests.test_safety_cert.formal_evidence_support import (
+    _unsafe,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the formal evidence."""
+
     def test_formal_certificate_add_property_and_report_validation(self) -> None:
+        """Adding properties and reporting check their fields."""
         cert = FormalProofCertificate()
         prop = FormalProperty("P1", "neuron", "desc", "assert", "proven")
         cert.add_property(prop)
@@ -24,6 +37,7 @@ class TestBoundaryContracts:
             cert.generate_report()
 
     def test_proof_test_assessment_boundaries(self) -> None:
+        """Coverage thresholds give their SIL."""
         assert (
             ProofTestCoverage.coverage_from_proofs(
                 [FormalProperty("P1", "m", "desc", "cover", "proven")]
@@ -34,5 +48,6 @@ class TestBoundaryContracts:
         assert ProofTestCoverage.dc_to_sil(0.6) == SILLevel.SIL_1
 
     def test_property_gap_rejects_boolean_proven_count(self) -> None:
+        """A boolean proven count is rejected."""
         with pytest.raises(ValueError, match="proven_properties"):
             PropertyGap("module", 2, True, ["assert"])

@@ -10,10 +10,26 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.certification_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    CertificationGenerator,
+    CertificationPackage,
+    ChecklistItem,
+    FormalProperty,
+    SafetyStandard,
+    SILLevel,
+)
+from tests.test_safety_cert.certification_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestCertificationGenerator:
+    """Generating safety certification packages."""
+
     def _props(self) -> list[FormalProperty]:
         return [
             FormalProperty(
@@ -38,6 +54,7 @@ class TestCertificationGenerator:
         ]
 
     def test_generate_iec(self) -> None:
+        """An IEC 61508 package is generated."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.IEC_61508,
@@ -50,6 +67,7 @@ class TestCertificationGenerator:
         assert pkg.package_hash != ""
 
     def test_generate_iso(self) -> None:
+        """An ISO 26262 package is generated."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.ISO_26262, SILLevel.SIL_3, ["sc_lif_neuron"], self._props()
@@ -57,6 +75,7 @@ class TestCertificationGenerator:
         assert pkg.standard == SafetyStandard.ISO_26262
 
     def test_generate_fda(self) -> None:
+        """An FDA package has its seven checklist items."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.FDA_CLASS_III, SILLevel.SIL_2, ["sc_lif_neuron"], self._props()
@@ -64,6 +83,7 @@ class TestCertificationGenerator:
         assert len(pkg.checklist) == 7
 
     def test_traceability_in_package(self) -> None:
+        """The package carries a traceability report."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], self._props()
@@ -71,6 +91,7 @@ class TestCertificationGenerator:
         assert "Traceability" in pkg.traceability_report
 
     def test_fmeda_in_package(self) -> None:
+        """The package carries an FMEDA report."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], self._props()
@@ -78,6 +99,7 @@ class TestCertificationGenerator:
         assert "FMEDA" in pkg.fmeda_report
 
     def test_wcet_in_package(self) -> None:
+        """The package carries a WCET report in cycles."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.IEC_61508,
@@ -90,6 +112,7 @@ class TestCertificationGenerator:
         assert "cycles" in pkg.wcet_report
 
     def test_checklist_coverage(self) -> None:
+        """A fresh package has a checklist coverage of 0."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], self._props()
@@ -97,6 +120,7 @@ class TestCertificationGenerator:
         assert pkg.checklist_coverage == 0.0
 
     def test_checklist_coverage_rejects_corrupted_internal_state(self) -> None:
+        """A corrupted checklist item is rejected."""
         pkg = CertificationPackage(
             standard=SafetyStandard.IEC_61508,
             sil_level=SILLevel.SIL_2,
@@ -111,6 +135,7 @@ class TestCertificationGenerator:
             _ = pkg.checklist_coverage
 
     def test_checklist_coverage_rejects_corrupted_status_state(self) -> None:
+        """A corrupted checklist status is rejected."""
         pkg = CertificationPackage(
             standard=SafetyStandard.IEC_61508,
             sil_level=SILLevel.SIL_2,
@@ -125,6 +150,7 @@ class TestCertificationGenerator:
             _ = pkg.checklist_coverage
 
     def test_package_rejects_corrupted_checklist_status_state(self) -> None:
+        """The package rejects a corrupted status."""
         item = ChecklistItem("id", "7.4.2", "desc", "formal/", "partial")
         item.status = _unsafe("bad")
         with pytest.raises(ValueError, match="statuses"):
@@ -139,6 +165,7 @@ class TestCertificationGenerator:
             )
 
     def test_package_rejects_corrupted_checklist_clause_state(self) -> None:
+        """The package rejects a corrupted clause."""
         item = ChecklistItem("id", "7.4.2", "desc", "formal/", "partial")
         item.clause = _unsafe("")
         with pytest.raises(ValueError, match="clauses"):
@@ -153,6 +180,7 @@ class TestCertificationGenerator:
             )
 
     def test_package_rejects_corrupted_checklist_item_id_state(self) -> None:
+        """The package rejects a corrupted item id."""
         item = ChecklistItem("id", "7.4.2", "desc", "formal/", "partial")
         item.item_id = _unsafe("")
         with pytest.raises(ValueError, match="item_id"):
@@ -186,6 +214,7 @@ class TestCertificationGenerator:
         ],
     )
     def test_generate_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """Generation rejects each invalid argument."""
         gen = CertificationGenerator()
         values = {
             "standard": SafetyStandard.IEC_61508,
@@ -199,6 +228,7 @@ class TestCertificationGenerator:
             gen.generate(**_unsafe(values))
 
     def test_generate_rejects_corrupted_formal_property_module_state(self) -> None:
+        """A corrupted property module is rejected."""
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
         prop.module = _unsafe("")
@@ -206,6 +236,7 @@ class TestCertificationGenerator:
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
     def test_generate_rejects_corrupted_formal_property_id_state(self) -> None:
+        """A corrupted property id is rejected."""
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
@@ -213,6 +244,7 @@ class TestCertificationGenerator:
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
     def test_generate_rejects_formal_property_whitespace_state(self) -> None:
+        """A property field with whitespace is rejected."""
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
         prop.module = _unsafe(" sc_lif_neuron")
@@ -220,6 +252,7 @@ class TestCertificationGenerator:
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
     def test_generate_rejects_corrupted_formal_property_status_state(self) -> None:
+        """A corrupted property status is rejected."""
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
         prop.status = _unsafe("bad")
@@ -227,6 +260,7 @@ class TestCertificationGenerator:
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
     def test_generate_rejects_corrupted_formal_property_type_state(self) -> None:
+        """A corrupted property type is rejected."""
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
         prop.property_type = _unsafe("bad")
@@ -234,6 +268,7 @@ class TestCertificationGenerator:
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
     def test_generate_rejects_duplicate_formal_property_ids(self) -> None:
+        """Duplicate property ids are rejected."""
         gen = CertificationGenerator()
         with pytest.raises(ValueError, match="duplicate prop_id"):
             gen.generate(
@@ -257,6 +292,7 @@ class TestCertificationGenerator:
         ],
     )
     def test_certification_package_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """The package rejects each invalid field."""
         values = {
             "standard": SafetyStandard.IEC_61508,
             "sil_level": SILLevel.SIL_2,

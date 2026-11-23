@@ -10,20 +10,29 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.certification_support import *  # noqa: F403
+from sc_neurocore.safety_cert.safety_cert import (
+    CertificationGenerator,
+    FormalProperty,
+    SafetyStandard,
+    SILLevel,
+)
 
 
 class TestAdditionalStandards:
+    """Certification packages for DO-254 and EN 50129."""
+
     def _props(self) -> list[FormalProperty]:
         return [FormalProperty("P1", "sc_lif_neuron", "No overflow", "assert", "proven")]
 
     def test_generate_do254(self) -> None:
+        """A DO-254 package has its six checklist items."""
         gen = CertificationGenerator()
         pkg = gen.generate(SafetyStandard.DO_254, SILLevel.SIL_2, ["sc_lif_neuron"], self._props())
         assert len(pkg.checklist) == 6
         assert pkg.standard == SafetyStandard.DO_254
 
     def test_generate_en50129(self) -> None:
+        """An EN 50129 package has its six checklist items."""
         gen = CertificationGenerator()
         pkg = gen.generate(
             SafetyStandard.EN_50129, SILLevel.SIL_3, ["sc_lif_neuron"], self._props()

@@ -10,24 +10,41 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.compliance_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    ChecklistItem,
+    CROSS_MAP,
+    CrossStandardMapper,
+)
+from tests.test_safety_cert.compliance_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestCrossStandardMapper:
+    """Mapping clauses across standards."""
+
     def test_equivalent_clauses(self) -> None:
+        """A clause maps to its two equivalents."""
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "7.4.2")
         assert len(equiv) == 2
         assert ("ISO 26262", "6.7.4") in equiv
 
     def test_equivalent_clauses_normalises_whitespace(self) -> None:
+        """Clause lookup ignores surrounding whitespace."""
         equiv = CrossStandardMapper.equivalent_clauses(" IEC 61508 ", " 7.4.2 ")
         assert ("ISO 26262", "6.7.4") in equiv
 
     def test_no_mapping(self) -> None:
+        """An unmapped clause has no equivalent."""
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "99.99")
         assert equiv == []
 
     def test_coverage_overlap_rejects_malformed_item_id(self) -> None:
+        """A malformed left item id is rejected."""
         bad_item = ChecklistItem(
             item_id="MALFORMED",
             clause="7.4.2",
@@ -46,6 +63,7 @@ class TestCrossStandardMapper:
             CrossStandardMapper.coverage_overlap([bad_item], [good_item])
 
     def test_coverage_overlap_rejects_malformed_right_item_id(self) -> None:
+        """A malformed right item id is rejected."""
         good_item = ChecklistItem(
             item_id="IEC 61508_7.4.2",
             clause="7.4.2",
@@ -64,6 +82,7 @@ class TestCrossStandardMapper:
             CrossStandardMapper.coverage_overlap([good_item], [bad_item])
 
     def test_coverage_overlap_rejects_corrupted_clause_state(self) -> None:
+        """A corrupted clause is rejected."""
         left = ChecklistItem(
             item_id="IEC 61508_7.4.2",
             clause="7.4.2",
@@ -83,6 +102,7 @@ class TestCrossStandardMapper:
             CrossStandardMapper.coverage_overlap([left], [right])
 
     def test_coverage_overlap_rejects_corrupted_status_state(self) -> None:
+        """A corrupted status is rejected."""
         left = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
         right = ChecklistItem("ISO 26262_6.7.4", "6.7.4", "desc", "formal/", "partial")
         left.status = _unsafe("bad")
@@ -90,6 +110,7 @@ class TestCrossStandardMapper:
             CrossStandardMapper.coverage_overlap([left], [right])
 
     def test_coverage_overlap_deduplicates_equivalent_mappings(self) -> None:
+        """Equivalent mappings are counted once."""
         left = [
             ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial"),
             ChecklistItem("IEC 61508_7.4.2_b", "7.4.2", "desc2", "formal/", "partial"),
@@ -103,10 +124,12 @@ class TestCrossStandardMapper:
     def test_equivalent_clauses_rejects_invalid_contracts(
         self, standard: Any, clause: Any, match: Any
     ) -> None:
+        """Clause lookup rejects each invalid argument."""
         with pytest.raises(ValueError, match=match):
             CrossStandardMapper.equivalent_clauses(standard, clause)
 
     def test_equivalent_clauses_rejects_corrupted_mapping_state(self) -> None:
+        """A corrupted mapping table is rejected."""
         key = ("IEC 61508", "7.4.2")
         original = CROSS_MAP[key]
         try:
@@ -128,5 +151,6 @@ class TestCrossStandardMapper:
     def test_coverage_overlap_rejects_invalid_contracts(
         self, left: Any, right: Any, match: Any
     ) -> None:
+        """The overlap rejects each invalid argument."""
         with pytest.raises(ValueError, match=match):
             CrossStandardMapper.coverage_overlap(_unsafe(left), _unsafe(right))

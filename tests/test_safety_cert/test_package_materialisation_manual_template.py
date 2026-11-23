@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert import (
+    SafetyManualGenerator,
+    SILLevel,
+)
 
 
 def test_manual_template_is_deterministic_and_non_certifying() -> None:

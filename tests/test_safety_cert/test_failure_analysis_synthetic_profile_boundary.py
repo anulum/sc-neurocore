@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FMEDA,
+)
+from tests.test_safety_cert.failure_analysis_support import (
+    _unsafe,
+)
 
 
 class TestSyntheticProfileBoundary:
+    """The synthetic failure profile and its acknowledgement."""
+
     def test_profile_requires_explicit_boolean_acknowledgement(self) -> None:
+        """The synthetic profile needs an explicit boolean consent."""
         fmeda = FMEDA()
         with pytest.raises(ValueError, match="must be a boolean"):
             fmeda.add_sc_standard_modes(
@@ -25,4 +34,5 @@ class TestSyntheticProfileBoundary:
             fmeda.add_sc_standard_modes("neuron")
 
     def test_empty_fmeda_report_is_explicitly_unassessed(self) -> None:
+        """An empty analysis reports itself as not assessed."""
         assert "Status: not assessed" in FMEDA().generate_report()

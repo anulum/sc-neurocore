@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.compliance_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    ChecklistItem,
+    CrossStandardMapper,
+)
+from tests.test_safety_cert.compliance_support import (
+    _unsafe,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the compliance mapping."""
+
     def test_cross_standard_overlap_rejects_empty_clauses_on_each_side(self) -> None:
+        """An empty clause on either side is rejected."""
         left = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
         right = ChecklistItem("ISO 26262_6.7.4", "6.7.4", "desc", "formal/", "partial")
         left.clause = _unsafe("")

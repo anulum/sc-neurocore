@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
+from sc_neurocore.safety_cert.safety_cert import (
+    FailureCategory,
+    FailureMode,
+    FMEDA,
+)
 
 
 class TestResidualRisk:
+    """Residual risk from undetected failures."""
+
     def test_residual_risk_all_safe(self) -> None:
+        """Only safe failures leave no residual risk."""
         fmeda = FMEDA()
         fmeda.add_failure_mode(FailureMode("FM1", "x", "safe", FailureCategory.SAFE, 100.0))
         assert fmeda.residual_risk_fit == 0.0
 
     def test_residual_risk_undetected(self) -> None:
+        """Undetected dangerous failures are all residual risk."""
         fmeda = FMEDA()
         fmeda.add_failure_mode(
             FailureMode("FM1", "x", "bad", FailureCategory.DANGEROUS_UNDETECTED, 100.0)
@@ -27,6 +35,7 @@ class TestResidualRisk:
         assert fmeda.residual_risk_fit == 100.0
 
     def test_residual_risk_partial(self) -> None:
+        """Partial detection leaves part of the risk."""
         fmeda = FMEDA()
         fmeda.add_failure_mode(
             FailureMode("FM1", "x", "det", FailureCategory.DANGEROUS_DETECTED, 100.0, 0.9)

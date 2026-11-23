@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.certification_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    SafetyManualGenerator,
+    SILLevel,
+)
+from tests.test_safety_cert.certification_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestSafetyManual:
+    """Generating the safety manual."""
+
     def test_generates(self) -> None:
+        """The manual names its SIL, its modules and the given rate."""
         manual = SafetyManualGenerator.generate(
             "SC-NeuroCore", SILLevel.SIL_2, ["sc_lif_neuron", "sc_encoder"], 2830.0
         )
@@ -38,6 +51,7 @@ class TestSafetyManual:
         ],
     )
     def test_generate_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """The manual rejects each invalid argument."""
         values = {
             "product_name": "SC-NeuroCore",
             "sil_level": SILLevel.SIL_2,

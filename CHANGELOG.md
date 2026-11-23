@@ -1320,6 +1320,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 29 safety-certification test modules that star-imported a
+  support module (`tests/test_safety_cert`) import their names
+  explicitly instead, gain their missing test and module docstrings
+  and are enrolled in the docstring policy. The seven supports, whose
+  `_unsafe` helpers are still imported, stay as they are.
+
 - The 30 bio-hybrid test modules that star-imported a support module
   (`tests/test_bioware`) import their names explicitly instead, gain
   their missing test docstrings and are enrolled in the docstring

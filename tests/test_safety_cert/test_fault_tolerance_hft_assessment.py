@@ -10,31 +10,49 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.fault_tolerance_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    HFTAssessment,
+    HFTLevel,
+    SILLevel,
+)
+from tests.test_safety_cert.fault_tolerance_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestHFTAssessment:
+    """Hardware fault tolerance assessment."""
+
     def test_high_sff_low_sil(self) -> None:
+        """A high SFF at low SIL needs no redundancy."""
         hft = HFTAssessment(sff=0.99, target_sil=SILLevel.SIL_2)
         assert hft.required_hft == HFTLevel.HFT_0
         assert hft.is_simplex_ok
 
     def test_low_sff_high_sil(self) -> None:
+        """A low SFF at high SIL needs fault tolerance 2."""
         hft = HFTAssessment(sff=0.5, target_sil=SILLevel.SIL_3)
         assert hft.required_hft == HFTLevel.HFT_2
         assert not hft.is_simplex_ok
 
     def test_mid_sff(self) -> None:
+        """A middling SFF needs fault tolerance 1."""
         hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
         assert hft.required_hft == HFTLevel.HFT_1
 
     def test_required_hft_rejects_corrupted_target_sil(self) -> None:
+        """A corrupted target SIL is rejected."""
         hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
         hft.target_sil = _unsafe("SIL_3")
         with pytest.raises(ValueError, match="target_sil"):
             _ = hft.required_hft
 
     def test_required_hft_rejects_corrupted_sff_state(self) -> None:
+        """A corrupted SFF is rejected."""
         hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
         hft.sff = _unsafe(float("nan"))
         with pytest.raises(ValueError, match="sff"):
@@ -52,6 +70,7 @@ class TestHFTAssessment:
         ],
     )
     def test_hft_assessment_rejects_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """The assessment rejects each invalid field."""
         values = {"sff": 0.9, "target_sil": SILLevel.SIL_2}
         values.update(kwargs)
         with pytest.raises(ValueError, match=match):

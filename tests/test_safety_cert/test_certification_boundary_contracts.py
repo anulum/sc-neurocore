@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.certification_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    CertificationGenerator,
+    CertificationPackage,
+    ChecklistItem,
+    FormalProperty,
+    SafetyStandard,
+    SILLevel,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the certification package."""
+
     def test_empty_checklist_package_reports_zero_fraction(self) -> None:
+        """An empty checklist has a coverage of 0."""
         pkg = CertificationPackage(
             standard=SafetyStandard.IEC_61508,
             sil_level=SILLevel.SIL_2,
@@ -27,6 +38,7 @@ class TestBoundaryContracts:
         assert pkg.checklist_coverage == 0.0
 
     def test_package_revalidates_clause_after_status_contract(self) -> None:
+        """The package re-checks each clause after its status."""
         item = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
         item.clause = ""
         with pytest.raises(ValueError, match="checklist clauses"):
@@ -41,6 +53,7 @@ class TestBoundaryContracts:
             )
 
     def test_certification_generator_rejects_formal_property_id_whitespace(self) -> None:
+        """A property id with whitespace is rejected."""
         prop = FormalProperty(" P1", "neuron", "desc", "assert", "proven")
         with pytest.raises(ValueError, match="prop_id"):
             CertificationGenerator().generate(
@@ -48,6 +61,7 @@ class TestBoundaryContracts:
             )
 
     def test_certification_generator_rejects_boolean_clock_configuration(self) -> None:
+        """A boolean clock frequency is rejected."""
         prop = FormalProperty("P1", "neuron", "desc", "assert", "proven")
         with pytest.raises(ValueError, match="clock_mhz"):
             CertificationGenerator().generate(

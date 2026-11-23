@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FormalProofCertificate,
+    FormalProperty,
+)
 
 
 class TestFormalDigestBoundary:
+    """The digest of a formal proof certificate."""
+
     @pytest.mark.parametrize(
         ("field", "value", "match"),
         [
@@ -32,12 +38,14 @@ class TestFormalDigestBoundary:
         value: object,
         match: str,
     ) -> None:
+        """Corrupted material fields are rejected."""
         prop = FormalProperty("P1", "neuron", "description", "assert", "proven")
         setattr(prop, field, value)
         with pytest.raises(ValueError, match=match):
             FormalProofCertificate([prop]).content_sha256()
 
     def test_hash_and_report_reject_empty_explicit_timestamp(self) -> None:
+        """An empty explicit timestamp is rejected."""
         cert = FormalProofCertificate(
             [FormalProperty("P1", "neuron", "description", "assert", "proven")]
         )

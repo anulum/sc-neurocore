@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.traceability_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    Requirement,
+    SafetyStandard,
+    TraceabilityMatrix,
+)
+from tests.test_safety_cert.traceability_support import (
+    _unsafe,
+)
 
 
 class TestBoundaryContracts:
+    """Edge cases of the traceability matrix."""
+
     def test_traceability_unknown_verification_link_is_rejected_without_mutation(self) -> None:
+        """Linking an unknown requirement changes nothing."""
         tm = TraceabilityMatrix()
         assert tm.link_verification("REQ_MISSING", "formal/proof.sby") is False
         assert tm.requirements == {}
 
     def test_traceability_rejects_corrupted_verification_reference_state(self) -> None:
+        """A corrupted verification reference is rejected."""
         tm = TraceabilityMatrix()
         req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
         tm.add_requirement(req)
@@ -28,9 +40,11 @@ class TestBoundaryContracts:
             tm.link_implementation("REQ_001", "hdl/test.v")
 
     def test_traceability_empty_matrix_reports_zero_fraction(self) -> None:
+        """An empty matrix has a coverage of 0."""
         assert TraceabilityMatrix().coverage == 0.0
 
     def test_implemented_count_and_explicit_timestamp_validation(self) -> None:
+        """Counts and an explicit timestamp are checked."""
         matrix = TraceabilityMatrix()
         matrix.add_requirement(
             Requirement(

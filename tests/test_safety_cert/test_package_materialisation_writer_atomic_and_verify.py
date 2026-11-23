@@ -6,9 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (writer_atomic_and_verify) from former test_package_materialisation.py
 
+"""Tests of the atomic certification package writer and its verification."""
+
 from __future__ import annotations
 
-from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
+import hashlib
+import json
+import pytest
+import sc_neurocore.safety_cert.certification as certification_module
+import stat
+from pathlib import (
+    Path,
+)
+from sc_neurocore.safety_cert import (
+    CertificationPackage,
+    EvidenceBag,
+    EvidenceItem,
+    SafetyStandard,
+    SILLevel,
+)
+from tests.test_safety_cert.package_materialisation_support import (
+    _package,
+)
 
 
 def test_atomic_write_emits_verified_manifest_and_private_files(tmp_path: Path) -> None:

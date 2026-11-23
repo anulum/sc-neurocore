@@ -10,30 +10,47 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FMEDA,
+    ReliabilityMetrics,
+)
+from tests.test_safety_cert.failure_analysis_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestReliabilityMetrics:
+    """MTBF and PFH reliability metrics."""
+
     def test_mtbf(self) -> None:
+        """The MTBF is positive in hours and years."""
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
         assert rm.mtbf_hours > 0
         assert rm.mtbf_years > 0
 
     def test_pfh_d(self) -> None:
+        """The dangerous failure rate is positive."""
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
         assert rm.pfh_d > 0
 
     def test_pfh_sil(self) -> None:
+        """The PFH gives at least SIL 1."""
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
         assert rm.pfh_sil.value >= 1
 
     def test_pfh_sil_rejects_corrupted_pfh_state(self) -> None:
+        """A corrupted PFH is rejected."""
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
         rm.dangerous_undetected_fit = _unsafe(float("nan"))
         with pytest.raises(ValueError, match="pfh_d"):
             _ = rm.pfh_sil
 
     def test_from_fmeda(self) -> None:
+        """Metrics follow from an FMEDA."""
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron", acknowledge_synthetic_profile=True)
         rm = ReliabilityMetrics.from_fmeda(fmeda)
@@ -41,10 +58,12 @@ class TestReliabilityMetrics:
         assert rm.mtbf_years > 0
 
     def test_from_fmeda_rejects_invalid_input(self) -> None:
+        """A non-FMEDA input is rejected."""
         with pytest.raises(ValueError, match="fmeda"):
             ReliabilityMetrics.from_fmeda(_unsafe("bad"))
 
     def test_zero_fit(self) -> None:
+        """A zero failure rate gives infinite MTBF and zero PFH."""
         rm = ReliabilityMetrics(total_fit=0.0, dangerous_undetected_fit=0.0)
         assert rm.mtbf_hours == float("inf")
         assert rm.pfh_d == 0.0
@@ -62,6 +81,7 @@ class TestReliabilityMetrics:
         ],
     )
     def test_reliability_metrics_reject_invalid_contracts(self, kwargs: Any, match: Any) -> None:
+        """The metrics reject each invalid field."""
         values = {"total_fit": 100.0, "dangerous_undetected_fit": 5.0}
         values.update(kwargs)
         with pytest.raises(ValueError, match=match):

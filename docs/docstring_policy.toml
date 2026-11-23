@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2962
+expected_file_count = 2990
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -11892,3 +11892,115 @@ rationale = "Exercise the bio-hybrid interface: validation session session const
 [[file]]
 path = "tests/test_bioware/test_validation_session_session_frame_validation.py"
 rationale = "Exercise the bio-hybrid interface: validation session session frame validation."
+
+[[file]]
+path = "tests/test_safety_cert/test_certification_additional_standards.py"
+rationale = "Exercise the safety certification: certification additional standards."
+
+[[file]]
+path = "tests/test_safety_cert/test_certification_boundary_contracts.py"
+rationale = "Exercise the safety certification: certification boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_certification_certification_generator.py"
+rationale = "Exercise the safety certification: certification certification generator."
+
+[[file]]
+path = "tests/test_safety_cert/test_certification_safety_manual.py"
+rationale = "Exercise the safety certification: certification safety manual."
+
+[[file]]
+path = "tests/test_safety_cert/test_compliance_boundary_contracts.py"
+rationale = "Exercise the safety certification: compliance boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_compliance_compliance_checklist.py"
+rationale = "Exercise the safety certification: compliance compliance checklist."
+
+[[file]]
+path = "tests/test_safety_cert/test_compliance_cross_standard_mapper.py"
+rationale = "Exercise the safety certification: compliance cross standard mapper."
+
+[[file]]
+path = "tests/test_safety_cert/test_compliance_fail_closed_evidence_contracts.py"
+rationale = "Exercise the safety certification: compliance fail closed evidence contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_compliance_iec62304.py"
+rationale = "Exercise the safety certification: compliance iec62304."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_boundary_contracts.py"
+rationale = "Exercise the safety certification: failure analysis boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_component_sff.py"
+rationale = "Exercise the safety certification: failure analysis component sff."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_fmeda.py"
+rationale = "Exercise the safety certification: failure analysis fmeda."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_reliability_metrics.py"
+rationale = "Exercise the safety certification: failure analysis reliability metrics."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_residual_risk.py"
+rationale = "Exercise the safety certification: failure analysis residual risk."
+
+[[file]]
+path = "tests/test_safety_cert/test_failure_analysis_synthetic_profile_boundary.py"
+rationale = "Exercise the safety certification: failure analysis synthetic profile boundary."
+
+[[file]]
+path = "tests/test_safety_cert/test_fault_tolerance_boundary_contracts.py"
+rationale = "Exercise the safety certification: fault tolerance boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_fault_tolerance_ccf_analysis.py"
+rationale = "Exercise the safety certification: fault tolerance ccf analysis."
+
+[[file]]
+path = "tests/test_safety_cert/test_fault_tolerance_hft_assessment.py"
+rationale = "Exercise the safety certification: fault tolerance hft assessment."
+
+[[file]]
+path = "tests/test_safety_cert/test_formal_evidence_boundary_contracts.py"
+rationale = "Exercise the safety certification: formal evidence boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_formal_evidence_formal_digest_boundary.py"
+rationale = "Exercise the safety certification: formal evidence formal digest boundary."
+
+[[file]]
+path = "tests/test_safety_cert/test_formal_evidence_formal_gap_detector.py"
+rationale = "Exercise the safety certification: formal evidence formal gap detector."
+
+[[file]]
+path = "tests/test_safety_cert/test_formal_evidence_formal_proof_certificate.py"
+rationale = "Exercise the safety certification: formal evidence formal proof certificate."
+
+[[file]]
+path = "tests/test_safety_cert/test_formal_evidence_proof_test_coverage.py"
+rationale = "Exercise the safety certification: formal evidence proof test coverage."
+
+[[file]]
+path = "tests/test_safety_cert/test_package_materialisation_generator_and_digest.py"
+rationale = "Exercise the safety certification: package materialisation generator and digest."
+
+[[file]]
+path = "tests/test_safety_cert/test_package_materialisation_validation_rejects.py"
+rationale = "Exercise the safety certification: package materialisation validation rejects."
+
+[[file]]
+path = "tests/test_safety_cert/test_package_materialisation_writer_atomic_and_verify.py"
+rationale = "Exercise the safety certification: package materialisation writer atomic and verify."
+
+[[file]]
+path = "tests/test_safety_cert/test_traceability_boundary_contracts.py"
+rationale = "Exercise the safety certification: traceability boundary contracts."
+
+[[file]]
+path = "tests/test_safety_cert/test_traceability_traceability_matrix.py"
+rationale = "Exercise the safety certification: traceability traceability matrix."

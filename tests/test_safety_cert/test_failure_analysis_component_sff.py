@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
+from sc_neurocore.safety_cert.safety_cert import (
+    FMEDA,
+)
 
 
 class TestComponentSFF:
+    """Safe failure fraction per component."""
+
     def test_sff_by_component(self) -> None:
+        """Each component gets its own SFF."""
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron", acknowledge_synthetic_profile=True)
         fmeda.add_sc_standard_modes("encoder", acknowledge_synthetic_profile=True)
@@ -24,6 +29,7 @@ class TestComponentSFF:
         assert 0 < sff_map["neuron"] <= 1.0
 
     def test_sff_single_component(self) -> None:
+        """A single component gets one SFF."""
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("lif", acknowledge_synthetic_profile=True)
         sff_map = fmeda.sff_by_component()

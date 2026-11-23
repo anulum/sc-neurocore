@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
+import pytest
+from sc_neurocore.safety_cert.safety_cert import (
+    FormalProperty,
+    ProofTestCoverage,
+    SILLevel,
+)
+from tests.test_safety_cert.formal_evidence_support import (
+    _unsafe,
+)
+from typing import (
+    Any,
+)
 
 
 class TestProofTestCoverage:
+    """Diagnostic coverage from proofs."""
+
     def test_full_coverage(self) -> None:
+        """Every property proven gives full coverage."""
         props = [
             FormalProperty("P1", "m", "d", "assert", "proven"),
             FormalProperty("P2", "m", "d", "assert", "proven"),
@@ -22,6 +36,7 @@ class TestProofTestCoverage:
         assert ProofTestCoverage.coverage_from_proofs(props) == 1.0
 
     def test_partial_coverage(self) -> None:
+        """Some properties proven give partial coverage."""
         props = [
             FormalProperty("P1", "m", "d", "assert", "proven"),
             FormalProperty("P2", "m", "d", "assert", "failed"),
@@ -29,22 +44,26 @@ class TestProofTestCoverage:
         assert abs(ProofTestCoverage.coverage_from_proofs(props) - 0.5) < 0.01
 
     def test_uncovered_modules(self) -> None:
+        """A module with no proof is uncovered."""
         props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
         uncovered = ProofTestCoverage.uncovered_modules(props, ["neuron", "encoder"])
         assert uncovered == ["encoder"]
 
     def test_uncovered_modules_deduplicates_preserving_order(self) -> None:
+        """Uncovered modules are listed once, in order."""
         props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
         uncovered = ProofTestCoverage.uncovered_modules(props, ["encoder", "encoder", "decoder"])
         assert uncovered == ["encoder", "decoder"]
 
     def test_dc_to_sil(self) -> None:
+        """Diagnostic coverage maps to its SIL."""
         assert ProofTestCoverage.dc_to_sil(0.99).value >= 3
         assert ProofTestCoverage.dc_to_sil(0.97) == SILLevel.SIL_3
         assert ProofTestCoverage.dc_to_sil(0.5) == SILLevel.SIL_1
 
     @pytest.mark.parametrize("dc", [-0.1, 1.1, float("nan"), float("inf"), True, "0.9"])
     def test_dc_to_sil_rejects_invalid_contracts(self, dc: Any) -> None:
+        """An invalid coverage value is rejected."""
         with pytest.raises(ValueError, match="dc"):
             ProofTestCoverage.dc_to_sil(_unsafe(dc))
 
@@ -61,16 +80,19 @@ class TestProofTestCoverage:
     def test_uncovered_modules_rejects_invalid_contracts(
         self, props: Any, modules: Any, match: Any
     ) -> None:
+        """The uncovered check rejects each invalid argument."""
         with pytest.raises(ValueError, match=match):
             ProofTestCoverage.uncovered_modules(_unsafe(props), _unsafe(modules))
 
     def test_uncovered_modules_rejects_corrupted_property_module(self) -> None:
+        """A corrupted property module is rejected."""
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.module = _unsafe("")
         with pytest.raises(ValueError, match="modules"):
             ProofTestCoverage.uncovered_modules([prop], ["m"])
 
     def test_uncovered_modules_rejects_corrupted_property_id(self) -> None:
+        """A corrupted property id is rejected."""
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
         with pytest.raises(ValueError, match="prop_id"):
@@ -80,22 +102,26 @@ class TestProofTestCoverage:
         "props", ["invalid", [FormalProperty("P1", "n", "d", "assert", "proven"), "bad"]]
     )
     def test_coverage_from_proofs_rejects_invalid_contracts(self, props: Any) -> None:
+        """An invalid property list is rejected."""
         with pytest.raises(ValueError, match="properties"):
             ProofTestCoverage.coverage_from_proofs(_unsafe(props))
 
     def test_coverage_from_proofs_rejects_corrupted_property_status(self) -> None:
+        """A corrupted property status is rejected."""
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.status = _unsafe("bad")
         with pytest.raises(ValueError, match="statuses"):
             ProofTestCoverage.coverage_from_proofs([prop])
 
     def test_coverage_from_proofs_rejects_corrupted_property_type(self) -> None:
+        """A corrupted property type is rejected."""
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.property_type = _unsafe("bad")
         with pytest.raises(ValueError, match="property_type"):
             ProofTestCoverage.coverage_from_proofs([prop])
 
     def test_coverage_from_proofs_rejects_corrupted_property_id(self) -> None:
+        """A corrupted property id is rejected."""
         prop = FormalProperty("P1", "m", "d", "assert", "proven")
         prop.prop_id = _unsafe("")
         with pytest.raises(ValueError, match="prop_id"):

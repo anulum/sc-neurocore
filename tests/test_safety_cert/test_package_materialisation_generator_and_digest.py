@@ -6,9 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (generator_and_digest) from former test_package_materialisation.py
 
+"""Tests of the certification package generator and its content digest."""
+
 from __future__ import annotations
 
-from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
+import pytest
+from dataclasses import (
+    replace,
+)
+from sc_neurocore.safety_cert import (
+    FormalProofCertificate,
+)
+from tests.test_safety_cert.package_materialisation_support import (
+    _package,
+    _property,
+)
 
 
 def test_default_generator_is_fail_closed() -> None:
