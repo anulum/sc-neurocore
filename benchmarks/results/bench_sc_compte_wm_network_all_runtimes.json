@@ -18,7 +18,7 @@
     "seed": 42
   },
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    ".venv/bin/python",
     "benchmarks/bench_sc_compte_wm_network_all_runtimes.py",
     "--steps",
     "1000",
@@ -42,11 +42,11 @@
     "go": "go version go1.27.2 linux/amd64",
     "mojo": "Mojo 1.0.0 (ed45d567)",
     "runtime_commands": {
-      "rustc": "/home/anulum/.cargo/bin/rustc",
-      "cargo": "/home/anulum/.cargo/bin/cargo",
-      "julia": "/home/anulum/.juliaup/bin/julia",
-      "go": "/home/anulum/.local/go/bin/go",
-      "mojo": "/home/anulum/.local/bin/mojo"
+      "rustc": "<home>/.cargo/bin/rustc",
+      "cargo": "<home>/.cargo/bin/cargo",
+      "julia": "<home>/.juliaup/bin/julia",
+      "go": "<home>/.local/go/bin/go",
+      "mojo": "<home>/.local/bin/mojo"
     },
     "go_toolchain_selection": "auto in src/sc_neurocore/accel/go",
     "mojo_library": {

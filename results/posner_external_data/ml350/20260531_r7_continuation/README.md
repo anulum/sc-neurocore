@@ -13,7 +13,7 @@ It is a live compute lane, not accepted runtime molecular data.
 
 ## Source Endpoint
 
-- Source run root: `/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507`
+- Source run root: `<run-root>/ml350_r6_seeded_20260507`
 - Source output: `run/posner_ml350_neutral_opt_20260507_r6_seeded.out`
 - Source endpoint XYZ: `run/posner_ml350_neutral_opt_20260507_r6_seeded.xyz`
 - Source endpoint GBW: `run/posner_ml350_neutral_opt_20260507_r6_seeded.gbw`
@@ -22,7 +22,7 @@ It is a live compute lane, not accepted runtime molecular data.
 
 ## Continuation Run
 
-- Run root: `/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531`
+- Run root: `<run-root>/ml350_r6_continuation_20260531`
 - Job name: `posner_ml350_neutral_opt_20260531_r7_continue`
 - tmux session: `scn_orca_r7_ml350`
 - Compute lock: active SC-NeuroCore ORCA lock under `~/compute-queue/`
@@ -40,7 +40,7 @@ and wavefunction hashes used at launch.
 Use this on ML350:
 
 ```bash
-/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531/status_probe.sh
+<run-root>/ml350_r6_continuation_20260531/status_probe.sh
 ```
 
 Acceptance remains fail-closed. The neutral geometry can be promoted only after

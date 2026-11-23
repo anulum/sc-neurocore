@@ -152,8 +152,8 @@ def _go_benchmark() -> dict[str, float | str]:
 
 
 def _julia_benchmark() -> dict[str, float | str]:
-    julia = shutil.which("julia") or "/home/anulum/.juliaup/bin/julia"
-    if not Path(julia).exists():
+    julia = shutil.which("julia")
+    if julia is None:
         return {"backend": "julia", "status": "julia executable not found"}
     code = """
 include("src/sc_neurocore/accel/julia/neurons/balanced_resonate_and_fire.jl")
@@ -185,8 +185,8 @@ end
 
 
 def _mojo_benchmark() -> dict[str, float | str]:
-    mojo = shutil.which("mojo") or "/home/anulum/.pixi/bin/mojo"
-    if not Path(mojo).exists():
+    mojo = shutil.which("mojo")
+    if mojo is None:
         return {"backend": "mojo", "status": "mojo executable not found"}
     return _run_key_value_benchmark(
         [mojo, "run", "src/sc_neurocore/accel/mojo/kernels/balanced_resonate_and_fire_bench.mojo"],
@@ -254,7 +254,8 @@ def _side_by_side_scalar_row(
     }
     if rust_run.get("status") == "executed":
         rust_state = rust_run["state"]
-        assert isinstance(rust_state, dict)
+        if not isinstance(rust_state, dict):
+            raise TypeError(f"rust_pyo3 state must be a mapping, got {type(rust_state).__name__}")
         row["rust_pyo3"] = {
             "status": rust_run["status"],
             "elapsed_seconds": rust_run["elapsed_seconds"],
@@ -268,13 +269,19 @@ def _side_by_side_scalar_row(
             "abs_y_delta": abs(float(python_run["final_y"]) - float(rust_state["y"])),
             "abs_q_delta": abs(float(python_run["final_q"]) - float(rust_state["q"])),
         }
+        rust_step_ns = rust_run["step_ns"]
+        if not isinstance(rust_step_ns, (int, float)):
+            raise TypeError(
+                f"rust_pyo3 step_ns must be a number, got {type(rust_step_ns).__name__}"
+            )
         row["speedup"] = {
-            "rust_vs_python_step_ns": float(python_run["step_ns"]) / float(rust_run["step_ns"])
+            "rust_vs_python_step_ns": float(python_run["step_ns"]) / float(rust_step_ns)
         }
     return row
 
 
 def main() -> None:
+    """Measure every backend and write ``results/bench_balanced_resonate_and_fire.json``."""
     out_path = Path(__file__).parent / "results" / "bench_balanced_resonate_and_fire.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     scalar_i2 = _drive_trace(200_000, current=2.0, omega=10.0, b_offset=1.0)

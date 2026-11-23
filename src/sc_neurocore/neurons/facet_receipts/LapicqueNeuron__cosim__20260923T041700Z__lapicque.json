@@ -143,7 +143,7 @@
     "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound",
@@ -186,6 +186,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-09-23T04:17:00Z",
-  "notes": "Requalified after compiler source change at d0c7c9682",
-  "receipt_sha256": "d2a40c58a8e83e3f6ec05d206355ebe40d6bb7267ffed762342ee404d3fa7d1f"
+  "notes": "Requalified after compiler source change at d0c7c9682 command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was d2a40c58a8e83e3f6ec05d206355ebe40d6bb7267ffed762342ee404d3fa7d1f",
+  "receipt_sha256": "c82f2735accf5727d08f2bf1f67c60bc766c3f17c0072d40ccb6c89f516b5919"
 }

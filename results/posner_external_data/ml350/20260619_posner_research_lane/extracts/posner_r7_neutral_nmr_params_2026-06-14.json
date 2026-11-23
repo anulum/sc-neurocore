@@ -103,31 +103,31 @@
     "sources": [
       {
         "name": "posner_neutral_nmr_r7.out",
-        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/output/posner_neutral_nmr_r7.out",
+        "path": "<run-root>/posner_followup_20260614T0218Z/01_neutral_nmr_r7/output/posner_neutral_nmr_r7.out",
         "role": "orca_output",
         "sha256": "511ed152fce1997799f135b1eb34e33daf4379d29050f5062429cb00be00bb30"
       },
       {
         "name": "REPRODUCIBILITY_LOG.md",
-        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/REPRODUCIBILITY_LOG.md",
+        "path": "<run-root>/posner_followup_20260614T0218Z/REPRODUCIBILITY_LOG.md",
         "role": "provenance",
         "sha256": "ba56386592bcae5e752e8532c4b89c5dcaca1db3b333eafae68f62d79d4d179d"
       },
       {
         "name": "run_pipeline.sh",
-        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/run_pipeline.sh",
+        "path": "<run-root>/posner_followup_20260614T0218Z/run_pipeline.sh",
         "role": "provenance",
         "sha256": "9e49530cdbc34b330e44ac556794fa84763a43c4692a28c96b0301c1a15e1b18"
       },
       {
         "name": "posner_neutral_nmr_r7.inp",
-        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/posner_neutral_nmr_r7.inp",
+        "path": "<run-root>/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/posner_neutral_nmr_r7.inp",
         "role": "provenance",
         "sha256": "12adcea685a0c30ae9d0046b108708de76ee1743c368724ee6cb91f3048b1796"
       },
       {
         "name": "input.xyz",
-        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/input.xyz",
+        "path": "<run-root>/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/input.xyz",
         "role": "provenance",
         "sha256": "3ef73733b0eff3b81f1487cc2fe8c113fd9b6128e7ce28e9d1528dac7671e8e9"
       }

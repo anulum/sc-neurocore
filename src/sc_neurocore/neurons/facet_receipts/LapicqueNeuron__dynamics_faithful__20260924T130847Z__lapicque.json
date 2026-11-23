@@ -107,7 +107,7 @@
     "tests/test_reference_lapicque_source_receipt.py"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_reference_lapicque_source_receipt.py",
@@ -145,6 +145,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-09-24T13:08:47Z",
-  "notes": "Requalified after readiness verifier source update at local 72388cdee",
-  "receipt_sha256": "5d4b1b5f180e32ec93038e0a77dffe86ca653e68bf8455d1ac9831cb1fd3033f"
+  "notes": "Requalified after readiness verifier source update at local 72388cdee command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was 5d4b1b5f180e32ec93038e0a77dffe86ca653e68bf8455d1ac9831cb1fd3033f",
+  "receipt_sha256": "097f92480752d12c51931a0500e04bded711fb0b5b1a2d67e8c1650454ddc0aa"
 }

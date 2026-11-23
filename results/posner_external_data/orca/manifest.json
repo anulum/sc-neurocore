@@ -1,7 +1,7 @@
 {
   "created_utc": "20260506T021449Z",
   "status": "prepared_inputs_only",
-  "orca_qc_binary": "/home/anulum/.local/opt/orca-qc/orca_6_1_1_linux_x86-64_shared_openmpi418/orca",
+  "orca_qc_binary": "<home>/.local/opt/orca-qc/orca_6_1_1_linux_x86-64_shared_openmpi418/orca",
   "orca_qc_available": true,
   "method": {
     "functional": "B3LYP",

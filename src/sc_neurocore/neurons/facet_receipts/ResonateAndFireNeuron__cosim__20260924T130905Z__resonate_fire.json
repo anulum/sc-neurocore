@@ -119,7 +119,7 @@
     "tests/test_cosim_resonate_and_fire.py::test_q3232_rtl_tracks_exact_map_and_complete_event_vector"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_cosim_resonate_and_fire.py::test_q3232_rtl_tracks_exact_map_and_complete_event_vector",
@@ -162,6 +162,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-09-24T13:09:05Z",
-  "notes": "Requalified after readiness verifier source update at local 72388cdee",
-  "receipt_sha256": "75e146bd71061d57b5a67c2995f2cf289566b567225b7213ed595c76c1b7ec34"
+  "notes": "Requalified after readiness verifier source update at local 72388cdee command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was 75e146bd71061d57b5a67c2995f2cf289566b567225b7213ed595c76c1b7ec34",
+  "receipt_sha256": "759a96ff818370f568042d8fa5f6d296363bb8ceabfa9eb9c7147d3734218b43"
 }

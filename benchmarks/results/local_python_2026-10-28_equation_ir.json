@@ -819,7 +819,7 @@
       ]
     }
   },
-  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json /media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/agentic_group_workspace/SC-NEUROCORE/01a18246-737c-7300-8346-8d78a0b40144/scratch/compiler-powers/equation-ir-benchmark-qualified.json",
+  "command": "python benchmarks/bench_equation_ir.py --samples 11 --warmup 2 --json <private-workspace>/SC-NEUROCORE/01a18246-737c-7300-8346-8d78a0b40144/scratch/compiler-powers/equation-ir-benchmark-qualified.json",
   "cross_language_comparison": false,
   "generated_at": "2026-10-28T22:36:36.779322+00:00",
   "hardware_measurement_claimed": false,

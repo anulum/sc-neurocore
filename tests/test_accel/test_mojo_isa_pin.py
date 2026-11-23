@@ -41,6 +41,7 @@ _ALLOWLIST = {
 
 
 def test_pin_isa_inserts_baseline_after_build() -> None:
+    """A ``mojo build`` argv gains the ISA baseline right after ``build``."""
     assert pin_isa(["mojo", "build", "-o", "x.so", "x.mojo"]) == [
         "mojo",
         "build",
@@ -53,6 +54,7 @@ def test_pin_isa_inserts_baseline_after_build() -> None:
 
 
 def test_pin_isa_inserts_baseline_after_run_through_pixi() -> None:
+    """A ``mojo run`` launched through pixi gains the baseline after ``run``."""
     assert pin_isa(["pixi", "run", "mojo", "run", "k.mojo"]) == [
         "pixi",
         "run",
@@ -65,11 +67,12 @@ def test_pin_isa_inserts_baseline_after_run_through_pixi() -> None:
 
 
 def test_pin_isa_pins_absolute_path_mojo_executable() -> None:
+    """An absolute-path Mojo executable is pinned like the bare token."""
     # shutil.which("mojo") / _require_tool("mojo") resolves to an absolute path;
     # it must be pinned exactly like the bare token or the built kernel SIGILLs.
-    argv = ["/home/anulum/.local/bin/mojo", "build", "--emit", "shared-lib", "x.mojo"]
+    argv = ["/opt/toolchains/bin/mojo", "build", "--emit", "shared-lib", "x.mojo"]
     assert pin_isa(argv) == [
-        "/home/anulum/.local/bin/mojo",
+        "/opt/toolchains/bin/mojo",
         "build",
         "--target-cpu",
         MOJO_TARGET_CPU,
@@ -80,6 +83,7 @@ def test_pin_isa_pins_absolute_path_mojo_executable() -> None:
 
 
 def test_pin_isa_pins_resolved_mojo_run_through_pixi() -> None:
+    """Resolved pixi and Mojo paths still get the baseline after ``run``."""
     argv = ["/opt/pixi/bin/pixi", "run", "/usr/bin/mojo", "run", "k.mojo"]
     assert pin_isa(argv) == [
         "/opt/pixi/bin/pixi",
@@ -93,6 +97,7 @@ def test_pin_isa_pins_resolved_mojo_run_through_pixi() -> None:
 
 
 def test_pin_isa_ignores_mojo_source_file_basename() -> None:
+    """A ``*.mojo`` source path is never mistaken for the executable."""
     # A ``*.mojo`` source path has basename ``x.mojo`` (not ``mojo``) and is not
     # followed by a subcommand, so it must never be mistaken for the executable.
     argv = ["python", "compile.py", "kernels/x.mojo", "build"]
@@ -100,16 +105,19 @@ def test_pin_isa_ignores_mojo_source_file_basename() -> None:
 
 
 def test_pin_isa_is_idempotent() -> None:
+    """Pinning an already pinned argv changes nothing."""
     once = pin_isa(["mojo", "run", "k.mojo"])
     assert pin_isa(once) == once
 
 
 def test_pin_isa_leaves_non_mojo_argv_untouched() -> None:
+    """An argv that runs no Mojo is returned unchanged."""
     argv = ["go", "build", "-o", "lib.so", "x.go"]
     assert pin_isa(argv) == argv
 
 
 def test_pin_isa_does_not_mutate_input() -> None:
+    """``pin_isa`` returns a new list and leaves its input as it was."""
     argv = ["mojo", "build", "x.mojo"]
     pin_isa(argv)
     assert argv == ["mojo", "build", "x.mojo"]

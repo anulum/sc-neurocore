@@ -9,7 +9,7 @@
   "created_utc": "20260531T011815Z",
   "source": "ORCA neutral closed-shell geometry optimization",
   "not_runtime_hyperfine_data": true,
-  "orca_output": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out",
+  "orca_output": "<run-root>/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out",
   "exit_status": 0,
   "accepted_neutral_geometry": false,
   "acceptance_rule": "accepted only when ORCA exits with status 0, prints `THE OPTIMIZATION HAS CONVERGED`, and prints `ORCA TERMINATED NORMALLY`",

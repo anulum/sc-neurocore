@@ -10,7 +10,7 @@
 This package is curated evidence from the ML350 neutral closed-shell ORCA run.
 It is not runtime hyperfine data and must not be used as `hf.json`.
 
-- ORCA output: `/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out`
+- ORCA output: `<run-root>/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out`
 - Exit status: `0`
 - Accepted neutral geometry: `False`
 - Last optimization cycle: `117`

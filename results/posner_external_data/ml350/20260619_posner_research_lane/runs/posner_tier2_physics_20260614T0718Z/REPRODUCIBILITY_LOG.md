@@ -2,17 +2,17 @@
 
 created_at_utc=2026-06-14T07:18:00Z
 host=god-of-the-math
-run_root=/home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z
-predecessor_run_root=/home/anulum/sc-neurocore-orca-runs/posner_handoff_extension_20260614T0340Z
-orca_binary=/home/anulum/.local/sc-neurocore/orca-6.1.1/orca
+run_root=<run-root>/posner_tier2_physics_20260614T0718Z
+predecessor_run_root=<run-root>/posner_handoff_extension_20260614T0340Z
+orca_binary=<home>/.local/sc-neurocore/orca-6.1.1/orca
 nprocs=24
 cpu_affinity=taskset -c 0-23
 maxcore_mb_per_rank=4000
 estimated_memory_ceiling_mb=96000
 mpi_env=HWLOC_COMPONENTS=-gl OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
 thread_env=OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
-waits_for_lock=/home/anulum/compute-queue/active_sc_neurocore_orca_handoff_extension.lock
-own_lock=/home/anulum/compute-queue/active_sc_neurocore_orca_tier2_physics.lock
+waits_for_lock=<compute-queue>/active_sc_neurocore_orca_handoff_extension.lock
+own_lock=<compute-queue>/active_sc_neurocore_orca_tier2_physics.lock
 
 ## Jobs
 
@@ -26,7 +26,7 @@ own_lock=/home/anulum/compute-queue/active_sc_neurocore_orca_tier2_physics.lock
 
 ## Initial input hashes
 
-7131c1233442e4bf049cbf5c076ecb1e005b37a2bd6a6b48557aecc10d75e4ce  /home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z/07_hydration6_opt/run/input.xyz
-b6af267015bc6c066040b9d1a650e74e488450236897c4b09fc3ca9e9767bc51  /home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z/07_hydration6_opt/run/posner_hydration6_opt.inp
-f474a526ec907180f85856292c243362f8be6a15022da6a110f94b28639fd2b8  /home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z/08_dimer_opt/run/input.xyz
-d2937b0d6033e975842ec12aba59d19ae7390489cb517efa5cc66346b9496f9b  /home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z/08_dimer_opt/run/posner_dimer_opt.inp
+7131c1233442e4bf049cbf5c076ecb1e005b37a2bd6a6b48557aecc10d75e4ce  <run-root>/posner_tier2_physics_20260614T0718Z/07_hydration6_opt/run/input.xyz
+b6af267015bc6c066040b9d1a650e74e488450236897c4b09fc3ca9e9767bc51  <run-root>/posner_tier2_physics_20260614T0718Z/07_hydration6_opt/run/posner_hydration6_opt.inp
+f474a526ec907180f85856292c243362f8be6a15022da6a110f94b28639fd2b8  <run-root>/posner_tier2_physics_20260614T0718Z/08_dimer_opt/run/input.xyz
+d2937b0d6033e975842ec12aba59d19ae7390489cb517efa5cc66346b9496f9b  <run-root>/posner_tier2_physics_20260614T0718Z/08_dimer_opt/run/posner_dimer_opt.inp

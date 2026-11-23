@@ -89,9 +89,6 @@ These notebooks demonstrate capabilities unique to SC-NeuroCore — features not
 
 ## High-fidelity demo notebooks (41–43)
 
-Programme plan: monorepo
-`.coordination/planning/SC-NEUROCORE/PLAN_2026-07-19T2301_notebook_demo_programme_high_fidelity_neurons.md`.
-
 Neurons are taken only from the polyglot-complete set in
 [`model_fidelity_status.md`](../api/model_fidelity_status.md).
 

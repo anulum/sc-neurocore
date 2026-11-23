@@ -65,7 +65,7 @@
     "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule",
@@ -103,6 +103,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-09-24T13:08:59Z",
-  "notes": "Requalified after readiness verifier source update at local 72388cdee",
-  "receipt_sha256": "a7eaa233cd5960e40b1fa8a2adf4a0e7654a0d2a5932a480586bedcdba8a7be9"
+  "notes": "Requalified after readiness verifier source update at local 72388cdee command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was a7eaa233cd5960e40b1fa8a2adf4a0e7654a0d2a5932a480586bedcdba8a7be9",
+  "receipt_sha256": "dcc86be4427f5720d3bcdcb4d390ede7b93363003902294880a43b6caaee64cc"
 }

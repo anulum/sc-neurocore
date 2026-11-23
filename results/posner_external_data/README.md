@@ -85,7 +85,7 @@ Until all three gates pass, results remain acquisition/preparation artifacts.
 The local ML350 lane completed on 2026-05-30 after 117 geometry cycles:
 
 - Run path:
-  `/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507`
+  `<run-root>/ml350_r6_seeded_20260507`
 - Method:
   `B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq`
 - Charge/multiplicity: neutral closed shell, `0 1`
@@ -114,11 +114,11 @@ neutral geometry requires both `THE OPTIMIZATION HAS CONVERGED` and
 The next neutral optimisation continuation was launched from the r6 endpoint:
 
 - Run root:
-  `/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531`
+  `<run-root>/ml350_r6_continuation_20260531`
 - Job name: `posner_ml350_neutral_opt_20260531_r7_continue`
 - tmux session: `scn_orca_r7_ml350`
 - Compute lock: active SC-NeuroCore ORCA lock under
-  `/home/anulum/compute-queue/`
+  `<compute-queue>/`
 - Method:
   `B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq MOREAD`
 - Resource limit: single ORCA worker with `%maxcore 12000`
@@ -132,7 +132,7 @@ Status probe:
 
 ```bash
 ssh anulum@192.168.1.30 \
-  /home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531/status_probe.sh
+  <run-root>/ml350_r6_continuation_20260531/status_probe.sh
 ```
 
 ## What a Converged Neutral ORCA Result Means
@@ -199,7 +199,7 @@ Prepared ORCA quantum-chemistry input files are in `orca/`.
 
 Current status:
 - Quantum-chemistry ORCA 6.1.1 is installed at
-  `/home/anulum/.local/opt/orca-qc/orca_6_1_1_linux_x86-64_shared_openmpi418/orca`.
+  `<home>/.local/opt/orca-qc/orca_6_1_1_linux_x86-64_shared_openmpi418/orca`.
 - `/usr/bin/orca` is still the GNOME screen reader, not the ORCA chemistry
   package.
 - OpenMPI, xTB, OpenBabel, and the Python chemistry workflow dependencies are
@@ -377,7 +377,7 @@ Use:
 ```bash
 ./.venv/bin/python tools/acquire_posner_external_data.py acquire-ibm \
   --backend ibm_fez \
-  --credential-vault /media/anulum/724AA8E84AA8AA75/agentic-shared/CREDENTIALS.md \
+  --credential-vault <credential-vault> \
   --vault-section "IBM Quantum"
 ```
 

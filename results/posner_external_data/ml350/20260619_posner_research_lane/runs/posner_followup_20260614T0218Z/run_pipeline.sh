@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z"
-ORCA="/home/anulum/.local/sc-neurocore/orca-6.1.1/orca"
-LOCK=/home/anulum/compute-queue/active_sc_neurocore_orca_followup.lock
+ROOT="<run-root>/posner_followup_20260614T0218Z"
+ORCA="<home>/.local/sc-neurocore/orca-6.1.1/orca"
+LOCK=<compute-queue>/active_sc_neurocore_orca_followup.lock
 export HWLOC_COMPONENTS=-gl
 export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
 export OMP_NUM_THREADS=1

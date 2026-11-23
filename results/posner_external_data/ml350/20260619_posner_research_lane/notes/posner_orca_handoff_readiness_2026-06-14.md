@@ -42,13 +42,13 @@ the first pass that can produce `1H` shielding evidence.
 ## Running or queued on ML350
 
 Current active run root:
-`/home/anulum/sc-neurocore-orca-runs/posner_handoff_extension_20260614T0340Z`
+`<run-root>/posner_handoff_extension_20260614T0340Z`
 
 Current queued dependent tier-2 pipeline:
-`/home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z`
+`<run-root>/posner_tier2_physics_20260614T0718Z`
 
 The tier-2 runner waits until
-`/home/anulum/compute-queue/active_sc_neurocore_orca_handoff_extension.lock`
+`<compute-queue>/active_sc_neurocore_orca_handoff_extension.lock`
 disappears, then verifies all three handoff-extension jobs have exit status 0
 and normal ORCA termination before taking its own lock. This prevents
 concurrent ORCA contention while keeping the next batch ready.
@@ -90,5 +90,5 @@ Tier-2 jobs:
 - The final SCPN-QUANTUM-CONTROL input artifact should be generated from JSON,
   not manually copied numbers.
 - Tier-2 extraction must include the generated
-  `/home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z/dependent_input_hashes.json`
+  `<run-root>/posner_tier2_physics_20260614T0718Z/dependent_input_hashes.json`
   once the optimization-dependent inputs are generated.

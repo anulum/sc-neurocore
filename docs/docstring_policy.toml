@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2339
+expected_file_count = 2342
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9400,3 +9400,15 @@ rationale = "Exercise the simulator registry through real package metadata."
 [[file]]
 path = "benchmarks/bench_model_alpha.py"
 rationale = "Document the alpha benchmark, which binds the simulator registry it measures through."
+
+[[file]]
+path = "benchmarks/bench_balanced_resonate_and_fire.py"
+rationale = "Document the balanced resonate-and-fire benchmark, which refuses and names an absent native tool."
+
+[[file]]
+path = "tests/test_accel/test_mojo_isa_pin.py"
+rationale = "Keep the Mojo ISA pin tests documented, with neutral sample tool paths."
+
+[[file]]
+path = "tests/test_public_tree_workstation_paths.py"
+rationale = "Refuse workstation, monorepo and private-record paths in tracked files, with reasoned exceptions."

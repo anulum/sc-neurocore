@@ -2,7 +2,7 @@
   "schema": "sc-neurocore.ml350-posner-research-lane.v1",
   "created_utc": "2026-06-19T14:50:50Z",
   "source_host": "god-of-the-math",
-  "source_root": "/home/anulum/sc-neurocore-orca-runs",
+  "source_root": "<run-root>",
   "artifact_policy": "Curated lane outputs only; raw ORCA scratch and restart trees remain on ML350.",
   "checksum_manifest": "SHA256SUMS.txt",
   "accepted_jobs": [

@@ -5,7 +5,7 @@ Created: 2026-06-19
 This package preserves the curated outputs for the SC-NEUROCORE ML350 Posner
 research lane. It intentionally excludes full ORCA scratch trees, restart
 matrices, and raw host work directories. Those remain on ML350 under
-`/home/anulum/sc-neurocore-orca-runs/`.
+`<run-root>/`.
 
 ## Contents
 

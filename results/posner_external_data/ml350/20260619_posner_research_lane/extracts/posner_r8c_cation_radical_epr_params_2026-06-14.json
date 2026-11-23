@@ -383,25 +383,25 @@
     "sources": [
       {
         "name": "posner_cation_radical_epr_r8c.out",
-        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/output/posner_cation_radical_epr_r8c.out",
+        "path": "<run-root>/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/output/posner_cation_radical_epr_r8c.out",
         "role": "orca_output",
         "sha256": "71ea14b90ec596e59bdb31607ed6a33644ff0c89a6a02efe72628133cfaf8c89"
       },
       {
         "name": "REPRODUCIBILITY_LOG.md",
-        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/REPRODUCIBILITY_LOG.md",
+        "path": "<run-root>/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/REPRODUCIBILITY_LOG.md",
         "role": "provenance",
         "sha256": "7328c0bb6f21d99cc4d521041e9494f16c0a427886fe96e97efa768cd91b0508"
       },
       {
         "name": "posner_cation_radical_epr_r8c.inp",
-        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/posner_cation_radical_epr_r8c.inp",
+        "path": "<run-root>/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/posner_cation_radical_epr_r8c.inp",
         "role": "provenance",
         "sha256": "c6f58d96400255a048b27dd8976663055947f0fffa27365722ba28a646e5a525"
       },
       {
         "name": "input.xyz",
-        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/input.xyz",
+        "path": "<run-root>/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/input.xyz",
         "role": "provenance",
         "sha256": "3ef73733b0eff3b81f1487cc2fe8c113fd9b6128e7ce28e9d1528dac7671e8e9"
       }

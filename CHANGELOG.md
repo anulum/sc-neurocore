@@ -556,6 +556,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Tracked files no longer name development-host paths, the private monorepo
+  or the group's private record tree. 56 facet receipts recorded between
+  2026-09-05 and 2026-10-05 named the absolute interpreter in `command[0]`;
+  each now holds `python`, the value later receipts record, carries a note
+  with its original digest, and is re-sealed with the receipt module's own
+  seal. Benchmark records and the Posner external-data files use
+  repository-relative paths or neutral tokens such as `<run-root>`, and the
+  checksum list of the Posner research lane is recomputed for the files that
+  changed. `bench_balanced_resonate_and_fire.py` reports an absent Julia or
+  Mojo instead of falling back to a fixed home directory. A test refuses such
+  paths in every tracked file, text or binary, except six files whose lines
+  redact, refuse or audit them, each with its reason.
+
 - `SHDAccelerator.classify(mode="legacy")` waited for `CTRL.done` in an
   unbounded loop, so a hung legacy wrapper hung the caller. It now reads
   `CTRL` at most `max_poll_iters` times, raises `SHDDriverError` with the

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="/home/anulum/sc-neurocore-orca-runs/posner_tier2_physics_20260614T0718Z"
-PREV="/home/anulum/sc-neurocore-orca-runs/posner_handoff_extension_20260614T0340Z"
-ORCA="/home/anulum/.local/sc-neurocore/orca-6.1.1/orca"
-PREV_LOCK=/home/anulum/compute-queue/active_sc_neurocore_orca_handoff_extension.lock
-LOCK=/home/anulum/compute-queue/active_sc_neurocore_orca_tier2_physics.lock
+ROOT="<run-root>/posner_tier2_physics_20260614T0718Z"
+PREV="<run-root>/posner_handoff_extension_20260614T0340Z"
+ORCA="<home>/.local/sc-neurocore/orca-6.1.1/orca"
+PREV_LOCK=<compute-queue>/active_sc_neurocore_orca_handoff_extension.lock
+LOCK=<compute-queue>/active_sc_neurocore_orca_tier2_physics.lock
 export HWLOC_COMPONENTS=-gl
 export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
 export OMP_NUM_THREADS=1

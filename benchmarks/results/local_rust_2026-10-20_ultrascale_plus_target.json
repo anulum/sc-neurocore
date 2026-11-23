@@ -4,10 +4,10 @@
   "bram_36k_estimated": 2,
   "build_profile": "release",
   "checksum": 0,
-  "command": "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/target/release/examples/bench_ultrascale_plus_target /media/anulum/GOTM/aaa_God_of_the_Math_Collection/.coordination/evidence/SC-NEUROCORE/compiler-dense-typed-2026-10-20T155447001822Z/target-rust-raw.json",
+  "command": "target/release/examples/bench_ultrascale_plus_target <private-records>/evidence/SC-NEUROCORE/compiler-dense-typed-2026-10-20T155447001822Z/target-rust-raw.json",
   "command_argv": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/target/release/examples/bench_ultrascale_plus_target",
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/.coordination/evidence/SC-NEUROCORE/compiler-dense-typed-2026-10-20T155447001822Z/target-rust-raw.json"
+    "target/release/examples/bench_ultrascale_plus_target",
+    "<private-records>/evidence/SC-NEUROCORE/compiler-dense-typed-2026-10-20T155447001822Z/target-rust-raw.json"
   ],
   "device_part": "xczu3eg-sbva484-1-e",
   "dsp_budget": 360,

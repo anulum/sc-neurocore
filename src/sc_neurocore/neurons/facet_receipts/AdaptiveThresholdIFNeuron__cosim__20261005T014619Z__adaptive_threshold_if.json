@@ -125,7 +125,7 @@
     "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector",
@@ -168,6 +168,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-10-05T01:46:19Z",
-  "notes": "",
-  "receipt_sha256": "0746d31ab83bafd43dcc9ea16dcdb1bbf82457ff320c78118b0e38095876e357"
+  "notes": "command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was 0746d31ab83bafd43dcc9ea16dcdb1bbf82457ff320c78118b0e38095876e357",
+  "receipt_sha256": "c518eb981774d1b96c1bf144958ce9ac51375b815022259d52eed850bb9a65f7"
 }

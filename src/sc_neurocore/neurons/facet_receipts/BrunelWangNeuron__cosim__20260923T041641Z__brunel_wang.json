@@ -125,7 +125,7 @@
     "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state"
   ],
   "command": [
-    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "python",
     "-m",
     "pytest",
     "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state",
@@ -168,6 +168,6 @@
     "skipped": 0
   },
   "recorded_at": "2026-09-23T04:16:41Z",
-  "notes": "Requalified after compiler source change at d0c7c9682",
-  "receipt_sha256": "b8c14b71f499ded528ba360dd90c891abf45fd7f02eed44cef8e723cf0e109e2"
+  "notes": "Requalified after compiler source change at d0c7c9682 command[0] redacted for publication on 2026-11-23 under owner decision 3911fc54; the original receipt digest was b8c14b71f499ded528ba360dd90c891abf45fd7f02eed44cef8e723cf0e109e2",
+  "receipt_sha256": "0d2aa8ca98fa2184f3310064ca5398e0d4f67b42189b1248323f52419e197e7b"
 }
