@@ -10,22 +10,32 @@
 
 from __future__ import annotations
 
-from gen_vmin_lif_lut_support import *  # noqa: F403
+import math
+import pytest
+from tools.gen_vmin_lif_lut import (
+    softplus_float,
+)
 
 
 class TestSoftplus:
+    """Hold the float softplus to its closed form."""
+
     def test_softplus_zero(self) -> None:
+        """softplus(0) is log 2."""
         assert softplus_float(0.0, 1.0) == pytest.approx(math.log(2), abs=1e-9)
 
     def test_softplus_large_positive_linear(self) -> None:
+        """For a large input softplus returns the input, as PyTorch's threshold does."""
         # softplus(z) ≈ z for large z (matches PyTorch threshold=20 behaviour)
         assert softplus_float(50.0, 1.0) == pytest.approx(50.0, abs=1e-9)
 
     def test_softplus_negative(self) -> None:
+        """softplus(-5) is log(1 + e^-5)."""
         # softplus(-5) ≈ log(1 + e^-5) ≈ 0.00671
         assert softplus_float(-5.0, 1.0) == pytest.approx(0.00671535, abs=1e-5)
 
     def test_softplus_beta_scaling(self) -> None:
+        """With beta 2, softplus is log(1 + e^(2z)) / 2."""
         # softplus(z, beta=2) = (1/2) * log(1 + e^(2z))
         # at z=1: (1/2) * log(1 + e^2) ≈ 0.5 * log(8.389) ≈ 1.063
         assert softplus_float(1.0, 2.0) == pytest.approx(1.0634640, abs=1e-5)

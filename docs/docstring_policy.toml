@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2418
+expected_file_count = 2427
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9716,3 +9716,39 @@ rationale = "Exercise the SHD weight extraction tool: layer spec."
 [[file]]
 path = "tools/test_extract_shd_weights_quantisation.py"
 rationale = "Exercise the SHD weight extraction tool: quantisation."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_cli.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: cli."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_float_reference.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: float reference."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_lut_generation.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: lut generation."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_lut_lookup.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: lut lookup."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_q88.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: q88."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_softplus.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: softplus."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_trajectory_consistency.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: trajectory consistency."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_verilog_header.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: verilog header."
+
+[[file]]
+path = "tools/test_gen_vmin_lif_lut_vmin_lif_single_step.py"
+rationale = "Exercise the vmin LIF softplus LUT generator: vmin lif single step."

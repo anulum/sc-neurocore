@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from gen_vmin_lif_lut_support import *  # noqa: F403
+from tools.gen_vmin_lif_lut import (
+    decode_q88,
+    encode_q88,
+    gen_softplus_lut,
+    LUT_RANGE,
+    LUT_SIZE,
+    vmin_lif_step_float,
+    vmin_lif_step_q88,
+    VminLifConfig,
+)
 
 
 class TestTrajectoryConsistency:
+    """Compare Q8.8 and float trajectories of the vmin LIF neuron."""
+
     def test_constant_input_trajectory(self) -> None:
+        """Over 50 steps of constant input the Q8.8 and float spike counts differ by at most one."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
 
@@ -32,6 +44,7 @@ class TestTrajectoryConsistency:
         assert abs(sum(spikes_q) - sum(spikes_f)) <= 1
 
     def test_zero_input_no_runaway(self) -> None:
+        """Without input the Q8.8 membrane stays within one unit of rest."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         v_q = 0

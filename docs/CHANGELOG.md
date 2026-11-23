@@ -1287,6 +1287,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The nine vmin LIF LUT generator test modules
+  (`tools/test_gen_vmin_lif_lut_*`) import their names explicitly
+  instead of through a suppressed star import, gain their missing test
+  docstrings and are enrolled in the docstring policy. Their support
+  module, which no test imports any more, is deleted. With every
+  `tools/test_*.py` module now importing explicitly, the ruff
+  per-file exemption from F403 and F405 for `tools/test_*.py` is
+  removed from `pyproject.toml`.
+
 - The six SHD weight-extraction tool test modules
   (`tools/test_extract_shd_weights_*`) import their names explicitly
   instead of through a suppressed star import, gain their missing test

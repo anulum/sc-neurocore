@@ -112,7 +112,8 @@
         {
           "attribution": "bound_script",
           "changed": [
-            ".github/workflows/ci.yml"
+            ".github/workflows/ci.yml",
+            "pyproject.toml"
           ],
           "currency": "outdated",
           "name": "bench_alpha.json",

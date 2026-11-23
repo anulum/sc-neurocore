@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from gen_vmin_lif_lut_support import *  # noqa: F403
+import pytest
+from tools.gen_vmin_lif_lut import (
+    vmin_lif_step_float,
+    VminLifConfig,
+)
 
 
 class TestFloatReference:
+    """Hold the float reference step to the PyTorch neuron's dynamics."""
+
     def test_float_step_matches_pytorch_dynamics(self) -> None:
+        """A sub-threshold float step follows the decay and softplus floor of the PyTorch model."""
         # Manual computation of one Vmin_LIF step:
         # v = 0.5, x = 0.3
         # v = 0.5 * 0.75 + 0.3 = 0.675
@@ -28,6 +35,7 @@ class TestFloatReference:
         assert v_next == pytest.approx(0.6785, abs=0.01)
 
     def test_float_step_threshold_crossing(self) -> None:
+        """Crossing the threshold spikes, resets and then applies the softplus floor."""
         cfg = VminLifConfig()
         v_next, spike = vmin_lif_step_float(0.9, 0.5, cfg)
         # 0.9 * 0.75 + 0.5 = 1.175 ≥ threshold(1.0) → spike, reset to v_reset=0

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from gen_vmin_lif_lut_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from tools.gen_vmin_lif_lut import (
+    main,
+)
 
 
 class TestCli:
+    """Drive the LUT generator through its command line."""
+
     def test_print_lut_outputs_table(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """--print-lut prints the softplus table and exits zero."""
         assert main(["--print-lut"]) == 0
 
         output = capsys.readouterr().out
@@ -24,6 +33,7 @@ class TestCli:
     def test_out_vh_writes_split_header(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """--out-vh writes the 64-entry header with the split licence header."""
         out_path = tmp_path / "vmin_lif_lut.vh"
 
         assert main(["--out-vh", str(out_path)]) == 0
@@ -35,6 +45,7 @@ class TestCli:
         assert "// Commercial license available\n" in header
 
     def test_demo_outputs_trajectory(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """--demo prints a single-neuron trajectory and exits zero."""
         assert main(["--demo"]) == 0
 
         output = capsys.readouterr().out

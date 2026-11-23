@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from gen_vmin_lif_lut_support import *  # noqa: F403
+import pytest
+from tools.gen_vmin_lif_lut import (
+    decode_q88,
+    encode_q88,
+    gen_softplus_lut,
+    LUT_RANGE,
+    LUT_SIZE,
+    Q88_MAX,
+    Q88_MIN,
+    vmin_lif_step_q88,
+    VminLifConfig,
+)
 
 
 class TestVminLifSingleStep:
+    """Step the Q8.8 vmin LIF neuron once."""
+
     def test_zero_input_zero_state(self) -> None:
+        """From rest without input the softplus floor lifts the membrane just above zero."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         # v=0, x=0 → after decay: 0, then softplus floor with v_inf=-5
@@ -24,6 +38,7 @@ class TestVminLifSingleStep:
         assert decode_q88(v_next) == pytest.approx(0.0067, abs=0.01)
 
     def test_threshold_crossing_triggers_spike(self) -> None:
+        """Charging past the threshold spikes and resets before the floor applies."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         # v=0.9, x=0.5 → decay: 0.9*0.75=0.675, +0.5=1.175 > threshold(1.0)
@@ -38,12 +53,14 @@ class TestVminLifSingleStep:
         assert 0 <= v_next <= 5  # bounded near 0 by softplus
 
     def test_subthreshold_no_spike(self) -> None:
+        """Charging below the threshold does not spike."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         v_next, spike = vmin_lif_step_q88(encode_q88(0.5), encode_q88(0.1), lut, cfg)
         assert spike == 0
 
     def test_softplus_floor_prevents_unbounded_negative(self) -> None:
+        """The softplus floor keeps the membrane at or above v_inf."""
         cfg = VminLifConfig()
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         # Even with strongly negative state, softplus floor should bound v
@@ -53,6 +70,7 @@ class TestVminLifSingleStep:
         assert spike == 0
 
     def test_charged_state_saturates_to_q88_max_before_spike(self) -> None:
+        """Charging past the Q8.8 maximum saturates instead of wrapping."""
         cfg = VminLifConfig(v_threshold=1e9)
         lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
         v_next, spike = vmin_lif_step_q88(Q88_MAX, Q88_MAX, lut, cfg)
@@ -61,6 +79,7 @@ class TestVminLifSingleStep:
         assert 0 <= v_next <= 5
 
     def test_charged_state_saturates_to_q88_min(self) -> None:
+        """Charging past the Q8.8 minimum saturates, and the floor lifts it to v_inf."""
         cfg = VminLifConfig(v_inf=0.0)
         v_next, spike = vmin_lif_step_q88(Q88_MIN, Q88_MIN, [0], cfg)
 
@@ -68,6 +87,7 @@ class TestVminLifSingleStep:
         assert v_next == 0
 
     def test_floor_saturates_to_q88_min(self) -> None:
+        """A floor below the Q8.8 range saturates to its minimum."""
         cfg = VminLifConfig(v_inf=-1e9)
         v_next, spike = vmin_lif_step_q88(Q88_MIN, Q88_MIN, [-1000], cfg)
 
@@ -75,6 +95,7 @@ class TestVminLifSingleStep:
         assert v_next == Q88_MIN
 
     def test_floor_saturates_to_q88_max(self) -> None:
+        """A floor above the Q8.8 range saturates to its maximum."""
         cfg = VminLifConfig(v_inf=1e9, v_threshold=1e9)
         v_next, spike = vmin_lif_step_q88(0, 0, [1000], cfg)
 
