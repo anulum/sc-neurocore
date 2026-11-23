@@ -1251,6 +1251,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The autonomous-learning bridge's architecture tests no longer cap file
+  lengths (300 lines per module, 120 for the facade), following the owner's
+  rule that files are divided by responsibility, never by size. They now
+  hold what the caps stood for. Each divided module defines exactly the
+  top-level names of its declared concern, and no name is defined twice.
+  The facade defines no class and only its three delegating functions.
+  A stray definition in a module, which the line caps did not catch, now
+  fails.
+
 - The evolution-substrate facade test no longer caps the facade at 180
   lines. The facade already defines no class or function and exports its 56
   historical names, so that contract is what remains.

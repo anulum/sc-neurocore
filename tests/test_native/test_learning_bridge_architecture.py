@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib
 from pathlib import Path
 import sys
@@ -91,23 +92,131 @@ def test_factory_reports_missing_torch_without_disabling_rust(
     assert fake_learning_lib.layer_ptr
 
 
-def test_split_modules_remain_bounded_and_licensed() -> None:
-    """Each divided bridge module has at most 300 lines, the licence header and a docstring."""
+# The concern of each divided module, as the top-level classes and functions it owns.
+# A new definition is placed by deciding which concern it belongs to, then listing it here.
+_OWNED_DEFINITIONS: dict[str, frozenset[str]] = {
+    "learning_factory.py": frozenset(
+        {
+            "create_plasticity_layer",
+        }
+    ),
+    "learning_runtime.py": frozenset(
+        {
+            "OnlineO1SnapshotFFI",
+            "_library_path",
+            "_bind_rule_api",
+            "_bind_learner_api",
+            "_bind_layer_api",
+            "_bind_wgpu_api",
+            "_bind_online_o1_api",
+            "_load_native_library",
+            "_get_lib",
+            "is_available",
+            "has_symbol",
+            "require_symbol",
+            "destroy_noexcept",
+            "set_deterministic_mode",
+            "deterministic_seed",
+        }
+    ),
+    "learning_rust.py": frozenset(
+        {
+            "_require_native",
+            "_NativeOwner",
+            "RustOnlineO1Synapse",
+            "RustPlasticityRule",
+            "RustEligentLearner",
+        }
+    ),
+    "learning_rust_layer.py": frozenset(
+        {
+            "_validated_state",
+            "RustRuleLayer",
+        }
+    ),
+    "learning_torch.py": frozenset(
+        {
+            "TorchRuleLayer",
+        }
+    ),
+    "learning_torch_autograd.py": frozenset(
+        {
+            "_BiologicalAutogradFactory",
+        }
+    ),
+    "learning_torch_precision.py": frozenset(
+        {
+            "normalise_bit_spec",
+            "normalise_clip",
+            "quantise_tensor",
+        }
+    ),
+    "learning_torch_support.py": frozenset(
+        {
+            "rule_parameters",
+            "validate_input",
+        }
+    ),
+    "learning_validation.py": frozenset(
+        {
+            "require_integral",
+            "require_non_negative_integral",
+            "require_integral_range",
+            "require_count",
+            "require_rule_type",
+            "require_bool",
+            "require_finite_float",
+            "require_positive_float",
+            "require_non_negative_float",
+            "require_unit_interval",
+            "require_u32_seed",
+            "require_u64_seed",
+            "saturate",
+            "_require_vector",
+            "as_bool_vector",
+            "as_float_vector",
+            "as_probability_vector",
+        }
+    ),
+    "learning_wgpu.py": frozenset(
+        {
+            "RustWgpuRuleLayer",
+        }
+    ),
+}
+
+# The facade re-exports the divided modules and delegates; these are all it defines.
+_FACADE_DEFINITIONS = frozenset({"is_available", "set_deterministic_mode", "__getattr__"})
+
+
+def _top_level_definitions(path: Path) -> set[str]:
+    """Return the names of the top-level classes and functions a module defines."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+    return {node.name for node in tree.body if isinstance(node, kinds)}
+
+
+def test_each_divided_module_owns_its_declared_concern_and_is_licensed() -> None:
+    """Each divided module defines exactly its declared names, none twice, under the licence header."""
     native_dir = Path(bridge.__file__).parent
-    paths = sorted(native_dir.glob("learning_*.py"))
-    assert paths
-    for path in paths:
-        lines = path.read_text(encoding="utf-8").splitlines()
-        assert len(lines) <= 300, f"{path.name} grew to {len(lines)} lines"
+    paths = {path.name: path for path in native_dir.glob("learning_*.py")}
+    assert set(paths) == set(_OWNED_DEFINITIONS) | {"learning_bridge.py"}
+    owner: dict[str, str] = {}
+    for name, declared in _OWNED_DEFINITIONS.items():
+        assert _top_level_definitions(paths[name]) == declared, name
+        for definition in declared:
+            assert definition not in owner, (
+                f"{definition} is defined in {owner.get(definition)} and {name}"
+            )
+            owner[definition] = name
+        lines = paths[name].read_text(encoding="utf-8").splitlines()
         assert lines[0] == "# SPDX-License-Identifier: AGPL-3.0-or-later"
         assert any('"""' in line for line in lines[:20])
 
 
-def test_facade_is_thin_relative_to_historical_monolith() -> None:
-    """The facade stays a thin re-export of the divided modules."""
-    facade_lines = Path(bridge.__file__).read_text(encoding="utf-8").splitlines()
-    assert len(facade_lines) < 120
-    assert not any(line.startswith("class Rust") for line in facade_lines)
+def test_facade_only_re_exports_and_delegates() -> None:
+    """The facade defines no class and only its delegating functions; everything else is re-exported."""
+    assert _top_level_definitions(Path(bridge.__file__)) == _FACADE_DEFINITIONS
 
 
 def test_facade_private_loader_aliases_runtime() -> None:
