@@ -10,28 +10,42 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    EventStream,
+    SensorModality,
+)
+from sensor_fusion_support import (
+    _make_stream,
+)
 
 
 class TestEventStream:
-    def test_num_events(self):
+    """Counts, timing and bitstream form of event streams."""
+
+    def test_num_events(self) -> None:
+        """A stream counts its events."""
         s = _make_stream(SensorModality.DVS, n_events=50)
         assert s.num_events == 50
 
-    def test_duration(self):
+    def test_duration(self) -> None:
+        """A stream of events has a positive duration."""
         s = _make_stream(SensorModality.DVS, n_events=100)
         assert s.duration_us > 0
 
-    def test_event_rate(self):
+    def test_event_rate(self) -> None:
+        """A stream of events has a positive event rate."""
         s = _make_stream(SensorModality.DVS, n_events=100)
         assert s.event_rate > 0
 
-    def test_to_bitstream_shape(self):
+    def test_to_bitstream_shape(self) -> None:
+        """A stream becomes a bitstream of the requested channels and length."""
         s = _make_stream(SensorModality.DVS, n_events=50)
         bs = s.to_bitstream(length=256, num_channels=32)
         assert bs.shape == (32, 256)
 
-    def test_empty_stream(self):
+    def test_empty_stream(self) -> None:
+        """An empty stream has no events, no duration and an all-zero bitstream."""
         s = EventStream(
             modality=SensorModality.DVS,
             timestamps=np.array([]),

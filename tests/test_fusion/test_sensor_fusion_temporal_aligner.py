@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    EventStream,
+    SensorModality,
+    TemporalAligner,
+)
 
 
 class TestTemporalAligner:
-    def test_align_overlapping(self):
+    """Aligning and windowing event streams in time."""
+
+    def test_align_overlapping(self) -> None:
+        """Overlapping streams are cut to their common span."""
         aligner = TemporalAligner(window_us=1000.0)
         s1 = EventStream(
             SensorModality.DVS,
@@ -34,7 +42,8 @@ class TestTemporalAligner:
             assert float(a.timestamps[0]) >= 200
             assert float(a.timestamps[-1]) <= 500
 
-    def test_slice_windows(self):
+    def test_slice_windows(self) -> None:
+        """A stream is sliced into at least three windows."""
         aligner = TemporalAligner(window_us=200.0)
         s = EventStream(
             SensorModality.DVS,
@@ -45,11 +54,13 @@ class TestTemporalAligner:
         windows = aligner.slice_windows(s)
         assert len(windows) >= 3
 
-    def test_empty_alignment(self):
+    def test_empty_alignment(self) -> None:
+        """Aligning nothing gives nothing."""
         aligner = TemporalAligner()
         assert aligner.align([]) == []
 
-    def test_align_non_overlapping_returns_streams_unchanged(self):
+    def test_align_non_overlapping_returns_streams_unchanged(self) -> None:
+        """Streams that do not overlap are returned unchanged."""
         # Streams whose active spans do not overlap give t_min >= t_max, so
         # there is no common window and the originals are returned as-is.
         aligner = TemporalAligner(window_us=1000.0)
@@ -68,7 +79,8 @@ class TestTemporalAligner:
         aligned = aligner.align([early, late])
         assert aligned == [early, late]
 
-    def test_slice_windows_single_event_returns_whole_stream(self):
+    def test_slice_windows_single_event_returns_whole_stream(self) -> None:
+        """A single-event stream is one window."""
         # A stream with fewer than two events cannot be windowed and is passed
         # through as a single window.
         aligner = TemporalAligner(window_us=200.0)

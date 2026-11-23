@@ -1314,6 +1314,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 sensor-fusion test modules (`tests/test_fusion`) import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing test docstrings and return annotations and are enrolled
+  in the docstring policy.
+
 - The 11 compiler-export, ONNX-export and TVM-lowering test modules
   (`tests/test_export`) import their names explicitly instead of
   through a suppressed star import, gain their missing test docstrings

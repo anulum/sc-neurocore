@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    DVSAdapter,
+    SensorModality,
+)
 
 
 class TestDVSAdapter:
-    def test_encode_events(self):
+    """Event encoding of the DVS adapter."""
+
+    def test_encode_events(self) -> None:
+        """Ten camera events encode as ten DVS events with their resolution."""
         ts = np.arange(10, dtype=np.float64) * 1000
         x = np.arange(10) % 128
         y = np.arange(10) % 128
@@ -24,7 +31,8 @@ class TestDVSAdapter:
         assert stream.num_events == 10
         assert "resolution" in stream.metadata
 
-    def test_address_encoding(self):
+    def test_address_encoding(self) -> None:
+        """An event's address is its row times the width plus its column."""
         ts = np.array([0.0, 1000.0])
         x = np.array([5, 10])
         y = np.array([3, 7])

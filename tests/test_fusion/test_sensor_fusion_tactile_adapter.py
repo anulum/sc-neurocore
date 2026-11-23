@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    SensorModality,
+    TactileAdapter,
+)
 
 
 class TestTactileAdapter:
-    def test_encode_pressure(self):
+    """Pressure encoding of the tactile adapter."""
+
+    def test_encode_pressure(self) -> None:
+        """Pressures above threshold give positive events and those below negative ones."""
         ts = np.arange(4, dtype=np.float64) * 100
         taxels = np.array([0, 1, 2, 3])
         pressures = np.array([0.5, 0.05, 0.8, 0.01])

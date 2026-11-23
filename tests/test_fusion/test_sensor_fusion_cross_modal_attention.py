@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    CrossModalAttention,
+)
 
 
 class TestCrossModalAttention:
-    def test_attend_preserves_shape(self):
+    """Stochastic cross-modal attention between bitstreams."""
+
+    def test_attend_preserves_shape(self) -> None:
+        """Attention keeps the query's shape."""
         attn = CrossModalAttention(num_channels=8, seed=42)
         q = np.ones((8, 32), dtype=np.uint8)
         k = np.ones((8, 32), dtype=np.uint8)
@@ -22,7 +28,8 @@ class TestCrossModalAttention:
         result = attn.attend(q, k, v)
         assert result.shape == (8, 32)
 
-    def test_attend_zero_query_zero_output(self):
+    def test_attend_zero_query_zero_output(self) -> None:
+        """An all-zero query gives an all-zero output."""
         attn = CrossModalAttention(num_channels=4, seed=42)
         q = np.zeros((4, 16), dtype=np.uint8)
         k = np.ones((4, 16), dtype=np.uint8)
@@ -30,7 +37,8 @@ class TestCrossModalAttention:
         result = attn.attend(q, k, v)
         assert np.sum(result) == 0
 
-    def test_sc_and_multiplication(self):
+    def test_sc_and_multiplication(self) -> None:
+        """Stochastic multiplication is the bitwise AND."""
         attn = CrossModalAttention(num_channels=4)
         a = np.array([[1, 0, 1, 1]], dtype=np.uint8)
         b = np.array([[1, 1, 0, 1]], dtype=np.uint8)

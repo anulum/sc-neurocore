@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2576
+expected_file_count = 2588
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -10348,3 +10348,51 @@ rationale = "Exercise the export suite: tvm lowering tvm lowering."
 [[file]]
 path = "tests/test_export/tvm_lowering_support.py"
 rationale = "Support the TVM lowering tests with typed mock SC-IR nodes and graphs."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_bitstream_decorrelator.py"
+rationale = "Exercise the sensor fusion suite: bitstream decorrelator."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_cochlea_adapter.py"
+rationale = "Exercise the sensor fusion suite: cochlea adapter."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_cross_modal_attention.py"
+rationale = "Exercise the sensor fusion suite: cross modal attention."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_dvs_adapter.py"
+rationale = "Exercise the sensor fusion suite: dvs adapter."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_event_stream.py"
+rationale = "Exercise the sensor fusion suite: event stream."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_fusion_energy_estimator.py"
+rationale = "Exercise the sensor fusion suite: fusion energy estimator."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_fusion_verilog_emitter.py"
+rationale = "Exercise the sensor fusion suite: fusion verilog emitter."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_hdc_binding.py"
+rationale = "Exercise the sensor fusion suite: hdc binding."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_imu_adapter.py"
+rationale = "Exercise the sensor fusion suite: imu adapter."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_sensor_fusion_layer.py"
+rationale = "Exercise the sensor fusion suite: sensor fusion layer."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_tactile_adapter.py"
+rationale = "Exercise the sensor fusion suite: tactile adapter."
+
+[[file]]
+path = "tests/test_fusion/test_sensor_fusion_temporal_aligner.py"
+rationale = "Exercise the sensor fusion suite: temporal aligner."

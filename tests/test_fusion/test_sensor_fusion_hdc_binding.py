@@ -10,22 +10,34 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    HDCBinding,
+    SensorModality,
+)
+from sensor_fusion_support import (
+    _make_stream,
+)
 
 
 class TestHDCBinding:
-    def test_hypervector_dimension(self):
+    """Hypervectors, binding and bundling for sensor streams."""
+
+    def test_hypervector_dimension(self) -> None:
+        """A hypervector has the configured dimension."""
         hdc = HDCBinding(dim=2048)
         hv = hdc.get_hypervector("dvs")
         assert len(hv) == 2048
 
-    def test_hypervector_deterministic(self):
+    def test_hypervector_deterministic(self) -> None:
+        """A name gives the same hypervector every time."""
         hdc = HDCBinding(dim=512, seed=42)
         a = hdc.get_hypervector("test")
         b = hdc.get_hypervector("test")
         np.testing.assert_array_equal(a, b)
 
-    def test_bind_is_self_inverse(self):
+    def test_bind_is_self_inverse(self) -> None:
+        """Binding twice with the same vector recovers the original."""
         hdc = HDCBinding(dim=1024, seed=42)
         a = hdc.get_hypervector("a")
         b = hdc.get_hypervector("b")
@@ -33,7 +45,8 @@ class TestHDCBinding:
         unbound = hdc.bind(bound, b)
         np.testing.assert_array_equal(unbound, a)
 
-    def test_bundle_majority_vote(self):
+    def test_bundle_majority_vote(self) -> None:
+        """Bundling takes the bitwise majority."""
         hdc = HDCBinding(dim=1024, seed=42)
         a = np.ones(1024, dtype=np.uint8)
         b = np.ones(1024, dtype=np.uint8)
@@ -41,32 +54,37 @@ class TestHDCBinding:
         result = hdc.bundle([a, b, c])
         assert np.sum(result) == 1024  # majority is 1
 
-    def test_bundle_empty_returns_zero_hypervector(self):
+    def test_bundle_empty_returns_zero_hypervector(self) -> None:
+        """Bundling nothing gives the zero hypervector."""
         hdc = HDCBinding(dim=64)
         result = hdc.bundle([])
         assert result.shape == (64,)
         assert np.sum(result) == 0
 
-    def test_similarity_identical(self):
+    def test_similarity_identical(self) -> None:
+        """A hypervector has similarity one with itself."""
         hdc = HDCBinding(dim=512, seed=42)
         a = hdc.get_hypervector("x")
         assert hdc.similarity(a, a) == 1.0
 
-    def test_similarity_random_near_half(self):
+    def test_similarity_random_near_half(self) -> None:
+        """Two random hypervectors have similarity near one half."""
         hdc = HDCBinding(dim=4096, seed=42)
         a = hdc.get_hypervector("x")
         b = hdc.get_hypervector("y")
         sim = hdc.similarity(a, b)
         assert 0.3 < sim < 0.7
 
-    def test_encode_stream(self):
+    def test_encode_stream(self) -> None:
+        """A stream encodes as a byte hypervector of the configured dimension."""
         hdc = HDCBinding(dim=1024, seed=42)
         s = _make_stream(SensorModality.DVS, 50, seed=0)
         hv = hdc.encode_stream(s)
         assert len(hv) == 1024
         assert hv.dtype == np.uint8
 
-    def test_different_modalities_different_encoding(self):
+    def test_different_modalities_different_encoding(self) -> None:
+        """The same events encode differently for different modalities."""
         hdc = HDCBinding(dim=1024, seed=42)
         s1 = _make_stream(SensorModality.DVS, 50, seed=0)
         s2 = _make_stream(SensorModality.COCHLEA, 50, seed=0)

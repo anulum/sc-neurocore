@@ -10,28 +10,38 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    CochleaAdapter,
+    SensorModality,
+)
 
 
 class TestCochleaAdapter:
-    def test_freq_to_channel_boundaries(self):
+    """Frequency mapping and spike encoding of the cochlea adapter."""
+
+    def test_freq_to_channel_boundaries(self) -> None:
+        """Frequencies below and above the band map to the first and last channels."""
         coch = CochleaAdapter(num_channels=64)
         assert coch.freq_to_channel(10.0) == 0
         assert coch.freq_to_channel(25000.0) == 63
 
-    def test_freq_to_channel_mid(self):
+    def test_freq_to_channel_mid(self) -> None:
+        """A mid-band frequency maps to an inner channel."""
         coch = CochleaAdapter(num_channels=64)
         ch = coch.freq_to_channel(1000.0)
         assert 0 < ch < 63
 
-    def test_log_scale_ordering(self):
+    def test_log_scale_ordering(self) -> None:
+        """Higher frequencies map to higher channels."""
         coch = CochleaAdapter(num_channels=64)
         ch_low = coch.freq_to_channel(100.0)
         ch_mid = coch.freq_to_channel(1000.0)
         ch_high = coch.freq_to_channel(10000.0)
         assert ch_low < ch_mid < ch_high
 
-    def test_encode_spikes(self):
+    def test_encode_spikes(self) -> None:
+        """Five tones encode as five cochlea events."""
         ts = np.arange(5, dtype=np.float64) * 100
         freqs = np.array([100.0, 500.0, 1000.0, 5000.0, 10000.0])
         coch = CochleaAdapter(num_channels=32)

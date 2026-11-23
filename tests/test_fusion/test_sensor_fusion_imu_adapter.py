@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from sensor_fusion_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.sensor_fusion import (
+    IMUAdapter,
+    SensorModality,
+)
 
 
 class TestIMUAdapter:
-    def test_encode_angular_rate(self):
+    """Angular-rate encoding of the IMU adapter."""
+
+    def test_encode_angular_rate(self) -> None:
+        """Angular rates encode as proprioceptive events, some dropped by the dead zone."""
         ts = np.arange(10, dtype=np.float64) * 100
         axes = np.zeros(10, dtype=np.int64)
         rates = np.array([10, 3, -20, 2, 15, -1, 30, 4, -8, 0], dtype=np.float64)
@@ -22,7 +29,8 @@ class TestIMUAdapter:
         assert stream.modality == SensorModality.PROPRIOCEPTIVE
         assert stream.num_events < 10  # some filtered by deadzone
 
-    def test_deadzone_filters_small(self):
+    def test_deadzone_filters_small(self) -> None:
+        """Only rates beyond the dead zone become events."""
         ts = np.arange(5, dtype=np.float64) * 100
         axes = np.zeros(5, dtype=np.int64)
         rates = np.array([1, 2, 3, 4, 100], dtype=np.float64)
