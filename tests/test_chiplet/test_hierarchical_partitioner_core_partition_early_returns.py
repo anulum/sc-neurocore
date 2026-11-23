@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_core_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestPartitionEarlyReturns:
-    """`partition()` and `_recursive_bisect` have early-return paths
-    for tiny inputs that pytest --cov flagged uncovered."""
+    """Early-return paths of partitioning on tiny inputs.
+
+    `partition()` and `_recursive_bisect` have early-return paths
+    for tiny inputs that pytest --cov flagged uncovered.
+    """
 
     def test_partition_with_fewer_vertices_than_partitions_pads(self) -> None:
+        """With fewer vertices than partitions, each vertex gets its own part and the rest stay empty."""
         # n_v=3 < num_partitions=5 → return [[v] for v in vertices]
         # then pad with empty partitions.
         g = _build_graph(3, avg_degree=1, seed=11)
@@ -30,6 +39,7 @@ class TestPartitionEarlyReturns:
         assert len(seeds) == 5
 
     def test_recursive_bisect_k_one_returns_input(self) -> None:
+        """With one partition, partitioning returns every vertex in a single part."""
         hp = HierarchicalPartitioner(num_partitions=1)
         g = _build_graph(10, seed=2)
         parts, seeds = hp.partition(g)
@@ -37,6 +47,7 @@ class TestPartitionEarlyReturns:
         assert sorted(parts[0]) == list(range(10))
 
     def test_spectral_bisect_single_vertex(self) -> None:
+        """Spectral bisection of a single vertex returns it with an empty other half."""
         # _spectral_bisect: `if len(vertices) <= 1: return vertices, []`
         hp = HierarchicalPartitioner(num_partitions=2)
         g = _build_graph(5, seed=2)
@@ -45,6 +56,7 @@ class TestPartitionEarlyReturns:
         assert a == [0] and b == []
 
     def test_recursive_bisect_direct_k_one(self) -> None:
+        """Recursive bisection returns its input for k equal to one or for a single vertex."""
         # `_recursive_bisect(_, _, _, k=1)` is reachable internally
         # only via the recursion when k splits to 1; we exercise it
         # directly to cover the early-return branch.

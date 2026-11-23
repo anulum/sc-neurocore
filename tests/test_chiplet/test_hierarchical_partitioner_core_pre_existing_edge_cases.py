@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_core_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    CorrelationAwareGraph,
+    CorrelationEdge,
+)
 
 
 class TestPreExistingEdgeCases:
-    """Two pre-existing edge-case lines (calculate_imbalance_ratio
+    """Two pre-existing edge cases of the partitioner package.
+
+    Two pre-existing edge-case lines (calculate_imbalance_ratio
     `ideal == 0` and MigrationPlanner `recs >= max_recommendations`)
     were uncovered by the original suite. Pin them so the chiplet
-    package reaches 100 % coverage."""
+    package reaches 100 % coverage.
+    """
 
     def test_imbalance_ratio_with_zero_ideal(self) -> None:
+        """Two empty partitions give an imbalance ratio of zero."""
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             calculate_imbalance_ratio,
         )
@@ -30,6 +37,7 @@ class TestPreExistingEdgeCases:
         assert result == 0.0
 
     def test_load_balancer_respects_max_recommendations(self) -> None:
+        """The load balancer returns no more migrations than its cap allows."""
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             CorrelationLoadBalancer,
         )

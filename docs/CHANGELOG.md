@@ -1302,6 +1302,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 15 hierarchical-partitioner core, backend, runtime-cache and
+  metrics test modules (`tests/test_chiplet/test_hierarchical_partitioner_*`)
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing test docstrings, drop their remaining lint
+  and type suppressions and are enrolled in the docstring policy. The
+  backend, metrics and runtime-cache support modules, which no test
+  imports any more, are deleted.
+
 - `engine/tests/test_hdc.rs` regains the layout rustfmt requires: the
   header edit had left two blank lines before its module comment, which
   the engine's `cargo fmt --check` step refuses.

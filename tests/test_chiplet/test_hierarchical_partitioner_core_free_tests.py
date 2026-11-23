@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_core_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.chiplet import (
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 def test_historical_flat_buffer_wrappers_cover_invalid_partition_ids() -> None:

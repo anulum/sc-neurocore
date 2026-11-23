@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_core_support import *  # noqa: F403
+from hierarchical_partitioner_core_support import (
+    _min_partition_ms,
+    _TIMING_REPEATS,
+)
 
 
 class TestPartitionScalingIsLinearish:
-    """The wall-clock should NOT grow quadratically with V any more.
+    """Partition wall-clock scaling stays below quadratic.
+
+    The wall-clock should NOT grow quadratically with V any more.
     We accept a generous slack — exact ms differs by hardware — but
-    a 10× V increase must NOT cause a 100× wall-clock increase."""
+    a 10× V increase must NOT cause a 100× wall-clock increase.
+    """
 
     def test_v200_finishes_under_one_second(self) -> None:
+        """Partitioning 200 vertices takes under one second at its best of several runs."""
         # Pre-fix this took ~700 ms on the dev box; post-fix ~30 ms.
         # 1 s is a generous CI margin (covers slow shared runners).
         # The minimum over repeats is the sample least contaminated by

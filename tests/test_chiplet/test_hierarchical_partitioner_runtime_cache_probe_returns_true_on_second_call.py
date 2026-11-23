@@ -10,32 +10,31 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from hierarchical_partitioner_runtime_cache_support import *  # noqa: F403
+import pytest
 
 
 class TestProbeReturnsTrueOnSecondCall:
-    """Each `_ensure_*_loaded` probe must short-circuit return True
+    """Backend probes short-circuit on their second call.
+
+    Each `_ensure_*_loaded` probe must short-circuit return True
     when called again — covers the `if X is not None: return True`
     branch. We force-load (first call) then assert (second call) so
-    the test does not depend on the order of unrelated tests."""
+    the test does not depend on the order of unrelated tests.
+    """
 
     def test_julia_probe_second_call_short_circuits(self) -> None:
+        """A loaded Julia probe returns True on its second call."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
-        try:
-            import juliacall  # noqa: F401
-        except ImportError:
-            pytest.skip("juliacall not installed")
+        pytest.importorskip("juliacall", reason="juliacall not installed")
         if not hp_mod._ensure_julia_kl_refine_loaded():
             pytest.skip("Julia kl_refine.jl not loadable")
         # Now julia is loaded — second call must short-circuit.
         assert hp_mod._ensure_julia_kl_refine_loaded() is True
 
     def test_go_probe_second_call_short_circuits(self) -> None:
+        """A loaded Go probe returns True on its second call."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         if not hp_mod._ensure_go_kl_refine_loaded():
@@ -43,6 +42,7 @@ class TestProbeReturnsTrueOnSecondCall:
         assert hp_mod._ensure_go_kl_refine_loaded() is True
 
     def test_mojo_probe_second_call_short_circuits(self) -> None:
+        """A loaded Mojo probe returns True on its second call."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         if not hp_mod._ensure_mojo_kl_refine_loaded():

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 2444
+expected_file_count = 2459
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9820,3 +9820,63 @@ rationale = "Exercise the chiplet topology: planar topologies."
 [[file]]
 path = "tests/test_chiplet/test_chiplet_topology_vertical_stacking.py"
 rationale = "Exercise the chiplet topology: vertical stacking."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_backends_all_backends_parity_via_dispatcher.py"
+rationale = "Exercise the hierarchical partitioner backends: all backends parity via dispatcher."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_backends_rust_refine_parity_and_perf.py"
+rationale = "Exercise the hierarchical partitioner backends: rust refine parity and perf."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_csr_graph_accessors.py"
+rationale = "Exercise the hierarchical partitioner core: csr graph accessors."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_free_tests.py"
+rationale = "Exercise the hierarchical partitioner core: free tests."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_partition_early_returns.py"
+rationale = "Exercise the hierarchical partitioner core: partition early returns."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_partition_scaling_is_linearish.py"
+rationale = "Exercise the hierarchical partitioner core: partition scaling is linearish."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_pre_existing_edge_cases.py"
+rationale = "Exercise the hierarchical partitioner core: pre existing edge cases."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_core_refine_backend_validation.py"
+rationale = "Exercise the hierarchical partitioner core: refine backend validation."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_metrics_boundary_scc_metrics.py"
+rationale = "Exercise the hierarchical partitioner metrics: boundary scc metrics."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_metrics_comm_volume.py"
+rationale = "Exercise the hierarchical partitioner metrics: comm volume."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_metrics_csr_graph.py"
+rationale = "Exercise the hierarchical partitioner metrics: csr graph."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_metrics_imbalance_ratio.py"
+rationale = "Exercise the hierarchical partitioner metrics: imbalance ratio."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_metrics_partition_report.py"
+rationale = "Exercise the hierarchical partitioner metrics: partition report."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_runtime_cache_import_fallback.py"
+rationale = "Exercise the hierarchical partitioner runtime cache: import fallback."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_runtime_cache_probe_returns_true_on_second_call.py"
+rationale = "Exercise the hierarchical partitioner runtime cache: probe returns true on second call."

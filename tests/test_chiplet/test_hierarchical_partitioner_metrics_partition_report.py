@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_metrics_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    PartitionReport,
+)
 
 
 class TestPartitionReport:
+    """Summary text of a partition report."""
+
     def test_summary(self) -> None:
+        """The report summary names the counts, the imbalance and the communication."""
         r = PartitionReport(
             num_partitions=4,
             partition_sizes=[25, 25, 25, 25],

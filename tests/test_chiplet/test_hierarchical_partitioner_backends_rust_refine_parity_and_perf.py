@@ -10,26 +10,35 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
 from statistics import median
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from hierarchical_partitioner_backends_support import *  # noqa: F403
+import pytest
+import time
+from sc_neurocore.chiplet import (
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 from tests.performance_guard import assert_speedup_guard
 
 
 class TestRustRefineParityAndPerf:
-    """The Rust KL refine kernel must produce the same partition
+    """Rust KL refinement parity and speed.
+
+    The Rust KL refine kernel must produce the same partition
     membership (same vertex → partition mapping) as the Python
     reference, AND it must be measurably faster on a non-trivial
-    workload."""
+    workload.
+    """
 
     def test_rust_backend_matches_python_membership(self) -> None:
+        """The Rust refine kernel gives the Python reference's membership for 50, 100 and 200 vertices."""
         try:
-            from sc_neurocore_engine import py_kl_refine  # noqa: F401
+            from sc_neurocore_engine import py_kl_refine
         except ImportError:
             pytest.skip("sc_neurocore_engine not built — Rust backend missing")
+        assert callable(py_kl_refine)
 
         import copy
 
@@ -61,10 +70,12 @@ class TestRustRefineParityAndPerf:
             )
 
     def test_rust_backend_is_faster_at_v500(self) -> None:
+        """At 500 vertices the Rust refine kernel matches Python and passes the speedup guard."""
         try:
-            from sc_neurocore_engine import py_kl_refine  # noqa: F401
+            from sc_neurocore_engine import py_kl_refine
         except ImportError:
             pytest.skip("sc_neurocore_engine not built")
+        assert callable(py_kl_refine)
         import copy
 
         g = _build_graph(500, avg_degree=8, seed=42)

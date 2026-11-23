@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_metrics_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    calculate_imbalance_ratio,
+)
 
 
 class TestImbalanceRatio:
+    """Imbalance ratio of the partition sizes."""
+
     def test_perfect_balance(self) -> None:
+        """Equal partition sizes give an imbalance ratio of zero."""
         parts = [[0, 1], [2, 3], [4, 5]]
         assert calculate_imbalance_ratio(parts) == 0.0
 
     def test_imbalanced(self) -> None:
+        """Unequal partition sizes give a positive imbalance ratio."""
         parts = [[0, 1, 2, 3], [4]]
         ratio = calculate_imbalance_ratio(parts)
         assert ratio > 0.0
 
     def test_empty(self) -> None:
+        """No partitions at all give an imbalance ratio of zero."""
         assert calculate_imbalance_ratio([]) == 0.0
 
     def test_single_partition(self) -> None:
+        """One partition gives an imbalance ratio of zero."""
         assert calculate_imbalance_ratio([[0, 1, 2]]) == 0.0

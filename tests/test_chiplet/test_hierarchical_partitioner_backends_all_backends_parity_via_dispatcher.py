@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
 
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-from hierarchical_partitioner_backends_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.chiplet import (
+    HierarchicalPartitioner,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    build_graph as _build_graph,
+)
 
 
 class TestAllBackendsParityViaDispatcher:
-    """Every wired backend (rust/julia/go/mojo) must produce the
+    """Backend parity through the refine dispatcher.
+
+    Every wired backend (rust/julia/go/mojo) must produce the
     SAME vertex→partition mapping as the Python reference when
     invoked via `HierarchicalPartitioner(refine_backend=...)`.
 
     These tests exercise the production path (the dispatcher
     invocation), not the bench harness's direct ctypes/juliacall
     calls. They are the load-bearing verification that the wiring
-    actually works for callers."""
+    actually works for callers.
+    """
 
     @pytest.mark.parametrize(
         "backend,probe_fn,probe_arg",
@@ -42,6 +51,7 @@ class TestAllBackendsParityViaDispatcher:
         probe_fn: Callable[[], object],
         probe_arg: str | None,
     ) -> None:
+        """A backend chosen through the dispatcher assigns every vertex as the Python reference does."""
         # Skip if the backend toolchain or built artefact is missing.
         try:
             probe_fn()

@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_core_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    CorrelationEdge,
+)
 
 
 class TestCsrGraphAccessors:
-    """`CSRGraph.edge_conn` and `LFSRSeedAllocator` zero-seed clamp
+    """Coverage of the CSR edge and LFSR seed accessors.
+
+    `CSRGraph.edge_conn` and `LFSRSeedAllocator` zero-seed clamp
     are used by external callers but were uncovered by the existing
-    suite — pin them here."""
+    suite — pin them here.
+    """
 
     def test_edge_conn_returns_correct_slice(self) -> None:
+        """The edge_conn accessor returns the connection weights of one vertex's edges."""
         from sc_neurocore.chiplet.hierarchical_partitioner import CSRGraph
 
         edges = [
@@ -32,6 +38,7 @@ class TestCsrGraphAccessors:
         assert conn0[0] == 1.5
 
     def test_lfsr_seed_clamps_zero_to_one(self) -> None:
+        """The LFSR seed allocator clamps a seed that wraps to zero up to one."""
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             LFSRSeedAllocator,
         )

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from hierarchical_partitioner_metrics_support import *  # noqa: F403
+from sc_neurocore.chiplet import (
+    calculate_comm_volume,
+)
+from tests.test_chiplet.hierarchical_partitioner_support import (
+    make_chain_graph as _make_chain_graph,
+)
 
 
 class TestCommVolume:
+    """Communication volume across partition boundaries."""
+
     def test_basic(self) -> None:
+        """A two-part chain has boundary edges, bytes, and one message per boundary edge."""
         g = _make_chain_graph(6, scc=0.1)
         parts = [[0, 1, 2], [3, 4, 5]]
         cv = calculate_comm_volume(g, parts)
@@ -23,6 +31,7 @@ class TestCommVolume:
         assert cv["messages"] == cv["boundary_edges"]
 
     def test_no_boundary(self) -> None:
+        """A single partition has no boundary edges and no volume."""
         g = _make_chain_graph(4)
         parts = [list(range(4))]
         cv = calculate_comm_volume(g, parts)
