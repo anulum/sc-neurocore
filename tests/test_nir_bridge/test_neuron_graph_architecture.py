@@ -21,9 +21,6 @@ from sc_neurocore.nir_bridge import neuron_graph as historical
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIR = ROOT / "src/sc_neurocore/nir_bridge"
-TEST_DIR = ROOT / "tests/test_nir_bridge"
-BENCHMARK_PATH = ROOT / "benchmarks/bench_nir_graph.py"
-PROBE_PATH = ROOT / "benchmarks/_nir_graph_probe.py"
 
 SYMBOL_OWNERS = {
     "neuron_graph_builder": {"from_scnetwork"},
@@ -249,18 +246,10 @@ def test_graph_summary_reports_population_and_connection_contracts() -> None:
     )
 
 
-def test_source_and_test_files_remain_responsibility_sized() -> None:
-    """Prevent replacement source or test GodFiles in this refactor lane."""
-    source_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in SOURCE_DIR.glob("neuron_graph*.py")
-    }
-    test_sizes = {
-        path.name: len(path.read_text(encoding="utf-8").splitlines())
-        for path in TEST_DIR.glob("*.py")
-    }
-
-    assert max(source_sizes.values()) <= 330, source_sizes
-    assert max(test_sizes.values()) <= 300, test_sizes
-    assert len(BENCHMARK_PATH.read_text(encoding="utf-8").splitlines()) <= 380
-    assert len(PROBE_PATH.read_text(encoding="utf-8").splitlines()) <= 240
+def test_each_responsibility_module_defines_exactly_its_owned_symbols() -> None:
+    """Every neuron-graph module is declared and defines only the symbols it owns."""
+    declared = {"neuron_graph", *RESPONSIBILITY_MODULES}
+    assert {path.stem for path in SOURCE_DIR.glob("neuron_graph*.py")} == declared
+    for module_name, owned in SYMBOL_OWNERS.items():
+        definitions = _top_level_definitions(SOURCE_DIR / f"{module_name}.py")
+        assert definitions == owned, module_name

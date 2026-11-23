@@ -1251,6 +1251,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The hardware neuron-graph architecture test no longer caps the
+  neuron-graph modules at 330 lines, the NIR bridge tests at 300 or the
+  graph benchmark and its probe at 380 and 240. In its place,
+  `test_each_responsibility_module_defines_exactly_its_owned_symbols`
+  requires every `neuron_graph*.py` module to be declared and each to
+  define exactly the symbols it owns, where the ownership test before
+  checked only the established symbols.
+
 - The hypervisor isolation test module no longer caps the isolation
   module at 120 lines or the historical `hypervisor` module at 900. Its
   ownership check stays: the isolation module defines exactly its two
