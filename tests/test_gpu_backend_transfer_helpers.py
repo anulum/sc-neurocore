@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.gpu_backend_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.accel.gpu_backend import (
+    to_device,
+    to_host,
+)
 
 
 class TestTransferHelpers:
-    def test_to_device_and_back(self):
+    """Moving arrays to and from the device."""
+
+    def test_to_device_and_back(self) -> None:
+        """An array survives a round trip to the device."""
         a = np.array([1, 2, 3], dtype=np.float32)
         dev = to_device(a)
         host = to_host(dev)
         np.testing.assert_array_equal(host, a)
 
-    def test_to_host_passthrough(self):
+    def test_to_host_passthrough(self) -> None:
+        """A host array passes through unchanged."""
         a = np.array([4, 5, 6])
         assert to_host(a) is a or np.array_equal(to_host(a), a)

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.gamma_oscillation_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network.gamma_oscillation import (
+    PINGCircuit,
+)
 
 
 class TestPINGCircuit:
-    def test_creates_default(self):
+    """The PING gamma oscillation circuit."""
+
+    def test_creates_default(self) -> None:
+        """The default circuit has 80 E and 20 I cells."""
         ping = PINGCircuit()
         assert ping.n_excitatory == 80
         assert ping.n_inhibitory == 20
@@ -24,7 +31,8 @@ class TestPINGCircuit:
         assert np.all(ping.v_e >= ping.e_l - 2.5)
         assert np.all(ping.v_e <= ping.e_l + 2.5)
 
-    def test_produces_spikes(self):
+    def test_produces_spikes(self) -> None:
+        """Driven E and I cells both spike."""
         ping = PINGCircuit()  # default drive 1.4 µA/cm² → supra-threshold
         total_e, total_i = 0, 0
         for _ in range(2000):  # 200 ms at dt=0.1
@@ -34,7 +42,8 @@ class TestPINGCircuit:
         assert total_e > 0
         assert total_i > 0  # E→I gain loop must engage
 
-    def test_no_drive_no_spikes(self):
+    def test_no_drive_no_spikes(self) -> None:
+        """Without drive nothing spikes."""
         ping = PINGCircuit(
             i_drive_e_mean=0.0,
             i_drive_e_sigma=0.0,
@@ -50,7 +59,8 @@ class TestPINGCircuit:
         # Zero drive + zero noise → V relaxes to E_L < threshold → no spikes.
         assert total == 0
 
-    def test_inhibition_suppresses(self):
+    def test_inhibition_suppresses(self) -> None:
+        """Stronger inhibition lowers the E rate."""
         # Stronger I→E inhibition should suppress E firing within the
         # published Börgers-Kopell weak-PING regime. Outside this band
         # (w_ie ≫ 0.05) the conductance saturates and rebound bursts
@@ -67,7 +77,8 @@ class TestPINGCircuit:
             f"stronger inhibition should suppress (e_strong={e_strong}, e_weak={e_weak})"
         )
 
-    def test_reset_returns_v_near_e_l(self):
+    def test_reset_returns_v_near_e_l(self) -> None:
+        """A reset returns voltages near rest and clears conductances."""
         ping = PINGCircuit()
         for _ in range(100):
             ping.step(dt=0.1)
@@ -77,6 +88,7 @@ class TestPINGCircuit:
         assert np.all(ping.g_ampa_e == 0.0)
         assert np.all(ping.g_gaba_e == 0.0)
 
-    def test_invalid_size_raises(self):
+    def test_invalid_size_raises(self) -> None:
+        """A circuit without both E and I cells is rejected."""
         with pytest.raises(ValueError, match="at least 1 E and 1 I"):
             PINGCircuit(n_excitatory=0)

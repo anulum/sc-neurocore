@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3102
+expected_file_count = 3150
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -12452,3 +12452,195 @@ rationale = "Exercise SC-NeuroCore: circuit primitives lateral inhibition."
 [[file]]
 path = "tests/test_circuit_primitives_winner_take_all.py"
 rationale = "Exercise SC-NeuroCore: circuit primitives winner take all."
+
+[[file]]
+path = "tests/test_fusion_modality_config.py"
+rationale = "Exercise SC-NeuroCore: fusion modality config."
+
+[[file]]
+path = "tests/test_fusion_multi_modal_fusion.py"
+rationale = "Exercise SC-NeuroCore: fusion multi modal fusion."
+
+[[file]]
+path = "tests/test_fusion_multimodal_modality_config.py"
+rationale = "Exercise SC-NeuroCore: fusion multimodal modality config."
+
+[[file]]
+path = "tests/test_fusion_multimodal_multi_modal_fusion_attention.py"
+rationale = "Exercise SC-NeuroCore: fusion multimodal multi modal fusion attention."
+
+[[file]]
+path = "tests/test_fusion_multimodal_multi_modal_fusion_concatenate.py"
+rationale = "Exercise SC-NeuroCore: fusion multimodal multi modal fusion concatenate."
+
+[[file]]
+path = "tests/test_fusion_multimodal_multi_modal_fusion_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: fusion multimodal multi modal fusion edge cases."
+
+[[file]]
+path = "tests/test_fusion_multimodal_multi_modal_fusion_sum.py"
+rationale = "Exercise SC-NeuroCore: fusion multimodal multi modal fusion sum."
+
+[[file]]
+path = "tests/test_gamma_oscillation_native_backend_dispatch.py"
+rationale = "Exercise SC-NeuroCore: gamma oscillation native backend dispatch."
+
+[[file]]
+path = "tests/test_gamma_oscillation_ping_circuit.py"
+rationale = "Exercise SC-NeuroCore: gamma oscillation ping circuit."
+
+[[file]]
+path = "tests/test_gamma_oscillation_ping_circuit_determinism.py"
+rationale = "Exercise SC-NeuroCore: gamma oscillation ping circuit determinism."
+
+[[file]]
+path = "tests/test_gamma_oscillation_published_fidelity.py"
+rationale = "Exercise SC-NeuroCore: gamma oscillation published fidelity."
+
+[[file]]
+path = "tests/test_gamma_oscillation_python_rust_parity.py"
+rationale = "Exercise SC-NeuroCore: gamma oscillation python rust parity."
+
+[[file]]
+path = "tests/test_gap_junction_gap_junction.py"
+rationale = "Exercise SC-NeuroCore: gap junction gap junction."
+
+[[file]]
+path = "tests/test_gap_junction_gap_junction_population.py"
+rationale = "Exercise SC-NeuroCore: gap junction gap junction population."
+
+[[file]]
+path = "tests/test_gpfa_em.py"
+rationale = "Exercise SC-NeuroCore: gpfa em."
+
+[[file]]
+path = "tests/test_gpfa_free_tests.py"
+rationale = "Exercise SC-NeuroCore: gpfa free tests."
+
+[[file]]
+path = "tests/test_gpfa_go_parity.py"
+rationale = "Exercise SC-NeuroCore: gpfa go parity."
+
+[[file]]
+path = "tests/test_gpfa_gp_kernel.py"
+rationale = "Exercise SC-NeuroCore: gpfa gp kernel."
+
+[[file]]
+path = "tests/test_gpfa_gpfa.py"
+rationale = "Exercise SC-NeuroCore: gpfa gpfa."
+
+[[file]]
+path = "tests/test_gpfa_julia_parity.py"
+rationale = "Exercise SC-NeuroCore: gpfa julia parity."
+
+[[file]]
+path = "tests/test_gpfa_log_likelihood.py"
+rationale = "Exercise SC-NeuroCore: gpfa log likelihood."
+
+[[file]]
+path = "tests/test_gpfa_mojo_parity.py"
+rationale = "Exercise SC-NeuroCore: gpfa mojo parity."
+
+[[file]]
+path = "tests/test_gpfa_pca_init.py"
+rationale = "Exercise SC-NeuroCore: gpfa pca init."
+
+[[file]]
+path = "tests/test_gpfa_rust_parity.py"
+rationale = "Exercise SC-NeuroCore: gpfa rust parity."
+
+[[file]]
+path = "tests/test_gpfa_transform.py"
+rationale = "Exercise SC-NeuroCore: gpfa transform."
+
+[[file]]
+path = "tests/test_gpu_backend_gpu_pack.py"
+rationale = "Exercise SC-NeuroCore: gpu backend gpu pack."
+
+[[file]]
+path = "tests/test_gpu_backend_gpu_popcount.py"
+rationale = "Exercise SC-NeuroCore: gpu backend gpu popcount."
+
+[[file]]
+path = "tests/test_gpu_backend_gpu_vec_and.py"
+rationale = "Exercise SC-NeuroCore: gpu backend gpu vec and."
+
+[[file]]
+path = "tests/test_gpu_backend_gpu_vec_mac.py"
+rationale = "Exercise SC-NeuroCore: gpu backend gpu vec mac."
+
+[[file]]
+path = "tests/test_gpu_backend_transfer_helpers.py"
+rationale = "Exercise SC-NeuroCore: gpu backend transfer helpers."
+
+[[file]]
+path = "tests/test_gpu_backend_vectorized_layer_gpu.py"
+rationale = "Exercise SC-NeuroCore: gpu backend vectorized layer gpu."
+
+[[file]]
+path = "tests/test_graph_topology_modularity.py"
+rationale = "Exercise SC-NeuroCore: graph topology modularity."
+
+[[file]]
+path = "tests/test_graph_topology_path_sample_cap.py"
+rationale = "Exercise SC-NeuroCore: graph topology path sample cap."
+
+[[file]]
+path = "tests/test_graph_topology_topology_analyzer.py"
+rationale = "Exercise SC-NeuroCore: graph topology topology analyzer."
+
+[[file]]
+path = "tests/test_hardware_constraint_checker.py"
+rationale = "Exercise SC-NeuroCore: hardware constraint checker."
+
+[[file]]
+path = "tests/test_hardware_device_catalog.py"
+rationale = "Exercise SC-NeuroCore: hardware device catalog."
+
+[[file]]
+path = "tests/test_hardware_hardware_benchmark.py"
+rationale = "Exercise SC-NeuroCore: hardware hardware benchmark."
+
+[[file]]
+path = "tests/test_hardware_mapper.py"
+rationale = "Exercise SC-NeuroCore: hardware mapper."
+
+[[file]]
+path = "tests/test_hardware_resource_estimator.py"
+rationale = "Exercise SC-NeuroCore: hardware resource estimator."
+
+[[file]]
+path = "tests/test_hh_validation_hodgkin_huxley_validation.py"
+rationale = "Exercise SC-NeuroCore: hh validation hodgkin huxley validation."
+
+[[file]]
+path = "tests/test_hh_validation_native_hodgkin_huxley.py"
+rationale = "Exercise SC-NeuroCore: hh validation native hodgkin huxley."
+
+[[file]]
+path = "tests/test_hls_export_compiles.py"
+rationale = "Exercise SC-NeuroCore: hls export compiles."
+
+[[file]]
+path = "tests/test_hls_export_euler_integration.py"
+rationale = "Exercise SC-NeuroCore: hls export euler integration."
+
+[[file]]
+path = "tests/test_hls_export_free_variables.py"
+rationale = "Exercise SC-NeuroCore: hls export free variables."
+
+[[file]]
+path = "tests/test_hls_export_helpers.py"
+rationale = "Exercise SC-NeuroCore: hls export helpers."
+
+[[file]]
+path = "tests/test_hls_export_hls_cpp_export.py"
+rationale = "Exercise SC-NeuroCore: hls export hls cpp export."
+
+[[file]]
+path = "tests/test_hls_export_structure_and_backends.py"
+rationale = "Exercise SC-NeuroCore: hls export structure and backends."
+
+[[file]]
+path = "tests/test_hls_export_threshold_and_reset.py"
+rationale = "Exercise SC-NeuroCore: hls export threshold and reset."

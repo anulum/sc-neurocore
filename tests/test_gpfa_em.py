@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa_em,
+    gpfa_pca_init,
+)
+from tests.gpfa_support import (
+    _synthetic_trains,
+)
 
 
 class TestEm:
+    """Expectation maximisation for GPFA."""
+
     def test_converges_and_is_deterministic(self) -> None:
+        """EM raises the likelihood, converges early and repeats exactly."""
         Y = np.asarray(_synthetic_trains(8, 600), dtype=np.float64)[:, :30]
         c0, d0, r0, tau = gpfa_pca_init(Y, 3, 20.0)
         x1, c1, _, _, ll1 = gpfa_em(Y, c0, d0, r0, tau, 40, 1e-4)
@@ -26,6 +37,7 @@ class TestEm:
         assert ll1 == ll2
 
     def test_respects_max_iter_without_convergence(self) -> None:
+        """EM stops at its iteration cap."""
         Y = np.asarray(_synthetic_trains(6, 400), dtype=np.float64)[:, :25]
         c0, d0, r0, tau = gpfa_pca_init(Y, 2, 20.0)
         _, _, _, _, ll = gpfa_em(Y, c0, d0, r0, tau, 3, 1e-12)

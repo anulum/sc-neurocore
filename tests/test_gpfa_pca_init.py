@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa_pca_init,
+)
+from tests.gpfa_support import (
+    _synthetic_trains,
+)
 
 
 class TestPcaInit:
+    """PCA initialisation for GPFA."""
+
     def test_deterministic_and_shapes(self) -> None:
+        """Initialisation repeats with the expected shapes."""
         Y = np.asarray(_synthetic_trains(6, 200), dtype=np.float64)[:, :30]
         c1, d1, r1, tau1 = gpfa_pca_init(Y, 3, 20.0)
         c2, d2, r2, tau2 = gpfa_pca_init(Y, 3, 20.0)
@@ -26,6 +36,7 @@ class TestPcaInit:
         npt.assert_array_equal(tau1, 40.0)
 
     def test_sign_convention_max_abs_entry_positive(self) -> None:
+        """Each loading column has a positive largest entry."""
         Y = np.asarray(_synthetic_trains(5, 150), dtype=np.float64)[:, :25]
         c, _, _, _ = gpfa_pca_init(Y, 2, 20.0)
         for j in range(c.shape[1]):

@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.hh_validation_support import *  # noqa: F403
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
 
 
 class TestNativeHodgkinHuxley:
     """Cross-validate the sc_neurocore HodgkinHuxleyNeuron."""
 
-    def test_native_fires(self):
+    def test_native_fires(self) -> None:
         """Native HH produces spikes at I=10."""
         hh = HodgkinHuxleyNeuron()
         spikes = sum(hh.step(10.0) for _ in range(50))
         assert spikes > 0, "0 spikes in 50ms"
 
-    def test_native_resting(self):
+    def test_native_resting(self) -> None:
         """Native HH settles near -65 mV with no current."""
         hh = HodgkinHuxleyNeuron()
         for _ in range(100):

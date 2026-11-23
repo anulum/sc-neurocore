@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.gpu_backend_support import *  # noqa: F403
+from sc_neurocore.accel.gpu_backend import (
+    gpu_vec_and,
+    to_host,
+    xp,
+)
 
 
 class TestGPUVecAnd:
-    def test_identity(self):
+    """Bitwise AND of word vectors."""
+
+    def test_identity(self) -> None:
+        """AND with all ones keeps the word."""
         a = xp.array([0xFFFFFFFFFFFFFFFF], dtype=xp.uint64)
         b = xp.array([0xAAAAAAAAAAAAAAAA], dtype=xp.uint64)
         result = gpu_vec_and(a, b)
         assert int(to_host(result)[0]) == 0xAAAAAAAAAAAAAAAA
 
-    def test_zero(self):
+    def test_zero(self) -> None:
+        """AND with zero gives zero."""
         a = xp.array([0xFFFFFFFFFFFFFFFF], dtype=xp.uint64)
         b = xp.array([0], dtype=xp.uint64)
         result = gpu_vec_and(a, b)

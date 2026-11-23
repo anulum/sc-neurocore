@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.gamma_oscillation_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network.gamma_oscillation import (
+    _HAS_RUST_PING_STEP,
+    PINGCircuit,
+)
 
 
 @pytest.mark.skipif(
@@ -18,8 +23,9 @@ from tests.gamma_oscillation_support import *  # noqa: F403
     reason="Rust kernel sc_neurocore_engine.py_ping_step not built",
 )
 class TestPythonRustParity:
-    """Per-population spike rates match between the NumPy and Rust
-    backends within a tight tolerance.
+    """Per-population spike rates of the NumPy and Rust backends match closely.
+
+    They agree within a tight tolerance.
 
     Per-cell membrane voltages diverge at the float-noise level
     because NumPy may issue FMA/SIMD intermediate operations whose
@@ -35,7 +41,8 @@ class TestPythonRustParity:
         "n_e,n_i",
         [(80, 20), (400, 100), (1000, 250)],
     )
-    def test_population_rates_match(self, n_e, n_i):
+    def test_population_rates_match(self, n_e: int, n_i: int) -> None:
+        """Population rates of the two backends agree."""
         ping_py = PINGCircuit(
             n_excitatory=n_e,
             n_inhibitory=n_i,
@@ -73,7 +80,7 @@ class TestPythonRustParity:
             f"I rate mismatch py={rate_i_py:.3f} rs={rate_i_rs:.3f}"
         )
 
-    def test_dominant_frequency_matches_across_backends(self):
+    def test_dominant_frequency_matches_across_backends(self) -> None:
         """The published 30-80 Hz peak must reproduce on both backends."""
         ping_py = PINGCircuit(
             n_excitatory=400,
@@ -104,7 +111,8 @@ class TestPythonRustParity:
         # 1 Hz tolerance covers spectral-bin rounding.
         assert abs(f_py - f_rs) < 1.5
 
-    def test_explicit_rust_request_works(self):
+    def test_explicit_rust_request_works(self) -> None:
+        """An explicit Rust request uses Rust."""
         ping = PINGCircuit(
             n_excitatory=10,
             n_inhibitory=4,
@@ -114,6 +122,7 @@ class TestPythonRustParity:
         assert ping._use_rust is True
         ping.step(dt=0.1)
 
-    def test_invalid_backend_raises(self):
+    def test_invalid_backend_raises(self) -> None:
+        """An unknown backend is rejected."""
         with pytest.raises(ValueError, match="backend must be"):
             PINGCircuit(backend="haskell")

@@ -10,17 +10,28 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa,
+    gpfa_transform,
+)
+from tests.gpfa_support import (
+    _synthetic_trains,
+)
 
 
 class TestTransform:
+    """Projecting spike trains with a fitted GPFA."""
+
     def test_projects_new_trains(self) -> None:
+        """New trains project to trajectories of the fitted shape."""
         trains = _synthetic_trains()
         params = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=20)
         proj = gpfa_transform(trains, params, bin_ms=20.0)
         assert proj.shape == params["trajectories"].shape
 
     def test_empty_inputs_return_empty(self) -> None:
+        """Empty inputs project to nothing."""
         full = {"C": np.zeros((1, 1)), "d": np.zeros(1), "R": np.eye(1), "tau": np.ones(1)}
         assert gpfa_transform([], full).size == 0  # no trains
         empty_c = {"C": np.array([]), "d": np.array([]), "R": np.array([]), "tau": np.array([])}

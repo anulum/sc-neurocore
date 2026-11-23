@@ -10,25 +10,29 @@
 
 from __future__ import annotations
 
-from tests.gamma_oscillation_support import *  # noqa: F403
+from typing import cast
+import numpy as np
+from sc_neurocore.network.gamma_oscillation import (
+    PINGCircuit,
+)
 
 
 class TestPublishedFidelity:
     """Pin the qualitative features the publication highlights."""
 
-    def test_python_step_consumes_one_noise_vector_per_population(self):
-        """The Python reference must consume the same Wiener increments as
-        native backends: one E vector and one I vector per timestep.
+    def test_python_step_consumes_one_noise_vector_per_population(self) -> None:
+        """The Python reference consumes the same Wiener increments as the native backends.
 
+        It draws one E vector and one I vector per timestep.
         A second hidden draw changes the stochastic trajectory and breaks
         backend parity even when all deterministic biophysics match.
         """
 
         class SequenceRng:
-            def __init__(self):
-                self.calls = []
+            def __init__(self) -> None:
+                self.calls: list[int] = []
 
-            def standard_normal(self, size):
+            def standard_normal(self, size: int) -> np.ndarray[tuple[int], np.dtype[np.float64]]:
                 self.calls.append(size)
                 if len(self.calls) == 1:
                     return np.array([2.0, -4.0])
@@ -68,7 +72,7 @@ class TestPublishedFidelity:
         ping.i_drive_e[:] = 0.0
         ping.i_drive_i[:] = 0.0
         fake_rng = SequenceRng()
-        ping._rng = fake_rng
+        ping._rng = cast(np.random.Generator, fake_rng)
 
         spikes_e, spikes_i = ping.step(dt=0.25)
 
@@ -78,7 +82,7 @@ class TestPublishedFidelity:
         assert not np.any(spikes_e)
         assert not np.any(spikes_i)
 
-    def test_gamma_frequency_is_30_to_80_hz(self):
+    def test_gamma_frequency_is_30_to_80_hz(self) -> None:
         """Default parameters reproduce Fig 2A's gamma-band peak."""
         ping = PINGCircuit(seed=42)
         # Burn-in 100 ms so transient initial sync settles.
@@ -96,7 +100,7 @@ class TestPublishedFidelity:
             "the published gamma band (30-80 Hz)"
         )
 
-    def test_e_drive_zero_disengages_gain_loop(self):
+    def test_e_drive_zero_disengages_gain_loop(self) -> None:
         """No E drive → no spikes → no E→I AMPA → no I spikes."""
         ping = PINGCircuit(
             i_drive_e_mean=0.0,
@@ -115,9 +119,11 @@ class TestPublishedFidelity:
         assert e_count == 0
         assert i_count == 0
 
-    def test_w_ei_zero_breaks_gain_loop(self):
-        """Cutting E→I weight to 0 leaves I cells silent (their drive
-        is 0); this is the canonical PING gain-loop test."""
+    def test_w_ei_zero_breaks_gain_loop(self) -> None:
+        """Cutting the E→I weight to 0 leaves the I cells silent.
+
+        Their drive is 0; this is the canonical PING gain-loop test.
+        """
         ping = PINGCircuit(w_ei=0.0, seed=13)
         e_count, i_count = 0, 0
         for _ in range(2000):
@@ -127,7 +133,7 @@ class TestPublishedFidelity:
         assert e_count > 0  # E cells still spike on their own drive
         assert i_count == 0  # I cells starved → no inhibition → no gamma
 
-    def test_population_rate_units_are_hz(self):
+    def test_population_rate_units_are_hz(self) -> None:
         """`population_rate` returns Hz per neuron, not raw counts."""
         ping = PINGCircuit(seed=23)
         log = []
@@ -139,7 +145,7 @@ class TestPublishedFidelity:
         # E cells fire at ~10-50 Hz in default regime.
         assert 1.0 <= float(np.mean(rate)) <= 200.0
 
-    def test_dominant_frequency_handles_silence(self):
+    def test_dominant_frequency_handles_silence(self) -> None:
         """All-silent log → returns 0.0 instead of NaN/raise."""
         ping = PINGCircuit(
             i_drive_e_mean=0.0,
@@ -150,13 +156,13 @@ class TestPublishedFidelity:
         spikes = [np.zeros(80, dtype=bool) for _ in range(1000)]
         assert ping.dominant_frequency(spikes, dt=0.1) == 0.0
 
-    def test_population_rate_empty_log(self):
+    def test_population_rate_empty_log(self) -> None:
         """Empty spike log → empty rate array, no crash."""
         rate = PINGCircuit.population_rate([], dt=0.1, bin_ms=1.0)
         assert isinstance(rate, np.ndarray)
         assert rate.size == 0
 
-    def test_scale_invariant_dominant_frequency(self):
+    def test_scale_invariant_dominant_frequency(self) -> None:
         """A 5× larger circuit must stay in the published 30-80 Hz band.
 
         Pins the per-spike conductance normalisation in `__post_init__`.
@@ -178,7 +184,7 @@ class TestPublishedFidelity:
             "in __post_init__ has regressed"
         )
 
-    def test_dominant_frequency_band_outside_nyquist(self):
+    def test_dominant_frequency_band_outside_nyquist(self) -> None:
         """If [f_min, f_max] excludes every FFT bin, return 0.0."""
         ping = PINGCircuit(seed=3)
         # Run long enough to get a non-trivial rate signal.

@@ -10,19 +10,26 @@
 
 from __future__ import annotations
 
-from tests.hls_export_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence.hls_export import (
+    generate_hls_cpp,
+)
 
 
 class TestHelpers:
+    """Helper functions in HLS exports."""
+
     def test_sigmoid_helper_emitted_when_used(self) -> None:
+        """The sigmoid helper is emitted when used."""
         cpp = generate_hls_cpp("sc_x", {"v": "sigmoid(v)"})
         assert "static inline fp_t sc_sigmoid(fp_t x)" in cpp
 
     def test_exprel_helper_emitted_when_used(self) -> None:
+        """The exprel helper is emitted when used."""
         cpp = generate_hls_cpp("sc_x", {"v": "exprel(v)"})
         assert "static inline fp_t sc_exprel(fp_t x)" in cpp
 
     def test_helpers_absent_when_unused(self) -> None:
+        """Unused helpers are not emitted."""
         cpp = generate_hls_cpp("sc_lif", {"v": "I"})
         assert "sc_sigmoid" not in cpp
         assert "sc_exprel" not in cpp

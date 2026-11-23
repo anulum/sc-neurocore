@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 49 top-level test modules of the fusion, gamma-oscillation, gap
+  junction, GPFA, GPU backend, graph topology, hardware mapping,
+  Hodgkin-Huxley validation and HLS export suites import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy. Seven support modules left without an importer
+  are deleted.
+
 - The 83 top-level test modules of the bipolar SC, bit-true, bridge,
   bus, catalogue, CCW bridge, C emitter, chaos, Chialvo map, chip
   compiler and circuit-primitive suites import their names explicitly

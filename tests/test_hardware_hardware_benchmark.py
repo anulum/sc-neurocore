@@ -10,12 +10,23 @@
 
 from __future__ import annotations
 
-from tests.hardware_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.hardware import (
+    ConstraintChecker,
+    DeviceFamily,
+    get_device,
+    HardwareConstraints,
+    Mapper,
+    ResourceEstimator,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestHardwareBenchmark:
-    def test_map_10k_neurons(self):
+    """Benchmarks of hardware mapping."""
+
+    def test_map_10k_neurons(self) -> None:
         """Map 10,000 neurons to Loihi in < 2 seconds."""
         rng = np.random.default_rng(42)
         adj = (rng.random((10_000, 10_000)) > 0.999).astype(float)
@@ -32,7 +43,7 @@ class TestHardwareBenchmark:
             strict_minimum_per_second=0.5,
         )
 
-    def test_estimate_10k_neurons(self):
+    def test_estimate_10k_neurons(self) -> None:
         """Resource estimation for 10k neurons in < 1 second."""
         rng = np.random.default_rng(42)
         adj = (rng.random((10_000, 10_000)) > 0.999).astype(float)
@@ -48,7 +59,7 @@ class TestHardwareBenchmark:
             strict_minimum_per_second=1.0,
         )
 
-    def test_constraint_check_1k_neurons(self):
+    def test_constraint_check_1k_neurons(self) -> None:
         """Constraint check for 1000 neurons in < 0.5 seconds."""
         rng = np.random.default_rng(42)
         adj = (rng.random((1000, 1000)) > 0.99).astype(float)

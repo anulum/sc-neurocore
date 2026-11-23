@@ -10,20 +10,25 @@
 
 from __future__ import annotations
 
-from tests.graph_topology_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.topology import (
+    TopologyAnalyzer,
+)
 
 
 class TestPathSampleCap:
     """n_path_samples constructor parameter (closes task #41)."""
 
-    def test_default_cap_is_100(self):
+    def test_default_cap_is_100(self) -> None:
+        """The default path sample cap is 100."""
         rng = np.random.RandomState(0)
         adj = (rng.random((10, 10)) < 0.3).astype(float)
         np.fill_diagonal(adj, 0)
         a = TopologyAnalyzer(adj)
         assert a.n_path_samples == 100
 
-    def test_explicit_small_cap_does_not_crash(self):
+    def test_explicit_small_cap_does_not_crash(self) -> None:
+        """A small cap still gives a path length."""
         adj = (np.random.RandomState(3).random((200, 200)) < 0.05).astype(float)
         np.fill_diagonal(adj, 0)
         a = TopologyAnalyzer(adj, n_path_samples=5)
@@ -32,7 +37,8 @@ class TestPathSampleCap:
         # Sampled-from-5 path length is finite (>=0)
         assert rep.avg_path_length >= 0
 
-    def test_cap_zero_falls_back_to_full_n(self):
+    def test_cap_zero_falls_back_to_full_n(self) -> None:
+        """A cap of 0 samples every node."""
         rng = np.random.RandomState(2)
         adj = (rng.random((40, 40)) < 0.2).astype(float)
         np.fill_diagonal(adj, 0)
@@ -41,6 +47,7 @@ class TestPathSampleCap:
         rep = a.analyze()
         assert rep.avg_path_length > 0
 
-    def test_explicit_cap_attribute_persists(self):
+    def test_explicit_cap_attribute_persists(self) -> None:
+        """An explicit cap is kept."""
         a = TopologyAnalyzer(np.zeros((5, 5)), n_path_samples=42)
         assert a.n_path_samples == 42

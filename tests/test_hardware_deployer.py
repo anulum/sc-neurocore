@@ -10,13 +10,27 @@
 
 from __future__ import annotations
 
-from tests.hardware_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+import pytest
+from sc_neurocore.hardware import (
+    Deployer,
+    DeploymentPackage,
+    DeviceFamily,
+    DeviceSpec,
+    get_device,
+    Mapper,
+    NeuronPlacement,
+)
 
 
 class TestDeployer:
     """Package, validate and summarise deployments from a mapped random network."""
 
-    def _pipeline(self, n=20, family=DeviceFamily.LOIHI):
+    def _pipeline(
+        self, n: int = 20, family: DeviceFamily = DeviceFamily.LOIHI
+    ) -> tuple[Deployer, np.ndarray[Any, Any], DeviceSpec, list[NeuronPlacement]]:
         """Return a deployer, a random adjacency, its device and greedy placements."""
         rng = np.random.default_rng(42)
         adj = (rng.random((n, n)) > 0.8).astype(float) * rng.random((n, n))
@@ -27,14 +41,14 @@ class TestDeployer:
         deployer = Deployer()
         return deployer, adj, device, placements
 
-    def test_package_creates_blob(self):
+    def test_package_creates_blob(self) -> None:
         """Packaging produces a non-empty configuration blob."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
         assert isinstance(pkg, DeploymentPackage)
         assert len(pkg.config_blob) > 0
 
-    def test_validate_good_package(self):
+    def test_validate_good_package(self) -> None:
         """A freshly built package validates."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
@@ -54,14 +68,14 @@ class TestDeployer:
         assert pkg.metadata["n_neurons"] == n
         assert deployer.validate(pkg) is True
 
-    def test_validate_empty_blob_fails(self):
+    def test_validate_empty_blob_fails(self) -> None:
         """An empty configuration blob fails validation."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
         pkg.config_blob = b""
         assert deployer.validate(pkg) is False
 
-    def test_validate_rejects_duplicate_neuron_ids(self):
+    def test_validate_rejects_duplicate_neuron_ids(self) -> None:
         """A neuron placed twice fails validation."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
@@ -69,7 +83,7 @@ class TestDeployer:
         pkg.placements = [dup, dup, *placements[2:]]
         assert deployer.validate(pkg) is False
 
-    def test_validate_rejects_core_id_out_of_range(self):
+    def test_validate_rejects_core_id_out_of_range(self) -> None:
         """A core id at the device's core count fails validation."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
@@ -78,7 +92,7 @@ class TestDeployer:
         pkg.placements = [bad, *placements[1:]]
         assert deployer.validate(pkg) is False
 
-    def test_validate_rejects_local_id_out_of_range(self):
+    def test_validate_rejects_local_id_out_of_range(self) -> None:
         """A local id at the device's neurons per core fails validation."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
@@ -87,7 +101,7 @@ class TestDeployer:
         pkg.placements = [bad, *placements[1:]]
         assert deployer.validate(pkg) is False
 
-    def test_summary_contains_info(self):
+    def test_summary_contains_info(self) -> None:
         """The summary names the neurons, synapses and device family."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
@@ -96,20 +110,20 @@ class TestDeployer:
         assert "Synapses" in summary
         assert "LOIHI" in summary
 
-    def test_metadata_populated(self):
+    def test_metadata_populated(self) -> None:
         """The metadata records the neuron count and the device family."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
         assert pkg.metadata["n_neurons"] == 20
         assert pkg.metadata["device_family"] == "LOIHI"
 
-    def test_config_blob_starts_with_magic(self):
+    def test_config_blob_starts_with_magic(self) -> None:
         """The blob starts with the SCNC magic."""
         deployer, adj, device, placements = self._pipeline()
         pkg = deployer.package(adj, device, placements)
         assert pkg.config_blob[:4] == b"SCNC"
 
-    def test_full_pipeline_roundtrip(self):
+    def test_full_pipeline_roundtrip(self) -> None:
         """A 50-neuron network packages, validates and summarises."""
         deployer, adj, device, placements = self._pipeline(n=50)
         pkg = deployer.package(adj, device, placements)
@@ -117,7 +131,7 @@ class TestDeployer:
         summary = deployer.summary(pkg)
         assert "50" in summary
 
-    def test_package_uses_explicit_weights_override(self):
+    def test_package_uses_explicit_weights_override(self) -> None:
         """Explicit weights are coded and counted instead of the adjacency values."""
         deployer, adj, device, placements = self._pipeline(n=8)
         dense_weights = np.ones_like(adj, dtype=np.float32)
@@ -128,7 +142,7 @@ class TestDeployer:
         assert len(pkg.config_blob) > 16
         assert pkg.metadata["n_synapses"] == int(np.count_nonzero(dense_weights))
 
-    def test_package_handles_all_zero_weights_scaling_branch(self):
+    def test_package_handles_all_zero_weights_scaling_branch(self) -> None:
         """All-zero weights still package and validate."""
         deployer, adj, device, placements = self._pipeline(n=8)
         zero_weights = np.zeros_like(adj, dtype=np.float32)
@@ -137,7 +151,7 @@ class TestDeployer:
         # Still valid package, even when all encoded weights are zero.
         assert deployer.validate(pkg) is True
 
-    def test_package_marks_fits_false_when_core_usage_exceeds_device_capacity(self):
+    def test_package_marks_fits_false_when_core_usage_exceeds_device_capacity(self) -> None:
         """A package that needs more cores than the device has is marked as not fitting."""
         deployer, adj, _, _ = self._pipeline(n=20)
         tiny_device = DeviceSpec(

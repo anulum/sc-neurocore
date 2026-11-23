@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from tests.fusion_multimodal_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+    MultiModalFusion,
+)
 
 
 class TestMultiModalFusionConcatenate:
-    def _make_fusion(self):
+    """Concatenating modalities."""
+
+    def _make_fusion(self) -> MultiModalFusion:
         mods = [
             ModalityConfig(name="dvs", n_channels=4, dt_us=1000.0),
             ModalityConfig(name="audio", n_channels=3, dt_us=1000.0),
         ]
         return MultiModalFusion(mods, output_dt_us=1000.0, mode="concatenate")
 
-    def test_output_channels(self):
+    def test_output_channels(self) -> None:
+        """The output has the channels of every modality."""
         f = self._make_fusion()
         assert f.n_output == 7
 
-    def test_fuse_same_timebase(self):
+    def test_fuse_same_timebase(self) -> None:
+        """Equal timebases fuse without resampling."""
         f = self._make_fusion()
         trains = {
             "dvs": np.ones((5, 4)),
@@ -34,14 +42,16 @@ class TestMultiModalFusionConcatenate:
         out = f.fuse(trains, duration_us=5000.0)
         assert out.shape == (5, 7)
 
-    def test_missing_modality_zeros(self):
+    def test_missing_modality_zeros(self) -> None:
+        """A missing modality contributes zeros."""
         f = self._make_fusion()
         trains = {"dvs": np.ones((5, 4))}
         out = f.fuse(trains, duration_us=5000.0)
         assert out.shape == (5, 7)
         assert np.all(out[:, 4:] == 0)
 
-    def test_resampling(self):
+    def test_resampling(self) -> None:
+        """Inputs are resampled to the output timebase."""
         mods = [
             ModalityConfig(name="fast", n_channels=2, dt_us=500.0),
             ModalityConfig(name="slow", n_channels=2, dt_us=2000.0),

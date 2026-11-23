@@ -10,30 +10,42 @@
 
 from __future__ import annotations
 
-from tests.hardware_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.hardware import (
+    DeviceFamily,
+    DeviceSpec,
+    get_device,
+    Mapper,
+)
 
 
 class TestMapper:
-    def _make_adj(self, n=20, density=0.1, seed=42):
+    """Mapping neurons onto device cores."""
+
+    def _make_adj(self, n: int = 20, density: float = 0.1, seed: int = 42) -> np.ndarray[Any, Any]:
         rng = np.random.default_rng(seed)
         adj = (rng.random((n, n)) < density).astype(float)
         np.fill_diagonal(adj, 0)
         return adj
 
-    def test_greedy_no_collisions(self):
+    def test_greedy_no_collisions(self) -> None:
+        """Greedy mapping places each neuron once."""
         adj = self._make_adj()
         mapper = Mapper()
         placements = mapper.map_greedy(adj, get_device(DeviceFamily.LOIHI))
         neuron_ids = [p.neuron_id for p in placements]
         assert len(set(neuron_ids)) == len(neuron_ids)
 
-    def test_balanced_all_placed(self):
+    def test_balanced_all_placed(self) -> None:
+        """Balanced mapping places every neuron."""
         adj = self._make_adj()
         mapper = Mapper()
         placements = mapper.map_balanced(adj, get_device(DeviceFamily.LOIHI))
         assert len(placements) == 20
 
-    def test_locality_clusters_neighbors(self):
+    def test_locality_clusters_neighbors(self) -> None:
+        """Locality mapping keeps a cluster on one or two cores."""
         n = 20
         adj = np.zeros((n, n))
         # Create two clusters: 0-9 and 10-19
@@ -62,7 +74,8 @@ class TestMapper:
         cluster0_cores = {placements[i].core_id for i in range(10)}
         assert len(cluster0_cores) <= 2  # should be 1 or 2 cores
 
-    def test_greedy_core_ids_valid(self):
+    def test_greedy_core_ids_valid(self) -> None:
+        """Greedy placements have valid core and local ids."""
         adj = self._make_adj(100)
         device = get_device(DeviceFamily.LOIHI)
         mapper = Mapper()
@@ -71,7 +84,8 @@ class TestMapper:
             assert p.core_id >= 0
             assert p.local_id >= 0
 
-    def test_balanced_mapping_caps_core_count_to_device_limit(self):
+    def test_balanced_mapping_caps_core_count_to_device_limit(self) -> None:
+        """Balanced mapping stays within the device cores."""
         adj = self._make_adj(n=10, density=0.2)
         mapper = Mapper()
         device = DeviceSpec(
@@ -89,7 +103,8 @@ class TestMapper:
         assert len(placements) == 10
         assert {p.core_id for p in placements} <= {0, 1}
 
-    def test_locality_mapping_fallback_places_all_remaining_neurons(self):
+    def test_locality_mapping_fallback_places_all_remaining_neurons(self) -> None:
+        """The locality fallback places every remaining neuron."""
         n = 9
         adj = np.zeros((n, n), dtype=float)
         mapper = Mapper()

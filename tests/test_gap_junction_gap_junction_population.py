@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.gap_junction_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.synapses.gap_junction import (
+    GapJunction,
+)
 
 
 class TestGapJunctionPopulation:
-    def test_current_matrix_two_neurons(self):
+    """Gap-junction currents across a population."""
+
+    def test_current_matrix_two_neurons(self) -> None:
+        """Two coupled neurons exchange opposite currents."""
         gj = GapJunction(conductance=0.1)
         voltages = np.array([-50.0, -70.0])
         adj = np.array([[0, 1], [1, 0]])
@@ -23,14 +31,16 @@ class TestGapJunctionPopulation:
         # Neuron 1: g*(V0-V1) = 0.1*(-50-(-70)) = +2.0
         np.testing.assert_allclose(currents, [-2.0, 2.0])
 
-    def test_current_matrix_conserves_current(self):
+    def test_current_matrix_conserves_current(self) -> None:
+        """Currents across the population sum to zero."""
         gj = GapJunction(conductance=0.5)
         voltages = np.array([-50.0, -60.0, -70.0])
         adj = np.ones((3, 3)) - np.eye(3)
         currents = gj.current_matrix(voltages, adj)
         np.testing.assert_allclose(currents.sum(), 0.0, atol=1e-10)
 
-    def test_weighted_reciprocal_current_matrix_conserves_current(self):
+    def test_weighted_reciprocal_current_matrix_conserves_current(self) -> None:
+        """Weighted reciprocal coupling still conserves current."""
         gj = GapJunction(conductance=0.25)
         voltages = np.array([-50.0, -60.0, -70.0])
         adj = np.array(
@@ -43,7 +53,8 @@ class TestGapJunctionPopulation:
         currents = gj.current_matrix(voltages, adj)
         np.testing.assert_allclose(currents.sum(), 0.0, atol=1e-10)
 
-    def test_no_connections_no_current(self):
+    def test_no_connections_no_current(self) -> None:
+        """Without connections no current flows."""
         gj = GapJunction(conductance=1.0)
         voltages = np.array([-50.0, -70.0, -90.0])
         adj = np.zeros((3, 3))
@@ -65,7 +76,10 @@ class TestGapJunctionPopulation:
             ),
         ],
     )
-    def test_invalid_current_matrix_inputs_fail_closed(self, voltages, adjacency):
+    def test_invalid_current_matrix_inputs_fail_closed(
+        self, voltages: np.ndarray[Any, Any], adjacency: np.ndarray[Any, Any]
+    ) -> None:
+        """Each invalid voltage or adjacency is rejected."""
         gj = GapJunction(conductance=0.1)
         with pytest.raises(ValueError, match="current_matrix"):
             gj.current_matrix(voltages, adjacency)

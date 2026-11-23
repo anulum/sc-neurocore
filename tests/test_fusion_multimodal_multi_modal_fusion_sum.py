@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.fusion_multimodal_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+    MultiModalFusion,
+)
 
 
 class TestMultiModalFusionSum:
-    def test_sum_mode(self):
+    """Summing the modalities together."""
+
+    def test_sum_mode(self) -> None:
+        """Sum mode gives a bounded output of the modality width."""
         mods = [
             ModalityConfig(name="a", n_channels=3, dt_us=1000.0),
             ModalityConfig(name="b", n_channels=3, dt_us=1000.0),
@@ -30,7 +37,8 @@ class TestMultiModalFusionSum:
         assert np.all(out <= 1.0)
         assert np.all(out >= 0.0)
 
-    def test_sum_different_channel_counts(self):
+    def test_sum_different_channel_counts(self) -> None:
+        """Sum mode takes the widest channel count."""
         mods = [
             ModalityConfig(name="a", n_channels=2, dt_us=1000.0),
             ModalityConfig(name="b", n_channels=4, dt_us=1000.0),

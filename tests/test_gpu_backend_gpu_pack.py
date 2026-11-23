@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.gpu_backend_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.accel.gpu_backend import (
+    gpu_pack_bitstream,
+    to_device,
+    to_host,
+    xp,
+)
 
 
 class TestGPUPack:
-    def test_1d_roundtrip(self):
+    """Packing bits into words."""
+
+    def test_1d_roundtrip(self) -> None:
+        """A short stream packs into one uint64 word."""
         bits = np.array([1, 0, 1, 1] + [0] * 60, dtype=np.uint8)
         packed = gpu_pack_bitstream(to_device(bits))
         host = to_host(packed)
@@ -23,17 +32,20 @@ class TestGPUPack:
         # bit0=1, bit1=0, bit2=1, bit3=1 -> 0b1101 = 13
         assert int(host[0]) == 13
 
-    def test_2d_shape(self):
+    def test_2d_shape(self) -> None:
+        """128 bits pack into two words per row."""
         bits = xp.zeros((4, 128), dtype=xp.uint8)
         packed = gpu_pack_bitstream(bits)
         assert packed.shape == (4, 2)  # 128/64 = 2 words
 
-    def test_all_ones(self):
+    def test_all_ones(self) -> None:
+        """All ones pack to a full word."""
         bits = xp.ones(64, dtype=xp.uint8)
         packed = gpu_pack_bitstream(bits)
         assert int(to_host(packed)[0]) == (2**64 - 1)
 
-    def test_all_zeros(self):
+    def test_all_zeros(self) -> None:
+        """All zeros pack to zero."""
         bits = xp.zeros(64, dtype=xp.uint8)
         packed = gpu_pack_bitstream(bits)
         assert int(to_host(packed)[0]) == 0

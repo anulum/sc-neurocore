@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa,
+)
+from tests.gpfa_support import (
+    _RUST_AVAILABLE,
+    _synthetic_trains,
+)
 
 
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust GPFA backend not built")
@@ -18,6 +26,7 @@ class TestRustParity:
     """The Rust backend matches the NumPy reference up to float64 round-off."""
 
     def test_full_pipeline_parity(self) -> None:
+        """The full pipeline matches Python on this backend."""
         trains = _synthetic_trains()
         py = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=40, backend="python")
         ru = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=40, backend="rust")
@@ -29,6 +38,7 @@ class TestRustParity:
         npt.assert_allclose(ru["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
 
     def test_auto_selects_rust(self) -> None:
+        """The automatic backend selects Rust."""
         # The structured nalgebra Rust path is the fastest measured backend, so
         # `auto` resolves to it when the engine is present (identical result).
         trains = _synthetic_trains()

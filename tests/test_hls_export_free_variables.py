@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from tests.hls_export_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence.hls_export import (
+    generate_hls_cpp,
+)
 
 
 class TestFreeVariables:
+    """Free variables in HLS exports."""
+
     def test_free_vars_become_inputs(self) -> None:
+        """Free variables become inputs."""
         cpp = generate_hls_cpp("sc_lif", {"v": "-v / tau + I - leak * v"})
         assert "fp_t tau," in cpp
         assert "fp_t leak," in cpp
 
     def test_state_vars_not_declared_as_inputs(self) -> None:
+        """State variables are passed by reference."""
         cpp = generate_hls_cpp("sc_izh", {"v": "u + I", "u": "v"})
         # v and u are &-referenced state, never plain input params.
         assert "fp_t &v," in cpp

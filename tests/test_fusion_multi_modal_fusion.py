@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.fusion_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+    MultiModalFusion,
+)
 
 
 class TestMultiModalFusion:
-    def _make_modalities(self):
+    """Fusing several spike modalities."""
+
+    def _make_modalities(self) -> list[ModalityConfig]:
         return [
             ModalityConfig("dvs", n_channels=4, dt_us=100.0),
             ModalityConfig("audio", n_channels=2, dt_us=500.0),
         ]
 
-    def test_concatenate_shape(self):
+    def test_concatenate_shape(self) -> None:
+        """Concatenation joins the channels of every modality."""
         mods = self._make_modalities()
         fuser = MultiModalFusion(mods, output_dt_us=100.0, mode="concatenate")
         spikes = {
@@ -30,7 +38,8 @@ class TestMultiModalFusion:
         out = fuser.fuse(spikes, duration_us=1000.0)
         assert out.shape == (10, 6)
 
-    def test_sum_mode(self):
+    def test_sum_mode(self) -> None:
+        """Sum mode keeps the widest modality and a bounded rate."""
         mods = self._make_modalities()
         fuser = MultiModalFusion(mods, output_dt_us=100.0, mode="sum")
         spikes = {
@@ -41,7 +50,8 @@ class TestMultiModalFusion:
         assert out.shape == (10, 4)
         assert out.max() <= 1.0
 
-    def test_attention_mode(self):
+    def test_attention_mode(self) -> None:
+        """Attention mode joins the channels of every modality."""
         mods = self._make_modalities()
         fuser = MultiModalFusion(mods, output_dt_us=100.0, mode="attention")
         spikes = {
@@ -51,7 +61,8 @@ class TestMultiModalFusion:
         out = fuser.fuse(spikes, duration_us=1000.0)
         assert out.shape == (10, 6)
 
-    def test_missing_modality(self):
+    def test_missing_modality(self) -> None:
+        """A missing modality contributes zeros."""
         mods = self._make_modalities()
         fuser = MultiModalFusion(mods, output_dt_us=100.0, mode="concatenate")
         spikes = {"dvs": np.ones((10, 4))}
@@ -59,7 +70,8 @@ class TestMultiModalFusion:
         assert out.shape == (10, 6)
         assert np.all(out[:, 4:] == 0)
 
-    def test_resampling(self):
+    def test_resampling(self) -> None:
+        """Inputs are resampled to the output timebase."""
         mods = self._make_modalities()
         fuser = MultiModalFusion(mods, output_dt_us=200.0, mode="concatenate")
         spikes = {
@@ -69,6 +81,7 @@ class TestMultiModalFusion:
         out = fuser.fuse(spikes, duration_us=1000.0)
         assert out.shape[0] == 5
 
-    def test_invalid_mode(self):
+    def test_invalid_mode(self) -> None:
+        """An unknown fusion mode is rejected."""
         with pytest.raises(ValueError, match="Unknown mode"):
             MultiModalFusion(self._make_modalities(), mode="bad")

@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa,
+)
+from tests.gpfa_support import (
+    _GO_AVAILABLE,
+    _GPFA_MODULE,
+    _synthetic_trains,
+)
 
 
 @pytest.mark.skipif(not _GO_AVAILABLE, reason="Go GPFA library not built")
@@ -18,6 +27,7 @@ class TestGoParity:
     """The Go backend matches the NumPy reference up to float64 round-off."""
 
     def test_full_pipeline_parity(self) -> None:
+        """The full pipeline matches Python on this backend."""
         trains = _synthetic_trains(6, 400)
         py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="python")
         go = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="go")
@@ -28,5 +38,6 @@ class TestGoParity:
         npt.assert_allclose(go["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
 
     def test_ensure_go_is_cached(self) -> None:
+        """The Go lane is loaded once and cached."""
         assert _GPFA_MODULE._ensure_go_gpfa() is True
         assert _GPFA_MODULE._ensure_go_gpfa() is True

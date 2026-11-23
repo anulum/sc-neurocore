@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.fusion_multimodal_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+    MultiModalFusion,
+)
 
 
 class TestMultiModalFusionAttention:
-    def test_attention_mode(self):
+    """Attention-weighted fusion."""
+
+    def test_attention_mode(self) -> None:
+        """Attention weights cover each modality and sum to 1."""
         mods = [
             ModalityConfig(name="dvs", n_channels=3, dt_us=1000.0),
             ModalityConfig(name="imu", n_channels=2, dt_us=1000.0),

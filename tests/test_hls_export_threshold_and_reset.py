@@ -10,19 +10,26 @@
 
 from __future__ import annotations
 
-from tests.hls_export_support import *  # noqa: F403
+from sc_neurocore.compiler.intelligence.hls_export import (
+    generate_hls_cpp,
+)
 
 
 class TestThresholdAndReset:
+    """Threshold and reset in HLS exports."""
+
     def test_threshold_is_configurable(self) -> None:
+        """The threshold is configurable."""
         cpp = generate_hls_cpp("sc_lif", {"v": "I"}, threshold=2.5)
         assert "const fp_t V_THRESH = fp_t(2.5);" in cpp
 
     def test_membrane_resets_by_subtracting_threshold(self) -> None:
+        """A spike subtracts the threshold."""
         cpp = generate_hls_cpp("sc_lif", {"v": "I"})
         assert "v = spike_out ? (v_next - V_THRESH) : v_next;" in cpp
 
     def test_spike_detection_on_first_state_var(self) -> None:
+        """Spikes are detected on the first state variable."""
         cpp = generate_hls_cpp("sc_izh", {"v": "u + I", "u": "v"})
         assert "spike_out = (v_next > V_THRESH);" in cpp
         # The non-membrane variable updates without a reset.

@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.hls_export_support import *  # noqa: F403
-
 
 class TestHLSCppExport:
     """Vitis/Catapult HLS C++ translation."""
 
     def test_vitis_export(self) -> None:
+        """The Vitis export uses fixed point and a pipeline pragma."""
         from sc_neurocore.compiler.intelligence import generate_hls_cpp
 
         cpp = generate_hls_cpp(
@@ -31,6 +30,7 @@ class TestHLSCppExport:
         assert "V_THRESH" in cpp
 
     def test_catapult_export(self) -> None:
+        """The Catapult export computes the next state."""
         from sc_neurocore.compiler.intelligence import generate_hls_cpp
 
         cpp = generate_hls_cpp(
@@ -43,6 +43,7 @@ class TestHLSCppExport:
         assert "n_next" in cpp
 
     def test_include_guard(self) -> None:
+        """The export has an include guard."""
         from sc_neurocore.compiler.intelligence import generate_hls_cpp
 
         cpp = generate_hls_cpp("sc_lif", {"v": "a + b"})
@@ -50,6 +51,7 @@ class TestHLSCppExport:
         assert "#endif" in cpp
 
     def test_state_struct(self) -> None:
+        """The export declares a state struct."""
         from sc_neurocore.compiler.intelligence import generate_hls_cpp
 
         cpp = generate_hls_cpp("sc_izh", {"v": "a", "u": "b"})
@@ -58,6 +60,7 @@ class TestHLSCppExport:
         assert "fp_t u;" in cpp
 
     def test_spike_detection(self) -> None:
+        """The export detects spikes at the threshold."""
         from sc_neurocore.compiler.intelligence import generate_hls_cpp
 
         cpp = generate_hls_cpp("sc_lif", {"v": "v + I_t"})

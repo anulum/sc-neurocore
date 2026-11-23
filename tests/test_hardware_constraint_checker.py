@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.hardware_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.hardware import (
+    ConstraintChecker,
+    DeviceFamily,
+    get_device,
+    HardwareConstraints,
+)
 
 
 class TestConstraintChecker:
-    def test_no_violations_small_network(self):
+    """Checking a network against device constraints."""
+
+    def test_no_violations_small_network(self) -> None:
+        """A small network breaks no constraint."""
         adj = np.zeros((5, 5))
         adj[0, 1] = 1.0
         adj[1, 2] = 1.0
@@ -23,7 +32,8 @@ class TestConstraintChecker:
         violations = checker.check(adj, constraints)
         assert len(violations) == 0
 
-    def test_fan_in_violation(self):
+    def test_fan_in_violation(self) -> None:
+        """Too much fan-in is reported for its neuron."""
         n = 50
         adj = np.zeros((n, n))
         adj[:, 0] = 1.0  # neuron 0 has fan-in = 49
@@ -35,7 +45,8 @@ class TestConstraintChecker:
         assert len(fan_in_violations) >= 1
         assert fan_in_violations[0].neuron_id == 0
 
-    def test_fan_out_violation(self):
+    def test_fan_out_violation(self) -> None:
+        """Too much fan-out is reported."""
         n = 50
         adj = np.zeros((n, n))
         adj[0, :] = 1.0
@@ -46,7 +57,8 @@ class TestConstraintChecker:
         fan_out_violations = [v for v in violations if v.constraint == "fan_out"]
         assert len(fan_out_violations) >= 1
 
-    def test_delay_violation(self):
+    def test_delay_violation(self) -> None:
+        """Too long a delay is reported."""
         adj = np.array([[0, 1], [0, 0]], dtype=float)
         delays = np.array([[0, 100], [0, 0]], dtype=float)
         checker = ConstraintChecker()
@@ -55,7 +67,8 @@ class TestConstraintChecker:
         delay_v = [v for v in violations if v.constraint == "delay"]
         assert len(delay_v) >= 1
 
-    def test_weight_precision_violation(self):
+    def test_weight_precision_violation(self) -> None:
+        """Weights beyond the precision are reported once."""
         checker = ConstraintChecker()
         constraints = HardwareConstraints(weight_bits=2)
         weights = np.array([[0.0, 0.49], [1.0, 0.0]], dtype=float)
@@ -67,7 +80,8 @@ class TestConstraintChecker:
         assert weight_v[0].neuron_id == -1
         assert weight_v[0].value > weight_v[0].limit
 
-    def test_zero_weights_skip_precision_violation(self):
+    def test_zero_weights_skip_precision_violation(self) -> None:
+        """Zero weights raise no precision violation."""
         checker = ConstraintChecker()
         constraints = HardwareConstraints(weight_bits=1)
 
@@ -75,12 +89,14 @@ class TestConstraintChecker:
 
         assert [v for v in violations if v.constraint == "weight_precision"] == []
 
-    def test_from_device_constraints(self):
+    def test_from_device_constraints(self) -> None:
+        """Constraints come from the device."""
         constraints = HardwareConstraints.from_device(get_device(DeviceFamily.LOIHI))
         assert constraints.max_fan_in == 4096
         assert constraints.weight_bits == 9
 
-    def test_auto_fix_resolves_violations(self):
+    def test_auto_fix_resolves_violations(self) -> None:
+        """Auto-fix removes the fan-in violations."""
         n = 50
         adj = np.zeros((n, n))
         adj[:, 0] = 1.0
@@ -95,7 +111,8 @@ class TestConstraintChecker:
         fan_in_after = [v for v in violations_after if v.constraint == "fan_in"]
         assert len(fan_in_after) == 0
 
-    def test_auto_fix_resolves_fan_out_violations(self):
+    def test_auto_fix_resolves_fan_out_violations(self) -> None:
+        """Auto-fix removes the fan-out violations."""
         n = 50
         adj = np.zeros((n, n))
         adj[0, :] = np.linspace(1.0, 50.0, n)

@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa,
+)
+from tests.gpfa_support import (
+    _synthetic_trains,
+)
 
 
 class TestGpfa:
+    """Fitting GPFA to spike trains."""
+
     def test_deterministic_and_seed_independent(self) -> None:
+        """A fit repeats exactly."""
         trains = _synthetic_trains()
         a = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=30, seed=1)
         b = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=30, seed=999)
@@ -22,6 +32,7 @@ class TestGpfa:
         npt.assert_array_equal(a["C"], b["C"])
 
     def test_auto_matches_python_within_tolerance(self) -> None:
+        """The automatic backend matches Python within tolerance."""
         # `auto` selects the fastest available backend (Rust when the engine is
         # present, else NumPy); either way it agrees with the NumPy reference up to
         # floating-point round-off.
@@ -31,16 +42,19 @@ class TestGpfa:
         npt.assert_allclose(auto["trajectories"], py["trajectories"], atol=1e-7)
 
     def test_clamps_latent_count(self) -> None:
+        """The latent count is capped."""
         trains = _synthetic_trains(n_neurons=2, n_samples=120)
         result = gpfa(trains, n_latents=9, bin_ms=20.0, max_iter=5)
         assert result["C"].shape[1] <= 2
 
     def test_empty_input_returns_empty(self) -> None:
+        """No spike trains give an empty result."""
         result = gpfa([], n_latents=3)
         assert result["trajectories"].size == 0
         assert result["log_likelihoods"] == []
 
     def test_unknown_backend_rejected(self) -> None:
+        """An unknown backend is rejected."""
         trains = _synthetic_trains(n_neurons=3, n_samples=120)
         with pytest.raises(ValueError, match="not available"):
             gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="cuda")

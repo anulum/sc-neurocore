@@ -10,25 +10,31 @@
 
 from __future__ import annotations
 
-from tests.gamma_oscillation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.gamma_oscillation import (
+    PINGCircuit,
+)
 
 
 class TestPINGCircuitDeterminism:
     """Two PINGCircuit instances built with the same seed produce identical output."""
 
-    def test_init_voltages_match_for_same_seed(self):
+    def test_init_voltages_match_for_same_seed(self) -> None:
+        """The same seed gives the same initial voltages."""
         a = PINGCircuit(seed=123)
         b = PINGCircuit(seed=123)
         np.testing.assert_array_equal(a.v_e, b.v_e)
         np.testing.assert_array_equal(a.v_i, b.v_i)
 
-    def test_init_voltages_differ_for_different_seeds(self):
+    def test_init_voltages_differ_for_different_seeds(self) -> None:
+        """Different seeds give different initial voltages."""
         a = PINGCircuit(seed=1)
         b = PINGCircuit(seed=2)
         differ = (not np.array_equal(a.v_e, b.v_e)) or (not np.array_equal(a.v_i, b.v_i))
         assert differ
 
-    def test_step_sequence_identical_for_same_seed(self):
+    def test_step_sequence_identical_for_same_seed(self) -> None:
+        """The same seed gives the same spikes step by step."""
         a = PINGCircuit(seed=99)
         b = PINGCircuit(seed=99)
         for _ in range(500):
@@ -37,7 +43,8 @@ class TestPINGCircuitDeterminism:
             np.testing.assert_array_equal(sa_e, sb_e)
             np.testing.assert_array_equal(sa_i, sb_i)
 
-    def test_global_numpy_seed_does_not_leak_in(self):
+    def test_global_numpy_seed_does_not_leak_in(self) -> None:
+        """The global NumPy seed does not affect a run."""
         np.random.seed(0)
         a = PINGCircuit(seed=42)
         a_spikes_e, a_spikes_i = [], []
@@ -53,7 +60,8 @@ class TestPINGCircuitDeterminism:
             np.testing.assert_array_equal(a_spikes_e[t], sb_e)
             np.testing.assert_array_equal(a_spikes_i[t], sb_i)
 
-    def test_total_spike_count_constant_across_runs(self):
+    def test_total_spike_count_constant_across_runs(self) -> None:
+        """Repeated runs give the same spike total."""
         counts = []
         for _ in range(5):
             ping = PINGCircuit(seed=42)
@@ -64,7 +72,8 @@ class TestPINGCircuitDeterminism:
             counts.append(total)
         assert len(set(counts)) == 1, f"non-deterministic: spike totals = {counts}"
 
-    def test_reset_state_uses_per_instance_rng(self):
+    def test_reset_state_uses_per_instance_rng(self) -> None:
+        """A reset draws from the instance generator."""
         ping = PINGCircuit(seed=42)
         for _ in range(10):
             ping.step(dt=0.1)

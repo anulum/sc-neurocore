@@ -10,7 +10,32 @@
 
 from __future__ import annotations
 
-from tests.gamma_oscillation_support import *  # noqa: F403
+from typing import Any
+import ctypes
+import importlib
+import numpy as np
+import os
+import pytest
+import sys
+from sc_neurocore.network import (
+    gamma_oscillation as gamma_oscillation_module,
+)
+from sc_neurocore.network.gamma_oscillation import (
+    _HAS_GO_PING_STEP,
+    _HAS_JULIA_PING_STEP,
+    _HAS_MOJO_PING_STEP,
+    PINGCircuit,
+)
+from tests.module_reload import (
+    restore_module_namespace,
+    snapshot_module_namespace,
+)
+from types import (
+    SimpleNamespace,
+)
+from typing import (
+    cast,
+)
 
 
 class TestNativeBackendDispatch:
@@ -31,11 +56,12 @@ class TestNativeBackendDispatch:
     )
     def test_explicit_backend_fails_closed_when_kernel_unavailable(
         self,
-        monkeypatch,
-        backend,
-        availability_flag,
-        match,
-    ):
+        monkeypatch: pytest.MonkeyPatch,
+        backend: str,
+        availability_flag: str,
+        match: str,
+    ) -> None:
+        """An explicit backend without its kernel is rejected."""
         monkeypatch.setattr(gamma_oscillation_module, availability_flag, False)
         with pytest.raises(RuntimeError, match=match):
             PINGCircuit(backend=backend)
@@ -48,7 +74,10 @@ class TestNativeBackendDispatch:
             ("mojo", _HAS_MOJO_PING_STEP),
         ],
     )
-    def test_explicit_backend_produces_boolean_spike_trains(self, backend, is_available):
+    def test_explicit_backend_produces_boolean_spike_trains(
+        self, backend: str, is_available: bool
+    ) -> None:
+        """An available native backend gives boolean spike trains."""
         if not is_available:
             pytest.skip(f"{backend} PING kernel is not built")
 
@@ -83,17 +112,19 @@ class TestNativeBackendDispatch:
         assert np.all(ping.g_ampa_e >= 0.0)
         assert np.all(ping.g_gaba_i >= 0.0)
 
-    def test_rust_kernel_discovery_falls_back_without_import_side_effects(self, monkeypatch):
-        real_import_module = gamma_oscillation_module._importlib.import_module
+    def test_rust_kernel_discovery_falls_back_without_import_side_effects(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A missing Rust engine leaves the Rust lane off without side effects."""
+        module_importlib = vars(gamma_oscillation_module)["_importlib"]
+        real_import_module = module_importlib.import_module
 
-        def reject_rust_engine(name):
+        def reject_rust_engine(name: str) -> Any:
             if name in {"sc_neurocore_engine.sc_neurocore_engine", "sc_neurocore_engine"}:
                 raise ImportError(name)
             return real_import_module(name)
 
-        monkeypatch.setattr(
-            gamma_oscillation_module._importlib, "import_module", reject_rust_engine
-        )
+        monkeypatch.setattr(module_importlib, "import_module", reject_rust_engine)
         _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
@@ -108,6 +139,7 @@ class TestNativeBackendDispatch:
     def test_rust_kernel_discovery_uses_root_package_fallback(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """The Rust kernel is found through the root package."""
         importlib_module = cast(Any, gamma_oscillation_module)._importlib
         real_import_module = importlib_module.import_module
 
@@ -131,6 +163,7 @@ class TestNativeBackendDispatch:
     def test_julia_discovery_failure_remains_optional(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A Julia discovery failure leaves the lane off."""
         monkeypatch.setitem(sys.modules, "juliacall", None)
         _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
@@ -144,6 +177,8 @@ class TestNativeBackendDispatch:
     def test_ctypes_backend_discovery_failures_remain_optional(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Native library discovery failures leave the lanes off."""
+
         def fake_exists(path: str) -> bool:
             return path.endswith("libgamma_oscillation.so")
 

@@ -10,27 +10,30 @@
 
 from __future__ import annotations
 
-from tests.gpu_backend_support import *  # noqa: F403
+import numpy as np
 
 
 class TestVectorizedLayerGPU:
     """Integration test: VectorizedSCLayer with GPU path."""
 
-    def test_forward_shape(self):
+    def test_forward_shape(self) -> None:
+        """The layer gives one output per neuron."""
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
         layer = VectorizedSCLayer(n_inputs=4, n_neurons=8, length=256)
         out = layer.forward([0.5, 0.5, 0.5, 0.5])
         assert out.shape == (8,)
 
-    def test_zero_input_low_output(self):
+    def test_zero_input_low_output(self) -> None:
+        """A zero input gives a low output."""
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
         layer = VectorizedSCLayer(n_inputs=4, n_neurons=8, length=1024)
         out = layer.forward([0.0, 0.0, 0.0, 0.0])
         assert np.all(out < 0.05)
 
-    def test_high_input_positive_output(self):
+    def test_high_input_positive_output(self) -> None:
+        """A high input gives a positive output."""
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
         layer = VectorizedSCLayer(n_inputs=4, n_neurons=8, length=1024)

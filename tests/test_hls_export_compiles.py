@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.hls_export_support import *  # noqa: F403
+import pytest
+import shutil
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.intelligence.hls_export import (
+    generate_hls_cpp,
+)
+from tests.hls_export_support import (
+    _AP_FIXED_STUB,
+    _HLS_MATH_STUB,
+)
 
 
 @pytest.mark.skipif(shutil.which("g++") is None, reason="g++ not available")
@@ -38,11 +50,13 @@ class TestCompiles:
         )
 
     def test_lif_compiles(self, tmp_path: Path) -> None:
+        """The LIF export compiles."""
         cpp = generate_hls_cpp("sc_lif", {"v": "-v / tau + I - leak * v"})
         result = self._compile(tmp_path, cpp, "sc_lif")
         assert result.returncode == 0, result.stderr
 
     def test_izhikevich_compiles(self, tmp_path: Path) -> None:
+        """The Izhikevich export compiles."""
         cpp = generate_hls_cpp(
             "sc_izh",
             {"v": "0.04 * v * v + 5.0 * v + 140.0 - u + I", "u": "a * (b * v - u)"},
@@ -51,6 +65,7 @@ class TestCompiles:
         assert result.returncode == 0, result.stderr
 
     def test_transcendental_compiles(self, tmp_path: Path) -> None:
+        """The transcendental export compiles."""
         cpp = generate_hls_cpp("sc_x", {"v": "tanh(v) + sigmoid(v) + exprel(I) + exp(v)"})
         result = self._compile(tmp_path, cpp, "sc_x")
         assert result.returncode == 0, result.stderr

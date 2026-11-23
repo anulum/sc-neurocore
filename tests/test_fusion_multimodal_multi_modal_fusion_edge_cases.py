@@ -10,23 +10,33 @@
 
 from __future__ import annotations
 
-from tests.fusion_multimodal_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+    MultiModalFusion,
+)
 
 
 class TestMultiModalFusionEdgeCases:
-    def test_unknown_mode_raises(self):
+    """Edge cases of multimodal fusion."""
+
+    def test_unknown_mode_raises(self) -> None:
+        """An unknown fusion mode is rejected."""
         mods = [ModalityConfig(name="x", n_channels=1, dt_us=1000.0)]
         with pytest.raises(ValueError, match="Unknown mode"):
             MultiModalFusion(mods, mode="invalid")
 
-    def test_zero_duration(self):
+    def test_zero_duration(self) -> None:
+        """A zero duration still gives one output step."""
         mods = [ModalityConfig(name="x", n_channels=2, dt_us=1000.0)]
         f = MultiModalFusion(mods, output_dt_us=1000.0, mode="concatenate")
         trains = {"x": np.ones((1, 2))}
         out = f.fuse(trains, duration_us=0.0)
         assert out.shape[0] >= 1
 
-    def test_rate_normalization(self):
+    def test_rate_normalization(self) -> None:
+        """Fused rates stay at or below 1."""
         mods = [ModalityConfig(name="x", n_channels=2, dt_us=1000.0)]
         f = MultiModalFusion(mods, output_dt_us=1000.0, mode="concatenate")
         trains = {"x": np.array([[5.0, 10.0], [3.0, 7.0]])}

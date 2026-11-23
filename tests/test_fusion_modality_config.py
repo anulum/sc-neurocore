@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.fusion_support import *  # noqa: F403
+from sc_neurocore.fusion.multimodal import (
+    ModalityConfig,
+)
 
 
 class TestModalityConfig:
-    def test_fields(self):
+    """Configuring a fusion modality."""
+
+    def test_fields(self) -> None:
+        """A modality keeps its name, channels and rate."""
         m = ModalityConfig(name="dvs", n_channels=128, dt_us=100.0)
         assert m.name == "dvs"
         assert m.n_channels == 128

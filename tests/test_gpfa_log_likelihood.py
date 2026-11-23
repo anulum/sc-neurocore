@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    _gp_kernel,
+    _gpfa_log_likelihood,
+    gpfa_pca_init,
+)
+from tests.gpfa_support import (
+    _synthetic_trains,
+)
 
 
 class TestLogLikelihood:
+    """The GPFA log-likelihood."""
+
     def test_finite_for_valid_model(self) -> None:
+        """A valid model has a finite likelihood."""
         Y = np.asarray(_synthetic_trains(5, 200), dtype=np.float64)[:, :20]
         c0, d0, r0, tau = gpfa_pca_init(Y, 2, 20.0)
         k_all = [_gp_kernel(Y.shape[1], float(tau[j])) for j in range(2)]
@@ -22,6 +34,7 @@ class TestLogLikelihood:
         assert np.isfinite(ll)
 
     def test_rejects_non_psd_covariance(self) -> None:
+        """A covariance that is not positive definite is rejected."""
         # A 1x1 marginal covariance with a large negative noise term is negative,
         # so slogdet reports a non-positive sign and the guard fires.
         Y = np.ones((1, 1), dtype=np.float64)

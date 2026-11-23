@@ -10,10 +10,25 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    _gpfa_em_dispatch,
+    _load_rust_gpfa_em,
+    gpfa,
+    gpfa_em,
+    gpfa_pca_init,
+)
+from tests.gpfa_support import (
+    _GPFA_MODULE,
+    _raise_oserror,
+    _synthetic_trains,
+)
 
 
 def test_dispatch_python_matches_reference() -> None:
+    """The Python dispatch matches the reference EM."""
     Y = np.asarray(_synthetic_trains(6, 300), dtype=np.float64)[:, :25]
     c0, d0, r0, tau = gpfa_pca_init(Y, 2, 20.0)
     direct = gpfa_em(Y, c0, d0, r0, tau, 20, 1e-4)
@@ -22,12 +37,14 @@ def test_dispatch_python_matches_reference() -> None:
 
 
 def test_ensure_julia_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without juliacall the Julia lane is off."""
     monkeypatch.setattr(_GPFA_MODULE, "_julia_gpfa", None)
     monkeypatch.setattr(_GPFA_MODULE._importlib_util, "find_spec", lambda _name: None)
     assert _GPFA_MODULE._ensure_julia_gpfa() is False
 
 
 def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without its module file the Julia lane is off."""
     monkeypatch.setattr(_GPFA_MODULE, "_julia_gpfa", None)
     monkeypatch.setattr(_GPFA_MODULE._importlib_util, "find_spec", lambda _name: object())
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
@@ -35,6 +52,7 @@ def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Julia lane raises."""
     monkeypatch.setattr(_GPFA_MODULE, "_ensure_julia_gpfa", lambda: False)
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="Julia GPFA backend is not available"):
@@ -42,12 +60,14 @@ def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_ensure_go_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without its library the Go lane is off."""
     monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
     assert _GPFA_MODULE._ensure_go_gpfa() is False
 
 
 def test_ensure_go_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A Go load error leaves the lane off."""
     monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", _raise_oserror)
@@ -55,6 +75,7 @@ def test_ensure_go_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_ensure_go_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A missing Go symbol leaves the lane off."""
     monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", lambda _path: object())
@@ -62,6 +83,7 @@ def test_ensure_go_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Go lane raises."""
     monkeypatch.setattr(_GPFA_MODULE, "_ensure_go_gpfa", lambda: False)
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="Go GPFA backend is not available"):
@@ -69,12 +91,14 @@ def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_ensure_mojo_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without its library the Mojo lane is off."""
     monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
     assert _GPFA_MODULE._ensure_mojo_gpfa() is False
 
 
 def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A Mojo load error leaves the lane off."""
     monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", _raise_oserror)
@@ -82,6 +106,7 @@ def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A missing Mojo symbol leaves the lane off."""
     monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
     monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", lambda _path: object())
@@ -89,6 +114,7 @@ def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mojo_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Mojo lane raises."""
     monkeypatch.setattr(_GPFA_MODULE, "_ensure_mojo_gpfa", lambda: False)
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="Mojo GPFA backend is not available"):
@@ -96,6 +122,8 @@ def test_mojo_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the engine the Rust probe finds nothing."""
+
     def _raise(_name: str) -> object:
         raise ImportError("engine absent")
 
@@ -104,6 +132,7 @@ def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Requesting the missing Rust lane raises."""
     monkeypatch.setattr(_GPFA_MODULE, "_rust_gpfa_em", None)
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="not available"):

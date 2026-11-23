@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.gpfa_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    _gp_kernel,
+)
 
 
 class TestGpKernel:
+    """The GPFA Gaussian-process kernel."""
+
     def test_shape_diagonal_and_symmetry(self) -> None:
+        """The kernel is a square symmetric matrix."""
         k = _gp_kernel(10, 5.0, 1.0)
         assert k.shape == (10, 10)
         npt.assert_allclose(np.diag(k), 1.0)
         npt.assert_allclose(k, k.T)
 
     def test_decays_with_distance(self) -> None:
+        """The kernel decays with time distance."""
         k = _gp_kernel(20, 3.0)
         assert k[0, 1] > k[0, 10]
