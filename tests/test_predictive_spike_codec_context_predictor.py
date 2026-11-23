@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestContextPredictor:
     """Markov context model predictor tests."""
 
     def test_context_roundtrip(self) -> None:
+        """The context predictor round-trips spikes losslessly."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 16)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="context", context_bits=8)
@@ -26,12 +30,14 @@ class TestContextPredictor:
         assert result.predictor_type == "context"
 
     def test_context_roundtrip_silent(self) -> None:
+        """The context predictor round-trips silent channels."""
         spikes = np.zeros((200, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="context")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 8), spikes)
 
     def test_context_roundtrip_dense(self) -> None:
+        """The context predictor round-trips dense firing."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 8)) < 0.3).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="context", context_bits=4)
@@ -54,6 +60,7 @@ class TestContextPredictor:
         assert r_ctx.prediction_accuracy > r_ema.prediction_accuracy
 
     def test_context_different_bits(self) -> None:
+        """The context predictor round-trips for each context width."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 8)) < 0.05).astype(np.int8)
         for bits in [2, 4, 8, 12]:

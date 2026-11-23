@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestChipletProfiles:
@@ -26,14 +29,12 @@ class TestChipletProfiles:
             "ucie_generic",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each listed profile belongs to the accelerator class."""
         p = get_profile(name)
         assert p.platform_class == "accelerator"
 
-    def test_wse3_frequency(self):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_wse3_frequency(self) -> None:
+        """The wafer-scale engine profile runs at 1000 MHz."""
         p = get_profile("cerebras_wse3")
         assert p.max_freq_mhz == 1000

@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_quadratic_if_backends.py
 
+"""Parity of the quadratic integrate-and-fire backends against Python."""
+
 from __future__ import annotations
 
-from tests.quadratic_if_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+import subprocess
+from sc_neurocore.accel import (
+    quadratic_if as backends,
+)
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.quadratic_if_backends_support import (
+    _COMPILED_BACKENDS,
+    _configured,
+    _GOLDENS,
+    _REPOSITORY,
+    _run,
+    _TRACE_ATOL,
+)
 
 
 def test_every_acceleration_backend_is_executable() -> None:

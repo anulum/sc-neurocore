@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestSovereignDefenceProfiles:
@@ -26,16 +29,13 @@ class TestSovereignDefenceProfiles:
             "trenz_zynq_space",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each listed profile belongs to the fpga class."""
         p = get_profile(name)
         assert p.platform_class == "fpga"
 
-    def test_rad750_no_dsp(self):
+    def test_rad750_no_dsp(self) -> None:
         """RAD750 has no dedicated DSP blocks."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("bae_rad750")
         assert p.dsp_block == ""
         assert p.dsp_mult_a == 0

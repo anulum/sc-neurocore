@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestPythonFallbackPath:
     """Force Python path through the class by monkeypatching _HAS_RUST."""
 
     def test_ema_python_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The Python EMA path round-trips spikes."""
         import sc_neurocore.spike_codec.predictive_codec as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST", False)
@@ -29,6 +34,7 @@ class TestPythonFallbackPath:
         assert result.predictor_type == "ema"
 
     def test_lfsr_python_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The Python LFSR path round-trips spikes."""
         import sc_neurocore.spike_codec.predictive_codec as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST", False)

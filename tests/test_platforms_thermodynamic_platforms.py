@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestThermodynamicPlatforms(unittest.TestCase):
-    def test_extropic_epu(self):
+    """The thermodynamic computing platform profiles."""
+
+    def test_extropic_epu(self) -> None:
+        """The Extropic profile is an eight-bit thermodynamic platform."""
         p = get_profile("extropic_epu")
         self.assertEqual(p.platform_class, "thermodynamic")
         self.assertEqual(p.vendor, "Extropic")
         self.assertEqual(p.data_width, 8)
 
-    def test_normal_cn101(self):
+    def test_normal_cn101(self) -> None:
+        """The Normal profile is a stochastic thermodynamic platform."""
         p = get_profile("normal_cn101")
         self.assertEqual(p.platform_class, "thermodynamic")
         self.assertIn("stochastic", p.notes.lower())

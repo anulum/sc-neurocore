@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestMetamaterialPlatforms(unittest.TestCase):
-    def test_mit_metamaterial(self):
+    """The metamaterial platform profiles."""
+
+    def test_mit_metamaterial(self) -> None:
+        """The MIT profile is a metamaterial platform."""
         p = get_profile("mit_metamaterial")
         self.assertEqual(p.platform_class, "metamaterial")
         self.assertEqual(p.vendor, "MIT")
 
-    def test_penn_acoustic_meta(self):
+    def test_penn_acoustic_meta(self) -> None:
+        """The Penn profile is an acoustic metamaterial platform."""
         p = get_profile("penn_acoustic_meta")
         self.assertEqual(p.platform_class, "metamaterial")
         self.assertIn("acoustic", p.notes.lower())

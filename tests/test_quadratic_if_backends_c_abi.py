@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (c_abi) from former test_quadratic_if_backends.py
 
+"""The C ABI of the quadratic integrate-and-fire kernels."""
+
 from __future__ import annotations
 
-from tests.quadratic_if_backends_support import *  # noqa: F403
+import ctypes
+import math
+import numpy as np
+import pytest
+from sc_neurocore.accel import (
+    quadratic_if as backends,
+)
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.quadratic_if_backends_support import (
+    _c_arguments,
+    _require_qif_backend,
+)
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))

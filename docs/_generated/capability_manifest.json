@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5680
+    "test_files": 5672
   },
   "documentation": {
     "public_pages": [
@@ -3721,15 +3721,8 @@
       "tests/physical_twin_support.py",
       "tests/physics_support.py",
       "tests/pipeline_stages_support.py",
-      "tests/planner_support.py",
-      "tests/platforms_support.py",
-      "tests/power_estimator_support.py",
-      "tests/predictive_spike_codec_support.py",
       "tests/privacy_governance_support.py",
-      "tests/privacy_support.py",
-      "tests/profiler_platform_support.py",
       "tests/public_api_support.py",
-      "tests/pynq_driver_support.py",
       "tests/qat_lsq_support.py",
       "tests/qat_observers_support.py",
       "tests/qat_pact_support.py",
@@ -3737,7 +3730,6 @@
       "tests/qat_torch_support.py",
       "tests/qc_e2e_support.py",
       "tests/quadratic_if_backends_support.py",
-      "tests/quantisation_pipeline_support.py",
       "tests/quantizer_support.py",
       "tests/quantum_cognition_support.py",
       "tests/quantum_stabilisation_support.py",

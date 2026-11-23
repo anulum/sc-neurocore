@@ -10,15 +10,17 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestPredictiveSpikeCodecCompression:
     """Verify compression properties."""
 
     def test_beats_raw_isi_on_bursty_data(self) -> None:
-        """Bursty firing (periodic oscillation) should compress better
-        with prediction than without."""
+        """Bursty firing (periodic oscillation) should compress better with prediction than without."""
         rng = np.random.RandomState(42)
         T, N = 2000, 64
         spikes = np.zeros((T, N), dtype=np.int8)
@@ -41,6 +43,7 @@ class TestPredictiveSpikeCodecCompression:
         assert pred_result.compression_ratio > raw_result.compression_ratio * 0.8
 
     def test_compression_ratio_above_one(self) -> None:
+        """Sparse spikes compress to fewer bytes than raw."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((1000, 50)) < 0.01).astype(np.int8)
         codec = PredictiveSpikeCodec()
@@ -58,6 +61,7 @@ class TestPredictiveSpikeCodecCompression:
         assert result.prediction_accuracy > 0.95
 
     def test_error_sparsity_reported(self) -> None:
+        """The result reports error sparsity in the unit interval."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec()

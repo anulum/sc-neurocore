@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestProbabilisticPlatforms(unittest.TestCase):
-    def test_purdue_pbit(self):
+    """The probabilistic-bit platform profiles."""
+
+    def test_purdue_pbit(self) -> None:
+        """The Purdue profile is a probabilistic platform."""
         p = get_profile("purdue_pbit")
         self.assertEqual(p.platform_class, "probabilistic")
         self.assertEqual(p.vendor, "Purdue")
 
-    def test_tohoku_sot_pbit(self):
+    def test_tohoku_sot_pbit(self) -> None:
+        """The Tohoku profile is a spin-orbit-torque p-bit platform."""
         p = get_profile("tohoku_sot_pbit")
         self.assertEqual(p.platform_class, "probabilistic")
         self.assertIn("SOT", p.notes)

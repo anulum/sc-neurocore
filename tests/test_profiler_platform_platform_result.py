@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.profiler_platform_support import *  # noqa: F403
+from sc_neurocore.profiler import (
+    PlatformResult,
+)
 
 
 class TestPlatformResult:
-    def test_fields(self):
+    """The platform comparison result record."""
+
+    def test_fields(self) -> None:
+        """A result is available with empty notes by default."""
         r = PlatformResult(
             platform="python",
             latency_ms=10.0,
@@ -25,7 +30,8 @@ class TestPlatformResult:
         assert r.available is True
         assert r.notes == ""
 
-    def test_unavailable(self):
+    def test_unavailable(self) -> None:
+        """A result can be marked unavailable."""
         r = PlatformResult(
             platform="custom",
             latency_ms=0,

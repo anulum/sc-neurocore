@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestPredictiveSpikeCodecRoundtrip:
     """Lossless roundtrip: compress → decompress must recover exact input."""
 
     def test_roundtrip_sparse_spikes(self) -> None:
+        """Sparse spikes round-trip losslessly."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
         codec = PredictiveSpikeCodec(alpha=0.005)
@@ -26,6 +30,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         assert result.lossless
 
     def test_roundtrip_dense_spikes(self) -> None:
+        """Dense spikes round-trip losslessly."""
         rng = np.random.RandomState(7)
         spikes = (rng.random((100, 16)) < 0.3).astype(np.int8)
         codec = PredictiveSpikeCodec(alpha=0.01)
@@ -34,6 +39,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_roundtrip_silent_channels(self) -> None:
+        """Silent channels round-trip with zero spikes."""
         spikes = np.zeros((200, 10), dtype=np.int8)
         codec = PredictiveSpikeCodec()
         data, result = codec.compress(spikes)
@@ -42,6 +48,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         assert result.n_spikes == 0
 
     def test_roundtrip_all_firing(self) -> None:
+        """Channels that always fire round-trip losslessly."""
         spikes = np.ones((50, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(alpha=0.1, threshold=0.5)
         data, _ = codec.compress(spikes)
@@ -49,6 +56,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_roundtrip_single_spike(self) -> None:
+        """A single spike round-trips losslessly."""
         spikes = np.zeros((100, 4), dtype=np.int8)
         spikes[42, 2] = 1
         codec = PredictiveSpikeCodec()
@@ -57,6 +65,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_roundtrip_single_channel(self) -> None:
+        """A single channel round-trips losslessly."""
         rng = np.random.RandomState(99)
         spikes = (rng.random((300, 1)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec()

@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestAutomotiveEdgeProfiles:
@@ -27,8 +30,7 @@ class TestAutomotiveEdgeProfiles:
             "syntiant_ndp120",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each automotive edge profile has a positive data width."""
         p = get_profile(name)
         assert p.data_width > 0

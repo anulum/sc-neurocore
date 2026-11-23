@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.power_estimator_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.power_estimator import (
+    estimate_power,
+)
 
 
 class TestPowerEstimator:

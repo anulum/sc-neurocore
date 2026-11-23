@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestPIMCXLProfiles:
@@ -26,8 +29,7 @@ class TestPIMCXLProfiles:
             "axdimm",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each listed profile belongs to the in_memory class."""
         p = get_profile(name)
         assert p.platform_class == "in_memory"

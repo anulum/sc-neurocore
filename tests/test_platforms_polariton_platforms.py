@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestPolaritonPlatforms(unittest.TestCase):
-    def test_marvell_polariton(self):
+    """The polariton platform profiles."""
+
+    def test_marvell_polariton(self) -> None:
+        """The Marvell profile is a polariton platform."""
         p = get_profile("marvell_polariton")
         self.assertEqual(p.platform_class, "polariton")
         self.assertEqual(p.vendor, "Marvell")
 
-    def test_stanford_polariton(self):
+    def test_stanford_polariton(self) -> None:
+        """The Stanford profile is a perovskite polariton platform."""
         p = get_profile("stanford_polariton")
         self.assertEqual(p.platform_class, "polariton")
         self.assertIn("perovskite", p.notes.lower())

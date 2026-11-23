@@ -10,13 +10,12 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
-
 
 class TestWeightNoise:
     """Device-variation noise injection for analog robustness."""
 
-    def test_gaussian_noise_changes_weights(self):
+    def test_gaussian_noise_changes_weights(self) -> None:
+        """Gaussian noise changes the weights."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, -1.0], [0.5, 0.0]]
@@ -25,7 +24,8 @@ class TestWeightNoise:
         differs = any(w[i][j] != noisy[i][j] for i in range(len(w)) for j in range(len(w[0])))
         assert differs
 
-    def test_noise_is_reproducible(self):
+    def test_noise_is_reproducible(self) -> None:
+        """The same seed gives the same noisy weights."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, 0.5], [-0.3, 0.8]]
@@ -33,7 +33,8 @@ class TestWeightNoise:
         n2 = inject_weight_noise(w, seed=123)
         assert n1 == n2
 
-    def test_different_seeds_differ(self):
+    def test_different_seeds_differ(self) -> None:
+        """Different seeds give different noisy weights."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, 0.5]]
@@ -41,7 +42,8 @@ class TestWeightNoise:
         n2 = inject_weight_noise(w, seed=2)
         assert n1 != n2
 
-    def test_uniform_noise(self):
+    def test_uniform_noise(self) -> None:
+        """Uniform noise keeps the weight matrix shape."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, -1.0]]
@@ -49,14 +51,16 @@ class TestWeightNoise:
         assert len(noisy) == 1
         assert len(noisy[0]) == 2
 
-    def test_lognormal_noise(self):
+    def test_lognormal_noise(self) -> None:
+        """Log-normal noise keeps the weight matrix shape."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, 0.5]]
         noisy = inject_weight_noise(w, noise_model="lognormal", seed=42)
         assert len(noisy[0]) == 2
 
-    def test_noise_profile_creation(self):
+    def test_noise_profile_creation(self) -> None:
+        """A noise profile keeps its model, sigma and target."""
         from sc_neurocore.compiler.intelligence import create_noise_profile
 
         p = create_noise_profile(
@@ -67,7 +71,8 @@ class TestWeightNoise:
         assert p.sigma == 0.03
         assert p.target_platform == "rain_neuromorphic"
 
-    def test_zero_sigma_no_noise(self):
+    def test_zero_sigma_no_noise(self) -> None:
+        """A zero sigma leaves the weights unchanged."""
         from sc_neurocore.compiler.intelligence import inject_weight_noise
 
         w = [[1.0, -0.5, 0.3]]

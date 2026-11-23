@@ -10,31 +10,35 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from sc_neurocore.compiler.platforms import (
+    list_profile_names,
+)
 
 
 class TestTotalProfileCount:
     """Verify total platform coverage."""
 
-    def test_at_least_113_profiles(self):
-        from sc_neurocore.compiler.platforms import list_profile_names
-
+    def test_at_least_113_profiles(self) -> None:
+        """The registry holds at least 113 profiles."""
         names = list_profile_names()
         assert len(names) >= 113, f"Only {len(names)} profiles found"
 
-    def test_10_platform_classes(self):
+    def test_10_platform_classes(self) -> None:
+        """The registry holds at least nine platform classes."""
         from sc_neurocore.compiler.platforms import list_profiles
 
         classes = {p.platform_class for p in list_profiles()}
         assert len(classes) >= 9
 
-    def test_filter_by_photonic(self):
+    def test_filter_by_photonic(self) -> None:
+        """At least five profiles are photonic."""
         from sc_neurocore.compiler.platforms import list_profiles
 
         photonic = list_profiles(platform_class="photonic")
         assert len(photonic) >= 5
 
-    def test_filter_by_in_memory(self):
+    def test_filter_by_in_memory(self) -> None:
+        """At least five profiles compute in memory."""
         from sc_neurocore.compiler.platforms import list_profiles
 
         pim = list_profiles(platform_class="in_memory")

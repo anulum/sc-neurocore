@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3318
+expected_file_count = 3381
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -13316,3 +13316,255 @@ rationale = "Exercise SC-NeuroCore: phi estimation phi star."
 [[file]]
 path = "tests/test_phi_estimation_rust_parity.py"
 rationale = "Exercise SC-NeuroCore: phi estimation rust parity."
+
+[[file]]
+path = "tests/physics_support.py"
+rationale = "Provide the uniform stochastic heat solver builder for the physics suites."
+
+[[file]]
+path = "tests/test_physics_stochastic_heat_solver.py"
+rationale = "Exercise SC-NeuroCore: physics stochastic heat solver."
+
+[[file]]
+path = "tests/test_physics_wolfram_hypergraph.py"
+rationale = "Exercise SC-NeuroCore: physics wolfram hypergraph."
+
+[[file]]
+path = "tests/test_planner_predictive_world_model.py"
+rationale = "Exercise SC-NeuroCore: planner predictive world model."
+
+[[file]]
+path = "tests/test_planner_sc_planner.py"
+rationale = "Exercise SC-NeuroCore: planner sc planner."
+
+[[file]]
+path = "tests/test_platforms_auto_target_recommender.py"
+rationale = "Exercise SC-NeuroCore: platforms auto target recommender."
+
+[[file]]
+path = "tests/test_platforms_automotive_edge_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms automotive edge profiles."
+
+[[file]]
+path = "tests/test_platforms_chiplet_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms chiplet profiles."
+
+[[file]]
+path = "tests/test_platforms_extended_coverage.py"
+rationale = "Exercise SC-NeuroCore: platforms extended coverage."
+
+[[file]]
+path = "tests/test_platforms_final_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms final platforms."
+
+[[file]]
+path = "tests/test_platforms_free_tests.py"
+rationale = "Exercise SC-NeuroCore: platforms free tests."
+
+[[file]]
+path = "tests/test_platforms_from_constraints.py"
+rationale = "Exercise SC-NeuroCore: platforms from constraints."
+
+[[file]]
+path = "tests/test_platforms_frontier_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms frontier platforms."
+
+[[file]]
+path = "tests/test_platforms_frontier_platforms_w8.py"
+rationale = "Exercise SC-NeuroCore: platforms frontier platforms w8."
+
+[[file]]
+path = "tests/test_platforms_magnonic_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms magnonic platforms."
+
+[[file]]
+path = "tests/test_platforms_metamaterial_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms metamaterial platforms."
+
+[[file]]
+path = "tests/test_platforms_new_platform_classes.py"
+rationale = "Exercise SC-NeuroCore: platforms new platform classes."
+
+[[file]]
+path = "tests/test_platforms_next_gen_neuromorphic_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms next gen neuromorphic profiles."
+
+[[file]]
+path = "tests/test_platforms_organic_bioelectronic.py"
+rationale = "Exercise SC-NeuroCore: platforms organic bioelectronic."
+
+[[file]]
+path = "tests/test_platforms_photonic_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms photonic profiles."
+
+[[file]]
+path = "tests/test_platforms_pimcxl_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms pimcxl profiles."
+
+[[file]]
+path = "tests/test_platforms_polariton_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms polariton platforms."
+
+[[file]]
+path = "tests/test_platforms_probabilistic_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms probabilistic platforms."
+
+[[file]]
+path = "tests/test_platforms_risc_v_sovereign.py"
+rationale = "Exercise SC-NeuroCore: platforms risc v sovereign."
+
+[[file]]
+path = "tests/test_platforms_sovereign_defence_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms sovereign defence profiles."
+
+[[file]]
+path = "tests/test_platforms_thermodynamic_platforms.py"
+rationale = "Exercise SC-NeuroCore: platforms thermodynamic platforms."
+
+[[file]]
+path = "tests/test_platforms_toml_loader.py"
+rationale = "Exercise SC-NeuroCore: platforms toml loader."
+
+[[file]]
+path = "tests/test_platforms_toml_profile_loader.py"
+rationale = "Exercise SC-NeuroCore: platforms toml profile loader."
+
+[[file]]
+path = "tests/test_platforms_total_coverage.py"
+rationale = "Exercise SC-NeuroCore: platforms total coverage."
+
+[[file]]
+path = "tests/test_platforms_total_profile_count.py"
+rationale = "Exercise SC-NeuroCore: platforms total profile count."
+
+[[file]]
+path = "tests/test_platforms_wave1_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms wave1 profiles."
+
+[[file]]
+path = "tests/test_platforms_wave1b_profiles.py"
+rationale = "Exercise SC-NeuroCore: platforms wave1b profiles."
+
+[[file]]
+path = "tests/test_platforms_weight_noise.py"
+rationale = "Exercise SC-NeuroCore: platforms weight noise."
+
+[[file]]
+path = "tests/test_power_estimator_power_estimator.py"
+rationale = "Exercise SC-NeuroCore: power estimator power estimator."
+
+[[file]]
+path = "tests/test_power_estimator_power_estimator_vcd_branches.py"
+rationale = "Exercise SC-NeuroCore: power estimator power estimator vcd branches."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_context_predictor.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec context predictor."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_lfsr_predictor.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec lfsr predictor."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_predictive_spike_codec_compression.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec predictive spike codec compression."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_predictive_spike_codec_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec predictive spike codec edge cases."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_predictive_spike_codec_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec predictive spike codec roundtrip."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_python_fallback_functions.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec python fallback functions."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_python_fallback_path.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec python fallback path."
+
+[[file]]
+path = "tests/test_predictive_spike_codec_world_model_predictor.py"
+rationale = "Exercise SC-NeuroCore: predictive spike codec world model predictor."
+
+[[file]]
+path = "tests/test_privacy_membership_audit.py"
+rationale = "Exercise SC-NeuroCore: privacy membership audit."
+
+[[file]]
+path = "tests/test_privacy_privacy_accountant.py"
+rationale = "Exercise SC-NeuroCore: privacy privacy accountant."
+
+[[file]]
+path = "tests/test_privacy_spike_level_dp.py"
+rationale = "Exercise SC-NeuroCore: privacy spike level dp."
+
+[[file]]
+path = "tests/test_profiler_platform_compare.py"
+rationale = "Exercise SC-NeuroCore: profiler platform compare."
+
+[[file]]
+path = "tests/test_profiler_platform_format_table.py"
+rationale = "Exercise SC-NeuroCore: profiler platform format table."
+
+[[file]]
+path = "tests/test_profiler_platform_platform_result.py"
+rationale = "Exercise SC-NeuroCore: profiler platform platform result."
+
+[[file]]
+path = "tests/test_pynq_driver_driver_source_hygiene.py"
+rationale = "Exercise SC-NeuroCore: pynq driver driver source hygiene."
+
+[[file]]
+path = "tests/test_pynq_driver_free_tests.py"
+rationale = "Exercise SC-NeuroCore: pynq driver free tests."
+
+[[file]]
+path = "tests/test_pynq_driver_physical_twin_bridge.py"
+rationale = "Exercise SC-NeuroCore: pynq driver physical twin bridge."
+
+[[file]]
+path = "tests/test_pynq_driver_run_step_determinism.py"
+rationale = "Exercise SC-NeuroCore: pynq driver run step determinism."
+
+[[file]]
+path = "tests/test_pynq_driver_verify_hardware_link.py"
+rationale = "Exercise SC-NeuroCore: pynq driver verify hardware link."
+
+[[file]]
+path = "tests/test_quadratic_if_backends_auto_dispatch.py"
+rationale = "Exercise SC-NeuroCore: quadratic if backends auto dispatch."
+
+[[file]]
+path = "tests/test_quadratic_if_backends_backend_parity.py"
+rationale = "Exercise SC-NeuroCore: quadratic if backends backend parity."
+
+[[file]]
+path = "tests/test_quadratic_if_backends_c_abi.py"
+rationale = "Exercise SC-NeuroCore: quadratic if backends c abi."
+
+[[file]]
+path = "tests/test_quadratic_if_backends_rejects_and_flow.py"
+rationale = "Exercise SC-NeuroCore: quadratic if backends rejects and flow."
+
+[[file]]
+path = "tests/test_quantisation_pipeline_dequantize_weights.py"
+rationale = "Exercise SC-NeuroCore: quantisation pipeline dequantize weights."
+
+[[file]]
+path = "tests/test_quantisation_pipeline_end_to_end_pipeline.py"
+rationale = "Exercise SC-NeuroCore: quantisation pipeline end to end pipeline."
+
+[[file]]
+path = "tests/test_quantisation_pipeline_fixed_point_quantization_guards.py"
+rationale = "Exercise SC-NeuroCore: quantisation pipeline fixed point quantization guards."
+
+[[file]]
+path = "tests/test_quantisation_pipeline_quantize_weights.py"
+rationale = "Exercise SC-NeuroCore: quantisation pipeline quantize weights."
+
+[[file]]
+path = "tests/test_quantisation_pipeline_sc_probability_mapping.py"
+rationale = "Exercise SC-NeuroCore: quantisation pipeline sc probability mapping."

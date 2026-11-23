@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestLFSRPredictor:
     """SC-native LFSR predictor: bit-true with sc_bitstream_encoder.v."""
 
     def test_lfsr_roundtrip(self) -> None:
+        """The LFSR predictor round-trips spikes losslessly."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
@@ -26,6 +30,7 @@ class TestLFSRPredictor:
         assert result.predictor_type == "lfsr"
 
     def test_lfsr_1024ch(self) -> None:
+        """The LFSR predictor round-trips 1024 channels."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 1024)) < 0.005).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=2, seed=0x1234)
@@ -33,12 +38,14 @@ class TestLFSRPredictor:
         np.testing.assert_array_equal(codec.decompress(data, 100, 1024), spikes)
 
     def test_lfsr_silent(self) -> None:
+        """The LFSR predictor round-trips silent channels."""
         spikes = np.zeros((200, 10), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 10), spikes)
 
     def test_lfsr_all_firing(self) -> None:
+        """The LFSR predictor round-trips channels that always fire."""
         spikes = np.ones((50, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=50, seed=0xBEEF)
         data, _ = codec.compress(spikes)
@@ -67,6 +74,7 @@ class TestLFSRPredictor:
         np.testing.assert_array_equal(codec_ema.decompress(data_lfsr, 100, 16), spikes)
 
     def test_different_alpha_q8(self) -> None:
+        """The LFSR predictor round-trips for each Q8 alpha."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for aq8 in [1, 5, 20, 100]:

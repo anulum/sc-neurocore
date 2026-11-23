@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.planner_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.world_model.planner import (
+    SCPlanner,
+)
+from sc_neurocore.world_model.predictive_model import (
+    PredictiveWorldModel,
+)
 
 
 class TestSCPlanner:
-    def test_propose_action_shape(self):
+    """The stochastic-computing action planner."""
+
+    def test_propose_action_shape(self) -> None:
+        """A proposed action has the action dimension."""
         np.random.seed(42)
         m = PredictiveWorldModel(state_dim=3, action_dim=2)
         p = SCPlanner(world_model=m)
@@ -23,7 +32,8 @@ class TestSCPlanner:
         action = p.propose_action(s, g, n_candidates=20)
         assert action.shape == (2,)
 
-    def test_plan_sequence_length(self):
+    def test_plan_sequence_length(self) -> None:
+        """A plan holds one action per requested step."""
         np.random.seed(42)
         m = PredictiveWorldModel(state_dim=3, action_dim=2)
         p = SCPlanner(world_model=m)
@@ -33,7 +43,8 @@ class TestSCPlanner:
         assert len(plan) == 3
         assert all(a.shape == (2,) for a in plan)
 
-    def test_plan_moves_toward_goal(self):
+    def test_plan_moves_toward_goal(self) -> None:
+        """The planner proposes an action for a distant goal."""
         np.random.seed(0)
         m = PredictiveWorldModel(state_dim=2, action_dim=1)
         p = SCPlanner(world_model=m)

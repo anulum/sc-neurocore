@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+    list_profile_names,
+)
 
 
 class TestNewPlatformClasses:
@@ -24,11 +28,11 @@ class TestNewPlatformClasses:
             "josephson_jj",
         ],
     )
-    def test_superconducting_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_superconducting_profiles(self, name: str) -> None:
+        """Each superconducting profile runs at 5000 MHz or more."""
         p = get_profile(name)
         assert p.platform_class == "superconducting"
+        assert p.max_freq_mhz is not None
         assert p.max_freq_mhz >= 5000  # GHz-class
 
     @pytest.mark.parametrize(
@@ -38,16 +42,14 @@ class TestNewPlatformClasses:
             "samsung_sot_mram",
         ],
     )
-    def test_spintronic_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_spintronic_profiles(self, name: str) -> None:
+        """Each listed profile belongs to the spintronic class."""
         p = get_profile(name)
         assert p.platform_class == "spintronic"
 
     @pytest.mark.parametrize("name", ["gf_fefet", "sk_hynix_feram"])
-    def test_ferroelectric_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_ferroelectric_profiles(self, name: str) -> None:
+        """Each listed profile belongs to the ferroelectric class."""
         p = get_profile(name)
         assert p.platform_class == "ferroelectric"
 
@@ -59,9 +61,8 @@ class TestNewPlatformClasses:
             "pact_xtensa",
         ],
     )
-    def test_cgra_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_cgra_profiles(self, name: str) -> None:
+        """Each CGRA profile names its processing-element block."""
         p = get_profile(name)
         assert p.platform_class == "cgra"
         assert p.dsp_block  # CGRAs have PE blocks
@@ -74,9 +75,8 @@ class TestNewPlatformClasses:
             "amd_3dv",
         ],
     )
-    def test_3d_stacked_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_3d_stacked_profiles(self, name: str) -> None:
+        """Each listed profile belongs to the 3d_stacked class."""
         p = get_profile(name)
         assert p.platform_class == "3d_stacked"
 
@@ -90,9 +90,8 @@ class TestNewPlatformClasses:
             "max78000",
         ],
     )
-    def test_edge_mcu_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_edge_mcu_profiles(self, name: str) -> None:
+        """Each listed profile belongs to the edge_mcu class."""
         p = get_profile(name)
         assert p.platform_class == "edge_mcu"
 
@@ -104,22 +103,16 @@ class TestNewPlatformClasses:
             "ainekko_rv",
         ],
     )
-    def test_riscv_ai_profiles(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_riscv_ai_profiles(self, name: str) -> None:
+        """Each RISC-V AI profile is an accelerator."""
         p = get_profile(name)
         assert p.platform_class == "accelerator"
 
-    def test_total_profile_count(self):
-        from sc_neurocore.compiler.platforms import list_profile_names
-
+    def test_total_profile_count(self) -> None:
+        """The registry holds at least 131 profiles."""
         assert len(list_profile_names()) >= 131
 
-    def test_platform_class_count(self):
-        from sc_neurocore.compiler.platforms import (
-            list_profile_names,
-            get_profile,
-        )
-
+    def test_platform_class_count(self) -> None:
+        """The registry holds at least 15 platform classes."""
         classes = {get_profile(n).platform_class for n in list_profile_names()}
         assert len(classes) >= 15

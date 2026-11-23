@@ -10,14 +10,18 @@
 
 from __future__ import annotations
 
-from tests.pynq_driver_support import *  # noqa: F403
+import importlib.abc
+import sc_neurocore.drivers.sc_neurocore_driver as pynq_driver
 
 
 class TestDriverSourceHygiene:
     """Driver source suppressions must stay narrow and documented."""
 
-    def test_pynq_optional_import_uses_narrow_type_ignore(self):
-        source = pynq_driver.__loader__.get_source(pynq_driver.__name__)
+    def test_pynq_optional_import_uses_narrow_type_ignore(self) -> None:
+        """The optional PYNQ import carries only a narrow import-not-found ignore."""
+        loader = pynq_driver.__loader__
+        assert isinstance(loader, importlib.abc.InspectLoader)
+        source = loader.get_source(pynq_driver.__name__)
 
         assert source is not None
         assert "type: ignore[import-not-found]" in source

@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.planner_support import *  # noqa: F403
+import numpy.typing as npt
+import numpy as np
+from sc_neurocore.world_model.predictive_model import (
+    PredictiveWorldModel,
+)
 
 
 class TestPredictiveWorldModel:
@@ -35,6 +39,7 @@ class TestPredictiveWorldModel:
         assert m.model.obs_dim == 4
 
     def test_predict_next_state_shape(self) -> None:
+        """The predicted next state keeps the state dimension."""
         m = PredictiveWorldModel(state_dim=4, action_dim=2)
         s = np.array([0.5, 0.3, 0.8, 0.1])
         a = np.array([0.5, 0.5])
@@ -51,9 +56,10 @@ class TestPredictiveWorldModel:
         np.testing.assert_allclose(ns, expected, atol=1e-12)
 
     def test_forecast_sequence(self) -> None:
+        """A forecast gives one state per action."""
         m = PredictiveWorldModel(state_dim=3, action_dim=1)
         s0 = np.array([0.5, 0.5, 0.5])
-        actions = [np.array([0.5])] * 5
+        actions: list[npt.ArrayLike] = [np.array([0.5])] * 5
         traj = m.forecast(s0, actions)
         assert len(traj) == 5
         assert all(t.shape == (3,) for t in traj)

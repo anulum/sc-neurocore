@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestWave1bProfiles:
@@ -28,32 +31,26 @@ class TestWave1bProfiles:
             "event_camera",
         ],
     )
-    def test_profile_exists(self, name):
+    def test_profile_exists(self, name: str) -> None:
         """Profile is registered and retrievable."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile(name)
         assert p.name == name
         assert p.data_width > 0
 
-    def test_total_profiles_at_least_84(self):
+    def test_total_profiles_at_least_84(self) -> None:
         """Registry should now have ≥84 profiles."""
         from sc_neurocore.compiler.platforms import list_profiles
 
         assert len(list_profiles()) >= 84
 
-    def test_superconducting_is_emerging(self):
+    def test_superconducting_is_emerging(self) -> None:
         """Superconducting is in the emerging class."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("superconducting")
         assert p.platform_class == "emerging"
         assert p.overflow == "wrap"
 
-    def test_event_camera_matches_dvs(self):
+    def test_event_camera_matches_dvs(self) -> None:
         """Event camera profile matches DVS sensor specs."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("event_camera")
         assert p.vendor == "Prophesee/Sony"
         assert p.data_width == 16

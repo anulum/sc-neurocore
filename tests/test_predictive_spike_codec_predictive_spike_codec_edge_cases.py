@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.spike_codec import (
+    PredictiveCompressionResult,
+    PredictiveSpikeCodec,
+)
 
 
 class TestPredictiveSpikeCodecEdgeCases:
     """Edge cases and error handling."""
 
     def test_invalid_magic_raises(self) -> None:
+        """A stream with a wrong header magic is rejected."""
         codec = PredictiveSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):
             codec.decompress(b"XXXX" + b"\x00" * 100, 10, 5)
 
     def test_bool_input_accepted(self) -> None:
+        """Boolean spike input round-trips as integers."""
         rng = np.random.RandomState(42)
         spikes = rng.random((100, 8)) < 0.05
         codec = PredictiveSpikeCodec()
@@ -30,6 +37,7 @@ class TestPredictiveSpikeCodecEdgeCases:
         np.testing.assert_array_equal(recovered, spikes.astype(np.int8))
 
     def test_different_alpha_values(self) -> None:
+        """Spikes round-trip for each smoothing alpha."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for alpha in [0.001, 0.01, 0.1, 0.5]:
@@ -39,6 +47,7 @@ class TestPredictiveSpikeCodecEdgeCases:
             np.testing.assert_array_equal(recovered, spikes)
 
     def test_different_thresholds(self) -> None:
+        """Spikes round-trip for each prediction threshold."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for threshold in [0.01, 0.1, 0.5, 0.9]:
@@ -48,6 +57,7 @@ class TestPredictiveSpikeCodecEdgeCases:
             np.testing.assert_array_equal(recovered, spikes)
 
     def test_result_is_predictive_type(self) -> None:
+        """Compression returns a predictive compression result."""
         spikes = np.zeros((10, 2), dtype=np.int8)
         codec = PredictiveSpikeCodec()
         _, result = codec.compress(spikes)

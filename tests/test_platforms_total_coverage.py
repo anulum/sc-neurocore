@@ -10,20 +10,20 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+    list_profile_names,
+)
 
 
 class TestTotalCoverage:
-    def test_min_profiles(self):
-        from sc_neurocore.compiler.platforms import list_profile_names
+    """Registry growth floors across every profile wave."""
 
+    def test_min_profiles(self) -> None:
+        """The registry holds at least 175 profiles."""
         assert len(list_profile_names()) >= 175
 
-    def test_min_classes(self):
-        from sc_neurocore.compiler.platforms import (
-            list_profile_names,
-            get_profile,
-        )
-
+    def test_min_classes(self) -> None:
+        """The registry holds at least 31 platform classes."""
         classes = {get_profile(n).platform_class for n in list_profile_names()}
         assert len(classes) >= 31

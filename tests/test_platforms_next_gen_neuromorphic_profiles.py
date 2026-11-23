@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestNextGenNeuromorphicProfiles:
@@ -26,15 +29,12 @@ class TestNextGenNeuromorphicProfiles:
             "brainscales2",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each listed profile belongs to the neuromorphic class."""
         p = get_profile(name)
         assert p.platform_class == "neuromorphic"
 
-    def test_brainscales2_wrap(self):
+    def test_brainscales2_wrap(self) -> None:
         """BrainScaleS-2 uses wrap overflow (analog domain)."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("brainscales2")
         assert p.overflow == "wrap"

@@ -10,16 +10,20 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestTOMLProfileLoader:
     """TOML-based custom profile registration."""
 
-    def test_load_valid_toml(self, tmp_path):
+    def test_load_valid_toml(self, tmp_path: Path) -> None:
+        """A valid TOML file gives a profile with every field."""
         from sc_neurocore.compiler.platforms import (
             load_toml_profile,
-            get_profile,
         )
 
         toml = tmp_path / "test_chip.toml"
@@ -49,13 +53,15 @@ notes = "Custom test chip."
         p2 = get_profile("test_my_chip_v1")
         assert p2.vendor == "TestCorp"
 
-    def test_load_missing_file(self):
+    def test_load_missing_file(self) -> None:
+        """A missing TOML file is reported as not found."""
         from sc_neurocore.compiler.platforms import load_toml_profile
 
         with pytest.raises(FileNotFoundError):
             load_toml_profile("/nonexistent/path/chip.toml")
 
-    def test_load_missing_fields(self, tmp_path):
+    def test_load_missing_fields(self, tmp_path: Path) -> None:
+        """A TOML file without a required field is rejected."""
         from sc_neurocore.compiler.platforms import load_toml_profile
 
         toml = tmp_path / "incomplete.toml"
@@ -67,7 +73,8 @@ vendor = "TestCorp"
         with pytest.raises(ValueError, match="Missing required fields"):
             load_toml_profile(str(toml))
 
-    def test_load_toml_dir(self, tmp_path):
+    def test_load_toml_dir(self, tmp_path: Path) -> None:
+        """Every TOML file in a directory is loaded."""
         from sc_neurocore.compiler.platforms import load_toml_profiles_dir
 
         for i in range(3):
@@ -86,13 +93,14 @@ rounding = "nearest"
         loaded = load_toml_profiles_dir(str(tmp_path))
         assert len(loaded) == 3
 
-    def test_load_empty_dir(self, tmp_path):
+    def test_load_empty_dir(self, tmp_path: Path) -> None:
+        """An empty directory gives no profiles."""
         from sc_neurocore.compiler.platforms import load_toml_profiles_dir
 
         loaded = load_toml_profiles_dir(str(tmp_path))
         assert len(loaded) == 0
 
-    def test_minimal_toml(self, tmp_path):
+    def test_minimal_toml(self, tmp_path: Path) -> None:
         """Minimal TOML without optional fields."""
         from sc_neurocore.compiler.platforms import load_toml_profile
 

@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from tests.profiler_platform_support import *  # noqa: F403
+from sc_neurocore.profiler import (
+    compare,
+    PlatformResult,
+)
+from sc_neurocore.profiler.platform_profiler import (
+    format_table,
+)
 
 
 class TestFormatTable:
-    def test_table_format(self):
+    """The text table of platform comparison results."""
+
+    def test_table_format(self) -> None:
+        """The table has its header and a row per platform."""
         results = compare(layer_sizes=[(16, 8)], platforms=["python"])
         table = format_table(results)
         assert "Platform" in table
         assert "python" in table
         assert "(ms)" in table
 
-    def test_unavailable_in_table(self):
+    def test_unavailable_in_table(self) -> None:
+        """An unavailable platform shows N/A in the table."""
         r = PlatformResult(
             platform="missing",
             latency_ms=0,

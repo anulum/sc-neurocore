@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (auto_dispatch) from former test_quadratic_if_backends.py
 
+"""Automatic backend dispatch of the quadratic integrate-and-fire neuron."""
+
 from __future__ import annotations
 
-from tests.quadratic_if_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel import (
+    quadratic_if as backends,
+)
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.quadratic_if_backends_support import (
+    _configured,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 def test_auto_prefers_go_without_initialising_julia() -> None:

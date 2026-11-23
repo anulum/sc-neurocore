@@ -6,9 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects_and_flow) from former test_quadratic_if_backends.py
 
+"""Contract rejections and the simulation flow of the quadratic integrate-and-fire neuron."""
+
 from __future__ import annotations
 
-from tests.quadratic_if_backends_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.quadratic_if_backends_support import (
+    _configured,
+    _require_qif_backend,
+    _TRACE_ATOL,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 def test_rust_accepts_complete_non_default_contract() -> None:
@@ -84,7 +100,7 @@ def test_non_finite_current_fails_before_mutation() -> None:
     ),
 )
 def test_invalid_model_contract_is_rejected_at_construction(
-    parameters: dict[str, float],
+    parameters: dict[str, Any],
 ) -> None:
     """Reject each invalid maintained field before a neuron can execute."""
     with pytest.raises(ValueError):

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.quantisation_pipeline_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compiler.quantizer import (
+    dequantize_weights,
+)
 
 
 class TestDequantizeWeights:
-    def test_known_value(self):
+    """Converting fixed-point weights back to floats."""
+
+    def test_known_value(self) -> None:
+        """The Q8.8 value 256 dequantises to 1.0."""
         # 256 in Q8.8 = 1.0
         q = np.array([256])
         d = dequantize_weights(q, fmt="Q8.8")
         np.testing.assert_allclose(d, 1.0, atol=1e-6)
 
-    def test_negative_known(self):
+    def test_negative_known(self) -> None:
+        """The Q8.8 value -256 dequantises to -1.0."""
         # -256 in Q8.8 = -1.0
         q = np.array([-256])
         d = dequantize_weights(q, fmt="Q8.8")

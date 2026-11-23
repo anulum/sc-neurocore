@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestMagnonicPlatforms:
+    """The magnonic platform profiles."""
+
     @pytest.mark.parametrize(
         "name",
         [
@@ -22,7 +27,6 @@ class TestMagnonicPlatforms:
             "imec_mtj_reservoir",
         ],
     )
-    def test_magnonic(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_magnonic(self, name: str) -> None:
+        """Each listed profile belongs to the magnonic class."""
         assert get_profile(name).platform_class == "magnonic"

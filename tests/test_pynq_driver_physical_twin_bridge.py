@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from tests.pynq_driver_support import *  # noqa: F403
+from collections.abc import Iterator
+from typing import Literal
+import numpy as np
+import pytest
+from sc_neurocore.drivers.physical_twin import (
+    PhysicalTwinBridge,
+)
 
 
 class TestPhysicalTwinBridge:
     """PhysicalTwinBridge exposes honest emulation and explicit TCP modes."""
 
-    def test_default_bridge_is_emulation_without_stdout(self, capsys):
+    def test_default_bridge_is_emulation_without_stdout(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """The default bridge emulates and prints nothing."""
         bridge = PhysicalTwinBridge(seed=7)
 
         assert bridge.mode == "EMULATION"
@@ -24,7 +33,8 @@ class TestPhysicalTwinBridge:
         assert not hasattr(bridge, "_TODO" + "_HIL")
         assert capsys.readouterr().out == ""
 
-    def test_emulation_mode_is_deterministic_and_uses_instance_rng(self):
+    def test_emulation_mode_is_deterministic_and_uses_instance_rng(self) -> None:
+        """Emulation is deterministic and draws from the instance generator."""
         a = PhysicalTwinBridge(seed=123)
         b = PhysicalTwinBridge(seed=123)
 
@@ -34,25 +44,26 @@ class TestPhysicalTwinBridge:
         assert seq_a == seq_b
         assert all(np.isfinite(value) for value in seq_a)
 
-    def test_tcp_mode_uses_json_line_contract(self, monkeypatch):
+    def test_tcp_mode_uses_json_line_contract(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """TCP mode sends and reads one JSON line per step."""
         writes: list[bytes] = []
 
         class FakeSocket:
-            def __enter__(self):
+            def __enter__(self) -> FakeSocket:
                 return self
 
-            def __exit__(self, exc_type, exc, tb):
+            def __exit__(self, exc_type: object, exc: object, tb: object) -> Literal[False]:
                 return False
 
             def sendall(self, data: bytes) -> None:
                 writes.append(data)
 
-            def makefile(self, mode: str, encoding: str):
+            def makefile(self, mode: str, encoding: str) -> Iterator[str]:
                 assert mode == "r"
                 assert encoding == "utf-8"
                 return iter(['{"v_mem": 0.875}\n'])
 
-        def fake_create_connection(address, timeout):
+        def fake_create_connection(address: tuple[str, int], timeout: float) -> FakeSocket:
             assert address == ("192.168.2.99", 5000)
             assert timeout == 0.25
             return FakeSocket()
@@ -64,18 +75,22 @@ class TestPhysicalTwinBridge:
         assert bridge.sync_step(0.5, 1) == pytest.approx(0.875)
         assert writes == [b'{"spike":1,"v_mem":0.5}\n']
 
-    def test_tcp_mode_rejects_malformed_hardware_reply(self, monkeypatch):
+    def test_tcp_mode_rejects_malformed_hardware_reply(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A hardware reply without v_mem is rejected."""
+
         class FakeSocket:
-            def __enter__(self):
+            def __enter__(self) -> FakeSocket:
                 return self
 
-            def __exit__(self, exc_type, exc, tb):
+            def __exit__(self, exc_type: object, exc: object, tb: object) -> Literal[False]:
                 return False
 
             def sendall(self, data: bytes) -> None:
                 pass
 
-            def makefile(self, mode: str, encoding: str):
+            def makefile(self, mode: str, encoding: str) -> Iterator[str]:
                 return iter(["{}\n"])
 
         monkeypatch.setattr("socket.create_connection", lambda *_args, **_kwargs: FakeSocket())

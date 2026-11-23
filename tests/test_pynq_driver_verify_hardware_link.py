@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.pynq_driver_support import *  # noqa: F403
+import pytest
+import sys
+import types
+from typing import Never
 
 
 class TestVerifyHardwareLink:
     """verify_link CLI smoke tests (closes task #31)."""
 
-    def test_extras_false_fpga_only(self, capsys):
+    def test_extras_false_fpga_only(self, capsys: pytest.CaptureFixture[str]) -> None:
         """extras=False skips Evo 2 + Opentrons probes."""
         from sc_neurocore.drivers.verify_hardware_link import verify_link
 
@@ -30,9 +33,8 @@ class TestVerifyHardwareLink:
         assert "Genomic" not in out
         assert "Robotics" not in out
 
-    def test_extras_true_runs_all_three_probes(self, capsys):
-        """extras=True (default) runs all three probes including the
-        sibling-repo imports.
+    def test_extras_true_runs_all_three_probes(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """extras=True (default) runs all three probes including the sibling-repo imports.
 
         On environments where the sibling modules are absent (the
         common case outside the GOTM monorepo), the probes report
@@ -49,14 +51,15 @@ class TestVerifyHardwareLink:
         assert "Genomic" in out
         assert "Robotics" in out
 
-    def test_extras_default_is_true(self, capsys):
+    def test_extras_default_is_true(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """By default all three probes run."""
         from sc_neurocore.drivers.verify_hardware_link import verify_link
 
         verify_link()  # default
         out = capsys.readouterr().out
         assert "[3/3]" in out
 
-    def test_no_sys_path_mutation(self):
+    def test_no_sys_path_mutation(self) -> None:
         """verify_link must not mutate sys.path (closes the cross-repo bug)."""
         import sys
 
@@ -67,7 +70,9 @@ class TestVerifyHardwareLink:
         after = list(sys.path)
         assert before == after, "verify_link mutated sys.path"
 
-    def test_fpga_probe_reports_success_when_driver_connects(self, monkeypatch, capsys):
+    def test_fpga_probe_reports_success_when_driver_connects(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """A driver that constructs cleanly drives the SUCCESS branch."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
@@ -76,11 +81,13 @@ class TestVerifyHardwareLink:
         out = capsys.readouterr().out
         assert "SUCCESS: PYNQ-Z2 Detected" in out
 
-    def test_fpga_probe_reports_unexpected_runtime_error(self, monkeypatch, capsys):
+    def test_fpga_probe_reports_unexpected_runtime_error(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """A raw OSError/RuntimeError (not RealityHardwareError) hits the ERROR branch."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
-        def boom(mode):
+        def boom(mode: str) -> Never:
             raise RuntimeError("bus fault")
 
         monkeypatch.setattr(vhl, "SC_NeuroCore_Driver", boom)
@@ -88,65 +95,76 @@ class TestVerifyHardwareLink:
         out = capsys.readouterr().out
         assert "ERROR: Unexpected failure: bus fault" in out
 
-    def test_genomic_probe_handles_present_but_unreachable_evo2(self, monkeypatch, capsys):
+    def test_genomic_probe_handles_present_but_unreachable_evo2(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """When Evo 2 is importable but its server is down, the probe warns cleanly."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
         evo_mod = types.ModuleType("scpn_evo2_real_interface")
 
         class Evo2RealInterface:
-            def connect(self):
+            def connect(self) -> Never:
                 raise ConnectionError("server down")
 
-        evo_mod.Evo2RealInterface = Evo2RealInterface
+        vars(evo_mod)["Evo2RealInterface"] = Evo2RealInterface
         monkeypatch.setitem(sys.modules, "scpn_evo2_real_interface", evo_mod)
 
         vhl.verify_link(extras=True)
         out = capsys.readouterr().out
         assert "Evo 2 Server unreachable" in out
 
-    def test_robotics_probe_reports_opentrons_online(self, monkeypatch, capsys):
+    def test_robotics_probe_reports_opentrons_online(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A robot that answers is reported online."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
         ot_mod = types.ModuleType("scpn_opentrions_verify")
 
         class OpentronsVerifier:
-            def ping(self):
+            def ping(self) -> bool:
                 return True
 
-        ot_mod.OpentronsVerifier = OpentronsVerifier
+        vars(ot_mod)["OpentronsVerifier"] = OpentronsVerifier
         monkeypatch.setitem(sys.modules, "scpn_opentrions_verify", ot_mod)
 
         vhl.verify_link(extras=True)
         out = capsys.readouterr().out
         assert "Opentrons OT-2 Online" in out
 
-    def test_robotics_probe_reports_opentrons_offline(self, monkeypatch, capsys):
+    def test_robotics_probe_reports_opentrons_offline(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A robot that does not answer is reported offline."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
         ot_mod = types.ModuleType("scpn_opentrions_verify")
 
         class OpentronsVerifier:
-            def ping(self):
+            def ping(self) -> bool:
                 return False
 
-        ot_mod.OpentronsVerifier = OpentronsVerifier
+        vars(ot_mod)["OpentronsVerifier"] = OpentronsVerifier
         monkeypatch.setitem(sys.modules, "scpn_opentrions_verify", ot_mod)
 
         vhl.verify_link(extras=True)
         out = capsys.readouterr().out
         assert "Robot offline" in out
 
-    def test_robotics_probe_handles_opentrons_error(self, monkeypatch, capsys):
+    def test_robotics_probe_handles_opentrons_error(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A robot probe error is reported with its message."""
         import sc_neurocore.drivers.verify_hardware_link as vhl
 
         ot_mod = types.ModuleType("scpn_opentrions_verify")
 
         class OpentronsVerifier:
-            def ping(self):
+            def ping(self) -> Never:
                 raise RuntimeError("robot fault")
 
-        ot_mod.OpentronsVerifier = OpentronsVerifier
+        vars(ot_mod)["OpentronsVerifier"] = OpentronsVerifier
         monkeypatch.setitem(sys.modules, "scpn_opentrions_verify", ot_mod)
 
         vhl.verify_link(extras=True)

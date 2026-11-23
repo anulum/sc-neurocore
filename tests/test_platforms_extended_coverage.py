@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import unittest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+    list_profile_names,
+)
 
 
 class TestExtendedCoverage(unittest.TestCase):
-    def test_profile_count_ge_183(self):
+    """Registry growth floors after the extended profile wave."""
+
+    def test_profile_count_ge_183(self) -> None:
+        """The registry holds at least 183 profiles."""
         self.assertGreaterEqual(len(list_profile_names()), 183)
 
-    def test_class_count_ge_35(self):
+    def test_class_count_ge_35(self) -> None:
+        """The registry holds at least 35 platform classes."""
         classes = {get_profile(n).platform_class for n in list_profile_names()}
         self.assertGreaterEqual(len(classes), 35)

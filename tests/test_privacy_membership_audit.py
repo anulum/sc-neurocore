@@ -10,12 +10,20 @@
 
 from __future__ import annotations
 
-from tests.privacy_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.privacy import (
+    MembershipAudit,
+)
 
 
 class TestMembershipAudit:
-    def test_basic(self):
-        def model(s):
+    """The membership-inference privacy audit."""
+
+    def test_basic(self) -> None:
+        """The audit reports an accuracy in the unit interval and a verdict."""
+
+        def model(s: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             return s.sum(axis=0).astype(np.float64)
 
         members = [np.ones((10, 4), dtype=np.int8) for _ in range(5)]
@@ -28,8 +36,10 @@ class TestMembershipAudit:
         assert "vulnerable" in result
         assert 0 <= result["accuracy"] <= 1
 
-    def test_indistinguishable(self):
-        def constant_model(s):
+    def test_indistinguishable(self) -> None:
+        """A constant model gives an audit accuracy of one half."""
+
+        def constant_model(s: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             return np.ones(4)
 
         members = [np.random.randint(0, 2, (10, 4), dtype=np.int8) for _ in range(5)]

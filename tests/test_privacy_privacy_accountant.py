@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
-from tests.privacy_support import *  # noqa: F403
+from sc_neurocore.privacy import (
+    PrivacyAccountant,
+)
 
 
 class TestPrivacyAccountant:
-    def test_init(self):
+    """The differential-privacy budget accountant."""
+
+    def test_init(self) -> None:
+        """A new accountant has spent nothing of its budget."""
         pa = PrivacyAccountant(target_epsilon=2.0)
         assert pa.spent_epsilon == 0.0
         assert pa.remaining_epsilon == 2.0
         assert not pa.budget_exhausted
 
-    def test_record_steps(self):
+    def test_record_steps(self) -> None:
+        """Recorded steps add up to the spent epsilon."""
         pa = PrivacyAccountant(target_epsilon=1.0)
         pa.record_step(0.3)
         pa.record_step(0.3)
@@ -28,12 +34,14 @@ class TestPrivacyAccountant:
         assert pa.remaining_epsilon == 0.4
         assert not pa.budget_exhausted
 
-    def test_budget_exhausted(self):
+    def test_budget_exhausted(self) -> None:
+        """Spending past the budget marks it exhausted."""
         pa = PrivacyAccountant(target_epsilon=0.5)
         pa.record_step(0.6)
         assert pa.budget_exhausted
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary reports the epsilon budget."""
         pa = PrivacyAccountant(target_epsilon=1.0)
         pa.record_step(0.1)
         s = pa.summary()

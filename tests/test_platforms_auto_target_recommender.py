@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestAutoTargetRecommender:
-    def test_basic_recommendation(self):
+    """The automatic hardware target recommender."""
+
+    def test_basic_recommendation(self) -> None:
+        """Recommendations come back ranked by descending score."""
         from sc_neurocore.compiler.intelligence import recommend_target
 
         recs = recommend_target({"v": "a + b"})
         assert len(recs) == 5
         assert recs[0].score >= recs[-1].score
 
-    def test_class_filter(self):
+    def test_class_filter(self) -> None:
+        """A class filter keeps only neuromorphic targets."""
         from sc_neurocore.compiler.intelligence import recommend_target
 
         recs = recommend_target(
@@ -31,16 +37,17 @@ class TestAutoTargetRecommender:
         for r in recs:
             assert "neuromorphic" in r.rationale
 
-    def test_width_filter(self):
+    def test_width_filter(self) -> None:
+        """A width filter keeps only targets of at most eight bits."""
         from sc_neurocore.compiler.intelligence import recommend_target
 
         recs = recommend_target({"v": "a + b"}, max_data_width=8)
-        from sc_neurocore.compiler.platforms import get_profile
 
         for r in recs:
             assert get_profile(r.profile_name).data_width <= 8
 
-    def test_top_n(self):
+    def test_top_n(self) -> None:
+        """The recommender returns the requested number of targets."""
         from sc_neurocore.compiler.intelligence import recommend_target
 
         recs = recommend_target({"v": "a + b"}, top_n=3)

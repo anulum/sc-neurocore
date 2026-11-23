@@ -10,20 +10,24 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+    list_profile_names,
+)
 
 
 class TestFinalPlatforms:
-    @pytest.mark.parametrize("name", ["ayar_teraphy", "intel_cpo"])
-    def test_optical_io(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
+    """Optical, acoustic, fluidic and space-qualified profiles."""
 
+    @pytest.mark.parametrize("name", ["ayar_teraphy", "intel_cpo"])
+    def test_optical_io(self, name: str) -> None:
+        """Each listed profile belongs to the optical_io class."""
         assert get_profile(name).platform_class == "optical_io"
 
     @pytest.mark.parametrize("name", ["mit_phononic", "caltech_mems_nn"])
-    def test_acoustic(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_acoustic(self, name: str) -> None:
+        """Each listed profile belongs to the acoustic class."""
         assert get_profile(name).platform_class == "acoustic"
 
     @pytest.mark.parametrize(
@@ -33,9 +37,8 @@ class TestFinalPlatforms:
             "eth_fluidic_logic",
         ],
     )
-    def test_fluidic(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_fluidic(self, name: str) -> None:
+        """Each listed profile belongs to the fluidic class."""
         assert get_profile(name).platform_class == "fluidic"
 
     @pytest.mark.parametrize(
@@ -47,21 +50,15 @@ class TestFinalPlatforms:
             "frontgrade_leon5",
         ],
     )
-    def test_space_qualified(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_space_qualified(self, name: str) -> None:
+        """Each listed profile belongs to the space_qualified class."""
         assert get_profile(name).platform_class == "space_qualified"
 
-    def test_total_profiles(self):
-        from sc_neurocore.compiler.platforms import list_profile_names
-
+    def test_total_profiles(self) -> None:
+        """The registry holds at least 164 profiles."""
         assert len(list_profile_names()) >= 164
 
-    def test_total_classes(self):
-        from sc_neurocore.compiler.platforms import (
-            list_profile_names,
-            get_profile,
-        )
-
+    def test_total_classes(self) -> None:
+        """The registry holds at least 28 platform classes."""
         classes = {get_profile(n).platform_class for n in list_profile_names()}
         assert len(classes) >= 28

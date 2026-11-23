@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from pathlib import Path
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestTOMLLoader:
-    def test_load(self, tmp_path):
+    """Loading custom platform profiles from TOML."""
+
+    def test_load(self, tmp_path: Path) -> None:
+        """A TOML profile is loaded and registered."""
         from sc_neurocore.compiler.platforms import load_profiles_from_toml
-        from sc_neurocore.compiler.platforms import get_profile
 
         toml = tmp_path / "custom.toml"
         toml.write_text(

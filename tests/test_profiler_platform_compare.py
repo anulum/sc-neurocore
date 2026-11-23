@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.profiler_platform_support import *  # noqa: F403
+from sc_neurocore.profiler import (
+    compare,
+)
 
 
 class TestCompare:
-    def test_default_platforms(self):
+    """Cross-platform latency, throughput and power comparison."""
+
+    def test_default_platforms(self) -> None:
+        """The default comparison covers four platforms including Python."""
         results = compare(
             layer_sizes=[(16, 8)],
             duration=0.1,
@@ -24,7 +29,8 @@ class TestCompare:
         platforms = {r.platform for r in results}
         assert "python" in platforms
 
-    def test_specific_platforms(self):
+    def test_specific_platforms(self) -> None:
+        """A named platform list limits the comparison."""
         results = compare(
             layer_sizes=[(16, 8)],
             platforms=["python"],
@@ -32,7 +38,8 @@ class TestCompare:
         assert len(results) == 1
         assert results[0].platform == "python"
 
-    def test_python_estimates(self):
+    def test_python_estimates(self) -> None:
+        """The Python estimate has positive latency, throughput and power."""
         results = compare(
             layer_sizes=[(100, 50)],
             duration=0.1,
@@ -45,7 +52,8 @@ class TestCompare:
         assert r.power_mw > 0
         assert r.energy_per_inf_nj > 0
 
-    def test_rust_platform(self):
+    def test_rust_platform(self) -> None:
+        """The Rust estimate has a positive latency."""
         results = compare(
             layer_sizes=[(16, 8)],
             platforms=["rust"],
@@ -54,7 +62,8 @@ class TestCompare:
         assert r.platform == "rust"
         assert r.latency_ms > 0
 
-    def test_fpga_platform(self):
+    def test_fpga_platform(self) -> None:
+        """The iCE40 FPGA estimate has a positive latency."""
         results = compare(
             layer_sizes=[(16, 8)],
             platforms=["fpga_ice40"],
@@ -63,7 +72,8 @@ class TestCompare:
         assert r.platform == "fpga_ice40"
         assert r.latency_ms > 0
 
-    def test_unknown_platform(self):
+    def test_unknown_platform(self) -> None:
+        """An unknown platform is reported as unavailable."""
         results = compare(
             layer_sizes=[(16, 8)],
             platforms=["quantum_computer"],
@@ -72,7 +82,8 @@ class TestCompare:
         assert r.available is False
         assert "Unknown" in r.notes
 
-    def test_sorted_by_energy(self):
+    def test_sorted_by_energy(self) -> None:
+        """Available results are sorted by energy per inference."""
         results = compare(
             layer_sizes=[(32, 16)],
             platforms=["python", "fpga_artix7"],

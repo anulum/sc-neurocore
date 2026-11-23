@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    PredictiveSpikeCodec,
+)
 
 
 class TestWorldModelPredictor:
     """Learnable autoregressive world model predictor."""
 
     def test_world_model_roundtrip(self) -> None:
+        """The world-model predictor round-trips spikes losslessly."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 16)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="world_model", alpha=0.01, context_bits=8, seed=42)
@@ -26,12 +30,14 @@ class TestWorldModelPredictor:
         assert result.predictor_type == "world_model"
 
     def test_world_model_silent(self) -> None:
+        """The world-model predictor round-trips silent channels."""
         spikes = np.zeros((200, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="world_model")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 8), spikes)
 
     def test_world_model_bursty(self) -> None:
+        """Bursty firing round-trips with high prediction accuracy."""
         rng = np.random.RandomState(42)
         T, N = 1000, 16
         bursty = np.zeros((T, N), dtype=np.int8)
@@ -47,6 +53,7 @@ class TestWorldModelPredictor:
         assert result.prediction_accuracy > 0.95
 
     def test_world_model_beats_ema_on_bursty(self) -> None:
+        """On bursty firing the world model predicts better than EMA."""
         rng = np.random.RandomState(42)
         T, N = 2000, 16
         bursty = np.zeros((T, N), dtype=np.int8)
@@ -63,6 +70,7 @@ class TestWorldModelPredictor:
         assert r_wm.prediction_accuracy > r_ema.prediction_accuracy
 
     def test_world_model_cross_decode(self) -> None:
+        """A world-model stream decodes correctly through an EMA codec."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 8)) < 0.05).astype(np.int8)
         data, _ = PredictiveSpikeCodec(predictor="world_model").compress(spikes)

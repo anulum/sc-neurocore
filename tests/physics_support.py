@@ -6,15 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_physics.py
 
+"""Shared stochastic heat solver builder for the focused physics suites."""
+
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from sc_neurocore.physics.heat import StochasticHeatSolver
-from sc_neurocore.physics.wolfram_hypergraph import WolframHypergraph
 
 
-def _make_uniform_solver(length: float, num_walkers: int, diffusivity: float, seed: int = 0):
+def _make_uniform_solver(
+    length: float, num_walkers: int, diffusivity: float, seed: int = 0
+) -> StochasticHeatSolver:
+    """Build a heat solver whose walkers start from a uniform initial distribution."""
     s = StochasticHeatSolver(
         length=length, num_walkers=num_walkers, diffusivity=diffusivity, seed=seed
     )
@@ -22,4 +25,4 @@ def _make_uniform_solver(length: float, num_walkers: int, diffusivity: float, se
     return s
 
 
-__all__ = ["np", "pytest", "StochasticHeatSolver", "WolframHypergraph", "_make_uniform_solver"]
+__all__ = ["_make_uniform_solver"]

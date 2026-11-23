@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.privacy_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.privacy import (
+    SpikeLevelDP,
+)
 
 
 class TestSpikeLevelDP:
-    def test_randomized_response(self):
+    """Spike-level differential privacy mechanisms."""
+
+    def test_randomized_response(self) -> None:
+        """Randomised response keeps the shape and flips some spikes."""
         dp = SpikeLevelDP(epsilon=1.0, mechanism="randomized_response", seed=42)
         spikes = np.ones((20, 10), dtype=np.int8)
         private = dp.privatize(spikes)
@@ -22,13 +28,15 @@ class TestSpikeLevelDP:
         # Some bits should be flipped
         assert not np.array_equal(private, spikes)
 
-    def test_subsampling(self):
+    def test_subsampling(self) -> None:
+        """Subsampling never adds spikes."""
         dp = SpikeLevelDP(epsilon=1.0, mechanism="subsampling", seed=42)
         spikes = np.ones((20, 10), dtype=np.int8)
         private = dp.privatize(spikes)
         assert private.sum() <= spikes.sum()
 
-    def test_high_epsilon_low_noise(self):
+    def test_high_epsilon_low_noise(self) -> None:
+        """A high epsilon keeps most spikes unchanged."""
         dp = SpikeLevelDP(epsilon=10.0, mechanism="randomized_response", seed=42)
         spikes = np.ones((20, 10), dtype=np.int8)
         private = dp.privatize(spikes)
@@ -36,7 +44,8 @@ class TestSpikeLevelDP:
         agreement = (private == spikes).mean()
         assert agreement > 0.9
 
-    def test_low_epsilon_high_noise(self):
+    def test_low_epsilon_high_noise(self) -> None:
+        """A low epsilon changes many spikes."""
         dp = SpikeLevelDP(epsilon=0.1, mechanism="randomized_response", seed=42)
         spikes = np.ones((20, 10), dtype=np.int8)
         private = dp.privatize(spikes)
@@ -44,17 +53,20 @@ class TestSpikeLevelDP:
         agreement = (private == spikes).mean()
         assert agreement < 0.8
 
-    def test_per_step_epsilon(self):
+    def test_per_step_epsilon(self) -> None:
+        """The per-step epsilon equals the configured epsilon."""
         dp = SpikeLevelDP(epsilon=2.0)
         assert dp.per_step_epsilon == 2.0
 
-    def test_unknown_mechanism(self):
+    def test_unknown_mechanism(self) -> None:
+        """An unknown mechanism name is rejected."""
         import pytest
 
         with pytest.raises(ValueError):
             SpikeLevelDP(mechanism="unknown")
 
-    def test_1d_input(self):
+    def test_1d_input(self) -> None:
+        """A one-dimensional spike vector keeps its shape."""
         dp = SpikeLevelDP(epsilon=1.0, seed=42)
         spikes = np.array([1, 0, 1, 1, 0], dtype=np.int8)
         private = dp.privatize(spikes)

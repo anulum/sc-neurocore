@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestWave1Profiles:
@@ -33,35 +36,29 @@ class TestWave1Profiles:
             "aws_inferentia",
         ],
     )
-    def test_profile_exists(self, name):
+    def test_profile_exists(self, name: str) -> None:
         """Profile is registered and retrievable."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile(name)
         assert p.name == name
         assert p.data_width > 0
         assert p.fraction >= 0
         assert p.vendor
 
-    def test_total_profiles_at_least_77(self):
+    def test_total_profiles_at_least_77(self) -> None:
         """Total registry should have at least 77 profiles."""
         from sc_neurocore.compiler.platforms import list_profiles
 
         assert len(list_profiles()) >= 77
 
-    def test_loihi3_is_neuromorphic(self):
+    def test_loihi3_is_neuromorphic(self) -> None:
         """Loihi 3 should be in the neuromorphic class."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("loihi3")
         assert p.platform_class == "neuromorphic"
         assert p.data_width == 32
         assert p.overflow == "wrap"
 
-    def test_versal_ai_edge_dsp58(self):
+    def test_versal_ai_edge_dsp58(self) -> None:
         """Versal AI Edge should use DSP58 with 27x24 multiplier."""
-        from sc_neurocore.compiler.platforms import get_profile
-
         p = get_profile("versal_ai_edge")
         assert p.dsp_block == "DSP58"
         assert p.dsp_mult_a == 27

@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from tests.predictive_spike_codec_support import *  # noqa: F403
+import numpy as np
 
 
 class TestPythonFallbackFunctions:
@@ -21,6 +21,7 @@ class TestPythonFallbackFunctions:
     """
 
     def test_predict_and_xor_roundtrip(self) -> None:
+        """The Python predict-and-XOR pair round-trips spikes."""
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor,
             _xor_and_recover,
@@ -35,6 +36,7 @@ class TestPythonFallbackFunctions:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_predict_and_xor_silent(self) -> None:
+        """Silent input is predicted correctly at every position."""
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor,
             _xor_and_recover,
@@ -47,6 +49,7 @@ class TestPythonFallbackFunctions:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_lfsr16_step(self) -> None:
+        """The 16-bit LFSR stays in range without a short cycle."""
         from sc_neurocore.spike_codec.predictive_codec import _lfsr16_step
 
         reg = 0xACE1
@@ -58,6 +61,7 @@ class TestPythonFallbackFunctions:
         assert len(seen) == 100  # no short cycle
 
     def test_predict_and_xor_lfsr_roundtrip(self) -> None:
+        """The Python LFSR predict-and-XOR pair round-trips spikes."""
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor_lfsr,
             _xor_and_recover_lfsr,
@@ -72,6 +76,7 @@ class TestPythonFallbackFunctions:
         np.testing.assert_array_equal(recovered, spikes)
 
     def test_predict_and_xor_lfsr_all_firing(self) -> None:
+        """The Python LFSR pair round-trips channels that always fire."""
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor_lfsr,
             _xor_and_recover_lfsr,

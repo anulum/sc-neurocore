@@ -10,14 +10,18 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestFromConstraints:
-    def test_basic(self):
+    """Building a platform profile from design constraints."""
+
+    def test_basic(self) -> None:
+        """A constrained profile is valid and can be retrieved by name."""
         from sc_neurocore.compiler.platforms import (
             HardwareProfile,
-            get_profile,
         )
 
         p = HardwareProfile.from_constraints(
@@ -30,7 +34,8 @@ class TestFromConstraints:
         retrieved = get_profile("test_w10_auto")
         assert retrieved.vendor == "TestVendor"
 
-    def test_low_power(self):
+    def test_low_power(self) -> None:
+        """A low-power constraint selects an eight-bit data width."""
         from sc_neurocore.compiler.platforms import HardwareProfile
 
         p = HardwareProfile.from_constraints(
@@ -39,7 +44,8 @@ class TestFromConstraints:
         )
         assert p.data_width == 8
 
-    def test_explicit_width(self):
+    def test_explicit_width(self) -> None:
+        """An explicit width and fraction are kept as given."""
         from sc_neurocore.compiler.platforms import HardwareProfile
 
         p = HardwareProfile.from_constraints(

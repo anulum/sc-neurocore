@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestRiscVSovereign:
+    """The sovereign RISC-V platform profiles."""
+
     @pytest.mark.parametrize(
         "name",
         [
@@ -24,7 +29,6 @@ class TestRiscVSovereign:
             "andes_ax45mpv",
         ],
     )
-    def test_risc_v(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_risc_v(self, name: str) -> None:
+        """Each listed profile belongs to the risc_v_sovereign class."""
         assert get_profile(name).platform_class == "risc_v_sovereign"

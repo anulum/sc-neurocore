@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
 class TestPhotonicProfiles:
@@ -26,16 +29,14 @@ class TestPhotonicProfiles:
             "luminous_computing",
         ],
     )
-    def test_profile_exists(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_profile_exists(self, name: str) -> None:
+        """Each photonic profile has a valid fixed-point format."""
         p = get_profile(name)
         assert p.platform_class == "photonic"
         assert p.data_width > 0
         assert p.fraction < p.data_width
 
-    def test_mzi_dsp_block(self):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_mzi_dsp_block(self) -> None:
+        """The photonic profile uses a Mach-Zehnder block."""
         p = get_profile("lightmatter_passage")
         assert p.dsp_block == "MZI"

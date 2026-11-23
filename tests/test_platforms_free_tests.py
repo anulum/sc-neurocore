@@ -10,10 +10,12 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+)
 
 
-def test_wave12_hardware_profiles_exist():
+def test_wave12_hardware_profiles_exist() -> None:
     """Verify Wave 12 platforms are loaded properly."""
     wetware1 = get_profile("cortical_labs_dishbrain")
     assert wetware1.platform_class == "wetware"

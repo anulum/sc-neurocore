@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.platforms_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.platforms import (
+    get_profile,
+    list_profile_names,
+)
 
 
 class TestFrontierPlatforms:
@@ -23,9 +27,8 @@ class TestFrontierPlatforms:
             "cortical_labs_dishbrain",
         ],
     )
-    def test_biological(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_biological(self, name: str) -> None:
+        """Each listed profile is biological or wetware."""
         p = get_profile(name)
         assert p.platform_class in ("biological", "wetware")
 
@@ -37,9 +40,8 @@ class TestFrontierPlatforms:
             "stanford_ecram",
         ],
     )
-    def test_electrochemical(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_electrochemical(self, name: str) -> None:
+        """Each listed profile belongs to the electrochemical class."""
         p = get_profile(name)
         assert p.platform_class == "electrochemical"
 
@@ -51,9 +53,8 @@ class TestFrontierPlatforms:
             "tachyum_prodigy",
         ],
     )
-    def test_wafer_scale(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_wafer_scale(self, name: str) -> None:
+        """Each listed profile belongs to the wafer_scale class."""
         p = get_profile(name)
         assert p.platform_class == "wafer_scale"
 
@@ -64,22 +65,16 @@ class TestFrontierPlatforms:
             "renesas_analog_ai",
         ],
     )
-    def test_analog_mixed(self, name):
-        from sc_neurocore.compiler.platforms import get_profile
-
+    def test_analog_mixed(self, name: str) -> None:
+        """Each listed profile belongs to the analog_mixed class."""
         p = get_profile(name)
         assert p.platform_class == "analog_mixed"
 
-    def test_total_profiles(self):
-        from sc_neurocore.compiler.platforms import list_profile_names
-
+    def test_total_profiles(self) -> None:
+        """The registry holds at least 144 profiles."""
         assert len(list_profile_names()) >= 144
 
-    def test_total_classes(self):
-        from sc_neurocore.compiler.platforms import (
-            list_profile_names,
-            get_profile,
-        )
-
+    def test_total_classes(self) -> None:
+        """The registry holds at least 19 platform classes."""
         classes = {get_profile(n).platform_class for n in list_profile_names()}
         assert len(classes) >= 19
