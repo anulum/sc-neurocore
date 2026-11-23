@@ -1277,6 +1277,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Removed
 
+- `crates/neuro_symbolic/` drops seven Python files, deleted on the owner's
+  approval: an older copy of `sc_neurocore.neuro_symbolic.predictive_coding`
+  with the same logic but no docstrings or types, its support module and
+  five test files. Each test file has the same test names as its
+  counterpart in `tests/test_neuro_symbolic/`, and pytest never collected
+  them. The Rust crate is unchanged.
+
 - The accelerated lanes drop 120 transcripts of application code, deleted on
   the owner's approval of the listed set: 54 Mojo and 66 Julia files that
   copied Python modules which are not compute kernels (web and command-line
