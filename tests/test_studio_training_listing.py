@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.studio_training_support import *  # noqa: F403
+from tests.studio_training_support import (
+    TestClient,
+    _CELL_TYPES,
+    _SURROGATES,
+    list_cell_types,
+    list_surrogates,
+)
+from tests.studio_training_support import client as client
 
 
 class TestListing:
+    """Listing the training surrogates and cell types."""
+
     def test_list_surrogates(self) -> None:
+        """Every surrogate is listed, atan and fast sigmoid among them."""
         result = list_surrogates()
         assert len(result) == len(_SURROGATES)
         names = {s["name"] for s in result}
@@ -22,6 +32,7 @@ class TestListing:
         assert "fast_sigmoid" in names
 
     def test_list_cell_types(self) -> None:
+        """Every cell type is listed, LIF and AdEx among them."""
         result = list_cell_types()
         assert len(result) == len(_CELL_TYPES)
         names = {c["name"] for c in result}
@@ -29,6 +40,7 @@ class TestListing:
         assert "AdExCell" in names
 
     def test_surrogates_endpoint(self, client: TestClient) -> None:
+        """The surrogates endpoint lists every surrogate with its availability."""
         r = client.get("/api/training/surrogates")
         assert r.status_code == 200
         data = r.json()
@@ -37,6 +49,7 @@ class TestListing:
         assert all("available" in s for s in data)
 
     def test_cell_types_endpoint(self, client: TestClient) -> None:
+        """The cell-types endpoint lists every cell type."""
         r = client.get("/api/training/cell-types")
         assert r.status_code == 200
         data = r.json()

@@ -10,14 +10,28 @@
 
 from __future__ import annotations
 
-from tests.studio_training_weights_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.training_weights import (
+    build_training_weight_restore_attach_evidence,
+    build_training_weight_restore_evidence,
+    STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION,
+    training_architecture_fingerprint,
+    validate_training_weight_restore_attach_evidence,
+    validate_training_weight_restore_evidence,
+)
+from tests.studio_training_weights_support import (
+    _materialization,
+)
 
 
 def test_build_training_weight_restore_evidence_wraps_materialization(
     tmp_path: Path,
 ) -> None:
     """Restore evidence wraps a verified materialization as training evidence."""
-
     materialization = _materialization(tmp_path)
 
     evidence = build_training_weight_restore_evidence(
@@ -40,7 +54,6 @@ def test_build_training_weight_restore_evidence_requires_source_status(
     tmp_path: Path,
 ) -> None:
     """Restore evidence requires a non-empty source training status."""
-
     materialization = _materialization(tmp_path)
 
     with pytest.raises(ValueError, match="source_status"):
@@ -51,7 +64,6 @@ def test_validate_training_weight_restore_evidence_rejects_forged(
     tmp_path: Path,
 ) -> None:
     """Restore evidence validation rejects forged or incomplete payloads."""
-
     materialization = _materialization(tmp_path)
     evidence = build_training_weight_restore_evidence(
         materialization,
@@ -88,7 +100,6 @@ def test_validate_training_weight_restore_evidence_rejects_forged(
 
 def test_training_architecture_fingerprint_ignores_non_architecture_fields() -> None:
     """The fingerprint covers only fields that change the model state-dict shape."""
-
     base = {
         "dataset": "synthetic",
         "hidden": [128],
@@ -105,7 +116,6 @@ def test_training_architecture_fingerprint_ignores_non_architecture_fields() -> 
 
 def test_training_architecture_fingerprint_changes_with_architecture() -> None:
     """Architecture-determining changes produce a different fingerprint."""
-
     base = {"dataset": "synthetic", "hidden": [128]}
 
     assert training_architecture_fingerprint({**base, "dataset": "mnist"}) != (
@@ -135,7 +145,6 @@ def test_build_training_weight_restore_attach_evidence_wraps_materialization(
     tmp_path: Path,
 ) -> None:
     """Attach evidence wraps a verified materialization as training evidence."""
-
     materialization = _materialization(tmp_path)
     fingerprint = training_architecture_fingerprint({"dataset": "synthetic", "hidden": [10]})
 
@@ -162,7 +171,6 @@ def test_build_training_weight_restore_attach_evidence_rejects_invalid_inputs(
     tmp_path: Path,
 ) -> None:
     """Attach evidence construction fails closed on invalid mode or identifiers."""
-
     materialization = _materialization(tmp_path)
     fingerprint = "a" * 64
 
@@ -199,7 +207,6 @@ def test_validate_training_weight_restore_attach_evidence_rejects_forged(
     tmp_path: Path,
 ) -> None:
     """Attach evidence validation rejects forged or incomplete payloads."""
-
     materialization = _materialization(tmp_path)
     evidence = build_training_weight_restore_attach_evidence(
         materialization,

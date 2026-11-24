@@ -12,7 +12,18 @@ from __future__ import annotations
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.training_contract import resolve_training_config
-from tests.studio_training_support import *  # noqa: F403
+from pathlib import Path
+from typing import cast
+import time
+from tests.studio_training_support import (
+    StudioJobCancelled,
+    StudioJobContext,
+    StudioJobManager,
+    StudioRuntimeSettings,
+    TestClient,
+    create_app,
+)
+from tests.studio_training_support import client as client
 
 
 class TestTrainingEndpoints:
@@ -109,6 +120,7 @@ class TestTrainingEndpoints:
         manager = cast(StudioJobManager, app.state.studio_job_manager)
 
         def cancelled(_context: StudioJobContext) -> dict[str, object]:
+            """Raise the cancellation an operator would cause."""
             raise StudioJobCancelled("operator cancelled")
 
         submitted = manager.submit(

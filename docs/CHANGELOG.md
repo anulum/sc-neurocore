@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 14 top-level Studio template and training test modules import their
+  names explicitly instead of through a suppressed star import, take
+  every name bound after the training support's web-stack guard from that
+  support, keep its client fixture in their namespaces through
+  redundant-alias imports, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy.
+
 - The 19 top-level Studio settings, policy and synthesis test modules
   import their names explicitly instead of through a suppressed star
   import, take every name bound after a support's web-stack guard from

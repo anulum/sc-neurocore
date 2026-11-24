@@ -6,14 +6,34 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (validate_summary) from former test_studio_training_evidence.py
 
+"""Validating Studio training evidence summaries."""
+
 from __future__ import annotations
 
-from tests.studio_training_evidence_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Callable,
+    Mapping,
+)
+from sc_neurocore.studio.platform.training_evidence import (
+    build_training_evidence_summary,
+    TRAINING_EVIDENCE_ARTIFACT_PATH,
+    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+    validate_training_evidence_summary,
+)
+from tests.studio_training_evidence_support import (
+    _training_payload_reader,
+    _training_record,
+    _unavailable_training_summary,
+    _valid_training_summary,
+)
+from typing import (
+    cast,
+)
 
 
 def test_validate_training_evidence_summary_accepts_verified_summary() -> None:
     """Evidence summary validator accepts verified Training Monitor summaries."""
-
     summary = build_training_evidence_summary(_training_record(), _training_payload_reader())
     assert isinstance(summary, dict)
     summary["duration_seconds"] = 1.5
@@ -25,14 +45,12 @@ def test_validate_training_evidence_summary_accepts_verified_summary() -> None:
 
 def test_validate_training_evidence_summary_rejects_unavailable_summary() -> None:
     """Evidence summary validator rejects bounded unavailable summaries."""
-
     with pytest.raises(ValueError, match="action_kind"):
         validate_training_evidence_summary(_unavailable_training_summary())
 
 
 def test_validate_training_evidence_summary_rejects_forged_artifact_path() -> None:
     """Evidence summary validator rejects non-confined artifact metadata."""
-
     summary = build_training_evidence_summary(_training_record(), _training_payload_reader())
     assert isinstance(summary, dict)
     evidence_artifact = summary["evidence_artifact"]
@@ -62,7 +80,6 @@ def test_validate_training_evidence_summary_rejects_invalid_fields(
     error_match: str,
 ) -> None:
     """Evidence summary validator rejects malformed top-level fields."""
-
     summary = _valid_training_summary()
     mutator(summary)
 
@@ -103,7 +120,6 @@ def test_validate_training_evidence_summary_rejects_invalid_evidence_artifact(
     error_match: str,
 ) -> None:
     """Evidence summary validator rejects malformed evidence artifact metadata."""
-
     summary = _valid_training_summary()
     summary["evidence_artifact"] = evidence_artifact
 
@@ -125,7 +141,6 @@ def test_validate_training_evidence_summary_rejects_invalid_result_artifact(
     error_match: str,
 ) -> None:
     """Evidence summary validator rejects malformed result artifact metadata."""
-
     summary = _valid_training_summary()
     summary["result_artifacts"] = [result_artifact]
 
@@ -149,6 +164,5 @@ def test_validate_training_evidence_summary_rejects_non_portable_json(
     error_match: str,
 ) -> None:
     """Evidence summary validator rejects non-portable JSON payloads."""
-
     with pytest.raises(ValueError, match=error_match):
         validate_training_evidence_summary(cast(Mapping[str, object], payload))

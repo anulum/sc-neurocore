@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.studio_templates_support import *  # noqa: F403
+import pytest
+from sc_neurocore.studio.templates import (
+    TEMPLATES,
+)
 
 
 class TestTemplateParsing:
+    """Building neurons from the Studio templates."""
+
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_template_creates_valid_neuron(self, name):
+    def test_template_creates_valid_neuron(self, name: str) -> None:
+        """Each template builds a neuron with one state per initial value."""
         from sc_neurocore.neurons.equation_builder import from_equations
 
         t = TEMPLATES[name]

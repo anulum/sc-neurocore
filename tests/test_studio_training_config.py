@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_training_support import *  # noqa: F403
+import time
+from tests.studio_training_support import (
+    get_training_status,
+    list_surrogates,
+    start_training,
+)
 
 
 class TestTrainingConfig:
+    """Training runs with the default configuration."""
+
     def test_default_config_runs(self) -> None:
+        """A default training run starts running and completes."""
         result = start_training({"epochs": 2, "batch_size": 32, "dataset": "synthetic"})
         assert result["status"] == "running"
         # Wait for completion (synthetic is fast)
@@ -27,6 +35,7 @@ class TestTrainingConfig:
         assert status["status"] == "completed", f"Expected completed, got {status}"
 
     def test_all_surrogates_listed(self) -> None:
+        """Every surrogate is listed."""
         expected = {
             "fast_sigmoid",
             "superspike",

@@ -10,14 +10,30 @@
 
 from __future__ import annotations
 
-from tests.studio_training_weights_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.training_weight_loader import (
+    load_training_weight_state_dict,
+)
+from sc_neurocore.studio.platform.training_weights import (
+    build_training_weight_restore_plan,
+    materialize_training_weight_payload,
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    write_training_weight_checkpoint,
+)
+from tests.studio_training_weights_support import (
+    _context,
+    _torch_checkpoint_bytes,
+)
 
 
 def test_materialize_training_weight_payload_verifies_artifacts_before_loading(
     tmp_path: Path,
 ) -> None:
     """Trusted weight materialization verifies plan-bound payloads first."""
-
     context = _context(tmp_path)
     weights_payload = b"weights"
     summary = write_training_weight_checkpoint(
@@ -59,7 +75,6 @@ def test_materialize_training_weight_payload_rejects_tampered_payloads(
     tmp_path: Path,
 ) -> None:
     """Trusted weight materialization rejects payloads before loader execution."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,
@@ -88,7 +103,6 @@ def test_materialize_training_weight_payload_rejects_invalid_loader_output(
     tmp_path: Path,
 ) -> None:
     """Trusted weight materialization validates state-dictionary keys."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,
@@ -115,7 +129,6 @@ def test_materialize_training_weight_payload_rejects_invalid_loader_output(
 
 def test_load_training_weight_state_dict_extracts_model_state() -> None:
     """Trusted loader returns only the string-keyed model state dictionary."""
-
     pytest.importorskip("torch")
     state_dict = load_training_weight_state_dict(_torch_checkpoint_bytes())
 
@@ -124,7 +137,6 @@ def test_load_training_weight_state_dict_extracts_model_state() -> None:
 
 def test_load_training_weight_state_dict_rejects_non_checkpoint() -> None:
     """Trusted loader rejects payloads that are not checkpoint objects."""
-
     torch = pytest.importorskip("torch")
     from io import BytesIO
 
@@ -137,7 +149,6 @@ def test_load_training_weight_state_dict_rejects_non_checkpoint() -> None:
 
 def test_load_training_weight_state_dict_rejects_unsupported_schema() -> None:
     """Trusted loader rejects checkpoints with an unexpected payload schema."""
-
     pytest.importorskip("torch")
     payload = _torch_checkpoint_bytes(schema_version="studio.training.torch-state-dict.v0")
 
@@ -147,7 +158,6 @@ def test_load_training_weight_state_dict_rejects_unsupported_schema() -> None:
 
 def test_load_training_weight_state_dict_rejects_missing_state_dict() -> None:
     """Trusted loader rejects checkpoints without a model state dictionary."""
-
     pytest.importorskip("torch")
     payload = _torch_checkpoint_bytes(include_state_dict=False)
 
@@ -157,7 +167,6 @@ def test_load_training_weight_state_dict_rejects_missing_state_dict() -> None:
 
 def test_load_training_weight_state_dict_rejects_invalid_state_key() -> None:
     """Trusted loader rejects model state dictionaries with empty keys."""
-
     torch = pytest.importorskip("torch")
     payload = _torch_checkpoint_bytes(state_dict={"": torch.zeros(1)})
 
@@ -167,7 +176,6 @@ def test_load_training_weight_state_dict_rejects_invalid_state_key() -> None:
 
 def test_load_training_weight_state_dict_rejects_undeserializable() -> None:
     """Trusted loader fails closed on payloads torch cannot deserialize."""
-
     pytest.importorskip("torch")
     with pytest.raises(ValueError, match="could not be deserialized"):
         load_training_weight_state_dict(b"not a torch payload")
@@ -175,7 +183,6 @@ def test_load_training_weight_state_dict_rejects_undeserializable() -> None:
 
 def test_materialize_with_real_torch_loader_roundtrips(tmp_path: Path) -> None:
     """End-to-end materialization loads real torch weights after verification."""
-
     pytest.importorskip("torch")
     context = _context(tmp_path)
     weights_payload = _torch_checkpoint_bytes()

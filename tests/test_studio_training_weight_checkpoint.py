@@ -10,14 +10,31 @@
 
 from __future__ import annotations
 
-from tests.studio_training_weights_support import *  # noqa: F403
+import hashlib
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.training_weights import (
+    build_training_weight_restore_plan,
+    STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    validate_training_weight_checkpoint_metadata,
+    write_training_weight_checkpoint,
+)
+from tests.studio_training_weights_support import (
+    _context,
+)
 
 
 def test_write_training_weight_checkpoint_publishes_binary_and_metadata(
     tmp_path: Path,
 ) -> None:
     """Weight checkpoint writer emits path-free manifest metadata."""
-
     context = _context(tmp_path)
     weights_payload = b"serialized weights"
 
@@ -52,7 +69,6 @@ def test_write_training_weight_checkpoint_rejects_invalid_payload(
     tmp_path: Path,
 ) -> None:
     """Weight checkpoint writer rejects empty or non-portable metadata inputs."""
-
     context = _context(tmp_path)
 
     with pytest.raises(ValueError, match="empty"):
@@ -79,7 +95,6 @@ def test_validate_training_weight_checkpoint_metadata_accepts_writer_output(
     tmp_path: Path,
 ) -> None:
     """Weight checkpoint import validation accepts writer-produced metadata."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,
@@ -102,7 +117,6 @@ def test_build_training_weight_restore_plan_returns_digest_bound_route(
     tmp_path: Path,
 ) -> None:
     """Weight restore plans expose authenticated routes and expected hashes."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,
@@ -134,7 +148,6 @@ def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
     tmp_path: Path,
 ) -> None:
     """Weight checkpoint import validation rejects forged artifact metadata."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,
@@ -166,7 +179,6 @@ def test_build_training_weight_restore_plan_rejects_missing_source_metadata(
     tmp_path: Path,
 ) -> None:
     """Weight restore plans require explicit source job metadata."""
-
     context = _context(tmp_path)
     summary = write_training_weight_checkpoint(
         context,

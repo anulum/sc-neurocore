@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.studio_templates_support import *  # noqa: F403
+from sc_neurocore.studio.templates import (
+    get_template,
+    list_templates,
+)
 
 
 class TestListAndGet:
-    def test_list_returns_all(self):
+    """Listing and fetching Studio equation templates."""
+
+    def test_list_returns_all(self) -> None:
+        """The template list holds five template dictionaries."""
         result = list_templates()
         assert len(result) == 5
         assert all(isinstance(t, dict) for t in result)
 
-    def test_get_existing(self):
+    def test_get_existing(self) -> None:
+        """The LIF template is returned by name."""
         t = get_template("lif")
         assert t is not None
         assert t["name"] == "lif"
 
-    def test_get_nonexistent(self):
+    def test_get_nonexistent(self) -> None:
+        """An unknown template gives None."""
         assert get_template("nonexistent") is None

@@ -6,14 +6,40 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (status_summary) from former test_studio_training_evidence.py
 
+"""The verified evidence summary in the Studio training status."""
+
 from __future__ import annotations
 
-from tests.studio_training_evidence_support import *  # noqa: F403
+import json
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.action_evidence import (
+    STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
+)
+from sc_neurocore.studio.platform.jobs import (
+    StudioJobArtifact,
+    StudioJobArtifactPayload,
+    StudioJobArtifactUnavailable,
+    StudioJobManager,
+    StudioJobRecord,
+)
+from sc_neurocore.studio.platform.training_evidence import (
+    build_training_evidence_summary,
+    TRAINING_EVIDENCE_ARTIFACT_PATH,
+    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+)
+from sc_neurocore.studio.training import (
+    get_training_status,
+)
+from tests.studio_training_evidence_support import (
+    _training_payload_reader,
+    training_evidence_task,
+)
 
 
 def test_training_status_includes_verified_evidence_summary(tmp_path: Path) -> None:
     """Training status exposes path-free evidence metadata after completion."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"training"}),
@@ -56,7 +82,6 @@ def test_training_status_includes_verified_evidence_summary(tmp_path: Path) -> N
 
 def test_training_evidence_summary_reports_unavailable_artifact() -> None:
     """Unreadable declared evidence artifacts produce a bounded summary."""
-
     artifact = StudioJobArtifact(
         relative_path=TRAINING_EVIDENCE_ARTIFACT_PATH,
         size_bytes=128,
@@ -77,6 +102,7 @@ def test_training_evidence_summary_reports_unavailable_artifact() -> None:
         _job_id: str,
         _relative_path: str,
     ) -> StudioJobArtifactPayload:
+        """Report the evidence artefact as unavailable."""
         raise StudioJobArtifactUnavailable("missing")
 
     summary = build_training_evidence_summary(record, unavailable_reader)
@@ -91,7 +117,6 @@ def test_training_evidence_summary_reports_unavailable_artifact() -> None:
 
 def test_training_evidence_summary_returns_none_without_declared_artifact() -> None:
     """Records without Training Monitor evidence do not fabricate summaries."""
-
     record = StudioJobRecord(
         job_id="sj_training",
         kind="training",

@@ -11,7 +11,21 @@
 from __future__ import annotations
 
 from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
-from tests.studio_training_support import *  # noqa: F403
+from pathlib import Path
+import json
+import pytest
+import threading
+from tests.studio_training_support import (
+    STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
+    StudioJobCancelled,
+    StudioJobContext,
+    StudioJobManager,
+    TrainingJob,
+    get_training_status,
+    list_jobs,
+    start_training,
+    stop_training,
+)
 
 
 class TestJobLifecycle:
@@ -122,6 +136,7 @@ class TestJobLifecycle:
         """Bounded training writes status and action evidence artifacts."""
 
         def complete_training(job: TrainingJob, context: object = None) -> None:
+            """Complete the training job with fixed final metrics."""
             job.status = "completed"
             job.final_metrics = {
                 "train_loss": 0.1,
@@ -163,6 +178,7 @@ class TestJobLifecycle:
         """Failed bounded training writes failed evidence before propagating."""
 
         def fail_training(job: TrainingJob, context: object = None) -> None:
+            """Fail the training job with RuntimeError."""
             raise RuntimeError("training boom")
 
         monkeypatch.setattr(TrainingJob, "_train", fail_training)
@@ -190,6 +206,7 @@ class TestJobLifecycle:
         """Stopped bounded training writes cancelled evidence before propagating."""
 
         def stop_training_run(job: TrainingJob, context: object = None) -> None:
+            """Mark the training job as stopped."""
             job.status = "stopped"
 
         monkeypatch.setattr(TrainingJob, "_train", stop_training_run)

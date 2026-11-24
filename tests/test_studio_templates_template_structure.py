@@ -10,36 +10,51 @@
 
 from __future__ import annotations
 
-from tests.studio_templates_support import *  # noqa: F403
+import pytest
+from sc_neurocore.studio.templates import (
+    TEMPLATES,
+)
+from tests.studio_templates_support import (
+    REQUIRED_KEYS,
+)
 
 
 class TestTemplateStructure:
-    def test_five_templates_exist(self):
+    """The structure of the Studio templates."""
+
+    def test_five_templates_exist(self) -> None:
+        """There are five templates."""
         assert len(TEMPLATES) == 5
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_template_has_required_keys(self, name):
+    def test_template_has_required_keys(self, name: str) -> None:
+        """Each template has every required key."""
         t = TEMPLATES[name]
         missing = REQUIRED_KEYS - set(t.keys())
         assert not missing, f"{name} missing keys: {missing}"
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_equations_is_nonempty_list(self, name):
+    def test_equations_is_nonempty_list(self, name: str) -> None:
+        """Each template's equations are a non-empty list."""
         assert isinstance(TEMPLATES[name]["equations"], list)
         assert len(TEMPLATES[name]["equations"]) > 0
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_params_is_dict(self, name):
+    def test_params_is_dict(self, name: str) -> None:
+        """Each template's parameters are a dictionary."""
         assert isinstance(TEMPLATES[name]["params"], dict)
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_init_is_dict(self, name):
+    def test_init_is_dict(self, name: str) -> None:
+        """Each template's initial state is a dictionary."""
         assert isinstance(TEMPLATES[name]["init"], dict)
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_dt_positive(self, name):
+    def test_dt_positive(self, name: str) -> None:
+        """Each template's time step is positive."""
         assert TEMPLATES[name]["dt"] > 0
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_duration_positive(self, name):
+    def test_duration_positive(self, name: str) -> None:
+        """Each template's duration is positive."""
         assert TEMPLATES[name]["duration"] > 0

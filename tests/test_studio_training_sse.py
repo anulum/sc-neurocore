@@ -13,7 +13,23 @@ from __future__ import annotations
 from sc_neurocore.studio import _training_stream as training_stream
 from sc_neurocore.studio.platform.jobs_failures import GENERIC_JOB_FAILURE
 from tests.studio_seccomp_support import run_child
-from tests.studio_training_support import *  # noqa: F403
+from pathlib import Path
+from typing import cast
+import json
+import pytest
+import threading
+import time
+from tests.studio_training_support import (
+    StudioJobContext,
+    StudioJobManager,
+    StudioRuntimeSettings,
+    TestClient,
+    TrainingJob,
+    _register_job,
+    create_app,
+    stream_metrics,
+)
+from tests.studio_training_support import client as client
 
 #: Source-owned training refusal raised when a recording changes under the run.
 DATASET_REFUSAL = "event dataset files or sample metadata differ from the manifest"
@@ -126,6 +142,7 @@ def test_http_stream_replays_real_failure_without_exposing_diagnostics(
     release = threading.Event()
 
     def task(context: StudioJobContext) -> dict[str, object]:
+        """Run the stand-in training job body and return its result."""
         if failure == "os-error":
             context.write_artifact("x" * 300, b"data")
         else:
@@ -195,6 +212,7 @@ class TestSSEStream:
         release = threading.Event()
 
         def task(context: StudioJobContext) -> dict[str, object]:
+            """Run the stand-in training job body and return its result."""
             context.append_artifact_event(
                 "training/events.jsonl",
                 {"event": "epoch", "data": {"epoch": 0}, "timestamp": 1.0},
@@ -248,6 +266,7 @@ class TestSSEStream:
         release = threading.Event()
 
         def task(context: StudioJobContext) -> dict[str, object]:
+            """Run the stand-in training job body and return its result."""
             release.wait(timeout=3.0)
             return {"final_metrics": {"train_accuracy": 0.75}, "training_status": "completed"}
 
@@ -261,6 +280,7 @@ class TestSSEStream:
         frames: list[dict[str, object]] = []
 
         def consume() -> None:
+            """Collect every streamed metrics frame."""
             for frame in stream_metrics(record.job_id, manager):
                 frames.append(json.loads(frame.removeprefix("data: ").strip()))
 
@@ -296,6 +316,7 @@ class TestSSEStream:
         release = threading.Event()
 
         def task(context: StudioJobContext) -> dict[str, object]:
+            """Run the stand-in training job body and return its result."""
             release.wait(timeout=20.0)
             return {"training_status": "completed"}
 

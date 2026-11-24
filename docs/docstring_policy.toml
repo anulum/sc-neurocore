@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4988
+expected_file_count = 4999
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -19996,3 +19996,47 @@ rationale = "Exercise SC-NeuroCore: studio synthesis tool detection."
 [[file]]
 path = "tests/test_studio_synthesis_yosys_json.py"
 rationale = "Exercise SC-NeuroCore: studio synthesis yosys json."
+
+[[file]]
+path = "tests/test_studio_templates_list_and_get.py"
+rationale = "Exercise SC-NeuroCore: studio templates list and get."
+
+[[file]]
+path = "tests/test_studio_templates_template_parsing.py"
+rationale = "Exercise SC-NeuroCore: studio templates template parsing."
+
+[[file]]
+path = "tests/test_studio_templates_template_structure.py"
+rationale = "Exercise SC-NeuroCore: studio templates template structure."
+
+[[file]]
+path = "tests/test_studio_training_config.py"
+rationale = "Exercise SC-NeuroCore: studio training config."
+
+[[file]]
+path = "tests/test_studio_training_evidence_status_summary.py"
+rationale = "Exercise SC-NeuroCore: studio training evidence status summary."
+
+[[file]]
+path = "tests/test_studio_training_evidence_summary_rejects.py"
+rationale = "Exercise SC-NeuroCore: studio training evidence summary rejects."
+
+[[file]]
+path = "tests/test_studio_training_evidence_validate_summary.py"
+rationale = "Exercise SC-NeuroCore: studio training evidence validate summary."
+
+[[file]]
+path = "tests/test_studio_training_listing.py"
+rationale = "Exercise SC-NeuroCore: studio training listing."
+
+[[file]]
+path = "tests/test_studio_training_weight_checkpoint.py"
+rationale = "Exercise SC-NeuroCore: studio training weight checkpoint."
+
+[[file]]
+path = "tests/test_studio_training_weight_evidence.py"
+rationale = "Exercise SC-NeuroCore: studio training weight evidence."
+
+[[file]]
+path = "tests/test_studio_training_weight_materialize.py"
+rationale = "Exercise SC-NeuroCore: studio training weight materialize."
