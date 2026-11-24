@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestLavaBridge:
-    def test_export_weights(self):
+    """Conversion of SC-NeuroCore weights and thresholds for Loihi through the Lava bridge."""
+
+    def test_export_weights(self) -> None:
+        """Weights export as an int32 Loihi matrix of the same shape, 0.0 mapping to -127."""
         import numpy as np
         from sc_neurocore.integrations.lava_bridge import export_weights_loihi
 
@@ -25,7 +30,8 @@ class TestLavaBridge:
         assert loihi_w[0, 0] == -127  # 0.0 → -1.0 → -127
         assert loihi_w[0, 2] == 127  # 1.0 → +1.0 → +127
 
-    def test_converter(self):
+    def test_converter(self) -> None:
+        """The converter builds a Loihi network configuration with the right input and output counts."""
         from sc_neurocore.integrations.lava_bridge import SCtoLavaConverter, LoihiNetworkConfig
 
         converter = SCtoLavaConverter(weight_bits=8)
@@ -38,7 +44,8 @@ class TestLavaBridge:
         assert config.n_inputs == 2
         assert config.n_outputs == 3
 
-    def test_threshold_conversion(self):
+    def test_threshold_conversion(self) -> None:
+        """A threshold of 1.0 with 8-bit weights converts to the Loihi threshold 127."""
         from sc_neurocore.integrations.lava_bridge import loihi_threshold_from_sc
 
         t = loihi_threshold_from_sc(1.0, weight_bits=8)

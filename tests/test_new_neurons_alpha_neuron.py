@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestAlphaNeuron:
-    def test_fires_with_excitation(self):
+    """The alpha-synapse neuron with excitatory and inhibitory inputs."""
+
+    def test_fires_with_excitation(self) -> None:
+        """Excitatory input makes the neuron fire."""
         from sc_neurocore.neurons.models import AlphaNeuron
 
         n = AlphaNeuron()
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
-    def test_inhibition_blocks(self):
+    def test_inhibition_blocks(self) -> None:
+        """Strong inhibition blocks firing."""
         from sc_neurocore.neurons.models import AlphaNeuron
 
         n = AlphaNeuron()

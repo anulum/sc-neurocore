@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestFitzHughNagumo:
-    def test_fires(self):
+    """The FitzHugh-Nagumo relaxation oscillator."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the oscillator fire."""
         from sc_neurocore.neurons.models import FitzHughNagumoNeuron
 
         n = FitzHughNagumoNeuron()
         spikes = sum(n.step(1.0) for _ in range(500))
         assert spikes > 0
 
-    def test_relaxation_oscillation(self):
+    def test_relaxation_oscillation(self) -> None:
+        """The recovery variable w moves from its initial value."""
         from sc_neurocore.neurons.models import FitzHughNagumoNeuron
 
         n = FitzHughNagumoNeuron()

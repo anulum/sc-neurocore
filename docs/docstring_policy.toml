@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4338
+expected_file_count = 4354
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17396,3 +17396,67 @@ rationale = "Exercise SC-NeuroCore: neuron families neuron families."
 [[file]]
 path = "tests/test_neuron_families_no_spike_model.py"
 rationale = "Exercise SC-NeuroCore: neuron families no spike model."
+
+[[file]]
+path = "tests/test_new_models_brunel_wang.py"
+rationale = "Exercise SC-NeuroCore: new models brunel wang."
+
+[[file]]
+path = "tests/test_new_models_srm0.py"
+rationale = "Exercise SC-NeuroCore: new models srm0."
+
+[[file]]
+path = "tests/test_new_neurons_ad_ex_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons ad ex neuron."
+
+[[file]]
+path = "tests/test_new_neurons_alpha_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons alpha neuron."
+
+[[file]]
+path = "tests/test_new_neurons_exp_if_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons exp if neuron."
+
+[[file]]
+path = "tests/test_new_neurons_fitz_hugh_nagumo.py"
+rationale = "Exercise SC-NeuroCore: new neurons fitz hugh nagumo."
+
+[[file]]
+path = "tests/test_new_neurons_hindmarsh_rose.py"
+rationale = "Exercise SC-NeuroCore: new neurons hindmarsh rose."
+
+[[file]]
+path = "tests/test_new_neurons_hodgkin_huxley.py"
+rationale = "Exercise SC-NeuroCore: new neurons hodgkin huxley."
+
+[[file]]
+path = "tests/test_new_neurons_lapicque_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons lapicque neuron."
+
+[[file]]
+path = "tests/test_new_neurons_lava_bridge.py"
+rationale = "Exercise SC-NeuroCore: new neurons lava bridge."
+
+[[file]]
+path = "tests/test_new_neurons_morris_lecar.py"
+rationale = "Exercise SC-NeuroCore: new neurons morris lecar."
+
+[[file]]
+path = "tests/test_new_neurons_poisson_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons poisson neuron."
+
+[[file]]
+path = "tests/test_new_neurons_quadratic_if.py"
+rationale = "Exercise SC-NeuroCore: new neurons quadratic if."
+
+[[file]]
+path = "tests/test_new_neurons_spike_response.py"
+rationale = "Exercise SC-NeuroCore: new neurons spike response."
+
+[[file]]
+path = "tests/test_new_neurons_theta_neuron.py"
+rationale = "Exercise SC-NeuroCore: new neurons theta neuron."
+
+[[file]]
+path = "tests/test_new_neurons_training_cells.py"
+rationale = "Exercise SC-NeuroCore: new neurons training cells."

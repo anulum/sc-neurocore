@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestExpIFNeuron:
-    def test_fires(self):
+    """The exponential integrate-and-fire neuron."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import ExpIFNeuron
 
         n = ExpIFNeuron()
         spikes = sum(n.step(500.0) for _ in range(2000))
         assert spikes > 0
 
-    def test_no_fire_without_input(self):
+    def test_no_fire_without_input(self) -> None:
+        """Without input the neuron does not fire."""
         from sc_neurocore.neurons.models import ExpIFNeuron
 
         n = ExpIFNeuron()

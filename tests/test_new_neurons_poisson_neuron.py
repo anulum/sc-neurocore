@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestPoissonNeuron:
-    def test_fires_at_rate(self):
+    """The Poisson spike-source neuron."""
+
+    def test_fires_at_rate(self) -> None:
+        """At 1000 Hz and dt 1 ms the measured rate lies between 500 and 1500 Hz."""
         from sc_neurocore.neurons.models import PoissonNeuron
 
         n = PoissonNeuron(rate_hz=1000.0, dt_ms=1.0)
@@ -22,7 +27,8 @@ class TestPoissonNeuron:
         rate = spikes / 10.0  # 10 seconds
         assert 500 < rate < 1500
 
-    def test_zero_rate(self):
+    def test_zero_rate(self) -> None:
+        """A zero rate gives no spikes."""
         from sc_neurocore.neurons.models import PoissonNeuron
 
         n = PoissonNeuron(rate_hz=0.0)

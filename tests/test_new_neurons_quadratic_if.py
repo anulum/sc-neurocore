@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestQuadraticIF:
-    def test_fires(self):
+    """The quadratic integrate-and-fire neuron."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import QuadraticIFNeuron
 
         n = QuadraticIFNeuron()
         spikes = sum(n.step(0.5) for _ in range(500))
         assert spikes > 0
 
-    def test_no_fire_subthreshold(self):
+    def test_no_fire_subthreshold(self) -> None:
+        """Started and reset below threshold, the neuron does not fire."""
         from sc_neurocore.neurons.models import QuadraticIFNeuron
 
         n = QuadraticIFNeuron(v=-2.0, v_reset=-2.0)

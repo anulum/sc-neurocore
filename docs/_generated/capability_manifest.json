@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5628
+    "test_files": 5627
   },
   "documentation": {
     "public_pages": [
@@ -3691,7 +3691,6 @@
       "tests/neuroml_import_support.py",
       "tests/neuron_families_support.py",
       "tests/neuron_integrator_paths_support.py",
-      "tests/new_models_support.py",
       "tests/new_neurons_support.py",
       "tests/nir_fpga_pipeline_support.py",
       "tests/nir_import_support.py",

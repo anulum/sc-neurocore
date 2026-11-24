@@ -10,25 +10,32 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestHodgkinHuxley:
-    def test_fires(self):
+    """The Hodgkin-Huxley neuron."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()
         spikes = sum(n.step(10.0) for _ in range(100))
         assert spikes > 0
 
-    def test_no_fire_without_input(self):
+    def test_no_fire_without_input(self) -> None:
+        """Without input the neuron does not fire."""
         from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()
         spikes = sum(n.step(0.0) for _ in range(50))
         assert spikes == 0
 
-    def test_gating_variables_bounded(self):
+    def test_gating_variables_bounded(self) -> None:
+        """The gating variables m and h stay inside [0, 1]."""
         from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()

@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestHindmarshRose:
-    def test_bursting(self):
+    """The Hindmarsh-Rose bursting neuron."""
+
+    def test_bursting(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import HindmarshRoseNeuron
 
         n = HindmarshRoseNeuron()
         spikes = sum(n.step(3.0) for _ in range(2000))
         assert spikes > 0
 
-    def test_z_evolves(self):
+    def test_z_evolves(self) -> None:
+        """The slow adaptation variable z moves from its initial value."""
         from sc_neurocore.neurons.models import HindmarshRoseNeuron
 
         n = HindmarshRoseNeuron()

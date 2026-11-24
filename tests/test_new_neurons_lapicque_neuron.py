@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestLapicqueNeuron:
-    def test_fires(self):
+    """The Lapicque integrate-and-fire neuron."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import LapicqueNeuron
 
         n = LapicqueNeuron()
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset returns the voltage to zero."""
         from sc_neurocore.neurons.models import LapicqueNeuron
 
         n = LapicqueNeuron()

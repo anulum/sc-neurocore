@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestMorrisLecar:
-    def test_fires(self):
+    """The Morris-Lecar neuron."""
+
+    def test_fires(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import MorrisLecarNeuron
 
         n = MorrisLecarNeuron()
         spikes = sum(n.step(100.0) for _ in range(500))
         assert spikes > 0
 
-    def test_calcium_activation(self):
+    def test_calcium_activation(self) -> None:
+        """Under drive the potassium activation w grows above zero."""
         from sc_neurocore.neurons.models import MorrisLecarNeuron
 
         n = MorrisLecarNeuron()

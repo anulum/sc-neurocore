@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 16 top-level test modules of the newer neuron models import their
+  names explicitly instead of through a suppressed star import, keep the
+  torch skip of their support as an explicit pytest.importorskip, gain
+  their missing docstrings and type annotations and are enrolled in the
+  docstring policy; the support left without an importer is deleted.
+
 - The 2 top-level neuron-family test modules import their names
   explicitly instead of through a suppressed star import; the
   parametrised family fixture moves into the one module that uses it,

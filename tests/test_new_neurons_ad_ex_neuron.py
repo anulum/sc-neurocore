@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestAdExNeuron:
-    def test_fires_with_input(self):
+    """The adaptive exponential integrate-and-fire neuron."""
+
+    def test_fires_with_input(self) -> None:
+        """Sustained input makes the neuron fire."""
         from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()
         spikes = sum(n.step(500.0) for _ in range(2000))
         assert spikes > 0
 
-    def test_adaptation(self):
+    def test_adaptation(self) -> None:
+        """The adaptation variable w grows while the neuron fires."""
         from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()
@@ -29,7 +35,8 @@ class TestAdExNeuron:
             n.step(400.0)
         assert n.w > 0, "adaptation variable must grow"
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset returns v to v_rest and w to zero."""
         from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()

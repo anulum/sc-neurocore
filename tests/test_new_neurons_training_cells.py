@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+from tests.new_neurons_support import (
+    torch,
+)
 
 
 class TestTrainingCells:
-    def test_expif_cell(self):
+    """The trainable torch cells of the training modules."""
+
+    def test_expif_cell(self) -> None:
+        """The ExpIF cell returns a spike tensor of the batch shape."""
         from sc_neurocore.training.snn_modules import ExpIFCell
 
         cell = ExpIFCell()
@@ -22,7 +27,8 @@ class TestTrainingCells:
         spike, v = cell(torch.ones(4) * 2.0, v)
         assert spike.shape == (4,)
 
-    def test_adex_cell(self):
+    def test_adex_cell(self) -> None:
+        """The AdEx cell returns a spike tensor of the batch shape."""
         from sc_neurocore.training.snn_modules import AdExCell
 
         cell = AdExCell()
@@ -31,7 +37,8 @@ class TestTrainingCells:
         spike, v, w = cell(torch.ones(4) * 2.0, v, w)
         assert spike.shape == (4,)
 
-    def test_lapicque_cell(self):
+    def test_lapicque_cell(self) -> None:
+        """The Lapicque cell returns a spike tensor of the batch shape."""
         from sc_neurocore.training.snn_modules import LapicqueCell
 
         cell = LapicqueCell()
@@ -39,7 +46,8 @@ class TestTrainingCells:
         spike, v = cell(torch.ones(4) * 5.0, v)
         assert spike.shape == (4,)
 
-    def test_alpha_cell(self):
+    def test_alpha_cell(self) -> None:
+        """The alpha cell returns a spike tensor of the batch shape."""
         from sc_neurocore.training.snn_modules import AlphaCell
 
         cell = AlphaCell()
@@ -49,7 +57,8 @@ class TestTrainingCells:
         spike, i_exc, i_inh, v = cell(torch.ones(4), torch.zeros(4), i_exc, i_inh, v)
         assert spike.shape == (4,)
 
-    def test_second_order_lif(self):
+    def test_second_order_lif(self) -> None:
+        """The second-order LIF cell returns a spike tensor of the batch shape."""
         from sc_neurocore.training.snn_modules import SecondOrderLIFCell
 
         cell = SecondOrderLIFCell()

@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.new_neurons_support import *  # noqa: F403
+import pytest
+
+pytest.importorskip("torch")
 
 
 class TestThetaNeuron:
-    def test_fires_above_threshold(self):
+    """The theta (Ermentrout-Kopell) neuron."""
+
+    def test_fires_above_threshold(self) -> None:
+        """Input above threshold makes the neuron fire."""
         from sc_neurocore.neurons.models import ThetaNeuron
 
         n = ThetaNeuron()
         spikes = sum(n.step(1.0) for _ in range(1000))
         assert spikes > 0
 
-    def test_no_fire_below(self):
+    def test_no_fire_below(self) -> None:
+        """Input below threshold gives no spikes."""
         from sc_neurocore.neurons.models import ThetaNeuron
 
         n = ThetaNeuron()
