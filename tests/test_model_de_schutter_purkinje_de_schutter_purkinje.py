@@ -10,21 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_de_schutter_purkinje_support import *  # noqa: F403
+from sc_neurocore.neurons.models.de_schutter_purkinje import (
+    DeSchutterPurkinjeNeuron,
+)
 
 
 class TestDeSchutterPurkinje:
-    def test_dynamics(self) -> None:
-        from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron
+    """The De Schutter Purkinje cell model."""
 
+    def test_dynamics(self) -> None:
+        """Calcium evolves under drive."""
         n = DeSchutterPurkinjeNeuron()
         for _ in range(200):
             n.step(20.0)
         assert n.ca != 0.0001, "calcium must evolve"
 
     def test_gating_bounded(self) -> None:
-        from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron
-
+        """The gating variables stay inside [0, 1]."""
         n = DeSchutterPurkinjeNeuron()
         for _ in range(100):
             n.step(15.0)

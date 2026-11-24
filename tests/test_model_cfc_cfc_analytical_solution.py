@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_cfc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.cfc import (
+    ClosedFormContinuousNeuron,
+)
 
 
 class TestCFCAnalyticalSolution:
     """x(t+dt) = x·exp(-dt/τ_eff) + f_target·(1 - exp(-dt/τ_eff))."""
 
-    def test_closed_form_formula(self):
+    def test_closed_form_formula(self) -> None:
         """Verify one step matches the closed-form expression."""
         n = ClosedFormContinuousNeuron(v_threshold=100.0)  # prevent spike
         I = 3.0
@@ -29,14 +32,14 @@ class TestCFCAnalyticalSolution:
         n.step(I)
         assert abs(n.x - expected) < 1e-10
 
-    def test_tau_eff_input_dependent(self):
+    def test_tau_eff_input_dependent(self) -> None:
         """τ_eff = τ_base · σ(w_τ·I + bias). Varies with input."""
         n = ClosedFormContinuousNeuron()
         tau1 = n.tau_base / (1.0 + np.exp(-(n.w_tau * 1.0)))
         tau5 = n.tau_base / (1.0 + np.exp(-(n.w_tau * 5.0)))
         assert tau1 != tau5
 
-    def test_f_target_tanh_bounded(self):
+    def test_f_target_tanh_bounded(self) -> None:
         """f_target = tanh(w_x·x + w_in·I) ∈ [-1, 1]. Always bounded.
 
         Note: tanh(-100) rounds to exactly -1.0 in float64.
@@ -45,7 +48,7 @@ class TestCFCAnalyticalSolution:
             f = np.tanh(0.8 * 0.5 + 1.0 * I)
             assert -1.0 <= f <= 1.0
 
-    def test_x_converges_to_f_target(self):
+    def test_x_converges_to_f_target(self) -> None:
         """At steady state (many steps): x → f_target."""
         n = ClosedFormContinuousNeuron(v_threshold=100.0)
         I = 3.0

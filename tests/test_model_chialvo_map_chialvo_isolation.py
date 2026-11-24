@@ -10,33 +10,42 @@
 
 from __future__ import annotations
 
-from tests.model_chialvo_map_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
 
 
 class TestChialvoIsolation:
-    def test_construction(self):
+    """The ChialvoMapNeuron in isolation."""
+
+    def test_construction(self) -> None:
+        """The constructor sets the documented initial state."""
         n = ChialvoMapNeuron()
         assert n.x == 0.0
         assert n.y == 0.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = ChialvoMapNeuron()
         assert n.step(0.0) in (0, 1)
 
-    def test_intrinsic_spiking(self):
+    def test_intrinsic_spiking(self) -> None:
         """Model spikes without input (k=0.04 provides excitability)."""
         n = ChialvoMapNeuron()
         spikes = sum(n.step(0.0) for _ in range(5000))
         assert spikes > 0, "no intrinsic spiking"
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = ChialvoMapNeuron()
         for _ in range(10000):
             n.step(0.02)
         assert np.isfinite(n.x)
         assert np.isfinite(n.y)
 
-    def test_safe_exp_prevents_overflow(self):
+    def test_safe_exp_prevents_overflow(self) -> None:
         """Extreme y-x should not cause overflow (safe_exp used)."""
         n = ChialvoMapNeuron()
         n.y = 1000.0
@@ -46,7 +55,8 @@ class TestChialvoIsolation:
         assert np.isfinite(n.x)
         assert np.isfinite(n.y)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = ChialvoMapNeuron()
         for _ in range(100):
             n.step(0.02)
@@ -66,18 +76,21 @@ class TestChialvoIsolation:
             ("x_threshold", np.nan),
         ],
     )
-    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float) -> None:
+        """An invalid numerical configuration is rejected."""
         with pytest.raises(ValueError):
             ChialvoMapNeuron(**{field: value})
 
-    def test_rejects_non_finite_current_before_state_mutation(self):
+    def test_rejects_non_finite_current_before_state_mutation(self) -> None:
+        """A non-finite current is rejected before any state change."""
         n = ChialvoMapNeuron()
         before = (n.x, n.y)
         with pytest.raises(ValueError, match="current"):
             n.step(np.nan)
         assert (n.x, n.y) == before
 
-    def test_rejects_corrupted_runtime_state_before_mutation(self):
+    def test_rejects_corrupted_runtime_state_before_mutation(self) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = ChialvoMapNeuron()
         n.y = np.inf
         before = (n.x, n.y)
@@ -85,7 +98,8 @@ class TestChialvoIsolation:
             n.step(0.0)
         assert (n.x, n.y) == before
 
-    def test_rejects_quadratic_overflow_before_state_mutation(self):
+    def test_rejects_quadratic_overflow_before_state_mutation(self) -> None:
+        """A quadratic overflow is rejected without changing state."""
         n = ChialvoMapNeuron(x=1.0e308, y=0.0)
         before = (n.x, n.y)
         with pytest.raises(FloatingPointError, match="quadratic|candidate"):

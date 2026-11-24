@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
+from tests.model_balanced_resonate_and_fire_support import (
+    REPO_ROOT,
+)
 
 
 class TestBRFProjectWiring:
+    """Project wiring of the balanced resonate-and-fire neuron."""
+
     def test_polyglot_mirror_files_exist_with_brf_equations(self) -> None:
+        """Every language mirror carries the BRF equations."""
         equation_paths = [
             "src/sc_neurocore/accel/rust/safety/balanced_resonate_and_fire.rs",
             "engine/src/neurons/simple_spiking/balanced_resonate_and_fire.rs",
@@ -36,6 +41,7 @@ class TestBRFProjectWiring:
         assert "BalancedResonateAndFire" in variant_source.read_text(encoding="utf-8")
 
     def test_benchmark_and_documentation_are_wired(self) -> None:
+        """The benchmark and documentation are wired in."""
         assert (REPO_ROOT / "benchmarks/bench_balanced_resonate_and_fire.py").exists()
         assert (REPO_ROOT / "benchmarks/results/bench_balanced_resonate_and_fire.json").exists()
         benchmark = (

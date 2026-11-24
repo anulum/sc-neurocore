@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.balanced_resonate_and_fire import (
+    BalancedResonateAndFireNeuron,
+    sustain_oscillation_boundary,
+)
 
 
 class TestBRFEquations:
+    """The update equations of the balanced resonate-and-fire neuron."""
+
     def test_construction_defaults_match_paper_algorithm(self) -> None:
+        """The defaults match the published algorithm."""
         neuron = BalancedResonateAndFireNeuron()
         assert neuron.x == 0.0
         assert neuron.y == 0.0
@@ -26,6 +34,7 @@ class TestBRFEquations:
         assert neuron.dt == 0.01
 
     def test_divergence_boundary_formula(self) -> None:
+        """The sustain-oscillation boundary follows its formula."""
         omega = 10.0
         dt = 0.01
         expected = (-1.0 + math.sqrt(1.0 - (dt * omega) ** 2)) / dt
@@ -33,6 +42,7 @@ class TestBRFEquations:
         assert BalancedResonateAndFireNeuron(omega=omega, dt=dt).p_omega == pytest.approx(expected)
 
     def test_one_step_matches_algorithm_1(self) -> None:
+        """One step matches Algorithm 1 of the paper."""
         neuron = BalancedResonateAndFireNeuron(
             x=0.2,
             y=-0.1,
@@ -57,6 +67,7 @@ class TestBRFEquations:
         assert neuron.q == pytest.approx(0.9 * 0.3 + expected_spike)
 
     def test_threshold_uses_real_part_not_radius(self) -> None:
+        """The threshold tests the real part, not the radius."""
         neuron = BalancedResonateAndFireNeuron(x=0.0, y=5.0)
         assert neuron.step(0.0) == 0
         assert neuron.q == 0.0

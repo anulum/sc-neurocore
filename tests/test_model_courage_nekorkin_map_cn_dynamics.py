@@ -10,10 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_courage_nekorkin_map_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.courage_nekorkin_map import (
+    CourageNekorkinMapNeuron,
+)
+from tests.model_courage_nekorkin_map_support import (
+    _breakpoints,
+)
 
 
 class TestCNDynamics:
+    """Dynamics of the CourageNekorkinMapNeuron."""
+
     def test_sustained_bounded_spiking(self) -> None:
         """Default regime fires repeatedly and stays bounded (no clip-pegging)."""
         n = CourageNekorkinMapNeuron()
@@ -54,11 +63,13 @@ class TestCNDynamics:
 
     @pytest.mark.parametrize("current", [-0.02, 0.0, 0.05, 0.1])
     def test_fi_sweep_finite(self, current: float) -> None:
+        """The trace stays finite across a current sweep."""
         n = CourageNekorkinMapNeuron()
         trace, _ = n.simulate(5000, current, backend="python")
         assert np.all(np.isfinite(trace))
 
     def test_upward_crossing_only(self) -> None:
+        """Only upward threshold crossings count as spikes."""
         n = CourageNekorkinMapNeuron()
         prev_x = n.x
         for _ in range(5000):

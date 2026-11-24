@@ -10,14 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_de_schutter_purkinje_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.de_schutter_purkinje import (
+    DeSchutterPurkinjeNeuron,
+)
 
 
 class TestDeSchutterPipeline:
+    """The DeSchutterPurkinjeNeuron in the network pipeline."""
+
     def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(DeSchutterPurkinjeNeuron, n=3, label="dsp").n == 3
 
     def test_network_runs(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(DeSchutterPurkinjeNeuron, n=3, label="dsp")
         drive = PoissonInput(n=3, rate_hz=100.0, weight=100.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

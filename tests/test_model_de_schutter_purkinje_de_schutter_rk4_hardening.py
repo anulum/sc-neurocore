@@ -10,18 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_de_schutter_purkinje_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.de_schutter_purkinje import (
+    DeSchutterPurkinjeNeuron,
+)
 
 
 class TestDeSchutterRK4Hardening:
+    """Hardening of the RK4 path of the Purkinje model."""
+
     def test_default_integrator_is_rk4(self) -> None:
+        """The default integrator is RK4."""
         assert DeSchutterPurkinjeNeuron().integrator == "rk4"
 
     def test_unknown_integrator_rejected(self) -> None:
+        """An unknown integrator is rejected."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
             DeSchutterPurkinjeNeuron(integrator="midpoint")  # type: ignore[arg-type]
 
     def test_rk4_and_baseline_euler_paths_diverge(self) -> None:
+        """The RK4 and Euler paths give different voltages."""
         rk4 = DeSchutterPurkinjeNeuron()
         euler = DeSchutterPurkinjeNeuron(integrator="baseline_euler")
         for _ in range(2_000):
@@ -30,11 +39,13 @@ class TestDeSchutterRK4Hardening:
         assert abs(rk4.v - euler.v) > 1.0e-8
 
     def test_cross_backend_spike_anchor(self) -> None:
+        """The cross-backend spike anchor fires once."""
         n = DeSchutterPurkinjeNeuron()
         spikes = sum(n.step(500.0) for _ in range(20_000))
         assert spikes == 1
 
     def test_non_finite_current_rejected_without_mutation(self) -> None:
+        """A non-finite current is rejected without change."""
         n = DeSchutterPurkinjeNeuron()
         for _ in range(10):
             n.step(200.0)
@@ -44,6 +55,7 @@ class TestDeSchutterRK4Hardening:
         assert (n.v, n.h_na, n.n_k, n.m_cap, n.h_cap, n.q_kca, n.ca) == old
 
     def test_non_finite_runtime_state_rejected_before_mutation(self) -> None:
+        """Corrupted calcium state is rejected without change."""
         n = DeSchutterPurkinjeNeuron()
         n.ca = float("nan")
         with pytest.raises(ValueError, match="ca"):
@@ -51,6 +63,7 @@ class TestDeSchutterRK4Hardening:
         assert np.isnan(n.ca)
 
     def test_calcium_stays_non_negative_under_rk4(self) -> None:
+        """Calcium stays non-negative under RK4."""
         n = DeSchutterPurkinjeNeuron()
         for _ in range(20_000):
             n.step(500.0)

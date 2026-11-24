@@ -10,15 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_chialvo_map_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.chialvo_map import (
+    ChialvoMapNeuron,
+)
 
 
 class TestChialvoNetwork:
-    def test_population(self):
+    """The ChialvoMapNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(ChialvoMapNeuron, n=10, label="chialvo")
         assert pop.n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(ChialvoMapNeuron, n=20, label="chialvo")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=0.1, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -26,7 +47,8 @@ class TestChialvoNetwork:
         net.run(duration=0.5, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_with_projection(self):
+    def test_with_projection(self) -> None:
+        """A projected network yields readable spike trains."""
         pop = Population(ChialvoMapNeuron, n=10, label="chialvo")
         proj = Projection(pop, pop, weight=0.01, probability=0.3, seed=42)
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.05, dt=0.001, seed=42)

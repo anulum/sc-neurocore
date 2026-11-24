@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_connor_stevens_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.connor_stevens import (
+    ConnorStevensNeuron,
+)
+from tests.model_connor_stevens_support import (
+    _connor_reference_rk4,
+)
 
 
 def test_connor_stevens_matches_independent_rk4_contract() -> None:

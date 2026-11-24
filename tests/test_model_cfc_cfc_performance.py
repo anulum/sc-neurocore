@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_cfc_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.cfc import (
+    ClosedFormContinuousNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestCFCPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the ClosedFormContinuousNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = ClosedFormContinuousNeuron()
         N = 50000
         t0 = time.perf_counter()

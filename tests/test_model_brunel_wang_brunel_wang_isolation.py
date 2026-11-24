@@ -10,20 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_brunel_wang_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.brunel_wang import (
+    BrunelWangNeuron,
+)
 
 
 class TestBrunelWangIsolation:
-    def test_step_returns_binary(self):
+    """The BrunelWangNeuron in isolation."""
+
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert BrunelWangNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = BrunelWangNeuron()
         for _ in range(10000):
             n.step(1.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = BrunelWangNeuron()
         for _ in range(100):
             n.step(1.0)
@@ -47,18 +56,21 @@ class TestBrunelWangIsolation:
             ("dt", 0.0),
         ],
     )
-    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float) -> None:
+        """An invalid numerical configuration is rejected."""
         with pytest.raises((ValueError, FloatingPointError)):
             BrunelWangNeuron(**{field: value})
 
-    def test_rejects_invalid_synaptic_input_before_state_mutation(self):
+    def test_rejects_invalid_synaptic_input_before_state_mutation(self) -> None:
+        """Invalid synaptic input is rejected without change."""
         n = BrunelWangNeuron()
         before = (n.v, n.get_state()["ref_remaining"])
         with pytest.raises(ValueError, match="s_nmda_rec"):
             n.step(1.0, s_nmda_rec=np.inf)
         assert (n.v, n.get_state()["ref_remaining"]) == before
 
-    def test_rejects_corrupted_runtime_state_before_mutation(self):
+    def test_rejects_corrupted_runtime_state_before_mutation(self) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = BrunelWangNeuron()
         n.v = np.inf
         before = (n.v, n.get_state()["ref_remaining"])
@@ -66,6 +78,7 @@ class TestBrunelWangIsolation:
             n.step(1.0)
         assert (n.v, n.get_state()["ref_remaining"]) == before
 
-    def test_nmda_voltage_factor_saturates_for_extreme_negative_voltage(self):
+    def test_nmda_voltage_factor_saturates_for_extreme_negative_voltage(self) -> None:
+        """The NMDA voltage factor saturates at extreme negative voltage."""
         n = BrunelWangNeuron()
         assert n._nmda_voltage_dep(-1.0e6) == 0.0

@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_butera_respiratory_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_unit_capacitance_respiratory import (
+    SCUnitCapacitanceRespiratoryNeuron as ButeraRespiratoryNeuron,
+)
+from tests.model_butera_respiratory_support import (
+    _butera_reference_rk4,
+)
 
 
 def test_butera_matches_independent_rk4_contract() -> None:

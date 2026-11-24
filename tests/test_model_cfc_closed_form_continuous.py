@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_cfc_support import *  # noqa: F403
+from sc_neurocore.neurons.models.cfc import (
+    ClosedFormContinuousNeuron,
+)
 
 
 class TestClosedFormContinuous:
-    def test_dynamics(self):
-        from sc_neurocore.neurons.models.cfc import ClosedFormContinuousNeuron
+    """The closed-form continuous-time neuron."""
 
+    def test_dynamics(self) -> None:
+        """The state evolves under drive."""
         n = ClosedFormContinuousNeuron()
         for _ in range(20):
             n.step(1.0)

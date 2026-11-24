@@ -10,15 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_butera_respiratory_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_unit_capacitance_respiratory import (
+    SCUnitCapacitanceRespiratoryNeuron as ButeraRespiratoryNeuron,
+)
 
 
 class TestButeraNetwork:
-    def test_population(self):
+    """The ButeraRespiratoryNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(ButeraRespiratoryNeuron, n=5, label="butera")
         assert pop.n == 5
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(ButeraRespiratoryNeuron, n=10, label="butera")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -26,7 +47,8 @@ class TestButeraNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_with_projection(self):
+    def test_with_projection(self) -> None:
+        """A projected network yields readable spike trains."""
         pop = Population(ButeraRespiratoryNeuron, n=10, label="butera")
         proj = Projection(pop, pop, weight=5.0, probability=0.3, seed=42)
         drive = PoissonInput(n=10, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_courage_nekorkin_map_support import *  # noqa: F403
+from sc_neurocore.neurons.models.courage_nekorkin_map import (
+    CourageNekorkinMapNeuron,
+)
+from tests.model_courage_nekorkin_map_support import (
+    _breakpoints,
+)
 
 
 class TestCNAnalytical:
+    """Analytical behaviour of the CourageNekorkinMapNeuron."""
+
     def test_breakpoints_formula(self) -> None:
+        """The breakpoints follow their closed form."""
         n = CourageNekorkinMapNeuron()
         jmin, jmax = n._breakpoints()
         exp_min, exp_max = _breakpoints()
@@ -22,7 +30,7 @@ class TestCNAnalytical:
         assert abs(jmax - exp_max) < 1e-15
 
     def test_f_lower_branch(self) -> None:
-        """x <= Jmin: F(x) = -m0*x."""
+        """For x <= Jmin the map is F(x) = -m0*x."""
         n = CourageNekorkinMapNeuron()
         jmin, _ = n._breakpoints()
         x = jmin - 0.05
@@ -36,7 +44,7 @@ class TestCNAnalytical:
         assert abs(n._f(x) - (n.m1 * (x - n.a))) < 1e-15
 
     def test_f_upper_branch(self) -> None:
-        """x >= Jmax: F(x) = -m0*(x - 1)."""
+        """For x >= Jmax the map is F(x) = -m0*(x - 1)."""
         n = CourageNekorkinMapNeuron()
         _, jmax = n._breakpoints()
         x = jmax + 0.05

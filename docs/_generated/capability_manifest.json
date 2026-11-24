@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5638
+    "test_files": 5635
   },
   "documentation": {
     "public_pages": [
@@ -3577,12 +3577,9 @@
       "tests/model_balanced_resonate_and_fire_support.py",
       "tests/model_bertram_phantom_support.py",
       "tests/model_booth_rinzel_support.py",
-      "tests/model_brainscales_adex_support.py",
       "tests/model_brunel_wang_support.py",
       "tests/model_butera_respiratory_support.py",
-      "tests/model_cazelles_map_support.py",
       "tests/model_cfc_support.py",
-      "tests/model_chialvo_map_support.py",
       "tests/model_connor_stevens_support.py",
       "tests/model_courage_nekorkin_map_support.py",
       "tests/model_de_schutter_purkinje_support.py",

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_courage_nekorkin_map_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.courage_nekorkin_map import (
+    CourageNekorkinMapNeuron,
+)
+from tests.model_courage_nekorkin_map_support import (
+    _breakpoints,
+)
 
 
 class TestCNIsolation:
+    """The CourageNekorkinMapNeuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = CourageNekorkinMapNeuron()
         assert n.x == 0.0 and n.y == 0.0
         assert n.m0 == 0.4 and n.m1 == 0.65 and n.a == 0.2
@@ -30,15 +39,18 @@ class TestCNIsolation:
         assert n.m0 < 1.0
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert CourageNekorkinMapNeuron().step(0.0) in (0, 1)
 
     def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = CourageNekorkinMapNeuron()
         for _ in range(50_000):
             n.step(0.0)
         assert np.isfinite(n.x) and np.isfinite(n.y)
 
     def test_reset_restores_state(self) -> None:
+        """A reset restores the initial state."""
         n = CourageNekorkinMapNeuron()
         for _ in range(1000):
             n.step(0.0)
@@ -46,6 +58,7 @@ class TestCNIsolation:
         assert n.x == 0.0 and n.y == 0.0
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = CourageNekorkinMapNeuron()

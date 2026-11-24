@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestBertramPerformance:
-    def test_isolation_runtime_regression_sentinel(self):
+    """Throughput of the BertramPhantomBurster."""
+
+    def test_isolation_runtime_regression_sentinel(self) -> None:
         """Bound pathological slowdowns without making CI throughput claims."""
         n = BertramPhantomBurster()
         N = 50_000
@@ -32,7 +50,7 @@ class TestBertramPerformance:
         )
         assert np.isfinite(n.v) and np.isfinite(n.s1) and np.isfinite(n.s2)
 
-    def test_network_runtime_regression_sentinel(self):
+    def test_network_runtime_regression_sentinel(self) -> None:
         """Bound pathological network slowdowns without throughput claims."""
         pop = Population(BertramPhantomBurster, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=1000.0, weight=200.0, dt=0.001, seed=42)

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.balanced_resonate_and_fire import (
+    BalancedResonateAndFireNeuron,
+    sustain_oscillation_boundary,
+)
 
 
 class TestBRFStabilityAndReset:
+    """Stability and reset of the balanced resonate-and-fire neuron."""
+
     def test_invalid_boundary_fails_fast(self) -> None:
+        """A time step past the divergence boundary is rejected."""
         with pytest.raises(ValueError, match=r"dt \* omega"):
             BalancedResonateAndFireNeuron(omega=200.0, dt=0.01)
         with pytest.raises(ValueError, match=r"dt \* omega"):
@@ -32,10 +40,12 @@ class TestBRFStabilityAndReset:
         ],
     )
     def test_parameter_validation(self, kwargs: dict[str, float], match: str) -> None:
+        """Each invalid parameter is rejected."""
         with pytest.raises(ValueError, match=match):
             BalancedResonateAndFireNeuron(**kwargs)
 
     def test_refractory_period_raises_threshold_and_decays(self) -> None:
+        """The refractory term raises the threshold and decays."""
         neuron = BalancedResonateAndFireNeuron()
         assert neuron.step(200.0) == 1
         assert neuron.q == pytest.approx(1.0)
@@ -46,6 +56,7 @@ class TestBRFStabilityAndReset:
         assert neuron.dynamic_threshold == pytest.approx(1.9)
 
     def test_smooth_reset_preserves_phase_state_after_spike(self) -> None:
+        """The smooth reset keeps the phase after a spike."""
         neuron = BalancedResonateAndFireNeuron()
         assert neuron.step(200.0) == 1
         assert neuron.x != 0.0
@@ -53,6 +64,7 @@ class TestBRFStabilityAndReset:
         assert neuron.damping < neuron.p_omega - neuron.b_offset
 
     def test_state_remains_finite_under_long_drive(self) -> None:
+        """The state stays finite under long drive."""
         neuron = BalancedResonateAndFireNeuron(omega=20.0, b_offset=2.0)
         for _ in range(20_000):
             neuron.step(5.0)
@@ -60,6 +72,7 @@ class TestBRFStabilityAndReset:
         assert all(math.isfinite(value) for value in snapshot.values())
 
     def test_reset_clears_membrane_and_refractory_state(self) -> None:
+        """A reset clears the membrane and refractory state."""
         neuron = BalancedResonateAndFireNeuron()
         neuron.step(200.0)
         neuron.reset()

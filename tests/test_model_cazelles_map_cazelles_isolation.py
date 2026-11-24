@@ -10,45 +10,56 @@
 
 from __future__ import annotations
 
-from tests.model_cazelles_map_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.cazelles_map import (
+    CazellesMapNeuron,
+)
 
 
 class TestCazellesIsolation:
-    def test_construction(self):
+    """The CazellesMapNeuron in isolation."""
+
+    def test_construction(self) -> None:
+        """The constructor sets the documented initial state."""
         n = CazellesMapNeuron()
         assert n.x == 0.1
         assert n.alpha == 0.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = CazellesMapNeuron()
         assert n.step(0.0) in (0, 1)
 
-    def test_spikes_under_drive(self):
+    def test_spikes_under_drive(self) -> None:
+        """Strong drive produces spikes."""
         n = CazellesMapNeuron()
         spikes = sum(n.step(0.0) for _ in range(5000))
         assert spikes > 50
 
-    def test_source_orbit_visits_fast_and_slow_regimes(self):
+    def test_source_orbit_visits_fast_and_slow_regimes(self) -> None:
+        """The orbit visits both the fast and the slow regime."""
         n = CazellesMapNeuron()
         trace, events = n.simulate(600, backend="python")
         assert events == 7
         assert np.any(trace < n.x1)
         assert np.any(trace >= n.x1)
 
-    def test_x_clipped(self):
+    def test_x_clipped(self) -> None:
         """The source orbit stays in the Figure-1 domain."""
         n = CazellesMapNeuron()
         for _ in range(10000):
             n.step(0.0)
         assert n.x0 <= n.x <= n.x4
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = CazellesMapNeuron()
         for _ in range(10000):
             n.step(0.0)
         assert np.isfinite(n.x)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = CazellesMapNeuron()
         for _ in range(100):
             n.step(0.0)

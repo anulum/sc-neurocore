@@ -10,15 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
 
 
 class TestBertramPipeline:
-    def test_population(self):
+    """The BertramPhantomBurster in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(BertramPhantomBurster, n=10, label="bertram")
         assert pop.n == 10
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
         """Full src→tgt wiring via Projection with SpikeMonitor."""
         src = Population(BertramPhantomBurster, n=5, label="src")
         tgt = Population(BertramPhantomBurster, n=5, label="tgt")
@@ -30,7 +56,8 @@ class TestBertramPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon_src.count > 0
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(BertramPhantomBurster, n=10, label="bertram")
         drive = PoissonInput(n=10, rate_hz=1000.0, weight=200.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -38,7 +65,8 @@ class TestBertramPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_spike_trains_extractable(self):
+    def test_spike_trains_extractable(self) -> None:
+        """The network spike trains can be read out."""
         pop = Population(BertramPhantomBurster, n=5, label="bertram")
         drive = PoissonInput(n=5, rate_hz=1000.0, weight=200.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -47,13 +75,15 @@ class TestBertramPipeline:
         trains = mon.spike_trains
         assert isinstance(trains, dict)
 
-    def test_analysis_spike_count(self):
+    def test_analysis_spike_count(self) -> None:
+        """The analysis counts the spikes of a driven run."""
         n = BertramPhantomBurster()
         train = np.array([float(n.step(200.0)) for _ in range(50_000)])
         sc = spike_count(train)
         assert sc == 1
 
-    def test_analysis_isi(self):
+    def test_analysis_isi(self) -> None:
+        """The analysis gives finite inter-spike intervals."""
         n = BertramPhantomBurster()
         train = np.array([float(n.step(200.0)) for _ in range(50_000)])
         intervals = isi(train, dt=0.0005)
@@ -61,13 +91,14 @@ class TestBertramPipeline:
             assert np.all(np.isfinite(intervals))
             assert np.all(intervals > 0)
 
-    def test_analysis_firing_rate(self):
+    def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = BertramPhantomBurster()
         train = np.array([float(n.step(200.0)) for _ in range(50_000)])
         rate = firing_rate(train, dt=0.0005)
         assert rate > 0
 
-    def test_analysis_cross_validation(self):
+    def test_analysis_cross_validation(self) -> None:
         """spike_count / duration ≈ firing_rate."""
         n = BertramPhantomBurster()
         train = np.array([float(n.step(200.0)) for _ in range(50_000)])

@@ -10,11 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
+import math
+import numpy as np
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons import (
+    BalancedResonateAndFireNeuron as PublicBRF,
+)
+from sc_neurocore.neurons.models.balanced_resonate_and_fire import (
+    BalancedResonateAndFireNeuron,
+)
+from tests.model_balanced_resonate_and_fire_support import (
+    _run,
+)
 
 
 class TestBRFResponse:
+    """The input response of the balanced resonate-and-fire neuron."""
+
     def test_frequency_timed_excitation_produces_more_spikes_than_off_phase(self) -> None:
+        """Excitation timed to the resonance fires more than off-phase excitation."""
         omega = 10.0
         dt = 0.01
         steps = 3000
@@ -34,17 +50,20 @@ class TestBRFResponse:
         assert resonant_spikes > 0
 
     def test_refractory_smooth_reset_sparsifies_high_drive(self) -> None:
+        """The refractory smooth reset sparsifies high drive."""
         sparse = len(_run(BalancedResonateAndFireNeuron(), current=120.0, steps=500))
         dense_upper_bound = 500
         assert 0 < sparse < dense_upper_bound
 
     def test_import_surfaces_and_population_wiring(self) -> None:
+        """The public import surfaces and population wiring work."""
         assert PublicBRF.__name__ == "BalancedResonateAndFireNeuron"
         pop = Population(BalancedResonateAndFireNeuron, n=4, label="brf")
         assert pop.n == 4
         assert all(isinstance(neuron, BalancedResonateAndFireNeuron) for neuron in pop.neurons)
 
     def test_reproducible_deterministic_trace(self) -> None:
+        """Two equal neurons give the same trace and state."""
         left = BalancedResonateAndFireNeuron(omega=15.0, b_offset=1.5)
         right = BalancedResonateAndFireNeuron(omega=15.0, b_offset=1.5)
         currents = np.sin(np.linspace(0.0, 12.0, 200)) * 10.0 + 10.0

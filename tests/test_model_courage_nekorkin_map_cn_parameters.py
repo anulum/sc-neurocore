@@ -10,24 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_courage_nekorkin_map_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.courage_nekorkin_map import (
+    CourageNekorkinMapNeuron,
+)
 
 
 class TestCNParameters:
+    """Parameter behaviour of the CourageNekorkinMapNeuron."""
+
     @pytest.mark.parametrize("m1", [0.5, 0.65, 0.8])
-    def test_m1_sweep(self, m1: float):
+    def test_m1_sweep(self, m1: float) -> None:
+        """The trace stays finite across m1 values."""
         n = CourageNekorkinMapNeuron(m1=m1)
         trace, _ = n.simulate(5000, backend="python")
         assert np.all(np.isfinite(trace))
 
     @pytest.mark.parametrize("beta", [0.08, 0.085, 0.09])
-    def test_beta_sweep(self, beta: float):
+    def test_beta_sweep(self, beta: float) -> None:
+        """The trace stays finite across beta values."""
         n = CourageNekorkinMapNeuron(beta=beta)
         trace, _ = n.simulate(5000, backend="python")
         assert np.all(np.isfinite(trace))
 
     @pytest.mark.parametrize("eps", [0.01, 0.02, 0.04])
-    def test_eps_sweep(self, eps: float):
+    def test_eps_sweep(self, eps: float) -> None:
+        """The trace stays finite across epsilon values."""
         n = CourageNekorkinMapNeuron(eps=eps)
         trace, _ = n.simulate(5000, backend="python")
         assert np.all(np.isfinite(trace))

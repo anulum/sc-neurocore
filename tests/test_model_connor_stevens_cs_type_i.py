@@ -10,20 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_connor_stevens_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.connor_stevens import (
+    ConnorStevensNeuron,
+)
+from tests.model_connor_stevens_support import (
+    _run,
+)
 
 
 class TestCSTypeI:
-    def test_fires_at_sufficient_current(self):
+    """Type I excitability of the Connor-Stevens neuron."""
+
+    def test_fires_at_sufficient_current(self) -> None:
+        """Sufficient current fires at least 20 times."""
         n = ConnorStevensNeuron()
         spikes = _run(n, current=20.0, steps=500)
         assert len(spikes) >= 20
 
-    def test_subthreshold_silent(self):
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = ConnorStevensNeuron()
         assert len(_run(n, current=1.0, steps=200)) == 0
 
-    def test_continuous_fi_curve(self):
+    def test_continuous_fi_curve(self) -> None:
         """Type-I: frequency starts from ~0 at threshold (no frequency jump)."""
         rates = []
         for I in [5.0, 8.0, 10.0, 15.0, 20.0]:
@@ -33,13 +44,15 @@ class TestCSTypeI:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [5.0, 10.0, 15.0, 20.0, 30.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The voltage stays finite across a current sweep."""
         n = ConnorStevensNeuron()
         for _ in range(200):
             n.step(current)
         assert np.isfinite(n.v)
 
-    def test_voltage_bounded(self):
+    def test_voltage_bounded(self) -> None:
+        """The voltage stays within physiological bounds."""
         n = ConnorStevensNeuron()
         vs = []
         for _ in range(500):

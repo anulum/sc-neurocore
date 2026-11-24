@@ -10,31 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_connor_stevens_support import *  # noqa: F403
+from sc_neurocore.neurons.models.connor_stevens import (
+    ConnorStevensNeuron,
+)
+from tests.model_connor_stevens_support import (
+    _run,
+)
 
 
 class TestCSAnalytical:
-    def test_100_substeps_per_call(self):
+    """Analytical behaviour of the ConnorStevensNeuron."""
+
+    def test_100_substeps_per_call(self) -> None:
         """dt=0.01 → 1/0.01 = 100 sub-steps per step() call."""
         n = ConnorStevensNeuron()
         assert int(1.0 / max(n.dt, 0.001)) == 100
 
-    def test_four_ionic_currents(self):
+    def test_four_ionic_currents(self) -> None:
         """I_Na, I_K, I_A, I_L — all conductances positive."""
         n = ConnorStevensNeuron()
         assert n.g_na > 0 and n.g_k > 0 and n.g_a > 0 and n.g_l > 0
 
-    def test_a_current_conductance_dominant(self):
+    def test_a_current_conductance_dominant(self) -> None:
         """g_A=47.7 > g_K=20 — A-current is the signature feature."""
         n = ConnorStevensNeuron()
         assert n.g_a > n.g_k
 
-    def test_reversal_ordering(self):
+    def test_reversal_ordering(self) -> None:
         """e_a < e_k < e_l < e_na."""
         n = ConnorStevensNeuron()
         assert n.e_a < n.e_k < n.e_l < n.e_na
 
-    def test_gating_variables_bounded(self):
+    def test_gating_variables_bounded(self) -> None:
         """All gating variables should stay in [0, 1] range."""
         n = ConnorStevensNeuron()
         for _ in range(500):
@@ -43,7 +50,7 @@ class TestCSAnalytical:
             val = getattr(n, attr)
             assert -0.01 <= val <= 1.01, f"{attr}={val}"
 
-    def test_a_type_delays_spike_onset(self):
+    def test_a_type_delays_spike_onset(self) -> None:
         """A-current creates delay at rheobase — Type-I hallmark."""
         # With A-current (default)
         n_with_a = ConnorStevensNeuron()

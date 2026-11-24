@@ -6,12 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_model_booth_rinzel.py
 
+"""Shared imports and the state helper of the Booth-Rinzel motoneuron suites."""
+
 from __future__ import annotations
 
-"""Full pipeline test for BoothRinzelNeuron (Booth & Rinzel 1995).
-
-2-compartment bistable motoneuron: soma (Na/K) + dendrite (Ca/KCa).
-4 sub-steps per step. Exhibits bistability at high current."""
 import numpy as np
 from sc_neurocore.neurons.models.booth_rinzel import BoothRinzelNeuron
 from sc_neurocore.network.population import Population
@@ -23,7 +21,10 @@ from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count, is
 import pytest
 
 
-def _booth_state_tuple(neuron):
+def _booth_state_tuple(
+    neuron: BoothRinzelNeuron,
+) -> tuple[float, float, float, float, float, float]:
+    """Return the six Booth-Rinzel state variables as one comparable tuple."""
     return (neuron.vs, neuron.vd, neuron.h, neuron.n, neuron.q, neuron.ca)
 
 

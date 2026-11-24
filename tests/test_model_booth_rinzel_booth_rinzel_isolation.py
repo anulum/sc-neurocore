@@ -10,39 +10,48 @@
 
 from __future__ import annotations
 
-from tests.model_booth_rinzel_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.booth_rinzel import (
+    BoothRinzelNeuron,
+)
 
 
 class TestBoothRinzelIsolation:
-    def test_construction(self):
+    """The BoothRinzelNeuron in isolation."""
+
+    def test_construction(self) -> None:
+        """The constructor sets the documented initial state."""
         n = BoothRinzelNeuron()
         assert n.vs == -65.0
         assert n.vd == -65.0
         assert n.ca == 0.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = BoothRinzelNeuron()
         assert n.step(0.0) in (0, 1)
 
-    def test_spikes_under_drive(self):
+    def test_spikes_under_drive(self) -> None:
+        """Strong drive produces spikes."""
         n = BoothRinzelNeuron()
         spikes = sum(n.step(10.0) for _ in range(50_000))
         assert spikes > 100, f"too few spikes at I=10: {spikes}"
 
-    def test_two_compartments_differ(self):
+    def test_two_compartments_differ(self) -> None:
         """Soma and dendrite should have different voltages under drive."""
         n = BoothRinzelNeuron()
         for _ in range(10_000):
             n.step(10.0)
         assert n.vs != n.vd, "soma and dendrite identical"
 
-    def test_calcium_accumulates(self):
+    def test_calcium_accumulates(self) -> None:
+        """Drive accumulates dendritic calcium."""
         n = BoothRinzelNeuron()
         for _ in range(10_000):
             n.step(10.0)
         assert n.ca > 0, "calcium did not accumulate"
 
-    def test_bistability(self):
+    def test_bistability(self) -> None:
         """At high current, model may enter depolarisation block (fewer spikes)."""
         n_low = BoothRinzelNeuron()
         n_high = BoothRinzelNeuron()
@@ -52,7 +61,7 @@ class TestBoothRinzelIsolation:
         # Just verify both are finite and model doesn't crash
         assert np.isfinite(n_high.vs)
 
-    def test_numerical_stability(self):
+    def test_numerical_stability(self) -> None:
         """Model should not produce NaN or Inf at any current."""
         for I in [0, 5, 10, 20, 50]:
             n = BoothRinzelNeuron()
@@ -64,7 +73,7 @@ class TestBoothRinzelIsolation:
             assert np.isfinite(n.n), f"n NaN/Inf at I={I}"
             assert np.isfinite(n.ca), f"ca NaN/Inf at I={I}"
 
-    def test_gating_bounded(self):
+    def test_gating_bounded(self) -> None:
         """Gating variables h, n, q should stay in [0, 1]."""
         n = BoothRinzelNeuron()
         for _ in range(50_000):
@@ -73,7 +82,8 @@ class TestBoothRinzelIsolation:
         assert 0 <= n.n <= 1
         assert 0 <= n.q <= 1
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = BoothRinzelNeuron()
         for _ in range(1000):
             n.step(10.0)

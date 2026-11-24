@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_brunel_wang_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.brunel_wang import (
+    BrunelWangNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestBrunelWangPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the BrunelWangNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = BrunelWangNeuron()
         N = 50000
         t0 = time.perf_counter()

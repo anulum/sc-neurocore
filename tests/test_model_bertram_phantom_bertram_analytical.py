@@ -10,29 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
+from tests.model_bertram_phantom_support import (
+    _boltz,
+)
 
 
 class TestBertramAnalytical:
-    def test_boltzmann_midpoint(self):
+    """Analytical behaviour of the BertramPhantomBurster."""
+
+    def test_boltzmann_midpoint(self) -> None:
         """At v=vh: σ(vh, vh, k) = 0.5 exactly."""
         n = BertramPhantomBurster()
         assert abs(n._boltz(-20.0, -20.0, 12.0) - 0.5) < 1e-12
 
-    def test_boltzmann_limits(self):
+    def test_boltzmann_limits(self) -> None:
         """σ → 1 for v >> vh, σ → 0 for v << vh."""
         n = BertramPhantomBurster()
         assert n._boltz(100.0, -20.0, 12.0) > 0.999
         assert n._boltz(-200.0, -20.0, 12.0) < 0.001
 
-    def test_boltzmann_matches_reference(self):
+    def test_boltzmann_matches_reference(self) -> None:
         """Cross-check internal _boltz against reference implementation."""
         n = BertramPhantomBurster()
         for v in [-80, -50, -20, 0, 20]:
             for vh, k in [(n.v_m, n.s_m), (n.v_n, n.s_n), (n.v_s1, n.s_s1), (n.v_s2, n.s_s2)]:
                 assert abs(n._boltz(v, vh, k) - _boltz(v, vh, k)) < 1e-14
 
-    def test_derivative_formula_at_initial_state(self):
+    def test_derivative_formula_at_initial_state(self) -> None:
         """Derivative matches the published current-balance ODE."""
         n = BertramPhantomBurster()
         v0, s1_0, s2_0 = n.v, n.s1, n.s2
@@ -53,7 +62,7 @@ class TestBertramAnalytical:
         assert np.isfinite(actual_ds1_dt)
         assert np.isfinite(actual_ds2_dt)
 
-    def test_ds1_derivative_formula(self):
+    def test_ds1_derivative_formula(self) -> None:
         """ds1/dt = (s1_inf(V) - s1) / tau_s1."""
         n = BertramPhantomBurster()
         v0, s1_0 = n.v, n.s1
@@ -62,7 +71,7 @@ class TestBertramAnalytical:
         _, actual_ds1_dt, _ = n._derivatives(v0, s1_0, n.s2, 0.0)
         assert abs(actual_ds1_dt - expected_ds1_dt) < 1e-14
 
-    def test_ds2_derivative_formula(self):
+    def test_ds2_derivative_formula(self) -> None:
         """ds2/dt = (s2_inf(V) - s2) / tau_s2."""
         n = BertramPhantomBurster()
         v0, s2_0 = n.v, n.s2
@@ -71,13 +80,13 @@ class TestBertramAnalytical:
         _, _, actual_ds2_dt = n._derivatives(v0, n.s1, s2_0, 0.0)
         assert abs(actual_ds2_dt - expected_ds2_dt) < 1e-14
 
-    def test_rk4_step_matches_independent_reference(self):
+    def test_rk4_step_matches_independent_reference(self) -> None:
         """One production step matches an independent RK4 update of the three ODEs."""
         n = BertramPhantomBurster()
         state = np.array([n.v, n.s1, n.s2], dtype=float)
         current = 200.0
 
-        def rhs(values):
+        def rhs(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             return np.array(n._derivatives(values[0], values[1], values[2], current))
 
         k1 = rhs(state)
@@ -90,7 +99,7 @@ class TestBertramAnalytical:
 
         np.testing.assert_allclose([n.v, n.s1, n.s2], expected, rtol=0.0, atol=1e-12)
 
-    def test_current_balance_at_rest(self):
+    def test_current_balance_at_rest(self) -> None:
         """Sum of ionic currents at initial state (v=-50, s1=0.1, s2=0.1)."""
         n = BertramPhantomBurster()
         v = n.v
@@ -108,7 +117,7 @@ class TestBertramAnalytical:
         assert i_ca < 0  # v=-50 < e_ca=25 → (v - e_ca) < 0, inward
         assert i_k > 0  # v=-50 > e_k=-75 → (v - e_k) > 0, outward
 
-    def test_five_ionic_currents_identified(self):
+    def test_five_ionic_currents_identified(self) -> None:
         """Model has 5 distinct currents: I_Ca, I_K, I_s1, I_s2, I_L."""
         n = BertramPhantomBurster()
         # Verify conductance parameters exist

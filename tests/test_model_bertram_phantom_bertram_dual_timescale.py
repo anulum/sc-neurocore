@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
+from tests.model_bertram_phantom_support import (
+    _boltz,
+)
 
 
 class TestBertramDualTimescale:
-    def test_tau_ratio(self):
+    """The two slow timescales of the Bertram phantom burster."""
+
+    def test_tau_ratio(self) -> None:
         """tau_s2 / tau_s1 = 5 (ultra-slow vs slow)."""
         n = BertramPhantomBurster()
         assert n.tau_s2 / n.tau_s1 == 5.0
 
-    def test_s1_faster_than_s2(self):
+    def test_s1_faster_than_s2(self) -> None:
         """s1 moves more per step than s2 (same driving, shorter tau)."""
         n = BertramPhantomBurster()
         s1_0, s2_0 = n.s1, n.s2
@@ -28,7 +35,7 @@ class TestBertramDualTimescale:
         ds2 = abs(n.s2 - s2_0)
         assert ds1 > ds2
 
-    def test_s1_approaches_equilibrium_faster(self):
+    def test_s1_approaches_equilibrium_faster(self) -> None:
         """After many steps, s1 converges toward s1_inf faster than s2."""
         n = BertramPhantomBurster()
         # Drive at constant current, measure convergence
@@ -43,7 +50,7 @@ class TestBertramDualTimescale:
         # s1 should be closer to its equilibrium (faster dynamics)
         assert err_s1 < err_s2 or err_s1 < 0.05
 
-    def test_slow_variables_bounded(self):
+    def test_slow_variables_bounded(self) -> None:
         """s1, s2 ∈ [0, 1] (Boltzmann targets are in [0, 1])."""
         n = BertramPhantomBurster()
         s1_vals, s2_vals = [], []

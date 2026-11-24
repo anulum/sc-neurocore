@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_booth_rinzel_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.neurons.models.booth_rinzel import (
+    BoothRinzelNeuron,
+)
+from tests.model_booth_rinzel_support import (
+    _booth_state_tuple,
+)
 
 
 @pytest.mark.parametrize(
@@ -35,13 +42,15 @@ from tests.model_booth_rinzel_support import *  # noqa: F403
         ("ca", -0.01),
     ],
 )
-def test_booth_rinzel_rejects_invalid_physical_configuration(field, value):
-    kwargs = {field: value}
+def test_booth_rinzel_rejects_invalid_physical_configuration(field: str, value: float) -> None:
+    """Each invalid physical parameter is rejected."""
+    kwargs: dict[str, Any] = {field: value}
     with pytest.raises(ValueError):
         BoothRinzelNeuron(**kwargs)
 
 
-def test_booth_rinzel_runtime_validation_is_fail_closed():
+def test_booth_rinzel_runtime_validation_is_fail_closed() -> None:
+    """Corrupted runtime state is rejected without change."""
     neuron = BoothRinzelNeuron()
     neuron.p = 1.0
     before = _booth_state_tuple(neuron)
@@ -50,7 +59,8 @@ def test_booth_rinzel_runtime_validation_is_fail_closed():
     assert _booth_state_tuple(neuron) == before
 
 
-def test_booth_rinzel_nonfinite_input_is_fail_closed():
+def test_booth_rinzel_nonfinite_input_is_fail_closed() -> None:
+    """A non-finite input is rejected without change."""
     neuron = BoothRinzelNeuron()
     before = _booth_state_tuple(neuron)
     with pytest.raises(ValueError):
@@ -58,7 +68,8 @@ def test_booth_rinzel_nonfinite_input_is_fail_closed():
     assert _booth_state_tuple(neuron) == before
 
 
-def test_booth_rinzel_drive_preserves_physical_bounds():
+def test_booth_rinzel_drive_preserves_physical_bounds() -> None:
+    """Drive keeps both compartments inside physical bounds."""
     neuron = BoothRinzelNeuron()
     for _ in range(100):
         neuron.step(8.0)

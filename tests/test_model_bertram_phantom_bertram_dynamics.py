@@ -10,21 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
+from tests.model_bertram_phantom_support import (
+    _run,
+)
 
 
 class TestBertramDynamics:
-    def test_subthreshold_silent(self):
+    """Dynamics of the BertramPhantomBurster."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = BertramPhantomBurster()
         assert len(_run(n, current=10.0, steps=50_000)) == 0
 
-    def test_fires_at_high_current(self):
+    def test_fires_at_high_current(self) -> None:
+        """High current gives the documented spike and settles below threshold."""
         n = BertramPhantomBurster()
         spikes = _run(n, current=200.0, steps=50_000)
         assert spikes == [3]
         assert n.v < n.v_threshold
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
         """Higher current does not reduce threshold-crossing count in this regime."""
         rates = []
         for I in [150.0, 200.0, 300.0]:
@@ -34,14 +45,14 @@ class TestBertramDynamics:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [150.0, 200.0, 250.0, 300.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
         """f-I sweep: seeded drive levels keep their RK4 crossing counts."""
         n = BertramPhantomBurster()
         spikes = _run(n, current=current, steps=50_000)
         assert len(spikes) == {150.0: 1, 200.0: 1, 250.0: 1, 300.0: 2}[current]
         assert np.isfinite(n.v) and np.isfinite(n.s1) and np.isfinite(n.s2)
 
-    def test_burst_structure(self):
+    def test_burst_structure(self) -> None:
         """Phantom burster: spikes cluster in bursts with silent intervals.
 
         Detect bursts by finding gaps (ISI > 50 steps) between spike clusters.
@@ -56,7 +67,7 @@ class TestBertramDynamics:
             # At least some structure — may be tonic at this current
             assert len(short) > 0 or len(long_gaps) > 0
 
-    def test_voltage_bounded(self):
+    def test_voltage_bounded(self) -> None:
         """V stays bounded — no divergence under drive."""
         n = BertramPhantomBurster()
         vs = []
@@ -65,7 +76,7 @@ class TestBertramDynamics:
             vs.append(n.v)
         assert min(vs) > -100 and max(vs) < 50
 
-    def test_upward_crossing_only(self):
+    def test_upward_crossing_only(self) -> None:
         """Spike fires only on upward threshold crossing."""
         n = BertramPhantomBurster()
         prev_v = n.v

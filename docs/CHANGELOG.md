@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 61 top-level model-zoo test modules of the balanced resonate-and-
+  fire, Bertram, Booth-Rinzel, BrainScaleS AdEx, Brunel-Wang, Butera,
+  Cazelles, closed-form continuous, Chialvo, Connor-Stevens, Courage-
+  Nekorkin and De Schutter neurons import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy. One helper support gains types and its own policy entry, and
+  the support modules left without an importer are deleted.
+
 - The 59 top-level model-zoo test modules of the adaptive-threshold IF,
   adaptive-threshold MoE, AdEx, AI-optimised, Akida, alpha, Amari field,
   Arcane and astrocyte neurons import their names explicitly instead of

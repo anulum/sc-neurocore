@@ -10,27 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_brainscales_adex_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.neurons.models.brainscales_adex import (
+    BrainScaleSAdExNeuron,
+)
 
 
 class TestBrainScaleSAnalysis:
-    def _get_binary_train(self):
+    """Spike analysis of the BrainScaleSAdExNeuron."""
+
+    def _get_binary_train(self) -> np.ndarray[Any, Any]:
         n = BrainScaleSAdExNeuron()
         train = np.zeros(10_000, dtype=np.int8)
         for t in range(10_000):
             train[t] = n.step(25.0)
         return train
 
-    def test_firing_rate(self):
+    def test_firing_rate(self) -> None:
+        """The firing rate of a driven spike train is computed."""
         train = self._get_binary_train()
         rate = firing_rate(train, dt=0.0001)
         assert rate >= 0
 
-    def test_spike_count(self):
+    def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         train = self._get_binary_train()
         assert spike_count(train) >= 0
 
-    def test_isi(self):
+    def test_isi(self) -> None:
+        """The inter-spike intervals of a driven train are finite."""
         train = self._get_binary_train()
         intervals = isi(train, dt=0.0001)
         if intervals.size > 0:

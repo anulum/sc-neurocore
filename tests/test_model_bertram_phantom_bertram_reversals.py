@@ -10,30 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_bertram_phantom_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
+from tests.model_bertram_phantom_support import (
+    _boltz,
+)
 
 
 class TestBertramReversals:
-    def test_reversal_ordering(self):
+    """The reversal potentials of the Bertram phantom burster."""
+
+    def test_reversal_ordering(self) -> None:
         """e_k < e_l < e_ca (standard ionic ordering)."""
         n = BertramPhantomBurster()
         assert n.e_k < n.e_l < n.e_ca
 
-    def test_ca_current_inward_at_rest(self):
+    def test_ca_current_inward_at_rest(self) -> None:
         """I_Ca inward (negative) at rest: v=-50 < e_ca=25."""
         n = BertramPhantomBurster()
         m_inf = _boltz(n.v, n.v_m, n.s_m)
         i_ca = n.g_ca * m_inf * (n.v - n.e_ca)
         assert i_ca < 0
 
-    def test_k_current_outward_at_rest(self):
+    def test_k_current_outward_at_rest(self) -> None:
         """I_K outward (positive) at rest: v=-50 > e_k=-75."""
         n = BertramPhantomBurster()
         n_inf = _boltz(n.v, n.v_n, n.s_n)
         i_k = n.g_k * n_inf * (n.v - n.e_k)
         assert i_k > 0
 
-    def test_s1_s2_share_reversal(self):
+    def test_s1_s2_share_reversal(self) -> None:
         """Both slow currents use e_k as reversal potential."""
         n = BertramPhantomBurster()
         # From source: i_s1 = g_s1 * s1 * (v - e_k)

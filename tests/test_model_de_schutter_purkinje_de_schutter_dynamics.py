@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_de_schutter_purkinje_support import *  # noqa: F403
+from sc_neurocore.neurons.models.de_schutter_purkinje import (
+    DeSchutterPurkinjeNeuron,
+)
+from tests.model_de_schutter_purkinje_support import (
+    _run,
+)
 
 
 class TestDeSchutterDynamics:
+    """Dynamics of the DeSchutterPurkinjeNeuron."""
+
     def test_converges_to_fixed_point(self) -> None:
         """V converges to stable FP at I=0."""
         n = DeSchutterPurkinjeNeuron()
@@ -25,6 +32,7 @@ class TestDeSchutterDynamics:
         assert abs(n.v - v1) < 0.1
 
     def test_v_shifts_with_current(self) -> None:
+        """More current raises the voltage."""
         n0 = DeSchutterPurkinjeNeuron()
         n100 = DeSchutterPurkinjeNeuron()
         for _ in range(20000):
@@ -39,6 +47,7 @@ class TestDeSchutterDynamics:
         assert len(spikes) >= 1
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = DeSchutterPurkinjeNeuron()

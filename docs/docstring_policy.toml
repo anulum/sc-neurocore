@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3735
+expected_file_count = 3797
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14984,3 +14984,251 @@ rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte performance."
 [[file]]
 path = "tests/test_model_astrocyte_astrocyte_pipeline.py"
 rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte pipeline."
+
+[[file]]
+path = "tests/model_booth_rinzel_support.py"
+rationale = "Provide the shared imports and the state helper of the Booth-Rinzel motoneuron suites."
+
+[[file]]
+path = "tests/test_model_balanced_resonate_and_fire_brf_equations.py"
+rationale = "Exercise SC-NeuroCore: model balanced resonate and fire brf equations."
+
+[[file]]
+path = "tests/test_model_balanced_resonate_and_fire_brf_project_wiring.py"
+rationale = "Exercise SC-NeuroCore: model balanced resonate and fire brf project wiring."
+
+[[file]]
+path = "tests/test_model_balanced_resonate_and_fire_brf_response.py"
+rationale = "Exercise SC-NeuroCore: model balanced resonate and fire brf response."
+
+[[file]]
+path = "tests/test_model_balanced_resonate_and_fire_brf_stability_and_reset.py"
+rationale = "Exercise SC-NeuroCore: model balanced resonate and fire brf stability and reset."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_analytical.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram analytical."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_dual_timescale.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram dual timescale."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram dynamics."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_isolation.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram isolation."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_parameters.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram parameters."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_performance.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram performance."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram pipeline."
+
+[[file]]
+path = "tests/test_model_bertram_phantom_bertram_reversals.py"
+rationale = "Exercise SC-NeuroCore: model bertram phantom bertram reversals."
+
+[[file]]
+path = "tests/test_model_booth_rinzel_booth_rinzel_analysis.py"
+rationale = "Exercise SC-NeuroCore: model booth rinzel booth rinzel analysis."
+
+[[file]]
+path = "tests/test_model_booth_rinzel_booth_rinzel_isolation.py"
+rationale = "Exercise SC-NeuroCore: model booth rinzel booth rinzel isolation."
+
+[[file]]
+path = "tests/test_model_booth_rinzel_booth_rinzel_network.py"
+rationale = "Exercise SC-NeuroCore: model booth rinzel booth rinzel network."
+
+[[file]]
+path = "tests/test_model_booth_rinzel_free_tests.py"
+rationale = "Exercise SC-NeuroCore: model booth rinzel free tests."
+
+[[file]]
+path = "tests/test_model_brainscales_adex_brain_scale_s_analysis.py"
+rationale = "Exercise SC-NeuroCore: model brainscales adex brain scale s analysis."
+
+[[file]]
+path = "tests/test_model_brainscales_adex_brain_scale_s_isolation.py"
+rationale = "Exercise SC-NeuroCore: model brainscales adex brain scale s isolation."
+
+[[file]]
+path = "tests/test_model_brainscales_adex_brain_scale_s_network.py"
+rationale = "Exercise SC-NeuroCore: model brainscales adex brain scale s network."
+
+[[file]]
+path = "tests/test_model_brainscales_adex_brain_scale_s_validation.py"
+rationale = "Exercise SC-NeuroCore: model brainscales adex brain scale s validation."
+
+[[file]]
+path = "tests/test_model_brunel_wang_brunel_wang_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model brunel wang brunel wang dynamics."
+
+[[file]]
+path = "tests/test_model_brunel_wang_brunel_wang_isolation.py"
+rationale = "Exercise SC-NeuroCore: model brunel wang brunel wang isolation."
+
+[[file]]
+path = "tests/test_model_brunel_wang_brunel_wang_performance.py"
+rationale = "Exercise SC-NeuroCore: model brunel wang brunel wang performance."
+
+[[file]]
+path = "tests/test_model_brunel_wang_brunel_wang_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model brunel wang brunel wang pipeline."
+
+[[file]]
+path = "tests/test_model_butera_respiratory_butera_analysis.py"
+rationale = "Exercise SC-NeuroCore: model butera respiratory butera analysis."
+
+[[file]]
+path = "tests/test_model_butera_respiratory_butera_isolation.py"
+rationale = "Exercise SC-NeuroCore: model butera respiratory butera isolation."
+
+[[file]]
+path = "tests/test_model_butera_respiratory_butera_network.py"
+rationale = "Exercise SC-NeuroCore: model butera respiratory butera network."
+
+[[file]]
+path = "tests/test_model_butera_respiratory_free_tests.py"
+rationale = "Exercise SC-NeuroCore: model butera respiratory free tests."
+
+[[file]]
+path = "tests/test_model_cazelles_map_cazelles_analysis.py"
+rationale = "Exercise SC-NeuroCore: model cazelles map cazelles analysis."
+
+[[file]]
+path = "tests/test_model_cazelles_map_cazelles_isolation.py"
+rationale = "Exercise SC-NeuroCore: model cazelles map cazelles isolation."
+
+[[file]]
+path = "tests/test_model_cazelles_map_cazelles_network.py"
+rationale = "Exercise SC-NeuroCore: model cazelles map cazelles network."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_analytical_solution.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc analytical solution."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_isolation.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc isolation."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_performance.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc performance."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc pipeline."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_threshold_behavior.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc threshold behavior."
+
+[[file]]
+path = "tests/test_model_cfc_cfc_validation.py"
+rationale = "Exercise SC-NeuroCore: model cfc cfc validation."
+
+[[file]]
+path = "tests/test_model_cfc_closed_form_continuous.py"
+rationale = "Exercise SC-NeuroCore: model cfc closed form continuous."
+
+[[file]]
+path = "tests/test_model_chialvo_map_chialvo_analysis.py"
+rationale = "Exercise SC-NeuroCore: model chialvo map chialvo analysis."
+
+[[file]]
+path = "tests/test_model_chialvo_map_chialvo_isolation.py"
+rationale = "Exercise SC-NeuroCore: model chialvo map chialvo isolation."
+
+[[file]]
+path = "tests/test_model_chialvo_map_chialvo_network.py"
+rationale = "Exercise SC-NeuroCore: model chialvo map chialvo network."
+
+[[file]]
+path = "tests/test_model_connor_stevens_connor_stevens_neuron_simulate.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens connor stevens neuron simulate."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_analytical.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs analytical."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_isolation.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs isolation."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_parameters.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs parameters."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_performance.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs performance."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs pipeline."
+
+[[file]]
+path = "tests/test_model_connor_stevens_cs_type_i.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens cs type i."
+
+[[file]]
+path = "tests/test_model_connor_stevens_free_tests.py"
+rationale = "Exercise SC-NeuroCore: model connor stevens free tests."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_analytical.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn analytical."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn dynamics."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_isolation.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn isolation."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_parameters.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn parameters."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_performance.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn performance."
+
+[[file]]
+path = "tests/test_model_courage_nekorkin_map_cn_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model courage nekorkin map cn pipeline."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter dynamics."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_isolation.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter isolation."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_performance.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter performance."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter pipeline."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_purkinje.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter purkinje."
+
+[[file]]
+path = "tests/test_model_de_schutter_purkinje_de_schutter_rk4_hardening.py"
+rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter rk4 hardening."

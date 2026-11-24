@@ -10,16 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_booth_rinzel_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.booth_rinzel import (
+    BoothRinzelNeuron,
+)
 
 
 class TestBoothRinzelNetwork:
-    def test_population(self):
+    """The BoothRinzelNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(BoothRinzelNeuron, n=5, label="br")
         assert pop.n == 5
         assert pop.model_name == "BoothRinzelNeuron"
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(BoothRinzelNeuron, n=10, label="br")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -27,7 +48,8 @@ class TestBoothRinzelNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0, "network produced zero spikes"
 
-    def test_with_projection(self):
+    def test_with_projection(self) -> None:
+        """A projected network yields readable spike trains."""
         pop = Population(BoothRinzelNeuron, n=10, label="br")
         proj = Projection(pop, pop, weight=0.5, probability=0.2, seed=42)
         drive = PoissonInput(n=10, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)
