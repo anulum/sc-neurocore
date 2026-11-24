@@ -10,26 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
+from tests.model_spike_response_support import (
+    _run,
+)
 
 
 class TestSRMFI:
-    def test_subthreshold_silent(self):
+    """The current-to-rate response of the SpikeResponseNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = SpikeResponseNeuron()
         assert len(_run(n, current=5.0, steps=10000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = SpikeResponseNeuron()
         assert len(_run(n, current=10.0, steps=10000)) >= 100
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [8.0, 10.0, 15.0, 20.0]:
             n = SpikeResponseNeuron()
             rates.append(len(_run(n, current=I, steps=5000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_fi_cross_current_comparison(self):
+    def test_fi_cross_current_comparison(self) -> None:
         """Verify rate ratios are consistent: stronger input → proportionally more spikes."""
         n10 = SpikeResponseNeuron()
         n20 = SpikeResponseNeuron()

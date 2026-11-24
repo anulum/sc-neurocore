@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaEncoding:
-    def test_spike_rate_equals_input_over_threshold(self):
+    """Signed rate encoding and reconstruction by the SigmaDeltaNeuron."""
+
+    def test_spike_rate_equals_input_over_threshold(self) -> None:
         """For constant I ∈ (0, θ): rate = I/θ spikes per step."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         I = 0.3
@@ -24,7 +30,7 @@ class TestSigmaDeltaEncoding:
         assert abs(pos - expected) <= 2, f"pos={pos}, expected={expected}"
 
     @pytest.mark.parametrize("I", [0.1, 0.25, 0.5, 0.75])
-    def test_rate_proportional_to_input(self, I: float):
+    def test_rate_proportional_to_input(self, I: float) -> None:
         """Rate = I/θ for I ∈ (0, θ) — exact for sigma-delta."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         outputs = [n.step(I) for _ in range(10000)]
@@ -32,13 +38,14 @@ class TestSigmaDeltaEncoding:
         expected = 10000 * I
         assert abs(pos - expected) <= 2
 
-    def test_negative_input_produces_negative_spikes(self):
+    def test_negative_input_produces_negative_spikes(self) -> None:
+        """Negative input produces negative spikes."""
         n = SigmaDeltaNeuron()
         outputs = [n.step(-0.5) for _ in range(1000)]
         assert outputs.count(-1) == 500
         assert outputs.count(1) == 0
 
-    def test_signal_reconstruction_bounded(self):
+    def test_signal_reconstruction_bounded(self) -> None:
         """Cumulative output × θ tracks cumulative input within ±θ.
 
         This is the fundamental sigma-delta guarantee: the quantisation
@@ -54,13 +61,13 @@ class TestSigmaDeltaEncoding:
             f"Reconstruction error {max_error:.4f} exceeds threshold {n.v_threshold}"
         )
 
-    def test_dc_removal(self):
+    def test_dc_removal(self) -> None:
         """For I=0, no spikes ever — perfect silence."""
         n = SigmaDeltaNeuron()
         outputs = [n.step(0.0) for _ in range(10000)]
         assert all(o == 0 for o in outputs)
 
-    def test_bidirectional_encoding(self):
+    def test_bidirectional_encoding(self) -> None:
         """Alternating +/- input produces both +1 and -1 spikes."""
         n = SigmaDeltaNeuron(v_threshold=0.5)
         outputs = []

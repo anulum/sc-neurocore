@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.siegert import (
+    SiegertTransferFunction,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSiegertPerformance:
+    """Throughput of the SiegertTransferFunction."""
+
     def test_isolation_throughput(self) -> None:
         """Slow due to Gauss-Legendre quadrature (40 points)."""
         n = SiegertTransferFunction()

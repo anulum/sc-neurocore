@@ -10,18 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.model_catalogue import (
+    load_descriptor_payload,
+)
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestSigmoidRateSchema:
-    def test_descriptor_tracks_theta_as_configuration(self):
+    """The descriptor and schema integration of the SigmoidRateNeuron."""
+
+    def test_descriptor_tracks_theta_as_configuration(self) -> None:
+        """Descriptor tracks theta as configuration."""
         payload = load_descriptor_payload("SigmoidRateNeuron")
         assert payload is not None
         assert set(payload["state"]) == {"r"}
         assert set(payload["parameters"]) == {"tau", "beta", "theta"}
         assert payload["integration"] == {"dt": 0.1, "method": "exp_euler"}
 
-    def test_schema_exp_euler_matches_hand_model(self):
+    def test_schema_exp_euler_matches_hand_model(self) -> None:
+        """Schema exp Euler matches hand model."""
         configured = {"tau": 10.0, "beta": 2.0, "theta": 1.0}
         schema = UniversalNeuron.from_schema(
             "sigmoid_rate",

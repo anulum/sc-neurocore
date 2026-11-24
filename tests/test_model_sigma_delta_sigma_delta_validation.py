@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaValidation:
+    """Input and state validation of the SigmaDeltaNeuron."""
+
     @pytest.mark.parametrize("sigma", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_accumulator(self, sigma: float):
+    def test_rejects_non_finite_accumulator(self, sigma: float) -> None:
+        """The model rejects non-finite accumulator."""
         with pytest.raises(ValueError, match="sigma"):
             SigmaDeltaNeuron(sigma=sigma)
 
     @pytest.mark.parametrize("v_threshold", [0.0, -1.0, np.nan, np.inf, -np.inf])
-    def test_rejects_non_positive_or_non_finite_threshold(self, v_threshold: float):
+    def test_rejects_non_positive_or_non_finite_threshold(self, v_threshold: float) -> None:
+        """The model rejects non-positive or non-finite threshold."""
         with pytest.raises(ValueError, match="v_threshold"):
             SigmaDeltaNeuron(v_threshold=v_threshold)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_accumulator_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_accumulator_mutation(self, current: float) -> None:
+        """The model rejects non-finite current before accumulator mutation."""
         n = SigmaDeltaNeuron(sigma=0.25)
         before = n.sigma
         with pytest.raises(ValueError, match="current"):

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
 
 
 class TestSFAIsolation:
-    def test_construction_defaults(self):
+    """The SFANeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = SFANeuron()
         assert n.v == -70.0
         assert n.g_sfa == 0.0
@@ -23,22 +29,26 @@ class TestSFAIsolation:
         assert n.e_k == -80.0
         assert n.dt == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SFANeuron().step(0.0) in (0, 1)
 
-    def test_state_evolves(self):
+    def test_state_evolves(self) -> None:
+        """The state evolves under drive."""
         n = SFANeuron()
         v0 = n.v
         n.step(50.0)
         assert n.v != v0
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = SFANeuron()
         for _ in range(50000):
             n.step(50.0)
         assert np.isfinite(n.v) and np.isfinite(n.g_sfa)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SFANeuron()
         for _ in range(100):
             n.step(50.0)

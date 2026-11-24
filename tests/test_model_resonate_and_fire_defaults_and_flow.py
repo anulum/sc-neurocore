@@ -6,12 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (defaults_and_flow) from former test_model_resonate_and_fire.py
 
+"""Defaults and the exact linear flow of the resonate-and-fire neuron."""
+
 from __future__ import annotations
 
-from tests.model_resonate_and_fire_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.resonate_and_fire import (
+    ResonateAndFireNeuron,
+)
+from tests.model_resonate_and_fire_support import (
+    _exact_flow,
+)
+from typing import (
+    cast,
+)
 
 
 def test_defaults_match_the_source_illustration_and_engineering_step() -> None:
+    """Defaults match the source illustration and engineering step."""
     neuron = ResonateAndFireNeuron()
     assert (neuron.x, neuron.y) == (0.0, 0.0)
     assert (neuron.b, neuron.omega, neuron.threshold, neuron.dt) == (
@@ -23,6 +36,7 @@ def test_defaults_match_the_source_illustration_and_engineering_step() -> None:
 
 
 def test_constructor_normalises_numeric_scalars() -> None:
+    """Constructor normalises numeric scalars."""
     neuron = ResonateAndFireNeuron(
         x=1,
         y=cast(float, "-0.25"),
@@ -42,6 +56,7 @@ def test_constructor_normalises_numeric_scalars() -> None:
 
 
 def test_one_step_matches_independent_exact_linear_flow() -> None:
+    """One step matches independent exact linear flow."""
     neuron = ResonateAndFireNeuron(
         x=0.3,
         y=-0.2,
@@ -64,6 +79,7 @@ def test_one_step_matches_independent_exact_linear_flow() -> None:
 
 
 def test_equilibrium_is_a_fixed_point_for_constant_input() -> None:
+    """Equilibrium is a fixed point for constant input."""
     b = -0.7
     omega = 3.2
     current = 1.4
@@ -84,6 +100,7 @@ def test_equilibrium_is_a_fixed_point_for_constant_input() -> None:
 
 
 def test_homogeneous_radius_decays_by_exp_b_dt() -> None:
+    """Homogeneous radius decays by exp b dt."""
     neuron = ResonateAndFireNeuron(
         x=0.6,
         y=-0.8,
@@ -102,6 +119,7 @@ def test_homogeneous_radius_decays_by_exp_b_dt() -> None:
 
 
 def test_omega_sets_the_exact_rotation_angle() -> None:
+    """Omega sets the exact rotation angle."""
     omega = 2.0
     neuron = ResonateAndFireNeuron(
         x=1.0,

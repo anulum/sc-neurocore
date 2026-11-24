@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
+from tests.model_spike_response_support import (
+    _run,
+)
 
 
 class TestSRMISI:
-    def test_constant_isi(self):
+    """Inter-spike intervals of the SpikeResponseNeuron."""
+
+    def test_constant_isi(self) -> None:
         """At constant suprathreshold input, ISI is perfectly constant."""
         n = SpikeResponseNeuron()
         spikes = _run(n, current=10.0, steps=10000)
@@ -22,7 +30,7 @@ class TestSRMISI:
         isis = np.diff(spikes[2:])
         assert np.all(isis == isis[0]), f"Non-constant ISI: {np.unique(isis)}"
 
-    def test_isi_from_simulation(self):
+    def test_isi_from_simulation(self) -> None:
         """Measure ISI at I=10.0: should be 20 steps (from probing)."""
         n = SpikeResponseNeuron()
         spikes = _run(n, current=10.0, steps=5000)
@@ -30,7 +38,8 @@ class TestSRMISI:
         # ISI = 20 from probing (refractory recovery takes 19 steps + spike step)
         assert 18 <= measured_isi <= 22, f"ISI = {measured_isi}"
 
-    def test_isi_shortens_with_stronger_input(self):
+    def test_isi_shortens_with_stronger_input(self) -> None:
+        """ISI shortens with stronger input."""
         n_weak = SpikeResponseNeuron()
         n_strong = SpikeResponseNeuron()
         s_weak = _run(n_weak, current=8.0, steps=5000)
@@ -40,7 +49,8 @@ class TestSRMISI:
             isi_strong = np.median(np.diff(s_strong[2:]))
             assert isi_strong < isi_weak
 
-    def test_cv_isi_zero(self):
+    def test_cv_isi_zero(self) -> None:
+        """Constant drive gives an ISI coefficient of variation near zero."""
         n = SpikeResponseNeuron()
         spikes = _run(n, current=10.0, steps=5000)
         isis_arr = np.diff(spikes[2:]).astype(float)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4166
+expected_file_count = 4224
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -16708,3 +16708,235 @@ rationale = "Exercise SC-NeuroCore: model rall cable rall cable propagation."
 [[file]]
 path = "tests/test_model_rall_cable_rall_cable_spiking.py"
 rationale = "Exercise SC-NeuroCore: model rall cable rall cable spiking."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_batch_and_reset.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire batch and reset."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_constructor_rejects.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire constructor rejects."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_defaults_and_flow.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire defaults and flow."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_exact_flow_rejects.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire exact flow rejects."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_runtime_atomic_rejects.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire runtime atomic rejects."
+
+[[file]]
+path = "tests/test_model_resonate_and_fire_spike_events.py"
+rationale = "Exercise SC-NeuroCore: model resonate and fire spike events."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa adaptation."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_analysis.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa analysis."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_determinism.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa determinism."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_isolation.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa isolation."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_network.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa network."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_parameters.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa parameters."
+
+[[file]]
+path = "tests/test_model_sfa_sfa_validation.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfa validation."
+
+[[file]]
+path = "tests/test_model_sfa_sfafi.py"
+rationale = "Exercise SC-NeuroCore: model sfa sfafi."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_analytical.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert analytical."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_erf_approx.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert erf approx."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_isolation.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert isolation."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_performance.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert performance."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert pipeline."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_rate_function.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert rate function."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_transfer.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert transfer."
+
+[[file]]
+path = "tests/test_model_siegert_siegert_validation.py"
+rationale = "Exercise SC-NeuroCore: model siegert siegert validation."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_analysis.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta analysis."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta edge cases."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_encoding.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta encoding."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_isolation.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta isolation."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_network.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta network."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_subtract.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta subtract."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_threshold.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta threshold."
+
+[[file]]
+path = "tests/test_model_sigma_delta_sigma_delta_validation.py"
+rationale = "Exercise SC-NeuroCore: model sigma delta sigma delta validation."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_isolation.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate isolation."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_parameters.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate parameters."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_performance.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate performance."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate pipeline."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_schema.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate schema."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_transfer_function.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate transfer function."
+
+[[file]]
+path = "tests/test_model_sigmoid_rate_sigmoid_rate_validation.py"
+rationale = "Exercise SC-NeuroCore: model sigmoid rate sigmoid rate validation."
+
+[[file]]
+path = "tests/test_model_spike_response_spike_response_validation.py"
+rationale = "Exercise SC-NeuroCore: model spike response spike response validation."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm edge cases."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_input_kernel.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm input kernel."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_isolation.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm isolation."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_parameters.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm parameters."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm pipeline."
+
+[[file]]
+path = "tests/test_model_spike_response_srm_refractory_kernel.py"
+rationale = "Exercise SC-NeuroCore: model spike response srm refractory kernel."
+
+[[file]]
+path = "tests/test_model_spike_response_srmfi.py"
+rationale = "Exercise SC-NeuroCore: model spike response srmfi."
+
+[[file]]
+path = "tests/test_model_spike_response_srmisi.py"
+rationale = "Exercise SC-NeuroCore: model spike response srmisi."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_fi.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 fi."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_fixed_point_decay.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 fixed point decay."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_isolation.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 isolation."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_performance.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 performance."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 pipeline."
+
+[[file]]
+path = "tests/test_model_spinnaker2_spi_n_naker2_refractory.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker2 spi n naker2 refractory."
+
+[[file]]
+path = "tests/test_model_spinnaker_lif_spi_n_naker_lif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif dynamics."
+
+[[file]]
+path = "tests/test_model_spinnaker_lif_spi_n_naker_lif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif isolation."
+
+[[file]]
+path = "tests/test_model_spinnaker_lif_spi_n_naker_lif_performance.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif performance."
+
+[[file]]
+path = "tests/test_model_spinnaker_lif_spi_n_naker_lif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif pipeline."
+
+[[file]]
+path = "tests/test_model_spinnaker_lif_spi_n_naker_lif_refractory.py"
+rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif refractory."

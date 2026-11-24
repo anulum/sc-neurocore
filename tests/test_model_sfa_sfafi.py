@@ -10,28 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
+from tests.model_sfa_support import (
+    _run,
+)
 
 
 class TestSFAFI:
-    def test_subthreshold_no_spikes(self):
+    """The current-to-rate response of the SFANeuron."""
+
+    def test_subthreshold_no_spikes(self) -> None:
         """Low current → no spikes."""
         n = SFANeuron()
         spikes = len(_run(n, current=10.0, steps=10000))
         assert spikes == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = SFANeuron()
         spikes = len(_run(n, current=50.0, steps=10000))
         assert spikes > 10
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n30 = SFANeuron()
         n100 = SFANeuron()
         s30 = len(_run(n30, current=30.0, steps=10000))
         s100 = len(_run(n100, current=100.0, steps=10000))
         assert s100 > s30
 
-    def test_zero_current_silent(self):
+    def test_zero_current_silent(self) -> None:
+        """Zero current silent."""
         n = SFANeuron()
         assert len(_run(n, current=0.0, steps=10000)) == 0

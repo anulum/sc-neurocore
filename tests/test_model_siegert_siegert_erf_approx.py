@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.siegert import (
+    _erf_approx,
+)
+from scipy.special import (
+    erf as scipy_erf,
+)
 
 
 class TestSiegertErfApprox:
     """Abramowitz & Stegun 7.1.26 rational approximation."""
 
     def test_erf_at_zero(self) -> None:
+        """The error-function approximation is zero at zero."""
         result = _erf_approx(np.array([0.0]))
         assert abs(result[0]) < 1e-6
 
     def test_erf_symmetry(self) -> None:
+        """The error-function approximation is odd: erf(-x) = -erf(x)."""
         x = np.array([1.0, -1.0])
         result = _erf_approx(x)
         assert abs(result[0] + result[1]) < 1e-6
@@ -34,6 +42,7 @@ class TestSiegertErfApprox:
         assert max_err < 1e-6, f"max erf error = {max_err:.2e}"
 
     def test_erf_bounded(self) -> None:
+        """The error-function approximation stays inside [-1, 1]."""
         x = np.array([-10.0, -1.0, 0.0, 1.0, 10.0])
         result = _erf_approx(x)
         assert np.all(np.abs(result) <= 1.0 + 1e-6)

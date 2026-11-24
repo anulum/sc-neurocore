@@ -10,12 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+from sc_neurocore.neurons.models.siegert import (
+    SiegertTransferFunction,
+)
 
 
 class TestSiegertRateFunction:
+    """The Siegert rate function below and above threshold and at saturation."""
+
     def test_zero_rate_below_threshold(self) -> None:
-        """mu = V_rest + I. I<15 → mu < threshold → rate ≈ 0."""
+        """With mu = V_rest + I, I<15 keeps mu below threshold, so the rate is about 0."""
         n = SiegertTransferFunction()
         for I in [0.0, 5.0, 10.0]:
             rate = n.step(I)
@@ -28,6 +32,7 @@ class TestSiegertRateFunction:
         assert rate > 10.0, f"rate={rate:.2f}"
 
     def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n = SiegertTransferFunction()
         r15 = n.step(15.0)
         r20 = n.step(20.0)

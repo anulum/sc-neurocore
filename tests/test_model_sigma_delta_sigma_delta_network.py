@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaNetwork:
-    def test_population(self):
+    """The SigmaDeltaNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(SigmaDeltaNeuron, n=10, label="sd")
         assert pop.n == 10
 
-    def test_network_with_drive(self):
+    def test_network_with_drive(self) -> None:
+        """A Poisson-driven population produces spikes."""
         pop = Population(SigmaDeltaNeuron, n=10, label="sd")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

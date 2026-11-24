@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
 
 
 class TestSRMIsolation:
-    def test_construction_defaults(self):
+    """The SpikeResponseNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = SpikeResponseNeuron()
         assert n.v == 0.0
         assert n.v_threshold == 1.0
@@ -24,11 +29,12 @@ class TestSRMIsolation:
         assert n.time_since_spike == 1000.0
         assert n.dt == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SpikeResponseNeuron().step(0.0) in (0, 1)
 
-    def test_v_no_accumulation(self):
-        """v = η + κ, computed fresh. No memory of previous v."""
+    def test_v_no_accumulation(self) -> None:
+        """The voltage v = η + κ is computed fresh, with no memory of the previous v."""
         n = SpikeResponseNeuron()
         n.step(5.0)
         v1 = n.v
@@ -37,7 +43,8 @@ class TestSRMIsolation:
         # v should be nearly identical (both have tss > 1000, eta ≈ 0)
         assert abs(v2 - v1) < 0.01
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SpikeResponseNeuron()
         for _ in range(50):
             n.step(10.0)

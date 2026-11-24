@@ -6,12 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (spike_events) from former test_model_resonate_and_fire.py
 
+"""Spike events and the source reset of the resonate-and-fire neuron."""
+
 from __future__ import annotations
 
-from tests.model_resonate_and_fire_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.resonate_and_fire import (
+    ResonateAndFireNeuron,
+)
 
 
 def test_spike_is_upward_y_crossing_and_installs_source_reset() -> None:
+    """Spike is upward y crossing and installs source reset."""
     neuron = ResonateAndFireNeuron(
         x=0.0,
         y=0.99,
@@ -25,6 +32,7 @@ def test_spike_is_upward_y_crossing_and_installs_source_reset() -> None:
 
 
 def test_source_reset_at_threshold_does_not_immediately_retrigger() -> None:
+    """Source reset at threshold does not immediately retrigger."""
     neuron = ResonateAndFireNeuron(
         x=0.0,
         y=0.99,
@@ -39,6 +47,7 @@ def test_source_reset_at_threshold_does_not_immediately_retrigger() -> None:
 
 
 def test_radius_above_threshold_is_not_itself_an_event() -> None:
+    """Radius above threshold is not itself an event."""
     neuron = ResonateAndFireNeuron(
         x=2.0,
         y=0.0,
@@ -52,6 +61,7 @@ def test_radius_above_threshold_is_not_itself_an_event() -> None:
 
 
 def test_downward_y_crossing_is_not_an_event() -> None:
+    """Downward y crossing is not an event."""
     neuron = ResonateAndFireNeuron(
         x=-1.0,
         y=1.01,
@@ -65,6 +75,7 @@ def test_downward_y_crossing_is_not_an_event() -> None:
 
 
 def test_zero_current_quiescent_state_remains_quiescent() -> None:
+    """Zero current quiescent state remains quiescent."""
     neuron = ResonateAndFireNeuron()
     assert [neuron.step(0.0) for _ in range(100)] == [0] * 100
     assert (neuron.x, neuron.y) == (0.0, 0.0)

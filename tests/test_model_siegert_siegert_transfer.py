@@ -10,21 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+from sc_neurocore.neurons.models.siegert import (
+    SiegertTransferFunction,
+)
 
 
 class TestSiegertTransfer:
-    def test_returns_rate(self) -> None:
-        from sc_neurocore.neurons.models.siegert import SiegertTransferFunction
+    """The SiegertTransferFunction returns a rate that rises with input."""
 
+    def test_returns_rate(self) -> None:
+        """The model returns rate."""
         n = SiegertTransferFunction()
         rate = n.step(5.0)
         assert isinstance(rate, float)
         assert rate >= 0.0
 
     def test_higher_input_higher_rate(self) -> None:
-        from sc_neurocore.neurons.models.siegert import SiegertTransferFunction
-
+        """Higher input higher rate."""
         n = SiegertTransferFunction()
         r_low = n.step(1.0)
         r_high = n.step(30.0)

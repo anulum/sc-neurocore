@@ -10,29 +10,44 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
 
 
 class TestSpikeResponseValidation:
+    """Input and state validation of the SpikeResponseNeuron."""
+
     @pytest.mark.parametrize("field", ["v", "v_threshold", "eta_reset"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float) -> None:
+        """The model rejects non-finite voltage parameters."""
         with pytest.raises(ValueError, match=field):
-            SpikeResponseNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            SpikeResponseNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["tau_eta", "tau_kappa", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_time_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-positive or non-finite time parameters."""
         with pytest.raises(ValueError, match=field):
-            SpikeResponseNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            SpikeResponseNeuron(**kwargs)
 
     @pytest.mark.parametrize("time_since_spike", [-1.0, np.nan, np.inf, -np.inf])
-    def test_rejects_negative_or_non_finite_refractory_clock(self, time_since_spike: float):
+    def test_rejects_negative_or_non_finite_refractory_clock(self, time_since_spike: float) -> None:
+        """The model rejects negative or non-finite refractory clock."""
         with pytest.raises(ValueError, match="time_since_spike"):
             SpikeResponseNeuron(time_since_spike=time_since_spike)
 
     @pytest.mark.parametrize("weighted_input", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_input_before_state_mutation(self, weighted_input: float):
+    def test_rejects_non_finite_input_before_state_mutation(self, weighted_input: float) -> None:
+        """The model rejects non-finite input before state mutation."""
         n = SpikeResponseNeuron(v=0.25, time_since_spike=3.0)
         before = (n.v, n.time_since_spike)
         with pytest.raises(ValueError, match="weighted_input"):

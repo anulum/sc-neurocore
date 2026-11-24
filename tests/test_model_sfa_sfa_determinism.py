@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
 
 
 class TestSFADeterminism:
-    def test_bit_exact(self):
+    """Bit-exact reproducibility of the SFANeuron."""
+
+    def test_bit_exact(self) -> None:
+        """Two runs give bit-identical spike, voltage and adaptation traces."""
         traces = []
         for _ in range(2):
             n = SFANeuron()

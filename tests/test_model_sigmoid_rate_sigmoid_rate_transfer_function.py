@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
+from tests.model_sigmoid_rate_support import (
+    _exact_rate,
+    _stable_sigmoid,
+)
 
 
 class TestSigmoidRateTransferFunction:
-    def test_single_step_matches_exact_relaxation(self):
+    """The sigmoid transfer function and exact relaxation of the SigmoidRateNeuron."""
+
+    def test_single_step_matches_exact_relaxation(self) -> None:
         """The rate state follows the closed-form first-order relaxation."""
         n = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)
         current = 3.0
@@ -23,7 +33,7 @@ class TestSigmoidRateTransferFunction:
         assert n.step(current) == pytest.approx(expected, abs=1e-12)
         assert n.r == pytest.approx(expected, abs=1e-12)
 
-    def test_large_timestep_exact_relaxation_remains_bounded(self):
+    def test_large_timestep_exact_relaxation_remains_bounded(self) -> None:
         """Exact relaxation preserves the rate interval even when dt exceeds tau."""
         n = SigmoidRateNeuron(r=1.0, tau=0.1, dt=5.0)
         value = n.step(-100.0)
@@ -32,14 +42,15 @@ class TestSigmoidRateTransferFunction:
         assert 0.0 <= n.r <= 1.0
         assert n.r < 1.0e-12
 
-    def test_sigmoid_at_theta(self):
+    def test_sigmoid_at_theta(self) -> None:
         """σ(β(I-θ)) at I=θ: σ(0) = 0.5."""
         n = SigmoidRateNeuron(theta=3.0)
         for _ in range(10000):
             n.step(3.0)
         assert abs(n.r - 0.5) < 0.01
 
-    def test_sigmoid_monotonic(self):
+    def test_sigmoid_monotonic(self) -> None:
+        """The steady-state rate rises monotonically with the input."""
         vals = []
         for I in [-5.0, 0.0, 1.0, 5.0, 10.0]:
             n = SigmoidRateNeuron()
@@ -48,7 +59,7 @@ class TestSigmoidRateTransferFunction:
             vals.append(n.r)
         assert all(vals[j] <= vals[j + 1] + 0.01 for j in range(len(vals) - 1))
 
-    def test_sigmoid_bounded_0_1(self):
+    def test_sigmoid_bounded_0_1(self) -> None:
         """Steady-state r ∈ [0, 1] (sigmoid output range)."""
         for I in [-100.0, 100.0]:
             n = SigmoidRateNeuron()
@@ -56,7 +67,7 @@ class TestSigmoidRateTransferFunction:
                 n.step(I)
             assert -0.01 <= n.r <= 1.01, f"I={I}: r={n.r}"
 
-    def test_beta_sharpness(self):
+    def test_beta_sharpness(self) -> None:
         """Higher beta → sharper sigmoid → faster transition."""
         n_soft = SigmoidRateNeuron(beta=0.5, theta=0.0)
         n_sharp = SigmoidRateNeuron(beta=10.0, theta=0.0)
@@ -66,8 +77,8 @@ class TestSigmoidRateTransferFunction:
         # Sharp beta: r closer to 1.0
         assert n_sharp.r > n_soft.r
 
-    def test_steady_state_exact(self):
-        """r_ss = σ(β(I-θ))."""
+    def test_steady_state_exact(self) -> None:
+        """The steady-state rate is r_ss = σ(β(I-θ))."""
         n = SigmoidRateNeuron(beta=2.0, theta=1.0)
         I = 3.0
         for _ in range(10000):
@@ -75,7 +86,7 @@ class TestSigmoidRateTransferFunction:
         expected = 1.0 / (1.0 + np.exp(-2.0 * (3.0 - 1.0)))
         assert abs(n.r - expected) < 0.01
 
-    def test_tau_controls_convergence_speed(self):
+    def test_tau_controls_convergence_speed(self) -> None:
         """Smaller tau → faster convergence to steady state."""
         n_fast = SigmoidRateNeuron(tau=1.0)
         n_slow = SigmoidRateNeuron(tau=100.0)

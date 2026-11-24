@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSpiNNaker2Performance:
-    def test_isolation_throughput(self):
+    """Throughput of the SpiNNaker2Neuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = SpiNNaker2Neuron()
         N = 100000
         t0 = time.perf_counter()

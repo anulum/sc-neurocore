@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
 
 
 class TestSpiNNaker2FixedPointDecay:
@@ -20,7 +22,7 @@ class TestSpiNNaker2FixedPointDecay:
     = 243/256 ≈ 0.949, approximating exp(-1/10) ≈ 0.905 with slight error.
     """
 
-    def test_decay_formula(self):
+    def test_decay_formula(self) -> None:
         """One step with I=0: v_new = (v * 243 >> 8) + 0."""
         n = SpiNNaker2Neuron()
         n.v = 1000
@@ -28,19 +30,19 @@ class TestSpiNNaker2FixedPointDecay:
         expected = (1000 * 243 >> 8) + 0  # = 949
         assert n.v == expected, f"v={n.v}, expected={expected}"
 
-    def test_decay_reduces_voltage(self):
+    def test_decay_reduces_voltage(self) -> None:
         """Decay with zero input should reduce |v| toward v_rest=0."""
         n = SpiNNaker2Neuron()
         n.v = 500
         n.step(0)
         assert n.v < 500
 
-    def test_effective_alpha(self):
+    def test_effective_alpha(self) -> None:
         """alpha_eff = 243/256 ≈ 0.9492."""
         alpha = 243 / 256
         assert 0.94 < alpha < 0.96
 
-    def test_integer_arithmetic_only(self):
+    def test_integer_arithmetic_only(self) -> None:
         """Verify no float operations: v stays integer."""
         n = SpiNNaker2Neuron()
         for _ in range(100):

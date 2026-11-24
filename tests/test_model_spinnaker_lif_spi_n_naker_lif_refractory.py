@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker_lif import (
+    SpiNNakerLIFNeuron,
+)
+from tests.model_spinnaker_lif_support import (
+    _run,
+)
 
 
 class TestSpiNNakerLIFRefractory:
-    def test_refractory_blocks_spikes(self):
+    """The refractory counter and offset current of the SpiNNakerLIFNeuron."""
+
+    def test_refractory_blocks_spikes(self) -> None:
         """During refractory period (tau_refrac=2), no spikes can occur."""
         n = SpiNNakerLIFNeuron()
         # Drive to spike
@@ -29,7 +36,7 @@ class TestSpiNNakerLIFRefractory:
                 return
         raise AssertionError("No spike")
 
-    def test_refractory_reduces_rate(self):
+    def test_refractory_reduces_rate(self) -> None:
         """Refractory period limits maximum firing rate."""
         n_norefrac = SpiNNakerLIFNeuron(tau_refrac=0.0)
         n_refrac = SpiNNakerLIFNeuron(tau_refrac=5.0)
@@ -37,7 +44,8 @@ class TestSpiNNakerLIFRefractory:
         s_yes = len(_run(n_refrac, current=50.0, steps=5000))
         assert s_no > s_yes
 
-    def test_refrac_count_decrements(self):
+    def test_refrac_count_decrements(self) -> None:
+        """Refrac count decrements."""
         n = SpiNNakerLIFNeuron(tau_refrac=3.0)
         n.refrac_count = 3.0
         n.step(0.0)
@@ -45,7 +53,7 @@ class TestSpiNNakerLIFRefractory:
         n.step(0.0)
         assert n.refrac_count == 1.0
 
-    def test_i_offset_adds_baseline(self):
+    def test_i_offset_adds_baseline(self) -> None:
         """i_offset provides constant baseline current."""
         n = SpiNNakerLIFNeuron(i_offset=25.0)
         spikes = len(_run(n, current=0.0, steps=5000))

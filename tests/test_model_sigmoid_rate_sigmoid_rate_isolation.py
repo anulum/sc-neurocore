@@ -10,29 +10,39 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
 
 
 class TestSigmoidRateIsolation:
-    def test_defaults(self):
+    """The SigmoidRateNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = SigmoidRateNeuron()
         assert n.r == 0.0 and n.tau == 10.0 and n.beta == 1.0 and n.theta == 0.0
 
-    def test_step_returns_float(self):
+    def test_step_returns_float(self) -> None:
+        """One step returns a floating-point rate."""
         assert isinstance(SigmoidRateNeuron().step(0.0), (float, np.floating))
 
-    def test_r_evolves(self):
+    def test_r_evolves(self) -> None:
+        """A positive input raises the rate r above zero."""
         n = SigmoidRateNeuron()
         n.step(5.0)
         assert n.r > 0.0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = SigmoidRateNeuron()
         for _ in range(100000):
             n.step(5.0)
         assert np.isfinite(n.r)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SigmoidRateNeuron(tau=7.0, beta=2.5, theta=-0.4, dt=0.2)
         for _ in range(100):
             n.step(5.0)
@@ -40,7 +50,8 @@ class TestSigmoidRateIsolation:
         assert n.r == 0.0
         assert (n.tau, n.beta, n.theta, n.dt) == (7.0, 2.5, -0.4, 0.2)
 
-    def test_python_batch_matches_scalar_steps(self):
+    def test_python_batch_matches_scalar_steps(self) -> None:
+        """Python batch matches scalar steps."""
         scalar = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)
         expected = np.asarray([scalar.step(3.0) for _ in range(32)])
         batched = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)

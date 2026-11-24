@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
+from tests.model_sfa_support import (
+    _run,
+)
 
 
 class TestSFAAdaptation:
     """Core property: ISI lengthens due to g_sfa build-up."""
 
-    def test_isi_lengthens(self):
+    def test_isi_lengthens(self) -> None:
         """Early ISIs shorter than late ISIs (adaptation)."""
         n = SFANeuron()
         spikes = _run(n, current=50.0, steps=10000)
@@ -26,7 +33,7 @@ class TestSFAAdaptation:
         late = np.mean(isis[-5:])
         assert late > early, f"Early ISI={early:.1f}, late ISI={late:.1f}"
 
-    def test_g_sfa_increments_on_spike(self):
+    def test_g_sfa_increments_on_spike(self) -> None:
         """Each spike adds delta_g to g_sfa."""
         n = SFANeuron()
         g_before = n.g_sfa
@@ -39,7 +46,7 @@ class TestSFAAdaptation:
         else:
             pytest.fail("No spike in 10k steps")
 
-    def test_g_sfa_uses_coupled_rk4_candidate(self):
+    def test_g_sfa_uses_coupled_rk4_candidate(self) -> None:
         """Without spikes, g_sfa follows the coupled RK4 candidate."""
         n = SFANeuron()
         n.g_sfa = 1.0
@@ -49,7 +56,7 @@ class TestSFAAdaptation:
         assert n.v == pytest.approx(expected_v)
         assert n.g_sfa == pytest.approx(expected_g)
 
-    def test_adaptation_current_opposes_depolarisation(self):
+    def test_adaptation_current_opposes_depolarisation(self) -> None:
         """g_sfa > 0 adds hyperpolarising current g_sfa·(V - E_K).
 
         Since V > E_K during depolarisation, this current is positive
@@ -64,7 +71,7 @@ class TestSFAAdaptation:
             f"No adapt: {s_no} spikes, adapt: {s_yes} — expected more without adaptation"
         )
 
-    def test_g_sfa_accumulates_across_spikes(self):
+    def test_g_sfa_accumulates_across_spikes(self) -> None:
         """g_sfa accumulates over multiple spikes (each adding delta_g)."""
         n = SFANeuron()
         spike_count_val = 0

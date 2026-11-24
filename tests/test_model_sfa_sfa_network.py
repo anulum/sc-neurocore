@@ -10,14 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
 
 
 class TestSFANetwork:
-    def test_population(self):
+    """The SFANeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(SFANeuron, n=10, label="sfa").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(SFANeuron, n=10, label="sfa")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

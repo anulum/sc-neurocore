@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5631
+    "test_files": 5629
   },
   "documentation": {
     "public_pages": [
@@ -3640,8 +3640,6 @@
       "tests/model_resonate_and_fire_support.py",
       "tests/model_rulkov_map_support.py",
       "tests/model_sfa_support.py",
-      "tests/model_siegert_support.py",
-      "tests/model_sigma_delta_support.py",
       "tests/model_sigmoid_rate_support.py",
       "tests/model_spike_response_support.py",
       "tests/model_spinnaker2_support.py",

@@ -6,12 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (batch_and_reset) from former test_model_resonate_and_fire.py
 
+"""Batch runs and reset of the resonate-and-fire neuron."""
+
 from __future__ import annotations
 
-from tests.model_resonate_and_fire_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.resonate_and_fire import (
+    ResonateAndFireNeuron,
+)
 
 
 def test_long_varied_run_is_finite_and_deterministic() -> None:
+    """Long varied run is finite and deterministic."""
     drive = 4.0 + 1.2 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
     first = ResonateAndFireNeuron()
     second = ResonateAndFireNeuron()
@@ -22,6 +28,7 @@ def test_long_varied_run_is_finite_and_deterministic() -> None:
 
 
 def test_python_batch_matches_scalar_complete_trace() -> None:
+    """Python batch matches scalar complete trace."""
     drive = 3.0 + np.sin(np.arange(256, dtype=np.float64) * 0.071)
     batch_neuron = ResonateAndFireNeuron(x=0.15, y=-0.2)
     scalar_neuron = ResonateAndFireNeuron(x=0.15, y=-0.2)
@@ -43,6 +50,7 @@ def test_python_batch_matches_scalar_complete_trace() -> None:
 
 
 def test_empty_batch_preserves_initial_state() -> None:
+    """Empty batch preserves initial state."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     result = neuron.simulate([], backend="python")
     assert np.asarray(result["x"]).shape == (0,)
@@ -55,6 +63,7 @@ def test_empty_batch_preserves_initial_state() -> None:
 
 
 def test_reset_restores_quiescent_state_and_preserves_parameters() -> None:
+    """Reset restores quiescent state and preserves parameters."""
     neuron = ResonateAndFireNeuron(
         x=0.5,
         y=-0.25,

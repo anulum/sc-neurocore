@@ -10,16 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaIsolation:
-    def test_construction_defaults(self):
+    """The SigmaDeltaNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = SigmaDeltaNeuron()
         assert n.sigma == 0.0
         assert n.v_threshold == 1.0
 
-    def test_step_returns_ternary(self):
+    def test_step_returns_ternary(self) -> None:
         """Output is {-1, 0, +1}, not just binary."""
         n = SigmaDeltaNeuron()
         assert n.step(0.0) == 0
@@ -28,14 +33,15 @@ class TestSigmaDeltaIsolation:
         n3 = SigmaDeltaNeuron()
         assert n3.step(-1.5) == -1  # sigma=-1.5 ≤ -1.0 → -1
 
-    def test_sigma_accumulates(self):
+    def test_sigma_accumulates(self) -> None:
         """Input is summed into sigma (integration)."""
         n = SigmaDeltaNeuron(v_threshold=100.0)  # high threshold to avoid spikes
         for _ in range(10):
             n.step(0.3)
         assert abs(n.sigma - 3.0) < 1e-10
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SigmaDeltaNeuron()
         for _ in range(50):
             n.step(0.5)

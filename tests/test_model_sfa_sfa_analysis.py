@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
 
 
 class TestSFAAnalysis:
-    def test_spike_count(self):
+    """Spike analysis of the SFANeuron."""
+
+    def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         n = SFANeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10000)])
         assert spike_count(train) >= 10
 
-    def test_spike_count_consistency(self):
+    def test_spike_count_consistency(self) -> None:
+        """Spike count consistency."""
         n = SFANeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10000)])
         assert spike_count(train) == int(train.sum())

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
+from tests.model_spike_response_support import (
+    _kappa,
+)
 
 
 class TestSRMInputKernel:
-    def test_kappa_formula_exact(self):
+    """The input kernel kappa of the SpikeResponseNeuron."""
+
+    def test_kappa_formula_exact(self) -> None:
         """κ = I·(1 - exp(-dt/tau_kappa))."""
         n = SpikeResponseNeuron()
         n.time_since_spike = 1000.0
@@ -22,19 +30,19 @@ class TestSRMInputKernel:
         expected = _kappa(5.0, n.dt, n.tau_kappa)
         assert abs(n.v - expected) < 1e-10
 
-    def test_kappa_linear_in_I(self):
+    def test_kappa_linear_in_I(self) -> None:
         """κ(2I) = 2·κ(I) — linearity."""
         k3 = _kappa(3.0, 1.0, 5.0)
         k6 = _kappa(6.0, 1.0, 5.0)
         assert abs(k6 - 2 * k3) < 1e-10
 
-    def test_kappa_decreases_with_tau_kappa(self):
+    def test_kappa_decreases_with_tau_kappa(self) -> None:
         """Larger tau_kappa → smaller κ (slower integration)."""
         k_small_tau = _kappa(10.0, 1.0, 1.0)
         k_large_tau = _kappa(10.0, 1.0, 20.0)
         assert k_small_tau > k_large_tau
 
-    def test_critical_current(self):
+    def test_critical_current(self) -> None:
         """I_crit = θ / (1 - exp(-dt/tau_kappa)). Verified above/below."""
         n = SpikeResponseNeuron()
         I_crit = n.v_threshold / (1.0 - np.exp(-n.dt / n.tau_kappa))

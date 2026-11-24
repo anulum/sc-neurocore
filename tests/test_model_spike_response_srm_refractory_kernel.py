@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
+from tests.model_spike_response_support import (
+    _eta,
+    _kappa,
+)
 
 
 class TestSRMRefractoryKernel:
-    def test_eta_at_tss_zero(self):
+    """The refractory kernel eta of the SpikeResponseNeuron."""
+
+    def test_eta_at_tss_zero(self) -> None:
         """After spike, tss=0. Next step: η uses tss=0 → η = eta_reset exactly."""
         n = SpikeResponseNeuron()
         n.step(10.0)  # spike, tss → 0
@@ -23,7 +31,7 @@ class TestSRMRefractoryKernel:
         n.step(0.0)  # zero input → v = eta(0) + 0 = -5.0
         assert abs(n.v - n.eta_reset) < 1e-10, f"v={n.v}, expected eta_reset={n.eta_reset}"
 
-    def test_eta_decays_step_by_step(self):
+    def test_eta_decays_step_by_step(self) -> None:
         """Track η decay: at step k after spike, η uses tss = k-1."""
         n = SpikeResponseNeuron()
         n.step(10.0)  # spike → tss = 0
@@ -35,21 +43,21 @@ class TestSRMRefractoryKernel:
                 f"Step {k} after spike: v={n.v:.6f}, eta(tss={k - 1})={expected_eta:.6f}"
             )
 
-    def test_eta_zero_beyond_100(self):
+    def test_eta_zero_beyond_100(self) -> None:
         """η clipped to 0 when tss ≥ 100 (code optimisation)."""
         n = SpikeResponseNeuron()
         n.time_since_spike = 100.0
         n.step(0.0)
         assert n.v == 0.0
 
-    def test_refractory_prevents_immediate_respike(self):
+    def test_refractory_prevents_immediate_respike(self) -> None:
         """Strong η suppression prevents re-spike even with strong input."""
         n = SpikeResponseNeuron()
         n.step(10.0)  # spike
         s = n.step(10.0)  # eta(0) = -5, kappa = 1.81 → v ≈ -3.19
         assert s == 0
 
-    def test_v_after_spike_equals_eta_plus_kappa(self):
+    def test_v_after_spike_equals_eta_plus_kappa(self) -> None:
         """Verify v = η(tss) + κ(I) exactly for several steps post-spike."""
         n = SpikeResponseNeuron()
         n.step(10.0)  # spike

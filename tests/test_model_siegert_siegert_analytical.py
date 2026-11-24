@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+from sc_neurocore.neurons.models.siegert import (
+    SiegertTransferFunction,
+)
 
 
 class TestSiegertAnalytical:
+    """Analytical behaviour of the SiegertTransferFunction."""
+
     def test_refractory_period_sets_max_rate(self) -> None:
         """τ_rp = 2 → max = 500 Hz. τ_rp = 5 → max = 200 Hz."""
         n2 = SiegertTransferFunction(tau_rp=2.0)

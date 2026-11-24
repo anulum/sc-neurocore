@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker_lif_support import *  # noqa: F403
+import math
+from sc_neurocore.neurons.models.spinnaker_lif import (
+    SpiNNakerLIFNeuron,
+)
+from tests.model_spinnaker_lif_support import (
+    _run,
+)
 
 
 class TestSpiNNakerLIFDynamics:
-    def test_membrane_equation(self):
+    """Dynamics of the SpiNNakerLIFNeuron."""
+
+    def test_membrane_equation(self) -> None:
         """Exact LIF flow solves constant-current membrane dynamics."""
         n = SpiNNakerLIFNeuron(tau_refrac=0.0)
         v0 = n.v
@@ -24,7 +32,8 @@ class TestSpiNNakerLIFDynamics:
         expected = steady + (v0 - steady) * math.exp(-n.dt / n.tau_m)
         assert abs(n.v - expected) < 1e-10
 
-    def test_exact_flow_reduces_to_euler_order_for_small_dt(self):
+    def test_exact_flow_reduces_to_euler_order_for_small_dt(self) -> None:
+        """Exact flow reduces to Euler order for small dt."""
         n = SpiNNakerLIFNeuron(dt=1.0e-6, tau_refrac=0.0)
         v0 = n.v
         current = 15.0
@@ -32,14 +41,15 @@ class TestSpiNNakerLIFDynamics:
         euler = v0 + (-(v0 - n.v_rest) + current + n.i_offset) / n.tau_m * n.dt
         assert abs(n.v - euler) < 1e-12
 
-    def test_steady_state(self):
+    def test_steady_state(self) -> None:
         """V_ss = V_rest + I. At I=10: V_ss = -60, below threshold."""
         n = SpiNNakerLIFNeuron()
         for _ in range(10000):
             n.step(10.0)
         assert abs(n.v - (-60.0)) < 0.1
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [25.0, 30.0, 40.0, 50.0]:
             n = SpiNNakerLIFNeuron()

@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
 
 
 class TestSpiNNaker2:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.spinnaker2 import SpiNNaker2Neuron
+    """Firing and fixed-point arithmetic of the SpiNNaker2Neuron."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = SpiNNaker2Neuron()
         assert sum(n.step(200) for _ in range(100)) > 0
 
-    def test_fixed_point(self):
-        from sc_neurocore.neurons.models.spinnaker2 import SpiNNaker2Neuron
-
+    def test_fixed_point(self) -> None:
+        """The voltage stays an integer after a step, as in fixed point."""
         n = SpiNNaker2Neuron()
         n.step(100)
         assert isinstance(n.v, int)

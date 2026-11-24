@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_siegert_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.siegert import (
+    SiegertTransferFunction,
+)
 
 
 class TestSiegertPipeline:
+    """The SiegertTransferFunction in the network pipeline."""
+
     def test_population_creates(self) -> None:
+        """A population of the model is built."""
         assert Population(SiegertTransferFunction, n=5, label="sieg").n == 5
 
     def test_returns_float_not_spike(self) -> None:
@@ -24,6 +33,7 @@ class TestSiegertPipeline:
         assert isinstance(result, (float, np.floating))
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         n1 = SiegertTransferFunction()
         n2 = SiegertTransferFunction()
         assert n1.step(20.0) == n2.step(20.0)

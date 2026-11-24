@@ -10,25 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_spike_response_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.spike_response import (
+    SpikeResponseNeuron,
+)
+from tests.model_spike_response_support import (
+    _run,
+)
 
 
 class TestSRMParameters:
-    def test_tau_eta_controls_refractory_duration(self):
+    """Parameter behaviour of the SpikeResponseNeuron."""
+
+    def test_tau_eta_controls_refractory_duration(self) -> None:
+        """Tau eta controls refractory duration."""
         n_fast = SpikeResponseNeuron(tau_eta=5.0)
         n_slow = SpikeResponseNeuron(tau_eta=20.0)
         s_fast = len(_run(n_fast, current=10.0, steps=5000))
         s_slow = len(_run(n_slow, current=10.0, steps=5000))
         assert s_fast > s_slow
 
-    def test_eta_reset_controls_suppression_depth(self):
+    def test_eta_reset_controls_suppression_depth(self) -> None:
+        """Eta reset controls suppression depth."""
         n_shallow = SpikeResponseNeuron(eta_reset=-2.0)
         n_deep = SpikeResponseNeuron(eta_reset=-10.0)
         s_shallow = len(_run(n_shallow, current=10.0, steps=5000))
         s_deep = len(_run(n_deep, current=10.0, steps=5000))
         assert s_shallow > s_deep
 
-    def test_threshold_controls_sensitivity(self):
+    def test_threshold_controls_sensitivity(self) -> None:
+        """Threshold controls sensitivity."""
         n_low = SpikeResponseNeuron(v_threshold=0.5)
         n_high = SpikeResponseNeuron(v_threshold=2.0)
         s_low = len(_run(n_low, current=10.0, steps=5000))
@@ -36,7 +48,8 @@ class TestSRMParameters:
         assert s_low > s_high
 
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = SpikeResponseNeuron(dt=dt)
         for _ in range(10000):
             n.step(10.0)

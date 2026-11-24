@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSigmoidRatePerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the SigmoidRateNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = SigmoidRateNeuron()
         N = 100000
         t0 = time.perf_counter()

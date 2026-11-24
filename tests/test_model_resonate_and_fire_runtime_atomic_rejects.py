@@ -6,13 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (runtime_atomic_rejects) from former test_model_resonate_and_fire.py
 
+"""Atomic runtime rejections of the resonate-and-fire neuron, which leave its state unchanged."""
+
 from __future__ import annotations
 
-from tests.model_resonate_and_fire_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.resonate_and_fire import (
+    ResonateAndFireNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 @pytest.mark.parametrize("current", (np.nan, np.inf, -np.inf, object()))
 def test_invalid_current_is_atomic(current: object) -> None:
+    """Invalid current is atomic."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     before = (neuron.x, neuron.y)
     with pytest.raises(ValueError, match="current"):
@@ -21,6 +31,7 @@ def test_invalid_current_is_atomic(current: object) -> None:
 
 
 def test_corrupted_runtime_configuration_is_atomic() -> None:
+    """Corrupted runtime configuration is atomic."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     neuron.dt = 0.0
     before = (neuron.x, neuron.y)
@@ -31,6 +42,7 @@ def test_corrupted_runtime_configuration_is_atomic() -> None:
 
 @pytest.mark.parametrize("field", ("x", "y"))
 def test_corrupted_runtime_state_type_is_atomic(field: str) -> None:
+    """Corrupted runtime state type is atomic."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     setattr(neuron, field, object())
     before = (neuron.x, neuron.y)
@@ -41,6 +53,7 @@ def test_corrupted_runtime_state_type_is_atomic(field: str) -> None:
 
 @pytest.mark.parametrize("field", ("b", "omega", "threshold", "dt"))
 def test_corrupted_runtime_parameter_type_is_atomic(field: str) -> None:
+    """Corrupted runtime parameter type is atomic."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     setattr(neuron, field, object())
     before = (neuron.x, neuron.y)
@@ -50,6 +63,7 @@ def test_corrupted_runtime_parameter_type_is_atomic(field: str) -> None:
 
 
 def test_nonfinite_exact_candidate_is_atomic() -> None:
+    """Non-finite exact candidate is atomic."""
     neuron = ResonateAndFireNeuron(
         x=0.25,
         y=-0.5,
@@ -65,6 +79,7 @@ def test_nonfinite_exact_candidate_is_atomic() -> None:
 
 
 def test_batch_rejects_nonfinite_drive_before_mutation() -> None:
+    """Batch rejects non-finite drive before mutation."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     before = (neuron.x, neuron.y)
     with pytest.raises(ValueError, match="finite"):
@@ -73,6 +88,7 @@ def test_batch_rejects_nonfinite_drive_before_mutation() -> None:
 
 
 def test_batch_rejects_unknown_backend_before_mutation() -> None:
+    """Batch rejects unknown backend before mutation."""
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)
     before = (neuron.x, neuron.y)
     with pytest.raises(ValueError, match="unknown resonate-and-fire backend"):

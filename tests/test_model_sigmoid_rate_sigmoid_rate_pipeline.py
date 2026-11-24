@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
 
 
 class TestSigmoidRatePipeline:
-    def test_population_creates(self):
+    """The SigmoidRateNeuron in the network pipeline."""
+
+    def test_population_creates(self) -> None:
+        """A population of the model is built."""
         assert Population(SigmoidRateNeuron, n=10, label="sr").n == 10
 
-    def test_returns_float_not_spike(self):
+    def test_returns_float_not_spike(self) -> None:
         """Rate model — returns float. Network.step_all limited."""
         n = SigmoidRateNeuron()
         assert isinstance(n.step(5.0), (float, np.floating))

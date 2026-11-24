@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaSubtract:
-    def test_positive_spike_subtracts_threshold(self):
+    """Threshold subtraction and residual carry of the SigmaDeltaNeuron."""
+
+    def test_positive_spike_subtracts_threshold(self) -> None:
         """On +1 spike: sigma -= threshold (not reset to 0)."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         # sigma = 0 + 1.3 = 1.3 ≥ 1.0 → spike, sigma = 1.3 - 1.0 = 0.3
@@ -22,23 +26,25 @@ class TestSigmaDeltaSubtract:
         assert s == 1
         assert abs(n.sigma - 0.3) < 1e-10
 
-    def test_negative_spike_adds_threshold(self):
+    def test_negative_spike_adds_threshold(self) -> None:
         """On -1 spike: sigma += threshold."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         s = n.step(-1.3)
         assert s == -1
         assert abs(n.sigma - (-0.3)) < 1e-10
 
-    def test_residual_carries_over(self):
+    def test_residual_carries_over(self) -> None:
         """Residual after subtraction carries into next step."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         n.step(0.7)  # sigma = 0.7, no spike
         n.step(0.7)  # sigma = 1.4 ≥ 1.0 → spike, sigma = 0.4
         assert abs(n.sigma - 0.4) < 1e-10
 
-    def test_overflow_accumulation(self):
-        """When I > threshold, sigma grows because only one threshold
-        is subtracted per step (even if sigma >> threshold)."""
+    def test_overflow_accumulation(self) -> None:
+        """When I > threshold, the accumulator sigma grows.
+
+        Only one threshold is subtracted per step, even if sigma >> threshold.
+        """
         n = SigmaDeltaNeuron(v_threshold=1.0)
         for _ in range(100):
             n.step(2.0)  # Each step: sigma += 2.0, then sigma -= 1.0 → net +1.0

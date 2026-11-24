@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaThreshold:
-    def test_lower_threshold_higher_rate(self):
+    """How the threshold sets the SigmaDeltaNeuron's rate and quantisation step."""
+
+    def test_lower_threshold_higher_rate(self) -> None:
+        """Lower threshold higher rate."""
         n_low = SigmaDeltaNeuron(v_threshold=0.5)
         n_high = SigmaDeltaNeuron(v_threshold=2.0)
         s_low = sum(1 for _ in range(1000) if n_low.step(0.3) == 1)
         s_high = sum(1 for _ in range(1000) if n_high.step(0.3) == 1)
         assert s_low > s_high
 
-    def test_threshold_controls_quantisation_step(self):
+    def test_threshold_controls_quantisation_step(self) -> None:
         """Each spike represents ±θ of accumulated signal."""
         n = SigmaDeltaNeuron(v_threshold=2.0)
         # I=0.5 → rate = 0.5/2.0 = 0.25 spikes/step
@@ -30,7 +35,7 @@ class TestSigmaDeltaThreshold:
         expected = 10000 * 0.5 / 2.0
         assert abs(pos - expected) <= 2
 
-    def test_very_small_threshold(self):
+    def test_very_small_threshold(self) -> None:
         """θ → 0: almost every step produces a spike."""
         n = SigmaDeltaNeuron(v_threshold=0.01)
         outputs = [n.step(0.1) for _ in range(100)]

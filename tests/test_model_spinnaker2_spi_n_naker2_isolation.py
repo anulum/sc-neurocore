@@ -10,32 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
 
 
 class TestSpiNNaker2Isolation:
-    def test_defaults(self):
+    """The SpiNNaker2Neuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = SpiNNaker2Neuron()
         assert n.v == 0 and n.v_threshold == 1024
         assert n.decay_mult == 243 and n.decay_shift == 8
         assert n.refrac_steps == 2
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SpiNNaker2Neuron().step(0) in (0, 1)
 
-    def test_integer_types(self):
+    def test_integer_types(self) -> None:
+        """The voltage and threshold are integers."""
         n = SpiNNaker2Neuron()
         assert isinstance(n.v, int)
         assert isinstance(n.v_threshold, int)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = SpiNNaker2Neuron()
         for _ in range(50000):
             n.step(500)
         # Integer can't be NaN, but check it's reasonable
         assert abs(n.v) < 10**9
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SpiNNaker2Neuron()
         for _ in range(100):
             n.step(500)

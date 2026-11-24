@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
 
 
 class TestSigmoidRateParameters:
+    """Parameter behaviour of the SigmoidRateNeuron."""
+
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.5])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = SigmoidRateNeuron(dt=dt)
         for _ in range(10000):
             n.step(5.0)
         assert np.isfinite(n.r)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SigmoidRateNeuron()

@@ -10,33 +10,54 @@
 
 from __future__ import annotations
 
-from tests.model_sigmoid_rate_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sigmoid_rate import (
+    SigmoidRateNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 class TestSigmoidRateValidation:
+    """Input and state validation of the SigmoidRateNeuron."""
+
     @pytest.mark.parametrize("field", ["r", "beta", "theta"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_state_and_transfer_parameters(self, field: str, value: float):
+    def test_rejects_non_finite_state_and_transfer_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-finite state and transfer parameters."""
         with pytest.raises(ValueError, match=field):
-            SigmoidRateNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            SigmoidRateNeuron(**kwargs)
 
     @pytest.mark.parametrize("r", [-1.0e-12, 1.0 + 1.0e-12])
-    def test_rejects_initial_rate_outside_unit_interval(self, r: float):
+    def test_rejects_initial_rate_outside_unit_interval(self, r: float) -> None:
+        """The model rejects initial rate outside unit interval."""
         with pytest.raises(ValueError, match="r must be in \\[0, 1\\]"):
             SigmoidRateNeuron(r=r)
 
     @pytest.mark.parametrize("field", ["tau", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_time_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-positive or non-finite time parameters."""
         with pytest.raises(ValueError, match=field):
-            SigmoidRateNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            SigmoidRateNeuron(**kwargs)
 
-    def test_accepts_large_timestep_exact_relaxation(self):
+    def test_accepts_large_timestep_exact_relaxation(self) -> None:
+        """The model accepts large timestep exact relaxation."""
         n = SigmoidRateNeuron(tau=0.1, dt=0.2)
         assert 0.0 <= n.step(1.0) <= 1.0
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_rate_mutation(self, current: float) -> None:
+        """The model rejects non-finite current before rate mutation."""
         n = SigmoidRateNeuron(r=0.25)
         before = n.r
         with pytest.raises(ValueError, match="current"):
@@ -44,7 +65,8 @@ class TestSigmoidRateValidation:
         assert n.r == before
 
     @pytest.mark.parametrize("field", ["r", "tau", "dt"])
-    def test_rejects_corrupted_runtime_state_before_rate_mutation(self, field: str):
+    def test_rejects_corrupted_runtime_state_before_rate_mutation(self, field: str) -> None:
+        """The model rejects corrupted runtime state before rate mutation."""
         n = SigmoidRateNeuron(r=0.25)
         before = n.r
         setattr(n, field, np.nan)
@@ -53,7 +75,8 @@ class TestSigmoidRateValidation:
         if field != "r":
             assert n.r == before
 
-    def test_rejects_runtime_rate_outside_unit_interval_before_mutation(self):
+    def test_rejects_runtime_rate_outside_unit_interval_before_mutation(self) -> None:
+        """The model rejects runtime rate outside unit interval before mutation."""
         n = SigmoidRateNeuron(r=0.25)
         n.r = 1.5
         with pytest.raises(ValueError, match="runtime rate state must be in \\[0, 1\\]"):
@@ -61,7 +84,8 @@ class TestSigmoidRateValidation:
         assert n.r == 1.5
 
     @pytest.mark.parametrize("field", ["tau", "dt"])
-    def test_rejects_non_positive_runtime_time_parameter_before_mutation(self, field: str):
+    def test_rejects_non_positive_runtime_time_parameter_before_mutation(self, field: str) -> None:
+        """The model rejects non-positive runtime time parameter before mutation."""
         n = SigmoidRateNeuron(r=0.25)
         before = n.r
         setattr(n, field, 0.0)
@@ -69,17 +93,20 @@ class TestSigmoidRateValidation:
             n.step(1.0)
         assert n.r == before
 
-    def test_stable_sigmoid_rejects_nonsaturating_nan_argument(self):
+    def test_stable_sigmoid_rejects_nonsaturating_nan_argument(self) -> None:
+        """Stable sigmoid rejects nonsaturating nan argument."""
         with pytest.raises(ValueError, match="sigmoid argument"):
             SigmoidRateNeuron._stable_sigmoid(np.inf, 1.0, 1.0)
 
-    def test_large_runtime_timestep_preserves_rate_interval(self):
+    def test_large_runtime_timestep_preserves_rate_interval(self) -> None:
+        """Large runtime timestep preserves rate interval."""
         n = SigmoidRateNeuron(r=1.0, tau=1.0e-308, dt=1.0e308)
         before = n.r
         assert n.step(-1.0e308) == pytest.approx(0.0, abs=1e-300)
         assert 0.0 <= n.r <= before
 
-    def test_extreme_finite_drive_saturates_without_overflow_warning(self):
+    def test_extreme_finite_drive_saturates_without_overflow_warning(self) -> None:
+        """Extreme finite drive saturates without overflow warning."""
         n = SigmoidRateNeuron(beta=1.0e308, theta=0.0)
         with np.errstate(over="raise", invalid="raise"):
             high = n.step(1.0e308)
@@ -89,13 +116,15 @@ class TestSigmoidRateValidation:
         assert 0.0 <= low < high
 
     @pytest.mark.parametrize("n_steps", [-1, 1.5, True])
-    def test_rejects_invalid_batch_length_without_mutation(self, n_steps: object):
+    def test_rejects_invalid_batch_length_without_mutation(self, n_steps: object) -> None:
+        """The model rejects invalid batch length without mutation."""
         n = SigmoidRateNeuron(r=0.25)
         with pytest.raises(ValueError, match="n_steps"):
             n.simulate(cast(int, n_steps), 3.0, backend="python")
         assert n.r == 0.25
 
-    def test_rejects_unknown_backend_without_mutation(self):
+    def test_rejects_unknown_backend_without_mutation(self) -> None:
+        """The model rejects unknown backend without mutation."""
         n = SigmoidRateNeuron(r=0.25)
         with pytest.raises(ValueError, match="backend must be"):
             n.simulate(1, 3.0, backend="cuda")

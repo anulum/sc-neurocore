@@ -10,37 +10,44 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaEdgeCases:
-    def test_exact_threshold_crossing(self):
-        """sigma exactly equals threshold → spike."""
+    """Threshold edges, large input and determinism of the SigmaDeltaNeuron."""
+
+    def test_exact_threshold_crossing(self) -> None:
+        """An accumulator sigma exactly at threshold gives a spike."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         s = n.step(1.0)
         assert s == 1
         assert abs(n.sigma) < 1e-10  # 1.0 - 1.0 = 0.0
 
-    def test_exact_negative_threshold(self):
+    def test_exact_negative_threshold(self) -> None:
+        """Exact negative threshold."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         s = n.step(-1.0)
         assert s == -1
         assert abs(n.sigma) < 1e-10
 
-    def test_large_input_single_spike(self):
+    def test_large_input_single_spike(self) -> None:
         """Even at I=100, only one spike per step (no multi-spike)."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         s = n.step(100.0)
         assert s == 1  # only one +1, not 100
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
         """With I > θ, sigma grows unboundedly but stays finite."""
         n = SigmaDeltaNeuron()
         for _ in range(100000):
             n.step(2.0)
         assert np.isfinite(n.sigma)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SigmaDeltaNeuron()

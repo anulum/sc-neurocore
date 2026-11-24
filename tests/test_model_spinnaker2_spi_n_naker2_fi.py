@@ -10,15 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
+from tests.model_spinnaker2_support import (
+    _run,
+)
 
 
 class TestSpiNNaker2FI:
-    def test_zero_silent(self):
+    """The current-to-rate response of the SpiNNaker2Neuron."""
+
+    def test_zero_silent(self) -> None:
+        """Zero current gives no spikes."""
         n = SpiNNaker2Neuron()
         assert sum(n.step(0) for _ in range(5000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [100, 300, 500, 1000]:
             n = SpiNNaker2Neuron()

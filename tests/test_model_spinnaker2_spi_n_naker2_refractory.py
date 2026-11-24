@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_spinnaker2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.spinnaker2 import (
+    SpiNNaker2Neuron,
+)
 
 
 class TestSpiNNaker2Refractory:
-    def test_refractory_blocks(self):
+    """The refractory counter of the SpiNNaker2Neuron."""
+
+    def test_refractory_blocks(self) -> None:
+        """A spike loads the refractory counter and blocks the next steps."""
         n = SpiNNaker2Neuron()
         for _ in range(1000):
             if n.step(500) == 1:
@@ -25,13 +30,14 @@ class TestSpiNNaker2Refractory:
                 return
         raise AssertionError("No spike")
 
-    def test_refrac_count_decrements(self):
+    def test_refrac_count_decrements(self) -> None:
+        """Refrac count decrements."""
         n = SpiNNaker2Neuron()
         n._refrac_count = 2
         n.step(0)
         assert n._refrac_count == 1
 
-    def test_max_rate_limited_by_refrac(self):
+    def test_max_rate_limited_by_refrac(self) -> None:
         """With refrac_steps=2: max rate = 1/(1+2) = 0.33 spikes/step."""
         n = SpiNNaker2Neuron(refrac_steps=2)
         outputs = [n.step(2000) for _ in range(3000)]

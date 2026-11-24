@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_sfa_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sfa import (
+    SFANeuron,
+)
+from tests.model_sfa_support import (
+    _run,
+)
 
 
 class TestSFAParameters:
-    def test_tau_sfa_controls_adaptation_timescale(self):
+    """Parameter behaviour of the SFANeuron."""
+
+    def test_tau_sfa_controls_adaptation_timescale(self) -> None:
         """Shorter tau_sfa → faster g_sfa decay → less sustained adaptation."""
         n_fast = SFANeuron(tau_sfa=50.0)
         n_slow = SFANeuron(tau_sfa=500.0)
@@ -23,7 +32,7 @@ class TestSFAParameters:
         # Faster decay → adaptation wears off quicker → more spikes
         assert s_fast > s_slow
 
-    def test_delta_g_controls_adaptation_strength(self):
+    def test_delta_g_controls_adaptation_strength(self) -> None:
         """Larger delta_g → stronger per-spike adaptation → fewer spikes."""
         n_weak = SFANeuron(delta_g=0.1)
         n_strong = SFANeuron(delta_g=2.0)
@@ -31,7 +40,7 @@ class TestSFAParameters:
         s_strong = len(_run(n_strong, current=50.0, steps=10000))
         assert s_weak > s_strong
 
-    def test_no_adaptation_when_delta_g_zero(self):
+    def test_no_adaptation_when_delta_g_zero(self) -> None:
         """delta_g=0 → no adaptation → constant ISI (regular LIF)."""
         n = SFANeuron(delta_g=0.0)
         spikes = _run(n, current=50.0, steps=10000)
@@ -41,7 +50,8 @@ class TestSFAParameters:
         assert cv < 0.02, f"CV(ISI) = {cv:.4f} — expected constant ISI without adaptation"
 
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = SFANeuron(dt=dt)
         for _ in range(10000):
             n.step(50.0)

@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_sigma_delta_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 
 
 class TestSigmaDeltaAnalysis:
-    def test_spike_count(self):
+    """Spike analysis of the SigmaDeltaNeuron."""
+
+    def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         n = SigmaDeltaNeuron()
         train = np.array([float(max(0, n.step(0.3))) for _ in range(10000)])
         assert spike_count(train) > 100
 
-    def test_spike_count_consistency(self):
+    def test_spike_count_consistency(self) -> None:
+        """Spike count consistency."""
         n = SigmaDeltaNeuron()
         train = np.array([float(max(0, n.step(0.3))) for _ in range(10000)])
         assert spike_count(train) == int(train.sum())
