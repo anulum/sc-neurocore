@@ -10,19 +10,20 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from zero_coverage_a_support import *  # noqa: F403
+import numpy as np
+
 
 class TestCatomLattice:
-    def test_reconfigure_and_topology(self):
+    """The claytronic catom lattice research module."""
+
+    def test_reconfigure_and_topology(self) -> None:
+        """After reconfiguration the topology is an array (the check is on the type only)."""
         from post_silicon.claytronics import CatomLattice
 
         c = CatomLattice(size=4)
-        c.reconfigure()
+        cast(Any, c).reconfigure()
         topo = c.get_topology()
         assert isinstance(topo, np.ndarray)

@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestDysonPowerGrid:
-    def test_step(self):
+    """The Dyson power grid research module."""
+
+    def test_step(self) -> None:
+        """A step returns a float (the check is on the type only)."""
         from exotic.dyson_grid import DysonPowerGrid
 
         d = DysonPowerGrid(n_collectors=4, n_consumers=2)

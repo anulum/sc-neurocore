@@ -10,31 +10,33 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from sc_neurocore.spatial.representations import VoxelGrid
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from research_modules_support import *  # noqa: F403
 
 class TestVoxelGrid:
-    def test_construction(self):
+    """The voxel-grid representation."""
+
+    def test_construction(self) -> None:
+        """A new 4x4x4 grid is all zeros."""
         vg = VoxelGrid(resolution=4)
         assert vg.data.shape == (4, 4, 4)
         assert np.all(vg.data == 0)
 
-    def test_set_voxel(self):
+    def test_set_voxel(self) -> None:
+        """Setting a voxel stores its value."""
         vg = VoxelGrid(resolution=4)
         vg.set_voxel(1, 2, 3, 0.8)
         assert vg.data[1, 2, 3] == 0.8
 
-    def test_set_voxel_out_of_bounds(self):
+    def test_set_voxel_out_of_bounds(self) -> None:
+        """Setting a voxel out of bounds changes nothing."""
         vg = VoxelGrid(resolution=4)
         vg.set_voxel(10, 0, 0, 1.0)  # should be no-op
         assert np.all(vg.data == 0)
 
-    def test_get_as_bitstream(self):
+    def test_get_as_bitstream(self) -> None:
+        """The grid as bitstreams has one stream per voxel, all ones for a full voxel."""
         vg = VoxelGrid(resolution=2)
         vg.set_voxel(0, 0, 0, 1.0)
         bs = vg.get_as_bitstream(length=100)

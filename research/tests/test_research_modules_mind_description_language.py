@@ -10,21 +10,27 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import pytest
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from sc_neurocore.core.mdl_parser import MindDescriptionLanguage
 
-from research_modules_support import *  # noqa: F403
 
 class TestMindDescriptionLanguage:
-    def test_encode_decode_roundtrip(self, capsys):
+    """Encoding and decoding mind descriptions."""
+
+    def test_encode_decode_roundtrip(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """An encoded orchestrator decodes back to its agent name and module states."""
+
         class MockModule:
-            def get_state(self):
+            """A module stand-in with a fixed weight state."""
+
+            def get_state(self) -> dict[str, list[float]]:
+                """Return the fixed weight state."""
                 return {"w": [0.1, 0.2]}
 
         class MockOrchestrator:
+            """An orchestrator stand-in holding one module."""
+
             modules = {"layer1": MockModule()}
 
         mdl_str = MindDescriptionLanguage.encode(MockOrchestrator(), "TestBot")
@@ -35,7 +41,8 @@ class TestMindDescriptionLanguage:
         assert data["agent_name"] == "TestBot"
         assert "layer1" in data["state"]
 
-    def test_decode_minimal(self, capsys):
+    def test_decode_minimal(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """A minimal description decodes to its agent name."""
         yaml_str = "agent_name: Min\nversion: '1.0'\narchitecture: {}\nstate: {}\n"
         data = MindDescriptionLanguage.decode(yaml_str)
         assert data["agent_name"] == "Min"

@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 33 research test modules import their names explicitly instead of
+  through a star import of their same-directory supports, which are
+  deleted together with the path insertion only they needed; the
+  modules gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy.
+
 - The 14 top-level Studio template and training test modules import their
   names explicitly instead of through a suppressed star import, take
   every name bound after the training support's web-stack guard from that

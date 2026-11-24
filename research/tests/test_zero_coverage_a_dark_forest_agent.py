@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestDarkForestAgent:
-    def test_decide(self):
+    """The dark-forest agent research module."""
+
+    def test_decide(self) -> None:
+        """A decision is a string (the check is on the type only)."""
         from meta.fermi_game import DarkForestAgent
 
         f = DarkForestAgent(hostility_factor=0.9)

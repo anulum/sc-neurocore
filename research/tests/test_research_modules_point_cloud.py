@@ -10,16 +10,15 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from sc_neurocore.spatial.representations import PointCloud
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from research_modules_support import *  # noqa: F403
 
 class TestPointCloud:
-    def test_normalize(self):
+    """The point-cloud representation."""
+
+    def test_normalize(self) -> None:
+        """Normalisation brings the points and intensities into [0, 1]."""
         pts = np.array([[0.0, 0.0, 0.0], [10.0, 10.0, 10.0]])
         ints = np.array([0.5, 1.5])
         pc = PointCloud(points=pts, intensities=ints)

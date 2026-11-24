@@ -10,16 +10,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestHolographicBoundary:
-    def test_encode_reconstruct(self):
+    """The holographic boundary research module."""
+
+    def test_encode_reconstruct(self) -> None:
+        """Encoding and reconstruction both return a value (the check is that they are not None)."""
         from eschaton.holographic import HolographicBoundary
 
         h = HolographicBoundary(grid_size=4)

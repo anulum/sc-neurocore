@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestAgentDAO:
-    def test_propose_and_vote(self):
+    """The agent DAO research module."""
+
+    def test_propose_and_vote(self) -> None:
+        """A proposal put to a vote returns a boolean (the check is on the type only)."""
         from meta.dao import AgentDAO
 
         d = AgentDAO(agent_id="agent_0", compute_credits=10.0)

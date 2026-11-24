@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4999
+expected_file_count = 5032
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20040,3 +20040,135 @@ rationale = "Exercise SC-NeuroCore: studio training weight evidence."
 [[file]]
 path = "tests/test_studio_training_weight_materialize.py"
 rationale = "Exercise SC-NeuroCore: studio training weight materialize."
+
+[[file]]
+path = "research/tests/test_research_modules_chaotic_rng.py"
+rationale = "Exercise SC-NeuroCore research: research modules chaotic rng."
+
+[[file]]
+path = "research/tests/test_research_modules_kardashev_estimator.py"
+rationale = "Exercise SC-NeuroCore research: research modules kardashev estimator."
+
+[[file]]
+path = "research/tests/test_research_modules_mdl_specification.py"
+rationale = "Exercise SC-NeuroCore research: research modules mdl specification."
+
+[[file]]
+path = "research/tests/test_research_modules_mind_description_language.py"
+rationale = "Exercise SC-NeuroCore research: research modules mind description language."
+
+[[file]]
+path = "research/tests/test_research_modules_neuromodulator_system.py"
+rationale = "Exercise SC-NeuroCore research: research modules neuromodulator system."
+
+[[file]]
+path = "research/tests/test_research_modules_phi_evaluator.py"
+rationale = "Exercise SC-NeuroCore research: research modules phi evaluator."
+
+[[file]]
+path = "research/tests/test_research_modules_point_cloud.py"
+rationale = "Exercise SC-NeuroCore research: research modules point cloud."
+
+[[file]]
+path = "research/tests/test_research_modules_snn_genetic_evolver.py"
+rationale = "Exercise SC-NeuroCore research: research modules snn genetic evolver."
+
+[[file]]
+path = "research/tests/test_research_modules_spatial_transformer3_d.py"
+rationale = "Exercise SC-NeuroCore research: research modules spatial transformer3 d."
+
+[[file]]
+path = "research/tests/test_research_modules_spike_to_concept_mapper.py"
+rationale = "Exercise SC-NeuroCore research: research modules spike to concept mapper."
+
+[[file]]
+path = "research/tests/test_research_modules_swarm_coupling.py"
+rationale = "Exercise SC-NeuroCore research: research modules swarm coupling."
+
+[[file]]
+path = "research/tests/test_research_modules_voxel_grid.py"
+rationale = "Exercise SC-NeuroCore research: research modules voxel grid."
+
+[[file]]
+path = "research/tests/test_research_modules_wolfram_hypergraph.py"
+rationale = "Exercise SC-NeuroCore research: research modules wolfram hypergraph."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_agent_dao.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a agent dao."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_catom_lattice.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a catom lattice."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_cellular_computer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a cellular computer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_constructor_cell.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a constructor cell."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_ctc_layer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a ctc layer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_dark_forest_agent.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a dark forest agent."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_dyson_power_grid.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a dyson power grid."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_everett_tree_layer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a everett tree layer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_false_vacuum_field.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a false vacuum field."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_femto_switch.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a femto switch."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_heat_death_layer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a heat death layer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_holographic_boundary.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a holographic boundary."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_nested_universe.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a nested universe."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_omega_integrator.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a omega integrator."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_planck_grid.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a planck grid."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_rad_hard_layer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a rad hard layer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_recursive_self_improver.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a recursive self improver."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_reversible_layer.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a reversible layer."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_semiotic_triad.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a semiotic triad."
+
+[[file]]
+path = "research/tests/test_zero_coverage_a_spin_network.py"
+rationale = "Exercise SC-NeuroCore research: zero coverage a spin network."

@@ -10,28 +10,26 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestPlanckGrid:
-    def test_bekenstein(self):
+    """The Planck-scale grid research module."""
+
+    def test_bekenstein(self) -> None:
+        """The Bekenstein bound is positive."""
         from eschaton.computronium import PlanckGrid
 
         g = PlanckGrid(volume_cm3=1.0, mass_kg=1.0)
         assert g.bekenstein_bound() > 0
 
-    def test_bremermann(self):
+    def test_bremermann(self) -> None:
+        """The Bremermann limit is positive."""
         from eschaton.computronium import PlanckGrid
 
         g = PlanckGrid()
         assert g.bremermann_limit() > 0
 
-    def test_simulate_step(self):
+    def test_simulate_step(self) -> None:
+        """A simulation step returns a string (the check is on the type only)."""
         from eschaton.computronium import PlanckGrid
 
         g = PlanckGrid()

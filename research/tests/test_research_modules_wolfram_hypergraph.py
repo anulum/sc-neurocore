@@ -10,27 +10,26 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from sc_neurocore.physics.wolfram_hypergraph import WolframHypergraph
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from research_modules_support import *  # noqa: F403
 
 class TestWolframHypergraph:
-    def test_construction(self):
+    """Rewriting of a Wolfram hypergraph."""
+
+    def test_construction(self) -> None:
+        """A new hypergraph holds its two edges."""
         wh = WolframHypergraph(edges=[(0, 1), (1, 2)], max_node_id=2)
         assert len(wh.edges) == 2
 
-    def test_evolve_creates_new_edges(self):
+    def test_evolve_creates_new_edges(self) -> None:
+        """One rewrite step adds an edge and a node."""
         wh = WolframHypergraph(edges=[(0, 1), (1, 2)], max_node_id=2)
         wh.evolve(steps=1)
         # Rule: {x,y},{y,z} -> {x,z},{x,w},{y,w}
         assert len(wh.edges) == 3
         assert wh.max_node_id == 3
 
-    def test_dimension_estimate(self):
+    def test_dimension_estimate(self) -> None:
         """Exercise real BFS neighbourhood growth estimate (not edge count)."""
         wh = WolframHypergraph(edges=[(0, 1), (1, 2), (2, 3)], max_node_id=3)
         dim = wh.dimension_estimate()
@@ -42,7 +41,8 @@ class TestWolframHypergraph:
         tiny = WolframHypergraph(edges=[(0, 1)], max_node_id=1)
         assert tiny.dimension_estimate() == 0.0
 
-    def test_multi_step_evolution(self):
+    def test_multi_step_evolution(self) -> None:
+        """Several steps do not lose edges."""
         wh = WolframHypergraph(edges=[(0, 1), (1, 2), (2, 3), (3, 4)], max_node_id=4)
         initial_count = len(wh.edges)
         wh.evolve(steps=2)

@@ -10,30 +10,36 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import pytest
 
-from research_modules_support import *  # noqa: F403
+from sc_neurocore.learning.neuroevolution import SNNGeneticEvolver
+import numpy as np
+
 
 class TestSNNGeneticEvolver:
-    def _make_layer(self):
+    """Genetic evolution of spiking layers."""
+
+    def _make_layer(self) -> Any:
         class MockLayer:
-            def __init__(self):
+            """A layer stand-in with random 3x3 weights."""
+
+            def __init__(self) -> None:
                 self.weights = np.random.rand(3, 3)
 
         return MockLayer()
 
-    def test_construction(self):
+    def test_construction(self) -> None:
+        """A new evolver holds a population of 20."""
         evolver = SNNGeneticEvolver(
             layer_factory=self._make_layer,
             fitness_func=lambda l: float(l.weights.sum()),
         )
         assert len(evolver.population) == 20
 
-    def test_evolve_returns_best(self, capsys):
+    def test_evolve_returns_best(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Evolution returns a layer with weights."""
         evolver = SNNGeneticEvolver(
             layer_factory=self._make_layer,
             fitness_func=lambda l: float(l.weights.sum()),
@@ -41,7 +47,8 @@ class TestSNNGeneticEvolver:
         best = evolver.evolve(generations=3)
         assert hasattr(best, "weights")
 
-    def test_crossover(self):
+    def test_crossover(self) -> None:
+        """Crossover gives a child with 3x3 weights."""
         evolver = SNNGeneticEvolver(
             layer_factory=self._make_layer,
             fitness_func=lambda l: float(l.weights.sum()),
@@ -51,7 +58,8 @@ class TestSNNGeneticEvolver:
         child = evolver._crossover(p1, p2)
         assert child.weights.shape == (3, 3)
 
-    def test_mutate(self):
+    def test_mutate(self) -> None:
+        """Mutation changes the weights and keeps them inside [0, 1]."""
         evolver = SNNGeneticEvolver(
             layer_factory=self._make_layer,
             fitness_func=lambda l: 0.0,

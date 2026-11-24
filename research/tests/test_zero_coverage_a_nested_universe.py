@@ -10,20 +10,18 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestNestedUniverse:
-    def test_spawn_and_step(self):
+    """The nested universe research module."""
+
+    def test_spawn_and_step(self) -> None:
+        """A spawned child universe is registered as a child."""
         from eschaton.simulation import NestedUniverse
 
         u = NestedUniverse(id=0, computing_resources=100.0)
         child = u.spawn_simulation(overhead=0.1)
         assert child is not None
         assert child in u.children
-        u.run_recursive_step()
+        cast(Any, u).run_recursive_step()

@@ -10,19 +10,20 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from zero_coverage_a_support import *  # noqa: F403
+import numpy as np
+
 
 class TestRadHardLayer:
-    def test_forward(self):
+    """The radiation-hardened layer research module."""
+
+    def test_forward(self) -> None:
+        """A forward pass returns two outputs."""
         from exotic.space import RadHardLayer
 
         r = RadHardLayer(n_inputs=3, n_neurons=2, length=64)
-        result = r.forward([0.5, 0.3, 0.7])
+        result = cast(Any, r).forward([0.5, 0.3, 0.7])
         assert isinstance(result, np.ndarray)
         assert result.shape == (2,)

@@ -10,20 +10,21 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from zero_coverage_a_support import *  # noqa: F403
+import numpy as np
+
 
 class TestRecursiveSelfImprover:
-    def test_improve(self):
+    """The recursive self-improver research module."""
+
+    def test_improve(self) -> None:
+        """An improvement step returns a float (the check is on the type only)."""
         from meta.singularity import RecursiveSelfImprover
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
         s = RecursiveSelfImprover()
         layer = VectorizedSCLayer(n_inputs=4, n_neurons=2, length=32)
-        result = s.improve(layer)
+        result = cast(Any, s).improve(layer)
         assert isinstance(result, (float, np.floating))

@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
-
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestEverettTreeLayer:
-    def test_solve(self):
+    """The Everett branching-tree layer research module."""
+
+    def test_solve(self) -> None:
+        """A solve returns a list or None (the check is on the type only)."""
         from transcendent.multiverse import EverettTreeLayer
 
         m = EverettTreeLayer(max_depth=5)

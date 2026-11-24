@@ -10,16 +10,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestCellularComputer:
-    def test_step(self):
+    """The cellular computer research module."""
+
+    def test_step(self) -> None:
+        """A step returns an integer (the check is on the type only)."""
         from post_silicon.synthetic_cell import CellularComputer
 
         c = CellularComputer(n_molecules_a=10, n_molecules_b=5, reaction_rate=0.1)

@@ -10,16 +10,16 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
+from sc_neurocore.robotics.swarm import SwarmCoupling
+import numpy as np
+import pytest
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from research_modules_support import *  # noqa: F403
 
 class TestSwarmCoupling:
-    def _make_agent(self, n_inputs, n_neurons, seed=42):
+    """Weight coupling between swarm agents."""
+
+    def _make_agent(self, n_inputs: int, n_neurons: int, seed: int = 42) -> SCLearningLayer:
         return SCLearningLayer(
             n_inputs=n_inputs,
             n_neurons=n_neurons,
@@ -29,7 +29,8 @@ class TestSwarmCoupling:
             base_seed=seed,
         )
 
-    def test_synchronize_shifts_weights(self, capsys):
+    def test_synchronize_shifts_weights(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Synchronisation changes both agents' weights."""
         a = self._make_agent(3, 2, seed=0)
         b = self._make_agent(3, 2, seed=99)
         wa_before = a.get_weights().copy()
@@ -44,7 +45,8 @@ class TestSwarmCoupling:
         assert not np.array_equal(wa_before, wa_after)
         assert not np.array_equal(wb_before, wb_after)
 
-    def test_size_mismatch_raises(self):
+    def test_size_mismatch_raises(self) -> None:
+        """Agents of different sizes raise ValueError."""
         a = self._make_agent(2, 3)
         b = self._make_agent(2, 4)
         sc = SwarmCoupling()

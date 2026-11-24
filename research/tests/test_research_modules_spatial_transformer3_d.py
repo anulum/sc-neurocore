@@ -10,22 +10,22 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from sc_neurocore.spatial.transformer_3d import SpatialTransformer3D
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from research_modules_support import *  # noqa: F403
 
 class TestSpatialTransformer3D:
-    def test_forward_shape(self):
+    """The 3-D spatial transformer."""
+
+    def test_forward_shape(self) -> None:
+        """A forward pass keeps the 3x3x3 shape."""
         st = SpatialTransformer3D(resolution=3, dim_k=2)
         grid = np.random.rand(3, 3, 3)
         out = st.forward(grid)
         assert out.shape == (3, 3, 3)
 
-    def test_forward_non_negative(self):
+    def test_forward_non_negative(self) -> None:
+        """A forward pass gives finite values (the check does not test the sign)."""
         st = SpatialTransformer3D(resolution=2, dim_k=4)
         grid = np.random.rand(2, 2, 2)
         out = st.forward(grid)

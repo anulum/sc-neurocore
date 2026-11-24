@@ -10,29 +10,28 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestSemioticTriad:
-    def test_learn_and_interpret(self):
+    """The semiotic triad research module."""
+
+    def test_learn_and_interpret(self) -> None:
+        """A learned sign is interpreted (the check is that the result is not None)."""
         from transcendent.noetic import SemioticTriad, Sign
 
-        s = SemioticTriad()
+        s = cast(Any, SemioticTriad)()
         s.learn_association("fire", "heat")
         s.learn_association("heat", "pain")
         sign = Sign(signifier="flame", signified="fire", interpretant="danger")
         result = s.interpret(sign)
         assert result is not None
 
-    def test_metaphor_distance(self):
+    def test_metaphor_distance(self) -> None:
+        """The metaphor distance is an integer (the check is on the type only)."""
         from transcendent.noetic import SemioticTriad
 
-        s = SemioticTriad()
+        s = cast(Any, SemioticTriad)()
         s.learn_association("fire", "heat")
         s.learn_association("heat", "pain")
         d = s.metaphor_distance("fire", "pain", depth=5)

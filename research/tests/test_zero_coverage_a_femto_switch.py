@@ -10,16 +10,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestFemtoSwitch:
-    def test_interact(self):
+    """The femtoscale switch research module."""
+
+    def test_interact(self) -> None:
+        """An interaction returns an array (the check is on the type only)."""
         from post_silicon.femto import FemtoSwitch
 
         f = FemtoSwitch()
@@ -28,7 +26,8 @@ class TestFemtoSwitch:
         result = f.interact(a, b)
         assert isinstance(result, np.ndarray)
 
-    def test_bit_to_quark(self):
+    def test_bit_to_quark(self) -> None:
+        """A bit maps to an array (the check is on the type only)."""
         from post_silicon.femto import FemtoSwitch
 
         f = FemtoSwitch()

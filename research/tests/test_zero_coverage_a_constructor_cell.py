@@ -10,16 +10,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestConstructorCell:
-    def test_replicate_and_mutate(self):
+    """The self-replicating constructor cell research module."""
+
+    def test_replicate_and_mutate(self) -> None:
+        """Replication returns a constructor cell (the check is on the type only)."""
         from exotic.constructor import ConstructorCell
 
         bp = np.random.randn(8)

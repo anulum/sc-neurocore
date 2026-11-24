@@ -10,20 +10,21 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from zero_coverage_a_support import *  # noqa: F403
+import numpy as np
+
 
 class TestFalseVacuumField:
-    def test_nucleate_and_step(self):
+    """The false-vacuum field research module."""
+
+    def test_nucleate_and_step(self) -> None:
+        """After nucleation a step leaves a numeric energy (the check is on the type only)."""
         from transcendent.vacuum_decay import FalseVacuumField
 
         v = FalseVacuumField(size=8)
         v.nucleate(2, 2)
-        v.step()
+        cast(Any, v).step()
         e = v.measure_energy()
         assert isinstance(e, (int, float, np.integer, np.floating))

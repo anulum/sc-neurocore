@@ -10,20 +10,21 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+from typing import Any, cast
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from zero_coverage_a_support import *  # noqa: F403
+import numpy as np
+
 
 class TestCTCLayer:
-    def test_self_consistency(self):
+    """The closed-timelike-curve layer research module."""
+
+    def test_self_consistency(self) -> None:
+        """The self-consistency solve returns an array (the check is on the type only)."""
         from meta.time_travel import CTCLayer
 
         t = CTCLayer(n_bits=8, max_iterations=50)
-        result = t.compute_self_consistency(
+        result = cast(Any, t).compute_self_consistency(
             lambda x: np.bitwise_xor(x, np.ones_like(x, dtype=np.uint8))
         )
         assert isinstance(result, np.ndarray)

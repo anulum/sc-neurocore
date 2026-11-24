@@ -10,16 +10,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path as _Path
+import numpy as np
 
-# Ensure same-dir support module is importable under pytest importlib mode.
-sys.path.insert(0, str(_Path(__file__).resolve().parent))
-
-from zero_coverage_a_support import *  # noqa: F403
 
 class TestReversibleLayer:
-    def test_toffoli(self):
+    """The reversible logic layer research module."""
+
+    def test_toffoli(self) -> None:
+        """Applying the Toffoli gate twice restores the input."""
         from post_silicon.reversible import ReversibleLayer
 
         g = ReversibleLayer()
@@ -31,7 +29,8 @@ class TestReversibleLayer:
         a3, b3, c3 = g.reverse_toffoli(a2, b2, c2)
         np.testing.assert_array_equal(a3, a)
 
-    def test_forward(self):
+    def test_forward(self) -> None:
+        """A forward pass keeps the input shape."""
         from post_silicon.reversible import ReversibleLayer
 
         g = ReversibleLayer()
