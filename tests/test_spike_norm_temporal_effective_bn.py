@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_norm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_norm import (
+    TemporalEffectiveBN,
+)
 
 
 class TestTemporalEffectiveBN:
-    def test_forward(self):
+    """Temporal effective batch normalisation."""
+
+    def test_forward(self) -> None:
+        """The output has the expected shape."""
         bn = TemporalEffectiveBN(n_features=8, T=10)
         out = bn.forward(np.random.randn(4, 8), t=5, training=True)
         assert out.shape == (4, 8)

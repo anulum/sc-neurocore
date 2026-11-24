@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_dsp_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_dsp import (
+    SpikeFIR,
+)
 
 
 class TestSpikeFIR:
-    def test_basic(self):
+    """FIR filtering of one- and two-dimensional spike trains."""
+
+    def test_basic(self) -> None:
+        """FIR filtering keeps the length and passes signal."""
         fir = SpikeFIR(coefficients=np.array([0.5, 0.3, 0.2]), threshold=0.5)
         spikes = np.zeros(20, dtype=np.int8)
         spikes[5] = 1
@@ -24,7 +30,8 @@ class TestSpikeFIR:
         assert out.shape == (20,)
         assert out.sum() > 0
 
-    def test_2d(self):
+    def test_2d(self) -> None:
+        """FIR filtering of a two-dimensional input keeps its shape."""
         fir = SpikeFIR(coefficients=np.array([0.5, 0.5]), threshold=0.4)
         spikes = np.zeros((20, 3), dtype=np.int8)
         spikes[5:8, 0] = 1

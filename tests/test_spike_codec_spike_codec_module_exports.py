@@ -10,15 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_codec_support import *  # noqa: F403
+import pytest
+import sc_neurocore.spike_codec as spike_codec_module
 
 
 class TestSpikeCodecModuleExports:
-    def test_lazy_predictive_exports_are_available(self):
+    """The spike-codec package's lazy exports."""
+
+    def test_lazy_predictive_exports_are_available(self) -> None:
+        """Lazy predictive exports are available."""
         assert spike_codec_module.PredictiveSpikeCodec is not None
         assert spike_codec_module.PredictiveCompressionResult is not None
         assert "SpikeCodec" in spike_codec_module.__all__
 
-    def test_unknown_lazy_export_raises_attribute_error(self):
+    def test_unknown_lazy_export_raises_attribute_error(self) -> None:
+        """Unknown lazy export raises attribute error."""
         with pytest.raises(AttributeError):
             spike_codec_module.__getattr__("not_an_export")

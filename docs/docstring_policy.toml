@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4394
+expected_file_count = 4423
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17620,3 +17620,119 @@ rationale = "Exercise SC-NeuroCore: sonata import import nodes."
 [[file]]
 path = "tests/test_sonata_import_specification.py"
 rationale = "Exercise SC-NeuroCore: sonata import specification."
+
+[[file]]
+path = "tests/spike_profiler_support.py"
+rationale = "Provide the seeded random spike-vector helper of the spike-profiler tests."
+
+[[file]]
+path = "tests/test_spike_alu_spike_alu.py"
+rationale = "Exercise SC-NeuroCore: spike alu spike alu."
+
+[[file]]
+path = "tests/test_spike_alu_spike_gate.py"
+rationale = "Exercise SC-NeuroCore: spike alu spike gate."
+
+[[file]]
+path = "tests/test_spike_alu_spike_register.py"
+rationale = "Exercise SC-NeuroCore: spike alu spike register."
+
+[[file]]
+path = "tests/test_spike_alu_spike_sort.py"
+rationale = "Exercise SC-NeuroCore: spike alu spike sort."
+
+[[file]]
+path = "tests/test_spike_codec_spike_codec.py"
+rationale = "Exercise SC-NeuroCore: spike codec spike codec."
+
+[[file]]
+path = "tests/test_spike_codec_spike_codec_huffman.py"
+rationale = "Exercise SC-NeuroCore: spike codec spike codec huffman."
+
+[[file]]
+path = "tests/test_spike_codec_spike_codec_module_exports.py"
+rationale = "Exercise SC-NeuroCore: spike codec spike codec module exports."
+
+[[file]]
+path = "tests/test_spike_dsp_spike_convolve.py"
+rationale = "Exercise SC-NeuroCore: spike dsp spike convolve."
+
+[[file]]
+path = "tests/test_spike_dsp_spike_fft.py"
+rationale = "Exercise SC-NeuroCore: spike dsp spike fft."
+
+[[file]]
+path = "tests/test_spike_dsp_spike_fir.py"
+rationale = "Exercise SC-NeuroCore: spike dsp spike fir."
+
+[[file]]
+path = "tests/test_spike_dsp_spike_iir.py"
+rationale = "Exercise SC-NeuroCore: spike dsp spike iir."
+
+[[file]]
+path = "tests/test_spike_dsp_spike_wavelet.py"
+rationale = "Exercise SC-NeuroCore: spike dsp spike wavelet."
+
+[[file]]
+path = "tests/test_spike_gnn_spike_gnn_layer.py"
+rationale = "Exercise SC-NeuroCore: spike gnn spike gnn layer."
+
+[[file]]
+path = "tests/test_spike_gnn_spike_graph_conv.py"
+rationale = "Exercise SC-NeuroCore: spike gnn spike graph conv."
+
+[[file]]
+path = "tests/test_spike_norm_membrane_potential_bn.py"
+rationale = "Exercise SC-NeuroCore: spike norm membrane potential bn."
+
+[[file]]
+path = "tests/test_spike_norm_per_timestep_bn.py"
+rationale = "Exercise SC-NeuroCore: spike norm per timestep bn."
+
+[[file]]
+path = "tests/test_spike_norm_temporal_accumulated_bn.py"
+rationale = "Exercise SC-NeuroCore: spike norm temporal accumulated bn."
+
+[[file]]
+path = "tests/test_spike_norm_temporal_effective_bn.py"
+rationale = "Exercise SC-NeuroCore: spike norm temporal effective bn."
+
+[[file]]
+path = "tests/test_spike_norm_threshold_dependent_bn.py"
+rationale = "Exercise SC-NeuroCore: spike norm threshold dependent bn."
+
+[[file]]
+path = "tests/test_spike_ode_odelif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: spike ode odelif dynamics."
+
+[[file]]
+path = "tests/test_spike_ode_spiking_ode_layer.py"
+rationale = "Exercise SC-NeuroCore: spike ode spiking ode layer."
+
+[[file]]
+path = "tests/test_spike_predictor_predict_and_xor_world_model.py"
+rationale = "Exercise SC-NeuroCore: spike predictor predict and xor world model."
+
+[[file]]
+path = "tests/test_spike_predictor_spike_predictor.py"
+rationale = "Exercise SC-NeuroCore: spike predictor spike predictor."
+
+[[file]]
+path = "tests/test_spike_profiler_layer_stats.py"
+rationale = "Exercise SC-NeuroCore: spike profiler layer stats."
+
+[[file]]
+path = "tests/test_spike_profiler_pathology.py"
+rationale = "Exercise SC-NeuroCore: spike profiler pathology."
+
+[[file]]
+path = "tests/test_spike_profiler_pathology_detection.py"
+rationale = "Exercise SC-NeuroCore: spike profiler pathology detection."
+
+[[file]]
+path = "tests/test_spike_profiler_profile_report.py"
+rationale = "Exercise SC-NeuroCore: spike profiler profile report."
+
+[[file]]
+path = "tests/test_spike_profiler_spike_profiler_basic.py"
+rationale = "Exercise SC-NeuroCore: spike profiler spike profiler basic."

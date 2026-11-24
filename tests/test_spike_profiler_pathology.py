@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_profiler_support import *  # noqa: F403
+from sc_neurocore.profiling.spike_profiler import (
+    Pathology,
+    Severity,
+)
 
 
 class TestPathology:
-    def test_fields(self):
+    """The fields of a profiler pathology."""
+
+    def test_fields(self) -> None:
+        """A pathology keeps its severity and metric value."""
         p = Pathology(
             severity=Severity.WARNING,
             category="dead_neurons",

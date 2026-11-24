@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 28 top-level spike ALU, codec, DSP, GNN, normalisation, ODE,
+  predictor and profiler test modules import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy; the profiler support is typed and documented, and the six
+  supports left without an importer are deleted.
+
 - The 12 top-level sleep-optimiser and SONATA import test modules import
   their names explicitly instead of through a suppressed star import, keep
   the h5py skip of the SONATA support, gain their missing docstrings and

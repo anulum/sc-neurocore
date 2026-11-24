@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.spike_gnn_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_gnn import (
+    SpikeGraphConv,
+)
+from tests.spike_gnn_support import (
+    _triangle_graph,
+)
 
 
 class TestSpikeGraphConv:
+    """Spiking graph convolution, with and without edges."""
+
     def test_basic(self) -> None:
+        """Graph convolution gives one output row per node."""
         features, adj = _triangle_graph()
         conv = SpikeGraphConv(8, 4)
         out = conv.forward(features, adj, T=4)
         assert out.shape == (3, 4)
 
     def test_no_edges(self) -> None:
+        """Graph convolution works on a graph without edges."""
         adj = np.eye(3)
         features = np.random.rand(3, 4)
         conv = SpikeGraphConv(4, 2)
@@ -28,6 +38,7 @@ class TestSpikeGraphConv:
         assert out.shape == (3, 2)
 
     def test_large_graph(self) -> None:
+        """Graph convolution scales to a larger graph."""
         N = 50
         adj = (np.random.rand(N, N) > 0.8).astype(np.float64)
         np.fill_diagonal(adj, 0)

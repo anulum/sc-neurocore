@@ -6,7 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_spike_profiler.py
 
+"""A seeded random spike-vector helper for the spike-profiler tests."""
+
 from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 import pytest
@@ -19,7 +23,10 @@ from sc_neurocore.profiling.spike_profiler import (
 )
 
 
-def _random_spikes(n_neurons, rate=0.1, rng=None):
+def _random_spikes(
+    n_neurons: int, rate: float = 0.1, rng: np.random.RandomState | None = None
+) -> np.ndarray[Any, Any]:
+    """Return an int8 spike vector where each neuron fires with probability ``rate`` (seed 42 by default)."""
     if rng is None:
         rng = np.random.RandomState(42)
     return (rng.random(n_neurons) < rate).astype(np.int8)

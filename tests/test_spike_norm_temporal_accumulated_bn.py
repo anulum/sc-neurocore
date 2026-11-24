@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.spike_norm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_norm import (
+    TemporalAccumulatedBN,
+)
 
 
 class TestTemporalAccumulatedBN:
-    def test_forward(self):
+    """Temporally accumulated batch normalisation and its reset."""
+
+    def test_forward(self) -> None:
+        """The output has the expected shape."""
         bn = TemporalAccumulatedBN(n_features=8)
         for _ in range(5):
             out = bn.forward(np.random.randn(4, 8), training=True)
         assert out.shape == (4, 8)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         bn = TemporalAccumulatedBN(n_features=4)
         bn.forward(np.ones(4), training=True)
         bn.reset()

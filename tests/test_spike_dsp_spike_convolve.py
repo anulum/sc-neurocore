@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_dsp_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_dsp import (
+    spike_convolve,
+)
 
 
 class TestSpikeConvolve:
-    def test_basic(self):
+    """Convolution of spike trains."""
+
+    def test_basic(self) -> None:
+        """Convolution returns a trace of the input length."""
         spikes = np.zeros(30, dtype=np.int8)
         spikes[10:15] = 1
         out = spike_convolve(spikes, np.array([0.5, 0.3, 0.2]), threshold=0.3)

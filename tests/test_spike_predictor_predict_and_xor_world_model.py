@@ -10,25 +10,33 @@
 
 from __future__ import annotations
 
-from tests.spike_predictor_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.world_model.spike_predictor import (
+    predict_and_xor_world_model,
+    xor_and_recover_world_model,
+)
 
 
 class TestPredictAndXorWorldModel:
-    def test_roundtrip(self):
+    """The predict-and-XOR world model's round trips and learning."""
+
+    def test_roundtrip(self) -> None:
+        """Predict-and-XOR encoding round-trips the spikes."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 8)) < 0.05).astype(np.int8)
         errors, _ = predict_and_xor_world_model(spikes, 8, seed=42)
         recovered = xor_and_recover_world_model(errors, 8, seed=42)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_silent_roundtrip(self):
+    def test_silent_roundtrip(self) -> None:
+        """A silent raster is predicted perfectly and round-trips."""
         spikes = np.zeros((100, 4), dtype=np.int8)
         errors, correct = predict_and_xor_world_model(spikes, 4)
         assert correct == 400  # all correct
         recovered = xor_and_recover_world_model(errors, 4)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_accuracy_improves_on_pattern(self):
+    def test_accuracy_improves_on_pattern(self) -> None:
         """Repeated pattern should be learned → accuracy increases."""
         rng = np.random.RandomState(42)
         T, N = 500, 4

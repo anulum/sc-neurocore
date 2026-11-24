@@ -10,37 +10,48 @@
 
 from __future__ import annotations
 
-from tests.spike_alu_support import *  # noqa: F403
+import pytest
+from sc_neurocore.symbolic.spike_logic import (
+    SpikeGate,
+)
 
 
 class TestSpikeGate:
+    """Truth tables of the spike logic gates."""
+
     @pytest.mark.parametrize("a,b,expected", [(0, 0, 0), (0, 1, 0), (1, 0, 0), (1, 1, 1)])
-    def test_and_truth_table(self, a, b, expected):
+    def test_and_truth_table(self, a: int, b: int, expected: int) -> None:
+        """The AND gate matches its truth table."""
         assert SpikeGate("AND")(a, b) == expected
 
     @pytest.mark.parametrize("a,b,expected", [(0, 0, 0), (0, 1, 1), (1, 0, 1), (1, 1, 1)])
-    def test_or_truth_table(self, a, b, expected):
+    def test_or_truth_table(self, a: int, b: int, expected: int) -> None:
+        """The OR gate matches its truth table."""
         assert SpikeGate("OR")(a, b) == expected
 
     @pytest.mark.parametrize("a,expected", [(0, 1), (1, 0)])
-    def test_not_truth_table(self, a, expected):
+    def test_not_truth_table(self, a: int, expected: int) -> None:
+        """The NOT gate inverts its input."""
         assert SpikeGate("NOT")(a) == expected
 
     @pytest.mark.parametrize("a,b,expected", [(0, 0, 1), (0, 1, 1), (1, 0, 1), (1, 1, 0)])
-    def test_nand_truth_table(self, a, b, expected):
+    def test_nand_truth_table(self, a: int, b: int, expected: int) -> None:
+        """The NAND gate matches its truth table."""
         assert SpikeGate("NAND")(a, b) == expected
 
     @pytest.mark.parametrize("a,b,expected", [(0, 0, 0), (0, 1, 1), (1, 0, 1), (1, 1, 0)])
-    def test_xor_truth_table(self, a, b, expected):
+    def test_xor_truth_table(self, a: int, b: int, expected: int) -> None:
+        """The XOR gate matches its truth table."""
         assert SpikeGate("XOR")(a, b) == expected
 
-    def test_lif_config_exists(self):
+    def test_lif_config_exists(self) -> None:
+        """A gate exposes its LIF configuration as a dictionary."""
         for gate_type in ["AND", "OR", "NOT", "NAND", "XOR"]:
             gate = SpikeGate(gate_type)
             config = gate.lif_config
             assert isinstance(config, dict)
 
-    def test_de_morgan_and(self):
+    def test_de_morgan_and(self) -> None:
         """NOT(A AND B) = NOT(A) OR NOT(B)."""
         nand = SpikeGate("NAND")
         not_g = SpikeGate("NOT")

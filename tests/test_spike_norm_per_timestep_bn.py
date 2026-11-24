@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_norm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_norm import (
+    PerTimestepBN,
+)
 
 
 class TestPerTimestepBN:
-    def test_forward(self):
+    """Per-time-step batch normalisation."""
+
+    def test_forward(self) -> None:
+        """The output has the expected shape."""
         bn = PerTimestepBN(n_features=8, T=10)
         out = bn.forward(np.random.randn(4, 8), t=3, training=True)
         assert out.shape == (4, 8)

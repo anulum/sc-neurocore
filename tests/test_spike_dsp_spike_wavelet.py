@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_dsp_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_dsp import (
+    spike_wavelet_decompose,
+)
 
 
 class TestSpikeWavelet:
-    def test_basic(self):
+    """Wavelet transforms of one- and two-dimensional spike trains."""
+
+    def test_basic(self) -> None:
+        """The wavelet transform gives three scales of the input length."""
         rng = np.random.RandomState(42)
         spikes = (rng.random(100) < 0.15).astype(np.int8)
         scales = spike_wavelet_decompose(spikes, n_scales=3)
@@ -22,7 +28,8 @@ class TestSpikeWavelet:
         for s in scales:
             assert s.shape == (100,)
 
-    def test_2d(self):
+    def test_2d(self) -> None:
+        """The wavelet transform of a two-dimensional input keeps its shape per scale."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 4)) < 0.15).astype(np.int8)
         scales = spike_wavelet_decompose(spikes, n_scales=3)

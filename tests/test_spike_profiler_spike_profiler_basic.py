@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.spike_profiler_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.profiling.spike_profiler import (
+    SpikeProfiler,
+)
+from tests.spike_profiler_support import (
+    _random_spikes,
+)
 
 
 class TestSpikeProfilerBasic:
-    def test_empty_report(self):
+    """Recording spikes, voltages and gradients with the spike profiler."""
+
+    def test_empty_report(self) -> None:
+        """A profiler with no records reports no steps or spikes."""
         p = SpikeProfiler()
         r = p.report()
         assert r.total_steps == 0
         assert r.total_spikes == 0
         assert len(r.pathologies) == 0
 
-    def test_record_single_step(self):
+    def test_record_single_step(self) -> None:
+        """One recorded step counts its spikes."""
         p = SpikeProfiler()
         spikes = np.array([1, 0, 1, 0, 0], dtype=np.int8)
         p.record_step("layer1", spikes)
@@ -31,7 +42,8 @@ class TestSpikeProfilerBasic:
         assert "layer1" in r.layer_stats
         assert r.layer_stats["layer1"].n_neurons == 5
 
-    def test_record_multiple_steps(self):
+    def test_record_multiple_steps(self) -> None:
+        """Record multiple steps."""
         p = SpikeProfiler()
         rng = np.random.RandomState(42)
         for _ in range(100):
@@ -43,7 +55,8 @@ class TestSpikeProfilerBasic:
         assert stats.firing_rates is not None
         assert 0.0 < stats.firing_rates.mean() < 0.5
 
-    def test_record_with_voltages(self):
+    def test_record_with_voltages(self) -> None:
+        """Record with voltages."""
         p = SpikeProfiler()
         spikes = np.array([1, 0, 0], dtype=np.int8)
         voltages = np.array([0.8, 0.2, -0.1])
@@ -55,7 +68,8 @@ class TestSpikeProfilerBasic:
         assert stats.voltage_min == pytest.approx(-0.1)
         assert stats.voltage_max == pytest.approx(0.8)
 
-    def test_record_with_gradients(self):
+    def test_record_with_gradients(self) -> None:
+        """Record with gradients."""
         p = SpikeProfiler()
         spikes = np.array([1, 0], dtype=np.int8)
         grads = np.array([0.5, 0.01])
@@ -65,7 +79,8 @@ class TestSpikeProfilerBasic:
         assert stats.gradient_norm_mean > 0
         assert stats.gradient_norm_max > 0
 
-    def test_batch_input(self):
+    def test_batch_input(self) -> None:
+        """A batch of spikes is summed per layer."""
         p = SpikeProfiler()
         # batch=4, n_neurons=8
         spikes = np.zeros((4, 8), dtype=np.int8)
@@ -75,7 +90,8 @@ class TestSpikeProfilerBasic:
         r = p.report()
         assert r.layer_stats["layer"].total_spikes == 2
 
-    def test_multiple_layers(self):
+    def test_multiple_layers(self) -> None:
+        """Three recorded layers report their total neuron count."""
         p = SpikeProfiler()
         rng = np.random.RandomState(0)
         for _ in range(50):
@@ -86,7 +102,8 @@ class TestSpikeProfilerBasic:
         assert len(r.layer_stats) == 3
         assert r.total_neurons == 35
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         p = SpikeProfiler()
         p.record_step("h", np.array([1, 0, 1], dtype=np.int8))
         p.reset()

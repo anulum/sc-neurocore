@@ -10,63 +10,80 @@
 
 from __future__ import annotations
 
-from tests.spike_alu_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.symbolic.spike_logic import (
+    SpikeALU,
+)
 
 
 class TestSpikeALU:
-    def test_add_basic(self):
+    """The spike ALU's arithmetic, comparison and bitwise operations."""
+
+    def test_add_basic(self) -> None:
+        """Adding 10 and 20 gives 30 without carry."""
         alu = SpikeALU(n_bits=8)
         result, carry = alu.add(10, 20)
         assert result == 30
         assert not carry
 
-    def test_add_overflow(self):
+    def test_add_overflow(self) -> None:
+        """An 8-bit sum past 255 wraps and sets the carry."""
         alu = SpikeALU(n_bits=8)
         result, carry = alu.add(200, 100)
         assert result == (200 + 100) & 0xFF
         assert carry
 
-    def test_add_zero(self):
+    def test_add_zero(self) -> None:
+        """Adding zeros gives zero without carry."""
         alu = SpikeALU(n_bits=8)
         result, carry = alu.add(0, 0)
         assert result == 0
         assert not carry
 
     @pytest.mark.parametrize("a,b", [(50, 20), (255, 255), (0, 0), (100, 99)])
-    def test_sub_matches_python(self, a, b):
+    def test_sub_matches_python(self, a: int, b: int) -> None:
+        """Subtraction matches Python's 8-bit wrapped difference."""
         alu = SpikeALU(n_bits=8)
         result, _ = alu.sub(a, b)
         assert result == (a - b) & 0xFF
 
-    def test_bitwise_and(self):
+    def test_bitwise_and(self) -> None:
+        """Bitwise AND of 0xFF and 0x0F gives 0x0F."""
         alu = SpikeALU(n_bits=8)
         assert alu.bitwise_and(0xFF, 0x0F) == 0x0F
 
-    def test_bitwise_or(self):
+    def test_bitwise_or(self) -> None:
+        """Bitwise OR of 0xF0 and 0x0F gives 0xFF."""
         alu = SpikeALU(n_bits=8)
         assert alu.bitwise_or(0xF0, 0x0F) == 0xFF
 
-    def test_bitwise_xor(self):
+    def test_bitwise_xor(self) -> None:
+        """Bitwise XOR gives 0xFF for complements and 0 for equal operands."""
         alu = SpikeALU(n_bits=8)
         assert alu.bitwise_xor(0xAA, 0x55) == 0xFF
         assert alu.bitwise_xor(42, 42) == 0
 
     @pytest.mark.parametrize("a,b,expected", [(10, 20, -1), (20, 10, 1), (15, 15, 0)])
-    def test_compare(self, a, b, expected):
+    def test_compare(self, a: int, b: int, expected: int) -> None:
+        """Comparison returns -1, 0 or 1 by the operands' order."""
         alu = SpikeALU(n_bits=8)
         assert alu.compare(a, b) == expected
 
-    def test_shift_left(self):
+    def test_shift_left(self) -> None:
+        """A left shift doubles within 8 bits."""
         alu = SpikeALU(n_bits=8)
         assert alu.shift_left(1) == 2
         assert alu.shift_left(0b01010101) == (0b10101010 & 0xFF)
 
-    def test_shift_right(self):
+    def test_shift_right(self) -> None:
+        """A right shift halves, dropping the low bit."""
         alu = SpikeALU(n_bits=8)
         assert alu.shift_right(2) == 1
         assert alu.shift_right(1) == 0
 
-    def test_add_commutative(self):
+    def test_add_commutative(self) -> None:
+        """Addition gives the same result in either operand order."""
         alu = SpikeALU(n_bits=8)
         for _ in range(20):
             a = np.random.randint(0, 256)

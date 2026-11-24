@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from tests.spike_norm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_norm import (
+    MembranePotentialBN,
+)
 
 
 class TestMembranePotentialBN:
-    def test_forward(self):
+    """Membrane-potential batch normalisation and its fused threshold."""
+
+    def test_forward(self) -> None:
+        """The output has the expected shape."""
         bn = MembranePotentialBN(n_features=8)
         out = bn.forward(np.random.randn(4, 8), training=True)
         assert out.shape == (4, 8)
 
-    def test_fused_threshold(self):
+    def test_fused_threshold(self) -> None:
+        """The fused threshold has one value per channel."""
         bn = MembranePotentialBN(n_features=4, threshold=1.0)
         bn.forward(np.random.randn(10, 4), training=True)
         fused = bn.fused_threshold()
         assert fused.shape == (4,)
 
-    def test_inference_passthrough(self):
+    def test_inference_passthrough(self) -> None:
+        """Inference passthrough."""
         bn = MembranePotentialBN(n_features=4)
         x = np.random.randn(3, 4)
         out = bn.forward(x, training=False)

@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.spike_profiler_support import *  # noqa: F403
+from sc_neurocore.profiling.spike_profiler import (
+    LayerStats,
+)
 
 
 class TestLayerStats:
-    def test_fields(self):
+    """The fields of the profiler's layer statistics."""
+
+    def test_fields(self) -> None:
+        """Fresh layer statistics start at zero."""
         s = LayerStats(name="test", n_neurons=10, n_steps=5)
         assert s.dead_neuron_count == 0
         assert s.estimated_syn_ops == 0

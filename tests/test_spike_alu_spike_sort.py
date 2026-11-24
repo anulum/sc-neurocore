@@ -10,30 +10,42 @@
 
 from __future__ import annotations
 
-from tests.spike_alu_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.symbolic.spike_logic import (
+    spike_sort,
+)
 
 
 class TestSpikeSort:
-    def test_empty(self):
+    """Sorting values with spikes, across edge cases."""
+
+    def test_empty(self) -> None:
+        """Sorting an empty list gives an empty list."""
         assert spike_sort([]) == []
 
-    def test_single(self):
+    def test_single(self) -> None:
+        """Sorting one value returns it unchanged."""
         assert spike_sort([42]) == [42]
 
-    def test_sorted_input(self):
+    def test_sorted_input(self) -> None:
+        """An already sorted list stays sorted."""
         assert spike_sort([1, 2, 3, 4]) == [1, 2, 3, 4]
 
-    def test_reversed_input(self):
+    def test_reversed_input(self) -> None:
+        """A reversed list is sorted ascending."""
         assert spike_sort([9, 7, 5, 3, 1]) == [1, 3, 5, 7, 9]
 
-    def test_duplicates(self):
+    def test_duplicates(self) -> None:
+        """Duplicate values are kept."""
         assert spike_sort([5, 5, 5]) == [5, 5, 5]
 
-    def test_large_values(self):
+    def test_large_values(self) -> None:
+        """Large values sort as Python sorts them."""
         arr = [255, 0, 128, 64, 192]
         assert spike_sort(arr) == sorted(arr)
 
-    def test_random_array(self):
+    def test_random_array(self) -> None:
+        """A random array sorts as Python sorts it."""
         rng = np.random.default_rng(42)
         arr = rng.integers(0, 256, size=15).tolist()
         assert spike_sort(arr) == sorted(arr)

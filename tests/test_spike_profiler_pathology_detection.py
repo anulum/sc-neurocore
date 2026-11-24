@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.spike_profiler_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.profiling.spike_profiler import (
+    Severity,
+    SpikeProfiler,
+)
+from tests.spike_profiler_support import (
+    _random_spikes,
+)
 
 
 class TestPathologyDetection:
-    def test_dead_neurons_critical(self):
+    """Pathologies the spike profiler detects."""
+
+    def test_dead_neurons_critical(self) -> None:
+        """Dead neurons critical."""
         p = SpikeProfiler(dead_threshold=0.01)
         # 80% dead neurons (8 out of 10 never fire)
         for _ in range(100):
@@ -27,7 +37,8 @@ class TestPathologyDetection:
         assert len(dead_path) >= 1
         assert dead_path[0].severity == Severity.CRITICAL
 
-    def test_dead_neurons_warning(self):
+    def test_dead_neurons_warning(self) -> None:
+        """Dead neurons warning."""
         p = SpikeProfiler()
         rng = np.random.RandomState(42)
         for _ in range(100):
@@ -40,7 +51,8 @@ class TestPathologyDetection:
         assert len(dead_path) >= 1
         assert dead_path[0].severity == Severity.WARNING
 
-    def test_saturated_neurons(self):
+    def test_saturated_neurons(self) -> None:
+        """Always-firing neurons are reported as saturated."""
         p = SpikeProfiler(saturated_threshold=0.95)
         for _ in range(100):
             spikes = np.ones(10, dtype=np.int8)  # All neurons fire every step
@@ -49,7 +61,8 @@ class TestPathologyDetection:
         sat_path = [x for x in r.pathologies if x.category == "saturated_neurons"]
         assert len(sat_path) >= 1
 
-    def test_silent_network(self):
+    def test_silent_network(self) -> None:
+        """A silent network is reported as a critical pathology."""
         p = SpikeProfiler()
         for _ in range(20):
             p.record_step("h", np.zeros(10, dtype=np.int8))
@@ -58,7 +71,8 @@ class TestPathologyDetection:
         assert len(silent) >= 1
         assert silent[0].severity == Severity.CRITICAL
 
-    def test_voltage_collapse(self):
+    def test_voltage_collapse(self) -> None:
+        """Collapsed voltages are reported."""
         p = SpikeProfiler()
         for _ in range(20):
             p.record_step("h", np.zeros(5, dtype=np.int8), voltages=np.zeros(5))
@@ -66,7 +80,8 @@ class TestPathologyDetection:
         collapse = [x for x in r.pathologies if x.category == "voltage_collapse"]
         assert len(collapse) >= 1
 
-    def test_gradient_explosion(self):
+    def test_gradient_explosion(self) -> None:
+        """Exploding gradients are reported as critical."""
         p = SpikeProfiler(gradient_explosion_ratio=10.0)
         for _ in range(10):
             p.record_step("h", np.ones(5, dtype=np.int8), gradients=np.ones(5) * 0.01)
@@ -77,7 +92,8 @@ class TestPathologyDetection:
         assert len(explode) >= 1
         assert explode[0].severity == Severity.CRITICAL
 
-    def test_gradient_vanishing(self):
+    def test_gradient_vanishing(self) -> None:
+        """Vanishing gradients are reported."""
         p = SpikeProfiler()
         for _ in range(10):
             p.record_step("layer1", np.ones(5, dtype=np.int8), gradients=np.ones(5) * 10.0)
@@ -86,7 +102,8 @@ class TestPathologyDetection:
         vanish = [x for x in r.pathologies if x.category == "gradient_vanishing"]
         assert len(vanish) >= 1
 
-    def test_healthy_network_no_pathologies(self):
+    def test_healthy_network_no_pathologies(self) -> None:
+        """Healthy network no pathologies."""
         p = SpikeProfiler()
         rng = np.random.RandomState(42)
         for _ in range(100):

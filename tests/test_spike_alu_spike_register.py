@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from tests.spike_alu_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.symbolic.spike_logic import (
+    SpikeRegister,
+)
 
 
 class TestSpikeRegister:
-    def test_write_read_roundtrip(self):
+    """Writing, reading and clearing the spike register."""
+
+    def test_write_read_roundtrip(self) -> None:
+        """Write read roundtrip."""
         reg = SpikeRegister(n_bits=8)
         for val in [0, 42, 127, 255]:
             reg.write(val)
             assert reg.read() == val
 
-    def test_clear(self):
+    def test_clear(self) -> None:
+        """Clearing the register makes it read zero."""
         reg = SpikeRegister(n_bits=8)
         reg.write(255)
         reg.clear()
         assert reg.read() == 0
 
-    def test_bit_level_access(self):
+    def test_bit_level_access(self) -> None:
+        """The register exposes its eight bits."""
         reg = SpikeRegister(n_bits=8)
         reg.write(0b10110011)
         bits = reg.read_bits()
@@ -35,12 +43,14 @@ class TestSpikeRegister:
         expected = np.array([1, 1, 0, 0, 1, 1, 0, 1], dtype=np.uint8)
         np.testing.assert_array_equal(bits, expected)
 
-    def test_write_bits(self):
+    def test_write_bits(self) -> None:
+        """Writing bits least significant first sets the value."""
         reg = SpikeRegister(n_bits=4)
         reg.write_bits(np.array([1, 0, 1, 0], dtype=np.uint8))
         assert reg.read() == 0b0101  # LSB first
 
-    def test_16_bit(self):
+    def test_16_bit(self) -> None:
+        """A 16-bit register holds 65535 and clears to zero."""
         reg = SpikeRegister(n_bits=16)
         reg.write(65535)
         assert reg.read() == 65535

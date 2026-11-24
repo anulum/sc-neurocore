@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.spike_norm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_norm import (
+    ThresholdDependentBN,
+)
 
 
 class TestThresholdDependentBN:
-    def test_forward(self):
+    """Threshold-dependent batch normalisation in training and inference."""
+
+    def test_forward(self) -> None:
+        """The output has the expected shape."""
         bn = ThresholdDependentBN(n_features=8, threshold=1.0)
         out = bn.forward(np.random.randn(4, 8), training=True)
         assert out.shape == (4, 8)
 
-    def test_inference(self):
+    def test_inference(self) -> None:
+        """Inference mode gives the expected shape."""
         bn = ThresholdDependentBN(n_features=4)
         bn.forward(np.random.randn(10, 4), training=True)
         out = bn.forward(np.random.randn(3, 4), training=False)

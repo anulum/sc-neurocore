@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec import (
+    CompressionResult,
+    SpikeCodec,
+)
 
 
 class TestSpikeCodec:
-    def test_roundtrip_lossless(self):
+    """The spike codec's lossless and lossy round trips and its compression."""
+
+    def test_roundtrip_lossless(self) -> None:
+        """A lossless round trip returns the same spikes."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 20)) < 0.05).astype(np.int8)
         codec = SpikeCodec(mode="lossless")
@@ -23,14 +30,16 @@ class TestSpikeCodec:
         np.testing.assert_array_equal(reconstructed, spikes)
         assert result.lossless
 
-    def test_compression_ratio(self):
+    def test_compression_ratio(self) -> None:
+        """Sparse spikes compress by more than 5x."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((1000, 50)) < 0.01).astype(np.int8)
         codec = SpikeCodec()
         _, result = codec.compress(spikes)
         assert result.compression_ratio > 5.0
 
-    def test_empty_spikes(self):
+    def test_empty_spikes(self) -> None:
+        """An empty raster round-trips and reports no spikes."""
         spikes = np.zeros((100, 10), dtype=np.int8)
         codec = SpikeCodec()
         data, result = codec.compress(spikes)
@@ -38,31 +47,36 @@ class TestSpikeCodec:
         np.testing.assert_array_equal(reconstructed, spikes)
         assert result.n_spikes == 0
 
-    def test_dense_spikes(self):
+    def test_dense_spikes(self) -> None:
+        """A dense raster round-trips exactly."""
         spikes = np.ones((10, 5), dtype=np.int8)
         codec = SpikeCodec()
         data, result = codec.compress(spikes)
         reconstructed = codec.decompress(data, 10, 5)
         np.testing.assert_array_equal(reconstructed, spikes)
 
-    def test_lossy_mode(self):
+    def test_lossy_mode(self) -> None:
+        """Lossy mode reports a non-lossless result."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 10)) < 0.1).astype(np.int8)
         codec = SpikeCodec(mode="lossy", timing_precision=5)
         _, result = codec.compress(spikes)
         assert not result.lossless
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary reports the compression ratio."""
         r = CompressionResult(1000, 100, 10.0, 50, 10, 100, True)
         assert "10.0x" in r.summary()
 
-    def test_varint_roundtrip(self):
+    def test_varint_roundtrip(self) -> None:
+        """Varint encoding round-trips each value."""
         for v in [0, 1, 127, 128, 16383, 16384, 1000000]:
             encoded = SpikeCodec._encode_varint(v)
             decoded, _ = SpikeCodec._decode_varint(encoded, 0)
             assert decoded == v
 
-    def test_single_neuron(self):
+    def test_single_neuron(self) -> None:
+        """A single-neuron raster round-trips exactly."""
         spikes = np.zeros((50, 1), dtype=np.int8)
         spikes[10, 0] = 1
         spikes[30, 0] = 1
@@ -71,16 +85,19 @@ class TestSpikeCodec:
         rec = codec.decompress(data, 50, 1)
         np.testing.assert_array_equal(rec, spikes)
 
-    def test_auto_entropy_threshold_selection(self):
+    def test_auto_entropy_threshold_selection(self) -> None:
+        """Auto entropy threshold selection."""
         codec = SpikeCodec(entropy="auto")
         assert codec._pick_entropy(n_spikes=3, total_bins=100) == "varint"
         assert codec._pick_entropy(n_spikes=4, total_bins=100) == "huffman"
 
-    def test_explicit_entropy_selection_is_respected(self):
+    def test_explicit_entropy_selection_is_respected(self) -> None:
+        """Explicit entropy selection is respected."""
         assert SpikeCodec(entropy="varint")._pick_entropy(100, 1000) == "varint"
         assert SpikeCodec(entropy="huffman")._pick_entropy(1, 100000) == "huffman"
 
-    def test_lossy_quantization_reduces_time_dimension(self):
+    def test_lossy_quantization_reduces_time_dimension(self) -> None:
+        """Lossy quantization reduces time dimension."""
         spikes = np.zeros((12, 2), dtype=np.int8)
         spikes[1, 0] = 1
         spikes[7, 1] = 1

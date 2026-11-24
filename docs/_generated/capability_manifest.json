@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5627
+    "test_files": 5621
   },
   "documentation": {
     "public_pages": [
@@ -3746,13 +3746,7 @@
       "tests/sources/test_bitstream_current_source_trace.py",
       "tests/sources/test_bitstream_current_source_validation.py",
       "tests/spade_gpfa_support.py",
-      "tests/spike_alu_support.py",
-      "tests/spike_codec_support.py",
-      "tests/spike_dsp_support.py",
       "tests/spike_gnn_support.py",
-      "tests/spike_norm_support.py",
-      "tests/spike_ode_support.py",
-      "tests/spike_predictor_support.py",
       "tests/spike_profiler_support.py",
       "tests/spike_stats_dimensionality_support.py",
       "tests/spike_stats_sorting_quality_support.py",

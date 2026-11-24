@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_ode_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_ode import (
+    ODELIFDynamics,
+)
 
 
 class TestODELIFDynamics:
-    def test_dvdt(self):
+    """The derivative of the ODE LIF dynamics."""
+
+    def test_dvdt(self) -> None:
+        """The membrane derivative has one value per neuron."""
         d = ODELIFDynamics(tau_mem=20.0, v_rest=0.0)
         dv = d.dvdt(np.array([0.5]), np.array([1.0]))
         assert dv.shape == (1,)
