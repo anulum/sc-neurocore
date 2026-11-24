@@ -566,6 +566,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   brings in the timing witness's current status and drops a repeated
   provenance comment.
 
+- The responsibility and interface text of the thirteen SC-NC rows on the
+  group and project map follows the public repositories. Recorders and
+  checkpoints are the engine's, views are the Studio's, equivalence proofs
+  are SC-NC-VERIFY's and SC-NC-HARDWARE holds runtime bindings, trim tables
+  and acquisition frames rather than target profiles. The core, learning,
+  verification, Studio and benchmark rows name what their repositories
+  state: backend dispatch, network conversion, evidence packets, dashboards,
+  profiling and energy accounting. The programme map, its PNG and JPG and
+  the print page follow.
+
 - The manufacturing, laboratory and equipment path is now described as
   planned rather than optional, on the group and project map, in the
   architecture overview, in the Mermaid programme diagram and in the

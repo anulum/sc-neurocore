@@ -68,7 +68,7 @@
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
 <text x="93" y="1776" font-size="24" fill="#172c46" font-weight="700">SC-NC-ANALYSIS</text>
 </a>
-<text x="93" y="1810" font-size="23" fill="#40566e" font-weight="400">Derived spike/state observables, statistical interpretation</text><text x="93" y="1839" font-size="23" fill="#40566e" font-weight="400">and views; runtime collection stays with its producer.</text><text x="93" y="1889" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · PUBLIC SCAFFOLD · EXTRACTION PLANNED</text>
+<text x="93" y="1810" font-size="23" fill="#40566e" font-weight="400">Derived spike/state observables, statistical interpretation</text><text x="93" y="1839" font-size="23" fill="#40566e" font-weight="400">and fits; views stay with STUDIO.</text><text x="93" y="1889" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · PUBLIC SCAFFOLD · EXTRACTION PLANNED</text>
 <rect x="70" y="1922" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="1922" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
@@ -80,7 +80,7 @@
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
 <text x="93" y="2136" font-size="24" fill="#172c46" font-weight="700">SC-NC-HARDWARE</text>
 </a>
-<text x="93" y="2170" font-size="23" fill="#40566e" font-weight="400">Target/device adapters and original acquisition; target</text><text x="93" y="2199" font-size="23" fill="#40566e" font-weight="400">profiles remain separate from physical board qualification.</text><text x="93" y="2249" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · PUBLIC SCAFFOLD · EXTRACTION PLANNED</text>
+<text x="93" y="2170" font-size="23" fill="#40566e" font-weight="400">Runtime bindings, trim tables, drivers and acquisition;</text><text x="93" y="2199" font-size="23" fill="#40566e" font-weight="400">device runs stay separate from board qualification.</text><text x="93" y="2249" font-size="16" fill="#126b68" font-weight="700">ARCHITECTURE DOCUMENTED · PUBLIC SCAFFOLD · EXTRACTION PLANNED</text>
 <rect x="70" y="2282" width="735" height="166" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="1.5" />
 <rect x="70" y="2282" width="7" height="166" rx="0" fill="#126b68" stroke="none" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#specialized-repositories">
