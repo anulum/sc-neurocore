@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_mojo_parity_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel.mojo.wilson_cowan import (
+    simulate_wilson_cowan,
+)
+from tests.wilson_cowan_mojo_parity_support import (
+    DEFAULT_PARAMS,
+)
 
 
 class TestRustMojoCrossParity:
-    def test_rust_mojo_within_ulp_drift(self):
+    """The Mojo and Rust Wilson-Cowan simulators against each other."""
+
+    def test_rust_mojo_within_ulp_drift(self) -> None:
+        """Rust and Mojo traces under a sinusoidal drive agree within 1e-9."""
         rs = pytest.importorskip(
             "sc_neurocore_engine", reason="Rust engine required"
         ).py_wilson_cowan_simulate

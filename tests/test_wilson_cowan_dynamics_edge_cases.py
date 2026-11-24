@@ -10,15 +10,20 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
 
 
 class TestEdgeCases:
+    """Edge cases of the Rust Wilson-Cowan simulator."""
+
     rust = pytest.importorskip(
         "sc_neurocore_engine", reason="Rust engine required"
     ).py_wilson_cowan_simulate
 
-    def test_zero_length_workload(self):
+    def test_zero_length_workload(self) -> None:
+        """An empty drive gives empty traces and returns the initial state."""
         out = self.rust(
             0.5,
             0.3,
@@ -37,7 +42,8 @@ class TestEdgeCases:
         assert out["e_final"] == 0.5
         assert out["i_final"] == 0.3
 
-    def test_single_step(self):
+    def test_single_step(self) -> None:
+        """One step gives one sample, which is the final state."""
         out = self.rust(
             0.1,
             0.05,
@@ -55,7 +61,7 @@ class TestEdgeCases:
         assert out["e"].shape == (1,)
         assert out["e_final"] == out["e"][0]
 
-    def test_boundary_init(self):
+    def test_boundary_init(self) -> None:
         """E=0 and E=1 initial conditions must not break downstream math."""
         for e_init in (0.0, 1.0):
             out = self.rust(

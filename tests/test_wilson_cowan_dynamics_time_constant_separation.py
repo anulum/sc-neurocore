@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestTimeConstantSeparation:
     """τ_e < τ_i: E settles before I on a step input."""
 
-    def test_e_reaches_target_before_i(self):
+    def test_e_reaches_target_before_i(self) -> None:
+        """With a faster E time constant, E reaches half its final value before I."""
         u = WilsonCowanUnit(tau_e=1.0, tau_i=4.0)
         trace_e, trace_i = [], []
         for _ in range(800):

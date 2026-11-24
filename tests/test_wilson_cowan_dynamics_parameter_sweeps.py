@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestParameterSweeps:
-    def test_w_ei_scales_inhibition(self):
+    """Sweeps of the coupling parameters."""
+
+    def test_w_ei_scales_inhibition(self) -> None:
+        """A stronger inhibitory coupling lowers the final E."""
         finals = []
         for w_ei in (2.0, 6.0, 10.0, 15.0):
             u = WilsonCowanUnit(w_ei=w_ei)

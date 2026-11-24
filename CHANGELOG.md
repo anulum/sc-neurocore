@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 19 top-level Wilson-Cowan dynamics and parity test modules import
+  their names explicitly instead of through a suppressed star import,
+  take every name bound after a support's skip guard from that support,
+  gain their missing docstrings, summary lines and type annotations and
+  are enrolled in the docstring policy.
+
 - The 12 top-level plot test modules import their names explicitly
   instead of through a suppressed star import, take every name bound
   after the matplotlib guard, the network fixture included, from their

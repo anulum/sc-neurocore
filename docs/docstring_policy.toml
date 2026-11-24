@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4651
+expected_file_count = 4670
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18648,3 +18648,79 @@ rationale = "Exercise SC-NeuroCore: viz plots voltage trace."
 [[file]]
 path = "tests/test_viz_plots_weight_matrix.py"
 rationale = "Exercise SC-NeuroCore: viz plots weight matrix."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_bounded_state.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics bounded state."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics edge cases."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_extreme_param_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics extreme param parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_long_run_stability.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics long run stability."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_monotone_response.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics monotone response."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_oscillator_regime.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics oscillator regime."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_parameter_sweeps.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics parameter sweeps."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_quiescent_fixed_point.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics quiescent fixed point."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_sigmoid.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics sigmoid."
+
+[[file]]
+path = "tests/test_wilson_cowan_dynamics_time_constant_separation.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan dynamics time constant separation."
+
+[[file]]
+path = "tests/test_wilson_cowan_go_parity_python_go_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan go parity python go parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_go_parity_rust_go_cross_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan go parity rust go cross parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_julia_parity_python_julia_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan julia parity python julia parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_julia_parity_rust_julia_cross_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan julia parity rust julia cross parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_mojo_parity_python_mojo_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan mojo parity python mojo parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_mojo_parity_rust_mojo_cross_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan mojo parity rust mojo cross parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_parity_bit_exact_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan parity bit exact parity."
+
+[[file]]
+path = "tests/test_wilson_cowan_parity_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan parity edge cases."
+
+[[file]]
+path = "tests/test_wilson_cowan_parity_final_state_parity.py"
+rationale = "Exercise SC-NeuroCore: wilson cowan parity final state parity."

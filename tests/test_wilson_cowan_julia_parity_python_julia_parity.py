@@ -10,20 +10,26 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_julia_parity_support import *  # noqa: F403
+import numpy as np
+from tests.wilson_cowan_julia_parity_support import (
+    _run_julia,
+    _run_python,
+)
 
 
 class TestPythonJuliaParity:
     """Julia trajectory must match Python primary at machine-epsilon."""
 
-    def test_parity_zero_input(self):
+    def test_parity_zero_input(self) -> None:
+        """Julia traces under zero drive match the Python primary within 1e-14 for the E and I traces."""
         n = 3_000
         e_py, i_py = _run_python(np.zeros(n))
         e_jl, i_jl = _run_julia(np.zeros(n))
         assert np.allclose(e_py, e_jl, atol=1e-14, rtol=0)
         assert np.allclose(i_py, i_jl, atol=1e-14, rtol=0)
 
-    def test_parity_constant_drive(self):
+    def test_parity_constant_drive(self) -> None:
+        """Julia traces under constant drive match the Python primary within 1e-14 for the E and I traces."""
         n = 3_000
         ext = np.full(n, 1.5)
         e_py, i_py = _run_python(ext)
@@ -31,7 +37,8 @@ class TestPythonJuliaParity:
         assert np.allclose(e_py, e_jl, atol=1e-14, rtol=0)
         assert np.allclose(i_py, i_jl, atol=1e-14, rtol=0)
 
-    def test_parity_sinusoid_drive(self):
+    def test_parity_sinusoid_drive(self) -> None:
+        """Julia traces under a sinusoidal drive match the Python primary within 1e-14 for the E and I traces."""
         n = 2_000
         ext = np.sin(np.linspace(0, 8 * np.pi, n)) * 2.0
         e_py, i_py = _run_python(ext)

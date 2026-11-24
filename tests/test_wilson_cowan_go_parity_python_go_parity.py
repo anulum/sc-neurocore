@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_go_parity_support import *  # noqa: F403
+import numpy as np
+from tests.wilson_cowan_go_parity_support import (
+    _run_go,
+    _run_python,
+)
 
 
 class TestPythonGoParity:
-    def test_parity_zero_input(self):
+    """The Go Wilson-Cowan simulator against the Python primary."""
+
+    def test_parity_zero_input(self) -> None:
+        """Go traces under zero drive match the Python primary within 1e-14 for the E and I traces."""
         n = 3_000
         e_py, i_py = _run_python(np.zeros(n))
         e_go, i_go = _run_go(np.zeros(n))
         assert np.allclose(e_py, e_go, atol=1e-14, rtol=0)
         assert np.allclose(i_py, i_go, atol=1e-14, rtol=0)
 
-    def test_parity_constant_drive(self):
+    def test_parity_constant_drive(self) -> None:
+        """Go traces under constant drive match the Python primary within 1e-14 for the E and I traces."""
         n = 3_000
         ext = np.full(n, 2.0)
         e_py, i_py = _run_python(ext)
@@ -29,7 +37,8 @@ class TestPythonGoParity:
         assert np.allclose(e_py, e_go, atol=1e-14, rtol=0)
         assert np.allclose(i_py, i_go, atol=1e-14, rtol=0)
 
-    def test_parity_ramp_drive(self):
+    def test_parity_ramp_drive(self) -> None:
+        """Go traces under a ramp drive match the Python primary within 1e-14 for the E and I traces."""
         n = 3_000
         ext = np.linspace(-1.0, 4.0, n)
         e_py, i_py = _run_python(ext)

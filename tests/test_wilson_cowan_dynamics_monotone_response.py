@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestMonotoneResponse:
-    def test_stronger_drive_higher_e(self):
+    """The excitatory response to a growing drive."""
+
+    def test_stronger_drive_higher_e(self) -> None:
+        """Final E does not fall as the drive grows and rises by more than 0.3 overall."""
         finals = []
         for drive in (0.5, 1.5, 3.0, 5.0, 8.0):
             u = WilsonCowanUnit()

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_parity_support import *  # noqa: F403
+import numpy as np
+from tests.wilson_cowan_parity_support import (
+    py_wilson_cowan_simulate,
+)
 
 
 class TestEdgeCases:
-    def test_zero_length_workload(self):
+    """Edge cases of the Rust Wilson-Cowan simulator."""
+
+    def test_zero_length_workload(self) -> None:
+        """An empty drive gives empty traces and returns the initial state."""
         out = py_wilson_cowan_simulate(
             0.3,
             0.2,
@@ -33,7 +39,8 @@ class TestEdgeCases:
         assert out["e_final"] == 0.3
         assert out["i_final"] == 0.2
 
-    def test_single_step(self):
+    def test_single_step(self) -> None:
+        """One step gives one sample, which is the final state."""
         out = py_wilson_cowan_simulate(
             0.1,
             0.05,

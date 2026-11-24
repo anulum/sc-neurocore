@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestOscillatorRegime:
-    """With strong recurrent coupling + cross-inhibition, Wilson-Cowan
+    """Limit cycles of the Wilson-Cowan model under strong coupling.
+
+    With strong recurrent coupling + cross-inhibition, Wilson-Cowan
     supports limit cycles. Detecting them via zero-crossings of
-    (E - mean(E))."""
+    (E - mean(E)).
+    """
 
     # Oscillator parameter set derived from Wilson-Cowan 1972 Fig 3.
     # Requires the published two-term sigmoid (Hopf bifurcation).
@@ -43,10 +49,13 @@ class TestOscillatorRegime:
             trace_e[t] = u.e
         return trace_e[self.OSC_TRANSIENT :]
 
-    def test_limit_cycle_shows_repeated_zero_crossings(self):
-        """Canonical regression guard: with the corrected two-term sigmoid,
+    def test_limit_cycle_shows_repeated_zero_crossings(self) -> None:
+        """The published oscillator parameters give repeated E oscillations.
+
+        Canonical regression guard: with the corrected two-term sigmoid,
         the Wilson-Cowan 1972 Fig 3 oscillator parameters produce repeated
-        E oscillations around the post-transient mean."""
+        E oscillations around the post-transient mean.
+        """
         trace = self._run_oscillator()
         centred = trace - trace.mean()
         zero_crossings = int(np.sum(np.abs(np.diff(np.sign(centred))) > 0))
@@ -55,12 +64,15 @@ class TestOscillatorRegime:
             f"around the mean; got {zero_crossings} zero-crossings"
         )
 
-    def test_limit_cycle_fft_peak_in_published_band(self):
-        """FFT peak verification. The Wilson-Cowan 1972 oscillator at this
+    def test_limit_cycle_fft_peak_in_published_band(self) -> None:
+        """The oscillator's FFT peak lies in the published band.
+
+        FFT peak verification. The Wilson-Cowan 1972 oscillator at this
         parameter set has a dominant period of roughly 60–140 timesteps
         (dt=0.1) corresponding to ~0.7–1.6 Hz in time-units of the Euler
         step. This is the actual published-frequency check requested by
-        `feedback_no_fabricated_benchmarks`."""
+        `feedback_no_fabricated_benchmarks`.
+        """
         trace = self._run_oscillator()
         centred = trace - trace.mean()
         # Discrete FFT of the detrended trace; bin 0 (DC) is now near 0.
@@ -82,7 +94,7 @@ class TestOscillatorRegime:
             f"noise floor ({noise_floor:.2f}); ratio={spec[peak_bin] / noise_floor:.2f}"
         )
 
-    def test_limit_cycle_amplitude_nontrivial(self):
+    def test_limit_cycle_amplitude_nontrivial(self) -> None:
         """Amplitude of the oscillation must exceed pure noise."""
         trace = self._run_oscillator()
         amplitude = float(trace.max() - trace.min())

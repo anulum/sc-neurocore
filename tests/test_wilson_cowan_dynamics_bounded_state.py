@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestBoundedState:
-    """Published 2-term sigmoid range is [-β, 1-β] where β = 1/(1+exp(aθ));
+    """The E and I states stay inside the published sigmoid envelope.
+
+    Published 2-term sigmoid range is [-β, 1-β] where β = 1/(1+exp(aθ));
     dynamics inherit that envelope so the physically meaningful state
     range is [-β · τ_max, 1 - β · τ_max] bounded by forward-Euler
-    relaxation. Empirically |E|, |I| ≤ 1 + β at defaults."""
+    relaxation. Empirically |E|, |I| ≤ 1 + β at defaults.
+    """
 
     @pytest.mark.parametrize("drive", [-5.0, 0.0, 1.0, 5.0, 20.0])
-    def test_bounds_under_drive(self, drive):
+    def test_bounds_under_drive(self, drive: float) -> None:
+        """Ten thousand steps under each drive keep E and I inside the sigmoid envelope."""
         u = WilsonCowanUnit()
         baseline = 1.0 / (1.0 + math.exp(u.a * u.theta))
         lo = -baseline - 1e-9

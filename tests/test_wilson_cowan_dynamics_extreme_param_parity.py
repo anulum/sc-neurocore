@@ -10,12 +10,22 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
+from tests.wilson_cowan_dynamics_support import (
+    DEFAULT_PARAMS,
+)
 
 
 class TestExtremeParamParity:
-    """Rust simulator must track Python primary bit-exact across
-    extreme parameter regimes."""
+    """Rust tracks the Python primary bit for bit across extreme parameters.
+
+    Rust simulator must track Python primary bit-exact across
+    extreme parameter regimes.
+    """
 
     rust = pytest.importorskip(
         "sc_neurocore_engine", reason="Rust engine required"
@@ -31,7 +41,8 @@ class TestExtremeParamParity:
             dict(w_ee=20.0, w_ei=1.0),  # strong excitation
         ],
     )
-    def test_parity_extreme_params(self, params):
+    def test_parity_extreme_params(self, params: dict[str, float]) -> None:
+        """Each extreme parameter set gives the same E trace in Rust and Python."""
         p = {**DEFAULT_PARAMS, **params}
         n = 2_000
         ext = np.linspace(-2.0, 5.0, n)

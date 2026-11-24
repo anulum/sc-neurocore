@@ -10,15 +10,20 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
 
 
 class TestLongRunStability:
-    """No NaN, no inf, no drift outside the published envelope over very
+    """Very long simulations stay finite and inside the published envelope.
+
+    No NaN, no inf, no drift outside the published envelope over very
     long simulations. `feedback_module_standard_attnres` requires
     algorithm/parity/**stability** tests; this section provides the
     third leg. We run the Rust simulator because the Python primary
-    would be too slow for 1 M-step sweeps in the test suite."""
+    would be too slow for 1 M-step sweeps in the test suite.
+    """
 
     rust = pytest.importorskip(
         "sc_neurocore_engine", reason="Rust engine required"
@@ -33,10 +38,13 @@ class TestLongRunStability:
             (10.0, 0.2),  # strong drive, coarser dt
         ],
     )
-    def test_no_nan_no_inf_over_1M_steps(self, drive, dt):
-        """Long-run integration must stay finite. 1 M steps is overkill
+    def test_no_nan_no_inf_over_1M_steps(self, drive: float, dt: float) -> None:
+        """One million integration steps stay finite.
+
+        Long-run integration must stay finite. 1 M steps is overkill
         for the published parameter range but catches accumulated
-        f64 round-off that would show up only at large N."""
+        f64 round-off that would show up only at large N.
+        """
         n = 1_000_000
         ext = np.full(n, drive, dtype=np.float64)
         out = self.rust(
@@ -65,10 +73,13 @@ class TestLongRunStability:
         )
         assert i.min() >= lo and i.max() <= hi
 
-    def test_steady_state_convergence_1M_steps(self):
-        """Under constant drive outside the oscillator regime, the state
+    def test_steady_state_convergence_1M_steps(self) -> None:
+        """Constant drive outside the oscillator regime settles to a steady state.
+
+        Under constant drive outside the oscillator regime, the state
         must settle. Check that the trailing 100k steps show very small
-        variance (steady state reached)."""
+        variance (steady state reached).
+        """
         n = 1_000_000
         ext = np.full(n, 5.0, dtype=np.float64)
         out = self.rust(
@@ -88,11 +99,14 @@ class TestLongRunStability:
         tail_std = float(np.std(out["e"][-100_000:]))
         assert tail_std < 1e-6, f"E should have settled to a fixed point; tail std = {tail_std:.2e}"
 
-    def test_time_reversibility_against_short_run(self):
-        """Simulator must be state-function of caller inputs only — so two
+    def test_time_reversibility_against_short_run(self) -> None:
+        """Two identical long runs end in bit-identical states.
+
+        Simulator must be state-function of caller inputs only — so two
         independent 500k-step runs from identical init + drive must
         produce bit-identical final states (no hidden state, no
-        accumulator leakage across calls)."""
+        accumulator leakage across calls).
+        """
         n = 500_000
         ext = np.full(n, 2.0, dtype=np.float64)
         out_a = self.rust(0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, ext)

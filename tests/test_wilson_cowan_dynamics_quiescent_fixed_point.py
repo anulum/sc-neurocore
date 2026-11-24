@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_dynamics_support import *  # noqa: F403
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestQuiescentFixedPoint:
-    def test_zero_drive_converges_low(self):
+    """The quiescent fixed point at low drive."""
+
+    def test_zero_drive_converges_low(self) -> None:
+        """Zero drive settles E and I below 0.01."""
         u = WilsonCowanUnit()
         for _ in range(10_000):
             u.step(0.0)
         assert u.e < 0.01
         assert u.i < 0.01
 
-    def test_small_drive_stays_low(self):
+    def test_small_drive_stays_low(self) -> None:
         """Below the sigmoid's activation threshold, E and I stay near 0."""
         u = WilsonCowanUnit()
         for _ in range(5_000):

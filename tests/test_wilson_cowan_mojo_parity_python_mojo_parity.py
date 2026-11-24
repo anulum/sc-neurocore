@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_mojo_parity_support import *  # noqa: F403
+import numpy as np
+from tests.wilson_cowan_mojo_parity_support import (
+    _run_mojo,
+    _run_python,
+)
 
 
 class TestPythonMojoParity:
-    def test_parity_zero_input(self):
+    """The Mojo Wilson-Cowan simulator against the Python primary."""
+
+    def test_parity_zero_input(self) -> None:
+        """Mojo traces under zero drive match the Python primary within 1e-9 for the E and I traces."""
         n = 3_000
         e_py, i_py = _run_python(np.zeros(n))
         e_mj, i_mj = _run_mojo(np.zeros(n))
         assert np.allclose(e_py, e_mj, atol=1e-9, rtol=0)
         assert np.allclose(i_py, i_mj, atol=1e-9, rtol=0)
 
-    def test_parity_constant_drive(self):
+    def test_parity_constant_drive(self) -> None:
+        """Mojo traces under constant drive match within 1e-12 for ten steps and 1e-9 throughout."""
         n = 3_000
         ext = np.full(n, 2.0)
         e_py, i_py = _run_python(ext)

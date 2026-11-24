@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_parity_support import *  # noqa: F403
+import numpy as np
+from tests.wilson_cowan_parity_support import (
+    DEFAULT_PARAMS,
+    _run_python,
+    _run_rust,
+    py_wilson_cowan_simulate,
+)
 
 
 class TestFinalStateParity:
-    def test_rust_e_final_matches_trace_last(self):
+    """Final states of the Rust and Python simulators."""
+
+    def test_rust_e_final_matches_trace_last(self) -> None:
+        """The reported final E and I equal the last trace samples."""
         n = 2_000
         ext = np.full(n, 1.0)
         out = py_wilson_cowan_simulate(
@@ -34,7 +43,8 @@ class TestFinalStateParity:
         assert out["e_final"] == out["e"][-1]
         assert out["i_final"] == out["i"][-1]
 
-    def test_python_rust_final_state_match(self):
+    def test_python_rust_final_state_match(self) -> None:
+        """Python and Rust final states agree within 2e-14."""
         n = 3_000
         ext = np.full(n, 2.5)
         e_py, i_py = _run_python(ext)

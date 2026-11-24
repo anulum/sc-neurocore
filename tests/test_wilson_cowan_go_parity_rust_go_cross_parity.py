@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.wilson_cowan_go_parity_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel.go.wilson_cowan import (
+    simulate_wilson_cowan,
+)
+from tests.wilson_cowan_go_parity_support import (
+    DEFAULT_PARAMS,
+)
 
 
 class TestRustGoCrossParity:
-    def test_rust_go_identical(self):
+    """The Go and Rust Wilson-Cowan simulators against each other."""
+
+    def test_rust_go_identical(self) -> None:
+        """Rust and Go traces under a sinusoidal drive agree within 1e-14."""
         rs = pytest.importorskip(
             "sc_neurocore_engine", reason="Rust engine required"
         ).py_wilson_cowan_simulate
