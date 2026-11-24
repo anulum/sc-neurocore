@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4373
+expected_file_count = 4378
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17536,3 +17536,23 @@ rationale = "Exercise SC-NeuroCore: numpy interop popcount numpy."
 [[file]]
 path = "tests/test_numpy_interop_popcount_routes_numpy_zero_copy.py"
 rationale = "Exercise SC-NeuroCore: numpy interop popcount routes numpy zero copy."
+
+[[file]]
+path = "tests/test_pipeline_stages_critical_path_integration.py"
+rationale = "Exercise SC-NeuroCore: pipeline stages critical path integration."
+
+[[file]]
+path = "tests/test_pipeline_stages_output_consistency.py"
+rationale = "Exercise SC-NeuroCore: pipeline stages output consistency."
+
+[[file]]
+path = "tests/test_pipeline_stages_pipeline_fill_counter.py"
+rationale = "Exercise SC-NeuroCore: pipeline stages pipeline fill counter."
+
+[[file]]
+path = "tests/test_pipeline_stages_pipeline_points.py"
+rationale = "Exercise SC-NeuroCore: pipeline stages pipeline points."
+
+[[file]]
+path = "tests/test_pipeline_stages_pipeline_registers.py"
+rationale = "Exercise SC-NeuroCore: pipeline stages pipeline registers."

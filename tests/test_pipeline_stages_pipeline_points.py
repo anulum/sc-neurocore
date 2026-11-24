@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.pipeline_stages_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+from tests.pipeline_stages_support import izhikevich_neuron as izhikevich_neuron
 
 
 class TestPipelinePoints:
     """Verify user-specified pipeline insertion points."""
 
-    def test_specific_point_only(self, izhikevich_neuron):
+    def test_specific_point_only(self, izhikevich_neuron: EquationNeuron) -> None:
         """Only the specified multiply should be registered."""
         v = compile_to_verilog(
             izhikevich_neuron,
@@ -27,7 +29,7 @@ class TestPipelinePoints:
         # Other multiplies should NOT be registered when pipeline_stages=0
         # and they're not in pipeline_points
 
-    def test_multiple_points(self, izhikevich_neuron):
+    def test_multiple_points(self, izhikevich_neuron: EquationNeuron) -> None:
         """Multiple specified points should all be registered."""
         v = compile_to_verilog(
             izhikevich_neuron,

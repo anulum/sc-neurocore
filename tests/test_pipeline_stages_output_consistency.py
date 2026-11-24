@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.pipeline_stages_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+from tests.pipeline_stages_support import izhikevich_neuron as izhikevich_neuron
+from tests.pipeline_stages_support import lif_neuron as lif_neuron
 
 
 class TestOutputConsistency:
     """Verify pipelined vs non-pipelined Verilog is structurally consistent."""
 
-    def test_both_compile_successfully(self, lif_neuron):
+    def test_both_compile_successfully(self, lif_neuron: EquationNeuron) -> None:
         """Both pipelined and non-pipelined must produce valid Verilog."""
         v0 = compile_to_verilog(lif_neuron, pipeline_stages=0)
         v1 = compile_to_verilog(lif_neuron, pipeline_stages=1)
@@ -25,7 +28,7 @@ class TestOutputConsistency:
         assert "endmodule" in v0
         assert "endmodule" in v1
 
-    def test_module_structure_preserved(self, lif_neuron):
+    def test_module_structure_preserved(self, lif_neuron: EquationNeuron) -> None:
         """Core structure (ports, always block) must be preserved."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=1)
         assert "input wire clk" in v
@@ -33,7 +36,7 @@ class TestOutputConsistency:
         assert "output reg spike_out" in v
         assert "always @(posedge clk or negedge rst_n)" in v
 
-    def test_state_vars_preserved(self, izhikevich_neuron):
+    def test_state_vars_preserved(self, izhikevich_neuron: EquationNeuron) -> None:
         """All state variables must appear in pipelined output."""
         v = compile_to_verilog(izhikevich_neuron, pipeline_stages=1)
         assert "v_reg" in v
@@ -41,7 +44,7 @@ class TestOutputConsistency:
         assert "v_out" in v
         assert "u_out" in v
 
-    def test_q1616_pipeline(self, lif_neuron):
+    def test_q1616_pipeline(self, lif_neuron: EquationNeuron) -> None:
         """Pipeline at Q16.16 should work with wider intermediates."""
         v = compile_to_verilog(
             lif_neuron,

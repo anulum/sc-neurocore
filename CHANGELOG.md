@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 5 top-level pipeline-stage test modules import their names
+  explicitly instead of through a suppressed star import; each imports
+  the support's fixtures it requests by name, so they stay module-local
+  as before, and the modules gain their type annotations and are enrolled
+  in the docstring policy.
+
 - The 3 top-level NumPy interop test modules import their names
   explicitly instead of through a suppressed star import, keep the Rust
   engine skip by importing the engine from the guarded support, gain

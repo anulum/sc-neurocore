@@ -10,45 +10,48 @@
 
 from __future__ import annotations
 
-from tests.pipeline_stages_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+from tests.pipeline_stages_support import izhikevich_neuron as izhikevich_neuron
+from tests.pipeline_stages_support import lif_neuron as lif_neuron
 
 
 class TestPipelineRegisters:
     """Verify pipeline registers appear in generated Verilog."""
 
-    def test_no_pipeline_no_regs(self, lif_neuron):
+    def test_no_pipeline_no_regs(self, lif_neuron: EquationNeuron) -> None:
         """pipeline_stages=0 should produce no pipeline registers."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=0)
         assert "_mul0_r" not in v
         assert "Pipeline registers" not in v
         assert "latency" not in v
 
-    def test_pipeline_1_stage_has_regs(self, lif_neuron):
+    def test_pipeline_1_stage_has_regs(self, lif_neuron: EquationNeuron) -> None:
         """pipeline_stages=1 should register all multiply outputs."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=1)
         assert "_r;" in v, "Expected pipeline register declarations"
         assert "Pipeline registers for multiply outputs" in v
         assert "Pipeline register stage" in v
 
-    def test_pipeline_produces_latency_port(self, lif_neuron):
+    def test_pipeline_produces_latency_port(self, lif_neuron: EquationNeuron) -> None:
         """Pipelined modules must have a latency output port."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=1)
         assert "output wire" in v and "latency" in v
 
-    def test_latency_value_matches_stage_count(self, lif_neuron):
+    def test_latency_value_matches_stage_count(self, lif_neuron: EquationNeuron) -> None:
         """Latency constant value should match number of pipeline regs."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=1)
         # The latency assignment should contain the actual count
         assert "Pipeline latency:" in v
 
-    def test_pipeline_2_stages_izh(self, izhikevich_neuron):
+    def test_pipeline_2_stages_izh(self, izhikevich_neuron: EquationNeuron) -> None:
         """Izhikevich has multiple multiplies — all should be pipelined."""
         v = compile_to_verilog(izhikevich_neuron, pipeline_stages=1)
         # Izhikevich has v*v, 5*v, a*(b*v - u) → multiple _mul regs
         reg_count = v.count("_r;")
         assert reg_count >= 3, f"Expected >=3 pipeline regs, got {reg_count}"
 
-    def test_pipeline_always_block_present(self, lif_neuron):
+    def test_pipeline_always_block_present(self, lif_neuron: EquationNeuron) -> None:
         """The reset-aware pipeline-register staging block should be present."""
         v = compile_to_verilog(lif_neuron, pipeline_stages=1)
         # Staging regs are clocked and reset with the module so an unfilled pipeline never
