@@ -10,17 +10,21 @@
 
 from __future__ import annotations
 
-from tests.fim_symmetry_dynamics_support import *  # noqa: F403
+from tests.fim_symmetry_dynamics_support import (
+    _make_self_connected_network,
+)
 
 
 class TestSTDPFIMInteraction:
-    def test_fim_and_stdp_coexist(self):
+    """Competition between STDP and the FIM term."""
+
+    def test_fim_and_stdp_coexist(self) -> None:
         """Both FIM and STDP should run without error."""
         net, proj, mon = _make_self_connected_network(n=20, fim_lambda=3.0)
         net.run(duration=0.1, dt=0.001)
         assert mon.count >= 0  # just verify no crash
 
-    def test_fim_does_not_kill_spikes(self):
+    def test_fim_does_not_kill_spikes(self) -> None:
         """FIM should not suppress all activity."""
         net, proj, mon = _make_self_connected_network(n=30, fim_lambda=5.0)
         net.run(duration=0.5, dt=0.001)

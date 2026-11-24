@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from tests.fim_symmetry_dynamics_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from tests.fim_symmetry_dynamics_support import (
+    _make_self_connected_network,
+)
 
 
 class TestLazarusPhaseGap:
-    def test_activity_after_reset(self):
-        """After resetting all populations, network should still produce
-        spikes when driven — the structural weights survive reset."""
+    """Network behaviour across a population reset."""
+
+    def test_activity_after_reset(self) -> None:
+        """After resetting all populations, the driven network still spikes.
+
+        The structural weights survive the reset.
+        """
         net, proj, mon = _make_self_connected_network(n=20, fim_lambda=2.0)
         net.run(duration=0.1, dt=0.001)
         initial_count = mon.count

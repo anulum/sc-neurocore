@@ -6,17 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_fault_injection.py
 
+"""Shared names and a TMR majority vote for the fault-injection tests."""
+
 from __future__ import annotations
 
-"""Tests for FaultInjector: bit-flip, stuck-at, and TMR majority vote."""
+import numpy.typing as npt
 import numpy as np
 from sc_neurocore.utils.bitstreams import generate_bernoulli_bitstream
 from sc_neurocore.utils.fault_injection import FaultInjector
 from sc_neurocore.utils.rng import RNG
 
 
-def _majority_vote(a, b, c):
-    return ((a & b) | (a & c) | (b & c)).astype(np.uint8)
+def _majority_vote(
+    a: npt.NDArray[np.uint8], b: npt.NDArray[np.uint8], c: npt.NDArray[np.uint8]
+) -> npt.NDArray[np.uint8]:
+    voted: npt.NDArray[np.uint8] = ((a & b) | (a & c) | (b & c)).astype(np.uint8)
+    return voted
 
 
 __all__ = ["np", "generate_bernoulli_bitstream", "FaultInjector", "RNG", "_majority_vote"]

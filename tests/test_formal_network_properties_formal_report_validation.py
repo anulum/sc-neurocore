@@ -6,18 +6,35 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (formal_report_validation) from former test_formal_network_properties.py
 
+"""Tests of validating formal network verification reports."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from collections.abc import Callable
+from typing import Any
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.formal.report_schema import (
+    FormalReportValidationError,
+    validate_formal_network_report,
+)
+from tests.formal_network_properties_support import (
+    _materialise_formal_report_artifacts,
+    _valid_formal_report_payload,
+)
 
 
 def test_validate_formal_network_report_accepts_complete_payload() -> None:
+    """A complete report is accepted."""
     payload = _valid_formal_report_payload()
 
     validate_formal_network_report(payload)
 
 
 def test_validate_formal_network_report_rejects_symlink_artifact_path(tmp_path: Path) -> None:
+    """An artifact path through a symlink is rejected."""
     payload = _valid_formal_report_payload()
     artifact_root = tmp_path / "artifacts"
     artifact_root.mkdir(parents=True, exist_ok=True)
@@ -26,14 +43,17 @@ def test_validate_formal_network_report_rejects_symlink_artifact_path(tmp_path: 
     target = artifact_root / "dense_lif_frontier_fixture_rate_bound.sv"
     symlink = artifact_root / "symlink_rate_bound.sv"
     symlink.symlink_to(target)
-    payload["artifacts"]["sva"] = str(symlink)
-    payload["artifacts"]["rate_sva"] = str(symlink)
+    artifacts = payload["artifacts"]
+    assert isinstance(artifacts, dict)
+    artifacts["sva"] = str(symlink)
+    artifacts["rate_sva"] = str(symlink)
 
     with pytest.raises(FormalReportValidationError, match="must not be a symlink"):
         validate_formal_network_report(payload, artifact_root=artifact_root)
 
 
 def test_validate_formal_network_report_rejects_directory_artifact_path(tmp_path: Path) -> None:
+    """An artifact path that is a directory is rejected."""
     payload = _valid_formal_report_payload()
     artifact_root = tmp_path / "artifacts"
     artifact_root.mkdir(parents=True, exist_ok=True)
@@ -41,7 +61,9 @@ def test_validate_formal_network_report_rejects_directory_artifact_path(tmp_path
 
     directory = artifact_root / "fake_dir.sv"
     directory.mkdir()
-    payload["artifacts"]["formal_bundle"] = str(directory)
+    artifacts = payload["artifacts"]
+    assert isinstance(artifacts, dict)
+    artifacts["formal_bundle"] = str(directory)
 
     with pytest.raises(FormalReportValidationError, match="must be a regular file"):
         validate_formal_network_report(payload, artifact_root=artifact_root)
@@ -444,7 +466,10 @@ def test_validate_formal_network_report_rejects_directory_artifact_path(tmp_path
         ),
     ],
 )
-def test_validate_formal_network_report_rejects_invalid_payloads(mutator, match: str) -> None:
+def test_validate_formal_network_report_rejects_invalid_payloads(
+    mutator: Callable[[dict[str, Any]], object], match: str
+) -> None:
+    """Each invalid report payload is rejected."""
     payload = _valid_formal_report_payload()
     mutator(payload)
 
@@ -467,7 +492,9 @@ def test_validate_formal_network_report_rejects_invalid_payloads(mutator, match:
         lambda payload: payload.__setitem__("population_inactivity_replay", None),
     ],
 )
-def test_validate_formal_network_report_accepts_null_replays(nuller) -> None:
+def test_validate_formal_network_report_accepts_null_replays(
+    nuller: Callable[[dict[str, Any]], object],
+) -> None:
     """A present property with a null replay record is accepted (replay is optional)."""
     payload = _valid_formal_report_payload()
     nuller(payload)

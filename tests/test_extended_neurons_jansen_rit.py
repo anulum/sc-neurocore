@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    JansenRitUnit,
+)
 
 
 class TestJansenRit:
-    def test_oscillation(self):
+    """The Jansen-Rit neural mass model."""
+
+    def test_oscillation(self) -> None:
+        """The output oscillates."""
         n = JansenRitUnit()
         vals = [n.step() for _ in range(500)]
         assert max(vals) > min(vals)

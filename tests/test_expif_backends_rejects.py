@@ -6,9 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects) from former test_expif_backends.py
 
+"""Tests of the ExpIF backend rejections."""
+
 from __future__ import annotations
 
-from tests.expif_backends_support import *  # noqa: F403
+import math
+import pytest
+import sc_neurocore.neurons.models.expif as expif
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 @pytest.mark.skipif(not expif._HAS_RUST, reason="current ExpIF batch binding is unavailable")

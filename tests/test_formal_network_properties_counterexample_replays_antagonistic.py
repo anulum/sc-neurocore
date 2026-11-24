@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (antagonistic) from former test_formal_network_properties_counterexample_replays.py
 
+"""Tests of replaying antagonistic-output counterexamples."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from sc_neurocore.formal.counterexample_replay import (
+    replay_antagonistic_counterexample,
+)
+from sc_neurocore.formal.network_properties import (
+    NetworkAntagonisticOutputExclusion,
+)
 
 
 def test_antagonistic_replay_detects_simultaneous_outputs() -> None:
+    """Simultaneous outputs are reported at their cycle."""
     prop = NetworkAntagonisticOutputExclusion(
         name="motor_left_right_exclusion",
         output_a=0,
@@ -31,6 +39,7 @@ def test_antagonistic_replay_detects_simultaneous_outputs() -> None:
 
 
 def test_antagonistic_replay_accepts_mutually_exclusive_outputs() -> None:
+    """Exclusive outputs pass the replay."""
     prop = NetworkAntagonisticOutputExclusion(
         name="motor_left_right_exclusion",
         output_a=0,

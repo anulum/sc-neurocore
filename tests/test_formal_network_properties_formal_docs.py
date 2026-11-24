@@ -6,12 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (formal_docs) from former test_formal_network_properties.py
 
+"""Tests that the formal-verification documentation stays current."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
 
 
 def test_formal_network_verification_docs_cover_cli_and_report_contract() -> None:
+    """The docs cover the CLI and its report contract."""
     repo_root = Path(__file__).resolve().parents[1]
     doc = repo_root / "docs" / "api" / "formal_network_verification.md"
 

@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.formal_property_check_support import *  # noqa: F403
+from sc_neurocore.compiler import (
+    formal_property_check,
+)
 
 
 class TestGeneratePropertySby:
     """The generated ``.sby`` script (no run required)."""
 
     def test_reads_rtl_then_sva_and_preps_top(self) -> None:
+        """The SBY file runs a bounded check with z3."""
         sby = formal_property_check._generate_property_sby(
             "mon", "mon.v", "mon_sva.sv", depth=18, mode="bmc", engine="z3"
         )

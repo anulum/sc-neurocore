@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.fim_symmetry_dynamics_support import *  # noqa: F403
+import numpy as np
+from tests.fim_symmetry_dynamics_support import (
+    _make_self_connected_network,
+)
 
 
 class TestFIMFeedback:
-    def test_fim_zero_lambda_no_effect(self):
+    """Self-observation feedback through the FIM term."""
+
+    def test_fim_zero_lambda_no_effect(self) -> None:
         """fim_lambda=0 should not modify weights."""
         net, proj, mon = _make_self_connected_network(fim_lambda=0.0)
         w_before = proj.data.copy()
@@ -24,7 +29,7 @@ class TestFIMFeedback:
         # (just verify no crash)
         assert proj.data is not None
 
-    def test_fim_positive_lambda_modifies_weights(self):
+    def test_fim_positive_lambda_modifies_weights(self) -> None:
         """fim_lambda>0 should produce different weight trajectory than lambda=0."""
         net0, proj0, _ = _make_self_connected_network(n=20, fim_lambda=0.0)
         net1, proj1, _ = _make_self_connected_network(n=20, fim_lambda=5.0)
@@ -34,13 +39,13 @@ class TestFIMFeedback:
         diff = np.mean(np.abs(proj0.data - proj1.data))
         assert diff > 0.001, f"FIM had no effect on weights (diff={diff:.6f})"
 
-    def test_fim_weights_stay_nonnegative(self):
+    def test_fim_weights_stay_nonnegative(self) -> None:
         """FIM correction should never push weights below zero."""
         net, proj, mon = _make_self_connected_network(n=20, fim_lambda=10.0)
         net.run(duration=0.2, dt=0.001)
         assert np.all(proj.data >= 0), "negative weight after FIM correction"
 
-    def test_fim_network_attribute(self):
+    def test_fim_network_attribute(self) -> None:
         """Network should store fim_lambda."""
         net, _, _ = _make_self_connected_network(fim_lambda=3.14)
         assert net.fim_lambda == 3.14

@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.expr_lut_tables_support import *  # noqa: F403
+from sc_neurocore.compiler import (
+    expr_lut_tables as tables,
+)
 
 
 class TestSupportedFunctions:

@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    MedvedevMapNeuron,
+)
 
 
 class TestMedvedevMap:
-    def test_dynamics(self):
+    """The Medvedev map neuron."""
+
+    def test_dynamics(self) -> None:
+        """The map state evolves."""
         n = MedvedevMapNeuron()
         for _ in range(50):
             n.step(0.1)

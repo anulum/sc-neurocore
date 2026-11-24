@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    ShermanRinzelKeizerNeuron,
+)
 
 
 class TestShermanRinzelKeizer:
-    def test_fires(self):
+    """The Sherman-Rinzel-Keizer beta-cell model."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = ShermanRinzelKeizerNeuron()
         assert sum(n.step(3.0) for _ in range(500)) > 0

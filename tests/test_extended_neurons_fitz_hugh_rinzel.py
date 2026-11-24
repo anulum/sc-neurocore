@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    FitzHughRinzelNeuron,
+)
 
 
 class TestFitzHughRinzel:
-    def test_bursting(self):
+    """The FitzHugh-Rinzel bursting neuron."""
+
+    def test_bursting(self) -> None:
+        """The neuron bursts under drive."""
         n = FitzHughRinzelNeuron()
         assert sum(n.step(1.0) for _ in range(2000)) > 0
 
-    def test_slow_var(self):
+    def test_slow_var(self) -> None:
+        """The slow variable evolves."""
         n = FitzHughRinzelNeuron()
         for _ in range(500):
             n.step(0.5)

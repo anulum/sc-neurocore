@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (sva_rate_bound) from former test_formal_network_properties.py
 
+"""Tests of compiling the rate bound and the dense LIF fixture."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.formal.network_properties import (
+    DenseLIFNetworkSpec,
+    NetworkRateBound,
+)
+from sc_neurocore.formal.property_compiler import (
+    compile_dense_lif_fixture_rtl,
+    compile_network_rate_bound_sva,
+)
 
 
 def test_compile_dense_lif_rate_bound_sva_is_deterministic() -> None:
+    """The rate-bound SVA is deterministic."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -45,6 +57,7 @@ def test_compile_dense_lif_rate_bound_sva_is_deterministic() -> None:
 
 
 def test_compile_dense_lif_fixture_rtl_is_deterministic_and_matches_formal_ports() -> None:
+    """The fixture RTL is deterministic and matches the formal ports."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -83,7 +96,8 @@ def test_compile_dense_lif_fixture_rtl_is_deterministic_and_matches_formal_ports
     ],
 )
 def test_dense_lif_spec_rejects_invalid_contracts(kwargs: dict[str, object], match: str) -> None:
-    values: dict[str, object] = {
+    """Each invalid network field is rejected."""
+    values: dict[str, Any] = {
         "name": "dense_lif_frontier_fixture",
         "input_width": 3,
         "output_width": 2,
@@ -108,7 +122,8 @@ def test_dense_lif_spec_rejects_invalid_contracts(kwargs: dict[str, object], mat
     ],
 )
 def test_rate_bound_rejects_invalid_contracts(kwargs: dict[str, object], match: str) -> None:
-    values: dict[str, object] = {
+    """Each invalid rate-bound field is rejected."""
+    values: dict[str, Any] = {
         "name": "output0_rate_bound",
         "output_index": 0,
         "window_cycles": 16,
@@ -121,6 +136,7 @@ def test_rate_bound_rejects_invalid_contracts(kwargs: dict[str, object], match: 
 
 
 def test_compiler_rejects_rate_bound_outside_network_output_width() -> None:
+    """An output past the network width is rejected."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,

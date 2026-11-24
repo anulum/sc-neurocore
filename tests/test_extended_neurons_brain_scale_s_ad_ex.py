@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    BrainScaleSAdExNeuron,
+)
 
 
 class TestBrainScaleSAdEx:
-    def test_fires(self):
+    """The BrainScaleS AdEx neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = BrainScaleSAdExNeuron()
         assert sum(n.step(500.0) for _ in range(2000)) > 0

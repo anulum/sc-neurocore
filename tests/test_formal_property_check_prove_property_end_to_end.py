@@ -10,7 +10,24 @@
 
 from __future__ import annotations
 
-from tests.formal_property_check_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.formal_property_check import (
+    PropertyProofResult,
+    prove_property,
+)
+from tests.formal_property_check_support import (
+    _ACC_RTL,
+    _ACC_SVA_STRONG,
+    _ACC_SVA_WEAK,
+    _BAD_RTL,
+    _BAD_SVA,
+    _CAP_RTL,
+    _CAP_SVA,
+    _needs_formal,
+)
 
 
 @_needs_formal
@@ -18,6 +35,7 @@ class TestProvePropertyEndToEnd:
     """Real machine-checked property proofs (require the formal toolchain)."""
 
     def test_bounded_monitor_is_proven(self, tmp_path: Path) -> None:
+        """A bounded monitor is proven."""
         result = prove_property(_CAP_RTL, _CAP_SVA, top="cap", depth=8, workdir=tmp_path)
         assert isinstance(result, PropertyProofResult)
         assert result.proven is True
@@ -25,6 +43,7 @@ class TestProvePropertyEndToEnd:
         assert result.returncode == 0
 
     def test_violating_monitor_is_disproved(self, tmp_path: Path) -> None:
+        """A violating monitor is disproved with a counterexample."""
         result = prove_property(_BAD_RTL, _BAD_SVA, top="bad", depth=8, workdir=tmp_path)
         assert result.proven is False
         assert result.verdict == "FAIL"
@@ -33,6 +52,7 @@ class TestProvePropertyEndToEnd:
         assert Path(result.trace_path).exists()
 
     def test_malformed_rtl_raises(self, tmp_path: Path) -> None:
+        """Malformed RTL makes the proof fail."""
         with pytest.raises(RuntimeError, match="did not complete"):
             prove_property(
                 "module cap; not verilog", _CAP_SVA, top="cap", depth=4, workdir=tmp_path
@@ -41,12 +61,14 @@ class TestProvePropertyEndToEnd:
     def test_default_workdir_is_created(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """The default work folder is created."""
         monkeypatch.chdir(tmp_path)
         result = prove_property(_CAP_RTL, _CAP_SVA, top="cap", depth=6)
         assert result.proven is True
         assert (tmp_path / "cap_property_work").is_dir()
 
     def test_kinduction_with_strengthening_proves_unbounded(self, tmp_path: Path) -> None:
+        """Strengthened k-induction proves the property."""
         # The strengthening lemma makes the accumulator bound 1-inductive, so
         # k-induction proves it unboundedly at a small depth independent of length.
         result = prove_property(
@@ -56,6 +78,7 @@ class TestProvePropertyEndToEnd:
         assert result.verdict == "PASS"
 
     def test_kinduction_without_strengthening_is_inconclusive(self, tmp_path: Path) -> None:
+        """Unstrengthened k-induction is inconclusive."""
         # The target bound alone is true but not inductive: base case holds, the
         # induction step does not converge -> inconclusive, not disproved.
         result = prove_property(

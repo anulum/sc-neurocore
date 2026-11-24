@@ -10,24 +10,30 @@
 
 from __future__ import annotations
 
-from tests.equilibrium_propagation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.training.equilibrium_propagation import (
+    EPNetwork,
+)
 
 
 class TestEPNetworkInit:
     """Test network initialisation."""
 
     def test_creates_correct_layers(self) -> None:
+        """The network has one weight matrix per layer pair."""
         net = EPNetwork([10, 5, 3])
         assert len(net.weights) == 2
         assert net.weights[0].shape == (10, 5)
         assert net.weights[1].shape == (5, 3)
 
     def test_biases_zero_init(self) -> None:
+        """Biases start at zero."""
         net = EPNetwork([4, 3, 2])
         np.testing.assert_array_equal(net.biases[0], np.zeros(3))
         np.testing.assert_array_equal(net.biases[1], np.zeros(2))
 
     def test_xavier_scale(self) -> None:
+        """Weights follow the Xavier scale."""
         # Xavier init should produce weights with moderate magnitude
         net = EPNetwork([100, 50, 10])
         for w in net.weights:
@@ -35,6 +41,7 @@ class TestEPNetworkInit:
             assert w.std() < 0.5
 
     def test_deterministic_with_seed(self) -> None:
+        """The same seed gives the same weights."""
         net1 = EPNetwork([5, 3], rng_seed=42)
         net2 = EPNetwork([5, 3], rng_seed=42)
         np.testing.assert_array_equal(net1.weights[0], net2.weights[0])

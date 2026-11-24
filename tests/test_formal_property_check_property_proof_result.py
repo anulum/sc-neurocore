@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.formal_property_check_support import *  # noqa: F403
+from sc_neurocore.compiler.formal_property_check import (
+    PropertyProofResult,
+)
 
 
 class TestPropertyProofResult:
     """The result dataclass."""
 
     def test_defaults(self) -> None:
+        """A proof result has no counterexample, trace or summary by default."""
         result = PropertyProofResult(
             proven=True, verdict="PASS", mode="bmc", depth=8, engine="z3", returncode=0
         )

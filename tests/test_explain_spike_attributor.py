@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.explain_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explain import (
+    SpikeAttributor,
+)
+from tests.explain_support import (
+    _make_spikes,
+)
 
 
 class TestSpikeAttributor:
-    def test_basic(self):
+    """Attributing outputs to input spikes."""
+
+    def test_basic(self) -> None:
+        """The importance map covers every step and neuron within [0, 1]."""
         spikes = _make_spikes()
         weights = [np.random.randn(4, 8) * 0.3]
         attr = SpikeAttributor(decay=0.9)
@@ -22,7 +31,8 @@ class TestSpikeAttributor:
         assert result.importance_map.shape == (20, 8)
         assert result.importance_map.max() <= 1.0
 
-    def test_later_spikes_more_important(self):
+    def test_later_spikes_more_important(self) -> None:
+        """Later spikes are more important than earlier ones."""
         spikes = np.zeros((10, 4), dtype=np.int8)
         spikes[2, 0] = 1
         spikes[8, 0] = 1
@@ -32,14 +42,16 @@ class TestSpikeAttributor:
         # Later spike should have higher importance (less decay)
         assert result.importance_map[8, 0] > result.importance_map[2, 0]
 
-    def test_multi_layer_weights(self):
+    def test_multi_layer_weights(self) -> None:
+        """Several weight layers give an input-sized map."""
         spikes = _make_spikes(N=4)
         weights = [np.random.randn(8, 4), np.random.randn(2, 8)]
         attr = SpikeAttributor()
         result = attr.attribute(spikes, weights, output_neuron=0)
         assert result.importance_map.shape == (20, 4)
 
-    def test_zero_spikes(self):
+    def test_zero_spikes(self) -> None:
+        """Without spikes nothing is important."""
         spikes = np.zeros((10, 4), dtype=np.int8)
         weights = [np.random.randn(2, 4)]
         attr = SpikeAttributor()

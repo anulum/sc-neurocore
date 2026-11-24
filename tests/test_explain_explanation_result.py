@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.explain_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.explain import (
+    ExplanationResult,
+)
 
 
 class TestExplanationResult:
-    def test_top_k(self):
+    """Explanation results."""
+
+    def test_top_k(self) -> None:
+        """The top k entries are listed by importance."""
         imp = np.zeros((10, 5))
         imp[3, 2] = 1.0
         imp[7, 4] = 0.5
@@ -24,7 +30,8 @@ class TestExplanationResult:
         assert top[0] == (3, 2, 1.0)
         assert top[1] == (7, 4, 0.5)
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary names the method and importance."""
         imp = np.random.rand(10, 5)
         r = ExplanationResult(method="test", importance_map=imp)
         s = r.summary()

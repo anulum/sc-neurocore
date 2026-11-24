@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    StochasticIFNeuron,
+)
 
 
 class TestStochasticIF:

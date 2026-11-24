@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    DestexheThalamicNeuron,
+)
 
 
 class TestDestexhe:
-    def test_fires(self):
+    """The Destexhe thalamic neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = DestexheThalamicNeuron()
         assert sum(n.step(5.0) for _ in range(200)) > 0
 
-    def test_t_current(self):
+    def test_t_current(self) -> None:
+        """The T-type inactivation evolves."""
         n = DestexheThalamicNeuron()
         for _ in range(100):
             n.step(3.0)

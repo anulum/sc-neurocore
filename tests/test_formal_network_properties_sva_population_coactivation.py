@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (sva_population_coactivation) from former test_formal_network_properties.py
 
+"""Tests of compiling the co-activation cap to SVA."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.formal.network_properties import (
+    DenseLIFNetworkSpec,
+    NetworkPopulationCoactivationCap,
+)
+from sc_neurocore.formal.property_compiler import (
+    compile_network_population_coactivation_sva,
+)
 
 
 def test_compile_dense_lif_population_coactivation_sva_is_deterministic() -> None:
+    """The co-activation SVA is deterministic."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -49,7 +60,8 @@ def test_compile_dense_lif_population_coactivation_sva_is_deterministic() -> Non
 def test_population_coactivation_cap_rejects_invalid_contracts(
     kwargs: dict[str, object], match: str
 ) -> None:
-    values: dict[str, object] = {
+    """Each invalid cap field is rejected."""
+    values: dict[str, Any] = {
         "name": "population_coactivation_cap",
         "max_active_outputs": 1,
     }
@@ -60,6 +72,7 @@ def test_population_coactivation_cap_rejects_invalid_contracts(
 
 
 def test_compiler_rejects_population_coactivation_cap_above_output_width() -> None:
+    """A cap above the output width is rejected."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,

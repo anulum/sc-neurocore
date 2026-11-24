@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    RadiationProfile,
+)
 
 
 class TestRadiationProfileContracts:
-    def test_presets_construct_valid_profiles(self):
+    """Checks on radiation profiles."""
+
+    def test_presets_construct_valid_profiles(self) -> None:
+        """Every preset is a named profile with a valid BER."""
         for profile in (
             RadiationProfile.terrestrial(),
             RadiationProfile.leo(),
@@ -34,8 +41,9 @@ class TestRadiationProfileContracts:
             ({"description": 1}, "description"),
         ],
     )
-    def test_rejects_invalid_contracts(self, kwargs, match):
-        values = {
+    def test_rejects_invalid_contracts(self, kwargs: dict[str, Any], match: str) -> None:
+        """Each invalid profile field is rejected."""
+        values: dict[str, Any] = {
             "name": "LEO",
             "ber": 1e-7,
             "description": "ok",

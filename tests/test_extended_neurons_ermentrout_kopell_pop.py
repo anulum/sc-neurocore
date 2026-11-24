@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    ErmentroutKopellPopulation,
+)
 
 
 class TestErmentroutKopellPop:
-    def test_rate_positive(self):
+    """The Ermentrout-Kopell population model."""
+
+    def test_rate_positive(self) -> None:
+        """The population rate is positive."""
         n = ErmentroutKopellPopulation()
         for _ in range(100):
             r = n.step(5.0)

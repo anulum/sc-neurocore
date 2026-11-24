@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    TrueNorthNeuron,
+)
 
 
 class TestTrueNorth:
-    def test_fires(self):
+    """The TrueNorth neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = TrueNorthNeuron()
         assert sum(n.step(30) for _ in range(100)) > 0

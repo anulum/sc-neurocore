@@ -10,26 +10,36 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjector,
+    FaultModel,
+)
 
 
 class TestFaultInjectorInjectContracts:
-    def test_rejects_invalid_inputs(self):
+    """Checks on fault injection calls."""
+
+    def test_rejects_invalid_inputs(self) -> None:
+        """Each invalid injection argument is rejected."""
         import numpy as np
 
         injector = FaultInjector(seed=1)
         with pytest.raises(ValueError, match="numpy.ndarray"):
-            injector.inject([0, 1], FaultModel.BIT_FLIP, 0.1)  # type: ignore[arg-type]
+            injector.inject(cast(Any, [0, 1]), FaultModel.BIT_FLIP, 0.1)
         with pytest.raises(ValueError, match="1-D"):
             injector.inject(np.zeros((2, 2), dtype=np.uint8), FaultModel.BIT_FLIP, 0.1)
         with pytest.raises(ValueError, match="non-empty"):
             injector.inject(np.zeros((0,), dtype=np.uint8), FaultModel.BIT_FLIP, 0.1)
         with pytest.raises(ValueError, match="FaultModel"):
-            injector.inject(np.zeros((4,), dtype=np.uint8), "bit_flip", 0.1)  # type: ignore[arg-type]
+            injector.inject(np.zeros((4,), dtype=np.uint8), cast(Any, "bit_flip"), 0.1)
         with pytest.raises(ValueError, match="ber"):
             injector.inject(np.zeros((4,), dtype=np.uint8), FaultModel.BIT_FLIP, 1.1)
 
-    def test_discrete_models_reject_non_binary_streams(self):
+    def test_discrete_models_reject_non_binary_streams(self) -> None:
+        """Discrete models reject non-binary streams."""
         import numpy as np
 
         injector = FaultInjector(seed=1)
@@ -37,7 +47,8 @@ class TestFaultInjectorInjectContracts:
         with pytest.raises(ValueError, match="binary"):
             injector.inject(bad, FaultModel.BIT_FLIP, 0.1)
 
-    def test_gaussian_noise_rejects_non_finite_or_out_of_range_inputs(self):
+    def test_gaussian_noise_rejects_non_finite_or_out_of_range_inputs(self) -> None:
+        """Gaussian noise rejects non-finite or out-of-range input."""
         import numpy as np
 
         injector = FaultInjector(seed=1)
@@ -56,7 +67,8 @@ class TestFaultInjectorInjectContracts:
             FaultModel.DROPOUT,
         ],
     )
-    def test_zero_ber_is_deterministic_noop(self, model):
+    def test_zero_ber_is_deterministic_noop(self, model: FaultModel) -> None:
+        """A zero BER changes nothing."""
         import numpy as np
 
         injector = FaultInjector(seed=1)

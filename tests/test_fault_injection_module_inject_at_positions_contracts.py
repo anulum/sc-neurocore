@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjector,
+)
 
 
 class TestInjectAtPositionsContracts:
-    def test_flips_requested_positions(self):
+    """Checks on position-targeted injection."""
+
+    def test_flips_requested_positions(self) -> None:
+        """The requested positions are flipped."""
         import numpy as np
 
         injector = FaultInjector(seed=1)
@@ -32,10 +40,11 @@ class TestInjectAtPositionsContracts:
             ([1.5], "integers"),
         ],
     )
-    def test_rejects_invalid_positions(self, positions, match):
+    def test_rejects_invalid_positions(self, positions: object, match: str) -> None:
+        """Each invalid position list is rejected."""
         import numpy as np
 
         injector = FaultInjector(seed=1)
         bitstream = np.array([0, 1, 0, 1], dtype=np.uint8)
         with pytest.raises(ValueError, match=match):
-            injector.inject_at_positions(bitstream, positions)  # type: ignore[arg-type]
+            injector.inject_at_positions(bitstream, cast(Any, positions))

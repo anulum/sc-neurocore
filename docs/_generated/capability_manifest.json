@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5589
+    "test_files": 5586
   },
   "documentation": {
     "public_pages": [
@@ -3490,12 +3490,9 @@
       "tests/event_driven_support.py",
       "tests/expif_backends_support.py",
       "tests/explain_support.py",
-      "tests/expr_lut_tables_support.py",
       "tests/extended_neurons_support.py",
       "tests/facet_receipt_budget_support.py",
-      "tests/fault_injection_module_support.py",
       "tests/fault_injection_support.py",
-      "tests/fault_tolerance_support.py",
       "tests/fim_symmetry_dynamics_support.py",
       "tests/fitzhugh_nagumo_backends_support.py",
       "tests/fixtures/advanced_plasticity.py",

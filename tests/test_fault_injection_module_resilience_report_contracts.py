@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    ResilienceReport,
+)
 
 
 class TestResilienceReportContracts:
-    def test_summary_includes_core_metrics(self):
+    """Checks on resilience reports."""
+
+    def test_summary_includes_core_metrics(self) -> None:
+        """The summary names the fault and trials."""
         report = ResilienceReport(
             fault_model="bit_flip",
             ber=1e-3,
@@ -46,8 +53,9 @@ class TestResilienceReportContracts:
             ("wall_time_ms", -1.0, "wall_time_ms"),
         ],
     )
-    def test_rejects_invalid_contracts(self, field, value, match):
-        values = {
+    def test_rejects_invalid_contracts(self, field: str, value: object, match: str) -> None:
+        """Each invalid report field is rejected."""
+        values: dict[str, Any] = {
             "fault_model": "bit_flip",
             "ber": 1e-3,
             "bitstream_length": 128,
@@ -64,7 +72,8 @@ class TestResilienceReportContracts:
         with pytest.raises(ValueError, match=match):
             ResilienceReport(**values)
 
-    def test_rejects_unknown_fault_model_value(self):
+    def test_rejects_unknown_fault_model_value(self) -> None:
+        """An unknown fault model is rejected."""
         with pytest.raises(ValueError, match="known FaultModel"):
             ResilienceReport(
                 fault_model="unknown_fault",

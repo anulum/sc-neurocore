@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    CourageNekorkinMapNeuron,
+)
 
 
 class TestCourageNekorkinMap:
-    def test_dynamics(self):
+    """The Courage-Nekorkin map neuron."""
+
+    def test_dynamics(self) -> None:
+        """The map state evolves."""
         n = CourageNekorkinMapNeuron()
         for _ in range(100):
             n.step(0.1)

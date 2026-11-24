@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    LeakyCompeteFireNeuron,
+)
 
 
 class TestLeakyCompeteFire:
-    def test_wta(self):
+    """The leaky compete-and-fire network."""
+
+    def test_wta(self) -> None:
+        """A step returns one spike flag per neuron."""
         n = LeakyCompeteFireNeuron(n_units=3)
         for _ in range(50):
             spikes = n.step([2.0, 0.5, 0.3])

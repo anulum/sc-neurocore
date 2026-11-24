@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    SFANeuron,
+)
 
 
 class TestSFA:
-    def test_fires(self):
+    """The spike-frequency adaptation neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = SFANeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_adaptation_reduces_rate(self):
+    def test_adaptation_reduces_rate(self) -> None:
+        """Adaptation keeps the later rate from rising."""
         n = SFANeuron()
         first = sum(n.step(25.0) for _ in range(100))
         second = sum(n.step(25.0) for _ in range(100))

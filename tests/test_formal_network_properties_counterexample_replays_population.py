@@ -6,12 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (population) from former test_formal_network_properties_counterexample_replays.py
 
+"""Tests of replaying population counterexamples."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+import pytest
+from sc_neurocore.formal.counterexample_replay import (
+    replay_population_coactivation_counterexample,
+    replay_population_inactivity_counterexample,
+    replay_population_silence_counterexample,
+)
+from sc_neurocore.formal.network_properties import (
+    NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
+    NetworkPopulationSilenceAfterCoactivation,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 def test_population_coactivation_replay_detects_too_many_simultaneous_outputs() -> None:
+    """Too many co-active outputs are reported."""
     prop = NetworkPopulationCoactivationCap(
         name="population_coactivation_cap",
         max_active_outputs=1,
@@ -30,6 +47,7 @@ def test_population_coactivation_replay_detects_too_many_simultaneous_outputs() 
 
 
 def test_population_coactivation_replay_accepts_outputs_within_cap() -> None:
+    """Outputs within the cap pass the replay."""
     prop = NetworkPopulationCoactivationCap(
         name="population_coactivation_cap",
         max_active_outputs=1,
@@ -48,6 +66,7 @@ def test_population_coactivation_replay_accepts_outputs_within_cap() -> None:
 
 
 def test_population_silence_replay_detects_spike_after_coactivation() -> None:
+    """A spike inside the silence window is reported."""
     prop = NetworkPopulationSilenceAfterCoactivation(
         name="population_silence_after_coactivation",
         trigger_active_outputs=2,
@@ -70,6 +89,7 @@ def test_population_silence_replay_detects_spike_after_coactivation() -> None:
 
 
 def test_population_silence_replay_accepts_silent_window() -> None:
+    """A silent window passes the replay."""
     prop = NetworkPopulationSilenceAfterCoactivation(
         name="population_silence_after_coactivation",
         trigger_active_outputs=2,
@@ -90,6 +110,7 @@ def test_population_silence_replay_accepts_silent_window() -> None:
 
 
 def test_population_inactivity_replay_detects_too_many_silent_cycles() -> None:
+    """Too long an inactive run is reported."""
     prop = NetworkPopulationInactivityBound(
         name="population_inactivity_bound",
         max_silent_cycles=2,
@@ -115,6 +136,7 @@ def test_population_inactivity_replay_detects_too_many_silent_cycles() -> None:
 
 
 def test_population_inactivity_replay_accepts_bounded_silent_runs() -> None:
+    """Bounded silent runs pass the replay."""
     prop = NetworkPopulationInactivityBound(
         name="population_inactivity_bound",
         max_silent_cycles=2,
@@ -133,6 +155,7 @@ def test_population_inactivity_replay_accepts_bounded_silent_runs() -> None:
 
 
 def test_population_coactivation_replay_accepts_scalar_samples() -> None:
+    """Scalar samples are accepted."""
     # Scalar samples are read as a single active output, so a unit cap holds.
     prop = NetworkPopulationCoactivationCap(
         name="population_coactivation_cap",
@@ -147,6 +170,7 @@ def test_population_coactivation_replay_accepts_scalar_samples() -> None:
 
 
 def test_population_coactivation_replay_rejects_string_sample() -> None:
+    """A string sample is rejected."""
     prop = NetworkPopulationCoactivationCap(
         name="population_coactivation_cap",
         max_active_outputs=1,

@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (auto_dispatch) from former test_expif_backends.py
 
+"""Tests of the ExpIF neuron's automatic backend dispatch."""
+
 from __future__ import annotations
 
-from tests.expif_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore.neurons.models.expif as expif
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
+from tests.expif_backends_support import (
+    _configured,
+    _require_expif_backend,
+)
 
 
 def test_auto_prefers_first_full_parameter_backend() -> None:

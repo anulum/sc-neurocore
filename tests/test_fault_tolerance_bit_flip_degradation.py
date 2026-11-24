@@ -10,14 +10,22 @@
 
 from __future__ import annotations
 
-from tests.fault_tolerance_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.utils.bitstreams import (
+    bitstream_to_probability,
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.fault_injection import (
+    FaultInjector,
+)
 
 
 class TestBitFlipDegradation:
     """Sweep bit-flip rates and verify graceful degradation."""
 
     @pytest.mark.parametrize("error_rate", [0.01, 0.05, 0.10, 0.25, 0.50])
-    def test_sc_graceful_degradation(self, error_rate):
+    def test_sc_graceful_degradation(self, error_rate: float) -> None:
         """SC bitstream error should scale linearly with bit-flip rate."""
         np.random.seed(42)
         p_true = 0.7
@@ -36,7 +44,7 @@ class TestBitFlipDegradation:
         # (flipping a fraction f of bits shifts probability by at most f)
         assert mean_error < error_rate + 0.05
 
-    def test_sc_vs_fixedpoint_robustness(self):
+    def test_sc_vs_fixedpoint_robustness(self) -> None:
         """SC bitstream is more robust to random bit-flips than fixed-point."""
         np.random.seed(42)
         error_rate = 0.1
@@ -69,7 +77,7 @@ class TestBitFlipDegradation:
         assert np.mean(sc_errors) < np.mean(fp_errors)
 
     @pytest.mark.parametrize("error_rate", [0.01, 0.10, 0.25])
-    def test_longer_bitstream_more_robust(self, error_rate):
+    def test_longer_bitstream_more_robust(self, error_rate: float) -> None:
         """Longer bitstreams should be more robust to bit-flips."""
         np.random.seed(42)
         p_true = 0.6

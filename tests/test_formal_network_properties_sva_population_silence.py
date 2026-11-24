@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (sva_population_silence) from former test_formal_network_properties.py
 
+"""Tests of compiling silence after co-activation to SVA."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.formal.network_properties import (
+    DenseLIFNetworkSpec,
+    NetworkPopulationSilenceAfterCoactivation,
+)
+from sc_neurocore.formal.property_compiler import (
+    compile_network_population_silence_sva,
+)
 
 
 def test_compile_dense_lif_population_silence_sva_is_deterministic() -> None:
+    """The silence SVA is deterministic."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -52,7 +63,8 @@ def test_compile_dense_lif_population_silence_sva_is_deterministic() -> None:
 def test_population_silence_rejects_invalid_contracts(
     kwargs: dict[str, object], match: str
 ) -> None:
-    values: dict[str, object] = {
+    """Each invalid silence field is rejected."""
+    values: dict[str, Any] = {
         "name": "population_silence_after_coactivation",
         "trigger_active_outputs": 2,
         "silence_cycles": 3,
@@ -64,6 +76,7 @@ def test_population_silence_rejects_invalid_contracts(
 
 
 def test_compiler_rejects_population_silence_trigger_above_output_width() -> None:
+    """A trigger above the output width is rejected."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,

@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.expr_lut_tables_support import *  # noqa: F403
+import ast
+from sc_neurocore.compiler import (
+    expr_lut_tables as tables,
+)
+from sc_neurocore.compiler.equation_compiler import (
+    _VerilogExprEmitter,
+    Q88,
+)
 
 
 class TestEmitterDelegationParity:

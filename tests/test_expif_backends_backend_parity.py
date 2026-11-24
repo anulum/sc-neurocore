@@ -6,9 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_expif_backends.py
 
+"""Tests that the ExpIF neuron backends agree."""
+
 from __future__ import annotations
 
-from tests.expif_backends_support import *  # noqa: F403
+import importlib
+import numpy as np
+import pytest
+import sc_neurocore.neurons.models.expif as expif
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
+from tests.expif_backends_support import (
+    _COMPILED_BACKENDS,
+    _configured,
+    _GOLDENS,
+    _run,
+    _TRACE_ATOL,
+)
 
 
 def test_every_acceleration_backend_is_executable() -> None:

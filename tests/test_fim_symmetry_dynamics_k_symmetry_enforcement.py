@@ -10,20 +10,26 @@
 
 from __future__ import annotations
 
-from tests.fim_symmetry_dynamics_support import *  # noqa: F403
+from tests.fim_symmetry_dynamics_support import (
+    _make_self_connected_network,
+)
 
 
 class TestKSymmetryEnforcement:
-    def test_enforce_symmetry_method_exists(self):
+    """Restoring weight symmetry after STDP."""
+
+    def test_enforce_symmetry_method_exists(self) -> None:
         """Projection should have _enforce_symmetry method."""
         _, proj, _ = _make_self_connected_network(n=10)
         assert hasattr(proj, "_enforce_symmetry")
 
-    def test_symmetry_called_during_stdp(self):
+    def test_symmetry_called_during_stdp(self) -> None:
         """After STDP update, _enforce_symmetry should have been called.
+
         Note: random topology (p=0.3) is NOT symmetric in connectivity,
         so only edges that exist in BOTH directions get symmetrised.
-        Asymmetry measure may remain nonzero due to one-way edges."""
+        Asymmetry measure may remain nonzero due to one-way edges.
+        """
         net, proj, _ = _make_self_connected_network(n=20)
         net.run(duration=0.05, dt=0.001)
         # Just verify it ran without error

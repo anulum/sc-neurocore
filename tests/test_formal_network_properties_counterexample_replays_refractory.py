@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (refractory) from former test_formal_network_properties_counterexample_replays.py
 
+"""Tests of replaying refractory counterexamples."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from sc_neurocore.formal.counterexample_replay import (
+    replay_refractory_counterexample,
+)
+from sc_neurocore.formal.network_properties import (
+    NetworkRefractoryInvariant,
+)
 
 
 def test_refractory_replay_detects_spike_inside_refractory_window() -> None:
+    """A spike inside the refractory window is reported."""
     prop = NetworkRefractoryInvariant(
         name="output0_refractory",
         output_index=0,
@@ -28,6 +36,7 @@ def test_refractory_replay_detects_spike_inside_refractory_window() -> None:
 
 
 def test_refractory_replay_accepts_spike_after_refractory_window() -> None:
+    """A spike after the window passes the replay."""
     prop = NetworkRefractoryInvariant(
         name="output0_refractory",
         output_index=0,
@@ -43,6 +52,7 @@ def test_refractory_replay_accepts_spike_after_refractory_window() -> None:
 
 
 def test_refractory_replay_selects_monitored_output_index() -> None:
+    """The replay watches the selected output."""
     prop = NetworkRefractoryInvariant(
         name="output1_refractory",
         output_index=1,

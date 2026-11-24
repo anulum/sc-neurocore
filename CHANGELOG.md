@@ -1378,6 +1378,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 88 top-level test modules of the equilibrium-propagation,
+  event-driven, ExpIF, explainability, extended-neuron, fault
+  injection and tolerance, FIM symmetry and formal-verification suites
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy. Seven `type: ignore` comments give
+  way to casts, four helper supports gain types and module docstrings,
+  and the support modules left without an importer are deleted.
+
 - The 93 top-level test modules of the debug-toolkit, delta codec,
   deployment, descriptor, digital-twin, dispatcher, distillation,
   doctor, DPI, DSL, edge, encoding, energy, engine v3 and equation

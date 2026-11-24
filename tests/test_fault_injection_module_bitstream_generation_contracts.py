@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    ResilienceBenchmark,
+)
 
 
 class TestBitstreamGenerationContracts:
-    def test_generated_stream_is_binary_and_length_preserved(self):
+    """Checks on generated bitstreams."""
+
+    def test_generated_stream_is_binary_and_length_preserved(self) -> None:
+        """A generated stream is binary and of the asked length."""
         bench = ResilienceBenchmark(seed=3)
         stream = bench._generate_bitstream(16, 0.25)
         assert stream.shape == (16,)
@@ -29,7 +36,10 @@ class TestBitstreamGenerationContracts:
             (4, float("nan"), "probability"),
         ],
     )
-    def test_rejects_invalid_generation_inputs(self, length, probability, match):
+    def test_rejects_invalid_generation_inputs(
+        self, length: Any, probability: Any, match: str
+    ) -> None:
+        """Each invalid generation argument is rejected."""
         bench = ResilienceBenchmark(seed=3)
         with pytest.raises(ValueError, match=match):
             bench._generate_bitstream(length, probability)

@@ -10,13 +10,32 @@
 
 from __future__ import annotations
 
-from tests.formal_property_check_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler import (
+    formal_property_check,
+)
+from sc_neurocore.compiler.formal_property_check import (
+    prove_property,
+)
+from tests.formal_property_check_support import (
+    _ACC_RTL,
+    _ACC_SVA_WEAK,
+    _BAD_RTL,
+    _BAD_SVA,
+    _CAP_RTL,
+    _CAP_SVA,
+    _fake_run,
+)
 
 
 class TestProvePropertyPureMapping:
     """Verdict-to-result mapping, exercised with a fake run."""
 
     def test_raises_when_tools_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Missing tools are reported."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": False
         )
@@ -24,6 +43,7 @@ class TestProvePropertyPureMapping:
             prove_property(_CAP_RTL, _CAP_SVA, top="cap")
 
     def test_pass_maps_to_proven(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        """A PASS verdict maps to proven."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": True
         )
@@ -46,6 +66,7 @@ class TestProvePropertyPureMapping:
     def test_fail_maps_to_disproven_with_counterexample(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A FAIL verdict maps to disproven with its counterexample."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": True
         )
@@ -69,6 +90,7 @@ class TestProvePropertyPureMapping:
     def test_fail_without_counterexample_text_gets_default(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A FAIL without text gets the default counterexample."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": True
         )
@@ -83,6 +105,7 @@ class TestProvePropertyPureMapping:
     def test_incomplete_verdict_raises(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """An incomplete verdict raises."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": True
         )
@@ -97,6 +120,7 @@ class TestProvePropertyPureMapping:
     def test_inconclusive_kinduction_maps_to_unproven_without_counterexample(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """Inconclusive k-induction maps to unproven."""
         monkeypatch.setattr(
             formal_property_check, "formal_tools_available", lambda engine="z3": True
         )

@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equilibrium_propagation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.training.equilibrium_propagation import (
+    EPNetwork,
+)
 
 
 class TestEPSettling:
     """Test the free-phase settling process."""
 
     def test_settle_returns_correct_structure(self) -> None:
+        """Settling returns one state per layer."""
         net = EPNetwork([4, 3, 2])
         x = np.array([0.5, 0.3, 0.1, 0.8])
         states = net._settle(x, n_steps=5)
@@ -26,12 +30,14 @@ class TestEPSettling:
         assert states[2].shape == (2,)
 
     def test_input_stays_clamped(self) -> None:
+        """The input layer stays clamped."""
         net = EPNetwork([4, 3, 2])
         x = np.array([0.5, 0.3, 0.1, 0.8])
         states = net._settle(x, n_steps=20)
         np.testing.assert_array_equal(states[0], x)
 
     def test_energy_decreases_free_phase(self) -> None:
+        """The free-phase energy does not rise."""
         net = EPNetwork([5, 4, 3])
         x = np.ones(5) * 0.5
         # Settle progressively and check energy trend

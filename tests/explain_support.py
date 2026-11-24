@@ -6,8 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_explain.py
 
+"""Shared names and a spike-raster maker for the explainability tests."""
+
 from __future__ import annotations
 
+import numpy.typing as npt
 import numpy as np
 from sc_neurocore.explain import (
     SpikeAttributor,
@@ -17,7 +20,9 @@ from sc_neurocore.explain import (
 )
 
 
-def _make_spikes(T=20, N=8, rate=0.2, seed=42):
+def _make_spikes(
+    T: int = 20, N: int = 8, rate: float = 0.2, seed: int = 42
+) -> npt.NDArray[np.int8]:
     rng = np.random.RandomState(seed)
     return (rng.random((T, N)) < rate).astype(np.int8)
 

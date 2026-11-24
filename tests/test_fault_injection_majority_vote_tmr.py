@@ -10,16 +10,31 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.utils.bitstreams import (
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.fault_injection import (
+    FaultInjector,
+)
+from sc_neurocore.utils.rng import (
+    RNG,
+)
+from tests.fault_injection_support import (
+    _majority_vote,
+)
 
 
 class TestMajorityVoteTMR:
-    def test_clean_signal_preserved(self):
+    """Triple modular redundancy by majority vote."""
+
+    def test_clean_signal_preserved(self) -> None:
+        """A clean signal survives the vote."""
         bits = generate_bernoulli_bitstream(0.7, 2000, rng=RNG(42))
         voted = _majority_vote(bits.copy(), bits.copy(), bits.copy())
         np.testing.assert_array_equal(bits, voted)
 
-    def test_tmr_reduces_error(self):
+    def test_tmr_reduces_error(self) -> None:
         """TMR should reduce error compared to single faulty channel."""
         L = 5000
         target = 0.6
@@ -40,7 +55,8 @@ class TestMajorityVoteTMR:
 
         assert np.mean(tmr_errs) < np.mean(single_errs)
 
-    def test_tmr_output_binary(self):
+    def test_tmr_output_binary(self) -> None:
+        """The vote matches the expected majority."""
         a = np.array([0, 1, 1, 0, 1], dtype=np.uint8)
         b = np.array([1, 1, 0, 0, 1], dtype=np.uint8)
         c = np.array([0, 1, 1, 1, 0], dtype=np.uint8)

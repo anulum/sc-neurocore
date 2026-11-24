@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjector,
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
 class TestSeedContracts:
-    def test_fault_injector_reproducible_with_same_seed(self):
+    """Checks on the injector seed."""
+
+    def test_fault_injector_reproducible_with_same_seed(self) -> None:
+        """The same seed injects the same faults."""
         bits = [0, 1, 1, 0, 1, 0, 1, 1]
         import numpy as np
 
@@ -25,8 +35,9 @@ class TestSeedContracts:
         assert np.array_equal(a, b)
 
     @pytest.mark.parametrize("seed", [1.5, "7", True])
-    def test_rejects_non_integer_seed(self, seed):
+    def test_rejects_non_integer_seed(self, seed: object) -> None:
+        """A seed that is not an integer is rejected."""
         with pytest.raises(ValueError, match="seed"):
-            FaultInjector(seed=seed)  # type: ignore[arg-type]
+            FaultInjector(seed=cast(Any, seed))
         with pytest.raises(ValueError, match="seed"):
-            ResilienceBenchmark(seed=seed)  # type: ignore[arg-type]
+            ResilienceBenchmark(seed=cast(Any, seed))

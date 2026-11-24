@@ -10,14 +10,20 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    InhomogeneousPoissonNeuron,
+)
 
 
 class TestInhomogeneousPoisson:
-    def test_fires(self):
+    """The inhomogeneous Poisson neuron."""
+
+    def test_fires(self) -> None:
+        """A high input rate fires."""
         n = InhomogeneousPoissonNeuron()
         assert sum(n.step(1000.0) for _ in range(1000)) > 0
 
-    def test_zero_rate(self):
+    def test_zero_rate(self) -> None:
+        """A zero rate never fires."""
         n = InhomogeneousPoissonNeuron()
         assert sum(n.step(0.0) for _ in range(100)) == 0

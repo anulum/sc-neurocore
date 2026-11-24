@@ -6,12 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rate_window) from former test_formal_network_properties_counterexample_replays.py
 
+"""Tests of replaying rate-window counterexamples."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+import pytest
+from sc_neurocore.formal.counterexample_replay import (
+    replay_rate_bound_counterexample,
+)
+from sc_neurocore.formal.network_properties import (
+    NetworkRateBound,
+)
 
 
 def test_counterexample_replay_detects_aligned_window_rate_violation() -> None:
+    """A rate violation in an aligned window is reported."""
     prop = NetworkRateBound(
         name="output0_rate_bound",
         output_index=0,
@@ -28,6 +37,7 @@ def test_counterexample_replay_detects_aligned_window_rate_violation() -> None:
 
 
 def test_counterexample_replay_selects_monitored_output_index() -> None:
+    """The replay watches the selected output."""
     prop = NetworkRateBound(
         name="output1_rate_bound",
         output_index=1,
@@ -51,6 +61,7 @@ def test_counterexample_replay_selects_monitored_output_index() -> None:
 
 
 def test_counterexample_replay_resets_on_aligned_windows() -> None:
+    """The spike count resets at each window."""
     prop = NetworkRateBound(
         name="output0_rate_bound",
         output_index=0,
@@ -66,6 +77,7 @@ def test_counterexample_replay_resets_on_aligned_windows() -> None:
 
 
 def test_counterexample_replay_rejects_non_binary_trace_values() -> None:
+    """Non-binary trace values are rejected."""
     prop = NetworkRateBound(
         name="output0_rate_bound",
         output_index=0,

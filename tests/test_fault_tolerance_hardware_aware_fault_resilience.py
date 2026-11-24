@@ -10,20 +10,23 @@
 
 from __future__ import annotations
 
-from tests.fault_tolerance_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.layers.hardware_aware import (
+    HardwareAwareSCLayer,
+)
 
 
 class TestHardwareAwareFaultResilience:
     """Test that hardware-aware training builds fault resilience."""
 
-    def test_stuck_synapses_dont_degrade_output(self):
+    def test_stuck_synapses_dont_degrade_output(self) -> None:
         """Network with stuck synapses should still produce valid output."""
         layer = HardwareAwareSCLayer(n_inputs=8, n_neurons=4, length=128, stuck_rate=0.2, seed=42)
         out = layer.forward([0.5] * 8)
         assert out.shape == (4,)
         assert np.all(np.isfinite(out))
 
-    def test_increasing_stuck_rate_degrades_gracefully(self):
+    def test_increasing_stuck_rate_degrades_gracefully(self) -> None:
         """Higher stuck rates should still produce finite outputs."""
         results = {}
         for rate in [0.0, 0.1, 0.3, 0.5]:

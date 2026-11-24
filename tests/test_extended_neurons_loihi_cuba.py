@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    LoihiCUBANeuron,
+)
 
 
 class TestLoihiCUBA:
-    def test_fires(self):
+    """The Loihi CUBA neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = LoihiCUBANeuron()
         assert sum(n.step(200) for _ in range(100)) > 0

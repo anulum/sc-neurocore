@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
 class TestBenchmarkRunContracts:
-    def test_run_returns_report_with_expected_fault_model(self):
+    """Checks on a resilience benchmark run."""
+
+    def test_run_returns_report_with_expected_fault_model(self) -> None:
+        """A run reports its fault model and trials."""
         bench = ResilienceBenchmark(seed=2)
         report = bench.run(
             fault_model=FaultModel.BIT_FLIP, ber=1e-3, bitstream_length=32, num_trials=5
@@ -32,7 +41,8 @@ class TestBenchmarkRunContracts:
             ({"num_trials": 0}, "num_trials"),
         ],
     )
-    def test_run_rejects_invalid_inputs(self, kwargs, match):
+    def test_run_rejects_invalid_inputs(self, kwargs: dict[str, object], match: str) -> None:
+        """Each invalid run argument is rejected."""
         bench = ResilienceBenchmark(seed=2)
         values = {
             "fault_model": FaultModel.BIT_FLIP,
@@ -43,4 +53,4 @@ class TestBenchmarkRunContracts:
         }
         values.update(kwargs)
         with pytest.raises(ValueError, match=match):
-            bench.run(**values)  # type: ignore[arg-type]
+            bench.run(**cast(Any, values))

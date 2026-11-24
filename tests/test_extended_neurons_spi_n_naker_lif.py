@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    SpiNNakerLIFNeuron,
+)
 
 
 class TestSpiNNakerLIF:
-    def test_fires(self):
+    """The SpiNNaker LIF neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = SpiNNakerLIFNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_refractory(self):
+    def test_refractory(self) -> None:
+        """A spike starts a refractory count."""
         n = SpiNNakerLIFNeuron(tau_refrac=5.0)
         # Drive hard until spike
         for _ in range(50):

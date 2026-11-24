@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.fim_symmetry_dynamics_support import *  # noqa: F403
+import numpy as np
 
 
 class TestSCFIMConnection:
-    def test_longer_bitstream_higher_precision(self):
+    """The link between SC encoding and the FIM."""
+
+    def test_longer_bitstream_higher_precision(self) -> None:
         """Longer bitstream L should give lower SC encoding error.
-        This is the necessary condition for the SC-FIM conjecture."""
+
+        This is the necessary condition for the SC-FIM conjecture.
+        """
         from sc_neurocore import BitstreamEncoder, bitstream_to_probability
 
         errors = {}

@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.event_driven_support import *  # noqa: F403
+from sc_neurocore.event_driven import (
+    EventStats,
+)
 
 
 class TestEventStats:
-    def test_summary(self):
+    """Statistics of an event-driven run."""
+
+    def test_summary(self) -> None:
+        """The summary names the event count."""
         s = EventStats(total_events_processed=100, total_spikes_generated=10, max_queue_size=50)
         assert "100 events" in s.summary()

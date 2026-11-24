@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equilibrium_propagation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.training.equilibrium_propagation import (
+    EPNetwork,
+)
 
 
 class TestEPTraining:
     """Test the EP training protocol."""
 
     def test_train_returns_mse(self) -> None:
+        """Training returns a non-negative MSE."""
         net = EPNetwork([4, 3, 2])
         x = np.random.default_rng(0).random((5, 4))
         y = np.random.default_rng(1).random((5, 2))
@@ -48,6 +52,7 @@ class TestEPTraining:
     # the algorithm structure, not convergence guarantees.
 
     def test_predict_shape(self) -> None:
+        """Predictions have one value in [0, 1] per output."""
         net = EPNetwork([4, 3, 2])
         x = np.array([0.1, 0.2, 0.3, 0.4])
         output = net.predict(x)

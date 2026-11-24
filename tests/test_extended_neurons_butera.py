@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    ButeraRespiratoryNeuron,
+)
 
 
 class TestButera:
-    def test_dynamics(self):
+    """The Butera respiratory neuron."""
+
+    def test_dynamics(self) -> None:
+        """The persistent sodium inactivation evolves."""
         n = ButeraRespiratoryNeuron()
         for _ in range(100):
             n.step(5.0)

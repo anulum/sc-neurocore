@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
 class TestBenchmarkSweepContracts:
-    def test_sweep_returns_reports_for_each_ber(self):
+    """Checks on a BER sweep."""
+
+    def test_sweep_returns_reports_for_each_ber(self) -> None:
+        """A sweep reports each BER in order."""
         bench = ResilienceBenchmark(seed=2)
         reports = bench.sweep_ber(
             fault_model=FaultModel.BIT_FLIP,
@@ -33,12 +42,13 @@ class TestBenchmarkSweepContracts:
             ([1e-3, 1.2], "entries"),
         ],
     )
-    def test_sweep_rejects_invalid_ber_range(self, ber_range, match):
+    def test_sweep_rejects_invalid_ber_range(self, ber_range: object, match: str) -> None:
+        """An invalid BER range is rejected."""
         bench = ResilienceBenchmark(seed=2)
         with pytest.raises(ValueError, match=match):
             bench.sweep_ber(
                 fault_model=FaultModel.BIT_FLIP,
-                ber_range=ber_range,  # type: ignore[arg-type]
+                ber_range=cast(Any, ber_range),
                 bitstream_length=32,
                 num_trials=5,
             )

@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.event_driven_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.event_driven import (
+    EventDrivenSimulator,
+)
+from tests.event_driven_support import (
+    _simple_chain,
+)
 
 
 class TestEventDrivenSimulator:
-    def test_no_events(self):
+    """The event-driven network simulator."""
+
+    def test_no_events(self) -> None:
+        """Without events nothing fires."""
         sim = _simple_chain()
         spikes, stats = sim.run(100.0)
         assert len(spikes) == 0
         assert stats.total_events_processed == 0
 
-    def test_single_spike_propagation(self):
+    def test_single_spike_propagation(self) -> None:
+        """A spike reaches its target neuron."""
         sim = EventDrivenSimulator(
             n_neurons=3,
             connectivity=[(0, 1, 1.5, 1.0), (1, 2, 1.5, 1.0)],
@@ -34,7 +44,8 @@ class TestEventDrivenSimulator:
         fired_neurons = {nid for _, nid in spikes}
         assert 1 in fired_neurons
 
-    def test_chain_propagation(self):
+    def test_chain_propagation(self) -> None:
+        """A spike propagates down the chain."""
         sim = EventDrivenSimulator(
             n_neurons=3,
             connectivity=[(0, 1, 2.0, 0.5), (1, 2, 2.0, 0.5)],
@@ -46,7 +57,8 @@ class TestEventDrivenSimulator:
         assert 1 in fired
         assert 2 in fired
 
-    def test_refractory_period(self):
+    def test_refractory_period(self) -> None:
+        """Spikes of one neuron are at least the refractory period apart."""
         sim = EventDrivenSimulator(
             n_neurons=2,
             connectivity=[(0, 1, 2.0, 0.0)],
@@ -60,13 +72,15 @@ class TestEventDrivenSimulator:
         if len(neuron1_times) >= 2:
             assert neuron1_times[1] - neuron1_times[0] >= 5.0
 
-    def test_inject_current(self):
+    def test_inject_current(self) -> None:
+        """Injected currents are processed as events."""
         sim = EventDrivenSimulator(n_neurons=2, connectivity=[], threshold=1.0)
         sim.inject_current([(0.0, 0, 0.5), (1.0, 0, 0.6)])
         spikes, stats = sim.run(10.0)
         assert stats.total_events_processed == 2
 
-    def test_speedup_estimate(self):
+    def test_speedup_estimate(self) -> None:
+        """The simulator estimates a speed-up over clock-driven runs."""
         sim = EventDrivenSimulator(
             n_neurons=1000,
             connectivity=[(0, i, 2.0, 0.0) for i in range(1, 10)],
@@ -77,7 +91,8 @@ class TestEventDrivenSimulator:
         if stats.total_events_processed > 0:
             assert stats.speedup_vs_clockdriven > 1.0
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset clears the recorded spikes."""
         sim = _simple_chain()
         sim.inject_spikes([(0.0, 0)])
         sim.run(10.0)
@@ -85,7 +100,8 @@ class TestEventDrivenSimulator:
         spikes, stats = sim.run(10.0)
         assert len(spikes) == 0
 
-    def test_delayed_events(self):
+    def test_delayed_events(self) -> None:
+        """A delayed event arrives after its delay."""
         sim = EventDrivenSimulator(
             n_neurons=2,
             connectivity=[(0, 1, 2.0, 5.0)],  # 5ms delay
@@ -97,7 +113,8 @@ class TestEventDrivenSimulator:
         if neuron1_times:
             assert neuron1_times[0] >= 5.0  # arrived after delay
 
-    def test_duration_cutoff(self):
+    def test_duration_cutoff(self) -> None:
+        """Events past the duration are not processed."""
         sim = EventDrivenSimulator(
             n_neurons=2,
             connectivity=[(0, 1, 2.0, 50.0)],  # arrives at t=50
@@ -107,7 +124,8 @@ class TestEventDrivenSimulator:
         spikes, _ = sim.run(10.0)  # cut off at t=10
         assert len(spikes) == 0  # event at t=50 not processed
 
-    def test_large_sparse_network(self):
+    def test_large_sparse_network(self) -> None:
+        """A large sparse network processes events."""
         rng = np.random.RandomState(42)
         n = 500
         conns = []

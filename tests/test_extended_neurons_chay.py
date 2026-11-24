@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    ChayNeuron,
+)
 
 
 class TestChay:
-    def test_drive_changes_state_without_leaving_physical_bounds(self):
+    """The Chay bursting neuron."""
+
+    def test_drive_changes_state_without_leaving_physical_bounds(self) -> None:
+        """Drive raises the voltage and keeps gates and calcium in bounds."""
         rest = ChayNeuron()
         driven = ChayNeuron()
         for _ in range(500):
@@ -24,7 +29,8 @@ class TestChay:
         assert 0.0 <= driven.n <= 1.0
         assert driven.ca >= 0.0
 
-    def test_calcium(self):
+    def test_calcium(self) -> None:
+        """The calcium concentration evolves."""
         n = ChayNeuron()
         for _ in range(200):
             n.step(5.0)

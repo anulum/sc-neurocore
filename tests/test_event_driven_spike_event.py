@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.event_driven_support import *  # noqa: F403
+from sc_neurocore.event_driven import (
+    SpikeEvent,
+)
 
 
 class TestSpikeEvent:
-    def test_ordering(self):
+    """Spike event records."""
+
+    def test_ordering(self) -> None:
+        """Events are ordered by time."""
         e1 = SpikeEvent(time=1.0, source_id=0, target_id=1)
         e2 = SpikeEvent(time=2.0, source_id=0, target_id=1)
         assert e1 < e2

@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (sva_temporal_separation) from former test_formal_network_properties.py
 
+"""Tests of compiling temporal separation to SVA."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.formal.network_properties import (
+    DenseLIFNetworkSpec,
+    NetworkOutputTemporalSeparation,
+)
+from sc_neurocore.formal.property_compiler import (
+    compile_network_temporal_separation_sva,
+)
 
 
 def test_compile_dense_lif_temporal_separation_sva_is_deterministic() -> None:
+    """The separation SVA is deterministic."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -57,7 +68,8 @@ def test_compile_dense_lif_temporal_separation_sva_is_deterministic() -> None:
 def test_temporal_separation_rejects_invalid_contracts(
     kwargs: dict[str, object], match: str
 ) -> None:
-    values: dict[str, object] = {
+    """Each invalid separation field is rejected."""
+    values: dict[str, Any] = {
         "name": "motor_left_right_temporal_separation",
         "output_a": 0,
         "output_b": 1,
@@ -70,6 +82,7 @@ def test_temporal_separation_rejects_invalid_contracts(
 
 
 def test_compiler_rejects_temporal_separation_outside_network_output_width() -> None:
+    """An output past the network width is rejected."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,
@@ -88,6 +101,7 @@ def test_compiler_rejects_temporal_separation_outside_network_output_width() -> 
 
 
 def test_temporal_separation_rejects_output_index_beyond_width() -> None:
+    """An output index past the width is rejected."""
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
         input_width=3,

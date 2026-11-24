@@ -6,13 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_event_driven.py
 
+"""Shared names and a chain-network builder for the event-driven simulator tests."""
+
 from __future__ import annotations
 
 import numpy as np
 from sc_neurocore.event_driven import EventDrivenSimulator, SpikeEvent, EventStats
 
 
-def _simple_chain(n=5):
+def _simple_chain(n: int = 5) -> EventDrivenSimulator:
     """Linear chain: 0→1→2→3→4."""
     conns = [(i, i + 1, 0.6, 1.0) for i in range(n - 1)]
     return EventDrivenSimulator(n_neurons=n, connectivity=conns, threshold=1.0, tau_mem=20.0)

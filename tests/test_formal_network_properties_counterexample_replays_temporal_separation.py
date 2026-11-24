@@ -6,12 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (temporal_separation) from former test_formal_network_properties_counterexample_replays.py
 
+"""Tests of replaying temporal-separation counterexamples."""
+
 from __future__ import annotations
 
-from tests.formal_network_properties_support import *  # noqa: F403
+import pytest
+from sc_neurocore.formal.counterexample_replay import (
+    replay_temporal_separation_counterexample,
+)
+from sc_neurocore.formal.network_properties import (
+    NetworkOutputTemporalSeparation,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 def test_temporal_separation_replay_detects_bounded_window_violation() -> None:
+    """A second output inside the window is reported."""
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",
         output_a=0,
@@ -33,6 +46,7 @@ def test_temporal_separation_replay_detects_bounded_window_violation() -> None:
 
 
 def test_temporal_separation_replay_rejects_simultaneous_outputs() -> None:
+    """Simultaneous outputs are reported at cycle 0."""
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",
         output_a=0,
@@ -49,6 +63,7 @@ def test_temporal_separation_replay_rejects_simultaneous_outputs() -> None:
 
 
 def test_temporal_separation_replay_accepts_outputs_after_window() -> None:
+    """Outputs after the window pass the replay."""
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",
         output_a=0,
@@ -67,6 +82,7 @@ def test_temporal_separation_replay_accepts_outputs_after_window() -> None:
 
 
 def test_temporal_separation_replay_detects_reverse_window_violation() -> None:
+    """A violation in the reverse order is reported."""
     # output_b fires first, then output_a fires inside the separation window —
     # the symmetric (b-triggers-a) violation branch.
     prop = NetworkOutputTemporalSeparation(
@@ -90,6 +106,7 @@ def test_temporal_separation_replay_detects_reverse_window_violation() -> None:
 
 
 def test_temporal_separation_replay_decrements_output_b_window() -> None:
+    """The second output's window counts down."""
     # output_b fires, then quiet cycles run its window down to zero before
     # output_a fires after the window has closed — no violation, exercising the
     # output_b countdown branch.
@@ -111,6 +128,7 @@ def test_temporal_separation_replay_decrements_output_b_window() -> None:
 
 
 def test_temporal_separation_replay_rejects_scalar_sample_for_second_output() -> None:
+    """A scalar sample for a second output is rejected."""
     # A scalar sample only carries output_index 0, so monitoring output_b=1
     # raises rather than silently misreading the trace.
     prop = NetworkOutputTemporalSeparation(
@@ -125,6 +143,7 @@ def test_temporal_separation_replay_rejects_scalar_sample_for_second_output() ->
 
 
 def test_temporal_separation_replay_rejects_string_sample() -> None:
+    """A string sample is rejected."""
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",
         output_a=0,
@@ -137,6 +156,7 @@ def test_temporal_separation_replay_rejects_string_sample() -> None:
 
 
 def test_temporal_separation_replay_rejects_out_of_range_output_index() -> None:
+    """An output index past the sample is rejected."""
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",
         output_a=0,

@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    WongWangUnit,
+)
 
 
 class TestWongWang:
-    def test_decision(self):
+    """The Wong-Wang decision model."""
+
+    def test_decision(self) -> None:
+        """The two populations separate into a decision."""
         n = WongWangUnit()
         for _ in range(2000):
             n.step(0.02, 0.0)

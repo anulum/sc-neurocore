@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.equilibrium_propagation_support import *  # noqa: F403
+from sc_neurocore.training.equilibrium_propagation import (
+    EPNetwork,
+)
 
 
 class TestEPSerialisation:
     """Test parameter serialisation."""
 
     def test_get_params_structure(self) -> None:
+        """The parameters list layer sizes, weights and biases."""
         net = EPNetwork([3, 2, 1])
         params = net.get_params()
         assert params["layer_sizes"] == [3, 2, 1]
@@ -24,6 +27,7 @@ class TestEPSerialisation:
         assert len(params["biases"]) == 2
 
     def test_params_are_json_serialisable(self) -> None:
+        """The parameters round-trip through JSON."""
         import json
 
         net = EPNetwork([3, 2])

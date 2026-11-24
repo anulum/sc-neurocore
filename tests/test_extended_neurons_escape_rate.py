@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    EscapeRateNeuron,
+)
 
 
 class TestEscapeRate:
-    def test_fires(self):
+    """The escape-rate stochastic neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = EscapeRateNeuron(rho_0=0.1, delta_u=2.0)
         assert sum(n.step(30.0) for _ in range(500)) > 0

@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.fault_tolerance_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.utils.bitstreams import (
+    bitstream_to_probability,
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.fault_injection import (
+    FaultInjector,
+)
 
 
 class TestStuckAtFaults:
     """Test stuck-at fault models."""
 
-    def test_stuck_at_0_decreases_probability(self):
+    def test_stuck_at_0_decreases_probability(self) -> None:
         """Stuck-at-0 faults should decrease the estimated probability."""
         np.random.seed(42)
         p_true = 0.7
@@ -25,7 +32,7 @@ class TestStuckAtFaults:
         p_est = bitstream_to_probability(corrupted)
         assert p_est < p_true
 
-    def test_stuck_at_1_increases_probability(self):
+    def test_stuck_at_1_increases_probability(self) -> None:
         """Stuck-at-1 faults should increase the estimated probability."""
         np.random.seed(42)
         p_true = 0.3

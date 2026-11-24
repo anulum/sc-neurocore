@@ -10,18 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
 from sc_neurocore.neurons.models.sc_normalized_energy_lif import (
     SCNormalizedEnergyLIFNeuron as EnergyLIFNeuron,
 )
 
 
 class TestEnergyLIF:
-    def test_fires(self):
+    """The energy-limited LIF neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = EnergyLIFNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_energy_depletes(self):
+    def test_energy_depletes(self) -> None:
+        """Firing depletes the energy store."""
         n = EnergyLIFNeuron()
         for _ in range(100):
             n.step(30.0)

@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    HuberBraunNeuron,
+)
 
 
 class TestHuberBraun:
-    def test_fires(self):
+    """The Huber-Braun thermoreceptor neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = HuberBraunNeuron()
         assert sum(n.step(5.0) for _ in range(300)) > 0

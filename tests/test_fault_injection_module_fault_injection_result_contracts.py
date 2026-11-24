@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultInjectionResult,
+)
 
 
 class TestFaultInjectionResultContracts:
-    def test_probability_properties_follow_popcount_ratio(self):
+    """Checks on fault-injection results."""
+
+    def test_probability_properties_follow_popcount_ratio(self) -> None:
+        """Probabilities follow the popcount ratios."""
         result = FaultInjectionResult(
             original_popcount=6,
             corrupted_popcount=5,
@@ -37,7 +44,8 @@ class TestFaultInjectionResultContracts:
             ({"bits_flipped": 11}, "bits_flipped"),
         ],
     )
-    def test_rejects_invalid_contracts(self, kwargs, match):
+    def test_rejects_invalid_contracts(self, kwargs: dict[str, Any], match: str) -> None:
+        """Each invalid result field is rejected."""
         values = {
             "original_popcount": 6,
             "corrupted_popcount": 5,

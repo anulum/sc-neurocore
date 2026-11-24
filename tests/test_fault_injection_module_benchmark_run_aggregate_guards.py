@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_module_support import *  # noqa: F403
+from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    ResilienceBenchmark,
+)
 
 
 class TestBenchmarkRunAggregateGuards:
-    def test_run_outputs_finite_statistics(self):
+    """Aggregate statistics of a resilience run."""
+
+    def test_run_outputs_finite_statistics(self) -> None:
+        """A run reports ordered, finite error statistics."""
         bench = ResilienceBenchmark(seed=5)
         report = bench.run(
             fault_model=FaultModel.BIT_FLIP,

@@ -10,19 +10,22 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
 from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
     SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
 )
 
 
 class TestSigmaDelta:
-    def test_positive_spike(self):
+    """The sigma-delta neuron."""
+
+    def test_positive_spike(self) -> None:
+        """A positive drive gives a positive spike."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         spikes = [n.step(0.3) for _ in range(10)]
         assert 1 in spikes
 
-    def test_negative_spike(self):
+    def test_negative_spike(self) -> None:
+        """A negative drive gives a negative spike."""
         n = SigmaDeltaNeuron(v_threshold=1.0)
         spikes = [n.step(-0.3) for _ in range(10)]
         assert -1 in spikes

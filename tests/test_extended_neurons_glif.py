@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    GLIFNeuron,
+)
 
 
 class TestGLIF:
-    def test_fires(self):
+    """The generalised LIF neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = GLIFNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_adaptation(self):
+    def test_adaptation(self) -> None:
+        """An after-spike current builds up."""
         n = GLIFNeuron()
         for _ in range(100):
             n.step(30.0)

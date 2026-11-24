@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.equilibrium_propagation_support import *  # noqa: F403
+import importlib
+import importlib.abc
+import sc_neurocore.training as training
+import sys
+from sc_neurocore.training.equilibrium_propagation import (
+    EPNetwork,
+)
+from tests.equilibrium_propagation_support import (
+    _BlockTorchFinder,
+)
 
 
 def test_training_package_exports_equilibrium_propagation_surface() -> None:

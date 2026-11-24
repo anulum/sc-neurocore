@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.fault_injection_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.utils.bitstreams import (
+    generate_bernoulli_bitstream,
+)
+from sc_neurocore.utils.fault_injection import (
+    FaultInjector,
+)
+from sc_neurocore.utils.rng import (
+    RNG,
+)
 
 
 class TestFixedPointComparison:
-    def test_sc_beats_fp_at_10pct_error(self):
+    """SC against fixed point under bit flips."""
+
+    def test_sc_beats_fp_at_10pct_error(self) -> None:
         """SC should degrade less than 16-bit fixed-point at 10% BER."""
         target = 0.65
         rate = 0.1

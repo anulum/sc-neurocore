@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import (
+    GatedLIFNeuron,
+)
 
 
 class TestGatedLIF:
-    def test_fires(self):
+    """The gated LIF neuron."""
+
+    def test_fires(self) -> None:
+        """The neuron fires under drive."""
         n = GatedLIFNeuron()
         assert sum(n.step(0.5) for _ in range(20)) > 0
