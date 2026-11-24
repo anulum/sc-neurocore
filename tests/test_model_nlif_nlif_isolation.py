@@ -10,34 +10,46 @@
 
 from __future__ import annotations
 
-from tests.model_nlif_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.nlif import (
+    NonlinearLIFNeuron,
+)
 
 
 class TestNLIFIsolation:
-    def test_defaults(self):
+    """The NonlinearLIFNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = NonlinearLIFNeuron()
         assert n.v == -65.0 and n.w == 0.0
         assert n.v_rest == -65.0 and n.v_crit == -40.0
         assert n.v_threshold == -20.0 and n.a == 0.04
         assert n.b == 0.5 and n.tau_w == 100.0 and n.c_m == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert NonlinearLIFNeuron().step(0.0) in (0, 1)
 
-    def test_both_states_evolve(self):
+    def test_both_states_evolve(self) -> None:
+        """The voltage changes under drive (the test checks v only)."""
         n = NonlinearLIFNeuron()
         v0, w0 = n.v, n.w
         for _ in range(500):
             n.step(20.0)
         assert n.v != v0
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = NonlinearLIFNeuron()
         for _ in range(100_000):
             n.step(20.0)
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = NonlinearLIFNeuron(v_rest=-62.0, v_reset=-58.0, v_crit=-40.0, v_threshold=-20.0)
         for _ in range(5000):
             n.step(20.0)
@@ -65,19 +77,22 @@ class TestNLIFIsolation:
             {"dt": 101.0},
         ],
     )
-    def test_rejects_non_physical_configuration(self, kwargs):
+    def test_rejects_non_physical_configuration(self, kwargs: dict[str, Any]) -> None:
+        """The model rejects non-physical configuration."""
         with pytest.raises(ValueError):
             NonlinearLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = NonlinearLIFNeuron(v=-60.0, w=0.5)
         before = (n.v, n.w)
         with pytest.raises(ValueError, match="current"):
             n.step(current)
         assert (n.v, n.w) == before
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = NonlinearLIFNeuron()

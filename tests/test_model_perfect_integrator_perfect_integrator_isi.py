@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
+from tests.model_perfect_integrator_support import (
+    _analytical_isi_steps,
+    _collect_spike_times,
+)
 
 
 class TestPerfectIntegratorISI:
     """Inter-spike interval analysis — should be perfectly regular."""
 
-    def test_constant_isi(self):
+    def test_constant_isi(self) -> None:
         """All ISIs identical (deterministic, no adaptation)."""
         n = PerfectIntegratorNeuron()
         times = _collect_spike_times(n, current=5.0, steps=2000)
@@ -25,7 +32,7 @@ class TestPerfectIntegratorISI:
         # All ISIs should be identical (±0 for deterministic model)
         assert np.all(isis == isis[0]), f"ISI variability detected: unique ISIs = {np.unique(isis)}"
 
-    def test_isi_matches_analytical(self):
+    def test_isi_matches_analytical(self) -> None:
         """Measured ISI matches C·(θ-V_reset) / (I·dt)."""
         n = PerfectIntegratorNeuron(c_m=2.0, v_threshold=3.0, v_reset=0.5)
         I = 10.0
@@ -42,7 +49,7 @@ class TestPerfectIntegratorISI:
         # Allow 1 step tolerance for floating-point rounding
         assert abs(measured_isi - round(expected_isi)) <= 1
 
-    def test_cv_isi_zero(self):
+    def test_cv_isi_zero(self) -> None:
         """Coefficient of variation of ISI = 0 (no jitter)."""
         n = PerfectIntegratorNeuron()
         times = _collect_spike_times(n, current=5.0, steps=5000)

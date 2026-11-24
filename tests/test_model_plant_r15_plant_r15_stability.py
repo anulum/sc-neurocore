@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Stability:
-    def test_moderate_current_finite(self):
+    """Numerical stability of the PlantR15Neuron across currents and time steps."""
+
+    def test_moderate_current_finite(self) -> None:
         """Moderate current (I≤10) keeps all state finite."""
         n = PlantR15Neuron()
         for _ in range(50000):
@@ -22,7 +28,7 @@ class TestPlantR15Stability:
         for name, val in [("v", n.v), ("m", n.m), ("h", n.h), ("n", n.n), ("ca", n.ca)]:
             assert np.isfinite(val), f"{name} = {val}"
 
-    def test_high_current_divergence(self):
+    def test_high_current_divergence(self) -> None:
         """Very high current (I≥100) may cause voltage divergence.
 
         This documents a numerical limitation — Euler integration with
@@ -36,7 +42,7 @@ class TestPlantR15Stability:
         assert np.isfinite(n.v), "V is NaN/Inf — complete numerical failure"
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
         """Model stays finite across time-step sizes."""
         n = PlantR15Neuron(dt=dt)
         for _ in range(50000):

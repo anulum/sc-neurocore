@@ -10,15 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Network:
-    def test_population(self):
+    """The PlantR15Neuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(PlantR15Neuron, n=5, label="r15")
         assert pop.n == 5
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
         """With strong Poisson drive, R15 neurons should fire."""
         pop = Population(PlantR15Neuron, n=5, label="r15")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)

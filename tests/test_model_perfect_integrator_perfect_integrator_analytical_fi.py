@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
+from tests.model_perfect_integrator_support import (
+    _analytical_isi_steps,
+)
 
 
 class TestPerfectIntegratorAnalyticalFI:
@@ -21,7 +27,8 @@ class TestPerfectIntegratorAnalyticalFI:
     """
 
     @pytest.mark.parametrize("current", [2.0, 5.0, 10.0, 20.0, 50.0])
-    def test_fi_curve_analytical(self, current: float):
+    def test_fi_curve_analytical(self, current: float) -> None:
+        """F-I curve analytical."""
         n = PerfectIntegratorNeuron()
         steps = 10000
         spikes = sum(n.step(current) for _ in range(steps))
@@ -39,7 +46,7 @@ class TestPerfectIntegratorAnalyticalFI:
             f"I={current}: got {spikes}, expected {expected_spikes:.1f}"
         )
 
-    def test_fi_linearity(self):
+    def test_fi_linearity(self) -> None:
         """f(2I) / f(I) ≈ 2 — perfect integrator has exactly linear f-I."""
         steps = 5000
         n1 = PerfectIntegratorNeuron()
@@ -49,7 +56,7 @@ class TestPerfectIntegratorAnalyticalFI:
         ratio = s2 / s1 if s1 > 0 else float("inf")
         assert 1.95 <= ratio <= 2.05, f"ratio {ratio} deviates from 2.0"
 
-    def test_fi_threshold_dependence(self):
+    def test_fi_threshold_dependence(self) -> None:
         """Doubling threshold halves the rate (same current)."""
         steps = 5000
         I = 5.0
@@ -60,7 +67,7 @@ class TestPerfectIntegratorAnalyticalFI:
         ratio = s1 / s2 if s2 > 0 else float("inf")
         assert 1.95 <= ratio <= 2.05
 
-    def test_fi_capacitance_dependence(self):
+    def test_fi_capacitance_dependence(self) -> None:
         """Doubling C_m halves the rate."""
         steps = 5000
         I = 5.0

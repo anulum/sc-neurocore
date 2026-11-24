@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
+from tests.model_plant_r15_support import (
+    _run,
+)
 
 
 class TestPlantR15Parameters:
-    def test_g_kca_controls_burst_termination(self):
+    """Parameter behaviour of the PlantR15Neuron."""
+
+    def test_g_kca_controls_burst_termination(self) -> None:
         """Reducing g_KCa should allow more spikes (less Ca-K inhibition)."""
         n_low = PlantR15Neuron(g_kca=0.001)
         n_high = PlantR15Neuron(g_kca=0.03)
@@ -22,7 +29,7 @@ class TestPlantR15Parameters:
         s_high, _ = _run(n_high, current=0.0, steps=50000)
         assert len(s_low) >= len(s_high), f"Low g_KCa: {len(s_low)} spikes, high: {len(s_high)}"
 
-    def test_tau_ca_affects_calcium_dynamics(self):
+    def test_tau_ca_affects_calcium_dynamics(self) -> None:
         """Shorter tau_Ca → faster Ca decay → different equilibrium."""
         n_fast = PlantR15Neuron(tau_ca=100.0)
         n_slow = PlantR15Neuron(tau_ca=1000.0)

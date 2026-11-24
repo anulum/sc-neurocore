@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
 
 
 class TestPernarowskiAnalysis:
-    def test_spike_count(self):
+    """Spike analysis of the PernarowskiNeuron."""
+
+    def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         n = PernarowskiNeuron()
         train = np.array([float(n.step(0.5)) for _ in range(5000)])
         assert spike_count(train) >= 10
 
-    def test_spike_count_consistency(self):
+    def test_spike_count_consistency(self) -> None:
         """spike_count on train equals manual sum."""
         n = PernarowskiNeuron()
         train = np.array([float(n.step(0.5)) for _ in range(5000)])

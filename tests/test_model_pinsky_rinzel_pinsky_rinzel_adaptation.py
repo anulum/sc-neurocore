@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
+from tests.model_pinsky_rinzel_support import (
+    _run,
+)
 
 
 class TestPinskyRinzelAdaptation:
-    def test_isis_lengthen_with_adaptation(self):
+    """Spike-frequency adaptation of the PinskyRinzelNeuron."""
+
+    def test_isis_lengthen_with_adaptation(self) -> None:
+        """Inter-spike intervals lengthen as adaptation builds up."""
         spike_times = _run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000)
         assert len(spike_times) >= 20
         isis = np.diff(spike_times)
         assert np.mean(isis[:5]) <= np.mean(isis[-5:])
 
-    def test_isi_coefficient_of_variation_bounded(self):
+    def test_isi_coefficient_of_variation_bounded(self) -> None:
+        """ISI coefficient of variation bounded."""
         spike_times = _run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000)
         isis = np.diff(spike_times[10:]).astype(float)
         assert np.std(isis) / np.mean(isis) < 0.2

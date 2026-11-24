@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
 
 
 class TestPinskyRinzelIsolation:
-    def test_construction_defaults(self):
+    """The PinskyRinzelNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PinskyRinzelNeuron()
         assert n.v_s == -60.0
         assert n.v_d == -60.0
@@ -24,13 +30,16 @@ class TestPinskyRinzelIsolation:
         assert n.p == 0.5
         assert n.dt == 0.02
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert PinskyRinzelNeuron().step(0.0) in (0, 1)
 
-    def test_dual_input_signature(self):
+    def test_dual_input_signature(self) -> None:
+        """Dual input signature."""
         assert PinskyRinzelNeuron().step(5.0, 3.0) in (0, 1)
 
-    def test_eight_state_variables_evolve(self):
+    def test_eight_state_variables_evolve(self) -> None:
+        """Eight state variables evolve."""
         n = PinskyRinzelNeuron()
         initial = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca)
         for _ in range(2000):
@@ -39,14 +48,16 @@ class TestPinskyRinzelIsolation:
         diffs = [abs(f - i) for f, i in zip(final, initial)]
         assert all(d > 1e-10 for d in diffs), f"Some variables did not evolve: {diffs}"
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(30.0)
         for var in (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca):
             assert np.isfinite(var)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = PinskyRinzelNeuron()
         for _ in range(1000):
             n.step(30.0)

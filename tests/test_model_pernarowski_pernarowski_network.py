@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
 
 
 class TestPernarowskiNetwork:
-    def test_population(self):
+    """The PernarowskiNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(PernarowskiNeuron, n=10, label="pern")
         assert pop.n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(PernarowskiNeuron, n=10, label="pern")
         drive = PoissonInput(n=10, rate_hz=200.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

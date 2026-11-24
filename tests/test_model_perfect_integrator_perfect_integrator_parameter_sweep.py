@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
+from tests.model_perfect_integrator_support import (
+    _analytical_isi_steps,
+)
 
 
 class TestPerfectIntegratorParameterSweep:
     """Systematic parameter sweeps verifying scaling laws."""
 
     @pytest.mark.parametrize("c_m", [0.5, 1.0, 2.0, 5.0])
-    def test_rate_inversely_proportional_to_capacitance(self, c_m: float):
-        """f ∝ 1/C — verify across parameter range."""
+    def test_rate_inversely_proportional_to_capacitance(self, c_m: float) -> None:
+        """The firing rate f is proportional to 1/C across the parameter range."""
         n = PerfectIntegratorNeuron(c_m=c_m)
         I = 10.0
         steps = 5000
@@ -28,8 +34,8 @@ class TestPerfectIntegratorParameterSweep:
         assert abs(spikes - expected) <= 1
 
     @pytest.mark.parametrize("threshold", [0.5, 1.0, 2.0, 5.0])
-    def test_rate_inversely_proportional_to_threshold(self, threshold: float):
-        """f ∝ 1/θ."""
+    def test_rate_inversely_proportional_to_threshold(self, threshold: float) -> None:
+        """The firing rate f is proportional to 1/θ."""
         n = PerfectIntegratorNeuron(v_threshold=threshold)
         I = 10.0
         steps = 5000

@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
+from tests.model_pernarowski_support import (
+    _run_and_collect,
+)
 
 
 class TestPernarowskiSlowVariables:
-    def test_z_evolves_slowly(self):
-        """z (eps2=0.001) should change much more slowly than w (eps1=0.1)."""
+    """The slow variable z of the PernarowskiNeuron."""
+
+    def test_z_evolves_slowly(self) -> None:
+        """The slow variable z (eps2=0.001) changes much more slowly than w (eps1=0.1)."""
         n = PernarowskiNeuron()
         z_initial = n.z
         w_initial = n.w
@@ -25,7 +32,7 @@ class TestPernarowskiSlowVariables:
         dw = abs(n.w - w_initial)
         assert dw > 10 * dz, f"dw={dw:.6f}, dz={dz:.6f} — z should be much slower than w"
 
-    def test_eps2_affects_dynamics(self):
+    def test_eps2_affects_dynamics(self) -> None:
         """Increasing eps2 speeds up z, changing the burst pattern."""
         n_slow = PernarowskiNeuron(eps2=0.0001)
         n_fast = PernarowskiNeuron(eps2=0.01)
@@ -34,7 +41,7 @@ class TestPernarowskiSlowVariables:
         # Different eps2 should produce different spike counts
         assert len(s_slow) != len(s_fast), "eps2 change had no effect on spike count"
 
-    def test_z_bounded(self):
+    def test_z_bounded(self) -> None:
         """Ultra-slow variable z should remain bounded."""
         n = PernarowskiNeuron()
         for _ in range(50000):

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
+from tests.model_non_resetting_lif_support import (
+    _exact_relaxation,
+)
 
 
 class TestNRLIFAnalytical:
-    def test_subthreshold_step_matches_exact_relaxation(self):
+    """Analytical behaviour of the NonResettingLIFNeuron."""
+
+    def test_subthreshold_step_matches_exact_relaxation(self) -> None:
         """Linear membrane and threshold ODEs follow the closed-form solution."""
         n = NonResettingLIFNeuron(v=-60.0, theta=-40.0, dt=0.5)
         v0 = n.v
@@ -26,7 +35,7 @@ class TestNRLIFAnalytical:
         assert n.v == pytest.approx(expected_v, abs=1e-12)
         assert n.theta == pytest.approx(expected_theta, abs=1e-12)
 
-    def test_large_timestep_exact_relaxation_remains_bounded(self):
+    def test_large_timestep_exact_relaxation_remains_bounded(self) -> None:
         """Exact relaxation stays inside the physical endpoint envelope for large dt."""
         n = NonResettingLIFNeuron(v=1000.0, theta=2000.0, dt=100.0)
         assert n.step(0.0) == 0
@@ -41,7 +50,7 @@ class TestNRLIFAnalytical:
         assert n.v_rest <= n.v <= 1000.0
         assert n.theta_rest <= n.theta <= 2000.0
 
-    def test_dv_formula(self):
+    def test_dv_formula(self) -> None:
         """Voltage follows exact first-order relaxation toward V_rest + R·I."""
         n = NonResettingLIFNeuron()
         v0 = n.v
@@ -50,7 +59,7 @@ class TestNRLIFAnalytical:
         n.step(I)
         assert abs(n.v - expected_v) < 1e-12
 
-    def test_dtheta_formula(self):
+    def test_dtheta_formula(self) -> None:
         """Threshold follows exact first-order relaxation toward theta_rest."""
         n = NonResettingLIFNeuron()
         theta0 = n.theta
@@ -58,7 +67,7 @@ class TestNRLIFAnalytical:
         n.step(0.0)  # subthreshold, no spike
         assert abs(n.theta - expected_theta) < 1e-14
 
-    def test_no_voltage_reset_on_spike(self):
+    def test_no_voltage_reset_on_spike(self) -> None:
         """V does NOT reset after spike — key model feature."""
         n = NonResettingLIFNeuron()
         for _ in range(10_000):
@@ -70,8 +79,8 @@ class TestNRLIFAnalytical:
                 assert n.v != n.v_rest or v_before == n.v_rest
                 break
 
-    def test_theta_increases_on_spike(self):
-        """On spike: θ += Δθ."""
+    def test_theta_increases_on_spike(self) -> None:
+        """On a spike the threshold rises by Δθ (θ += Δθ)."""
         n = NonResettingLIFNeuron()
         for _ in range(10_000):
             theta_before = n.theta
@@ -80,7 +89,7 @@ class TestNRLIFAnalytical:
                 assert n.theta > theta_before
                 break
 
-    def test_theta_decays_toward_theta_rest(self):
+    def test_theta_decays_toward_theta_rest(self) -> None:
         """θ decays exponentially toward θ_rest."""
         n = NonResettingLIFNeuron()
         n.theta = -30.0  # elevated
@@ -89,7 +98,7 @@ class TestNRLIFAnalytical:
         # Should decay toward theta_rest = -50
         assert n.theta < -30.0  # moved toward -50
 
-    def test_theta_decay_rate(self):
+    def test_theta_decay_rate(self) -> None:
         """After 1 tau_θ: θ decays by (1-1/e) of excess."""
         n = NonResettingLIFNeuron()
         n.theta = -40.0  # 10 above rest
@@ -102,7 +111,7 @@ class TestNRLIFAnalytical:
         expected = excess * np.exp(-1)
         assert abs(remaining - expected) < 0.5
 
-    def test_membrane_steady_state(self):
+    def test_membrane_steady_state(self) -> None:
         """At steady state (no spike): V_ss = V_rest + R·I."""
         n = NonResettingLIFNeuron()
         I = 5.0  # subthreshold
@@ -111,7 +120,7 @@ class TestNRLIFAnalytical:
         expected_ss = n.v_rest + n.r_m * I
         assert abs(n.v - expected_ss) < 0.5
 
-    def test_spike_condition(self):
+    def test_spike_condition(self) -> None:
         """Spike when V ≥ θ (dynamic threshold)."""
         n = NonResettingLIFNeuron()
         for _ in range(10_000):

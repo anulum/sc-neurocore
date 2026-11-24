@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
+from tests.model_pinsky_rinzel_support import (
+    _run,
+)
 
 
 class TestPinskyRinzelFI:
-    def test_quiescent_near_rest(self):
+    """The current-to-rate response of the PinskyRinzelNeuron, up to depolarisation block."""
+
+    def test_quiescent_near_rest(self) -> None:
+        """Quiescent near rest."""
         assert len(_run(PinskyRinzelNeuron(), current_soma=0.0, steps=50000)) <= 5
 
     @pytest.mark.parametrize("drive", [2.0, 5.0, 20.0])
-    def test_low_drive_fires_repetitively(self, drive: float):
+    def test_low_drive_fires_repetitively(self, drive: float) -> None:
+        """Low drive fires repetitively."""
         assert len(_run(PinskyRinzelNeuron(), current_soma=drive, steps=50000)) >= 10
 
-    def test_non_monotonic_depolarisation_block(self):
+    def test_non_monotonic_depolarisation_block(self) -> None:
+        """Non-monotonic depolarisation block."""
         low = len(_run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000))
         high = len(_run(PinskyRinzelNeuron(), current_soma=200.0, steps=50000))
         assert low > high

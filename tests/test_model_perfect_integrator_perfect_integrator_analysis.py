@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
 
 
 class TestPerfectIntegratorAnalysis:
-    def test_spike_count_matches_manual(self):
+    """Spike analysis of the PerfectIntegratorNeuron."""
+
+    def test_spike_count_matches_manual(self) -> None:
+        """Spike count matches manual."""
         n = PerfectIntegratorNeuron()
         train = np.array([float(n.step(5.0)) for _ in range(500)])
         manual_count = int(train.sum())
         assert spike_count(train) == manual_count
 
-    def test_spike_count_long_run(self):
+    def test_spike_count_long_run(self) -> None:
         """Long run spike count matches analytical prediction."""
         n = PerfectIntegratorNeuron()
         I = 5.0

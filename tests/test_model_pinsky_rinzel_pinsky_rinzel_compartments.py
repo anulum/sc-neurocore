@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
+from tests.model_pinsky_rinzel_support import (
+    _run,
+)
 
 
 class TestPinskyRinzelCompartments:
-    def test_soma_dendrite_coupling(self):
+    """Soma-dendrite coupling and dendritic calcium of the PinskyRinzelNeuron."""
+
+    def test_soma_dendrite_coupling(self) -> None:
+        """Soma dendrite coupling."""
         coupled = PinskyRinzelNeuron(gc=2.1)
         uncoupled = PinskyRinzelNeuron(gc=0.001)
         for _ in range(5000):
@@ -22,23 +30,27 @@ class TestPinskyRinzelCompartments:
             uncoupled.step(20.0, 0.0)
         assert abs(coupled.v_d - uncoupled.v_d) > 1.0
 
-    def test_dendritic_drive_evokes_spiking(self):
+    def test_dendritic_drive_evokes_spiking(self) -> None:
+        """Dendritic drive evokes spiking."""
         n = PinskyRinzelNeuron()
         assert len(_run(n, current_soma=0.0, steps=50000, current_dend=20.0)) > 0
 
-    def test_calcium_accumulates_during_spiking(self):
+    def test_calcium_accumulates_during_spiking(self) -> None:
+        """Calcium accumulates during spiking."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(20.0)
         assert n.ca > 1.0
 
-    def test_calcium_non_negative_without_drive(self):
+    def test_calcium_non_negative_without_drive(self) -> None:
+        """Calcium non-negative without drive."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(0.0)
         assert n.ca >= 0.0
 
-    def test_gc_coupling_strength_reduces_gap(self):
+    def test_gc_coupling_strength_reduces_gap(self) -> None:
+        """Stronger coupling gc narrows the soma-dendrite voltage gap."""
         weak = PinskyRinzelNeuron(gc=0.5)
         strong = PinskyRinzelNeuron(gc=5.0)
         for _ in range(10000):

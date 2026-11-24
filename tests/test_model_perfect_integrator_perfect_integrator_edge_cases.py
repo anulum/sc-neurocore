@@ -10,27 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
+from tests.model_perfect_integrator_support import (
+    _collect_spike_times,
+)
 
 
 class TestPerfectIntegratorEdgeCases:
     """Numerical edge cases and parameter boundaries."""
 
-    def test_negative_current_no_spike(self):
+    def test_negative_current_no_spike(self) -> None:
         """Negative input drives V below reset — never reaches threshold."""
         n = PerfectIntegratorNeuron()
         spikes = sum(n.step(-5.0) for _ in range(1000))
         assert spikes == 0
         assert n.v < 0.0
 
-    def test_large_negative_current_finite(self):
+    def test_large_negative_current_finite(self) -> None:
         """Even extreme negative current keeps V finite."""
         n = PerfectIntegratorNeuron()
         for _ in range(100000):
             n.step(-1e6)
         assert np.isfinite(n.v)
 
-    def test_very_small_dt(self):
+    def test_very_small_dt(self) -> None:
         """Fine time resolution: more steps to spike, same total time."""
         n = PerfectIntegratorNeuron(dt=0.001)
         I = 5.0
@@ -39,18 +46,18 @@ class TestPerfectIntegratorEdgeCases:
         assert len(times) >= 1
         assert abs(times[0] - 200) <= 1
 
-    def test_very_large_dt(self):
+    def test_very_large_dt(self) -> None:
         """Coarse dt: spike on first step if dV >= θ."""
         n = PerfectIntegratorNeuron(dt=1.0)
         # dV = 5.0 * 1.0 = 5.0 >= 1.0
         assert n.step(5.0) == 1
 
-    def test_threshold_must_exceed_reset(self):
+    def test_threshold_must_exceed_reset(self) -> None:
         """Zero threshold excursion is a degenerate no-distance ISI."""
         with pytest.raises(ValueError, match="v_threshold"):
             PerfectIntegratorNeuron(v_threshold=0.0, v_reset=0.0)
 
-    def test_floating_point_accumulation(self):
+    def test_floating_point_accumulation(self) -> None:
         """Document fp rounding: 10 additions of 0.1 ≠ 1.0 exactly.
 
         With I=1.0, dt=0.1, C=1.0: dV=0.1/step. After 10 steps,
@@ -63,7 +70,7 @@ class TestPerfectIntegratorEdgeCases:
         # Spike at step 10 or 11 depending on fp accumulation
         assert times[0] in (9, 10), f"First spike at step {times[0]}"
 
-    def test_alternating_current(self):
+    def test_alternating_current(self) -> None:
         """Alternating +/- current: voltage oscillates around 0, no spikes."""
         n = PerfectIntegratorNeuron()
         spikes = 0
@@ -73,14 +80,15 @@ class TestPerfectIntegratorEdgeCases:
         assert spikes == 0
         assert abs(n.v) < 1e-10
 
-    def test_reset_method(self):
+    def test_reset_method(self) -> None:
+        """A reset after drive returns the voltage to v_reset."""
         n = PerfectIntegratorNeuron()
         for _ in range(50):
             n.step(3.0)
         n.reset()
         assert n.v == n.v_reset
 
-    def test_deterministic_reproducibility(self):
+    def test_deterministic_reproducibility(self) -> None:
         """Exact bit-for-bit reproducibility across runs."""
         runs = []
         for _ in range(3):

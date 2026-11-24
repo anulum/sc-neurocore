@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_neurogrid_support import *  # noqa: F403
+from typing import Any, cast
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.neurogrid import (
+    NeuroGridNeuron,
+)
 
 
 class TestNGRK4Hardening:
+    """The RK4 integrator, its Euler regression path and input checks of the NeuroGridNeuron."""
+
     def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         n = NeuroGridNeuron()
         assert n.integrator == "rk4"
 
     def test_unknown_integrator_rejected(self) -> None:
+        """Unknown integrator rejected."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
-            NeuroGridNeuron(integrator="bad")  # type: ignore[arg-type]
+            NeuroGridNeuron(integrator=cast(Any, "bad"))
 
     def test_rk4_and_euler_regression_paths_diverge(self) -> None:
+        """RK4 and Euler regression paths diverge."""
         rk4 = NeuroGridNeuron()
         euler = NeuroGridNeuron(integrator="baseline_euler")
         rk4_spikes = sum(rk4.step(100.0) for _ in range(20_000))
@@ -31,12 +41,14 @@ class TestNGRK4Hardening:
         assert euler_spikes == 93
 
     def test_cross_backend_anchor(self) -> None:
+        """Cross-backend anchor."""
         n = NeuroGridNeuron()
         spikes = sum(n.step(100.0) for _ in range(20_000))
         assert spikes == 94
         assert np.isfinite(n.v_s) and np.isfinite(n.v_d)
 
     def test_invalid_input_preserves_state(self) -> None:
+        """Invalid input preserves state."""
         n = NeuroGridNeuron()
         for _ in range(10):
             n.step(100.0)
@@ -46,6 +58,7 @@ class TestNGRK4Hardening:
         assert (n.v_s, n.v_d) == old_state
 
     def test_corrupt_state_rejected_before_mutation(self) -> None:
+        """Corrupt state rejected before mutation."""
         n = NeuroGridNeuron()
         for _ in range(10):
             n.step(100.0)
@@ -56,6 +69,7 @@ class TestNGRK4Hardening:
         assert n.v_d == old_v_d
 
     def test_runtime_configuration_rejects_invalid_tau(self) -> None:
+        """Runtime configuration rejects invalid tau."""
         n = NeuroGridNeuron()
         n.tau_s = 0.0
         with pytest.raises(ValueError, match="tau_s must be positive"):

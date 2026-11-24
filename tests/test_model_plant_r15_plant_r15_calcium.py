@@ -10,27 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Calcium:
-    def test_calcium_non_negative(self):
+    """Calcium dynamics of the PlantR15Neuron and their effect on firing."""
+
+    def test_calcium_non_negative(self) -> None:
         """Ca concentration is clamped ≥ 0."""
         n = PlantR15Neuron()
         for _ in range(50000):
             n.step(0.0)
         assert n.ca >= 0.0
 
-    def test_calcium_accumulates_from_initial(self):
-        """Ca should increase from initial 0.1 during early transient
-        (Ca influx from depolarisation > Ca decay)."""
+    def test_calcium_accumulates_from_initial(self) -> None:
+        """Calcium rises from its initial 0.1 during the early transient.
+
+        Calcium influx from depolarisation exceeds calcium decay.
+        """
         n = PlantR15Neuron()
         ca_initial = n.ca
         for _ in range(5000):
             n.step(0.0)
         assert n.ca > ca_initial, f"Ca={n.ca:.4f} <= initial {ca_initial}"
 
-    def test_calcium_at_equilibrium(self):
+    def test_calcium_at_equilibrium(self) -> None:
         """At steady state, Ca stabilises (dCa/dt ≈ 0)."""
         n = PlantR15Neuron()
         for _ in range(50000):
@@ -41,9 +47,11 @@ class TestPlantR15Calcium:
         ca_2 = n.ca
         assert abs(ca_2 - ca_1) < 0.01, f"Ca still drifting: {ca_1:.4f} → {ca_2:.4f}"
 
-    def test_calcium_suppresses_firing(self):
-        """High Ca activates I_KCa, which hyperpolarises — the mechanism
-        that terminates bursts in the R15 model."""
+    def test_calcium_suppresses_firing(self) -> None:
+        """High calcium activates I_KCa, which hyperpolarises the cell.
+
+        This is the mechanism that terminates bursts in the R15 model.
+        """
         n = PlantR15Neuron()
         for _ in range(50000):
             n.step(0.0)

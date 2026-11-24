@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
 
 
 class TestNRLIFThresholdAdaptation:
-    def test_threshold_elevation_creates_refractoriness(self):
+    """The adaptive threshold of the NonResettingLIFNeuron."""
+
+    def test_threshold_elevation_creates_refractoriness(self) -> None:
         """After spike, elevated θ prevents immediate re-firing."""
         n = NonResettingLIFNeuron()
         # Find first spike, then check next step
@@ -27,7 +31,7 @@ class TestNRLIFThresholdAdaptation:
                 assert n.theta > n.theta_rest
                 break
 
-    def test_theta_accumulates_with_rapid_spiking(self):
+    def test_theta_accumulates_with_rapid_spiking(self) -> None:
         """Multiple rapid spikes → θ well above θ_rest."""
         n = NonResettingLIFNeuron()
         for _ in range(5000):

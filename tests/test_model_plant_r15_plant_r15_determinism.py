@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Determinism:
-    def test_bit_exact_reproducibility(self):
+    """Bit-exact reproducibility of the PlantR15Neuron."""
+
+    def test_bit_exact_reproducibility(self) -> None:
+        """Bit exact reproducibility."""
         traces = []
         for _ in range(2):
             n = PlantR15Neuron()

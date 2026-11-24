@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
+from tests.model_pernarowski_support import (
+    _run_and_collect,
+)
 
 
 class TestPernarowskiFI:
-    def test_moderate_current_sustains_oscillation(self):
+    """The current-to-rate response of the PernarowskiNeuron, up to depolarisation block."""
+
+    def test_moderate_current_sustains_oscillation(self) -> None:
         """I ∈ [0, 1.0] should sustain oscillatory spiking."""
         for I in [0.0, 0.3, 0.5, 1.0]:
             n = PernarowskiNeuron()
@@ -23,7 +30,7 @@ class TestPernarowskiFI:
                 f"I={I}: only {len(spike_times)} spikes, expected oscillation"
             )
 
-    def test_depolarisation_block(self):
+    def test_depolarisation_block(self) -> None:
         """High current (I≥2.0) suppresses oscillation — V stays high."""
         for I in [2.0, 3.0]:
             n = PernarowskiNeuron()
@@ -32,7 +39,7 @@ class TestPernarowskiFI:
                 f"I={I}: {len(spike_times)} spikes, expected depolarisation block"
             )
 
-    def test_rate_increases_with_moderate_current(self):
+    def test_rate_increases_with_moderate_current(self) -> None:
         """Between I=0 and I=0.5, rate should be slightly modulated."""
         n0 = PernarowskiNeuron()
         n1 = PernarowskiNeuron()

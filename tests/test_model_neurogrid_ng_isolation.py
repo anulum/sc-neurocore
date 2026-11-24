@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_neurogrid_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.neurogrid import (
+    NeuroGridNeuron,
+)
 
 
 class TestNGIsolation:
+    """The NeuroGridNeuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = NeuroGridNeuron()
         assert n.v_s == -65.0 and n.v_d == -65.0
         assert n.tau_s == 20.0 and n.tau_d == 50.0
@@ -23,13 +29,16 @@ class TestNGIsolation:
         assert n.dt == 0.1
 
     def test_two_compartments(self) -> None:
+        """The model has a soma and a dendrite voltage."""
         n = NeuroGridNeuron()
         assert hasattr(n, "v_s") and hasattr(n, "v_d")
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert NeuroGridNeuron().step(0.0) in (0, 1)
 
     def test_both_compartments_evolve(self) -> None:
+        """Both compartments evolve."""
         n = NeuroGridNeuron()
         vs0, vd0 = n.v_s, n.v_d
         for _ in range(500):
@@ -37,12 +46,14 @@ class TestNGIsolation:
         assert n.v_s != vs0 or n.v_d != vd0
 
     def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = NeuroGridNeuron()
         for _ in range(100_000):
             n.step(100.0)
         assert np.isfinite(n.v_s) and np.isfinite(n.v_d)
 
     def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = NeuroGridNeuron()
         for _ in range(5000):
             n.step(100.0)
@@ -50,6 +61,7 @@ class TestNGIsolation:
         assert n.v_s == -65.0 and n.v_d == -65.0
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = NeuroGridNeuron()

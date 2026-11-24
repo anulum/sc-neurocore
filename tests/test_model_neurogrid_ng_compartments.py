@@ -10,16 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_neurogrid_support import *  # noqa: F403
+from sc_neurocore.neurons.models.neurogrid import (
+    NeuroGridNeuron,
+)
 
 
 class TestNGCompartments:
+    """The soma and dendrite compartments of the NeuroGridNeuron and their coupling."""
+
     def test_dendrite_slower_than_soma(self) -> None:
         """tau_d > tau_s → dendrite integrates slower."""
         n = NeuroGridNeuron()
         assert n.tau_d > n.tau_s
 
     def test_dendrite_accumulates(self) -> None:
+        """Dendrite accumulates."""
         n = NeuroGridNeuron()
         vd_vals = []
         for _ in range(500):

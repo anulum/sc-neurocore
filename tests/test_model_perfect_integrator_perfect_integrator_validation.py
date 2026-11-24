@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
 
 
 class TestPerfectIntegratorValidation:
+    """Input and state validation of the PerfectIntegratorNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -22,15 +29,21 @@ class TestPerfectIntegratorValidation:
             ("v_reset", -np.inf),
         ],
     )
-    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float) -> None:
+        """The model rejects non-finite voltage parameters."""
         with pytest.raises(ValueError, match=field):
-            PerfectIntegratorNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            PerfectIntegratorNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["c_m", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_scale_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-positive or non-finite scale parameters."""
         with pytest.raises(ValueError, match=field):
-            PerfectIntegratorNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            PerfectIntegratorNeuron(**kwargs)
 
     @pytest.mark.parametrize(
         ("v_threshold", "v_reset"),
@@ -39,23 +52,29 @@ class TestPerfectIntegratorValidation:
             (-1.0, 0.0),
         ],
     )
-    def test_rejects_non_positive_threshold_excursion(self, v_threshold: float, v_reset: float):
+    def test_rejects_non_positive_threshold_excursion(
+        self, v_threshold: float, v_reset: float
+    ) -> None:
+        """The model rejects non-positive threshold excursion."""
         with pytest.raises(ValueError, match="v_threshold"):
             PerfectIntegratorNeuron(v_threshold=v_threshold, v_reset=v_reset)
 
-    def test_rejects_initial_voltage_at_or_above_threshold(self):
+    def test_rejects_initial_voltage_at_or_above_threshold(self) -> None:
+        """The model rejects initial voltage at or above threshold."""
         with pytest.raises(ValueError, match="v must be below v_threshold"):
             PerfectIntegratorNeuron(v=1.0)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = PerfectIntegratorNeuron(v=0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):
             n.step(current)
         assert n.v == before
 
-    def test_rejects_non_finite_voltage_increment_before_state_mutation(self):
+    def test_rejects_non_finite_voltage_increment_before_state_mutation(self) -> None:
+        """The model rejects non-finite voltage increment before state mutation."""
         n = PerfectIntegratorNeuron(v=0.25, v_threshold=1.0e308, c_m=1.0e-308)
         before = n.v
         with pytest.raises(ValueError, match="voltage increment"):
@@ -63,7 +82,8 @@ class TestPerfectIntegratorValidation:
         assert n.v == before
 
     @pytest.mark.parametrize("field", ["v", "c_m", "dt", "v_threshold", "v_reset"])
-    def test_rejects_corrupted_runtime_state_before_voltage_mutation(self, field: str):
+    def test_rejects_corrupted_runtime_state_before_voltage_mutation(self, field: str) -> None:
+        """The model rejects corrupted runtime state before voltage mutation."""
         n = PerfectIntegratorNeuron(v=0.25)
         before = n.v
         setattr(n, field, np.nan)
@@ -82,7 +102,8 @@ class TestPerfectIntegratorValidation:
     )
     def test_rejects_invalid_runtime_geometry_before_voltage_mutation(
         self, field: str, value: float
-    ):
+    ) -> None:
+        """The model rejects invalid runtime geometry before voltage mutation."""
         n = PerfectIntegratorNeuron(v=0.25)
         before = n.v
         setattr(n, field, value)

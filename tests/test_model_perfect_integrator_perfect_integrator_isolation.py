@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
 
 
 class TestPerfectIntegratorIsolation:
     """Core single-neuron dynamics."""
 
-    def test_construction_defaults(self):
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PerfectIntegratorNeuron()
         assert n.v == 0.0
         assert n.c_m == 1.0
@@ -24,17 +27,18 @@ class TestPerfectIntegratorIsolation:
         assert n.v_reset == 0.0
         assert n.dt == 0.1
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert PerfectIntegratorNeuron().step(0.0) in (0, 1)
 
-    def test_zero_input_no_drift(self):
+    def test_zero_input_no_drift(self) -> None:
         """With I=0, voltage must stay exactly at initial value."""
         n = PerfectIntegratorNeuron(v=0.3)
         for _ in range(1000):
             n.step(0.0)
         assert n.v == 0.3
 
-    def test_linear_voltage_ramp(self):
+    def test_linear_voltage_ramp(self) -> None:
         """Voltage should increase linearly: V(t) = V₀ + (I/C)·dt·t."""
         n = PerfectIntegratorNeuron()
         I, C, dt = 3.0, n.c_m, n.dt
@@ -44,7 +48,7 @@ class TestPerfectIntegratorIsolation:
             expected = dv * t
             assert abs(n.v - expected) < 1e-12, f"step {t}: {n.v} != {expected}"
 
-    def test_no_leak_invariant(self):
+    def test_no_leak_invariant(self) -> None:
         """Key property: voltage is unchanged by zero-input steps (no decay)."""
         n = PerfectIntegratorNeuron()
         n.step(2.0)

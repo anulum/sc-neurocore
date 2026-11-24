@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
 
 
 class TestNRLIFIsolation:
-    def test_defaults(self):
+    """The NonResettingLIFNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = NonResettingLIFNeuron()
         assert n.v == -65.0 and n.theta == -50.0
         assert n.v_rest == -65.0 and n.theta_rest == -50.0
@@ -22,23 +28,27 @@ class TestNRLIFIsolation:
         assert n.tau_m == 10.0 and n.tau_theta == 50.0
         assert n.r_m == 1.0 and n.dt == 0.1
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert NonResettingLIFNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = NonResettingLIFNeuron()
         for _ in range(100_000):
             n.step(20.0)
         assert np.isfinite(n.v) and np.isfinite(n.theta)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = NonResettingLIFNeuron()
         for _ in range(5000):
             n.step(20.0)
         n.reset()
         assert n.v == n.v_rest and n.theta == n.theta_rest
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = NonResettingLIFNeuron()

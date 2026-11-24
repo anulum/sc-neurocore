@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Analysis:
-    def test_spike_count(self):
+    """Spike analysis of the PlantR15Neuron."""
+
+    def test_spike_count(self) -> None:
         """At least 1 transient spike in a long run."""
         n = PlantR15Neuron()
         train = np.array([float(n.step(0.0)) for _ in range(50000)])
         assert spike_count(train) >= 1
 
-    def test_spike_count_consistency(self):
+    def test_spike_count_consistency(self) -> None:
+        """Spike count consistency."""
         n = PlantR15Neuron()
         train = np.array([float(n.step(0.0)) for _ in range(50000)])
         assert spike_count(train) == int(train.sum())

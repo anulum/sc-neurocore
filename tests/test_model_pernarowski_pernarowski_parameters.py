@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
+from tests.model_pernarowski_support import (
+    _run_and_collect,
+)
 
 
 class TestPernarowskiParameters:
-    def test_custom_threshold(self):
+    """Parameter behaviour of the PernarowskiNeuron."""
+
+    def test_custom_threshold(self) -> None:
         """Lower threshold → more spikes detected."""
         n_low = PernarowskiNeuron(v_threshold=0.0)
         n_high = PernarowskiNeuron(v_threshold=1.0)
@@ -23,8 +32,8 @@ class TestPernarowskiParameters:
         # With lower threshold, we may detect more crossings
         assert len(s_low) >= len(s_high)
 
-    def test_gamma_affects_w_dynamics(self):
-        """gamma scales w decay — different gamma → different ISI."""
+    def test_gamma_affects_w_dynamics(self) -> None:
+        """The rate gamma scales the decay of w, so a different gamma gives a different ISI."""
         n1 = PernarowskiNeuron(gamma=0.3)
         n2 = PernarowskiNeuron(gamma=0.8)
         s1, _ = _run_and_collect(n1, current=0.5, steps=10000)
@@ -35,8 +44,8 @@ class TestPernarowskiParameters:
             isi2 = np.mean(np.diff(s2))
             assert isi1 != isi2, "gamma had no effect on ISI"
 
-    def test_beta_affects_z_equilibrium(self):
-        """beta scales z slow nullcline — z_eq = beta*(V+0.7)."""
+    def test_beta_affects_z_equilibrium(self) -> None:
+        """The gain beta scales the slow z nullcline, z_eq = beta*(V+0.7)."""
         n1 = PernarowskiNeuron(beta=0.1)
         n2 = PernarowskiNeuron(beta=1.0)
         for _ in range(10000):
@@ -46,7 +55,7 @@ class TestPernarowskiParameters:
         assert abs(n1.z - n2.z) > 0.01
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
         """Model stays finite and oscillates across time-step sizes."""
         n = PernarowskiNeuron(dt=dt)
         spike_times, voltages = _run_and_collect(n, current=0.5, steps=10000)

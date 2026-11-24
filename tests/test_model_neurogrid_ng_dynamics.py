@@ -10,19 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_neurogrid_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.neurogrid import (
+    NeuroGridNeuron,
+)
+from tests.model_neurogrid_support import (
+    _run,
+)
 
 
 class TestNGDynamics:
+    """Dynamics of the NeuroGridNeuron."""
+
     def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = NeuroGridNeuron()
         assert len(_run(n, current=20.0, steps=5000)) == 0
 
     def test_fires_under_drive(self) -> None:
+        """The model fires under drive."""
         n = NeuroGridNeuron()
         assert len(_run(n, current=100.0, steps=10_000)) >= 5
 
     def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [50.0, 100.0, 200.0]:
             n = NeuroGridNeuron()
@@ -31,6 +43,7 @@ class TestNGDynamics:
 
     @pytest.mark.parametrize("current", [0.0, 50.0, 100.0, 150.0, 200.0])
     def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = NeuroGridNeuron()
         for _ in range(10_000):
             n.step(current)

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
+from tests.model_plant_r15_support import (
+    _run,
+)
 
 
 class TestPlantR15Equilibrium:
-    def test_transient_spike(self):
+    """The transient spike and the fixed point of the PlantR15Neuron."""
+
+    def test_transient_spike(self) -> None:
         """From initial conditions, model fires exactly 1 transient spike."""
         n = PlantR15Neuron()
         spike_times, _ = _run(n, current=0.0, steps=100000)
         assert len(spike_times) == 1, f"Expected 1 transient spike, got {len(spike_times)}"
 
-    def test_converges_to_fixed_point(self):
+    def test_converges_to_fixed_point(self) -> None:
         """After transient, V stabilises near −23.8 mV (equilibrium)."""
         n = PlantR15Neuron()
         for _ in range(50000):
@@ -34,9 +41,11 @@ class TestPlantR15Equilibrium:
         )
         assert -30.0 < v_eq < -15.0, f"V_eq = {v_eq:.2f} outside expected range"
 
-    def test_equilibrium_independent_of_small_current(self):
-        """Small currents (I<1) shift equilibrium slightly but don't trigger
-        sustained oscillation — model stays at a (shifted) fixed point."""
+    def test_equilibrium_independent_of_small_current(self) -> None:
+        """Small currents (I<1) shift the equilibrium only slightly.
+
+        They do not trigger sustained oscillation; the model stays at a (shifted) fixed point.
+        """
         for I in [0.0, 0.1, 0.5]:
             n = PlantR15Neuron()
             spike_times, _ = _run(n, current=I, steps=100000)

@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
 
 
 class TestNRLIFValidation:
+    """Input and state validation of the NonResettingLIFNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -23,24 +30,35 @@ class TestNRLIFValidation:
             ("theta_rest", np.nan),
         ],
     )
-    def test_rejects_non_finite_voltage_or_threshold_state(self, field: str, value: float):
+    def test_rejects_non_finite_voltage_or_threshold_state(self, field: str, value: float) -> None:
+        """The model rejects non-finite voltage or threshold state."""
         with pytest.raises(ValueError, match=field):
-            NonResettingLIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            NonResettingLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["delta_theta", "r_m"])
     @pytest.mark.parametrize("value", [-1.0, np.nan, np.inf])
-    def test_rejects_negative_or_non_finite_non_negative_parameters(self, field: str, value: float):
+    def test_rejects_negative_or_non_finite_non_negative_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects negative or non-finite non-negative parameters."""
         with pytest.raises(ValueError, match=field):
-            NonResettingLIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            NonResettingLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["tau_m", "tau_theta", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_scale_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-positive or non-finite scale parameters."""
         with pytest.raises(ValueError, match=field):
-            NonResettingLIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            NonResettingLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
         before = (n.v, n.theta)
         with pytest.raises(ValueError, match="current"):
@@ -61,7 +79,8 @@ class TestNRLIFValidation:
             "dt",
         ],
     )
-    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str):
+    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
         before = (n.v, n.theta)
         setattr(n, field, np.nan)
@@ -71,7 +90,8 @@ class TestNRLIFValidation:
             assert (n.v, n.theta) == before
 
     @pytest.mark.parametrize("field", ["tau_m", "tau_theta", "dt"])
-    def test_rejects_non_positive_runtime_time_constants_before_mutation(self, field: str):
+    def test_rejects_non_positive_runtime_time_constants_before_mutation(self, field: str) -> None:
+        """The model rejects non-positive runtime time constants before mutation."""
         n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
         before = (n.v, n.theta)
         setattr(n, field, 0.0)
@@ -79,14 +99,16 @@ class TestNRLIFValidation:
             n.step(20.0)
         assert (n.v, n.theta) == before
 
-    def test_rejects_non_finite_membrane_candidate_before_mutation(self):
+    def test_rejects_non_finite_membrane_candidate_before_mutation(self) -> None:
+        """The model rejects non-finite membrane candidate before mutation."""
         n = NonResettingLIFNeuron(v=-60.0, theta=-45.0, r_m=10.0)
         before = (n.v, n.theta)
         with pytest.raises(ValueError, match="exact relaxation"):
             n.step(1.0e308)
         assert (n.v, n.theta) == before
 
-    def test_rejects_non_finite_threshold_candidate_before_mutation(self):
+    def test_rejects_non_finite_threshold_candidate_before_mutation(self) -> None:
+        """The model rejects non-finite threshold candidate before mutation."""
         n = NonResettingLIFNeuron(v=1.0e308, theta=9.0e307, theta_rest=9.0e307, delta_theta=9.0e307)
         before = (n.v, n.theta)
         with pytest.raises(ValueError, match="exact relaxation"):

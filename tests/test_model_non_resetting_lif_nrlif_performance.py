@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestNRLIFPerformance:
-    def test_isolation_runtime_regression_sentinel(self):
+    """Throughput of the NonResettingLIFNeuron."""
+
+    def test_isolation_runtime_regression_sentinel(self) -> None:
         """Bound pathological slowdowns without making CI throughput claims."""
         n = NonResettingLIFNeuron()
         N = 200_000
@@ -30,7 +48,7 @@ class TestNRLIFPerformance:
             strict_minimum_per_second=0.1,
         )
 
-    def test_network_runtime_regression_sentinel(self):
+    def test_network_runtime_regression_sentinel(self) -> None:
         """Bound pathological network slowdowns without throughput claims."""
         pop = Population(NonResettingLIFNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)

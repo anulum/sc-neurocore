@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4039
+expected_file_count = 4101
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -16200,3 +16200,251 @@ rationale = "Exercise SC-NeuroCore: model morris lecar ml type ii."
 [[file]]
 path = "tests/test_model_morris_lecar_morris_lecar_neuron_simulate.py"
 rationale = "Exercise SC-NeuroCore: model morris lecar morris lecar neuron simulate."
+
+[[file]]
+path = "tests/test_model_neurogrid_neuro_grid.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid neuro grid."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_analytical.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng analytical."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_compartments.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng compartments."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng dynamics."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_isolation.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng isolation."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_parameters.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng parameters."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_performance.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng performance."
+
+[[file]]
+path = "tests/test_model_neurogrid_ng_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ng pipeline."
+
+[[file]]
+path = "tests/test_model_neurogrid_ngrk4_hardening.py"
+rationale = "Exercise SC-NeuroCore: model neurogrid ngrk4 hardening."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif adaptation."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_analytical.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif analytical."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif dynamics."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif isolation."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif parameters."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_performance.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif performance."
+
+[[file]]
+path = "tests/test_model_nlif_nlif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model nlif nlif pipeline."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_analytical.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif analytical."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif dynamics."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif isolation."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif parameters."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_performance.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif performance."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif pipeline."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_threshold_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif threshold adaptation."
+
+[[file]]
+path = "tests/test_model_non_resetting_lif_nrlif_validation.py"
+rationale = "Exercise SC-NeuroCore: model non resetting lif nrlif validation."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_analysis.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator analysis."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_analytical_fi.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator analytical fi."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator edge cases."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_isi.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator isi."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_isolation.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator isolation."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_network.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator network."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_parameter_sweep.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator parameter sweep."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_simulate.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator simulate."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_threshold.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator threshold."
+
+[[file]]
+path = "tests/test_model_perfect_integrator_perfect_integrator_validation.py"
+rationale = "Exercise SC-NeuroCore: model perfect integrator perfect integrator validation."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_analysis.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski analysis."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_determinism.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski determinism."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_fi.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski fi."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_isolation.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski isolation."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_network.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski network."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_oscillations.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski oscillations."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_parameters.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski parameters."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_slow_variables.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski slow variables."
+
+[[file]]
+path = "tests/test_model_pernarowski_pernarowski_validation.py"
+rationale = "Exercise SC-NeuroCore: model pernarowski pernarowski validation."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel adaptation."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_analysis.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel analysis."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_compartments.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel compartments."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_fi.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel fi."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_gating.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel gating."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_isolation.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel isolation."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_network.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel network."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_numerics.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel numerics."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_rate_branches.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel rate branches."
+
+[[file]]
+path = "tests/test_model_pinsky_rinzel_pinsky_rinzel_safety.py"
+rationale = "Exercise SC-NeuroCore: model pinsky rinzel pinsky rinzel safety."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_analysis.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 analysis."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_calcium.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 calcium."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_determinism.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 determinism."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_equilibrium.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 equilibrium."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_gating.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 gating."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_isolation.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 isolation."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_network.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 network."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_parameters.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 parameters."
+
+[[file]]
+path = "tests/test_model_plant_r15_plant_r15_stability.py"
+rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 stability."

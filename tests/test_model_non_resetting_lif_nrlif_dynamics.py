@@ -10,19 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_non_resetting_lif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
+from tests.model_non_resetting_lif_support import (
+    _run,
+)
 
 
 class TestNRLIFDynamics:
-    def test_subthreshold_silent(self):
+    """Dynamics of the NonResettingLIFNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = NonResettingLIFNeuron()
         assert len(_run(n, current=5.0, steps=5000)) == 0
 
-    def test_fires_under_drive(self):
+    def test_fires_under_drive(self) -> None:
+        """The model fires under drive."""
         n = NonResettingLIFNeuron()
         assert len(_run(n, current=20.0, steps=5000)) >= 5
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [15.0, 20.0, 30.0]:
             n = NonResettingLIFNeuron()
@@ -30,7 +42,8 @@ class TestNRLIFDynamics:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 10.0, 20.0, 30.0, 50.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = NonResettingLIFNeuron()
         for _ in range(5000):
             n.step(current)

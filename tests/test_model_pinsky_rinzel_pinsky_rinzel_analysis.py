@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
 
 
 class TestPinskyRinzelAnalysis:
-    def test_spike_count_matches_train_sum(self):
+    """Spike analysis of the PinskyRinzelNeuron."""
+
+    def test_spike_count_matches_train_sum(self) -> None:
+        """Spike count matches train sum."""
         n = PinskyRinzelNeuron()
         train = np.array([float(n.step(5.0)) for _ in range(50000)])
         assert spike_count(train) >= 5

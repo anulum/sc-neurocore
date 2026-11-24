@@ -10,21 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_neurogrid_support import *  # noqa: F403
+from sc_neurocore.neurons.models.neurogrid import (
+    NeuroGridNeuron,
+)
 
 
 class TestNeuroGrid:
-    def test_dynamics(self) -> None:
-        from sc_neurocore.neurons.models.neurogrid import NeuroGridNeuron
+    """Dynamics and reset of the NeuroGridNeuron."""
 
+    def test_dynamics(self) -> None:
+        """The state evolves under drive."""
         n = NeuroGridNeuron()
         for _ in range(200):
             n.step(10.0)
         assert n.v_s != n.v_d, "soma and dendrite should differ"
 
     def test_reset(self) -> None:
-        from sc_neurocore.neurons.models.neurogrid import NeuroGridNeuron
-
+        """A reset after drive leaves a valid state."""
         n = NeuroGridNeuron()
         for _ in range(50):
             n.step(5.0)

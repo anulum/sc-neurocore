@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_plant_r15_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plant_r15 import (
+    PlantR15Neuron,
+)
 
 
 class TestPlantR15Gating:
-    def test_gating_bounded(self):
+    """Gating bounds and equilibrium gating of the PlantR15Neuron."""
+
+    def test_gating_bounded(self) -> None:
         """m, h, n should stay approximately in [0, 1]."""
         n = PlantR15Neuron()
         for _ in range(50000):
@@ -22,7 +26,7 @@ class TestPlantR15Gating:
         for name, val in [("m", n.m), ("h", n.h), ("n", n.n)]:
             assert -0.01 <= val <= 1.01, f"{name} = {val:.6f}"
 
-    def test_gating_at_equilibrium(self):
+    def test_gating_at_equilibrium(self) -> None:
         """At fixed point, gating variables should be stable."""
         n = PlantR15Neuron()
         for _ in range(50000):

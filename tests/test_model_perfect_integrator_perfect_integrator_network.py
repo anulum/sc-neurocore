@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
 
 
 class TestPerfectIntegratorNetwork:
-    def test_population_construction(self):
+    """The PerfectIntegratorNeuron in a network."""
+
+    def test_population_construction(self) -> None:
+        """Population construction."""
         pop = Population(PerfectIntegratorNeuron, n=10, label="pi")
         assert pop.n == 10
 
-    def test_network_produces_spikes(self):
+    def test_network_produces_spikes(self) -> None:
+        """Network produces spikes."""
         pop = Population(PerfectIntegratorNeuron, n=20, label="pi")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -26,7 +44,7 @@ class TestPerfectIntegratorNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_two_populations_different_drive(self):
+    def test_two_populations_different_drive(self) -> None:
         """Stronger drive → more spikes across a population."""
         pop_weak = Population(PerfectIntegratorNeuron, n=10, label="weak")
         pop_high_drive = Population(PerfectIntegratorNeuron, n=10, label="high_drive")

@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
 
 
 class TestPernarowskiDeterminism:
-    def test_bit_exact_reproducibility(self):
+    """Bit-exact reproducibility of the PernarowskiNeuron."""
+
+    def test_bit_exact_reproducibility(self) -> None:
         """Identical runs produce identical traces (no RNG)."""
         traces = []
         for _ in range(2):

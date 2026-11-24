@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
 
 
 class TestPinskyRinzelGating:
-    def test_gating_variables_bounded(self):
+    """Gating bounds and sodium inactivation of the PinskyRinzelNeuron."""
+
+    def test_gating_variables_bounded(self) -> None:
+        """Gating variables bounded."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(50.0)
         for name, value in (("h", n.h), ("n", n.n), ("s", n.s), ("c", n.c), ("q", n.q)):
             assert 0.0 <= value <= 1.0, f"{name} = {value}"
 
-    def test_sodium_inactivates_at_high_drive(self):
+    def test_sodium_inactivates_at_high_drive(self) -> None:
+        """Sodium inactivates at high drive."""
         n = PinskyRinzelNeuron()
         h_initial = n.h
         for _ in range(50000):

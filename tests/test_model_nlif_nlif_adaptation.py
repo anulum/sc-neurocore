@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_nlif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.nlif import (
+    NonlinearLIFNeuron,
+)
 
 
 class TestNLIFAdaptation:
-    def test_w_accumulates_during_spiking(self):
+    """Spike-triggered adaptation of the NonlinearLIFNeuron."""
+
+    def test_w_accumulates_during_spiking(self) -> None:
+        """W accumulates during spiking."""
         n = NonlinearLIFNeuron()
         for _ in range(5000):
             n.step(20.0)
         assert n.w != 0.0
 
-    def test_adaptation_reduces_rate(self):
+    def test_adaptation_reduces_rate(self) -> None:
+        """Adaptation reduces rate."""
         n = NonlinearLIFNeuron()
         s1 = sum(n.step(25.0) for _ in range(2500))
         s2 = sum(n.step(25.0) for _ in range(2500))

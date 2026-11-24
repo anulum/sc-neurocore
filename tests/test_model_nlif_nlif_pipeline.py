@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_nlif_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.nlif import (
+    NonlinearLIFNeuron,
+)
 
 
 class TestNLIFPipeline:
-    def test_population(self):
+    """The NonlinearLIFNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(NonlinearLIFNeuron, n=10, label="nlif").n == 10
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(NonlinearLIFNeuron, n=5, label="src")
         tgt = Population(NonlinearLIFNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
@@ -28,7 +55,8 @@ class TestNLIFPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon_src.count > 0
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(NonlinearLIFNeuron, n=10, label="nlif")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -36,13 +64,15 @@ class TestNLIFPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_analysis_spike_count(self):
+    def test_analysis_spike_count(self) -> None:
+        """The analysis counts the spikes of a driven run."""
         n = NonlinearLIFNeuron()
         train = np.array([float(n.step(20.0)) for _ in range(5000)])
         sc = spike_count(train)
         assert sc >= 30
 
-    def test_analysis_isi(self):
+    def test_analysis_isi(self) -> None:
+        """The analysis gives finite inter-spike intervals."""
         n = NonlinearLIFNeuron()
         train = np.array([float(n.step(20.0)) for _ in range(5000)])
         intervals = isi(train, dt=0.0001)
@@ -50,13 +80,15 @@ class TestNLIFPipeline:
             assert np.all(np.isfinite(intervals))
             assert np.all(intervals > 0)
 
-    def test_analysis_firing_rate(self):
+    def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = NonlinearLIFNeuron()
         train = np.array([float(n.step(20.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.0001)
         assert rate > 0
 
-    def test_analysis_cross_validation(self):
+    def test_analysis_cross_validation(self) -> None:
+        """Analysis cross validation."""
         n = NonlinearLIFNeuron()
         train = np.array([float(n.step(20.0)) for _ in range(5000)])
         sc = spike_count(train)

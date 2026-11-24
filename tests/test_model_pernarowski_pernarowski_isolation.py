@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_pernarowski_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
 
 
 class TestPernarowskiIsolation:
-    def test_construction_defaults(self):
+    """The PernarowskiNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PernarowskiNeuron()
         assert n.v == -1.0
         assert n.w == 0.0
@@ -23,11 +29,12 @@ class TestPernarowskiIsolation:
         assert n.eps2 == 0.001
         assert n.v_threshold == 0.5
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = PernarowskiNeuron()
         assert n.step(0.0) in (0, 1)
 
-    def test_three_state_variables_evolve(self):
+    def test_three_state_variables_evolve(self) -> None:
         """All three state variables (V, w, z) should change after steps."""
         n = PernarowskiNeuron()
         v0, w0, z0 = n.v, n.w, n.z
@@ -37,7 +44,7 @@ class TestPernarowskiIsolation:
         assert n.w != w0
         assert n.z != z0
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
         """No divergence over 50k steps."""
         n = PernarowskiNeuron()
         for _ in range(50000):
@@ -46,7 +53,8 @@ class TestPernarowskiIsolation:
         assert np.isfinite(n.w)
         assert np.isfinite(n.z)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = PernarowskiNeuron()
         for _ in range(500):
             n.step(1.0)

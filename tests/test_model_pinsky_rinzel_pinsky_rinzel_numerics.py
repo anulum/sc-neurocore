@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_pinsky_rinzel_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.pinsky_rinzel import (
+    PinskyRinzelNeuron,
+)
 
 
 class TestPinskyRinzelNumerics:
-    def test_bit_exact_reproducibility(self):
+    """Reproducibility and time-step stability of the PinskyRinzelNeuron."""
+
+    def test_bit_exact_reproducibility(self) -> None:
+        """Bit exact reproducibility."""
+
         def trace() -> list[tuple[int, float]]:
+            """Run a fresh neuron for 500 driven steps and return its spikes and somatic voltages."""
             n = PinskyRinzelNeuron()
             return [(n.step(30.0), n.v_s) for _ in range(500)]
 
         assert trace() == trace()
 
     @pytest.mark.parametrize("dt", [0.01, 0.02, 0.05])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = PinskyRinzelNeuron(dt=dt)
         for _ in range(20000):
             n.step(30.0)

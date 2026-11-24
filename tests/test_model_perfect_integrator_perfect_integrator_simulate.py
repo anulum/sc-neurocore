@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_perfect_integrator_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.perfect_integrator import (
+    PerfectIntegratorNeuron,
+)
 
 
 class TestPerfectIntegratorSimulate:
     """Engineering-verification surface for ``PerfectIntegratorNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace(self) -> None:
+        """Simulate python returns finite trace."""
         n = PerfectIntegratorNeuron()
         trace, spikes = n.simulate(1000, current=1.0, backend="python")
         assert trace.shape == (1000,)
@@ -25,6 +30,7 @@ class TestPerfectIntegratorSimulate:
         assert n.v == float(trace[-1])
 
     def test_simulate_rust_matches_python(self) -> None:
+        """Simulate rust matches python."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = PerfectIntegratorNeuron()
         rs = PerfectIntegratorNeuron()
@@ -34,6 +40,7 @@ class TestPerfectIntegratorSimulate:
         assert np.array_equal(tr_py, tr_rs)
 
     def test_simulate_rust_carries_non_default_contract(self) -> None:
+        """Simulate rust carries non-default contract."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
         rust = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
