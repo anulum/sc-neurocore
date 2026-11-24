@@ -10,22 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_huber_braun_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.huber_braun import (
+    HuberBraunNeuron,
+)
+from tests.model_huber_braun_support import (
+    _run,
+)
 
 
 class TestHBDynamics:
-    def test_fires_under_drive(self):
+    """Dynamics of the HuberBraunNeuron."""
+
+    def test_fires_under_drive(self) -> None:
+        """The model fires under drive."""
         n = HuberBraunNeuron()
         spikes = _run(n, current=50.0, steps=10_000)
         assert len(spikes) >= 1
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         s_low = len(_run(HuberBraunNeuron(), 20.0, 10_000))
         s_high = len(_run(HuberBraunNeuron(), 100.0, 10_000))
         assert s_high >= s_low
 
     @pytest.mark.parametrize("current", [0.0, 20.0, 50.0, 100.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = HuberBraunNeuron()
         for _ in range(5000):
             n.step(current)

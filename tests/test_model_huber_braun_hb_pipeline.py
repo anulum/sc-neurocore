@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_huber_braun_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.huber_braun import (
+    HuberBraunNeuron,
+)
 
 
 class TestHBPipeline:
-    def test_population(self):
+    """The HuberBraunNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(HuberBraunNeuron, n=10, label="hb").n == 10
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(HuberBraunNeuron, n=5, label="src")
         tgt = Population(HuberBraunNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
@@ -27,7 +54,8 @@ class TestHBPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert isinstance(mon_src.count, int)
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(HuberBraunNeuron, n=10, label="hb")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -35,20 +63,23 @@ class TestHBPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_analysis_spike_count(self):
+    def test_analysis_spike_count(self) -> None:
+        """The analysis counts the spikes of a driven run."""
         n = HuberBraunNeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10_000)])
         sc = spike_count(train)
         assert sc >= 0
 
-    def test_analysis_isi(self):
+    def test_analysis_isi(self) -> None:
+        """The analysis gives finite inter-spike intervals."""
         n = HuberBraunNeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10_000)])
         intervals = isi(train, dt=0.0001)
         if intervals.size > 0:
             assert np.all(np.isfinite(intervals))
 
-    def test_analysis_firing_rate(self):
+    def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = HuberBraunNeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10_000)])
         rate = firing_rate(train, dt=0.0001)

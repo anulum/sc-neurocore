@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.inhomogeneous_poisson import (
+    InhomogeneousPoissonNeuron,
+)
 
 
 class TestIPValidation:
+    """Input and state validation of the InhomogeneousPoissonNeuron."""
+
     @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float):
+    def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float) -> None:
+        """The model rejects non-positive or non-finite dt."""
         with pytest.raises(ValueError, match="dt_ms"):
             InhomogeneousPoissonNeuron(dt_ms=dt_ms)
 
     @pytest.mark.parametrize("rate_hz", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_rate_before_sampling(self, rate_hz: float):
+    def test_rejects_non_finite_rate_before_sampling(self, rate_hz: float) -> None:
+        """The model rejects non-finite rate before sampling."""
         n = InhomogeneousPoissonNeuron()
         with pytest.raises(ValueError, match="rate_hz"):
             n.step(rate_hz)

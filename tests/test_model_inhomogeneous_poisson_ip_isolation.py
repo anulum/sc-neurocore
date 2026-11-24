@@ -10,29 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
+from sc_neurocore.neurons.models.inhomogeneous_poisson import (
+    InhomogeneousPoissonNeuron,
+)
 
 
 class TestIPIsolation:
-    def test_defaults(self):
+    """The InhomogeneousPoissonNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = InhomogeneousPoissonNeuron()
         assert n.dt_ms == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert InhomogeneousPoissonNeuron().step(100.0) in (0, 1)
 
-    def test_stateless(self):
+    def test_stateless(self) -> None:
         """No internal state — only dt_ms parameter."""
         n = InhomogeneousPoissonNeuron()
         assert not hasattr(n, "v")
 
-    def test_reset_noop(self):
+    def test_reset_noop(self) -> None:
+        """A reset on the stateless model does nothing."""
         n = InhomogeneousPoissonNeuron()
         n.step(100.0)
         n.reset()
         # Nothing to verify — stateless
 
-    def test_stochastic_two_runs_differ(self):
+    def test_stochastic_two_runs_differ(self) -> None:
+        """Stochastic two runs differ."""
         n1 = InhomogeneousPoissonNeuron()
         n2 = InhomogeneousPoissonNeuron()
         t1 = [n1.step(100.0) for _ in range(1000)]

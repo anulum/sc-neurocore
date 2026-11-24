@@ -10,22 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_hindmarsh_rose_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.hindmarsh_rose import (
+    HindmarshRoseNeuron,
+)
+from tests.model_hindmarsh_rose_support import (
+    _run,
+)
 
 
 class TestHRBursting:
-    def test_fires_at_moderate_current(self):
+    """Bursting of the Hindmarsh-Rose neuron."""
+
+    def test_fires_at_moderate_current(self) -> None:
+        """The model fires at moderate current."""
         n = HindmarshRoseNeuron()
         spikes = _run(n, current=5.0, steps=10_000)
         assert len(spikes) >= 20
 
-    def test_silent_at_low_current(self):
+    def test_silent_at_low_current(self) -> None:
+        """A low current gives no spikes."""
         n = HindmarshRoseNeuron()
         # At I=0 with default params may or may not fire
         spikes = _run(n, current=0.0, steps=5000)
         assert isinstance(len(spikes), int)
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [2.0, 5.0, 10.0]:
             n = HindmarshRoseNeuron()
@@ -33,14 +45,15 @@ class TestHRBursting:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 2.0, 3.5, 5.0, 10.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = HindmarshRoseNeuron()
         for _ in range(10_000):
             n.step(current)
         assert np.isfinite(n.x)
 
-    def test_x_bounded(self):
-        """x stays bounded (cubic creates restoring force)."""
+    def test_x_bounded(self) -> None:
+        """The membrane variable x stays bounded (the cubic creates a restoring force)."""
         n = HindmarshRoseNeuron()
         xs = []
         for _ in range(20_000):

@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_ilif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.ilif import (
+    InhibitoryLIFNeuron,
+)
 
 
 class TestILIFAnalytical:
-    def test_v_update_formula(self):
+    """Analytical behaviour of the InhibitoryLIFNeuron."""
+
+    def test_v_update_formula(self) -> None:
         """V = alpha_m·V + I - inh_strength·inh_trace (after trace decay)."""
         n = InhibitoryLIFNeuron()
         v0, inh0 = n.v, n.inh_trace
@@ -26,7 +30,7 @@ class TestILIFAnalytical:
         if n.v != n.v_reset:  # no spike
             assert abs(n.v - expected_v) < 1e-12
 
-    def test_inh_trace_decay(self):
+    def test_inh_trace_decay(self) -> None:
         """inh_trace *= alpha_inh per step."""
         n = InhibitoryLIFNeuron()
         n.inh_trace = 1.0
@@ -36,7 +40,7 @@ class TestILIFAnalytical:
         expected = 1.0 * n.alpha_inh**steps
         assert abs(n.inh_trace - expected) < 1e-10
 
-    def test_spike_increments_trace(self):
+    def test_spike_increments_trace(self) -> None:
         """On spike: inh_trace += 1."""
         n = InhibitoryLIFNeuron()
         for _ in range(10_000):
@@ -47,14 +51,15 @@ class TestILIFAnalytical:
                 assert abs(n.inh_trace - expected) < 1e-10
                 break
 
-    def test_spike_resets_voltage(self):
+    def test_spike_resets_voltage(self) -> None:
+        """Spike resets voltage."""
         n = InhibitoryLIFNeuron()
         for _ in range(10_000):
             if n.step(5.0) == 1:
                 assert n.v == n.v_reset
                 break
 
-    def test_inhibition_suppresses_after_spike(self):
+    def test_inhibition_suppresses_after_spike(self) -> None:
         """After spike, inh_trace > 0 → suppresses next V integration."""
         n = InhibitoryLIFNeuron()
         for _ in range(10_000):
@@ -66,7 +71,7 @@ class TestILIFAnalytical:
                 assert n.v < v_next_no_inh
                 break
 
-    def test_alpha_m_range(self):
+    def test_alpha_m_range(self) -> None:
         """0 < alpha_m < 1 for finite tau_m."""
         n = InhibitoryLIFNeuron()
         assert 0 < n.alpha_m < 1

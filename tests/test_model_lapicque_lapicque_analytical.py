@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_lapicque_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.lapicque import (
+    LapicqueNeuron,
+)
+from tests.model_lapicque_support import (
+    _run,
+)
 
 
 class TestLapicqueAnalytical:
-    def test_exact_flow_formula(self):
+    """Analytical behaviour of the LapicqueNeuron."""
+
+    def test_exact_flow_formula(self) -> None:
         """V_next = V_ss + (V - V_ss) · exp(-dt / τ)."""
         n = LapicqueNeuron()
         v0 = n.v
@@ -24,7 +32,8 @@ class TestLapicqueAnalytical:
         n.step(I)
         assert abs(n.v - expected) < 1e-14
 
-    def test_exact_flow_separates_from_forward_euler_for_large_dt(self):
+    def test_exact_flow_separates_from_forward_euler_for_large_dt(self) -> None:
+        """Exact flow separates from forward Euler for large dt."""
         n = LapicqueNeuron(v=0.25, dt=5.0)
         v0 = n.v
         current = 0.5
@@ -36,7 +45,7 @@ class TestLapicqueAnalytical:
         assert abs(n.v - expected) < 1e-14
         assert abs(n.v - euler) > 1e-4
 
-    def test_steady_state(self):
+    def test_steady_state(self) -> None:
         """V_ss = V_rest + R·I (at equilibrium dV=0)."""
         n = LapicqueNeuron()
         I = 0.5  # subthreshold
@@ -45,26 +54,28 @@ class TestLapicqueAnalytical:
         expected_ss = n.v_rest + n.resistance * I
         assert abs(n.v - expected_ss) < 0.01
 
-    def test_rheobase(self):
+    def test_rheobase(self) -> None:
         """Rheobase = (V_threshold - V_rest) / R. Below: silent."""
         n = LapicqueNeuron()
         rheobase = (n.v_threshold - n.v_rest) / n.resistance
         # Below rheobase: no spikes
         assert len(_run(n, current=rheobase * 0.9, steps=5000)) == 0
 
-    def test_above_rheobase_fires(self):
+    def test_above_rheobase_fires(self) -> None:
+        """A current above rheobase makes the neuron fire."""
         n = LapicqueNeuron()
         rheobase = (n.v_threshold - n.v_rest) / n.resistance
         assert len(_run(n, current=rheobase * 1.5, steps=5000)) >= 10
 
-    def test_spike_resets_voltage(self):
+    def test_spike_resets_voltage(self) -> None:
+        """Spike resets voltage."""
         n = LapicqueNeuron()
         for _ in range(10_000):
             if n.step(20.0) == 1:
                 assert n.v == n.v_reset
                 break
 
-    def test_resistance_scales_input(self):
+    def test_resistance_scales_input(self) -> None:
         """Higher R → more effective current."""
         n1 = LapicqueNeuron(resistance=0.5, v_threshold=100.0)
         n2 = LapicqueNeuron(resistance=2.0, v_threshold=100.0)

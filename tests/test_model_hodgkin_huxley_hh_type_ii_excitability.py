@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_hodgkin_huxley_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
+from tests.model_hodgkin_huxley_support import (
+    _run,
+)
 
 
 class TestHHTypeIIExcitability:
     """HH is the canonical Type-II excitable model."""
 
-    def test_subthreshold_silent(self):
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = HodgkinHuxleyNeuron()
         assert len(_run(n, current=5.0, steps=5000)) <= 2
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = HodgkinHuxleyNeuron()
         assert len(_run(n, current=10.0, steps=5000)) >= 100
 
-    def test_non_monotonic_fi(self):
+    def test_non_monotonic_fi(self) -> None:
         """Type-II: f–I peaks then declines at high current."""
         rates = {}
         for I in [10.0, 20.0, 50.0]:
@@ -35,7 +43,7 @@ class TestHHTypeIIExcitability:
             f"f(20)={rates[20.0]}, f(50)={rates[50.0]} — expected non-monotonic"
         )
 
-    def test_isi_regularity(self):
+    def test_isi_regularity(self) -> None:
         """HH ISI has moderate variability from the 4-variable interaction.
 
         CV at I=10 measured ~0.26 — higher than simple IF models but

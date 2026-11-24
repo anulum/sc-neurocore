@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_hodgkin_huxley_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestHHPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the HodgkinHuxleyNeuron."""
+
+    def test_isolation_throughput(self) -> None:
         """HH is slow due to 100 sub-steps + exp() per step."""
         n = HodgkinHuxleyNeuron()
         N = 500

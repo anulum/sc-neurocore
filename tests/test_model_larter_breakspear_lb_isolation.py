@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_larter_breakspear_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.larter_breakspear import (
+    LarterBreakspearNeuron,
+)
 
 
 class TestLBIsolation:
-    def test_defaults(self):
+    """The LarterBreakspearNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = LarterBreakspearNeuron()
         assert n.v == 0.1 and n.w == 0.1 and n.z == 0.1
         assert n.g_ca == 1.1 and n.g_na == 6.7
@@ -23,25 +30,29 @@ class TestLBIsolation:
         assert n.dt == 0.01
         assert n.integrator == "rk4"
 
-    def test_step_returns_float(self):
+    def test_step_returns_float(self) -> None:
+        """One step returns a float voltage."""
         n = LarterBreakspearNeuron()
         result = n.step(0.0)
         assert isinstance(result, (float, np.floating))
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = LarterBreakspearNeuron()
         for _ in range(50_000):
             n.step(0.0)
         assert np.isfinite(n.v) and np.isfinite(n.w) and np.isfinite(n.z)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = LarterBreakspearNeuron()
         for _ in range(5000):
             n.step(0.0)
         n.reset()
         assert n.v == 0.1 and n.w == 0.1 and n.z == 0.1
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = LarterBreakspearNeuron()
@@ -49,7 +60,8 @@ class TestLBIsolation:
             traces.append(trace)
         assert traces[0] == traces[1]
 
-    def test_rejects_nonfinite_coupling(self):
+    def test_rejects_nonfinite_coupling(self) -> None:
+        """The model rejects non-finite coupling."""
         n = LarterBreakspearNeuron()
         with pytest.raises(ValueError, match="coupling"):
             n.step(float("inf"))

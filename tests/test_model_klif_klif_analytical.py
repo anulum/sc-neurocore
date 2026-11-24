@@ -10,12 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_klif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.klif import (
+    KLIFNeuron,
+)
 
 
 class TestKLIFAnalytical:
-    def test_v_update_formula(self):
-        """V = α·V + k·I."""
+    """Analytical behaviour of the KLIFNeuron."""
+
+    def test_v_update_formula(self) -> None:
+        """The voltage update is V = α·V + k·I."""
         n = KLIFNeuron()
         v0 = n.v
         I = 0.5
@@ -24,7 +28,7 @@ class TestKLIFAnalytical:
         if n.v != n.v_reset:
             assert abs(n.v - expected) < 1e-12
 
-    def test_k_scales_input(self):
+    def test_k_scales_input(self) -> None:
         """k=2 → double effective input."""
         n1 = KLIFNeuron(k=1.0, v_threshold=100.0)
         n2 = KLIFNeuron(k=2.0, v_threshold=100.0)
@@ -33,7 +37,7 @@ class TestKLIFAnalytical:
             n2.step(1.0)
         assert n2.v > n1.v
 
-    def test_alpha_decay_without_input(self):
+    def test_alpha_decay_without_input(self) -> None:
         """V decays by α per step when I=0."""
         n = KLIFNeuron(v_threshold=100.0)
         n.v = 0.5
@@ -42,14 +46,15 @@ class TestKLIFAnalytical:
         expected = 0.5 * n.alpha**10
         assert abs(n.v - expected) < 1e-10
 
-    def test_spike_resets_voltage(self):
+    def test_spike_resets_voltage(self) -> None:
+        """Spike resets voltage."""
         n = KLIFNeuron()
         for _ in range(10_000):
             if n.step(1.0) == 1:
                 assert n.v == n.v_reset
                 break
 
-    def test_zero_k_no_integration(self):
+    def test_zero_k_no_integration(self) -> None:
         """k=0 → V never integrates input."""
         n = KLIFNeuron(k=0.0)
         for _ in range(1000):

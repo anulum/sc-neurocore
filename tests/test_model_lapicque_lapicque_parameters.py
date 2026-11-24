@@ -10,25 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_lapicque_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.lapicque import (
+    LapicqueNeuron,
+)
+from tests.model_lapicque_support import (
+    _run,
+)
 
 
 class TestLapicqueParameters:
+    """Parameter behaviour of the LapicqueNeuron."""
+
     @pytest.mark.parametrize("tau", [5.0, 20.0, 50.0])
-    def test_tau_sweep(self, tau: float):
+    def test_tau_sweep(self, tau: float) -> None:
+        """The model is exercised across a sweep of tau."""
         n = LapicqueNeuron(tau=tau)
         for _ in range(5000):
             n.step(20.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("resistance", [0.5, 1.0, 2.0])
-    def test_resistance_sweep(self, resistance: float):
+    def test_resistance_sweep(self, resistance: float) -> None:
+        """The model is exercised across a sweep of resistance."""
         n = LapicqueNeuron(resistance=resistance)
         spikes = len(_run(n, current=20.0, steps=5000))
         assert isinstance(spikes, int)
 
     @pytest.mark.parametrize("dt", [0.1, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = LapicqueNeuron(dt=dt)
         for _ in range(5000):
             n.step(20.0)

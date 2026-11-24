@@ -10,39 +10,52 @@
 
 from __future__ import annotations
 
-from tests.model_leaky_compete_fire_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.leaky_compete_fire import (
+    LeakyCompeteFireNeuron,
+)
 
 
 class TestLCFIsolation:
-    def test_defaults(self):
+    """The LeakyCompeteFireNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = LeakyCompeteFireNeuron()
         assert n.n_units == 4 and len(n.v) == 4
         assert n.tau == 10.0 and n.v_threshold == 1.0
         assert n.w_inh == 0.5
 
-    def test_step_returns_list(self):
+    def test_step_returns_list(self) -> None:
+        """One step returns one spike per unit."""
         n = LeakyCompeteFireNeuron()
         result = n.step(5.0)
         assert isinstance(result, list) and len(result) == 4
 
-    def test_each_element_binary(self):
+    def test_each_element_binary(self) -> None:
+        """Each unit's spike is binary."""
         n = LeakyCompeteFireNeuron()
         result = n.step(5.0)
         for s in result:
             assert s in (0, 1)
 
-    def test_reset_zeroes_all(self):
+    def test_reset_zeroes_all(self) -> None:
+        """A reset zeroes every unit."""
         n = LeakyCompeteFireNeuron()
         for _ in range(100):
             n.step(5.0)
         n.reset()
         assert all(v == 0.0 for v in n.v)
 
-    def test_initial_vector_state_is_preserved_when_valid(self):
+    def test_initial_vector_state_is_preserved_when_valid(self) -> None:
+        """Initial vector state is preserved when valid."""
         n = LeakyCompeteFireNeuron(n_units=3, v=[0.1, 0.2, 0.3])
         assert n.v == [0.1, 0.2, 0.3]
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = LeakyCompeteFireNeuron()
@@ -63,24 +76,29 @@ class TestLCFIsolation:
             {"dt": np.inf},
         ],
     )
-    def test_invalid_configuration_raises(self, kwargs):
+    def test_invalid_configuration_raises(self, kwargs: dict[str, Any]) -> None:
+        """Invalid configuration raises."""
         with pytest.raises(ValueError):
             LeakyCompeteFireNeuron(**kwargs)
 
-    def test_step_rejects_current_length_mismatch(self):
+    def test_step_rejects_current_length_mismatch(self) -> None:
+        """Step rejects current length mismatch."""
         n = LeakyCompeteFireNeuron(n_units=3)
         with pytest.raises(ValueError, match="length"):
             n.step([1.0, 2.0])
 
-    def test_step_rejects_non_finite_current(self):
+    def test_step_rejects_non_finite_current(self) -> None:
+        """Step rejects non-finite current."""
         n = LeakyCompeteFireNeuron(n_units=2)
         with pytest.raises(ValueError, match="finite"):
             n.step([1.0, np.nan])
 
-    def test_rejects_initial_voltage_length_mismatch(self):
+    def test_rejects_initial_voltage_length_mismatch(self) -> None:
+        """The model rejects initial voltage length mismatch."""
         with pytest.raises(ValueError, match="v must have length"):
             LeakyCompeteFireNeuron(n_units=3, v=[0.1, 0.2])
 
-    def test_rejects_non_finite_initial_voltage(self):
+    def test_rejects_non_finite_initial_voltage(self) -> None:
+        """The model rejects non-finite initial voltage."""
         with pytest.raises(ValueError, match="v must contain"):
             LeakyCompeteFireNeuron(n_units=2, v=[0.1, np.nan])

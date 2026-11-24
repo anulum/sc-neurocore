@@ -10,19 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_klif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.klif import (
+    KLIFNeuron,
+)
+from tests.model_klif_support import (
+    _run,
+)
 
 
 class TestKLIFDynamics:
-    def test_fires_under_drive(self):
+    """Dynamics of the KLIFNeuron."""
+
+    def test_fires_under_drive(self) -> None:
+        """The model fires under drive."""
         n = KLIFNeuron()
         assert len(_run(n, current=1.0, steps=5000)) >= 100
 
-    def test_subthreshold_silent(self):
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = KLIFNeuron()
         assert len(_run(n, current=0.01, steps=5000)) == 0
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.5, 1.0, 5.0]:
             n = KLIFNeuron()
@@ -30,7 +42,8 @@ class TestKLIFDynamics:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 0.5, 1.0, 2.0, 5.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = KLIFNeuron()
         for _ in range(5000):
             n.step(current)

@@ -10,14 +10,35 @@
 
 from __future__ import annotations
 
-from tests.model_larter_breakspear_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.larter_breakspear import (
+    LarterBreakspearNeuron,
+)
 
 
 class TestLBPipeline:
-    def test_population(self):
+    """The LarterBreakspearNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(LarterBreakspearNeuron, n=5, label="lb").n == 5
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(LarterBreakspearNeuron, n=5, label="src")
         tgt = Population(LarterBreakspearNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
@@ -27,7 +48,8 @@ class TestLBPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert isinstance(mon_src.count, int)
 
-    def test_network_runs(self):
+    def test_network_runs(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(LarterBreakspearNeuron, n=10, label="lb")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

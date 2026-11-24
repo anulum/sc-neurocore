@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.inhomogeneous_poisson import (
+    InhomogeneousPoissonNeuron,
+)
+from tests.model_inhomogeneous_poisson_support import (
+    _poisson_interval_probability,
+)
 
 
 class TestIPAnalytical:
-    def test_probability_formula(self):
+    """Analytical behaviour of the InhomogeneousPoissonNeuron."""
+
+    def test_probability_formula(self) -> None:
         """P(spike) = 1 - exp(-rate_hz · dt_ms / 1000)."""
         n = InhomogeneousPoissonNeuron(dt_ms=1.0)
         assert n._probability(100.0) == pytest.approx(1.0 - math.exp(-0.1))
 
-    def test_expected_spike_count(self):
+    def test_expected_spike_count(self) -> None:
         """E[spikes] = N · (1 - exp(-rate · dt/1000)). Statistical test."""
         n = InhomogeneousPoissonNeuron(dt_ms=1.0)
         N = 100_000
@@ -30,24 +40,25 @@ class TestIPAnalytical:
         std = np.sqrt(N * p * (1.0 - p))
         assert abs(spikes - expected) < 5 * std
 
-    def test_negative_rate_no_spikes(self):
+    def test_negative_rate_no_spikes(self) -> None:
         """Negative rate clipped to 0 → P = 0."""
         n = InhomogeneousPoissonNeuron()
         spikes = sum(n.step(-100.0) for _ in range(10_000))
         assert spikes == 0
 
-    def test_zero_rate_no_spikes(self):
+    def test_zero_rate_no_spikes(self) -> None:
+        """A zero rate gives no spikes."""
         n = InhomogeneousPoissonNeuron()
         spikes = sum(n.step(0.0) for _ in range(10_000))
         assert spikes == 0
 
-    def test_high_rate_saturates_without_invalid_probability(self):
+    def test_high_rate_saturates_without_invalid_probability(self) -> None:
         """High finite rates saturate to one spike per interval without invalid probabilities."""
         n = InhomogeneousPoissonNeuron()
         spikes = sum(n.step(1.0e9) for _ in range(100))
         assert spikes == 100
 
-    def test_rate_proportional(self):
+    def test_rate_proportional(self) -> None:
         """Double rate → double expected spikes."""
         n1 = InhomogeneousPoissonNeuron()
         n2 = InhomogeneousPoissonNeuron()
@@ -58,7 +69,7 @@ class TestIPAnalytical:
         assert s2 > s1
 
     @pytest.mark.parametrize("dt_ms", [0.1, 1.0, 5.0])
-    def test_dt_ms_scales_probability(self, dt_ms: float):
+    def test_dt_ms_scales_probability(self, dt_ms: float) -> None:
         """Larger dt_ms → higher P per step."""
         n = InhomogeneousPoissonNeuron(dt_ms=dt_ms)
         spikes = sum(n.step(100.0) for _ in range(10_000))

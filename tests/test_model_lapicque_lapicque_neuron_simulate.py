@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_lapicque_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.lapicque import (
+    LapicqueNeuron,
+)
 
 
 class TestLapicqueNeuronSimulate:
     """Engineering-verification surface for ``LapicqueNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace(self) -> None:
+        """Simulate python returns finite trace."""
         n = LapicqueNeuron()
         trace, spikes = n.simulate(1000, current=2.0, backend="python")
         assert trace.shape == (1000,)
@@ -24,6 +29,7 @@ class TestLapicqueNeuronSimulate:
         assert spikes >= 1
 
     def test_simulate_rust_matches_or_ulp_python(self) -> None:
+        """Simulate rust matches or ULP python."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = LapicqueNeuron()
         rs = LapicqueNeuron()
@@ -34,6 +40,7 @@ class TestLapicqueNeuronSimulate:
         assert max_diff < 1e-9
 
     def test_simulate_rust_carries_non_default_complete_contract(self) -> None:
+        """Simulate rust carries non-default complete contract."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         python = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)
         rust = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)

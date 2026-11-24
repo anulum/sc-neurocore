@@ -10,7 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_hindmarsh_rose_support import *  # noqa: F403
+import numpy as np
+import os
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.hindmarsh_rose import (
+    HindmarshRoseNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
@@ -35,7 +52,10 @@ def _isolation_min_rate(*, ci_rate: int, local_rate: int) -> int:
 
 
 class TestHRPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the HindmarshRoseNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = HindmarshRoseNeuron()
         N = 200_000
         t0 = time.perf_counter()
@@ -51,7 +71,8 @@ class TestHRPerformance:
             strict_minimum_per_second=float(min_rate),
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(HindmarshRoseNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

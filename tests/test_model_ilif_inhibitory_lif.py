@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_ilif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.ilif import (
+    InhibitoryLIFNeuron,
+)
 
 
 class TestInhibitoryLIF:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.ilif import InhibitoryLIFNeuron
+    """The inhibitory LIF neuron."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = InhibitoryLIFNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_inhibition_trace(self):
-        from sc_neurocore.neurons.models.ilif import InhibitoryLIFNeuron
-
+    def test_inhibition_trace(self) -> None:
+        """Spikes build up the inhibition trace."""
         n = InhibitoryLIFNeuron()
         for _ in range(50):
             if n.step(50.0):

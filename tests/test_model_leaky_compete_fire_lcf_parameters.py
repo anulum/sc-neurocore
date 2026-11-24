@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_leaky_compete_fire_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.leaky_compete_fire import (
+    LeakyCompeteFireNeuron,
+)
 
 
 class TestLCFParameters:
+    """Parameter behaviour of the LeakyCompeteFireNeuron."""
+
     @pytest.mark.parametrize("w_inh", [0.0, 0.5, 2.0])
-    def test_w_inh_sweep(self, w_inh: float):
+    def test_w_inh_sweep(self, w_inh: float) -> None:
+        """The model is exercised across a sweep of w_inh."""
         n = LeakyCompeteFireNeuron(w_inh=w_inh)
         for _ in range(1000):
             n.step(5.0)
         assert all(np.isfinite(v) for v in n.v)
 
     @pytest.mark.parametrize("n_units", [2, 4, 8])
-    def test_n_units_sweep(self, n_units: int):
+    def test_n_units_sweep(self, n_units: int) -> None:
+        """The model is exercised across a sweep of n_units."""
         n = LeakyCompeteFireNeuron(n_units=n_units)
         result = n.step(5.0)
         assert len(result) == n_units

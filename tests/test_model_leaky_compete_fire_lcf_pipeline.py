@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_leaky_compete_fire_support import *  # noqa: F403
+import pytest
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.leaky_compete_fire import (
+    LeakyCompeteFireNeuron,
+)
 
 
 class TestLCFPipeline:
-    def test_population_incompatible(self):
-        """v is list (multi-unit WTA) → Population._sync_voltages fails."""
+    """The LeakyCompeteFireNeuron in the network pipeline."""
+
+    def test_population_incompatible(self) -> None:
+        """The voltage v is a list (multi-unit WTA), so Population._sync_voltages fails."""
         with pytest.raises((ValueError, TypeError)):
             Population(LeakyCompeteFireNeuron, n=5, label="lcf")
 
-    def test_analysis_isolation(self):
+    def test_analysis_isolation(self) -> None:
         """Run in isolation, flatten spikes for analysis."""
         n = LeakyCompeteFireNeuron()
         total_spikes = 0

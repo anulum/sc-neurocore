@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_hindmarsh_rose_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.hindmarsh_rose import (
+    HindmarshRoseNeuron,
+)
 
 
 class TestHRAnalytical:
-    def test_dx_formula_one_step(self):
-        """dx = (y - x³ + b·x² - z + I) · dt."""
+    """Analytical behaviour of the HindmarshRoseNeuron."""
+
+    def test_dx_formula_one_step(self) -> None:
+        """The membrane update is dx = (y - x³ + b·x² - z + I) · dt."""
         n = HindmarshRoseNeuron(integrator="euler")
         x0, y0, z0 = n.x, n.y, n.z
         I = 3.0
@@ -27,7 +32,8 @@ class TestHRAnalytical:
         assert abs((n.y - y0) - expected_dy) < 1e-12
         assert abs((n.z - z0) - expected_dz) < 1e-14
 
-    def test_runge_kutta_tracks_substepped_reference_better_than_euler(self):
+    def test_runge_kutta_tracks_substepped_reference_better_than_euler(self) -> None:
+        """Runge-Kutta tracks substepped reference better than Euler."""
         horizon = 1.0
         current = 3.5
         reference = HindmarshRoseNeuron(dt=0.001, integrator="rk4")
@@ -54,18 +60,18 @@ class TestHRAnalytical:
         assert rk4_error < euler_error
         assert rk4_error < 5e-3
 
-    def test_cubic_nonlinearity(self):
+    def test_cubic_nonlinearity(self) -> None:
         """-x³ creates the excitable dynamics."""
         n = HindmarshRoseNeuron()
         # At x=2: -x³ = -8, b·x² = 12 → net = 4 (positive)
         assert -8.0 + n.b * 4.0 == 4.0
 
-    def test_z_slow_timescale(self):
+    def test_z_slow_timescale(self) -> None:
         """r=0.001 → z changes ~1000x slower than x."""
         n = HindmarshRoseNeuron()
         assert n.r == 0.001
 
-    def test_z_adapts_to_x(self):
+    def test_z_adapts_to_x(self) -> None:
         """dz/dt = r·(s·(x-x_rest) - z). z tracks s·(x-x_rest)."""
         n = HindmarshRoseNeuron()
         z0 = n.z
@@ -74,14 +80,14 @@ class TestHRAnalytical:
         # z should have moved from initial value
         assert n.z != z0
 
-    def test_x_nullcline(self):
+    def test_x_nullcline(self) -> None:
         """x-nullcline: y = x³ - b·x² + z - I."""
         # At rest (x=-1.6): y_null = (-1.6)³ - 3·(-1.6)² + z - I
         x = -1.6
         y_null = x**3 - 3.0 * x**2 + 2.0 - 0.0
         assert np.isfinite(y_null)
 
-    def test_y_nullcline(self):
+    def test_y_nullcline(self) -> None:
         """y-nullcline: y = 1 - 5x²."""
         x = -1.6
         y_null = 1.0 - 5.0 * x**2

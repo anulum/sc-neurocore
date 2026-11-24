@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3920
+expected_file_count = 3980
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -15724,3 +15724,243 @@ rationale = "Exercise SC-NeuroCore: model hill tononi ht performance."
 [[file]]
 path = "tests/test_model_hill_tononi_ht_pipeline.py"
 rationale = "Exercise SC-NeuroCore: model hill tononi ht pipeline."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_analytical.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr analytical."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_bursting.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr bursting."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_isolation.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr isolation."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_parameters.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr parameters."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_performance.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr performance."
+
+[[file]]
+path = "tests/test_model_hindmarsh_rose_hr_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model hindmarsh rose hr pipeline."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_current_balance.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh current balance."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_isolation.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh isolation."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_parameters.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh parameters."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_performance.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh performance."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh pipeline."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_rate_functions.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh rate functions."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hh_type_ii_excitability.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hh type ii excitability."
+
+[[file]]
+path = "tests/test_model_hodgkin_huxley_hodgkin_huxley_neuron_simulate.py"
+rationale = "Exercise SC-NeuroCore: model hodgkin huxley hodgkin huxley neuron simulate."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_analytical.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb analytical."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb dynamics."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_isolation.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb isolation."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_parameters.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb parameters."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_performance.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb performance."
+
+[[file]]
+path = "tests/test_model_huber_braun_hb_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model huber braun hb pipeline."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_analytical.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif analytical."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif dynamics."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif isolation."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif parameters."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_performance.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif performance."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif pipeline."
+
+[[file]]
+path = "tests/test_model_ilif_ilif_validation.py"
+rationale = "Exercise SC-NeuroCore: model ilif ilif validation."
+
+[[file]]
+path = "tests/test_model_ilif_inhibitory_lif.py"
+rationale = "Exercise SC-NeuroCore: model ilif inhibitory lif."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_analytical.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip analytical."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip dynamics."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_isolation.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip isolation."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_performance.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip performance."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip pipeline."
+
+[[file]]
+path = "tests/test_model_inhomogeneous_poisson_ip_validation.py"
+rationale = "Exercise SC-NeuroCore: model inhomogeneous poisson ip validation."
+
+[[file]]
+path = "tests/test_model_klif_klif.py"
+rationale = "Exercise SC-NeuroCore: model klif klif."
+
+[[file]]
+path = "tests/test_model_klif_klif_analytical.py"
+rationale = "Exercise SC-NeuroCore: model klif klif analytical."
+
+[[file]]
+path = "tests/test_model_klif_klif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model klif klif dynamics."
+
+[[file]]
+path = "tests/test_model_klif_klif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model klif klif isolation."
+
+[[file]]
+path = "tests/test_model_klif_klif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model klif klif parameters."
+
+[[file]]
+path = "tests/test_model_klif_klif_performance.py"
+rationale = "Exercise SC-NeuroCore: model klif klif performance."
+
+[[file]]
+path = "tests/test_model_klif_klif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model klif klif pipeline."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_analytical.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque analytical."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque dynamics."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_isolation.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque isolation."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_neuron_simulate.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque neuron simulate."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_parameters.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque parameters."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_performance.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque performance."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque pipeline."
+
+[[file]]
+path = "tests/test_model_lapicque_lapicque_validation.py"
+rationale = "Exercise SC-NeuroCore: model lapicque lapicque validation."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_analytical.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb analytical."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb dynamics."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_isolation.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb isolation."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_parameters.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb parameters."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_performance.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb performance."
+
+[[file]]
+path = "tests/test_model_larter_breakspear_lb_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model larter breakspear lb pipeline."
+
+[[file]]
+path = "tests/test_model_leaky_compete_fire_lcf_analytical.py"
+rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf analytical."
+
+[[file]]
+path = "tests/test_model_leaky_compete_fire_lcf_isolation.py"
+rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf isolation."
+
+[[file]]
+path = "tests/test_model_leaky_compete_fire_lcf_parameters.py"
+rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf parameters."
+
+[[file]]
+path = "tests/test_model_leaky_compete_fire_lcf_performance.py"
+rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf performance."
+
+[[file]]
+path = "tests/test_model_leaky_compete_fire_lcf_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf pipeline."

@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_hindmarsh_rose_support import *  # noqa: F403
+from typing import cast
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.hindmarsh_rose import (
+    HindmarshRoseNeuron,
+)
 
 
 class TestHRParameters:
+    """Parameter behaviour of the HindmarshRoseNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -24,30 +32,36 @@ class TestHRParameters:
             ("b", float("inf")),
         ],
     )
-    def test_rejects_nonphysical_parameters(self, field: str, value: float):
+    def test_rejects_nonphysical_parameters(self, field: str, value: float) -> None:
+        """The model rejects nonphysical parameters."""
         with pytest.raises(ValueError, match=field):
-            HindmarshRoseNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            HindmarshRoseNeuron(**kwargs)
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="integrator"):
-            HindmarshRoseNeuron(integrator="verlet")
+            HindmarshRoseNeuron(integrator=cast(Any, "verlet"))
 
     @pytest.mark.parametrize("b", [2.0, 3.0, 4.0])
-    def test_b_sweep(self, b: float):
+    def test_b_sweep(self, b: float) -> None:
+        """The model is exercised across a sweep of b."""
         n = HindmarshRoseNeuron(b=b)
         for _ in range(10_000):
             n.step(5.0)
         assert np.isfinite(n.x)
 
     @pytest.mark.parametrize("r", [0.0005, 0.001, 0.005])
-    def test_r_slow_timescale(self, r: float):
+    def test_r_slow_timescale(self, r: float) -> None:
+        """The slow variable stays finite across r values."""
         n = HindmarshRoseNeuron(r=r)
         for _ in range(10_000):
             n.step(5.0)
         assert np.isfinite(n.z)
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.15])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = HindmarshRoseNeuron(dt=dt)
         for _ in range(10_000):
             n.step(5.0)

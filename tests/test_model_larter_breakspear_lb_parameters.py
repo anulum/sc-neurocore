@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_larter_breakspear_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.larter_breakspear import (
+    LarterBreakspearNeuron,
+)
 
 
 class TestLBParameters:
+    """Parameter behaviour of the LarterBreakspearNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -33,12 +40,15 @@ class TestLBParameters:
             ("coupling_balance", 1.01),
         ],
     )
-    def test_rejects_nonphysical_parameters(self, field: str, value: float):
+    def test_rejects_nonphysical_parameters(self, field: str, value: float) -> None:
+        """The model rejects nonphysical parameters."""
         with pytest.raises(ValueError, match=field):
-            LarterBreakspearNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            LarterBreakspearNeuron(**kwargs)
 
     @pytest.mark.parametrize("integrator", ["rk4", "euler"])
-    def test_runtime_parameter_corruption_fails_before_mutation(self, integrator: str):
+    def test_runtime_parameter_corruption_fails_before_mutation(self, integrator: str) -> None:
+        """Runtime parameter corruption fails before mutation."""
         n = LarterBreakspearNeuron(integrator=integrator)
         n.tau_k = float("nan")
         before = (n.v, n.w, n.z)
@@ -49,7 +59,8 @@ class TestLBParameters:
         assert (n.v, n.w, n.z) == before
 
     @pytest.mark.parametrize("integrator", ["rk4", "euler"])
-    def test_potassium_gate_bounds_fail_before_mutation(self, integrator: str):
+    def test_potassium_gate_bounds_fail_before_mutation(self, integrator: str) -> None:
+        """Potassium gate bounds fail before mutation."""
         n = LarterBreakspearNeuron(w=0.0, dt=100.0, integrator=integrator)
         before = (n.v, n.w, n.z)
 
@@ -58,26 +69,30 @@ class TestLBParameters:
 
         assert (n.v, n.w, n.z) == before
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="integrator"):
             LarterBreakspearNeuron(integrator="verlet")
 
     @pytest.mark.parametrize("g_ca", [0.5, 1.1, 2.0])
-    def test_g_ca_sweep(self, g_ca: float):
+    def test_g_ca_sweep(self, g_ca: float) -> None:
+        """The model is exercised across a sweep of g_ca."""
         n = LarterBreakspearNeuron(g_ca=g_ca)
         for _ in range(5000):
             n.step(0.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("i_ext", [0.0, 0.3, 1.0])
-    def test_i_ext_sweep(self, i_ext: float):
+    def test_i_ext_sweep(self, i_ext: float) -> None:
+        """The model is exercised across a sweep of i_ext."""
         n = LarterBreakspearNeuron(i_ext=i_ext)
         for _ in range(5000):
             n.step(0.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("a_ee", [0.0, 0.4, 0.5])
-    def test_a_ee_sweep(self, a_ee: float):
+    def test_a_ee_sweep(self, a_ee: float) -> None:
+        """The model is exercised across a sweep of a_ee."""
         n = LarterBreakspearNeuron(a_ee=a_ee)
         for _ in range(5000):
             n.step(0.0)

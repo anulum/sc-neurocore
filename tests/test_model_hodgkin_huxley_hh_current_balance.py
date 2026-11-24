@@ -10,17 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_hodgkin_huxley_support import *  # noqa: F403
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
 
 
 class TestHHCurrentBalance:
-    def test_i_na_inward_at_rest(self):
+    """The current balance of the Hodgkin-Huxley neuron."""
+
+    def test_i_na_inward_at_rest(self) -> None:
         """I_Na at rest: g_Na·m³·h·(V-E_Na). V=-65 < E_Na=50 → negative (inward)."""
         n = HodgkinHuxleyNeuron()
         i_na = n.g_na * n.m**3 * n.h * (n.v - n.e_na)
         assert i_na < 0
 
-    def test_i_k_outward_at_rest(self):
+    def test_i_k_outward_at_rest(self) -> None:
         """I_K: g_K·n⁴·(V-E_K). V=-65 > E_K=-77 → positive (outward)."""
         n = HodgkinHuxleyNeuron()
         i_k = n.g_k * n.n**4 * (n.v - n.e_k)

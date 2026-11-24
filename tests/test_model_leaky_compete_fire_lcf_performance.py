@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_leaky_compete_fire_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.leaky_compete_fire import (
+    LeakyCompeteFireNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestLCFPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the LeakyCompeteFireNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = LeakyCompeteFireNeuron()
         N = 100_000
         t0 = time.perf_counter()

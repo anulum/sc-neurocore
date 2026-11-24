@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_hodgkin_huxley_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
 
 
 class TestHHParameters:
+    """Parameter behaviour of the HodgkinHuxleyNeuron."""
+
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = HodgkinHuxleyNeuron(dt=dt)
         for _ in range(2000):
             n.step(10.0)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = HodgkinHuxleyNeuron()

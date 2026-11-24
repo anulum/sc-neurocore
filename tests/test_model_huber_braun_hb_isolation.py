@@ -10,33 +10,42 @@
 
 from __future__ import annotations
 
-from tests.model_huber_braun_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.huber_braun import (
+    HuberBraunNeuron,
+)
 
 
 class TestHBIsolation:
-    def test_defaults(self):
+    """The HuberBraunNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = HuberBraunNeuron()
         assert n.v == -50.0 and n.a_sd == 0.0 and n.a_sr == 0.0
         assert n.g_sd == 1.5 and n.g_sr == 0.4 and n.g_l == 0.1
         assert n.eta == 0.012 and n.dt == 0.1
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert HuberBraunNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = HuberBraunNeuron()
         for _ in range(50_000):
             n.step(50.0)
         assert np.isfinite(n.v) and np.isfinite(n.a_sd) and np.isfinite(n.a_sr)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = HuberBraunNeuron()
         for _ in range(2000):
             n.step(50.0)
         n.reset()
         assert n.v == -50.0 and n.a_sd == 0.0 and n.a_sr == 0.0
 
-    def test_stochastic_noise_present(self):
+    def test_stochastic_noise_present(self) -> None:
         """η·randn() noise → voltage diverges from deterministic path."""
         n1 = HuberBraunNeuron(eta=0.0)  # no noise
         n2 = HuberBraunNeuron(eta=0.012)  # with noise

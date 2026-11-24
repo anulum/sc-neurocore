@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_hodgkin_huxley_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.hodgkin_huxley import (
+    HodgkinHuxleyNeuron,
+)
 
 
 class TestHHIsolation:
-    def test_defaults(self):
+    """The HodgkinHuxleyNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = HodgkinHuxleyNeuron()
         assert n.v == -65.0 and n.m == 0.05 and n.h == 0.6 and n.n == 0.32
         assert n.g_na == 120.0 and n.g_k == 36.0 and n.g_l == 0.3
         assert n.e_na == 50.0 and n.e_k == -77.0 and n.e_l == -54.4
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert HodgkinHuxleyNeuron().step(0.0) in (0, 1)
 
-    def test_four_variables_evolve(self):
+    def test_four_variables_evolve(self) -> None:
+        """Four variables evolve."""
         n = HodgkinHuxleyNeuron()
         initial = (n.v, n.m, n.h, n.n)
         for _ in range(100):
@@ -31,21 +39,23 @@ class TestHHIsolation:
         for name, v0, v1 in zip(["v", "m", "h", "n"], initial, (n.v, n.m, n.h, n.n)):
             assert v0 != v1, f"{name} didn't evolve"
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = HodgkinHuxleyNeuron()
         for _ in range(5000):
             n.step(10.0)
         for var in [n.v, n.m, n.h, n.n]:
             assert np.isfinite(var)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = HodgkinHuxleyNeuron()
         for _ in range(100):
             n.step(10.0)
         n.reset()
         assert n.v == -65.0 and n.m == 0.05 and n.h == 0.6 and n.n == 0.32
 
-    def test_100_substeps(self):
+    def test_100_substeps(self) -> None:
         """round(1.0/dt) = 100 sub-steps per step() call."""
         n = HodgkinHuxleyNeuron(dt=0.01)
         assert round(1.0 / n.dt) == 100

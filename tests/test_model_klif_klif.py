@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_klif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.klif import (
+    KLIFNeuron,
+)
 
 
 class TestKLIF:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.klif import KLIFNeuron
+    """The KLIF neuron with a learnable scaling factor."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = KLIFNeuron()
         assert sum(n.step(0.5) for _ in range(50)) > 0

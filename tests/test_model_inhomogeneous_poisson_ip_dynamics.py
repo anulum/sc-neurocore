@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
+from sc_neurocore.neurons.models.inhomogeneous_poisson import (
+    InhomogeneousPoissonNeuron,
+)
+from tests.model_inhomogeneous_poisson_support import (
+    _run,
+)
 
 
 class TestIPDynamics:
-    def test_fires_at_positive_rate(self):
+    """Dynamics of the InhomogeneousPoissonNeuron."""
+
+    def test_fires_at_positive_rate(self) -> None:
+        """The model fires at positive rate."""
         n = InhomogeneousPoissonNeuron()
         spikes = _run(n, rate=100.0, steps=10_000)
         assert len(spikes) >= 100
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         s_low = len(_run(InhomogeneousPoissonNeuron(), 50.0, 10_000))
         s_high = len(_run(InhomogeneousPoissonNeuron(), 500.0, 10_000))
         assert s_high >= s_low

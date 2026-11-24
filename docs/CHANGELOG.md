@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 60 top-level model-zoo test modules of the Hindmarsh-Rose,
+  Hodgkin-Huxley, Huber-Braun, inhibitory LIF, inhomogeneous Poisson,
+  KLIF, Lapicque, Larter-Breakspear and leaky compete-and-fire neurons
+  import their names explicitly instead of through a suppressed star
+  import, gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy, and the support module left
+  without an importer is deleted.
+
 - The 64 top-level model-zoo test modules of the FitzHugh-Rinzel,
   fractional LIF, Galves-Löcherbach, gamma renewal, gated LIF, GLM,
   Golomb fast-spiking, Gutkin-Ermentrout, Hay layer-5 and Hill-Tononi
