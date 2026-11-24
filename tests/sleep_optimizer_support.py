@@ -6,9 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_sleep_optimizer.py
 
+"""A synthetic EEG generator for the sleep-optimiser tests."""
+
 from __future__ import annotations
 
-"""Tests for Sleep Optimization System (UC3) — adapts to agent-written API."""
+from typing import Any
 import unittest
 from unittest import mock
 import numpy as np
@@ -29,7 +31,10 @@ from sc_neurocore.sleep.protocol_library import StageAudioParams, PROTOCOL_REGIS
 from sc_neurocore.sleep.sleep_optimizer import SleepTick
 
 
-def generate_stage_eeg(stage, sample_rate=256, n_samples=512, seed=42):
+def generate_stage_eeg(
+    stage: SleepStage, sample_rate: int = 256, n_samples: int = 512, seed: int = 42
+) -> np.ndarray[Any, Any]:
+    """Return a seeded synthetic EEG trace with the dominant rhythms of a sleep stage, plus Gaussian noise."""
     t = np.arange(n_samples) / sample_rate
     rng = np.random.RandomState(seed)
     if stage == SleepStage.WAKE:

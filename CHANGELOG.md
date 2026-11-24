@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 top-level sleep-optimiser and SONATA import test modules import
+  their names explicitly instead of through a suppressed star import, keep
+  the h5py skip of the SONATA support, gain their missing docstrings and
+  type annotations, check optional results before use, and are enrolled
+  in the docstring policy; the sleep support's EEG generator is typed,
+  documented and enrolled.
+
 - The 2 top-level spike-server test modules import their names
   explicitly instead of through a suppressed star import; the
   module-scoped server fixture moves into the one module that uses it, the

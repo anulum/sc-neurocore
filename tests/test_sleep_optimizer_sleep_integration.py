@@ -10,11 +10,28 @@
 
 from __future__ import annotations
 
-from tests.sleep_optimizer_support import *  # noqa: F403
+import unittest
+from sc_neurocore.sleep import (
+    Chronotype,
+    CircadianOptimizer,
+    SleepOptimizer,
+    SleepOptimizerConfig,
+    SleepReportGenerator,
+    SleepStage,
+)
+from sc_neurocore.sleep.protocol_library import (
+    PROTOCOL_REGISTRY,
+)
+from tests.sleep_optimizer_support import (
+    generate_stage_eeg,
+)
 
 
 class TestSleepIntegration(unittest.TestCase):
-    def test_full_flow(self):
+    """A full sleep session across protocols, and a session reset."""
+
+    def test_full_flow(self) -> None:
+        """A full session produces a report of positive duration."""
         circ = CircadianOptimizer(Chronotype.DOLPHIN)
         proto_name = circ.get_recommended_protocol()
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
@@ -29,7 +46,8 @@ class TestSleepIntegration(unittest.TestCase):
         r = SleepReportGenerator().generate(opt)
         self.assertGreater(r.total_duration_min, 0)
 
-    def test_all_protocols_run(self):
+    def test_all_protocols_run(self) -> None:
+        """Every protocol runs ten ticks."""
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         for name in PROTOCOL_REGISTRY:
             opt = SleepOptimizer(name, config=cfg)
@@ -39,7 +57,8 @@ class TestSleepIntegration(unittest.TestCase):
                 opt.check_and_adapt()
             self.assertEqual(len(opt.get_history()), 10)
 
-    def test_session_reset(self):
+    def test_session_reset(self) -> None:
+        """A new session starts with an empty history."""
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         opt = SleepOptimizer("insomnia_relief", config=cfg)
         opt.start_session()

@@ -10,39 +10,55 @@
 
 from __future__ import annotations
 
-from tests.sleep_optimizer_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.sleep import (
+    SleepOptimizer,
+    SleepOptimizerConfig,
+    SleepStage,
+)
+from unittest import (
+    mock,
+)
 
 
 class TestSleepOptimizerBranchCoverage(unittest.TestCase):
     """Inactive-session guards, the None-stage fallback, and re-induction logic."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Create the shared optimiser configuration."""
         self.cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
 
-    def test_add_sample_before_start_is_ignored(self):
+    def test_add_sample_before_start_is_ignored(self) -> None:
+        """Add sample before start is ignored."""
         opt = SleepOptimizer("insomnia_relief", config=self.cfg)
         opt.add_sample(0.1)  # session not started -> no-op
         self.assertEqual(opt._sample_count, 0)
 
-    def test_add_samples_before_start_is_ignored(self):
+    def test_add_samples_before_start_is_ignored(self) -> None:
+        """Add samples before start is ignored."""
         opt = SleepOptimizer("insomnia_relief", config=self.cfg)
         opt.add_samples(np.zeros(16))  # session not started -> no-op
         self.assertEqual(opt._sample_count, 0)
 
-    def test_check_and_adapt_inactive_returns_none(self):
+    def test_check_and_adapt_inactive_returns_none(self) -> None:
+        """Check and adapt inactive returns none."""
         opt = SleepOptimizer("insomnia_relief", config=self.cfg)
         self.assertIsNone(opt.check_and_adapt())
 
-    def test_none_detection_falls_back_to_wake(self):
+    def test_none_detection_falls_back_to_wake(self) -> None:
+        """None detection falls back to wake."""
         opt = SleepOptimizer("insomnia_relief", config=self.cfg)
         opt.start_session()
         with mock.patch.object(opt._detector, "detect", return_value=None):
             opt._sample_count = self.cfg.stage_check_interval
             tick = opt.check_and_adapt()
         self.assertIsNotNone(tick)
+        assert tick is not None
         self.assertEqual(tick.current_stage, SleepStage.WAKE)
 
-    def test_repeated_wake_against_sleep_target_triggers_reinduction(self):
+    def test_repeated_wake_against_sleep_target_triggers_reinduction(self) -> None:
+        """Repeated wake against sleep target triggers reinduction."""
         opt = SleepOptimizer("insomnia_relief", config=self.cfg)
         opt.start_session()
         interval = self.cfg.stage_check_interval
@@ -56,6 +72,7 @@ class TestSleepOptimizerBranchCoverage(unittest.TestCase):
             first = opt.check_and_adapt()
             opt._sample_count = 2 * interval
             second = opt.check_and_adapt()
+        assert first is not None and second is not None
         self.assertEqual(first.current_stage, SleepStage.WAKE)
         self.assertFalse(first.reinduction_active)
         self.assertTrue(second.reinduction_active)

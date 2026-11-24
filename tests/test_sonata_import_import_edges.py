@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.sonata_import_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.adapters.sonata import (
+    import_sonata_edges,
+)
+from tests.sonata_import_support import (
+    _create_edges_h5,
+)
 
 
 class TestImportEdges:
+    """Importing SONATA edges, with unstated weights and delays kept unstated."""
+
     def test_basic(self, tmp_path: Path) -> None:
+        """A small edges file imports with its sources and targets."""
         f = _create_edges_h5(
             tmp_path / "edges.h5",
             src_ids=[0, 1, 2],
@@ -28,6 +40,7 @@ class TestImportEdges:
         assert edges[0].weight == pytest.approx(0.5)
 
     def test_an_unstated_weight_or_delay_stays_unstated(self, tmp_path: Path) -> None:
+        """An unstated weight or delay stays unstated."""
         f = _create_edges_h5(
             tmp_path / "edges.h5",
             src_ids=[0, 1],

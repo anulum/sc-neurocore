@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.sonata_import_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.adapters.sonata import (
+    import_sonata_nodes,
+)
+from tests.sonata_import_support import (
+    _create_nodes_h5,
+    h5py,
+)
 
 
 class TestImportNodes:
+    """Importing SONATA nodes, and refusing a file that is not SONATA."""
+
     def test_basic(self, tmp_path: Path) -> None:
+        """A small nodes file imports five nodes with their ids."""
         f = _create_nodes_h5(tmp_path / "nodes.h5", n=5)
         nodes = import_sonata_nodes(f)
         assert len(nodes) == 5
@@ -22,6 +35,7 @@ class TestImportNodes:
         assert nodes[4].node_id == 4
 
     def test_a_file_that_is_not_sonata_is_refused(self, tmp_path: Path) -> None:
+        """A file that is not SONATA is refused."""
         p = tmp_path / "empty.h5"
         with h5py.File(p, "w"):
             pass

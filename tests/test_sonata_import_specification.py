@@ -12,11 +12,26 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from tests.sonata_import_support import *  # noqa: F403
+import numpy as np
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.adapters.sonata import (
+    import_sonata,
+    import_sonata_edges,
+    import_sonata_nodes,
+)
+from tests.sonata_import_support import (
+    _create_edges_h5,
+    _create_nodes_h5,
+    _stamp,
+    h5py,
+)
 
 
 def _two_population_nodes(path: Path) -> Path:
-    """An ``exc`` and an ``inh`` population whose ids both start at 0."""
+    """Write an ``exc`` and an ``inh`` population whose ids both start at 0."""
     with h5py.File(path, "w") as f:
         _stamp(f)
         for name, size, model in (("exc", 3, "point_neuron"), ("inh", 2, "virtual")):
@@ -31,7 +46,10 @@ def _two_population_nodes(path: Path) -> Path:
 
 
 class TestPopulationIdentity:
+    """Nodes identified by population and id, and parallel edges summed."""
+
     def test_nodes_are_identified_by_population_and_id(self, tmp_path: Path) -> None:
+        """Nodes are identified by population and id."""
         nodes = _two_population_nodes(tmp_path / "nodes.h5")
         edges = _create_edges_h5(
             tmp_path / "edges.h5",
@@ -79,6 +97,7 @@ class TestPopulationIdentity:
         }
 
     def test_parallel_edges_add_their_weights(self, tmp_path: Path) -> None:
+        """Parallel edges add their weights."""
         nodes = _create_nodes_h5(tmp_path / "nodes.h5", n=2)
         edges = _create_edges_h5(
             tmp_path / "edges.h5", src_ids=[0, 0], tgt_ids=[1, 1], weights=[0.25, 0.5]
@@ -87,9 +106,12 @@ class TestPopulationIdentity:
 
 
 class TestProperties:
+    """Node group properties and extra edge properties carried through the import."""
+
     def test_each_node_carries_its_group_properties_and_no_guessed_model(
         self, tmp_path: Path
     ) -> None:
+        """Each node carries its group properties and no guessed model."""
         path = _create_nodes_h5(
             tmp_path / "nodes.h5", n=2, properties={"tau_m": np.array([10.0, 30.0])}
         )
@@ -98,6 +120,7 @@ class TestProperties:
         assert all(node.model_type is None and node.model_template is None for node in nodes)
 
     def test_edge_properties_other_than_weight_and_delay_are_kept(self, tmp_path: Path) -> None:
+        """Edge properties other than weight and delay are kept."""
         path = _create_edges_h5(tmp_path / "edges.h5", src_ids=[0], tgt_ids=[1], weights=[2.0])
         with h5py.File(path, "a") as f:
             f["edges/exc_exc/0"].create_dataset(
@@ -108,7 +131,10 @@ class TestProperties:
 
 
 class TestRefusals:
+    """Malformed or incomplete SONATA files the importer refuses."""
+
     def test_a_population_spread_over_several_groups_is_refused(self, tmp_path: Path) -> None:
+        """A population spread over several groups is refused."""
         path = tmp_path / "nodes.h5"
         with h5py.File(path, "w") as f:
             _stamp(f)
@@ -122,6 +148,7 @@ class TestRefusals:
             import_sonata_nodes(path)
 
     def test_an_attribute_libsonata_cannot_read_is_an_error_not_a_gap(self, tmp_path: Path) -> None:
+        """An attribute libsonata cannot read is an error not a gap."""
         path = _create_nodes_h5(
             tmp_path / "nodes.h5", n=1, properties={"model_type": np.array([b"point_neuron"])}
         )
@@ -131,6 +158,7 @@ class TestRefusals:
             import_sonata_nodes(path)
 
     def test_a_file_without_nodes_or_populations_is_refused(self, tmp_path: Path) -> None:
+        """A file without nodes or populations is refused."""
         bare = tmp_path / "bare.h5"
         with h5py.File(bare, "w") as f:
             _stamp(f)
@@ -144,6 +172,7 @@ class TestRefusals:
             import_sonata_nodes(empty)
 
     def test_a_wrong_magic_is_refused(self, tmp_path: Path) -> None:
+        """A wrong magic is refused."""
         path = _create_nodes_h5(tmp_path / "nodes.h5", n=1)
         with h5py.File(path, "a") as f:
             f.attrs["magic"] = np.uint32(7)
@@ -154,6 +183,7 @@ class TestRefusals:
         ("group", "dataset"), [("nodes", "node_type_id"), ("edges", "edge_type_id")]
     )
     def test_missing_type_ids_are_refused(self, tmp_path: Path, group: str, dataset: str) -> None:
+        """Missing type ids are refused."""
         reader: Callable[[Path], object]
         if group == "nodes":
             path = _create_nodes_h5(tmp_path / "f.h5", n=2)
@@ -167,6 +197,7 @@ class TestRefusals:
             reader(path)
 
     def test_type_ids_that_do_not_cover_the_population_are_refused(self, tmp_path: Path) -> None:
+        """Type ids that do not cover the population are refused."""
         path = _create_edges_h5(
             tmp_path / "edges.h5", src_ids=[0, 1, 0], tgt_ids=[1, 0, 1], weights=[1.0] * 3
         )
@@ -183,6 +214,7 @@ class TestRefusals:
     def test_edges_naming_absent_nodes_are_refused(
         self, tmp_path: Path, source: str, src_id: int, message: str
     ) -> None:
+        """Edges naming absent nodes are refused."""
         nodes = _create_nodes_h5(tmp_path / "nodes.h5", n=2)
         edges = _create_edges_h5(
             tmp_path / "edges.h5", src_ids=[src_id], tgt_ids=[1], weights=[1.0], source=source
@@ -191,6 +223,7 @@ class TestRefusals:
             import_sonata(nodes, edges)
 
     def test_a_matrix_is_refused_while_any_weight_is_unstated(self, tmp_path: Path) -> None:
+        """A matrix is refused while any weight is unstated."""
         nodes = _create_nodes_h5(tmp_path / "nodes.h5", n=2)
         edges = _create_edges_h5(tmp_path / "edges.h5", src_ids=[0], tgt_ids=[1])
         net = import_sonata(nodes, edges)
@@ -199,6 +232,7 @@ class TestRefusals:
             net.connectivity_matrix()
 
     def test_a_matrix_refuses_an_edge_to_a_node_outside_it(self, tmp_path: Path) -> None:
+        """A matrix refuses an edge to a node outside it."""
         nodes = _create_nodes_h5(tmp_path / "nodes.h5", n=2)
         edges = _create_edges_h5(tmp_path / "edges.h5", src_ids=[0], tgt_ids=[1], weights=[1.0])
         net = import_sonata(nodes, edges)

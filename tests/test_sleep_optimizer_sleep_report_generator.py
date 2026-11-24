@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.sleep_optimizer_support import *  # noqa: F403
+import unittest
+from sc_neurocore.sleep import (
+    SleepOptimizer,
+    SleepOptimizerConfig,
+    SleepReport,
+    SleepReportGenerator,
+    SleepStage,
+)
+from tests.sleep_optimizer_support import (
+    generate_stage_eeg,
+)
 
 
 class TestSleepReportGenerator(unittest.TestCase):
-    def _run_session(self, protocol="insomnia_relief", n_epochs=50):
+    """The sleep report: quality, grade and efficiency of a session."""
+
+    def _run_session(self, protocol: str = "insomnia_relief", n_epochs: int = 50) -> SleepOptimizer:
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         opt = SleepOptimizer(protocol, config=cfg)
         opt.start_session()
@@ -34,26 +46,31 @@ class TestSleepReportGenerator(unittest.TestCase):
         opt.stop_session()
         return opt
 
-    def test_generate(self):
+    def test_generate(self) -> None:
+        """A session report has a positive duration."""
         r = SleepReportGenerator().generate(self._run_session())
         self.assertIsInstance(r, SleepReport)
         self.assertGreater(r.total_duration_min, 0)
 
-    def test_quality_range(self):
+    def test_quality_range(self) -> None:
+        """The quality score lies between 0 and 100."""
         r = SleepReportGenerator().generate(self._run_session())
         self.assertGreaterEqual(r.quality_score, 0)
         self.assertLessEqual(r.quality_score, 100)
 
-    def test_grade(self):
+    def test_grade(self) -> None:
+        """The grade is one of A, B, C, D and F."""
         r = SleepReportGenerator().generate(self._run_session())
         self.assertIn(r.grade, "ABCDF")
 
-    def test_efficiency(self):
+    def test_efficiency(self) -> None:
+        """The sleep efficiency lies between 0 and 100 per cent."""
         r = SleepReportGenerator().generate(self._run_session())
         self.assertGreaterEqual(r.sleep_efficiency_pct, 0)
         self.assertLessEqual(r.sleep_efficiency_pct, 100)
 
-    def test_empty_session(self):
+    def test_empty_session(self) -> None:
+        """An empty session reports zero duration."""
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         opt = SleepOptimizer("insomnia_relief", config=cfg)
         opt.start_session()

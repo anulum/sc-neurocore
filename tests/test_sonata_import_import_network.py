@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.sonata_import_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.adapters.sonata import (
+    import_sonata,
+)
+from tests.sonata_import_support import (
+    _create_edges_h5,
+    _create_nodes_h5,
+)
 
 
 class TestImportNetwork:
+    """Importing a SONATA network and its connectivity matrix."""
+
     def test_full_network(self, tmp_path: Path) -> None:
+        """A nodes and edges pair imports as a network of 5 nodes and 3 edges."""
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=5)
         ef = _create_edges_h5(
             tmp_path / "edges.h5",
@@ -27,6 +40,7 @@ class TestImportNetwork:
         assert net.n_edges == 3
 
     def test_connectivity_matrix(self, tmp_path: Path) -> None:
+        """Connectivity matrix."""
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=3)
         ef = _create_edges_h5(
             tmp_path / "edges.h5",
@@ -42,6 +56,7 @@ class TestImportNetwork:
         assert W[0, 0] == 0.0
 
     def test_nodes_only(self, tmp_path: Path) -> None:
+        """A nodes file alone imports as a network without edges."""
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=10)
         net = import_sonata(nf)
         assert net.n_nodes == 10

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4381
+expected_file_count = 4394
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17568,3 +17568,55 @@ rationale = "Exercise SC-NeuroCore: serve server spike server http."
 [[file]]
 path = "tests/test_serve_server_spike_server_step.py"
 rationale = "Exercise SC-NeuroCore: serve server spike server step."
+
+[[file]]
+path = "tests/sleep_optimizer_support.py"
+rationale = "Provide the seeded synthetic EEG generator of the sleep-optimiser tests."
+
+[[file]]
+path = "tests/test_sleep_optimizer_circadian_optimizer.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer circadian optimizer."
+
+[[file]]
+path = "tests/test_sleep_optimizer_protocol_library.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer protocol library."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_integration.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep integration."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_optimizer.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep optimizer."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_optimizer_branch_coverage.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep optimizer branch coverage."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_report_generator.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep report generator."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_report_generator_branches.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep report generator branches."
+
+[[file]]
+path = "tests/test_sleep_optimizer_sleep_stage_detector.py"
+rationale = "Exercise SC-NeuroCore: sleep optimizer sleep stage detector."
+
+[[file]]
+path = "tests/test_sonata_import_import_edges.py"
+rationale = "Exercise SC-NeuroCore: sonata import import edges."
+
+[[file]]
+path = "tests/test_sonata_import_import_network.py"
+rationale = "Exercise SC-NeuroCore: sonata import import network."
+
+[[file]]
+path = "tests/test_sonata_import_import_nodes.py"
+rationale = "Exercise SC-NeuroCore: sonata import import nodes."
+
+[[file]]
+path = "tests/test_sonata_import_specification.py"
+rationale = "Exercise SC-NeuroCore: sonata import specification."
