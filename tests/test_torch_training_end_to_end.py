@@ -10,11 +10,27 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from typing import Any, cast
+
+from tests.torch_training_support import (
+    SpikingNet,
+    atan_surrogate,
+    fast_sigmoid,
+    rate_encode,
+    sigmoid_surrogate,
+    spike_count_loss,
+    straight_through,
+    superspike,
+    torch,
+    train_epoch,
+    triangular,
+)
 
 
 class TestEndToEnd:
-    def test_full_pipeline_gradient(self):
+    """Encoding, network, loss and backward pass together."""
+
+    def test_full_pipeline_gradient(self) -> None:
         """Complete pipeline: encode → network → loss → backward."""
         x = torch.rand(8, 16)
         labels = torch.randint(0, 5, (8,))
@@ -23,12 +39,12 @@ class TestEndToEnd:
         net = SpikingNet(n_input=16, n_hidden=32, n_output=5)
         spike_counts, mem = net(spikes)
         loss = spike_count_loss(spike_counts, labels)
-        loss.backward()
+        cast(Any, loss).backward()
 
         for p in net.parameters():
             assert p.grad is not None
 
-    def test_all_surrogates_train(self):
+    def test_all_surrogates_train(self) -> None:
         """Verify all surrogate functions produce valid training gradients."""
         for fn in [
             fast_sigmoid,
@@ -42,11 +58,11 @@ class TestEndToEnd:
             x = torch.randn(5, 2, 8)
             spike_counts, _ = net(x)
             loss = spike_counts.sum()
-            loss.backward()
+            cast(Any, loss).backward()
             grads = [p.grad for p in net.parameters() if p.grad is not None]
             assert len(grads) > 0, f"No gradients with {fn.__name__}"
 
-    def test_sc_export_after_training(self):
+    def test_sc_export_after_training(self) -> None:
         """Train briefly, then export to SC weights."""
         from torch.utils.data import DataLoader, TensorDataset
 

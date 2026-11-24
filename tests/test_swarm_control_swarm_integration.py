@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.swarm_control_support import *  # noqa: F403
+import unittest
+from sc_neurocore.swarm import (
+    AgentConfig,
+    CollectiveFields,
+    EnvConfig,
+    EvolverConfig,
+    FieldConfig,
+    SwarmEnvironment,
+    SwarmEvolver,
+)
 
 
 class TestSwarmIntegration(unittest.TestCase):
-    def test_agents_with_fields(self):
+    """Agents, collective fields and evolution working together."""
+
+    def test_agents_with_fields(self) -> None:
+        """Agents depositing chemical as they move leave a positive field."""
         acfg = AgentConfig(n_hidden=8)
         cfg = EnvConfig(n_agents=5, agent_config=acfg)
         env = SwarmEnvironment(cfg)
@@ -26,7 +38,7 @@ class TestSwarmIntegration(unittest.TestCase):
             fields.diffuse(0.1)
         self.assertGreater(fields.chemical_field.max(), 0)
 
-    def test_evolution_improves(self):
+    def test_evolution_improves(self) -> None:
         """Evolution should not systematically worsen over 3 generations."""
         cfg = EvolverConfig(
             pop_size=8, n_elite=2, n_eval_steps=30, agent_config=AgentConfig(n_hidden=4)

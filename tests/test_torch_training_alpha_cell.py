@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    AlphaCell,
+    torch,
+)
 
 
 class TestAlphaCell:
-    def test_excitatory_inhibitory(self):
+    """The alpha-synapse training cell with excitatory and inhibitory inputs."""
+
+    def test_excitatory_inhibitory(self) -> None:
+        """Stronger excitation than inhibition gives a larger excitatory current."""
         cell = AlphaCell()
         exc = torch.tensor([[1.0]])
         inh = torch.tensor([[0.5]])

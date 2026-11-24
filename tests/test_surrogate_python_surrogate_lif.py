@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.surrogate_python_support import *  # noqa: F403
+from tests.surrogate_python_support import (
+    SurrogateLif,
+)
 
 
 class TestSurrogateLif:
-    def test_forward_backward_cycle(self):
+    """The surrogate-gradient LIF neuron of the Rust engine."""
+
+    def test_forward_backward_cycle(self) -> None:
+        """A forward step and a backward pass give a non-zero float gradient."""
         lif = SurrogateLif(surrogate="fast_sigmoid", k=25.0)
         _spike, _v = lif.forward(leak_k=20, gain_k=256, i_t=128)
         grad = lif.backward(1.0)
         assert isinstance(grad, float)
         assert grad != 0.0
 
-    def test_clear_trace(self):
+    def test_clear_trace(self) -> None:
+        """Ten forward steps leave a trace of ten entries, and clearing it empties it."""
         lif = SurrogateLif(surrogate="arctan", k=10.0)
         for _ in range(10):
             lif.forward(20, 256, 128)

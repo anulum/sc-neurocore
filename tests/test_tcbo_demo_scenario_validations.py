@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.tcbo_demo_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.experiments.tcbo_demo_engine import (
+    TCBODemoEngine,
+)
 
 
 class TestScenarioValidations(unittest.TestCase):
-    def test_healthy_awake_coherence(self):
+    """Behaviour of the TCBO demo scenarios."""
+
+    def test_healthy_awake_coherence(self) -> None:
+        """The healthy awake scenario ends with a global order above 0.1."""
         engine = TCBODemoEngine(seed=42)
         snaps = engine.run_scenario("healthy_awake", duration_s=3.0, subsample=300)
         last_R = snaps[-1].R_global
         self.assertGreater(last_R, 0.1)
 
-    def test_anesthesia_lower_R(self):
+    def test_anesthesia_lower_R(self) -> None:
         """Anesthesia should produce lower R than healthy awake."""
         engine = TCBODemoEngine(seed=42)
         healthy = engine.run_scenario("healthy_awake", duration_s=3.0, subsample=300)
@@ -29,13 +36,15 @@ class TestScenarioValidations(unittest.TestCase):
         R_anest = np.mean([s.R_global for s in anest[-5:]])
         self.assertLess(R_anest, R_healthy + 0.1)
 
-    def test_recovery_kappa_varies(self):
+    def test_recovery_kappa_varies(self) -> None:
+        """The recovery scenario varies the coupling gain."""
         engine = TCBODemoEngine(seed=42)
         snaps = engine.run_scenario("recovery", duration_s=5.0, subsample=500)
         kappas = [s.kappa for s in snaps]
         self.assertNotAlmostEqual(max(kappas), min(kappas), places=2)
 
-    def test_sleep_onset_runs(self):
+    def test_sleep_onset_runs(self) -> None:
+        """The sleep-onset scenario keeps the global order inside [0, 1]."""
         engine = TCBODemoEngine(seed=42)
         snaps = engine.run_scenario("sleep_onset", duration_s=2.0, subsample=200)
         self.assertTrue(all(0 <= s.R_global <= 1 for s in snaps))

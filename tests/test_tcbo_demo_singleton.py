@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.tcbo_demo_support import *  # noqa: F403
+import unittest
+from sc_neurocore.experiments.tcbo_demo_engine import (
+    get_tcbo_demo_engine,
+    reset_tcbo_demo_engine,
+)
 
 
 class TestSingleton(unittest.TestCase):
-    def test_singleton(self):
+    """The shared TCBO demo engine."""
+
+    def test_singleton(self) -> None:
+        """Two lookups return the same engine."""
         reset_tcbo_demo_engine()
         e1 = get_tcbo_demo_engine()
         e2 = get_tcbo_demo_engine()
         self.assertIs(e1, e2)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset makes the next lookup return a new engine."""
         e1 = get_tcbo_demo_engine()
         reset_tcbo_demo_engine()
         e2 = get_tcbo_demo_engine()

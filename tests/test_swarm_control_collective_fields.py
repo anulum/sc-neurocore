@@ -10,20 +10,30 @@
 
 from __future__ import annotations
 
-from tests.swarm_control_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.swarm import (
+    CollectiveFields,
+    FieldConfig,
+)
 
 
 class TestCollectiveFields(unittest.TestCase):
-    def test_init(self):
+    """The chemical, emotional and symbolic fields shared by a swarm."""
+
+    def test_init(self) -> None:
+        """A 50-cell grid gives a 50x50 chemical field."""
         f = CollectiveFields(FieldConfig(grid_size=50), n_agents=5)
         self.assertEqual(f.chemical_field.shape, (50, 50))
 
-    def test_deposit_chemical(self):
+    def test_deposit_chemical(self) -> None:
+        """Depositing chemical raises the field above zero."""
         f = CollectiveFields(FieldConfig(grid_size=50), n_agents=5)
         f.deposit_chemical(25.0, 25.0, 1.0)
         self.assertGreater(f.chemical_field.max(), 0)
 
-    def test_diffuse(self):
+    def test_diffuse(self) -> None:
+        """Diffusion does not raise the field maximum."""
         f = CollectiveFields(FieldConfig(grid_size=20), n_agents=5)
         # Deposit at a valid position (mapped to grid coords internally)
         f.deposit_chemical(50.0, 50.0, 10.0)
@@ -34,18 +44,21 @@ class TestCollectiveFields(unittest.TestCase):
         val_after = f.chemical_field.max()
         self.assertLessEqual(val_after, val_before)
 
-    def test_gradient(self):
+    def test_gradient(self) -> None:
+        """The chemical gradient next to a deposit is a float."""
         f = CollectiveFields(FieldConfig(grid_size=50), n_agents=5)
         f.deposit_chemical(25.0, 25.0, 10.0)
         gx, gy = f.get_chemical_gradient(24.0, 25.0)
         # Gradient should return floats
         self.assertIsInstance(gx, float)
 
-    def test_emotional_field_shape(self):
+    def test_emotional_field_shape(self) -> None:
+        """The emotional field has one row per agent."""
         f = CollectiveFields(FieldConfig(), n_agents=10)
         self.assertEqual(f.emotional_field.shape[0], 10)
 
-    def test_synchronize_emotions(self):
+    def test_synchronize_emotions(self) -> None:
+        """Synchronising emotions does not raise their variance by more than 0.01."""
         f = CollectiveFields(FieldConfig(), n_agents=5)
         f.emotional_field = np.random.randn(5, 8)
         before_var = f.emotional_field.var()
@@ -53,7 +66,8 @@ class TestCollectiveFields(unittest.TestCase):
         after_var = f.emotional_field.var()
         self.assertLessEqual(after_var, before_var + 0.01)
 
-    def test_symbolic_field(self):
+    def test_symbolic_field(self) -> None:
+        """The symbolic field holds a two-component glyph at each point."""
         f = CollectiveFields(FieldConfig(grid_size=20), n_agents=3)
         glyph = f.get_symbolic_at(10.0, 10.0)
         self.assertEqual(len(glyph), 2)

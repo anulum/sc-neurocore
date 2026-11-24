@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+import pytest
+from tests.torch_training_support import (
+    IFCell,
+    torch,
+)
 
 
 class TestIFCell:
-    def test_no_leak(self):
+    """The non-leaky integrate-and-fire training cell."""
+
+    def test_no_leak(self) -> None:
+        """A subthreshold step adds the input current without leak."""
         cell = IFCell(threshold=10.0)
         v = torch.tensor([[5.0]])
         current = torch.tensor([[1.0]])

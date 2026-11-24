@@ -10,23 +10,33 @@
 
 from __future__ import annotations
 
-from tests.tcbo_demo_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.scpn.params import (
+    build_knm_matrix as _build_knm,
+)
 
 
 class TestBuildKnm(unittest.TestCase):
-    def test_symmetric(self):
+    """The coupling matrix of the TCBO demo."""
+
+    def test_symmetric(self) -> None:
+        """The 16-node coupling matrix is symmetric."""
         K = _build_knm(16)
         self.assertTrue(np.allclose(K, K.T))
 
-    def test_zero_diagonal(self):
+    def test_zero_diagonal(self) -> None:
+        """The coupling matrix has a zero diagonal."""
         K = _build_knm(16)
         self.assertTrue(np.allclose(np.diag(K), 0))
 
-    def test_non_negative(self):
+    def test_non_negative(self) -> None:
+        """The coupling matrix is non-negative."""
         K = _build_knm(16)
         self.assertTrue(np.all(K >= 0))
 
-    def test_small_N(self):
+    def test_small_N(self) -> None:
+        """A four-node coupling matrix is 4x4 and symmetric."""
         K = _build_knm(4)
         self.assertEqual(K.shape, (4, 4))
         self.assertTrue(np.allclose(K, K.T))

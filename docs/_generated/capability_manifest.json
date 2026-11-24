@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5618
+    "test_files": 5615
   },
   "documentation": {
     "public_pages": [
@@ -3794,9 +3794,6 @@
       "tests/studio_training_weights_support.py",
       "tests/studio_worker_limit_tasks.py",
       "tests/surrogate_python_support.py",
-      "tests/swarm_control_support.py",
-      "tests/swarm_fitness_contracts_support.py",
-      "tests/tcbo_demo_support.py",
       "tests/temporal_properties_support.py",
       "tests/test_accel/test_accel_mirror_authority.py",
       "tests/test_accel/test_ffi_contiguity.py",

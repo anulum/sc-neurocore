@@ -10,31 +10,45 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+import pytest
+from tests.torch_training_support import (
+    SpikeMonitor,
+    SpikingNet,
+    model_info,
+    population_decode,
+    reset_states,
+    torch,
+)
 
 
 class TestUtilities:
-    def test_model_info(self):
+    """Model information, population decoding and spike monitoring."""
+
+    def test_model_info(self) -> None:
+        """Model information counts parameters and LIF cells."""
         net = SpikingNet(n_input=16, n_hidden=32, n_output=5)
         info = model_info(net)
         assert info["total_params"] > 0
         assert info["spiking_cells"] > 0
         assert "LIFCell" in info["cell_types"]
 
-    def test_population_decode(self):
+    def test_population_decode(self) -> None:
+        """Population decoding gives the count-weighted mean index."""
         counts = torch.tensor([[0.0, 1.0, 5.0, 0.0]])  # peak at index 2
         decoded = population_decode(counts)
         # weights = [0, 1/6, 5/6, 0], preferred = [0,1,2,3]
         # decoded = 1/6*1 + 5/6*2 = 11/6 ≈ 1.833
         assert decoded.item() == pytest.approx(11 / 6, abs=0.01)
 
-    def test_population_decode_with_preferred(self):
+    def test_population_decode_with_preferred(self) -> None:
+        """Population decoding with preferred values returns the active one."""
         counts = torch.tensor([[0.0, 0.0, 1.0]])
         preferred = torch.tensor([0.0, 45.0, 90.0])
         decoded = population_decode(counts, preferred)
         assert decoded.item() == pytest.approx(90.0)
 
-    def test_spike_monitor(self):
+    def test_spike_monitor(self) -> None:
+        """The spike monitor records each layer and clears on reset."""
         net = SpikingNet(n_input=16, n_hidden=32, n_output=5, n_layers=1)
         mon = SpikeMonitor(net)
         x = torch.randn(5, 2, 16)
@@ -48,7 +62,8 @@ class TestUtilities:
             assert mon.get(name) is None
         mon.remove()
 
-    def test_reset_states(self):
+    def test_reset_states(self) -> None:
+        """Resetting monitor states, or none, runs (the test asserts nothing)."""
         net = SpikingNet(n_input=16, n_hidden=32, n_output=5)
         mon = SpikeMonitor(net)
         reset_states([mon])

@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 39 top-level surrogate, swarm, TCBO and torch-training test
+  modules import their names explicitly instead of through a suppressed
+  star import, take every name bound after a support's skip guard from
+  that support, gain their missing docstrings and type annotations and
+  are enrolled in the docstring policy; the three support modules left
+  without an importer are deleted.
+
 - The 37 top-level spike-train statistics test modules import their
   names explicitly instead of through a suppressed star import, gain
   their missing docstrings and type annotations and are enrolled in the

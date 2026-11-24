@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    ALIFCell,
+    torch,
+)
 
 
 class TestALIFCell:
-    def test_adaptive_threshold(self):
+    """The adaptive-threshold LIF training cell."""
+
+    def test_adaptive_threshold(self) -> None:
+        """A membrane above threshold spikes and raises the adaptation."""
         cell = ALIFCell(beta=0.9, threshold=1.0, beta_adapt=1.8)
         v = torch.tensor([[2.0]])
         a = torch.tensor([[0.0]])

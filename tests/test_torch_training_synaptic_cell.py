@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    SynapticCell,
+    torch,
+)
 
 
 class TestSynapticCell:
-    def test_forward_three_outputs(self):
+    """The current-based synaptic training cell."""
+
+    def test_forward_three_outputs(self) -> None:
+        """A step gives spikes and a synaptic current of the input shape."""
         cell = SynapticCell(alpha=0.9, beta=0.8)
         current = torch.randn(4, 16)
         i_syn = torch.zeros(4, 16)

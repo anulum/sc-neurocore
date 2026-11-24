@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    ExpIFCell,
+    torch,
+)
 
 
 class TestExpIFCell:
-    def test_exponential_upstroke(self):
+    """The exponential integrate-and-fire training cell."""
+
+    def test_exponential_upstroke(self) -> None:
+        """A batch step gives spikes of the input shape (the check is on the shape only)."""
         cell = ExpIFCell(beta=0.9, delta_t=0.5, v_rh=0.8, threshold=2.0)
         current = torch.randn(4, 8)
         v = torch.zeros(4, 8)

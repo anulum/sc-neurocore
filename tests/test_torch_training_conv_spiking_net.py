@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    ConvSpikingNet,
+    torch,
+)
 
 
 class TestConvSpikingNet:
-    def test_forward(self):
+    """The convolutional spiking network."""
+
+    def test_forward(self) -> None:
+        """Ten steps of four 28x28 images give 4x10 spike counts."""
         net = ConvSpikingNet(n_output=10)
         x = torch.randn(10, 4, 1, 28, 28)  # (T=10, batch=4, C=1, H=28, W=28)
         spike_counts, mem_acc = net(x)
         assert spike_counts.shape == (4, 10)
 
-    def test_to_sc_weights(self):
+    def test_to_sc_weights(self) -> None:
+        """The SC weight export covers the two convolutional and two dense layers."""
         net = ConvSpikingNet(n_output=10)
         sc = net.to_sc_weights()
         assert len(sc) == 4  # conv1, conv2, fc1, fc2

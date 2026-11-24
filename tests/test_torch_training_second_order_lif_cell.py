@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    SecondOrderLIFCell,
+    torch,
+)
 
 
 class TestSecondOrderLIFCell:
-    def test_inertial_dynamics(self):
+    """The second-order LIF training cell."""
+
+    def test_inertial_dynamics(self) -> None:
+        """A step gives an acceleration state of the input shape."""
         cell = SecondOrderLIFCell(alpha=0.95, beta=0.9)
         current = torch.randn(4, 8)
         a = torch.zeros(4, 8)

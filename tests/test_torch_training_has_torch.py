@@ -10,9 +10,14 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    HAS_TORCH,
+)
 
 
 class TestHasTorch:
-    def test_torch_available(self):
+    """The torch availability flag of the training package."""
+
+    def test_torch_available(self) -> None:
+        """The training package reports torch as available."""
         assert HAS_TORCH is True

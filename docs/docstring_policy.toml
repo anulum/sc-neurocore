@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4576
+expected_file_count = 4614
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18348,3 +18348,155 @@ rationale = "Exercise SC-NeuroCore: spike train stats van rossum distance."
 [[file]]
 path = "tests/test_spike_train_stats_victor_purpura_distance.py"
 rationale = "Exercise SC-NeuroCore: spike train stats victor purpura distance."
+
+[[file]]
+path = "tests/test_surrogate_python_differentiable_dense_layer.py"
+rationale = "Exercise SC-NeuroCore: surrogate python differentiable dense layer."
+
+[[file]]
+path = "tests/test_surrogate_python_surrogate_lif.py"
+rationale = "Exercise SC-NeuroCore: surrogate python surrogate lif."
+
+[[file]]
+path = "tests/test_swarm_control_collective_fields.py"
+rationale = "Exercise SC-NeuroCore: swarm control collective fields."
+
+[[file]]
+path = "tests/test_swarm_control_swarm_agent.py"
+rationale = "Exercise SC-NeuroCore: swarm control swarm agent."
+
+[[file]]
+path = "tests/test_swarm_control_swarm_environment.py"
+rationale = "Exercise SC-NeuroCore: swarm control swarm environment."
+
+[[file]]
+path = "tests/test_swarm_control_swarm_evolver.py"
+rationale = "Exercise SC-NeuroCore: swarm control swarm evolver."
+
+[[file]]
+path = "tests/test_swarm_control_swarm_fitness.py"
+rationale = "Exercise SC-NeuroCore: swarm control swarm fitness."
+
+[[file]]
+path = "tests/test_swarm_control_swarm_integration.py"
+rationale = "Exercise SC-NeuroCore: swarm control swarm integration."
+
+[[file]]
+path = "tests/test_swarm_fitness_contracts_collective_fields.py"
+rationale = "Exercise SC-NeuroCore: swarm fitness contracts collective fields."
+
+[[file]]
+path = "tests/test_swarm_fitness_contracts_swarm_environment.py"
+rationale = "Exercise SC-NeuroCore: swarm fitness contracts swarm environment."
+
+[[file]]
+path = "tests/test_swarm_fitness_contracts_swarm_fitness.py"
+rationale = "Exercise SC-NeuroCore: swarm fitness contracts swarm fitness."
+
+[[file]]
+path = "tests/test_tcbo_demo_build_knm.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo build knm."
+
+[[file]]
+path = "tests/test_tcbo_demo_order_parameter.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo order parameter."
+
+[[file]]
+path = "tests/test_tcbo_demo_p_h1_lightweight.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo p h1 lightweight."
+
+[[file]]
+path = "tests/test_tcbo_demo_scenario_validations.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo scenario validations."
+
+[[file]]
+path = "tests/test_tcbo_demo_singleton.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo singleton."
+
+[[file]]
+path = "tests/test_tcbo_demo_synthetic_eeg_generator.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo synthetic eeg generator."
+
+[[file]]
+path = "tests/test_tcbo_demo_tcbo_controller.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo tcbo controller."
+
+[[file]]
+path = "tests/test_tcbo_demo_tcbo_demo_engine.py"
+rationale = "Exercise SC-NeuroCore: tcbo demo tcbo demo engine."
+
+[[file]]
+path = "tests/test_torch_training_ad_ex_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training ad ex cell."
+
+[[file]]
+path = "tests/test_torch_training_alif_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training alif cell."
+
+[[file]]
+path = "tests/test_torch_training_alpha_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training alpha cell."
+
+[[file]]
+path = "tests/test_torch_training_conv_spiking_net.py"
+rationale = "Exercise SC-NeuroCore: torch training conv spiking net."
+
+[[file]]
+path = "tests/test_torch_training_delay_linear.py"
+rationale = "Exercise SC-NeuroCore: torch training delay linear."
+
+[[file]]
+path = "tests/test_torch_training_encoding.py"
+rationale = "Exercise SC-NeuroCore: torch training encoding."
+
+[[file]]
+path = "tests/test_torch_training_end_to_end.py"
+rationale = "Exercise SC-NeuroCore: torch training end to end."
+
+[[file]]
+path = "tests/test_torch_training_exp_if_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training exp if cell."
+
+[[file]]
+path = "tests/test_torch_training_has_torch.py"
+rationale = "Exercise SC-NeuroCore: torch training has torch."
+
+[[file]]
+path = "tests/test_torch_training_if_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training if cell."
+
+[[file]]
+path = "tests/test_torch_training_lapicque_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training lapicque cell."
+
+[[file]]
+path = "tests/test_torch_training_lif_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training lif cell."
+
+[[file]]
+path = "tests/test_torch_training_losses.py"
+rationale = "Exercise SC-NeuroCore: torch training losses."
+
+[[file]]
+path = "tests/test_torch_training_recurrent_lif_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training recurrent lif cell."
+
+[[file]]
+path = "tests/test_torch_training_second_order_lif_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training second order lif cell."
+
+[[file]]
+path = "tests/test_torch_training_spiking_net.py"
+rationale = "Exercise SC-NeuroCore: torch training spiking net."
+
+[[file]]
+path = "tests/test_torch_training_synaptic_cell.py"
+rationale = "Exercise SC-NeuroCore: torch training synaptic cell."
+
+[[file]]
+path = "tests/test_torch_training_training_loops.py"
+rationale = "Exercise SC-NeuroCore: torch training training loops."
+
+[[file]]
+path = "tests/test_torch_training_utilities.py"
+rationale = "Exercise SC-NeuroCore: torch training utilities."

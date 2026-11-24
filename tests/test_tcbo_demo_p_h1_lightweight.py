@@ -10,23 +10,32 @@
 
 from __future__ import annotations
 
-from tests.tcbo_demo_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.experiments.tcbo_demo_engine import (
+    _compute_p_h1_lightweight,
+)
 
 
 class TestP_h1Lightweight(unittest.TestCase):
-    def test_coherent_high(self):
+    """The lightweight estimate of the H1 persistence probability."""
+
+    def test_coherent_high(self) -> None:
+        """A coherent phase history gives an estimate above 0.5."""
         history = np.tile(np.ones(16) * 1.0, (60, 1))
         history += np.random.default_rng(0).normal(0, 0.05, history.shape)
         p = _compute_p_h1_lightweight(history)
         self.assertGreater(p, 0.5)
 
-    def test_incoherent_lower(self):
+    def test_incoherent_lower(self) -> None:
+        """A random phase history gives an estimate below 0.8."""
         rng = np.random.default_rng(42)
         history = rng.uniform(0, 2 * np.pi, (60, 16))
         p = _compute_p_h1_lightweight(history)
         self.assertLess(p, 0.8)
 
-    def test_short_history_returns_zero(self):
+    def test_short_history_returns_zero(self) -> None:
+        """A five-step history gives zero."""
         history = np.zeros((5, 16))
         p = _compute_p_h1_lightweight(history)
         self.assertEqual(p, 0.0)

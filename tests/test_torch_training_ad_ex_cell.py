@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    AdExCell,
+    torch,
+)
 
 
 class TestAdExCell:
-    def test_adaptation_current(self):
+    """The adaptive exponential integrate-and-fire training cell."""
+
+    def test_adaptation_current(self) -> None:
+        """A spike adds to the adaptation current (checked only when the step spikes)."""
         cell = AdExCell(beta=0.9, a=0.01, b=0.1)
         current = torch.tensor([[3.0]])
         v = torch.zeros(1, 1)

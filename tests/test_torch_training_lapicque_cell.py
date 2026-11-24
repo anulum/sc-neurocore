@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    LapicqueCell,
+    torch,
+)
 
 
 class TestLapicqueCell:
-    def test_decay_and_gain(self):
+    """The Lapicque training cell."""
+
+    def test_decay_and_gain(self) -> None:
+        """A small current far below threshold raises the membrane by less than one."""
         cell = LapicqueCell(tau=20.0, r=1.0, dt=1.0, threshold=5.0)
         current = torch.tensor([[1.0]])
         v = torch.zeros(1, 1)

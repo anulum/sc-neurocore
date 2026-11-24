@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.surrogate_python_support import *  # noqa: F403
+import numpy as np
+from tests.surrogate_python_support import (
+    DifferentiableDenseLayer,
+)
 
 
 class TestDifferentiableDenseLayer:
-    def test_train_step(self):
+    """The differentiable stochastic dense layer of the Rust engine."""
+
+    def test_train_step(self) -> None:
+        """One backward pass gives gradients of the documented shapes, and a weight update changes the output."""
         layer = DifferentiableDenseLayer(
             n_inputs=8,
             n_neurons=4,

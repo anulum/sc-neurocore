@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.torch_training_support import *  # noqa: F403
+from tests.torch_training_support import (
+    RecurrentLIFCell,
+    torch,
+)
 
 
 class TestRecurrentLIFCell:
-    def test_recurrent_connection(self):
+    """The recurrent LIF training cell."""
+
+    def test_recurrent_connection(self) -> None:
+        """A step with previous spikes gives spikes of the input shape."""
         cell = RecurrentLIFCell(n_neurons=16, beta=0.9)
         current = torch.randn(4, 16)
         v = torch.zeros(4, 16)

@@ -13,7 +13,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from tests.torch_training_support import *  # noqa: F403
+import pytest
+from tests.torch_training_support import (
+    atan_surrogate,
+    fast_sigmoid,
+    sigmoid_surrogate,
+    straight_through,
+    superspike,
+    torch,
+    triangular,
+)
 
 
 class TestSurrogates:
