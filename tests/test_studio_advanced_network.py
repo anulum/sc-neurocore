@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.studio_advanced_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import pytest
+from tests.studio_advanced_support import (
+    get_ei_network_simulator,
+    simulate_ei_network,
+)
+from tests.studio_advanced_support import client as client
 
 
 class TestNetwork:
-    def test_basic_ei_network(self):
+    """The excitatory-inhibitory network simulator and its endpoint."""
+
+    def test_basic_ei_network(self) -> None:
+        """A 20+5 network reports its sizes and one time and neuron per spike."""
         r = simulate_ei_network(n_exc=20, n_inh=5, duration=50.0, ext_rate=10.0)
         assert r["n_total"] == 25
         assert r["n_exc"] == 20
@@ -22,18 +35,20 @@ class TestNetwork:
         assert len(r["spike_times"]) == r["n_spikes"]
         assert len(r["spike_neurons"]) == r["n_spikes"]
 
-    def test_network_produces_spikes(self):
+    def test_network_produces_spikes(self) -> None:
+        """The network produces spikes."""
         # 50 Hz per external input is five times the drive's threshold rate.
         r = simulate_ei_network(n_exc=40, n_inh=10, duration=200.0, ext_rate=50.0)
         assert r["n_spikes"] > 0
 
-    def test_network_rates_arrays(self):
+    def test_network_rates_arrays(self) -> None:
+        """The excitatory and inhibitory rates have one value per rate time."""
         r = simulate_ei_network(n_exc=20, n_inh=5, duration=50.0)
         assert len(r["rate_time"]) > 0
         assert len(r["exc_rates"]) == len(r["rate_time"])
         assert len(r["inh_rates"]) == len(r["rate_time"])
 
-    def test_network_uses_rust_engine(self):
+    def test_network_uses_rust_engine(self) -> None:
         """Verify the Rust engine path is used when available."""
         try:
             simulate = get_ei_network_simulator()
@@ -44,13 +59,15 @@ class TestNetwork:
         except ImportError:
             pytest.skip("Rust engine not installed")
 
-    def test_network_result_types(self):
+    def test_network_result_types(self) -> None:
+        """The network result fields have their documented types."""
         r = simulate_ei_network(n_exc=10, n_inh=5, duration=20.0)
         assert isinstance(r["spike_times"], list)
         assert isinstance(r["n_exc"], int)
         assert isinstance(r["mean_exc_rate"], float)
 
-    def test_network_endpoint(self, client):
+    def test_network_endpoint(self, client: TestClient) -> None:
+        """The network endpoint returns a 25-neuron result with spike times."""
         r = client.post(
             "/api/network/ei",
             json={

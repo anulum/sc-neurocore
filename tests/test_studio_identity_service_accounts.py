@@ -10,10 +10,28 @@
 
 from __future__ import annotations
 
-from tests.studio_identity_support import *  # noqa: F403
+import hashlib
+import json
+import pytest
+from datetime import (
+    datetime,
+    timezone,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.identity import (
+    load_studio_identity_store,
+    StudioIdentityAuthenticator,
+)
+from tests.studio_identity_support import (
+    _write_identity_file,
+    _write_payload,
+)
 
 
 def test_studio_identity_store_authenticates_service_account_token(tmp_path: Path) -> None:
+    """A service-account token authenticates with its principal and roles."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
     authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
@@ -27,6 +45,7 @@ def test_studio_identity_store_authenticates_service_account_token(tmp_path: Pat
 
 
 def test_studio_identity_store_rejects_invalid_bearer_token(tmp_path: Path) -> None:
+    """An unknown bearer token is rejected as invalid."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
     authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
@@ -38,6 +57,7 @@ def test_studio_identity_store_rejects_invalid_bearer_token(tmp_path: Path) -> N
 
 
 def test_studio_identity_store_treats_missing_authorization_as_neutral(tmp_path: Path) -> None:
+    """A missing authorization header gives no principal and no failure."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
     authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
@@ -49,6 +69,7 @@ def test_studio_identity_store_treats_missing_authorization_as_neutral(tmp_path:
 
 
 def test_studio_identity_store_rejects_malformed_authorization_header(tmp_path: Path) -> None:
+    """A malformed authorization header is rejected as invalid."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
     authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
@@ -60,6 +81,7 @@ def test_studio_identity_store_rejects_malformed_authorization_header(tmp_path: 
 
 
 def test_studio_identity_store_rejects_disabled_service_account_token(tmp_path: Path) -> None:
+    """A disabled account's token is rejected as disabled."""
     identity_path = tmp_path / "studio-identities.json"
     token_hash = hashlib.sha256(b"admin-token").hexdigest()
     _write_payload(
@@ -85,6 +107,7 @@ def test_studio_identity_store_rejects_disabled_service_account_token(tmp_path: 
 
 
 def test_studio_identity_store_rejects_expired_service_account_token(tmp_path: Path) -> None:
+    """An expired account's token is rejected as expired."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(
         identity_path,
@@ -100,6 +123,7 @@ def test_studio_identity_store_rejects_expired_service_account_token(tmp_path: P
 
 
 def test_studio_identity_store_accepts_future_expiry_without_z_suffix(tmp_path: Path) -> None:
+    """A future expiry without a Z suffix is accepted."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(
         identity_path,
@@ -118,6 +142,7 @@ def test_studio_identity_store_accepts_future_expiry_without_z_suffix(tmp_path: 
 
 
 def test_studio_identity_store_rejects_malformed_service_account_role(tmp_path: Path) -> None:
+    """A malformed role is rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text(
         json.dumps(
@@ -248,6 +273,7 @@ def test_studio_identity_store_rejects_malformed_payloads(
     payload: object,
     match: str,
 ) -> None:
+    """Malformed store payloads are rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(identity_path, payload)
 
@@ -256,11 +282,13 @@ def test_studio_identity_store_rejects_malformed_payloads(
 
 
 def test_studio_identity_store_rejects_unreadable_identity_path(tmp_path: Path) -> None:
+    """An unreadable identity path is rejected with ValueError."""
     with pytest.raises(ValueError, match="cannot be read"):
         load_studio_identity_store(tmp_path)
 
 
 def test_studio_identity_store_rejects_invalid_json(tmp_path: Path) -> None:
+    """An identity file that is not valid JSON is rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text("{", encoding="utf-8")
 
@@ -269,6 +297,7 @@ def test_studio_identity_store_rejects_invalid_json(tmp_path: Path) -> None:
 
 
 def test_studio_identity_store_rejects_unsupported_schema(tmp_path: Path) -> None:
+    """An unsupported store schema is rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text(
         json.dumps({"schema_version": "legacy", "service_accounts": []}),

@@ -13,7 +13,11 @@ from __future__ import annotations
 from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import pinned_request
 
-from tests.studio_advanced_support import *  # noqa: F403
+from tests.studio_advanced_support import (
+    classify_firing_pattern,
+    generate_experiment_script,
+    generate_oneliner,
+)
 
 EQUATIONS = {
     "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
@@ -28,7 +32,10 @@ EQUATIONS = {
 
 
 class TestCodegenAdvanced:
-    def test_the_equation_export_carries_the_equations_and_the_initial_state(self):
+    """Code generation from equation experiments and firing-pattern classification."""
+
+    def test_the_equation_export_carries_the_equations_and_the_initial_state(self) -> None:
+        """The exported script carries the equation, the parameters, the initial state and the experiment hash."""
         spec = resolve_experiment(EQUATIONS)
         script = generate_experiment_script(spec, pinned_request(EQUATIONS, spec))
         assert "'dv/dt = -(v - E_L) / tau_m + I / C'" in script
@@ -36,14 +43,16 @@ class TestCodegenAdvanced:
         assert "'init': {'v': -65.0}" in script
         assert spec.experiment_sha256 in script
 
-    def test_the_oneliner_runs_the_same_experiment(self):
+    def test_the_oneliner_runs_the_same_experiment(self) -> None:
+        """The one-line export runs the same resolved experiment on a single line."""
         spec = resolve_experiment(EQUATIONS)
         line = generate_oneliner(spec, pinned_request(EQUATIONS, spec))
         assert "run_experiment(resolve_experiment(" in line
         assert "dv/dt = -(v - E_L) / tau_m + I / C" in line
         assert line.count("\n") == 0
 
-    def test_classifier_adapting(self):
+    def test_classifier_adapting(self) -> None:
+        """An adapting trace is classed as adapting, irregular or tonic."""
         isis_adapting = list(range(50, 150, 10))
         spikes = []
         t = 100
@@ -53,7 +62,8 @@ class TestCodegenAdvanced:
         r = classify_firing_pattern(spikes, 2000, 0.1)
         assert r["pattern"] in ("adapting", "irregular", "tonic")
 
-    def test_classifier_bursting(self):
+    def test_classifier_bursting(self) -> None:
+        """A bursting trace is classed as bursting, irregular or chaotic."""
         spikes = []
         for burst_start in range(0, 1000, 200):
             for i in range(5):

@@ -10,10 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_identity_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.identity import (
+    rotate_studio_browser_user_password,
+    update_studio_browser_user_record,
+    update_studio_identity_record,
+)
+from tests.studio_identity_support import (
+    _write_identity_file,
+)
 
 
 def test_identity_mutations_report_missing_records(tmp_path: Path) -> None:
+    """Mutating a missing service account or browser user raises KeyError."""
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
 

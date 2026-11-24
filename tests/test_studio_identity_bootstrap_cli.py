@@ -6,9 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (cli) from former test_studio_identity_bootstrap.py
 
+"""The Studio bootstrap, preflight and browser-user command-line tools."""
+
 from __future__ import annotations
 
-from tests.studio_identity_bootstrap_support import *  # noqa: F403
+import json
+import pytest
+import sys
+from pathlib import (
+    Path,
+)
+from sc_neurocore.cli import (
+    main,
+)
+from sc_neurocore.studio.platform.bootstrap import (
+    bootstrap_studio_admin_identity,
+)
+from sc_neurocore.studio.platform.identity import (
+    load_studio_identity_store,
+    StudioIdentityAuthenticator,
+)
+from tests.studio_identity_bootstrap_support import (
+    _configure_release_preflight_env,
+    _fixed_token,
+    _StringStdin,
+)
 
 
 def test_studio_bootstrap_admin_cli_writes_identity_file(
@@ -16,6 +38,7 @@ def test_studio_bootstrap_admin_cli_writes_identity_file(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """The bootstrap CLI writes an authenticating identity file without the bearer token."""
     identity_path = tmp_path / "studio-identities.json"
     monkeypatch.setattr(
         sys,
@@ -51,6 +74,7 @@ def test_studio_bootstrap_admin_cli_requires_identity_file(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """The bootstrap CLI exits with 1 without an identity file."""
     monkeypatch.setattr(sys, "argv", ["sc-neurocore", "studio-bootstrap-admin"])
 
     exit_code = main()
@@ -64,6 +88,7 @@ def test_studio_preflight_cli_prints_release_report(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """The preflight CLI prints a passing release report without local paths."""
     identity_path = tmp_path / "studio-identities.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
     (tmp_path / "audit").mkdir()
@@ -85,6 +110,7 @@ def test_studio_preflight_cli_writes_report_to_explicit_output(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """The preflight CLI writes its report to the given output and prints nothing."""
     identity_path = tmp_path / "studio-identities.json"
     output_path = tmp_path / "reports" / "studio-preflight.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
@@ -110,6 +136,7 @@ def test_studio_add_browser_user_cli_writes_password_verifier(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """The add-browser-user CLI stores a password verifier and never the password."""
     identity_path = tmp_path / "studio-identities.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
     monkeypatch.setattr(
@@ -190,6 +217,7 @@ def test_studio_add_browser_user_cli_requires_operational_inputs(
     argv: list[str],
     match: str,
 ) -> None:
+    """The add-browser-user CLI exits with 1 without its required inputs."""
     monkeypatch.setattr(sys, "argv", argv)
 
     exit_code = main()

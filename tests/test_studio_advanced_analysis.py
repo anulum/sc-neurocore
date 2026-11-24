@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_advanced_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_advanced_support import client as client
 
 
 class TestAnalysisFunctions:
-    def test_bifurcation_endpoint(self, client):
+    """The Studio analysis endpoints: bifurcation, sensitivity, precision, heatmap, compile and codegen."""
+
+    def test_bifurcation_endpoint(self, client: TestClient) -> None:
+        """The bifurcation endpoint returns five parameter values with their attractors."""
         r = client.post(
             "/api/bifurcation",
             json={
@@ -37,7 +45,8 @@ class TestAnalysisFunctions:
         assert len(d["param_values"]) == 5
         assert len(d["attractors"]) == 5
 
-    def test_sensitivity_endpoint(self, client):
+    def test_sensitivity_endpoint(self, client: TestClient) -> None:
+        """The sensitivity endpoint returns parameter sensitivities."""
         r = client.post(
             "/api/sensitivity",
             json={
@@ -56,7 +65,8 @@ class TestAnalysisFunctions:
         assert "sensitivities" in d
         assert len(d["sensitivities"]) > 0
 
-    def test_precision_endpoint(self, client):
+    def test_precision_endpoint(self, client: TestClient) -> None:
+        """The precision endpoint returns a non-negative maximum error."""
         r = client.post(
             "/api/precision",
             json={
@@ -75,7 +85,8 @@ class TestAnalysisFunctions:
         assert "error" in d
         assert d["error"]["max_error"] >= 0
 
-    def test_heatmap_endpoint(self, client):
+    def test_heatmap_endpoint(self, client: TestClient) -> None:
+        """The heatmap endpoint returns a 3x3 grid of rates."""
         r = client.post(
             "/api/heatmap",
             json={
@@ -102,7 +113,8 @@ class TestAnalysisFunctions:
         assert len(d["rates"]) == 3
         assert len(d["rates"][0]) == 3
 
-    def test_compile_endpoint(self, client):
+    def test_compile_endpoint(self, client: TestClient) -> None:
+        """The compile endpoint returns a Verilog module of more than 100 characters."""
         r = client.post(
             "/api/compile",
             json={
@@ -117,7 +129,8 @@ class TestAnalysisFunctions:
         assert "module" in d["verilog"]
         assert d["chars"] > 100
 
-    def test_codegen_endpoint(self, client):
+    def test_codegen_endpoint(self, client: TestClient) -> None:
+        """The codegen endpoint returns a pinned, self-checking experiment script with the equation."""
         r = client.post(
             "/api/codegen",
             json={

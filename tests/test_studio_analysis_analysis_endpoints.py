@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.studio_analysis_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import pytest
+from tests.studio_analysis_support import client as client
 
 
 class TestAnalysisEndpoints:
-    def test_characterize(self, client):
+    """The Studio analysis, import and adaptive-precision endpoints."""
+
+    def test_characterize(self, client: TestClient) -> None:
+        """The characterise endpoint reports a pattern, an F-I curve and sensitivities."""
         r = client.post(
             "/api/characterize",
             json={
@@ -29,7 +38,8 @@ class TestAnalysisEndpoints:
         assert "fi_curve" in d
         assert "top_sensitivities" in d
 
-    def test_fi_curve_model(self, client):
+    def test_fi_curve_model(self, client: TestClient) -> None:
+        """The F-I curve endpoint returns five currents and five rates."""
         r = client.post(
             "/api/fi-curve",
             json={
@@ -46,7 +56,8 @@ class TestAnalysisEndpoints:
         assert len(d["currents"]) == 5
         assert len(d["rates"]) == 5
 
-    def test_codegen(self, client):
+    def test_codegen(self, client: TestClient) -> None:
+        """The codegen endpoint pins the request and embeds its experiment hash in the script and one-liner."""
         r = client.post(
             "/api/codegen",
             json={
@@ -70,7 +81,8 @@ class TestAnalysisEndpoints:
         assert "resolve_experiment" in d["script"]
         assert "run_experiment" in d["oneliner"]
 
-    def test_classify_endpoint(self, client):
+    def test_classify_endpoint(self, client: TestClient) -> None:
+        """The classify endpoint returns a firing pattern."""
         r = client.post(
             "/api/classify",
             json={
@@ -87,7 +99,8 @@ class TestAnalysisEndpoints:
         assert r.status_code == 200
         assert "pattern" in r.json()
 
-    def test_import_trace(self, client):
+    def test_import_trace(self, client: TestClient) -> None:
+        """An imported voltage trace returns times and statistics."""
         voltage = [float(i) for i in range(-65, -45)] + [float(i) for i in range(-45, -65, -1)]
         r = client.post("/api/import-trace", json={"voltage": voltage, "dt": 0.1})
         assert r.status_code == 200
@@ -95,7 +108,8 @@ class TestAnalysisEndpoints:
         assert "time" in d
         assert "stats" in d
 
-    def test_multi_simulate(self, client):
+    def test_multi_simulate(self, client: TestClient) -> None:
+        """A two-model simulation returns two results with spike counts."""
         r = client.post(
             "/api/multi-simulate",
             json=[
@@ -108,7 +122,8 @@ class TestAnalysisEndpoints:
         assert len(d) == 2
         assert d[0]["spike_count"] >= 0
 
-    def test_adaptive_precision_auto_tune(self, client):
+    def test_adaptive_precision_auto_tune(self, client: TestClient) -> None:
+        """Auto-tuning returns an adaptive-precision plan for six synapses with a positive LUT cost."""
         response = client.post(
             "/api/adaptive-precision/auto-tune",
             json={
@@ -136,7 +151,8 @@ class TestAnalysisEndpoints:
         )
         assert payload["num_synapses"] == 6
 
-    def test_adaptive_precision_auto_tune_rejects_invalid_layer(self, client):
+    def test_adaptive_precision_auto_tune_rejects_invalid_layer(self, client: TestClient) -> None:
+        """Auto-tuning an invalid layer is rejected with 422."""
         response = client.post(
             "/api/adaptive-precision/auto-tune",
             json={
@@ -147,7 +163,8 @@ class TestAnalysisEndpoints:
         )
         assert response.status_code == 422
 
-    def test_adaptive_precision_formal_bundle(self, client):
+    def test_adaptive_precision_formal_bundle(self, client: TestClient) -> None:
+        """The formal bundle carries its SBY and SVA artefacts and an unrun report."""
         response = client.post(
             "/api/adaptive-precision/formal-bundle",
             json={
@@ -170,7 +187,10 @@ class TestAnalysisEndpoints:
         assert payload["artifacts_text"]["report"] == ""
         assert "symbiyosys_executed" in payload["formal_manifest_json"]
 
-    def test_adaptive_precision_formal_bundle_rejects_bad_layer_shape(self, client):
+    def test_adaptive_precision_formal_bundle_rejects_bad_layer_shape(
+        self, client: TestClient
+    ) -> None:
+        """A formal bundle with a bad layer shape is rejected with 422."""
         response = client.post(
             "/api/adaptive-precision/formal-bundle",
             json={"layer_weights": [[[[0.2]]]]},

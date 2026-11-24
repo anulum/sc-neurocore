@@ -10,14 +10,26 @@
 
 from __future__ import annotations
 
-from tests.studio_advanced_support import *  # noqa: F403
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_advanced_support import (
+    characterize_model,
+)
+from tests.studio_advanced_support import client as client
 
 
 class TestCharacterize:
-    def test_characterize_lif(self):
+    """Automatic characterisation of a neuron model."""
+
+    def test_characterize_lif(self) -> None:
+        """Characterising a LIF simulator reports its pattern, a 20-point F-I curve, sensitivities and state ranges."""
         from sc_neurocore.studio.models import simulate_model
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
+            """Simulate the LIF model at the requested current."""
             cur = kw.pop("current", 500)
             kw.pop("params", None)
             kw.pop("init", None)
@@ -34,7 +46,8 @@ class TestCharacterize:
         assert "top_sensitivities" in r
         assert "state_ranges" in r
 
-    def test_characterize_endpoint(self, client):
+    def test_characterize_endpoint(self, client: TestClient) -> None:
+        """The characterise endpoint returns a known firing pattern."""
         r = client.post(
             "/api/characterize",
             json={

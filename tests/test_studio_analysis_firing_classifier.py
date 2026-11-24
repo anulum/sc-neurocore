@@ -10,19 +10,26 @@
 
 from __future__ import annotations
 
-from tests.studio_analysis_support import *  # noqa: F403
+from tests.studio_analysis_support import (
+    classify_firing_pattern,
+)
 
 
 class TestFiringClassifier:
-    def test_silent(self):
+    """Classification of firing patterns."""
+
+    def test_silent(self) -> None:
+        """No spikes are classed as silent."""
         r = classify_firing_pattern([], 1000, 0.1)
         assert r["pattern"] == "silent"
 
-    def test_tonic(self):
+    def test_tonic(self) -> None:
+        """Regular spikes are classed as tonic."""
         spikes = list(range(100, 1000, 100))
         r = classify_firing_pattern(spikes, 1000, 0.1)
         assert r["pattern"] == "tonic"
 
-    def test_single_spike(self):
+    def test_single_spike(self) -> None:
+        """One spike is classed as a single spike."""
         r = classify_firing_pattern([500], 1000, 0.1)
         assert r["pattern"] == "single_spike"

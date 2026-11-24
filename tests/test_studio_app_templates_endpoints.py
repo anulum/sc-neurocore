@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.studio_app_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import logging
+import pytest
+from tests.studio_app_support import (
+    TEMPLATES,
+)
+from tests.studio_app_support import client as client
+from typing import Never
 
 
 class TestTemplatesEndpoints:
-    def test_list_templates(self, client):
+    """The Studio template endpoints."""
+
+    def test_list_templates(self, client: TestClient) -> None:
+        """The template list holds five templates, LIF among them."""
         r = client.get("/api/templates")
         assert r.status_code == 200
         data = r.json()
@@ -22,26 +36,32 @@ class TestTemplatesEndpoints:
         names = {t["name"] for t in data}
         assert "lif" in names
 
-    def test_get_template(self, client):
+    def test_get_template(self, client: TestClient) -> None:
+        """A template is returned by name with its equations."""
         r = client.get("/api/templates/lif")
         assert r.status_code == 200
         data = r.json()
         assert data["name"] == "lif"
         assert "equations" in data
 
-    def test_get_nonexistent_template(self, client):
+    def test_get_nonexistent_template(self, client: TestClient) -> None:
+        """An unknown template gives 404."""
         r = client.get("/api/templates/nonexistent")
         assert r.status_code == 404
 
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
-    def test_each_template_accessible(self, client, name):
+    def test_each_template_accessible(self, client: TestClient, name: str) -> None:
+        """Each listed template can be fetched."""
         r = client.get(f"/api/templates/{name}")
         assert r.status_code == 200
 
-    def test_internal_error_is_logged(self, client, monkeypatch, caplog):
+    def test_internal_error_is_logged(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """An internal error returns 500 and is logged."""
         import sc_neurocore.studio.api.catalogue as catalogue_routes
 
-        def _boom():
+        def _boom() -> Never:
             raise RuntimeError("catalog exploded")
 
         monkeypatch.setattr(catalogue_routes, "list_models", _boom)

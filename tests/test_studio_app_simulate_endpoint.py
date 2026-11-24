@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_app_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_app_support import (
+    TEMPLATES,
+)
+from tests.studio_app_support import client as client
 
 
 class TestSimulateEndpoint:
-    def test_simulate_lif(self, client):
+    """The Studio equation simulation endpoint."""
+
+    def test_simulate_lif(self, client: TestClient) -> None:
+        """A LIF simulation returns spikes, times and states."""
         t = TEMPLATES["lif"]
         r = client.post(
             "/api/simulate",
@@ -35,7 +46,8 @@ class TestSimulateEndpoint:
         assert "time" in data
         assert "states" in data
 
-    def test_simulate_minimal(self, client):
+    def test_simulate_minimal(self, client: TestClient) -> None:
+        """A minimal simulation request succeeds."""
         r = client.post(
             "/api/simulate",
             json={
@@ -48,7 +60,8 @@ class TestSimulateEndpoint:
         )
         assert r.status_code == 200
 
-    def test_simulate_bad_equation(self, client):
+    def test_simulate_bad_equation(self, client: TestClient) -> None:
+        """An invalid equation is rejected with 422."""
         r = client.post(
             "/api/simulate",
             json={
@@ -59,7 +72,8 @@ class TestSimulateEndpoint:
         )
         assert r.status_code == 422
 
-    def test_simulate_invalid_dt(self, client):
+    def test_simulate_invalid_dt(self, client: TestClient) -> None:
+        """An invalid time step is rejected with 422."""
         r = client.post(
             "/api/simulate",
             json={
@@ -70,7 +84,8 @@ class TestSimulateEndpoint:
         )
         assert r.status_code == 422
 
-    def test_simulate_returns_all_state_vars(self, client):
+    def test_simulate_returns_all_state_vars(self, client: TestClient) -> None:
+        """A two-variable model returns both state variables."""
         t = TEMPLATES["izhikevich"]
         r = client.post(
             "/api/simulate",
@@ -90,7 +105,8 @@ class TestSimulateEndpoint:
         assert "v" in data["states"]
         assert "u" in data["states"]
 
-    def test_models_simulate_accepts_model_name_alias(self, client):
+    def test_models_simulate_accepts_model_name_alias(self, client: TestClient) -> None:
+        """The model simulation endpoint accepts the model-name alias and the name."""
         # The Studio frontend and every other model endpoint send ``model_name``;
         # /api/models/simulate must accept it (not only the bare ``name``).
         by_alias = client.post(

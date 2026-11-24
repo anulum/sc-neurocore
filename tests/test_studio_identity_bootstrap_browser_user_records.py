@@ -6,14 +6,35 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (browser_user_records) from former test_studio_identity_bootstrap.py
 
+"""Adding browser-user records to the Studio identity store."""
+
 from __future__ import annotations
 
-from tests.studio_identity_bootstrap_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.bootstrap import (
+    bootstrap_studio_admin_identity,
+)
+from sc_neurocore.studio.platform.identity import (
+    add_studio_browser_user_record,
+    load_studio_identity_store,
+    StudioIdentityAuthenticator,
+)
+from tests.studio_identity_bootstrap_support import (
+    _fixed_token,
+)
+from typing import (
+    Any,
+)
 
 
 def test_add_studio_browser_user_record_preserves_service_account(
     tmp_path: Path,
 ) -> None:
+    """Adding a browser user keeps the service account and stores only a PBKDF2 verifier."""
     identity_path = tmp_path / "studio-identities.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
 
@@ -56,6 +77,7 @@ def test_add_studio_browser_user_rejects_invalid_inputs(
     kwargs: dict[str, Any],
     match: str,
 ) -> None:
+    """Invalid browser-user inputs are rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
 
@@ -72,6 +94,7 @@ def test_add_studio_browser_user_rejects_invalid_inputs(
 
 
 def test_add_studio_browser_user_rejects_duplicate_username(tmp_path: Path) -> None:
+    """A duplicate username is rejected with ValueError."""
     identity_path = tmp_path / "studio-identities.json"
     bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
     add_studio_browser_user_record(

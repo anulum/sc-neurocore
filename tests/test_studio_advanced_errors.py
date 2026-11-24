@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_advanced_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_advanced_support import client as client
 
 
 class TestErrorHandling:
-    def test_bad_model_name(self, client):
+    """Validation errors of the Studio simulation endpoints."""
+
+    def test_bad_model_name(self, client: TestClient) -> None:
+        """An unknown model name is rejected with 422."""
         r = client.post(
             "/api/models/simulate",
             json={
@@ -25,7 +33,8 @@ class TestErrorHandling:
         )
         assert r.status_code == 422
 
-    def test_bad_ode_equation(self, client):
+    def test_bad_ode_equation(self, client: TestClient) -> None:
+        """An invalid ODE equation is rejected with 422."""
         r = client.post(
             "/api/simulate",
             json={
@@ -36,7 +45,8 @@ class TestErrorHandling:
         )
         assert r.status_code == 422
 
-    def test_negative_duration(self, client):
+    def test_negative_duration(self, client: TestClient) -> None:
+        """A negative duration is rejected with 422."""
         r = client.post(
             "/api/simulate",
             json={

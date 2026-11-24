@@ -10,7 +10,29 @@
 
 from __future__ import annotations
 
-from tests.studio_identity_admin_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.app import (
+    create_app,
+)
+from sc_neurocore.studio.platform.identity import (
+    list_studio_identity_public_records,
+)
+from sc_neurocore.studio.platform.settings import (
+    StudioRuntimeSettings,
+)
+from starlette.testclient import (
+    TestClient,
+)
+from tests.studio_identity_admin_support import (
+    _admin_headers,
+    _audit_rows,
+    _client,
+    _write_identity_file,
+    _write_single_service_admin_identity_file,
+)
 
 
 def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:

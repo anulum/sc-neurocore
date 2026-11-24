@@ -10,17 +10,26 @@
 
 from __future__ import annotations
 
-from tests.studio_advanced_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_advanced_support import client as client
 
 
 class TestPresets:
-    def test_list_presets(self, client):
+    """Studio presets, their actions and the default adaptive-precision flow."""
+
+    def test_list_presets(self, client: TestClient) -> None:
+        """The preset list holds ten presets."""
         r = client.get("/api/presets")
         assert r.status_code == 200
         d = r.json()
         assert len(d) == 10
 
-    def test_preset_actions_catalog_endpoint(self, client):
+    def test_preset_actions_catalog_endpoint(self, client: TestClient) -> None:
+        """The preset action catalogue lists at least two actions."""
         response = client.get("/api/presets/actions/catalog")
         assert response.status_code == 200
         payload = response.json()
@@ -31,14 +40,18 @@ class TestPresets:
             for row in payload["actions"]
         )
 
-    def test_get_preset(self, client):
+    def test_get_preset(self, client: TestClient) -> None:
+        """A preset is returned by its id with equations or a model name."""
         r = client.get("/api/presets/threshold")
         assert r.status_code == 200
         d = r.json()
         assert d["id"] == "threshold"
         assert "equations" in d or "model_name" in d
 
-    def test_fpga_precision_preset_exposes_adaptive_precision_actions(self, client):
+    def test_fpga_precision_preset_exposes_adaptive_precision_actions(
+        self, client: TestClient
+    ) -> None:
+        """The FPGA precision preset exposes the auto-tune and formal-bundle actions."""
         r = client.get("/api/presets/fpga_precision")
         assert r.status_code == 200
         payload = r.json()
@@ -48,14 +61,16 @@ class TestPresets:
         assert "auto_tune_adaptive_precision" in ids
         assert "generate_adaptive_precision_formal_bundle" in ids
 
-    def test_fpga_precision_preset_actions_endpoint(self, client):
+    def test_fpga_precision_preset_actions_endpoint(self, client: TestClient) -> None:
+        """The FPGA precision actions endpoint lists at least two actions."""
         response = client.get("/api/presets/fpga_precision/actions")
         assert response.status_code == 200
         payload = response.json()
         assert payload["preset_id"] == "fpga_precision"
         assert len(payload["actions"]) >= 2
 
-    def test_fpga_precision_action_resolve_endpoint(self, client):
+    def test_fpga_precision_action_resolve_endpoint(self, client: TestClient) -> None:
+        """Resolving the auto-tune action gives its endpoint and default payload."""
         response = client.post(
             "/api/presets/fpga_precision/actions/auto_tune_adaptive_precision/resolve",
             json={"overrides": {"target_error_percent": 0.05, "max_bits": 12}},
@@ -68,7 +83,8 @@ class TestPresets:
         assert payload["payload"]["target_error_percent"] == 0.05
         assert payload["payload"]["max_bits"] == 12
 
-    def test_fpga_precision_action_execute_endpoint(self, client):
+    def test_fpga_precision_action_execute_endpoint(self, client: TestClient) -> None:
+        """Executing the auto-tune action returns an adaptive-precision plan."""
         response = client.post(
             "/api/presets/fpga_precision/actions/auto_tune_adaptive_precision/execute",
             json={"overrides": {"target_error_percent": 0.05, "max_bits": 12}},
@@ -79,7 +95,8 @@ class TestPresets:
         assert payload["result"]["schema"] == "sc-neurocore.adaptive_precision_plan.v1"
         assert payload["result"]["api_surface"]["target_error_percent"] == 0.05
 
-    def test_fpga_precision_execute_all_actions_endpoint(self, client):
+    def test_fpga_precision_execute_all_actions_endpoint(self, client: TestClient) -> None:
+        """Executing all actions runs the auto-tune and formal-bundle actions."""
         response = client.post(
             "/api/presets/fpga_precision/actions/execute-all",
             json={
@@ -99,7 +116,8 @@ class TestPresets:
         assert "auto_tune_adaptive_precision" in ids
         assert "generate_adaptive_precision_formal_bundle" in ids
 
-    def test_fpga_precision_default_flow_run_endpoint(self, client):
+    def test_fpga_precision_default_flow_run_endpoint(self, client: TestClient) -> None:
+        """The default flow runs to completion as default-flow evidence, auto-tune first."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={
@@ -121,7 +139,8 @@ class TestPresets:
         assert len(manifest["inputs_fingerprint_sha256"]) == 64
         assert len(manifest["run_fingerprint_sha256"]) == 64
 
-    def test_fpga_precision_default_flow_plan_endpoint(self, client):
+    def test_fpga_precision_default_flow_plan_endpoint(self, client: TestClient) -> None:
+        """The default-flow plan lists its fingerprinted actions, auto-tune first."""
         response = client.get("/api/presets/fpga_precision/default-flow/plan")
         assert response.status_code == 200
         payload = response.json()
@@ -132,7 +151,8 @@ class TestPresets:
         assert len(payload["actions"][0]["template_fingerprint_sha256"]) == 64
         assert len(payload["plan_fingerprint_sha256"]) == 64
 
-    def test_fpga_precision_default_flow_contract_endpoint(self, client):
+    def test_fpga_precision_default_flow_contract_endpoint(self, client: TestClient) -> None:
+        """The default-flow contract carries the plan's action order and fingerprint."""
         response = client.get("/api/presets/fpga_precision/default-flow/contract")
         assert response.status_code == 200
         payload = response.json()
@@ -143,7 +163,8 @@ class TestPresets:
         assert template["action_order"] == plan["action_order"]
         assert template["plan_fingerprint_sha256"] == plan["plan_fingerprint_sha256"]
 
-    def test_fpga_precision_default_flow_verify_endpoint(self, client):
+    def test_fpga_precision_default_flow_verify_endpoint(self, client: TestClient) -> None:
+        """Verifying the default-flow plan matches its fingerprint."""
         plan = client.get("/api/presets/fpga_precision/default-flow/plan")
         assert plan.status_code == 200
         plan_payload = plan.json()
@@ -164,7 +185,8 @@ class TestPresets:
         assert payload["verified"] is True
         assert payload["plan_fingerprint_match"] is True
 
-    def test_fpga_precision_default_flow_guarded_run_endpoint(self, client):
+    def test_fpga_precision_default_flow_guarded_run_endpoint(self, client: TestClient) -> None:
+        """A guarded run verifies the plan before executing its actions."""
         plan = client.get("/api/presets/fpga_precision/default-flow/plan")
         assert plan.status_code == 200
         plan_payload = plan.json()
@@ -187,7 +209,10 @@ class TestPresets:
         assert payload["verification_gate"]["verified"] is True
         assert payload["executed_count"] >= 2
 
-    def test_fpga_precision_default_flow_run_from_contract_endpoint(self, client):
+    def test_fpga_precision_default_flow_run_from_contract_endpoint(
+        self, client: TestClient
+    ) -> None:
+        """A run from the contract verifies both the contract and the plan."""
         contract = client.get("/api/presets/fpga_precision/default-flow/contract")
         assert contract.status_code == 200
         contract_payload = contract.json()
@@ -205,7 +230,8 @@ class TestPresets:
         assert payload["contract_verification"]["verified"] is True
         assert payload["verification_gate"]["verified"] is True
 
-    def test_fpga_precision_default_flow_attest_endpoint(self, client):
+    def test_fpga_precision_default_flow_attest_endpoint(self, client: TestClient) -> None:
+        """Attesting a completed run gives a fingerprinted default-flow attestation."""
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={
@@ -226,7 +252,8 @@ class TestPresets:
         assert payload["preset_id"] == "fpga_precision"
         assert len(payload["attestation_fingerprint_sha256"]) == 64
 
-    def test_fpga_precision_default_flow_attest_verify_endpoint(self, client):
+    def test_fpga_precision_default_flow_attest_verify_endpoint(self, client: TestClient) -> None:
+        """An attestation of a completed run verifies."""
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={
@@ -253,6 +280,7 @@ class TestPresets:
         )
         assert verify_payload["verified"] is True
 
-    def test_preset_not_found(self, client):
+    def test_preset_not_found(self, client: TestClient) -> None:
+        """An unknown preset gives 404."""
         r = client.get("/api/presets/nonexistent")
         assert r.status_code == 404

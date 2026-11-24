@@ -10,14 +10,29 @@
 
 from __future__ import annotations
 
-from tests.studio_audit_quarantine_support import *  # noqa: F403
+import json
+import pytest
+from datetime import (
+    datetime,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
+    write_studio_audit_quarantine_restore,
+)
+from tests.studio_audit_quarantine_support import (
+    _archive_context,
+    _written_archive_pair,
+    UTC,
+)
 
 
 def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
     tmp_path: Path,
 ) -> None:
     """Restore writer materializes validated archive rows as job artifacts."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     result = write_studio_audit_quarantine_restore(
         _archive_context(tmp_path / "restore"),
@@ -51,7 +66,6 @@ def test_write_studio_audit_quarantine_restore_rejects_invalid_archive(
     tmp_path: Path,
 ) -> None:
     """Restore writer rejects archives that fail validation."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     manifest_payload["archive_id"] = "saqa_other"
 

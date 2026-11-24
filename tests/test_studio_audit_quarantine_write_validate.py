@@ -10,14 +10,38 @@
 
 from __future__ import annotations
 
-from tests.studio_audit_quarantine_support import *  # noqa: F403
+import json
+import pytest
+from collections.abc import (
+    Callable,
+)
+from datetime import (
+    datetime,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION,
+    validate_studio_audit_quarantine_archive,
+    write_studio_audit_quarantine_archive,
+)
+from tests.studio_audit_quarantine_support import (
+    _archive_context,
+    _quarantine_export_payload,
+    _written_archive_pair,
+    UTC,
+)
+from typing import (
+    cast,
+)
 
 
 def test_write_studio_audit_quarantine_archive_writes_manifest_and_payload(
     tmp_path: Path,
 ) -> None:
     """Quarantine archive writer emits confined, path-free archive artifacts."""
-
     result = write_studio_audit_quarantine_archive(
         _archive_context(tmp_path),
         quarantine_export=_quarantine_export_payload(),
@@ -52,7 +76,6 @@ def test_validate_studio_audit_quarantine_archive_accepts_writer_output(
     tmp_path: Path,
 ) -> None:
     """Archive validation accepts the writer's archive and manifest pair."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
 
     validation = validate_studio_audit_quarantine_archive(
@@ -74,7 +97,6 @@ def test_validate_studio_audit_quarantine_archive_reports_manifest_mismatch(
     tmp_path: Path,
 ) -> None:
     """Archive validation reports mismatched companion manifests."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     manifest_payload["archive_id"] = "saqa_other"
     manifest_payload["summary"] = {}
@@ -129,7 +151,6 @@ def test_validate_studio_audit_quarantine_archive_reports_manifest_defects(
     expected_errors: list[str],
 ) -> None:
     """Archive validation reports stable manifest defect codes."""
-
     archive_payload, manifest_payload = _written_archive_pair(tmp_path)
     mutation(manifest_payload)
 
@@ -155,7 +176,6 @@ def test_validate_studio_audit_quarantine_archive_rejects_non_json_manifest(
     manifest_payload: dict[str, object],
 ) -> None:
     """Archive validation rejects manifests that cannot be JSON payloads."""
-
     archive_payload, _manifest_payload = _written_archive_pair(tmp_path)
 
     validation = validate_studio_audit_quarantine_archive(
@@ -171,7 +191,6 @@ def test_validate_studio_audit_quarantine_archive_reports_summary_mismatch(
     tmp_path: Path,
 ) -> None:
     """Archive validation recomputes summary fields before import."""
-
     archive_payload, _manifest_payload = _written_archive_pair(tmp_path)
     archive_summary = cast(dict[str, object], archive_payload["summary"])
     archive_summary["event_count"] = 999
@@ -188,7 +207,6 @@ def test_write_studio_audit_quarantine_archive_rejects_malformed_export(
     tmp_path: Path,
 ) -> None:
     """Quarantine archive writer rejects unsupported export schemas."""
-
     with pytest.raises(ValueError, match="export_schema_unsupported"):
         write_studio_audit_quarantine_archive(
             _archive_context(tmp_path),
@@ -218,7 +236,6 @@ def test_write_studio_audit_quarantine_archive_rejects_invalid_export_shapes(
     error_match: str,
 ) -> None:
     """Quarantine archive writer validates each public export field."""
-
     export_payload = _quarantine_export_payload()
     mutation(export_payload)
 
@@ -261,7 +278,6 @@ def test_validate_studio_audit_quarantine_archive_rejects_invalid_archive_shapes
     expected_error: str,
 ) -> None:
     """Archive validation returns stable error codes for invalid archives."""
-
     archive_payload, _manifest_payload = _written_archive_pair(tmp_path)
     mutation(archive_payload)
 

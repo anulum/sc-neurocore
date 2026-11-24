@@ -10,14 +10,34 @@
 
 from __future__ import annotations
 
-from tests.studio_audit_quarantine_support import *  # noqa: F403
+import json
+import pytest
+from collections.abc import (
+    Callable,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    build_studio_audit_quarantine_archive_retention_plan,
+    purge_studio_audit_quarantine_archive_prune_candidates,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
+    StudioJobRecord,
+)
+from tests.studio_audit_quarantine_support import (
+    _archive_record,
+    _archive_result_for_job,
+)
+from typing import (
+    cast,
+)
 
 
 def test_build_studio_audit_quarantine_archive_retention_plan_marks_old_archives(
     tmp_path: Path,
 ) -> None:
     """Retention planning marks newest valid archive jobs for retention."""
-
     old_result = _archive_result_for_job(tmp_path, "sj_old")
     new_result = _archive_result_for_job(tmp_path, "sj_new")
     records = (
@@ -71,7 +91,6 @@ def test_build_studio_audit_quarantine_archive_retention_plan_rejects_zero_retai
     tmp_path: Path,
 ) -> None:
     """Retention planning fails closed on non-positive retain counts."""
-
     with pytest.raises(ValueError, match="archive_retention_retain_latest_invalid"):
         build_studio_audit_quarantine_archive_retention_plan(
             (
@@ -105,7 +124,6 @@ def test_build_studio_audit_quarantine_archive_retention_plan_skips_malformed_jo
     mutation: Callable[[dict[str, object]], object],
 ) -> None:
     """Retention planning skips malformed archive job results."""
-
     result = _archive_result_for_job(tmp_path, "sj_malformed")
     mutation(result)
 
@@ -130,7 +148,6 @@ def test_purge_studio_audit_quarantine_archive_prune_candidates_purges_old_jobs(
     tmp_path: Path,
 ) -> None:
     """Archive purge removes only retention prune candidates."""
-
     old_result = _archive_result_for_job(tmp_path, "sj_old")
     new_result = _archive_result_for_job(tmp_path, "sj_new")
     purged_job_ids: list[str] = []
@@ -150,6 +167,7 @@ def test_purge_studio_audit_quarantine_archive_prune_candidates_purges_old_jobs(
     )
 
     def purge_job(job_id: str) -> StudioJobRecord:
+        """Record the purged job id and return a record."""
         purged_job_ids.append(job_id)
         return records[0]
 

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_app_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_app_support import client as client
 
 
 class TestHealth:
-    def test_health(self, client):
+    """The Studio health endpoint."""
+
+    def test_health(self, client: TestClient) -> None:
+        """The health endpoint reports ok."""
         r = client.get("/api/health")
         assert r.status_code == 200
         assert r.json() == {"status": "ok"}

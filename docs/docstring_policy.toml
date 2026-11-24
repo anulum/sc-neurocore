@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4686
+expected_file_count = 4708
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18788,3 +18788,91 @@ rationale = "Exercise SC-NeuroCore: adaptive runtime precision precision strings
 [[file]]
 path = "tests/test_adaptive_runtime_precision_validation.py"
 rationale = "Exercise SC-NeuroCore: adaptive runtime precision validation."
+
+[[file]]
+path = "tests/test_studio_advanced_analysis.py"
+rationale = "Exercise SC-NeuroCore: studio advanced analysis."
+
+[[file]]
+path = "tests/test_studio_advanced_characterize.py"
+rationale = "Exercise SC-NeuroCore: studio advanced characterize."
+
+[[file]]
+path = "tests/test_studio_advanced_codegen.py"
+rationale = "Exercise SC-NeuroCore: studio advanced codegen."
+
+[[file]]
+path = "tests/test_studio_advanced_errors.py"
+rationale = "Exercise SC-NeuroCore: studio advanced errors."
+
+[[file]]
+path = "tests/test_studio_advanced_network.py"
+rationale = "Exercise SC-NeuroCore: studio advanced network."
+
+[[file]]
+path = "tests/test_studio_advanced_presets.py"
+rationale = "Exercise SC-NeuroCore: studio advanced presets."
+
+[[file]]
+path = "tests/test_studio_analysis_analysis_endpoints.py"
+rationale = "Exercise SC-NeuroCore: studio analysis analysis endpoints."
+
+[[file]]
+path = "tests/test_studio_analysis_codegen.py"
+rationale = "Exercise SC-NeuroCore: studio analysis codegen."
+
+[[file]]
+path = "tests/test_studio_analysis_firing_classifier.py"
+rationale = "Exercise SC-NeuroCore: studio analysis firing classifier."
+
+[[file]]
+path = "tests/test_studio_analysis_simulation_protocols.py"
+rationale = "Exercise SC-NeuroCore: studio analysis simulation protocols."
+
+[[file]]
+path = "tests/test_studio_app_health.py"
+rationale = "Exercise SC-NeuroCore: studio app health."
+
+[[file]]
+path = "tests/test_studio_app_simulate_endpoint.py"
+rationale = "Exercise SC-NeuroCore: studio app simulate endpoint."
+
+[[file]]
+path = "tests/test_studio_app_templates_endpoints.py"
+rationale = "Exercise SC-NeuroCore: studio app templates endpoints."
+
+[[file]]
+path = "tests/test_studio_audit_quarantine_restore.py"
+rationale = "Exercise SC-NeuroCore: studio audit quarantine restore."
+
+[[file]]
+path = "tests/test_studio_audit_quarantine_retention.py"
+rationale = "Exercise SC-NeuroCore: studio audit quarantine retention."
+
+[[file]]
+path = "tests/test_studio_audit_quarantine_write_validate.py"
+rationale = "Exercise SC-NeuroCore: studio audit quarantine write validate."
+
+[[file]]
+path = "tests/test_studio_compiler_cosim.py"
+rationale = "Exercise SC-NeuroCore: studio compiler cosim."
+
+[[file]]
+path = "tests/test_studio_identity_bootstrap_bootstrap_core.py"
+rationale = "Exercise SC-NeuroCore: studio identity bootstrap bootstrap core."
+
+[[file]]
+path = "tests/test_studio_identity_bootstrap_browser_user_records.py"
+rationale = "Exercise SC-NeuroCore: studio identity bootstrap browser user records."
+
+[[file]]
+path = "tests/test_studio_identity_bootstrap_cli.py"
+rationale = "Exercise SC-NeuroCore: studio identity bootstrap cli."
+
+[[file]]
+path = "tests/test_studio_identity_mutations.py"
+rationale = "Exercise SC-NeuroCore: studio identity mutations."
+
+[[file]]
+path = "tests/test_studio_identity_service_accounts.py"
+rationale = "Exercise SC-NeuroCore: studio identity service accounts."

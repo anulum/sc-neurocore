@@ -10,7 +10,23 @@
 
 from __future__ import annotations
 
-from tests.studio_identity_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.identity import (
+    add_studio_browser_user_record,
+    load_studio_identity_store,
+    make_browser_user_password_verifier,
+    rotate_studio_browser_user_password,
+    StudioIdentityAuthenticator,
+    update_studio_browser_user_record,
+    verify_browser_user_password,
+)
+from tests.studio_identity_support import (
+    _write_identity_file,
+    _write_payload,
+)
 
 
 def test_browser_user_authentication_rejects_empty_expired_and_unknown_users(

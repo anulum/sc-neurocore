@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
-from tests.studio_analysis_support import *  # noqa: F403
+from typing import Any
+
+import pytest
+from tests.studio_analysis_support import (
+    _make_current_trace,
+    _make_simulate_fn,
+    frequency_response,
+    heatmap_2d,
+    simulate,
+)
 
 
 class TestSimulationProtocols:
-    def test_step_protocol(self):
+    """Stimulus protocols, frequency response and heatmap sweeps."""
+
+    def test_step_protocol(self) -> None:
+        """A step protocol is zero before and 30 after its onset."""
         r = simulate(
             equations=["dv/dt = -(v - E_L) / tau_m + I / C"],
             threshold="v > -50",
@@ -31,7 +43,8 @@ class TestSimulationProtocols:
         mid = len(r["current_trace"]) // 2
         assert r["current_trace"][mid] == 30.0
 
-    def test_ramp_protocol(self):
+    def test_ramp_protocol(self) -> None:
+        """A ramp protocol rises from zero to about ten."""
         r = simulate(
             equations=["dv/dt = I"],
             init={"v": 0.0},
@@ -43,23 +56,27 @@ class TestSimulationProtocols:
         assert r["current_trace"][0] == 0.0
         assert r["current_trace"][-1] == pytest.approx(10.0, rel=0.1)
 
-    def test_sine_protocol_trace_has_ac_current(self):
+    def test_sine_protocol_trace_has_ac_current(self) -> None:
+        """A sine protocol swings between about -2 and 2 from zero."""
         trace = _make_current_trace("sine", 2.0, 1000, dt=1.0, frequency_hz=10.0)
         assert trace[0] == pytest.approx(0.0)
         assert max(trace) == pytest.approx(2.0, rel=0.02)
         assert min(trace) == pytest.approx(-2.0, rel=0.02)
 
-    def test_a_biased_sine_oscillates_about_its_bias(self):
+    def test_a_biased_sine_oscillates_about_its_bias(self) -> None:
+        """A biased sine swings between about 5 and 15 from its bias of 10."""
         trace = _make_current_trace("sine", 5.0, 1000, dt=1.0, frequency_hz=10.0, bias=10.0)
         assert trace[0] == pytest.approx(10.0)
         assert max(trace) == pytest.approx(15.0, rel=0.02)
         assert min(trace) == pytest.approx(5.0, rel=0.02)
 
-    def test_a_bias_is_refused_for_any_protocol_but_the_sine(self):
+    def test_a_bias_is_refused_for_any_protocol_but_the_sine(self) -> None:
+        """A bias on a protocol other than the sine is rejected with ValueError."""
         with pytest.raises(ValueError, match="sine protocol only"):
             _make_current_trace("constant", 5.0, 10, bias=1.0)
 
-    def test_frequency_response_drives_a_biased_sine_on_a_real_run(self):
+    def test_frequency_response_drives_a_biased_sine_on_a_real_run(self) -> None:
+        """The frequency response drives a biased sine and reports positive rates and gains."""
         # A real LIF equation run: the drive stays positive about its bias.
         result = frequency_response(
             _make_simulate_fn(
@@ -85,8 +102,11 @@ class TestSimulationProtocols:
         assert all(gain is not None and gain > 0 for gain in result["gain"])
         assert result["contract"]["domain"] == "complete"
 
-    def test_heatmap_2d_returns_failure_metadata_on_success(self):
-        def fake_simulate(**cfg):
+    def test_heatmap_2d_returns_failure_metadata_on_success(self) -> None:
+        """A complete heatmap sweep reports no failed points and the expected rates."""
+
+        def fake_simulate(**cfg: Any) -> dict[str, Any]:
+            """Stand in for a simulation and return a synthetic rate."""
             params = cfg["params"]
             return {"stats": {"rate_hz": float(params["ix"] + params["iy"])}}
 
@@ -107,8 +127,11 @@ class TestSimulationProtocols:
         assert result["failure_rate"] == 0.0
         assert result["rates"] == [[11.0, 12.0], [21.0, 22.0]]
 
-    def test_heatmap_2d_fails_closed_with_diagnostics(self):
-        def fake_simulate(**cfg):
+    def test_heatmap_2d_fails_closed_with_diagnostics(self) -> None:
+        """A heatmap sweep with a failing point raises with its diagnostics."""
+
+        def fake_simulate(**cfg: Any) -> dict[str, Any]:
+            """Stand in for a simulation and return a synthetic rate."""
             params = cfg["params"]
             if params["ix"] == 2.0 and params["iy"] == 20.0:
                 raise RuntimeError("synthetic failure")
@@ -144,7 +167,8 @@ class TestSimulationProtocols:
             }
         ]
 
-    def test_stats_have_isi_histogram(self):
+    def test_stats_have_isi_histogram(self) -> None:
+        """Simulation statistics include an ISI histogram with counts."""
         r = simulate(
             equations=["dv/dt = -(v - E_L) / tau_m + I / C"],
             threshold="v > -50",

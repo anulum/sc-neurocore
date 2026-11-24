@@ -10,7 +10,26 @@
 
 from __future__ import annotations
 
-from tests.studio_identity_admin_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.identity import (
+    list_studio_browser_user_public_records,
+    list_studio_identity_public_records,
+    load_studio_identity_store,
+    rotate_studio_browser_user_password,
+    StudioIdentityAuthenticator,
+    StudioIdentityLifecycleError,
+    update_studio_browser_user_record,
+    update_studio_identity_record,
+)
+from tests.studio_identity_admin_support import (
+    _write_identity_file,
+    _write_single_browser_admin_identity_file,
+    _write_single_service_admin_identity_file,
+)
 
 
 def test_identity_public_records_never_expose_token_hashes(tmp_path: Path) -> None:

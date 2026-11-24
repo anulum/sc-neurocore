@@ -6,12 +6,39 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (bootstrap_core) from former test_studio_identity_bootstrap.py
 
+"""Bootstrapping the Studio admin identity store."""
+
 from __future__ import annotations
 
-from tests.studio_identity_bootstrap_support import *  # noqa: F403
+import hashlib
+import json
+import os
+import pytest
+import sc_neurocore.studio.platform.bootstrap as bootstrap
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform.bootstrap import (
+    bootstrap_studio_admin_identity,
+    DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID,
+    DEFAULT_STUDIO_ADMIN_ROLES,
+    MIN_BOOTSTRAP_TOKEN_BYTES,
+)
+from sc_neurocore.studio.platform.identity import (
+    load_studio_identity_store,
+    StudioIdentityAuthenticator,
+)
+from tests.studio_identity_bootstrap_support import (
+    _fixed_token,
+)
+from typing import (
+    Any,
+    Literal,
+)
 
 
 def test_bootstrap_studio_admin_identity_creates_authenticating_store(tmp_path: Path) -> None:
+    """Bootstrapping writes a hardened store whose admin token authenticates and is stored only as a hash."""
     identity_path = tmp_path / "private" / "studio-identities.json"
 
     result = bootstrap_studio_admin_identity(
@@ -41,6 +68,7 @@ def test_bootstrap_studio_admin_identity_creates_authenticating_store(tmp_path: 
 
 
 def test_bootstrap_public_dict_excludes_bearer_token(tmp_path: Path) -> None:
+    """The public bootstrap result omits the bearer token."""
     identity_path = tmp_path / "studio-identities.json"
 
     result = bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
@@ -53,6 +81,7 @@ def test_bootstrap_public_dict_excludes_bearer_token(tmp_path: Path) -> None:
 
 
 def test_bootstrap_refuses_existing_identity_without_overwrite(tmp_path: Path) -> None:
+    """An existing identity file is kept unless overwrite is requested."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text("existing", encoding="utf-8")
 
@@ -63,6 +92,7 @@ def test_bootstrap_refuses_existing_identity_without_overwrite(tmp_path: Path) -
 
 
 def test_bootstrap_overwrite_replaces_existing_identity(tmp_path: Path) -> None:
+    """Overwrite replaces the identity file with the new principal and roles."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text("existing", encoding="utf-8")
 
@@ -100,6 +130,7 @@ def test_bootstrap_rejects_invalid_inputs(
     kwargs: dict[str, Any],
     match: str,
 ) -> None:
+    """Invalid bootstrap inputs are rejected with ValueError."""
     with pytest.raises(ValueError, match=match):
         bootstrap_studio_admin_identity(
             tmp_path / "studio-identities.json",
@@ -108,6 +139,7 @@ def test_bootstrap_rejects_invalid_inputs(
 
 
 def test_bootstrap_rejects_parent_path_that_is_file(tmp_path: Path) -> None:
+    """A parent path that is a file is rejected with ValueError."""
     parent_path = tmp_path / "not-a-directory"
     parent_path.write_text("file", encoding="utf-8")
 
@@ -119,9 +151,12 @@ def test_bootstrap_create_failure_removes_partial_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A failed write leaves no partial identity file."""
     identity_path = tmp_path / "studio-identities.json"
 
     class BrokenHandle:
+        """A file handle whose write raises OSError."""
+
         def __init__(self, descriptor: int) -> None:
             self._descriptor = descriptor
 
@@ -138,6 +173,7 @@ def test_bootstrap_create_failure_removes_partial_file(
             return False
 
         def write(self, text: str) -> int:
+            """Raise OSError instead of writing."""
             del text
             raise OSError("simulated write failure")
 
@@ -147,6 +183,7 @@ def test_bootstrap_create_failure_removes_partial_file(
         buffering: int = -1,
         encoding: str | None = None,
     ) -> BrokenHandle:
+        """Return a broken handle for the descriptor."""
         del mode, buffering, encoding
         return BrokenHandle(descriptor)
 
@@ -162,6 +199,7 @@ def test_bootstrap_replace_failure_removes_temporary_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A failed replace keeps the old file and leaves no temporary file."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text("existing", encoding="utf-8")
 
@@ -169,6 +207,7 @@ def test_bootstrap_replace_failure_removes_temporary_file(
         source: str | bytes | os.PathLike[str] | os.PathLike[bytes],
         destination: str | bytes | os.PathLike[str] | os.PathLike[bytes],
     ) -> None:
+        """Raise OSError instead of replacing the file."""
         del source, destination
         raise OSError("simulated replace failure")
 
@@ -189,6 +228,7 @@ def test_bootstrap_permission_hardening_reports_false_without_posix(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Permission hardening reports False without POSIX permissions."""
     identity_path = tmp_path / "studio-identities.json"
     identity_path.write_text("existing", encoding="utf-8")
     monkeypatch.setattr("sc_neurocore.studio.platform.bootstrap.os.name", "nt")

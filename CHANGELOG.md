@@ -1378,6 +1378,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 25 top-level Studio advanced, analysis, app, compiler, audit
+  quarantine and identity test modules import their names explicitly
+  instead of through a suppressed star import, take every name bound
+  after a support's web-stack guard from that support, keep the
+  supports' client fixtures in their namespaces through redundant-alias
+  imports, gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy.
+
 - The 18 top-level adaptive audio and adaptive precision test modules
   import their names explicitly instead of through a suppressed star
   import, keep the support's neuron fixtures in their namespaces through

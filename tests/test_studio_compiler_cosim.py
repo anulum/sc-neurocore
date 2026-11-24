@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.studio_compiler_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_compiler_support import LIF_EQ
+from tests.studio_compiler_support import client as client
 
 
 class TestCosim:
-    def test_cosim_returns_traces(self, client):
+    """Float and fixed-point co-simulation of an equation model."""
+
+    def test_cosim_returns_traces(self, client: TestClient) -> None:
+        """Co-simulation returns float and fixed results with a non-negative error."""
         r = client.post("/api/ir/cosim", json=LIF_EQ)
         assert r.status_code == 200
         data = r.json()
