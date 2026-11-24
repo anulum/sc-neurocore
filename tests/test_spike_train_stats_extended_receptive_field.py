@@ -10,21 +10,33 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_extended_support import *  # noqa: F403
+from typing import Any
+
+from sc_neurocore.analysis.spike_stats import place_field_detection
+from sc_neurocore.analysis.spike_stats import spatial_information
+from sc_neurocore.analysis.spike_stats import spike_triggered_covariance
+from sc_neurocore.analysis.spike_stats import tuning_curve
+import numpy as np
+from tests.spike_train_stats_extended_support import poisson_train as poisson_train
 
 
 class TestReceptiveField:
-    def test_spike_triggered_covariance(self, poisson_train):
+    """Spike-triggered covariance, spatial information, place fields and tuning curves."""
+
+    def test_spike_triggered_covariance(self, poisson_train: np.ndarray[Any, Any]) -> None:
+        """Spike-triggered covariance over a 20-step window is 20x20."""
         stim = np.random.default_rng(3).normal(0, 1, poisson_train.size)
         stc = spike_triggered_covariance(stim, poisson_train, window_steps=20)
         assert stc.shape == (20, 20)
 
-    def test_spatial_information(self, poisson_train):
+    def test_spatial_information(self, poisson_train: np.ndarray[Any, Any]) -> None:
+        """Spatial information of a Poisson train along a linear track is non-negative."""
         positions = np.linspace(0, 100, poisson_train.size)
         si = spatial_information(poisson_train, positions)
         assert si >= 0
 
-    def test_place_field_detection(self):
+    def test_place_field_detection(self) -> None:
+        """Place-field detection on a train with a raised rate between 40 and 60 returns a list (the check is on the type only)."""
         rng = np.random.default_rng(9)
         n = 5000
         positions = np.linspace(0, 100, n)
@@ -36,7 +48,8 @@ class TestReceptiveField:
         fields = place_field_detection(train, positions, threshold_std=1.5)
         assert isinstance(fields, list)
 
-    def test_tuning_curve(self, poisson_train):
+    def test_tuning_curve(self, poisson_train: np.ndarray[Any, Any]) -> None:
+        """The tuning curve against a sinusoidal stimulus has one rate per bin centre and is not empty."""
         stim = np.sin(np.linspace(0, 4 * np.pi, poisson_train.size))
         rates, centers = tuning_curve(poisson_train, stim)
         assert rates.size == centers.size

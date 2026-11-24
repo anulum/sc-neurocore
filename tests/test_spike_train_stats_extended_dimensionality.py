@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_extended_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+
+from sc_neurocore.analysis.spike_stats import demixed_pca
+from sc_neurocore.analysis.spike_stats import factor_analysis
+from tests.spike_train_stats_extended_support import population as population
 
 
 class TestDimensionality:
-    def test_demixed_pca(self, population):
+    """Demixed PCA and factor analysis of a five-train population."""
+
+    def test_demixed_pca(self, population: list[np.ndarray[Any, Any]]) -> None:
+        """Two conditions give a 2-D projection and two explained-variance values."""
         conds = {
             0: population[:3],
             1: population[2:],
@@ -23,7 +32,8 @@ class TestDimensionality:
         assert proj.ndim == 2
         assert explained.size == 2
 
-    def test_factor_analysis(self, population):
+    def test_factor_analysis(self, population: list[np.ndarray[Any, Any]]) -> None:
+        """Two factors over five trains give 5x2 loadings and five noise variances."""
         loadings, psi = factor_analysis(population, n_factors=2)
         assert loadings.shape == (5, 2)
         assert psi.size == 5

@@ -10,18 +10,30 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_extended_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+
+from sc_neurocore.analysis.spike_stats import cell_assembly_detection
+from sc_neurocore.analysis.spike_stats import synfire_chain_detection
+from sc_neurocore.analysis.spike_stats import unitary_events
+from tests.spike_train_stats_extended_support import population as population
 
 
 class TestPatternDetection:
-    def test_unitary_events(self, population):
+    """Unitary events, cell assemblies and synfire chains on a five-train population."""
+
+    def test_unitary_events(self, population: list[np.ndarray[Any, Any]]) -> None:
+        """Unitary-event analysis of three trains returns a list (the check is on the type only)."""
         events = unitary_events(population[:3])
         assert isinstance(events, list)
 
-    def test_cell_assembly_detection(self, population):
+    def test_cell_assembly_detection(self, population: list[np.ndarray[Any, Any]]) -> None:
+        """Cell-assembly detection returns a list (the check is on the type only)."""
         assemblies = cell_assembly_detection(population)
         assert isinstance(assemblies, list)
 
-    def test_synfire_chain_detection(self, population):
+    def test_synfire_chain_detection(self, population: list[np.ndarray[Any, Any]]) -> None:
+        """Synfire-chain detection returns a list (the check is on the type only)."""
         chains = synfire_chain_detection(population)
         assert isinstance(chains, list)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4525
+expected_file_count = 4539
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18144,3 +18144,59 @@ rationale = "Exercise SC-NeuroCore: spike stats waveform waveform amplitude."
 [[file]]
 path = "tests/test_spike_stats_waveform_waveform_width.py"
 rationale = "Exercise SC-NeuroCore: spike stats waveform waveform width."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_causality.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended causality."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_decoding.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended decoding."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_dimensionality.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended dimensionality."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_distance_metrics.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended distance metrics."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_information_theory.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended information theory."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_nonstationarity.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended nonstationarity."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_pattern_detection.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended pattern detection."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_point_process.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended point process."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_receptive_field.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended receptive field."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_regularity.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended regularity."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_spike_sorting_quality.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended spike sorting quality."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_surrogates.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended surrogates."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_synchrony.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended synchrony."
+
+[[file]]
+path = "tests/test_spike_train_stats_extended_waveform.py"
+rationale = "Exercise SC-NeuroCore: spike train stats extended waveform."
