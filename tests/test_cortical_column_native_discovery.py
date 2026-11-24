@@ -10,13 +10,28 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_support import *  # noqa: F403
+import importlib
+import pytest
+import sys
+from sc_neurocore.network import (
+    cortical_column as cortical_column_module,
+)
+from tests.module_reload import (
+    restore_module_namespace,
+    snapshot_module_namespace,
+)
+from types import (
+    SimpleNamespace,
+)
 
 
 class TestNativeDiscovery:
+    """Discovery of the native SpMV backends."""
+
     def test_rust_discovery_uses_root_package_fallback(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Rust discovery falls back to the root package."""
         real_import_module = importlib.import_module
 
         def root_only_engine(name: str) -> object:
@@ -45,6 +60,7 @@ class TestNativeDiscovery:
     def test_rust_discovery_fails_closed_without_symbols(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Rust discovery fails closed without its symbols."""
         real_import_module = importlib.import_module
 
         def missing_engine(name: str) -> object:
@@ -70,6 +86,7 @@ class TestNativeDiscovery:
     def test_julia_discovery_failure_remains_optional(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A failed Julia discovery stays optional."""
         monkeypatch.setitem(sys.modules, "juliacall", None)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
@@ -86,6 +103,8 @@ class TestNativeDiscovery:
     def test_optional_ctypes_backend_load_failures_remain_optional(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Failed Go and Mojo loads stay optional."""
+
         def fake_exists(path: str) -> bool:
             return path.endswith("libcortical_column.so")
 
@@ -109,6 +128,8 @@ class TestNativeDiscovery:
             restore_module_namespace(cortical_column_module, _saved_ns)
 
     def test_mojo_ctypes_discovery_configures_symbol(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Mojo discovery configures the kernel symbol."""
+
         class FakeFunction:
             argtypes = None
             restype = object()

@@ -10,24 +10,39 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network import (
+    cortical_column as cortical_column_module,
+)
+from sc_neurocore.network.cortical_column import (
+    CONN_PROBS,
+    CorticalColumn,
+    FULL_SIZES,
+    POPULATIONS,
+)
 
 
 class TestCorticalColumn:
-    def test_creates_with_defaults(self):
+    """The eight-population cortical column model."""
+
+    def test_creates_with_defaults(self) -> None:
+        """A default column has every population and a plausible size."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert set(col.sizes.keys()) == set(POPULATIONS)
         assert col.n_total == sum(col.sizes.values())
         # Default scale=0.1 → ~7717 cells; here at 0.02 → ~1544.
         assert 1000 < col.n_total < 2000
 
-    def test_invalid_scale_raises(self):
+    def test_invalid_scale_raises(self) -> None:
+        """A scale out of range is rejected."""
         with pytest.raises(ValueError, match="scale"):
             CorticalColumn(scale=0.0)
         with pytest.raises(ValueError, match="scale"):
             CorticalColumn(scale=1.5)
 
-    def test_invalid_delay_bins_and_backend_raise(self):
+    def test_invalid_delay_bins_and_backend_raise(self) -> None:
+        """Bad delay bins and an unknown backend are rejected."""
         with pytest.raises(ValueError, match="n_delay_bins"):
             CorticalColumn(scale=0.02, n_delay_bins=0)
         with pytest.raises(ValueError, match="backend must be"):
@@ -48,11 +63,12 @@ class TestCorticalColumn:
     )
     def test_explicit_unavailable_backend_fails_closed(
         self,
-        monkeypatch,
-        backend,
-        availability_flag,
-        match,
-    ):
+        monkeypatch: pytest.MonkeyPatch,
+        backend: str,
+        availability_flag: str,
+        match: str,
+    ) -> None:
+        """An unavailable backend that is requested fails closed."""
         # `CorticalColumn.__init__` runs one-shot native discovery, which
         # rewrites these module flags from what it finds. Discovering first
         # means the patch below survives construction; without it only the
@@ -63,14 +79,16 @@ class TestCorticalColumn:
         with pytest.raises(RuntimeError, match=match):
             CorticalColumn(scale=0.02, backend=backend)
 
-    def test_full_scale_sizes(self):
+    def test_full_scale_sizes(self) -> None:
+        """Full scale gives the published population sizes."""
         # At scale=1.0, sizes should match Potjans Table 5 exactly
         # without materialising the full synapse graph.
         sizes = CorticalColumn.population_sizes(scale=1.0)
         for pop, expected in FULL_SIZES.items():
             assert sizes[pop] == expected
 
-    def test_step_returns_per_pop_spike_dict(self):
+    def test_step_returns_per_pop_spike_dict(self) -> None:
+        """One step gives a boolean spike vector per population."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         spikes = col.step(dt=0.1)
         assert set(spikes.keys()) == set(POPULATIONS)
@@ -78,25 +96,29 @@ class TestCorticalColumn:
             assert sp.shape == (col.sizes[p],)
             assert sp.dtype == bool
 
-    def test_simulate_returns_rasters(self):
+    def test_simulate_returns_rasters(self) -> None:
+        """A simulation gives a boolean raster per population."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         rasters = col.simulate(duration_ms=20.0, dt=0.1)
         for p in POPULATIONS:
             assert rasters[p].shape == (200, col.sizes[p])
             assert rasters[p].dtype == bool
 
-    def test_simulate_zero_steps_raises(self):
+    def test_simulate_zero_steps_raises(self) -> None:
+        """A run shorter than one step is rejected."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         with pytest.raises(ValueError, match="duration_ms / dt"):
             col.simulate(duration_ms=0.0, dt=0.1)
 
-    def test_dt_change_mid_run_raises(self):
+    def test_dt_change_mid_run_raises(self) -> None:
+        """Changing dt during a run is rejected."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         col.step(dt=0.1)
         with pytest.raises(ValueError, match="dt changed mid-run"):
             col.step(dt=0.2)
 
-    def test_no_background_no_spikes(self):
+    def test_no_background_no_spikes(self) -> None:
+        """Without background input nothing spikes."""
         # Cut both the background drive and let the network alone:
         # nothing should fire because there is no feedforward input.
         col = CorticalColumn(
@@ -109,7 +131,8 @@ class TestCorticalColumn:
         total = sum(int(np.count_nonzero(rasters[p])) for p in POPULATIONS)
         assert total == 0
 
-    def test_reset_state_clears_voltages_and_buffers(self):
+    def test_reset_state_clears_voltages_and_buffers(self) -> None:
+        """A reset clears currents and refractory counters."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -124,7 +147,8 @@ class TestCorticalColumn:
         # dt is dropped so the next step can pick a new dt without raising.
         col.step(dt=0.05)
 
-    def test_population_rates_drops_burn_in(self):
+    def test_population_rates_drops_burn_in(self) -> None:
+        """Rates leave out the burn-in period."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -136,7 +160,8 @@ class TestCorticalColumn:
         for r in rates.values():
             assert r == 0.0
 
-    def test_population_rates_burn_in_eats_entire_run(self):
+    def test_population_rates_burn_in_eats_entire_run(self) -> None:
+        """A burn-in longer than the run gives zero rates."""
         # When `burn_in_ms` ≥ recorded duration, every per-population
         # slice is empty and the helper must return 0.0 instead of
         # crashing on `arr.shape[1]`.
@@ -150,7 +175,8 @@ class TestCorticalColumn:
         rates = col.population_rates(rasters, dt=0.1, burn_in_ms=200.0)
         assert all(r == 0.0 for r in rates.values())
 
-    def test_repr_is_one_line_summary(self):
+    def test_repr_is_one_line_summary(self) -> None:
+        """The representation is a one-line summary."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         s = repr(col)
         assert s.startswith("CorticalColumn(")
@@ -158,11 +184,13 @@ class TestCorticalColumn:
         assert "n_total=" in s
         assert "\n" not in s
 
-    def test_population_names_property(self):
+    def test_population_names_property(self) -> None:
+        """The population names follow the table order."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert tuple(col.population_names) == POPULATIONS
 
-    def test_total_indegree_matches_potjans_table5(self):
+    def test_total_indegree_matches_potjans_table5(self) -> None:
+        """Total in-degrees match Table 5 within 5 percent."""
         # With scale_correction=True the per-target indegree should
         # match the FULL-SCALE in-degree per Potjans Table 5
         # (≈ Σ_s p[t,s] · N_s_full). We allow a 5 % tolerance for

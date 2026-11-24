@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_support import *  # noqa: F403
+from sc_neurocore.network.cortical_column import CorticalColumn
+from sc_neurocore.network.cortical_column import POPULATIONS
+from typing import Any
+import numpy as np
+import pytest
+
+
+@pytest.fixture(scope="class")
+def rasters() -> tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]:
+    """Return a seeded cortical column and its spike rasters."""
+    col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
+    return col, col.simulate(duration_ms=600.0, dt=0.1)
 
 
 class TestPublishedFidelity:
@@ -21,13 +32,19 @@ class TestPublishedFidelity:
     ~25 s on a modern CPU.
     """
 
-    def test_no_population_silent(self, rasters):
+    def test_no_population_silent(
+        self, rasters: tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]
+    ) -> None:
+        """No population is silent."""
         col, r = rasters
         rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
         for p, rate in rates.items():
             assert rate > 0.1, f"{p} silent at {rate:.3f} Hz"
 
-    def test_no_population_at_refractory_ceiling(self, rasters):
+    def test_no_population_at_refractory_ceiling(
+        self, rasters: tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]
+    ) -> None:
+        """No population fires at the refractory ceiling."""
         # T_ref = 2 ms → max sustainable rate ≈ 500 Hz. Asynchronous-
         # irregular Potjans rates should sit well below 80 Hz.
         col, r = rasters
@@ -35,14 +52,20 @@ class TestPublishedFidelity:
         for p, rate in rates.items():
             assert rate < 80.0, f"{p} saturated at {rate:.1f} Hz"
 
-    def test_inhibitory_faster_than_excitatory_overall(self, rasters):
+    def test_inhibitory_faster_than_excitatory_overall(
+        self, rasters: tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]
+    ) -> None:
+        """Inhibitory populations fire faster than excitatory ones."""
         col, r = rasters
         rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
         e_mean = np.mean([rates[p] for p in POPULATIONS if not p.endswith("i")])
         i_mean = np.mean([rates[p] for p in POPULATIONS if p.endswith("i")])
         assert i_mean > e_mean, f"Potjans E/I asymmetry violated: E={e_mean:.2f} I={i_mean:.2f}"
 
-    def test_l4e_in_published_band(self, rasters):
+    def test_l4e_in_published_band(
+        self, rasters: tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]
+    ) -> None:
+        """L4e fires inside the published band."""
         # L4e is the main thalamic-input layer in Potjans; its rate
         # is one of the most reproducible (4.51 Hz published).
         col, r = rasters
@@ -51,9 +74,10 @@ class TestPublishedFidelity:
             f"L4e rate {rates['L4e']:.2f} Hz outside [1, 15] sanity band"
         )
 
-    def test_per_connection_delays_tighten_rates(self, rasters):
-        """With per-connection Gaussian delays (default), at least 5
-        of 8 populations should sit within 1.5× of Potjans Table 4.
+    def test_per_connection_delays_tighten_rates(
+        self, rasters: tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]
+    ) -> None:
+        """With per-connection Gaussian delays (default), at least 5 of 8 populations should sit within 1.5× of Potjans Table 4.
 
         This is the verification that `delay_distribution=True` is
         actually doing what it claims — the single-mean-delay path
@@ -85,7 +109,8 @@ class TestPublishedFidelity:
             f"have regressed (rates={rates})"
         )
 
-    def test_zero_background_silent(self):
+    def test_zero_background_silent(self) -> None:
+        """Without background input every population is silent."""
         # Sanity: with bg_rate = 0 the recurrent network has nothing
         # to bootstrap and stays silent indefinitely.
         col = CorticalColumn(

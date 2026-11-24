@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3623
+expected_file_count = 3633
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14536,3 +14536,43 @@ rationale = "Exercise SC-NeuroCore: conversion extract layers."
 [[file]]
 path = "tests/test_conversion_qcfs.py"
 rationale = "Exercise SC-NeuroCore: conversion qcfs."
+
+[[file]]
+path = "tests/test_cortical_column_connectivity.py"
+rationale = "Exercise SC-NeuroCore: cortical column connectivity."
+
+[[file]]
+path = "tests/test_cortical_column_cortical_column.py"
+rationale = "Exercise SC-NeuroCore: cortical column cortical column."
+
+[[file]]
+path = "tests/test_cortical_column_determinism.py"
+rationale = "Exercise SC-NeuroCore: cortical column determinism."
+
+[[file]]
+path = "tests/test_cortical_column_dynamics_cortical_column_basic.py"
+rationale = "Exercise SC-NeuroCore: cortical column dynamics cortical column basic."
+
+[[file]]
+path = "tests/test_cortical_column_dynamics_cortical_column_determinism.py"
+rationale = "Exercise SC-NeuroCore: cortical column dynamics cortical column determinism."
+
+[[file]]
+path = "tests/test_cortical_column_dynamics_cortical_column_feedforward.py"
+rationale = "Exercise SC-NeuroCore: cortical column dynamics cortical column feedforward."
+
+[[file]]
+path = "tests/test_cortical_column_dynamics_cortical_column_reset.py"
+rationale = "Exercise SC-NeuroCore: cortical column dynamics cortical column reset."
+
+[[file]]
+path = "tests/test_cortical_column_dynamics_cortical_column_simulate.py"
+rationale = "Exercise SC-NeuroCore: cortical column dynamics cortical column simulate."
+
+[[file]]
+path = "tests/test_cortical_column_native_discovery.py"
+rationale = "Exercise SC-NeuroCore: cortical column native discovery."
+
+[[file]]
+path = "tests/test_cortical_column_published_fidelity.py"
+rationale = "Exercise SC-NeuroCore: cortical column published fidelity."

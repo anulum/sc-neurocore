@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The ten top-level cortical column test modules import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy. The class-scoped rasters fixture moves unchanged
+  into its only user, the published-fidelity module, and the support
+  module left without an importer is deleted.
+
 - The 31 top-level Brunel benchmark and ANN-to-SNN conversion test
   modules import their names explicitly instead of through a suppressed
   star import, gain their missing docstrings and are enrolled in the

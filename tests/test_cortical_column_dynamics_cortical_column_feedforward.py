@@ -10,18 +10,22 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_dynamics_support import *  # noqa: F403
+from sc_neurocore.network.cortical_column import (
+    CorticalColumn,
+)
 
 
 class TestCorticalColumnFeedforward:
-    def test_excitatory_populations_present(self):
+    """Feedforward activity of a small cortical column."""
+
+    def test_excitatory_populations_present(self) -> None:
         """Excitatory populations should exist and produce spikes."""
         col = CorticalColumn(scale=0.02, seed=42)
         result = col.simulate(duration_ms=50.0, dt=0.1)
         exc_keys = [k for k in result if k.endswith("e")]
         assert len(exc_keys) >= 4, f"Expected >= 4 excitatory pops, got {exc_keys}"
 
-    def test_inhibition_present(self):
+    def test_inhibition_present(self) -> None:
         """Inhibitory populations should exist and produce spikes with strong drive."""
         col = CorticalColumn(scale=0.02, g_inh=4.0, seed=42)
         result = col.simulate(duration_ms=50.0, dt=0.1)

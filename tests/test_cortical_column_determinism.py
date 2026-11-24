@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.cortical_column import (
+    CorticalColumn,
+    POPULATIONS,
+)
 
 
 class TestDeterminism:
-    def test_same_seed_same_state(self):
+    """Seeded determinism of the cortical column."""
+
+    def test_same_seed_same_state(self) -> None:
+        """The same seed gives the same state."""
         a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=99)
         b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=99)
         for p in POPULATIONS:
             np.testing.assert_array_equal(a.v[p], b.v[p])
 
-    def test_same_seed_same_rasters(self):
+    def test_same_seed_same_rasters(self) -> None:
+        """The same seed gives the same rasters."""
         a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=7)
         b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=7)
         ra = a.simulate(duration_ms=20.0, dt=0.1)
@@ -28,14 +36,16 @@ class TestDeterminism:
         for p in POPULATIONS:
             np.testing.assert_array_equal(ra[p], rb[p])
 
-    def test_different_seed_different_state(self):
+    def test_different_seed_different_state(self) -> None:
+        """Different seeds give different states."""
         a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=1)
         b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=2)
         # At least one population must have different initial voltages.
         differs = any(not np.array_equal(a.v[p], b.v[p]) for p in POPULATIONS)
         assert differs
 
-    def test_global_numpy_seed_does_not_leak(self):
+    def test_global_numpy_seed_does_not_leak(self) -> None:
+        """The global NumPy seed does not change the run."""
         np.random.seed(0)
         a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         ra = a.simulate(duration_ms=10.0, dt=0.1)

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5645
+    "test_files": 5644
   },
   "documentation": {
     "public_pages": [
@@ -3415,7 +3415,6 @@
       "tests/conversion_support.py",
       "tests/cordiv_division_support.py",
       "tests/cortical_column_dynamics_support.py",
-      "tests/cortical_column_support.py",
       "tests/cosim_emitters_support.py",
       "tests/cosim_fitzhugh_rinzel_support.py",
       "tests/cosim_glif_support.py",

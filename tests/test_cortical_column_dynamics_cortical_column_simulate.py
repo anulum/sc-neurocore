@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_dynamics_support import *  # noqa: F403
+from sc_neurocore.network.cortical_column import (
+    CorticalColumn,
+)
 
 
 class TestCorticalColumnSimulate:
-    def test_simulate_returns_dict(self):
+    """Simulating a small cortical column."""
+
+    def test_simulate_returns_dict(self) -> None:
+        """A simulation returns a dictionary."""
         col = CorticalColumn(scale=0.02, seed=42)
         result = col.simulate(duration_ms=5.0, dt=0.1)
         assert isinstance(result, dict)
 
-    def test_simulate_shapes(self):
+    def test_simulate_shapes(self) -> None:
+        """Each raster has one row per step."""
         col = CorticalColumn(scale=0.02, seed=42)
         dt = 0.1
         dur = 5.0
@@ -28,14 +34,14 @@ class TestCorticalColumnSimulate:
         for key, arr in result.items():
             assert arr.shape[0] == n_steps, f"{key}: {arr.shape[0]} rows != {n_steps}"
 
-    def test_background_drive_produces_spikes(self):
+    def test_background_drive_produces_spikes(self) -> None:
         """Background Poisson input should produce at least some spikes."""
         col = CorticalColumn(scale=0.02, bg_rate=8.0, seed=42)
         result = col.simulate(duration_ms=50.0, dt=0.1)
         total_spikes = sum(arr.sum() for arr in result.values())
         assert total_spikes > 0, "no spikes at all with background drive"
 
-    def test_no_background_minimal_activity(self):
+    def test_no_background_minimal_activity(self) -> None:
         """With near-zero background, activity should be very low."""
         col = CorticalColumn(scale=0.02, bg_rate=0.01, seed=42)
         result = col.simulate(duration_ms=10.0, dt=0.1)

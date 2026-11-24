@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_dynamics_support import *  # noqa: F403
+from sc_neurocore.network.cortical_column import (
+    CorticalColumn,
+)
 
 
 class TestCorticalColumnReset:
-    def test_reset_clears_state(self):
+    """Resetting a small cortical column."""
+
+    def test_reset_clears_state(self) -> None:
+        """After a reset the activity stays in range."""
         col = CorticalColumn(scale=0.02, seed=42)
         for _ in range(50):
             col.step()

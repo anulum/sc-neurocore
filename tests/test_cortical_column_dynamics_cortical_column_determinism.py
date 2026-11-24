@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_dynamics_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.cortical_column import (
+    CorticalColumn,
+)
 
 
 class TestCorticalColumnDeterminism:
-    def test_same_seed_same_output(self):
+    """Determinism of a small cortical column."""
+
+    def test_same_seed_same_output(self) -> None:
+        """The same seed gives the same output."""
         dt = 0.1
         dur = 5.0
 

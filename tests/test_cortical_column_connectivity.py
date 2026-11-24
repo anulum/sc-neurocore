@@ -10,11 +10,29 @@
 
 from __future__ import annotations
 
-from tests.cortical_column_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.network import (
+    cortical_column as cortical_column_module,
+)
+from sc_neurocore.network.cortical_column import (
+    CONN_PROBS,
+    CorticalColumn,
+    K_BG,
+    POPULATIONS,
+)
+from scipy import (
+    sparse,
+)
+from typing import Never
 
 
 class TestConnectivity:
-    def test_populations_constant_matches_table5(self):
+    """Connectivity of the Potjans cortical microcircuit."""
+
+    def test_populations_constant_matches_table5(self) -> None:
+        """The populations match Potjans Table 5."""
         # Order is significant — many tests / docs rely on it.
         assert POPULATIONS == (
             "L23e",
@@ -27,7 +45,8 @@ class TestConnectivity:
             "L6i",
         )
 
-    def test_conn_probs_shape_and_known_entries(self):
+    def test_conn_probs_shape_and_known_entries(self) -> None:
+        """The connection probabilities are 8 by 8 with the published values."""
         assert CONN_PROBS.shape == (8, 8)
         # Spot-check a couple of entries from Potjans Table 5.
         # L23e ← L23e (recurrent superficial-pyramidal): 0.1009
@@ -37,17 +56,20 @@ class TestConnectivity:
         # L4i ← L23i: zero per Binzegger
         assert CONN_PROBS[3, 1] == pytest.approx(0.0029)
 
-    def test_k_bg_table5(self):
+    def test_k_bg_table5(self) -> None:
+        """The background in-degrees match Table 5."""
         # Background in-degree per cell from Potjans Table 5.
         assert K_BG["L23e"] == 1600
         assert K_BG["L6e"] == 2900  # Largest of the 8.
 
-    def test_l4_to_l23e_weight_is_doubled(self):
+    def test_l4_to_l23e_weight_is_doubled(self) -> None:
+        """The L4 to L2/3e weight is doubled."""
         # Per Potjans, the L4e → L2/3e edge is boosted to 2 · w_e.
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert col.w_l4_to_l23e == 2.0 * col.w_e
 
-    def test_inhibitory_weight_uses_g_inh(self):
+    def test_inhibitory_weight_uses_g_inh(self) -> None:
+        """The inhibitory weight is -4 times the excitatory weight."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -56,7 +78,8 @@ class TestConnectivity:
         )
         assert col.w_i == pytest.approx(-4.0 * col.w_e)
 
-    def test_sparse_adjacency_built_for_every_nonzero_pair(self):
+    def test_sparse_adjacency_built_for_every_nonzero_pair(self) -> None:
+        """Every connected pair gets a sparse matrix."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         nonzero_pairs = {
             (POPULATIONS[i], POPULATIONS[j])
@@ -66,9 +89,8 @@ class TestConnectivity:
         }
         assert set(col._W.keys()) == nonzero_pairs
 
-    def test_block_csr_path_builds_and_runs(self):
-        """Opt-in `use_block_csr=True` builds 2 × n_delay_bins block
-        matrices and produces biologically plausible rates.
+    def test_block_csr_path_builds_and_runs(self) -> None:
+        """Opt-in `use_block_csr=True` builds 2 × n_delay_bins block matrices and produces biologically plausible rates.
 
         With the batched Rust kernel, the block path is now ON PAR
         with the per-pair scipy path at scale=0.1 (287 s vs 290 s
@@ -109,12 +131,16 @@ class TestConnectivity:
             for p, sp in spikes.items():
                 assert sp.shape == (col.sizes[p],)
 
-    def test_empty_block_csr_preserves_shape(self):
+    def test_empty_block_csr_preserves_shape(self) -> None:
+        """An empty block CSR keeps its shape."""
         block = CorticalColumn._stack_block([], n_rows=3, n_cols=5)
         assert block.shape == (3, 5)
         assert block.nnz == 0
 
-    def test_block_csr_python_fallback_injects_delayed_spikes(self, monkeypatch):
+    def test_block_csr_python_fallback_injects_delayed_spikes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The Python block path injects delayed spikes."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -166,7 +192,10 @@ class TestConnectivity:
 
         assert col.i_syn[target][0] == pytest.approx(before[target][0] + col.w_e)
 
-    def test_block_csr_single_rust_fallback_injects_delayed_spikes(self, monkeypatch):
+    def test_block_csr_single_rust_fallback_injects_delayed_spikes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The single Rust fallback injects delayed spikes."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -201,7 +230,13 @@ class TestConnectivity:
         delayed_idx = (col._buf_idx - col._global_e_bin_steps[0]) % col._buf_len_e
         col._buf_e[POPULATIONS[0]][delayed_idx, 0] = 1
 
-        def fake_spmv(indptr, indices, data, x, y):
+        def fake_spmv(
+            indptr: np.ndarray[Any, Any],
+            indices: np.ndarray[Any, Any],
+            data: np.ndarray[Any, Any],
+            x: np.ndarray[Any, Any],
+            y: np.ndarray[Any, Any],
+        ) -> None:
             y += sparse.csr_matrix((data, indices, indptr), shape=(y.size, x.size)).dot(x)
 
         monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
@@ -210,7 +245,10 @@ class TestConnectivity:
 
         assert col.i_syn[target][0] == pytest.approx(col.w_e)
 
-    def test_explicit_python_block_csr_does_not_call_single_rust_fallback(self, monkeypatch):
+    def test_explicit_python_block_csr_does_not_call_single_rust_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An explicit Python backend never calls the Rust fallback."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -246,7 +284,7 @@ class TestConnectivity:
         delayed_idx = (col._buf_idx - col._global_e_bin_steps[0]) % col._buf_len_e
         col._buf_e[source][delayed_idx, 0] = 1
 
-        def forbidden_single_rust(*_args):
+        def forbidden_single_rust(*_args: object) -> Never:
             raise AssertionError("backend='python' must not call native Rust fallback")
 
         monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
@@ -264,7 +302,8 @@ class TestConnectivity:
 
         assert col.i_syn[target][0] == pytest.approx(col.w_e)
 
-    def test_spmv_into_python_and_rust_paths(self, monkeypatch):
+    def test_spmv_into_python_and_rust_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The Python and Rust SpMV paths agree."""
         block = sparse.csr_matrix(([2.0], ([1], [0])), shape=(3, 2))
         x = np.array([4.0, 0.0])
         y_python = np.zeros(3)
@@ -277,7 +316,13 @@ class TestConnectivity:
         calls = []
         y_rust = np.zeros(3)
 
-        def fake_spmv(indptr, indices, data, x_arg, y_arg):
+        def fake_spmv(
+            indptr: np.ndarray[Any, Any],
+            indices: np.ndarray[Any, Any],
+            data: np.ndarray[Any, Any],
+            x_arg: np.ndarray[Any, Any],
+            y_arg: np.ndarray[Any, Any],
+        ) -> None:
             calls.append((indptr.dtype, indices.dtype, data.dtype))
             y_arg += sparse.csr_matrix((data, indices, indptr), shape=(y_arg.size, x_arg.size)).dot(
                 x_arg
@@ -300,11 +345,12 @@ class TestConnectivity:
     )
     def test_block_csr_auto_native_dispatch_marshals_pointers(
         self,
-        monkeypatch,
-        native_name,
-        flag_name,
-        function_name,
-    ):
+        monkeypatch: pytest.MonkeyPatch,
+        native_name: str,
+        flag_name: str,
+        function_name: str,
+    ) -> None:
+        """Automatic native dispatch passes valid buffers."""
         col = CorticalColumn(
             scale=0.02,
             scale_correction=False,
@@ -340,7 +386,16 @@ class TestConnectivity:
         delayed_idx = (col._buf_idx - col._global_i_bin_steps[0]) % col._buf_len_i
         col._buf_i[inhibitory[0]][delayed_idx, 0] = 1
 
-        def fake_native(n_blocks, n_rows, _indptrs, _indices, _data, _xs, _x_lens, y_ptr):
+        def fake_native(
+            n_blocks: int,
+            n_rows: int,
+            _indptrs: object,
+            _indices: object,
+            _data: object,
+            _xs: object,
+            _x_lens: object,
+            y_ptr: Any,
+        ) -> None:
             assert n_blocks == 1
             if native_name == "julia":
                 ptr = cortical_column_module.ctypes.cast(
@@ -367,7 +422,8 @@ class TestConnectivity:
 
         assert col.i_syn[target][0] == pytest.approx(col.w_i)
 
-    def test_total_indegree_counts_multapses_from_csr_data(self):
+    def test_total_indegree_counts_multapses_from_csr_data(self) -> None:
+        """The in-degree counts multapses from the CSR data."""
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         target = POPULATIONS[0]
         assert col.total_indegree(target) == sum(
