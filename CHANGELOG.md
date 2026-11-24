@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 15 top-level HDC and IBM verification-circuit test modules import
+  their names explicitly instead of through a suppressed star import,
+  gain their missing docstrings and are enrolled in the docstring
+  policy. Every name their supports bind at or after the Rust-engine,
+  tools-path or qiskit and scipy guards is still taken from the
+  support, and the two modules that take nothing from it re-run those
+  guards themselves. The IBM support gains types, and the support left
+  without an importer is deleted.
+
 - The 12 top-level GOTM brain and content-indexer test modules import
   their names explicitly instead of through a suppressed star import,
   gain their missing docstrings and are enrolled in the docstring

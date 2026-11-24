@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.hdc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.hdc.base import (
+    AssociativeMemory,
+    HDCEncoder,
+)
 
 
 class TestAssociativeMemory:
-    def test_store_and_query(self):
+    """The hyperdimensional associative memory."""
+
+    def test_store_and_query(self) -> None:
+        """A stored vector is recalled by its label."""
         np.random.seed(42)
         enc = HDCEncoder(dim=5000)
         mem = AssociativeMemory()
@@ -25,7 +32,8 @@ class TestAssociativeMemory:
         assert mem.query(va) == "A"
         assert mem.query(vb) == "B"
 
-    def test_query_with_noise(self):
+    def test_query_with_noise(self) -> None:
+        """A noisy query still recalls the right label."""
         np.random.seed(42)
         enc = HDCEncoder(dim=10000)
         mem = AssociativeMemory()

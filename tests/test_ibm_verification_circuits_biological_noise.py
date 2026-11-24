@@ -14,11 +14,18 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+pytest.importorskip("scipy")
 
 
 class TestBiologicalNoise:
-    def test_noise_params(self):
+    """The biological noise model of the extended Posner circuits."""
+
+    def test_noise_params(self) -> None:
+        """The noise parameters at 37 C match their published values."""
         ext = pytest.importorskip("posner_extended")
         params = ext.get_noise_params_dict(37.0)
         assert params["temperature_K"] == 310.15
@@ -27,7 +34,8 @@ class TestBiologicalNoise:
         assert 0.49 < params["p_excited"] < 0.51
         assert params["cage_dephasing_rate"] is None
 
-    def test_biological_noise_requires_cage_dephasing_rate(self):
+    def test_biological_noise_requires_cage_dephasing_rate(self) -> None:
+        """The noise model asks for a cage dephasing rate."""
         ext = pytest.importorskip("posner_extended")
         pytest.importorskip("qiskit_aer")
         with pytest.raises(ValueError, match="cage_dephasing_rate"):

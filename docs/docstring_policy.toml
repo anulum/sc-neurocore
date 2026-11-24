@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3661
+expected_file_count = 3677
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14688,3 +14688,67 @@ rationale = "Exercise SC-NeuroCore: gotm brain text extraction."
 [[file]]
 path = "tests/test_gotm_brain_v_property.py"
 rationale = "Exercise SC-NeuroCore: gotm brain v property."
+
+[[file]]
+path = "tests/ibm_verification_circuits_support.py"
+rationale = "Provide the guarded Posner verification-circuit imports and helpers shared by the IBM verification suites."
+
+[[file]]
+path = "tests/test_hdc_associative_memory.py"
+rationale = "Exercise SC-NeuroCore: hdc associative memory."
+
+[[file]]
+path = "tests/test_hdc_hdc_encoder.py"
+rationale = "Exercise SC-NeuroCore: hdc hdc encoder."
+
+[[file]]
+path = "tests/test_hdc_python_bit_stream_tensor.py"
+rationale = "Exercise SC-NeuroCore: hdc python bit stream tensor."
+
+[[file]]
+path = "tests/test_hdc_python_hdc_vector.py"
+rationale = "Exercise SC-NeuroCore: hdc python hdc vector."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_biological_noise.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits biological noise."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_ca43_enriched.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits ca43 enriched."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_chain_physics.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits chain physics."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_circuits.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits circuits."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_decoherence_physics.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits decoherence physics."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_exchange_protection.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits exchange protection."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_hamiltonian.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits hamiltonian."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_orca_pipeline.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits orca pipeline."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_recombination.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits recombination."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_thermal_average.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits thermal average."
+
+[[file]]
+path = "tests/test_ibm_verification_circuits_two_posner_transport.py"
+rationale = "Exercise SC-NeuroCore: ibm verification circuits two posner transport."

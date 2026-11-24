@@ -14,11 +14,22 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+from tests.ibm_verification_circuits_support import (
+    CA43_ZERO_TENSORS,
+    CA_ELECTRON_MAP_TEST,
+    HF1,
+    HF2,
+    ZERO_TENSOR,
+    _angle_sum,
+)
 
 
 class TestCa43Enriched:
-    def test_circuit_35q(self):
+    """The calcium-43 enriched Posner circuit."""
+
+    def test_circuit_35q(self) -> None:
+        """The enriched circuit has 35 qubits."""
         ext = pytest.importorskip("posner_extended")
         qc = ext.build_posner_43ca_circuit(
             n_trotter=1,
@@ -29,7 +40,8 @@ class TestCa43Enriched:
         )
         assert qc.num_qubits == 35
 
-    def test_missing_ca43_inputs_fail_closed(self):
+    def test_missing_ca43_inputs_fail_closed(self) -> None:
+        """Missing calcium-43 tensors are rejected."""
         ext = pytest.importorskip("posner_extended")
         with pytest.raises(ValueError, match="ca43_hf_tensors"):
             ext.build_posner_43ca_circuit(
@@ -38,7 +50,7 @@ class TestCa43Enriched:
                 ca_electron_map=CA_ELECTRON_MAP_TEST,
             )
 
-    def test_analysis_keys(self):
+    def test_analysis_keys(self) -> None:
         """35q circuit analysis with minimal HF (MPS-tractable).
 
         Full I·S coupling (ca43_hf=0.01) creates too much entanglement
@@ -73,7 +85,10 @@ class TestCa43Enriched:
         assert "ca_polarizations" in r
         assert len(r["ca_polarizations"]) == 9  # 9 calcium ions
 
-    def test_dipolar_angles_match_hamiltonian_convention_35q(self, monkeypatch):
+    def test_dipolar_angles_match_hamiltonian_convention_35q(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The dipolar angles follow the Hamiltonian convention."""
         ext = pytest.importorskip("posner_extended")
         orca = pytest.importorskip("orca_posner_hf")
         t = 1.25

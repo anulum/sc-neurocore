@@ -14,34 +14,50 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    ZERO_TENSOR,
+    _angle_sum,
+    build_chain_circuit,
+    build_posner_circuit,
+    build_posner_decoherence_circuit,
+    vih,
+)
 
 
 class TestCircuits:
-    def test_posner_8q(self):
+    """Construction of the Posner verification circuits."""
+
+    def test_posner_8q(self) -> None:
+        """The Posner circuit has 8 qubits."""
         qc = build_posner_circuit(hf1=HF1, hf2=HF2)
         assert qc.num_qubits == 8
 
-    def test_decoherence_uses_delay(self):
+    def test_decoherence_uses_delay(self) -> None:
+        """The decoherence circuit uses a delay gate."""
         qc = build_posner_decoherence_circuit(delay_dt=1000, hf1=HF1, hf2=HF2)
         ops = qc.count_ops()
         assert "delay" in ops, f"Must use delay, got {ops}"
 
-    def test_decoherence_8q(self):
+    def test_decoherence_8q(self) -> None:
+        """The decoherence circuit has 8 qubits."""
         qc = build_posner_decoherence_circuit(delay_dt=0, hf1=HF1, hf2=HF2)
         assert qc.num_qubits == 8
 
-    def test_chain_10q(self):
+    def test_chain_10q(self) -> None:
+        """The chain circuit has 10 qubits."""
         qc = build_chain_circuit(n_qubits=10)
         assert qc.num_qubits == 10
 
-    def test_nuclear_dipolar_in_circuit(self):
+    def test_nuclear_dipolar_in_circuit(self) -> None:
         """Circuit must contain RZZ gates for nuclear dipolar coupling."""
         qc = build_posner_circuit(n_trotter=1, hf1=HF1, hf2=HF2)
         ops = qc.count_ops()
         assert ops.get("rzz", 0) >= 16, f"Must have tensor dipolar RZZ, got {ops}"
 
-    def test_dipolar_angles_match_hamiltonian_convention_8q(self):
+    def test_dipolar_angles_match_hamiltonian_convention_8q(self) -> None:
         """RPP(theta)=exp(-i theta PP/2), so theta=Aab*t/2."""
         t = 1.25
         qi, qj = 2, 3

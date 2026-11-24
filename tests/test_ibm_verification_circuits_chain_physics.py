@@ -14,11 +14,20 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+from tests.ibm_verification_circuits_support import (
+    _posner_chain_couplings,
+    _sv,
+    analyse_chain,
+    analytical_chain_corr,
+    build_chain_circuit,
+)
 
 
 class TestChainPhysics:
-    def test_exponential_superexchange(self):
+    """The physics of the Posner chain circuit."""
+
+    def test_exponential_superexchange(self) -> None:
+        """Couplings decay exponentially with distance."""
         J = _posner_chain_couplings(10)
         assert J[0] > J[1] > J[2], "Couplings must decay with distance"
         assert J[0] == 1.0, "Nearest must be 1.0"
@@ -27,12 +36,14 @@ class TestChainPhysics:
         ratio_23 = J[2] / J[1]
         assert abs(ratio_12 - ratio_23) < 0.01, "Must be exponential (constant ratio)"
 
-    def test_correlations_emerge(self):
+    def test_correlations_emerge(self) -> None:
+        """The chain develops correlations."""
         qc = build_chain_circuit(n_qubits=10, t=1.0)
         corrs = analyse_chain(_sv(qc, 50_000), 10)["zz_from_0"]
         assert any(abs(c) > 0.01 for c in corrs)
 
-    def test_nearest_strongest(self):
+    def test_nearest_strongest(self) -> None:
+        """The nearest coupling is the strongest."""
         n = 10
         J = _posner_chain_couplings(n)
         th = analytical_chain_corr(n, J, 1.0)

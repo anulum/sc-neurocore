@@ -14,21 +14,31 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    _sv,
+    analyse_rpm_8q,
+    build_posner_decoherence_circuit,
+)
 
 
 class TestDecoherencePhysics:
-    def test_zero_delay_preserves(self):
+    """The physics of the decoherence circuit."""
+
+    def test_zero_delay_preserves(self) -> None:
+        """Without delay the singlet survives."""
         qc = build_posner_decoherence_circuit(delay_dt=0, hf1=HF1, hf2=HF2)
         r = analyse_rpm_8q(_sv(qc))
         assert r["singlet_probability"] > 0.3
 
-    def test_exact_sim_stable(self):
+    def test_exact_sim_stable(self) -> None:
+        """The exact simulation does not depend on the delay."""
         r0 = analyse_rpm_8q(_sv(build_posner_decoherence_circuit(delay_dt=0, hf1=HF1, hf2=HF2)))
         r1 = analyse_rpm_8q(_sv(build_posner_decoherence_circuit(delay_dt=5000, hf1=HF1, hf2=HF2)))
         assert abs(r0["singlet_probability"] - r1["singlet_probability"]) < 0.02
 
-    def test_xy4_dd_circuit(self):
+    def test_xy4_dd_circuit(self) -> None:
         """XY-4 DD: electron-only, proper symmetric spacing."""
         qc = build_posner_decoherence_circuit(delay_dt=4000, dd_sequence="xy4", hf1=HF1, hf2=HF2)
         ops = qc.count_ops()
@@ -38,7 +48,7 @@ class TestDecoherencePhysics:
         # X-pulses: 2 from DD per electron (4 total) + 1 from singlet prep (q1) = 5
         assert ops.get("x", 0) == 5, f"Expected 5 X gates, got {ops.get('x', 0)}"
 
-    def test_dd_vs_raw_same_on_simulator(self):
+    def test_dd_vs_raw_same_on_simulator(self) -> None:
         """On exact simulator, DD and raw give same result (no noise)."""
         r_raw = analyse_rpm_8q(
             _sv(build_posner_decoherence_circuit(delay_dt=4000, hf1=HF1, hf2=HF2))

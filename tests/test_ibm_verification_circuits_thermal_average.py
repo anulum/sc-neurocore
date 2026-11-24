@@ -14,11 +14,21 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+import numpy as np
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    analytical_singlet_thermal,
+    posner_hamiltonian,
+)
 
 
 class TestThermalAverage:
-    def test_64_configs_differ_from_single(self):
+    """Thermal averaging of the singlet yield."""
+
+    def test_64_configs_differ_from_single(self) -> None:
+        """Averaging 64 configurations differs from one configuration."""
         from scipy.linalg import expm
 
         H = posner_hamiltonian(1.0, HF1, HF2)

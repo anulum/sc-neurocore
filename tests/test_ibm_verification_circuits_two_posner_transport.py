@@ -14,11 +14,22 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    INCORPORATION_TEST_TENSORS,
+    ZERO_TENSOR,
+    _angle_sum,
+    _sv,
+)
 
 
 class TestTwoPosnerTransport:
-    def test_circuit_16q(self):
+    """The two-Posner transport circuit."""
+
+    def test_circuit_16q(self) -> None:
+        """The transport circuit has 16 qubits and no CZ gates."""
         ext = pytest.importorskip("posner_extended")
         qc = ext.build_two_posner_transport_circuit(
             hf_site1=HF1,
@@ -29,7 +40,8 @@ class TestTwoPosnerTransport:
         assert qc.num_qubits == 16
         assert qc.count_ops().get("cz", 0) == 0
 
-    def test_analysis(self):
+    def test_analysis(self) -> None:
+        """The analysis reports a binding probability in range."""
         ext = pytest.importorskip("posner_extended")
         qc = ext.build_two_posner_transport_circuit(
             hf_site1=HF1,
@@ -42,7 +54,7 @@ class TestTwoPosnerTransport:
         assert "binding_probability" in r
         assert 0 <= r["binding_probability"] <= 1
 
-    def test_zero_transport_has_bounded_binding_probability(self):
+    def test_zero_transport_has_bounded_binding_probability(self) -> None:
         """Zero transport delay uses explicit fixture tensors and stays bounded."""
         ext = pytest.importorskip("posner_extended")
         qc = ext.build_two_posner_transport_circuit(
@@ -55,7 +67,8 @@ class TestTwoPosnerTransport:
         r = ext.analyse_two_posner(counts)
         assert 0.0 <= r["binding_probability"] <= 1.0
 
-    def test_missing_hf_fails_closed(self):
+    def test_missing_hf_fails_closed(self) -> None:
+        """A missing hyperfine tensor is rejected."""
         ext = pytest.importorskip("posner_extended")
         with pytest.raises(ValueError, match="hf_site1"):
             ext.build_two_posner_transport_circuit(
@@ -63,7 +76,8 @@ class TestTwoPosnerTransport:
                 transport_delay_dt=0,
             )
 
-    def test_missing_incorporation_tensors_fails_closed(self):
+    def test_missing_incorporation_tensors_fails_closed(self) -> None:
+        """Missing incorporation tensors are rejected."""
         ext = pytest.importorskip("posner_extended")
         with pytest.raises(ValueError, match="incorporation_tensors"):
             ext.build_two_posner_transport_circuit(
@@ -72,7 +86,8 @@ class TestTwoPosnerTransport:
                 transport_delay_dt=0,
             )
 
-    def test_nonzero_transport_requires_explicit_noise_rate(self):
+    def test_nonzero_transport_requires_explicit_noise_rate(self) -> None:
+        """Transport needs an explicit noise rate."""
         ext = pytest.importorskip("posner_extended")
         pytest.importorskip("qiskit_aer")
         with pytest.raises(ValueError, match="transport_depolarizing_rate"):
@@ -83,7 +98,10 @@ class TestTwoPosnerTransport:
                 transport_delay_dt=1000,
             )
 
-    def test_dipolar_angles_match_hamiltonian_convention_16q(self, monkeypatch):
+    def test_dipolar_angles_match_hamiltonian_convention_16q(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The dipolar angles follow the Hamiltonian convention."""
         ext = pytest.importorskip("posner_extended")
         orca = pytest.importorskip("orca_posner_hf")
         t = 1.25

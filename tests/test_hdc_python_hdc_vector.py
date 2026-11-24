@@ -10,20 +10,27 @@
 
 from __future__ import annotations
 
-from tests.hdc_python_support import *  # noqa: F403
+from tests.hdc_python_support import (
+    HDCVector,
+)
 
 
 class TestHDCVector:
-    def test_create_default_dimension(self):
+    """The Rust-backed hyperdimensional vector."""
+
+    def test_create_default_dimension(self) -> None:
+        """The default vector has 10000 dimensions."""
         v = HDCVector()
         assert v.dimension == 10_000
 
-    def test_create_custom_dimension(self):
+    def test_create_custom_dimension(self) -> None:
+        """A custom dimension is kept."""
         v = HDCVector(5000, seed=42)
         assert v.dimension == 5000
         assert len(v) == 5000
 
-    def test_bind_operator(self):
+    def test_bind_operator(self) -> None:
+        """Binding gives a vector unlike both inputs."""
         a = HDCVector(10_000, seed=1)
         b = HDCVector(10_000, seed=2)
         c = a * b
@@ -32,20 +39,23 @@ class TestHDCVector:
         assert c.similarity(a) < 0.6
         assert c.similarity(b) < 0.6
 
-    def test_bind_self_inverse(self):
+    def test_bind_self_inverse(self) -> None:
+        """Binding twice with the same vector recovers the input."""
         a = HDCVector(10_000, seed=1)
         b = HDCVector(10_000, seed=2)
         # (a*b)*b should recover a
         c = (a * b) * b
         assert c.similarity(a) > 0.99
 
-    def test_bundle_operator(self):
+    def test_bundle_operator(self) -> None:
+        """Bundling keeps the dimension."""
         a = HDCVector(10_000, seed=1)
         b = HDCVector(10_000, seed=2)
         c = a + b  # bundle of two
         assert c.dimension == 10_000
 
-    def test_bundle_preserves_similarity(self):
+    def test_bundle_preserves_similarity(self) -> None:
+        """A bundle stays similar to its members."""
         a = HDCVector(10_000, seed=1)
         b = HDCVector(10_000, seed=2)
         c = HDCVector(10_000, seed=3)
@@ -59,31 +69,35 @@ class TestHDCVector:
             f"than to random ({sim_random:.3f})"
         )
 
-    def test_permute(self):
+    def test_permute(self) -> None:
+        """Permuting gives a vector unlike the input."""
         v = HDCVector(10_000, seed=42)
         p = v.permute(1)
         assert p.dimension == 10_000
         # Permuted vector should be dissimilar
         assert v.similarity(p) < 0.6
 
-    def test_permute_is_not_inplace(self):
+    def test_permute_is_not_inplace(self) -> None:
+        """Permuting leaves the input unchanged."""
         v = HDCVector(10_000, seed=42)
         original_pc = v.popcount()
         _ = v.permute(1)
         assert v.popcount() == original_pc
 
-    def test_similarity_self_is_one(self):
+    def test_similarity_self_is_one(self) -> None:
+        """A vector is fully similar to itself."""
         v = HDCVector(10_000, seed=42)
         assert v.similarity(v) == 1.0
 
-    def test_repr(self):
+    def test_repr(self) -> None:
+        """The representation names the vector and its dimension."""
         v = HDCVector(1000, seed=42)
         r = repr(v)
         assert "HDCVector" in r
         assert "1000" in r
 
-    def test_symbolic_query_pattern(self):
-        """End-to-end: encode country-capital pairs, query 'Capital of France?'"""
+    def test_symbolic_query_pattern(self) -> None:
+        """End-to-end: encode country-capital pairs and query 'Capital of France?'."""
         country_france = HDCVector(10_000, seed=100)
         country_germany = HDCVector(10_000, seed=101)
         capital_paris = HDCVector(10_000, seed=200)

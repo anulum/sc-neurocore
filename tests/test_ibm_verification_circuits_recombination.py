@@ -14,15 +14,25 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    analytical_singlet_recombination,
+    analytical_singlet_thermal,
+)
 
 
 class TestRecombination:
-    def test_recombination_callable(self):
+    """Recombination-weighted singlet yield."""
+
+    def test_recombination_callable(self) -> None:
+        """The recombination yield lies strictly inside the unit interval."""
         phi = analytical_singlet_recombination(1.0, HF1, HF2, omega_0=0.5, k_recomb=0.1, n_t=5)
         assert 0.0 < phi < 1.0
 
-    def test_recombination_differs_from_instant(self):
+    def test_recombination_differs_from_instant(self) -> None:
+        """The recombination yield differs from the instant yield."""
         phi_r = analytical_singlet_recombination(1.0, HF1, HF2, omega_0=0.5, k_recomb=0.1, n_t=10)
         phi_i = analytical_singlet_thermal(1.0, HF1, HF2, omega_0=0.5, t=math.pi)
         assert abs(phi_r - phi_i) > 0.01, "Recomb-weighted must differ from single-t"

@@ -6,20 +6,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_ibm_verification_circuits.py
 
+"""Shared Posner verification-circuit imports and helpers, behind the tools path and the qiskit and scipy guards."""
+
 from __future__ import annotations
 
-"""Tests for explicit Posner verification circuit construction."""
 import math
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 qiskit = pytest.importorskip("qiskit")
 pytest.importorskip("scipy")
-import verify_ibm_heron as vih  # noqa: E402
-from verify_ibm_heron import (  # noqa: E402
+
+if TYPE_CHECKING:
+    from qiskit import QuantumCircuit
+
+import verify_ibm_heron as vih
+from verify_ibm_heron import (
     REFERENCE_TEST_HF_SITE1,
     REFERENCE_TEST_HF_SITE2,
     DEFAULT_NUC_DIPOLAR,
@@ -39,7 +45,7 @@ from verify_ibm_heron import (  # noqa: E402
     build_chain_circuit,
     posner_hamiltonian,
 )
-from qiskit.quantum_info import Statevector  # noqa: E402
+from qiskit.quantum_info import Statevector
 
 HF1 = REFERENCE_TEST_HF_SITE1
 HF2 = REFERENCE_TEST_HF_SITE2
@@ -63,13 +69,16 @@ CA_ELECTRON_MAP_TEST = {
 CA43_ZERO_TENSORS = {start: ZERO_TENSOR for start in CA_ELECTRON_MAP_TEST}
 
 
-def _sv(qc, shots=100_000):
-    return Statevector.from_instruction(qc.remove_final_measurements(inplace=False)).sample_counts(
-        shots
-    )
+def _sv(qc: QuantumCircuit, shots: int = 100_000) -> dict[str, int]:
+    """Sample measurement counts from the ideal statevector of ``qc``."""
+    counts: dict[str, int] = Statevector.from_instruction(
+        qc.remove_final_measurements(inplace=False)
+    ).sample_counts(shots)
+    return counts
 
 
-def _angle_sum(qc, gate_name: str, qa: int, qb: int) -> float:
+def _angle_sum(qc: QuantumCircuit, gate_name: str, qa: int, qb: int) -> float:
+    """Sum the angles of ``gate_name`` gates acting on exactly qubits ``qa`` and ``qb``."""
     total = 0.0
     target = {qa, qb}
     for circuit_instruction in qc.data:

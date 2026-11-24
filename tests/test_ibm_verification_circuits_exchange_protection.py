@@ -14,19 +14,29 @@ import pytest
 
 pytest.importorskip("qiskit")
 
-from tests.ibm_verification_circuits_support import *  # noqa: F403
+import math
+from tests.ibm_verification_circuits_support import (
+    HF1,
+    HF2,
+    analytical_singlet_thermal,
+)
 
 
 class TestExchangeProtection:
-    def test_weak_exchange_allows_mixing(self):
+    """Exchange protection of the singlet."""
+
+    def test_weak_exchange_allows_mixing(self) -> None:
+        """Weak exchange lets the singlet mix."""
         p = analytical_singlet_thermal(0.5, HF1, HF2, omega_0=0.5, t=math.pi)
         assert p < 0.75, f"J=0.5 must allow mixing, got {p}"
 
-    def test_strong_exchange_protects(self):
+    def test_strong_exchange_protects(self) -> None:
+        """Strong exchange protects the singlet."""
         p = analytical_singlet_thermal(10.0, HF1, HF2, omega_0=0.5, t=math.pi)
         assert p > 0.85, f"J=10 must protect, got {p}"
 
-    def test_zero_hf_preserves(self):
+    def test_zero_hf_preserves(self) -> None:
+        """Without hyperfine coupling the singlet is kept."""
         z = [{"Axx": 0, "Ayy": 0, "Azz": 0, "Axy": 0, "Axz": 0, "Ayz": 0}] * 3
         p = analytical_singlet_thermal(1.0, z, z, 0.0, math.pi, 0.0, 0.0)
         assert p > 0.99
