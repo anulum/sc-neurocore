@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 2 top-level spike-server test modules import their names
+  explicitly instead of through a suppressed star import; the
+  module-scoped server fixture moves into the one module that uses it, the
+  support's mocks and HTTP helpers are typed, documented and enrolled,
+  and the modules gain their missing docstrings and type annotations and
+  are enrolled in the docstring policy.
+
 - The 5 top-level pipeline-stage test modules import their names
   explicitly instead of through a suppressed star import; each imports
   the support's fixtures it requests by name, so they stay module-local

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4378
+expected_file_count = 4381
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17556,3 +17556,15 @@ rationale = "Exercise SC-NeuroCore: pipeline stages pipeline points."
 [[file]]
 path = "tests/test_pipeline_stages_pipeline_registers.py"
 rationale = "Exercise SC-NeuroCore: pipeline stages pipeline registers."
+
+[[file]]
+path = "tests/serve_server_support.py"
+rationale = "Provide the mock networks and the HTTP helpers of the spike-server tests."
+
+[[file]]
+path = "tests/test_serve_server_spike_server_http.py"
+rationale = "Exercise SC-NeuroCore: serve server spike server http."
+
+[[file]]
+path = "tests/test_serve_server_spike_server_step.py"
+rationale = "Exercise SC-NeuroCore: serve server spike server step."

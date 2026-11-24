@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.serve_server_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.serve import (
+    SpikeServer,
+)
+from tests.serve_server_support import (
+    MockNetwork,
+    MockPopNetwork,
+)
 
 
 class TestSpikeServerStep:
-    def test_step_with_sc_network(self):
+    """Stepping a spike server directly, without HTTP."""
+
+    def test_step_with_sc_network(self) -> None:
+        """A step on a network with a step method returns outputs and timestep 1."""
         net = MockNetwork()
         server = SpikeServer(net)
         result = server.step({"input": [1.0, 2.0, 3.0]})
@@ -26,7 +37,8 @@ class TestSpikeServerStep:
             [0.5, 1.0, 1.5],
         )
 
-    def test_step_increments_timestep(self):
+    def test_step_increments_timestep(self) -> None:
+        """Each step advances the timestep by one."""
         net = MockNetwork()
         server = SpikeServer(net)
         server.step({"input": [1.0]})
@@ -34,14 +46,16 @@ class TestSpikeServerStep:
         result = server.step({"input": [3.0]})
         assert result["timestep"] == 3
 
-    def test_step_with_population_network(self):
+    def test_step_with_population_network(self) -> None:
+        """A step on a population network returns outputs per population."""
         net = MockPopNetwork()
         server = SpikeServer(net)
         result = server.step({"exc": [1.0, 0.0, 1.0]})
         assert "outputs" in result
         assert "exc" in result["outputs"]
 
-    def test_step_unsupported_network(self):
+    def test_step_unsupported_network(self) -> None:
+        """Stepping a network without a step interface is refused."""
         server = SpikeServer(object())
         with pytest.raises(TypeError, match="Unsupported"):
             server.step({"input": [1.0]})

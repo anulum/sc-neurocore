@@ -6,9 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_serve_server.py
 
+"""Mock networks and HTTP helpers for the spike-server tests."""
+
 from __future__ import annotations
 
 import json
+from typing import Any
 import time
 import urllib.request
 import numpy as np
@@ -19,48 +22,47 @@ from sc_neurocore.serve import SpikeServer
 class MockNetwork:
     """Mock network with step() interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Start with no calls."""
         self.call_count = 0
 
-    def step(self, inputs: dict) -> dict:
+    def step(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Count the call and return each input halved."""
         self.call_count += 1
         return {k: v * 0.5 for k, v in inputs.items()}
 
-    def reset(self):
+    def reset(self) -> None:
+        """Clear the call count."""
         self.call_count = 0
 
 
 class MockPopulation:
-    def __init__(self, label, n):
+    """Mock population with a label, a size and zero voltages."""
+
+    def __init__(self, label: str, n: int) -> None:
+        """Store the label and size and zero the voltages."""
         self.label = label
         self.n = n
         self.voltages = np.zeros(n)
 
-    def step_all(self, currents):
+    def step_all(self, currents: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Spike where the current exceeds 0.5."""
         return (currents > 0.5).astype(np.int8)
 
 
 class MockPopNetwork:
     """Mock network with populations interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Hold an excitatory and an inhibitory mock population."""
         self.populations = [MockPopulation("exc", 3), MockPopulation("inh", 2)]
 
 
 _HTTP_PORT = 18901
 
 
-@pytest.fixture(scope="module")
-def running_server():
-    net = MockNetwork()
-    server = SpikeServer(net, host="127.0.0.1", port=_HTTP_PORT)
-    server.start(blocking=False)
-    time.sleep(0.5)
-    yield server
-    server.stop()
-
-
-def _post(path, data):
+def _post(path: str, data: object) -> Any:
+    """POST JSON to the test server and return the decoded reply, retrying twice."""
     body = json.dumps(data).encode("utf-8")
     for attempt in range(3):
         try:
@@ -76,9 +78,11 @@ def _post(path, data):
             if attempt == 2:
                 raise
             time.sleep(0.2)
+    raise AssertionError("unreachable: the last attempt returns or re-raises")
 
 
-def _get(path):
+def _get(path: str) -> Any:
+    """GET from the test server and return the decoded reply, retrying twice."""
     for attempt in range(3):
         try:
             req = urllib.request.Request(
@@ -91,6 +95,7 @@ def _get(path):
             if attempt == 2:
                 raise
             time.sleep(0.2)
+    raise AssertionError("unreachable: the last attempt returns or re-raises")
 
 
 __all__ = [
@@ -104,7 +109,6 @@ __all__ = [
     "MockPopulation",
     "MockPopNetwork",
     "_HTTP_PORT",
-    "running_server",
     "_post",
     "_get",
 ]
