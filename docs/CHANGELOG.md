@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 2 top-level neuron-family test modules import their names
+  explicitly instead of through a suppressed star import; the
+  parametrised family fixture moves into the one module that uses it,
+  and the support keeps the twelve typed and documented equation-neuron
+  factories. The modules and the support are enrolled in the docstring
+  policy.
+
 - The 7 top-level NeuroML import test modules import their names
   explicitly instead of through a suppressed star import, keep the
   support's autouse fixture by importing it by name, gain their missing

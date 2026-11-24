@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from tests.neuron_families_support import *  # noqa: F403
+from tests.neuron_families_support import (
+    _make_leaky_no_spike,
+)
 
 
 class TestNoSpikeModel:
-    def test_subthreshold_never_spikes(self):
+    """A leaky model with no input that must never spike."""
+
+    def test_subthreshold_never_spikes(self) -> None:
+        """Without input the leaky model never spikes in 10000 steps."""
         neuron = _make_leaky_no_spike()
         for _ in range(10000):
             assert not neuron.step(I=0.0), "subthreshold model spiked"
 
-    def test_decays_to_zero(self):
+    def test_decays_to_zero(self) -> None:
+        """Without input the voltage decays to near zero."""
         neuron = _make_leaky_no_spike()
         for _ in range(1000):
             neuron.step(I=0.0)

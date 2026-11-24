@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4335
+expected_file_count = 4338
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17384,3 +17384,15 @@ rationale = "Exercise SC-NeuroCore: neuroml import multiple cells."
 [[file]]
 path = "tests/test_neuroml_import_parse_helpers.py"
 rationale = "Exercise SC-NeuroCore: neuroml import parse helpers."
+
+[[file]]
+path = "tests/neuron_families_support.py"
+rationale = "Provide the twelve equation-neuron factories and their driving currents for the neuron-family tests."
+
+[[file]]
+path = "tests/test_neuron_families_neuron_families.py"
+rationale = "Exercise SC-NeuroCore: neuron families neuron families."
+
+[[file]]
+path = "tests/test_neuron_families_no_spike_model.py"
+rationale = "Exercise SC-NeuroCore: neuron families no spike model."

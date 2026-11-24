@@ -6,19 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_neuron_families.py
 
+"""Equation-neuron factories for the neuron-family tests.
+
+Twelve neuron models built with EquationNeuron. MODEL_FACTORIES pairs eleven of them with a driving current
+at which they fire; the leaky model below threshold never spikes.
+"""
+
 from __future__ import annotations
 
-"""Parametrised tests for 12 representative neuron models from EquationNeuron.
+from collections.abc import Callable
 
-Each model is verified for: step() returns, spike detection, reset,
-state finiteness, and deterministic behaviour.
-"""
-import numpy as np
-import pytest
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 
 
-def _make_lif():
+def _make_lif() -> EquationNeuron:
+    """Return a leaky integrate-and-fire neuron, dv/dt = -(v - v_rest)/tau + I."""
     return EquationNeuron(
         equations={"v": "-(v - v_rest) / tau + I"},
         parameters={"v_rest": 0.0, "tau": 20.0},
@@ -29,7 +31,8 @@ def _make_lif():
     )
 
 
-def _make_expif():
+def _make_expif() -> EquationNeuron:
+    """Return an exponential integrate-and-fire neuron with spike initiation at v_T."""
     return EquationNeuron(
         equations={"v": "-(v - v_rest)/tau + delta_T * exp((v - v_T)/delta_T)/tau + I"},
         parameters={"v_rest": -65.0, "tau": 20.0, "delta_T": 2.0, "v_T": -50.0},
@@ -40,7 +43,8 @@ def _make_expif():
     )
 
 
-def _make_izhikevich_rs():
+def _make_izhikevich_rs() -> EquationNeuron:
+    """Return a regular-spiking Izhikevich neuron (a = 0.02, reset u + 8)."""
     return EquationNeuron(
         equations={"v": "0.04*v**2 + 5*v + 140 - u + I", "u": "a*(b*v - u)"},
         parameters={"a": 0.02, "b": 0.2},
@@ -51,7 +55,8 @@ def _make_izhikevich_rs():
     )
 
 
-def _make_izhikevich_fs():
+def _make_izhikevich_fs() -> EquationNeuron:
+    """Return a fast-spiking Izhikevich neuron (a = 0.1, reset u + 2)."""
     return EquationNeuron(
         equations={"v": "0.04*v**2 + 5*v + 140 - u + I", "u": "a*(b*v - u)"},
         parameters={"a": 0.1, "b": 0.2},
@@ -62,7 +67,8 @@ def _make_izhikevich_fs():
     )
 
 
-def _make_fhn():
+def _make_fhn() -> EquationNeuron:
+    """Return a FitzHugh-Nagumo neuron in its classic parameters."""
     return EquationNeuron(
         equations={"v": "v - v**3/3 - w + I", "w": "0.08*(v + 0.7 - 0.8*w)"},
         state={"v": -1.0, "w": -0.5},
@@ -72,7 +78,8 @@ def _make_fhn():
     )
 
 
-def _make_hindmarsh_rose():
+def _make_hindmarsh_rose() -> EquationNeuron:
+    """Return a three-variable Hindmarsh-Rose bursting neuron."""
     return EquationNeuron(
         equations={
             "x": "y - 1.0*x**3 + 3.0*x**2 - z + I",
@@ -86,7 +93,8 @@ def _make_hindmarsh_rose():
     )
 
 
-def _make_quadratic_if():
+def _make_quadratic_if() -> EquationNeuron:
+    """Return a quadratic integrate-and-fire neuron, dv/dt = v**2 + I."""
     return EquationNeuron(
         equations={"v": "v**2 + I"},
         state={"v": -0.5},
@@ -96,7 +104,8 @@ def _make_quadratic_if():
     )
 
 
-def _make_resonate_fire():
+def _make_resonate_fire() -> EquationNeuron:
+    """Return a linear resonate-and-fire neuron with coupled v and w."""
     return EquationNeuron(
         equations={"v": "0.98*v - w + I", "w": "v + 0.98*w"},
         state={"v": 0.0, "w": 0.0},
@@ -106,7 +115,8 @@ def _make_resonate_fire():
     )
 
 
-def _make_adex():
+def _make_adex() -> EquationNeuron:
+    """Return an adaptive exponential integrate-and-fire neuron."""
     return EquationNeuron(
         equations={
             "v": "-(v-(-65))/20 + 2*exp((v-(-50))/2)/20 - w + I",
@@ -119,7 +129,8 @@ def _make_adex():
     )
 
 
-def _make_integrator():
+def _make_integrator() -> EquationNeuron:
+    """Return a perfect integrator, dv/dt = I."""
     return EquationNeuron(
         equations={"v": "I"},
         state={"v": 0.0},
@@ -129,7 +140,7 @@ def _make_integrator():
     )
 
 
-def _make_leaky_no_spike():
+def _make_leaky_no_spike() -> EquationNeuron:
     """Leaky model below threshold — should never spike."""
     return EquationNeuron(
         equations={"v": "-v / 10.0"},
@@ -140,7 +151,8 @@ def _make_leaky_no_spike():
     )
 
 
-def _make_two_var_decay():
+def _make_two_var_decay() -> EquationNeuron:
+    """Return a two-variable model whose w decays and feeds v."""
     return EquationNeuron(
         equations={"v": "-v/10 + w + I", "w": "-w/50"},
         state={"v": 0.0, "w": 1.0},
@@ -150,7 +162,7 @@ def _make_two_var_decay():
     )
 
 
-MODEL_FACTORIES = {
+MODEL_FACTORIES: dict[str, tuple[Callable[[], EquationNeuron], float]] = {
     "LIF": (_make_lif, 0.08),
     "ExpIF": (_make_expif, 3.0),
     "Izhikevich_RS": (_make_izhikevich_rs, 10.0),
@@ -165,17 +177,7 @@ MODEL_FACTORIES = {
 }
 
 
-@pytest.fixture(params=MODEL_FACTORIES.keys())
-def model_and_current(request):
-    name = request.param
-    factory, I_amp = MODEL_FACTORIES[name]
-    return name, factory(), I_amp
-
-
 __all__ = [
-    "np",
-    "pytest",
-    "EquationNeuron",
     "_make_lif",
     "_make_expif",
     "_make_izhikevich_rs",
@@ -189,5 +191,4 @@ __all__ = [
     "_make_leaky_no_spike",
     "_make_two_var_decay",
     "MODEL_FACTORIES",
-    "model_and_current",
 ]
