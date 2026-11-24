@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.studio_network_canvas_support import *  # noqa: F403
+from tests.studio_network_canvas_support import (
+    create_population,
+    create_projection,
+    simulate_graph,
+)
 
 
 class TestGraphSimulation:
-    def test_simulate_valid_graph(self):
+    """Simulation of canvas graphs."""
+
+    def test_simulate_valid_graph(self) -> None:
+        """A valid two-population graph runs on the Python backend with versioned results."""
         exc = create_population(count=40, neuron_type="excitatory")
         inh = create_population(count=10, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"])
@@ -30,12 +37,14 @@ class TestGraphSimulation:
         # No population declares a drive: an undriven LIF network stays silent.
         assert result["n_spikes"] == 0
 
-    def test_simulate_empty_graph(self):
+    def test_simulate_empty_graph(self) -> None:
+        """An empty graph fails with errors."""
         result = simulate_graph({"populations": [], "projections": []})
         assert result["success"] is False
         assert "errors" in result
 
-    def test_simulate_three_populations_runs_every_declared_projection(self):
+    def test_simulate_three_populations_runs_every_declared_projection(self) -> None:
+        """A three-population graph runs both declared projections."""
         exc0 = create_population(count=20, neuron_type="excitatory")
         exc1 = create_population(count=20, neuron_type="excitatory")
         inh = create_population(count=10, neuron_type="inhibitory")
@@ -56,7 +65,8 @@ class TestGraphSimulation:
         assert [p["count"] for p in result["populations"]] == [20, 20, 10]
         assert result["topology"]["projections"][1]["n_synapses"] == 200
 
-    def test_simulate_rejects_a_sign_conflict_instead_of_flipping_it(self):
+    def test_simulate_rejects_a_sign_conflict_instead_of_flipping_it(self) -> None:
+        """A positive weight from an inhibitory source is rejected, not flipped."""
         exc = create_population(count=20, neuron_type="excitatory")
         inh = create_population(count=10, neuron_type="inhibitory")
         graph = {

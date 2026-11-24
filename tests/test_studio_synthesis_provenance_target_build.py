@@ -6,14 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (target_build) from former test_studio_synthesis_provenance.py
 
+"""Building and validating synthesis-target provenance records."""
+
 from __future__ import annotations
 
-from tests.studio_synthesis_provenance_support import *  # noqa: F403
+from typing import Any, cast
+
+from sc_neurocore.studio.synthesis_provenance import JsonValue
+from sc_neurocore.studio.synthesis_provenance import (
+    STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
+)
+from sc_neurocore.studio.synthesis_provenance import StudioSynthesisTargetProvenance
+from sc_neurocore.studio.synthesis_provenance import StudioSynthesisToolProvenance
+from sc_neurocore.studio.synthesis_provenance import build_synthesis_target_provenance
+from tests.studio_synthesis_provenance_support import _tool_status
+import pytest
 
 
 def test_build_synthesis_target_provenance_for_pnr_target() -> None:
     """Target provenance records synthesis and PnR tool state without paths."""
-
     provenance = build_synthesis_target_provenance(
         "ice40",
         target_config={"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
@@ -50,7 +61,6 @@ def test_build_synthesis_target_provenance_for_pnr_target() -> None:
 
 def test_build_synthesis_target_provenance_for_synthesis_only_target() -> None:
     """Targets without PnR still record synthesis readiness."""
-
     provenance = build_synthesis_target_provenance(
         "gowin",
         target_config={"synth_cmd": "synth_gowin", "pnr": None, "device": None},
@@ -65,7 +75,6 @@ def test_build_synthesis_target_provenance_for_synthesis_only_target() -> None:
 
 def test_build_synthesis_target_provenance_rejects_missing_command() -> None:
     """Target provenance fails closed when synthesis command metadata is absent."""
-
     with pytest.raises(ValueError, match="no synthesis command"):
         build_synthesis_target_provenance(
             "broken",
@@ -77,7 +86,6 @@ def test_build_synthesis_target_provenance_rejects_missing_command() -> None:
 
 def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -> None:
     """Synthesis provenance uses the shared Studio evidence-class contract."""
-
     provenance = StudioSynthesisTargetProvenance(
         target="ice40",
         capacity={"luts": 5280},
@@ -93,7 +101,7 @@ def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -
                 version="Yosys 0.test",
             ),
         ),
-        evidence_classification="screenshots",  # type: ignore[arg-type]  # Invalid by design.
+        evidence_classification=cast(Any, "screenshots"),  # Invalid by design.
     )
 
     with pytest.raises(ValueError, match="classification"):
@@ -102,7 +110,6 @@ def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -
 
 def test_synthesis_target_provenance_rejects_unknown_status() -> None:
     """Synthesis provenance uses the shared terminal-status contract."""
-
     provenance = StudioSynthesisTargetProvenance(
         target="ice40",
         capacity={"luts": 5280},
@@ -118,7 +125,7 @@ def test_synthesis_target_provenance_rejects_unknown_status() -> None:
                 version="Yosys 0.test",
             ),
         ),
-        status="running",  # type: ignore[arg-type]  # Invalid by design.
+        status=cast(Any, "running"),  # Invalid by design.
     )
 
     with pytest.raises(ValueError, match="status"):

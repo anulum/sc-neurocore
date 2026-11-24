@@ -6,19 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (run_and_endpoint) from former test_studio_synthesis_provenance.py
 
+"""Synthesis-target provenance from a run and from its endpoint."""
+
 from __future__ import annotations
 
-from tests.studio_synthesis_provenance_support import *  # noqa: F403
+from sc_neurocore.studio.synthesis import run_synthesis
+from sc_neurocore.studio.synthesis_provenance import (
+    STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
+)
+from starlette.testclient import TestClient
+from tests.studio_synthesis_provenance_support import _tool_status
+import pytest
+import re
+from tests.studio_synthesis_provenance_support import client as client
 
 
 def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Synthesis failures still carry target provenance for operator evidence."""
-
     import sc_neurocore.studio.synthesis as synthesis
 
     def missing_tool(_name: str) -> None:
+        """Resolve every EDA tool as missing."""
         return None
 
     monkeypatch.setattr(synthesis, "_resolve_eda_tool", missing_tool)
@@ -40,7 +50,6 @@ def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(
 
 def test_synthesis_endpoint_returns_target_provenance(client: TestClient) -> None:
     """The public synthesis endpoint returns path-free target provenance."""
-
     response = client.post(
         "/api/synth/run",
         json={"verilog": "module test(); endmodule", "target": "ice40"},

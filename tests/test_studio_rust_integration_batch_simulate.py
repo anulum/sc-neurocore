@@ -10,38 +10,51 @@
 
 from __future__ import annotations
 
-from tests.studio_rust_integration_support import *  # noqa: F403
+from typing import Any, Never
+
+import numpy as np
+import pytest
+from tests.studio_rust_integration_support import (
+    _bridge_engine,
+    _inner_engine,
+)
 
 
 class TestRustBatchSimulate:
-    def test_batch_adex(self):
+    """The Rust batch simulator behind the Studio."""
+
+    def test_batch_adex(self) -> None:
+        """An AdEx batch run gives 1000 finite voltages."""
         sce = _inner_engine()
         current = np.full(1000, 500.0)
         r = sce.py_batch_simulate("AdEx", 1000, current)
         assert len(r["voltages"]) == 1000
         assert all(np.isfinite(r["voltages"]))
 
-    def test_batch_hodgkin_huxley(self):
+    def test_batch_hodgkin_huxley(self) -> None:
+        """A Hodgkin-Huxley batch run gives 500 voltages and steps."""
         sce = _inner_engine()
         current = np.full(500, 15.0)
         r = sce.py_batch_simulate("HodgkinHuxley", 500, current)
         assert len(r["voltages"]) == 500
         assert r["n_steps"] == 500
 
-    def test_batch_izhikevich(self):
+    def test_batch_izhikevich(self) -> None:
+        """An Izhikevich batch run spikes."""
         sce = _inner_engine()
         current = np.full(1000, 10.0)
         r = sce.py_batch_simulate("Izhikevich", 1000, current)
         spikes = r["spikes"].tolist()
         assert len(spikes) > 0, "Izhikevich with I=10 should spike"
 
-    def test_batch_unsupported_model(self):
+    def test_batch_unsupported_model(self) -> None:
+        """An unsupported model raises (the check accepts any exception)."""
         sce = _inner_engine()
         current = np.full(100, 10.0)
         with pytest.raises(Exception):
             sce.py_batch_simulate("NonexistentModel", 100, current)
 
-    def test_model_simulate_uses_rust(self):
+    def test_model_simulate_uses_rust(self) -> None:
         """Rust fast path in simulate_model must use the maintained bridge."""
         _bridge_engine()
         from sc_neurocore.studio.models import _try_rust_simulate
@@ -54,7 +67,7 @@ class TestRustBatchSimulate:
         assert "v" in result["states"]
         assert result["state_layout"]["recorded"] == ["v"]
 
-    def test_rust_path_names_nothing_for_an_undeclared_model(self):
+    def test_rust_path_names_nothing_for_an_undeclared_model(self) -> None:
         """The lane's export needs a declared name; `AdEx` has no declaration.
 
         The Rust factory accepts short aliases the Python contract layer does
@@ -75,11 +88,14 @@ class TestRustBatchSimulate:
         assert result["final_state"] == {}
         assert any("does not declare" in note for note in result["state_layout"]["custody_notes"])
 
-    def test_model_simulate_returns_none_when_backend_unavailable(self, monkeypatch):
+    def test_model_simulate_returns_none_when_backend_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An unavailable backend gives None."""
         import sc_neurocore.studio.model_simulate as simulate_mod
         import sc_neurocore.studio.models as mod
 
-        def _unavailable():
+        def _unavailable() -> Never:
             raise mod.RustStudioBackendUnavailable("no bridge")
 
         # Patch the defining module — ``models`` is a thin re-export facade.
@@ -87,11 +103,14 @@ class TestRustBatchSimulate:
         current = np.full(10, 1.0)
         assert mod._try_rust_simulate("AdEx", 10, current, 0.1) is None
 
-    def test_model_simulate_raises_on_runtime_backend_failure(self, monkeypatch):
+    def test_model_simulate_raises_on_runtime_backend_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A runtime backend failure raises the Rust backend error."""
         import sc_neurocore.studio.model_simulate as simulate_mod
         import sc_neurocore.studio.models as mod
 
-        def _broken(_name, _n_steps, _current):
+        def _broken(_name: str, _n_steps: int, _current: np.ndarray[Any, Any]) -> Never:
             raise RuntimeError("ffi exploded")
 
         monkeypatch.setattr(simulate_mod, "_load_rust_batch_simulate", lambda: _broken)

@@ -1378,6 +1378,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 20 top-level Studio integration, network canvas, progress, Rust
+  integration, simulation and synthesis provenance test modules import
+  their names explicitly instead of through a suppressed star import,
+  take every name bound after a support's web-stack guard from that
+  support, keep the client fixtures in their namespaces through
+  redundant-alias imports, replace four type-ignore comments with casts,
+  gain their missing docstrings and type annotations and are enrolled in
+  the docstring policy; the Rust integration support is typed and
+  documented, and the simulation support left without an importer is
+  deleted.
+
 - The seven quantum-cognition test modules that took their names from
   a suppressed star import (`tests/test_quantum_cognition`: hybrid
   Fisher-Posner, GOTM brain and radical pair) import them explicitly.

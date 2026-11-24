@@ -14,10 +14,17 @@ from typing import Any, cast
 
 import pytest
 
-from tests.studio_integration_support import *  # noqa: F403
+from tests.studio_integration_support import (
+    PIPELINE_ROUTE,
+    create_population,
+    create_projection,
+    run_pipeline,
+)
 
 
 class TestPipeline:
+    """The Studio design-to-hardware pipeline."""
+
     def _make_graph(self) -> dict[str, object]:
         exc = create_population(count=30, neuron_type="excitatory", model="AdExNeuron")
         inh = create_population(count=10, neuron_type="inhibitory", model="AdExNeuron")
@@ -39,6 +46,7 @@ class TestPipeline:
         return {"populations": [src, dst], "projections": [proj], "duration": 12.0, "dt": 1.0}
 
     def test_a_supported_network_reaches_synthesis_with_its_trace(self) -> None:
+        """A supported network reaches synthesis with a bit-true co-simulation and a full trace."""
         result = run_pipeline(self._supported_graph())
 
         assert result["pipeline"] == PIPELINE_ROUTE
@@ -70,13 +78,14 @@ class TestPipeline:
     def test_a_design_the_device_cannot_hold_is_not_a_completed_pipeline(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A design too large for the device fails at the fit step."""
         # Real synthesis of the real network; only the device is shrunk to
         # fewer LUTs than the design needs. (A design that overflows the real
         # UP5K costs about a minute of synthesis: 20 neurons, 6237 LUTs.)
         from sc_neurocore.studio import synthesis as synthesis_module
 
         monkeypatch.setitem(
-            synthesis_module._DEVICE_CAPACITY,
+            cast(Any, synthesis_module)._DEVICE_CAPACITY,
             "ice40",
             {"luts": 10, "ffs": 5280, "brams": 30, "dsps": 8},
         )
@@ -98,6 +107,7 @@ class TestPipeline:
     def test_a_synthesis_that_runs_out_of_time_says_so_with_the_network_size(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A synthesis timeout is reported with the network size."""
         # Real Yosys, stopped by a shortened limit. The default 100-neuron
         # canvas network hits the real 60 s limit, and the canvas said
         # "Pipeline failed at synthesise: unknown".
@@ -119,10 +129,13 @@ class TestPipeline:
     def test_a_synthesis_that_fails_carries_yosys_message(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """A failed synthesis carries the Yosys message."""
         from sc_neurocore.studio import synthesis as synthesis_module
 
         monkeypatch.setitem(
-            synthesis_module._TARGETS["ice40"], "synth_cmd", "synth_ice40 -no_such_option"
+            cast(Any, synthesis_module)._TARGETS["ice40"],
+            "synth_cmd",
+            "synth_ice40 -no_such_option",
         )
         result = run_pipeline(self._supported_graph())
 
@@ -135,6 +148,7 @@ class TestPipeline:
         assert "map_ram" not in result["error"]
 
     def test_two_different_networks_give_different_hardware(self) -> None:
+        """Two different networks give different hardware hashes."""
         first = run_pipeline(self._supported_graph())
         graph = self._supported_graph()
         cast(list[dict[str, Any]], graph["projections"])[0]["weight"] = 0.25
@@ -143,17 +157,20 @@ class TestPipeline:
             assert first["trace"][key] != second["trace"][key], key
 
     def test_the_format_is_the_callers_choice_among_two(self) -> None:
+        """The caller chooses one of the two fixed-point formats."""
         result = run_pipeline(self._supported_graph(), q_format="Q16.16")
         assert result["steps"]["lower"]["q_format"] == "Q16.16"
         with pytest.raises(ValueError, match="q_format must be one of"):
             run_pipeline(self._supported_graph(), q_format="Q4.4")
 
     def test_pipeline_empty_graph(self) -> None:
+        """An empty graph fails at validation."""
         result = run_pipeline({"populations": [], "projections": []})
         assert result["success"] is False
         assert result["step"] == "validate"
 
     def test_pipeline_target(self) -> None:
+        """The pipeline reports the requested target."""
         result = run_pipeline(self._make_graph(), target="ecp5")
         assert result.get("target") == "ecp5"
 
@@ -161,9 +178,11 @@ class TestPipeline:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A failed simulation is reported as the pipeline result."""
         graph = self._make_graph()
 
         def fail_simulation(_graph: dict[str, Any]) -> dict[str, object]:
+            """Stand in for a simulation that fails."""
             return {"success": False, "errors": ["sim failed"]}
 
         monkeypatch.setattr(
@@ -191,12 +210,14 @@ class TestPipeline:
         assert "synthesise" not in result["steps"]
 
     def test_the_refusal_leaks_nothing_about_the_host(self) -> None:
+        """A refusal shows no traceback or host paths."""
         text = str(run_pipeline(self._make_graph()))
         assert "Traceback" not in text
         assert "/home/" not in text
         assert "/media/" not in text
 
     def test_the_simulation_it_did_run_is_still_reported(self) -> None:
+        """The validation and simulation that ran are still reported."""
         result = run_pipeline(self._make_graph())
         assert result["steps"]["validate"] == {"passed": True}
         assert "n_spikes" in result["steps"]["simulate"]
@@ -241,6 +262,7 @@ class TestPipeline:
         real = network_hardware_cosim.compile_lowered
 
         def miscompiled(lowered: Any) -> Any:
+            """Compile the lowered network and alter one shift constant in its top module."""
             result = real(lowered)
             return dataclasses.replace(
                 result, top_module=result.top_module.replace("sh000000080", "sh000000040")

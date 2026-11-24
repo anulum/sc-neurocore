@@ -6,14 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (matrix_digest) from former test_studio_synthesis_provenance.py
 
+"""Provenance grades of the synthesis target matrix."""
+
 from __future__ import annotations
 
-from tests.studio_synthesis_provenance_support import *  # noqa: F403
+from sc_neurocore.studio.synthesis_provenance import JsonValue
+from sc_neurocore.studio.synthesis_provenance import (
+    STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
+)
+from sc_neurocore.studio.synthesis_provenance import build_synthesis_target_provenance_matrix
+from tests.studio_synthesis_provenance_support import _tool_status
+from typing import cast
+import hashlib
+import json
 
 
 def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
     """The target matrix has deterministic target membership and digest."""
-
     matrix = build_synthesis_target_provenance_matrix(
         targets={
             "ice40": {
@@ -55,6 +64,7 @@ def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
 
 
 def test_matrix_provenance_grade_tool_backed_when_every_target_backed() -> None:
+    """A matrix whose targets are all tool-backed is tool-backed."""
     matrix = build_synthesis_target_provenance_matrix(
         targets={
             "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
@@ -68,6 +78,7 @@ def test_matrix_provenance_grade_tool_backed_when_every_target_backed() -> None:
 
 
 def test_matrix_provenance_grade_unverified_when_any_target_unverified() -> None:
+    """A matrix with an unverified target is unverified."""
     matrix = build_synthesis_target_provenance_matrix(
         targets={
             "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
@@ -81,6 +92,7 @@ def test_matrix_provenance_grade_unverified_when_any_target_unverified() -> None
 
 
 def test_matrix_provenance_grade_unverified_when_empty() -> None:
+    """An empty matrix is unverified."""
     matrix = build_synthesis_target_provenance_matrix(
         targets={},
         capacities={},

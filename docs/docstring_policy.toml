@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4957
+expected_file_count = 4975
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -5148,10 +5148,6 @@ rationale = "Shared test support with maintained docstrings and strict typing (R
 
 [[file]]
 path = "tests/lapicque_backends_support.py"
-rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
-
-[[file]]
-path = "tests/studio_simulation_support.py"
 rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
 
 [[file]]
@@ -19872,3 +19868,79 @@ rationale = "Exercise SC-NeuroCore: formal property check prove property end to 
 [[file]]
 path = "tests/test_formal_property_check_prove_property_pure_mapping.py"
 rationale = "Exercise SC-NeuroCore: formal property check prove property pure mapping."
+
+[[file]]
+path = "tests/studio_rust_integration_support.py"
+rationale = "Provide the Rust engine loaders and the Studio network simulator of the Studio Rust integration tests."
+
+[[file]]
+path = "tests/test_studio_integration_endpoints.py"
+rationale = "Exercise SC-NeuroCore: studio integration endpoints."
+
+[[file]]
+path = "tests/test_studio_integration_pipeline.py"
+rationale = "Exercise SC-NeuroCore: studio integration pipeline."
+
+[[file]]
+path = "tests/test_studio_integration_project.py"
+rationale = "Exercise SC-NeuroCore: studio integration project."
+
+[[file]]
+path = "tests/test_studio_network_canvas_creation.py"
+rationale = "Exercise SC-NeuroCore: studio network canvas creation."
+
+[[file]]
+path = "tests/test_studio_network_canvas_endpoints.py"
+rationale = "Exercise SC-NeuroCore: studio network canvas endpoints."
+
+[[file]]
+path = "tests/test_studio_network_canvas_graph_simulation.py"
+rationale = "Exercise SC-NeuroCore: studio network canvas graph simulation."
+
+[[file]]
+path = "tests/test_studio_network_canvas_nir.py"
+rationale = "Exercise SC-NeuroCore: studio network canvas nir."
+
+[[file]]
+path = "tests/test_studio_network_canvas_validation.py"
+rationale = "Exercise SC-NeuroCore: studio network canvas validation."
+
+[[file]]
+path = "tests/test_studio_progress_characterise_progress.py"
+rationale = "Exercise SC-NeuroCore: studio progress characterise progress."
+
+[[file]]
+path = "tests/test_studio_progress_heatmap_progress.py"
+rationale = "Exercise SC-NeuroCore: studio progress heatmap progress."
+
+[[file]]
+path = "tests/test_studio_progress_scan_progress.py"
+rationale = "Exercise SC-NeuroCore: studio progress scan progress."
+
+[[file]]
+path = "tests/test_studio_progress_web_socket_endpoint.py"
+rationale = "Exercise SC-NeuroCore: studio progress web socket endpoint."
+
+[[file]]
+path = "tests/test_studio_rust_integration_batch_simulate.py"
+rationale = "Exercise SC-NeuroCore: studio rust integration batch simulate."
+
+[[file]]
+path = "tests/test_studio_rust_integration_ei_network.py"
+rationale = "Exercise SC-NeuroCore: studio rust integration ei network."
+
+[[file]]
+path = "tests/test_studio_synthesis_provenance_matrix_digest.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis provenance matrix digest."
+
+[[file]]
+path = "tests/test_studio_synthesis_provenance_provenance_grades.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis provenance provenance grades."
+
+[[file]]
+path = "tests/test_studio_synthesis_provenance_run_and_endpoint.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis provenance run and endpoint."
+
+[[file]]
+path = "tests/test_studio_synthesis_provenance_target_build.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis provenance target build."

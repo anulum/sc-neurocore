@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from tests.studio_integration_support import *  # noqa: F403
+from typing import Any, cast
+
+from pathlib import Path
+import json
+import pytest
+import re
+from tests.studio_integration_support import (
+    delete_project,
+    list_projects,
+    load_project,
+    save_project,
+)
 
 
 def _write_revision(root: Path, name: str, document: object, *, revision: int = 1) -> None:
@@ -20,7 +31,6 @@ def _write_revision(root: Path, name: str, document: object, *, revision: int = 
     edit, a partial restore, a foreign file — so they write the revision
     themselves rather than going through ``save_project``.
     """
-
     directory = root / name / "revisions"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / f"{revision}.json").write_text(json.dumps(document), encoding="utf-8")
@@ -38,11 +48,14 @@ def _write_revision(root: Path, name: str, document: object, *, revision: int = 
 
 
 class TestProjectSaveLoad:
+    """Saving, loading, listing and deleting Studio projects."""
+
     def test_save_project(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Saving a project returns a completed, hashed record without local paths."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         result = save_project("test_proj", {"dt": 0.1, "duration": 100})
         assert result["name"] == "test_proj"
@@ -60,6 +73,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A saved project loads with its state."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         save_project("load_test", {"equations": ["dv/dt = -v"]})
         result = load_project("load_test")
@@ -71,6 +85,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Loading an unknown project reports an error."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         result = load_project("nope")
         assert "error" in result
@@ -80,6 +95,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A project without a state object is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         _write_revision(tmp_path, "bad_payload", {"name": "bad_payload", "state": []})
         with pytest.raises(ValueError, match="'state' object"):
@@ -90,6 +106,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A project payload that is not an object is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         _write_revision(tmp_path, "bad_payload", ["not", "an", "object"])
 
@@ -101,6 +118,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A project whose stored name differs is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         _write_revision(tmp_path, "expected", {"name": "other", "state": {}})
 
@@ -112,6 +130,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Two saved projects are listed."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         save_project("proj_a", {})
         save_project("proj_b", {})
@@ -128,6 +147,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Deleting a project removes it from the list."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         save_project("to_delete", {})
         assert len(list_projects()) == 1
@@ -140,6 +160,7 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Deleting an unknown project reports an error."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         result = delete_project("nope")
         assert "error" in result
@@ -149,15 +170,17 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A non-object state is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         with pytest.raises(ValueError, match="Project state must be an object"):
-            save_project("bad_state", ["not", "an", "object"])  # type: ignore[arg-type]
+            save_project("bad_state", cast(Any, ["not", "an", "object"]))
 
     def test_save_rejects_invalid_hdl_identifier(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """An invalid HDL identifier is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         with pytest.raises(ValueError, match="Invalid HDL-facing identifiers"):
             save_project("bad_ident", {"module_name": "bad-name"})
@@ -176,6 +199,7 @@ class TestProjectSaveLoad:
         monkeypatch: pytest.MonkeyPatch,
         state: dict[str, Any],
     ) -> None:
+        """Invalid nested HDL identifiers are rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
 
         with pytest.raises(ValueError, match="Invalid HDL-facing identifiers"):
@@ -186,10 +210,11 @@ class TestProjectSaveLoad:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A non-string project name is rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
 
         with pytest.raises(ValueError, match="Invalid project name"):
-            save_project(123, {})  # type: ignore[arg-type]
+            save_project(cast(Any, 123), {})
 
     @pytest.mark.parametrize(
         "name",
@@ -210,6 +235,7 @@ class TestProjectSaveLoad:
         monkeypatch: pytest.MonkeyPatch,
         name: str,
     ) -> None:
+        """Project names with path semantics are rejected with ValueError."""
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
 
         with pytest.raises(ValueError, match="Invalid project name"):

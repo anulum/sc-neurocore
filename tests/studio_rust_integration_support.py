@@ -6,9 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for Rust engine integration in Studio
 
+"""The Rust engine loaders and the Studio network simulator for the Studio Rust integration tests."""
+
 from __future__ import annotations
 
 import importlib
+from types import ModuleType
 
 import numpy as np
 
@@ -17,16 +20,16 @@ import pytest
 from sc_neurocore_engine.studio import get_ei_network_simulator
 
 
-def _bridge_engine():
-    """Shared fixtures for Studio Rust EI network and batch-simulate tests."""
-    mod = pytest.importorskip("sc_neurocore_engine")
+def _bridge_engine() -> ModuleType:
+    """Return the Rust engine package, skipping when it is absent and failing when it lacks the Studio simulator."""
+    mod: ModuleType = pytest.importorskip("sc_neurocore_engine")
     assert hasattr(mod, "py_simulate_ei_network"), (
         "installed Rust engine bridge lacks the required Studio simulator"
     )
     return mod
 
 
-def _inner_engine():
+def _inner_engine() -> ModuleType:
     """Import the inner extension module without bypassing the package bridge."""
     return importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
 

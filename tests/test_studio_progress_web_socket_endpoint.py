@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.studio_progress_support import *  # noqa: F403
+from pathlib import Path
+import hashlib
+import json
+import pytest
+from tests.studio_progress_support import (
+    Principal,
+    StudioRuntimeSettings,
+    TestClient,
+    WebSocketDisconnect,
+    create_app,
+)
+from tests.studio_progress_support import client as client
 
 
 class TestWebSocketEndpoint:
+    """The Studio progress WebSocket and its access policy."""
+
     def test_ws_unknown_op(self, client: TestClient) -> None:
+        """An unknown operation gets an error message."""
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_json({"op": "nonexistent"})
             msg = ws.receive_json()
@@ -22,12 +36,14 @@ class TestWebSocketEndpoint:
             assert "Unknown op" in msg["msg"]
 
     def test_ws_invalid_json(self, client: TestClient) -> None:
+        """Invalid JSON gets an error message."""
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_text("not json at all")
             msg = ws.receive_json()
             assert msg["type"] == "error"
 
     def test_ws_characterize_streams_progress(self, client: TestClient) -> None:
+        """A characterisation streams progress and then completes or fails."""
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_json(
                 {
@@ -49,6 +65,7 @@ class TestWebSocketEndpoint:
                 assert progress_count > 0
 
     def test_ws_rejects_unconfigured_origin(self) -> None:
+        """An unconfigured origin is closed with 1008."""
         app = create_app(
             runtime_settings=StudioRuntimeSettings(
                 allowed_hosts=("testserver",),
@@ -69,6 +86,7 @@ class TestWebSocketEndpoint:
         assert exc_info.value.code == 1008
 
     def test_ws_policy_rejects_missing_principal(self, tmp_path: Path) -> None:
+        """A connection without a principal is closed with 1008 and audited as denied."""
         audit_path = tmp_path / "audit" / "studio.jsonl"
         app = create_app(
             runtime_settings=StudioRuntimeSettings(
@@ -97,6 +115,7 @@ class TestWebSocketEndpoint:
         assert row["route"] == "/ws/progress"
 
     def test_ws_policy_rejects_invalid_bearer_identity_token(self, tmp_path: Path) -> None:
+        """An invalid bearer token is closed with 1008 and audited as denied."""
         identity_path = tmp_path / "studio-identities.json"
         audit_path = tmp_path / "audit" / "studio.jsonl"
         identity_path.write_text(
@@ -144,6 +163,7 @@ class TestWebSocketEndpoint:
         assert row["reason"] == "invalid_identity_token"
 
     def test_ws_policy_accepts_browser_session_subprotocol(self, tmp_path: Path) -> None:
+        """A browser-session subprotocol is accepted and audited as allowed."""
         audit_path = tmp_path / "audit" / "studio.jsonl"
         app = create_app(
             runtime_settings=StudioRuntimeSettings(

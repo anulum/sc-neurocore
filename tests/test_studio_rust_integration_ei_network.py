@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.studio_rust_integration_support import *  # noqa: F403
+from sc_neurocore_engine.studio import (
+    get_ei_network_simulator,
+)
+from tests.studio_rust_integration_support import (
+    _bridge_engine,
+    _inner_engine,
+)
 
 
 class TestRustEINetwork:
-    def test_rust_ei_network_direct(self):
+    """The Rust excitatory-inhibitory network simulator behind the Studio."""
+
+    def test_rust_ei_network_direct(self) -> None:
+        """A direct Rust run reports 25 neurons with spikes and rates."""
         _bridge_engine()
         simulate = get_ei_network_simulator()
         r = simulate(n_exc=20, n_inh=5, duration=50.0, ext_rate=100.0)
@@ -23,7 +32,8 @@ class TestRustEINetwork:
         assert "spike_times" in r
         assert "exc_rates" in r
 
-    def test_rust_ei_network_via_python(self):
+    def test_rust_ei_network_via_python(self) -> None:
+        """A run through Python reports 25 neurons with list spike times."""
         _bridge_engine()
         from sc_neurocore.studio.network import simulate_ei_network
 
@@ -32,13 +42,15 @@ class TestRustEINetwork:
         assert isinstance(r["spike_times"], list)
         assert isinstance(r["mean_exc_rate"], (int, float))
 
-    def test_rust_ei_result_types(self):
+    def test_rust_ei_result_types(self) -> None:
+        """The Rust result holds arrays."""
         sce = _inner_engine()
         r = sce.py_simulate_ei_network(n_exc=10, n_inh=5, duration=20.0)
         assert hasattr(r["spike_times"], "tolist")
         assert hasattr(r["rate_time"], "tolist")
 
-    def test_numpy_fallback_works(self):
+    def test_numpy_fallback_works(self) -> None:
+        """The NumPy fallback reports 15 neurons with list spike times."""
         from sc_neurocore.studio.network import _simulate_numpy
 
         r = _simulate_numpy(

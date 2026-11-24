@@ -10,21 +10,38 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, Never
+
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import pytest
 import base64
 
-from tests.studio_network_canvas_support import *  # noqa: F403
+from tests.studio_network_canvas_support import (
+    create_population,
+    create_projection,
+)
+from tests.studio_network_canvas_support import client as client
 
 
 class TestEndpoints:
-    def test_models_endpoint(self, client):
+    """The network canvas endpoints: models, populations, validation, simulation and NIR."""
+
+    def test_models_endpoint(self, client: TestClient) -> None:
+        """The models endpoint returns a list."""
         r = client.get("/api/graph/models")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
 
-    def test_models_endpoint_surfaces_discovery_failure(self, client, monkeypatch):
+    def test_models_endpoint_surfaces_discovery_failure(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A model discovery failure gives 500."""
         import sc_neurocore.studio.api.design as design_routes
 
-        def _boom():
+        def _boom() -> Never:
             raise RuntimeError("catalog failed")
 
         monkeypatch.setattr(design_routes, "graph_available_models", _boom)
@@ -32,21 +49,24 @@ class TestEndpoints:
         assert r.status_code == 500
         assert r.json()["detail"] == "Internal error"
 
-    def test_create_population_endpoint(self, client):
+    def test_create_population_endpoint(self, client: TestClient) -> None:
+        """The population endpoint returns the requested label and count."""
         r = client.post("/api/graph/population", json={"label": "Test", "count": 50})
         assert r.status_code == 200
         data = r.json()
         assert data["label"] == "Test"
         assert data["count"] == 50
 
-    def test_validate_endpoint(self, client):
+    def test_validate_endpoint(self, client: TestClient) -> None:
+        """Validating an empty graph reports errors."""
         r = client.post("/api/graph/validate", json={"populations": [], "projections": []})
         assert r.status_code == 200
         data = r.json()
         assert data["valid"] is False
         assert len(data["errors"]) > 0
 
-    def test_simulate_endpoint(self, client):
+    def test_simulate_endpoint(self, client: TestClient) -> None:
+        """Simulating a valid graph succeeds over 300 steps."""
         exc = create_population(count=30, neuron_type="excitatory")
         inh = create_population(count=10, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"])
@@ -57,7 +77,10 @@ class TestEndpoints:
         assert data["success"] is True
         assert data["spec"]["n_steps"] == 300
 
-    def test_simulate_endpoint_reports_validation_errors_in_the_body(self, client):
+    def test_simulate_endpoint_reports_validation_errors_in_the_body(
+        self, client: TestClient
+    ) -> None:
+        """Simulating an invalid graph reports its validation errors in the body."""
         exc = create_population(count=30, neuron_type="excitatory")
         proj = create_projection(exc["id"], exc["id"], delay=0.33)
         graph = {"populations": [exc], "projections": [proj], "duration": 30.0}
@@ -67,11 +90,14 @@ class TestEndpoints:
         assert data["success"] is False
         assert any("whole number of 0.1 ms steps" in e for e in data["errors"])
 
-    def test_simulate_endpoint_maps_execution_failure_to_422(self, client, monkeypatch):
+    def test_simulate_endpoint_maps_execution_failure_to_422(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An execution failure maps to 422 with its reason."""
         import sc_neurocore.studio.api.design as design_routes
         from sc_neurocore.studio.network_execution import GraphExecutionFailure
 
-        def _fail(_graph):
+        def _fail(_graph: dict[str, Any]) -> Never:
             raise GraphExecutionFailure(
                 reason="population x ended with a non-finite membrane voltage"
             )
@@ -84,7 +110,8 @@ class TestEndpoints:
             "reason": "population x ended with a non-finite membrane voltage",
         }
 
-    def test_create_population_endpoint_carries_params_and_drive(self, client):
+    def test_create_population_endpoint_carries_params_and_drive(self, client: TestClient) -> None:
+        """The population endpoint keeps parameters and drive."""
         r = client.post(
             "/api/graph/population",
             json={"params": {"tau": 5.0}, "drive": {"kind": "constant", "current": 1.0}, "x": 1},
@@ -94,7 +121,8 @@ class TestEndpoints:
         assert data["params"] == {"tau": 5.0}
         assert data["drive"] == {"kind": "constant", "current": 1.0}
 
-    def test_export_nir_endpoint(self, client):
+    def test_export_nir_endpoint(self, client: TestClient) -> None:
+        """The NIR export returns an HDF5 file with its notes."""
         pop = create_population()
         r = client.post("/api/graph/export-nir", json={"populations": [pop], "projections": []})
         assert r.status_code == 200
@@ -105,7 +133,8 @@ class TestEndpoints:
         assert base64.b64decode(data["content_base64"])[:8] == b"\x89HDF\r\n\x1a\n"
         assert any("milliseconds" in note for note in data["notes"])
 
-    def test_import_nir_endpoint(self, client):
+    def test_import_nir_endpoint(self, client: TestClient) -> None:
+        """Importing a Studio envelope returns its population."""
         nir = {"nodes": {"a": {"type": "SCLapicqueLIFNeuron", "count": 10}}, "edges": []}
         r = client.post("/api/graph/import-nir", json=nir)
         assert r.status_code == 200
@@ -114,13 +143,15 @@ class TestEndpoints:
         assert data["origin"] == "studio-envelope"
         assert len(data["graph"]["populations"]) == 1
 
-    def test_export_nir_endpoint_rejects_malformed_graph(self, client):
+    def test_export_nir_endpoint_rejects_malformed_graph(self, client: TestClient) -> None:
+        """Exporting a malformed graph is rejected with 422 and a reason."""
         r = client.post("/api/graph/export-nir", json={"populations": [{"count": 10}]})
         assert r.status_code == 422
         # The reason travels under the key the Studio client reads out.
         assert r.json()["detail"]["reason"]
 
-    def test_an_exported_nir_file_imports_through_the_route(self, client):
+    def test_an_exported_nir_file_imports_through_the_route(self, client: TestClient) -> None:
+        """An exported NIR file imports back with its population."""
         graph = {"populations": [create_population(count=6)], "projections": [], "dt": 1.0}
         exported = client.post("/api/graph/export-nir", json=graph).json()
 
@@ -131,7 +162,8 @@ class TestEndpoints:
         assert r.json()["origin"] == "studio"
         assert r.json()["graph"]["populations"][0]["count"] == 6
 
-    def test_import_nir_endpoint_names_why_bytes_are_refused(self, client):
+    def test_import_nir_endpoint_names_why_bytes_are_refused(self, client: TestClient) -> None:
+        """Unreadable NIR bytes are refused with the reason."""
         r = client.post(
             "/api/graph/import-nir",
             json={"content_base64": base64.b64encode(b"not an HDF5 file").decode("ascii")},
@@ -139,21 +171,27 @@ class TestEndpoints:
         assert r.status_code == 422
         assert "not a readable NIR graph" in r.json()["detail"]["reason"]
 
-    def test_import_nir_endpoint_names_an_unreadable_envelope_format(self, client):
+    def test_import_nir_endpoint_names_an_unreadable_envelope_format(
+        self, client: TestClient
+    ) -> None:
+        """An unreadable envelope format is refused with the reason."""
         r = client.post(
             "/api/graph/import-nir", json={"format": "nir-2.0", "nodes": {}, "edges": []}
         )
         assert r.status_code == 422
         assert "unreadable interchange format" in r.json()["detail"]["reason"]
 
-    def test_import_nir_endpoint_rejects_malformed_edges(self, client):
+    def test_import_nir_endpoint_rejects_malformed_edges(self, client: TestClient) -> None:
+        """Malformed NIR edges are rejected with 422."""
         r = client.post("/api/graph/import-nir", json={"nodes": {"a": {}}, "edges": [{}]})
         assert r.status_code == 422
         assert r.json()["detail"] == {
             "reason": "Graph envelope edge 0 source must be a non-empty string"
         }
 
-    def test_project_load_endpoint_returns_loaded_state(self, client, monkeypatch):
+    def test_project_load_endpoint_returns_loaded_state(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """The project adapter returns a successful load result unchanged."""
         import sc_neurocore.studio.api.design as design_routes
 
@@ -168,7 +206,9 @@ class TestEndpoints:
         assert response.status_code == 200
         assert response.json() == {"name": "example", "state": {"zoom": 2}}
 
-    def test_project_delete_endpoint_maps_missing_project(self, client, monkeypatch):
+    def test_project_delete_endpoint_maps_missing_project(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """A missing project maps to the established not-found response."""
         import sc_neurocore.studio.api.design as design_routes
 
@@ -183,7 +223,9 @@ class TestEndpoints:
         assert response.status_code == 404
         assert response.json()["detail"] == "Project not found: missing"
 
-    def test_project_delete_endpoint_returns_deleted_project(self, client, monkeypatch):
+    def test_project_delete_endpoint_returns_deleted_project(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """A successful project deletion returns its public confirmation."""
         import sc_neurocore.studio.api.design as design_routes
 
@@ -198,13 +240,15 @@ class TestEndpoints:
         assert response.status_code == 200
         assert response.json() == {"deleted": "example"}
 
-    def test_create_projection_endpoint_filters_unknown_fields(self, client, monkeypatch):
+    def test_create_projection_endpoint_filters_unknown_fields(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Only the graph projection contract reaches the implementation."""
         import sc_neurocore.studio.api.design as design_routes
 
         captured: dict[str, object] = {}
 
-        def _create_projection(**kwargs):
+        def _create_projection(**kwargs: Any) -> dict[str, Any]:
             captured.update(kwargs)
             return {"id": "projection-1", **kwargs}
 

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.studio_integration_support import *  # noqa: F403
+import re
+from tests.studio_integration_support import (
+    TestClient,
+    create_population,
+    create_projection,
+)
+from tests.studio_integration_support import client as client
 
 
 class TestEndpoints:
+    """The Studio project and pipeline endpoints."""
+
     def test_save_endpoint(self, client: TestClient) -> None:
+        """Saving a project returns a completed, hashed record without its path."""
         r = client.post(
             "/api/project/save",
             json={"name": "endpoint_test", "state": {"dt": 0.1}},
@@ -30,6 +39,7 @@ class TestEndpoints:
         assert "path" not in data
 
     def test_save_requires_name(self, client: TestClient) -> None:
+        """A save without a name is rejected with 422."""
         r = client.post("/api/project/save", json={"state": {}})
         assert r.status_code == 422
 
@@ -37,6 +47,7 @@ class TestEndpoints:
         self,
         client: TestClient,
     ) -> None:
+        """A save with a non-object state is rejected with 422."""
         r = client.post(
             "/api/project/save",
             json={"name": "bad_state_endpoint", "state": ["not", "an", "object"]},
@@ -47,6 +58,7 @@ class TestEndpoints:
         self,
         client: TestClient,
     ) -> None:
+        """A save with an invalid HDL identifier is rejected with 422."""
         r = client.post(
             "/api/project/save",
             json={"name": "bad_ident_endpoint", "state": {"module_name": "bad-name"}},
@@ -54,23 +66,28 @@ class TestEndpoints:
         assert r.status_code == 422
 
     def test_list_endpoint(self, client: TestClient) -> None:
+        """The project list is a list."""
         r = client.get("/api/project/list")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
 
     def test_load_nonexistent_endpoint(self, client: TestClient) -> None:
+        """Loading an unknown project gives 404."""
         r = client.get("/api/project/load/nonexistent_xyz")
         assert r.status_code == 404
 
     def test_load_invalid_name_endpoint(self, client: TestClient) -> None:
+        """Loading a project with an invalid name is rejected with 422."""
         r = client.get("/api/project/load/bad%5Cname")
         assert r.status_code == 422
 
     def test_delete_invalid_name_endpoint(self, client: TestClient) -> None:
+        """Deleting a project with an invalid name is rejected with 422."""
         r = client.delete("/api/project/bad%5Cname")
         assert r.status_code == 422
 
     def test_pipeline_endpoint(self, client: TestClient) -> None:
+        """The pipeline endpoint runs all five steps in Q16.16 with a bit-true RTL match."""
         exc = create_population(count=3, neuron_type="excitatory")
         inh = create_population(count=2, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"])
@@ -87,6 +104,7 @@ class TestEndpoints:
         assert data["trace"]["input_sha256"] == data["steps"]["lower"]["input_sha256"]
 
     def test_pipeline_endpoint_empty_graph(self, client: TestClient) -> None:
+        """The pipeline endpoint reports failure for an empty graph."""
         r = client.post(
             "/api/pipeline/run",
             json={"graph": {"populations": [], "projections": []}, "target": "ice40"},

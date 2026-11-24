@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.studio_progress_support import *  # noqa: F403
+from typing import Any
+import queue
+from tests.studio_progress_support import (
+    _scan_with_progress,
+)
 
 
 class TestScanProgress:
+    """Progress messages of a streamed model scan."""
+
     def test_scan_produces_results(self) -> None:
+        """A streamed scan sends progress and ends with named results."""
         q: queue.Queue[dict[str, Any]] = queue.Queue()
         _scan_with_progress(q)
 

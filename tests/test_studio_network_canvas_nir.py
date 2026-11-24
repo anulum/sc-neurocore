@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.studio_network_canvas_support import *  # noqa: F403
+import pytest
+from tests.studio_network_canvas_support import (
+    GRAPH_ENVELOPE_FORMAT,
+    GRAPH_ENVELOPE_VERSION,
+    LEGACY_GRAPH_ENVELOPE_FORMAT,
+    create_population,
+    create_projection,
+    envelope_to_graph,
+    graph_to_envelope,
+    validate_graph,
+)
 
 
 class TestNIR:
-    def test_export_nir(self):
+    """NIR export and import of canvas graphs."""
+
+    def test_export_nir(self) -> None:
+        """Exporting gives a versioned envelope with two nodes and one edge."""
         exc = create_population(label="E", count=80)
         inh = create_population(label="I", count=20, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"])
@@ -25,7 +38,7 @@ class TestNIR:
         assert len(nir["nodes"]) == 2
         assert len(nir["edges"]) == 1
 
-    def test_the_envelope_no_longer_claims_to_be_nir(self):
+    def test_the_envelope_no_longer_claims_to_be_nir(self) -> None:
         """It never was: node types are catalogue models, not NIR primitives."""
         graph = {
             "populations": [create_population(label="E", count=8)],
@@ -33,7 +46,7 @@ class TestNIR:
         }
         assert graph_to_envelope(graph)["format"] != LEGACY_GRAPH_ENVELOPE_FORMAT
 
-    def test_a_file_exported_before_the_rename_still_opens(self):
+    def test_a_file_exported_before_the_rename_still_opens(self) -> None:
         """The versioned loader is preserved; an operator loses no saved work."""
         graph = {
             "populations": [create_population(label="E", count=8)],
@@ -45,12 +58,12 @@ class TestNIR:
 
         assert envelope_to_graph(legacy)["populations"]
 
-    def test_an_envelope_this_loader_cannot_read_is_named_as_such(self):
+    def test_an_envelope_this_loader_cannot_read_is_named_as_such(self) -> None:
         """A real NIR file used to fail on a node type; now it fails on the format."""
         with pytest.raises(ValueError, match="unreadable interchange format"):
             envelope_to_graph({"format": "nir-2.0", "nodes": {}, "edges": []})
 
-    def test_an_envelope_without_a_format_is_still_accepted(self):
+    def test_an_envelope_without_a_format_is_still_accepted(self) -> None:
         """Hand-written payloads and older fixtures declare nothing; keep them."""
         graph = {
             "populations": [create_population(label="E", count=8)],
@@ -60,7 +73,8 @@ class TestNIR:
 
         assert envelope_to_graph(payload)["populations"]
 
-    def test_import_nir(self):
+    def test_import_nir(self) -> None:
+        """Importing gives a valid graph with its populations and projection."""
         nir = {
             "format": "nir",
             "version": "0.1",
@@ -78,7 +92,8 @@ class TestNIR:
         assert graph["projections"][0]["rule"] == "all_to_all"
         assert validate_graph(graph) == []
 
-    def test_import_rejects_nir_primitive_types_and_inconsistent_graphs(self):
+    def test_import_rejects_nir_primitive_types_and_inconsistent_graphs(self) -> None:
+        """Importing NIR primitives or inconsistent graphs raises ValueError."""
         with pytest.raises(ValueError, match="is not a catalogue model"):
             envelope_to_graph({"nodes": {"a": {"type": "LIF", "count": 10}}, "edges": []})
         with pytest.raises(ValueError, match="not executable"):
@@ -96,7 +111,8 @@ class TestNIR:
                 }
             )
 
-    def test_roundtrip(self):
+    def test_roundtrip(self) -> None:
+        """A graph survives an export and import with its random projection."""
         exc = create_population(label="E", count=64)
         inh = create_population(label="I", count=16, neuron_type="inhibitory")
         proj = create_projection(exc["id"], inh["id"], weight=0.3)

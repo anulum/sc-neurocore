@@ -10,14 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_progress_support import *  # noqa: F403
+from typing import Any
+import queue
+from tests.studio_progress_support import (
+    _heatmap_with_progress,
+)
 
 
 class TestHeatmapProgress:
+    """Progress messages of a streamed heatmap."""
+
     def test_heatmap_progress(self) -> None:
+        """A streamed heatmap sends progress and ends with three rate rows."""
         q: queue.Queue[dict[str, Any]] = queue.Queue()
 
         def sim_fn(**kw: Any) -> dict[str, Any]:
+            """Return a silent simulation result."""
             import numpy as np
 
             n = 50

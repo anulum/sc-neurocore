@@ -10,14 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_progress_support import *  # noqa: F403
+from typing import Any
+import queue
+from tests.studio_progress_support import (
+    _characterize_with_progress,
+)
 
 
 class TestCharacteriseProgress:
+    """Progress messages of a streamed characterisation."""
+
     def test_produces_progress_and_complete(self) -> None:
+        """A streamed characterisation sends progress and ends with a complete result."""
         q: queue.Queue[dict[str, Any]] = queue.Queue()
 
         def sim_fn(**kw: Any) -> dict[str, Any]:
+            """Return a silent simulation result."""
             import numpy as np
 
             n = 100
@@ -48,9 +56,11 @@ class TestCharacteriseProgress:
         assert "pattern" in complete["result"]
 
     def test_progress_has_pct(self) -> None:
+        """Each progress message has a percentage inside [0, 100] and a message."""
         q: queue.Queue[dict[str, Any]] = queue.Queue()
 
         def sim_fn(**kw: Any) -> dict[str, Any]:
+            """Return a silent simulation result."""
             import numpy as np
 
             n = 50

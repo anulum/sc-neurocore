@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.studio_simulation_support import *  # noqa: F403
+import pytest
+from sc_neurocore.studio.simulation import (
+    MAX_PLOT_POINTS,
+    MAX_STEPS,
+    simulate,
+)
+from sc_neurocore.studio.templates import (
+    TEMPLATES,
+)
 
 
 class TestSimulateEdgeCases:
