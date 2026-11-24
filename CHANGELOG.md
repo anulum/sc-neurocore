@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 18 top-level adaptive audio and adaptive precision test modules
+  import their names explicitly instead of through a suppressed star
+  import, keep the support's neuron fixtures in their namespaces through
+  redundant-alias imports, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy.
+
 - The 18 top-level network test modules (basic network, execution paths,
   and monitors and stimuli) import their names explicitly instead of
   through a suppressed star import and are enrolled in the docstring

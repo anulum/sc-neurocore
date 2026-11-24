@@ -10,11 +10,29 @@
 
 from __future__ import annotations
 
-from tests.adaptive_audio_support import *  # noqa: F403
+import unittest
+from sc_neurocore.audio import (
+    AdaptiveAudioEngine,
+    AdaptiveSessionReport,
+    EVSEngine,
+    EVSSnapshot,
+    SSGFEngine,
+    UserProfile,
+)
+from sc_neurocore.audio.adaptive_engine import (
+    SessionPhase,
+)
+from tests.adaptive_audio_support import (
+    _small_adaptive_engine,
+    _snapshot,
+)
 
 
 class TestAdaptiveAudioEngine(unittest.TestCase):
+    """The adaptive audio engine: session phases, adaptations, clamps and reports."""
+
     def test_init(self) -> None:
+        """A new engine starts in the discovery phase."""
         ssgf = SSGFEngine()
         evs = EVSEngine()
         profile = UserProfile()
@@ -22,6 +40,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertEqual(eng.current_phase, SessionPhase.DISCOVERY)
 
     def test_on_evs_update(self) -> None:
+        """An EVS update returns audio parameters with a binaural frequency."""
         ssgf = SSGFEngine()
         evs = EVSEngine()
         profile = UserProfile()
@@ -44,6 +63,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertIn("binaural_hz", result)
 
     def test_phase_transition(self) -> None:
+        """After 250 updates the engine has left the discovery phase."""
         ssgf = SSGFEngine()
         evs = EVSEngine()
         profile = UserProfile()
@@ -67,6 +87,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertNotEqual(eng.current_phase, SessionPhase.DISCOVERY)
 
     def test_session_report(self) -> None:
+        """The session report after ten updates has a letter grade."""
         ssgf = SSGFEngine()
         evs = EVSEngine()
         profile = UserProfile()
@@ -91,6 +112,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertIn(report.grade, "ABCDF")
 
     def test_low_evs_adjusts_params(self) -> None:
+        """A low EVS update returns a dictionary (the check does not test which parameters change)."""
         ssgf = SSGFEngine()
         evs = EVSEngine()
         profile = UserProfile()
@@ -112,6 +134,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
     def test_report_serialization_covers_grade_thresholds(self) -> None:
+        """The report serialises with rounded values, and each verified share gives its grade from A to F."""
         report = AdaptiveSessionReport(
             total_ticks=3,
             avg_evs=44.444,
@@ -151,6 +174,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
             self.assertEqual(eng.get_session_report().grade, expected_grade)
 
     def test_lock_on_declining_trend_boosts_geometry_feedback(self) -> None:
+        """A declining trend in lock-on raises the geometry feedback and retunes the target to 11 Hz."""
         eng = _small_adaptive_engine()
         for score in [80.0, 70.0, 60.0, 50.0, 40.0]:
             eng.on_evs_update(_snapshot(evs_score=score))
@@ -165,6 +189,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertAlmostEqual(eng.evs._target_hz, 11.0)
 
     def test_discovery_and_lock_on_respect_parameter_clamps(self) -> None:
+        """Discovery raises the geometry feedback to its 0.15 floor and lock-on keeps it at its 0.6 ceiling."""
         eng = _small_adaptive_engine()
         eng.ssgf.cfg.sigma_g = 0.05
         eng.on_evs_update(_snapshot(evs_score=50.0))
@@ -178,6 +203,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertAlmostEqual(eng.ssgf.cfg.sigma_g, 0.6)
 
     def test_lock_on_improving_trend_stabilises_learning_rate(self) -> None:
+        """An improving trend in lock-on lowers the learning rate."""
         eng = _small_adaptive_engine()
         eng.ssgf.cfg.lr_z = 0.02
         for score in [10.0, 20.0, 30.0, 40.0, 50.0]:
@@ -190,6 +216,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertLess(eng.ssgf.cfg.lr_z, before_lr)
 
     def test_lock_on_learning_rate_floor_is_stable(self) -> None:
+        """A learning rate at its 0.002 floor stays there."""
         eng = _small_adaptive_engine()
         for score in [10.0, 20.0, 30.0, 40.0, 50.0]:
             eng.on_evs_update(_snapshot(evs_score=score))
@@ -201,6 +228,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertAlmostEqual(eng.ssgf.cfg.lr_z, 0.002)
 
     def test_deepening_phase_updates_pressure_and_report_duration(self) -> None:
+        """Deepening raises the field pressure and geometry feedback and is counted in the phase durations."""
         eng = _small_adaptive_engine()
         eng._phase = SessionPhase.LOCK_ON
         eng._tick = 1200
@@ -220,6 +248,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertEqual(report.phase_durations["deepening"], 1)
 
     def test_deepening_phase_respects_clamps(self) -> None:
+        """Deepening keeps the field pressure, geometry feedback and learning rate at their clamps."""
         eng = _small_adaptive_engine()
         eng._phase = SessionPhase.DEEPENING
         eng.ssgf.cfg.field_pressure = 0.4
@@ -234,6 +263,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertAlmostEqual(eng.ssgf.cfg.lr_z, 0.001)
 
     def test_deepening_near_theurgic_pressure_cap_is_stable(self) -> None:
+        """A field pressure at its 0.5 cap stays there under high global order."""
         eng = _small_adaptive_engine()
         eng._phase = SessionPhase.DEEPENING
         eng.ssgf.cfg.field_pressure = 0.5
@@ -244,6 +274,7 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         self.assertAlmostEqual(eng.ssgf.cfg.field_pressure, 0.5)
 
     def test_report_lock_on_duration_and_reset_clear_session_state(self) -> None:
+        """The report splits ticks into discovery and lock-on, and a reset clears the session."""
         eng = _small_adaptive_engine()
         for _ in range(3):
             eng.on_evs_update(_snapshot(evs_score=75.0))

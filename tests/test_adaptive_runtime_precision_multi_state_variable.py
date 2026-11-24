@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import izhikevich_neuron as izhikevich_neuron
 
 
 class TestMultiStateVariable:
     """Verify adaptive precision with multi-state-variable neurons."""
 
-    def test_izhikevich_both_vars_present(self, izhikevich_neuron):
+    def test_izhikevich_both_vars_present(self, izhikevich_neuron: EquationNeuron) -> None:
         """Both v and u must appear in all three modules."""
         v = compile_adaptive_precision(izhikevich_neuron, module_name="sc_izh_adapt")
         assert "v_reg" in v
@@ -26,7 +28,7 @@ class TestMultiStateVariable:
         assert "hp_v_out" in v
         assert "hp_u_out" in v
 
-    def test_izhikevich_hp_authoritative_both_vars(self, izhikevich_neuron):
+    def test_izhikevich_hp_authoritative_both_vars(self, izhikevich_neuron: EquationNeuron) -> None:
         """HP output assignment must be applied to both state variables."""
         v = compile_adaptive_precision(
             izhikevich_neuron,

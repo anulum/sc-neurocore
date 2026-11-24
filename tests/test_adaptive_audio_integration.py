@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.adaptive_audio_support import *  # noqa: F403
+import unittest
+from sc_neurocore.audio import (
+    AdaptiveAudioEngine,
+    Chronotype,
+    EVSEngine,
+    EVSSnapshot,
+    SSGFEngine,
+    UserProfile,
+)
+from sc_neurocore.audio.ssgf_engine import (
+    SSGFConfig,
+)
 
 
 class TestIntegration(unittest.TestCase):
+    """The adaptive engine, SSGF engine, EVS engine and user profile together."""
+
     def test_full_pipeline(self) -> None:
+        """Twenty EVS updates return binaural frequencies and a report with ticks."""
         profile = UserProfile(chronotype=Chronotype.BEAR)
         ssgf = SSGFEngine()
         evs = EVSEngine()
@@ -41,6 +55,7 @@ class TestIntegration(unittest.TestCase):
         self.assertGreater(report.total_ticks, 0)
 
     def test_ssgf_audio_consistency(self) -> None:
+        """After five outer steps the audio mapping keeps its frequency and intensity in range."""
         eng = SSGFEngine(SSGFConfig(seed=42))
         for _ in range(5):
             eng.outer_step()

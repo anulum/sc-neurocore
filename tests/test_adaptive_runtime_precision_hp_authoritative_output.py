@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestHPAuthoritativeOutput:
     """Verify outputs are taken from HP, never LP-converted state."""
 
-    def test_output_register_uses_hp_spike(self, lif_neuron):
+    def test_output_register_uses_hp_spike(self, lif_neuron: EquationNeuron) -> None:
         """Spike output must be driven by HP."""
         v = compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16)
         assert "spike_out <= hp_spike;" in v
 
-    def test_output_register_uses_hp_state(self, lif_neuron):
+    def test_output_register_uses_hp_state(self, lif_neuron: EquationNeuron) -> None:
         """State output must be driven by HP."""
         v = compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16)
         assert "v_out <= hp_v_out;" in v

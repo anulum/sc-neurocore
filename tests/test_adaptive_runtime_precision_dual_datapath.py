@@ -10,38 +10,40 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestDualDatapath:
     """Verify that both LP and HP datapaths are generated."""
 
-    def test_contains_lp_module(self, lif_neuron):
+    def test_contains_lp_module(self, lif_neuron: EquationNeuron) -> None:
         """LP sub-module must be present."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert "module sc_lif_adapt_lp" in v
 
-    def test_contains_hp_module(self, lif_neuron):
+    def test_contains_hp_module(self, lif_neuron: EquationNeuron) -> None:
         """HP sub-module must be present."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert "module sc_lif_adapt_hp" in v
 
-    def test_contains_wrapper_module(self, lif_neuron):
+    def test_contains_wrapper_module(self, lif_neuron: EquationNeuron) -> None:
         """Top-level wrapper module must be present."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert "module sc_lif_adapt " in v or "module sc_lif_adapt\n" in v
 
-    def test_lp_instantiation(self, lif_neuron):
+    def test_lp_instantiation(self, lif_neuron: EquationNeuron) -> None:
         """LP datapath must be instantiated."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert "lp_inst" in v
 
-    def test_hp_instantiation(self, lif_neuron):
+    def test_hp_instantiation(self, lif_neuron: EquationNeuron) -> None:
         """HP datapath must be instantiated."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert "hp_inst" in v
 
-    def test_three_endmodule(self, lif_neuron):
+    def test_three_endmodule(self, lif_neuron: EquationNeuron) -> None:
         """Must have 3 endmodule statements (LP, HP, wrapper)."""
         v = compile_adaptive_precision(lif_neuron, module_name="sc_lif_adapt")
         assert v.count("endmodule") == 3

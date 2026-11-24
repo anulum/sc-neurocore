@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import _extract_manifest
+import pytest
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestValidation:
     """Verify that invalid configurations are rejected."""
 
-    def test_thresholds_require_ordered_band(self, lif_neuron):
+    def test_thresholds_require_ordered_band(self, lif_neuron: EquationNeuron) -> None:
         """Swapped hysteresis thresholds must be rejected."""
         with pytest.raises(ValueError, match="threshold_down_pct"):
             compile_adaptive_precision(
@@ -32,7 +36,7 @@ class TestValidation:
                 threshold_down_pct=0.2,
             )
 
-    def test_thresholds_reject_nonfinite(self, lif_neuron):
+    def test_thresholds_reject_nonfinite(self, lif_neuron: EquationNeuron) -> None:
         """NaN and infinities are rejected by threshold validation."""
         with pytest.raises(ValueError, match="finite"):
             compile_adaptive_precision(
@@ -62,7 +66,7 @@ class TestValidation:
                 threshold_down_pct=0.000001,
             )
 
-    def test_thresholds_are_reflected_in_manifest(self, lif_neuron):
+    def test_thresholds_are_reflected_in_manifest(self, lif_neuron: EquationNeuron) -> None:
         """Manifest must retain threshold policy under compiler contract."""
         up = 0.9
         down = 0.3
@@ -72,17 +76,17 @@ class TestValidation:
         assert manifest["threshold_up_pct"] == up
         assert manifest["threshold_down_pct"] == down
 
-    def test_lp_wider_than_hp_rejected(self, lif_neuron):
+    def test_lp_wider_than_hp_rejected(self, lif_neuron: EquationNeuron) -> None:
         """LP wider than HP must raise ValueError."""
         with pytest.raises(ValueError, match="strictly less"):
             compile_adaptive_precision(lif_neuron, lp_width=32, lp_frac=16, hp_width=16, hp_frac=8)
 
-    def test_equal_widths_rejected(self, lif_neuron):
+    def test_equal_widths_rejected(self, lif_neuron: EquationNeuron) -> None:
         """Equal LP and HP widths must raise ValueError."""
         with pytest.raises(ValueError, match="strictly less"):
             compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=16, hp_frac=8)
 
-    def test_zero_frac_rejected(self, lif_neuron):
+    def test_zero_frac_rejected(self, lif_neuron: EquationNeuron) -> None:
         """Zero fractional bits must raise ValueError."""
         with pytest.raises(ValueError, match="fraction"):
             compile_adaptive_precision(lif_neuron, lp_width=8, lp_frac=0, hp_width=16, hp_frac=8)

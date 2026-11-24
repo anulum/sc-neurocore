@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import _extract_manifest
+import pytest
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestPrecisionStrings:
     """Verify new precision-string support and manifest emission."""
 
-    def test_precision_string_api(self, lif_neuron):
+    def test_precision_string_api(self, lif_neuron: EquationNeuron) -> None:
         """Q-format strings should be resolved and emitted deterministically."""
         v = compile_adaptive_precision(
             lif_neuron,
@@ -30,7 +34,7 @@ class TestPrecisionStrings:
         assert manifest["lp_precision"]["label"] == "Q8.8"
         assert manifest["hp_precision"]["label"] == "Q16.16"
 
-    def test_block_floating_precision_metadata(self, lif_neuron):
+    def test_block_floating_precision_metadata(self, lif_neuron: EquationNeuron) -> None:
         """Block-floating precision should emit block metadata and deterministic label."""
         v = compile_adaptive_precision(
             lif_neuron,
@@ -69,7 +73,9 @@ class TestPrecisionStrings:
             "fixed_mantissa_with_explicit_shared_exponent_metadata"
         )
 
-    def test_block_floating_precision_metadata_carries_concrete_layout(self, lif_neuron):
+    def test_block_floating_precision_metadata_carries_concrete_layout(
+        self, lif_neuron: EquationNeuron
+    ) -> None:
         """BFP manifests must carry exact block layout when parameter count is known."""
         v = compile_adaptive_precision(
             lif_neuron,
@@ -94,7 +100,9 @@ class TestPrecisionStrings:
             "exponent_index_formula": "parameter_index // block_size",
         }
 
-    def test_block_floating_precision_metadata_rejects_bad_parameter_count(self, lif_neuron):
+    def test_block_floating_precision_metadata_rejects_bad_parameter_count(
+        self, lif_neuron: EquationNeuron
+    ) -> None:
         """Invalid BFP parameter-count metadata must fail before RTL emission."""
         with pytest.raises(ValueError, match="parameter_count"):
             compile_adaptive_precision(
@@ -104,7 +112,9 @@ class TestPrecisionStrings:
                 lp_parameter_count=-1,
             )
 
-    def test_fixed_precision_rejects_block_parameter_count(self, lif_neuron):
+    def test_fixed_precision_rejects_block_parameter_count(
+        self, lif_neuron: EquationNeuron
+    ) -> None:
         """Fixed Q-format manifests must not silently accept BFP layout metadata."""
         with pytest.raises(ValueError, match="block-floating precision"):
             compile_adaptive_precision(
@@ -114,7 +124,7 @@ class TestPrecisionStrings:
                 lp_parameter_count=65,
             )
 
-    def test_invalid_precision_string(self, lif_neuron):
+    def test_invalid_precision_string(self, lif_neuron: EquationNeuron) -> None:
         """Invalid precision strings must fail with ValueError."""
         with pytest.raises(ValueError, match="precision"):
             compile_adaptive_precision(

@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import PRECISION_PAIRS
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+import pytest
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestAllPrecisionPairs:
@@ -24,7 +28,9 @@ class TestAllPrecisionPairs:
             for lp, hp in PRECISION_PAIRS
         ],
     )
-    def test_canonical_pair_compiles(self, lif_neuron, lp_hp):
+    def test_canonical_pair_compiles(
+        self, lif_neuron: EquationNeuron, lp_hp: tuple[tuple[int, int], tuple[int, int]]
+    ) -> None:
         """Each canonical LP/HP pair must compile without error."""
         (lp_w, lp_f), (hp_w, hp_f) = lp_hp
         v = compile_adaptive_precision(

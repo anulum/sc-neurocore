@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.adaptive_precision_support import *  # noqa: F403
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.compiler.adaptive_precision import (
+    LayerPrecision,
+)
+from typing import (
+    cast,
+)
 
 
 class TestLayerPrecision:

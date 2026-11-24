@@ -10,15 +10,27 @@
 
 from __future__ import annotations
 
-from tests.adaptive_audio_support import *  # noqa: F403
+import numpy as np
+import unittest
+from sc_neurocore.audio import (
+    EVSEngine,
+    EVSSnapshot,
+)
+from sc_neurocore.audio.evs_engine import (
+    EVSConfig,
+)
 
 
 class TestEVSEngine(unittest.TestCase):
+    """The entrainment verification score engine."""
+
     def test_init(self) -> None:
+        """A new engine has no baseline."""
         eng = EVSEngine()
         self.assertFalse(eng.baseline_done)
 
     def test_baseline(self) -> None:
+        """Baseline samples are collected or the baseline completes."""
         eng = EVSEngine(EVSConfig(sample_rate=256, fft_window=256, baseline_duration_s=0.5))
         eng.start_baseline()
         for v in np.sin(np.linspace(0, 20 * np.pi, 256)):
@@ -26,6 +38,7 @@ class TestEVSEngine(unittest.TestCase):
         self.assertTrue(len(eng._baseline_samples) > 0 or eng._baseline_done)
 
     def test_compute_returns_snapshot(self) -> None:
+        """A computed snapshot has a score inside [0, 100] (checked only when one is returned)."""
         cfg = EVSConfig(
             sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64
         )
@@ -43,6 +56,7 @@ class TestEVSEngine(unittest.TestCase):
             self.assertLessEqual(snap.evs_score, 100)
 
     def test_score_range(self) -> None:
+        """The score of random input lies inside [0, 100] (checked only when a snapshot is returned)."""
         cfg = EVSConfig(
             sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64
         )

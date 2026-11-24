@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4668
+expected_file_count = 4686
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18716,3 +18716,75 @@ rationale = "Exercise SC-NeuroCore: wilson cowan parity edge cases."
 [[file]]
 path = "tests/test_wilson_cowan_parity_final_state_parity.py"
 rationale = "Exercise SC-NeuroCore: wilson cowan parity final state parity."
+
+[[file]]
+path = "tests/test_adaptive_audio_adaptive_audio_engine.py"
+rationale = "Exercise SC-NeuroCore: adaptive audio adaptive audio engine."
+
+[[file]]
+path = "tests/test_adaptive_audio_evs_engine.py"
+rationale = "Exercise SC-NeuroCore: adaptive audio evs engine."
+
+[[file]]
+path = "tests/test_adaptive_audio_integration.py"
+rationale = "Exercise SC-NeuroCore: adaptive audio integration."
+
+[[file]]
+path = "tests/test_adaptive_audio_ssgf_engine.py"
+rationale = "Exercise SC-NeuroCore: adaptive audio ssgf engine."
+
+[[file]]
+path = "tests/test_adaptive_audio_user_profile.py"
+rationale = "Exercise SC-NeuroCore: adaptive audio user profile."
+
+[[file]]
+path = "tests/test_adaptive_precision_adaptive_precision_api_surface.py"
+rationale = "Exercise SC-NeuroCore: adaptive precision adaptive precision api surface."
+
+[[file]]
+path = "tests/test_adaptive_precision_analyze_sensitivity.py"
+rationale = "Exercise SC-NeuroCore: adaptive precision analyze sensitivity."
+
+[[file]]
+path = "tests/test_adaptive_precision_assign_lengths.py"
+rationale = "Exercise SC-NeuroCore: adaptive precision assign lengths."
+
+[[file]]
+path = "tests/test_adaptive_precision_layer_precision.py"
+rationale = "Exercise SC-NeuroCore: adaptive precision layer precision."
+
+[[file]]
+path = "tests/test_adaptive_precision_synapse_precision.py"
+rationale = "Exercise SC-NeuroCore: adaptive precision synapse precision."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_all_precision_pairs.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision all precision pairs."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_dual_datapath.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision dual datapath."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_hp_authoritative_clocking.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision hp authoritative clocking."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_hp_authoritative_output.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision hp authoritative output."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_hysteresis.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision hysteresis."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_multi_state_variable.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision multi state variable."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_precision_strings.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision precision strings."
+
+[[file]]
+path = "tests/test_adaptive_runtime_precision_validation.py"
+rationale = "Exercise SC-NeuroCore: adaptive runtime precision validation."

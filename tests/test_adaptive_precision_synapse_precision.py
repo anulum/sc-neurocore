@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.adaptive_precision_support import *  # noqa: F403
+import numpy as np
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.compiler.adaptive_precision import (
+    assign_synapse_precisions,
+    precision_plan_manifest,
+    SynapsePrecision,
+)
+from typing import (
+    cast,
+)
 
 
 class TestSynapsePrecision:

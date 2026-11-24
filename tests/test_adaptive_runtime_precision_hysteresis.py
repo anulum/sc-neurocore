@@ -10,33 +10,35 @@
 
 from __future__ import annotations
 
-from tests.adaptive_runtime_precision_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.compiler.adaptive_runtime_precision import compile_adaptive_precision
+from tests.adaptive_runtime_precision_support import lif_neuron as lif_neuron
 
 
 class TestHysteresis:
     """Verify hysteresis threshold logic."""
 
-    def test_thresh_up_present(self, lif_neuron):
+    def test_thresh_up_present(self, lif_neuron: EquationNeuron) -> None:
         """THRESH_UP localparam must be present."""
         v = compile_adaptive_precision(lif_neuron)
         assert "THRESH_UP" in v
 
-    def test_thresh_down_present(self, lif_neuron):
+    def test_thresh_down_present(self, lif_neuron: EquationNeuron) -> None:
         """THRESH_DOWN localparam must be present."""
         v = compile_adaptive_precision(lif_neuron)
         assert "THRESH_DOWN" in v
 
-    def test_precision_mode_register(self, lif_neuron):
+    def test_precision_mode_register(self, lif_neuron: EquationNeuron) -> None:
         """precision_mode register must be declared."""
         v = compile_adaptive_precision(lif_neuron)
         assert "reg precision_mode" in v
 
-    def test_precision_mode_reset_to_lp(self, lif_neuron):
+    def test_precision_mode_reset_to_lp(self, lif_neuron: EquationNeuron) -> None:
         """precision_mode must reset to 0 (LP mode)."""
         v = compile_adaptive_precision(lif_neuron)
         assert "precision_mode <= 1'b0" in v
 
-    def test_custom_hysteresis(self, lif_neuron):
+    def test_custom_hysteresis(self, lif_neuron: EquationNeuron) -> None:
         """Custom hysteresis percentages should work."""
         v = compile_adaptive_precision(
             lif_neuron,

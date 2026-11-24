@@ -10,7 +10,26 @@
 
 from __future__ import annotations
 
-from tests.adaptive_precision_support import *  # noqa: F403
+import json
+import numpy as np
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler import (
+    formal_property_check,
+)
+from sc_neurocore.compiler.adaptive_precision import (
+    assign_synapse_precisions,
+    auto_tune_synapse_precisions,
+    write_precision_formal_evidence_bundle,
+)
+from sc_neurocore.compiler.formal_property_check import (
+    PropertyProofResult,
+)
+from tests.adaptive_precision_support import (
+    _needs_formal,
+)
 
 
 class TestAdaptivePrecisionAPISurface:
