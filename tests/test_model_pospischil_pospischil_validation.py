@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilValidation:
+    """Input and state validation of the PospischilNeuron."""
+
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -26,35 +32,43 @@ class TestPospischilValidation:
             {"g_m": -0.01},
         ],
     )
-    def test_rejects_invalid_parameters(self, kwargs: dict[str, float]):
+    def test_rejects_invalid_parameters(self, kwargs: dict[str, Any]) -> None:
+        """The model rejects invalid parameters."""
         with pytest.raises(ValueError):
             PospischilNeuron(**kwargs)
 
-    def test_accepts_zero_m_current_conductance(self):
+    def test_accepts_zero_m_current_conductance(self) -> None:
+        """The model accepts zero m current conductance."""
         # The fast-spiking variant legitimately sets g_m = 0.
         assert PospischilNeuron(g_m=0.0).g_m == 0.0
 
     @pytest.mark.parametrize("field", ["v", "vt", "e_na", "e_k"])
-    def test_rejects_non_finite_field(self, field: str):
+    def test_rejects_non_finite_field(self, field: str) -> None:
+        """The model rejects non-finite field."""
         with pytest.raises(ValueError, match="must be finite"):
-            PospischilNeuron(**{field: float("nan")})
+            kwargs: dict[str, Any] = {field: float("nan")}
+            PospischilNeuron(**kwargs)
 
-    def test_rejects_boolean_field(self):
+    def test_rejects_boolean_field(self) -> None:
+        """The model rejects boolean field."""
         with pytest.raises(ValueError, match="must be finite"):
-            PospischilNeuron(v=True)  # type: ignore[arg-type]
+            PospischilNeuron(v=True)
 
-    def test_rejects_non_finite_current(self):
+    def test_rejects_non_finite_current(self) -> None:
+        """The model rejects non-finite current."""
         n = PospischilNeuron()
         with pytest.raises(ValueError, match="must be finite"):
             n.step(float("inf"))
 
-    def test_runtime_validation_catches_corrupted_state(self):
+    def test_runtime_validation_catches_corrupted_state(self) -> None:
+        """Runtime validation catches corrupted state."""
         n = PospischilNeuron()
         n.dt = -1.0  # corrupt a positive parameter after construction
         with pytest.raises(ValueError, match="dt must be positive"):
             n.step(0.0)
 
-    def test_non_finite_candidate_fails_closed(self):
+    def test_non_finite_candidate_fails_closed(self) -> None:
+        """Non-finite candidate fails closed."""
         # A colossal stimulus overflows the membrane derivative; the candidate
         # guard raises rather than committing a non-finite state.
         n = PospischilNeuron()

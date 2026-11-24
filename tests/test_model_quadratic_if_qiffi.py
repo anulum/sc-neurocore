@@ -10,20 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.model_quadratic_if_support import (
+    _run,
+)
 
 
 class TestQIFFI:
     """f–I curve: f ∝ sqrt(I) for Type-I."""
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.5, 1.0, 2.0, 5.0]:
             n = QuadraticIFNeuron()
             rates.append(len(_run(n, current=I, steps=50000)))
         assert all(rates[i] < rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_sublinear_scaling(self):
+    def test_sublinear_scaling(self) -> None:
         """QIF has sub-linear f-I: f(4I)/f(I) < 4 (not linear like LIF).
 
         Theoretical sqrt scaling is for continuous model; discrete reset

@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
+from tests.model_poisson_support import (
+    _poisson_step_probability,
+)
 
 
 class TestPoissonISI:
+    """The exponential inter-spike intervals of the PoissonNeuron."""
+
     def test_isi_exponentially_distributed(self) -> None:
         """For Poisson process, ISI follows geometric distribution.
 

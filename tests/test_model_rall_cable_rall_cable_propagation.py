@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 
 
 class TestRallCablePropagation:
+    """Signal propagation and attenuation along the RallCableNeuron."""
+
     def test_distal_depolarises_more(self) -> None:
         """Current at distal end → distal compartment most depolarised."""
         n = RallCableNeuron()

@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_prescott_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.prescott import (
+    PrescottNeuron,
+)
+from tests.model_prescott_support import (
+    _prescott_rhs,
+    _prescott_rk4_after_call,
+)
 
 
 class TestPrescottIsolation:
-    def test_construction_defaults(self):
+    """The PrescottNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PrescottNeuron()
         assert n.v == -65.0
         assert n.w == 0.0
@@ -22,10 +33,12 @@ class TestPrescottIsolation:
         assert n.tau_w == 100.0
         assert n.dt == 0.1
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert PrescottNeuron().step(0.0) in (0, 1)
 
-    def test_two_state_variables_evolve(self):
+    def test_two_state_variables_evolve(self) -> None:
+        """Two state variables evolve."""
         n = PrescottNeuron()
         v0, w0 = n.v, n.w
         for _ in range(500):
@@ -33,7 +46,8 @@ class TestPrescottIsolation:
         assert n.v != v0
         assert n.w != w0
 
-    def test_step_uses_candidate_first_rk4(self):
+    def test_step_uses_candidate_first_rk4(self) -> None:
+        """Step uses candidate first RK4."""
         n = PrescottNeuron()
         expected_v, expected_w = _prescott_rk4_after_call(n, 50.0)
         euler_v, euler_w = _prescott_rhs(n, n.v, n.w, 50.0)
@@ -44,13 +58,15 @@ class TestPrescottIsolation:
         assert n.w == pytest.approx(expected_w, abs=1e-15)
         assert (n.v, n.w) != pytest.approx(euler_candidate)
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = PrescottNeuron()
         for _ in range(50000):
             n.step(50.0)
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = PrescottNeuron()
         for _ in range(1000):
             n.step(50.0)

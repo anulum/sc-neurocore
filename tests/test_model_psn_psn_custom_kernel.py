@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 
 
 class TestPSNCustomKernel:
-    def test_custom_kernel_affects_scoring(self):
+    """A custom kernel changes the parallel spiking neuron's scoring."""
+
+    def test_custom_kernel_affects_scoring(self) -> None:
         """Non-uniform kernel weights recent inputs differently."""
         n = SCResettingParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
         n.kernel = np.array([0.0, 0.0, 0.0, 1.0])  # only last entry

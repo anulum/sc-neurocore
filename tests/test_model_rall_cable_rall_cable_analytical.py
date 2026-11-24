@@ -10,10 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
+from typing import (
+    Any,
+)
 
 
 class TestRallCableAnalytical:
+    """Analytical behaviour of the RallCableNeuron."""
+
     def test_cable_equation_one_step(self) -> None:
         """Implicit step solves the sealed passive cable tridiagonal system."""
         n = RallCableNeuron(n_comp=3)
@@ -35,6 +44,7 @@ class TestRallCableAnalytical:
         np.testing.assert_allclose(n.v, expected, atol=1e-10)
 
     def test_implicit_step_separates_from_forward_euler(self) -> None:
+        """Implicit step separates from forward Euler."""
         n_implicit = RallCableNeuron(n_comp=3, dt=2.0, g_ratio=5.0)
         n_euler = RallCableNeuron(n_comp=3, dt=2.0, g_ratio=5.0)
         before = n_euler.v.copy()
@@ -77,10 +87,12 @@ class TestRallCableAnalytical:
         ],
     )
     def test_rejects_invalid_configuration(self, kwargs: dict[str, Any]) -> None:
+        """The model rejects invalid configuration."""
         with pytest.raises(ValueError):
             RallCableNeuron(**kwargs)
 
     def test_rejects_non_finite_current_without_mutation(self) -> None:
+        """The model rejects non-finite current without mutation."""
         n = RallCableNeuron(n_comp=3)
         before = n.v.copy()
         with pytest.raises(ValueError):
@@ -88,6 +100,7 @@ class TestRallCableAnalytical:
         np.testing.assert_allclose(n.v, before)
 
     def test_rejects_corrupt_state_without_mutation(self) -> None:
+        """The model rejects corrupt state without mutation."""
         n = RallCableNeuron(n_comp=3)
         n.v[1] = float("nan")
         before = n.v.copy()

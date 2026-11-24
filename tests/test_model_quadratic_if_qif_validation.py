@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
 
 
 class TestQIFValidation:
+    """Input and state validation of the QuadraticIFNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -22,12 +29,15 @@ class TestQIFValidation:
             ("v_peak", -np.inf),
         ],
     )
-    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float) -> None:
+        """The model rejects non-finite voltage parameters."""
         with pytest.raises(ValueError, match=field):
-            QuadraticIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            QuadraticIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("dt", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_dt(self, dt: float):
+    def test_rejects_non_positive_or_non_finite_dt(self, dt: float) -> None:
+        """The model rejects non-positive or non-finite dt."""
         with pytest.raises(ValueError, match="dt"):
             QuadraticIFNeuron(dt=dt)
 
@@ -38,30 +48,35 @@ class TestQIFValidation:
             (2.0, 1.0),
         ],
     )
-    def test_rejects_reset_not_below_peak(self, v_reset: float, v_peak: float):
+    def test_rejects_reset_not_below_peak(self, v_reset: float, v_peak: float) -> None:
+        """The model rejects reset not below peak."""
         with pytest.raises(ValueError, match="v_peak"):
             QuadraticIFNeuron(v_reset=v_reset, v_peak=v_peak)
 
-    def test_rejects_initial_voltage_at_or_above_peak(self):
+    def test_rejects_initial_voltage_at_or_above_peak(self) -> None:
+        """The model rejects initial voltage at or above peak."""
         with pytest.raises(ValueError, match="v must be below v_peak"):
             QuadraticIFNeuron(v=1.0)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = QuadraticIFNeuron(v=-0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):
             n.step(current)
         assert n.v == before
 
-    def test_rejects_non_finite_exact_flow_before_state_mutation(self):
+    def test_rejects_non_finite_exact_flow_before_state_mutation(self) -> None:
+        """The model rejects non-finite exact flow before state mutation."""
         n = QuadraticIFNeuron(v=-0.25)
         before = n.v
         with pytest.raises(ValueError, match="exact-flow"):
             n.step(-1.0e308)
         assert n.v == before
 
-    def test_negative_current_fixed_point_is_preserved(self):
+    def test_negative_current_fixed_point_is_preserved(self) -> None:
+        """Negative current fixed point is preserved."""
         n = QuadraticIFNeuron(v=-1.0)
         spike = n.step(-1.0)
         assert spike == 0

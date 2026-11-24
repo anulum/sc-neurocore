@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
 
 
 class TestPoissonIsolation:
+    """The PoissonNeuron in isolation."""
+
     def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PoissonNeuron()
         assert n.rate_hz == 100.0
         assert n.dt_ms == 1.0
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = PoissonNeuron()
         assert n.step() in (0, 1)
 

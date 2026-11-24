@@ -10,31 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_plif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plif import (
+    ParametricLIFNeuron,
+)
 
 
 class TestPLIFEdgeCases:
-    def test_zero_input(self):
+    """Zero and negative input, reset and determinism of the ParametricLIFNeuron."""
+
+    def test_zero_input(self) -> None:
         """Zero input from rest → V stays at 0, no spikes."""
         n = ParametricLIFNeuron()
         spikes = sum(n.step(0.0) for _ in range(100))
         assert spikes == 0
         assert n.v == 0.0
 
-    def test_negative_input(self):
+    def test_negative_input(self) -> None:
         """Negative input drives V below 0."""
         n = ParametricLIFNeuron()
         n.step(-0.5)
         assert n.v == -0.5
 
-    def test_reset_method(self):
+    def test_reset_method(self) -> None:
+        """A reset after drive returns the voltage to zero."""
         n = ParametricLIFNeuron()
         for _ in range(50):
             n.step(2.0)
         n.reset()
         assert n.v == 0.0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = ParametricLIFNeuron(a=1.0)

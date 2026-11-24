@@ -10,18 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from typing import Any, cast
+import pytest
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilIntegrator:
-    def test_default_integrator_is_rk4(self):
+    """Integrator choice and agreement of the PospischilNeuron."""
+
+    def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         assert PospischilNeuron().integrator == "rk4"
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
-            PospischilNeuron(integrator="midpoint")  # type: ignore[arg-type]
+            PospischilNeuron(integrator=cast(Any, "midpoint"))
 
-    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self) -> None:
+        """Baseline Euler path runs and diverges from RK4."""
         rk4 = PospischilNeuron()
         euler = PospischilNeuron(integrator="baseline_euler")
         rk4_spikes = sum(rk4.step(7.0) for _ in range(40000))
@@ -31,7 +40,8 @@ class TestPospischilIntegrator:
         # trajectories; their final membrane potentials differ.
         assert rk4.v != euler.v
 
-    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self) -> None:
+        """RK4 and Euler agree to first order at tiny dt."""
         rk4 = PospischilNeuron(dt=1e-4)
         euler = PospischilNeuron(dt=1e-4, integrator="baseline_euler")
         for _ in range(200):

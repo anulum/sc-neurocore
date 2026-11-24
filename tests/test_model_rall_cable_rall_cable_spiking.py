@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
+from tests.model_rall_cable_support import (
+    _run,
+)
 
 
 class TestRallCableSpiking:
+    """How cable length and coupling decide whether the RallCableNeuron spikes."""
+
     def test_fewer_compartments_easier_to_spike(self) -> None:
         """Shorter cable (fewer compartments) → less attenuation → more spikes."""
         n2 = RallCableNeuron(n_comp=2, g_ratio=2.0)

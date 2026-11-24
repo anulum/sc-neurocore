@@ -10,33 +10,47 @@
 
 from __future__ import annotations
 
-from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pv_fast_spiking_neuron import (
+    PVFastSpikingNeuron,
+)
+from tests.model_pv_fast_spiking_neuron_support import (
+    _spikes,
+)
 
 
 class TestPVFastSpikingIsolation:
-    def test_construction_defaults(self):
+    """The PVFastSpikingNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PVFastSpikingNeuron()
         assert n.v == -65.0
         assert n.g_kv3 == 5.0
         assert n.phi == 5.0
         assert n.dt == 0.01
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert PVFastSpikingNeuron().step(2.0) in (0, 1)
 
-    def test_quiescent_without_drive(self):
+    def test_quiescent_without_drive(self) -> None:
+        """Quiescent without drive."""
         assert _spikes(PVFastSpikingNeuron(), 0.0, 20000) == 0
 
-    def test_suprathreshold_high_frequency_firing(self):
+    def test_suprathreshold_high_frequency_firing(self) -> None:
+        """Suprathreshold high frequency firing."""
         # The defining FS feature: sustained high-rate discharge under drive.
         assert _spikes(PVFastSpikingNeuron(), 2.0, 40000) >= 200
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         s1 = _spikes(PVFastSpikingNeuron(), 1.0, 30000)
         s2 = _spikes(PVFastSpikingNeuron(), 3.0, 30000)
         assert s1 < s2
 
-    def test_no_spike_frequency_adaptation(self):
+    def test_no_spike_frequency_adaptation(self) -> None:
+        """No spike frequency adaptation."""
         n = PVFastSpikingNeuron()
         spike_times = [t for t in range(40000) if n.step(2.0)]
         assert len(spike_times) >= 20
@@ -46,14 +60,16 @@ class TestPVFastSpikingIsolation:
         # FS cells do not adapt: late inter-spike intervals stay close to early.
         assert late < early * 1.3
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = PVFastSpikingNeuron()
         for _ in range(50000):
             n.step(2.0)
         for value in (n.v, n.h, n.n, n.p):
             assert np.isfinite(value)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = PVFastSpikingNeuron()
         for _ in range(1000):
             n.step(2.0)

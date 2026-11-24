@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
+from tests.model_pospischil_support import (
+    _run,
+)
 
 
 class TestPospischilAdaptation:
-    def test_adaptation_lengthens_later_isis(self):
+    """M-current adaptation of the PospischilNeuron by cell type."""
+
+    def test_adaptation_lengthens_later_isis(self) -> None:
         """I_M activates slowly → later ISIs should be longer than early ISIs.
 
         This is the hallmark of RS (regular-spiking) neurons.
@@ -30,7 +38,7 @@ class TestPospischilAdaptation:
             "expected adaptation (late ≥ early)"
         )
 
-    def test_p_variable_grows_during_spiking(self):
+    def test_p_variable_grows_during_spiking(self) -> None:
         """Slow K gate p should increase during sustained firing."""
         n = PospischilNeuron()
         p0 = n.p
@@ -38,7 +46,7 @@ class TestPospischilAdaptation:
             n.step(10.0)
         assert n.p > p0, f"p didn't grow: {p0} → {n.p}"
 
-    def test_fs_no_adaptation(self):
+    def test_fs_no_adaptation(self) -> None:
         """FS type (g_m=0) → no adaptation → higher firing rate than RS."""
         n_fs = PospischilNeuron(g_m=0.0)
         n_rs = PospischilNeuron(g_m=0.07)
@@ -46,7 +54,7 @@ class TestPospischilAdaptation:
         s_rs = len(_run(n_rs, current=5.0, steps=50000))
         assert s_fs > s_rs, f"FS: {s_fs} spikes, RS: {s_rs} — expected FS > RS"
 
-    def test_g_m_scales_adaptation(self):
+    def test_g_m_scales_adaptation(self) -> None:
         """Higher g_m → stronger adaptation → fewer spikes."""
         n_weak = PospischilNeuron(g_m=0.03)
         n_strong = PospischilNeuron(g_m=0.1)

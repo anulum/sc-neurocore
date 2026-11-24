@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_plif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.plif import (
+    ParametricLIFNeuron,
+)
 
 
 class TestPLIFThreshold:
-    def test_spike_on_updated_voltage(self):
+    """Threshold crossing, the critical current and the soft reset of the ParametricLIFNeuron."""
+
+    def test_spike_on_updated_voltage(self) -> None:
         """Returned spike is based on updated V, not pre-step V.
 
         Old V triggers reset (line 33), new V determines returned spike (line 35).
@@ -33,7 +37,7 @@ class TestPLIFThreshold:
         s2 = n2.step(1.5)
         assert s2 == 1, "V_new = 1.5 ≥ threshold, should spike"
 
-    def test_suprathreshold_input_fires_every_step(self):
+    def test_suprathreshold_input_fires_every_step(self) -> None:
         """I ≥ threshold → fires every step (V resets to I ≥ threshold)."""
         n = ParametricLIFNeuron()
         # Skip first step (V starts at 0)
@@ -41,7 +45,7 @@ class TestPLIFThreshold:
         spikes = sum(n.step(1.5) for _ in range(100))
         assert spikes == 100
 
-    def test_exact_threshold_input(self):
+    def test_exact_threshold_input(self) -> None:
         """I = threshold → fires every step (after first)."""
         n = ParametricLIFNeuron()
         n.step(1.0)  # V=0+1.0=1.0, but spike check was V=0 (no spike)
@@ -49,7 +53,7 @@ class TestPLIFThreshold:
         spikes = sum(n.step(1.0) for _ in range(100))
         assert spikes == 100
 
-    def test_critical_current(self):
+    def test_critical_current(self) -> None:
         """I_crit = threshold · (1 - alpha). Below this, no spikes ever.
 
         For alpha=0.5, threshold=1.0: I_crit = 0.5.
@@ -61,7 +65,7 @@ class TestPLIFThreshold:
         spikes_below = sum(n_below.step(I_crit - 0.01) for _ in range(1000))
         assert spikes_below == 0, f"{spikes_below} spikes below I_crit"
 
-    def test_reset_is_soft(self):
+    def test_reset_is_soft(self) -> None:
         """After spike, V = I (not zero) — soft reset via (1-spike) multiplication."""
         n = ParametricLIFNeuron()
         n.v = 2.0  # will spike

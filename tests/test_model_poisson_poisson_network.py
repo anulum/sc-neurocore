@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
 
 
 class TestPoissonNetwork:
+    """The PoissonNeuron in a network."""
+
     def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(PoissonNeuron, n=20, label="poisson")
         assert pop.n == 20
 
     def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(PoissonNeuron, n=20, label="poisson")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=1.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

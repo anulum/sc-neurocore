@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 
 
 class TestRallCableParameters:
+    """Parameter behaviour of the RallCableNeuron."""
+
     @pytest.mark.parametrize("n_comp", [2, 3, 5, 10])
     def test_n_comp_variations(self, n_comp: int) -> None:
+        """The voltage vector has one finite entry per compartment for each n_comp."""
         n = RallCableNeuron(n_comp=n_comp)
         assert n.v.shape == (n_comp,)
         for _ in range(1000):
@@ -24,12 +31,14 @@ class TestRallCableParameters:
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
     def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = RallCableNeuron(dt=dt, n_comp=3, g_ratio=1.0)
         for _ in range(10000):
             n.step(100.0)
         assert np.all(np.isfinite(n.v))
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = RallCableNeuron(n_comp=3)

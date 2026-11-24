@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pv_fast_spiking_neuron import (
+    PVFastSpikingNeuron,
+)
+from tests.model_pv_fast_spiking_neuron_support import (
+    _spikes,
+)
 
 
 class TestPVFastSpikingKv3:
-    def test_kv3_block_changes_firing(self):
+    """The Kv3 current's effect on the PVFastSpikingNeuron's firing."""
+
+    def test_kv3_block_changes_firing(self) -> None:
+        """Kv3 block changes firing."""
         intact = _spikes(PVFastSpikingNeuron(), 2.0, 40000)
         blocked = _spikes(PVFastSpikingNeuron(g_kv3=0.0), 2.0, 40000)
         assert intact != blocked

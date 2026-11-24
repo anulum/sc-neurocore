@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilNetwork:
-    def test_population(self):
+    """The PospischilNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(PospischilNeuron, n=5, label="posp")
         assert pop.n == 5
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(PospischilNeuron, n=5, label="posp")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

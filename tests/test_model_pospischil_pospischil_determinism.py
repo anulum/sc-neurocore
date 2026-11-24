@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilDeterminism:
-    def test_bit_exact_reproducibility(self):
+    """Bit-exact reproducibility of the PospischilNeuron."""
+
+    def test_bit_exact_reproducibility(self) -> None:
+        """Bit exact reproducibility."""
         traces = []
         for _ in range(2):
             n = PospischilNeuron()

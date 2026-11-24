@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4101
+expected_file_count = 4166
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -16448,3 +16448,263 @@ rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 parameters."
 [[file]]
 path = "tests/test_model_plant_r15_plant_r15_stability.py"
 rationale = "Exercise SC-NeuroCore: model plant r15 plant r15 stability."
+
+[[file]]
+path = "tests/test_model_plif_plif_analysis.py"
+rationale = "Exercise SC-NeuroCore: model plif plif analysis."
+
+[[file]]
+path = "tests/test_model_plif_plif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model plif plif dynamics."
+
+[[file]]
+path = "tests/test_model_plif_plif_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model plif plif edge cases."
+
+[[file]]
+path = "tests/test_model_plif_plif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model plif plif isolation."
+
+[[file]]
+path = "tests/test_model_plif_plif_learnable_rate.py"
+rationale = "Exercise SC-NeuroCore: model plif plif learnable rate."
+
+[[file]]
+path = "tests/test_model_plif_plif_network.py"
+rationale = "Exercise SC-NeuroCore: model plif plif network."
+
+[[file]]
+path = "tests/test_model_plif_plif_threshold.py"
+rationale = "Exercise SC-NeuroCore: model plif plif threshold."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_analysis.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson analysis."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_dt_scaling.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson dt scaling."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_isi.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson isi."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_isolation.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson isolation."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_network.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson network."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_rate.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson rate."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_stochasticity.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson stochasticity."
+
+[[file]]
+path = "tests/test_model_poisson_poisson_validation.py"
+rationale = "Exercise SC-NeuroCore: model poisson poisson validation."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil adaptation."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_alpha_singular.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil alpha singular."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_analysis.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil analysis."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_cell_types.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil cell types."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_determinism.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil determinism."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_fi.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil fi."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_gating.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil gating."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_integrator.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil integrator."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_isolation.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil isolation."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_network.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil network."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_spike_mechanism.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil spike mechanism."
+
+[[file]]
+path = "tests/test_model_pospischil_pospischil_validation.py"
+rationale = "Exercise SC-NeuroCore: model pospischil pospischil validation."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_analysis.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott analysis."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_determinism.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott determinism."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_excitability.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott excitability."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_isolation.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott isolation."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_network.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott network."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_oscillations.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott oscillations."
+
+[[file]]
+path = "tests/test_model_prescott_prescott_parameters.py"
+rationale = "Exercise SC-NeuroCore: model prescott prescott parameters."
+
+[[file]]
+path = "tests/test_model_psn_parallel_spiking_neuron.py"
+rationale = "Exercise SC-NeuroCore: model psn parallel spiking neuron."
+
+[[file]]
+path = "tests/test_model_psn_psn_custom_kernel.py"
+rationale = "Exercise SC-NeuroCore: model psn psn custom kernel."
+
+[[file]]
+path = "tests/test_model_psn_psn_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model psn psn edge cases."
+
+[[file]]
+path = "tests/test_model_psn_psn_isolation.py"
+rationale = "Exercise SC-NeuroCore: model psn psn isolation."
+
+[[file]]
+path = "tests/test_model_psn_psn_performance.py"
+rationale = "Exercise SC-NeuroCore: model psn psn performance."
+
+[[file]]
+path = "tests/test_model_psn_psn_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model psn psn pipeline."
+
+[[file]]
+path = "tests/test_model_psn_psn_scoring.py"
+rationale = "Exercise SC-NeuroCore: model psn psn scoring."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_integrator.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking integrator."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_isolation.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking isolation."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_kv3.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking kv3."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_network.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking network."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_safe_rate.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking safe rate."
+
+[[file]]
+path = "tests/test_model_pv_fast_spiking_neuron_pv_fast_spiking_validation.py"
+rationale = "Exercise SC-NeuroCore: model pv fast spiking neuron pv fast spiking validation."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_analysis.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif analysis."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_bifurcation.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif bifurcation."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif edge cases."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif isolation."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_network.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif network."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qif_validation.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qif validation."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qiffi.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qiffi."
+
+[[file]]
+path = "tests/test_model_quadratic_if_qifisi.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if qifisi."
+
+[[file]]
+path = "tests/test_model_quadratic_if_quadratic_if_simulate.py"
+rationale = "Exercise SC-NeuroCore: model quadratic if quadratic if simulate."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_analysis.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable analysis."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_analytical.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable analytical."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_isolation.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable isolation."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_network.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable network."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_parameters.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable parameters."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_performance.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable performance."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_propagation.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable propagation."
+
+[[file]]
+path = "tests/test_model_rall_cable_rall_cable_spiking.py"
+rationale = "Exercise SC-NeuroCore: model rall cable rall cable spiking."

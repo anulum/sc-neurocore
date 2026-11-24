@@ -10,15 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_prescott_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.prescott import (
+    PrescottNeuron,
+)
 
 
 class TestPrescottNetwork:
-    def test_population(self):
+    """The PrescottNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         pop = Population(PrescottNeuron, n=5, label="prescott")
         assert pop.n == 5
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(PrescottNeuron, n=5, label="prescott")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

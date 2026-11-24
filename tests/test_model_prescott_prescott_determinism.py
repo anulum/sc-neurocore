@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_prescott_support import *  # noqa: F403
+from sc_neurocore.neurons.models.prescott import (
+    PrescottNeuron,
+)
 
 
 class TestPrescottDeterminism:
-    def test_bit_exact(self):
+    """Bit-exact reproducibility of the PrescottNeuron."""
+
+    def test_bit_exact(self) -> None:
+        """Two runs give bit-identical spike, voltage and w traces."""
         traces = []
         for _ in range(2):
             n = PrescottNeuron()

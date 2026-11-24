@@ -10,10 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
+from tests.model_poisson_support import (
+    _poisson_step_probability,
+)
 
 
 class TestPoissonRate:
+    """The mean rate of the PoissonNeuron and its rate override."""
+
     def test_mean_rate_matches_lambda(self) -> None:
         """Over many trials, spike rate ≈ 1 - exp(-λ·dt/1000).
 

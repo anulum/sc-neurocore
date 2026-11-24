@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 
 
 class TestPSNScoring:
-    def test_spike_at_threshold(self):
+    """Threshold scoring, buffer clearing and rate of the parallel spiking neuron."""
+
+    def test_spike_at_threshold(self) -> None:
         """With uniform kernel: score = mean(buffer). Spike when mean >= θ."""
         n = SCResettingParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
         # Fill buffer with 1.0 → score = mean([1,1,1,1]) = 1.0 → spike
@@ -23,14 +28,14 @@ class TestPSNScoring:
         s = n.step(1.0)  # 4th step fills buffer → score = 1.0 → spike
         assert s == 1
 
-    def test_subthreshold_no_spike(self):
+    def test_subthreshold_no_spike(self) -> None:
         """Score below threshold → no spike."""
         n = SCResettingParallelSpikingNeuron(kernel_size=8, v_threshold=1.0)
         # I=0.5 → avg=0.5 < 1.0
         spikes = sum(n.step(0.5) for _ in range(100))
         assert spikes == 0
 
-    def test_buffer_cleared_on_spike(self):
+    def test_buffer_cleared_on_spike(self) -> None:
         """After spike, buffer is zeroed → next step starts fresh."""
         n = SCResettingParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
         # Fill and trigger spike
@@ -39,7 +44,7 @@ class TestPSNScoring:
         # Buffer should now be zeros
         assert np.all(n.buffer == 0.0)
 
-    def test_rate_proportional_to_input(self):
+    def test_rate_proportional_to_input(self) -> None:
         """At I=threshold: spikes every kernel_size steps (refill cycle)."""
         n = SCResettingParallelSpikingNeuron(kernel_size=8, v_threshold=1.0)
         spikes = sum(n.step(1.0) for _ in range(500))
@@ -47,7 +52,7 @@ class TestPSNScoring:
         expected = 500 // 8
         assert abs(spikes - expected) <= 2
 
-    def test_double_input_double_rate(self):
+    def test_double_input_double_rate(self) -> None:
         """I=2*θ → score reaches threshold with half the buffer filled."""
         n1 = SCResettingParallelSpikingNeuron(kernel_size=8, v_threshold=1.0)
         n2 = SCResettingParallelSpikingNeuron(kernel_size=8, v_threshold=1.0)

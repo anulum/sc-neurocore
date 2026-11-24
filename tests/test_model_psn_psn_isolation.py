@@ -10,26 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 
 
 class TestPSNIsolation:
-    def test_construction_defaults(self):
+    """The SCResettingParallelSpikingNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = SCResettingParallelSpikingNeuron()
         assert n.kernel_size == 8
         assert n.v_threshold == 1.0
         assert n.kernel.shape == (8,)
         assert n.buffer.shape == (8,)
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SCResettingParallelSpikingNeuron().step(0.0) in (0, 1)
 
-    def test_default_kernel_is_uniform(self):
+    def test_default_kernel_is_uniform(self) -> None:
         """Default kernel = 1/kernel_size (averaging filter)."""
         n = SCResettingParallelSpikingNeuron(kernel_size=4)
         np.testing.assert_allclose(n.kernel, [0.25, 0.25, 0.25, 0.25])
 
-    def test_buffer_fills_circularly(self):
+    def test_buffer_fills_circularly(self) -> None:
         """Input values are written to circular buffer."""
         n = SCResettingParallelSpikingNeuron(kernel_size=4, v_threshold=100.0)
         for i in range(6):
@@ -38,7 +45,8 @@ class TestPSNIsolation:
         assert n.buffer[0] == 4.0
         assert n.buffer[1] == 5.0
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SCResettingParallelSpikingNeuron()
         for _ in range(20):
             n.step(5.0)

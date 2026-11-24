@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5633
+    "test_files": 5631
   },
   "documentation": {
     "public_pages": [
@@ -3631,11 +3631,9 @@
       "tests/model_pernarowski_support.py",
       "tests/model_pinsky_rinzel_support.py",
       "tests/model_plant_r15_support.py",
-      "tests/model_plif_support.py",
       "tests/model_poisson_support.py",
       "tests/model_pospischil_support.py",
       "tests/model_prescott_support.py",
-      "tests/model_psn_support.py",
       "tests/model_pv_fast_spiking_neuron_support.py",
       "tests/model_quadratic_if_support.py",
       "tests/model_rall_cable_support.py",

@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
+from tests.model_poisson_support import (
+    _poisson_step_probability,
+)
 
 
 class TestPoissonStochasticity:
+    """Run-to-run variability and statelessness of the PoissonNeuron."""
+
     def test_different_runs_differ(self) -> None:
         """Two neurons with distinct seeds produce distinct spike trains."""
         n1 = PoissonNeuron(rate_hz=200.0, seed=1)

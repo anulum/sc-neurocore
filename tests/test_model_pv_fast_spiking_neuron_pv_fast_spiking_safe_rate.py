@@ -10,15 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.pv_fast_spiking_neuron import (
+    _safe_rate,
+)
 
 
 class TestPVFastSpikingSafeRate:
-    def test_fallback_returned_at_singularity(self):
+    """The safe gating-rate helper at and around its singularity."""
+
+    def test_fallback_returned_at_singularity(self) -> None:
+        """Fallback returned at singularity."""
         # v + vhalf = 0 -> the L'Hôpital limit a*k is returned.
         assert _safe_rate(0.1, 35.0, -35.0, 10.0, 1.0) == 1.0
 
-    def test_regular_branch_matches_hodgkin_huxley_ratio(self):
+    def test_regular_branch_matches_hodgkin_huxley_ratio(self) -> None:
+        """Away from the singularity the rate matches the Hodgkin-Huxley ratio."""
         v, a, vhalf, k = -30.0, 0.1, 35.0, 10.0
         d = v + vhalf
         expected = a * d / (1.0 - np.exp(-d / k))

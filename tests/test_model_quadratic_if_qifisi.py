@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.model_quadratic_if_support import (
+    _run,
+)
 
 
 class TestQIFISI:
-    def test_constant_isi(self):
+    """Inter-spike intervals of the QuadraticIFNeuron."""
+
+    def test_constant_isi(self) -> None:
         """Deterministic → constant ISI at steady state."""
         n = QuadraticIFNeuron()
         spikes = _run(n, current=1.0, steps=50000)
@@ -23,7 +31,8 @@ class TestQIFISI:
         cv = np.std(isis) / np.mean(isis)
         assert cv < 0.02, f"CV(ISI) = {cv:.4f}"
 
-    def test_isi_shortens_with_current(self):
+    def test_isi_shortens_with_current(self) -> None:
+        """ISI shortens with current."""
         n1 = QuadraticIFNeuron()
         n5 = QuadraticIFNeuron()
         s1 = _run(n1, current=1.0, steps=50000)

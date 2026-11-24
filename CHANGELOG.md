@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 65 top-level model-zoo test modules of the parametric LIF,
+  Poisson, Pospischil, Prescott, parallel spiking, PV fast-spiking,
+  quadratic integrate-and-fire and Rall cable neurons import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy, and the two support modules left without an
+  importer are deleted.
+
 - The 62 top-level model-zoo test modules of the NeuroGrid, nonlinear
   LIF, non-resetting LIF, perfect integrator, Pernarowski, Pinsky-Rinzel
   and Plant R15 neurons import their names explicitly instead of through

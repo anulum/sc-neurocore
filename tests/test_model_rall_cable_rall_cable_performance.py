@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestRallCablePerformance:
+    """Throughput of the RallCableNeuron."""
+
     def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         import time
 
         n = RallCableNeuron(n_comp=5)

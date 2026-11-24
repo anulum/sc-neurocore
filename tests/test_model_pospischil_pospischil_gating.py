@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilGating:
-    def test_gating_bounded(self):
+    """Gating bounds and time-step stability of the PospischilNeuron."""
+
+    def test_gating_bounded(self) -> None:
         """m, h, n, p should stay approximately in [0, 1]."""
         n = PospischilNeuron()
         for _ in range(50000):
@@ -23,7 +29,8 @@ class TestPospischilGating:
             assert -0.01 <= val <= 1.01, f"{name} = {val:.6f}"
 
     @pytest.mark.parametrize("dt", [0.01, 0.025, 0.05])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = PospischilNeuron(dt=dt)
         for _ in range(20000):
             n.step(10.0)

@@ -10,12 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+import pytest
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 
 
 class TestRallCableNetwork:
+    """The RallCableNeuron in a network."""
+
     def test_population_incompatible(self) -> None:
-        """RallCableNeuron has array-valued v — Population._sync_voltages
-        cannot handle this (expects scalar v). Document this limitation."""
+        """A Population of RallCableNeuron is refused, documenting a limitation.
+
+        The neuron has an array-valued v, and Population._sync_voltages expects a scalar v.
+        """
         with pytest.raises((ValueError, TypeError)):
             Population(RallCableNeuron, n=5, label="rall")

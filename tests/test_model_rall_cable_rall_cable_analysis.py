@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 
 
 class TestRallCableAnalysis:
+    """Spike analysis of the RallCableNeuron."""
+
     def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
         train = np.array([float(n.step(500.0)) for _ in range(50_000)])
         assert spike_count(train) >= 10
 
     def test_analysis_isi(self) -> None:
+        """The analysis gives finite inter-spike intervals."""
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
         train = np.array([float(n.step(500.0)) for _ in range(50_000)])
         intervals = isi(train, dt=0.0001)
@@ -28,12 +40,14 @@ class TestRallCableAnalysis:
             assert np.all(intervals > 0)
 
     def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
         train = np.array([float(n.step(500.0)) for _ in range(50_000)])
         rate = firing_rate(train, dt=0.0001)
         assert rate > 0
 
     def test_analysis_cross_validation(self) -> None:
+        """Analysis cross validation."""
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
         train = np.array([float(n.step(500.0)) for _ in range(50_000)])
         sc = spike_count(train)

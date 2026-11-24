@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
 
 
 class TestQIFAnalysis:
-    def test_spike_count(self):
+    """Spike analysis of the QuadraticIFNeuron."""
+
+    def test_spike_count(self) -> None:
+        """The spikes of a driven train are counted."""
         n = QuadraticIFNeuron()
         train = np.array([float(n.step(1.0)) for _ in range(50000)])
         assert spike_count(train) >= 100
 
-    def test_spike_count_consistency(self):
+    def test_spike_count_consistency(self) -> None:
+        """Spike count consistency."""
         n = QuadraticIFNeuron()
         train = np.array([float(n.step(1.0)) for _ in range(50000)])
         assert spike_count(train) == int(train.sum())

@@ -10,21 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_rall_cable_support import *  # noqa: F403
+from sc_neurocore.neurons.models.rall_cable import (
+    RallCableNeuron,
+)
 
 
 class TestRallCable:
-    def test_propagation(self) -> None:
-        from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
+    """Propagation and reset of the RallCableNeuron."""
 
+    def test_propagation(self) -> None:
+        """Drive leaves different voltages at the two ends of the cable."""
         n = RallCableNeuron()
         for _ in range(100):
             n.step(5.0)
         assert n.v[0] != n.v[-1], "voltage should differ across compartments"
 
     def test_reset(self) -> None:
-        from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
-
+        """A reset after drive leaves a valid state."""
         n = RallCableNeuron()
         for _ in range(50):
             n.step(5.0)

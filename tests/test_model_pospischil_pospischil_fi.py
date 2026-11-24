@@ -10,24 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
+from tests.model_pospischil_support import (
+    _run,
+)
 
 
 class TestPospischilFI:
-    def test_subthreshold_no_spikes(self):
+    """The current-to-rate response of the PospischilNeuron."""
+
+    def test_subthreshold_no_spikes(self) -> None:
         """Low current (I<2) → no sustained spiking."""
         n = PospischilNeuron()
         spikes = _run(n, current=1.0, steps=50000)
         assert len(spikes) == 0
 
-    def test_suprathreshold_spiking(self):
+    def test_suprathreshold_spiking(self) -> None:
         """Moderate current (I=5–10) → sustained regular spiking."""
         for I in [5.0, 10.0]:
             n = PospischilNeuron()
             spikes = _run(n, current=I, steps=50000)
             assert len(spikes) >= 100, f"I={I}: only {len(spikes)} spikes"
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
         """Monotonic f–I: more current → more spikes."""
         n5 = PospischilNeuron()
         n10 = PospischilNeuron()

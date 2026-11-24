@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_plif_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.plif import (
+    ParametricLIFNeuron,
+)
 
 
 class TestPLIFLearnableRate:
-    def test_higher_alpha_more_spikes(self):
+    """The learnable leak rate alpha of the ParametricLIFNeuron and its firing."""
+
+    def test_higher_alpha_more_spikes(self) -> None:
         """Higher alpha (more memory) → easier to reach threshold → more spikes."""
         I = 0.4  # Below I_crit for alpha=0.5, above for alpha=0.73
         n_low = ParametricLIFNeuron(a=-1.0)  # alpha ≈ 0.27
@@ -24,14 +29,14 @@ class TestPLIFLearnableRate:
         assert s_high > s_low
 
     @pytest.mark.parametrize("a_val", [-2.0, -1.0, 0.0, 1.0, 2.0])
-    def test_rate_at_suprathreshold(self, a_val: float):
+    def test_rate_at_suprathreshold(self, a_val: float) -> None:
         """At I ≥ threshold, rate = 1 spike/step regardless of alpha."""
         n = ParametricLIFNeuron(a=a_val)
         n.step(2.0)  # prime (V=2.0)
         spikes = sum(n.step(2.0) for _ in range(100))
         assert spikes == 100
 
-    def test_subcritical_no_spikes(self):
+    def test_subcritical_no_spikes(self) -> None:
         """Below I_crit, neuron never fires (voltage converges below threshold)."""
         for a_val in [-2.0, 0.0, 2.0]:
             n = ParametricLIFNeuron(a=a_val)

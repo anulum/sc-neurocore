@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_prescott_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.prescott import (
+    PrescottNeuron,
+)
+from tests.model_prescott_support import (
+    _run,
+)
 
 
 class TestPrescottOscillations:
-    def test_spontaneous_oscillation(self):
+    """Spontaneous oscillation and firing rate of the PrescottNeuron."""
+
+    def test_spontaneous_oscillation(self) -> None:
         """Model oscillates even at I=0 (slow relaxation oscillation)."""
         n = PrescottNeuron()
         spikes = _run(n, current=0.0, steps=100000)
         assert len(spikes) >= 3, f"Expected spontaneous oscillation, got {len(spikes)} spikes"
 
-    def test_slow_isi(self):
+    def test_slow_isi(self) -> None:
         """ISI is on the order of thousands of steps (slow oscillator)."""
         n = PrescottNeuron()
         spikes = _run(n, current=50.0, steps=100000)
@@ -29,7 +37,7 @@ class TestPrescottOscillations:
         mean_isi = np.mean(isis)
         assert mean_isi > 1000, f"Mean ISI={mean_isi:.0f}, expected >1000"
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
         """More current → shorter ISI → more spikes."""
         n_low = PrescottNeuron()
         n_high = PrescottNeuron()
@@ -37,7 +45,7 @@ class TestPrescottOscillations:
         s_high = len(_run(n_high, current=200.0, steps=100000))
         assert s_high > s_low
 
-    def test_voltage_oscillates(self):
+    def test_voltage_oscillates(self) -> None:
         """Voltage should show large-amplitude oscillations."""
         n = PrescottNeuron()
         voltages = []

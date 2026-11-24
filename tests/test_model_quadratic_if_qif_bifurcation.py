@@ -10,31 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.model_quadratic_if_support import (
+    _run,
+)
 
 
 class TestQIFBifurcation:
     """Saddle-node bifurcation at I=0: the defining property of QIF."""
 
-    def test_negative_current_no_spikes(self):
+    def test_negative_current_no_spikes(self) -> None:
         """I<0 → stable fixed point at V = -sqrt(-I). No spikes."""
         n = QuadraticIFNeuron()
         spikes = _run(n, current=-0.5, steps=50000)
         assert len(spikes) == 0
 
-    def test_zero_current_no_spikes(self):
+    def test_zero_current_no_spikes(self) -> None:
         """I=0 → half-stable fixed point at V=0. From V=-1, approaches slowly."""
         n = QuadraticIFNeuron()
         spikes = _run(n, current=0.0, steps=50000)
         assert len(spikes) == 0
 
-    def test_positive_current_fires(self):
+    def test_positive_current_fires(self) -> None:
         """I>0 → no stable fixed point → periodic spiking (limit cycle)."""
         n = QuadraticIFNeuron()
         spikes = _run(n, current=0.5, steps=50000)
         assert len(spikes) >= 50
 
-    def test_type_i_continuous_fi_onset(self):
+    def test_type_i_continuous_fi_onset(self) -> None:
         """Type-I: firing rate rises continuously from zero at I=0⁺.
 
         Near bifurcation, f ∝ sqrt(I). Verify rate at I=0.1 < rate at I=1.0,

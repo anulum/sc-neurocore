@@ -10,22 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 
 
 class TestPSNEdgeCases:
+    """Kernel sizes, zero input and determinism of the parallel spiking neuron."""
+
     @pytest.mark.parametrize("ks", [2, 4, 8, 16])
-    def test_kernel_size_variations(self, ks: int):
+    def test_kernel_size_variations(self, ks: int) -> None:
+        """Kernel size variations."""
         n = SCResettingParallelSpikingNeuron(kernel_size=ks, v_threshold=1.0)
         spikes = sum(n.step(1.0) for _ in range(500))
         assert spikes > 0
 
-    def test_zero_input(self):
+    def test_zero_input(self) -> None:
+        """Zero input gives no spikes over 100 steps."""
         n = SCResettingParallelSpikingNeuron()
         spikes = sum(n.step(0.0) for _ in range(100))
         assert spikes == 0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SCResettingParallelSpikingNeuron()

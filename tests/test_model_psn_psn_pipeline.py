@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 
 
 class TestPSNPipeline:
-    def test_population(self):
+    """The SCResettingParallelSpikingNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(SCResettingParallelSpikingNeuron, n=10, label="psn").n == 10
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(SCResettingParallelSpikingNeuron, n=5, label="src")
         tgt = Population(SCResettingParallelSpikingNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
@@ -28,7 +55,8 @@ class TestPSNPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon_src.count > 0
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(SCResettingParallelSpikingNeuron, n=10, label="psn")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -36,17 +64,20 @@ class TestPSNPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_analysis_spike_count(self):
+    def test_analysis_spike_count(self) -> None:
+        """The analysis counts the spikes of a driven run."""
         n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) > 10
 
-    def test_analysis_spike_count_consistency(self):
+    def test_analysis_spike_count_consistency(self) -> None:
+        """Analysis spike count consistency."""
         n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) == int(train.sum())
 
-    def test_analysis_isi(self):
+    def test_analysis_isi(self) -> None:
+        """The analysis gives finite inter-spike intervals."""
         n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         intervals = isi(train, dt=0.001)
@@ -54,13 +85,15 @@ class TestPSNPipeline:
             assert np.all(np.isfinite(intervals))
             assert np.all(intervals > 0)
 
-    def test_analysis_firing_rate(self):
+    def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
 
-    def test_analysis_cross_validation(self):
+    def test_analysis_cross_validation(self) -> None:
+        """Analysis cross validation."""
         n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         sc = spike_count(train)

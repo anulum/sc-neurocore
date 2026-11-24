@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilIsolation:
-    def test_construction_defaults(self):
+    """The PospischilNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = PospischilNeuron()
         assert n.v == -70.0
         assert n.g_m == 0.07  # RS type
@@ -22,10 +28,12 @@ class TestPospischilIsolation:
         assert n.dt == 0.025
         assert n.v_threshold == -20.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert PospischilNeuron().step(0.0) in (0, 1)
 
-    def test_five_state_variables_evolve(self):
+    def test_five_state_variables_evolve(self) -> None:
+        """Five state variables evolve."""
         n = PospischilNeuron()
         initial = (n.v, n.m, n.h, n.n, n.p)
         for _ in range(500):
@@ -33,14 +41,16 @@ class TestPospischilIsolation:
         for name, v0, v1 in zip(["v", "m", "h", "n", "p"], initial, (n.v, n.m, n.h, n.n, n.p)):
             assert v0 != v1, f"{name} didn't evolve"
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = PospischilNeuron()
         for _ in range(50000):
             n.step(10.0)
         for var in [n.v, n.m, n.h, n.n, n.p]:
             assert np.isfinite(var)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = PospischilNeuron()
         for _ in range(1000):
             n.step(10.0)
@@ -48,7 +58,7 @@ class TestPospischilIsolation:
         assert n.v == -70.0
         assert n.p == 0.0
 
-    def test_substep_integration(self):
+    def test_substep_integration(self) -> None:
         """Uses 4 sub-steps per step() call."""
         n = PospischilNeuron()
         v0 = n.v

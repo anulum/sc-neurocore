@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
+from tests.model_quadratic_if_support import (
+    _euler_candidate,
+    _exact_qif_candidate,
+    _run,
+)
 
 
 class TestQIFEdgeCases:
-    def test_quadratic_divergence(self):
+    """Divergence, the exact flow, a custom peak and stability of the QuadraticIFNeuron."""
+
+    def test_quadratic_divergence(self) -> None:
         """At I>0, the exact flow follows the quadratic positive feedback."""
         n = QuadraticIFNeuron()
         n.v = 0.5  # positive side
@@ -23,7 +34,8 @@ class TestQIFEdgeCases:
         assert not spiked
         assert n.v == pytest.approx(expected, abs=1e-12)
 
-    def test_exact_flow_separates_from_raw_euler(self):
+    def test_exact_flow_separates_from_raw_euler(self) -> None:
+        """Exact flow separates from raw Euler."""
         n = QuadraticIFNeuron(v=0.5, dt=0.1)
         exact, spiked = _exact_qif_candidate(n, 1.0)
         euler = _euler_candidate(n, 1.0)
@@ -32,13 +44,15 @@ class TestQIFEdgeCases:
         assert abs(exact - euler) > 1e-3
         assert n.v == pytest.approx(exact, abs=1e-12)
 
-    def test_exact_flow_resets_on_within_step_peak_crossing(self):
+    def test_exact_flow_resets_on_within_step_peak_crossing(self) -> None:
+        """Exact flow resets on within step peak crossing."""
         n = QuadraticIFNeuron(v=0.95, dt=0.5)
         spike = n.step(1.0)
         assert spike == 1
         assert n.v == n.v_reset
 
-    def test_custom_peak(self):
+    def test_custom_peak(self) -> None:
+        """A lower spike peak v_peak makes the neuron fire more often."""
         n = QuadraticIFNeuron(v_peak=0.5)
         # Lower peak → fires sooner
         s_low = len(_run(n, current=1.0, steps=10000))
@@ -47,13 +61,15 @@ class TestQIFEdgeCases:
         assert s_low > s_high
 
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = QuadraticIFNeuron(dt=dt)
         for _ in range(50000):
             n.step(1.0)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = QuadraticIFNeuron()

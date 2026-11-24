@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_pospischil_support import *  # noqa: F403
+from sc_neurocore.neurons.models.pospischil import (
+    PospischilNeuron,
+)
 
 
 class TestPospischilSpikeMechanism:
-    def test_upward_crossing_only(self):
+    """Spike detection of the PospischilNeuron on upward crossings."""
+
+    def test_upward_crossing_only(self) -> None:
+        """Upward crossing only."""
         n = PospischilNeuron()
         spike_count = 0
         for _ in range(50000):

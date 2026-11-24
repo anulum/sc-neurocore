@@ -10,14 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.pv_fast_spiking_neuron import (
+    PVFastSpikingNeuron,
+)
 
 
 class TestPVFastSpikingNetwork:
-    def test_population_size(self):
+    """The PVFastSpikingNeuron in a network."""
+
+    def test_population_size(self) -> None:
+        """A population holds the requested number of neurons."""
         assert Population(PVFastSpikingNeuron, n=8, label="pv").n == 8
 
-    def test_population_drives_spikes(self):
+    def test_population_drives_spikes(self) -> None:
+        """Population drives spikes."""
         pop = Population(PVFastSpikingNeuron, n=5, label="pv")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=6.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

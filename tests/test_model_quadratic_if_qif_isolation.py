@@ -10,33 +10,43 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
 
 
 class TestQIFIsolation:
-    def test_construction_defaults(self):
+    """The QuadraticIFNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = QuadraticIFNeuron()
         assert n.v == -1.0
         assert n.v_reset == -1.0
         assert n.v_peak == 1.0
         assert n.dt == 0.01
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert QuadraticIFNeuron().step(0.0) in (0, 1)
 
-    def test_voltage_evolves(self):
+    def test_voltage_evolves(self) -> None:
+        """One driven step changes the voltage."""
         n = QuadraticIFNeuron()
         v0 = n.v
         n.step(1.0)
         assert n.v != v0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = QuadraticIFNeuron()
         for _ in range(50000):
             n.step(1.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = QuadraticIFNeuron()
         for _ in range(100):
             n.step(2.0)

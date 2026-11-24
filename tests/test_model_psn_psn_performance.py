@@ -10,12 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_psn_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_resetting_psn import (
+    SCResettingParallelSpikingNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPSNPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the SCResettingParallelSpikingNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         import time
 
         n = SCResettingParallelSpikingNeuron()
@@ -29,7 +46,8 @@ class TestPSNPerformance:
             label="PSN isolation", observed_per_second=rate, strict_minimum_per_second=100_000.0
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         import time
 
         pop = Population(SCResettingParallelSpikingNeuron, n=20, label="bench")

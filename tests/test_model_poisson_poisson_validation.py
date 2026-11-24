@@ -10,21 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_poisson_support import *  # noqa: F403
+import math
+import numpy as np
+import numpy.typing as npt
+import pytest
+from collections.abc import (
+    Callable,
+)
+from sc_neurocore.neurons.models.poisson import (
+    PoissonNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 class TestPoissonValidation:
+    """Input and state validation of the PoissonNeuron."""
+
     @pytest.mark.parametrize("rate_hz", [-1.0, np.nan, np.inf, -np.inf])
     def test_rejects_negative_or_non_finite_baseline_rate(self, rate_hz: float) -> None:
+        """The model rejects negative or non-finite baseline rate."""
         with pytest.raises(ValueError, match="rate_hz"):
             PoissonNeuron(rate_hz=rate_hz)
 
     @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
     def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float) -> None:
+        """The model rejects non-positive or non-finite dt."""
         with pytest.raises(ValueError, match="dt_ms"):
             PoissonNeuron(dt_ms=dt_ms)
 
     def test_probability_uses_bounded_poisson_interval_transform(self) -> None:
+        """Probability uses bounded poisson interval transform."""
         neuron = PoissonNeuron(rate_hz=2000.0, dt_ms=1.0)
         assert neuron._probability(neuron.rate_hz) == pytest.approx(1.0 - math.exp(-2.0))
 
@@ -52,6 +69,7 @@ class TestPoissonValidation:
 
     @pytest.mark.parametrize("rate_override", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_rate_override(self, rate_override: float) -> None:
+        """The model rejects non-finite rate override."""
         n = PoissonNeuron(rate_hz=100.0)
         with pytest.raises(ValueError, match="rate_override"):
             n.step(rate_override=rate_override)
@@ -68,12 +86,14 @@ class TestPoissonValidation:
     def test_rejects_corrupted_runtime_rate_state_before_probability(
         self, field: str, value: float, message: str
     ) -> None:
+        """The model rejects corrupted runtime rate state before probability."""
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
         setattr(n, field, value)
         with pytest.raises(ValueError, match=message):
             n.step()
 
     def test_rejects_non_finite_interval_hazard_before_sampling(self) -> None:
+        """The model rejects non-finite interval hazard before sampling."""
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
         n.rate_hz = 1.0e308
         n.dt_ms = 1.0e308
@@ -81,6 +101,7 @@ class TestPoissonValidation:
             n.step()
 
     def test_high_rate_override_saturates_without_invalid_probability(self) -> None:
+        """High rate override saturates without invalid probability."""
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
         spikes = sum(n.step(rate_override=1.0e9) for _ in range(100))
         assert spikes == 100
@@ -127,6 +148,7 @@ class TestPoissonValidation:
         calls: list[str] = []
 
         def loader(backend: str) -> bool:
+            """Record the load attempt and report whether the backend is available."""
             calls.append(f"load:{backend}")
             return availability[backend]
 
@@ -136,6 +158,8 @@ class TestPoissonValidation:
             [float, float, int, int, float],
             tuple[npt.NDArray[np.uint8], int],
         ]:
+            """Return a fake native batch runner for the backend."""
+
             def run(
                 _rate_hz: float,
                 _dt_ms: float,
@@ -143,6 +167,7 @@ class TestPoissonValidation:
                 n_steps: int,
                 _rate_override: float,
             ) -> tuple[npt.NDArray[np.uint8], int]:
+                """Record the run and return an all-zero spike train with the state unchanged."""
                 calls.append(f"run:{backend}")
                 return np.zeros(n_steps, dtype=np.uint8), rng_state
 
@@ -190,6 +215,7 @@ class TestPoissonValidation:
             _n_steps: int,
             _rate_override: float,
         ) -> tuple[npt.NDArray[np.uint8], int]:
+            """Fail as a native backend would, before returning any state."""
             raise FloatingPointError("native failure")
 
         monkeypatch.setattr(backends, "_HAS_RUST", True)

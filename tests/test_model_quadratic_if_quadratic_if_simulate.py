@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_quadratic_if_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+)
 
 
 class TestQuadraticIFSimulate:
     """Engineering-verification surface for ``QuadraticIFNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace(self) -> None:
+        """Simulate python returns finite trace."""
         n = QuadraticIFNeuron()
         trace, spikes = n.simulate(1000, current=1.0, backend="python")
         assert trace.shape == (1000,)
@@ -25,6 +30,7 @@ class TestQuadraticIFSimulate:
         assert n.v == float(trace[-1])
 
     def test_simulate_rust_matches_python(self) -> None:
+        """Simulate rust matches python."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = QuadraticIFNeuron()
         rs = QuadraticIFNeuron()
@@ -34,6 +40,7 @@ class TestQuadraticIFSimulate:
         assert np.array_equal(tr_py, tr_rs)
 
     def test_simulate_rust_accepts_non_default_complete_contract(self) -> None:
+        """Simulate rust accepts non-default complete contract."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
         rs = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
