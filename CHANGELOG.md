@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 7 top-level NeuroML import test modules import their names
+  explicitly instead of through a suppressed star import, keep the
+  support's autouse fixture by importing it by name, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy.
+
 - The 50 top-level test modules of the Tsodyks-Markram, VIP,
   Wang-Buzsaki, Wendling, Wilson-Cowan and Yamada neurons and of the
   model zoo's network configurations import their names explicitly

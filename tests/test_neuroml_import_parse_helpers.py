@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.adapters.neuroml import (
+    import_neuroml,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 _IAF = (
     '<iafCell id="lif0" C="100pF" leakConductance="10nS" '
@@ -19,6 +29,8 @@ _IAF = (
 
 
 class TestAttributeStrictness:
+    """Cell attributes that cannot be read as stated are refused."""
+
     @pytest.mark.parametrize(
         ("attributes", "message"),
         [
@@ -59,11 +71,13 @@ class TestAttributeStrictness:
     def test_an_iaf_attribute_that_cannot_be_read_as_stated_is_refused(
         self, tmp_path: Path, attributes: str, message: str
     ) -> None:
+        """An iafCell attribute with a wrong or missing unit is refused with a named reason."""
         f = _write_nml(tmp_path / "bad.nml", f'<iafCell id="lif0" {attributes}/>', valid=False)
         with pytest.raises(ValueError, match=message):
             import_neuroml(f)
 
     def test_a_cell_without_an_id_is_refused(self, tmp_path: Path) -> None:
+        """A cell without an id is refused."""
         f = _write_nml(
             tmp_path / "anon.nml",
             '<iafTauCell tau="20ms" leakReversal="-65mV" thresh="-55mV" reset="-70mV"/>',
@@ -73,6 +87,7 @@ class TestAttributeStrictness:
             import_neuroml(f)
 
     def test_a_dimensionless_attribute_with_a_unit_is_refused(self, tmp_path: Path) -> None:
+        """A dimensionless Izhikevich attribute given a unit is refused."""
         f = _write_nml(
             tmp_path / "izh.nml",
             '<izhikevichCell id="izh" v0="-65mV" thresh="30mV" a="0.02ms" b="0.2" c="-65" d="8"/>',
@@ -82,6 +97,7 @@ class TestAttributeStrictness:
             import_neuroml(f)
 
     def test_an_adex_cell_needs_positive_capacitance_and_conductance(self, tmp_path: Path) -> None:
+        """An AdEx cell needs a positive capacitance and leak conductance."""
         f = _write_nml(
             tmp_path / "adex.nml",
             '<adExIaFCell id="adex0" C="281pF" gL="0nS" EL="-70.6mV" VT="-50.4mV" '
@@ -93,7 +109,10 @@ class TestAttributeStrictness:
 
 
 class TestDocumentStrictness:
+    """Document structure the importer refuses or ignores."""
+
     def test_elements_the_importer_does_not_model_are_refused(self, tmp_path: Path) -> None:
+        """Elements the importer does not model, such as networks, are refused."""
         f = _write_nml(
             tmp_path / "net.nml",
             _IAF
@@ -106,10 +125,12 @@ class TestDocumentStrictness:
             import_neuroml(f)
 
     def test_documentation_elements_are_ignored(self, tmp_path: Path) -> None:
+        """Documentation elements such as notes are ignored."""
         f = _write_nml(tmp_path / "doc.nml", "<notes>A single cell.</notes>" + _IAF)
         assert [cell.cell_id for cell in import_neuroml(f)] == ["lif0"]
 
     def test_the_root_must_be_a_neuroml_document(self, tmp_path: Path) -> None:
+        """A document whose root is not neuroml is refused."""
         f = tmp_path / "other.xml"
         f.write_text("<lems/>", encoding="utf-8")
         with pytest.raises(ValueError, match="root must be <neuroml>, got <lems>"):
@@ -117,9 +138,12 @@ class TestDocumentStrictness:
 
 
 class TestMappingNotes:
+    """The notes in which an imported cell reports what the mapping changes or loses."""
+
     def test_an_iaf_cell_names_its_timestep_voltage_shift_and_resistance(
         self, tmp_path: Path
     ) -> None:
+        """An imported iafCell notes its timestep, voltage shift and resistance."""
         (cell,) = import_neuroml(_write_nml(tmp_path / "lif.nml", _IAF))
         assert cell.notes == (
             "NeuroML cells carry no timestep; the model runs at dt=1.0 ms",
@@ -129,6 +153,7 @@ class TestMappingNotes:
         )
 
     def test_a_fractional_refractory_period_is_reported_as_rounded(self, tmp_path: Path) -> None:
+        """A refractory period that is not a whole number of steps is noted as rounded."""
         f = _write_nml(
             tmp_path / "ref.nml",
             '<iafTauRefCell id="r" tau="20ms" leakReversal="-65mV" thresh="-55mV" '
@@ -141,6 +166,7 @@ class TestMappingNotes:
     def test_a_2003_izhikevich_cell_names_what_the_model_has_no_place_for(
         self, tmp_path: Path
     ) -> None:
+        """A 2003 Izhikevich cell notes the attributes the model has no place for."""
         f = _write_nml(
             tmp_path / "izh.nml",
             '<izhikevichCell id="izh" v0="-70mV" thresh="25mV" a="0.02" b="0.2" c="-65" d="8"/>',
@@ -152,6 +178,7 @@ class TestMappingNotes:
     def test_an_adex_refractory_period_is_reported_only_when_it_is_lost(
         self, tmp_path: Path
     ) -> None:
+        """An AdEx refractory period is noted only when the mapping loses it."""
         body = (
             '<adExIaFCell id="{id}" C="281pF" gL="30nS" EL="-70.6mV" VT="-50.4mV" '
             'thresh="-40mV" reset="-70.6mV" delT="2mV" tauw="144ms" a="4nS" '

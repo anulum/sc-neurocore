@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.adapters.neuroml import (
+    import_neuroml,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from textwrap import (
+    dedent,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestImportAdEx:
-    def test_adex(self, tmp_path):
+    """Importing an AdEx integrate-and-fire cell."""
+
+    def test_adex(self, tmp_path: Path) -> None:
+        """An adExIaFCell imports with its parameters in model units."""
         f = _write_nml(
             tmp_path / "adex.nml",
             dedent("""\

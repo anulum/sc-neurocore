@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.adapters.neuroml import (
+    import_neuroml,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from textwrap import (
+    dedent,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestImportIAFCell:
-    def test_basic_lif(self, tmp_path):
+    """Importing the integrate-and-fire cell variants."""
+
+    def test_basic_lif(self, tmp_path: Path) -> None:
+        """An iafCell imports as a LIF cell with its parameters in model units."""
         f = _write_nml(
             tmp_path / "lif.nml",
             dedent("""\
@@ -30,7 +44,8 @@ class TestImportIAFCell:
         assert c.params["tau_mem"] == pytest.approx(10.0, rel=0.01)
         assert c.params["v_threshold"] == pytest.approx(10.0, rel=0.01)
 
-    def test_ref_cell(self, tmp_path):
+    def test_ref_cell(self, tmp_path: Path) -> None:
+        """An iafRefCell imports with its refractory period."""
         f = _write_nml(
             tmp_path / "ref.nml",
             dedent("""\
@@ -42,7 +57,8 @@ class TestImportIAFCell:
         cells = import_neuroml(f)
         assert cells[0].params["refractory_period"] == 5
 
-    def test_tau_cell(self, tmp_path):
+    def test_tau_cell(self, tmp_path: Path) -> None:
+        """An iafTauCell imports with its time constant."""
         f = _write_nml(
             tmp_path / "tau.nml",
             dedent("""\
@@ -53,7 +69,8 @@ class TestImportIAFCell:
         cells = import_neuroml(f)
         assert cells[0].params["tau_mem"] == 20.0
 
-    def test_tau_ref_cell_carries_refractory_period(self, tmp_path):
+    def test_tau_ref_cell_carries_refractory_period(self, tmp_path: Path) -> None:
+        """An iafTauRefCell imports with its time constant and refractory period."""
         f = _write_nml(
             tmp_path / "tau_ref.nml",
             dedent("""\

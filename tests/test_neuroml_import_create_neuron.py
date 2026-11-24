@@ -10,11 +10,33 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.adapters.neuroml import (
+    create_neuron,
+    import_neuroml,
+    ImportedCell,
+)
+from sc_neurocore.neurons.models.izhikevich2007 import (
+    Izhikevich2007Neuron,
+)
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from textwrap import (
+    dedent,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestCreateNeuron:
-    def test_lif_instantiation(self, tmp_path):
+    """Instantiating SC-NeuroCore neurons from imported NeuroML cells."""
+
+    def test_lif_instantiation(self, tmp_path: Path) -> None:
+        """An imported integrate-and-fire cell instantiates a LIF neuron."""
         f = _write_nml(
             tmp_path / "lif.nml",
             dedent("""\
@@ -27,7 +49,8 @@ class TestCreateNeuron:
         spike = neuron.step(100.0)
         assert spike in (0, 1)
 
-    def test_izhikevich_instantiation(self, tmp_path):
+    def test_izhikevich_instantiation(self, tmp_path: Path) -> None:
+        """An imported 2003 Izhikevich cell instantiates an Izhikevich neuron."""
         f = _write_nml(
             tmp_path / "izh.nml",
             dedent("""\
@@ -40,7 +63,8 @@ class TestCreateNeuron:
         spikes = sum(neuron.step(10.0) for _ in range(100))
         assert spikes > 0
 
-    def test_izhikevich2007_instantiation_preserves_biophysical_state(self, tmp_path):
+    def test_izhikevich2007_instantiation_preserves_biophysical_state(self, tmp_path: Path) -> None:
+        """An imported 2007 Izhikevich cell keeps its biophysical initial state."""
         f = _write_nml(
             tmp_path / "izh07.nml",
             dedent("""\
@@ -57,7 +81,8 @@ class TestCreateNeuron:
         assert isinstance(neuron, Izhikevich2007Neuron)
         assert neuron.get_state() == {"v": pytest.approx(-60.0), "u": pytest.approx(0.0)}
 
-    def test_adex_instantiation_adapts(self, tmp_path):
+    def test_adex_instantiation_adapts(self, tmp_path: Path) -> None:
+        """An imported AdEx cell maps onto AdExNeuron's own parameters and adapts."""
         # Regression: the imported AdEx parameters must map onto AdExNeuron's own
         # constructor names/units (previously they used NeuroML names and crashed
         # with TypeError), and the pA-unit spike-triggered adaptation must produce
@@ -82,7 +107,8 @@ class TestCreateNeuron:
         # Spike-frequency adaptation: later intervals exceed the first.
         assert intervals[-1] > intervals[0]
 
-    def test_unknown_cell_type_raises(self):
+    def test_unknown_cell_type_raises(self) -> None:
+        """An imported cell of an unknown type is refused."""
         bogus = ImportedCell(
             cell_id="mystery",
             cell_type="NotARealNeuron",

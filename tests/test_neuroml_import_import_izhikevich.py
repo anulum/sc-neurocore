@@ -10,11 +10,25 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.adapters.neuroml import (
+    import_neuroml,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from textwrap import (
+    dedent,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestImportIzhikevich:
-    def test_2003_dimensionless(self, tmp_path):
+    """Importing the 2003 and 2007 Izhikevich cells."""
+
+    def test_2003_dimensionless(self, tmp_path: Path) -> None:
+        """A 2003 izhikevichCell imports with its dimensionless parameters."""
         f = _write_nml(
             tmp_path / "izh.nml",
             dedent("""\
@@ -28,7 +42,8 @@ class TestImportIzhikevich:
         assert c.params["a"] == 0.02
         assert c.params["c"] == -65.0
 
-    def test_2007_biophysical(self, tmp_path):
+    def test_2007_biophysical(self, tmp_path: Path) -> None:
+        """A 2007 izhikevich2007Cell imports with its biophysical parameters."""
         f = _write_nml(
             tmp_path / "izh07.nml",
             dedent("""\

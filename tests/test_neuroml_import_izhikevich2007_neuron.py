@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models import (
+    Izhikevich2007Neuron,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestIzhikevich2007Neuron:
-    def test_euler_step_matches_biophysical_equations_below_threshold(self):
+    """The biophysical 2007 Izhikevich neuron the importer targets."""
+
+    def test_euler_step_matches_biophysical_equations_below_threshold(self) -> None:
+        """Below threshold one Euler step follows the biophysical equations."""
         neuron = Izhikevich2007Neuron(
             C=100.0,
             k=0.7,
@@ -38,7 +45,8 @@ class TestIzhikevich2007Neuron:
         assert neuron.v == pytest.approx(-61.0 + 0.1 * expected_dv)
         assert neuron.u == pytest.approx(2.0 + 0.1 * expected_du)
 
-    def test_spike_reset_uses_vpeak_c_and_d(self):
+    def test_spike_reset_uses_vpeak_c_and_d(self) -> None:
+        """A spike at vpeak resets v to c and adds d to u."""
         neuron = Izhikevich2007Neuron(
             C=100.0,
             k=0.7,

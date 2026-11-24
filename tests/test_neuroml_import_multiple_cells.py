@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.neuroml_import_support import *  # noqa: F403
+from pathlib import Path
+from sc_neurocore.adapters.neuroml import (
+    import_neuroml,
+)
+from tests.neuroml_import_support import (
+    _write_nml,
+)
+from textwrap import (
+    dedent,
+)
+from tests.neuroml_import_support import ensure_fixtures as ensure_fixtures
 
 
 class TestMultipleCells:
-    def test_mixed_file(self, tmp_path):
+    """Importing a document that holds several cells."""
+
+    def test_mixed_file(self, tmp_path: Path) -> None:
+        """A document with cells of three types imports all three, one of each type."""
         f = _write_nml(
             tmp_path / "mix.nml",
             dedent("""\

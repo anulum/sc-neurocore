@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4328
+expected_file_count = 4335
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17356,3 +17356,31 @@ rationale = "Exercise SC-NeuroCore: model zoo visual cortex v1."
 [[file]]
 path = "tests/test_model_zoo_working_memory_circuit.py"
 rationale = "Exercise SC-NeuroCore: model zoo working memory circuit."
+
+[[file]]
+path = "tests/test_neuroml_import_create_neuron.py"
+rationale = "Exercise SC-NeuroCore: neuroml import create neuron."
+
+[[file]]
+path = "tests/test_neuroml_import_import_ad_ex.py"
+rationale = "Exercise SC-NeuroCore: neuroml import import ad ex."
+
+[[file]]
+path = "tests/test_neuroml_import_import_iaf_cell.py"
+rationale = "Exercise SC-NeuroCore: neuroml import import iaf cell."
+
+[[file]]
+path = "tests/test_neuroml_import_import_izhikevich.py"
+rationale = "Exercise SC-NeuroCore: neuroml import import izhikevich."
+
+[[file]]
+path = "tests/test_neuroml_import_izhikevich2007_neuron.py"
+rationale = "Exercise SC-NeuroCore: neuroml import izhikevich2007 neuron."
+
+[[file]]
+path = "tests/test_neuroml_import_multiple_cells.py"
+rationale = "Exercise SC-NeuroCore: neuroml import multiple cells."
+
+[[file]]
+path = "tests/test_neuroml_import_parse_helpers.py"
+rationale = "Exercise SC-NeuroCore: neuroml import parse helpers."
