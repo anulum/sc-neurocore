@@ -1378,6 +1378,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The three top-level DOI-verification test modules import their names
+  explicitly instead of through a suppressed star import, take the
+  provenance tool from their support after its path guard, gain their
+  missing docstrings and are enrolled in the docstring policy.
+
 - The 21 top-level variability edge-case test modules import their names
   explicitly instead of through a suppressed star import, keep the
   support's fixture in their namespace through a redundant-alias import,

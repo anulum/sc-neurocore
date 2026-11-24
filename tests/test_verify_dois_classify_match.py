@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.verify_dois_support import *  # noqa: F403
+from typing import Any
+from tests.verify_dois_support import (
+    verify_dois,
+)
 
 
 class TestClassifyMatch:
+    """Classification of a claimed citation against a resolved DOI record."""
+
     @staticmethod
     def _outcome(**over: Any) -> dict[str, Any]:
         base = {"registry": "crossref", "resolves": True, "first_author": "jahr", "year": 1990}
@@ -21,6 +26,7 @@ class TestClassifyMatch:
         return base
 
     def test_exact_match_is_verified(self) -> None:
+        """Matching author and year verify the citation."""
         result = verify_dois.classify_match("jahr", 1990, self._outcome())
         assert result == {
             "author_match": True,
@@ -30,6 +36,7 @@ class TestClassifyMatch:
         }
 
     def test_translation_verifies_on_resolution_despite_author_year_mismatch(self) -> None:
+        """A declared translation verifies on resolution alone and records the author and year mismatch."""
         # A declared translation deliberately keeps the original work's author and
         # year (Lapicque 1907) while the DOI points to the translator's paper
         # (Brunel 2007); resolution alone verifies it, and the literal mismatch is
@@ -43,6 +50,7 @@ class TestClassifyMatch:
         assert result["verified"] is True
 
     def test_translation_still_requires_the_doi_to_resolve(self) -> None:
+        """A declared translation whose DOI does not resolve is not verified."""
         # The translation flag relaxes author/year, never the fabrication catcher.
         result = verify_dois.classify_match(
             "lapicque", 1907, {"registry": "crossref", "resolves": False}, translation=True
@@ -50,6 +58,7 @@ class TestClassifyMatch:
         assert result["verified"] is False
 
     def test_year_within_one_still_verifies(self) -> None:
+        """A year one off the registered year still verifies."""
         # 2007 claimed, 2006 registered (a book's print-vs-online date) -> still verified.
         result = verify_dois.classify_match(
             "izhikevich", 2007, self._outcome(first_author="izhikevich", year=2006)
@@ -58,11 +67,13 @@ class TestClassifyMatch:
         assert result["verified"] is True
 
     def test_year_off_by_two_fails(self) -> None:
+        """A year two off the registered year fails."""
         result = verify_dois.classify_match("jahr", 1990, self._outcome(year=1992))
         assert result["year_match"] is False
         assert result["verified"] is False
 
     def test_wrong_paper_fails_on_author_even_if_it_resolves(self) -> None:
+        """A resolving DOI with another first author fails."""
         # ConnorStevens class: the DOI resolved, but to an unrelated author -> not verified.
         result = verify_dois.classify_match(
             "connor", 1971, self._outcome(first_author="hall", year=1971)
@@ -71,17 +82,20 @@ class TestClassifyMatch:
         assert result["verified"] is False
 
     def test_non_resolving_doi_is_never_verified(self) -> None:
+        """A DOI that does not resolve is never verified."""
         result = verify_dois.classify_match(
             "jahr", 1990, {"registry": "crossref", "resolves": False}
         )
         assert result["verified"] is False
 
     def test_missing_claimed_year_fails_closed(self) -> None:
+        """A missing claimed year fails closed."""
         result = verify_dois.classify_match("jahr", None, self._outcome())
         assert result["year_match"] is False
         assert result["verified"] is False
 
     def test_missing_claimed_author_fails_closed(self) -> None:
+        """A missing claimed author fails closed."""
         result = verify_dois.classify_match("", 1990, self._outcome())
         assert result["author_match"] is False
         assert result["verified"] is False

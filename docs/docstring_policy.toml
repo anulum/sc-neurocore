@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4636
+expected_file_count = 4639
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18588,3 +18588,15 @@ rationale = "Exercise SC-NeuroCore: variability edge cases zero timestep guards.
 [[file]]
 path = "tests/variability_edge_cases_support.py"
 rationale = "Provide the Python-fallback fixture, the seeded Bernoulli train and the Rust flag of the variability edge-case tests."
+
+[[file]]
+path = "tests/test_verify_dois_classify_match.py"
+rationale = "Exercise SC-NeuroCore: verify dois classify match."
+
+[[file]]
+path = "tests/test_verify_dois_fold_surname.py"
+rationale = "Exercise SC-NeuroCore: verify dois fold surname."
+
+[[file]]
+path = "tests/test_verify_dois_resolve_doi_routing.py"
+rationale = "Exercise SC-NeuroCore: verify dois resolve doi routing."

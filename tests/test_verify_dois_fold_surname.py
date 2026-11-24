@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.verify_dois_support import *  # noqa: F403
+import pytest
+from tests.verify_dois_support import (
+    verify_dois,
+)
 
 
 class TestFoldSurname:
+    """Folding author strings to an ASCII family-name token."""
+
     @pytest.mark.parametrize(
         ("raw", "expected"),
         [
@@ -28,7 +33,9 @@ class TestFoldSurname:
         ],
     )
     def test_folds_to_ascii_family_token(self, raw: str, expected: str) -> None:
+        """Each author string folds to its lower-case ASCII family token."""
         assert verify_dois.fold_surname(raw) == expected
 
     def test_diacritic_and_plain_fold_identically(self) -> None:
+        """A surname with and without its diacritic folds to the same token."""
         assert verify_dois.fold_surname("Llinás, R.") == verify_dois.fold_surname("Llinas, R.")

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.verify_dois_support import *  # noqa: F403
+from typing import Any
+import pytest
+from tests.verify_dois_support import (
+    verify_dois,
+)
 
 
 class TestResolveDoiRouting:
+    """Routing a DOI to the registry that resolves it."""
+
     def test_arxiv_doi_routes_to_datacite(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An arXiv DOI is resolved through DataCite and never sent to Crossref."""
         seen: dict[str, str] = {}
 
         def fake_datacite(doi: str) -> dict[str, Any]:
@@ -37,6 +44,7 @@ class TestResolveDoiRouting:
         assert seen["registry"] == "datacite"
 
     def test_plain_doi_routes_to_crossref(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A plain DOI is resolved through Crossref."""
         monkeypatch.setattr(
             verify_dois,
             "_resolve_crossref",
@@ -47,11 +55,13 @@ class TestResolveDoiRouting:
         assert outcome["resolves"] is True
 
     def test_not_found_marks_unresolved(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A DOI the registry does not know is marked unresolved."""
         monkeypatch.setattr(verify_dois, "_resolve_crossref", lambda doi: {"__not_found__": True})
         outcome = verify_dois.resolve_doi("10.9999/does.not.exist")
         assert outcome["resolves"] is False
 
     def test_network_error_marks_unresolved(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A network error marks the DOI unresolved with a network-or-parse error."""
         monkeypatch.setattr(verify_dois, "_resolve_crossref", lambda doi: None)
         outcome = verify_dois.resolve_doi("10.1000/x")
         assert outcome["resolves"] is False
