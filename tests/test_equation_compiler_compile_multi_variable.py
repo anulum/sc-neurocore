@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestCompileMultiVariable:
-    def test_fitzhugh_nagumo(self):
+    """Compiling multi-variable equations."""
+
+    def test_fitzhugh_nagumo(self) -> None:
+        """FitzHugh-Nagumo compiles with a register per variable."""
         neuron = EquationNeuron(
             equations={
                 "v": "v - v**3 / 3 - w + I",
@@ -35,7 +43,8 @@ class TestCompileMultiVariable:
         assert "v_next" in verilog
         assert "w_next" in verilog
 
-    def test_izhikevich(self):
+    def test_izhikevich(self) -> None:
+        """Izhikevich compiles with a register per variable."""
         neuron = EquationNeuron(
             equations={
                 "v": "0.04 * v**2 + 5 * v + 140 - u + I",

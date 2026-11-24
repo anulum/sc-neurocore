@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.descriptor_tiers_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.descriptor_tiers import (
+    science_tier,
+)
+from sc_neurocore.neurons.model_descriptor import (
+    descriptor_completeness_tier,
+    parse_model_descriptor,
+)
+from tests.descriptor_tiers_support import (
+    _s0_payload,
+    _s3_payload,
+    _validated_payload,
+)
 
 
 @pytest.mark.parametrize("expected", [0, 1, 2, 3])

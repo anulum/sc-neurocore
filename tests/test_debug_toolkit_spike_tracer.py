@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.debug_toolkit_support import *  # noqa: F403
+from sc_neurocore.debug.tracer import (
+    ExecutionTrace,
+)
+from tests.debug_toolkit_support import (
+    _MockNetwork,
+)
 
 
 class TestSpikeTracer:
-    def test_run(self):
+    """Recording a network run as a trace."""
+
+    def test_run(self) -> None:
+        """A run records every neuron at every step."""
         from sc_neurocore.debug.tracer import SpikeTracer
 
         net = _MockNetwork()

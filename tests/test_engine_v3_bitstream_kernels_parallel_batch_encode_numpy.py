@@ -10,25 +10,29 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_bitstream_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestParallelBatchEncodeNumpy:
     """Tests for parallel batch_encode_numpy."""
 
     def test_shape_and_dtype(self) -> None:
+        """Packed streams have the asked shape and uint64 words."""
         probs = np.array([0.3, 0.5, 0.7], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
         assert packed.shape == (3, 16)
         assert packed.dtype == np.uint64
 
     def test_deterministic(self) -> None:
+        """The same seed packs the same streams."""
         probs = np.array([0.5, 0.5], dtype=np.float64)
         p1 = v3.batch_encode_numpy(probs, length=256, seed=42)
         p2 = v3.batch_encode_numpy(probs, length=256, seed=42)
         np.testing.assert_array_equal(p1, p2)
 
     def test_different_seed(self) -> None:
+        """Different seeds pack different streams."""
         probs = np.array([0.5], dtype=np.float64)
         p1 = v3.batch_encode_numpy(probs, length=1024, seed=1)
         p2 = v3.batch_encode_numpy(probs, length=1024, seed=2)
@@ -53,6 +57,7 @@ class TestParallelBatchEncodeNumpy:
         assert all(0.0 <= v <= 4.0 for v in out)
 
     def test_empty_probs(self) -> None:
+        """No probabilities pack no streams."""
         probs = np.array([], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=64, seed=42)
         assert packed.shape[0] == 0

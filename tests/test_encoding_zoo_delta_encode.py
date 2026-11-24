@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    delta_encode,
+)
 
 
 class TestDeltaEncode:
-    def test_1d(self):
+    """Delta encoding of changes."""
+
+    def test_1d(self) -> None:
+        """A change in a 1-D signal fires a spike."""
         signal = np.array([0.0, 0.0, 0.5, 0.5, 1.0])
         s = delta_encode(signal, threshold=0.3)
         assert s.shape == (5, 1)
         assert s[2, 0] == 1  # change 0→0.5
 
-    def test_2d(self):
+    def test_2d(self) -> None:
+        """A 2-D signal gives the asked raster shape."""
         signal = np.random.rand(20, 4)
         s = delta_encode(signal, threshold=0.1)
         assert s.shape == (20, 4)

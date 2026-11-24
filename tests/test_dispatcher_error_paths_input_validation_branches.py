@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel.go import (
+    wilson_cowan as go_wilson,
+)
 
 
 class TestInputValidationBranches:
     """The shape-mismatch ValueError paths in every dispatcher."""
 
     def test_go_wilson_stim_mismatch(self) -> None:
+        """A Go Wilson-Cowan call with mismatched stimuli gives an empty trace."""
         # Wilson-Cowan has only `ext_input`; there is no stim1/stim2 in its
         # signature. This test is the degenerate case: empty array works.
         # Requires the compiled Go cdylib — skip in environments where

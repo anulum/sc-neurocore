@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    rank_order_encode,
+)
 
 
 class TestRankOrderEncode:
-    def test_shape(self):
+    """Rank-order encoding."""
+
+    def test_shape(self) -> None:
+        """Rank-order encoding gives the asked raster shape."""
         s = rank_order_encode(np.array([0.3, 0.9, 0.1, 0.7]), T=10)
         assert s.shape == (10, 4)
 
-    def test_order(self):
+    def test_order(self) -> None:
+        """A larger value fires no later."""
         s = rank_order_encode(np.array([0.1, 0.9, 0.5]), T=10)
         t_high = np.argmax(s[:, 1])
         t_low = np.argmax(s[:, 0])

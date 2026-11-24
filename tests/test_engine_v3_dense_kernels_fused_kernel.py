@@ -10,7 +10,8 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestFusedKernel:
@@ -29,6 +30,7 @@ class TestFusedKernel:
         np.testing.assert_array_equal(fused, materialized)
 
     def test_fused_determinism(self) -> None:
+        """The fused kernel is deterministic."""
         layer = v3.DenseLayer(16, 8, 1024, seed=42)
         inputs = [0.5] * 16
         out1 = layer.forward_fast(inputs, seed=777)
@@ -36,6 +38,7 @@ class TestFusedKernel:
         np.testing.assert_array_equal(out1, out2)
 
     def test_fused_statistical_correctness(self) -> None:
+        """A stronger input gives a larger output."""
         layer = v3.DenseLayer(16, 8, 2048, seed=42)
         low = np.mean(layer.forward_fast([0.1] * 16, seed=42))
         high = np.mean(layer.forward_fast([0.9] * 16, seed=42))

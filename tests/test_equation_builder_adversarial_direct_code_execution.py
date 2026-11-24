@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestDirectCodeExecution:
     """Attempts to call dangerous builtins directly."""
 
     def test_import_os(self) -> None:
+        """An import is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "__import__('os').system('id')"},
@@ -24,6 +28,7 @@ class TestDirectCodeExecution:
             )
 
     def test_eval_nested(self) -> None:
+        """A nested eval is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "eval('1+1')"},
@@ -31,6 +36,7 @@ class TestDirectCodeExecution:
             )
 
     def test_exec_call(self) -> None:
+        """An exec call is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "exec('v=1')"},
@@ -38,6 +44,7 @@ class TestDirectCodeExecution:
             )
 
     def test_compile_call(self) -> None:
+        """A compile call is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "compile('v=1','','exec')"},
@@ -45,6 +52,7 @@ class TestDirectCodeExecution:
             )
 
     def test_open_file(self) -> None:
+        """Opening a file is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "open('/etc/passwd').read()"},
@@ -52,6 +60,7 @@ class TestDirectCodeExecution:
             )
 
     def test_breakpoint_call(self) -> None:
+        """A breakpoint call is rejected."""
         with pytest.raises(ValueError, match="Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "breakpoint()"},

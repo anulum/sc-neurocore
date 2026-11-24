@@ -13,7 +13,12 @@ from __future__ import annotations
 import pytest
 
 from sc_neurocore.compiler.rtl_refusals import RtlCompileRefusal
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestEdgeCaseCoverage:

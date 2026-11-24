@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestBuiltinIntrospection:
@@ -21,6 +24,7 @@ class TestBuiltinIntrospection:
         ["getattr", "setattr", "delattr", "globals", "locals", "vars", "dir", "type"],
     )
     def test_blocked_introspection_func(self, func_name: str) -> None:
+        """Introspection functions are blocked."""
         with pytest.raises(ValueError, match="Blocked"):
             EquationNeuron(
                 equations={"v": f"{func_name}(v)"},

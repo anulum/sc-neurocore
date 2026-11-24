@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.edge_crossing_detection_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.edge_crossing_detection_support import (
+    _fhn_hand,
+    _fhn_schema,
+    _verilog_spike_count_q1616,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

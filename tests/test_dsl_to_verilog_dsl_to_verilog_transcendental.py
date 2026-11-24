@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.dsl_to_verilog_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.dsl_to_verilog_support import (
+    _TRANSCENDENTAL_MODELS,
+)
 
 
 class TestDSLToVerilogTranscendental:

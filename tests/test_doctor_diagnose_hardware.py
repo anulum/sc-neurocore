@@ -10,21 +10,31 @@
 
 from __future__ import annotations
 
-from tests.doctor_support import *  # noqa: F403
+from sc_neurocore.doctor import (
+    diagnose,
+)
+from sc_neurocore.doctor.diagnose import (
+    Severity,
+)
 
 
 class TestDiagnoseHardware:
-    def test_small_network_fits(self):
+    """Diagnosing the hardware fit."""
+
+    def test_small_network_fits(self) -> None:
+        """A small network gets a fit finding."""
         r = diagnose([(4, 2)], target="artix7")
         hw = [f for f in r.findings if f.category.startswith("hardware")]
         assert len(hw) >= 1
 
-    def test_overprovisioned(self):
+    def test_overprovisioned(self) -> None:
+        """An oversized device is reported."""
         r = diagnose([(4, 2)], target="artix7")
         over = [f for f in r.findings if f.category == "hardware_overprovisioned"]
         assert len(over) >= 1
 
-    def test_large_network_exceeds(self):
+    def test_large_network_exceeds(self) -> None:
+        """A network too large for the device is critical."""
         r = diagnose([(256, 128), (128, 64)], target="ice40", bitstream_length=512)
         hw = [f for f in r.findings if f.category == "hardware_fit"]
         assert any(f.severity == Severity.CRITICAL for f in hw)

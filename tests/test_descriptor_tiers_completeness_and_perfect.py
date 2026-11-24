@@ -10,7 +10,20 @@
 
 from __future__ import annotations
 
-from tests.descriptor_tiers_support import *  # noqa: F403
+from sc_neurocore.neurons.descriptor_tiers import (
+    completeness_tiers,
+    CompletenessTiers,
+    is_perfect,
+    SILICON_RUNGS,
+)
+from sc_neurocore.neurons.model_descriptor import (
+    parse_model_descriptor,
+)
+from tests.descriptor_tiers_support import (
+    _perfect_payload,
+    _silicon,
+    _validated_payload,
+)
 
 
 def test_completeness_tiers_reports_both_axes_and_labels() -> None:

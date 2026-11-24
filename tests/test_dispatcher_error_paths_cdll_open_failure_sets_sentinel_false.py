@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import ctypes
+import pytest
+from pathlib import (
+    Path,
+)
 
 
 class TestCDLLOpenFailureSetsSentinelFalse:
-    """Importing the dispatcher when the `.so` cannot be loaded sets the
-    `_HAS_*` sentinel to False rather than crashing the interpreter."""
+    """Importing a dispatcher whose `.so` cannot be loaded.
+
+    The `_HAS_*` sentinel becomes False rather than the interpreter crashing.
+    """
 
     def test_missing_so_on_nonexistent_path_sets_false(
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
-        """Simulate a missing shared library by pointing CDLL at a
-        nonexistent path and re-importing the module."""
+        """Simulate a missing shared library.
+
+        CDLL is pointed at a nonexistent path and the module is re-imported.
+        """
         missing_lib_dir = tmp_path / "missing_accel"
         missing_lib_dir.mkdir()
         # Patch Path.resolve().parent to point at the missing-lib directory so the

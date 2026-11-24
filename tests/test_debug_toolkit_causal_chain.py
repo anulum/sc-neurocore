@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.debug_toolkit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.debug.analyzer import (
+    causal_chain,
+    CausalEvent,
+)
+from tests.debug_toolkit_support import (
+    _make_trace,
+)
 
 
 class TestCausalChain:
-    def test_single_spike(self):
+    """Tracing the causal chain of a spike."""
+
+    def test_single_spike(self) -> None:
+        """A lone spike gives a chain that starts at its step."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[5, 2] = 1
         currents = np.random.randn(10, 5) * 0.01
@@ -27,7 +37,8 @@ class TestCausalChain:
         assert chain[0].neuron_id == 2
         assert chain[0].spiked is True
 
-    def test_causal_chain_with_predecessors(self):
+    def test_causal_chain_with_predecessors(self) -> None:
+        """A spike with two predecessors gives at least three events."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[5, 2] = 1
         spikes[4, 0] = 1
@@ -38,14 +49,16 @@ class TestCausalChain:
         chain = causal_chain(trace, neuron_id=2, timestep=5, max_depth=5)
         assert len(chain) >= 3  # target + 2 predecessors
 
-    def test_max_depth_respected(self):
+    def test_max_depth_respected(self) -> None:
+        """The chain stops at its maximum depth."""
         spikes = np.ones((10, 5), dtype=np.int8)
         trace = _make_trace(spikes=spikes)
         chain = causal_chain(trace, neuron_id=0, timestep=9, max_depth=2)
         timesteps_in_chain = {e.timestep for e in chain}
         assert min(timesteps_in_chain) >= 7
 
-    def test_early_stop_at_time_zero(self):
+    def test_early_stop_at_time_zero(self) -> None:
+        """A spike at step 0 has no predecessor."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[0, 0] = 1
         trace = _make_trace(spikes=spikes)

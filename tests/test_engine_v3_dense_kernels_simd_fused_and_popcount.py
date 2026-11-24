@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestSIMDFusedAndPopcount:
     """Verify SIMD fused AND+popcount preserves dense behavior."""
 
     def test_dense_forward_unchanged(self) -> None:
+        """The dense forward pass is deterministic and in range."""
         layer = v3.DenseLayer(8, 4, 1024, seed=42)
         inputs = [0.1, 0.3, 0.5, 0.7, 0.2, 0.4, 0.6, 0.8]
         out1 = layer.forward(inputs, seed=123)
@@ -25,6 +27,7 @@ class TestSIMDFusedAndPopcount:
         assert all(0.0 <= x <= 8.0 for x in out1)
 
     def test_dense_prepacked_unchanged(self) -> None:
+        """The NumPy prepacked path matches the legacy path."""
         layer = v3.DenseLayer(8, 4, 1024, seed=42)
         probs = np.array([0.2, 0.4, 0.6, 0.8, 0.1, 0.3, 0.5, 0.7], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=99)
@@ -33,6 +36,7 @@ class TestSIMDFusedAndPopcount:
         np.testing.assert_allclose(out_numpy, out_legacy)
 
     def test_determinism(self) -> None:
+        """The forward pass is deterministic."""
         layer = v3.DenseLayer(16, 8, 1024, seed=42)
         inputs = [0.5] * 16
         out1 = layer.forward_fast(inputs, seed=77)

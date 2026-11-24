@@ -10,14 +10,21 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    phase_encode,
+)
 
 
 class TestPhaseEncode:
-    def test_shape(self):
+    """Phase encoding of values."""
+
+    def test_shape(self) -> None:
+        """Phase encoding gives the asked raster shape."""
         s = phase_encode(np.array([0.5, 0.3]), T=16, n_phases=4)
         assert s.shape == (16, 2)
 
-    def test_periodic(self):
+    def test_periodic(self) -> None:
+        """A phase-coded value fires periodically."""
         s = phase_encode(np.array([0.5]), T=24, n_phases=8)
         assert s[:, 0].sum() >= 3  # fires every 8 steps at phase 4

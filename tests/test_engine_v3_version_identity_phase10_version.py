@@ -10,9 +10,14 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_version_identity_support import *  # noqa: F403
+from tests.engine_v3_version_identity_support import (
+    _assert_engine_version_matches_core,
+)
 
 
 class TestPhase10Version:
+    """The engine version seen from phase 10."""
+
     def test_version(self) -> None:
+        """The engine version matches the core package version."""
         _assert_engine_version_matches_core()

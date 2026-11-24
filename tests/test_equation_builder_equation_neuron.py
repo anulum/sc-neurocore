@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
 
 
 class TestEquationNeuron:
@@ -100,7 +102,9 @@ class TestEquationNeuron:
 
         for bad in (0, -3, True, False, 2.0):
             with pytest.raises(ValueError, match="substeps must be a positive integer"):
-                EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, dt=1.0, substeps=bad)  # type: ignore[arg-type]
+                EquationNeuron(
+                    equations={"v": "I"}, state={"v": 0.0}, dt=1.0, substeps=cast(Any, bad)
+                )
 
     def test_macrostep_advances_n_integration_substeps(self) -> None:
         """One macro ``step()`` advances the state by ``substeps`` inner integration steps."""

@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_bitstream_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestFastBernoulli:
     """Tests for byte-threshold Bernoulli in forward_fast and batch_encode_numpy."""
 
     def test_forward_fast_deterministic(self) -> None:
+        """The fast forward pass is deterministic."""
         layer = v3.DenseLayer(16, 8, 1024, seed=42)
         inputs = [0.5] * 16
         out1 = layer.forward_fast(inputs, seed=100)
@@ -24,6 +26,7 @@ class TestFastBernoulli:
         np.testing.assert_array_equal(out1, out2)
 
     def test_forward_fast_output_range(self) -> None:
+        """The fast forward outputs are not negative."""
         layer = v3.DenseLayer(8, 4, 1024, seed=42)
         inputs = [0.3] * 8
         out = layer.forward_fast(inputs, seed=42)
@@ -37,6 +40,7 @@ class TestFastBernoulli:
         assert high_out > low_out, "Higher input probs should give higher output"
 
     def test_batch_encode_numpy_deterministic(self) -> None:
+        """Batch encoding is deterministic."""
         probs = np.array([0.5, 0.5], dtype=np.float64)
         p1 = v3.batch_encode_numpy(probs, length=256, seed=42)
         p2 = v3.batch_encode_numpy(probs, length=256, seed=42)

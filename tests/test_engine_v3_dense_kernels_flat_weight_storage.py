@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestFlatWeightStorage:
     """Verify flat packed weight storage keeps API behavior unchanged."""
 
     def test_weight_roundtrip(self) -> None:
+        """Weights round-trip through flat storage."""
         layer = v3.DenseLayer(4, 3, 256, seed=42)
         weights = np.array(
             [
@@ -31,6 +33,7 @@ class TestFlatWeightStorage:
         np.testing.assert_allclose(got, weights)
 
     def test_forward_equivalence_vs_prepacked(self) -> None:
+        """The fast path matches the prepacked path."""
         layer = v3.DenseLayer(8, 4, 512, seed=42)
         probs = np.array([0.2, 0.4, 0.6, 0.8, 0.1, 0.3, 0.5, 0.7], dtype=np.float64)
         seed = 31415

@@ -10,7 +10,8 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestRayonThreshold:

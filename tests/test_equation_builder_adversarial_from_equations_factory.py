@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    from_equations,
+)
 
 
 class TestFromEquationsFactory:
     """Verify the from_equations() factory also rejects adversarial input."""
 
     def test_import_in_ode(self) -> None:
+        """An import inside an ODE is rejected."""
         with pytest.raises(ValueError, match="Blocked|Cannot parse"):
             from_equations(
                 "dv/dt = __import__('os').system('id')",
@@ -26,6 +30,7 @@ class TestFromEquationsFactory:
             )
 
     def test_dunder_in_threshold(self) -> None:
+        """A dunder in the threshold is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked"):
             from_equations(
                 "dv/dt = -v / 10 + I",
@@ -34,6 +39,7 @@ class TestFromEquationsFactory:
             )
 
     def test_dunder_in_reset(self) -> None:
+        """A dunder in the reset is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked"):
             from_equations(
                 "dv/dt = -v / 10 + I",

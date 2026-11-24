@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.distillation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.distillation import (
+    SelfDistiller,
+)
 
 
 class TestSelfDistiller:
-    def test_generate_targets(self):
+    """Self-distillation targets."""
+
+    def test_generate_targets(self) -> None:
+        """Targets form a probability distribution."""
         sd = SelfDistiller(T_teacher=16, T_student=4)
         targets = sd.generate_targets(lambda x, T: np.random.randn(10), np.zeros(8))
         assert targets.shape == (10,)

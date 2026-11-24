@@ -10,12 +10,23 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import ctypes
+import numpy as np
+import pytest
+from tests.dispatcher_error_paths_support import (
+    CTYPES_DISPATCHERS,
+)
+from types import (
+    ModuleType,
+)
 
 
 class TestNonZeroReturnRaisesRuntimeError:
-    """When the C shim returns non-zero, the dispatcher raises
-    ``RuntimeError`` with the offending return code in the message."""
+    """A C shim that returns non-zero.
+
+    The dispatcher raises ``RuntimeError`` with the offending return code in
+    the message.
+    """
 
     @pytest.mark.parametrize("module,fn_name,_label", CTYPES_DISPATCHERS)
     def test_nonzero_return(
@@ -25,6 +36,8 @@ class TestNonZeroReturnRaisesRuntimeError:
         fn_name: str,
         _label: str,
     ) -> None:
+        """Each dispatcher reports a non-zero return code."""
+
         class FakeCShim:
             argtypes: list[object] = []
             restype: object = ctypes.c_int

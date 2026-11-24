@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+    from_equations,
+)
 
 
 class TestTestbenchGenerator:
-    def test_generates_testbench(self):
+    """Generating Verilog testbenches."""
+
+    def test_generates_testbench(self) -> None:
+        """A testbench module is generated with a dump."""
         from sc_neurocore.compiler.equation_compiler import generate_testbench
 
         neuron = from_equations(
@@ -34,7 +40,8 @@ class TestTestbenchGenerator:
         assert "v_out" in tb
         assert "uut" in tb
 
-    def test_testbench_multi_variable(self):
+    def test_testbench_multi_variable(self) -> None:
+        """The testbench outputs every variable."""
         from sc_neurocore.compiler.equation_compiler import generate_testbench
 
         neuron = EquationNeuron(
@@ -46,7 +53,7 @@ class TestTestbenchGenerator:
         assert "v_out" in tb
         assert "w_out" in tb
 
-    def test_cycles_per_step_scales_run_length(self):
+    def test_cycles_per_step_scales_run_length(self) -> None:
         """A latency-aware testbench runs n_steps × cycles_per_step clocks for a pipelined DUT."""
         from sc_neurocore.compiler.equation_compiler import generate_testbench
 
@@ -63,7 +70,7 @@ class TestTestbenchGenerator:
         assert "repeat (300)" in tb3
         assert "spikes in 300 cycles" in tb3
 
-    def test_cycles_per_step_must_be_positive(self):
+    def test_cycles_per_step_must_be_positive(self) -> None:
         """cycles_per_step below 1 is rejected rather than emitting a zero-length run."""
         import pytest
 

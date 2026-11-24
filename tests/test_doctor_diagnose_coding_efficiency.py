@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from tests.doctor_support import *  # noqa: F403
+from sc_neurocore.doctor import (
+    diagnose,
+)
 
 
 class TestDiagnoseCodingEfficiency:
-    def test_overprovisioned_coding(self):
+    """Diagnosing the bitstream coding."""
+
+    def test_overprovisioned_coding(self) -> None:
+        """Over-long bitstreams are reported."""
         r = diagnose([(10, 8)], target="artix7", bitstream_length=512)
         cod = [f for f in r.findings if f.category == "coding_overprovisioned"]
         assert len(cod) >= 1
 
-    def test_underprovisioned_coding(self):
+    def test_underprovisioned_coding(self) -> None:
+        """Too-short bitstreams are reported."""
         layers = [(64, 64), (64, 64), (64, 64), (64, 32)]
         r = diagnose(layers, target="artix7", bitstream_length=32)
         cod = [f for f in r.findings if f.category == "coding_underprovisioned"]

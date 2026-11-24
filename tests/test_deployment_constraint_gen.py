@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.deployment_support import *  # noqa: F403
+from sc_neurocore.compiler.deployment import (
+    generate_constraints,
+)
 
 
 class TestConstraintGen:

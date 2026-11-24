@@ -10,7 +10,28 @@
 
 from __future__ import annotations
 
-from tests.deployment_support import *  # noqa: F403
+import pytest
+import shutil
+import subprocess
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.deployment import (
+    generate_host_driver,
+)
+from sc_neurocore.compiler.live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+)
+from tests.deployment_support import (
+    _GeneratedLiveHostDriverFactory,
+    _GeneratedUnsafeHostDriverFactory,
+    LIF_PARAMS,
+)
+from typing import (
+    Any,
+    cast,
+)
 
 
 class TestHostDriverGen:
@@ -78,7 +99,7 @@ class TestHostDriverGen:
     def test_invalid_language(self) -> None:
         """Should raise on invalid language."""
         with pytest.raises(ValueError, match="Unsupported language"):
-            generate_host_driver("sc_lif", LIF_PARAMS, language="rust")  # type: ignore[arg-type]
+            generate_host_driver("sc_lif", LIF_PARAMS, language=cast(Any, "rust"))
 
     def test_python_driver_sanitises_module_and_parameter_identifiers(self) -> None:
         """Generated Python drivers should be valid for unsafe source names."""

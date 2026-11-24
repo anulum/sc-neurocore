@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestDunderChainEscapes:
     """Attempts to escape the sandbox via dunder attribute chains."""
 
     def test_class_bases_subclasses(self) -> None:
+        """A class-bases escape is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "().__class__.__bases__[0].__subclasses__()"},
@@ -24,6 +28,7 @@ class TestDunderChainEscapes:
             )
 
     def test_class_mro(self) -> None:
+        """An MRO escape is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "().__class__.__mro__[1]"},
@@ -31,6 +36,7 @@ class TestDunderChainEscapes:
             )
 
     def test_globals_access(self) -> None:
+        """Access to globals is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "(lambda: 0).__globals__"},
@@ -38,6 +44,7 @@ class TestDunderChainEscapes:
             )
 
     def test_code_access(self) -> None:
+        """Access to code objects is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "(lambda: 0).__code__"},
@@ -45,6 +52,7 @@ class TestDunderChainEscapes:
             )
 
     def test_reduce_access(self) -> None:
+        """Access to reduce is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "().__reduce__()"},
@@ -52,6 +60,7 @@ class TestDunderChainEscapes:
             )
 
     def test_dict_access(self) -> None:
+        """Access to dunder dict is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "().__class__.__dict__"},
@@ -59,6 +68,7 @@ class TestDunderChainEscapes:
             )
 
     def test_init_subclass(self) -> None:
+        """Access to init_subclass is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "type.__init_subclass__()"},
@@ -66,6 +76,7 @@ class TestDunderChainEscapes:
             )
 
     def test_builtins_access(self) -> None:
+        """Access to builtins is rejected."""
         with pytest.raises(ValueError, match="Dunder|Blocked|Unsafe"):
             EquationNeuron(
                 equations={"v": "__builtins__"},

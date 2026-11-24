@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestASTDepthExhaustion:
     """Attempts to exhaust the parser with deeply nested expressions."""
 
     def test_depth_limit_exceeded(self) -> None:
+        """An expression past the AST depth limit is rejected."""
         # Build a deeply nested expression: (((((...(v)...)))))
         depth = 30
         expr = "v"
@@ -29,6 +33,7 @@ class TestASTDepthExhaustion:
             )
 
     def test_depth_just_under_limit_accepted(self) -> None:
+        """An expression just under the limit is accepted."""
         # A moderately nested expression should still work
         depth = 8
         expr = "v"

@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.deployment_support import *  # noqa: F403
+from sc_neurocore.compiler.deployment import (
+    estimate_resources,
+)
+from tests.deployment_support import (
+    STUB_VERILOG,
+)
 
 
 class TestResourceEstimation:

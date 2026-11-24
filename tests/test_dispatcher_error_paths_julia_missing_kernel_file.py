@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
 
 
 class TestJuliaMissingKernelFile:
     """Julia loader helpers fail closed when a maintained kernel is absent."""
 
     def test_jansen_rit_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A missing Jansen-Rit kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
         if not mod._HAS_JULIA_NEURONS:
@@ -27,6 +31,7 @@ class TestJuliaMissingKernelFile:
             mod._ensure_jansen_rit_loaded()
 
     def test_wong_wang_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A missing Wong-Wang kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
         if not mod._HAS_JULIA_NEURONS:
@@ -39,6 +44,7 @@ class TestJuliaMissingKernelFile:
             mod._ensure_wong_wang_loaded()
 
     def test_wilson_cowan_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A missing Wilson-Cowan kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
         if not mod._HAS_JULIA_NEURONS:

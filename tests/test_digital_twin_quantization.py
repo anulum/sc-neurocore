@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.digital_twin_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.digital_twin import (
+    FPGAMismatchModel,
+)
 
 
 class TestQuantization:
-    def test_q88_quantization(self):
+    """Fixed-point quantisation in the digital twin."""
+
+    def test_q88_quantization(self) -> None:
+        """Values land on the Q8.8 grid."""
         model = FPGAMismatchModel(quantization_bits=16)
         x = np.array([0.123456789, -0.987654321, 0.5])
         q = model.quantize(x)
@@ -24,11 +30,13 @@ class TestQuantization:
             remainder = abs(val) % step
             assert remainder < 1e-10 or abs(remainder - step) < 1e-10
 
-    def test_quantize_preserves_shape(self):
+    def test_quantize_preserves_shape(self) -> None:
+        """Quantisation keeps the shape."""
         model = FPGAMismatchModel()
         x = np.random.randn(5, 3)
         assert model.quantize(x).shape == (5, 3)
 
-    def test_quantize_zero(self):
+    def test_quantize_zero(self) -> None:
+        """Zero quantises to zero."""
         model = FPGAMismatchModel()
         assert model.quantize(np.array([0.0]))[0] == 0.0

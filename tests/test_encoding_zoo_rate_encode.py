@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    rate_encode,
+)
 
 
 class TestRateEncode:
-    def test_shape(self):
+    """Rate encoding of values."""
+
+    def test_shape(self) -> None:
+        """Rate encoding gives an int8 raster of the asked shape."""
         s = rate_encode(np.array([0.5, 0.3, 0.8]), T=20)
         assert s.shape == (20, 3)
         assert s.dtype == np.int8
 
-    def test_rate_correlation(self):
+    def test_rate_correlation(self) -> None:
+        """A larger value fires more often."""
         s = rate_encode(np.array([0.1, 0.9]), T=1000, seed=42)
         assert s[:, 1].mean() > s[:, 0].mean()

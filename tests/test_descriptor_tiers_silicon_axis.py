@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.descriptor_tiers_support import *  # noqa: F403
+from sc_neurocore.neurons.descriptor_tiers import (
+    silicon_tier,
+)
+from sc_neurocore.neurons.model_descriptor import (
+    parse_model_descriptor,
+)
+from tests.descriptor_tiers_support import (
+    _silicon,
+    _validated_payload,
+)
 
 
 def test_silicon_tier_none_without_compile_clean_rtl() -> None:

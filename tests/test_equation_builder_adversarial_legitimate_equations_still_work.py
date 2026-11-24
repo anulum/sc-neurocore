@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+    from_equations,
+)
 
 
 class TestLegitimateEquationsStillWork:
     """Ensure the hardening does not break legitimate neuron equations."""
 
     def test_lif_equation(self) -> None:
+        """A LIF equation still integrates."""
         neuron = from_equations(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",
@@ -29,6 +33,7 @@ class TestLegitimateEquationsStillWork:
         assert neuron.state["v"] != -65.0  # Should have integrated
 
     def test_fitzhugh_nagumo(self) -> None:
+        """A FitzHugh-Nagumo system still integrates."""
         neuron = EquationNeuron(
             equations={
                 "v": "v - v**3 / 3 - w + I",
@@ -43,6 +48,7 @@ class TestLegitimateEquationsStillWork:
         assert neuron.state["v"] != -1.0
 
     def test_transcendental_functions(self) -> None:
+        """Transcendental functions still integrate."""
         neuron = EquationNeuron(
             equations={"v": "-v + exp(-v) + tanh(v) + sin(v)"},
             state={"v": 1.0},
@@ -53,6 +59,7 @@ class TestLegitimateEquationsStillWork:
         assert neuron.state["v"] != 1.0
 
     def test_conditional_expression(self) -> None:
+        """A conditional expression still integrates."""
         neuron = EquationNeuron(
             equations={"v": "v + 1 if v < 10 else -v"},
             state={"v": 0.0},

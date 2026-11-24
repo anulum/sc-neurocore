@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.energy_accounting_support import *  # noqa: F403
+from sc_neurocore.energy_accounting.accountant import (
+    HARDWARE_COSTS,
+)
 
 
 class TestHardwareCosts:
-    def test_builtin_targets(self):
+    """The built-in hardware cost models."""
+
+    def test_builtin_targets(self) -> None:
+        """At least five targets are built in, Loihi 2 and Akida among them."""
         assert len(HARDWARE_COSTS) >= 5
         assert "loihi2" in HARDWARE_COSTS
         assert "akida" in HARDWARE_COSTS

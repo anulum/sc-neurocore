@@ -6,9 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rejects_and_hints) from former test_dpi_neuron_backends.py
 
+"""Tests of the DPI backend rejections and install hints."""
+
 from __future__ import annotations
 
-from tests.dpi_neuron_backends_support import *  # noqa: F403
+import ctypes
+import math
+import numpy as np
+import pytest
+import subprocess
+import sys
+from pathlib import (
+    Path,
+)
+from sc_neurocore.accel import (
+    dpi_neuron as backends,
+)
+from sc_neurocore.neurons.models.dpi_neuron import (
+    DPINeuron,
+)
+from tests.dpi_neuron_backends_support import (
+    _factory_values,
+    _FULL_CONTRACT_BACKENDS,
+    _invoke_full_contract,
+    _REPOSITORY,
+)
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))

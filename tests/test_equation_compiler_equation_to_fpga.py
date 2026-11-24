@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    equation_to_fpga,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from tests.equation_compiler_support import (
+    UNIT_REGISTRY,
+)
 
 
 class TestEquationToFPGA:
-    def test_one_liner(self):
+    """The one-line equation-to-FPGA path."""
+
+    def test_one_liner(self) -> None:
+        """One call gives a spiking neuron and its module."""
         neuron, verilog = equation_to_fpga(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",
@@ -29,7 +40,8 @@ class TestEquationToFPGA:
         spikes = sum(neuron.step(I=30.0) for _ in range(200))
         assert spikes > 0
 
-    def test_multi_eq_one_liner(self):
+    def test_multi_eq_one_liner(self) -> None:
+        """Several equations give a register per variable."""
         neuron, verilog = equation_to_fpga(
             "dv/dt = -(v - v_rest) / tau + I",
             "dw/dt = (v - w) / tau_w",
@@ -40,7 +52,8 @@ class TestEquationToFPGA:
         assert "v_reg" in verilog
         assert "w_reg" in verilog
 
-    def test_strict_units_one_liner_export_path(self):
+    def test_strict_units_one_liner_export_path(self) -> None:
+        """The strict-units path names its constants."""
         neuron, verilog = equation_to_fpga(
             "dv/dt = (-(v - E_L) + R * I) / tau_m",
             threshold="v > v_threshold",

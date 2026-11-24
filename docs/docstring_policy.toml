@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4786
+expected_file_count = 4875
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -5136,10 +5136,6 @@ rationale = "Shared test support with maintained docstrings and strict typing (R
 
 [[file]]
 path = "tests/cosim_lif_support.py"
-rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
-
-[[file]]
-path = "tests/equation_builder_support.py"
 rationale = "Shared test support with maintained docstrings and strict typing (RIGOR QA debt)."
 
 [[file]]
@@ -19188,3 +19184,363 @@ rationale = "Exercise SC-NeuroCore: dcls tent kernel single forward."
 [[file]]
 path = "tests/test_dcls_tent_kernel_tent_gate.py"
 rationale = "Exercise SC-NeuroCore: dcls tent kernel tent gate."
+
+[[file]]
+path = "src/sc_neurocore/debug/tracer.py"
+rationale = "Exercise SC-NeuroCore: tracer."
+
+[[file]]
+path = "tests/debug_toolkit_support.py"
+rationale = "Provide the names, trace maker and network stand-ins shared by the debug-toolkit tests."
+
+[[file]]
+path = "tests/dpi_neuron_backends_support.py"
+rationale = "Provide the names and contract helpers shared by the DPI backend parity and rejection tests."
+
+[[file]]
+path = "tests/test_debug_toolkit_causal_chain.py"
+rationale = "Exercise SC-NeuroCore: debug toolkit causal chain."
+
+[[file]]
+path = "tests/test_debug_toolkit_execution_trace.py"
+rationale = "Exercise SC-NeuroCore: debug toolkit execution trace."
+
+[[file]]
+path = "tests/test_debug_toolkit_find_divergence.py"
+rationale = "Exercise SC-NeuroCore: debug toolkit find divergence."
+
+[[file]]
+path = "tests/test_debug_toolkit_spike_diff.py"
+rationale = "Exercise SC-NeuroCore: debug toolkit spike diff."
+
+[[file]]
+path = "tests/test_debug_toolkit_spike_tracer.py"
+rationale = "Exercise SC-NeuroCore: debug toolkit spike tracer."
+
+[[file]]
+path = "tests/test_delta_spike_codec_delta_spike_codec_compression.py"
+rationale = "Exercise SC-NeuroCore: delta spike codec delta spike codec compression."
+
+[[file]]
+path = "tests/test_delta_spike_codec_delta_spike_codec_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: delta spike codec delta spike codec edge cases."
+
+[[file]]
+path = "tests/test_delta_spike_codec_delta_spike_codec_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: delta spike codec delta spike codec roundtrip."
+
+[[file]]
+path = "tests/test_deployment_cocotb_gen.py"
+rationale = "Exercise SC-NeuroCore: deployment cocotb gen."
+
+[[file]]
+path = "tests/test_deployment_constraint_gen.py"
+rationale = "Exercise SC-NeuroCore: deployment constraint gen."
+
+[[file]]
+path = "tests/test_deployment_host_driver_gen.py"
+rationale = "Exercise SC-NeuroCore: deployment host driver gen."
+
+[[file]]
+path = "tests/test_deployment_resource_estimation.py"
+rationale = "Exercise SC-NeuroCore: deployment resource estimation."
+
+[[file]]
+path = "tests/test_digital_twin_network_application.py"
+rationale = "Exercise SC-NeuroCore: digital twin network application."
+
+[[file]]
+path = "tests/test_digital_twin_perturbations.py"
+rationale = "Exercise SC-NeuroCore: digital twin perturbations."
+
+[[file]]
+path = "tests/test_digital_twin_quantization.py"
+rationale = "Exercise SC-NeuroCore: digital twin quantization."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_cdll_open_failure_sets_sentinel_false.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths cdll open failure sets sentinel false."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_input_validation_branches.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths input validation branches."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_julia_missing_kernel_file.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths julia missing kernel file."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_julia_without_juliacall_installed.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths julia without juliacall installed."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_library_not_built_raises_import_error.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths library not built raises import error."
+
+[[file]]
+path = "tests/test_dispatcher_error_paths_non_zero_return_raises_runtime_error.py"
+rationale = "Exercise SC-NeuroCore: dispatcher error paths non zero return raises runtime error."
+
+[[file]]
+path = "tests/test_distillation_self_distiller.py"
+rationale = "Exercise SC-NeuroCore: distillation self distiller."
+
+[[file]]
+path = "tests/test_distillation_temporal_distillation_loss.py"
+rationale = "Exercise SC-NeuroCore: distillation temporal distillation loss."
+
+[[file]]
+path = "tests/test_doctor_diagnose_architecture.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose architecture."
+
+[[file]]
+path = "tests/test_doctor_diagnose_coding_efficiency.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose coding efficiency."
+
+[[file]]
+path = "tests/test_doctor_diagnose_hardware.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose hardware."
+
+[[file]]
+path = "tests/test_doctor_diagnose_integration.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose integration."
+
+[[file]]
+path = "tests/test_doctor_diagnose_spike_rates.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose spike rates."
+
+[[file]]
+path = "tests/test_doctor_diagnose_weights.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnose weights."
+
+[[file]]
+path = "tests/test_doctor_diagnostic_report.py"
+rationale = "Exercise SC-NeuroCore: doctor diagnostic report."
+
+[[file]]
+path = "tests/test_dpi_neuron_backends_auto_dispatch.py"
+rationale = "Exercise SC-NeuroCore: dpi neuron backends auto dispatch."
+
+[[file]]
+path = "tests/test_dpi_neuron_backends_backend_parity.py"
+rationale = "Exercise SC-NeuroCore: dpi neuron backends backend parity."
+
+[[file]]
+path = "tests/test_dpi_neuron_backends_rejects_and_hints.py"
+rationale = "Exercise SC-NeuroCore: dpi neuron backends rejects and hints."
+
+[[file]]
+path = "tests/test_dsl_to_verilog_dsl_to_verilog_compilation.py"
+rationale = "Exercise SC-NeuroCore: dsl to verilog dsl to verilog compilation."
+
+[[file]]
+path = "tests/test_dsl_to_verilog_dsl_to_verilog_transcendental.py"
+rationale = "Exercise SC-NeuroCore: dsl to verilog dsl to verilog transcendental."
+
+[[file]]
+path = "tests/test_dsl_to_verilog_i_verilog_simulation.py"
+rationale = "Exercise SC-NeuroCore: dsl to verilog i verilog simulation."
+
+[[file]]
+path = "tests/test_dsl_to_verilog_testbench_generation.py"
+rationale = "Exercise SC-NeuroCore: dsl to verilog testbench generation."
+
+[[file]]
+path = "tests/test_edge_crossing_detection_edge_detection_cosim.py"
+rationale = "Exercise SC-NeuroCore: edge crossing detection edge detection cosim."
+
+[[file]]
+path = "tests/test_edge_crossing_detection_edge_detection_emitter.py"
+rationale = "Exercise SC-NeuroCore: edge crossing detection edge detection emitter."
+
+[[file]]
+path = "tests/test_edge_crossing_detection_edge_detection_runner.py"
+rationale = "Exercise SC-NeuroCore: edge crossing detection edge detection runner."
+
+[[file]]
+path = "tests/test_encoding_zoo_burst_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo burst encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_delta_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo delta encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_encoding_optimizer.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo encoding optimizer."
+
+[[file]]
+path = "tests/test_encoding_zoo_latency_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo latency encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_phase_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo phase encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_rank_order_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo rank order encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_rate_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo rate encode."
+
+[[file]]
+path = "tests/test_encoding_zoo_sigma_delta_encode.py"
+rationale = "Exercise SC-NeuroCore: encoding zoo sigma delta encode."
+
+[[file]]
+path = "tests/test_energy_accounting_energy_accountant.py"
+rationale = "Exercise SC-NeuroCore: energy accounting energy accountant."
+
+[[file]]
+path = "tests/test_energy_accounting_hardware_costs.py"
+rationale = "Exercise SC-NeuroCore: energy accounting hardware costs."
+
+[[file]]
+path = "tests/test_engine_v3_bitstream_kernels_fast_bernoulli.py"
+rationale = "Exercise SC-NeuroCore: engine v3 bitstream kernels fast bernoulli."
+
+[[file]]
+path = "tests/test_engine_v3_bitstream_kernels_fast_prng.py"
+rationale = "Exercise SC-NeuroCore: engine v3 bitstream kernels fast prng."
+
+[[file]]
+path = "tests/test_engine_v3_bitstream_kernels_parallel_batch_encode_numpy.py"
+rationale = "Exercise SC-NeuroCore: engine v3 bitstream kernels parallel batch encode numpy."
+
+[[file]]
+path = "tests/test_engine_v3_bitstream_kernels_simd_bernoulli_encode.py"
+rationale = "Exercise SC-NeuroCore: engine v3 bitstream kernels simd bernoulli encode."
+
+[[file]]
+path = "tests/test_engine_v3_bitstream_kernels_simd_pack.py"
+rationale = "Exercise SC-NeuroCore: engine v3 bitstream kernels simd pack."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_batch_forward.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels batch forward."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_flat_weight_storage.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels flat weight storage."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_forward_numpy.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels forward numpy."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_fused_and_popcount.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels fused and popcount."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_fused_kernel.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels fused kernel."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_rayon_threshold.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels rayon threshold."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_simd_fused_and_popcount.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels simd fused and popcount."
+
+[[file]]
+path = "tests/test_engine_v3_dense_kernels_zero_copy_prepacked_numpy.py"
+rationale = "Exercise SC-NeuroCore: engine v3 dense kernels zero copy prepacked numpy."
+
+[[file]]
+path = "tests/test_engine_v3_lif_kernels_branchless_lif.py"
+rationale = "Exercise SC-NeuroCore: engine v3 lif kernels branchless lif."
+
+[[file]]
+path = "tests/test_engine_v3_lif_kernels_multi_neuron_batch.py"
+rationale = "Exercise SC-NeuroCore: engine v3 lif kernels multi neuron batch."
+
+[[file]]
+path = "tests/test_engine_v3_lif_kernels_zero_alloc_lif.py"
+rationale = "Exercise SC-NeuroCore: engine v3 lif kernels zero alloc lif."
+
+[[file]]
+path = "tests/test_engine_v3_version_identity_phase10_version.py"
+rationale = "Exercise SC-NeuroCore: engine v3 version identity phase10 version."
+
+[[file]]
+path = "tests/test_engine_v3_version_identity_phase11_version.py"
+rationale = "Exercise SC-NeuroCore: engine v3 version identity phase11 version."
+
+[[file]]
+path = "tests/test_engine_v3_version_identity_phase12_version.py"
+rationale = "Exercise SC-NeuroCore: engine v3 version identity phase12 version."
+
+[[file]]
+path = "tests/test_engine_v3_version_identity_phase8_version.py"
+rationale = "Exercise SC-NeuroCore: engine v3 version identity phase8 version."
+
+[[file]]
+path = "tests/test_engine_v3_version_identity_phase9_version.py"
+rationale = "Exercise SC-NeuroCore: engine v3 version identity phase9 version."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_ast_depth_exhaustion.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial ast depth exhaustion."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_builtin_introspection.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial builtin introspection."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_direct_code_execution.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial direct code execution."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_dunder_chain_escapes.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial dunder chain escapes."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_from_equations_factory.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial from equations factory."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_legitimate_equations_still_work.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial legitimate equations still work."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_module_injection.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial module injection."
+
+[[file]]
+path = "tests/test_equation_builder_adversarial_unsafe_ast_nodes.py"
+rationale = "Exercise SC-NeuroCore: equation builder adversarial unsafe ast nodes."
+
+[[file]]
+path = "tests/test_equation_compiler_compile_lif.py"
+rationale = "Exercise SC-NeuroCore: equation compiler compile lif."
+
+[[file]]
+path = "tests/test_equation_compiler_compile_multi_variable.py"
+rationale = "Exercise SC-NeuroCore: equation compiler compile multi variable."
+
+[[file]]
+path = "tests/test_equation_compiler_compile_no_threshold.py"
+rationale = "Exercise SC-NeuroCore: equation compiler compile no threshold."
+
+[[file]]
+path = "tests/test_equation_compiler_dt_underflow_guard.py"
+rationale = "Exercise SC-NeuroCore: equation compiler dt underflow guard."
+
+[[file]]
+path = "tests/test_equation_compiler_equation_to_fpga.py"
+rationale = "Exercise SC-NeuroCore: equation compiler equation to fpga."
+
+[[file]]
+path = "tests/test_equation_compiler_testbench_generator.py"
+rationale = "Exercise SC-NeuroCore: equation compiler testbench generator."
+
+[[file]]
+path = "tests/test_equation_compiler_transcendental_functions.py"
+rationale = "Exercise SC-NeuroCore: equation compiler transcendental functions."
+
+[[file]]
+path = "tests/test_equation_compiler_verilog_syntax.py"
+rationale = "Exercise SC-NeuroCore: equation compiler verilog syntax."

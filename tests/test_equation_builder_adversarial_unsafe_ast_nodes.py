@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestUnsafeASTNodes:
     """Attempts to use AST node types not in the whitelist."""
 
     def test_lambda(self) -> None:
+        """A lambda is rejected."""
         with pytest.raises(ValueError, match="Unsafe AST node"):
             EquationNeuron(
                 equations={"v": "(lambda: 0)()"},
@@ -24,6 +28,7 @@ class TestUnsafeASTNodes:
             )
 
     def test_generator_expression(self) -> None:
+        """A generator expression is rejected."""
         with pytest.raises(ValueError, match="Unsafe AST node"):
             EquationNeuron(
                 equations={"v": "sum(x for x in [1,2,3])"},
@@ -31,6 +36,7 @@ class TestUnsafeASTNodes:
             )
 
     def test_dict_comprehension(self) -> None:
+        """A dict comprehension is rejected."""
         with pytest.raises(ValueError, match="Unsafe AST node|Invalid equation"):
             EquationNeuron(
                 equations={"v": "{k: v for k, v in [(1,2)]}"},
@@ -38,6 +44,7 @@ class TestUnsafeASTNodes:
             )
 
     def test_starred(self) -> None:
+        """A starred expression is rejected."""
         with pytest.raises(ValueError, match="Unsafe AST node|Invalid equation"):
             EquationNeuron(
                 equations={"v": "*[1,2,3]"},

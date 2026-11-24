@@ -10,23 +10,31 @@
 
 from __future__ import annotations
 
-from tests.distillation_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.distillation import (
+    TemporalDistillationLoss,
+)
 
 
 class TestTemporalDistillationLoss:
-    def test_compute(self):
+    """The temporal distillation loss."""
+
+    def test_compute(self) -> None:
+        """The loss reports its total."""
         loss_fn = TemporalDistillationLoss(temperature=3.0, alpha=0.5)
         result = loss_fn.compute(np.random.randn(10), np.random.randn(10))
         assert "total_loss" in result
 
-    def test_with_targets(self):
+    def test_with_targets(self) -> None:
+        """With targets the task loss is positive."""
         loss_fn = TemporalDistillationLoss()
         targets = np.zeros(5)
         targets[2] = 1.0
         result = loss_fn.compute(np.random.randn(5), np.random.randn(5), targets)
         assert result["task_loss"] > 0
 
-    def test_temporal(self):
+    def test_temporal(self) -> None:
+        """The temporal distillation loss is not negative."""
         loss_fn = TemporalDistillationLoss()
         result = loss_fn.compute(np.random.randn(8, 5), np.random.randn(8, 5))
         assert result["distill_loss"] >= 0

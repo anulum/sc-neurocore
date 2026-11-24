@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.dsl_to_verilog_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.equation_compiler import (
+    generate_testbench,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.dsl_to_verilog_support import (
+    _SIMPLE_MODELS,
+)
 
 
 class TestTestbenchGeneration:
@@ -18,6 +27,7 @@ class TestTestbenchGeneration:
 
     @pytest.mark.parametrize("model_name", _SIMPLE_MODELS)
     def test_testbench_generates(self, model_name: str) -> None:
+        """A testbench is generated with a dump and spike count."""
         neuron = UniversalNeuron.from_schema(model_name)
         eq_neuron = neuron.to_equation_neuron()
         module_name = f"sc_{model_name}"
@@ -30,6 +40,7 @@ class TestTestbenchGeneration:
 
     @pytest.mark.parametrize("model_name", _SIMPLE_MODELS)
     def test_testbench_has_state_monitors(self, model_name: str) -> None:
+        """The testbench monitors each state variable."""
         neuron = UniversalNeuron.from_schema(model_name)
         eq_neuron = neuron.to_equation_neuron()
         tb = generate_testbench(eq_neuron, module_name=f"sc_{model_name}")

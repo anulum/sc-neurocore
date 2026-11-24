@@ -6,9 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_debug_toolkit.py
 
+"""Shared names, a trace maker and network stand-ins for the debug-toolkit tests."""
+
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from sc_neurocore.debug.tracer import ExecutionTrace
 from sc_neurocore.debug.analyzer import (
@@ -20,7 +23,13 @@ from sc_neurocore.debug.analyzer import (
 )
 
 
-def _make_trace(n_neurons=5, n_steps=10, spikes=None, voltages=None, currents=None):
+def _make_trace(
+    n_neurons: int = 5,
+    n_steps: int = 10,
+    spikes: npt.NDArray[np.int8] | None = None,
+    voltages: npt.NDArray[np.float64] | None = None,
+    currents: npt.NDArray[np.float64] | None = None,
+) -> ExecutionTrace:
     if spikes is None:
         spikes = np.zeros((n_steps, n_neurons), dtype=np.int8)
     if voltages is None:
@@ -39,31 +48,37 @@ def _make_trace(n_neurons=5, n_steps=10, spikes=None, voltages=None, currents=No
 
 
 class _MockPop:
-    def __init__(self, label, n):
+    def __init__(self, label: str, n: int) -> None:
         self.label = label
         self.n = n
         self.voltages = np.zeros(n)
 
-    def step_all(self, currents):
+    def step_all(self, currents: npt.NDArray[np.float64]) -> npt.NDArray[np.int8]:
         self.voltages = currents * 0.1
         return (currents > 0.5).astype(np.int8)
 
 
 class _MockNetwork:
-    def __init__(self):
+    def __init__(self) -> None:
         self.populations = [_MockPop("exc", 3), _MockPop("inh", 2)]
 
-    def _apply_stimuli(self, pop_currents, t, dt):
+    def _apply_stimuli(
+        self, pop_currents: dict[int, npt.NDArray[np.float64]], t: float, dt: float
+    ) -> None:
         for pid in pop_currents:
             pop_currents[pid] += 1.0
 
-    def _apply_projections(self, pop_currents, last_spikes):
+    def _apply_projections(
+        self,
+        pop_currents: dict[int, npt.NDArray[np.float64]],
+        last_spikes: dict[int, npt.NDArray[np.int8]],
+    ) -> None:
         pass
 
-    def _record(self, pop, spikes, t, dt):
+    def _record(self, pop: _MockPop, spikes: npt.NDArray[np.int8], t: float, dt: float) -> None:
         pass
 
-    def _update_plasticity(self, last_spikes):
+    def _update_plasticity(self, last_spikes: dict[int, npt.NDArray[np.int8]]) -> None:
         pass
 
 

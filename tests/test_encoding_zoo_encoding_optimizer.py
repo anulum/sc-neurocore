@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    EncodingOptimizer,
+)
 
 
 class TestEncodingOptimizer:
-    def test_profile(self):
+    """Choosing an encoding for data."""
+
+    def test_profile(self) -> None:
+        """The profile reports mean, deviation and sparsity."""
         opt = EncodingOptimizer(T=16)
         data = np.random.rand(100)
         stats = opt.profile(data)
@@ -23,13 +29,15 @@ class TestEncodingOptimizer:
         assert "sparsity" in stats
         assert "dynamic_range" in stats
 
-    def test_profile_2d(self):
+    def test_profile_2d(self) -> None:
+        """A 2-D profile reports temporal autocorrelation."""
         opt = EncodingOptimizer(T=16)
         data = np.random.rand(50, 10)
         stats = opt.profile(data)
         assert "temporal_autocorrelation" in stats
 
-    def test_recommend(self):
+    def test_recommend(self) -> None:
+        """At least five encodings are ranked by score."""
         opt = EncodingOptimizer(T=16)
         data = np.random.rand(32)
         recs = opt.recommend(data)
@@ -40,14 +48,16 @@ class TestEncodingOptimizer:
             assert r.encoding != ""
             assert r.reason != ""
 
-    def test_recommend_sparse_data(self):
+    def test_recommend_sparse_data(self) -> None:
+        """Sparse data still gets five recommendations."""
         opt = EncodingOptimizer(T=16)
         data = np.zeros(100)
         data[:5] = 1.0
         recs = opt.recommend(data)
         assert len(recs) >= 5
 
-    def test_unnormalized_data(self):
+    def test_unnormalized_data(self) -> None:
+        """Unnormalised data still gets five recommendations."""
         opt = EncodingOptimizer(T=16)
         data = np.random.rand(32) * 100 - 50
         recs = opt.recommend(data)

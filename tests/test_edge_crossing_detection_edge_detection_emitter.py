@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.edge_crossing_detection_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.edge_crossing_detection_support import (
+    _fhn_schema,
+    _wrapped_phase_schema,
+)
 
 
 class TestEdgeDetectionEmitter:

@@ -6,11 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_dpi_neuron_backends.py
 
+"""Shared names and helpers for the end-to-end DPI backend parity and rejection tests."""
+
 from __future__ import annotations
 
-"""End-to-end parity and rejection contracts for every native DPI lane."""
-
 from collections.abc import Callable
+from typing import TypeVar
 
 
 import ctypes
@@ -163,7 +164,10 @@ def _assert_state_parity(actual: npt.ArrayLike, expected: npt.ArrayLike) -> None
     np.testing.assert_allclose(actual_array, expected_array, rtol=0.0, atol=_STATE_ATOL)
 
 
-def _invoke_full_contract(runner: Callable[..., object]) -> object:
+_R = TypeVar("_R")
+
+
+def _invoke_full_contract(runner: Callable[..., _R]) -> _R:
     """Invoke one configurable native runner with the public 20-field ABI."""
     return runner(*_factory_values(), 1, 0.0)
 

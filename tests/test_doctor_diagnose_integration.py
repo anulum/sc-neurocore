@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.doctor_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.doctor import (
+    diagnose,
+    DiagnosticReport,
+)
 
 
 class TestDiagnoseIntegration:
-    def test_full_diagnosis(self):
+    """A complete network diagnosis."""
+
+    def test_full_diagnosis(self) -> None:
+        """A full diagnosis scores between 0 and 100."""
         layers = [(64, 32), (32, 10)]
         weights = [np.random.randn(32, 64) * 0.3, np.random.randn(10, 32) * 0.3]
         rates = [np.random.uniform(0.05, 0.3, 32), np.random.uniform(0.05, 0.3, 10)]

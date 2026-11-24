@@ -10,7 +10,8 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestFusedAndPopcount:
@@ -26,6 +27,7 @@ class TestFusedAndPopcount:
         assert all(v >= 0.0 for v in out1)
 
     def test_prepacked_deterministic(self) -> None:
+        """The prepacked forward pass is deterministic."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         probs = np.array([0.3, 0.5, 0.7, 0.9], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=55)

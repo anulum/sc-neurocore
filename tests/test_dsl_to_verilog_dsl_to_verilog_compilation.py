@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.dsl_to_verilog_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.dsl_to_verilog_support import (
+    _SIMPLE_MODELS,
+)
 
 
 class TestDSLToVerilogCompilation:
@@ -52,16 +58,19 @@ class TestDSLToVerilogCompilation:
         assert "module sc_lif" in verilog
 
     def test_izhikevich_module_name(self) -> None:
+        """An Izhikevich model compiles to its named module."""
         neuron = UniversalNeuron.from_schema("izhikevich")
         verilog = neuron.to_verilog()
         assert "module sc_izhikevich" in verilog
 
     def test_custom_module_name(self) -> None:
+        """A custom module name is used."""
         neuron = UniversalNeuron.from_schema("lif")
         verilog = neuron.to_verilog(module_name="my_custom_lif")
         assert "module my_custom_lif" in verilog
 
     def test_lif_has_reset_logic(self) -> None:
+        """A LIF model drives its spike output."""
         neuron = UniversalNeuron.from_schema("lif")
         verilog = neuron.to_verilog()
         # Should have threshold comparison and reset assignment

@@ -10,64 +10,84 @@
 
 from __future__ import annotations
 
-from tests.energy_accounting_support import *  # noqa: F403
+import pytest
+from sc_neurocore.energy_accounting import (
+    EnergyAccountant,
+    HardwareCostModel,
+)
+from sc_neurocore.energy_accounting.accountant import (
+    EnergyReport,
+)
 
 
 class TestEnergyAccountant:
-    def test_basic(self):
+    """Accounting the energy of a network run."""
+
+    def test_basic(self) -> None:
+        """A run has positive energy over its two layers."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h1", "out"], [(64, 32), (32, 10)], [100, 30], n_timesteps=50)
         assert r.total_energy_nj > 0
         assert len(r.layers) == 2
 
-    def test_dominant_layer(self):
+    def test_dominant_layer(self) -> None:
+        """The layer that spends most is reported."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h1", "out"], [(64, 32), (32, 10)], [1000, 10], n_timesteps=50)
         assert r.dominant_layer == "h1"
 
-    def test_energy_per_spike(self):
+    def test_energy_per_spike(self) -> None:
+        """Energy per spike is positive."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h"], [(10, 5)], [100], n_timesteps=20)
         assert r.energy_per_spike_pj > 0
 
-    def test_no_spikes(self):
+    def test_no_spikes(self) -> None:
+        """Without spikes membrane updates still cost energy."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h"], [(10, 5)], [0], n_timesteps=10)
         assert r.total_energy_pj > 0  # still membrane updates
         assert r.energy_per_spike_pj == 0.0
 
-    def test_different_hardware(self):
+    def test_different_hardware(self) -> None:
+        """Analogue hardware spends less than Loihi 2."""
         r_loihi = EnergyAccountant("loihi2").account(["h"], [(10, 5)], [100], 10)
         r_analog = EnergyAccountant("analog_28nm").account(["h"], [(10, 5)], [100], 10)
         assert r_analog.total_energy_pj < r_loihi.total_energy_pj
 
-    def test_custom_cost_model(self):
+    def test_custom_cost_model(self) -> None:
+        """A custom cost model is named custom."""
         custom = HardwareCostModel(name="custom", synop_pj=1.0, membrane_update_pj=0.1)
         acc = EnergyAccountant(custom)
         r = acc.account(["h"], [(4, 2)], [10], 5)
         assert r.hardware == "custom"
 
-    def test_unknown_hardware(self):
+    def test_unknown_hardware(self) -> None:
+        """An unknown hardware target is rejected."""
         with pytest.raises(ValueError):
             EnergyAccountant("nonexistent")
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary names the hardware and nanojoules."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h1", "out"], [(10, 5), (5, 2)], [50, 10], 20)
         s = r.summary()
         assert "loihi2" in s
         assert "nJ" in s
 
-    def test_routing_energy(self):
+    def test_routing_energy(self) -> None:
+        """Routing energy is positive."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h"], [(10, 5)], [100], 10)
         assert r.routing_energy_pj > 0
 
-    def test_dominant_layer_empty(self):
+    def test_dominant_layer_empty(self) -> None:
+        """No layers give no dominant layer."""
         r = EnergyReport(hardware="loihi2")
         assert r.dominant_layer is None
 
-    def test_energy_per_spike_matches_total_energy_ratio(self):
+    def test_energy_per_spike_matches_total_energy_ratio(self) -> None:
+        """Energy per spike is the total over the spike count."""
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h1", "h2"], [(8, 4), (4, 2)], [40, 20], n_timesteps=10)
         expected = r.total_energy_pj / (40 + 20)

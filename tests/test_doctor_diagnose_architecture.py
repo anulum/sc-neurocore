@@ -10,16 +10,22 @@
 
 from __future__ import annotations
 
-from tests.doctor_support import *  # noqa: F403
+from sc_neurocore.doctor import (
+    diagnose,
+)
 
 
 class TestDiagnoseArchitecture:
-    def test_bottleneck(self):
+    """Diagnosing the network architecture."""
+
+    def test_bottleneck(self) -> None:
+        """A bottleneck layer is reported."""
         r = diagnose([(256, 256), (256, 8)], target="artix7")
         bn = [f for f in r.findings if f.category == "architecture_bottleneck"]
         assert len(bn) >= 1
 
-    def test_small_capacity(self):
+    def test_small_capacity(self) -> None:
+        """A network with little capacity is reported."""
         r = diagnose([(64, 4)], target="artix7")
         cap = [f for f in r.findings if f.category == "architecture_capacity"]
         assert len(cap) >= 1

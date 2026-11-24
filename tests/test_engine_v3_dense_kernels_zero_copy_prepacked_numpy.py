@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore_engine as v3
 
 
 class TestZeroCopyPrepackedNumpy:
     """Tests for forward_prepacked_numpy (true zero-copy path)."""
 
     def test_output_shape_and_type(self) -> None:
+        """The zero-copy path returns float64 values per neuron."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         probs = np.array([0.3, 0.5, 0.7, 0.9], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=55)
@@ -35,12 +38,14 @@ class TestZeroCopyPrepackedNumpy:
         np.testing.assert_allclose(out_numpy, out_legacy)
 
     def test_wrong_n_inputs(self) -> None:
+        """A wrong input count is rejected."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         packed = np.zeros((3, 16), dtype=np.uint64)  # 3 inputs, need 4
         with pytest.raises(ValueError):
             layer.forward_prepacked_numpy(packed)
 
     def test_wrong_word_count(self) -> None:
+        """A wrong word count is rejected."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         packed = np.zeros((4, 10), dtype=np.uint64)  # 10 words, need 16
         with pytest.raises(ValueError):
@@ -56,6 +61,7 @@ class TestZeroCopyPrepackedNumpy:
         assert np.all(out >= 0.0)
 
     def test_deterministic(self) -> None:
+        """The zero-copy path is deterministic."""
         layer = v3.DenseLayer(4, 2, 512, seed=42)
         probs = np.array([0.5] * 4, dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=512, seed=42)

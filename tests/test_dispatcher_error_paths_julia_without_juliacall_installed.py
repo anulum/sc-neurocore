@@ -10,14 +10,17 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import pytest
 
 
 class TestJuliaWithoutJuliacallInstalled:
-    """When juliacall is not installed, calling the dispatchers raises
-    ImportError with the install-extras hint."""
+    """Calling the Julia dispatchers without juliacall installed.
+
+    They raise ImportError with the install-extras hint.
+    """
 
     def test_jansen_rit_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Jansen-Rit without juliacall raises ImportError."""
         import sc_neurocore.accel.julia.neurons as mod
 
         monkeypatch.setattr(mod, "_jl", None)
@@ -26,6 +29,7 @@ class TestJuliaWithoutJuliacallInstalled:
             mod._ensure_jansen_rit_loaded()
 
     def test_wong_wang_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Wong-Wang without juliacall raises ImportError."""
         import sc_neurocore.accel.julia.neurons as mod
 
         monkeypatch.setattr(mod, "_jl", None)
@@ -34,6 +38,7 @@ class TestJuliaWithoutJuliacallInstalled:
             mod._ensure_wong_wang_loaded()
 
     def test_wilson_cowan_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Wilson-Cowan without juliacall raises ImportError."""
         import sc_neurocore.accel.julia.neurons as mod
 
         monkeypatch.setattr(mod, "_jl", None)

@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-from tests.debug_toolkit_support import *  # noqa: F403
+import numpy as np
+import pytest
+from tests.debug_toolkit_support import (
+    _make_trace,
+)
 
 
 class TestExecutionTrace:
-    def test_spike_count_zero(self):
+    """The recorded execution trace."""
+
+    def test_spike_count_zero(self) -> None:
+        """A silent trace counts no spikes."""
         trace = _make_trace()
         assert trace.spike_count == 0
 
-    def test_spike_count_nonzero(self):
+    def test_spike_count_nonzero(self) -> None:
+        """Two spikes are counted."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[3, 1] = 1
         spikes[7, 4] = 1
         trace = _make_trace(spikes=spikes)
         assert trace.spike_count == 2
 
-    def test_firing_rates(self):
+    def test_firing_rates(self) -> None:
+        """Each neuron's firing rate is its spike share."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[0, 0] = 1
         spikes[5, 0] = 1
@@ -34,7 +43,8 @@ class TestExecutionTrace:
         assert rates[0] == pytest.approx(0.2)
         assert rates[1] == pytest.approx(0.0)
 
-    def test_neuron_trace(self):
+    def test_neuron_trace(self) -> None:
+        """A neuron trace lists its spike times."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[2, 1] = 1
         spikes[7, 1] = 1
@@ -46,7 +56,8 @@ class TestExecutionTrace:
         assert nt["spike_times"][0] == 2
         assert nt["spike_times"][1] == 7
 
-    def test_spike_times(self):
+    def test_spike_times(self) -> None:
+        """A neuron's spike times are listed."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[4, 3] = 1
         trace = _make_trace(spikes=spikes)
@@ -54,7 +65,8 @@ class TestExecutionTrace:
         assert len(times) == 1
         assert times[0] == 4
 
-    def test_population_spikes(self):
+    def test_population_spikes(self) -> None:
+        """Spikes are sliced by population."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[0, 0] = 1
         spikes[0, 4] = 1
@@ -66,7 +78,8 @@ class TestExecutionTrace:
         assert pop_b.shape == (10, 2)
         assert pop_b[0, 1] == 1
 
-    def test_population_spikes_not_found(self):
+    def test_population_spikes_not_found(self) -> None:
+        """An unknown population is rejected."""
         trace = _make_trace()
         with pytest.raises(ValueError, match="not found"):
             trace.population_spikes("nonexistent")

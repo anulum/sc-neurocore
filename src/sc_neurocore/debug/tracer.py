@@ -96,12 +96,11 @@ class SpikeTracer:
     >>> divergence = find_divergence(trace, expected_spikes)
     """
 
-    def __init__(self, network):  # type: ignore[no-untyped-def]
+    def __init__(self, network: Any) -> None:
         self.network = network
 
     def run(self, duration: float, dt: float = 0.001, seed: int = 42) -> ExecutionTrace:
         """Run the network and record full execution trace."""
-
         np.random.seed(seed)
         n_steps = int(round(duration / dt))
 

@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_adversarial_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestModuleInjection:
@@ -21,6 +24,7 @@ class TestModuleInjection:
         ["os", "sys", "subprocess", "importlib", "shutil", "pathlib", "socket", "ctypes", "pickle"],
     )
     def test_blocked_module_as_name(self, module_name: str) -> None:
+        """A blocked module name is rejected."""
         with pytest.raises(ValueError, match="Blocked"):
             EquationNeuron(
                 equations={"v": f"{module_name}"},

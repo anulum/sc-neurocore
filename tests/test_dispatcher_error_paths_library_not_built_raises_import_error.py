@@ -10,12 +10,21 @@
 
 from __future__ import annotations
 
-from tests.dispatcher_error_paths_support import *  # noqa: F403
+import numpy as np
+import pytest
+from tests.dispatcher_error_paths_support import (
+    CTYPES_DISPATCHERS,
+)
+from types import (
+    ModuleType,
+)
 
 
 class TestLibraryNotBuiltRaisesImportError:
-    """When ``_lib`` is absent, calling the dispatcher raises ImportError
-    with a helpful message telling the caller how to rebuild."""
+    """Calling a dispatcher whose ``_lib`` is absent.
+
+    It raises ImportError with a message telling the caller how to rebuild.
+    """
 
     @pytest.mark.parametrize("module,fn_name,_label", CTYPES_DISPATCHERS)
     def test_missing_lib_raises(
@@ -25,6 +34,7 @@ class TestLibraryNotBuiltRaisesImportError:
         fn_name: str,
         _label: str,
     ) -> None:
+        """Each dispatcher without its library raises ImportError."""
         monkeypatch.setattr(module, "_lib", None)
         fn = getattr(module, fn_name)
         if "wilson" in fn_name:

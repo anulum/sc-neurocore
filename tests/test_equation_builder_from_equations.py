@@ -10,7 +10,8 @@
 
 from __future__ import annotations
 
-from tests.equation_builder_support import *  # noqa: F403
+import numpy as np
+import pytest
 
 
 class TestFromEquations:

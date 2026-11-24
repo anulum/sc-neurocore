@@ -1378,6 +1378,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 93 top-level test modules of the debug-toolkit, delta codec,
+  deployment, descriptor, digital-twin, dispatcher, distillation,
+  doctor, DPI, DSL, edge, encoding, energy, engine v3 and equation
+  suites import their names explicitly instead of through a suppressed
+  star import, gain their missing docstrings and type annotations and
+  are enrolled in the docstring policy. Two `type: ignore` comments
+  give way to casts, `SpikeTracer.__init__` gains its annotation in
+  place of a `type: ignore`, two helper supports gain types and module
+  docstrings, and eleven support modules left without an importer are
+  deleted.
+
 - The 68 top-level test modules of the CLI deploy and formal, codec
   registry, AER communication, compiler live-control, static-analysis
   and validation, compression, continual-learning, contrastive,

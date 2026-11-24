@@ -10,18 +10,32 @@
 
 from __future__ import annotations
 
-from tests.debug_toolkit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.debug.analyzer import (
+    DivergencePoint,
+    find_divergence,
+)
+from sc_neurocore.debug.tracer import (
+    ExecutionTrace,
+)
+from tests.debug_toolkit_support import (
+    _make_trace,
+)
 
 
 class TestFindDivergence:
-    def test_identical_traces(self):
+    """Finding where two traces diverge."""
+
+    def test_identical_traces(self) -> None:
+        """Identical traces never diverge."""
         spikes = np.zeros((10, 5), dtype=np.int8)
         spikes[3, 2] = 1
         t1 = _make_trace(spikes=spikes.copy())
         t2 = _make_trace(spikes=spikes.copy())
         assert find_divergence(t1, t2) is None
 
-    def test_divergent_traces(self):
+    def test_divergent_traces(self) -> None:
+        """The first differing step and neuron are reported."""
         s1 = np.zeros((10, 5), dtype=np.int8)
         s2 = np.zeros((10, 5), dtype=np.int8)
         s1[3, 2] = 1
@@ -36,7 +50,8 @@ class TestFindDivergence:
         assert dp.trace_a_spike == 1
         assert dp.trace_b_spike == 0
 
-    def test_different_sizes(self):
+    def test_different_sizes(self) -> None:
+        """Traces of different sizes diverge at step 0."""
         s1 = np.zeros((10, 5), dtype=np.int8)
         s2 = np.zeros((8, 3), dtype=np.int8)
         s1[0, 0] = 1

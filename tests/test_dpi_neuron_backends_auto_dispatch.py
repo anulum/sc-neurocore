@@ -6,9 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (auto_dispatch) from former test_dpi_neuron_backends.py
 
+"""Tests of the DPI neuron's automatic backend dispatch."""
+
 from __future__ import annotations
 
-from tests.dpi_neuron_backends_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.accel import (
+    dpi_neuron as backends,
+)
+from sc_neurocore.neurons.models.dpi_neuron import (
+    DPINeuron,
+)
+from tests.dpi_neuron_backends_support import (
+    _assert_state_parity,
+    _configured,
+)
+from unittest.mock import (
+    patch,
+)
 
 
 def test_rust_accepts_non_default_contract_through_complete_batch() -> None:

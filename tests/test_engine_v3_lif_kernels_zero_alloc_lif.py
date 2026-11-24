@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_lif_kernels_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore_engine as v3
 
 
 class TestZeroAllocLIF:
     """Verify pre-allocated LIF batch outputs stay correct."""
 
     def test_batch_lif_unchanged(self) -> None:
+        """The batched LIF matches step-by-step updates."""
         lif = v3.FixedPointLif()
         step_spikes, step_voltages = [], []
         for _ in range(1000):
@@ -29,6 +31,7 @@ class TestZeroAllocLIF:
         np.testing.assert_array_equal(step_voltages, np.asarray(batch_voltages))
 
     def test_batch_lif_multi_unchanged(self) -> None:
+        """The multi-input batched LIF matches sequential runs."""
         n_steps = 500
         currents = np.array([64, 96, 128, 160, 192, 224, 100, 140], dtype=np.int16)
         sequential_spikes = []
@@ -42,6 +45,7 @@ class TestZeroAllocLIF:
             np.testing.assert_array_equal(spikes_multi[idx], sequential_spikes[idx])
 
     def test_batch_lif_multi_shape(self) -> None:
+        """The multi-input batch gives spikes and voltages per step."""
         currents = np.full(10, 128, dtype=np.int16)
         spikes, voltages = v3.batch_lif_run_multi(10, 100, 20, 256, currents)
         spikes_arr = np.asarray(spikes)
@@ -52,6 +56,7 @@ class TestZeroAllocLIF:
         assert voltages_arr.dtype == np.int16
 
     def test_batch_lif_varying_unchanged(self) -> None:
+        """A varying input matches the reference run."""
         currents = np.array([120, 128, 136, 150, 160, 100, 80, 140], dtype=np.int16)
         noises = np.array([0, 1, -1, 2, -2, 0, 1, -1], dtype=np.int16)
 

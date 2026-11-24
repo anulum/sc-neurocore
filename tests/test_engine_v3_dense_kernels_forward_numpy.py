@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.engine_v3_dense_kernels_support import *  # noqa: F403
+import numpy as np
+import pytest
+import sc_neurocore_engine as v3
 
 
 class TestForwardNumpy:
     """Tests for single-call numpy dense forward."""
 
     def test_output_shape_and_type(self) -> None:
+        """The forward pass returns float64 values per neuron."""
         layer = v3.DenseLayer(16, 8, 512)
         inputs = np.array([0.5] * 16, dtype=np.float64)
         out = layer.forward_numpy(inputs)
@@ -25,6 +28,7 @@ class TestForwardNumpy:
         assert out.dtype == np.float64
 
     def test_output_range(self) -> None:
+        """Outputs stay within their range."""
         layer = v3.DenseLayer(16, 8, 512)
         inputs = np.array([0.3] * 16, dtype=np.float64)
         out = layer.forward_numpy(inputs)
@@ -32,6 +36,7 @@ class TestForwardNumpy:
         assert np.all(out <= 16.0)
 
     def test_deterministic(self) -> None:
+        """The forward pass is deterministic."""
         layer = v3.DenseLayer(16, 8, 512, seed=42)
         inputs = np.array([0.5] * 16, dtype=np.float64)
         out1 = layer.forward_numpy(inputs, seed=100)
@@ -48,12 +53,14 @@ class TestForwardNumpy:
         np.testing.assert_allclose(out_numpy, out_fast)
 
     def test_wrong_input_length(self) -> None:
+        """An input of the wrong length is rejected."""
         layer = v3.DenseLayer(8, 4, 256)
         inputs = np.array([0.5] * 7, dtype=np.float64)
         with pytest.raises(ValueError):
             layer.forward_numpy(inputs)
 
     def test_different_seed_different_output(self) -> None:
+        """Different seeds give different outputs."""
         layer = v3.DenseLayer(8, 4, 1024, seed=42)
         inputs = np.array([0.5] * 8, dtype=np.float64)
         out1 = layer.forward_numpy(inputs, seed=100)

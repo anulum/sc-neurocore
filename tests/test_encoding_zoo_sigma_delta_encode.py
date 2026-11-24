@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.encoding_zoo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.encoding import (
+    sigma_delta_encode,
+)
 
 
 class TestSigmaDeltaEncode:
-    def test_1d(self):
+    """Sigma-delta encoding."""
+
+    def test_1d(self) -> None:
+        """A 1-D signal gives spikes in the asked shape."""
         signal = np.sin(np.linspace(0, 4 * np.pi, 100))
         s = sigma_delta_encode(signal, threshold=0.2)
         assert s.shape == (100, 1)
         assert s.sum() > 0
 
-    def test_2d(self):
+    def test_2d(self) -> None:
+        """A 2-D signal gives the asked raster shape."""
         signal = np.random.rand(50, 3)
         s = sigma_delta_encode(signal, threshold=0.1)
         assert s.shape == (50, 3)

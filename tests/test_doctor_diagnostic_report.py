@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.doctor_support import *  # noqa: F403
+from sc_neurocore.doctor import (
+    Diagnosis,
+    DiagnosticReport,
+)
+from sc_neurocore.doctor.diagnose import (
+    Severity,
+)
 
 
 class TestDiagnosticReport:
-    def test_empty(self):
+    """The diagnostic report."""
+
+    def test_empty(self) -> None:
+        """An empty report scores 100 with no critical finding."""
         r = DiagnosticReport(target="ice40")
         assert r.score == 100
         assert r.has_critical is False
 
-    def test_score_with_findings(self):
+    def test_score_with_findings(self) -> None:
+        """A critical finding lowers the score."""
         r = DiagnosticReport(
             target="ice40",
             findings=[
@@ -30,7 +40,8 @@ class TestDiagnosticReport:
         assert r.score < 100
         assert r.has_critical is True
 
-    def test_summary(self):
+    def test_summary(self) -> None:
+        """The summary names the device, findings and advice."""
         r = DiagnosticReport(
             target="artix7",
             findings=[Diagnosis("hw", Severity.WARNING, "high util", "prune")],

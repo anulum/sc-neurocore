@@ -6,9 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (backend_parity) from former test_dpi_neuron_backends.py
 
+"""Tests that the DPI neuron backends agree."""
+
 from __future__ import annotations
 
-from tests.dpi_neuron_backends_support import *  # noqa: F403
+import numpy as np
+import os
+import pytest
+import subprocess
+from sc_neurocore.accel import (
+    dpi_neuron as backends,
+)
+from tests.dpi_neuron_backends_support import (
+    _assert_state_parity,
+    _COMPILED_BACKENDS,
+    _configured,
+    _FULL_CONTRACT_BACKENDS,
+    _GOLDENS,
+    _REPOSITORY,
+    _run,
+    _run_complete,
+)
 
 
 def test_every_acceleration_backend_is_executable() -> None:

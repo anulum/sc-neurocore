@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
 
 
 class TestCompileNoThreshold:
-    def test_integrator_no_spike(self):
+    """Compiling equations without a threshold."""
+
+    def test_integrator_no_spike(self) -> None:
+        """An integrator never sets its spike output."""
         neuron = EquationNeuron(
             equations={"v": "I"},
             state={"v": 0.0},

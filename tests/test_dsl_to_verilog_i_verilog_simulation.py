@@ -10,7 +10,22 @@
 
 from __future__ import annotations
 
-from tests.dsl_to_verilog_support import *  # noqa: F403
+import pytest
+import subprocess
+import tempfile
+from pathlib import (
+    Path,
+)
+from sc_neurocore.compiler.equation_compiler import (
+    generate_testbench,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.dsl_to_verilog_support import (
+    _SIMPLE_MODELS,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

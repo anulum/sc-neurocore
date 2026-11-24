@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.equation_compiler_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import (
+    compile_to_verilog,
+)
+from sc_neurocore.neurons.equation_builder import (
+    from_equations,
+)
+from tests.equation_compiler_support import (
+    UNIT_REGISTRY,
+)
 
 
 class TestCompileLIF:
-    def test_basic_lif_generates_verilog(self):
+    """Compiling a LIF equation to Verilog."""
+
+    def test_basic_lif_generates_verilog(self) -> None:
+        """A LIF compiles to a clocked module."""
         neuron = from_equations(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",
@@ -32,7 +43,8 @@ class TestCompileLIF:
         assert "v_out" in verilog
         assert "v_reg" in verilog
 
-    def test_lif_has_threshold_logic(self):
+    def test_lif_has_threshold_logic(self) -> None:
+        """The LIF module sets and clears its spike output."""
         neuron = from_equations(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",
@@ -44,7 +56,8 @@ class TestCompileLIF:
         assert "spike_out <= 1'b1" in verilog
         assert "spike_out <= 1'b0" in verilog
 
-    def test_lif_has_parameters(self):
+    def test_lif_has_parameters(self) -> None:
+        """The LIF parameters become Verilog parameters."""
         neuron = from_equations(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",
@@ -57,7 +70,8 @@ class TestCompileLIF:
         assert "P_TAU_M" in verilog
         assert "P_C" in verilog
 
-    def test_strict_units_lif_compiles_with_named_threshold_and_reset_constants(self):
+    def test_strict_units_lif_compiles_with_named_threshold_and_reset_constants(self) -> None:
+        """With strict units the threshold and reset are named constants."""
         neuron = from_equations(
             "dv/dt = (-(v - E_L) + R * I) / tau_m",
             threshold="v > v_threshold",

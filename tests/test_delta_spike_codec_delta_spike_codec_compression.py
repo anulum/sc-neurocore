@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.delta_spike_codec_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.spike_codec.delta_codec import (
+    DeltaSpikeCodec,
+)
 
 
 class TestDeltaSpikeCodecCompression:
-    def test_correlated_beats_uncorrelated(self):
+    """Compression figures of the delta spike codec."""
+
+    def test_correlated_beats_uncorrelated(self) -> None:
         """Correlated data should compress better with delta codec."""
         rng = np.random.RandomState(42)
         T, N = 2000, 16
@@ -34,7 +39,8 @@ class TestDeltaSpikeCodecCompression:
 
         assert corr_result.compression_ratio > uncorr_result.compression_ratio
 
-    def test_delta_sparsity_reported(self):
+    def test_delta_sparsity_reported(self) -> None:
+        """The delta sparsity and group count are reported."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 16)) < 0.05).astype(np.int8)
         codec = DeltaSpikeCodec(group_size=4)
