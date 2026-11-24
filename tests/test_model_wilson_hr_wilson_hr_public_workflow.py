@@ -10,16 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+from sc_neurocore.analysis.spike_stats.basic import firing_rate
+from sc_neurocore.analysis.spike_stats.basic import isi
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
 class TestWilsonHRPublicWorkflow:
     """Named workflow contract: Wilson-HR public surface inside the Python simulator."""
 
     def test_population(self) -> None:
+        """A population of ten neurons is built."""
         assert Population(WilsonHRNeuron, n=10, label="whr").n == 10
 
     def test_network_spikes(self) -> None:
+        """A driven network spikes."""
         pop = Population(WilsonHRNeuron, n=10, label="whr")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.1, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -28,6 +39,7 @@ class TestWilsonHRPublicWorkflow:
         assert mon.count > 0
 
     def test_projection_wiring(self) -> None:
+        """A driven projection makes the network spike."""
         src = Population(WilsonHRNeuron, n=10, label="src")
         tgt = Population(WilsonHRNeuron, n=10, label="tgt")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.1, dt=0.001, seed=42)
@@ -38,6 +50,7 @@ class TestWilsonHRPublicWorkflow:
         assert mon.count > 0
 
     def test_analysis(self) -> None:
+        """A driven run gives at least 400 spikes, several intervals and a positive rate."""
         n = WilsonHRNeuron()
         train = np.array([float(n.step(0.1)) for _ in range(50_000)])
         sc = spike_count(train)

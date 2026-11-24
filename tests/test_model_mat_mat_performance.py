@@ -10,12 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.network.population import Population
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
+from sc_neurocore.network.monitor import SpikeMonitor
+import time
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMATPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the resetting MAT neuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated neuron meets its load-tolerant throughput floor."""
         n = SCResettingMATNeuron()
         N = 100_000
         t0 = time.perf_counter()
@@ -29,7 +37,8 @@ class TestMATPerformance:
             strict_minimum_per_second=100_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """A driven network meets its load-tolerant throughput floor."""
         pop = Population(SCResettingMATNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

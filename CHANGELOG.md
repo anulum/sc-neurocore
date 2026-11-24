@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 32 top-level MAT, Wilson-HR, extended-neuron and Studio storage test
+  modules that star-imported their supports without a noqa import their
+  names explicitly, keep the storage fixtures in their namespaces through
+  redundant-alias imports, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy.
+
 - The 33 research test modules import their names explicitly instead of
   through a star import of their same-directory supports, which are
   deleted together with the path insertion only they needed; the

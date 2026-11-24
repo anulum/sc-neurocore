@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
+import numpy as np
+import pytest
+from tests.model_mat_support import (
+    _run,
+)
 
 
 class TestMATDynamics:
-    def test_subthreshold_silent(self):
+    """Dynamics of the resetting MAT neuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = SCResettingMATNeuron()
         assert len(_run(n, current=15.0, steps=5000)) == 0
 
-    def test_fires_at_sufficient_current(self):
+    def test_fires_at_sufficient_current(self) -> None:
+        """A sufficient current gives at least 30 spikes."""
         n = SCResettingMATNeuron()
         assert len(_run(n, current=30.0, steps=5000)) >= 30
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall from the lowest to the highest current."""
         rates = []
         for I in [25.0, 35.0, 50.0]:
             n = SCResettingMATNeuron()
@@ -30,12 +40,13 @@ class TestMATDynamics:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [20.0, 30.0, 40.0, 50.0, 80.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """A current sweep runs and counts spikes (the check is on the type only)."""
         n = SCResettingMATNeuron()
         spikes = _run(n, current=current, steps=5000)
         assert isinstance(len(spikes), int)
 
-    def test_isi_increases_with_adaptation(self):
+    def test_isi_increases_with_adaptation(self) -> None:
         """Adaptation lengthens ISI over time."""
         n = SCResettingMATNeuron()
         spikes = _run(n, current=40.0, steps=10_000)

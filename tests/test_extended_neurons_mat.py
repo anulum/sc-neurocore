@@ -10,15 +10,19 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *
+from sc_neurocore.neurons.models import MATNeuron
 
 
 class TestSourceMAT:
-    def test_fires(self):
+    """The source MAT neuron of the extended-neuron family."""
+
+    def test_fires(self) -> None:
+        """Sustained drive makes the MAT neuron fire."""
         n = MATNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_threshold_adapts(self):
+    def test_threshold_adapts(self) -> None:
+        """Firing raises the fast adaptive threshold."""
         n = MATNeuron()
         for _ in range(200):
             n.step(30.0)

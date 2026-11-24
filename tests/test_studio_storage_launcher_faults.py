@@ -25,7 +25,13 @@ from pathlib import Path
 import pytest
 
 from tests.studio_seccomp_support import SECCOMP_AVAILABLE, Refusal, run_refused
-from tests.studio_storage_launcher_support import *
+from tests.studio_storage_launcher_support import (
+    GEN_A,
+    JOB_A,
+    configuration,
+    launcher_base,
+    prepare,
+)
 
 pytestmark = pytest.mark.skipif(not SECCOMP_AVAILABLE, reason="seccomp filters need Linux x86_64")
 
@@ -94,6 +100,7 @@ HARNESS = (
 
 
 def harness(base: Path, fault: str, refusals: list[Refusal]) -> dict[str, object]:
+    """Run the launcher fault harness for one fault and return its refusal record."""
     config_path = base / "launcher.json"
     config_path.write_text(json.dumps(configuration(base)))
     prepare(base / "spool", JOB_A, GEN_A)

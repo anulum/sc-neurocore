@@ -25,7 +25,15 @@ from sc_neurocore.studio.platform.storage_worker_grant import (
     ExpectedWorker,
     WorkerGrantEndpoint,
 )
-from tests.studio_storage_grant_support import *
+from tests.studio_storage_grant_support import (
+    NAME,
+    expected_for,
+    finish,
+    held_grant_directory,
+    process_worker,
+    spawn_worker,
+    task_module,
+)
 
 
 @pytest.fixture
@@ -111,6 +119,7 @@ def test_registration_failure_withholds_ready(grant_dir: tuple[int, Path]) -> No
     descriptor, path = grant_dir
 
     def refuse(identity: str) -> None:
+        """Refuse registration for an unadmitted supervisor."""
         raise ValueError(f"no admitted supervisor for {identity}")
 
     with WorkerGrantEndpoint(descriptor, path, NAME) as endpoint:
@@ -148,6 +157,7 @@ def test_process_worker_imports_task_only_after_socket_grant(
     (path / "work").mkdir()
 
     def register(identity: str) -> None:
+        """Register unless the grant was refused."""
         if not granted:
             raise ValueError("registration refused")
 

@@ -35,7 +35,17 @@ from sc_neurocore.studio.platform.storage_supervision_client import (
     supervision_heartbeat_request,
     supervision_start_request,
 )
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    JOB,
+    admit,
+    exchange,
+    heartbeat,
+    start,
+    worker_rows,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
+from tests.studio_storage_supervision_support import worker as worker
 
 
 def test_heartbeat_by_another_generation_is_refused(ledger: StudioJobLedger, worker: str) -> None:
@@ -77,6 +87,7 @@ def test_worker_exiting_before_registration_is_unverified(ledger: StudioJobLedge
     )
 
     def exit_worker() -> None:
+        """Kill the worker process and wait for it."""
         child.kill()
         child.wait(timeout=10.0)
 
@@ -100,6 +111,7 @@ def _raw(ledger: StudioJobLedger, payload: bytes, *, workspace: str = "default")
     failures: list[BaseException] = []
 
     def serve() -> None:
+        """Serve the supervision service and record any failure."""
         try:
             serve_supervision(
                 service,

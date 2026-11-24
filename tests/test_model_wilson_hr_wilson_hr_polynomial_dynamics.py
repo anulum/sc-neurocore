@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import numpy as np
+from tests.model_wilson_hr_support import (
+    _rhs,
+    _rk4_reference,
+)
 
 
 class TestWilsonHRPolynomialDynamics:
+    """The polynomial dynamics of the Wilson-HR neuron."""
+
     def test_polynomial_formula(self) -> None:
+        """The derivatives match the published polynomial within 1e-15."""
         n = WilsonHRNeuron(v=-0.4, r=0.08)
         expected_dv, expected_dr = _rhs(n, n.v, n.r, 0.3)
         actual_dv, actual_dr = n._derivatives(n.v, n.r, 0.3)
@@ -22,6 +30,7 @@ class TestWilsonHRPolynomialDynamics:
         assert abs(actual_dr - expected_dr) < 1e-15
 
     def test_step_matches_independent_rk4_reference(self) -> None:
+        """A step matches an independent RK4 reference within 1e-15."""
         n = WilsonHRNeuron(v=-0.4, r=0.08)
         expected_v, expected_r = _rk4_reference(n, 0.3)
         assert n.step(0.3) == 0
@@ -29,6 +38,7 @@ class TestWilsonHRPolynomialDynamics:
         assert abs(n.r - expected_r) < 1e-15
 
     def test_upward_crossing_does_not_reset_rk4_candidate(self) -> None:
+        """An upward peak crossing keeps the RK4 candidate state."""
         n = WilsonHRNeuron(v=-0.01, r=0.05, v_peak=0.0, dt=0.02)
         previous_v = n.v
         candidate_v, candidate_r = _rk4_reference(n, 2.0)
@@ -38,10 +48,12 @@ class TestWilsonHRPolynomialDynamics:
         assert n.v == candidate_v
 
     def test_r_nullcline(self) -> None:
+        """The recovery nullcline passes through the resting point."""
         v = -0.7
         assert abs((1.35 * v + 1.03) - 0.085) < 1e-12
 
     def test_source_limit_cycle_stays_finite_without_reset(self) -> None:
+        """The limit cycle stays finite and crosses the peak without a reset."""
         n = WilsonHRNeuron()
         vs = []
         for _ in range(50_000):

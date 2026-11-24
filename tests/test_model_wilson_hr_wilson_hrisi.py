@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import numpy as np
+from tests.model_wilson_hr_support import (
+    _run,
+)
 
 
 class TestWilsonHRISI:
+    """Inter-spike intervals of the Wilson-HR neuron."""
+
     def test_isi_variability_at_peak(self) -> None:
+        """The ISI coefficient of variation at peak drive is positive."""
         n = WilsonHRNeuron()
         spikes = _run(n, current=0.1, steps=50_000)
         if len(spikes) >= 20:

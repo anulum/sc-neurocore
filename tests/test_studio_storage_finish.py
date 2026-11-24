@@ -31,7 +31,13 @@ from sc_neurocore.studio.platform.storage_finish_protocol import (
 )
 from sc_neurocore.studio.platform.storage_peer import write_verified_frame
 from tests.studio_storage_finish_support import FILES, finish, request, reserved, started, stop
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    JOB,
+    admit,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
+from tests.studio_storage_supervision_support import worker as worker
 
 
 def test_stopped_worker_output_is_sealed_once(ledger: StudioJobLedger) -> None:
@@ -171,6 +177,7 @@ def test_job_ending_before_the_commit_is_answered_from_its_record(
     stop(started(ledger))
 
     def end_elsewhere() -> None:
+        """Fail the job elsewhere, as a reconciler would."""
         ledger.transition(JOB, "failed", error="reconciled")
 
     response = finish(ledger, request(FILES), list(FILES.values()), competing=end_elsewhere)

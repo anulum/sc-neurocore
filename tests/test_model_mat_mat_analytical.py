@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
+import numpy as np
+import pytest
 
 
 class TestMATAnalytical:
-    def test_rk4_candidate_one_step(self):
+    """Analytical behaviour of the resetting MAT neuron."""
+
+    def test_rk4_candidate_one_step(self) -> None:
         """The public step commits the candidate-first RK4 state."""
         n = SCResettingMATNeuron()
         I = 15.0
@@ -24,7 +28,7 @@ class TestMATAnalytical:
         assert abs(n.theta1 - expected_theta1) < 1e-12
         assert abs(n.theta2 - expected_theta2) < 1e-12
 
-    def test_rk4_separates_from_forward_euler(self):
+    def test_rk4_separates_from_forward_euler(self) -> None:
         """Finite-dt MAT integration must not regress to raw forward Euler."""
         n = SCResettingMATNeuron(theta1=4.0, theta2=2.0, dt=2.0)
         I = 15.0
@@ -32,7 +36,7 @@ class TestMATAnalytical:
         expected_v, _, _ = n._rk4_candidate(I)
         assert abs(expected_v - euler_v) > 1e-3
 
-    def test_theta1_exponential_decay(self):
+    def test_theta1_exponential_decay(self) -> None:
         """RK4 threshold decay tracks the closed-form exponential."""
         n = SCResettingMATNeuron()
         n.theta1 = 5.0  # as if just spiked
@@ -42,7 +46,7 @@ class TestMATAnalytical:
         expected = 5.0 * np.exp(-steps * n.dt / n.tau_1)
         assert abs(n.theta1 - expected) < 1e-3
 
-    def test_theta2_exponential_decay(self):
+    def test_theta2_exponential_decay(self) -> None:
         """RK4 slow-threshold decay tracks the closed-form exponential."""
         n = SCResettingMATNeuron()
         n.theta2 = 3.0
@@ -52,7 +56,7 @@ class TestMATAnalytical:
         expected = 3.0 * np.exp(-steps * n.dt / n.tau_2)
         assert abs(n.theta2 - expected) < 1e-9
 
-    def test_theta1_decays_faster_than_theta2(self):
+    def test_theta1_decays_faster_than_theta2(self) -> None:
         """tau_1 < tau_2 → theta1 decays faster."""
         n = SCResettingMATNeuron()
         n.theta1 = 10.0
@@ -61,7 +65,7 @@ class TestMATAnalytical:
             n.step(0.0)
         assert n.theta1 < n.theta2
 
-    def test_decay_ratio_matches_timescale(self):
+    def test_decay_ratio_matches_timescale(self) -> None:
         """After 1 tau: theta decays to ≈ 1/e of initial."""
         n = SCResettingMATNeuron()
         n.theta1 = 10.0
@@ -70,7 +74,7 @@ class TestMATAnalytical:
         expected = 10.0 / np.e
         assert abs(n.theta1 - expected) < 0.01
 
-    def test_threshold_is_sum(self):
+    def test_threshold_is_sum(self) -> None:
         """Effective threshold = V_base + theta1 + theta2."""
         n = SCResettingMATNeuron()
         n.theta1 = 3.0
@@ -78,7 +82,7 @@ class TestMATAnalytical:
         threshold = n.v_threshold_base + n.theta1 + n.theta2
         assert abs(threshold - (-45.0)) < 1e-12
 
-    def test_spike_increments_both_thetas(self):
+    def test_spike_increments_both_thetas(self) -> None:
         """On spike: theta1 += h1=5, theta2 += h2=3."""
         n = SCResettingMATNeuron()
         for _ in range(10_000):
@@ -88,7 +92,7 @@ class TestMATAnalytical:
                 assert n.theta2 >= n.h2 * 0.9
                 break
 
-    def test_spike_retains_threshold_candidates(self):
+    def test_spike_retains_threshold_candidates(self) -> None:
         """Spike reset keeps the RK4-decayed threshold state before increments."""
         n = SCResettingMATNeuron()
         _, theta1_candidate, theta2_candidate = n._rk4_candidate(250.0)
@@ -97,7 +101,7 @@ class TestMATAnalytical:
         assert abs(n.theta1 - (theta1_candidate + n.h1)) < 1e-12
         assert abs(n.theta2 - (theta2_candidate + n.h2)) < 1e-12
 
-    def test_spike_resets_voltage(self):
+    def test_spike_resets_voltage(self) -> None:
         """On spike: V → V_reset."""
         n = SCResettingMATNeuron()
         for _ in range(10_000):
@@ -105,7 +109,7 @@ class TestMATAnalytical:
                 assert n.v == n.v_reset
                 break
 
-    def test_membrane_steady_state(self):
+    def test_membrane_steady_state(self) -> None:
         """At steady state (no spike): V_ss = V_rest + R·I."""
         n = SCResettingMATNeuron()
         # Low current to avoid spiking
@@ -116,7 +120,7 @@ class TestMATAnalytical:
         # Should be close to steady state
         assert abs(n.v - expected_ss) < 1.0
 
-    def test_invalid_current_preserves_state(self):
+    def test_invalid_current_preserves_state(self) -> None:
         """Invalid runtime current is rejected before mutating state."""
         n = SCResettingMATNeuron()
         before = (n.v, n.theta1, n.theta2)
@@ -124,7 +128,7 @@ class TestMATAnalytical:
             n.step(float("nan"))
         assert (n.v, n.theta1, n.theta2) == before
 
-    def test_invalid_state_preserves_state(self):
+    def test_invalid_state_preserves_state(self) -> None:
         """Corrupted threshold adaptation is rejected before mutation."""
         n = SCResettingMATNeuron()
         n.theta1 = -1.0

@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.cosim_wilson_hr_support import *
+from pathlib import Path
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
 
 
 class TestSchemaModelParity:

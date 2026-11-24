@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import numpy as np
+from tests.model_wilson_hr_support import (
+    _run,
+)
 
 
 class TestWilsonHRCurrentResponse:
+    """Current response of the Wilson-HR neuron."""
+
     def test_low_current_regime_is_subthreshold(self) -> None:
+        """Low currents give no spikes."""
         for current in [0.0, 0.01, 0.03]:
             n = WilsonHRNeuron()
             assert len(_run(n, current=current, steps=5_000)) == 0
 
     def test_moderate_current_regime_stays_finite(self) -> None:
+        """Moderate currents keep the state finite."""
         for current in [0.07, 0.1, 0.14]:
             n = WilsonHRNeuron()
             for _ in range(5_000):
@@ -27,11 +35,13 @@ class TestWilsonHRCurrentResponse:
             assert np.isfinite(n.v) and np.isfinite(n.r)
 
     def test_drive_evokes_repetitive_spiking(self) -> None:
+        """Drive evokes at least 40 spikes."""
         n = WilsonHRNeuron()
         spikes = _run(n, current=0.075, steps=5_000)
         assert len(spikes) >= 40
 
     def test_high_drive_produces_more_spikes_than_threshold_drive(self) -> None:
+        """High drive gives more spikes than threshold drive."""
         n_low = WilsonHRNeuron()
         n = WilsonHRNeuron()
         low_spikes = _run(n_low, current=0.075, steps=5_000)
@@ -39,6 +49,7 @@ class TestWilsonHRCurrentResponse:
         assert len(high_spikes) > len(low_spikes)
 
     def test_fi_5_point_sweep(self) -> None:
+        """A five-point sweep is silent at the two lowest currents and rises above them."""
         rates = {}
         for current in [0.0, 0.03, 0.07, 0.1, 0.14]:
             n = WilsonHRNeuron()

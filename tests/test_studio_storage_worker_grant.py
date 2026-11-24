@@ -33,7 +33,10 @@ from sc_neurocore.studio.platform.storage_worker_grant import (
     validate_grant_name,
 )
 from tests.studio_seccomp_support import SECCOMP_AVAILABLE, Refusal, run_refused
-from tests.studio_storage_grant_support import *
+from tests.studio_storage_grant_support import (
+    NAME,
+    held_grant_directory,
+)
 
 
 @pytest.fixture
@@ -302,6 +305,7 @@ def test_in_process_worker_side_accepts_exact_grant(grant_dir: tuple[int, Path])
     with WorkerGrantEndpoint(descriptor, path, NAME) as endpoint:
 
         def connect() -> None:
+            """Receive the socket grant and record any failure."""
             try:
                 receive_socket_grant(endpoint.path, expected_server_uid=os.getuid())
             except BaseException as exc:
@@ -329,12 +333,14 @@ def test_registration_past_deadline_withholds_ready(grant_dir: tuple[int, Path])
     registered: list[str] = []
 
     def slow_register(identity: str) -> None:
+        """Register after a delay, to race the grant."""
         time.sleep(0.6)
         registered.append(identity)
 
     with WorkerGrantEndpoint(descriptor, path, NAME) as endpoint:
 
         def connect() -> None:
+            """Receive the socket grant and record any failure."""
             try:
                 receive_socket_grant(endpoint.path, expected_server_uid=os.getuid())
             except BaseException as exc:

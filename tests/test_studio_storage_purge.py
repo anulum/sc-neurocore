@@ -42,7 +42,12 @@ from sc_neurocore.studio.platform.storage_purge_protocol import (
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 from tests.studio_storage_finish_support import FILES, finish, request, started, stop
 from tests.studio_storage_generation_support import FRAME, Authority
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    JOB,
+    admit,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
 
 ADMIN = StorageRequester(principal_id="operator", roles=("studio.admin",))
 
@@ -161,6 +166,7 @@ def test_the_handler_reads_its_own_frame_and_refuses_no_workspace(
     failures: list[BaseException] = []
 
     def serve() -> None:
+        """Serve one purge request on the service socket."""
         try:
             serve_purge(
                 service,
@@ -205,6 +211,7 @@ def test_a_record_of_another_job_is_refused(ledger: StudioJobLedger, tmp_path: P
     client, service = socket.socketpair()
 
     def serve() -> None:
+        """Serve one purge request on the service socket."""
         with service:
             deadline = time.monotonic() + 10
             frame = read_verified_frame(

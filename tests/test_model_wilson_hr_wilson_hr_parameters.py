@@ -12,7 +12,12 @@ from __future__ import annotations
 
 from typing import cast
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import numpy as np
+import pytest
+from tests.model_wilson_hr_support import (
+    _run,
+)
 
 
 def _construct_with_field(field: str, value: object) -> WilsonHRNeuron:
@@ -34,32 +39,39 @@ def _construct_with_field(field: str, value: object) -> WilsonHRNeuron:
 
 
 class TestWilsonHRParameters:
+    """Parameter validation and effects of the Wilson-HR neuron."""
+
     @pytest.mark.parametrize("field", ["v", "r", "v_peak"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_state_and_threshold(self, field: str, value: float) -> None:
+        """Non-finite state and threshold values are rejected with ValueError."""
         with pytest.raises(ValueError, match=field):
             _construct_with_field(field, value)
 
     @pytest.mark.parametrize("field", ["v", "r", "v_peak"])
     @pytest.mark.parametrize("value", [object(), "0.1", True])
     def test_rejects_non_numeric_state_and_threshold(self, field: str, value: object) -> None:
+        """Non-numeric state and threshold values are rejected with TypeError."""
         with pytest.raises(TypeError, match=field):
             _construct_with_field(field, value)
 
     @pytest.mark.parametrize("field", ["capacitance", "tau_r", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
     def test_rejects_non_positive_or_non_finite_scales(self, field: str, value: float) -> None:
+        """Non-positive or non-finite scales are rejected with ValueError."""
         with pytest.raises(ValueError, match=field):
             _construct_with_field(field, value)
 
     @pytest.mark.parametrize("field", ["capacitance", "tau_r", "dt"])
     @pytest.mark.parametrize("value", [object(), "0.1", True])
     def test_rejects_non_numeric_scales(self, field: str, value: object) -> None:
+        """Non-numeric scales are rejected with TypeError."""
         with pytest.raises(TypeError, match=field):
             _construct_with_field(field, value)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = WilsonHRNeuron()
         before = (n.v, n.r)
         with pytest.raises(FloatingPointError, match="current"):
@@ -68,6 +80,7 @@ class TestWilsonHRParameters:
 
     @pytest.mark.parametrize("current", [object(), "0.3", True])
     def test_rejects_non_numeric_current_before_state_mutation(self, current: object) -> None:
+        """A non-numeric current is rejected before any state change."""
         n = WilsonHRNeuron()
         before = (n.v, n.r)
         with pytest.raises(TypeError, match="current"):
@@ -75,6 +88,7 @@ class TestWilsonHRParameters:
         assert (n.v, n.r) == before
 
     def test_rejects_corrupted_runtime_state_before_mutation(self) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = WilsonHRNeuron()
         n.r = np.inf
         before = (n.v, n.r)
@@ -83,6 +97,7 @@ class TestWilsonHRParameters:
         assert (n.v, n.r) == before
 
     def test_rejects_corrupted_runtime_scale_before_mutation(self) -> None:
+        """A corrupted runtime scale is rejected before any change."""
         n = WilsonHRNeuron()
         n.tau_r = 0.0
         before = (n.v, n.r)
@@ -91,6 +106,7 @@ class TestWilsonHRParameters:
         assert (n.v, n.r) == before
 
     def test_rejects_polynomial_overflow_before_state_mutation(self) -> None:
+        """A polynomial overflow is rejected before any state change."""
         n = WilsonHRNeuron(v=1.0e308)
         before = (n.v, n.r)
         with pytest.raises(FloatingPointError, match="polynomial|candidate|derivative"):
@@ -98,20 +114,24 @@ class TestWilsonHRParameters:
         assert (n.v, n.r) == before
 
     def test_direct_derivative_rejects_non_finite_state(self) -> None:
+        """The derivative rejects a non-finite state."""
         n = WilsonHRNeuron()
         with pytest.raises(FloatingPointError, match="state and current"):
             n._derivatives(np.nan, n.r, 0.3)
 
     def test_direct_derivative_rejects_non_finite_output(self) -> None:
+        """The derivative rejects a non-finite output."""
         n = WilsonHRNeuron()
         with pytest.raises(FloatingPointError, match="derivative"):
             n._derivatives(0.0, 1.0e308, 0.3)
 
     def test_direct_candidate_validation_rejects_non_finite_candidate(self) -> None:
+        """Candidate validation rejects a non-finite candidate."""
         with pytest.raises(FloatingPointError, match="candidate"):
             WilsonHRNeuron._validate_candidate(np.nan, 0.0)
 
     def test_tau_r_affects_recovery(self) -> None:
+        """Different recovery time constants give different spike counts."""
         n_fast = WilsonHRNeuron(tau_r=1.0)
         n_slow = WilsonHRNeuron(tau_r=5.0)
         s_fast = len(_run(n_fast, current=0.3, steps=50_000))
@@ -119,6 +139,7 @@ class TestWilsonHRParameters:
         assert s_fast != s_slow
 
     def test_capacitance_controls_membrane_rate(self) -> None:
+        """A smaller capacitance moves the membrane faster."""
         fast = WilsonHRNeuron(capacitance=0.4)
         slow = WilsonHRNeuron(capacitance=1.6)
         fast.step(0.1)
@@ -126,6 +147,7 @@ class TestWilsonHRParameters:
         assert abs(fast.v + 0.7) > abs(slow.v + 0.7)
 
     def test_v_peak_controls_threshold(self) -> None:
+        """A higher peak does not raise the spike count."""
         n_low = WilsonHRNeuron(v_peak=-0.1)
         n_high = WilsonHRNeuron(v_peak=0.2)
         s_low = len(_run(n_low, current=0.1, steps=50_000))
@@ -134,12 +156,14 @@ class TestWilsonHRParameters:
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
     def test_dt_stability(self, dt: float) -> None:
+        """The voltage stays finite across time steps."""
         n = WilsonHRNeuron(dt=dt)
         for _ in range(50_000):
             n.step(0.3)
         assert np.isfinite(n.v)
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = WilsonHRNeuron()

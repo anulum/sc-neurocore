@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import numpy as np
+import pytest
 
 
 class TestWilsonHRIsolation:
+    """The Wilson-HR neuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults are the documented voltage, recovery, capacitance, time constant, peak and step."""
         n = WilsonHRNeuron()
         assert n.v == -0.7
         assert n.r == 0.085
@@ -24,9 +29,11 @@ class TestWilsonHRIsolation:
         assert n.dt == 0.05
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert WilsonHRNeuron().step(0.0) in (0, 1)
 
     def test_two_variables_evolve(self) -> None:
+        """Both state variables evolve under drive."""
         n = WilsonHRNeuron()
         v0, r0 = n.v, n.r
         for _ in range(100):
@@ -34,12 +41,14 @@ class TestWilsonHRIsolation:
         assert n.v != v0 and n.r != r0
 
     def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = WilsonHRNeuron()
         for _ in range(50_000):
             n.step(0.3)
         assert np.isfinite(n.v) and np.isfinite(n.r)
 
     def test_reset(self) -> None:
+        """A reset restores the default voltage and recovery."""
         n = WilsonHRNeuron()
         for _ in range(100):
             n.step(0.3)
@@ -47,6 +56,7 @@ class TestWilsonHRIsolation:
         assert n.v == -0.7 and n.r == 0.085
 
     def test_spike_preserves_continuous_voltage(self) -> None:
+        """A spike keeps the continuous voltage at or above the peak."""
         n = WilsonHRNeuron()
         for _ in range(50_000):
             if n.step(0.1) == 1:

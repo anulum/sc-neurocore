@@ -10,12 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+import time
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWilsonHRPerformance:
+    """Throughput of the Wilson-HR neuron."""
+
     def test_isolation_throughput(self) -> None:
+        """The isolated neuron meets its load-tolerant throughput floor."""
         n = WilsonHRNeuron()
         steps = 50_000
         t0 = time.perf_counter()
@@ -29,6 +37,7 @@ class TestWilsonHRPerformance:
         )
 
     def test_network_throughput(self) -> None:
+        """A driven network meets its load-tolerant throughput floor."""
         pop = Population(WilsonHRNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=0.3, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

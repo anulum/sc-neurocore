@@ -38,7 +38,11 @@ from sc_neurocore.studio.platform.storage_finish_protocol import (
 from sc_neurocore.studio.platform.storage_peer import read_verified_frame, write_verified_frame
 from tests.studio_seccomp_support import REPOSITORY, SECCOMP_AVAILABLE
 from tests.studio_storage_finish_support import FILES, finish, request, reserved, started, stop
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    JOB,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
 
 
 def _serve(ledger: StudioJobLedger, channel: socket.socket, *, api_uid: int) -> None:
@@ -90,6 +94,7 @@ def test_a_transfer_broken_after_ready_seals_nothing(
     failures: list[BaseException] = []
 
     def serve() -> None:
+        """Serve the finish service and record any failure."""
         try:
             _serve(ledger, service, api_uid=os.getuid())
         except BaseException as exc:
@@ -101,6 +106,7 @@ def test_a_transfer_broken_after_ready_seals_nothing(
     deadline = time.monotonic() + 10
 
     def send(payload: bytes, ceiling: int = 4096) -> None:
+        """Send one verified frame to the service."""
         write_verified_frame(
             client, payload, expected_uid=os.getuid(), max_bytes=ceiling, deadline=deadline
         )

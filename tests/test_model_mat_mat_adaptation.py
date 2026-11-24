@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
 
 
 class TestMATAdaptation:
-    def test_adaptation_reduces_rate(self):
+    """Threshold adaptation of the resetting MAT neuron."""
+
+    def test_adaptation_reduces_rate(self) -> None:
         """Adaptation → first half has more spikes than second half."""
         n = SCResettingMATNeuron()
         s1 = sum(n.step(40.0) for _ in range(2500))
         s2 = sum(n.step(40.0) for _ in range(2500))
         assert s1 >= s2
 
-    def test_adaptation_recovers(self):
+    def test_adaptation_recovers(self) -> None:
         """After silence, thetas decay → threshold drops → fires again."""
         n = SCResettingMATNeuron()
         # Drive to adapt
@@ -34,7 +36,7 @@ class TestMATAdaptation:
         theta_recovered = n.theta1 + n.theta2
         assert theta_recovered < theta_adapted
 
-    def test_theta_accumulation_with_bursts(self):
+    def test_theta_accumulation_with_bursts(self) -> None:
         """Rapid spiking accumulates theta beyond single h1/h2."""
         n = SCResettingMATNeuron()
         for _ in range(1000):

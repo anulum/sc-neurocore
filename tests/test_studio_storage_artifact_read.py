@@ -37,7 +37,11 @@ from sc_neurocore.studio.platform.policy_models import InMemoryAuditSink
 from sc_neurocore.studio.platform.storage_record_protocol import StorageRequester
 from tests.studio_storage_finish_support import FILES, finish, request, started, stop
 from tests.studio_storage_generation_support import FRAME, Authority
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    JOB,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
 
 ADMIN = StorageRequester(principal_id="operator", roles=("studio.admin",))
 DOWNLOAD: ArtifactRoute = "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}"
@@ -235,6 +239,7 @@ def test_artifact_handler_independently_binds_the_requested_workspace(
     failures: list[BaseException] = []
 
     def serve() -> None:
+        """Serve one artefact-read request and record any failure."""
         try:
             serve_artifact_read(
                 channel,

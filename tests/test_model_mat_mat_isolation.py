@@ -10,21 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
+import numpy as np
 
 
 class TestMATIsolation:
-    def test_defaults(self):
+    """The resetting MAT neuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults are the documented membrane, threshold and adaptation values."""
         n = SCResettingMATNeuron()
         assert n.v == -70.0 and n.theta1 == 0.0 and n.theta2 == 0.0
         assert n.v_threshold_base == -50.0 and n.dt == 1.0
         assert n.tau_1 == 10.0 and n.tau_2 == 200.0
         assert n.h1 == 5.0 and n.h2 == 3.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SCResettingMATNeuron().step(0.0) in (0, 1)
 
-    def test_all_states_evolve(self):
+    def test_all_states_evolve(self) -> None:
+        """The membrane evolves under drive."""
         n = SCResettingMATNeuron()
         v0, t1_0, t2_0 = n.v, n.theta1, n.theta2
         for _ in range(100):
@@ -32,20 +38,23 @@ class TestMATIsolation:
         # v changes, thetas change after spike
         assert n.v != v0
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = SCResettingMATNeuron()
         for _ in range(100_000):
             n.step(30.0)
         assert np.isfinite(n.v) and np.isfinite(n.theta1) and np.isfinite(n.theta2)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the resting membrane and zero thresholds."""
         n = SCResettingMATNeuron()
         for _ in range(5000):
             n.step(30.0)
         n.reset()
         assert n.v == n.v_rest and n.theta1 == 0.0 and n.theta2 == 0.0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SCResettingMATNeuron()

@@ -34,7 +34,18 @@ from sc_neurocore.studio.platform.storage_supervision_protocol import (
     decode_supervision_response,
     encode_supervision_message,
 )
-from tests.studio_storage_supervision_support import *
+from tests.studio_storage_supervision_support import (
+    Clock,
+    JOB,
+    admit,
+    exchange,
+    heartbeat,
+    start,
+    worker_rows,
+)
+from tests.studio_storage_supervision_support import clock as clock
+from tests.studio_storage_supervision_support import ledger as ledger
+from tests.studio_storage_supervision_support import worker as worker
 
 
 def test_start_marks_running_and_registers_the_worker(ledger: StudioJobLedger, worker: str) -> None:

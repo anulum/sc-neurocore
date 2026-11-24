@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5032
+expected_file_count = 5052
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20172,3 +20172,83 @@ rationale = "Exercise SC-NeuroCore research: zero coverage a semiotic triad."
 [[file]]
 path = "research/tests/test_zero_coverage_a_spin_network.py"
 rationale = "Exercise SC-NeuroCore research: zero coverage a spin network."
+
+[[file]]
+path = "tests/test_extended_neurons_mat.py"
+rationale = "Exercise SC-NeuroCore: extended neurons mat."
+
+[[file]]
+path = "tests/test_model_mat_mat_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model mat mat adaptation."
+
+[[file]]
+path = "tests/test_model_mat_mat_analytical.py"
+rationale = "Exercise SC-NeuroCore: model mat mat analytical."
+
+[[file]]
+path = "tests/test_model_mat_mat_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model mat mat dynamics."
+
+[[file]]
+path = "tests/test_model_mat_mat_isolation.py"
+rationale = "Exercise SC-NeuroCore: model mat mat isolation."
+
+[[file]]
+path = "tests/test_model_mat_mat_parameters.py"
+rationale = "Exercise SC-NeuroCore: model mat mat parameters."
+
+[[file]]
+path = "tests/test_model_mat_mat_performance.py"
+rationale = "Exercise SC-NeuroCore: model mat mat performance."
+
+[[file]]
+path = "tests/test_model_mat_mat_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model mat mat pipeline."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_current_response.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr current response."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_isolation.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr isolation."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_parameters.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr parameters."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_performance.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr performance."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_polynomial_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr polynomial dynamics."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hr_public_workflow.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hr public workflow."
+
+[[file]]
+path = "tests/test_model_wilson_hr_wilson_hrisi.py"
+rationale = "Exercise SC-NeuroCore: model wilson hr wilson hrisi."
+
+[[file]]
+path = "tests/test_studio_storage_finish_transfer.py"
+rationale = "Exercise SC-NeuroCore: studio storage finish transfer."
+
+[[file]]
+path = "tests/test_studio_storage_launcher_configuration.py"
+rationale = "Exercise SC-NeuroCore: studio storage launcher configuration."
+
+[[file]]
+path = "tests/test_studio_storage_launcher_faults.py"
+rationale = "Exercise SC-NeuroCore: studio storage launcher faults."
+
+[[file]]
+path = "tests/test_studio_storage_supervision.py"
+rationale = "Exercise SC-NeuroCore: studio storage supervision."
+
+[[file]]
+path = "tests/test_studio_storage_supervision_faults.py"
+rationale = "Exercise SC-NeuroCore: studio storage supervision faults."

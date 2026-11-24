@@ -52,7 +52,20 @@ from sc_neurocore.studio.platform.storage_worker_grant import (
     ExpectedWorker,
     WorkerGrantEndpoint,
 )
-from tests.studio_storage_launcher_support import *
+from tests.studio_storage_launcher_support import (
+    GEN_A,
+    GEN_B,
+    JOB_A,
+    JOB_B,
+    Launcher,
+    await_state,
+    configuration,
+    launcher_base,
+    prepare,
+    send,
+    shutdown,
+    start,
+)
 
 
 @pytest.fixture
@@ -371,6 +384,7 @@ def test_a_process_that_ends_while_its_stat_is_read_counts_as_gone(
     """
 
     def reaped(path: Path, *args: object, **kwargs: object) -> str:
+        """Report the process as already gone."""
         raise ProcessLookupError(3, "No such process")
 
     monkeypatch.setattr(Path, "read_text", reaped)
