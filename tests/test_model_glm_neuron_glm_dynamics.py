@@ -10,23 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_glm_neuron_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.glm_neuron import (
+    GLMNeuron,
+)
+from tests.model_glm_neuron_support import (
+    _run,
+)
 
 
 class TestGLMDynamics:
-    def test_fires_with_strong_stimulus(self):
+    """Dynamics of the GLMNeuron."""
+
+    def test_fires_with_strong_stimulus(self) -> None:
+        """The model fires with strong stimulus."""
         n = GLMNeuron()
         spikes = _run(n, current=10.0, steps=5000)
         assert len(spikes) >= 10
 
-    def test_silent_at_zero(self):
+    def test_silent_at_zero(self) -> None:
         """At μ=-3 and zero stimulus: very low rate."""
         n = GLMNeuron()
         spikes = _run(n, current=0.0, steps=1000)
         # May get 0-2 spikes (stochastic)
         assert len(spikes) < 50
 
-    def test_rate_increases_with_stimulus(self):
+    def test_rate_increases_with_stimulus(self) -> None:
+        """Rate increases with stimulus."""
         n_low = GLMNeuron()
         n_high = GLMNeuron()
         s_low = len(_run(n_low, current=2.0, steps=5000))
@@ -34,7 +45,8 @@ class TestGLMDynamics:
         assert s_high >= s_low
 
     @pytest.mark.parametrize("stim", [0.0, 2.0, 5.0, 10.0])
-    def test_stim_sweep(self, stim: float):
+    def test_stim_sweep(self, stim: float) -> None:
+        """The model is exercised across a sweep of stim."""
         n = GLMNeuron()
         spikes = [n.step(stim) for _ in range(1000)]
 

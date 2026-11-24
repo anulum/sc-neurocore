@@ -10,31 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_golomb_fs_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.golomb_fs import (
+    GolombFSNeuron,
+)
 
 
 class TestGFSAnalytical:
-    def test_10_substeps(self):
+    """Analytical behaviour of the GolombFSNeuron."""
+
+    def test_10_substeps(self) -> None:
         """10 sub-steps per step() call (dt=0.01)."""
         n = GolombFSNeuron()
         assert n.dt == 0.01
 
-    def test_four_ionic_currents(self):
+    def test_four_ionic_currents(self) -> None:
+        """The model has four ionic currents."""
         n = GolombFSNeuron()
         assert n.g_na > 0 and n.g_kd > 0 and n.g_kv3 > 0 and n.g_l > 0
 
-    def test_kv3_high_threshold(self):
+    def test_kv3_high_threshold(self) -> None:
         """Kv3 p_inf half-activation at v=-3 mV (high threshold)."""
         v_half_kv3 = -3.0
         p_inf = 1.0 / (1.0 + np.exp(-(v_half_kv3 + 3.0) / 8.0))
         assert abs(p_inf - 0.5) < 1e-12
 
-    def test_kv3_conductance_large(self):
+    def test_kv3_conductance_large(self) -> None:
         """g_Kv3=150 > g_Na=112.5: Kv3 dominates repolarisation."""
         n = GolombFSNeuron()
         assert n.g_kv3 > n.g_na
 
-    def test_m_na_instantaneous(self):
+    def test_m_na_instantaneous(self) -> None:
         """m_Na set directly to m_inf (no time constant)."""
         # Source uses m_inf directly in current calculation
         n = GolombFSNeuron()
@@ -42,11 +48,13 @@ class TestGFSAnalytical:
         # m_inf is not stored — computed inline
         assert np.isfinite(n.v)
 
-    def test_reversal_ordering(self):
+    def test_reversal_ordering(self) -> None:
+        """The reversal potentials are in physiological order."""
         n = GolombFSNeuron()
         assert n.e_k < n.e_l < n.e_na
 
-    def test_gating_bounded(self):
+    def test_gating_bounded(self) -> None:
+        """The gating variables stay inside [0, 1]."""
         n = GolombFSNeuron()
         for _ in range(2000):
             n.step(5.0)

@@ -10,23 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_gated_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.gated_lif import (
+    GatedLIFNeuron,
+)
+from tests.model_gated_lif_support import (
+    _run,
+)
 
 
 class TestDynamics:
-    def test_fires_at_test_current(self):
+    """Dynamics of the GatedLIFNeuron."""
+
+    def test_fires_at_test_current(self) -> None:
+        """The model fires at test current."""
         n = GatedLIFNeuron()
         spikes = _run(n, current=5.0, steps=5000)
         assert len(spikes) >= 100
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n_low = GatedLIFNeuron()
         n_high = GatedLIFNeuron()
         s_low = len(_run(n_low, current=2.0, steps=5000))
         s_high = len(_run(n_high, current=10.0, steps=5000))
         assert s_high >= s_low
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = GatedLIFNeuron()

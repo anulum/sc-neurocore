@@ -10,25 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_glm_neuron_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.glm_neuron import (
+    GLMNeuron,
+)
+from tests.model_glm_neuron_support import (
+    _run,
+)
 
 
 class TestGLMParameters:
+    """Parameter behaviour of the GLMNeuron."""
+
     @pytest.mark.parametrize("mu", [-5.0, -3.0, 0.0])
-    def test_mu_sweep(self, mu: float):
+    def test_mu_sweep(self, mu: float) -> None:
+        """The model is exercised across a sweep of mu."""
         n = GLMNeuron(mu=mu)
         spikes = len(_run(n, current=5.0, steps=5000))
         assert isinstance(spikes, int)
 
     @pytest.mark.parametrize("n_k", [5, 10, 20])
-    def test_n_k_sweep(self, n_k: int):
+    def test_n_k_sweep(self, n_k: int) -> None:
+        """The model is exercised across a sweep of n_k."""
         n = GLMNeuron(n_k=n_k)
         assert n.k.shape == (n_k,)
         for _ in range(500):
             n.step(5.0)
 
     @pytest.mark.parametrize("n_h", [10, 20, 40])
-    def test_n_h_sweep(self, n_h: int):
+    def test_n_h_sweep(self, n_h: int) -> None:
+        """The model is exercised across a sweep of n_h."""
         n = GLMNeuron(n_h=n_h)
         assert n.h.shape == (n_h,)
         for _ in range(500):

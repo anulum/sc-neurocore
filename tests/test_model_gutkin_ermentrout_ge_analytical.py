@@ -10,10 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_gutkin_ermentrout_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.gutkin_ermentrout import (
+    GutkinErmentroutNeuron,
+)
+from tests.model_gutkin_ermentrout_support import (
+    _m_inf,
+    _n_inf,
+    _rhs,
+    _rk4_reference,
+)
 
 
 class TestGEAnalytical:
+    """Analytical behaviour of the GutkinErmentroutNeuron."""
+
     def test_m_inf_boltzmann(self) -> None:
         """m_inf = 1/(1+exp(-(v+20)/15))."""
         n = GutkinErmentroutNeuron()
@@ -23,11 +34,11 @@ class TestGEAnalytical:
             assert abs(expected - computed) < 1e-14
 
     def test_m_inf_midpoint(self) -> None:
-        """m_inf(-20) = 0.5."""
+        """The activation m_inf(-20) equals 0.5."""
         assert abs(_m_inf(-20.0) - 0.5) < 1e-12
 
     def test_n_inf_midpoint(self) -> None:
-        """n_inf(-25) = 0.5."""
+        """The activation n_inf(-25) equals 0.5."""
         assert abs(_n_inf(-25.0) - 0.5) < 1e-12
 
     def test_rk4_current_balance_one_step(self) -> None:
@@ -49,10 +60,12 @@ class TestGEAnalytical:
         assert abs(n.v - euler_v) > 1e-6
 
     def test_three_currents(self) -> None:
+        """The model has three positive ionic conductances."""
         n = GutkinErmentroutNeuron()
         assert n.g_na > 0 and n.g_k > 0 and n.g_l > 0
 
     def test_reversal_ordering(self) -> None:
+        """The reversal potentials are in physiological order."""
         n = GutkinErmentroutNeuron()
         assert n.e_k < n.e_l < n.e_na
 

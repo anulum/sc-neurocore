@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.model_hill_tononi_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
+    SCSixStateThalamocorticalNeuron,
+)
 
 
 class TestSCSixStateThalamocorticalRK4:
@@ -25,55 +29,66 @@ class TestSCSixStateThalamocorticalRK4:
     evaluated as ``b·b·b·sqrt(b)`` so every backend reproduces the trajectory.
     """
 
-    def test_default_integrator_is_rk4(self):
+    def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         assert SCSixStateThalamocorticalNeuron().integrator == "rk4"
 
-    def test_unknown_integrator_rejected(self):
+    def test_unknown_integrator_rejected(self) -> None:
+        """Unknown integrator rejected."""
         with pytest.raises(ValueError, match="integrator"):
             SCSixStateThalamocorticalNeuron(integrator="trapezoid")  # type: ignore[arg-type]
 
-    def test_baseline_euler_path_runs_and_fires(self):
+    def test_baseline_euler_path_runs_and_fires(self) -> None:
+        """Baseline Euler path runs and fires."""
         n = SCSixStateThalamocorticalNeuron(integrator="baseline_euler")
         assert sum(n.step(0.0) for _ in range(10000)) > 0
 
-    def test_rk4_and_baseline_differ(self):
+    def test_rk4_and_baseline_differ(self) -> None:
+        """RK4 and baseline differ."""
         rk4 = SCSixStateThalamocorticalNeuron()
         euler = SCSixStateThalamocorticalNeuron(integrator="baseline_euler")
         rk4_v = [round(rk4.step(10.0) or rk4.v, 9) for _ in range(500)]
         euler_v = [round(euler.step(10.0) or euler.v, 9) for _ in range(500)]
         assert rk4_v != euler_v
 
-    def test_cross_backend_spike_anchor(self):
+    def test_cross_backend_spike_anchor(self) -> None:
+        """Cross-backend spike anchor."""
         # Pins the preserved Python compatibility recurrence.
         n = SCSixStateThalamocorticalNeuron()
         assert sum(n.step(10.0) for _ in range(200000)) == 694
 
-    def test_sodium_clamped_non_negative(self):
+    def test_sodium_clamped_non_negative(self) -> None:
+        """Sodium clamped non-negative."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(50000):
             n.step(10.0)
             assert n.na_i >= 0.0
 
-    def test_non_finite_current_rejected(self):
+    def test_non_finite_current_rejected(self) -> None:
+        """Non-finite current rejected."""
         n = SCSixStateThalamocorticalNeuron()
         with pytest.raises(ValueError, match="current"):
             n.step(math.nan)
 
-    def test_non_finite_state_rejected_on_step(self):
+    def test_non_finite_state_rejected_on_step(self) -> None:
+        """Non-finite state rejected on step."""
         n = SCSixStateThalamocorticalNeuron()
         n.v = math.inf
         with pytest.raises(ValueError, match="v"):
             n.step(10.0)
 
-    def test_negative_conductance_rejected(self):
+    def test_negative_conductance_rejected(self) -> None:
+        """Negative conductance rejected."""
         with pytest.raises(ValueError, match="g_na"):
             SCSixStateThalamocorticalNeuron(g_na=-1.0)
 
-    def test_non_positive_na_eq_rejected(self):
+    def test_non_positive_na_eq_rejected(self) -> None:
+        """Non-positive Na eq rejected."""
         with pytest.raises(ValueError, match="na_eq"):
             SCSixStateThalamocorticalNeuron(na_eq=0.0)
 
-    def test_stays_finite_under_extreme_drive(self):
+    def test_stays_finite_under_extreme_drive(self) -> None:
+        """Stays finite under extreme drive."""
         # The delayed-rectifier and I_KNa currents grow with V, so the cell
         # self-limits to a high but finite fixed point rather than diverging; the
         # _safe_exp guard keeps the saturating gates finite (Python math.exp would
@@ -83,7 +98,8 @@ class TestSCSixStateThalamocorticalRK4:
             n.step(1e5)
         assert math.isfinite(n.v) and math.isfinite(n.na_i)
 
-    def test_h_current_evolves(self):
+    def test_h_current_evolves(self) -> None:
+        """The H current evolves under drive."""
         from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
             SCSixStateThalamocorticalNeuron,
         )

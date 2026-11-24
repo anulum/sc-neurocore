@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.fitzhugh_rinzel import (
+    FitzHughRinzelNeuron,
+)
 
 
 class TestFHRIsolation:
-    def test_defaults(self):
+    """The FitzHughRinzelNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = FitzHughRinzelNeuron()
         assert n.v == -1.0 and n.w == -0.5 and n.y == 0.0
         assert n.delta == 0.08 and n.mu == 0.0001
         assert n.b == 0.8 and n.d == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert FitzHughRinzelNeuron().step(0.0) in (0, 1)
 
-    def test_three_variables_evolve(self):
+    def test_three_variables_evolve(self) -> None:
+        """Three variables evolve."""
         n = FitzHughRinzelNeuron()
         initial = (n.v, n.w, n.y)
         for _ in range(1000):
@@ -31,13 +39,15 @@ class TestFHRIsolation:
         for name, v0, v1 in zip(["v", "w", "y"], initial, (n.v, n.w, n.y), strict=True):
             assert v0 != v1, f"{name} did not evolve"
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = FitzHughRinzelNeuron()
         for _ in range(100_000):
             n.step(0.5)
         assert np.isfinite(n.v) and np.isfinite(n.w) and np.isfinite(n.y)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = FitzHughRinzelNeuron()
         for _ in range(500):
             n.step(0.5)

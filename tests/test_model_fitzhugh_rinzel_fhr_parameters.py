@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.fitzhugh_rinzel import (
+    FitzHughRinzelNeuron,
+)
 
 
 class TestFHRParameters:
-    def test_mu_controls_y_speed(self):
+    """Parameter behaviour of the FitzHughRinzelNeuron."""
+
+    def test_mu_controls_y_speed(self) -> None:
+        """Mu controls y speed."""
         n_fast = FitzHughRinzelNeuron(mu=0.01)
         n_slow = FitzHughRinzelNeuron(mu=0.00001)
         for _ in range(5000):
@@ -23,13 +31,15 @@ class TestFHRParameters:
         assert abs(n_fast.y) > abs(n_slow.y)
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = FitzHughRinzelNeuron(dt=dt)
         for _ in range(10000):
             n.step(0.5)
         assert np.isfinite(n.v) and np.isfinite(n.w) and np.isfinite(n.y)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = FitzHughRinzelNeuron()
@@ -50,11 +60,15 @@ class TestFHRParameters:
             ({"dt": 0.0}, "dt.*positive"),
         ],
     )
-    def test_rejects_invalid_numeric_configuration(self, kwargs: dict[str, float], match: str):
+    def test_rejects_invalid_numeric_configuration(
+        self, kwargs: dict[str, float], match: str
+    ) -> None:
+        """The model rejects invalid numeric configuration."""
         with pytest.raises(ValueError, match=match):
             FitzHughRinzelNeuron(**kwargs)
 
-    def test_rejects_nonfinite_current_without_mutation(self):
+    def test_rejects_nonfinite_current_without_mutation(self) -> None:
+        """The model rejects non-finite current without mutation."""
         neuron = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
         before = (neuron.v, neuron.w, neuron.y)
 
@@ -63,7 +77,8 @@ class TestFHRParameters:
 
         assert (neuron.v, neuron.w, neuron.y) == before
 
-    def test_rejects_corrupted_runtime_parameter_without_mutation(self):
+    def test_rejects_corrupted_runtime_parameter_without_mutation(self) -> None:
+        """The model rejects corrupted runtime parameter without mutation."""
         neuron = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
         before = (neuron.v, neuron.w, neuron.y)
         neuron.mu = float("nan")
@@ -73,7 +88,8 @@ class TestFHRParameters:
 
         assert (neuron.v, neuron.w, neuron.y) == before
 
-    def test_rejects_nonpositive_runtime_parameter_without_mutation(self):
+    def test_rejects_nonpositive_runtime_parameter_without_mutation(self) -> None:
+        """The model rejects nonpositive runtime parameter without mutation."""
         neuron = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
         before = (neuron.v, neuron.w, neuron.y)
         neuron.d = 0.0
@@ -83,7 +99,8 @@ class TestFHRParameters:
 
         assert (neuron.v, neuron.w, neuron.y) == before
 
-    def test_rejects_overflow_candidate_without_mutation(self):
+    def test_rejects_overflow_candidate_without_mutation(self) -> None:
+        """The model rejects overflow candidate without mutation."""
         # v = 1e155 makes the cube overflow to +inf; the exact `v*v*v` form
         # produces inf (rather than the libm-pow OverflowError) which the finite
         # guard rejects as a non-finite derivative — same contract, no mutation.
@@ -95,7 +112,8 @@ class TestFHRParameters:
 
         assert (neuron.v, neuron.w, neuron.y) == before
 
-    def test_rejects_nonfinite_derivative_without_mutation(self):
+    def test_rejects_nonfinite_derivative_without_mutation(self) -> None:
+        """The model rejects non-finite derivative without mutation."""
         neuron = FitzHughRinzelNeuron(mu=1.0e308)
         before = (neuron.v, neuron.w, neuron.y)
 
@@ -104,6 +122,7 @@ class TestFHRParameters:
 
         assert (neuron.v, neuron.w, neuron.y) == before
 
-    def test_rejects_nonfinite_candidate_directly(self):
+    def test_rejects_nonfinite_candidate_directly(self) -> None:
+        """The model rejects non-finite candidate directly."""
         with pytest.raises(FloatingPointError, match="candidate"):
             FitzHughRinzelNeuron._validate_candidate(math.nan, -0.5, 0.0)

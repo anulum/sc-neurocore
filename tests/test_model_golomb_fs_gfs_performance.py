@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_golomb_fs_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.golomb_fs import (
+    GolombFSNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestGFSPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the GolombFSNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = GolombFSNeuron()
         N = 2000
         t0 = time.perf_counter()
@@ -28,7 +46,8 @@ class TestGFSPerformance:
             label="Golomb FS isolation", observed_per_second=rate, strict_minimum_per_second=500.0
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(GolombFSNeuron, n=10, label="bench")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

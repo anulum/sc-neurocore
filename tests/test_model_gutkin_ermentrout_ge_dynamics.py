@@ -10,20 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_gutkin_ermentrout_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.gutkin_ermentrout import (
+    GutkinErmentroutNeuron,
+)
+from tests.model_gutkin_ermentrout_support import (
+    _run,
+)
 
 
 class TestGEDynamics:
+    """Dynamics of the GutkinErmentroutNeuron."""
+
     def test_fires_under_drive(self) -> None:
+        """The model fires under drive."""
         n = GutkinErmentroutNeuron()
         spikes = _run(n, current=5.0, steps=10_000)
         assert len(spikes) >= 10
 
     def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = GutkinErmentroutNeuron()
         assert len(_run(n, current=0.5, steps=5000)) == 0
 
     def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [2.0, 5.0, 10.0]:
             n = GutkinErmentroutNeuron()
@@ -32,12 +44,14 @@ class TestGEDynamics:
 
     @pytest.mark.parametrize("current", [0.0, 2.0, 5.0, 10.0, 20.0])
     def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = GutkinErmentroutNeuron()
         for _ in range(10_000):
             n.step(current)
         assert np.isfinite(n.v)
 
     def test_voltage_bounded(self) -> None:
+        """The voltage stays inside physiological bounds."""
         n = GutkinErmentroutNeuron()
         vs = []
         for _ in range(10_000):

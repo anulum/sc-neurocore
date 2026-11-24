@@ -10,34 +10,44 @@
 
 from __future__ import annotations
 
-from tests.model_golomb_fs_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.golomb_fs import (
+    GolombFSNeuron,
+)
 
 
 class TestGFSIsolation:
-    def test_defaults(self):
+    """The GolombFSNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = GolombFSNeuron()
         assert n.v == -65.0 and n.h == 0.9 and n.n == 0.1 and n.p == 0.0
         assert n.g_kv3 == 150.0  # Kv3 — signature channel
         assert n.dt == 0.01 and n.v_threshold == -20.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert GolombFSNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = GolombFSNeuron()
         for _ in range(5000):
             n.step(5.0)
         for attr in ["v", "h", "n", "p"]:
             assert np.isfinite(getattr(n, attr))
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = GolombFSNeuron()
         for _ in range(1000):
             n.step(5.0)
         n.reset()
         assert n.v == -65.0 and n.h == 0.9 and n.n == 0.1 and n.p == 0.0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = GolombFSNeuron()

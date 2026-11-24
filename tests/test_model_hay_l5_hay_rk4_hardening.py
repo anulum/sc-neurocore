@@ -10,19 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
 
 
 class TestHayRK4Hardening:
+    """Hardening of the RK4 path of the Hay pyramidal neuron."""
+
     def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         n = HayL5PyramidalNeuron()
         assert n.integrator == "rk4"
 
     def test_unknown_integrator_rejected(self) -> None:
+        """Unknown integrator rejected."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
             HayL5PyramidalNeuron(integrator="bad")  # type: ignore[arg-type]
 
     def test_rk4_and_euler_regression_paths_diverge(self) -> None:
+        """RK4 and Euler regression paths diverge."""
         rk4 = HayL5PyramidalNeuron()
         euler = HayL5PyramidalNeuron(integrator="baseline_euler")
         rk4_spikes = sum(rk4.step(10.0) for _ in range(20_000))
@@ -32,18 +41,21 @@ class TestHayRK4Hardening:
         assert abs(rk4.v_s - euler.v_s) < 2e-8
 
     def test_cross_backend_somatic_anchor(self) -> None:
+        """Cross-backend somatic anchor."""
         n = HayL5PyramidalNeuron()
         spikes = sum(n.step(10.0) for _ in range(20_000))
         assert spikes == 1
         assert n.ca_a >= 0.0
 
     def test_cross_backend_dual_input_anchor(self) -> None:
+        """Cross-backend dual input anchor."""
         n = HayL5PyramidalNeuron()
         spikes = sum(n.step(5.0, 5.0) for _ in range(20_000))
         assert spikes == 4
         assert n.ca_a >= 0.0
 
     def test_invalid_input_preserves_state(self) -> None:
+        """Invalid input preserves state."""
         n = HayL5PyramidalNeuron()
         for _ in range(10):
             n.step(10.0)
@@ -53,6 +65,7 @@ class TestHayRK4Hardening:
         assert (n.v_s, n.h_na, n.n_k, n.v_t, n.m_ca, n.h_ca, n.m_ih, n.v_a, n.ca_a) == old_state
 
     def test_corrupt_state_preserves_state(self) -> None:
+        """Corrupt state preserves state."""
         n = HayL5PyramidalNeuron()
         for _ in range(10):
             n.step(10.0)
@@ -63,6 +76,7 @@ class TestHayRK4Hardening:
         assert (n.v_s, n.h_na, n.n_k, n.v_t, n.m_ca, n.h_ca, n.m_ih, n.v_a) == old_state[:-1]
 
     def test_runtime_configuration_rejects_invalid_dt(self) -> None:
+        """Runtime configuration rejects invalid dt."""
         n = HayL5PyramidalNeuron()
         n.dt = 0.0
         with pytest.raises(ValueError, match="dt must be positive"):
@@ -70,6 +84,7 @@ class TestHayRK4Hardening:
 
     @pytest.mark.parametrize("current", [0.0, 5.0, 10.0, 20.0])
     def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = HayL5PyramidalNeuron()
         for _ in range(3000):
             n.step(current)

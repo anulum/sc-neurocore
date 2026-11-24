@@ -10,29 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_glm_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.glm_neuron import (
+    GLMNeuron,
+)
 
 
 class TestGLMAnalytical:
-    def test_stimulus_filter_shape(self):
-        """k = 0.5·exp(-arange(n_k)/3). Exponential decay."""
+    """Analytical behaviour of the GLMNeuron."""
+
+    def test_stimulus_filter_shape(self) -> None:
+        """The stimulus filter k is 0.5·exp(-arange(n_k)/3), an exponential decay."""
         n = GLMNeuron()
         expected = np.exp(-np.arange(10) / 3.0) * 0.5
         np.testing.assert_allclose(n.k, expected)
 
-    def test_post_spike_filter_shape(self):
-        """h = -5·exp(-t/2) + 0.5·exp(-t/10). Starts strongly negative."""
+    def test_post_spike_filter_shape(self) -> None:
+        """The history filter h is -5·exp(-t/2) + 0.5·exp(-t/10) and starts strongly negative."""
         n = GLMNeuron()
         t = np.arange(20)
         expected = -5.0 * np.exp(-t / 2.0) + 0.5 * np.exp(-t / 10.0)
         np.testing.assert_allclose(n.h, expected)
 
-    def test_h_filter_refractoriness(self):
+    def test_h_filter_refractoriness(self) -> None:
         """h[0] is strongly negative → suppresses firing after spike."""
         n = GLMNeuron()
         assert n.h[0] < -4.0  # -5 + 0.5 = -4.5
 
-    def test_stimulus_buffer_circular(self):
+    def test_stimulus_buffer_circular(self) -> None:
         """New stimulus enters at index 0, old values shift right."""
         n = GLMNeuron(n_k=4, mu=-100.0)  # high mu to prevent spikes
         n.step(1.0)
@@ -41,7 +46,7 @@ class TestGLMAnalytical:
         assert n._stim_buf[0] == 2.0
         assert n._stim_buf[1] == 1.0
 
-    def test_log_rate_clipping(self):
+    def test_log_rate_clipping(self) -> None:
         """log_rate clipped to [-20, 20] → exp(20) ≈ 4.85e8."""
         n = GLMNeuron(mu=100.0)  # extreme mu
         spike = n.step(1000.0)
@@ -50,7 +55,7 @@ class TestGLMAnalytical:
         assert np.all(np.isfinite(n._stim_buf))
         assert np.all(np.isfinite(n._spike_buf))
 
-    def test_baseline_rate_at_zero_input(self):
+    def test_baseline_rate_at_zero_input(self) -> None:
         """At zero stimulus, no history: log_rate = μ = -3.0 → λ = exp(-3) ≈ 0.05."""
         n = GLMNeuron()
         expected_lambda = np.exp(-3.0)
@@ -58,7 +63,7 @@ class TestGLMAnalytical:
         # Very low probability per step
         assert expected_p < 0.001
 
-    def test_spike_enters_spike_buffer(self):
+    def test_spike_enters_spike_buffer(self) -> None:
         """After spike, spike_buf[0] = 1.0."""
         n = GLMNeuron(mu=10.0)  # high mu to guarantee spike
 

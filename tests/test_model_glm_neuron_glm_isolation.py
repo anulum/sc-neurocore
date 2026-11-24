@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_glm_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.glm_neuron import (
+    GLMNeuron,
+)
 
 
 class TestGLMIsolation:
-    def test_defaults(self):
+    """The GLMNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = GLMNeuron()
         assert n.n_k == 10 and n.n_h == 20
         assert n.mu == -3.0 and n.dt_ms == 1.0
         assert n.k.shape == (10,) and n.h.shape == (20,)
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert GLMNeuron().step(0.0) in (0, 1)
 
-    def test_buffers_initialised_to_zero(self):
+    def test_buffers_initialised_to_zero(self) -> None:
+        """Buffers initialised to zero."""
         n = GLMNeuron()
         assert np.all(n._stim_buf == 0.0)
         assert np.all(n._spike_buf == 0.0)
 
-    def test_reset_clears_buffers(self):
+    def test_reset_clears_buffers(self) -> None:
+        """Reset clears buffers."""
         n = GLMNeuron()
         for _ in range(100):
             n.step(5.0)
@@ -36,7 +45,7 @@ class TestGLMIsolation:
         assert np.all(n._stim_buf == 0.0)
         assert np.all(n._spike_buf == 0.0)
 
-    def test_stochastic_two_runs_differ(self):
+    def test_stochastic_two_runs_differ(self) -> None:
         """Different RNG seeds → different spike trains."""
         n1 = GLMNeuron()
         n2 = GLMNeuron()

@@ -10,10 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
 
 
 class TestHayCompartments:
+    """The compartments of the Hay layer-5 pyramidal neuron."""
+
     def test_somatic_input_drives_spiking(self) -> None:
         """Somatic drive produces spikes (soma may hyperpolarise post-spike)."""
         n = HayL5PyramidalNeuron()
@@ -21,6 +25,7 @@ class TestHayCompartments:
         assert spikes >= 1
 
     def test_tuft_input_depolarises_tuft(self) -> None:
+        """Tuft input depolarises tuft."""
         n = HayL5PyramidalNeuron()
         for _ in range(500):
             n.step(0.0, current_tuft=10.0)
@@ -34,6 +39,7 @@ class TestHayCompartments:
         assert n.v_t > -75.0
 
     def test_all_compartments_evolve(self) -> None:
+        """All compartments evolve."""
         n = HayL5PyramidalNeuron()
         for _ in range(2000):
             n.step(10.0)

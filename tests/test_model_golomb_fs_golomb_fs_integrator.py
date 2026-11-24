@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_golomb_fs_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.golomb_fs import (
+    GolombFSNeuron,
+)
 
 
 class TestGolombFSIntegrator:
-    def test_default_integrator_is_rk4(self):
+    """The integrators of the Golomb fast-spiking neuron."""
+
+    def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         assert GolombFSNeuron().integrator == "rk4"
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
             GolombFSNeuron(integrator="midpoint")  # type: ignore[arg-type]
 
-    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self) -> None:
+        """Baseline Euler path runs and diverges from RK4."""
         rk4 = GolombFSNeuron()
         euler = GolombFSNeuron(integrator="baseline_euler")
         rk4_spikes = sum(rk4.step(5.0) for _ in range(40000))
@@ -29,7 +37,8 @@ class TestGolombFSIntegrator:
         assert rk4_spikes > 0 and euler_spikes > 0
         assert rk4.v != euler.v
 
-    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self) -> None:
+        """RK4 and Euler agree to first order at tiny dt."""
         rk4 = GolombFSNeuron(dt=1e-5)
         euler = GolombFSNeuron(dt=1e-5, integrator="baseline_euler")
         for _ in range(200):

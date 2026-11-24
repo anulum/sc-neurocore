@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_golomb_fs_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.golomb_fs import (
+    GolombFSNeuron,
+)
 
 
 class TestGFSParameters:
+    """Parameter behaviour of the GolombFSNeuron."""
+
     @pytest.mark.parametrize("g_kv3", [0.0, 150.0, 300.0])
-    def test_g_kv3_sweep(self, g_kv3: float):
+    def test_g_kv3_sweep(self, g_kv3: float) -> None:
+        """The model is exercised across a sweep of g_kv3."""
         n = GolombFSNeuron(g_kv3=g_kv3)
         for _ in range(2000):
             n.step(5.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("g_na", [50.0, 112.5, 200.0])
-    def test_g_na_sweep(self, g_na: float):
+    def test_g_na_sweep(self, g_na: float) -> None:
+        """The model is exercised across a sweep of g_na."""
         n = GolombFSNeuron(g_na=g_na)
         for _ in range(2000):
             n.step(5.0)

@@ -10,14 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_hill_tononi_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
+    SCSixStateThalamocorticalNeuron,
+)
 
 
 class TestSCSixStateThalamocortical:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
-            SCSixStateThalamocorticalNeuron,
-        )
+    """The six-state Hill-Tononi thalamocortical neuron."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = SCSixStateThalamocorticalNeuron()
         assert sum(n.step(5.0) for _ in range(300)) > 0

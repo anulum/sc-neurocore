@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_gated_lif_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.gated_lif import (
+    GatedLIFNeuron,
+)
 
 
 class TestValidation:
+    """Input and state validation of the GatedLIFNeuron."""
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -21,23 +28,31 @@ class TestValidation:
             ("gate_i", np.inf),
         ],
     )
-    def test_rejects_non_finite_state_or_input_gate(self, field: str, value: float):
+    def test_rejects_non_finite_state_or_input_gate(self, field: str, value: float) -> None:
+        """The model rejects non-finite state or input gate."""
         with pytest.raises(ValueError, match=field):
-            GatedLIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            GatedLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("gate_v", [-0.1, 1.1, np.nan, np.inf])
-    def test_rejects_leak_gate_outside_closed_unit_interval(self, gate_v: float):
+    def test_rejects_leak_gate_outside_closed_unit_interval(self, gate_v: float) -> None:
+        """The model rejects leak gate outside closed unit interval."""
         with pytest.raises(ValueError, match="gate_v"):
             GatedLIFNeuron(gate_v=gate_v)
 
     @pytest.mark.parametrize("field", ["v_threshold", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+    def test_rejects_non_positive_or_non_finite_scale_parameters(
+        self, field: str, value: float
+    ) -> None:
+        """The model rejects non-positive or non-finite scale parameters."""
         with pytest.raises(ValueError, match=field):
-            GatedLIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            GatedLIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = GatedLIFNeuron(v=0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):

@@ -10,26 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_gutkin_ermentrout_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.gutkin_ermentrout import (
+    GutkinErmentroutNeuron,
+)
 
 
 class TestGEIsolation:
+    """The GutkinErmentroutNeuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = GutkinErmentroutNeuron()
         assert n.v == -65.0 and n.n == 0.1
         assert n.g_na == 20.0 and n.g_k == 10.0 and n.g_l == 8.0
         assert n.dt == 0.05
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert GutkinErmentroutNeuron().step(0.0) in (0, 1)
 
     def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = GutkinErmentroutNeuron()
         for _ in range(100_000):
             n.step(5.0)
         assert np.isfinite(n.v) and np.isfinite(n.n)
 
     def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = GutkinErmentroutNeuron()
         for _ in range(5000):
             n.step(5.0)
@@ -37,6 +47,7 @@ class TestGEIsolation:
         assert n.v == -65.0 and n.n == 0.1
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = GutkinErmentroutNeuron()
@@ -56,5 +67,6 @@ class TestGEIsolation:
         ],
     )
     def test_invalid_initial_contract_rejected(self, kwargs: dict[str, float], match: str) -> None:
+        """Invalid initial contract rejected."""
         with pytest.raises(ValueError, match=match):
             GutkinErmentroutNeuron(**kwargs)

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
 
 
 class TestHayIsolation:
+    """The HayL5PyramidalNeuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = HayL5PyramidalNeuron()
         assert n.v_s == -75.0 and n.v_t == -75.0 and n.v_a == -75.0
         assert n.h_na == 0.9 and n.n_k == 0.1
@@ -23,11 +29,13 @@ class TestHayIsolation:
         assert n.dt == 0.025
 
     def test_nine_state_variables(self) -> None:
+        """The model has nine state variables."""
         n = HayL5PyramidalNeuron()
         for attr in ["v_s", "h_na", "n_k", "v_t", "m_ca", "h_ca", "m_ih", "v_a", "ca_a"]:
             assert hasattr(n, attr)
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert HayL5PyramidalNeuron().step(0.0) in (0, 1)
 
     def test_dual_input(self) -> None:
@@ -37,6 +45,7 @@ class TestHayIsolation:
         assert np.isfinite(n.v_s)
 
     def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = HayL5PyramidalNeuron()
         for _ in range(10_000):
             n.step(10.0)
@@ -44,6 +53,7 @@ class TestHayIsolation:
             assert np.isfinite(getattr(n, attr)), f"{attr} not finite"
 
     def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = HayL5PyramidalNeuron()
         for _ in range(2000):
             n.step(10.0)
@@ -52,6 +62,7 @@ class TestHayIsolation:
         assert n.ca_a == 0.0001
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = HayL5PyramidalNeuron()

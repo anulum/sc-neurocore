@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
 
 
 class TestHayAnalytical:
+    """Analytical behaviour of the HayL5PyramidalNeuron."""
+
     def test_4_substeps(self) -> None:
+        """The time step gives four sub-steps per step."""
         n = HayL5PyramidalNeuron()
         assert n.dt == 0.025  # 4 sub-steps in source
 
@@ -46,6 +51,7 @@ class TestHayAnalytical:
         assert n.ca_a >= 0
 
     def test_reversal_ordering(self) -> None:
+        """The reversal potentials are in physiological order."""
         n = HayL5PyramidalNeuron()
         assert n.e_k < n.e_l < n.e_ih < n.e_na < n.e_ca
 

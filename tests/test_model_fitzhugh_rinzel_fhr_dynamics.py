@@ -10,22 +10,35 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.fitzhugh_rinzel import (
+    FitzHughRinzelNeuron,
+)
+from tests.model_fitzhugh_rinzel_support import (
+    _rhs,
+    _rk4_reference,
+    _run,
+)
 
 
 class TestFHRDynamics:
-    def test_derivative_formula(self):
+    """Dynamics of the FitzHughRinzelNeuron."""
+
+    def test_derivative_formula(self) -> None:
         """The derivative matches the three-state FitzHugh-Rinzel ODE."""
         n = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
         assert n._derivatives(n.v, n.w, n.y, 0.5) == pytest.approx(_rhs(n.v, n.w, n.y, 0.5))
 
-    def test_derivative_rejects_nonfinite_runtime_inputs(self):
+    def test_derivative_rejects_nonfinite_runtime_inputs(self) -> None:
         """The ODE primitive rejects corrupted nonfinite runtime values."""
         n = FitzHughRinzelNeuron()
         with pytest.raises(FloatingPointError, match="state and current must be finite"):
             n._derivatives(math.nan, n.w, n.y, 0.5)
 
-    def test_step_matches_independent_rk4_reference(self):
+    def test_step_matches_independent_rk4_reference(self) -> None:
+        """Step matches independent RK4 reference."""
         n = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
         expected = _rk4_reference(n.v, n.w, n.y, 0.5, n.dt)
         assert n.step(0.5) == 0
@@ -34,12 +47,14 @@ class TestFHRDynamics:
     @pytest.mark.parametrize(
         "current, expected", [(0.0, 0), (0.5, 25), (0.8, 28), (1.0, 28), (2.0, 1)]
     )
-    def test_deterministic_current_regimes(self, current: float, expected: int):
+    def test_deterministic_current_regimes(self, current: float, expected: int) -> None:
+        """Each current gives its documented spike count."""
         n = FitzHughRinzelNeuron()
         assert len(_run(n, current=current, steps=10000)) == expected
         assert np.isfinite(n.v) and np.isfinite(n.w) and np.isfinite(n.y)
 
-    def test_v_bounded(self):
+    def test_v_bounded(self) -> None:
+        """The voltage stays inside physiological bounds."""
         n = FitzHughRinzelNeuron()
         vs = [n.v]
         for _ in range(10000):
@@ -47,7 +62,8 @@ class TestFHRDynamics:
             vs.append(n.v)
         assert min(vs) > -3 and max(vs) < 3
 
-    def test_isi_regularity(self):
+    def test_isi_regularity(self) -> None:
+        """Constant drive gives regular inter-spike intervals."""
         n = FitzHughRinzelNeuron()
         spikes = _run(n, current=0.5, steps=10000)
         isis = np.diff(spikes[2:]).astype(float)

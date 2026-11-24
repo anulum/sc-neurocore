@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_fractional_lif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.fractional_lif import (
+    FractionalLIFNeuron,
+)
 
 
 class TestFLIFParameters:
+    """Parameter behaviour of the FractionalLIFNeuron."""
+
     @pytest.mark.parametrize("alpha", [0.5, 0.8, 1.0])
-    def test_alpha_variations(self, alpha: float):
+    def test_alpha_variations(self, alpha: float) -> None:
+        """The state stays finite across fractional orders."""
         n = FractionalLIFNeuron(alpha=alpha)
         for _ in range(5000):
             n.step(5.0)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = FractionalLIFNeuron()

@@ -10,31 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_fractional_lif_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.fractional_lif import (
+    FractionalLIFNeuron,
+)
 
 
 class TestFLIFGLCoefficients:
     """Grünwald-Letnikov coefficients: c[0]=1, c[k] = c[k-1]·(k-1-α)/k."""
 
-    def test_first_coefficient_is_one(self):
+    def test_first_coefficient_is_one(self) -> None:
+        """First coefficient is one."""
         n = FractionalLIFNeuron()
         assert n._gl_coeffs[0] == 1.0
 
-    def test_gl_recurrence(self):
+    def test_gl_recurrence(self) -> None:
         """c[k] = c[k-1] · (k-1-alpha) / k."""
         n = FractionalLIFNeuron(alpha=0.8)
         for k in range(1, 10):
             expected = n._gl_coeffs[k - 1] * (k - 1 - 0.8) / k
             assert abs(n._gl_coeffs[k] - expected) < 1e-12
 
-    def test_alpha_1_reduces_to_lif(self):
+    def test_alpha_1_reduces_to_lif(self) -> None:
         """At α=1: GL coeffs → [1, 0, 0, ...] (standard derivative)."""
         n = FractionalLIFNeuron(alpha=1.0)
         assert n._gl_coeffs[0] == 1.0
         # c[1] = 1 * (0 - 1) / 1 = -1
         assert abs(n._gl_coeffs[1] - (-1.0)) < 1e-12
 
-    def test_alpha_1_step_matches_euler_lif_update(self):
+    def test_alpha_1_step_matches_euler_lif_update(self) -> None:
+        """Alpha 1 step matches Euler LIF update."""
         n = FractionalLIFNeuron(v=0.25, alpha=1.0, dt=0.1)
 
         spike = n.step(0.5)
@@ -42,14 +47,15 @@ class TestFLIFGLCoefficients:
         assert spike == 0
         assert n.v == pytest.approx(0.25 + (-0.25 + 0.5) * 0.1)
 
-    def test_alpha_affects_memory_depth(self):
+    def test_alpha_affects_memory_depth(self) -> None:
         """Lower α → slower coefficient decay → longer effective memory."""
         n_low = FractionalLIFNeuron(alpha=0.5)
         n_high = FractionalLIFNeuron(alpha=0.9)
         # At k=50: low alpha should have larger |coeff|
         assert abs(n_low._gl_coeffs[50]) > abs(n_high._gl_coeffs[50])
 
-    def test_history_buffer_length(self):
+    def test_history_buffer_length(self) -> None:
+        """The history buffer fills to its maximum length."""
         n = FractionalLIFNeuron()
         for _ in range(200):
             n.step(5.0)

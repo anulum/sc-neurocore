@@ -10,26 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_hill_tononi_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
+    SCSixStateThalamocorticalNeuron,
+)
 
 
 class TestHTAnalytical:
-    def test_six_ionic_currents(self):
+    """Analytical behaviour of the SCSixStateThalamocorticalNeuron."""
+
+    def test_six_ionic_currents(self) -> None:
+        """The model has six positive ionic conductances."""
         n = SCSixStateThalamocorticalNeuron()
         for g in [n.g_na, n.g_k, n.g_h, n.g_t, n.g_kna, n.g_l]:
             assert g > 0
 
-    def test_kna_activation_formula(self):
+    def test_kna_activation_formula(self) -> None:
         """w_KNa = 0.37 / (1 + (38.7/Na_i)^3.5). At Na_i=38.7: half-max."""
         w = 0.37 / (1.0 + (38.7 / 38.7) ** 3.5)
         assert abs(w - 0.37 / 2.0) < 1e-10
 
-    def test_kna_low_na(self):
+    def test_kna_low_na(self) -> None:
         """At low Na_i (5mM): w_KNa ≈ 0 (K channel closed)."""
         w = 0.37 / (1.0 + (38.7 / 5.0) ** 3.5)
         assert w < 0.001
 
-    def test_na_accumulation_during_spiking(self):
+    def test_na_accumulation_during_spiking(self) -> None:
         """Na_i increases during spiking (I_Na inward → Na enters)."""
         n = SCSixStateThalamocorticalNeuron()
         na_before = n.na_i
@@ -38,24 +44,26 @@ class TestHTAnalytical:
         # Na should accumulate from spiking
         assert n.na_i != na_before
 
-    def test_na_non_negative(self):
+    def test_na_non_negative(self) -> None:
         """Na_i clipped to ≥ 0."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(50_000):
             n.step(0.0)
             assert n.na_i >= 0.0
 
-    def test_na_pump_formula(self):
+    def test_na_pump_formula(self) -> None:
         """Na/K pump: rate = pump_max · Na_i / (Na_i + Na_eq)."""
         n = SCSixStateThalamocorticalNeuron()
         pump_rate = n.na_pump_max * n.na_i / (n.na_i + n.na_eq)
         assert pump_rate > 0 and np.isfinite(pump_rate)
 
-    def test_reversal_ordering(self):
+    def test_reversal_ordering(self) -> None:
+        """The reversal potentials are in physiological order."""
         n = SCSixStateThalamocorticalNeuron()
         assert n.e_k < n.e_l < n.e_h < n.e_na < n.e_ca
 
-    def test_gating_bounded(self):
+    def test_gating_bounded(self) -> None:
+        """The gating variables stay inside [0, 1]."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(10_000):
             n.step(0.0)

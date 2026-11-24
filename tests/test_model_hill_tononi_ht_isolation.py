@@ -10,40 +10,51 @@
 
 from __future__ import annotations
 
-from tests.model_hill_tononi_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
+    SCSixStateThalamocorticalNeuron,
+)
 
 
 class TestHTIsolation:
-    def test_defaults(self):
+    """The SCSixStateThalamocorticalNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = SCSixStateThalamocorticalNeuron()
         assert n.v == -65.0 and n.na_i == 5.0
         assert n.h_na == 0.6 and n.n_k == 0.3
         assert n.m_h == 0.0 and n.h_t == 0.9
         assert n.g_kna == 1.33 and n.dt == 0.05
 
-    def test_six_state_variables(self):
+    def test_six_state_variables(self) -> None:
+        """The model has six state variables."""
         n = SCSixStateThalamocorticalNeuron()
         for attr in ["v", "h_na", "n_k", "m_h", "h_t", "na_i"]:
             assert hasattr(n, attr)
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SCSixStateThalamocorticalNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(50_000):
             n.step(0.0)
         for attr in ["v", "h_na", "n_k", "m_h", "h_t", "na_i"]:
             assert np.isfinite(getattr(n, attr)), f"{attr} not finite"
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(5000):
             n.step(2.0)
         n.reset()
         assert n.v == -65.0 and n.na_i == 5.0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SCSixStateThalamocorticalNeuron()

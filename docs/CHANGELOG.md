@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 64 top-level model-zoo test modules of the FitzHugh-Rinzel,
+  fractional LIF, Galves-Löcherbach, gamma renewal, gated LIF, GLM,
+  Golomb fast-spiking, Gutkin-Ermentrout, Hay layer-5 and Hill-Tononi
+  neurons import their names explicitly instead of through a
+  suppressed star import, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy.
+
 - The 60 top-level model-zoo test modules of the Dendrify, model
   descriptor, Destexhe, DPI, Durstewitz, e-prop ALIF, energy LIF,
   escape-rate, ExpIF and FitzHugh-Nagumo neurons import their names

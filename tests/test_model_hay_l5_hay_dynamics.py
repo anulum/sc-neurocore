@@ -10,20 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
+from tests.model_hay_l5_support import (
+    _run,
+)
 
 
 class TestHayDynamics:
+    """Dynamics of the HayL5PyramidalNeuron."""
+
     def test_fires_under_somatic_drive(self) -> None:
+        """The model fires under somatic drive."""
         n = HayL5PyramidalNeuron()
         spikes = _run(n, current=10.0, steps=5000)
         assert len(spikes) >= 1
 
     def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = HayL5PyramidalNeuron()
         assert len(_run(n, current=1.0, steps=3000)) == 0
 
     def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [5.0, 10.0, 20.0]:
             n = HayL5PyramidalNeuron()

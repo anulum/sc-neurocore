@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_hill_tononi_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_six_state_thalamocortical import (
+    SCSixStateThalamocorticalNeuron,
+)
+from tests.model_hill_tononi_support import (
+    _run,
+)
 
 
 class TestHTIntrinsic:
-    def test_fires_at_zero_current(self):
+    """Intrinsic firing of the Hill-Tononi neuron."""
+
+    def test_fires_at_zero_current(self) -> None:
         """Intrinsic oscillator — fires without external input."""
         n = SCSixStateThalamocorticalNeuron()
         spikes = _run(n, current=0.0, steps=10_000)
         assert len(spikes) >= 5
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.0, 2.0, 5.0]:
             n = SCSixStateThalamocorticalNeuron()
@@ -28,7 +38,8 @@ class TestHTIntrinsic:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 1.0, 3.0, 5.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = SCSixStateThalamocorticalNeuron()
         for _ in range(10_000):
             n.step(current)

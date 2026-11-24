@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_hay_l5_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.hay_l5 import (
+    HayL5PyramidalNeuron,
+)
 
 
 class TestHayParameters:
+    """Parameter behaviour of the HayL5PyramidalNeuron."""
+
     @pytest.mark.parametrize("g_na", [150.0, 300.0, 500.0])
     def test_g_na_sweep(self, g_na: float) -> None:
+        """The model is exercised across a sweep of g_na."""
         n = HayL5PyramidalNeuron(g_na=g_na)
         for _ in range(3000):
             n.step(10.0)
@@ -23,6 +30,7 @@ class TestHayParameters:
 
     @pytest.mark.parametrize("g_ca_t", [0.0, 2.0, 5.0])
     def test_g_ca_trunk_sweep(self, g_ca_t: float) -> None:
+        """The model is exercised across a sweep of g_ca_trunk."""
         n = HayL5PyramidalNeuron(g_ca_t=g_ca_t)
         for _ in range(3000):
             n.step(10.0)
@@ -30,6 +38,7 @@ class TestHayParameters:
 
     @pytest.mark.parametrize("g_st", [0.5, 1.5, 3.0])
     def test_coupling_sweep(self, g_st: float) -> None:
+        """The model is exercised across a sweep of coupling."""
         n = HayL5PyramidalNeuron(g_st=g_st)
         for _ in range(3000):
             n.step(10.0)

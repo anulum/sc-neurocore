@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.fitzhugh_rinzel import (
+    FitzHughRinzelNeuron,
+)
+from tests.model_fitzhugh_rinzel_support import (
+    _run,
+)
 
 
 class TestFHRThreeTimescales:
-    def test_y_ultra_slow(self):
+    """The three timescales of the FitzHugh-Rinzel neuron."""
+
+    def test_y_ultra_slow(self) -> None:
         """mu=0.0001 keeps y much slower than w over short horizons."""
         n = FitzHughRinzelNeuron()
         w0, y0 = n.w, n.y
@@ -24,7 +32,7 @@ class TestFHRThreeTimescales:
         dy = abs(n.y - y0)
         assert dw > 100 * dy, f"dw={dw:.6f}, dy={dy:.6f}"
 
-    def test_y_modulates_oscillation(self):
+    def test_y_modulates_oscillation(self) -> None:
         """Different y-nullcline offsets change the driven trajectory."""
         n1 = FitzHughRinzelNeuron(c=-0.5)
         n2 = FitzHughRinzelNeuron(c=-1.0)

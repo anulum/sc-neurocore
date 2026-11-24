@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3856
+expected_file_count = 3920
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -15468,3 +15468,259 @@ rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn performance."
 [[file]]
 path = "tests/test_model_fitzhugh_nagumo_fhn_pipeline.py"
 rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn pipeline."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr dynamics."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_isolation.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr isolation."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_parameters.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr parameters."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_performance.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr performance."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr pipeline."
+
+[[file]]
+path = "tests/test_model_fitzhugh_rinzel_fhr_three_timescales.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh rinzel fhr three timescales."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif dynamics."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif isolation."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif parameters."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_performance.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif performance."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif pipeline."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flif_validation.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flif validation."
+
+[[file]]
+path = "tests/test_model_fractional_lif_flifgl_coefficients.py"
+rationale = "Exercise SC-NeuroCore: model fractional lif flifgl coefficients."
+
+[[file]]
+path = "tests/test_model_galves_locherbach_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model galves locherbach dynamics."
+
+[[file]]
+path = "tests/test_model_galves_locherbach_isolation.py"
+rationale = "Exercise SC-NeuroCore: model galves locherbach isolation."
+
+[[file]]
+path = "tests/test_model_galves_locherbach_performance.py"
+rationale = "Exercise SC-NeuroCore: model galves locherbach performance."
+
+[[file]]
+path = "tests/test_model_galves_locherbach_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model galves locherbach pipeline."
+
+[[file]]
+path = "tests/test_model_galves_locherbach_validation.py"
+rationale = "Exercise SC-NeuroCore: model galves locherbach validation."
+
+[[file]]
+path = "tests/test_model_gamma_renewal_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model gamma renewal dynamics."
+
+[[file]]
+path = "tests/test_model_gamma_renewal_isolation.py"
+rationale = "Exercise SC-NeuroCore: model gamma renewal isolation."
+
+[[file]]
+path = "tests/test_model_gamma_renewal_performance.py"
+rationale = "Exercise SC-NeuroCore: model gamma renewal performance."
+
+[[file]]
+path = "tests/test_model_gamma_renewal_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model gamma renewal pipeline."
+
+[[file]]
+path = "tests/test_model_gamma_renewal_validation.py"
+rationale = "Exercise SC-NeuroCore: model gamma renewal validation."
+
+[[file]]
+path = "tests/test_model_gated_lif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model gated lif dynamics."
+
+[[file]]
+path = "tests/test_model_gated_lif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model gated lif isolation."
+
+[[file]]
+path = "tests/test_model_gated_lif_performance.py"
+rationale = "Exercise SC-NeuroCore: model gated lif performance."
+
+[[file]]
+path = "tests/test_model_gated_lif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model gated lif pipeline."
+
+[[file]]
+path = "tests/test_model_gated_lif_validation.py"
+rationale = "Exercise SC-NeuroCore: model gated lif validation."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_analytical.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm analytical."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm dynamics."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_isolation.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm isolation."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_parameters.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm parameters."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_performance.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm performance."
+
+[[file]]
+path = "tests/test_model_glm_neuron_glm_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model glm neuron glm pipeline."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_analytical.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs analytical."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs dynamics."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_isolation.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs isolation."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_parameters.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs parameters."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_performance.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs performance."
+
+[[file]]
+path = "tests/test_model_golomb_fs_gfs_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs gfs pipeline."
+
+[[file]]
+path = "tests/test_model_golomb_fs_golomb_fs_integrator.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs golomb fs integrator."
+
+[[file]]
+path = "tests/test_model_golomb_fs_golomb_fs_validation.py"
+rationale = "Exercise SC-NeuroCore: model golomb fs golomb fs validation."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_analytical.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge analytical."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge dynamics."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_isolation.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge isolation."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_parameters.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge parameters."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_performance.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge performance."
+
+[[file]]
+path = "tests/test_model_gutkin_ermentrout_ge_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model gutkin ermentrout ge pipeline."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_analytical.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay analytical."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_compartments.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay compartments."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay dynamics."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_isolation.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay isolation."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_parameters.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay parameters."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_performance.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay performance."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay pipeline."
+
+[[file]]
+path = "tests/test_model_hay_l5_hay_rk4_hardening.py"
+rationale = "Exercise SC-NeuroCore: model hay l5 hay rk4 hardening."
+
+[[file]]
+path = "tests/test_model_hill_tononi_hill_tononi.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi hill tononi."
+
+[[file]]
+path = "tests/test_model_hill_tononi_hill_tononi_rk4.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi hill tononi rk4."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_analytical.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht analytical."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_intrinsic.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht intrinsic."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_isolation.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht isolation."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_parameters.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht parameters."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_performance.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht performance."
+
+[[file]]
+path = "tests/test_model_hill_tononi_ht_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model hill tononi ht pipeline."

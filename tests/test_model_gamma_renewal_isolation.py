@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_gamma_renewal_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.gamma_renewal import (
+    GammaRenewalNeuron,
+)
 
 
 class TestIsolation:
-    def test_step_returns_binary(self):
+    """The GammaRenewalNeuron in isolation."""
+
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert GammaRenewalNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = GammaRenewalNeuron()
         for _ in range(5000):
             n.step(100.0)
         assert np.isfinite(getattr(n, "v", 0.0))
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = GammaRenewalNeuron()
         for _ in range(100):
             n.step(100.0)

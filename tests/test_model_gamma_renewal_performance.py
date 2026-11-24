@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_gamma_renewal_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.gamma_renewal import (
+    GammaRenewalNeuron,
+)
 from tests.performance_guard import assert_throughput_guard
 
 
 class TestPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the GammaRenewalNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = GammaRenewalNeuron()
         N = 20000
         t0 = time.perf_counter()
@@ -29,7 +47,8 @@ class TestPerformance:
             smoke_minimum_per_second=100.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(GammaRenewalNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

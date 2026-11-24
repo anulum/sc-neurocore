@@ -10,30 +10,43 @@
 
 from __future__ import annotations
 
-from tests.model_galves_locherbach_support import *  # noqa: F403
+import pytest
+import warnings
+from sc_neurocore.neurons.models.galves_locherbach import (
+    GalvesLocherbachNeuron,
+)
+from tests.model_galves_locherbach_support import (
+    _run,
+)
 
 
 class TestDynamics:
-    def test_fires_at_test_current(self):
+    """Dynamics of the GalvesLocherbachNeuron."""
+
+    def test_fires_at_test_current(self) -> None:
+        """The model fires at test current."""
         n = GalvesLocherbachNeuron()
         spikes = _run(n, current=10.0, steps=5000)
         assert len(spikes) >= 50
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n_low = GalvesLocherbachNeuron()
         n_high = GalvesLocherbachNeuron()
         s_low = len(_run(n_low, current=0.5, steps=5000))
         s_high = len(_run(n_high, current=10.0, steps=5000))
         assert s_high >= s_low
 
-    def test_two_runs_differ(self):
+    def test_two_runs_differ(self) -> None:
+        """Two independent runs give different spike trains."""
         n1 = GalvesLocherbachNeuron()
         n2 = GalvesLocherbachNeuron()
         t1 = [n1.step(0.5) for _ in range(1000)]
         t2 = [n2.step(0.5) for _ in range(1000)]
         assert t1 != t2
 
-    def test_logistic_probability_is_bounded_without_overflow_warning(self):
+    def test_logistic_probability_is_bounded_without_overflow_warning(self) -> None:
+        """Logistic probability is bounded without overflow warning."""
         n = GalvesLocherbachNeuron(v=-1.0e9, steepness=50.0)
         with warnings.catch_warnings():
             warnings.simplefilter("error", RuntimeWarning)

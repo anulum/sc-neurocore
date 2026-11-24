@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_galves_locherbach_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.galves_locherbach import (
+    GalvesLocherbachNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the GalvesLocherbachNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = GalvesLocherbachNeuron()
         N = 50000
         t0 = time.perf_counter()
@@ -28,7 +46,8 @@ class TestPerformance:
             strict_minimum_per_second=50_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(GalvesLocherbachNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

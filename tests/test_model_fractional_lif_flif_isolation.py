@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_fractional_lif_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.fractional_lif import (
+    FractionalLIFNeuron,
+)
 
 
 class TestFLIFIsolation:
-    def test_defaults(self):
+    """The FractionalLIFNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = FractionalLIFNeuron()
         assert n.v == 0.0 and n.alpha == 0.8 and n.v_threshold == 1.0
         assert n._max_history == 100
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert FractionalLIFNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = FractionalLIFNeuron()
         for _ in range(10000):
             n.step(5.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = FractionalLIFNeuron(v_rest=0.2, v_reset=0.2, v_threshold=1.0)
         for _ in range(100):
             n.step(5.0)
