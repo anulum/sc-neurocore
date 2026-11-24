@@ -566,6 +566,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   brings in the timing witness's current status and drops a repeated
   provenance comment.
 
+- The SC-NC rows of the group and project map list, under "Where it lives
+  today", every top-level package and module of `src/sc_neurocore` that
+  `tools/sc_nc_split_map.json` assigns to the destination. Neuron, synapse and
+  network code, the recorders, the quantum, hypervector and neuro-symbolic
+  packages and the visual views now appear under their planned destinations.
+  The page also states the destinations' import order, the facade that stays
+  in SC-NeuroCore and the three packages that leave for the circuit platform.
+  The split map now follows the public SC-NC repositories: SC-NC-HARDWARE
+  may import SC-NC-DATA and SC-NC-VERIFY may import SC-NC-ANALYSIS, as they
+  declare, and the `compression` and `energy` packages move to SC-NC-COMPILER
+  and `stochastic_doctor` from the facade to SC-NC-ANALYSIS, as those
+  repositories list them. The import gate reports 122 crossings instead of
+  134; one is new, the folded energy estimator's import of the NIR bridge.
+  The print page is rendered again.
+
 - `sc_neurocore.studio.project` held two responsibilities, project storage
   and the graph-to-target pipeline. The pipeline (`run_pipeline`,
   `PIPELINE_ROUTE`, `PIPELINE_COSIM_STEP_LIMIT`, `PIPELINE_Q_FORMATS`) now

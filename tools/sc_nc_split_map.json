@@ -41,6 +41,7 @@
     ],
     "SC-NC-HARDWARE": [
       "SC-NC-CORE",
+      "SC-NC-DATA",
       "SC-NC-COMPILER"
     ],
     "SC-NC-LEARN": [
@@ -62,6 +63,7 @@
       "SC-NC-CORE",
       "SC-NC-CATALOGUE",
       "SC-NC-ENGINE",
+      "SC-NC-ANALYSIS",
       "SC-NC-COMPILER"
     ],
     "SC-NC-BENCH": [
@@ -102,8 +104,7 @@
     "cli",
     "doctor",
     "hub",
-    "pipeline",
-    "stochastic_doctor"
+    "pipeline"
   ],
   "circuit_side_packages": {
     "asic_flow": "CIRCUIT-PHYSICAL",
@@ -128,7 +129,7 @@
     "chip_compiler": "SC-NC-COMPILER",
     "comm": "SC-NC-HARDWARE",
     "compiler": "SC-NC-COMPILER",
-    "compression": "SC-NC-DATA",
+    "compression": "SC-NC-COMPILER",
     "continual": "SC-NC-LEARN",
     "contrastive": "SC-NC-LEARN",
     "control": "SC-NC-RESEARCH",
@@ -142,7 +143,7 @@
     "drivers": "SC-NC-HARDWARE",
     "edge": "SC-NC-HARDWARE",
     "encoding": "SC-NC-DATA",
-    "energy": "SC-NC-BENCH",
+    "energy": "SC-NC-COMPILER",
     "energy_accounting": "SC-NC-BENCH",
     "ensembles": "SC-NC-RESEARCH",
     "event_driven": "SC-NC-ENGINE",
@@ -214,6 +215,7 @@
     "spike_ode": "SC-NC-ENGINE",
     "spike_train_statistics": "SC-NC-ANALYSIS",
     "spintronic": "SC-NC-HARDWARE",
+    "stochastic_doctor": "SC-NC-ANALYSIS",
     "studio": "SC-NC-STUDIO",
     "swarm": "SC-NC-RESEARCH",
     "symbolic": "SC-NC-RESEARCH",
